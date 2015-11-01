@@ -1,0 +1,102 @@
+package edu.washington.gs.maccoss.encyclopedia.filereaders;
+
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import uk.ac.ebi.jmzml.model.mzml.BinaryDataArrayList;
+import uk.ac.ebi.jmzml.model.mzml.CVParam;
+import uk.ac.ebi.jmzml.model.mzml.Precursor;
+import uk.ac.ebi.jmzml.model.mzml.PrecursorList;
+import uk.ac.ebi.jmzml.model.mzml.Spectrum;
+import uk.ac.ebi.jmzml.xml.io.MzMLObjectIterator;
+import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Swath;
+import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
+
+public class MzmlReader {
+	public static void main(String[] args) throws IOException, SQLException {
+		SwathFile swathFile=new SwathFile();
+		swathFile.openFile();
+
+		System.out.println("Starting...");
+		File xmlFile=new File("/Users/searleb/Documents/school/projects/mzml/q06051_rl_MCF7_IMAC_GpX_6.mzML");
+		MzMLUnmarshaller unmarshaller=new MzMLUnmarshaller(xmlFile);
+
+		swathFile.setFileName(xmlFile.getName(), unmarshaller.getMzMLId(), xmlFile.getAbsolutePath());
+
+		int spectrumCount=unmarshaller.getObjectCountForXpath("/run/spectrumList/spectrum");
+		System.out.println("Number of spectrum elements: "+spectrumCount);
+
+		MzMLObjectIterator<Spectrum> spectrumIterator=unmarshaller.unmarshalCollectionFromXpath("/run/spectrumList/spectrum", Spectrum.class);
+
+		ArrayList<PrecursorScan> precursors=new ArrayList<PrecursorScan>();
+		ArrayList<Swath> swaths=new ArrayList<Swath>();
+		int count=0;
+		int previousReport=0;
+		while (spectrumIterator.hasNext()) {
+			Spectrum spectrum=spectrumIterator.next();
+			PrecursorList pl=spectrum.getPrecursorList();
+			Precursor p=null;
+			if (pl!=null) {
+				for (Precursor precursor : pl.getPrecursor()) {
+					p=precursor;
+					break;
+				}
+			}
+
+			String spectrumName=spectrum.getId();
+			int spectrumIndex=spectrum.getIndex();
+			HashMap<String, CVParam> cvparams=asCVMap(spectrum.getScanList().getScan().get(0).getCvParam());
+			float scanStartTime=Float.parseFloat(cvparams.get("MS:1000016").getValue());
+			BinaryDataArrayList bdal=spectrum.getBinaryDataArrayList();
+
+			double[] massArray=ByteConverter.toDoubleArray(bdal.getBinaryDataArray().get(0).getBinaryDataAsNumberArray());
+			float[] intensityArray=ByteConverter.toFloatArray(bdal.getBinaryDataArray().get(1).getBinaryDataAsNumberArray());
+
+			if (p==null) {
+				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray));
+			} else {
+				HashMap<String, CVParam> isolationCVParams=asCVMap(p.getIsolationWindow().getCvParam());
+				float isolationWindowTarget=Float.parseFloat(isolationCVParams.get("MS:1000827").getValue());
+				float isolationWindowLowerOffset=Float.parseFloat(isolationCVParams.get("MS:1000828").getValue());
+				float isolationWindowUpperOffset=Float.parseFloat(isolationCVParams.get("MS:1000829").getValue());
+				
+				swaths.add(new Swath(spectrumName, p.getSpectrumRef(), spectrumIndex, scanStartTime, isolationWindowTarget-isolationWindowLowerOffset, isolationWindowTarget+isolationWindowUpperOffset, massArray, intensityArray));
+			}
+			
+			if (precursors.size()>100) {
+				swathFile.addPrecursor(precursors);
+				precursors.clear();
+			}
+			
+			if (swaths.size()>100) {
+				swathFile.addSwath(swaths);
+				swaths.clear();
+			}
+			int percent=(100*count)/spectrumCount;
+			if (percent>previousReport) {
+				previousReport=percent;
+				System.out.println(percent+"% complete");
+			}
+			count++;
+		}
+		swathFile.addPrecursor(precursors);
+		swathFile.addSwath(swaths);
+		
+		swathFile.saveAsFile(new File("/Users/searleb/Documents/school/projects/mzml/q06051_rl_MCF7_IMAC_GpX_6.dia"));
+	}
+
+	public static HashMap<String, CVParam> asCVMap(List<CVParam> params) {
+		HashMap<String, CVParam> map=new HashMap<String, CVParam>();
+		if (params==null) return map;
+		for (CVParam cvParam : params) {
+			map.put(cvParam.getAccession(), cvParam);
+		}
+		return map;
+	}
+}

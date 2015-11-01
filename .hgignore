@@ -1,0 +1,16 @@
+syntax: glob
+target/**
+
+*~
+*.class
+*.DS_Store
+*.orig
+~$*
+jrat.*
+
+# IntelliJ settings
+.idea/*
+
+syntax: regexp
+^logs$
+\.iml$
