@@ -22,12 +22,67 @@ public class FragmentationModel {
 	public String[] getAas() {
 		return aas;
 	}
+	
+	/**
+	 * returns sorted array of sprimary ions
+	 * @param type
+	 * @return
+	 */
+	public double[] getPrimaryIons(FragmentationType type) {
+		switch (type) {
+			case CID:
+				return concatAndSort(getBIons(), getYIons());
+			case ETD:
+				return concatAndSort(getCIons(), getZIons(), getZp1Ions());
+			default:
+				throw new IllegalArgumentException("Unknown fragmentation type ["+type+"]");
+		}
+	}
+
+	private static double[] concatAndSort(double[]... a) {
+		int length=0;
+		for (double[] ds : a) {
+			length+=ds.length;
+		}
+		double[] c=new double[length];
+		int current=0;
+		for (double[] ds : a) {
+			System.arraycopy(ds, 0, c, current, ds.length);
+			current+=ds.length;
+		}
+		Arrays.sort(c);
+		return c;
+	}
+
+	public double[] getCIons() {
+		double[] bs=getBIons();
+		for (int i=0; i<bs.length; i++) {
+			bs[i]+=17.02654911;
+		}
+		return bs;
+	}
+	
+	public double[] getZIons() {
+		double[] ys=getYIons();
+		for (int i=0; i<ys.length; i++) {
+			ys[i]-=17.02654911;
+		}
+		return ys;
+	}
+	
+	public double[] getZp1Ions() {
+		double[] ys=getYIons();
+		for (int i=0; i<ys.length; i++) {
+			ys[i]-=16.01872407;
+		}
+		return ys;
+	}
 
 	public double[] getBIons() {
 		TDoubleArrayList ions=new TDoubleArrayList();
 		
 		TDoubleArrayList rolling=new TDoubleArrayList();
-		rolling.add(1.00783);
+		rolling.add(1.007276467);
 		for (int i = 0; i < masses.length; i++) {
 			int index=i;
 			TDoubleArrayList neutrals=new TDoubleArrayList();
@@ -52,7 +107,7 @@ public class FragmentationModel {
 		TDoubleArrayList ions=new TDoubleArrayList();
 		
 		TDoubleArrayList rolling=new TDoubleArrayList();
-		rolling.add(19.01845);
+		rolling.add(19.01784117);
 		for (int i = 0; i < masses.length; i++) {
 			int index=masses.length-1-i;
 			TDoubleArrayList neutrals=new TDoubleArrayList();
@@ -73,6 +128,11 @@ public class FragmentationModel {
 		return ionArray;
 	}
 
+	/**
+	 * triplet is (masses, neutral losses, AAs)
+	 * @param sequence
+	 * @return
+	 */
 	public static Triplet<double[], double[], String[]> getMasses(String sequence) {
 		char[] ca=sequence.toCharArray();
 		

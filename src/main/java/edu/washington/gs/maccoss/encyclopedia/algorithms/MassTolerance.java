@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
+import gnu.trove.list.array.TDoubleArrayList;
+
 import java.util.Arrays;
 
 import com.google.common.base.Optional;
@@ -57,5 +59,39 @@ public class MassTolerance {
 		}
 		
 		return Optional.absent();
+	}
+	
+	/**
+	 * @param peaks -- assumes sorted array of peaks
+	 * @param target
+	 * @return all matching masses in range
+	 */
+	public double[] getMatches(double[] peaks, double target) {
+		int value=Arrays.binarySearch(peaks, target);
+		// exact match (not likely)
+		if (value<0) {
+			// insertion point
+			value=-(value+1);
+		}
+		
+		TDoubleArrayList matches=new TDoubleArrayList();
+		if (value>0) {
+			// look below
+			int index=value;
+			while (compareTo(peaks[index-1], target)==0) {
+				matches.add(peaks[index-1]);
+				index--;
+			}
+		}
+		if (value<peaks.length) {
+			// look up
+			int index=value;
+			while (compareTo(peaks[index], target)==0) {
+				matches.add(peaks[index]);
+				index++;
+			}
+		}
+		
+		return matches.toArray();
 	}
 }

@@ -1,0 +1,133 @@
+package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
+
+import java.util.HashSet;
+
+import com.google.common.base.Optional;
+
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
+
+public class PeptideUtils {
+	public static String getSmartDecoy(String peptide, DigestionEnzyme enzyme, HashSet<String> backgroundProteome, SearchParameters parameters) {
+		FragmentationModel model=new FragmentationModel(peptide);
+		double[] primaryIons=model.getPrimaryIons(parameters.getFragType());
+		
+		String decoy=reverse(peptide, enzyme);
+		int attempts=0;
+		int maxTries=10;
+		while (attempts<maxTries) {
+			if (backgroundProteome.contains(decoy)) {
+				decoy=shuffle(decoy, enzyme);
+			} else {
+				model=new FragmentationModel(decoy);
+				double[] decoyIons=model.getPrimaryIons(parameters.getFragType());
+				int matches=0;
+				for (double decoyFragment : decoyIons) {
+					Optional<Double> match=parameters.getTolerance().getMatch(primaryIons, decoyFragment);
+					if (match.isPresent()) matches++;
+				}
+				
+				float fraction=matches/(float)primaryIons.length;
+				if (fraction<=0.4f) {
+					break;
+				} else {
+					// otherwise too much overlap
+					decoy=shuffle(decoy, enzyme);
+				}
+			}
+			attempts++;
+		}
+		return decoy;
+	}
+	
+	public static String getDecoy(String peptide, DigestionEnzyme enzyme, HashSet<String> backgroundProteome) {
+		String decoy=reverse(peptide, enzyme);
+		int attempts=0;
+		int maxTries=3;
+		while (attempts<maxTries) {
+			if (backgroundProteome.contains(decoy)) {
+				decoy=shuffle(decoy, enzyme);
+			} else {
+				break;
+			}
+			attempts++;
+		}
+		return decoy;
+	}
+	
+	public static String reverse(String peptide, DigestionEnzyme enzyme) {
+		Triplet<double[], double[], String[]>triplet=FragmentationModel.getMasses(peptide);
+		String[] aas=triplet.z;
+		reverse(aas, enzyme);
+		return getSequence(aas);
+	}
+	
+	public static void reverse(String[] aas, DigestionEnzyme enzyme) {
+		int start=0;
+		if (enzyme.isTargetPostSite(aas[start].charAt(0))) {
+			start++;
+		}
+		int stop=aas.length-1;
+		if (enzyme.isTargetPreSite(aas[stop].charAt(0))) {
+			stop--;
+		}
+		
+		while (start<=stop) {
+			String c=aas[start];
+			aas[start]=aas[stop];
+			aas[stop]=c;
+			start++;
+			stop--;
+		}
+	}
+
+	/**
+	 * generates reliable random shuffle
+	 * @param peptide
+	 * @param enzyme
+	 * @return
+	 */
+	public static String shuffle(String peptide, DigestionEnzyme enzyme) {
+		Triplet<double[], double[], String[]>triplet=FragmentationModel.getMasses(peptide);
+		String[] aas=triplet.z;
+		shuffle(aas, enzyme);
+		return getSequence(aas);
+	}
+	
+	public static void shuffle(String[] aas, DigestionEnzyme enzyme) {
+		int start=0;
+		if (enzyme.isTargetPostSite(aas[start].charAt(0))) {
+			start++;
+		}
+		int stop=aas.length-1;
+		if (enzyme.isTargetPreSite(aas[stop].charAt(0))) {
+			stop--;
+		}
+		int diff=(stop)-start;
+		
+		// String.hashCode() is cross-platform consistent
+		int seed=getSequence(aas).hashCode();
+		for (int i=0; i<aas.length; i++) {
+			seed=RandomGenerator.randomInt(seed);
+			int index1=start+Math.abs(seed%diff+1);
+			
+			seed=RandomGenerator.randomInt(seed);
+			int index2=start+Math.abs(seed%diff+1);
+			if (index1!=index2) {
+				String c=aas[index1];
+				aas[index1]=aas[index2];
+				aas[index2]=c;
+			}
+		}
+	}
+	
+	private static String getSequence(String[] aas) {
+		StringBuilder sb=new StringBuilder();
+		for (String aa : aas) {
+			sb.append(aa);
+		}
+		return sb.toString();
+	}
+}

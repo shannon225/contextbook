@@ -3,26 +3,42 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 import junit.framework.TestCase;
 
 public class MassToleranceTest extends TestCase {
+	public static final MassTolerance TOLERANCE=new MassTolerance(10.0);
+	
 	public void testMassTolerance() {
-		MassTolerance t=new MassTolerance(10.0);
-		assertEquals(0, t.compareTo(1000.0, 1000.0));
-		assertEquals(-1, t.compareTo(1000.0, 1001.0));
-		assertEquals(-1, t.compareTo(1000.0, 1000.1));
-		assertEquals(0, t.compareTo(1000.0, 1000.01));
-		assertEquals(0, t.compareTo(1000.0, 1000.001));
-		assertEquals(1, t.compareTo(1000.0, 999.0));
-		assertEquals(1, t.compareTo(1000.0, 999.9));
-		assertEquals(0, t.compareTo(1000.0, 999.99));
-		assertEquals(0, t.compareTo(1000.0, 999.999));
+		assertEquals(0, TOLERANCE.compareTo(1000.0, 1000.0));
+		assertEquals(-1, TOLERANCE.compareTo(1000.0, 1001.0));
+		assertEquals(-1, TOLERANCE.compareTo(1000.0, 1000.1));
+		assertEquals(0, TOLERANCE.compareTo(1000.0, 1000.01));
+		assertEquals(0, TOLERANCE.compareTo(1000.0, 1000.001));
+		assertEquals(1, TOLERANCE.compareTo(1000.0, 999.0));
+		assertEquals(1, TOLERANCE.compareTo(1000.0, 999.9));
+		assertEquals(0, TOLERANCE.compareTo(1000.0, 999.99));
+		assertEquals(0, TOLERANCE.compareTo(1000.0, 999.999));
 
-		assertEquals(true, t.equals(1000.0, 1000.0));
-		assertEquals(false, t.equals(1000.0, 1001.0));
-		assertEquals(false, t.equals(1000.0, 1000.1));
-		assertEquals(true, t.equals(1000.0, 1000.01));
-		assertEquals(true, t.equals(1000.0, 1000.001));
-		assertEquals(false, t.equals(1000.0, 999.0));
-		assertEquals(false, t.equals(1000.0, 999.9));
-		assertEquals(true, t.equals(1000.0, 999.99));
-		assertEquals(true, t.equals(1000.0, 999.999));
+		assertEquals(true, TOLERANCE.equals(1000.0, 1000.0));
+		assertEquals(false, TOLERANCE.equals(1000.0, 1001.0));
+		assertEquals(false, TOLERANCE.equals(1000.0, 1000.1));
+		assertEquals(true, TOLERANCE.equals(1000.0, 1000.01));
+		assertEquals(true, TOLERANCE.equals(1000.0, 1000.001));
+		assertEquals(false, TOLERANCE.equals(1000.0, 999.0));
+		assertEquals(false, TOLERANCE.equals(1000.0, 999.9));
+		assertEquals(true, TOLERANCE.equals(1000.0, 999.99));
+		assertEquals(true, TOLERANCE.equals(1000.0, 999.999));
+	}
+	
+	public void testGetMatch() {
+		double[] values=new double[] {1.0, 1.1, 1.3, 1.399999, 1.4, 1.4000001, 1.5, 2.0};
+		assertEquals(new Double(1.4), TOLERANCE.getMatch(values, 1.4).get());
+		assertEquals(new Double(1.4000001), TOLERANCE.getMatch(values, 1.40001).get());
+	}
+	
+	public void testGetMatches() {
+		double[] values=new double[] {1.0, 1.1, 1.3, 1.399999, 1.4, 1.4000001, 1.5, 2.0};
+		double[] matches=TOLERANCE.getMatches(values, 1.4);
+		double[] expected=new double[] {1.399999, 1.4, 1.4000001};
+		for (int i=0; i<matches.length; i++) {
+			assertEquals(expected[i], matches[i]);
+		}
 	}
 }

@@ -11,26 +11,26 @@ public class MassConstants {
 	private static void checkInit() {
 		if (massesByAA.size()>0) return;
 		
-		massesByAA.put('A', 71.0371);
-		massesByAA.put('R', 156.1011);
-		massesByAA.put('N', 114.0429);
-		massesByAA.put('D', 115.027);
-		massesByAA.put('C', 103.0092);
-		massesByAA.put('E', 129.0426);
-		massesByAA.put('Q', 128.0586);
-		massesByAA.put('G', 57.0215);
-		massesByAA.put('H', 137.0589);
-		massesByAA.put('L', 113.0841);
-		massesByAA.put('I', 113.0841);
-		massesByAA.put('K', 128.095);
-		massesByAA.put('M', 131.0405);
-		massesByAA.put('F', 147.0684);
-		massesByAA.put('P', 97.0528);
-		massesByAA.put('S', 87.032);
-		massesByAA.put('T', 101.0477);
-		massesByAA.put('W', 186.0793);
-		massesByAA.put('Y', 163.0633);
-		massesByAA.put('V', 99.0684);
+		massesByAA.put('A', 71.037114);
+		massesByAA.put('R', 156.101111);
+		massesByAA.put('N', 114.042927);
+		massesByAA.put('D', 115.026943);
+		massesByAA.put('C', 103.009185);
+		massesByAA.put('E', 129.042593);
+		massesByAA.put('Q', 128.058578);
+		massesByAA.put('G', 57.021464);
+		massesByAA.put('H', 137.058912);
+		massesByAA.put('L', 113.084064);
+		massesByAA.put('I', 113.084064);
+		massesByAA.put('K', 128.094963);
+		massesByAA.put('M', 131.040485);
+		massesByAA.put('F', 147.068414);
+		massesByAA.put('P', 97.052764);
+		massesByAA.put('S', 87.032028);
+		massesByAA.put('T', 101.047679);
+		massesByAA.put('W', 186.079313);
+		massesByAA.put('Y', 163.06332);
+		massesByAA.put('V', 99.068414);
 		
 		massesByAA.forEachEntry(new TCharDoubleProcedure() {
 			public boolean execute(char arg0, double arg1) {
@@ -51,6 +51,11 @@ public class MassConstants {
 			total+=getMass(c);
 		}
 		return total;
+	}
+	
+	public static double getChargedMass(String sequence, byte charge) {
+		double mass=getMass(sequence)+19.01838974;
+		return (mass+1.00727647*charge)/charge;
 	}
 	
 	public static Float getModificationMass(String mod) {
