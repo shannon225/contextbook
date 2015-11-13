@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 public class MassConstantsTest extends TestCase {
 	public void testGetMass() {
 		String sequence="PEPTIDER";
-		assertEquals(955.46112, MassConstants.getMass(sequence)+18.01042, 0.0001);
+		assertEquals(955.46112, MassConstants.getMass(sequence)+18.01042, 0.001);
 	}
 	
 	public void testGetNeutralLoss() {

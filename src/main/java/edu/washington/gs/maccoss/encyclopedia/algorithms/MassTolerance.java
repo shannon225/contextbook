@@ -75,23 +75,20 @@ public class MassTolerance {
 		}
 		
 		TDoubleArrayList matches=new TDoubleArrayList();
-		if (value>0) {
-			// look below
-			int index=value;
-			while (compareTo(peaks[index-1], target)==0) {
-				matches.add(peaks[index-1]);
-				index--;
-			}
+		// look below
+		int index=value;
+		while (index>0&&compareTo(peaks[index-1], target)==0) {
+			matches.add(peaks[index-1]);
+			index--;
 		}
-		if (value<peaks.length) {
-			// look up
-			int index=value;
-			while (compareTo(peaks[index], target)==0) {
-				matches.add(peaks[index]);
-				index++;
-			}
+
+		// look up
+		index=value;
+		while (index<peaks.length&&compareTo(peaks[index], target)==0) {
+			matches.add(peaks[index]);
+			index++;
 		}
-		
+
 		return matches.toArray();
 	}
 }

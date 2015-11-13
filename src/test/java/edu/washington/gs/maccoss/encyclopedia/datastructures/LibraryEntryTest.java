@@ -25,7 +25,7 @@ public class LibraryEntryTest extends TestCase {
 				777, 779.449849, 792.36318, 876.502609, 880.368, 888,
 				921.40578, 1018.45858, 1036.4691 };
 		for (int i = 0; i < reverseMasses.length; i++) {
-			assertEquals(expectedReversedMasses[i], reverseMasses[i], 0.0001);
+			assertEquals(expectedReversedMasses[i], reverseMasses[i], 0.001);
 		}
 	}
 }
