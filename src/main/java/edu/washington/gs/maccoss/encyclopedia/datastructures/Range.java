@@ -15,6 +15,11 @@ public class Range implements Comparable<Range> {
 	}
 	
 	@Override
+	public String toString() {
+		return start+" to "+stop;
+	}
+	
+	@Override
 	public int hashCode() {
 		return Float.floatToIntBits(start)+16807*Float.floatToIntBits(stop);
 	}
@@ -39,6 +44,13 @@ public class Range implements Comparable<Range> {
 	
 	public float getRange() {
 		return start-stop;
+	}
+	
+	public boolean contains(float value) {
+		if (value>=start&&value<=stop) {
+			return true;
+		}
+		return false;
 	}
 	
 	/**

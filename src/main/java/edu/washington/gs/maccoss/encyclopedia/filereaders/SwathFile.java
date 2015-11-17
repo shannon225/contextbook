@@ -21,6 +21,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Swath;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class SwathFile extends SQLFile {
 	private File userFile=null;
@@ -190,7 +192,7 @@ public class SwathFile extends SQLFile {
 		}
 	}
 
-	public ArrayList<Swath> getSwaths(double targetMz, float minRT, float maxRT) throws IOException, SQLException,DataFormatException {
+	public ArrayList<Swath> getSwaths(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException,DataFormatException {
 		Connection c=getConnection(tempFile);
 		try {
 			Statement s=c.createStatement();
@@ -209,6 +211,9 @@ public class SwathFile extends SQLFile {
 					int peakCount=rs.getInt(7);
 					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), peakCount));
 					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(9), peakCount));
+					if (sqrt) {
+						intensityArray=General.protectedSqrt(intensityArray);
+					}
 					swaths.add(new Swath(spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray));
 				}
 
@@ -248,7 +253,7 @@ public class SwathFile extends SQLFile {
 
 	public void close() {
 		if (!tempFile.delete()) {
-			System.err.println("Error deleting temp file!");
+			Logger.errorLine("Error deleting temp file!");
 		}
 	}
 }

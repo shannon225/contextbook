@@ -13,6 +13,7 @@ import java.util.zip.DataFormatException;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class BlibFile extends SQLFile {
 	private final File userFile;
@@ -49,7 +50,7 @@ public class BlibFile extends SQLFile {
 					if (entries.size()>1000) {
 						library.addEntries(entries);
 						entries.clear();
-						System.out.print(".");
+						Logger.log(".");
 					}
 				}
 

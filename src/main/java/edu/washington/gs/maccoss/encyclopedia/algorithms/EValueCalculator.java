@@ -14,19 +14,25 @@ public class EValueCalculator {
 	private final float b;
 	private final float negLog10EValue;
 
-	float maxScore=-Float.MAX_VALUE;
-	float maxRT=0.0f;
+	private final float maxScore;
+	private final float maxRT;
 	
 	public EValueCalculator(TFloatFloatHashMap scoreMap) {
+		final float[] intermediateMaxScores=new float[2];
+		intermediateMaxScores[0]=-Float.MAX_VALUE;
+		intermediateMaxScores[1]=0.0f;
 		scoreMap.forEachEntry(new TFloatFloatProcedure() {
 			public boolean execute(float arg0, float arg1) {
-				if (arg1>maxScore) {
-					maxScore=arg1;
-					maxRT=arg0;
+				if (arg1>intermediateMaxScores[0]) {
+					intermediateMaxScores[0]=arg1;
+					intermediateMaxScores[1]=arg0;
 				}
 				return true;
 			}
 		});
+		maxScore=intermediateMaxScores[0];
+		maxRT=intermediateMaxScores[1];
+		
 		scoreMap.forEachEntry(new TFloatFloatProcedure() {
 			public boolean execute(float arg0, float arg1) {
 				int index=getIndex(arg1);

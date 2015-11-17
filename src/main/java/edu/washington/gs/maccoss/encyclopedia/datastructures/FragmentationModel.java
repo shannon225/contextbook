@@ -32,7 +32,7 @@ public class FragmentationModel {
 	public PecanLibraryEntry getPecanSpectrum(byte precursorCharge, double[] sortedBinCounterKeys, TDoubleIntHashMap binCounter, SearchParameters params) {
 		TDoubleFloatHashMap peakMap=new TDoubleFloatHashMap();
 		double[] ions=getPrimaryIons(params.getFragType());
-		int totalOfSquares=0;
+		float totalOfSquares=0.0f;
 		for (int i=0; i<ions.length; i++) {
 			double[] matches=params.getTolerance().getMatches(sortedBinCounterKeys, ions[i]);
 			
@@ -47,12 +47,12 @@ public class FragmentationModel {
 			totalOfSquares+=score*score;
 		}
 		
-		final float denominator=(float)Math.sqrt(totalOfSquares);
+		final float euclidianDistance=(float)Math.sqrt(totalOfSquares);
 		final ArrayList<Peak> peaks=new ArrayList<Peak>();
 		
 		peakMap.forEachEntry(new TDoubleFloatProcedure() {
 			public boolean execute(double arg0, float arg1) {
-				peaks.add(new Peak(arg0, arg1/denominator));
+				peaks.add(new Peak(arg0, arg1/euclidianDistance));
 				return true;
 			}
 		});
@@ -62,8 +62,8 @@ public class FragmentationModel {
 		
 		StringBuilder sb=new StringBuilder();
 		String[] aas=getAas();
-		for (int i = aas.length-1; i >=0; i--) {
-			sb.append(aas[i]);
+		for (String aa : aas) {
+			sb.append(aa);
 		}
 		String sequence=sb.toString();
 		double precursorMZ=MassConstants.getChargedMass(sequence, precursorCharge);

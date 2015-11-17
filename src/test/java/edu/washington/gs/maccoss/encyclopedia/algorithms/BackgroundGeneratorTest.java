@@ -26,7 +26,7 @@ public class BackgroundGeneratorTest extends TestCase {
 			bins.add(i);
 		}
 		double[] binArray=bins.toArray();
-		TDoubleIntHashMap[] binCounters=BackgroundGenerator.generateBackground(binArray, entries, PARAMETERS);
+		TDoubleIntHashMap[] binCounters=BackgroundGenerator.generateBackground(binArray, entries, PARAMETERS).x;
 
 		int[] expectedSizes=new int[] {61931, 63402, 64018, 65614, 66799, 67520, 68660, 69868, 70879, 71698, 72725, 74656, 74381, 75946, 75106, 76099, 77119, 78127, 78183, 79101, 78580, 80176, 81050,
 				81264, 81261, 82083, 81800, 82215, 83790, 83489, 84408, 84262, 84977, 86106, 85042, 86042, 84445, 85417, 84377, 86291, 84028, 84687, 87367, 85448, 83981, 86387, 86753, 85877, 86506,

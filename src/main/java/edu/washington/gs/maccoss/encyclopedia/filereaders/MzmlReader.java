@@ -17,20 +17,23 @@ import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Swath;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class MzmlReader {
 	public static void main(String[] args) throws IOException, SQLException {
 		SwathFile swathFile=new SwathFile();
 		swathFile.openFile();
 
-		System.out.println("Starting...");
-		File xmlFile=new File("/Users/searleb/Documents/school/projects/mzml/q06051_rl_MCF7_IMAC_GpX_6.mzML");
+		Logger.logLine("Starting ...");
+		File xmlFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/82593_lv_mcx_DIA_5mz_400to525.mzML");
+		File saveFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/82593_lv_mcx_DIA_5mz_400to525.dia");
+		
 		MzMLUnmarshaller unmarshaller=new MzMLUnmarshaller(xmlFile);
 
 		swathFile.setFileName(xmlFile.getName(), unmarshaller.getMzMLId(), xmlFile.getAbsolutePath());
 
 		int spectrumCount=unmarshaller.getObjectCountForXpath("/run/spectrumList/spectrum");
-		System.out.println("Number of spectrum elements: "+spectrumCount);
+		Logger.logLine("Number of spectrum elements: "+spectrumCount);
 
 		MzMLObjectIterator<Spectrum> spectrumIterator=unmarshaller.unmarshalCollectionFromXpath("/run/spectrumList/spectrum", Spectrum.class);
 
@@ -81,14 +84,15 @@ public class MzmlReader {
 			int percent=(100*count)/spectrumCount;
 			if (percent>previousReport) {
 				previousReport=percent;
-				System.out.println(percent+"% complete");
+				Logger.logLine(percent+"% complete");
 			}
 			count++;
 		}
 		swathFile.addPrecursor(precursors);
 		swathFile.addSwath(swaths);
 		
-		swathFile.saveAsFile(new File("/Users/searleb/Documents/school/projects/mzml/q06051_rl_MCF7_IMAC_GpX_6.dia"));
+		swathFile.saveAsFile(saveFile);
+		Logger.logLine("... Finished!");
 	}
 
 	public static HashMap<String, CVParam> asCVMap(List<CVParam> params) {

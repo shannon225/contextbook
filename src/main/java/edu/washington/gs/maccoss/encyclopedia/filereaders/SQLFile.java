@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+
 public abstract class SQLFile {
 	public Connection getConnection(File f) throws IOException {
 		Connection c=null;
@@ -14,7 +16,7 @@ public abstract class SQLFile {
 			c.setAutoCommit(false);
 			return c;
 		} catch (Exception e) {
-			System.err.println(e.getClass().getName()+": "+e.getMessage());
+			Logger.errorLine(e.getClass().getName()+": "+e.getMessage());
 			throw new IOException("Error reading database file: "+f.getAbsolutePath());
 		}
 	}

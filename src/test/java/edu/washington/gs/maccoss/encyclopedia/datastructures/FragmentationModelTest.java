@@ -1,14 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
-import gnu.trove.map.TDoubleIntMap;
-import gnu.trove.map.hash.TDoubleIntHashMap;
-
 import java.util.Arrays;
 
 import junit.framework.TestCase;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import gnu.trove.map.hash.TDoubleIntHashMap;
 
 public class FragmentationModelTest extends TestCase {
 	private static final SearchParameters PARAMETERS=new SearchParameters(FragmentationType.CID, new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"));
@@ -111,6 +108,17 @@ public class FragmentationModelTest extends TestCase {
 	}
 	
 	public void testPecanLibraryEntry() {
+		PecanLibraryEntry entry=getPecanEntry();
+
+		float[] expectedIntensities=new float[] {0.016653385f, 0.005693227f, 0.0856032f, 0.09188297f, 0.30906087f, 0.14599809f, 0.349966f, 0.28330582f, 0.34489402f, 0.3777411f, 0.39662814f,
+				0.27353665f, 0.20693642f, 0.21439359f, 0.1664174f, 0.18887055f, 0.095573045f, 0.096346915f};
+		float[] intensities=entry.getIntensityArray();
+		for (int i=0; i<intensities.length; i++) {
+			assertEquals(expectedIntensities[i], intensities[i], 0.00001f);
+		}
+	}
+
+	public static PecanLibraryEntry getPecanEntry() {
 		TDoubleIntHashMap map=new TDoubleIntHashMap();
 		map.put(114.091340467,1428);
 		map.put(147.11280417,4179);
@@ -871,15 +879,8 @@ public class FragmentationModelTest extends TestCase {
 		Arrays.sort(keys);
 
 		String peptide="ILQEGVDPK";
-		double mz=MassConstants.getChargedMass(peptide, (byte)2);
 		FragmentationModel model=new FragmentationModel(peptide);
 		PecanLibraryEntry entry=model.getPecanSpectrum((byte)2, keys, map, PARAMETERS);
-
-		float[] expectedIntensities=new float[] {0.021099463f, 0.00721319f, 0.10845732f, 0.116413645f, 0.39157316f, 0.1849763f, 0.443399f, 0.35894206f, 0.43697295f, 0.47858942f, 0.5025189f,
-				0.34656474f, 0.26218376f, 0.27163184f, 0.2108471f, 0.23929471f, 0.12108889f, 0.12206937f};
-		float[] intensities=entry.getIntensityArray();
-		for (int i=0; i<intensities.length; i++) {
-			assertEquals(expectedIntensities[i], intensities[i], 0.00001f);
-		}
+		return entry;
 	}
 }

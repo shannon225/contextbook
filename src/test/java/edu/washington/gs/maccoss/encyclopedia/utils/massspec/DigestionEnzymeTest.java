@@ -140,7 +140,6 @@ public class DigestionEnzymeTest extends TestCase {
 		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 40, 2);
 		assertEquals(expected.size(), sequences.size());
 		for (String peptide : sequences) {
-			//System.out.println("expected.add(\""+peptide+"\");");
 			assertTrue(expected.contains(peptide));
 		}
 		

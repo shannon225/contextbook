@@ -19,6 +19,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class LibraryFile extends SQLFile {
 	private File userFile=null;
@@ -239,7 +240,7 @@ public class LibraryFile extends SQLFile {
 
 	public void close() {
 		if (!tempFile.delete()) {
-			System.err.println("Error deleting temp file!");
+			Logger.errorLine("Error deleting temp file!");
 		}
 	}
 

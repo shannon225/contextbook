@@ -10,6 +10,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+
 public class FastaReader {
 	public static ArrayList<FastaEntry> readFasta(File f) {
 		BufferedReader in=null;
@@ -19,8 +21,8 @@ public class FastaReader {
 			return readFasta(in, f.getName());
 
 		} catch (IOException ioe) {
-			System.out.println("I/O Error found reading FASTA ["+f.getAbsolutePath()+"]");
-			ioe.printStackTrace();
+			Logger.errorLine("I/O Error found reading FASTA ["+f.getAbsolutePath()+"]");
+			Logger.errorException(ioe);
 			return entryList;
 		} finally {
 			if (in!=null) {
@@ -67,8 +69,8 @@ public class FastaReader {
 			return entryList;
 
 		} catch (IOException ioe) {
-			System.out.println("I/O Error found reading FASTA ["+fileName+"]");
-			ioe.printStackTrace();
+			Logger.errorLine("I/O Error found reading FASTA ["+fileName+"]");
+			Logger.errorException(ioe);
 			return entryList;
 		} finally {
 			if (in!=null) {

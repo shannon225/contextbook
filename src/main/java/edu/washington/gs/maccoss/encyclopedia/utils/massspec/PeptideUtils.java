@@ -10,7 +10,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 
 public class PeptideUtils {
-	public static String getSmartDecoy(String peptide, DigestionEnzyme enzyme, HashSet<String> backgroundProteome, SearchParameters parameters) {
+	public static String getSmartDecoy(String peptide, HashSet<String> backgroundProteome, SearchParameters parameters) {
+		DigestionEnzyme enzyme=parameters.getEnzyme();
+		
 		FragmentationModel model=new FragmentationModel(peptide);
 		double[] primaryIons=model.getPrimaryIons(parameters.getFragType());
 		
