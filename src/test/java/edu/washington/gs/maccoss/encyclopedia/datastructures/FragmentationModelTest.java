@@ -8,7 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import gnu.trove.map.hash.TDoubleIntHashMap;
 
 public class FragmentationModelTest extends TestCase {
-	private static final SearchParameters PARAMETERS=new SearchParameters(FragmentationType.CID, new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"));
+	private static final SearchParameters PARAMETERS=new SearchParameters(FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"));
 	
 	public void testPrimaryIons() {
 		String sequence="PEPT[+80]IDER";

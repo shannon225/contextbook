@@ -9,7 +9,7 @@ import junit.framework.TestCase;
 
 public class PeptideUtilsTest extends TestCase {
 	private static final DigestionEnzyme ENZYME=DigestionEnzyme.getEnzyme("trypsin");
-	private static final SearchParameters PARAMETERS=new SearchParameters(FragmentationType.CID, new MassTolerance(50), ENZYME);
+	private static final SearchParameters PARAMETERS=new SearchParameters(FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), ENZYME);
 	
 	public void testDecoys() {
 		HashSet<String> backgroundProteome=new HashSet<String>();

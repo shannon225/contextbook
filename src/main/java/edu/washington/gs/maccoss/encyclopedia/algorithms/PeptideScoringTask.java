@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Swath;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -18,19 +18,19 @@ public class PeptideScoringTask extends ThreadableTask<HashMap<LibraryEntry, XYT
 	 */
 	private final PSMScorer scorer;
 	private final ArrayList<LibraryEntry> entries;
-	private final ArrayList<Swath> swaths;
+	private final ArrayList<Stripe> stripes;
 	private final TDoubleObjectHashMap<XYPoint> background; // if not null, then score using zscore (otherwise use raw score)
 
-	public PeptideScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Swath> swaths) {
+	public PeptideScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes) {
 		this.scorer=scorer;
 		this.entries=entries;
-		this.swaths=swaths;
+		this.stripes=stripes;
 		this.background=null;
 	}
-	public PeptideScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Swath> swaths, TDoubleObjectHashMap<XYPoint> background) {
+	public PeptideScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint> background) {
 		this.scorer=scorer;
 		this.entries=entries;
-		this.swaths=swaths;
+		this.stripes=stripes;
 		this.background=background;
 	}
 
@@ -39,16 +39,17 @@ public class PeptideScoringTask extends ThreadableTask<HashMap<LibraryEntry, XYT
 		HashMap<LibraryEntry, XYTrace> map=new HashMap<LibraryEntry, XYTrace>();
 		for (LibraryEntry entry : entries) {
 			TFloatFloatHashMap scoreMap=new TFloatFloatHashMap();
-			for (Swath swath : swaths) {
-				float score=scorer.score(entry, swath);
-				float rt=swath.getScanStartTime();
+			for (Stripe stripe : stripes) {
+				float score=scorer.score(entry, stripe);
+				
+				float rt=stripe.getScanStartTime();
 				if (background!=null) {
 					XYPoint meanStdev=background.get((double)rt);
 					if (meanStdev.y==0.0) {
 						scoreMap.put(rt, 0.0f);
 					} else {
-						float zscore=(float)((score-meanStdev.x)/meanStdev.y);
-						scoreMap.put(rt, zscore);
+						//float zscore=(float)((score-meanStdev.x)/meanStdev.y);
+						scoreMap.put(rt, (float)(score-meanStdev.x));
 					}
 				} else {
 					scoreMap.put(rt, score);

@@ -1,5 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import jdk.nashorn.internal.ir.annotations.Immutable;
+
+@Immutable
 public class Range implements Comparable<Range> {
 	private final float start, stop;
 

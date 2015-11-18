@@ -1,11 +1,14 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TIntArrayList;
+import jdk.nashorn.internal.ir.annotations.Immutable;
 
 import java.util.Arrays;
 
 import com.google.common.base.Optional;
 
+@Immutable
 public class MassTolerance {
 	private final double ppmTolerance;
 	private final double percent;
@@ -66,7 +69,7 @@ public class MassTolerance {
 	 * @param target
 	 * @return all matching masses in range
 	 */
-	public double[] getMatches(double[] peaks, double target) {
+	public int[] getIndicies(double[] peaks, double target) {
 		int value=Arrays.binarySearch(peaks, target);
 		// exact match (not likely)
 		if (value<0) {
@@ -74,21 +77,35 @@ public class MassTolerance {
 			value=-(value+1);
 		}
 		
-		TDoubleArrayList matches=new TDoubleArrayList();
+		TIntArrayList matches=new TIntArrayList();
 		// look below
 		int index=value;
 		while (index>0&&compareTo(peaks[index-1], target)==0) {
-			matches.add(peaks[index-1]);
+			matches.add(index-1);
 			index--;
 		}
 
 		// look up
 		index=value;
 		while (index<peaks.length&&compareTo(peaks[index], target)==0) {
-			matches.add(peaks[index]);
+			matches.add(index);
 			index++;
 		}
 
 		return matches.toArray();
+	}
+	
+	/**
+	 * @param peaks -- assumes sorted array of peaks
+	 * @param target
+	 * @return all matching masses in range
+	 */
+	public double[] getMatches(double[] peaks, double target) {
+		int[] indicies=getIndicies(peaks, target);
+		double[] matches=new double[indicies.length];
+		for (int i=0; i<indicies.length; i++) {
+			matches[i]=peaks[indicies[i]];
+		}
+		return matches;
 	}
 }

@@ -1,21 +1,35 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import jdk.nashorn.internal.ir.annotations.Immutable;
 
 @Immutable
-public class DotProduct implements PSMScorer {
-	private final MassTolerance tolerance;
+public class PecanScorer implements PSMScorer {
+	private final MassTolerance fragmentTolerance;
+	private final MassTolerance precursorTolerance;
+	private final PrecursorScanMap precursors;
 
-	public DotProduct(MassTolerance tolerance) {
-		this.tolerance = tolerance;
+
+	public PecanScorer(MassTolerance fragmentTolerance, MassTolerance precursorTolerance, PrecursorScanMap precursors) {
+		this.fragmentTolerance=fragmentTolerance;
+		this.precursorTolerance=precursorTolerance;
+		this.precursors=precursors;
 	}
+
 
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer#score(edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry, edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe)
 	 */
 	public float score(LibraryEntry entry, Stripe spectrum) {
+		// precursor scoring
+		Peak[] precursorPacket=precursors.getIsotopePacket(entry.getPrecursorMZ(), spectrum.getScanStartTime(), entry.getPrecursorCharge(), precursorTolerance);
+		
+		
+		
+		// fragment scoring
 		double[] libraryMasses=entry.getMassArray();
 		float[] libraryIntensities=entry.getIntensityArray();
 		
@@ -28,7 +42,7 @@ public class DotProduct implements PSMScorer {
 		int libraryIndex=0;
 		int spectrumIndex=0;
 		while (true) {
-			int compare=tolerance.compareTo(libraryMasses[libraryIndex], spectrumMasses[spectrumIndex]);
+			int compare=fragmentTolerance.compareTo(libraryMasses[libraryIndex], spectrumMasses[spectrumIndex]);
 			if (compare==0) {
 				sum+=libraryIntensities[libraryIndex]*spectrumIntensities[spectrumIndex];
 				libraryIndex++;

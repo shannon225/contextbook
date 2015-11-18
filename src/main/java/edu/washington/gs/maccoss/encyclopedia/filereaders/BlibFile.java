@@ -36,7 +36,7 @@ public class BlibFile extends SQLFile {
 				ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
 				while (rs.next()) {
 					double precursorMZ=rs.getDouble(1);
-					int precursorCharge=rs.getInt(2);
+					byte precursorCharge=(byte)rs.getInt(2);
 					String peptideModSeq=rs.getString(3);
 					int copies=rs.getInt(4);
 					int numPeaks=rs.getInt(5);

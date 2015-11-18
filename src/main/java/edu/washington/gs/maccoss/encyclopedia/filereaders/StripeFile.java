@@ -18,19 +18,19 @@ import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Swath;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
-public class SwathFile extends SQLFile {
+public class StripeFile extends SQLFile {
 	private File userFile=null;
 	private final File tempFile;
 	
 	private final HashSet<Range> ranges=new HashSet<Range>();
 
-	public SwathFile() throws IOException {
+	public StripeFile() throws IOException {
 		tempFile=File.createTempFile("encyclopedia_", ".dia");
 		tempFile.deleteOnExit();
 	}
@@ -161,24 +161,52 @@ public class SwathFile extends SQLFile {
 		}
 	}
 
-	public void addSwath(ArrayList<Swath> swaths) throws IOException, SQLException {
+	public ArrayList<PrecursorScan> getPrecursors(float minRT, float maxRT) throws IOException, SQLException,DataFormatException {
+		Connection c=getConnection(tempFile);
+		try {
+			Statement s=c.createStatement();
+			try {
+				ResultSet rs=s.executeQuery("select SpectrumName, SpectrumIndex, ScanStartTime, PeakCount, MassArray, IntensityArray from precursor "
+						+"where ScanStartTime between "+minRT+" and "+maxRT);
+
+				ArrayList<PrecursorScan> precursors=new ArrayList<PrecursorScan>();
+				while (rs.next()) {
+					String spectrumName=rs.getString(1);
+					int spectrumIndex=rs.getInt(2);
+					float scanStartTime=rs.getFloat(3);
+					int peakCount=rs.getInt(4);
+					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(5), peakCount));
+					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(6), peakCount));
+					precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray));
+				}
+
+				return precursors;
+			} finally {
+				s.close();
+			}
+		} finally {
+			c.close();
+		}
+	}
+
+	public void addStripe(ArrayList<Stripe> stripes) throws IOException, SQLException {
 		Connection c=getConnection(tempFile);
 		try {
 			PreparedStatement prep=c
 					.prepareStatement("insert into spectra (SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, PeakCount, MassArray, IntensityArray) VALUES (?,?,?,?,?,?,?,?,?)");
 			try {
-				for (Swath swath : swaths) {
-					ranges.add(swath.getRange());
+				for (Stripe stripe : stripes) {
+					ranges.add(stripe.getRange());
 					
-					prep.setString(1, swath.getSpectrumName());
-					prep.setString(2, swath.getPrecursorName());
-					prep.setInt(3, swath.getSpectrumIndex());
-					prep.setFloat(4, swath.getScanStartTime());
-					prep.setFloat(5, swath.getIsolationWindowLower());
-					prep.setFloat(6, swath.getIsolationWindowUpper());
-					prep.setInt(7, swath.getMassArray().length);
-					prep.setBytes(8, CompressionUtils.compress(ByteConverter.toByteArray(swath.getMassArray())));
-					prep.setBytes(9, CompressionUtils.compress(ByteConverter.toByteArray(swath.getIntensityArray())));
+					prep.setString(1, stripe.getSpectrumName());
+					prep.setString(2, stripe.getPrecursorName());
+					prep.setInt(3, stripe.getSpectrumIndex());
+					prep.setFloat(4, stripe.getScanStartTime());
+					prep.setFloat(5, stripe.getIsolationWindowLower());
+					prep.setFloat(6, stripe.getIsolationWindowUpper());
+					prep.setInt(7, stripe.getMassArray().length);
+					prep.setBytes(8, CompressionUtils.compress(ByteConverter.toByteArray(stripe.getMassArray())));
+					prep.setBytes(9, CompressionUtils.compress(ByteConverter.toByteArray(stripe.getIntensityArray())));
 					prep.addBatch();
 				}
 				prep.executeBatch();
@@ -192,7 +220,7 @@ public class SwathFile extends SQLFile {
 		}
 	}
 
-	public ArrayList<Swath> getSwaths(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException,DataFormatException {
+	public ArrayList<Stripe> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException,DataFormatException {
 		Connection c=getConnection(tempFile);
 		try {
 			Statement s=c.createStatement();
@@ -200,7 +228,7 @@ public class SwathFile extends SQLFile {
 				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, PeakCount, MassArray, IntensityArray from spectra "
 						+"where IsolationWindowLower <= "+targetMz+" and IsolationWindowUpper >= "+targetMz+" and ScanStartTime between "+minRT+" and "+maxRT);
 
-				ArrayList<Swath> swaths=new ArrayList<Swath>();
+				ArrayList<Stripe> stripes=new ArrayList<Stripe>();
 				while (rs.next()) {
 					String spectrumName=rs.getString(1);
 					String precursorName=rs.getString(2);
@@ -214,10 +242,10 @@ public class SwathFile extends SQLFile {
 					if (sqrt) {
 						intensityArray=General.protectedSqrt(intensityArray);
 					}
-					swaths.add(new Swath(spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray));
+					stripes.add(new Stripe(spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray));
 				}
 
-				return swaths;
+				return stripes;
 			} finally {
 				s.close();
 			}

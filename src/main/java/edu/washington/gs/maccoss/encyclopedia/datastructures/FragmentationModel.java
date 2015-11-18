@@ -12,7 +12,9 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TDoubleFloatHashMap;
 import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.procedure.TDoubleFloatProcedure;
+import jdk.nashorn.internal.ir.annotations.Immutable;
 
+@Immutable
 public class FragmentationModel {
 	private final double[] masses;
 	private final double[] neutralLosses;
@@ -34,7 +36,7 @@ public class FragmentationModel {
 		double[] ions=getPrimaryIons(params.getFragType());
 		float totalOfSquares=0.0f;
 		for (int i=0; i<ions.length; i++) {
-			double[] matches=params.getTolerance().getMatches(sortedBinCounterKeys, ions[i]);
+			double[] matches=params.getFragmentTolerance().getMatches(sortedBinCounterKeys, ions[i]);
 			
 			int total=1; // add one pseudocount
 			if (matches.length>0) {

@@ -14,7 +14,7 @@ public class LibraryEntryTest extends TestCase {
 				68f, 74f, 70f, 87f, 4f, 50f, 51f, 90f, 73f, 66f, 12f, 9f, 76f,
 				15f, 34f, 62f, 81f, 94f, 50f };
 		
-		LibraryEntry entry=new LibraryEntry(518.73841, 2, "PEPT[+80]IDER", 1, 0.0f, 0.0f, massArray, intensityArray);
+		LibraryEntry entry=new LibraryEntry(518.73841, (byte)2, "PEPT[+80]IDER", 1, 0.0f, 0.0f, massArray, intensityArray);
 		ReverseLibraryEntry reverse=entry.getReverse(new MassTolerance(10.0f));
 		assertEquals("REDIT[+80]PEP", reverse.getPeptideModSeq());
 		

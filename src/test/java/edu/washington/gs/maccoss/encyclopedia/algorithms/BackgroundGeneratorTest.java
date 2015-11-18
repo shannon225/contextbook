@@ -16,7 +16,7 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TDoubleIntHashMap;
 
 public class BackgroundGeneratorTest extends TestCase {
-	private static final SearchParameters PARAMETERS=new SearchParameters(FragmentationType.CID, new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"));
+	private static final SearchParameters PARAMETERS=new SearchParameters(FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"));
 
 	public void testGenerateBackground() {
 		InputStream is=getClass().getResourceAsStream("/mouse_20150911_uniprot_sp.fasta");
@@ -50,7 +50,7 @@ public class BackgroundGeneratorTest extends TestCase {
 		double[] ions=model.getPrimaryIons(PARAMETERS.getFragType());
 		int[] expectedCounts=new int[] {1771, 5280, 353, 318, 97, 231, 90, 125, 93, 74, 79, 109, 162, 123, 189, 136, 322, 320};
 		for (int i=0; i<ions.length; i++) {
-			double[] matches=PARAMETERS.getTolerance().getMatches(keys, ions[i]);
+			double[] matches=PARAMETERS.getFragmentTolerance().getMatches(keys, ions[i]);
 
 			if (matches.length>0) {
 				int total=0;

@@ -1,6 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.graphing;
 
+import jdk.nashorn.internal.ir.annotations.Immutable;
 
+@Immutable
 public class XYPoint implements PointInterface {
 	public final double x;
 	public final double y;

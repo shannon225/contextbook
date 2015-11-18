@@ -165,7 +165,7 @@ public class LibraryFile extends SQLFile {
 				while (rs.next()) {
 
 					double precursorMZ=rs.getDouble(1);
-					int precursorCharge=rs.getInt(2);
+					byte precursorCharge=(byte)rs.getInt(2);
 					String peptideModSeq=rs.getString(3);
 					int copies=rs.getInt(4);
 					float retentionTime=rs.getFloat(5); 

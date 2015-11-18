@@ -1,6 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
-public class PrecursorScan {
+import jdk.nashorn.internal.ir.annotations.Immutable;
+
+@Immutable
+public class PrecursorScan implements Comparable<PrecursorScan> {
 	private final String spectrumName;
 	private final int spectrumIndex;
 	private final float scanStartTime;
@@ -35,4 +38,16 @@ public class PrecursorScan {
 		return intensityArray;
 	}
 
+	@Override
+	public int compareTo(PrecursorScan o) {
+		if (o==null) return 1;
+		int c=Float.compare(scanStartTime, o.scanStartTime);
+		if (c!=0) return c;
+
+		c=Integer.compare(spectrumIndex, o.spectrumIndex);
+		if (c!=0) return c;
+
+		c=spectrumName.compareTo(o.spectrumName);
+		return c;
+	}
 }

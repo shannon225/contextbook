@@ -8,11 +8,13 @@ import com.google.common.base.Optional;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
+import jdk.nashorn.internal.ir.annotations.Immutable;
 
+@Immutable
 public class LibraryEntry {
 
 	private final double precursorMZ;
-	private final int precursorCharge;
+	private final byte precursorCharge;
 	private final String peptideModSeq;
 	private final int copies;
 	private final float retentionTime;
@@ -20,7 +22,7 @@ public class LibraryEntry {
 	private final double[] massArray;
 	private final float[] intensityArray;
 
-	public LibraryEntry(double precursorMZ, int precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray) {
+	public LibraryEntry(double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray) {
 		this.precursorMZ=precursorMZ;
 		this.precursorCharge=precursorCharge;
 		this.peptideModSeq=peptideModSeq;
@@ -35,7 +37,7 @@ public class LibraryEntry {
 		return precursorMZ;
 	}
 
-	public int getPrecursorCharge() {
+	public byte getPrecursorCharge() {
 		return precursorCharge;
 	}
 

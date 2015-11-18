@@ -27,7 +27,7 @@ public class PeptideUtils {
 				double[] decoyIons=model.getPrimaryIons(parameters.getFragType());
 				int matches=0;
 				for (double decoyFragment : decoyIons) {
-					Optional<Double> match=parameters.getTolerance().getMatch(primaryIons, decoyFragment);
+					Optional<Double> match=parameters.getFragmentTolerance().getMatch(primaryIons, decoyFragment);
 					if (match.isPresent()) matches++;
 				}
 				

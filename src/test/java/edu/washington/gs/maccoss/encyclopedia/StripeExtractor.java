@@ -28,12 +28,13 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PecanLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Swath;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.SwathFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
@@ -50,15 +51,15 @@ import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.procedure.TDoubleObjectProcedure;
 import gnu.trove.set.hash.TDoubleHashSet;
 
-public class SwathExtractor {
-	private static final SearchParameters PARAMETERS=new SearchParameters(FragmentationType.CID, new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"));
+public class StripeExtractor {
+	private static final SearchParameters PARAMETERS=new SearchParameters(FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
 
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		int cores=Runtime.getRuntime().availableProcessors();
 
 		File f=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/82593_lv_mcx_DIA_5mz_400to525.dia");
-		SwathFile swathfile=new SwathFile();
-		swathfile.openFile(f);
+		StripeFile stripefile=new StripeFile();
+		stripefile.openFile(f);
 
 		// File lf=new
 		// File("/Users/searleb/Documents/school/projects/qe_phospho.elib");
@@ -73,23 +74,27 @@ public class SwathExtractor {
 				"TSGGAGGLGSLR", "VAAENQYGR", "VDFDDIHR", "VGPANPSLQK", "VLSIGDGIAR", "VTLVSAAPEK", "VVDDELATR", "VVFIFGPDK", "WPLYLSTK", "YDHLGDSPK", "YVDMSAKSK", "YVIEFIAR"};
 
 		TDoubleHashSet boundaries=new TDoubleHashSet();
-		for (Range range : swathfile.getRanges()) {
+		for (Range range : stripefile.getRanges()) {
 			boundaries.add(range.getStart());
 			boundaries.add(range.getStop());
 		}
 		double[] binArray=boundaries.toArray();
 		Arrays.sort(binArray);
 
-		InputStream is=swathfile.getClass().getResourceAsStream("/mouse_20150911_uniprot_sp.fasta");
+		InputStream is=stripefile.getClass().getResourceAsStream("/mouse_20150911_uniprot_sp.fasta");
 		ArrayList<FastaEntry> entries=FastaReader.readFasta(is, "mouse_20150911_uniprot_sp.fasta");
 		Pair<TDoubleIntHashMap[], ArrayList<String>[]> background=BackgroundGenerator.generateBackground(binArray, entries, PARAMETERS);
 		TDoubleIntHashMap[] binCounters=background.x;
 		ArrayList<String>[] backgroundProteomes=background.y;
-		DotProduct scorer=new DotProduct(PARAMETERS.getTolerance());
-
-		for (Range range : swathfile.getRanges()) {
+		DotProduct scorer=new DotProduct(PARAMETERS.getFragmentTolerance());
+		
+		// get precursors
+		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
+		
+		// get stripes
+		for (Range range : stripefile.getRanges()) {
 			System.out.println("Processing "+range);
-			// first check to see if we need to process this swath
+			// first check to see if we need to process this stripe
 			boolean hasPeptides=false;
 			outer:for (String peptide : peptides) {
 				for (byte charge : charges) {
@@ -110,7 +115,7 @@ public class SwathExtractor {
 			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 			//ExecutorService executor=Executors.newFixedThreadPool(cores, threadFactory);
 			
-			ArrayList<Swath> swaths=swathfile.getSwaths(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 			int index=Arrays.binarySearch(binArray, range.getMiddle());
 			index=(-(index+1))-1;
 			TDoubleIntHashMap map=binCounters[index];
@@ -136,7 +141,7 @@ public class SwathExtractor {
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						tasks.add(randentry);
 
-						Future<HashMap<LibraryEntry, XYTrace>> value=executor.submit(new PeptideScoringTask(scorer, tasks, swaths));
+						Future<HashMap<LibraryEntry, XYTrace>> value=executor.submit(new PeptideScoringTask(scorer, tasks, stripes));
 						results.add(value);
 						
 						backgroundPeptideCount++;
@@ -145,7 +150,7 @@ public class SwathExtractor {
 			}
 			executor.shutdown();
 			while (!executor.isTerminated()) {
-				System.out.println(workQueue.size());
+				System.out.println(workQueue.size()+" peptides remaining...");
 				Thread.sleep(50);
 			}
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
@@ -205,7 +210,7 @@ public class SwathExtractor {
 						tasks.add(entry);
 						tasks.add(reventry);
 
-						Future<HashMap<LibraryEntry, XYTrace>> value=executor.submit(new PeptideScoringTask(scorer, tasks, swaths, backgroundScores));
+						Future<HashMap<LibraryEntry, XYTrace>> value=executor.submit(new PeptideScoringTask(scorer, tasks, stripes, backgroundScores));
 						results.add(value);
 					}
 				}

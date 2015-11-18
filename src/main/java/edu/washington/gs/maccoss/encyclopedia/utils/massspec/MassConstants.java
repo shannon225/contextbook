@@ -6,6 +6,11 @@ import gnu.trove.map.hash.TIntCharHashMap;
 import gnu.trove.procedure.TCharDoubleProcedure;
 
 public class MassConstants {
+	public final static double neutronMass=1.0086649158849;
+	public final static double protonMass=1.00727646681290;
+	public final static double hydrogenMass=1.007825032071;
+	public final static double oh3=15.9949146195616+3*hydrogenMass;
+	
 	final private static TCharDoubleHashMap massesByAA=new TCharDoubleHashMap();
 	final private static TIntCharHashMap aasByNominal=new TIntCharHashMap();
 	private static void checkInit() {
@@ -54,8 +59,8 @@ public class MassConstants {
 	}
 	
 	public static double getChargedMass(String sequence, byte charge) {
-		double mass=getMass(sequence)+19.01838974;
-		return (mass+1.00727647*charge)/charge;
+		double mass=getMass(sequence)+oh3;
+		return (mass+protonMass*charge)/charge;
 	}
 	
 	public static Float getModificationMass(String mod) {

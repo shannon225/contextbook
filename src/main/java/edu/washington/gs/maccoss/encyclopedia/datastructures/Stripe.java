@@ -1,6 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
-public class Swath {
+import jdk.nashorn.internal.ir.annotations.Immutable;
+
+@Immutable
+public class Stripe {
 	private final String spectrumName;
 	private final String precursorName;
 	private final int spectrumIndex;
@@ -10,7 +13,7 @@ public class Swath {
 	private final double[] massArray;
 	private final float[] intensityArray;
 
-	public Swath(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, float isolationWindowLower, float isolationWindowUpper, double[] massArray, float[] intensityArray) {
+	public Stripe(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, float isolationWindowLower, float isolationWindowUpper, double[] massArray, float[] intensityArray) {
 		this.spectrumName=spectrumName;
 		this.precursorName=precursorName;
 		this.spectrumIndex=spectrumIndex;

@@ -2,10 +2,13 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import jdk.nashorn.internal.ir.annotations.Immutable;
 
+@Immutable
 public class SearchParameters {
 	private final FragmentationType fragType;
-	private final MassTolerance tolerance;
+	private final MassTolerance precursorTolerance;
+	private final MassTolerance fragmentTolerance;
 	private final DigestionEnzyme enzyme;
 	private final int minPeptideLength=5;
 	private final int maxPeptideLength=40;
@@ -13,9 +16,10 @@ public class SearchParameters {
 	private final byte minCharge=2;
 	private final byte maxCharge=3;
 
-	public SearchParameters(FragmentationType fragType, MassTolerance tolerance, DigestionEnzyme enzyme) {
+	public SearchParameters(FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme) {
 		this.fragType=fragType;
-		this.tolerance=tolerance;
+		this.fragmentTolerance=fragmentTolerance;
+		this.precursorTolerance=precursorTolerance;
 		this.enzyme=enzyme;
 	}
 
@@ -23,8 +27,12 @@ public class SearchParameters {
 		return fragType;
 	}
 
-	public MassTolerance getTolerance() {
-		return tolerance;
+	public MassTolerance getFragmentTolerance() {
+		return fragmentTolerance;
+	}
+	
+	public MassTolerance getPrecursorTolerance() {
+		return precursorTolerance;
 	}
 
 	public DigestionEnzyme getEnzyme() {

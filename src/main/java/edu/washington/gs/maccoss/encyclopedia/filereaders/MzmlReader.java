@@ -15,14 +15,14 @@ import uk.ac.ebi.jmzml.model.mzml.Spectrum;
 import uk.ac.ebi.jmzml.xml.io.MzMLObjectIterator;
 import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Swath;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class MzmlReader {
 	public static void main(String[] args) throws IOException, SQLException {
-		SwathFile swathFile=new SwathFile();
-		swathFile.openFile();
+		StripeFile stripeFile=new StripeFile();
+		stripeFile.openFile();
 
 		Logger.logLine("Starting ...");
 		File xmlFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/82593_lv_mcx_DIA_5mz_400to525.mzML");
@@ -30,7 +30,7 @@ public class MzmlReader {
 		
 		MzMLUnmarshaller unmarshaller=new MzMLUnmarshaller(xmlFile);
 
-		swathFile.setFileName(xmlFile.getName(), unmarshaller.getMzMLId(), xmlFile.getAbsolutePath());
+		stripeFile.setFileName(xmlFile.getName(), unmarshaller.getMzMLId(), xmlFile.getAbsolutePath());
 
 		int spectrumCount=unmarshaller.getObjectCountForXpath("/run/spectrumList/spectrum");
 		Logger.logLine("Number of spectrum elements: "+spectrumCount);
@@ -38,7 +38,7 @@ public class MzmlReader {
 		MzMLObjectIterator<Spectrum> spectrumIterator=unmarshaller.unmarshalCollectionFromXpath("/run/spectrumList/spectrum", Spectrum.class);
 
 		ArrayList<PrecursorScan> precursors=new ArrayList<PrecursorScan>();
-		ArrayList<Swath> swaths=new ArrayList<Swath>();
+		ArrayList<Stripe> stripes=new ArrayList<Stripe>();
 		int count=0;
 		int previousReport=0;
 		while (spectrumIterator.hasNext()) {
@@ -69,17 +69,17 @@ public class MzmlReader {
 				float isolationWindowLowerOffset=Float.parseFloat(isolationCVParams.get("MS:1000828").getValue());
 				float isolationWindowUpperOffset=Float.parseFloat(isolationCVParams.get("MS:1000829").getValue());
 				
-				swaths.add(new Swath(spectrumName, p.getSpectrumRef(), spectrumIndex, scanStartTime, isolationWindowTarget-isolationWindowLowerOffset, isolationWindowTarget+isolationWindowUpperOffset, massArray, intensityArray));
+				stripes.add(new Stripe(spectrumName, p.getSpectrumRef(), spectrumIndex, scanStartTime, isolationWindowTarget-isolationWindowLowerOffset, isolationWindowTarget+isolationWindowUpperOffset, massArray, intensityArray));
 			}
 			
 			if (precursors.size()>100) {
-				swathFile.addPrecursor(precursors);
+				stripeFile.addPrecursor(precursors);
 				precursors.clear();
 			}
 			
-			if (swaths.size()>100) {
-				swathFile.addSwath(swaths);
-				swaths.clear();
+			if (stripes.size()>100) {
+				stripeFile.addStripe(stripes);
+				stripes.clear();
 			}
 			int percent=(100*count)/spectrumCount;
 			if (percent>previousReport) {
@@ -88,10 +88,10 @@ public class MzmlReader {
 			}
 			count++;
 		}
-		swathFile.addPrecursor(precursors);
-		swathFile.addSwath(swaths);
+		stripeFile.addPrecursor(precursors);
+		stripeFile.addStripe(stripes);
 		
-		swathFile.saveAsFile(saveFile);
+		stripeFile.saveAsFile(saveFile);
 		Logger.logLine("... Finished!");
 	}
 
