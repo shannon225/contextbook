@@ -27,6 +27,10 @@ public class PecanScorer implements PSMScorer {
 		// precursor scoring
 		Peak[] precursorPacket=precursors.getIsotopePacket(entry.getPrecursorMZ(), spectrum.getScanStartTime(), entry.getPrecursorCharge(), precursorTolerance);
 		
+		// FIXME
+		// calculate mass accuracy
+		// calculate isotope dot product (with -1 peak)
+		
 		
 		
 		// fragment scoring

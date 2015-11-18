@@ -1,12 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TIntArrayList;
-import jdk.nashorn.internal.ir.annotations.Immutable;
-
 import java.util.Arrays;
 
 import com.google.common.base.Optional;
+
+import gnu.trove.list.array.TIntArrayList;
+import jdk.nashorn.internal.ir.annotations.Immutable;
 
 @Immutable
 public class MassTolerance {
