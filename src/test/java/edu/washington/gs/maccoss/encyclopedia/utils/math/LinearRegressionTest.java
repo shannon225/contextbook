@@ -1,7 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import junit.framework.TestCase;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 
 public class LinearRegressionTest extends TestCase {
 	/**

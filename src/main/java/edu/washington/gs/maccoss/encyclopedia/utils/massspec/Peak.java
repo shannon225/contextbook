@@ -46,4 +46,14 @@ public class Peak implements PointInterface {
 		}
 		return new Pair<double[], float[]>(masses.toArray(), intensities.toArray());
 	}
+	
+	public static Pair<double[], float[]> toArrays(Peak[] peaks) {
+		TDoubleArrayList masses=new TDoubleArrayList();
+		TFloatArrayList intensities=new TFloatArrayList();
+		for (Peak peak : peaks) {
+			masses.add(peak.mass);
+			intensities.add(peak.intensity);
+		}
+		return new Pair<double[], float[]>(masses.toArray(), intensities.toArray());
+	}
 }

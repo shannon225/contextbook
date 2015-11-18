@@ -2,9 +2,8 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
-import jdk.nashorn.internal.ir.annotations.Immutable;
 
-@Immutable
+//@Immutable
 public class SearchParameters {
 	private final FragmentationType fragType;
 	private final MassTolerance precursorTolerance;

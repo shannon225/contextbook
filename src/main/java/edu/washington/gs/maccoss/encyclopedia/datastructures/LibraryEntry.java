@@ -8,9 +8,8 @@ import com.google.common.base.Optional;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
-import jdk.nashorn.internal.ir.annotations.Immutable;
 
-@Immutable
+//@Immutable
 public class LibraryEntry {
 
 	private final double precursorMZ;

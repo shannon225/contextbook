@@ -2,10 +2,10 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.util.HashSet;
 
+import junit.framework.TestCase;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import junit.framework.TestCase;
 
 public class PeptideUtilsTest extends TestCase {
 	private static final DigestionEnzyme ENZYME=DigestionEnzyme.getEnzyme("trypsin");

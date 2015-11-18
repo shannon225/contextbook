@@ -1,8 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
+import junit.framework.TestCase;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import junit.framework.TestCase;
 
 public class DotProductTest extends TestCase {
 	

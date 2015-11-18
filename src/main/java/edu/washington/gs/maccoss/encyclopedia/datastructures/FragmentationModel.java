@@ -12,9 +12,8 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TDoubleFloatHashMap;
 import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.procedure.TDoubleFloatProcedure;
-import jdk.nashorn.internal.ir.annotations.Immutable;
 
-@Immutable
+//@Immutable
 public class FragmentationModel {
 	private final double[] masses;
 	private final double[] neutralLosses;

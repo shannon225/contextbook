@@ -1,15 +1,15 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import gnu.trove.map.hash.TDoubleIntHashMap;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 
 public class BackgroundGenerator {
 	/**

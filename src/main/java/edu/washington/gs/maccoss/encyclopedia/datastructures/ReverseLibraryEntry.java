@@ -1,8 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
-import jdk.nashorn.internal.ir.annotations.Immutable;
 
-@Immutable
+//@Immutable
 public class ReverseLibraryEntry extends LibraryEntry {
 	public ReverseLibraryEntry(double precursorMZ, byte precursorCharge,
 			String peptideModSeq, int copies, float retentionTime, float score,

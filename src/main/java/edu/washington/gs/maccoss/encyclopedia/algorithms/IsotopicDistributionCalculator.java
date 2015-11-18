@@ -33,6 +33,21 @@ public class IsotopicDistributionCalculator {
 		map.put('W', new int[] {10, 11, 1, 2, 0});
 		map.put('Y', new int[] {9, 9, 2, 1, 0});
 	}
+	
+	public static float[] normalizeToMax(float[] values) {
+		float max=0.0f;
+		for (int i = 0; i < values.length; i++) {
+			if (values[i]>max) {
+				max=values[i];
+			}
+		}
+		if (max==0.0f) return values;
+		float[] ret=new float[values.length];
+		for (int i = 0; i < values.length; i++) {
+			ret[i]=values[i]/max;
+		}
+		return ret;
+	}
 
 	/**
 	 * I ignore modifications in isotope distribution calculation. This is an oversight.

@@ -1,8 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
-import jdk.nashorn.internal.ir.annotations.Immutable;
 
-@Immutable
+//@Immutable
 public class PrecursorScan implements Comparable<PrecursorScan> {
 	private final String spectrumName;
 	private final int spectrumIndex;
