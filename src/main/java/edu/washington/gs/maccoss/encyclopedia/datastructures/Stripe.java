@@ -11,6 +11,7 @@ public class Stripe {
 	private final float isolationWindowUpper;
 	private final double[] massArray;
 	private final float[] intensityArray;
+	private final float intensityMagnitude;
 
 	public Stripe(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, float isolationWindowLower, float isolationWindowUpper, double[] massArray, float[] intensityArray) {
 		this.spectrumName=spectrumName;
@@ -21,6 +22,16 @@ public class Stripe {
 		this.isolationWindowUpper=isolationWindowUpper;
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
+		
+		float magnitude=0.0f;
+		for (float f : intensityArray) {
+			magnitude+=f*f;
+		}
+		intensityMagnitude=(float)Math.sqrt(magnitude);
+	}
+	
+	public float getIntensityMagnitude() {
+		return intensityMagnitude;
 	}
 	
 	public Range getRange() {

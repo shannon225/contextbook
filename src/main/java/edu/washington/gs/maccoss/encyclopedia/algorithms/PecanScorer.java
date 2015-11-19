@@ -26,7 +26,65 @@ public class PecanScorer implements PSMScorer {
 	 */
 	public float score(LibraryEntry entry, Stripe spectrum) {
 		// precursor scoring
-		Peak[] precursorPacket=precursors.getIsotopePacket(entry.getPrecursorMZ(), spectrum.getScanStartTime(), entry.getPrecursorCharge(), precursorTolerance);
+		float[] precursorScores=getPrecursorScores(entry, spectrum.getScanStartTime());
+		float averageAbsPPM=precursorScores[0]; // FINAL SCORE
+		float isotopeDotProduct=precursorScores[1]; // FINAL SCORE
+		
+		// fragment scoring
+		double[] libraryMasses=entry.getMassArray();
+		float[] libraryIntensities=entry.getIntensityArray();
+		
+		double[] spectrumMasses=spectrum.getMassArray();
+		float[] spectrumIntensities=spectrum.getIntensityArray();
+		
+		if (libraryMasses.length==0||spectrumMasses.length==0) return 0.0f;
+		
+		int numMatches=0; // FINAL SCORE
+		int numAboveThresholdMatches=0; // FINAL SCORE
+		float rawScore=0.0f; // FINAL SCORE
+		float weightedRawScore=0.0f; // FINAL SCORE
+		float sumLibraryMasses=0.0f;
+		
+		TFloatArrayList individualPeakScores=new TFloatArrayList();
+		
+		int libraryIndex=0;
+		int spectrumIndex=0;
+		while (true) {
+			int compare=fragmentTolerance.compareTo(libraryMasses[libraryIndex], spectrumMasses[spectrumIndex]);
+			if (compare==0) {
+				numMatches++;
+				float product = libraryIntensities[libraryIndex]*spectrumIntensities[spectrumIndex];
+				individualPeakScores.add(product);
+				
+				rawScore+=product;
+				weightedRawScore+=(float)product*libraryMasses[libraryIndex];
+				sumLibraryMasses+=(float)libraryMasses[libraryIndex];
+				libraryIndex++;
+				spectrumIndex++;
+			} else if (compare>0) {
+				spectrumIndex++;
+			} else {
+				libraryIndex++;
+			}
+			if (libraryIndex>=libraryMasses.length) break;
+			if (spectrumIndex>=spectrumMasses.length) break;
+		}
+		weightedRawScore=weightedRawScore/sumLibraryMasses;
+		float peakSimilarity=rawScore/spectrum.getIntensityMagnitude(); // FINAL SCORE
+		
+		float individualIonThreshold=rawScore/(entry.getPeptideSeq().length()+1);
+		for (float peak : individualPeakScores.toArray()) {
+			if (peak>individualIonThreshold) {
+				numAboveThresholdMatches++;
+			}
+		}
+		
+		return rawScore;
+	}
+
+
+	public float[] getPrecursorScores(LibraryEntry entry, float spectrumRT) {
+		Peak[] precursorPacket=precursors.getIsotopePacket(entry.getPrecursorMZ(), spectrumRT, entry.getPrecursorCharge(), precursorTolerance);
 		Pair<double[], float[]> pair=Peak.toArrays(precursorPacket);
 		double[] masses=pair.x;
 		float[] intensities=pair.y;
@@ -52,42 +110,6 @@ public class PecanScorer implements PSMScorer {
 			}
 		}
 		
-		// fragment scoring
-		double[] libraryMasses=entry.getMassArray();
-		float[] libraryIntensities=entry.getIntensityArray();
-		
-		double[] spectrumMasses=spectrum.getMassArray();
-		float[] spectrumIntensities=spectrum.getIntensityArray();
-		
-		if (libraryMasses.length==0||spectrumMasses.length==0) return 0.0f;
-		
-		int numMatches=0; // FINAL SCORE
-		float rawScore=0.0f; // FINAL SCORE
-		float weightedRawScore=0.0f; // FINAL SCORE
-		float sumLibraryMasses=0.0f;
-		
-		int libraryIndex=0;
-		int spectrumIndex=0;
-		while (true) {
-			int compare=fragmentTolerance.compareTo(libraryMasses[libraryIndex], spectrumMasses[spectrumIndex]);
-			if (compare==0) {
-				numMatches++;
-				float product = libraryIntensities[libraryIndex]*spectrumIntensities[spectrumIndex];
-				rawScore+=product;
-				weightedRawScore+=(float)product*libraryMasses[libraryIndex];
-				sumLibraryMasses+=(float)libraryMasses[libraryIndex];
-				libraryIndex++;
-				spectrumIndex++;
-			} else if (compare>0) {
-				spectrumIndex++;
-			} else {
-				libraryIndex++;
-			}
-			if (libraryIndex>=libraryMasses.length) break;
-			if (spectrumIndex>=spectrumMasses.length) break;
-		}
-		weightedRawScore=weightedRawScore/sumLibraryMasses;
-		
-		return rawScore;
+		return new float[] {averageAbsPPM, isotopeDotProduct};
 	}
 }

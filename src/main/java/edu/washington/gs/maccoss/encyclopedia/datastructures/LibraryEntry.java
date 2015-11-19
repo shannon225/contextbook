@@ -43,6 +43,16 @@ public class LibraryEntry {
 	public String getPeptideModSeq() {
 		return peptideModSeq;
 	}
+	
+	public String getPeptideSeq() {
+		StringBuilder sb=new StringBuilder();
+		for (char c : peptideModSeq.toCharArray()) {
+			if (Character.isLetter(c)) {
+				sb.append(c);
+			}
+		}
+		return sb.toString();
+	}
 
 	public int getCopies() {
 		return copies;

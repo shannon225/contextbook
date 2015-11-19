@@ -45,11 +45,10 @@ public class PeptideScoringTask extends ThreadableTask<HashMap<LibraryEntry, XYT
 				float rt=stripe.getScanStartTime();
 				if (background!=null) {
 					XYPoint meanStdev=background.get((double)rt);
-					if (meanStdev.y==0.0) {
-						scoreMap.put(rt, 0.0f);
-					} else {
-						//float zscore=(float)((score-meanStdev.x)/meanStdev.y);
+					if (meanStdev!=null) {
 						scoreMap.put(rt, (float)(score-meanStdev.x));
+					} else {
+						scoreMap.put(rt, score);
 					}
 				} else {
 					scoreMap.put(rt, score);

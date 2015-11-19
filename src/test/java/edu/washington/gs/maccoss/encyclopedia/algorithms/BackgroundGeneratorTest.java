@@ -61,5 +61,32 @@ public class BackgroundGeneratorTest extends TestCase {
 				assertEquals(expectedCounts[i], total);
 			}
 		}
+
+		peptide="FGGGSVELLK";
+		mz=MassConstants.getChargedMass(peptide, (byte)2);
+		index=Arrays.binarySearch(binArray, mz);
+		index=(-(index+1))-1;
+		assertEquals(20, index);
+
+		keys=binCounters[index].keys();
+		Arrays.sort(keys);
+
+		model=new FragmentationModel(peptide);
+		ions=model.getPrimaryIons(PARAMETERS.getFragType());
+		expectedCounts=new int[] {1771, 5280, 353, 318, 97, 231, 90, 125, 93, 74, 79, 109, 162, 123, 189, 136, 322, 320};
+		for (int i=0; i<ions.length; i++) {
+			double[] matches=PARAMETERS.getFragmentTolerance().getMatches(keys, ions[i]);
+
+			if (matches.length>0) {
+				int total=0;
+				for (int j=0; j<matches.length; j++) {
+					int value=binCounters[index].get(matches[j]);
+					total+=value;
+				}
+				System.out.println(ions[i]+"\t"+total);
+				// assertEquals(expectedCounts[i], total);
+			}
+		}
+
 	}
 }

@@ -67,6 +67,11 @@ public class IsotopicDistributionCalculator {
 		return getIsotopeDistribution(base);
 	}
 	
+	/**
+	 * this algorithm follows Kubinyi, Analytica Chimica Acta, 247 (1991) 107-119
+	 * @param counts
+	 * @return
+	 */
 	static float[] getIsotopeDistribution(int[] counts) {
 		int p=0;
 		int q=0;

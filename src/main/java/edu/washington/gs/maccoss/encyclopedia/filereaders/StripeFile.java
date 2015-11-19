@@ -139,15 +139,18 @@ public class StripeFile extends SQLFile {
 	public void addPrecursor(ArrayList<PrecursorScan> precursors) throws IOException, SQLException {
 		Connection c=getConnection(tempFile);
 		try {
-			PreparedStatement prep=c.prepareStatement("insert into precursor (SpectrumName, SpectrumIndex, ScanStartTime, PeakCount, MassArray, IntensityArray) VALUES (?,?,?,?,?,?)");
+			PreparedStatement prep=c.prepareStatement("insert into precursor (SpectrumName, SpectrumIndex, ScanStartTime, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray) VALUES (?,?,?,?,?,?,?)");
 			try {
 				for (PrecursorScan precursor : precursors) {
 					prep.setString(1, precursor.getSpectrumName());
 					prep.setInt(2, precursor.getSpectrumIndex());
 					prep.setFloat(3, precursor.getScanStartTime());
-					prep.setInt(4, precursor.getMassArray().length);
-					prep.setBytes(5, CompressionUtils.compress(ByteConverter.toByteArray(precursor.getMassArray())));
-					prep.setBytes(6, CompressionUtils.compress(ByteConverter.toByteArray(precursor.getIntensityArray())));
+					byte[] massByteArray=ByteConverter.toByteArray(precursor.getMassArray());
+					prep.setInt(4, massByteArray.length);
+					prep.setBytes(5, CompressionUtils.compress(massByteArray));
+					byte[] intensityByteArray=ByteConverter.toByteArray(precursor.getIntensityArray());
+					prep.setInt(6, intensityByteArray.length);
+					prep.setBytes(7, CompressionUtils.compress(intensityByteArray));
 					prep.addBatch();
 				}
 				prep.executeBatch();
@@ -166,7 +169,7 @@ public class StripeFile extends SQLFile {
 		try {
 			Statement s=c.createStatement();
 			try {
-				ResultSet rs=s.executeQuery("select SpectrumName, SpectrumIndex, ScanStartTime, PeakCount, MassArray, IntensityArray from precursor "
+				ResultSet rs=s.executeQuery("select SpectrumName, SpectrumIndex, ScanStartTime, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray from precursor "
 						+"where ScanStartTime between "+minRT+" and "+maxRT);
 
 				ArrayList<PrecursorScan> precursors=new ArrayList<PrecursorScan>();
@@ -174,9 +177,10 @@ public class StripeFile extends SQLFile {
 					String spectrumName=rs.getString(1);
 					int spectrumIndex=rs.getInt(2);
 					float scanStartTime=rs.getFloat(3);
-					int peakCount=rs.getInt(4);
-					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(5), peakCount));
-					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(6), peakCount));
+					int massEncodedLength=rs.getInt(4);
+					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(5), massEncodedLength));
+					int intensityEncodedLength=rs.getInt(6);
+					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(7), intensityEncodedLength));
 					precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray));
 				}
 
@@ -193,7 +197,7 @@ public class StripeFile extends SQLFile {
 		Connection c=getConnection(tempFile);
 		try {
 			PreparedStatement prep=c
-					.prepareStatement("insert into spectra (SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, PeakCount, MassArray, IntensityArray) VALUES (?,?,?,?,?,?,?,?,?)");
+					.prepareStatement("insert into spectra (SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray) VALUES (?,?,?,?,?,?,?,?,?,?)");
 			try {
 				for (Stripe stripe : stripes) {
 					ranges.add(stripe.getRange());
@@ -204,9 +208,13 @@ public class StripeFile extends SQLFile {
 					prep.setFloat(4, stripe.getScanStartTime());
 					prep.setFloat(5, stripe.getIsolationWindowLower());
 					prep.setFloat(6, stripe.getIsolationWindowUpper());
-					prep.setInt(7, stripe.getMassArray().length);
-					prep.setBytes(8, CompressionUtils.compress(ByteConverter.toByteArray(stripe.getMassArray())));
-					prep.setBytes(9, CompressionUtils.compress(ByteConverter.toByteArray(stripe.getIntensityArray())));
+					byte[] massByteArray=ByteConverter.toByteArray(stripe.getMassArray());
+					prep.setInt(7, massByteArray.length);
+					prep.setBytes(8, CompressionUtils.compress(massByteArray));
+					byte[] intensityByteArray=ByteConverter.toByteArray(stripe.getIntensityArray());
+					prep.setInt(9, intensityByteArray.length);
+					prep.setBytes(10, CompressionUtils.compress(intensityByteArray));
+					
 					prep.addBatch();
 				}
 				prep.executeBatch();
@@ -225,7 +233,7 @@ public class StripeFile extends SQLFile {
 		try {
 			Statement s=c.createStatement();
 			try {
-				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, PeakCount, MassArray, IntensityArray from spectra "
+				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray from spectra "
 						+"where IsolationWindowLower <= "+targetMz+" and IsolationWindowUpper >= "+targetMz+" and ScanStartTime between "+minRT+" and "+maxRT);
 
 				ArrayList<Stripe> stripes=new ArrayList<Stripe>();
@@ -236,9 +244,10 @@ public class StripeFile extends SQLFile {
 					float scanStartTime=rs.getFloat(4);
 					float isolationWindowLower=rs.getFloat(5);
 					float isolationWindowUpper=rs.getFloat(6);
-					int peakCount=rs.getInt(7);
-					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), peakCount));
-					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(9), peakCount));
+					int massEncodedLength=rs.getInt(7);
+					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), massEncodedLength));
+					int intensityEncodedLength=rs.getInt(9);
+					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(10), intensityEncodedLength));
 					if (sqrt) {
 						intensityArray=General.protectedSqrt(intensityArray);
 					}
@@ -261,8 +270,8 @@ public class StripeFile extends SQLFile {
 			try {
 				s.execute("create table if not exists metadata ( Key string not null, Value string not null, primary key (Key) )");
 				s.execute("create table if not exists ranges ( Start float not null, Stop float not null )");
-				s.execute("create table if not exists spectra ( SpectrumName string not null, PrecursorName string not null, SpectrumIndex int not null, ScanStartTime float not null, IsolationWindowLower float not null, IsolationWindowUpper float not null, PeakCount int not null, MassArray blob not null, IntensityArray blob not null, primary key (SpectrumIndex) )");
-				s.execute("create table if not exists precursor ( SpectrumName string not null, SpectrumIndex int not null, ScanStartTime float not null, PeakCount int not null, MassArray blob not null, IntensityArray blob not null, primary key (SpectrumIndex) )");
+				s.execute("create table if not exists spectra ( SpectrumName string not null, PrecursorName string not null, SpectrumIndex int not null, ScanStartTime float not null, IsolationWindowLower float not null, IsolationWindowUpper float not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, primary key (SpectrumIndex) )");
+				s.execute("create table if not exists precursor ( SpectrumName string not null, SpectrumIndex int not null, ScanStartTime float not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, primary key (SpectrumIndex) )");
 
 				s.execute("create index if not exists \"spectra_index_isolation_window_lower\" on \"spectra\" (\"IsolationWindowLower\" ASC)");
 				s.execute("create index if not exists \"spectra_index_isolation_window_upper\" on \"spectra\" (\"IsolationWindowUpper\" ASC)");
