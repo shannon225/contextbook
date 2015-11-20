@@ -1,13 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.graphing;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.procedure.TFloatFloatProcedure;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 
 public class XYTrace {
 	private final String name;

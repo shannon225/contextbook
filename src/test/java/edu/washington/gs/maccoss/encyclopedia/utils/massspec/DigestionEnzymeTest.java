@@ -3,9 +3,9 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import junit.framework.TestCase;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import junit.framework.TestCase;
 
 public class DigestionEnzymeTest extends TestCase {
 	public void testMissedCleavages() {

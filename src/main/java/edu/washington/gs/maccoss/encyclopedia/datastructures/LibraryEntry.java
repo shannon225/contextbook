@@ -82,8 +82,8 @@ public class LibraryEntry {
 		return peaks;
 	}
 	
-	public ReverseLibraryEntry getReverse(MassTolerance tolerance) {
-		FragmentationModel model=new FragmentationModel(peptideModSeq);
+	public ReverseLibraryEntry getReverse(MassTolerance tolerance, AminoAcidConstants aaConstants) {
+		FragmentationModel model=new FragmentationModel(peptideModSeq, aaConstants);
 		double[] bs=model.getBIons();
 		double[] ys=model.getYIons();
 		

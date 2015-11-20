@@ -1,13 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import gnu.trove.list.array.TFloatArrayList;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 
 //@Immutable
 public class PrecursorScanMap {

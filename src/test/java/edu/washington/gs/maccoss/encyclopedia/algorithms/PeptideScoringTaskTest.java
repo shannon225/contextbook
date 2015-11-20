@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.concurrent.ExecutionException;
 import java.util.zip.DataFormatException;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -22,16 +23,14 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.set.hash.TDoubleHashSet;
 import junit.framework.TestCase;
 
 public class PeptideScoringTaskTest extends TestCase {
-	private static final SearchParameters PARAMETERS=new SearchParameters(FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
+	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
 	
 	public void testPeptideScoringTask() throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 
@@ -45,7 +44,7 @@ public class PeptideScoringTaskTest extends TestCase {
 		for (Range range : stripefile.getRanges().keySet()) {
 			// first check to see if we need to process this stripe
 			boolean hasPeptides=false;
-			double mz=MassConstants.getChargedMass(peptide, charge);
+			double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
 			if (!range.contains((float)mz)) {
 				continue;
 			}
@@ -72,10 +71,10 @@ public class PeptideScoringTaskTest extends TestCase {
 			ArrayList<String> backgroundProteomeArray=backgroundProteomes[index];
 			HashSet<String> backgroundProteomeSet=new HashSet<String>(backgroundProteomeArray);
 			
-			FragmentationModel model=new FragmentationModel(peptide);
+			FragmentationModel model=new FragmentationModel(peptide, PARAMETERS.getAAConstants());
 			PecanLibraryEntry entry=model.getPecanSpectrum(charge, keys, map, PARAMETERS);
 
-			FragmentationModel revmodel=new FragmentationModel(PeptideUtils.getSmartDecoy(peptide, backgroundProteomeSet, PARAMETERS));
+			FragmentationModel revmodel=new FragmentationModel(PeptideUtils.getSmartDecoy(peptide, backgroundProteomeSet, PARAMETERS), PARAMETERS.getAAConstants());
 			PecanLibraryEntry reventry=revmodel.getPecanSpectrum(charge, keys, map, PARAMETERS);
 
 			ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();

@@ -19,8 +19,8 @@ public class FragmentationModel {
 	private final double[] neutralLosses;
 	private final String[] aas;
 	
-	public FragmentationModel(String modifiedSequence) {
-		Triplet<double[], double[], String[]> tuple = getMasses(modifiedSequence);
+	public FragmentationModel(String modifiedSequence, AminoAcidConstants aaConstants) {
+		Triplet<double[], double[], String[]> tuple = getMasses(modifiedSequence, aaConstants);
 		masses=tuple.x;
 		neutralLosses=tuple.y;
 		aas=tuple.z;
@@ -67,7 +67,7 @@ public class FragmentationModel {
 			sb.append(aa);
 		}
 		String sequence=sb.toString();
-		double precursorMZ=MassConstants.getChargedMass(sequence, precursorCharge);
+		double precursorMZ=params.getAAConstants().getChargedMass(sequence, precursorCharge);
 
 		return new PecanLibraryEntry(precursorMZ, precursorCharge, sequence, 1, 0.0f, 0, arrays.x, arrays.y);	
 	}
@@ -182,7 +182,7 @@ public class FragmentationModel {
 	 * @param sequence
 	 * @return
 	 */
-	public static Triplet<double[], double[], String[]> getMasses(String sequence) {
+	public static Triplet<double[], double[], String[]> getMasses(String sequence, AminoAcidConstants aaConstants) {
 		char[] ca=sequence.toCharArray();
 		
 		TDoubleArrayList masses=new TDoubleArrayList();
@@ -199,7 +199,7 @@ public class FragmentationModel {
 				if (masses.size()==0) {
 					// handling of n-termini mods assumes you can't have multiple []s in a row
 					i++;
-					masses.add(MassConstants.getMass(ca[i]));
+					masses.add(aaConstants.getMass(ca[i]));
 					neutralLosses.add(0.0);
 					aas.add(Character.toString(ca[i]));
 				}
@@ -209,7 +209,7 @@ public class FragmentationModel {
 				neutralLosses.set(masses.size()-1, MassConstants.getNeutralLoss(modificationMass));
 				aas.set(masses.size()-1, aas.get(masses.size()-1)+"["+massText+"]");
 			} else {
-				masses.add(MassConstants.getMass(ca[i]));
+				masses.add(aaConstants.getMass(ca[i]));
 				neutralLosses.add(0.0);
 				aas.add(Character.toString(ca[i]));
 			}

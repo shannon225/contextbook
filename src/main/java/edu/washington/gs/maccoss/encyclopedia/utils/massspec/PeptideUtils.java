@@ -11,19 +11,17 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 
 public class PeptideUtils {
 	public static String getSmartDecoy(String peptide, HashSet<String> backgroundProteome, SearchParameters parameters) {
-		DigestionEnzyme enzyme=parameters.getEnzyme();
-		
-		FragmentationModel model=new FragmentationModel(peptide);
+		FragmentationModel model=new FragmentationModel(peptide, parameters.getAAConstants());
 		double[] primaryIons=model.getPrimaryIons(parameters.getFragType());
 		
-		String decoy=reverse(peptide, enzyme);
+		String decoy=reverse(peptide, parameters);
 		int attempts=0;
 		int maxTries=10;
 		while (attempts<maxTries) {
 			if (backgroundProteome.contains(decoy)) {
-				decoy=shuffle(decoy, enzyme);
+				decoy=shuffle(decoy, parameters);
 			} else {
-				model=new FragmentationModel(decoy);
+				model=new FragmentationModel(decoy, parameters.getAAConstants());
 				double[] decoyIons=model.getPrimaryIons(parameters.getFragType());
 				int matches=0;
 				for (double decoyFragment : decoyIons) {
@@ -36,7 +34,7 @@ public class PeptideUtils {
 					break;
 				} else {
 					// otherwise too much overlap
-					decoy=shuffle(decoy, enzyme);
+					decoy=shuffle(decoy, parameters);
 				}
 			}
 			attempts++;
@@ -44,13 +42,13 @@ public class PeptideUtils {
 		return decoy;
 	}
 	
-	public static String getDecoy(String peptide, DigestionEnzyme enzyme, HashSet<String> backgroundProteome) {
-		String decoy=reverse(peptide, enzyme);
+	public static String getDecoy(String peptide, HashSet<String> backgroundProteome, SearchParameters parameters) {
+		String decoy=reverse(peptide, parameters);
 		int attempts=0;
 		int maxTries=3;
 		while (attempts<maxTries) {
 			if (backgroundProteome.contains(decoy)) {
-				decoy=shuffle(decoy, enzyme);
+				decoy=shuffle(decoy, parameters);
 			} else {
 				break;
 			}
@@ -59,10 +57,10 @@ public class PeptideUtils {
 		return decoy;
 	}
 	
-	public static String reverse(String peptide, DigestionEnzyme enzyme) {
-		Triplet<double[], double[], String[]>triplet=FragmentationModel.getMasses(peptide);
+	public static String reverse(String peptide, SearchParameters parameters) {
+		Triplet<double[], double[], String[]>triplet=FragmentationModel.getMasses(peptide, parameters.getAAConstants());
 		String[] aas=triplet.z;
-		reverse(aas, enzyme);
+		reverse(aas, parameters.getEnzyme());
 		return getSequence(aas);
 	}
 	
@@ -91,10 +89,10 @@ public class PeptideUtils {
 	 * @param enzyme
 	 * @return
 	 */
-	public static String shuffle(String peptide, DigestionEnzyme enzyme) {
-		Triplet<double[], double[], String[]>triplet=FragmentationModel.getMasses(peptide);
+	public static String shuffle(String peptide, SearchParameters parameters) {
+		Triplet<double[], double[], String[]>triplet=FragmentationModel.getMasses(peptide, parameters.getAAConstants());
 		String[] aas=triplet.z;
-		shuffle(aas, enzyme);
+		shuffle(aas, parameters.getEnzyme());
 		return getSequence(aas);
 	}
 	

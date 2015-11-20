@@ -2,14 +2,14 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.util.HashSet;
 
-import junit.framework.TestCase;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import junit.framework.TestCase;
 
 public class PeptideUtilsTest extends TestCase {
-	private static final DigestionEnzyme ENZYME=DigestionEnzyme.getEnzyme("trypsin");
-	private static final SearchParameters PARAMETERS=new SearchParameters(FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), ENZYME);
+	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"));
 	
 	public void testDecoys() {
 		HashSet<String> backgroundProteome=new HashSet<String>();
@@ -17,13 +17,13 @@ public class PeptideUtilsTest extends TestCase {
 		backgroundProteome.add(seq);
 		
 		// dumb decoy method sees these as different peptides
-		assertEquals("IACDEFQFEDCALR", PeptideUtils.getDecoy(seq, ENZYME, backgroundProteome));
+		assertEquals("IACDEFQFEDCALR", PeptideUtils.getDecoy(seq, backgroundProteome, PARAMETERS));
 		// but they share too many ions, so actually must shuffle
 		assertEquals("FDFCDQECELAAIR", PeptideUtils.getSmartDecoy(seq, backgroundProteome, PARAMETERS));
 	}
 
 	public void testReverse() {
-		String s=PeptideUtils.reverse("ABC[+57]DEFGHIJK", ENZYME);
+		String s=PeptideUtils.reverse("ABC[+57]DEFGHIJK", PARAMETERS);
 		assertEquals("JIHGFEDC[+57]BAK", s);
 	}
 	
@@ -33,8 +33,8 @@ public class PeptideUtilsTest extends TestCase {
 		HashSet<String> set=new HashSet<String>();
 		set.add(s);
 		for (int i=0; i<1000; i++) {
-			String shuffle=PeptideUtils.shuffle(s, ENZYME);
-			s=PeptideUtils.shuffle(s, ENZYME);
+			String shuffle=PeptideUtils.shuffle(s, PARAMETERS);
+			s=PeptideUtils.shuffle(s, PARAMETERS);
 			// asserts random from the same seed always returns the same sequence
 			assertEquals(shuffle, s);
 

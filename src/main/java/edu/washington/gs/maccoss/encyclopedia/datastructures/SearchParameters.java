@@ -5,6 +5,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 
 //@Immutable
 public class SearchParameters {
+	private final AminoAcidConstants aaConstants;
 	private final FragmentationType fragType;
 	private final MassTolerance precursorTolerance;
 	private final MassTolerance fragmentTolerance;
@@ -16,11 +17,16 @@ public class SearchParameters {
 	private final byte maxCharge=3;
 	private final int minEluteTime=12;
 
-	public SearchParameters(FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme) {
+	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme) {
+		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.fragmentTolerance=fragmentTolerance;
 		this.precursorTolerance=precursorTolerance;
 		this.enzyme=enzyme;
+	}
+	
+	public AminoAcidConstants getAAConstants() {
+		return aaConstants;
 	}
 
 	public FragmentationType getFragType() {

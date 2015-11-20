@@ -4,19 +4,19 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import junit.framework.TestCase;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TDoubleIntHashMap;
+import junit.framework.TestCase;
 
 public class BackgroundGeneratorTest extends TestCase {
-	private static final SearchParameters PARAMETERS=new SearchParameters(FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"));
+	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"));
 
 	public void testGenerateBackground() {
 		InputStream is=getClass().getResourceAsStream("/mouse_20150911_uniprot_sp.fasta");
@@ -38,7 +38,7 @@ public class BackgroundGeneratorTest extends TestCase {
 		}
 
 		String peptide="ILQEGVDPK";
-		double mz=MassConstants.getChargedMass(peptide, (byte)2);
+		double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, (byte)2);
 		int index=Arrays.binarySearch(binArray, mz);
 		index=(-(index+1))-1;
 		assertEquals(20, index);
@@ -46,7 +46,7 @@ public class BackgroundGeneratorTest extends TestCase {
 		double[] keys=binCounters[index].keys();
 		Arrays.sort(keys);
 
-		FragmentationModel model=new FragmentationModel(peptide);
+		FragmentationModel model=new FragmentationModel(peptide, PARAMETERS.getAAConstants());
 		double[] ions=model.getPrimaryIons(PARAMETERS.getFragType());
 		int[] expectedCounts=new int[] {1771, 5280, 353, 318, 97, 231, 90, 125, 93, 74, 79, 109, 162, 123, 189, 136, 322, 320};
 		for (int i=0; i<ions.length; i++) {
@@ -63,7 +63,7 @@ public class BackgroundGeneratorTest extends TestCase {
 		}
 
 		peptide="FGGGSVELLK";
-		mz=MassConstants.getChargedMass(peptide, (byte)2);
+		mz=PARAMETERS.getAAConstants().getChargedMass(peptide, (byte)2);
 		index=Arrays.binarySearch(binArray, mz);
 		index=(-(index+1))-1;
 		assertEquals(20, index);
@@ -71,7 +71,7 @@ public class BackgroundGeneratorTest extends TestCase {
 		keys=binCounters[index].keys();
 		Arrays.sort(keys);
 
-		model=new FragmentationModel(peptide);
+		model=new FragmentationModel(peptide, PARAMETERS.getAAConstants());
 		ions=model.getPrimaryIons(PARAMETERS.getFragType());
 		expectedCounts=new int[] {1771, 5280, 353, 318, 97, 231, 90, 125, 93, 74, 79, 109, 162, 123, 189, 136, 322, 320};
 		for (int i=0; i<ions.length; i++) {

@@ -2,17 +2,17 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.Arrays;
 
-import junit.framework.TestCase;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import gnu.trove.map.hash.TDoubleIntHashMap;
+import junit.framework.TestCase;
 
 public class FragmentationModelTest extends TestCase {
-	private static final SearchParameters PARAMETERS=new SearchParameters(FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"));
+	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"));
 	
 	public void testPrimaryIons() {
 		String sequence="PEPT[+80]IDER";
-		FragmentationModel model=new FragmentationModel(sequence);
+		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
 		double[] ions=model.getPrimaryIons(FragmentationType.CID);
 		double[] expected=new double[] {98.06063, 175.11955, 227.10323, 304.16215, 324.15603, 407.226834, 419.18915, 505.20373, 520.310934, 532.27325, 615.344054, 618.28783, 635.337934,
 				712.3968540000001, 713.32095, 733.31483, 764.380534, 810.3737500000001, 841.4394540000001, 862.35743, 920.481634, 938.4922540000001, 939.4163500000001, 1018.45853, 1036.4691500000001};
@@ -35,7 +35,7 @@ public class FragmentationModelTest extends TestCase {
 		double[] expectedB = new double[] { 98.06063, 227.10323, 324.15599, 425.20367, 538.28773, 653.31467, 782.35727, 938.45838 };
 		double[] expectedY = new double[] { 175.11955, 304.16214, 419.18908, 532.27314, 633.32082, 730.37359, 859.41618, 956.46894 };
 		
-		FragmentationModel model=new FragmentationModel(sequence);
+		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
 		double[] bs=model.getBIons();
 		for (int i = 0; i < bs.length; i++) {
 			assertEquals(expectedB[i], bs[i], 0.001);
@@ -52,7 +52,7 @@ public class FragmentationModelTest extends TestCase {
 		double[] expectedY = new double[] { 175.11955, 304.16214, 419.18908, 532.27314, 633.32082+80, 730.37359+80, 859.41618+80, 956.46894+80, 633.32082+80-97.976896, 730.37359+80-97.976896, 859.41618+80-97.976896, 956.46894+80-97.976896  };
 		Arrays.sort(expectedY);
 		
-		FragmentationModel model=new FragmentationModel(sequence);
+		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
 		double[] bs=model.getBIons();
 		for (int i = 0; i < bs.length; i++) {
 			assertEquals(expectedB[i], bs[i], 0.001);
@@ -66,42 +66,42 @@ public class FragmentationModelTest extends TestCase {
 	public void testGetMasses() {
 		String sequence="PEPTIDER";
 		double[] expected = new double[] { 97.0528, 129.0426, 97.0528, 101.0477, 113.0841, 115.027, 129.0426, 156.1011 };
-		double[] masses=FragmentationModel.getMasses(sequence).x;
+		double[] masses=FragmentationModel.getMasses(sequence, PARAMETERS.getAAConstants()).x;
 		for (int i = 0; i < masses.length; i++) {
 			assertEquals(expected[i], masses[i], 0.001);
 		}
 		
 		sequence="PEPT[+80]IDER";
 		expected = new double[] { 97.0528, 129.0426, 97.0528, 101.0477+80.0, 113.0841, 115.027, 129.0426, 156.1011 };
-		masses=FragmentationModel.getMasses(sequence).x;
+		masses=FragmentationModel.getMasses(sequence, PARAMETERS.getAAConstants()).x;
 		for (int i = 0; i < masses.length; i++) {
 			assertEquals(expected[i], masses[i], 0.001);
 		}
 		
 		sequence="PE[-17]PTIDER";
 		expected = new double[] { 97.0528, 129.0426-17.0, 97.0528, 101.0477, 113.0841, 115.027, 129.0426, 156.1011 };
-		masses=FragmentationModel.getMasses(sequence).x;
+		masses=FragmentationModel.getMasses(sequence, PARAMETERS.getAAConstants()).x;
 		for (int i = 0; i < masses.length; i++) {
 			assertEquals(expected[i], masses[i], 0.001);
 		}
 		
 		sequence="[-17]PEPTIDER";
 		expected = new double[] { 97.0528-17.0, 129.0426, 97.0528, 101.0477, 113.0841, 115.027, 129.0426, 156.1011 };
-		masses=FragmentationModel.getMasses(sequence).x;
+		masses=FragmentationModel.getMasses(sequence, PARAMETERS.getAAConstants()).x;
 		for (int i = 0; i < masses.length; i++) {
 			assertEquals(expected[i], masses[i], 0.001);
 		}
 		
 		sequence="[+42]PEPTIDER";
 		expected = new double[] { 97.0528+42.0, 129.0426, 97.0528, 101.0477, 113.0841, 115.027, 129.0426, 156.1011 };
-		masses=FragmentationModel.getMasses(sequence).x;
+		masses=FragmentationModel.getMasses(sequence, PARAMETERS.getAAConstants()).x;
 		for (int i = 0; i < masses.length; i++) {
 			assertEquals(expected[i], masses[i], 0.001);
 		}
 		
 		sequence="PEPTIDER[+14]";
 		expected = new double[] { 97.0528, 129.0426, 97.0528, 101.0477, 113.0841, 115.027, 129.0426, 156.1011+14.0 };
-		masses=FragmentationModel.getMasses(sequence).x;
+		masses=FragmentationModel.getMasses(sequence, PARAMETERS.getAAConstants()).x;
 		for (int i = 0; i < masses.length; i++) {
 			assertEquals(expected[i], masses[i], 0.001);
 		}
@@ -879,7 +879,7 @@ public class FragmentationModelTest extends TestCase {
 		Arrays.sort(keys);
 
 		String peptide="ILQEGVDPK";
-		FragmentationModel model=new FragmentationModel(peptide);
+		FragmentationModel model=new FragmentationModel(peptide, PARAMETERS.getAAConstants());
 		PecanLibraryEntry entry=model.getPecanSpectrum((byte)2, keys, map, PARAMETERS);
 		return entry;
 	}

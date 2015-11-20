@@ -8,7 +8,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import gnu.trove.map.hash.TDoubleIntHashMap;
 
 public class BackgroundGenerator {
@@ -30,10 +29,10 @@ public class BackgroundGenerator {
 		for (FastaEntry entry : entries) {
 			ArrayList<String> peptides=params.getEnzyme().digestProtein(entry.getSequence(), params.getMinPeptideLength(), params.getMaxPeptideLength(), params.getMaxMissedCleavages());
 			for (String sequence : peptides) {
-				FragmentationModel model=new FragmentationModel(sequence);
+				FragmentationModel model=new FragmentationModel(sequence, params.getAAConstants());
 				double[] ions=model.getPrimaryIons(params.getFragType());
 				for (byte charge=params.getMinCharge(); charge<=params.getMaxCharge(); charge++) {
-					double parentMZ=MassConstants.getChargedMass(sequence, charge);
+					double parentMZ=params.getAAConstants().getChargedMass(sequence, charge);
 					int index=Arrays.binarySearch(binBoundaries, parentMZ);
 					if (index>=0) {
 						// increment the lower index

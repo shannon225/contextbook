@@ -1,9 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
+import java.util.ArrayList;
+
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TCharHashSet;
-
-import java.util.ArrayList;
 
 public class DigestionEnzyme {
 	private static final char[] AAs="ACDEFGHIKLMNPQRSTVWY".toCharArray();

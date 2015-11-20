@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
@@ -9,14 +10,12 @@ import gnu.trove.list.array.TFloatArrayList;
 
 //@Immutable
 public class PecanScorer implements PSMScorer {
-	private final MassTolerance fragmentTolerance;
-	private final MassTolerance precursorTolerance;
+	private final SearchParameters parameters;
 	private final PrecursorScanMap precursors;
 
 
-	public PecanScorer(MassTolerance fragmentTolerance, MassTolerance precursorTolerance, PrecursorScanMap precursors) {
-		this.fragmentTolerance=fragmentTolerance;
-		this.precursorTolerance=precursorTolerance;
+	public PecanScorer(SearchParameters parameters, PrecursorScanMap precursors) {
+		this.parameters=parameters;
 		this.precursors=precursors;
 	}
 
@@ -50,7 +49,7 @@ public class PecanScorer implements PSMScorer {
 		int libraryIndex=0;
 		int spectrumIndex=0;
 		while (true) {
-			int compare=fragmentTolerance.compareTo(libraryMasses[libraryIndex], spectrumMasses[spectrumIndex]);
+			int compare=parameters.getFragmentTolerance().compareTo(libraryMasses[libraryIndex], spectrumMasses[spectrumIndex]);
 			if (compare==0) {
 				numMatches++;
 				float product = libraryIntensities[libraryIndex]*spectrumIntensities[spectrumIndex];
@@ -84,7 +83,7 @@ public class PecanScorer implements PSMScorer {
 
 
 	public float[] getPrecursorScores(LibraryEntry entry, float spectrumRT) {
-		Peak[] precursorPacket=precursors.getIsotopePacket(entry.getPrecursorMZ(), spectrumRT, entry.getPrecursorCharge(), precursorTolerance);
+		Peak[] precursorPacket=precursors.getIsotopePacket(entry.getPrecursorMZ(), spectrumRT, entry.getPrecursorCharge(), parameters.getPrecursorTolerance());
 		Pair<double[], float[]> pair=Peak.toArrays(precursorPacket);
 		double[] masses=pair.x;
 		float[] intensities=pair.y;
@@ -100,7 +99,7 @@ public class PecanScorer implements PSMScorer {
 		
 		// precursor idotp
 		intensities=IsotopicDistributionCalculator.normalizeToMax(intensities);
-		float[] predicted=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq());
+		float[] predicted=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
 		float isotopeDotProduct=0.0f; // FINAL SCORE
 		for (int i = 0; i < PrecursorScanMap.isotopes.length; i++) {
 			byte isotope=PrecursorScanMap.isotopes[i];

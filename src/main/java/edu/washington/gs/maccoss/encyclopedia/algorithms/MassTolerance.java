@@ -1,10 +1,10 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
-import gnu.trove.list.array.TIntArrayList;
-
 import java.util.Arrays;
 
 import com.google.common.base.Optional;
+
+import gnu.trove.list.array.TIntArrayList;
 
 //@Immutable
 public class MassTolerance {

@@ -1,9 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
-import junit.framework.TestCase;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import junit.framework.TestCase;
 
 public class LibraryEntryTest extends TestCase {
+	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
 	public void testReverse() {
 		double[] massArray = new double[] { 98.06063, 175.11955, 227.10323,
 				304.16214, 324.15599, 333, 419.18908, 444, 505.20367,
@@ -15,7 +17,7 @@ public class LibraryEntryTest extends TestCase {
 				15f, 34f, 62f, 81f, 94f, 50f };
 		
 		LibraryEntry entry=new LibraryEntry(518.73841, (byte)2, "PEPT[+80]IDER", 1, 0.0f, 0.0f, massArray, intensityArray);
-		ReverseLibraryEntry reverse=entry.getReverse(new MassTolerance(10.0f));
+		ReverseLibraryEntry reverse=entry.getReverse(new MassTolerance(10.0f), PARAMETERS.getAAConstants());
 		assertEquals("REDIT[+80]PEP", reverse.getPeptideModSeq());
 		
 		double[] reverseMasses=reverse.getMassArray();

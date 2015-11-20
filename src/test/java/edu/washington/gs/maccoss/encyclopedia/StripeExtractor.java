@@ -29,6 +29,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PecanRawScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PecanScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -46,7 +47,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
@@ -58,7 +58,7 @@ import gnu.trove.procedure.TDoubleObjectProcedure;
 import gnu.trove.set.hash.TDoubleHashSet;
 
 public class StripeExtractor {
-	private static final SearchParameters PARAMETERS=new SearchParameters(FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
+	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
 
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		int cores=Runtime.getRuntime().availableProcessors();
@@ -111,7 +111,7 @@ public class StripeExtractor {
 			boolean hasPeptides=false;
 			outer:for (String peptide : peptides) {
 				for (byte charge : charges) {
-					double mz=MassConstants.getChargedMass(peptide, charge);
+					double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
 					if (range.contains((float)mz)) {
 						hasPeptides=true;
 						break outer;
@@ -146,11 +146,11 @@ public class StripeExtractor {
 				for (byte charge : charges) {
 					seed=RandomGenerator.randomInt(seed);
 					String peptide=backgroundProteomeArray.get((int)(RandomGenerator.floatFromRandomInt(seed)*backgroundProteomeArray.size()));
-					double mz=MassConstants.getChargedMass(peptide, charge);
+					double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
 
 					if (range.contains((float)mz)) {
-						String random=PeptideUtils.getDecoy(peptide, PARAMETERS.getEnzyme(), backgroundProteomeSet);
-						FragmentationModel randmodel=new FragmentationModel(random);
+						String random=PeptideUtils.getDecoy(peptide, backgroundProteomeSet, PARAMETERS);
+						FragmentationModel randmodel=new FragmentationModel(random, PARAMETERS.getAAConstants());
 						PecanLibraryEntry randentry=randmodel.getPecanSpectrum(charge, keys, map, PARAMETERS);
 
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
@@ -213,12 +213,12 @@ public class StripeExtractor {
 			results.clear();
 			for (String peptide : peptides) {
 				for (byte charge : charges) {
-					double mz=MassConstants.getChargedMass(peptide, charge);
+					double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
 					if (range.contains((float)mz)) {
-						FragmentationModel model=new FragmentationModel(peptide);
+						FragmentationModel model=new FragmentationModel(peptide, PARAMETERS.getAAConstants());
 						PecanLibraryEntry pecanEntry=model.getPecanSpectrum(charge, keys, map, PARAMETERS);
 
-						FragmentationModel revmodel=new FragmentationModel(PeptideUtils.getSmartDecoy(peptide, backgroundProteomeSet, PARAMETERS));
+						FragmentationModel revmodel=new FragmentationModel(PeptideUtils.getSmartDecoy(peptide, backgroundProteomeSet, PARAMETERS), PARAMETERS.getAAConstants());
 						PecanLibraryEntry reventry=revmodel.getPecanSpectrum(charge, keys, map, PARAMETERS);
 
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();

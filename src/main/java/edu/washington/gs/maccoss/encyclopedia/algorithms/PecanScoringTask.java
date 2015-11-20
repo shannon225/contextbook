@@ -89,11 +89,9 @@ public class PecanScoringTask extends PeptideScoringTask {
 					continue;
 				} else {
 					result.addStripe(goodStripes.get(i).x, stripe.y);
-					System.out.println(stripe.x);
 					for (int j=0; j<scanExcludingWindow; j++) {
 						int index=stripe.x-scanAveragingWindow+j;
 						takenScans.add(index);
-						System.out.println("\t"+index);
 					}
 				}
 			}
