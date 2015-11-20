@@ -6,7 +6,15 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.list.array.TFloatArrayList;
 import uk.ac.ebi.jmzml.model.mzml.BinaryDataArrayList;
 import uk.ac.ebi.jmzml.model.mzml.CVParam;
 import uk.ac.ebi.jmzml.model.mzml.Precursor;
@@ -14,10 +22,6 @@ import uk.ac.ebi.jmzml.model.mzml.PrecursorList;
 import uk.ac.ebi.jmzml.model.mzml.Spectrum;
 import uk.ac.ebi.jmzml.xml.io.MzMLObjectIterator;
 import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class MzmlReader {
 	public static void main(String[] args) throws IOException, SQLException {
@@ -41,6 +45,8 @@ public class MzmlReader {
 		ArrayList<Stripe> stripes=new ArrayList<Stripe>();
 		int count=0;
 		int previousReport=0;
+		
+		HashMap<Range, TFloatArrayList> retentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 		while (spectrumIterator.hasNext()) {
 			Spectrum spectrum=spectrumIterator.next();
 			PrecursorList pl=spectrum.getPrecursorList();
@@ -55,7 +61,22 @@ public class MzmlReader {
 			String spectrumName=spectrum.getId();
 			int spectrumIndex=spectrum.getIndex();
 			HashMap<String, CVParam> cvparams=asCVMap(spectrum.getScanList().getScan().get(0).getCvParam());
-			float scanStartTime=Float.parseFloat(cvparams.get("MS:1000016").getValue());
+			CVParam scanStartTimeCVParams=cvparams.get("MS:1000016");
+			float multiplier;
+			String unit=scanStartTimeCVParams.getUnitName();
+			if ("second".equalsIgnoreCase(unit)) {
+				multiplier=1.0f;
+			} else if ("minute".equalsIgnoreCase(unit)) {
+				multiplier=60.0f;
+			} else if ("hour".equalsIgnoreCase(unit)) {
+				multiplier=360.0f;
+			} else if ("millisecond".equalsIgnoreCase(unit)) {
+				multiplier=0.001f;
+			} else {
+				throw new IllegalArgumentException("Unexpected time unit: "+unit);
+			}
+			
+			float scanStartTime=multiplier*Float.parseFloat(scanStartTimeCVParams.getValue());
 			BinaryDataArrayList bdal=spectrum.getBinaryDataArrayList();
 
 			double[] massArray=ByteConverter.toDoubleArray(bdal.getBinaryDataArray().get(0).getBinaryDataAsNumberArray());
@@ -69,7 +90,15 @@ public class MzmlReader {
 				float isolationWindowLowerOffset=Float.parseFloat(isolationCVParams.get("MS:1000828").getValue());
 				float isolationWindowUpperOffset=Float.parseFloat(isolationCVParams.get("MS:1000829").getValue());
 				
-				stripes.add(new Stripe(spectrumName, p.getSpectrumRef(), spectrumIndex, scanStartTime, isolationWindowTarget-isolationWindowLowerOffset, isolationWindowTarget+isolationWindowUpperOffset, massArray, intensityArray));
+				Stripe stripe=new Stripe(spectrumName, p.getSpectrumRef(), spectrumIndex, scanStartTime, isolationWindowTarget-isolationWindowLowerOffset, isolationWindowTarget+isolationWindowUpperOffset, massArray, intensityArray);
+				stripes.add(stripe);
+				Range range=stripe.getRange();
+				TFloatArrayList stripeRTs=retentionTimesByStripe.get(range);
+				if (stripeRTs==null) {
+					stripeRTs=new TFloatArrayList();
+					retentionTimesByStripe.put(range, stripeRTs);
+				}
+				stripeRTs.add(scanStartTime);
 			}
 			
 			if (precursors.size()>100) {
@@ -90,6 +119,17 @@ public class MzmlReader {
 		}
 		stripeFile.addPrecursor(precursors);
 		stripeFile.addStripe(stripes);
+		
+		HashMap<Range, Float> dutyCycleMap=new HashMap<Range, Float>();
+		for (Entry<Range, TFloatArrayList> entry : retentionTimesByStripe.entrySet()) {
+			Range range=entry.getKey();
+			TFloatArrayList rts=entry.getValue();
+			float[] deltas=General.firstDerivative(rts.toArray());
+			float averageDutyCycle=General.mean(deltas);
+			dutyCycleMap.put(range, averageDutyCycle);
+			System.out.println(range+"\t"+averageDutyCycle);
+		}
+		stripeFile.setRanges(dutyCycleMap);
 		
 		stripeFile.saveAsFile(saveFile);
 		Logger.logLine("... Finished!");

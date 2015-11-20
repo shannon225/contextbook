@@ -2,7 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 
 //@Immutable
-public class Stripe {
+public class Stripe implements Comparable<Stripe> {
 	private final String spectrumName;
 	private final String precursorName;
 	private final int spectrumIndex;
@@ -28,6 +28,20 @@ public class Stripe {
 			magnitude+=f*f;
 		}
 		intensityMagnitude=(float)Math.sqrt(magnitude);
+	}
+	
+	@Override
+	public int compareTo(Stripe o) {
+		if (o==null) return 1;
+		int c=Float.compare(scanStartTime, o.scanStartTime);
+		if (c!=0) return c;
+		c=Integer.compare(spectrumIndex, o.spectrumIndex);
+		if (c!=0) return c;
+		c=Float.compare(isolationWindowLower, o.isolationWindowLower);
+		if (c!=0) return c;
+		c=Float.compare(isolationWindowUpper, o.isolationWindowUpper);
+		if (c!=0) return c;
+		return spectrumName.compareTo(o.spectrumName);
 	}
 	
 	public float getIntensityMagnitude() {

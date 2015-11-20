@@ -6,56 +6,41 @@ import java.util.HashMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ThreadableTask;
-import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
-public class PeptideScoringTask extends ThreadableTask<HashMap<LibraryEntry, XYTrace>> {
+public class PeptideScoringTask extends ThreadableTask<HashMap<LibraryEntry, PeptideScoringResult>> {
 	/**
 	 * must be immutable!
 	 */
-	private final PSMScorer scorer;
-	private final ArrayList<LibraryEntry> entries;
-	private final ArrayList<Stripe> stripes;
-	private final TDoubleObjectHashMap<XYPoint> background; // if not null, then score using zscore (otherwise use raw score)
+	protected final PSMScorer scorer;
+	protected final ArrayList<LibraryEntry> entries;
+	protected final ArrayList<Stripe> stripes;
 
 	public PeptideScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes) {
 		this.scorer=scorer;
 		this.entries=entries;
 		this.stripes=stripes;
-		this.background=null;
-	}
-	public PeptideScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint> background) {
-		this.scorer=scorer;
-		this.entries=entries;
-		this.stripes=stripes;
-		this.background=background;
 	}
 
 	@Override
-	protected HashMap<LibraryEntry, XYTrace> process() {
-		HashMap<LibraryEntry, XYTrace> map=new HashMap<LibraryEntry, XYTrace>();
+	protected HashMap<LibraryEntry, PeptideScoringResult> process() {
+		HashMap<LibraryEntry, PeptideScoringResult> map=new HashMap<LibraryEntry, PeptideScoringResult>();
 		for (LibraryEntry entry : entries) {
 			TFloatFloatHashMap scoreMap=new TFloatFloatHashMap();
+			
+			PeptideScoringResult result=new PeptideScoringResult();
 			for (Stripe stripe : stripes) {
 				float score=scorer.score(entry, stripe);
 				
 				float rt=stripe.getScanStartTime();
-				if (background!=null) {
-					XYPoint meanStdev=background.get((double)rt);
-					if (meanStdev!=null) {
-						scoreMap.put(rt, (float)(score-meanStdev.x));
-					} else {
-						scoreMap.put(rt, score);
-					}
-				} else {
-					scoreMap.put(rt, score);
-				}
+				scoreMap.put(rt, score);
+				result.addStripe(score, stripe);
 			}
 			//EValueCalculator calculator=new EValueCalculator(scoreMap);
-			map.put(entry, new XYTrace(scoreMap, GraphType.line, entry.getPeptideModSeq()));
+			result.setTrace(new XYTrace(scoreMap, GraphType.line, entry.getPeptideModSeq()));
+			map.put(entry, result);
 		}
 		return map;
 	}

@@ -11,7 +11,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.zip.DataFormatException;
@@ -28,7 +27,7 @@ public class StripeFile extends SQLFile {
 	private File userFile=null;
 	private final File tempFile;
 	
-	private final HashSet<Range> ranges=new HashSet<Range>();
+	private final HashMap<Range, Float> ranges=new HashMap<Range, Float>();
 
 	public StripeFile() throws IOException {
 		tempFile=File.createTempFile("encyclopedia_", ".dia");
@@ -36,8 +35,13 @@ public class StripeFile extends SQLFile {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public HashSet<Range> getRanges() {
-		return (HashSet<Range>)ranges.clone();
+	public HashMap<Range, Float> getRanges() {
+		return (HashMap<Range, Float>)ranges.clone();
+	}
+	
+	public void setRanges(HashMap<Range, Float> ranges) {
+		this.ranges.clear();
+		this.ranges.putAll(ranges);
 	}
 
 	public void openFile(File userFile) throws IOException, SQLException {
@@ -51,12 +55,13 @@ public class StripeFile extends SQLFile {
 		try {
 			Statement s=c.createStatement();
 			try {
-				ResultSet rs=s.executeQuery("select Start, Stop from Ranges");
+				ResultSet rs=s.executeQuery("select Start, Stop, DutyCycle from Ranges");
 
 				while (rs.next()) {
 					float start=rs.getFloat(1);
 					float stop=rs.getFloat(2);
-					ranges.add(new Range(start, stop));
+					float dutyCycle=rs.getFloat(3);
+					ranges.put(new Range(start, stop), dutyCycle);
 				}
 			} finally {
 				s.close();
@@ -69,11 +74,13 @@ public class StripeFile extends SQLFile {
 	public void writeRanges() throws IOException, SQLException {
 		Connection c=getConnection(tempFile);
 		try {
-			PreparedStatement prep=c.prepareStatement("insert into ranges (Start, Stop) VALUES (?,?)");
+			PreparedStatement prep=c.prepareStatement("insert into ranges (Start, Stop, DutyCycle) VALUES (?,?,?)");
 			try {
-				for (Range entry : ranges) {
-					prep.setFloat(1, entry.getStart());
-					prep.setFloat(2, entry.getStop());
+				for (Entry<Range, Float> entry : ranges.entrySet()) {
+					Range range=entry.getKey();
+					prep.setFloat(1, range.getStart());
+					prep.setFloat(2, range.getStop());
+					prep.setFloat(3, entry.getValue());
 					prep.addBatch();
 				}
 				prep.executeBatch();
@@ -200,8 +207,6 @@ public class StripeFile extends SQLFile {
 					.prepareStatement("insert into spectra (SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray) VALUES (?,?,?,?,?,?,?,?,?,?)");
 			try {
 				for (Stripe stripe : stripes) {
-					ranges.add(stripe.getRange());
-					
 					prep.setString(1, stripe.getSpectrumName());
 					prep.setString(2, stripe.getPrecursorName());
 					prep.setInt(3, stripe.getSpectrumIndex());
@@ -269,7 +274,7 @@ public class StripeFile extends SQLFile {
 			Statement s=c.createStatement();
 			try {
 				s.execute("create table if not exists metadata ( Key string not null, Value string not null, primary key (Key) )");
-				s.execute("create table if not exists ranges ( Start float not null, Stop float not null )");
+				s.execute("create table if not exists ranges ( Start float not null, Stop float not null, DutyCycle float not null )");
 				s.execute("create table if not exists spectra ( SpectrumName string not null, PrecursorName string not null, SpectrumIndex int not null, ScanStartTime float not null, IsolationWindowLower float not null, IsolationWindowUpper float not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, primary key (SpectrumIndex) )");
 				s.execute("create table if not exists precursor ( SpectrumName string not null, SpectrumIndex int not null, ScanStartTime float not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, primary key (SpectrumIndex) )");
 

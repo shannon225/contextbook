@@ -22,13 +22,11 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TDoubleIntHashMap;
-import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.set.hash.TDoubleHashSet;
 import junit.framework.TestCase;
 
@@ -44,7 +42,7 @@ public class PeptideScoringTaskTest extends TestCase {
 		String peptide="FGGGSVELLK";
 		byte charge=(byte)2;
 
-		for (Range range : stripefile.getRanges()) {
+		for (Range range : stripefile.getRanges().keySet()) {
 			// first check to see if we need to process this stripe
 			boolean hasPeptides=false;
 			double mz=MassConstants.getChargedMass(peptide, charge);
@@ -83,10 +81,9 @@ public class PeptideScoringTaskTest extends TestCase {
 			ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 			tasks.add(entry);
 
-			final TDoubleObjectHashMap<XYPoint> backgroundScores=new TDoubleObjectHashMap<XYPoint>();
-			PeptideScoringTask task=new PeptideScoringTask(scorer, tasks, stripes, backgroundScores);
+			PeptideScoringTask task=new PeptideScoringTask(scorer, tasks, stripes);
 			
-			HashMap<LibraryEntry, XYTrace> result=task.process();
+			HashMap<LibraryEntry, PeptideScoringResult> result=task.process();
 		}
 	}
 

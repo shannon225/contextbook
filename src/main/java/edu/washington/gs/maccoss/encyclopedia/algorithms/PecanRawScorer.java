@@ -11,14 +11,18 @@ public class PecanRawScorer implements PSMScorer {
 	public PecanRawScorer(MassTolerance fragmentTolerance) {
 		this.fragmentTolerance = fragmentTolerance;
 	}
+	
 	public float score(LibraryEntry entry, Stripe spectrum) {
+		return subScore(entry, spectrum)[0];
+	}
+	public float[] subScore(LibraryEntry entry, Stripe spectrum) {
 		double[] libraryMasses=entry.getMassArray();
 		float[] libraryIntensities=entry.getIntensityArray();
 		
 		double[] spectrumMasses=spectrum.getMassArray();
 		float[] spectrumIntensities=spectrum.getIntensityArray();
 		
-		if (libraryMasses.length==0||spectrumMasses.length==0) return 0.0f;
+		if (libraryMasses.length==0||spectrumMasses.length==0) return new float[] {0.0f, 0.0f};
 
 		int numMatches=0; // FINAL SCORE
 		int numAboveThresholdMatches=0; // FINAL SCORE
@@ -53,10 +57,6 @@ public class PecanRawScorer implements PSMScorer {
 			}
 		}
 		
-		if (numAboveThresholdMatches<0.5*peptideLength) {
-			rawScore=0.0f;
-		}
-		
-		return rawScore;
+		return new float[] {rawScore, numAboveThresholdMatches};
 	}
 }

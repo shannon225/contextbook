@@ -14,6 +14,7 @@ public class SearchParameters {
 	private final int maxMissedCleavages=1;
 	private final byte minCharge=2;
 	private final byte maxCharge=3;
+	private final int minEluteTime=12;
 
 	public SearchParameters(FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme) {
 		this.fragType=fragType;
@@ -56,5 +57,8 @@ public class SearchParameters {
 
 	public byte getMinCharge() {
 		return minCharge;
+	}
+	public int getMinEluteTime() {
+		return minEluteTime;
 	}
 }
