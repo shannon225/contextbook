@@ -1,6 +1,17 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
 public class General {
+	public static String toString(float[] f) {
+		StringBuilder sb=new StringBuilder();
+		for (float g : f) {
+			if (sb.length()>0) {
+				sb.append(',');
+			}
+			sb.append(g);
+		}
+		return sb.toString();
+	}
+	
 	public static float[] firstDerivative(float[] v) {
 		float[] d=new float[v.length-1];
 		for (int i=1; i<v.length; i++) {
@@ -77,6 +88,24 @@ public class General {
 		double[] r=new double[v1.length];
 		for (int i=0; i<r.length; i++) {
 			r[i]=v1[i]+v2[i];
+		}
+		return r;
+	}
+
+	public static float[] add(float[] v1, float[] v2) {
+		assert(v1.length==v2.length);
+		
+		float[] r=new float[v1.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=v1[i]+v2[i];
+		}
+		return r;
+	}
+
+	public static float[] multiply(float[] v1, float m) {
+		float[] r=new float[v1.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=v1[i]*m;
 		}
 		return r;
 	}

@@ -7,14 +7,24 @@ import gnu.trove.list.array.TFloatArrayList;
 //@Immutable
 public class PecanRawScorer implements PSMScorer {
 	private final MassTolerance fragmentTolerance;
+	private final PecanAuxillaryScorer auxScorer;
 
-	public PecanRawScorer(MassTolerance fragmentTolerance) {
+	public PecanRawScorer(MassTolerance fragmentTolerance, PecanAuxillaryScorer auxScorer) {
 		this.fragmentTolerance = fragmentTolerance;
+		this.auxScorer=auxScorer;
 	}
 	
 	public float score(LibraryEntry entry, Stripe spectrum) {
 		return subScore(entry, spectrum)[0];
 	}
+	
+	public float[] auxScore(LibraryEntry entry, Stripe spectrum) {
+		return auxScorer.score(entry, spectrum);
+	}
+	public PecanAuxillaryScorer getAuxScorer() {
+		return auxScorer;
+	}
+	
 	public float[] subScore(LibraryEntry entry, Stripe spectrum) {
 		double[] libraryMasses=entry.getMassArray();
 		float[] libraryIntensities=entry.getIntensityArray();
@@ -24,7 +34,6 @@ public class PecanRawScorer implements PSMScorer {
 		
 		if (libraryMasses.length==0||spectrumMasses.length==0) return new float[] {0.0f, 0.0f};
 
-		int numMatches=0; // FINAL SCORE
 		int numAboveThresholdMatches=0; // FINAL SCORE
 		float rawScore=0.0f; // FINAL SCORE
 		

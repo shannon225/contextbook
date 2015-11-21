@@ -9,11 +9,13 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.IndexedObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.TFloatFloatHashMap;
+import gnu.trove.map.hash.TIntFloatHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 
 public class PecanScoringTask extends PeptideScoringTask {
@@ -59,9 +61,11 @@ public class PecanScoringTask extends PeptideScoringTask {
 
 			ArrayList<ScoredObject<IndexedObject<Stripe>>> goodStripes=new ArrayList<ScoredObject<IndexedObject<Stripe>>>();
 
+			TFloatArrayList windowedBackgroundSubtractedScores=new TFloatArrayList();
 			int scanAveragingWindow=2*scanAveragingMargin+1;
 			int scanExcludingWindow=2*scanAveragingWindow+1;
 			// moving average on background subtracted scores, this approach uses less data for the first and last scanAveragingMargin scans
+			TIntFloatHashMap scoreByIndex=new TIntFloatHashMap();
 			for (int i=0; i<backgroundSubtractedScores.size(); i++) {
 				float sum=0.0f;
 				int count=0;
@@ -73,7 +77,8 @@ public class PecanScoringTask extends PeptideScoringTask {
 					}
 				}
 				float smoothedScore=sum/count;
-				backgroundSubtractedScores.set(i, smoothedScore);
+				windowedBackgroundSubtractedScores.add(smoothedScore);
+				scoreByIndex.put(i, smoothedScore);
 
 				if (numAboveThresholdMatches.get(i)>=requiredNumAboveThreshold) {
 					goodStripes.add(new ScoredObject<IndexedObject<Stripe>>(smoothedScore, new IndexedObject<Stripe>(i, stripes.get(i))));
@@ -88,11 +93,30 @@ public class PecanScoringTask extends PeptideScoringTask {
 				if (takenScans.contains(stripe.x)) {
 					continue;
 				} else {
-					result.addStripe(goodStripes.get(i).x, stripe.y);
+					float[] averageAuxScores=null;
+					float total=0.0f;
 					for (int j=0; j<scanExcludingWindow; j++) {
 						int index=stripe.x-scanAveragingWindow+j;
+						float indexScore=scoreByIndex.get(index);
+						
 						takenScans.add(index);
+						float[] auxScores=getScorer().auxScore(entry, stripe.y);
+						if (indexScore>0) {
+							if (averageAuxScores==null) {
+								averageAuxScores=General.multiply(auxScores, indexScore);
+							} else {
+								averageAuxScores=General.add(averageAuxScores, General.multiply(auxScores, indexScore));
+							}
+						}
+						total+=indexScore;
 					}
+					if (averageAuxScores!=null&&total>=0.0f) {
+						averageAuxScores=General.multiply(averageAuxScores, 1.0f/total);
+					} else {
+						averageAuxScores=getScorer().getAuxScorer().getMissingDataScores();
+					}
+					
+					result.addStripe(goodStripes.get(i).x, averageAuxScores, stripe.y);
 				}
 			}
 			
@@ -100,7 +124,7 @@ public class PecanScoringTask extends PeptideScoringTask {
 			TFloatFloatHashMap scoreMap=new TFloatFloatHashMap();
 			for (int i=0; i<super.stripes.size(); i++) {
 				if (numAboveThresholdMatches.get(i)>=requiredNumAboveThreshold) {
-					scoreMap.put(super.stripes.get(i).getScanStartTime(), backgroundSubtractedScores.get(i));
+					scoreMap.put(super.stripes.get(i).getScanStartTime(), windowedBackgroundSubtractedScores.get(i));
 				} else {
 					scoreMap.put(super.stripes.get(i).getScanStartTime(), 0.0f);
 				}

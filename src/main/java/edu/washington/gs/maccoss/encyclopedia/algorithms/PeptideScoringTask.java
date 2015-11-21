@@ -36,7 +36,7 @@ public class PeptideScoringTask extends ThreadableTask<HashMap<LibraryEntry, Pep
 				
 				float rt=stripe.getScanStartTime();
 				scoreMap.put(rt, score);
-				result.addStripe(score, stripe);
+				result.addStripe(score, new float[0], stripe);
 			}
 			//EValueCalculator calculator=new EValueCalculator(scoreMap);
 			result.setTrace(new XYTrace(scoreMap, GraphType.line, entry.getPeptideModSeq()));

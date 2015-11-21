@@ -9,25 +9,27 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import gnu.trove.list.array.TFloatArrayList;
 
 //@Immutable
-public class PecanScorer implements PSMScorer {
+public class PecanAuxillaryScorer {
 	private final SearchParameters parameters;
 	private final PrecursorScanMap precursors;
+	private final float maxPPMError;
 
-
-	public PecanScorer(SearchParameters parameters, PrecursorScanMap precursors) {
+	public PecanAuxillaryScorer(SearchParameters parameters, PrecursorScanMap precursors) {
 		this.parameters=parameters;
 		this.precursors=precursors;
+		maxPPMError=(float)parameters.getPrecursorTolerance().getPpmTolerance();
 	}
 
 
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer#score(edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry, edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe)
 	 */
-	public float score(LibraryEntry entry, Stripe spectrum) {
+	public float[] score(LibraryEntry entry, Stripe spectrum) {
 		// precursor scoring
 		float[] precursorScores=getPrecursorScores(entry, spectrum.getScanStartTime());
 		float averageAbsPPM=precursorScores[0]; // FINAL SCORE
 		float isotopeDotProduct=precursorScores[1]; // FINAL SCORE
+		float averagePPM=precursorScores[2]; // FINAL SCORE
 		
 		// fragment scoring
 		double[] libraryMasses=entry.getMassArray();
@@ -36,7 +38,9 @@ public class PecanScorer implements PSMScorer {
 		double[] spectrumMasses=spectrum.getMassArray();
 		float[] spectrumIntensities=spectrum.getIntensityArray();
 		
-		if (libraryMasses.length==0||spectrumMasses.length==0) return 0.0f;
+		if (libraryMasses.length==0||spectrumMasses.length==0) {
+			return getMissingDataScores();
+		}
 		
 		int numMatches=0; // FINAL SCORE
 		int numAboveThresholdMatches=0; // FINAL SCORE
@@ -78,7 +82,12 @@ public class PecanScorer implements PSMScorer {
 			}
 		}
 		
-		return rawScore;
+		return new float[] {rawScore, peakSimilarity, weightedRawScore, numAboveThresholdMatches, numMatches, averageAbsPPM, averagePPM, isotopeDotProduct};
+	}
+
+
+	public float[] getMissingDataScores() {
+		return new float[] {0, 0, 0, 0, 0, maxPPMError, maxPPMError, 0};
 	}
 
 
@@ -89,14 +98,23 @@ public class PecanScorer implements PSMScorer {
 		float[] intensities=pair.y;
 		
 		// weighted average AbsPPM
+		float averagePPM=0.0f; // FINAL SCORE
 		float averageAbsPPM=0.0f; // FINAL SCORE
 		float sumIntensities=0.0f;
 		for (int i = 0; i < masses.length; i++) {
-			averageAbsPPM+=(float)Math.abs((masses[i]-entry.getPrecursorMZ())/1000000.0f)*intensities[i];
+			double delta=masses[i]-entry.getPrecursorMZ();
+			float ppm=(float)(delta/1000000.0*intensities[i]);
+			averagePPM+=ppm;
+			averageAbsPPM+=Math.abs(ppm);
 			sumIntensities+=intensities[i];
 		}
-		averageAbsPPM=averageAbsPPM/sumIntensities;
-		
+		if (sumIntensities>0) {
+			averagePPM=averagePPM/sumIntensities;
+			averageAbsPPM=averageAbsPPM/sumIntensities;
+		} else {
+			averagePPM=maxPPMError;
+			averageAbsPPM=maxPPMError;
+		}
 		// precursor idotp
 		intensities=IsotopicDistributionCalculator.normalizeToMax(intensities);
 		float[] predicted=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
@@ -109,6 +127,6 @@ public class PecanScorer implements PSMScorer {
 			}
 		}
 		
-		return new float[] {averageAbsPPM, isotopeDotProduct};
+		return new float[] {averageAbsPPM, isotopeDotProduct, averagePPM};
 	}
 }

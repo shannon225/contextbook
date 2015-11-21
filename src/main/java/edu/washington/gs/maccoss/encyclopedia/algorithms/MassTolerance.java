@@ -19,6 +19,9 @@ public class MassTolerance {
 	public double getPpmTolerance() {
 		return ppmTolerance;
 	}
+	public double getTolerance(double m) {
+		return ppmTolerance/1000000.0*m;
+	}
 	
 	public boolean equals(double m1, double m2) {
 		return compareTo(m1, m2)==0;

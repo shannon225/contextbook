@@ -25,6 +25,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.BackgroundGenerator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.DotProduct;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PecanAuxillaryScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PecanRawScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PecanScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
@@ -41,9 +42,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
@@ -93,11 +92,12 @@ public class StripeExtractor {
 		Pair<TDoubleIntHashMap[], ArrayList<String>[]> background=BackgroundGenerator.generateBackground(binArray, entries, PARAMETERS);
 		TDoubleIntHashMap[] binCounters=background.x;
 		ArrayList<String>[] backgroundProteomes=background.y;
+		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
+		
 		PSMScorer scorer=new DotProduct(PARAMETERS.getFragmentTolerance());
-		PecanRawScorer pecanScorer=new PecanRawScorer(PARAMETERS.getFragmentTolerance());
+		PecanRawScorer pecanScorer=new PecanRawScorer(PARAMETERS.getFragmentTolerance(), new PecanAuxillaryScorer(PARAMETERS, precursors));
 		
 		// get precursors
-		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
 		//PecanScorer scorer=new PecanScorer(PARAMETERS.getFragmentTolerance(), PARAMETERS.getPrecursorTolerance(), precursors);
 		
 		// get stripes
@@ -107,9 +107,25 @@ public class StripeExtractor {
 			int scanAveragingMargin=(int)(PARAMETERS.getMinEluteTime()/dutyCycle/2); // floor
 			
 			System.out.println("Processing "+range+" ("+scanAveragingMargin+")");
+			
+			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+			Collections.sort(stripes);
+			
+			int index=Arrays.binarySearch(binArray, range.getMiddle());
+			index=(-(index+1))-1;
+			TDoubleIntHashMap map=binCounters[index];
+			double[] keys=map.keys();
+			Arrays.sort(keys);
+			ArrayList<String> backgroundProteomeArray=backgroundProteomes[index];
+			HashSet<String> backgroundProteomeSet=new HashSet<String>(backgroundProteomeArray);
+			
+			if (peptides!=null) {
+				backgroundProteomeArray=new ArrayList<String>(Arrays.asList(peptides));
+			}
+			
 			// first check to see if we need to process this stripe
 			boolean hasPeptides=false;
-			outer:for (String peptide : peptides) {
+			outer:for (String peptide : backgroundProteomeArray) {
 				for (byte charge : charges) {
 					double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
 					if (range.contains((float)mz)) {
@@ -127,17 +143,6 @@ public class StripeExtractor {
 			LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 			//ExecutorService executor=Executors.newFixedThreadPool(cores, threadFactory);
-			
-			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
-			Collections.sort(stripes);
-			
-			int index=Arrays.binarySearch(binArray, range.getMiddle());
-			index=(-(index+1))-1;
-			TDoubleIntHashMap map=binCounters[index];
-			double[] keys=map.keys();
-			Arrays.sort(keys);
-			ArrayList<String> backgroundProteomeArray=backgroundProteomes[index];
-			HashSet<String> backgroundProteomeSet=new HashSet<String>(backgroundProteomeArray);
 
 			int backgroundPeptideCount=0;
 			int seed=RandomGenerator.randomInt(1);
@@ -165,8 +170,8 @@ public class StripeExtractor {
 			}
 			executor.shutdown();
 			while (!executor.isTerminated()) {
-				System.out.println(workQueue.size()+" peptides remaining...");
-				Thread.sleep(50);
+				System.out.println(workQueue.size()+" background peptides remaining for "+range+"...");
+				Thread.sleep(100);
 			}
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
@@ -208,10 +213,10 @@ public class StripeExtractor {
 					return true;
 				};
 			});
-			Charter.launchChart("RT ("+range+" M/Z)", "Background Score", new XYTrace(meanPlusStdev, GraphType.line, "M+S"), new XYTrace(meanStdev, GraphType.line, "M"), new XYTrace(meanMinusStdev, GraphType.line, "M-S"));
+			//Charter.launchChart("RT ("+range+" M/Z)", "Background Score", new XYTrace(meanPlusStdev, GraphType.line, "M+S"), new XYTrace(meanStdev, GraphType.line, "M"), new XYTrace(meanMinusStdev, GraphType.line, "M-S"));
 
 			results.clear();
-			for (String peptide : peptides) {
+			for (String peptide : backgroundProteomeArray) {
 				for (byte charge : charges) {
 					double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
 					if (range.contains((float)mz)) {
@@ -232,8 +237,10 @@ public class StripeExtractor {
 			}
 			executor.shutdown();
 			while (!executor.isTerminated()) {
-				executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+				System.out.println(workQueue.size()+" peptides remaining for "+range+"...");
+				Thread.sleep(100);
 			}
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
 			ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
 			for (Future<HashMap<LibraryEntry, PeptideScoringResult>> future : results) {
@@ -243,14 +250,23 @@ public class StripeExtractor {
 					PeptideScoringResult peptideResult=resultEntry.getValue();
 					
 					int rank=1;
-					for (ScoredObject<Stripe> goodStripe : peptideResult.getGoodStripes()) {
-						System.out.println(peptide.getPeptideModSeq()+"\t"+rank+"\t"+goodStripe.x+"\t"+goodStripe.y.getScanStartTime());
+					for (Pair<ScoredObject<Stripe>, float[]> goodStripe : peptideResult.getGoodStripes()) {
+						float primaryScore=goodStripe.x.x;
+						Stripe stripe=goodStripe.x.y;
+						float[] auxScores=goodStripe.y;
+						
+						System.out.print(peptide.getPeptideModSeq()+"\t"+rank+"\t"+primaryScore+"\t"+stripe.getScanStartTime());
+						for (float s : auxScores) {
+							System.out.print("\t"+s);
+						}
+						System.out.println();
 						rank++;
+						if (rank>3) break;
 					}
 					traces.add(peptideResult.getTrace());
 				}
 			}
-			Charter.launchChart("RT ("+range+" M/Z)", "Score", traces.toArray(new XYTrace[traces.size()]));
+			//Charter.launchChart("RT ("+range+" M/Z)", "Score", traces.toArray(new XYTrace[traces.size()]));
 		}
 	}
 

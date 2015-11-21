@@ -53,7 +53,13 @@ public class PrecursorScanMap {
 				intensity+=intensities[indicies[j]];
 				weightedMz+=intensities[indicies[j]]*masses[indicies[j]];
 			}
-			isotopeIntensities[i]=new Peak(weightedMz/intensity, intensity);
+			if (intensity>0) {
+				weightedMz=weightedMz/intensity;
+			} else {
+				weightedMz=mz+tolerance.getTolerance(mz);
+			}
+			
+			isotopeIntensities[i]=new Peak(weightedMz, intensity);
 		}
 		return isotopeIntensities;
 	}
