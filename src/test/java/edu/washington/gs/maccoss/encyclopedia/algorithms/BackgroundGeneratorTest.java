@@ -20,8 +20,8 @@ public class BackgroundGeneratorTest extends TestCase {
 			DigestionEnzyme.getEnzyme("trypsin"));
 
 	public void testGenerateBackground() {
-		InputStream is=getClass().getResourceAsStream("/mouse_20150911_uniprot_sp.fasta");
-		ArrayList<FastaEntry> entries=FastaReader.readFasta(is, "mouse_20150911_uniprot_sp.fasta");
+		InputStream is=getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
+		ArrayList<FastaEntry> entries=FastaReader.readFasta(is, "contam_correctNL.fasta");
 		TDoubleArrayList bins=new TDoubleArrayList();
 		for (double i=400.0; i<=900.0; i+=5.0) {
 			bins.add(i);
@@ -29,10 +29,10 @@ public class BackgroundGeneratorTest extends TestCase {
 		double[] binArray=bins.toArray();
 		TDoubleIntHashMap[] binCounters=BackgroundGenerator.generateBackground(binArray, entries, PARAMETERS).x;
 
-		int[] expectedSizes=new int[] {62490, 63036, 64157, 66232, 66727, 66942, 68383, 68992, 70288, 71440, 72849, 73478, 74693, 76248, 74334, 76749, 77078, 78343, 78905, 78839, 78156, 80610, 80232,
-				80911, 80508, 82407, 81740, 81545, 83369, 82531, 83396, 82540, 84143, 85849, 85593, 85497, 85755, 85739, 85708, 86573, 84195, 84338, 85280, 86974, 84606, 86134, 86992, 86090, 86174,
-				86553, 84988, 85015, 85303, 88357, 84788, 87080, 86404, 87924, 85198, 86969, 85578, 86588, 86919, 88670, 88348, 88526, 85224, 85468, 85437, 83064, 83822, 85938, 85993, 82934, 85597,
-				84000, 81408, 81229, 84133, 81342, 82883, 79410, 80171, 84549, 78541, 81222, 81128, 80980, 80707, 82055, 82072, 79129, 81366, 78730, 79943, 81257, 80397, 78726, 79911, 80636};
+		int[] expectedSizes=new int[] {12947, 12863, 12121, 13008, 13247, 12621, 13515, 13164, 12994, 13728, 12558, 12716, 12922, 13640, 14059, 14519, 13873, 13905, 13586, 14301, 14008, 14000, 13647,
+				14254, 14122, 13397, 14887, 13874, 13798, 14489, 14233, 14007, 13566, 15137, 13792, 13668, 14333, 15410, 14122, 14181, 15481, 15281, 14351, 14593, 14310, 14418, 14462, 14785, 14622,
+				14687, 14659, 13923, 13929, 13496, 14808, 13492, 13944, 14091, 14558, 14221, 13911, 14424, 15009, 14365, 13643, 14993, 13765, 13756, 14815, 14678, 13506, 14730, 14072, 14664, 14113,
+				14842, 12950, 13992, 14175, 14092, 13183, 13616, 13661, 13656, 12513, 13931, 13640, 13776, 14047, 12697, 12775, 13310, 11787, 13537, 13241, 11704, 14093, 12448, 13417, 13056};
 		assertEquals(expectedSizes.length, binCounters.length);
 		for (int i=0; i<binCounters.length; i++) {
 			assertEquals(expectedSizes[i], binCounters[i].size());
@@ -49,7 +49,7 @@ public class BackgroundGeneratorTest extends TestCase {
 
 		FragmentationModel model=new FragmentationModel(peptide, PARAMETERS.getAAConstants());
 		double[] ions=model.getPrimaryIons(PARAMETERS.getFragType());
-		int[] expectedCounts=new int[] {1704, 5252, 323, 328, 85, 232, 73, 134, 84, 73, 85, 98, 156, 112, 185, 126, 304, 300};
+		int[] expectedCounts=new int[] {181, 388, 34, 17, 10, 16, 10, 14, 10, 10, 5, 14, 5, 11, 6, 5, 15, 18};
 		for (int i=0; i<ions.length; i++) {
 			double[] matches=PARAMETERS.getFragmentTolerance().getMatches(keys, ions[i]);
 
@@ -74,7 +74,7 @@ public class BackgroundGeneratorTest extends TestCase {
 
 		model=new FragmentationModel(peptide, PARAMETERS.getAAConstants());
 		ions=model.getPrimaryIons(PARAMETERS.getFragType());
-		expectedCounts=new int[] {5252, 463, 44, 903, 52, 8, 158, 43, 69, 122, 76, 63, 43, 100, 144, 94, 131, 244, 300, 309};
+		expectedCounts=new int[] {388, 41, 8, 60, 6, 3, 9, 3, 10, 14, 7, 8, 6, 7, 10, 6, 15, 22, 29, 32};
 		for (int i=0; i<ions.length; i++) {
 			double[] matches=PARAMETERS.getFragmentTolerance().getMatches(keys, ions[i]);
 

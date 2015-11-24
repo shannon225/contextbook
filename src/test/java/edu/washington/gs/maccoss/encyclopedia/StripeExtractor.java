@@ -57,19 +57,14 @@ import gnu.trove.procedure.TDoubleObjectProcedure;
 import gnu.trove.set.hash.TDoubleHashSet;
 
 public class StripeExtractor {
-	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
+	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
 
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		int cores=Runtime.getRuntime().availableProcessors();
 
-		File f=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/82593_lv_mcx_DIA_5mz_400to525.dia");
+		File f=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/20150708_Ecoli_0911_25x4mzDIA_500_600.dia");
 		StripeFile stripefile=new StripeFile();
 		stripefile.openFile(f);
-
-		// File lf=new
-		// File("/Users/searleb/Documents/school/projects/qe_phospho.elib");
-		// LibraryFile libraryFile=new LibraryFile();
-		// libraryFile.openFile(lf);
 
 		byte[] charges=new byte[] {(byte)2, (byte)3};
 		String[] peptides=new String[] {"ADVDAATLAR", "APIQWEER", "ATNLTVSAVR", "AVDSLVPIGR", "AYIDSTDSR", "DGLTDVYNK", "DGPGFYTTR", "DTPGFIVNR", "DVLSNLIPK", "DYPLIPVGK", "EAFLLFDR", "EALISQLTR",
@@ -77,8 +72,12 @@ public class StripeExtractor {
 				"KFVADGIFK", "LGFMSAFVK", "LLEAASVSSK", "LLFEELVR", "LNVLANVIR", "LQGDLVTIR", "LTLSALIDGK", "LTLSALVDGK", "LVNMLDAVR", "MFASFPTTK", "NDAGYSEPR", "NTYYASIAK", "QGVLTLEIR", "QIFLGGVDR",
 				"RAEVLDSTK", "RGDFIPGLR", "RLTDADAMK", "RLVVQQAGK", "RWEVAALR", "SFLPLLRR", "SLHTLFGDK", "SVQAAMEKR", "TAYVGENVR", "TDLTAVPASR", "TIPWLENR", "TLEDILFR", "TQLVSNLKK", "TQVQSVIDK",
 				"TSGGAGGLGSLR", "VAAENQYGR", "VDFDDIHR", "VGPANPSLQK", "VLSIGDGIAR", "VTLVSAAPEK", "VVDDELATR", "VVFIFGPDK", "WPLYLSTK", "YDHLGDSPK", "YVDMSAKSK", "YVIEFIAR"};
-		peptides=new String[] {"FGGGSVELLK"};
+		peptides=new String[] {"TYVPADDYR"};
+		//peptides=null; // SEARCH EVERYTHING!
 
+		InputStream is=stripefile.getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
+		ArrayList<FastaEntry> entries=FastaReader.readFasta(is, "ecoli-190209-contam_correctNL.fasta");
+		
 		TDoubleHashSet boundaries=new TDoubleHashSet();
 		for (Range range : stripefile.getRanges().keySet()) {
 			boundaries.add(range.getStart());
@@ -86,9 +85,6 @@ public class StripeExtractor {
 		}
 		double[] binArray=boundaries.toArray();
 		Arrays.sort(binArray);
-
-		InputStream is=stripefile.getClass().getResourceAsStream("/mouse_20150911_uniprot_sp.fasta");
-		ArrayList<FastaEntry> entries=FastaReader.readFasta(is, "mouse_20150911_uniprot_sp.fasta");
 		Pair<TDoubleIntHashMap[], ArrayList<String>[]> background=BackgroundGenerator.generateBackground(binArray, entries, PARAMETERS);
 		TDoubleIntHashMap[] binCounters=background.x;
 		ArrayList<String>[] backgroundProteomes=background.y;
@@ -107,9 +103,6 @@ public class StripeExtractor {
 			int scanAveragingMargin=(int)(PARAMETERS.getMinEluteTime()/dutyCycle/2); // floor
 			
 			System.out.println("Processing "+range+" ("+scanAveragingMargin+")");
-			
-			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
-			Collections.sort(stripes);
 			
 			int index=Arrays.binarySearch(binArray, range.getMiddle());
 			index=(-(index+1))-1;
@@ -137,6 +130,9 @@ public class StripeExtractor {
 			if (!hasPeptides) {
 				continue;
 			}
+			
+			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+			Collections.sort(stripes);
 
 			// prepare executor for background
 			ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("SWATH_"+range.getStart()+"to"+range.getStop()+"-%d").setDaemon(true).build();

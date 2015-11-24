@@ -7,9 +7,9 @@ import gnu.trove.list.array.TFloatArrayList;
 //@Immutable
 public class PecanRawScorer implements PSMScorer {
 	private final MassTolerance fragmentTolerance;
-	private final PecanAuxillaryScorer auxScorer;
+	private final AuxillaryPSMScorer auxScorer;
 
-	public PecanRawScorer(MassTolerance fragmentTolerance, PecanAuxillaryScorer auxScorer) {
+	public PecanRawScorer(MassTolerance fragmentTolerance, AuxillaryPSMScorer auxScorer) {
 		this.fragmentTolerance = fragmentTolerance;
 		this.auxScorer=auxScorer;
 	}
@@ -21,7 +21,7 @@ public class PecanRawScorer implements PSMScorer {
 	public float[] auxScore(LibraryEntry entry, Stripe spectrum) {
 		return auxScorer.score(entry, spectrum);
 	}
-	public PecanAuxillaryScorer getAuxScorer() {
+	public AuxillaryPSMScorer getAuxScorer() {
 		return auxScorer;
 	}
 	
@@ -60,10 +60,19 @@ public class PecanRawScorer implements PSMScorer {
 		
 		int peptideLength=entry.getPeptideSeq().length();
 		float individualIonThreshold=rawScore/(peptideLength+1);
+		int numMatches=0;
 		for (float peak : individualPeakScores.toArray()) {
-			if (peak>individualIonThreshold) {
+			numMatches++;
+			if (peak>=individualIonThreshold) {
 				numAboveThresholdMatches++;
 			}
+			if (spectrum.getScanStartTime()/60>36.5&&spectrum.getScanStartTime()/60<36.55) {
+				System.out.println(entry.getPeptideModSeq()+"\t"+(spectrum.getScanStartTime()/60.0f)+"\t"+peak);
+			}
+		}
+
+		if (spectrum.getScanStartTime()/60>36.5&&spectrum.getScanStartTime()/60<36.55) {
+			System.out.println(entry.getPeptideModSeq()+"\t"+(spectrum.getScanStartTime()/60.0f)+"\t"+rawScore+"\t"+numMatches+"\t"+numAboveThresholdMatches+"\t"+individualIonThreshold);
 		}
 		
 		return new float[] {rawScore, numAboveThresholdMatches};

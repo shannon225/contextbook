@@ -35,10 +35,10 @@ public class Charter {
 				644.3249822, 755.3933965, 772.3835602, 852.4461605, 885.4676242, 980.5411235, 998.5516882}, new double[] {0.021099463, 0.00721319, 0.10845732, 0.116413645, 0.39157316, 0.1849763,
 				0.443399, 0.35894206, 0.43697295, 0.47858942, 0.5025189, 0.34656474, 0.26218376, 0.27163184, 0.2108471, 0.23929471, 0.12108889, 0.12206937}, GraphType.line, "Trace2");
 		
-		launchChart("M/Z", "Intensity", trace, trace2);
+		launchChart("M/Z", "Intensity", false, trace, trace2);
 	}
 
-	public static void launchChart(String xAxis, String yAxis, XYTrace... traces) {
+	public static void launchChart(String xAxis, String yAxis, boolean displayLegend, XYTrace... traces) {
 		final JFrame f=new JFrame("Runs vs Reference");
 		f.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
@@ -46,14 +46,14 @@ public class Charter {
 			}
 		});
 
-		f.getContentPane().add(getChart(xAxis, yAxis, traces), BorderLayout.CENTER);
+		f.getContentPane().add(getChart(xAxis, yAxis, displayLegend, traces), BorderLayout.CENTER);
 
 		f.pack();
 		f.setSize(new Dimension(1000, 770));
 		f.setVisible(true);
 	}
 
-	public static ChartPanel getChart(String xAxis, String yAxis, XYTrace... traces) {
+	public static ChartPanel getChart(String xAxis, String yAxis, boolean displayLegend, XYTrace... traces) {
 		NumberAxis numberaxis=new NumberAxis(xAxis);
 		numberaxis.setAutoRangeIncludesZero(false);
 		NumberAxis numberaxis1=new NumberAxis(yAxis);
@@ -139,7 +139,9 @@ public class Charter {
 		JFreeChart chart=new JFreeChart(plot);
 		chart.setBackgroundPaint(Color.white);
 		ChartPanel chartPanel=new ChartPanel(chart, false);
-		chartPanel.getChart().removeLegend();
+		if (!displayLegend) {
+			chartPanel.getChart().removeLegend();
+		}
 
 		NumberAxis rangeAxis=(NumberAxis)((XYPlot)plot).getRangeAxis();
 

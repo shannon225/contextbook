@@ -29,8 +29,8 @@ public class MzmlReader {
 		stripeFile.openFile();
 
 		Logger.logLine("Starting ...");
-		File xmlFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/82593_lv_mcx_DIA_5mz_400to525.mzML");
-		File saveFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/82593_lv_mcx_DIA_5mz_400to525.dia");
+		File xmlFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/20150708_Ecoli_0911_25x4mzDIA_500_600.mzML");
+		File saveFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/20150708_Ecoli_0911_25x4mzDIA_500_600.dia");
 		
 		MzMLUnmarshaller unmarshaller=new MzMLUnmarshaller(xmlFile);
 

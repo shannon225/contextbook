@@ -113,7 +113,7 @@ public class PecanScoringTask extends PeptideScoringTask {
 					if (averageAuxScores!=null&&total>=0.0f) {
 						averageAuxScores=General.multiply(averageAuxScores, 1.0f/total);
 					} else {
-						averageAuxScores=getScorer().getAuxScorer().getMissingDataScores();
+						averageAuxScores=getScorer().getAuxScorer().getMissingDataScores(entry);
 					}
 					
 					result.addStripe(goodStripes.get(i).x, averageAuxScores, stripe.y);

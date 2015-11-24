@@ -22,10 +22,10 @@ public class FastaReaderTest extends TestCase {
 	}
 
 	public void testFastaReader() {
-		InputStream is=getClass().getResourceAsStream("/mouse_20150911_uniprot_sp.fasta");
-		ArrayList<FastaEntry> entries=FastaReader.readFasta(is, "mouse_20150911_uniprot_sp.fasta");
+		InputStream is=getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
+		ArrayList<FastaEntry> entries=FastaReader.readFasta(is, "ecoli-190209-contam_correctNL.fasta");
 
-		assertEquals(24754, entries.size());
+		assertEquals(4178, entries.size());
 
 		/*
 		TIntObjectHashMap<TFloatArrayList> peptideDefects=new TIntObjectHashMap<TFloatArrayList>();

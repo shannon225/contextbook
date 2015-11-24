@@ -9,7 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import gnu.trove.list.array.TFloatArrayList;
 
 //@Immutable
-public class PecanAuxillaryScorer {
+public class PecanAuxillaryScorer implements AuxillaryPSMScorer {
 	private final SearchParameters parameters;
 	private final PrecursorScanMap precursors;
 	private final float maxPPMError;
@@ -20,10 +20,7 @@ public class PecanAuxillaryScorer {
 		maxPPMError=(float)parameters.getPrecursorTolerance().getPpmTolerance();
 	}
 
-
-	/* (non-Javadoc)
-	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer#score(edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry, edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe)
-	 */
+	@Override
 	public float[] score(LibraryEntry entry, Stripe spectrum) {
 		// precursor scoring
 		float[] precursorScores=getPrecursorScores(entry, spectrum.getScanStartTime());
@@ -39,7 +36,7 @@ public class PecanAuxillaryScorer {
 		float[] spectrumIntensities=spectrum.getIntensityArray();
 		
 		if (libraryMasses.length==0||spectrumMasses.length==0) {
-			return getMissingDataScores();
+			return getMissingDataScores(entry);
 		}
 		
 		int numMatches=0; // FINAL SCORE
@@ -84,9 +81,14 @@ public class PecanAuxillaryScorer {
 		
 		return new float[] {rawScore, peakSimilarity, weightedRawScore, numAboveThresholdMatches, numMatches, averageAbsPPM, averagePPM, isotopeDotProduct};
 	}
+	
+	@Override
+	public String[] getScoreNames(LibraryEntry entry) {
+		return new String[] {"rawScore", "peakSimilarity", "weightedRawScore", "numAboveThresholdMatches", "numMatches", "averageAbsPPM", "averagePPM", "isotopeDotProduct"};
+	}
 
-
-	public float[] getMissingDataScores() {
+	@Override
+	public float[] getMissingDataScores(LibraryEntry entry) {
 		return new float[] {0, 0, 0, 0, 0, maxPPMError, maxPPMError, 0};
 	}
 

@@ -79,6 +79,8 @@ public class FragmentationModel {
 	 */
 	public double[] getPrimaryIons(FragmentationType type) {
 		switch (type) {
+			case YONLY:
+				return concatAndSort(getYIons());
 			case CID:
 				return concatAndSort(getBIons(), getYIons());
 			case ETD:
