@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,11 +73,14 @@ public class StripeExtractor {
 				"KFVADGIFK", "LGFMSAFVK", "LLEAASVSSK", "LLFEELVR", "LNVLANVIR", "LQGDLVTIR", "LTLSALIDGK", "LTLSALVDGK", "LVNMLDAVR", "MFASFPTTK", "NDAGYSEPR", "NTYYASIAK", "QGVLTLEIR", "QIFLGGVDR",
 				"RAEVLDSTK", "RGDFIPGLR", "RLTDADAMK", "RLVVQQAGK", "RWEVAALR", "SFLPLLRR", "SLHTLFGDK", "SVQAAMEKR", "TAYVGENVR", "TDLTAVPASR", "TIPWLENR", "TLEDILFR", "TQLVSNLKK", "TQVQSVIDK",
 				"TSGGAGGLGSLR", "VAAENQYGR", "VDFDDIHR", "VGPANPSLQK", "VLSIGDGIAR", "VTLVSAAPEK", "VVDDELATR", "VVFIFGPDK", "WPLYLSTK", "YDHLGDSPK", "YVDMSAKSK", "YVIEFIAR"};
-		peptides=new String[] {"TYVPADDYR"};
-		//peptides=null; // SEARCH EVERYTHING!
+		peptides=new String[] {"LVDIVEPTEK"};
+		peptides=null; // SEARCH EVERYTHING!
 
 		InputStream is=stripefile.getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
 		ArrayList<FastaEntry> entries=FastaReader.readFasta(is, "ecoli-190209-contam_correctNL.fasta");
+
+		//entries=FastaReader.readFasta(new File("/Users/searleb/Documents/projects/pecan/mouse_20150911_uniprot_sp.fasta"));
+		PrintWriter writer = new PrintWriter("/Users/searleb/Documents/projects/pecan/ecoli_dataset/encyc_report.txt", "UTF-8");
 		
 		TDoubleHashSet boundaries=new TDoubleHashSet();
 		for (Range range : stripefile.getRanges().keySet()) {
@@ -100,7 +104,7 @@ public class StripeExtractor {
 		for (Entry<Range, Float> entry : stripefile.getRanges().entrySet()) {
 			Range range=entry.getKey();
 			float dutyCycle=entry.getValue();
-			int scanAveragingMargin=(int)(PARAMETERS.getMinEluteTime()/dutyCycle/2); // floor
+			int scanAveragingMargin=(int)(((PARAMETERS.getMinEluteTime())/dutyCycle+1)/2); // floor
 			
 			System.out.println("Processing "+range+" ("+scanAveragingMargin+")");
 			
@@ -112,13 +116,16 @@ public class StripeExtractor {
 			ArrayList<String> backgroundProteomeArray=backgroundProteomes[index];
 			HashSet<String> backgroundProteomeSet=new HashSet<String>(backgroundProteomeArray);
 			
+			ArrayList<String> targetPeptides;
 			if (peptides!=null) {
-				backgroundProteomeArray=new ArrayList<String>(Arrays.asList(peptides));
+				targetPeptides=new ArrayList<String>(Arrays.asList(peptides));
+			} else {
+				targetPeptides=backgroundProteomeArray;
 			}
 			
 			// first check to see if we need to process this stripe
 			boolean hasPeptides=false;
-			outer:for (String peptide : backgroundProteomeArray) {
+			outer:for (String peptide : targetPeptides) {
 				for (byte charge : charges) {
 					double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
 					if (range.contains((float)mz)) {
@@ -152,7 +159,7 @@ public class StripeExtractor {
 					if (range.contains((float)mz)) {
 						String random=PeptideUtils.getDecoy(peptide, backgroundProteomeSet, PARAMETERS);
 						FragmentationModel randmodel=new FragmentationModel(random, PARAMETERS.getAAConstants());
-						PecanLibraryEntry randentry=randmodel.getPecanSpectrum(charge, keys, map, PARAMETERS);
+						PecanLibraryEntry randentry=randmodel.getPecanSpectrum(charge, keys, map, PARAMETERS, true);
 
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						tasks.add(randentry);
@@ -212,15 +219,15 @@ public class StripeExtractor {
 			//Charter.launchChart("RT ("+range+" M/Z)", "Background Score", new XYTrace(meanPlusStdev, GraphType.line, "M+S"), new XYTrace(meanStdev, GraphType.line, "M"), new XYTrace(meanMinusStdev, GraphType.line, "M-S"));
 
 			results.clear();
-			for (String peptide : backgroundProteomeArray) {
+			for (String peptide : targetPeptides) {
 				for (byte charge : charges) {
 					double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
 					if (range.contains((float)mz)) {
 						FragmentationModel model=new FragmentationModel(peptide, PARAMETERS.getAAConstants());
-						PecanLibraryEntry pecanEntry=model.getPecanSpectrum(charge, keys, map, PARAMETERS);
+						PecanLibraryEntry pecanEntry=model.getPecanSpectrum(charge, keys, map, PARAMETERS, false);
 
-						FragmentationModel revmodel=new FragmentationModel(PeptideUtils.getSmartDecoy(peptide, backgroundProteomeSet, PARAMETERS), PARAMETERS.getAAConstants());
-						PecanLibraryEntry reventry=revmodel.getPecanSpectrum(charge, keys, map, PARAMETERS);
+						FragmentationModel revmodel=new FragmentationModel(PeptideUtils.getSmartDecoy(peptide, charge, backgroundProteomeSet, PARAMETERS), PARAMETERS.getAAConstants());
+						PecanLibraryEntry reventry=revmodel.getPecanSpectrum(charge, keys, map, PARAMETERS, true);
 
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						tasks.add(pecanEntry);
@@ -242,7 +249,7 @@ public class StripeExtractor {
 			for (Future<HashMap<LibraryEntry, PeptideScoringResult>> future : results) {
 				HashMap<LibraryEntry, PeptideScoringResult> result=future.get();
 				for (Entry<LibraryEntry, PeptideScoringResult> resultEntry : result.entrySet()) {
-					LibraryEntry peptide=resultEntry.getKey();
+					PecanLibraryEntry peptide=(PecanLibraryEntry)resultEntry.getKey();
 					PeptideScoringResult peptideResult=resultEntry.getValue();
 					
 					int rank=1;
@@ -251,19 +258,23 @@ public class StripeExtractor {
 						Stripe stripe=goodStripe.x.y;
 						float[] auxScores=goodStripe.y;
 						
-						System.out.print(peptide.getPeptideModSeq()+"\t"+rank+"\t"+primaryScore+"\t"+stripe.getScanStartTime());
-						for (float s : auxScores) {
-							System.out.print("\t"+s);
+						if (rank==1) {
+							writer.print(peptide.getPeptideModSeq()+"\t"+peptide.isDecoy()+"\t"+rank+"\t"+primaryScore+"\t"+stripe.getScanStartTime());
+							for (float s : auxScores) {
+								writer.print("\t"+s);
+							}
+							writer.println();
 						}
-						System.out.println();
 						rank++;
 						if (rank>3) break;
 					}
 					traces.add(peptideResult.getTrace());
 				}
 			}
-			//Charter.launchChart("RT ("+range+" M/Z)", "Score", traces.toArray(new XYTrace[traces.size()]));
+			//Charter.launchChart("RT ("+range+" M/Z)", "Score", true, traces.toArray(new XYTrace[traces.size()]));
+			writer.flush();
 		}
+		writer.close();
 	}
 
 }

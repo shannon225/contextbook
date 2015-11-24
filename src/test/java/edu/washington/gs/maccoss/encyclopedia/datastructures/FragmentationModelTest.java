@@ -13,14 +13,14 @@ public class FragmentationModelTest extends TestCase {
 	public void testPrimaryIons() {
 		String sequence="PEPT[+80]IDER";
 		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
-		double[] ions=model.getPrimaryIons(FragmentationType.CID);
+		double[] ions=model.getPrimaryIons(FragmentationType.CID, (byte)2);
 		double[] expected=new double[] {98.06063, 175.11955, 227.10323, 304.16215, 324.15603, 407.226834, 419.18915, 505.20373, 520.310934, 532.27325, 615.344054, 618.28783, 635.337934,
 				712.3968540000001, 713.32095, 733.31483, 764.380534, 810.3737500000001, 841.4394540000001, 862.35743, 920.481634, 938.4922540000001, 939.4163500000001, 1018.45853, 1036.4691500000001};
 		for (int i=0; i<ions.length; i++) {
 			assertEquals(expected[i], ions[i], 0.001);
 		}
 		
-		ions=model.getPrimaryIons(FragmentationType.ETD);
+		ions=model.getPrimaryIons(FragmentationType.ETD, (byte)2);
 		expected=new double[] {115.08717911000001, 158.09300089, 159.10082593, 244.12977911, 287.13560089, 288.14342593, 341.18257911, 402.16260088999996, 403.17042592999996, 424.25338311,
 				515.2467008899999, 516.25452593, 522.23027911, 537.33748311, 598.31750489, 599.3253299300001, 635.31437911, 652.36448311, 695.37030489, 696.29440089, 696.3781299300001,
 				697.3022259300001, 750.34137911, 781.40708311, 793.3472008900001, 794.3550259300001, 824.41290489, 825.4207299300001, 879.38397911, 921.4657048900001, 922.3898008900001,
@@ -109,6 +109,7 @@ public class FragmentationModelTest extends TestCase {
 	
 	public void testPecanLibraryEntry() {
 		PecanLibraryEntry entry=getPecanEntry();
+		assertEquals(4.202089f, entry.getEuclidianDistance(), 0.00001f);
 
 		float[] expectedIntensities=new float[] {0.016653385f, 0.005693227f, 0.0856032f, 0.09188297f, 0.30906087f, 0.14599809f, 0.349966f, 0.28330582f, 0.34489402f, 0.3777411f, 0.39662814f,
 				0.27353665f, 0.20693642f, 0.21439359f, 0.1664174f, 0.18887055f, 0.095573045f, 0.096346915f};
@@ -880,7 +881,7 @@ public class FragmentationModelTest extends TestCase {
 
 		String peptide="ILQEGVDPK";
 		FragmentationModel model=new FragmentationModel(peptide, PARAMETERS.getAAConstants());
-		PecanLibraryEntry entry=model.getPecanSpectrum((byte)2, keys, map, PARAMETERS);
+		PecanLibraryEntry entry=model.getPecanSpectrum((byte)2, keys, map, PARAMETERS, false);
 		return entry;
 	}
 }

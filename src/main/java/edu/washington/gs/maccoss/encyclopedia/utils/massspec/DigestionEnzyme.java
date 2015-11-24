@@ -120,6 +120,8 @@ public class DigestionEnzyme {
 	}
 	
 	public ArrayList<String> digestProtein(String sequence, int minLength, int maxLength, int maxMissedCleavages) {
+		int totalAllowedStarts=maxMissedCleavages+1;
+		
 		ArrayList<String> peptides=new ArrayList<String>();
 		String peptide;
 		TIntArrayList starts=new TIntArrayList();
@@ -139,7 +141,7 @@ public class DigestionEnzyme {
 				}
 			}
 			starts.insert(0, stop+1);
-			if (starts.size()>maxMissedCleavages) {
+			if (starts.size()>totalAllowedStarts) {
 				starts.removeAt(starts.size()-1);
 			}
 		}

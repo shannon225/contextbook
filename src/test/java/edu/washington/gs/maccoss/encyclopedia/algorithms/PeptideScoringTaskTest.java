@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -26,7 +25,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PecanLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -35,17 +33,9 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
-import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TDoubleIntHashMap;
-import gnu.trove.map.hash.TDoubleObjectHashMap;
-import gnu.trove.procedure.TDoubleObjectProcedure;
 import gnu.trove.set.hash.TDoubleHashSet;
 
 public class PeptideScoringTaskTest {
@@ -64,7 +54,7 @@ public class PeptideScoringTaskTest {
 				"KFVADGIFK", "LGFMSAFVK", "LLEAASVSSK", "LLFEELVR", "LNVLANVIR", "LQGDLVTIR", "LTLSALIDGK", "LTLSALVDGK", "LVNMLDAVR", "MFASFPTTK", "NDAGYSEPR", "NTYYASIAK", "QGVLTLEIR", "QIFLGGVDR",
 				"RAEVLDSTK", "RGDFIPGLR", "RLTDADAMK", "RLVVQQAGK", "RWEVAALR", "SFLPLLRR", "SLHTLFGDK", "SVQAAMEKR", "TAYVGENVR", "TDLTAVPASR", "TIPWLENR", "TLEDILFR", "TQLVSNLKK", "TQVQSVIDK",
 				"TSGGAGGLGSLR", "VAAENQYGR", "VDFDDIHR", "VGPANPSLQK", "VLSIGDGIAR", "VTLVSAAPEK", "VVDDELATR", "VVFIFGPDK", "WPLYLSTK", "YDHLGDSPK", "YVDMSAKSK", "YVIEFIAR"};
-		peptides=new String[] {"TYVPADDYR"};
+		peptides=new String[] {"LVDIVEPTEK"};
 		//peptides=null; // SEARCH EVERYTHING!
 
 		InputStream is=stripefile.getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
@@ -100,7 +90,6 @@ public class PeptideScoringTaskTest {
 			double[] keys=map.keys();
 			Arrays.sort(keys);
 			ArrayList<String> backgroundProteomeArray=backgroundProteomes[index];
-			HashSet<String> backgroundProteomeSet=new HashSet<String>(backgroundProteomeArray);
 			
 			if (peptides!=null) {
 				backgroundProteomeArray=new ArrayList<String>(Arrays.asList(peptides));
@@ -132,7 +121,7 @@ public class PeptideScoringTaskTest {
 					double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
 					if (range.contains((float)mz)) {
 						FragmentationModel model=new FragmentationModel(peptide, PARAMETERS.getAAConstants());
-						PecanLibraryEntry pecanEntry=model.getPecanSpectrum(charge, keys, map, PARAMETERS);
+						PecanLibraryEntry pecanEntry=model.getPecanSpectrum(charge, keys, map, PARAMETERS, false);
 
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						tasks.add(pecanEntry);

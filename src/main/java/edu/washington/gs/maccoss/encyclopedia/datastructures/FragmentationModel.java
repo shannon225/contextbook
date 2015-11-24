@@ -30,9 +30,9 @@ public class FragmentationModel {
 		return aas;
 	}
 
-	public PecanLibraryEntry getPecanSpectrum(byte precursorCharge, double[] sortedBinCounterKeys, TDoubleIntHashMap binCounter, SearchParameters params) {
+	public PecanLibraryEntry getPecanSpectrum(byte precursorCharge, double[] sortedBinCounterKeys, TDoubleIntHashMap binCounter, SearchParameters params, boolean isDecoy) {
 		TDoubleFloatHashMap peakMap=new TDoubleFloatHashMap();
-		double[] ions=getPrimaryIons(params.getFragType());
+		double[] ions=getPrimaryIons(params.getFragType(), precursorCharge);
 		float totalOfSquares=0.0f;
 		for (int i=0; i<ions.length; i++) {
 			double[] matches=params.getFragmentTolerance().getMatches(sortedBinCounterKeys, ions[i]);
@@ -69,7 +69,7 @@ public class FragmentationModel {
 		String sequence=sb.toString();
 		double precursorMZ=params.getAAConstants().getChargedMass(sequence, precursorCharge);
 
-		return new PecanLibraryEntry(precursorMZ, precursorCharge, sequence, 1, 0.0f, 0, arrays.x, arrays.y);	
+		return new PecanLibraryEntry(precursorMZ, precursorCharge, sequence, 1, 0.0f, 0, arrays.x, arrays.y, isDecoy, euclidianDistance);	
 	}
 	
 	/**
@@ -77,17 +77,43 @@ public class FragmentationModel {
 	 * @param type
 	 * @return
 	 */
-	public double[] getPrimaryIons(FragmentationType type) {
+	public double[] getPrimaryIons(FragmentationType type, byte precursorCharge) {
 		switch (type) {
 			case YONLY:
-				return concatAndSort(getYIons());
+				double[] yIons=getYIons();
+				if (precursorCharge>2) {
+					return concatAndSort(yIons, getPlus2s(yIons));
+				} else {
+					return yIons;
+				}
 			case CID:
-				return concatAndSort(getBIons(), getYIons());
+				double[] yIonsCID=getYIons();
+				double[] bIonsCID=getBIons();
+				if (precursorCharge>2) {
+					return concatAndSort(yIonsCID, getPlus2s(yIonsCID), bIonsCID, getPlus2s(bIonsCID));
+				} else {
+					return concatAndSort(bIonsCID, yIonsCID);
+				}
 			case ETD:
-				return concatAndSort(getCIons(), getZIons(), getZp1Ions());
+				double[] cIonsCID=getCIons();
+				double[] zIonsCID=getZIons();
+				double[] zp1IonsCID=getZp1Ions();
+				if (precursorCharge>3) { // one charge gets quenched in fragmentation
+					return concatAndSort(cIonsCID, getPlus2s(cIonsCID), zIonsCID, getPlus2s(zIonsCID), zp1IonsCID, getPlus2s(zp1IonsCID));
+				} else {
+					return concatAndSort(getCIons(), getZIons(), getZp1Ions());
+				}
 			default:
 				throw new IllegalArgumentException("Unknown fragmentation type ["+type+"]");
 		}
+	}
+	
+	public static double[] getPlus2s(double[] masses) {
+		double[] p2=new double[masses.length];
+		for (int i=0; i<p2.length; i++) {
+			p2[i]=(masses[i]+MassConstants.protonMass)/2.0;
+		}
+		return p2;
 	}
 
 	private static double[] concatAndSort(double[]... a) {

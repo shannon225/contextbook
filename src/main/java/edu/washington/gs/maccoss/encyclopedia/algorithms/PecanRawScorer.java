@@ -1,8 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PecanLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import gnu.trove.list.array.TFloatArrayList;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 //@Immutable
 public class PecanRawScorer implements PSMScorer {
@@ -15,7 +16,7 @@ public class PecanRawScorer implements PSMScorer {
 	}
 	
 	public float score(LibraryEntry entry, Stripe spectrum) {
-		return subScore(entry, spectrum)[0];
+		return General.sum(getIndividualPeakScores(entry, spectrum, true)); // dot product
 	}
 	
 	public float[] auxScore(LibraryEntry entry, Stripe spectrum) {
@@ -25,56 +26,33 @@ public class PecanRawScorer implements PSMScorer {
 		return auxScorer;
 	}
 	
-	public float[] subScore(LibraryEntry entry, Stripe spectrum) {
+	public float[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize) {
 		double[] libraryMasses=entry.getMassArray();
-		float[] libraryIntensities=entry.getIntensityArray();
+		float[] libraryIntensities;
+		// NOTE: this seems questionable that unnormalized intensities are used for individual scores while normalized intensities are used for total scores. -BCS
+		if (!normalize&&entry instanceof PecanLibraryEntry) {
+			libraryIntensities=((PecanLibraryEntry)entry).getUnnormalizedIntensities();
+		} else {
+			libraryIntensities=entry.getIntensityArray();
+		}
 		
 		double[] spectrumMasses=spectrum.getMassArray();
 		float[] spectrumIntensities=spectrum.getIntensityArray();
 		
-		if (libraryMasses.length==0||spectrumMasses.length==0) return new float[] {0.0f, 0.0f};
-
-		int numAboveThresholdMatches=0; // FINAL SCORE
-		float rawScore=0.0f; // FINAL SCORE
+		float[] individualPeakScores=new float[libraryMasses.length];
 		
-		TFloatArrayList individualPeakScores=new TFloatArrayList();
+		if (libraryMasses.length==0||spectrumMasses.length==0) return individualPeakScores;
 		
-		int libraryIndex=0;
-		int spectrumIndex=0;
-		while (true) {
-			int compare=fragmentTolerance.compareTo(libraryMasses[libraryIndex], spectrumMasses[spectrumIndex]);
-			if (compare==0) {
-				float peakScore=libraryIntensities[libraryIndex]*spectrumIntensities[spectrumIndex];
-				individualPeakScores.add(peakScore);
-				rawScore+=peakScore;
-				libraryIndex++;
-				spectrumIndex++;
-			} else if (compare>0) {
-				spectrumIndex++;
-			} else {
-				libraryIndex++;
+		for (int i=0; i<libraryMasses.length; i++) {
+			int[] indicies=fragmentTolerance.getIndicies(spectrumMasses, libraryMasses[i]);
+			float intensity=0.0f;
+			for (int j=0; j<indicies.length; j++) {
+				intensity+=spectrumIntensities[indicies[j]];
 			}
-			if (libraryIndex>=libraryMasses.length) break;
-			if (spectrumIndex>=spectrumMasses.length) break;
+			float peakScore=libraryIntensities[i]*intensity;
+			individualPeakScores[i]=peakScore;
 		}
 		
-		int peptideLength=entry.getPeptideSeq().length();
-		float individualIonThreshold=rawScore/(peptideLength+1);
-		int numMatches=0;
-		for (float peak : individualPeakScores.toArray()) {
-			numMatches++;
-			if (peak>=individualIonThreshold) {
-				numAboveThresholdMatches++;
-			}
-			if (spectrum.getScanStartTime()/60>36.5&&spectrum.getScanStartTime()/60<36.55) {
-				System.out.println(entry.getPeptideModSeq()+"\t"+(spectrum.getScanStartTime()/60.0f)+"\t"+peak);
-			}
-		}
-
-		if (spectrum.getScanStartTime()/60>36.5&&spectrum.getScanStartTime()/60<36.55) {
-			System.out.println(entry.getPeptideModSeq()+"\t"+(spectrum.getScanStartTime()/60.0f)+"\t"+rawScore+"\t"+numMatches+"\t"+numAboveThresholdMatches+"\t"+individualIonThreshold);
-		}
-		
-		return new float[] {rawScore, numAboveThresholdMatches};
+		return individualPeakScores;
 	}
 }

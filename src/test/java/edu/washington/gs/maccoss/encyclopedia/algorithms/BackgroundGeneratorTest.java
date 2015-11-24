@@ -7,6 +7,7 @@ import java.util.Arrays;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PecanLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
@@ -17,7 +18,7 @@ import junit.framework.TestCase;
 
 public class BackgroundGeneratorTest extends TestCase {
 	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50),
-			DigestionEnzyme.getEnzyme("trypsin"));
+			DigestionEnzyme.getEnzyme("trypsin"), 0);
 
 	public void testGenerateBackground() {
 		InputStream is=getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
@@ -29,17 +30,18 @@ public class BackgroundGeneratorTest extends TestCase {
 		double[] binArray=bins.toArray();
 		TDoubleIntHashMap[] binCounters=BackgroundGenerator.generateBackground(binArray, entries, PARAMETERS).x;
 
-		int[] expectedSizes=new int[] {12947, 12863, 12121, 13008, 13247, 12621, 13515, 13164, 12994, 13728, 12558, 12716, 12922, 13640, 14059, 14519, 13873, 13905, 13586, 14301, 14008, 14000, 13647,
-				14254, 14122, 13397, 14887, 13874, 13798, 14489, 14233, 14007, 13566, 15137, 13792, 13668, 14333, 15410, 14122, 14181, 15481, 15281, 14351, 14593, 14310, 14418, 14462, 14785, 14622,
-				14687, 14659, 13923, 13929, 13496, 14808, 13492, 13944, 14091, 14558, 14221, 13911, 14424, 15009, 14365, 13643, 14993, 13765, 13756, 14815, 14678, 13506, 14730, 14072, 14664, 14113,
-				14842, 12950, 13992, 14175, 14092, 13183, 13616, 13661, 13656, 12513, 13931, 13640, 13776, 14047, 12697, 12775, 13310, 11787, 13537, 13241, 11704, 14093, 12448, 13417, 13056};
+		int[] expectedSizes=new int[] {22411, 22285, 20803, 22091, 22989, 21518, 22927, 21994, 21927, 23646, 21077, 21235, 21896, 22808, 23758, 24460, 22840, 22963, 22534, 24042, 22939, 23248, 22623,
+				23713, 23381, 22541, 24799, 22672, 22485, 23836, 23091, 22896, 22330, 24781, 22344, 22326, 23640, 25040, 23303, 22636, 24878, 24936, 22913, 23791, 23293, 23190, 22971, 23927, 23546,
+				23751, 23735, 22263, 22247, 21292, 23214, 21628, 22859, 22587, 23317, 22818, 21889, 22941, 23696, 22757, 21865, 23807, 22041, 21942, 23367, 23338, 21370, 23542, 22545, 23379, 22672,
+				23597, 20143, 21939, 22773, 22119, 20293, 21422, 22269, 20827, 19504, 22253, 21577, 22136, 21776, 19706, 19647, 20949, 18634, 21040, 20212, 17847, 21665, 19123, 20758, 21061};
 		assertEquals(expectedSizes.length, binCounters.length);
 		for (int i=0; i<binCounters.length; i++) {
 			assertEquals(expectedSizes[i], binCounters[i].size());
 		}
 
 		String peptide="ILQEGVDPK";
-		double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, (byte)2);
+		byte charge=(byte)2;
+		double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
 		int index=Arrays.binarySearch(binArray, mz);
 		index=(-(index+1))-1;
 		assertEquals(20, index);
@@ -48,8 +50,8 @@ public class BackgroundGeneratorTest extends TestCase {
 		Arrays.sort(keys);
 
 		FragmentationModel model=new FragmentationModel(peptide, PARAMETERS.getAAConstants());
-		double[] ions=model.getPrimaryIons(PARAMETERS.getFragType());
-		int[] expectedCounts=new int[] {181, 388, 34, 17, 10, 16, 10, 14, 10, 10, 5, 14, 5, 11, 6, 5, 15, 18};
+		double[] ions=model.getPrimaryIons(PARAMETERS.getFragType(), charge);
+		int[] expectedCounts=new int[] {198, 388, 34, 20, 12, 21, 12, 16, 12, 16, 6, 16, 25, 11, 6, 5, 15, 18};
 		for (int i=0; i<ions.length; i++) {
 			double[] matches=PARAMETERS.getFragmentTolerance().getMatches(keys, ions[i]);
 
@@ -62,9 +64,11 @@ public class BackgroundGeneratorTest extends TestCase {
 				assertEquals(expectedCounts[i], total);
 			}
 		}
+		PecanLibraryEntry entry=model.getPecanSpectrum(charge, keys, binCounters[index], PARAMETERS, false);
+		assertEquals(34.20645f, entry.getEuclidianDistance(), 0.0001f);
 
 		peptide="FGGGSVELLK";
-		mz=PARAMETERS.getAAConstants().getChargedMass(peptide, (byte)2);
+		mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
 		index=Arrays.binarySearch(binArray, mz);
 		index=(-(index+1))-1;
 		assertEquals(20, index);
@@ -73,8 +77,8 @@ public class BackgroundGeneratorTest extends TestCase {
 		Arrays.sort(keys);
 
 		model=new FragmentationModel(peptide, PARAMETERS.getAAConstants());
-		ions=model.getPrimaryIons(PARAMETERS.getFragType());
-		expectedCounts=new int[] {388, 41, 8, 60, 6, 3, 9, 3, 10, 14, 7, 8, 6, 7, 10, 6, 15, 22, 29, 32};
+		ions=model.getPrimaryIons(PARAMETERS.getFragType(), charge);
+		expectedCounts=new int[] {388, 41, 8, 60, 7, 5, 9, 5, 12, 17, 7, 8, 6, 14, 33, 6, 15, 22, 29, 32};
 		for (int i=0; i<ions.length; i++) {
 			double[] matches=PARAMETERS.getFragmentTolerance().getMatches(keys, ions[i]);
 
@@ -88,5 +92,7 @@ public class BackgroundGeneratorTest extends TestCase {
 			}
 		}
 
+		entry=model.getPecanSpectrum(charge, keys, binCounters[index], PARAMETERS, false);
+		assertEquals(43.045853f, entry.getEuclidianDistance(), 0.0001f);
 	}
 }

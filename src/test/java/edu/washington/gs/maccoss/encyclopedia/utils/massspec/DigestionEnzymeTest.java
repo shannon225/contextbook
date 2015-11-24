@@ -137,7 +137,7 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("LVAASQAALGL");
 		expected.add("KLVAASQAALGL");
 
-		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 40, 2);
+		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 40, 1);
 		assertEquals(expected.size(), sequences.size());
 		for (String peptide : sequences) {
 			assertTrue(expected.contains(peptide));
@@ -205,7 +205,7 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("ETCFAEEGK");
 		expected.add("LVAASQAALGL");
 		
-		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 40, 1);
+		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 40, 0);
 		assertEquals(expected.size(), sequences.size());
 		for (String peptide : sequences) {
 			assertTrue(expected.contains(peptide));
@@ -237,7 +237,7 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("VEKCCKADDKETCF");
 		expected.add("VAASQAAL");
 
-		sequences=enzyme.digestProtein(sequence, 8, 40, 1);
+		sequences=enzyme.digestProtein(sequence, 8, 40, 0);
 		assertEquals(expected.size(), sequences.size());
 		for (String peptide : sequences) {
 			assertTrue(expected.contains(peptide));
@@ -280,7 +280,7 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("KLVAASQAALGL");
 
 
-		sequences=enzyme.digestProtein(sequence, 8, 40, 1);
+		sequences=enzyme.digestProtein(sequence, 8, 40, 0);
 		assertEquals(expected.size(), sequences.size());
 		for (String peptide : sequences) {
 			assertTrue(expected.contains(peptide));

@@ -10,12 +10,12 @@ public class SearchParameters {
 	private final MassTolerance precursorTolerance;
 	private final MassTolerance fragmentTolerance;
 	private final DigestionEnzyme enzyme;
-	private final int minPeptideLength=5;
-	private final int maxPeptideLength=40;
-	private final int maxMissedCleavages=1;
-	private final byte minCharge=2;
-	private final byte maxCharge=3;
-	private final int minEluteTime=12;
+	private final int minPeptideLength;
+	private final int maxPeptideLength;
+	private final int maxMissedCleavages;
+	private final byte minCharge;
+	private final byte maxCharge;
+	private final int minEluteTime;
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme) {
 		this.aaConstants=aaConstants;
@@ -23,6 +23,28 @@ public class SearchParameters {
 		this.fragmentTolerance=fragmentTolerance;
 		this.precursorTolerance=precursorTolerance;
 		this.enzyme=enzyme;
+
+		minPeptideLength=5;
+		maxPeptideLength=40;
+		maxMissedCleavages=1;
+		minCharge=2;
+		maxCharge=3;
+		minEluteTime=12;
+	}
+
+	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme, int maxMissedCleavages) {
+		this.aaConstants=aaConstants;
+		this.fragType=fragType;
+		this.fragmentTolerance=fragmentTolerance;
+		this.precursorTolerance=precursorTolerance;
+		this.enzyme=enzyme;
+		this.maxMissedCleavages=maxMissedCleavages;
+
+		minPeptideLength=5;
+		maxPeptideLength=40;
+		minCharge=2;
+		maxCharge=3;
+		minEluteTime=12;
 	}
 	
 	public AminoAcidConstants getAAConstants() {

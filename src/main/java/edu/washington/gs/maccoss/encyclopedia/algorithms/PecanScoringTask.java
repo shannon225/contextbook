@@ -12,10 +12,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.IndexedObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
-import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.TFloatFloatHashMap;
-import gnu.trove.map.hash.TIntFloatHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 
 public class PecanScoringTask extends PeptideScoringTask {
@@ -36,58 +34,64 @@ public class PecanScoringTask extends PeptideScoringTask {
 		HashMap<LibraryEntry, PeptideScoringResult> map=new HashMap<LibraryEntry, PeptideScoringResult>();
 		
 		for (LibraryEntry entry : super.entries) {
-			float requiredNumAboveThreshold=0.5f*entry.getPeptideSeq().length();
+			int requiredNumAboveThreshold=(int)(0.5f*entry.getPeptideSeq().length());
 			
-			TFloatArrayList rawScores=new TFloatArrayList();
-			TFloatArrayList backgroundSubtractedScores=new TFloatArrayList();
-			TFloatArrayList numAboveThresholdMatches=new TFloatArrayList();
 			
-			for (Stripe stripe : super.stripes) {
-				float[] scores=getScorer().subScore(entry, stripe);
-				float rawScore=scores[0];
-				float numAboveThreshold=scores[1];
+			float[] rawScores=new float[super.stripes.size()];
+			float[] bgsubScores=new float[super.stripes.size()];
+			float[][] fragmentTraces=new float[entry.getMassArray().length][];
+			for (int i=0; i<fragmentTraces.length; i++) {
+				fragmentTraces[i]=new float[super.stripes.size()];
+			}
+			
+			for (int i=0; i<super.stripes.size(); i++) {
+				Stripe stripe=super.stripes.get(i);
+				float[] scores=getScorer().getIndividualPeakScores(entry, stripe, false);
+				for (int j=0; j<scores.length; j++) {
+					fragmentTraces[j][i]=scores[j];
+				}
+				rawScores[i]+=getScorer().score(entry, stripe);
 				
-				rawScores.add(rawScore);
-				numAboveThresholdMatches.add(numAboveThreshold);
-
 				float rt=stripe.getScanStartTime();
 				XYPoint meanStdev=background.get((double)rt);
 				if (meanStdev!=null) {
-					backgroundSubtractedScores.add((float)(rawScore-meanStdev.x));
+					bgsubScores[i]=(float)(rawScores[i]-meanStdev.x);
 				} else {
-					backgroundSubtractedScores.add(rawScore);
+					bgsubScores[i]=rawScores[i];
 				}
 			}
 
-			ArrayList<ScoredObject<IndexedObject<Stripe>>> goodStripes=new ArrayList<ScoredObject<IndexedObject<Stripe>>>();
-
-			TFloatArrayList windowedBackgroundSubtractedScores=new TFloatArrayList();
 			int scanAveragingWindow=2*scanAveragingMargin+1;
 			int scanExcludingWindow=2*scanAveragingWindow+1;
-			// moving average on background subtracted scores, this approach uses less data for the first and last scanAveragingMargin scans
-			TIntFloatHashMap scoreByIndex=new TIntFloatHashMap();
-			for (int i=0; i<backgroundSubtractedScores.size(); i++) {
-				float sum=0.0f;
-				int count=0;
-				for (int j=0; j<scanAveragingWindow; j++) {
-					int index=i+j-scanAveragingMargin;
-					if (index>=0&&index<backgroundSubtractedScores.size()) {
-						sum+=backgroundSubtractedScores.get(index);
-						count++;
+
+			float[] sumRawScores=movingSum(rawScores, scanAveragingWindow);
+			float[] sumBgsubScores=movingSum(bgsubScores, scanAveragingWindow);
+			float[][] sumFragmentTraces=new float[entry.getIntensityArray().length][];
+			for (int i=0; i<sumFragmentTraces.length; i++) {
+				sumFragmentTraces[i]=movingSum(fragmentTraces[i], scanAveragingWindow);
+			}
+
+			ArrayList<ScoredObject<IndexedObject<Stripe>>> goodStripes=new ArrayList<ScoredObject<IndexedObject<Stripe>>>();
+			int[] numAboveThresholdMatches=new int[sumRawScores.length];
+			for (int i=0; i<numAboveThresholdMatches.length; i++) {
+				// NOTE: this seems questionable that unnormalized intensities are used for individual scores while normalized intensities are used for total scores. -BCS
+				float threshold=sumRawScores[i]/(entry.getPeptideSeq().length()+1);
+				for (int j=0; j<sumFragmentTraces.length; j++) {
+					if (sumFragmentTraces[j][i]>=threshold) {
+						numAboveThresholdMatches[i]++;
 					}
 				}
-				float smoothedScore=sum/count;
-				windowedBackgroundSubtractedScores.add(smoothedScore);
-				scoreByIndex.put(i, smoothedScore);
-
-				if (numAboveThresholdMatches.get(i)>=requiredNumAboveThreshold) {
-					goodStripes.add(new ScoredObject<IndexedObject<Stripe>>(smoothedScore, new IndexedObject<Stripe>(i, stripes.get(i))));
+				
+				if (numAboveThresholdMatches[i]>=requiredNumAboveThreshold) {
+					goodStripes.add(new ScoredObject<IndexedObject<Stripe>>(sumBgsubScores[i], new IndexedObject<Stripe>(i, stripes.get(i))));
 				}
+
 			}
 			Collections.sort(goodStripes);
 
 			PeptideScoringResult result=new PeptideScoringResult();
 			TIntHashSet takenScans=new TIntHashSet();
+			
 			for (int i=goodStripes.size()-1; i>=0; i--) {
 				IndexedObject<Stripe> stripe=goodStripes.get(i).y;
 				if (takenScans.contains(stripe.x)) {
@@ -97,18 +101,20 @@ public class PecanScoringTask extends PeptideScoringTask {
 					float total=0.0f;
 					for (int j=0; j<scanExcludingWindow; j++) {
 						int index=stripe.x-scanAveragingWindow+j;
-						float indexScore=scoreByIndex.get(index);
-						
-						takenScans.add(index);
-						float[] auxScores=getScorer().auxScore(entry, stripe.y);
-						if (indexScore>0) {
-							if (averageAuxScores==null) {
-								averageAuxScores=General.multiply(auxScores, indexScore);
-							} else {
-								averageAuxScores=General.add(averageAuxScores, General.multiply(auxScores, indexScore));
+						if (index>=0&&index<sumBgsubScores.length) {
+							float indexScore=sumBgsubScores[index];
+
+							takenScans.add(index);
+							float[] auxScores=getScorer().auxScore(entry, stripes.get(index));
+							if (indexScore>0) {
+								if (averageAuxScores==null) {
+									averageAuxScores=General.multiply(auxScores, indexScore);
+								} else {
+									averageAuxScores=General.add(averageAuxScores, General.multiply(auxScores, indexScore));
+								}
 							}
+							total+=indexScore;
 						}
-						total+=indexScore;
 					}
 					if (averageAuxScores!=null&&total>=0.0f) {
 						averageAuxScores=General.multiply(averageAuxScores, 1.0f/total);
@@ -120,11 +126,10 @@ public class PecanScoringTask extends PeptideScoringTask {
 				}
 			}
 			
-			//EValueCalculator calculator=new EValueCalculator(scoreMap);
 			TFloatFloatHashMap scoreMap=new TFloatFloatHashMap();
 			for (int i=0; i<super.stripes.size(); i++) {
-				if (numAboveThresholdMatches.get(i)>=requiredNumAboveThreshold) {
-					scoreMap.put(super.stripes.get(i).getScanStartTime(), windowedBackgroundSubtractedScores.get(i));
+				if (numAboveThresholdMatches[i]>=requiredNumAboveThreshold) {
+					scoreMap.put(super.stripes.get(i).getScanStartTime(), sumBgsubScores[i]);
 				} else {
 					scoreMap.put(super.stripes.get(i).getScanStartTime(), 0.0f);
 				}
@@ -134,5 +139,23 @@ public class PecanScoringTask extends PeptideScoringTask {
 			map.put(entry, result);
 		}
 		return map;
+	}
+	
+	public static float[] movingSum(float[] scores, int scanAveragingWindow) {
+		// moving sum on background subtracted scores, this approach uses less data for the first and last scanAveragingMargin scans
+		int scanAveragingMargin=(scanAveragingWindow-1)/2;
+		
+		float[] sumScores=new float[scores.length];
+		for (int i=0; i<scores.length; i++) {
+			float sum=0.0f;
+			for (int j=0; j<scanAveragingWindow; j++) {
+				int index=i+j-scanAveragingMargin;
+				if (index>=0&&index<scores.length) {
+					sum+=scores[index];
+				}
+			}
+			sumScores[i]=sum/scanAveragingWindow;
+		}
+		return sumScores;
 	}
 }

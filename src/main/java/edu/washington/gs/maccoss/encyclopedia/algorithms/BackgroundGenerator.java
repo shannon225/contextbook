@@ -25,13 +25,12 @@ public class BackgroundGenerator {
 			binCounters[i]=new TDoubleIntHashMap();
 			allPeptides[i]=new HashSet<String>();
 		}
-
 		for (FastaEntry entry : entries) {
 			ArrayList<String> peptides=params.getEnzyme().digestProtein(entry.getSequence(), params.getMinPeptideLength(), params.getMaxPeptideLength(), params.getMaxMissedCleavages());
 			for (String sequence : peptides) {
 				FragmentationModel model=new FragmentationModel(sequence, params.getAAConstants());
-				double[] ions=model.getPrimaryIons(params.getFragType());
 				for (byte charge=params.getMinCharge(); charge<=params.getMaxCharge(); charge++) {
+					double[] ions=model.getPrimaryIons(params.getFragType(), charge);
 					double parentMZ=params.getAAConstants().getChargedMass(sequence, charge);
 					int index=Arrays.binarySearch(binBoundaries, parentMZ);
 					if (index>=0) {

@@ -24,6 +24,8 @@ public class FragmentationTraceTask extends PeptideScoringTask {
 		
 		for (LibraryEntry entry : super.entries) {
 			String[] scoreNames=getScorer().getAuxScorer().getScoreNames(entry);
+			
+			@SuppressWarnings("unchecked")
 			ArrayList<XYPoint>[] dataPoints=new ArrayList[scoreNames.length];
 			for (int i=0; i<dataPoints.length; i++) {
 				dataPoints[i]=new ArrayList<XYPoint>();
