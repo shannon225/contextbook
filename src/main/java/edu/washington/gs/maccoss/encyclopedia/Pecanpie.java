@@ -25,11 +25,11 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.BackgroundGenerator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.DotProduct;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PecanAuxillaryScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PecanRawScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PecanScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanAuxillaryScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
@@ -60,25 +60,28 @@ public class Pecanpie {
 	public static void main(String[] args) {
 		// EXAMPLE
 		File diaFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/20150708_Ecoli_0911_25x4mzDIA_500_600.dia");
-		File fastaFile=new File("/Users/searleb/Documents/projects/encyclopedia/pecan/ecoli_dataset/ecoli-190209-contam_correctNL.fasta");
+		File fastaFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/ecoli-190209-contam_correctNL.fasta");
 		File outputFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/encyc_report.txt");
-		SearchParameters params=new SearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
+		SearchParameters parameters=new SearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
+
+		PSMScorer backgroundScorer=new DotProduct(parameters.getFragmentTolerance());
+		PSMScorer pecanScorer=new PecanRawScorer(parameters.getFragmentTolerance(), new PecanAuxillaryScorer(parameters));
 		
 		try {
-			runPie(diaFile, fastaFile, outputFile, params);
+			runPie(diaFile, fastaFile, outputFile, backgroundScorer, pecanScorer, parameters);
 		} catch (Exception e) {
 			System.err.println("Encountered Fatal Error!");
 			e.printStackTrace();
 		}
 	}
 
-	public static void runPie(File diaFile, File fastaFile, File outputFile, SearchParameters parameters) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+	public static void runPie(File diaFile, File fastaFile, File outputFile, PSMScorer backgroundScorer, PSMScorer pecanScorer, SearchParameters parameters) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		int cores=Runtime.getRuntime().availableProcessors();
 		
 		StripeFile stripefile=new StripeFile();
 		stripefile.openFile(diaFile);
 
-		byte[] charges=new byte[] {(byte)2, (byte)3};
+		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
 
 		ArrayList<FastaEntry> entries=FastaReader.readFasta(fastaFile);
 
@@ -95,13 +98,15 @@ public class Pecanpie {
 		
 		double[] binArray=boundaries.toArray();
 		Arrays.sort(binArray);
+		
 		Pair<TDoubleIntHashMap[], ArrayList<String>[]> background=BackgroundGenerator.generateBackground(binArray, entries, parameters);
 		TDoubleIntHashMap[] binCounters=background.x;
 		ArrayList<String>[] backgroundProteomes=background.y;
-		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
-		
-		PSMScorer scorer=new DotProduct(parameters.getFragmentTolerance());
-		PecanRawScorer pecanScorer=new PecanRawScorer(parameters.getFragmentTolerance(), new PecanAuxillaryScorer(parameters, precursors));
+
+		byte[] charges=new byte[parameters.getMaxCharge()-parameters.getMinCharge()+1];
+		for (int i=0; i<charges.length; i++) {
+			charges[i]=(byte)(parameters.getMinCharge()+i);
+		}
 		
 		// get stripes
 		for (Range range : ranges) {
@@ -160,7 +165,7 @@ public class Pecanpie {
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						tasks.add(randentry);
 
-						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new PeptideScoringTask(scorer, tasks, stripes));
+						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new PeptideScoringTask(backgroundScorer, tasks, stripes, precursors));
 						results.add(value);
 						
 						backgroundPeptideCount++;
@@ -196,19 +201,12 @@ public class Pecanpie {
 			}
 			
 			final TDoubleObjectHashMap<XYPoint> backgroundScores=new TDoubleObjectHashMap<XYPoint>();
-			final ArrayList<XYPoint> meanPlusStdev=new ArrayList<XYPoint>();
-			final ArrayList<XYPoint> meanStdev=new ArrayList<XYPoint>();
-			final ArrayList<XYPoint> meanMinusStdev=new ArrayList<XYPoint>();
 			backgroundScoreMap.forEachEntry(new TDoubleObjectProcedure<TDoubleArrayList>() {
 				public boolean execute(double arg0, TDoubleArrayList arg1) {
 					double[] values=arg1.toArray();
 					double m=General.mean(values);
 					double s=General.stdev(values);
 					backgroundScores.put(arg0, new XYPoint(m, s));
-
-					meanPlusStdev.add(new XYPoint(arg0, m+s));
-					meanStdev.add(new XYPoint(arg0, m));
-					meanMinusStdev.add(new XYPoint(arg0, m-s));
 					return true;
 				};
 			});
@@ -228,7 +226,7 @@ public class Pecanpie {
 						tasks.add(pecanEntry);
 						tasks.add(reventry);
 
-						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new PecanScoringTask(pecanScorer, tasks, stripes, backgroundScores, scanAveragingMargin));
+						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new PecanScoringTask(pecanScorer, tasks, stripes, backgroundScores, precursors, scanAveragingMargin));
 						results.add(value);
 					}
 				}

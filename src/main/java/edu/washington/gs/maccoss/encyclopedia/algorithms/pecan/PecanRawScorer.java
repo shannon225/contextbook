@@ -1,7 +1,11 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms;
+package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PecanLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
@@ -14,18 +18,23 @@ public class PecanRawScorer implements PSMScorer {
 		this.fragmentTolerance = fragmentTolerance;
 		this.auxScorer=auxScorer;
 	}
-	
-	public float score(LibraryEntry entry, Stripe spectrum) {
+
+	@Override
+	public float score(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
 		return General.sum(getIndividualPeakScores(entry, spectrum, true)); // dot product
 	}
-	
-	public float[] auxScore(LibraryEntry entry, Stripe spectrum) {
-		return auxScorer.score(entry, spectrum);
-	}
-	public AuxillaryPSMScorer getAuxScorer() {
-		return auxScorer;
+
+	@Override
+	public float[] auxScore(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
+		return auxScorer.score(entry, spectrum, precursors);
 	}
 	
+	@Override
+	public String[] getAuxScoreNames(LibraryEntry entry) {
+		return auxScorer.getScoreNames(entry);
+	}
+	
+	@Override
 	public float[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize) {
 		double[] libraryMasses=entry.getMassArray();
 		float[] libraryIntensities;

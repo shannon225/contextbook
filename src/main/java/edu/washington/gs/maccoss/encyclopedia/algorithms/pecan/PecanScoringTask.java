@@ -1,10 +1,14 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms;
+package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -20,13 +24,19 @@ public class PecanScoringTask extends PeptideScoringTask {
 	private final int scanAveragingMargin;
 	protected final TDoubleObjectHashMap<XYPoint> background; // if not null, then score using zscore (otherwise use raw score)
 
-	public PecanScoringTask(PecanRawScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint> background, int scanAveragingMargin) {
-		super(scorer, entries, stripes);
+	/**
+	 * scorer must be a 
+	 * @param scorer
+	 * @param entries
+	 * @param stripes
+	 * @param background
+	 * @param precursors
+	 * @param scanAveragingMargin
+	 */
+	public PecanScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint> background, PrecursorScanMap precursors, int scanAveragingMargin) {
+		super(scorer, entries, stripes, precursors);
 		this.background=background;
 		this.scanAveragingMargin=scanAveragingMargin;
-	}
-	private PecanRawScorer getScorer() {
-		return (PecanRawScorer)super.scorer;
 	}
 
 	@Override
@@ -46,11 +56,11 @@ public class PecanScoringTask extends PeptideScoringTask {
 			
 			for (int i=0; i<super.stripes.size(); i++) {
 				Stripe stripe=super.stripes.get(i);
-				float[] scores=getScorer().getIndividualPeakScores(entry, stripe, false);
+				float[] scores=scorer.getIndividualPeakScores(entry, stripe, false);
 				for (int j=0; j<scores.length; j++) {
 					fragmentTraces[j][i]=scores[j];
 				}
-				rawScores[i]+=getScorer().score(entry, stripe);
+				rawScores[i]+=scorer.score(entry, stripe, precursors);
 				
 				float rt=stripe.getScanStartTime();
 				XYPoint meanStdev=background.get((double)rt);
@@ -125,7 +135,7 @@ public class PecanScoringTask extends PeptideScoringTask {
 					for (int j=0; j<scanAveragingWindow; j++) {
 						int index=stripe.x-scanAveragingMargin+j;
 						if (index>=0&&index<stripes.size()) {
-							float[] auxScores=getScorer().auxScore(entry, stripes.get(index));
+							float[] auxScores=scorer.auxScore(entry, stripes.get(index), precursors);
 							if (averageAuxScores==null) {
 								averageAuxScores=auxScores;
 							} else {
@@ -154,7 +164,7 @@ public class PecanScoringTask extends PeptideScoringTask {
 		return map;
 	}
 	
-	public static float[] movingSum(float[] scores, int scanAveragingWindow) {
+	private static float[] movingSum(float[] scores, int scanAveragingWindow) {
 		// moving sum on background subtracted scores, this approach uses less data for the first and last scanAveragingMargin scans
 		int scanAveragingMargin=(scanAveragingWindow-1)/2;
 		

@@ -26,11 +26,11 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.BackgroundGenerator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.DotProduct;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PecanAuxillaryScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PecanRawScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PecanScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanAuxillaryScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
@@ -100,7 +100,7 @@ public class StripeExtractor {
 		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
 		
 		PSMScorer scorer=new DotProduct(PARAMETERS.getFragmentTolerance());
-		PecanRawScorer pecanScorer=new PecanRawScorer(PARAMETERS.getFragmentTolerance(), new PecanAuxillaryScorer(PARAMETERS, precursors));
+		PecanRawScorer pecanScorer=new PecanRawScorer(PARAMETERS.getFragmentTolerance(), new PecanAuxillaryScorer(PARAMETERS));
 		
 		// get precursors
 		//PecanScorer scorer=new PecanScorer(PARAMETERS.getFragmentTolerance(), PARAMETERS.getPrecursorTolerance(), precursors);
@@ -167,7 +167,7 @@ public class StripeExtractor {
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						tasks.add(randentry);
 
-						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new PeptideScoringTask(scorer, tasks, stripes));
+						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new PeptideScoringTask(scorer, tasks, stripes, precursors));
 						results.add(value);
 						
 						backgroundPeptideCount++;
@@ -236,7 +236,7 @@ public class StripeExtractor {
 						tasks.add(pecanEntry);
 						tasks.add(reventry);
 
-						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new PecanScoringTask(pecanScorer, tasks, stripes, backgroundScores, scanAveragingMargin));
+						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new PecanScoringTask(pecanScorer, tasks, stripes, backgroundScores, precursors, scanAveragingMargin));
 						results.add(value);
 					}
 				}

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -17,11 +18,13 @@ public class PeptideScoringTask extends ThreadableTask<HashMap<LibraryEntry, Pep
 	protected final PSMScorer scorer;
 	protected final ArrayList<LibraryEntry> entries;
 	protected final ArrayList<Stripe> stripes;
+	protected final PrecursorScanMap precursors;
 
-	public PeptideScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes) {
+	public PeptideScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors) {
 		this.scorer=scorer;
 		this.entries=entries;
 		this.stripes=stripes;
+		this.precursors=precursors;
 	}
 
 	@Override
@@ -32,7 +35,7 @@ public class PeptideScoringTask extends ThreadableTask<HashMap<LibraryEntry, Pep
 			
 			PeptideScoringResult result=new PeptideScoringResult();
 			for (Stripe stripe : stripes) {
-				float score=scorer.score(entry, stripe);
+				float score=scorer.score(entry, stripe, precursors);
 				
 				float rt=stripe.getScanStartTime();
 				scoreMap.put(rt, score);

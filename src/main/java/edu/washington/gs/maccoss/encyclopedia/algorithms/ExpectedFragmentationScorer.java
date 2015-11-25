@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import gnu.trove.list.array.TFloatArrayList;
@@ -18,7 +19,7 @@ public class ExpectedFragmentationScorer implements AuxillaryPSMScorer {
 	}
 
 	@Override
-	public float[] score(LibraryEntry entry, Stripe spectrum) {
+	public float[] score(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
 		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		MassTolerance tolerance=parameters.getFragmentTolerance();
 		double[] masses=spectrum.getMassArray();

@@ -1,5 +1,7 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms;
+package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -11,19 +13,17 @@ import gnu.trove.list.array.TFloatArrayList;
 //@Immutable
 public class PecanAuxillaryScorer implements AuxillaryPSMScorer {
 	private final SearchParameters parameters;
-	private final PrecursorScanMap precursors;
 	private final float maxPPMError;
 
-	public PecanAuxillaryScorer(SearchParameters parameters, PrecursorScanMap precursors) {
+	public PecanAuxillaryScorer(SearchParameters parameters) {
 		this.parameters=parameters;
-		this.precursors=precursors;
 		maxPPMError=(float)parameters.getPrecursorTolerance().getPpmTolerance();
 	}
 
 	@Override
-	public float[] score(LibraryEntry entry, Stripe spectrum) {
+	public float[] score(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
 		// precursor scoring
-		float[] precursorScores=getPrecursorScores(entry, spectrum.getScanStartTime());
+		float[] precursorScores=getPrecursorScores(entry, spectrum.getScanStartTime(), precursors);
 		float averageAbsPPM=precursorScores[0]; // FINAL SCORE
 		float isotopeDotProduct=precursorScores[1]; // FINAL SCORE
 		float averagePPM=precursorScores[2]; // FINAL SCORE
@@ -70,7 +70,8 @@ public class PecanAuxillaryScorer implements AuxillaryPSMScorer {
 			if (spectrumIndex>=spectrumMasses.length) break;
 		}
 		weightedRawScore=weightedRawScore/sumLibraryMasses;
-		float peakSimilarity=rawScore/spectrum.getIntensityMagnitude(); // FINAL SCORE
+		float spectrumMagnitude=spectrum.getIntensityMagnitude();
+		float peakSimilarity=spectrumMagnitude<=0?0.0f:rawScore/spectrumMagnitude; // FINAL SCORE
 		
 		float individualIonThreshold=rawScore/(entry.getPeptideSeq().length()+1);
 		for (float peak : individualPeakScores.toArray()) {
@@ -93,7 +94,7 @@ public class PecanAuxillaryScorer implements AuxillaryPSMScorer {
 	}
 
 
-	public float[] getPrecursorScores(LibraryEntry entry, float spectrumRT) {
+	public float[] getPrecursorScores(LibraryEntry entry, float spectrumRT, PrecursorScanMap precursors) {
 		Peak[] precursorPacket=precursors.getIsotopePacket(entry.getPrecursorMZ(), spectrumRT, entry.getPrecursorCharge(), parameters.getPrecursorTolerance());
 		Pair<double[], float[]> pair=Peak.toArrays(precursorPacket);
 		double[] masses=pair.x;

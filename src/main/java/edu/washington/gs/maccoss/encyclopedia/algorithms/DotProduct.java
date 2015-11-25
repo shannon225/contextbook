@@ -1,7 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 //@Immutable
 public class DotProduct implements PSMScorer {
@@ -14,22 +16,32 @@ public class DotProduct implements PSMScorer {
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer#score(edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry, edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe)
 	 */
-	public float score(LibraryEntry entry, Stripe spectrum) {
+	public float score(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
+		float[] peakscores=getIndividualPeakScores(entry, spectrum, false);
+		return General.sum(peakscores);
+	}
+	
+	@Override
+	public String[] getAuxScoreNames(LibraryEntry entry) {
+		return new String[0];
+	}
+	@Override
+	public float[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize) {
 		double[] libraryMasses=entry.getMassArray();
 		float[] libraryIntensities=entry.getIntensityArray();
 		
 		double[] spectrumMasses=spectrum.getMassArray();
 		float[] spectrumIntensities=spectrum.getIntensityArray();
 		
-		if (libraryMasses.length==0||spectrumMasses.length==0) return 0.0f;
+		if (libraryMasses.length==0||spectrumMasses.length==0) return new float[0];
 		
-		float sum=0.0f;
+		float[] peakscores=new float[libraryIntensities.length];
 		int libraryIndex=0;
 		int spectrumIndex=0;
 		while (true) {
 			int compare=tolerance.compareTo(libraryMasses[libraryIndex], spectrumMasses[spectrumIndex]);
 			if (compare==0) {
-				sum+=libraryIntensities[libraryIndex]*spectrumIntensities[spectrumIndex];
+				peakscores[libraryIndex]=libraryIntensities[libraryIndex]*spectrumIntensities[spectrumIndex];
 				libraryIndex++;
 				spectrumIndex++;
 			} else if (compare>0) {
@@ -41,6 +53,11 @@ public class DotProduct implements PSMScorer {
 			if (spectrumIndex>=spectrumMasses.length) break;
 		}
 		
-		return sum;
+		return peakscores;
+	}
+	
+	@Override
+	public float[] auxScore(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
+		return new float[0];
 	}
 }
