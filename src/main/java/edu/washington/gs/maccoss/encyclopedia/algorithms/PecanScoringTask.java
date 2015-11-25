@@ -73,6 +73,7 @@ public class PecanScoringTask extends PeptideScoringTask {
 
 			ArrayList<ScoredObject<IndexedObject<Stripe>>> goodStripes=new ArrayList<ScoredObject<IndexedObject<Stripe>>>();
 			int[] numAboveThresholdMatches=new int[sumRawScores.length];
+			int[] numMatches=new int[sumRawScores.length];
 			for (int i=0; i<numAboveThresholdMatches.length; i++) {
 				// NOTE: this seems questionable that unnormalized intensities are used for individual scores while normalized intensities are used for total scores. -BCS
 				float threshold=sumRawScores[i]/(entry.getPeptideSeq().length()+1);
@@ -80,9 +81,26 @@ public class PecanScoringTask extends PeptideScoringTask {
 					if (sumFragmentTraces[j][i]>=threshold) {
 						numAboveThresholdMatches[i]++;
 					}
+					if (sumFragmentTraces[j][i]>=threshold) {
+						numMatches[i]++;
+					}
 				}
 				
-				if (numAboveThresholdMatches[i]>=requiredNumAboveThreshold) {
+				/*if (super.stripes.get(i).getScanStartTime()>60f*48.85&&super.stripes.get(i).getScanStartTime()<60f*49.20f) {
+					System.out.println(entry.getPeptideSeq()+"\t"+(super.stripes.get(i).getScanStartTime()/60f)+"\t"+numAboveThresholdMatches[i]+"/"+requiredNumAboveThreshold+"\t"+sumBgsubScores[i]);
+					for (int j=0; j<sumFragmentTraces.length; j++) {
+						System.out.println("\t"+sumFragmentTraces[j][i]+"\t>= "+threshold);
+					}
+				}*/
+				/*
+				if (super.stripes.get(i).getScanStartTime()>60f*42.32f&&super.stripes.get(i).getScanStartTime()<60f*42.33f) {
+					System.out.println(entry.getPeptideSeq()+"\t"+(super.stripes.get(i).getScanStartTime()/60f)+"\t"+numAboveThresholdMatches[i]+"/"+requiredNumAboveThreshold+"\t"+sumBgsubScores[i]);
+					for (int j=0; j<sumFragmentTraces.length; j++) {
+						System.out.println("\t"+sumFragmentTraces[j][i]+"\t>= "+threshold);
+					}
+				}*/
+				
+				if (numAboveThresholdMatches[i]>requiredNumAboveThreshold) {
 					goodStripes.add(new ScoredObject<IndexedObject<Stripe>>(sumBgsubScores[i], new IndexedObject<Stripe>(i, stripes.get(i))));
 				}
 
@@ -98,31 +116,26 @@ public class PecanScoringTask extends PeptideScoringTask {
 					continue;
 				} else {
 					float[] averageAuxScores=null;
-					float total=0.0f;
 					for (int j=0; j<scanExcludingWindow; j++) {
 						int index=stripe.x-scanAveragingWindow+j;
 						if (index>=0&&index<sumBgsubScores.length) {
-							float indexScore=sumBgsubScores[index];
-
 							takenScans.add(index);
-							float[] auxScores=getScorer().auxScore(entry, stripes.get(index));
-							if (indexScore>0) {
-								if (averageAuxScores==null) {
-									averageAuxScores=General.multiply(auxScores, indexScore);
-								} else {
-									averageAuxScores=General.add(averageAuxScores, General.multiply(auxScores, indexScore));
-								}
-							}
-							total+=indexScore;
 						}
 					}
-					if (averageAuxScores!=null&&total>=0.0f) {
-						averageAuxScores=General.multiply(averageAuxScores, 1.0f/total);
-					} else {
-						averageAuxScores=getScorer().getAuxScorer().getMissingDataScores(entry);
+					for (int j=0; j<scanAveragingWindow; j++) {
+						int index=stripe.x-scanAveragingMargin+j;
+						if (index>=0&&index<stripes.size()) {
+							float[] auxScores=getScorer().auxScore(entry, stripes.get(index));
+							if (averageAuxScores==null) {
+								averageAuxScores=auxScores;
+							} else {
+								averageAuxScores=General.add(averageAuxScores, auxScores);
+							}
+						}
 					}
+					averageAuxScores=General.multiply(averageAuxScores, 1.0f/scanAveragingWindow);
 					
-					result.addStripe(goodStripes.get(i).x, averageAuxScores, stripe.y);
+					result.addStripe(goodStripes.get(i).x, General.concatenate(averageAuxScores, numAboveThresholdMatches[stripe.x], numMatches[stripe.x], sumRawScores[stripe.x]), stripe.y);
 				}
 			}
 			

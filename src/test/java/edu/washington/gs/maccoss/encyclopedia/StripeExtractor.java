@@ -73,7 +73,7 @@ public class StripeExtractor {
 				"KFVADGIFK", "LGFMSAFVK", "LLEAASVSSK", "LLFEELVR", "LNVLANVIR", "LQGDLVTIR", "LTLSALIDGK", "LTLSALVDGK", "LVNMLDAVR", "MFASFPTTK", "NDAGYSEPR", "NTYYASIAK", "QGVLTLEIR", "QIFLGGVDR",
 				"RAEVLDSTK", "RGDFIPGLR", "RLTDADAMK", "RLVVQQAGK", "RWEVAALR", "SFLPLLRR", "SLHTLFGDK", "SVQAAMEKR", "TAYVGENVR", "TDLTAVPASR", "TIPWLENR", "TLEDILFR", "TQLVSNLKK", "TQVQSVIDK",
 				"TSGGAGGLGSLR", "VAAENQYGR", "VDFDDIHR", "VGPANPSLQK", "VLSIGDGIAR", "VTLVSAAPEK", "VVDDELATR", "VVFIFGPDK", "WPLYLSTK", "YDHLGDSPK", "YVDMSAKSK", "YVIEFIAR"};
-		peptides=new String[] {"LVDIVEPTEK"};
+		peptides=new String[] {"QATFEEMIAR"};
 		peptides=null; // SEARCH EVERYTHING!
 
 		InputStream is=stripefile.getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
@@ -81,12 +81,17 @@ public class StripeExtractor {
 
 		//entries=FastaReader.readFasta(new File("/Users/searleb/Documents/projects/pecan/mouse_20150911_uniprot_sp.fasta"));
 		PrintWriter writer = new PrintWriter("/Users/searleb/Documents/projects/pecan/ecoli_dataset/encyc_report.txt", "UTF-8");
+		//writer=null; //FIXME
 		
 		TDoubleHashSet boundaries=new TDoubleHashSet();
+		ArrayList<Range> ranges=new ArrayList<Range>();
 		for (Range range : stripefile.getRanges().keySet()) {
 			boundaries.add(range.getStart());
 			boundaries.add(range.getStop());
+			ranges.add(range);
 		}
+		Collections.sort(ranges);
+		
 		double[] binArray=boundaries.toArray();
 		Arrays.sort(binArray);
 		Pair<TDoubleIntHashMap[], ArrayList<String>[]> background=BackgroundGenerator.generateBackground(binArray, entries, PARAMETERS);
@@ -101,9 +106,8 @@ public class StripeExtractor {
 		//PecanScorer scorer=new PecanScorer(PARAMETERS.getFragmentTolerance(), PARAMETERS.getPrecursorTolerance(), precursors);
 		
 		// get stripes
-		for (Entry<Range, Float> entry : stripefile.getRanges().entrySet()) {
-			Range range=entry.getKey();
-			float dutyCycle=entry.getValue();
+		for (Range range : ranges) {
+			float dutyCycle=stripefile.getRanges().get(range);
 			int scanAveragingMargin=(int)(((PARAMETERS.getMinEluteTime())/dutyCycle+1)/2); // floor
 			
 			System.out.println("Processing "+range+" ("+scanAveragingMargin+")");
@@ -145,7 +149,6 @@ public class StripeExtractor {
 			ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("SWATH_"+range.getStart()+"to"+range.getStop()+"-%d").setDaemon(true).build();
 			LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
-			//ExecutorService executor=Executors.newFixedThreadPool(cores, threadFactory);
 
 			int backgroundPeptideCount=0;
 			int seed=RandomGenerator.randomInt(1);
@@ -174,7 +177,7 @@ public class StripeExtractor {
 			executor.shutdown();
 			while (!executor.isTerminated()) {
 				System.out.println(workQueue.size()+" background peptides remaining for "+range+"...");
-				Thread.sleep(100);
+				Thread.sleep(200);
 			}
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
@@ -241,7 +244,7 @@ public class StripeExtractor {
 			executor.shutdown();
 			while (!executor.isTerminated()) {
 				System.out.println(workQueue.size()+" peptides remaining for "+range+"...");
-				Thread.sleep(100);
+				Thread.sleep(200);
 			}
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
@@ -259,11 +262,19 @@ public class StripeExtractor {
 						float[] auxScores=goodStripe.y;
 						
 						if (rank==1) {
-							writer.print(peptide.getPeptideModSeq()+"\t"+peptide.isDecoy()+"\t"+rank+"\t"+primaryScore+"\t"+stripe.getScanStartTime());
-							for (float s : auxScores) {
-								writer.print("\t"+s);
+							if (writer!=null) {
+								writer.print(peptide.getPeptideModSeq()+"\t"+peptide.isDecoy()+"\t"+rank+"\t"+primaryScore+"\t"+stripe.getScanStartTime());
+								for (float s : auxScores) {
+									writer.print("\t"+s);
+								}
+								writer.println();
+							} else {
+								System.out.print(peptide.getPeptideModSeq()+"\t"+peptide.isDecoy()+"\t"+rank+"\t"+primaryScore+"\t"+stripe.getScanStartTime());
+								for (float s : auxScores) {
+									System.out.print("\t"+s);
+								}
+								System.out.println();
 							}
-							writer.println();
 						}
 						rank++;
 						if (rank>3) break;
@@ -272,9 +283,13 @@ public class StripeExtractor {
 				}
 			}
 			//Charter.launchChart("RT ("+range+" M/Z)", "Score", true, traces.toArray(new XYTrace[traces.size()]));
-			writer.flush();
+			if (writer!=null) {
+				writer.flush();
+			}
 		}
-		writer.close();
+		if (writer!=null) {
+			writer.close();
+		}
 	}
 
 }

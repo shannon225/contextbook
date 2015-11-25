@@ -1,6 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
 public class General {
+	public static float[] concatenate(float[] a, float... f) {
+		float[] r=new float[a.length+f.length];
+		System.arraycopy(a, 0, r, 0, a.length);
+		System.arraycopy(f, 0, r, a.length, f.length);
+		return r;
+	}
+	
 	public static String toString(float[] f) {
 		StringBuilder sb=new StringBuilder();
 		for (float g : f) {

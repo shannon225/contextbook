@@ -54,8 +54,7 @@ public class PeptideScoringTaskTest {
 				"KFVADGIFK", "LGFMSAFVK", "LLEAASVSSK", "LLFEELVR", "LNVLANVIR", "LQGDLVTIR", "LTLSALIDGK", "LTLSALVDGK", "LVNMLDAVR", "MFASFPTTK", "NDAGYSEPR", "NTYYASIAK", "QGVLTLEIR", "QIFLGGVDR",
 				"RAEVLDSTK", "RGDFIPGLR", "RLTDADAMK", "RLVVQQAGK", "RWEVAALR", "SFLPLLRR", "SLHTLFGDK", "SVQAAMEKR", "TAYVGENVR", "TDLTAVPASR", "TIPWLENR", "TLEDILFR", "TQLVSNLKK", "TQVQSVIDK",
 				"TSGGAGGLGSLR", "VAAENQYGR", "VDFDDIHR", "VGPANPSLQK", "VLSIGDGIAR", "VTLVSAAPEK", "VVDDELATR", "VVFIFGPDK", "WPLYLSTK", "YDHLGDSPK", "YVDMSAKSK", "YVIEFIAR"};
-		peptides=new String[] {"LVDIVEPTEK"};
-		//peptides=null; // SEARCH EVERYTHING!
+		peptides=new String[] {"QATFEEMIAR"};
 
 		InputStream is=stripefile.getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
 		ArrayList<FastaEntry> entries=FastaReader.readFasta(is, "ecoli-190209-contam_correctNL.fasta");
