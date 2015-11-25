@@ -29,10 +29,10 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanAuxillaryScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PecanLibraryEntry;
@@ -161,7 +161,7 @@ public class StripeExtractor {
 
 					if (range.contains((float)mz)) {
 						String random=PeptideUtils.getDecoy(peptide, backgroundProteomeSet, PARAMETERS);
-						FragmentationModel randmodel=new FragmentationModel(random, PARAMETERS.getAAConstants());
+						PecanOneFragmentationModel randmodel=new PecanOneFragmentationModel(random, PARAMETERS.getAAConstants());
 						PecanLibraryEntry randentry=randmodel.getPecanSpectrum(charge, keys, map, PARAMETERS, true);
 
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
@@ -226,17 +226,17 @@ public class StripeExtractor {
 				for (byte charge : charges) {
 					double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
 					if (range.contains((float)mz)) {
-						FragmentationModel model=new FragmentationModel(peptide, PARAMETERS.getAAConstants());
+						PecanOneFragmentationModel model=new PecanOneFragmentationModel(peptide, PARAMETERS.getAAConstants());
 						PecanLibraryEntry pecanEntry=model.getPecanSpectrum(charge, keys, map, PARAMETERS, false);
 
-						FragmentationModel revmodel=new FragmentationModel(PeptideUtils.getSmartDecoy(peptide, charge, backgroundProteomeSet, PARAMETERS), PARAMETERS.getAAConstants());
+						PecanOneFragmentationModel revmodel=new PecanOneFragmentationModel(PeptideUtils.getSmartDecoy(peptide, charge, backgroundProteomeSet, PARAMETERS), PARAMETERS.getAAConstants());
 						PecanLibraryEntry reventry=revmodel.getPecanSpectrum(charge, keys, map, PARAMETERS, true);
 
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						tasks.add(pecanEntry);
 						tasks.add(reventry);
 
-						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new PecanScoringTask(pecanScorer, tasks, stripes, backgroundScores, precursors, scanAveragingMargin));
+						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new PecanOneScoringTask(pecanScorer, tasks, stripes, backgroundScores, precursors, scanAveragingMargin));
 						results.add(value);
 					}
 				}

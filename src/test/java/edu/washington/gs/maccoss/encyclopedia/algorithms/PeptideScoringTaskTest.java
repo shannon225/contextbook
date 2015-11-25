@@ -20,9 +20,9 @@ import java.util.zip.DataFormatException;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PecanLibraryEntry;
@@ -122,7 +122,7 @@ public class PeptideScoringTaskTest {
 				for (byte charge : charges) {
 					double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
 					if (range.contains((float)mz)) {
-						FragmentationModel model=new FragmentationModel(peptide, PARAMETERS.getAAConstants());
+						PecanOneFragmentationModel model=new PecanOneFragmentationModel(peptide, PARAMETERS.getAAConstants());
 						PecanLibraryEntry pecanEntry=model.getPecanSpectrum(charge, keys, map, PARAMETERS, false);
 
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();

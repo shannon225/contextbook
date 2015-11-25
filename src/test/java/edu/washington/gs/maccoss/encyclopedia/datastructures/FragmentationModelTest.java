@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 import java.util.Arrays;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import gnu.trove.map.hash.TDoubleIntHashMap;
 import junit.framework.TestCase;
@@ -880,7 +881,7 @@ public class FragmentationModelTest extends TestCase {
 		Arrays.sort(keys);
 
 		String peptide="ILQEGVDPK";
-		FragmentationModel model=new FragmentationModel(peptide, PARAMETERS.getAAConstants());
+		PecanOneFragmentationModel model=new PecanOneFragmentationModel(peptide, PARAMETERS.getAAConstants());
 		PecanLibraryEntry entry=model.getPecanSpectrum((byte)2, keys, map, PARAMETERS, false);
 		return entry;
 	}

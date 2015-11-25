@@ -22,16 +22,14 @@ import java.util.zip.DataFormatException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.BackgroundGenerator;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.DotProduct;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanAuxillaryScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.AbstractPecanFragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PecanLibraryEntry;
@@ -63,19 +61,21 @@ public class Pecanpie {
 		File fastaFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/ecoli-190209-contam_correctNL.fasta");
 		File outputFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/encyc_report.txt");
 		SearchParameters parameters=new SearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
-
-		PSMScorer backgroundScorer=new DotProduct(parameters.getFragmentTolerance());
-		PSMScorer pecanScorer=new PecanRawScorer(parameters.getFragmentTolerance(), new PecanAuxillaryScorer(parameters));
+		PecanScoringFactory factory=new PecanOneScoringFactory(parameters);
 		
 		try {
-			runPie(diaFile, fastaFile, outputFile, backgroundScorer, pecanScorer, parameters);
+			runPie(diaFile, fastaFile, outputFile, factory);
 		} catch (Exception e) {
 			System.err.println("Encountered Fatal Error!");
 			e.printStackTrace();
 		}
 	}
 
-	public static void runPie(File diaFile, File fastaFile, File outputFile, PSMScorer backgroundScorer, PSMScorer pecanScorer, SearchParameters parameters) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+	public static void runPie(File diaFile, File fastaFile, File outputFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+		PSMScorer backgroundScorer=taskFactory.getBackgroundScorer();
+		PSMScorer pecanScorer=taskFactory.getPecanScorer();
+		SearchParameters parameters=taskFactory.getParameters();
+		
 		int cores=Runtime.getRuntime().availableProcessors();
 		
 		StripeFile stripefile=new StripeFile();
@@ -159,7 +159,7 @@ public class Pecanpie {
 
 					if (range.contains((float)mz)) {
 						String random=PeptideUtils.getDecoy(peptide, backgroundProteomeSet, parameters);
-						FragmentationModel randmodel=new FragmentationModel(random, parameters.getAAConstants());
+						AbstractPecanFragmentationModel randmodel=taskFactory.getFragmentationModel(random, parameters.getAAConstants());
 						PecanLibraryEntry randentry=randmodel.getPecanSpectrum(charge, keys, map, parameters, true);
 
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
@@ -216,17 +216,17 @@ public class Pecanpie {
 				for (byte charge : charges) {
 					double mz=parameters.getAAConstants().getChargedMass(peptide, charge);
 					if (range.contains((float)mz)) {
-						FragmentationModel model=new FragmentationModel(peptide, parameters.getAAConstants());
+						AbstractPecanFragmentationModel model=taskFactory.getFragmentationModel(peptide, parameters.getAAConstants());
 						PecanLibraryEntry pecanEntry=model.getPecanSpectrum(charge, keys, map, parameters, false);
 
-						FragmentationModel revmodel=new FragmentationModel(PeptideUtils.getSmartDecoy(peptide, charge, backgroundProteomeSet, parameters), parameters.getAAConstants());
+						AbstractPecanFragmentationModel revmodel=taskFactory.getFragmentationModel(PeptideUtils.getSmartDecoy(peptide, charge, backgroundProteomeSet, parameters), parameters.getAAConstants());
 						PecanLibraryEntry reventry=revmodel.getPecanSpectrum(charge, keys, map, parameters, true);
 
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						tasks.add(pecanEntry);
 						tasks.add(reventry);
 
-						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new PecanScoringTask(pecanScorer, tasks, stripes, backgroundScores, precursors, scanAveragingMargin));
+						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(taskFactory.getScoringTask(pecanScorer, tasks, stripes, backgroundScores, precursors, scanAveragingMargin));
 						results.add(value);
 					}
 				}

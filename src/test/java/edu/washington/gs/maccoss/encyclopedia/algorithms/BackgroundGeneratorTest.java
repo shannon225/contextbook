@@ -4,8 +4,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PecanLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -49,7 +49,7 @@ public class BackgroundGeneratorTest extends TestCase {
 		double[] keys=binCounters[index].keys();
 		Arrays.sort(keys);
 
-		FragmentationModel model=new FragmentationModel(peptide, PARAMETERS.getAAConstants());
+		PecanOneFragmentationModel model=new PecanOneFragmentationModel(peptide, PARAMETERS.getAAConstants());
 		double[] ions=model.getPrimaryIons(PARAMETERS.getFragType(), charge);
 		int[] expectedCounts=new int[] {198, 388, 34, 20, 12, 21, 12, 16, 12, 16, 6, 16, 25, 11, 6, 5, 15, 18};
 		for (int i=0; i<ions.length; i++) {
@@ -76,7 +76,7 @@ public class BackgroundGeneratorTest extends TestCase {
 		keys=binCounters[index].keys();
 		Arrays.sort(keys);
 
-		model=new FragmentationModel(peptide, PARAMETERS.getAAConstants());
+		model=new PecanOneFragmentationModel(peptide, PARAMETERS.getAAConstants());
 		ions=model.getPrimaryIons(PARAMETERS.getFragType(), charge);
 		expectedCounts=new int[] {388, 41, 8, 60, 7, 5, 9, 5, 12, 17, 7, 8, 6, 14, 33, 6, 15, 22, 29, 32};
 		for (int i=0; i<ions.length; i++) {
