@@ -75,7 +75,7 @@ public class PecanScoringTask extends PeptideScoringTask {
 			int[] numAboveThresholdMatches=new int[sumRawScores.length];
 			int[] numMatches=new int[sumRawScores.length];
 			for (int i=0; i<numAboveThresholdMatches.length; i++) {
-				// NOTE: this seems questionable that unnormalized intensities are used for individual scores while normalized intensities are used for total scores. -BCS
+				// TODO: this seems questionable that unnormalized intensities are used for individual scores while normalized intensities are used for total scores. -BCS
 				float threshold=sumRawScores[i]/(entry.getPeptideSeq().length()+1);
 				for (int j=0; j<sumFragmentTraces.length; j++) {
 					if (sumFragmentTraces[j][i]>=threshold) {

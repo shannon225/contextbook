@@ -29,7 +29,7 @@ public class PecanRawScorer implements PSMScorer {
 	public float[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize) {
 		double[] libraryMasses=entry.getMassArray();
 		float[] libraryIntensities;
-		// NOTE: this seems questionable that unnormalized intensities are used for individual scores while normalized intensities are used for total scores. -BCS
+		// TODO: this seems questionable that unnormalized intensities are used for individual scores while normalized intensities are used for total scores. -BCS
 		if (!normalize&&entry instanceof PecanLibraryEntry) {
 			libraryIntensities=((PecanLibraryEntry)entry).getUnnormalizedIntensities();
 		} else {
