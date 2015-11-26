@@ -24,13 +24,15 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class StripeFile extends SQLFile {
+	public static final String DIA_EXTENSION=".dia";
+	
 	private File userFile=null;
 	private final File tempFile;
 	
 	private final HashMap<Range, Float> ranges=new HashMap<Range, Float>();
 
 	public StripeFile() throws IOException {
-		tempFile=File.createTempFile("encyclopedia_", ".dia");
+		tempFile=File.createTempFile("encyclopedia_", DIA_EXTENSION);
 		tempFile.deleteOnExit();
 	}
 	

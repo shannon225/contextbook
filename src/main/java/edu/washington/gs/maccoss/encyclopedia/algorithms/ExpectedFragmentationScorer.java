@@ -7,6 +7,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class ExpectedFragmentationScorer implements AuxillaryPSMScorer {
@@ -88,7 +89,7 @@ public class ExpectedFragmentationScorer implements AuxillaryPSMScorer {
 				}
 				return ions.toArray();
 			default:
-				throw new IllegalArgumentException("Unknown fragmentation type ["+parameters.getFragType()+"]");
+				throw new EncyclopediaException("Unknown fragmentation type ["+parameters.getFragType()+"]");
 		}
 	}
 
@@ -128,7 +129,7 @@ public class ExpectedFragmentationScorer implements AuxillaryPSMScorer {
 				}
 				return ions.toArray();
 			default:
-				throw new IllegalArgumentException("Unknown fragmentation type ["+parameters.getFragType()+"]");
+				throw new EncyclopediaException("Unknown fragmentation type ["+parameters.getFragType()+"]");
 		}
 	}
 
@@ -168,7 +169,7 @@ public class ExpectedFragmentationScorer implements AuxillaryPSMScorer {
 				}
 				return names.toArray(new String[names.size()]);
 			default:
-				throw new IllegalArgumentException("Unknown fragmentation type ["+parameters.getFragType()+"]");
+				throw new EncyclopediaException("Unknown fragmentation type ["+parameters.getFragType()+"]");
 		}
 	}
 }

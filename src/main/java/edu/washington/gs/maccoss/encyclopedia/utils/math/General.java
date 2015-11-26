@@ -37,6 +37,11 @@ public class General {
 		return r;
 	}
 	
+	public static float mean(int[] v) {
+		float sum=sum(v);
+		return sum/(float)v.length;
+	}
+	
 	public static float mean(float[] v) {
 		float sum=sum(v);
 		return sum/v.length;
@@ -44,6 +49,14 @@ public class General {
 
 	public static float sum(float[] v) {
 		float sum=0.0f;
+		for (int i=0; i<v.length; i++) {
+			sum+=v[i];
+		}
+		return sum;
+	}
+
+	public static int sum(int[] v) {
+		int sum=0;
 		for (int i=0; i<v.length; i++) {
 			sum+=v[i];
 		}

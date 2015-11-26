@@ -1,12 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
@@ -14,7 +11,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
 import uk.ac.ebi.jmzml.model.mzml.BinaryDataArrayList;
 import uk.ac.ebi.jmzml.model.mzml.CVParam;
@@ -24,19 +20,22 @@ import uk.ac.ebi.jmzml.model.mzml.Spectrum;
 import uk.ac.ebi.jmzml.xml.io.MzMLObjectIterator;
 import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 
-public class MzmlReader {
-	public static void main(String[] args) throws IOException, SQLException {
-		StripeFile stripeFile=new StripeFile();
-		stripeFile.openFile();
+public class MzmlToDIAProducer implements Runnable {
+	private final BlockingQueue<MzmlBlock> mzmlBlockQueue;
+	private final MzMLUnmarshaller unmarshaller;
+	private final HashMap<Range, TFloatArrayList> retentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 
-		Logger.logLine("Starting ...");
-		File xmlFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/20150708_Ecoli_0911_25x4mzDIA_500_600.mzML");
-		File saveFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/20150708_Ecoli_0911_25x4mzDIA_500_600.dia");
-		
-		MzMLUnmarshaller unmarshaller=new MzMLUnmarshaller(xmlFile);
+	public MzmlToDIAProducer(MzMLUnmarshaller unmarshaller, BlockingQueue<MzmlBlock> mzmlBlockQueue) {
+		this.unmarshaller=unmarshaller;
+		this.mzmlBlockQueue=mzmlBlockQueue;
+	}
+	
+	public HashMap<Range, TFloatArrayList> getRetentionTimesByStripe() {
+		return retentionTimesByStripe;
+	}
 
-		stripeFile.setFileName(xmlFile.getName(), unmarshaller.getMzMLId(), xmlFile.getAbsolutePath());
-
+	@Override
+	public void run() {
 		int spectrumCount=unmarshaller.getObjectCountForXpath("/run/spectrumList/spectrum");
 		Logger.logLine("Number of spectrum elements: "+spectrumCount);
 
@@ -47,7 +46,6 @@ public class MzmlReader {
 		int count=0;
 		int previousReport=0;
 		
-		HashMap<Range, TFloatArrayList> retentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 		while (spectrumIterator.hasNext()) {
 			Spectrum spectrum=spectrumIterator.next();
 			PrecursorList pl=spectrum.getPrecursorList();
@@ -101,15 +99,16 @@ public class MzmlReader {
 				}
 				stripeRTs.add(scanStartTime);
 			}
-			
-			if (precursors.size()>100) {
-				stripeFile.addPrecursor(precursors);
-				precursors.clear();
-			}
-			
-			if (stripes.size()>100) {
-				stripeFile.addStripe(stripes);
-				stripes.clear();
+
+			try {
+				if (precursors.size()>200||stripes.size()>2000) {
+					mzmlBlockQueue.put(new MzmlBlock(precursors, stripes));
+					precursors.clear();
+					stripes.clear();
+				}
+			} catch (InterruptedException ie) {
+				Logger.errorLine("Mzml reading interrupted!");
+				Logger.errorException(ie);
 			}
 			int percent=(100*count)/spectrumCount;
 			if (percent>previousReport) {
@@ -118,22 +117,13 @@ public class MzmlReader {
 			}
 			count++;
 		}
-		stripeFile.addPrecursor(precursors);
-		stripeFile.addStripe(stripes);
-		
-		HashMap<Range, Float> dutyCycleMap=new HashMap<Range, Float>();
-		for (Entry<Range, TFloatArrayList> entry : retentionTimesByStripe.entrySet()) {
-			Range range=entry.getKey();
-			TFloatArrayList rts=entry.getValue();
-			float[] deltas=General.firstDerivative(rts.toArray());
-			float averageDutyCycle=General.mean(deltas);
-			dutyCycleMap.put(range, averageDutyCycle);
-			System.out.println(range+"\t"+averageDutyCycle);
+		try {
+			mzmlBlockQueue.put(new MzmlBlock(precursors, stripes));
+			mzmlBlockQueue.put(MzmlBlock.POISON_BLOCK);			
+		} catch (InterruptedException ie) {
+			Logger.errorLine("Mzml reading interrupted!");
+			Logger.errorException(ie);
 		}
-		stripeFile.setRanges(dutyCycleMap);
-		
-		stripeFile.saveAsFile(saveFile);
-		Logger.logLine("... Finished!");
 	}
 
 	public static HashMap<String, CVParam> asCVMap(List<CVParam> params) {

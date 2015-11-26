@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearRegression;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
@@ -90,7 +91,7 @@ public class EValueCalculator {
 			index=counts.length-1;
 		}
 		if (index<0) {
-			throw new RuntimeException("No score bins available for scoring system! Empty library spectrum?");
+			throw new EncyclopediaException("No score bins available for scoring system! Empty library spectrum?");
 		}
 		return index;
 	}

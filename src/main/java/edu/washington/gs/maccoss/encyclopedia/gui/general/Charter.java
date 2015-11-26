@@ -8,7 +8,6 @@ import java.awt.Font;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
-import java.security.InvalidParameterException;
 
 import javax.swing.JFrame;
 
@@ -22,6 +21,7 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -94,7 +94,7 @@ public class Charter {
 					break;
 
 				default:
-					throw new InvalidParameterException("unsupported graphing type!");
+					throw new EncyclopediaException("unsupported graphing type!");
 			}
 
 			Pair<double[], double[]> values=trace.toArrays();
@@ -124,7 +124,7 @@ public class Charter {
 					break;
 
 				default:
-					throw new InvalidParameterException("unsupported graphing type!");
+					throw new EncyclopediaException("unsupported graphing type!");
 			}
 
 			plot.setDataset(count, dataset);

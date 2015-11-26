@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.util.ArrayList;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TCharHashSet;
 
@@ -73,7 +74,7 @@ public class DigestionEnzyme {
 			return new DigestionEnzyme("PepsinA", n, c);
 		}
 		
-		throw new IllegalArgumentException("Unknown digestion enzyme ["+enzymeName+"]");
+		throw new EncyclopediaException("Unknown digestion enzyme ["+enzymeName+"]");
 	}
 	
 	DigestionEnzyme(String name, TCharHashSet nterm, TCharHashSet cterm) {

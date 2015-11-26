@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -57,7 +58,7 @@ public class FragmentationModel {
 					return concatAndSort(getCIons(), getZIons(), getZp1Ions());
 				}
 			default:
-				throw new IllegalArgumentException("Unknown fragmentation type ["+type+"]");
+				throw new EncyclopediaException("Unknown fragmentation type ["+type+"]");
 		}
 	}
 	
