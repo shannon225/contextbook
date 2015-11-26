@@ -2,13 +2,15 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -21,14 +23,12 @@ import gnu.trove.set.hash.TIntHashSet;
 
 public class PecanOneScoringTask extends AbstractPecanScoringTask {
 	public PecanOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint> background, PrecursorScanMap precursors,
-			int scanAveragingMargin) {
-		super(scorer, entries, stripes, background, precursors, scanAveragingMargin);
+			int scanAveragingMargin, BlockingQueue<PeptideScoringResult> resultsQueue) {
+		super(scorer, entries, stripes, background, precursors, scanAveragingMargin, resultsQueue);
 	}
 
 	@Override
-	protected HashMap<LibraryEntry, PeptideScoringResult> process() {
-		HashMap<LibraryEntry, PeptideScoringResult> map=new HashMap<LibraryEntry, PeptideScoringResult>();
-		
+	protected Nothing process() {
 		for (LibraryEntry entry : super.entries) {
 			int requiredNumAboveThreshold=(int)(0.5f*entry.getPeptideSeq().length());
 			
@@ -77,7 +77,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 					if (sumFragmentTraces[j][i]>=threshold) {
 						numAboveThresholdMatches[i]++;
 					}
-					if (sumFragmentTraces[j][i]>=threshold) {
+					if (sumFragmentTraces[j][i]>0.0f) {
 						numMatches[i]++;
 					}
 				}
@@ -103,7 +103,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 			}
 			Collections.sort(goodStripes);
 
-			PeptideScoringResult result=new PeptideScoringResult();
+			PeptideScoringResult result=new PeptideScoringResult(entry);
 			TIntHashSet takenScans=new TIntHashSet();
 			
 			for (int i=goodStripes.size()-1; i>=0; i--) {
@@ -131,7 +131,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 					}
 					averageAuxScores=General.multiply(averageAuxScores, 1.0f/scanAveragingWindow);
 					
-					result.addStripe(goodStripes.get(i).x, General.concatenate(averageAuxScores, numAboveThresholdMatches[stripe.x], numMatches[stripe.x], sumRawScores[stripe.x]), stripe.y);
+					result.addStripe(goodStripes.get(i).x, General.concatenate(averageAuxScores, numAboveThresholdMatches[stripe.x], numMatches[stripe.x]), stripe.y);
 				}
 			}
 			
@@ -145,8 +145,15 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 			}
 			
 			result.setTrace(new XYTrace(scoreMap, GraphType.line, entry.getPeptideModSeq()));
-			map.put(entry, result);
+			
+			try {
+				resultsQueue.put(result);
+			} catch (InterruptedException ie) {
+				Logger.errorLine("Analysis interrupted!");
+				Logger.errorException(ie);
+				return Nothing.NOTHING;
+			}
 		}
-		return map;
+		return Nothing.NOTHING;
 	}
 }

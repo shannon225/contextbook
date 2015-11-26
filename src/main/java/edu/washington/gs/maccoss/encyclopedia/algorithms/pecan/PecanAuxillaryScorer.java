@@ -69,7 +69,11 @@ public class PecanAuxillaryScorer implements AuxillaryPSMScorer {
 			if (libraryIndex>=libraryMasses.length) break;
 			if (spectrumIndex>=spectrumMasses.length) break;
 		}
-		weightedRawScore=weightedRawScore/sumLibraryMasses;
+		if (sumLibraryMasses==0.0f) {
+			weightedRawScore=0.0f;
+		} else {
+			weightedRawScore=weightedRawScore/sumLibraryMasses;
+		}
 		float spectrumMagnitude=spectrum.getIntensityMagnitude();
 		float peakSimilarity=spectrumMagnitude<=0?0.0f:rawScore/spectrumMagnitude; // FINAL SCORE
 		

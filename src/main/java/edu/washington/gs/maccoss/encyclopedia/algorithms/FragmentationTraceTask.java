@@ -40,7 +40,7 @@ public class FragmentationTraceTask extends PeptideScoringTask {
 				}
 			}
 			
-			FragmentationScoringResult result=new FragmentationScoringResult();
+			FragmentationScoringResult result=new FragmentationScoringResult(entry);
 			for (int i=0; i<dataPoints.length; i++) {
 				XYTrace trace=new XYTrace(dataPoints[i], GraphType.line, scoreNames[i]);
 				result.addFragmentationTrace(trace);

@@ -31,6 +31,10 @@ public class LibraryEntry {
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
 	}
+	
+	public boolean isDecoy() {
+		return false;
+	}
 
 	public double getPrecursorMZ() {
 		return precursorMZ;

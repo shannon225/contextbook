@@ -1,18 +1,29 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
 import java.util.ArrayList;
+import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ThreadableTask;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 
-public class AbstractPecanScoringTask extends PeptideScoringTask {
+public abstract class AbstractPecanScoringTask extends ThreadableTask<Nothing> {
+	/**
+	 * must be immutable!
+	 */
+	protected final PSMScorer scorer;
+	protected final ArrayList<LibraryEntry> entries;
+	protected final ArrayList<Stripe> stripes;
+	protected final PrecursorScanMap precursors;
 	protected final int scanAveragingMargin;
 	protected final TDoubleObjectHashMap<XYPoint> background; // if not null, then score using zscore (otherwise use raw score)
+	protected final BlockingQueue<PeptideScoringResult> resultsQueue;
 
 	/**
 	 * scorer must be a 
@@ -23,10 +34,26 @@ public class AbstractPecanScoringTask extends PeptideScoringTask {
 	 * @param precursors
 	 * @param scanAveragingMargin
 	 */
-	public AbstractPecanScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint> background, PrecursorScanMap precursors, int scanAveragingMargin) {
-		super(scorer, entries, stripes, precursors);
+	public AbstractPecanScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint> background, PrecursorScanMap precursors, int scanAveragingMargin, BlockingQueue<PeptideScoringResult> resultsQueue) {
+		this.scorer=scorer;
+		this.entries=entries;
+		this.stripes=stripes;
+		this.precursors=precursors;
 		this.background=background;
 		this.scanAveragingMargin=scanAveragingMargin;
+		this.resultsQueue=resultsQueue;
+	}
+
+	@Override
+	public String getTaskName() {
+		StringBuilder sb=new StringBuilder();
+		for (LibraryEntry entry : entries) {
+			if (sb.length()>0) {
+				sb.append(',');
+			}
+			sb.append(entry.getPeptideModSeq());
+		}
+		return sb.toString();
 	}
 	
 	protected float[] movingSum(float[] scores, int scanAveragingWindow) {

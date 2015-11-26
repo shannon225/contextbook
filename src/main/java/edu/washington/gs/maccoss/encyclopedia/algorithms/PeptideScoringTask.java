@@ -33,7 +33,7 @@ public class PeptideScoringTask extends ThreadableTask<HashMap<LibraryEntry, Pep
 		for (LibraryEntry entry : entries) {
 			TFloatFloatHashMap scoreMap=new TFloatFloatHashMap();
 			
-			PeptideScoringResult result=new PeptideScoringResult();
+			PeptideScoringResult result=new PeptideScoringResult(entry);
 			for (Stripe stripe : stripes) {
 				float score=scorer.score(entry, stripe, precursors);
 				

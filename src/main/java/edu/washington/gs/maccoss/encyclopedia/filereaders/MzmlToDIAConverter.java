@@ -30,22 +30,36 @@ public class MzmlToDIAConverter {
 		if (!f.exists()||!f.canRead()) {
 			throw new EncyclopediaException("Can't read file "+f.getAbsolutePath());
 		}
+		
+		// first try to read if .DIA
 		if (f.getName().toLowerCase().endsWith(StripeFile.DIA_EXTENSION)) {
-			try {
-				StripeFile stripefile=new StripeFile();
-				stripefile.openFile(f);
-				return stripefile;
-			} catch (IOException ioe) {
-				throw new EncyclopediaException("Error reading DIA file!", ioe);
-			} catch (SQLException sqle) {
-				throw new EncyclopediaException("Error reading DIA file!", sqle);
-			}
-		} else if (f.getName().toLowerCase().endsWith(MZML_EXTENSION)) {
-			String absolutePath=f.getAbsolutePath();
-			File diaFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+StripeFile.DIA_EXTENSION);
+			return openDIAFile(f);
+		}
+		
+		// then try to change name to .DIA and read
+		String absolutePath=f.getAbsolutePath();
+		File diaFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+StripeFile.DIA_EXTENSION);
+		if (diaFile.exists()&&diaFile.canRead()) {
+			return openDIAFile(diaFile);
+		}
+		
+		// otherwise check for MZML and convert
+		if (f.getName().toLowerCase().endsWith(MZML_EXTENSION)) {
 			return convert(f, diaFile);
 		} else {
 			throw new EncyclopediaException("Can't read file type "+f.getAbsolutePath());
+		}
+	}
+
+	public static StripeFile openDIAFile(File f) {
+		try {
+			StripeFile stripefile=new StripeFile();
+			stripefile.openFile(f);
+			return stripefile;
+		} catch (IOException ioe) {
+			throw new EncyclopediaException("Error reading DIA file!", ioe);
+		} catch (SQLException sqle) {
+			throw new EncyclopediaException("Error reading DIA file!", sqle);
 		}
 	}
 

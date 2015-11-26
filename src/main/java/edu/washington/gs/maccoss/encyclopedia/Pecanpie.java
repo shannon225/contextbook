@@ -2,7 +2,6 @@ package edu.washington.gs.maccoss.encyclopedia;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -41,14 +41,14 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsToTSVConsumer;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
@@ -84,8 +84,6 @@ public class Pecanpie {
 		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
 
 		ArrayList<FastaEntry> entries=FastaReader.readFasta(fastaFile);
-
-		PrintWriter writer = new PrintWriter(outputFile, "UTF-8");
 		
 		TDoubleHashSet boundaries=new TDoubleHashSet();
 		ArrayList<Range> ranges=new ArrayList<Range>();
@@ -108,12 +106,17 @@ public class Pecanpie {
 			charges[i]=(byte)(parameters.getMinCharge()+i);
 		}
 		
+		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
+		PeptideScoringResultsToTSVConsumer resultsConsumer=new PeptideScoringResultsToTSVConsumer(outputFile, resultsQueue);
+		Thread consumerThread=new Thread(resultsConsumer);
+		consumerThread.start();
+		
 		// get stripes
 		for (Range range : ranges) {
 			float dutyCycle=stripefile.getRanges().get(range);
 			int scanAveragingMargin=(int)(((parameters.getMinEluteTime())/dutyCycle+1)/2); // floor
 			
-			System.out.println("Processing "+range+" ("+scanAveragingMargin+")");
+			Logger.logLine("Processing "+range);
 			
 			int index=Arrays.binarySearch(binArray, range.getMiddle());
 			index=(-(index+1))-1;
@@ -174,7 +177,7 @@ public class Pecanpie {
 			}
 			executor.shutdown();
 			while (!executor.isTerminated()) {
-				System.out.println(workQueue.size()+" background peptides remaining for "+range+"...");
+				Logger.logLine(workQueue.size()+" background peptides remaining for "+range+"...");
 				Thread.sleep(200);
 			}
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
@@ -199,6 +202,7 @@ public class Pecanpie {
 					}
 				}
 			}
+			results.clear();
 			
 			final TDoubleObjectHashMap<XYPoint> backgroundScores=new TDoubleObjectHashMap<XYPoint>();
 			backgroundScoreMap.forEachEntry(new TDoubleObjectProcedure<TDoubleArrayList>() {
@@ -211,7 +215,6 @@ public class Pecanpie {
 				};
 			});
 
-			results.clear();
 			for (String peptide : targetPeptides) {
 				for (byte charge : charges) {
 					double mz=parameters.getAAConstants().getChargedMass(peptide, charge);
@@ -226,47 +229,23 @@ public class Pecanpie {
 						tasks.add(pecanEntry);
 						tasks.add(reventry);
 
-						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(taskFactory.getScoringTask(pecanScorer, tasks, stripes, backgroundScores, precursors, scanAveragingMargin));
-						results.add(value);
+						executor.submit(taskFactory.getScoringTask(pecanScorer, tasks, stripes, backgroundScores, precursors, scanAveragingMargin, resultsQueue));
 					}
 				}
 			}
 			executor.shutdown();
 			while (!executor.isTerminated()) {
-				System.out.println(workQueue.size()+" peptides remaining for "+range+"...");
+				Logger.logLine(workQueue.size()+" peptides remaining for "+range+"...");
 				Thread.sleep(200);
 			}
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-
-			ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
-			for (Future<HashMap<LibraryEntry, PeptideScoringResult>> future : results) {
-				HashMap<LibraryEntry, PeptideScoringResult> result=future.get();
-				for (Entry<LibraryEntry, PeptideScoringResult> resultEntry : result.entrySet()) {
-					PecanLibraryEntry peptide=(PecanLibraryEntry)resultEntry.getKey();
-					PeptideScoringResult peptideResult=resultEntry.getValue();
-					
-					int rank=1;
-					for (Pair<ScoredObject<Stripe>, float[]> goodStripe : peptideResult.getGoodStripes()) {
-						float primaryScore=goodStripe.x.x;
-						Stripe stripe=goodStripe.x.y;
-						float[] auxScores=goodStripe.y;
-						
-						if (rank<=3) {
-							writer.print(peptide.getPeptideModSeq()+"\t"+peptide.isDecoy()+"\t"+rank+"\t"+primaryScore+"\t"+stripe.getScanStartTime());
-							for (float s : auxScores) {
-								writer.print("\t"+s);
-							}
-							writer.println();
-						}
-						rank++;
-						if (rank>3) break;
-					}
-					traces.add(peptideResult.getTrace());
-				}
-			}
-			writer.flush();
+			resultsQueue.put(PeptideScoringResult.POISON_RESULT);
 		}
-		writer.close();
+
+		consumerThread.join();
+		resultsConsumer.close();
+		
+		Logger.logLine("Finished analysis!");
 	}
 
 }

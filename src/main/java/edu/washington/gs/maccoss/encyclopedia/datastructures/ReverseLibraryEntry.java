@@ -9,4 +9,9 @@ public class ReverseLibraryEntry extends LibraryEntry {
 		super(precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime,
 				score, massArray, intensityArray);
 	}
+	
+	@Override
+	public boolean isDecoy() {
+		return true;
+	}
 }
