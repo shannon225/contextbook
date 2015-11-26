@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.filewriters;
+package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -9,16 +9,17 @@ import java.util.concurrent.BlockingQueue;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 
-public class PeptideScoringResultsToTSVConsumer implements Runnable {
+public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsConsumer {
 	private final BlockingQueue<PeptideScoringResult> resultsQueue;
 	private final PrintWriter writer;
 
-	public PeptideScoringResultsToTSVConsumer(File outputFile, BlockingQueue<PeptideScoringResult> resultsQueue) {
+	public PecanScoringResultsToTSVConsumer(File outputFile, BlockingQueue<PeptideScoringResult> resultsQueue) {
 		this.resultsQueue=resultsQueue;
 		try {
 			writer=new PrintWriter(outputFile, "UTF-8");
@@ -28,7 +29,8 @@ public class PeptideScoringResultsToTSVConsumer implements Runnable {
 			throw new EncyclopediaException("Error setting up output file: "+outputFile.getAbsolutePath(), e);
 		}
 	}
-	
+
+	@Override
 	public void close() {
 		writer.flush();
 		writer.close();

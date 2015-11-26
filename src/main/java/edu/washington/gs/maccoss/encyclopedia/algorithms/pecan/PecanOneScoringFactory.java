@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
@@ -11,14 +12,17 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 
 public class PecanOneScoringFactory implements PecanScoringFactory {
 	private final SearchParameters parameters;
+	private final File outputFile;
 
-	public PecanOneScoringFactory(SearchParameters parameters) {
+	public PecanOneScoringFactory(SearchParameters parameters, File outputFile) {
 		this.parameters=parameters;
+		this.outputFile=outputFile;
 	}
 	
 	@Override
@@ -47,4 +51,8 @@ public class PecanOneScoringFactory implements PecanScoringFactory {
 		return new PecanOneScoringTask(scorer, entries, stripes, background, precursors, scanAveragingMargin, resultsQueue);
 	}
 
+	@Override
+	public PeptideScoringResultsConsumer getResultsConsumer(BlockingQueue<PeptideScoringResult> resultsQueue) {
+		return new PecanScoringResultsToTSVConsumer(outputFile, resultsQueue);
+	}
 }

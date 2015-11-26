@@ -41,7 +41,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsToTSVConsumer;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -62,17 +62,17 @@ public class Pecanpie {
 		File fastaFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/ecoli-190209-contam_correctNL.fasta");
 		File outputFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/encyc_report.txt");
 		SearchParameters parameters=new SearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
-		PecanScoringFactory factory=new PecanOneScoringFactory(parameters);
+		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, outputFile);
 		
 		try {
-			runPie(diaFile, fastaFile, outputFile, factory);
+			runPie(diaFile, fastaFile, factory);
 		} catch (Exception e) {
 			System.err.println("Encountered Fatal Error!");
 			e.printStackTrace();
 		}
 	}
 
-	public static void runPie(File diaFile, File fastaFile, File outputFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+	public static void runPie(File diaFile, File fastaFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		PSMScorer backgroundScorer=taskFactory.getBackgroundScorer();
 		PSMScorer pecanScorer=taskFactory.getPecanScorer();
 		SearchParameters parameters=taskFactory.getParameters();
@@ -107,7 +107,7 @@ public class Pecanpie {
 		}
 		
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
-		PeptideScoringResultsToTSVConsumer resultsConsumer=new PeptideScoringResultsToTSVConsumer(outputFile, resultsQueue);
+		PeptideScoringResultsConsumer resultsConsumer=taskFactory.getResultsConsumer(resultsQueue);
 		Thread consumerThread=new Thread(resultsConsumer);
 		consumerThread.start();
 		
