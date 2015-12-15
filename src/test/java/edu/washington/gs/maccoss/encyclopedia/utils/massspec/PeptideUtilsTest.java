@@ -20,6 +20,9 @@ public class PeptideUtilsTest extends TestCase {
 		assertEquals("IACDEFQFEDCALR", PeptideUtils.getDecoy(seq, backgroundProteome, PARAMETERS));
 		// but they share too many ions, so actually must shuffle
 		assertEquals("FDFCDQECELAAIR", PeptideUtils.getSmartDecoy(seq, (byte)2, backgroundProteome, PARAMETERS));
+		
+
+		assertEquals("IGHTVEREDTPAIR", PeptideUtils.getSmartDecoy(seq, (byte)3, backgroundProteome, PARAMETERS));
 	}
 
 	public void testReverse() {
@@ -42,7 +45,5 @@ public class PeptideUtilsTest extends TestCase {
 			assertFalse(set.contains(s));
 			set.add(s);
 		}
-		
-		
 	}
 }

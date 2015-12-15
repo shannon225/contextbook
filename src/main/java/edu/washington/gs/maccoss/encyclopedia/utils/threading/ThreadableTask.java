@@ -2,6 +2,9 @@ package edu.washington.gs.maccoss.encyclopedia.utils.threading;
 
 import java.util.concurrent.Callable;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+
 public abstract class ThreadableTask<R> implements Callable<R> {
 	public abstract String getTaskName();
 	
@@ -12,13 +15,21 @@ public abstract class ThreadableTask<R> implements Callable<R> {
 	
 	@Override
 	public R call() {
-		//Logger.logLine("Started "+getTaskName());
-		//long startTime=System.currentTimeMillis();
 
-		R ret=process();
+		try {
+			//Logger.logLine("Started "+getTaskName());
+			//long startTime=System.currentTimeMillis();
+			
+			R ret=process();
+			return ret;
+			
+			//long stopTime=System.currentTimeMillis();
+			//Logger.logLine("Finished "+getTaskName()+" in "+(stopTime-startTime)/1000+" seconds.");
+		} catch (Throwable t) {
+			Logger.errorLine("Encountered unexpected exception!");
+			Logger.errorException(t);
+			throw new EncyclopediaException("Encountered unexpected exception!", t);
+		}
 
-		//long stopTime=System.currentTimeMillis();
-		//Logger.logLine("Finished "+getTaskName()+" in "+(stopTime-startTime)/1000+" seconds.");
-		return ret;
 	}
 }

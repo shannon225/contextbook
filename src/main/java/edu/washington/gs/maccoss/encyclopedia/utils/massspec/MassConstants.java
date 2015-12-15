@@ -6,7 +6,7 @@ public class MassConstants {
 	public final static double neutronMass=1.0086649158849;
 	public final static double protonMass=1.00727646681290;
 	public final static double hydrogenMass=1.007825032071;
-	public final static double oh3=15.9949146195616+3*hydrogenMass;
+	public final static double oh2=15.9949146195616+2*hydrogenMass;
 	
 	public static Float getModificationMass(String mod) {
 		if ("Cam".equals(mod)) {

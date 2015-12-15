@@ -7,6 +7,21 @@ public class General {
 		System.arraycopy(f, 0, r, a.length, f.length);
 		return r;
 	}
+
+	public static float[] concatenate(float[]... a) {
+		int length=0;
+		for (int i=0; i<a.length; i++) {
+			length+=a[i].length;
+		}
+		float[] r=new float[length];
+		
+		int lastIndex=0;
+		for (int i=0; i<a.length; i++) {
+			System.arraycopy(a[i], 0, r, lastIndex, a[i].length);
+			lastIndex+=a[i].length;
+		}
+		return r;
+	}
 	
 	public static String toString(float[] f) {
 		StringBuilder sb=new StringBuilder();

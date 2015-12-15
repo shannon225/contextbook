@@ -8,6 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
@@ -15,16 +16,15 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.IndexedObject;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 
 public class PecanOneScoringTask extends AbstractPecanScoringTask {
 	public PecanOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint> background, PrecursorScanMap precursors,
-			int scanAveragingMargin, BlockingQueue<PeptideScoringResult> resultsQueue) {
-		super(scorer, entries, stripes, background, precursors, scanAveragingMargin, resultsQueue);
+			int scanAveragingWindow, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
+		super(scorer, entries, stripes, background, precursors, scanAveragingWindow, resultsQueue, parameters);
 	}
 
 	@Override
@@ -32,16 +32,21 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 		for (LibraryEntry entry : super.entries) {
 			int requiredNumAboveThreshold=(int)(0.5f*entry.getPeptideSeq().length());
 			
+			int scanAveragingHalfWindow=scanAveragingWindow/2;
 			
+			float[] rawRTs=new float[super.stripes.size()];
 			float[] rawScores=new float[super.stripes.size()];
 			float[] bgsubScores=new float[super.stripes.size()];
 			float[][] fragmentTraces=new float[entry.getMassArray().length][];
+			
 			for (int i=0; i<fragmentTraces.length; i++) {
 				fragmentTraces[i]=new float[super.stripes.size()];
 			}
 			
 			for (int i=0; i<super.stripes.size(); i++) {
 				Stripe stripe=super.stripes.get(i);
+				rawRTs[i]=stripe.getScanStartTime();
+				
 				float[] scores=scorer.getIndividualPeakScores(entry, stripe, false);
 				for (int j=0; j<scores.length; j++) {
 					fragmentTraces[j][i]=scores[j];
@@ -57,24 +62,22 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 				}
 			}
 
-			int scanAveragingWindow=2*scanAveragingMargin+1;
-			int scanExcludingWindow=2*scanAveragingWindow+1;
-
-			float[] sumRawScores=movingSum(rawScores, scanAveragingWindow);
-			float[] sumBgsubScores=movingSum(bgsubScores, scanAveragingWindow);
+			float[] sumRawScores=movingForwardSum(rawScores, scanAveragingWindow);
+			float[] sumBgsubScores=movingForwardSum(bgsubScores, scanAveragingWindow);
 			float[][] sumFragmentTraces=new float[entry.getIntensityArray().length][];
 			for (int i=0; i<sumFragmentTraces.length; i++) {
-				sumFragmentTraces[i]=movingSum(fragmentTraces[i], scanAveragingWindow);
+				sumFragmentTraces[i]=movingForwardSum(fragmentTraces[i], scanAveragingWindow);
 			}
+			float[] midTime=movingForwardRTAverage(rawRTs, scanAveragingWindow);
 
-			ArrayList<ScoredObject<IndexedObject<Stripe>>> goodStripes=new ArrayList<ScoredObject<IndexedObject<Stripe>>>();
+			ArrayList<ScoredIndex> goodStripes=new ArrayList<ScoredIndex>();
 			int[] numAboveThresholdMatches=new int[sumRawScores.length];
 			int[] numMatches=new int[sumRawScores.length];
 			for (int i=0; i<numAboveThresholdMatches.length; i++) {
 				// TODO: this seems questionable that unnormalized intensities are used for individual scores while normalized intensities are used for total scores. -BCS
-				float threshold=sumRawScores[i]/(entry.getPeptideSeq().length()+1);
+				float threshold=Math.max(0.0f, sumRawScores[i]/(entry.getPeptideSeq().length()+1));
 				for (int j=0; j<sumFragmentTraces.length; j++) {
-					if (sumFragmentTraces[j][i]>=threshold) {
+					if (sumFragmentTraces[j][i]>threshold) {
 						numAboveThresholdMatches[i]++;
 					}
 					if (sumFragmentTraces[j][i]>0.0f) {
@@ -82,65 +85,62 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 					}
 				}
 				
-				/*if (super.stripes.get(i).getScanStartTime()>60f*48.85&&super.stripes.get(i).getScanStartTime()<60f*49.20f) {
-					System.out.println(entry.getPeptideSeq()+"\t"+(super.stripes.get(i).getScanStartTime()/60f)+"\t"+numAboveThresholdMatches[i]+"/"+requiredNumAboveThreshold+"\t"+sumBgsubScores[i]);
-					for (int j=0; j<sumFragmentTraces.length; j++) {
-						System.out.println("\t"+sumFragmentTraces[j][i]+"\t>= "+threshold);
-					}
-				}*/
-				/*
-				if (super.stripes.get(i).getScanStartTime()>60f*42.32f&&super.stripes.get(i).getScanStartTime()<60f*42.33f) {
-					System.out.println(entry.getPeptideSeq()+"\t"+(super.stripes.get(i).getScanStartTime()/60f)+"\t"+numAboveThresholdMatches[i]+"/"+requiredNumAboveThreshold+"\t"+sumBgsubScores[i]);
-					for (int j=0; j<sumFragmentTraces.length; j++) {
-						System.out.println("\t"+sumFragmentTraces[j][i]+"\t>= "+threshold);
-					}
-				}*/
-				
 				if (numAboveThresholdMatches[i]>requiredNumAboveThreshold) {
-					goodStripes.add(new ScoredObject<IndexedObject<Stripe>>(sumBgsubScores[i], new IndexedObject<Stripe>(i, stripes.get(i))));
+					goodStripes.add(new ScoredIndex(sumBgsubScores[i], i));
 				}
-
 			}
 			Collections.sort(goodStripes);
 
 			PeptideScoringResult result=new PeptideScoringResult(entry);
 			TIntHashSet takenScans=new TIntHashSet();
-			
+			int identifiedPeaks=0;
 			for (int i=goodStripes.size()-1; i>=0; i--) {
-				IndexedObject<Stripe> stripe=goodStripes.get(i).y;
-				if (takenScans.contains(stripe.x)) {
+				int index=goodStripes.get(i).y;
+				if (takenScans.contains(index)) {
 					continue;
 				} else {
-					float[] averageAuxScores=null;
-					for (int j=0; j<scanExcludingWindow; j++) {
-						int index=stripe.x-scanAveragingWindow+j;
-						if (index>=0&&index<sumBgsubScores.length) {
-							takenScans.add(index);
-						}
+					int lowerWindow=index-2*scanAveragingWindow; // can't pick anything in twice the peak width
+					int upperWindow=index+3*scanAveragingWindow; // +1 to account for the window boundary
+					for (int j=lowerWindow; j<upperWindow; j++) {
+						takenScans.add(j);
 					}
-					for (int j=0; j<scanAveragingWindow; j++) {
-						int index=stripe.x-scanAveragingMargin+j;
-						if (index>=0&&index<stripes.size()) {
-							float[] auxScores=scorer.auxScore(entry, stripes.get(index), precursors);
-							if (averageAuxScores==null) {
-								averageAuxScores=auxScores;
-							} else {
-								averageAuxScores=General.add(averageAuxScores, auxScores);
-							}
-						}
-					}
-					averageAuxScores=General.multiply(averageAuxScores, 1.0f/scanAveragingWindow);
 					
-					result.addStripe(goodStripes.get(i).x, General.concatenate(averageAuxScores, numAboveThresholdMatches[stripe.x], numMatches[stripe.x]), stripe.y);
+					float[][] auxScores=new float[scanAveragingWindow][];
+					for (int j=0; j<scanAveragingWindow; j++) {
+						Stripe stripe=stripes.get(index+j);
+						auxScores[j]=scorer.auxScore(entry, stripe, precursors);
+					}
+					
+					float[] averageAuxScores=new float[auxScores[0].length];
+					for (int auxIndex=0; auxIndex<averageAuxScores.length; auxIndex++) {
+						for (int scanIndex=0; scanIndex<auxScores.length; scanIndex++) {
+							averageAuxScores[auxIndex]+=auxScores[scanIndex][auxIndex];
+						}
+					}
+					for (int j=0; j<averageAuxScores.length; j++) {
+						averageAuxScores[j]=averageAuxScores[j]/scanAveragingWindow;
+					}
+
+					// averaging forward, so current scan is actually the median for half a window back
+					int medianIndex=index+scanAveragingHalfWindow;
+					Stripe medianStripe=stripes.get(medianIndex);
+					float[] completeAuxArray=General.concatenate(new float[] {numAboveThresholdMatches[index], numMatches[index], midTime[index]}, averageAuxScores, auxScores[scanAveragingHalfWindow]);
+					result.addStripe(goodStripes.get(i).x/scanAveragingWindow, completeAuxArray, medianStripe);
+					
+					if (identifiedPeaks>parameters.getNumberOfReportedPeaks()) {
+						// keep N+1 peaks
+						break;
+					}
+					identifiedPeaks++;
 				}
 			}
 			
 			TFloatFloatHashMap scoreMap=new TFloatFloatHashMap();
-			for (int i=0; i<super.stripes.size(); i++) {
+			for (int i=0; i<sumBgsubScores.length; i++) {
 				if (numAboveThresholdMatches[i]>=requiredNumAboveThreshold) {
-					scoreMap.put(super.stripes.get(i).getScanStartTime(), sumBgsubScores[i]);
+					scoreMap.put(midTime[i], sumBgsubScores[i]);
 				} else {
-					scoreMap.put(super.stripes.get(i).getScanStartTime(), 0.0f);
+					scoreMap.put(midTime[i], 0.0f);
 				}
 			}
 			

@@ -45,7 +45,7 @@ public class PrecursorScanMap {
 		for (int i=0; i<isotopes.length; i++) {
 			byte isotope=isotopes[i];
 			
-			double target=mz+isotope*charge*MassConstants.neutronMass;
+			double target=mz+(isotope*MassConstants.neutronMass/charge);
 			int[] indicies=tolerance.getIndicies(masses, target);
 			float intensity=0.0f;
 			double weightedMz=0.0;

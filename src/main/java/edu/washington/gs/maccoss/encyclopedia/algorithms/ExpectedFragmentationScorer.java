@@ -38,6 +38,17 @@ public class ExpectedFragmentationScorer implements AuxillaryPSMScorer {
 					}
 					ions.add(intensity);
 				}
+				if (entry.getPrecursorCharge()>2) {
+					yIons=FragmentationModel.getPlus2s(yIons);
+					for (int i=startIonIndex; i<yIons.length; i++) {
+						int[] indicies=tolerance.getIndicies(masses, yIons[i]);
+						float intensity=0.0f;
+						for (int j=0; j<indicies.length; j++) {
+							intensity+=intensities[indicies[j]];
+						}
+						ions.add(intensity);
+					}
+				}
 				return ions.toArray();
 			case CID:
 				double[] bIons=model.getBIons();
@@ -142,6 +153,11 @@ public class ExpectedFragmentationScorer implements AuxillaryPSMScorer {
 				double[] yIons=model.getYIons();
 				for (int i=startIonIndex; i<yIons.length; i++) {
 					names.add("y"+(i+1));
+				}
+				if (entry.getPrecursorCharge()>2) {
+					for (int i=startIonIndex; i<yIons.length; i++) {
+						names.add("y"+(i+1)+"+2H");
+					}
 				}
 				return names.toArray(new String[names.size()]);
 			case CID:

@@ -98,7 +98,7 @@ public class AminoAcidConstants {
 	}
 	
 	public double getChargedMass(String sequence, byte charge) {
-		double mass=getMass(sequence)+MassConstants.oh3;
+		double mass=getMass(sequence)+MassConstants.oh2;
 		return (mass+MassConstants.protonMass*charge)/charge;
 	}
 	

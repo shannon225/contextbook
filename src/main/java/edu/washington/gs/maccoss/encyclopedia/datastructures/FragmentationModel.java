@@ -24,7 +24,14 @@ public class FragmentationModel {
 	public String[] getAas() {
 		return aas;
 	}
-
+	
+	public String getModifiedSequence() {
+		StringBuilder sb=new StringBuilder();
+		for (String string : aas) {
+			sb.append(string);
+		}
+		return sb.toString();
+	}
 	
 	/**
 	 * returns sorted array of sprimary ions

@@ -42,6 +42,7 @@ import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.set.hash.TDoubleHashSet;
 
 public class PeptideScoringTaskTest {
+	private static final Range FRAGMENTATION_RANGE=new Range(0f, 2000f);
 	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
 
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
@@ -57,7 +58,9 @@ public class PeptideScoringTaskTest {
 				"KFVADGIFK", "LGFMSAFVK", "LLEAASVSSK", "LLFEELVR", "LNVLANVIR", "LQGDLVTIR", "LTLSALIDGK", "LTLSALVDGK", "LVNMLDAVR", "MFASFPTTK", "NDAGYSEPR", "NTYYASIAK", "QGVLTLEIR", "QIFLGGVDR",
 				"RAEVLDSTK", "RGDFIPGLR", "RLTDADAMK", "RLVVQQAGK", "RWEVAALR", "SFLPLLRR", "SLHTLFGDK", "SVQAAMEKR", "TAYVGENVR", "TDLTAVPASR", "TIPWLENR", "TLEDILFR", "TQLVSNLKK", "TQVQSVIDK",
 				"TSGGAGGLGSLR", "VAAENQYGR", "VDFDDIHR", "VGPANPSLQK", "VLSIGDGIAR", "VTLVSAAPEK", "VVDDELATR", "VVFIFGPDK", "WPLYLSTK", "YDHLGDSPK", "YVDMSAKSK", "YVIEFIAR"};
-		peptides=new String[] {"QATFEEMIAR"};
+
+		charges=new byte[] {(byte)3};
+		peptides=new String[] {"IREVGAETIPDTHR"};
 
 		InputStream is=stripefile.getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
 		ArrayList<FastaEntry> entries=FastaReader.readFasta(is, "ecoli-190209-contam_correctNL.fasta");
@@ -69,7 +72,7 @@ public class PeptideScoringTaskTest {
 		}
 		double[] binArray=boundaries.toArray();
 		Arrays.sort(binArray);
-		Pair<TDoubleIntHashMap[], ArrayList<String>[]> background=BackgroundGenerator.generateBackground(binArray, entries, PARAMETERS);
+		Pair<TDoubleIntHashMap[], ArrayList<String>[]> background=BackgroundGenerator.generateBackground(binArray, entries, true, PARAMETERS);
 		TDoubleIntHashMap[] binCounters=background.x;
 		ArrayList<String>[] backgroundProteomes=background.y;
 		
@@ -123,7 +126,7 @@ public class PeptideScoringTaskTest {
 					double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
 					if (range.contains((float)mz)) {
 						PecanOneFragmentationModel model=new PecanOneFragmentationModel(peptide, PARAMETERS.getAAConstants());
-						PecanLibraryEntry pecanEntry=model.getPecanSpectrum(charge, keys, map, PARAMETERS, false);
+						PecanLibraryEntry pecanEntry=model.getPecanSpectrum(charge, keys, map, FRAGMENTATION_RANGE, PARAMETERS, false);
 
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						tasks.add(pecanEntry);

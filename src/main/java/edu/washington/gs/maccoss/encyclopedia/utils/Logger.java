@@ -12,14 +12,14 @@ public class Logger {
 		System.err.println(s);
 	}
 
-	public static void logException(Exception e) {
+	public static void logException(Throwable e) {
 		System.out.println(e);
 		for (StackTraceElement ste : e.getStackTrace()) {
 			System.out.println("\t"+ste.toString());
 		}
 	}
 
-	public static void errorException(Exception e) {
+	public static void errorException(Throwable e) {
 		System.err.println(e);
 		for (StackTraceElement ste : e.getStackTrace()) {
 			System.err.println("\t"+ste.toString());

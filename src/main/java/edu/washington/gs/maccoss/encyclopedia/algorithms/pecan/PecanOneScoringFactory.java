@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.DotProduct;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -37,7 +36,7 @@ public class PecanOneScoringFactory implements PecanScoringFactory {
 
 	@Override
 	public PSMScorer getBackgroundScorer() {
-		return new DotProduct(parameters.getFragmentTolerance());
+		return new PecanRawScorer(parameters.getFragmentTolerance(), null);
 	}
 
 	@Override
@@ -48,11 +47,11 @@ public class PecanOneScoringFactory implements PecanScoringFactory {
 	@Override
 	public AbstractPecanScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint> background, PrecursorScanMap precursors,
 			int scanAveragingMargin, BlockingQueue<PeptideScoringResult> resultsQueue) {
-		return new PecanOneScoringTask(scorer, entries, stripes, background, precursors, scanAveragingMargin, resultsQueue);
+		return new PecanOneScoringTask(scorer, entries, stripes, background, precursors, scanAveragingMargin, resultsQueue, parameters);
 	}
 
 	@Override
 	public PeptideScoringResultsConsumer getResultsConsumer(BlockingQueue<PeptideScoringResult> resultsQueue) {
-		return new PecanScoringResultsToTSVConsumer(outputFile, resultsQueue);
+		return new PecanScoringResultsToTSVConsumer(outputFile, resultsQueue, parameters.getNumberOfReportedPeaks());
 	}
 }

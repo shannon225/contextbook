@@ -16,6 +16,8 @@ public class SearchParameters {
 	private final byte minCharge;
 	private final byte maxCharge;
 	private final int minEluteTime;
+	private final int numberOfReportedPeaks;
+	private final boolean addDecoysToBackgound;
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme) {
 		this.aaConstants=aaConstants;
@@ -25,14 +27,17 @@ public class SearchParameters {
 		this.enzyme=enzyme;
 
 		minPeptideLength=5;
-		maxPeptideLength=40;
+		maxPeptideLength=99;
 		maxMissedCleavages=1;
 		minCharge=2;
 		maxCharge=3;
 		minEluteTime=12;
+		numberOfReportedPeaks=3;
+		addDecoysToBackgound=false;
 	}
 
-	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme, int maxMissedCleavages) {
+	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme,
+			int maxMissedCleavages) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.fragmentTolerance=fragmentTolerance;
@@ -41,12 +46,14 @@ public class SearchParameters {
 		this.maxMissedCleavages=maxMissedCleavages;
 
 		minPeptideLength=5;
-		maxPeptideLength=40;
+		maxPeptideLength=99;
 		minCharge=2;
 		maxCharge=3;
 		minEluteTime=12;
+		numberOfReportedPeaks=3;
+		addDecoysToBackgound=false;
 	}
-	
+
 	public AminoAcidConstants getAAConstants() {
 		return aaConstants;
 	}
@@ -58,7 +65,7 @@ public class SearchParameters {
 	public MassTolerance getFragmentTolerance() {
 		return fragmentTolerance;
 	}
-	
+
 	public MassTolerance getPrecursorTolerance() {
 		return precursorTolerance;
 	}
@@ -86,7 +93,16 @@ public class SearchParameters {
 	public byte getMinCharge() {
 		return minCharge;
 	}
+
 	public int getMinEluteTime() {
 		return minEluteTime;
+	}
+
+	public int getNumberOfReportedPeaks() {
+		return numberOfReportedPeaks;
+	}
+
+	public boolean isAddDecoysToBackgound() {
+		return addDecoysToBackgound;
 	}
 }

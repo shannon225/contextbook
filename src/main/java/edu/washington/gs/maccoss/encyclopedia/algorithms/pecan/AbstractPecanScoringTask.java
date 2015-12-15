@@ -7,6 +7,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -21,9 +22,10 @@ public abstract class AbstractPecanScoringTask extends ThreadableTask<Nothing> {
 	protected final ArrayList<LibraryEntry> entries;
 	protected final ArrayList<Stripe> stripes;
 	protected final PrecursorScanMap precursors;
-	protected final int scanAveragingMargin;
+	protected final int scanAveragingWindow;
 	protected final TDoubleObjectHashMap<XYPoint> background; // if not null, then score using zscore (otherwise use raw score)
 	protected final BlockingQueue<PeptideScoringResult> resultsQueue;
+	protected final SearchParameters parameters;
 
 	/**
 	 * scorer must be a 
@@ -34,14 +36,15 @@ public abstract class AbstractPecanScoringTask extends ThreadableTask<Nothing> {
 	 * @param precursors
 	 * @param scanAveragingMargin
 	 */
-	public AbstractPecanScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint> background, PrecursorScanMap precursors, int scanAveragingMargin, BlockingQueue<PeptideScoringResult> resultsQueue) {
+	public AbstractPecanScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint> background, PrecursorScanMap precursors, int scanAveragingWindow, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
 		this.scorer=scorer;
 		this.entries=entries;
 		this.stripes=stripes;
 		this.precursors=precursors;
 		this.background=background;
-		this.scanAveragingMargin=scanAveragingMargin;
+		this.scanAveragingWindow=scanAveragingWindow;
 		this.resultsQueue=resultsQueue;
+		this.parameters=parameters;
 	}
 
 	@Override
@@ -56,7 +59,27 @@ public abstract class AbstractPecanScoringTask extends ThreadableTask<Nothing> {
 		return sb.toString();
 	}
 	
-	protected float[] movingSum(float[] scores, int scanAveragingWindow) {
+	protected float[] movingForwardRTAverage(float[] rts, int scanAveragingWindow) {
+		// like moving sum, this approach drops the first scanAveragingWindow-1 scans
+		float[] avgRTs=new float[rts.length-scanAveragingWindow];
+		for (int i=0; i<avgRTs.length; i++) {
+			avgRTs[i]=(rts[i]+rts[i+scanAveragingWindow-1])/2.0f;
+		}
+		return avgRTs;
+	}
+	
+	protected float[] movingForwardSum(float[] scores, int scanAveragingWindow) {
+		// moving sum, this approach drops the first scanAveragingWindow-1 scans
+		float[] sumScores=new float[scores.length-scanAveragingWindow];
+		for (int i=0; i<sumScores.length; i++) {
+			for (int j=0; j<scanAveragingWindow; j++) {
+				sumScores[i]+=scores[i+j];
+			}
+		}
+		return sumScores;
+	}
+	
+	protected float[] movingCenteredSum(float[] scores, int scanAveragingWindow) {
 		// moving sum on background subtracted scores, this approach uses less data for the first and last scanAveragingMargin scans
 		int scanAveragingMargin=(scanAveragingWindow-1)/2;
 		

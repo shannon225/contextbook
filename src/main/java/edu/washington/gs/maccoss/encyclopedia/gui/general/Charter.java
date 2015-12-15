@@ -15,8 +15,10 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.PaintScale;
 import org.jfree.chart.renderer.xy.AbstractXYItemRenderer;
 import org.jfree.chart.renderer.xy.XYAreaRenderer;
+import org.jfree.chart.renderer.xy.XYBlockRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
@@ -25,6 +27,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZTrace;
 
 public class Charter {
 	public static void main(String[] args) {
@@ -51,6 +54,62 @@ public class Charter {
 		f.pack();
 		f.setSize(new Dimension(1000, 770));
 		f.setVisible(true);
+	}
+
+	public static void launchChart(String xAxis, String yAxis, boolean displayLegend, XYZTrace dataset) {
+		final JFrame f=new JFrame("Runs vs Reference");
+		f.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				System.exit(0);
+			}
+		});
+
+		f.getContentPane().add(getChart(xAxis, yAxis, displayLegend, dataset), BorderLayout.CENTER);
+
+		f.pack();
+		f.setSize(new Dimension(1000, 770));
+		f.setVisible(true);
+	}
+
+	public static ChartPanel getChart(String xAxisName, String yAxisName, boolean displayLegend, XYZTrace dataset) {
+		NumberAxis xAxis=new NumberAxis(xAxisName);
+		xAxis.setAutoRangeIncludesZero(false);
+		NumberAxis yAxis=new NumberAxis(yAxisName);
+		yAxis.setAutoRangeIncludesZero(false);
+		
+		XYBlockRenderer renderer=new XYBlockRenderer();
+		renderer.setBlockHeight(5);
+		renderer.setBlockWidth(5);
+        PaintScale scale = new PeakPaintScale(dataset.getMinZ(), dataset.getMaxZ()); 
+        renderer.setPaintScale(scale); 
+        
+		XYPlot plot=new XYPlot(dataset, xAxis, yAxis, renderer);
+		plot.setBackgroundPaint(Color.white);
+		plot.setDomainGridlinesVisible(false);
+		plot.setRangeGridlinePaint(Color.white);
+		JFreeChart chart=new JFreeChart(plot);
+		chart.removeLegend();
+		chart.setBackgroundPaint(Color.white);
+
+		ChartPanel chartPanel=new ChartPanel(chart, false);
+		if (!displayLegend) {
+			chartPanel.getChart().removeLegend();
+		}
+
+		NumberAxis rangeAxis=(NumberAxis)plot.getRangeAxis();
+
+		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
+		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
+		rangeAxis.setLabelFont(font2);
+		rangeAxis.setTickLabelFont(font);
+
+		NumberAxis domainAxis=(NumberAxis)((XYPlot)plot).getDomainAxis();
+		if (domainAxis!=null) {
+			domainAxis.setLabelFont(font2);
+			domainAxis.setTickLabelFont(font);
+		}
+
+		return chartPanel;
 	}
 
 	public static ChartPanel getChart(String xAxis, String yAxis, boolean displayLegend, XYTrace... traces) {

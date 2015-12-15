@@ -5,6 +5,7 @@ import java.util.Collections;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PecanLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
@@ -18,19 +19,24 @@ public class PecanOneFragmentationModel extends AbstractPecanFragmentationModel 
 		super(modifiedSequence, aaConstants);
 	}
 
-	public PecanLibraryEntry getPecanSpectrum(byte precursorCharge, double[] sortedBinCounterKeys, TDoubleIntHashMap binCounter, SearchParameters params, boolean isDecoy) {
+	public PecanLibraryEntry getPecanSpectrum(byte precursorCharge, double[] sortedBinCounterKeys, TDoubleIntHashMap binCounter, Range fragmentationRange, SearchParameters params, boolean isDecoy) {
 		TDoubleFloatHashMap peakMap=new TDoubleFloatHashMap();
 		double[] ions=getPrimaryIons(params.getFragType(), precursorCharge);
 		float totalOfSquares=0.0f;
 		for (int i=0; i<ions.length; i++) {
+			if (!fragmentationRange.contains((float)ions[i])) {
+				continue;
+			}
 			double[] matches=params.getFragmentTolerance().getMatches(sortedBinCounterKeys, ions[i]);
 			
-			int total=1; // add one pseudocount
+			int total=0;
 			if (matches.length>0) {
 				for (int j=0; j<matches.length; j++) {
 					total+=binCounter.get(matches[j]);
 				}
 			}
+			if (total==0) total=1; // TODO not quite adding one pseudocount (which would probably be more robust)
+			
 			float score=100.0f/total;
 			peakMap.put(ions[i], score);
 			totalOfSquares+=score*score;

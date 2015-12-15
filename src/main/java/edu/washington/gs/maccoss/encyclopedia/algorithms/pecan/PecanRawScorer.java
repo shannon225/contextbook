@@ -51,7 +51,7 @@ public class PecanRawScorer implements PSMScorer {
 		float[] individualPeakScores=new float[libraryMasses.length];
 		
 		if (libraryMasses.length==0||spectrumMasses.length==0) return individualPeakScores;
-		
+
 		for (int i=0; i<libraryMasses.length; i++) {
 			int[] indicies=fragmentTolerance.getIndicies(spectrumMasses, libraryMasses[i]);
 			float intensity=0.0f;
