@@ -24,9 +24,13 @@ public class AminoAcidConstants {
 	public AminoAcidConstants(TCharFloatHashMap fixedMods) {
 		atomicComposition.put('A', new int[] {5, 3, 1, 1, 0});
 		if (fixedMods.contains('C')&&Math.round(fixedMods.get('C'))==57) {
-			atomicComposition.put('C', new int[] {8, 5, 2, 2, 1}); // assumes +57 is alkylation
+			atomicComposition.put('C', new int[] {8, 5, 2, 2, 1}); // assumes +57 is carbamidomethyl alkylation
+		} else if (fixedMods.contains('C')&&Math.round(fixedMods.get('C'))==58) {
+			atomicComposition.put('C', new int[] {7, 5, 3, 1, 1}); // assumes +58 is carboxymethyl alkylation
+		} else if (fixedMods.contains('C')&&Math.round(fixedMods.get('C'))==46) {
+			atomicComposition.put('C', new int[] {7, 4, 1, 1, 2}); // assumes +46 is methylthio (MMTS)
 		} else {
-			atomicComposition.put('C', new int[] {5, 3, 1, 1, 1});
+			atomicComposition.put('C', new int[] {5, 3, 1, 1, 1}); // unmodified
 		}
 		atomicComposition.put('D', new int[] {5, 4, 3, 1, 0});
 		atomicComposition.put('E', new int[] {7, 5, 3, 1, 0});
