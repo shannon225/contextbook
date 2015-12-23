@@ -1,25 +1,37 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
 import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.concurrent.BlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
 import junit.framework.TestCase;
 
 public class PercolatorExecutorTest extends TestCase {
 
 	public void testPercolatorExecutor() throws Exception {
-		PercolatorExecutor e=new PercolatorExecutor(new File("/Users/searleb/Documents/projects/pecan/v0.9.7/onePep.530.49.td.feature"));
-		BlockingQueue<String> result=e.start();
+		InputStream is=getClass().getResourceAsStream("/pecan.feature.txt");
+		File featureFile=File.createTempFile("pecan", ".feature");
+		featureFile.deleteOnExit();
+		Files.copy(is, featureFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		
+		PercolatorExecutor e=new PercolatorExecutor(featureFile);
+		BlockingQueue<OutputMessage> result=e.start();
+		
+		int outputlines=0;
 
-		int count=0;
 		while (!e.isFinished()||!result.isEmpty()) {
-			String data=result.take();
-			if (data.startsWith(">")) {
-				count++;
-				if (count%1000==0) System.out.println(count+", "+result.size()+", "+e.isFinished());
+			if (!result.isEmpty()) {
+				OutputMessage data=result.take();
+				if (data.isStdOutput) {
+					outputlines++;
+				}
+			} else {
+				Thread.sleep(10);
 			}
 		}
-		System.out.println(count+", "+result.size());
-		System.out.println("FINISHED!");
+		assertEquals(712, outputlines-1); // number of spectra above 1% FDR (-1 for header)
 	}
 }

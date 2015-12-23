@@ -7,6 +7,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
 
 public class ExternalExecutor {
 	private final String[] cmdAndArgs;
@@ -16,8 +17,8 @@ public class ExternalExecutor {
 		this.cmdAndArgs=cmdAndArgs;
 	}
 
-	public BlockingQueue<String> start() throws IOException {
-		final BlockingQueue<String> queue=new LinkedBlockingQueue<String>();
+	public BlockingQueue<OutputMessage> start() throws IOException {
+		final BlockingQueue<OutputMessage> queue=new LinkedBlockingQueue<OutputMessage>();
 		StringBuilder sb=new StringBuilder();
 		for (String arg : cmdAndArgs) {
 			if (sb.length()>0) {
@@ -26,7 +27,8 @@ public class ExternalExecutor {
 			sb.append(arg);
 		}
 		Logger.logLine("Executing ["+sb.toString()+"]");
-		p=Runtime.getRuntime().exec(cmdAndArgs);
+		ProcessBuilder pb=new ProcessBuilder(cmdAndArgs);
+		p=pb.start();
 
 		new Thread(new Runnable() {
 			public void run() {
@@ -35,8 +37,22 @@ public class ExternalExecutor {
 
 				try {
 					while ((line=input.readLine())!=null) {
-						System.out.println("--> "+line);
-						queue.add(line);
+						queue.add(new OutputMessage(line, true));
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}).start();
+
+		new Thread(new Runnable() {
+			public void run() {
+				BufferedReader input=new BufferedReader(new InputStreamReader(p.getErrorStream()));
+				String line=null;
+
+				try {
+					while ((line=input.readLine())!=null) {
+						queue.add(new OutputMessage(line, false));
 					}
 				} catch (IOException e) {
 					e.printStackTrace();

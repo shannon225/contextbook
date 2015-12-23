@@ -22,7 +22,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 	public static String[] generateCommand(File tsv) {
 		File percolator=getPercolator();
 		
-		return new String[] {percolator.getAbsolutePath(), "-h"};
+		return new String[] {percolator.getAbsolutePath(), tsv.getAbsolutePath()};
 	}
 	
 	public static File getPercolator() {
@@ -42,7 +42,6 @@ public class PercolatorExecutor extends ExternalExecutor {
 					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-v2-06.mac");
 					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
 					percolator.setExecutable(true);
-					System.out.println(percolator.getAbsolutePath());
 					return percolator;
 				}
 				case LINUX:
