@@ -22,7 +22,7 @@ public class PeptideUtilsTest extends TestCase {
 		assertEquals("FDFCDQECELAAIR", PeptideUtils.getSmartDecoy(seq, (byte)2, backgroundProteome, PARAMETERS));
 		
 
-		assertEquals("IGHTVEREDTPAIR", PeptideUtils.getSmartDecoy(seq, (byte)3, backgroundProteome, PARAMETERS));
+		assertEquals("FDFCDQECELAAIR", PeptideUtils.getSmartDecoy(seq, (byte)3, backgroundProteome, PARAMETERS));
 	}
 
 	public void testReverse() {
