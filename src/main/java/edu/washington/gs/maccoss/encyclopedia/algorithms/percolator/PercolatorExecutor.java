@@ -12,11 +12,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 
 public class PercolatorExecutor extends ExternalExecutor {
-	private final File tsv;
-
+	
 	public PercolatorExecutor(File tsv) {
 		super(generateCommand(tsv));
-		this.tsv=tsv;
 	}
 	
 	public static String[] generateCommand(File tsv) {

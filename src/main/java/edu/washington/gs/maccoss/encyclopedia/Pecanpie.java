@@ -9,8 +9,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.StringTokenizer;
 import java.util.Map.Entry;
+import java.util.StringTokenizer;
+import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -25,7 +26,6 @@ import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.BackgroundGenerator;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringTask;
@@ -33,8 +33,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.AbstractPecanFrag
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PecanLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -44,14 +42,15 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
+import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -62,18 +61,50 @@ import gnu.trove.set.hash.TDoubleHashSet;
 
 public class Pecanpie {
 	public static void main(String[] args) {
-		// EXAMPLE
-		File diaFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/20150708_Ecoli_0911_25x4mzDIA_500_600.dia");
-		//File fastaFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/ecoli-190209-contam_correctNL.fasta");
-		File fastaFile=new File("/Users/searleb/Documents/projects/pecan/v0.9.7/ecoli_20150911_uniprot_sp_digested_Mass600to4000.fasta"); //FIXME
-		File featureFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/encyc_report.feature.txt");
-		File outputFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/encyc_report.percolator.txt");
-		SearchParameters parameters=new SearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
-		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
+		Logger.logLine("Pecanpie version 0.1");
 		
-		ArrayList<FastaEntry> targets=new ArrayList<FastaEntry>();
-		targets.add(new FastaEntry("FILE", ">Protein", "IGHTVEREDTPAIR"));
-		//targets=null;
+		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
+		if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")||arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
+			Logger.logLine("Required Parameters: ");
+			Logger.logLine("\t-i\tinput .DIA or .MZML file");
+			Logger.logLine("\t-f\tbackground FASTA file");
+			Logger.logLine("Other Parameters: ");
+			Logger.logLine("\t-t\ttarget FASTA file (default: background FASTA file)");
+			Logger.logLine("\t-o\toutput report (input file.pecan.txt)");
+			
+			TreeMap<String, String> defaults=new TreeMap<String, String>(SearchParameterParser.getDefaultParameters());
+			for (Entry<String, String> entry : defaults.entrySet()) {
+				Logger.logLine("\t"+entry.getKey()+"\t(default: "+entry.getValue()+")");
+			}
+			System.exit(1);
+		}
+		
+		if (!arguments.containsKey("-i")||!arguments.containsKey("-f")) {
+			Logger.errorLine("You are required to specify an input file (-i) and a background FASTA file (-f)");
+		}
+
+		File diaFile=new File(arguments.get("-i"));
+		File fastaFile=new File(arguments.get("-f"));
+		
+		ArrayList<FastaEntry> targets;
+		if (arguments.containsKey("-t")) {
+			targets=FastaReader.readFasta(new File(arguments.get("-t")));
+		} else {
+			targets=null;
+		}
+		
+		File outputFile;
+		if (arguments.containsKey("-o")) {
+			outputFile=new File(arguments.get("-o"));
+		} else {
+			outputFile=new File(diaFile.getAbsolutePath()+".pecan.txt");
+		}
+		
+		
+		File featureFile=new File(outputFile.getAbsolutePath()+".features");
+
+		SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
+		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
 		
 		try {
 			runPie(Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
