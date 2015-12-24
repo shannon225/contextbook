@@ -65,6 +65,7 @@ public class Pecanpie {
 		
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
 		if (arguments.size()==0||arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")||arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
+			Logger.logLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.logLine("Required Parameters: ");
 			Logger.logLine("\t-i\tinput .DIA or .MZML file");
 			Logger.logLine("\t-f\tbackground FASTA file");
