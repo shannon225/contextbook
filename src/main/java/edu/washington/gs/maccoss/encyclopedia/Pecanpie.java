@@ -64,7 +64,7 @@ public class Pecanpie {
 		Logger.logLine("Pecanpie version 0.1");
 		
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
-		if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")||arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
+		if (arguments.size()==0||arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")||arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("Required Parameters: ");
 			Logger.logLine("\t-i\tinput .DIA or .MZML file");
 			Logger.logLine("\t-f\tbackground FASTA file");
@@ -81,6 +81,7 @@ public class Pecanpie {
 		
 		if (!arguments.containsKey("-i")||!arguments.containsKey("-f")) {
 			Logger.errorLine("You are required to specify an input file (-i) and a background FASTA file (-f)");
+			System.exit(1);
 		}
 
 		File diaFile=new File(arguments.get("-i"));
