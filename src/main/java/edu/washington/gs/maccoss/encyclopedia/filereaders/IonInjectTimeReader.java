@@ -82,7 +82,8 @@ public class IonInjectTimeReader {
 				float isolationWindowLowerOffset=Float.parseFloat(isolationCVParams.get("MS:1000828").getValue());
 				float isolationWindowUpperOffset=Float.parseFloat(isolationCVParams.get("MS:1000829").getValue());
 				
-				//range=new Range(isolationWindowTarget-isolationWindowLowerOffset, isolationWindowTarget+isolationWindowUpperOffset);
+				range=new Range(isolationWindowTarget-isolationWindowLowerOffset, isolationWindowTarget+isolationWindowUpperOffset);
+				range=null;
 			}
 
 			if (range!=null) {
