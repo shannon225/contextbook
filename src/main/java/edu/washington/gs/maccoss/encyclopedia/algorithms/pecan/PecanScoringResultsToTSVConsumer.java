@@ -52,10 +52,11 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 				PeptideScoringResult result=resultsQueue.take();
 				if (PeptideScoringResult.POISON_RESULT==result) break;
 				if (!printedHeader) {
-					writer.println("id\tTD\tScanNr\ttopx\tpeakBGScore\tdeltaCn\ttraceNumAboveThresholdIons\ttraceNumIons\tmidTime\t"
+					// Percolator always assumes linux line endings!
+					writer.print("id\tTD\tScanNr\ttopx\tpeakBGScore\tdeltaCn\ttraceNumAboveThresholdIons\ttraceNumIons\tmidTime\t"
 							+ "peakRawScore\tpeakSimilarity\tpeakWeightedRawScore\tpeakNumAboveThresholdMatches\tpeakNumMatches\tpeakAverageAbsPPM\tpeakAveragePPM\tpeakIsotopeDotProduct\t"
 							+ "midRawScore\tmidSimilarity\tmidWeightedRawScore\tmidNumAboveThresholdIons\tmidNumIons\tmidAbsPPM\tmidPPM\tmidIsotopeDotProduct\t"
-							+ "pepLength\tcharge2\tcharge3\tsequence\tannotation");
+							+ "pepLength\tcharge2\tcharge3\tsequence\tannotation\n");
 					printedHeader=true;
 				}
 				LibraryEntry peptide=result.getEntry();
@@ -89,7 +90,9 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 						
 						String annotation=stripe.getSpectrumName();
 						writer.print("\t"+peptide.getPeptideSeq().length()+"\t"+(peptide.getPrecursorCharge()==2?1:0)+"\t"+(peptide.getPrecursorCharge()==3?1:0)+"\t"+sequence+"\t"+annotation);
-						writer.println();
+
+						// Percolator always assumes linux line endings!
+						writer.print("\n");
 					}
 					rank++;
 					if (rank>3) break;

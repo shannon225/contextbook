@@ -20,16 +20,17 @@ public class PecanpieTest {
 		File diaFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/20150708_Ecoli_0911_25x4mzDIA_500_600.dia");
 		//File fastaFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/ecoli-190209-contam_correctNL.fasta");
 		File fastaFile=new File("/Users/searleb/Documents/projects/pecan/v0.9.7/ecoli_20150911_uniprot_sp_digested_Mass600to4000.fasta"); //FIXME
-		File outputFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/encyc_report.txt");
+		File featureFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/encyc_report.feature.txt");
+		File outputFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/encyc_report.percolator.txt");
 		SearchParameters parameters=new SearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
-		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, outputFile);
+		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
 		
 		ArrayList<FastaEntry> targets=new ArrayList<FastaEntry>();
 		targets.add(new FastaEntry("FILE", ">Protein", "IGHTVEREDTPAIR"));
-		//targets=null;
+		targets=null;
 		
 		try {
-			Pecanpie.runPie(Optional.fromNullable(targets), diaFile, fastaFile, factory);
+			Pecanpie.runPie(Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
 		} catch (Exception e) {
 			System.err.println("Encountered Fatal Error!");
 			e.printStackTrace();

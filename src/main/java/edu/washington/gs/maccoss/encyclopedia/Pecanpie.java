@@ -2,12 +2,14 @@ package edu.washington.gs.maccoss.encyclopedia;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.StringTokenizer;
 import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
@@ -30,6 +32,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.AbstractPecanFragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -47,6 +50,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -62,23 +66,24 @@ public class Pecanpie {
 		File diaFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/20150708_Ecoli_0911_25x4mzDIA_500_600.dia");
 		//File fastaFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/ecoli-190209-contam_correctNL.fasta");
 		File fastaFile=new File("/Users/searleb/Documents/projects/pecan/v0.9.7/ecoli_20150911_uniprot_sp_digested_Mass600to4000.fasta"); //FIXME
-		File outputFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/encyc_report.txt");
+		File featureFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/encyc_report.feature.txt");
+		File outputFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/encyc_report.percolator.txt");
 		SearchParameters parameters=new SearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
-		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, outputFile);
+		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
 		
 		ArrayList<FastaEntry> targets=new ArrayList<FastaEntry>();
 		targets.add(new FastaEntry("FILE", ">Protein", "IGHTVEREDTPAIR"));
 		//targets=null;
 		
 		try {
-			runPie(Optional.fromNullable(targets), diaFile, fastaFile, factory);
+			runPie(Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
 		} catch (Exception e) {
 			System.err.println("Encountered Fatal Error!");
 			e.printStackTrace();
 		}
 	}
 
-	public static void runPie(Optional<ArrayList<FastaEntry>> targetList, File diaFile, File fastaFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+	public static void runPie(Optional<ArrayList<FastaEntry>> targetList, File diaFile, File fastaFile, File featureFile, File outputFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		long startTime=System.currentTimeMillis();
 		PSMScorer backgroundScorer=taskFactory.getBackgroundScorer();
 		PSMScorer pecanScorer=taskFactory.getPecanScorer();
@@ -196,7 +201,7 @@ public class Pecanpie {
 			executor.shutdown();
 			while (!executor.isTerminated()) {
 				Logger.logLine(workQueue.size()+" background peptides remaining for "+range+"...");
-				Thread.sleep(200);
+				Thread.sleep(500);
 			}
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
@@ -258,7 +263,7 @@ public class Pecanpie {
 			executor.shutdown();
 			while (!executor.isTerminated()) {
 				Logger.logLine(workQueue.size()+" peptides remaining for "+range+"...");
-				Thread.sleep(200);
+				Thread.sleep(500);
 			}
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 		}
@@ -267,7 +272,42 @@ public class Pecanpie {
 		consumerThread.join();
 		resultsConsumer.close();
 		
-		Logger.logLine("Finished analysis! ("+resultsConsumer.getNumberProcessed()+" total peaks processed in "+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
+		PercolatorExecutor e=new PercolatorExecutor(featureFile);
+		BlockingQueue<OutputMessage> result=e.start();
+		
+		int countBelow1pFDR=0;
+		boolean isFirst=true;
+		boolean record=true;
+		PrintWriter writer=new PrintWriter(outputFile, "UTF-8");
+		while (!e.isFinished()||!result.isEmpty()) {
+			if (!result.isEmpty()) {
+				OutputMessage data=result.take();
+				if (data.isStdOutput) {
+					if (isFirst) {
+						isFirst=false;
+					} else if (record) {
+						StringTokenizer st=new StringTokenizer(data.message);
+						st.nextToken(); // PSMid
+						st.nextToken(); // score
+						float qvalue=Float.parseFloat(st.nextToken());
+						if (qvalue<0.01f) {
+							countBelow1pFDR++;
+						} else {
+							record=false;
+						}
+					}
+					writer.println(data.message);
+				} else {
+					Logger.logLine(data.message);
+				}
+			} else {
+				Thread.sleep(10);
+			}
+		}
+		writer.flush();
+		writer.close();
+		
+		Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+countBelow1pFDR+" peaks identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 	}
 
 	public static boolean arePeptidesInRange(HashSet<FastaEntry> targets, Range range, SearchParameters parameters) {
