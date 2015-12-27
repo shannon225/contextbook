@@ -103,7 +103,7 @@ public class Pecanpie {
 		}
 		
 		
-		File featureFile=new File(outputFile.getAbsolutePath()+".features");
+		File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
 
 		SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
@@ -198,7 +198,7 @@ public class Pecanpie {
 			HashSet<String> backgroundProteomeSet=new HashSet<String>(backgroundProteomeArray);
 			
 			float dutyCycle=stripefile.getRanges().get(range);
-			int scanAveragingMargin=(int)((parameters.getMinEluteTime())/dutyCycle); // floor
+			int scanAveragingMargin=(int)((parameters.getMinEluteTime())/dutyCycle)+1; // floor
 			float maxFragmentationMz=(float)Math.ceil(range.getMiddle()/10.0f)*20.0f+50.0f;
 			Range fragmentationRange=new Range(maxFragmentationMz/15f, maxFragmentationMz);
 			

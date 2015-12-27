@@ -79,6 +79,18 @@ public abstract class AbstractPecanScoringTask extends ThreadableTask<Nothing> {
 		return sumScores;
 	}
 	
+	protected float[] movingForwardAverage(float[] scores, int scanAveragingWindow) {
+		// moving sum, this approach drops the first scanAveragingWindow-1 scans
+		float[] sumScores=new float[scores.length-scanAveragingWindow];
+		for (int i=0; i<sumScores.length; i++) {
+			for (int j=0; j<scanAveragingWindow; j++) {
+				sumScores[i]+=scores[i+j];
+			}
+			sumScores[i]=sumScores[i]/scanAveragingWindow;
+		}
+		return sumScores;
+	}
+	
 	protected float[] movingCenteredSum(float[] scores, int scanAveragingWindow) {
 		// moving sum on background subtracted scores, this approach uses less data for the first and last scanAveragingMargin scans
 		int scanAveragingMargin=(scanAveragingWindow-1)/2;

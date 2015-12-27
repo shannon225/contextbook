@@ -10,6 +10,28 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
 import junit.framework.TestCase;
 
 public class PercolatorExecutorTest extends TestCase {
+	
+	public static void main(String[] args) throws Exception {
+		File featureFile=new File("/Users/searleb/Downloads/20150708_Ecoli_0911_25x4mzDIA_700_800.pecan.feature");
+		PercolatorExecutor e=new PercolatorExecutor(featureFile);
+		BlockingQueue<OutputMessage> result=e.start();
+		
+		int outputlines=0;
+
+		while (!e.isFinished()||!result.isEmpty()) {
+			if (!result.isEmpty()) {
+				OutputMessage data=result.take();
+				if (data.isStdOutput) {
+					outputlines++;
+				} else {
+					System.out.println(data.message);
+				}
+			} else {
+				Thread.sleep(10);
+			}
+		}
+		System.out.println("total processed: "+outputlines);
+	}
 
 	public void testPercolatorExecutor() throws Exception {
 		InputStream is=getClass().getResourceAsStream("/pecan.feature.txt");

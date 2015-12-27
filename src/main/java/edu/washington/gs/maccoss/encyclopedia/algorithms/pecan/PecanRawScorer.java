@@ -7,7 +7,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PecanLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 
 //@Immutable
 public class PecanRawScorer implements PSMScorer {
@@ -21,7 +21,7 @@ public class PecanRawScorer implements PSMScorer {
 
 	@Override
 	public float score(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
-		return General.sum(getIndividualPeakScores(entry, spectrum, true)); // dot product
+		return PeakScores.sumScores(getIndividualPeakScores(entry, spectrum, true)); // dot product
 	}
 
 	@Override
@@ -35,7 +35,7 @@ public class PecanRawScorer implements PSMScorer {
 	}
 	
 	@Override
-	public float[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize) {
+	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize) {
 		double[] libraryMasses=entry.getMassArray();
 		float[] libraryIntensities;
 		// TODO: this seems questionable that unnormalized intensities are used for individual scores while normalized intensities are used for total scores. -BCS
@@ -48,18 +48,27 @@ public class PecanRawScorer implements PSMScorer {
 		double[] spectrumMasses=spectrum.getMassArray();
 		float[] spectrumIntensities=spectrum.getIntensityArray();
 		
-		float[] individualPeakScores=new float[libraryMasses.length];
+		PeakScores[] individualPeakScores=new PeakScores[libraryMasses.length];
 		
 		if (libraryMasses.length==0||spectrumMasses.length==0) return individualPeakScores;
 
 		for (int i=0; i<libraryMasses.length; i++) {
 			int[] indicies=fragmentTolerance.getIndicies(spectrumMasses, libraryMasses[i]);
 			float intensity=0.0f;
+			float bestPeakIntensity=0.0f;
+			float deltaMass=0.0f;
 			for (int j=0; j<indicies.length; j++) {
 				intensity+=spectrumIntensities[indicies[j]];
+				
+				if (spectrumIntensities[indicies[j]]>bestPeakIntensity) {
+					bestPeakIntensity=spectrumIntensities[indicies[j]];
+					deltaMass=(float)((libraryMasses[i]-spectrumMasses[indicies[j]])*1000000.0/libraryMasses[i]);
+				}
 			}
 			float peakScore=libraryIntensities[i]*intensity;
-			individualPeakScores[i]=peakScore;
+			if (intensity>0.0f) {
+				individualPeakScores[i]=new PeakScores(peakScore, deltaMass);
+			}
 		}
 		
 		return individualPeakScores;

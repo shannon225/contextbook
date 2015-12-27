@@ -3,7 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 
 //@Immutable
 public class DotProduct implements PSMScorer {
@@ -17,8 +17,7 @@ public class DotProduct implements PSMScorer {
 	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer#score(edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry, edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe)
 	 */
 	public float score(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
-		float[] peakscores=getIndividualPeakScores(entry, spectrum, false);
-		return General.sum(peakscores);
+		return PeakScores.sumScores(getIndividualPeakScores(entry, spectrum, false));
 	}
 	
 	@Override
@@ -26,22 +25,24 @@ public class DotProduct implements PSMScorer {
 		return new String[0];
 	}
 	@Override
-	public float[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize) {
+	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize) {
 		double[] libraryMasses=entry.getMassArray();
 		float[] libraryIntensities=entry.getIntensityArray();
 		
 		double[] spectrumMasses=spectrum.getMassArray();
 		float[] spectrumIntensities=spectrum.getIntensityArray();
 		
-		if (libraryMasses.length==0||spectrumMasses.length==0) return new float[0];
+		if (libraryMasses.length==0||spectrumMasses.length==0) return new PeakScores[0];
 		
-		float[] peakscores=new float[libraryIntensities.length];
+		PeakScores[] peakscores=new PeakScores[libraryIntensities.length];
 		int libraryIndex=0;
 		int spectrumIndex=0;
 		while (true) {
 			int compare=tolerance.compareTo(libraryMasses[libraryIndex], spectrumMasses[spectrumIndex]);
 			if (compare==0) {
-				peakscores[libraryIndex]=libraryIntensities[libraryIndex]*spectrumIntensities[spectrumIndex];
+				float score=libraryIntensities[libraryIndex]*spectrumIntensities[spectrumIndex];
+				float deltaMass=(float)(libraryIntensities[libraryIndex]-spectrumMasses[spectrumIndex]);
+				peakscores[libraryIndex]=new PeakScores(score, deltaMass);
 				libraryIndex++;
 				spectrumIndex++;
 			} else if (compare>0) {

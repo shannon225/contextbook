@@ -31,7 +31,7 @@ public class SearchParameterParser {
 		map.put("-maxCharge", "3");
 		map.put("-minEluteTime", "12");
 		map.put("-numberOfReportedPeaks", "1");
-		map.put("-addDecoysToBackgound", "false");
+		map.put("-addDecoysToBackground", "false");
 		return map;
 	}
 	
@@ -123,8 +123,7 @@ public class SearchParameterParser {
 		maxCharge=(byte)getInteger("-maxCharge", parameters, 3);
 		minEluteTime=getInteger("-minEluteTime", parameters, 12);
 		numberOfReportedPeaks=getInteger("-numberOfReportedPeaks", parameters, 1);
-		addDecoysToBackgound=getBoolean("-addDecoysToBackgound", parameters, false);
-		
+		addDecoysToBackgound=getBoolean("-addDecoysToBackground", parameters, false);
 		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound);
 	}
 

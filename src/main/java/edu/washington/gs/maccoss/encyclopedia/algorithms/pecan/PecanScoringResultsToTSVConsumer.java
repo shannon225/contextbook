@@ -53,9 +53,9 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 				if (PeptideScoringResult.POISON_RESULT==result) break;
 				if (!printedHeader) {
 					// Percolator always assumes linux line endings!
-					writer.print("id\tTD\tScanNr\ttopx\tpeakBGScore\tdeltaCn\ttraceNumAboveThresholdIons\ttraceNumIons\tmidTime\t"
-							+ "peakRawScore\tpeakSimilarity\tpeakWeightedRawScore\tpeakNumAboveThresholdMatches\tpeakNumMatches\tpeakAverageAbsPPM\tpeakAveragePPM\tpeakIsotopeDotProduct\t"
-							+ "midRawScore\tmidSimilarity\tmidWeightedRawScore\tmidNumAboveThresholdIons\tmidNumIons\tmidAbsPPM\tmidPPM\tmidIsotopeDotProduct\t"
+					writer.print("id\tTD\tScanNr\ttopx\tpeakBGScore\tdeltaCn\t"
+							+ "peakAvgIdotp\tpeakMaxIdotp\tpeakScore\tpeakWScore\tpeakIons\tpeakMassErrMean\tpeakMassErrVar\tprecursorMassErrMean\t"
+							+ "precursorMassErrVar\tpeakSimilarity\tduration\tmidTime\t"
 							+ "pepLength\tcharge2\tcharge3\tsequence\tannotation\n");
 					printedHeader=true;
 				}
@@ -83,11 +83,43 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 					if (rank<=numberOfPeaksPerPeptide) {
 						float deltaCn=firstScore<=0?0.0f:Math.min(1.0f, (primaryScore-secondScore)/firstScore); // if secondScore<0 then deltaCn can be >1, so protect against that
 						writer.print((peptide.isDecoy()?"decoy":"")+peptide.getPeptideModSeq()+"+"+peptide.getPrecursorCharge()+"\t"+(peptide.isDecoy()?-1:1)+"\t"+stripe.getSpectrumIndex()+"\t"+rank+"\t"+primaryScore+"\t"+deltaCn);
-						for (float s : auxScores) {
-							writer.print("\t"+s);
-						}
+
+						/*
+						 * 0) traceNumAboveThresholdIons  
+						 * 1) traceNumIons  
+						 * 2) midTime  
+						 * 3) peakRawScore  
+						 * 4) peakSimilarity  
+						 * 5) peakWeightedRawScore  
+						 * 6) peakNumAboveThresholdMatches  
+						 * 7) peakNumMatches  
+						 * 8) peakAverageAbsPPM  
+						 * 9) peakAveragePPM  
+						 * 10) peakIsotopeDotProduct  
+						 * 11) fragmentDeltaMassAverage
+						 * 12) fragmentDeltaMassVariance
+						 * 13) duration
+						 * 14) tpeakMaxIdotp
+						 * 15) varPPM  
+						 * 
+						 * peakAvgIdotp	peakMaxIdotp	peakScore	peakWScore	peakIons	peakMassErrMean	peakMassErrVar	precursorMassErrMean	
+						 * precursorMassErrVar	peakSimilarity	duration	midTime
+						 */
+
+						writer.print("\t"+auxScores[10]); //peakIsotopeDotProduct
+						writer.print("\t"+auxScores[14]); //tpeakMaxIdotp
+						writer.print("\t"+auxScores[3]);  //peakRawScore
+						writer.print("\t"+auxScores[5]);  //peakWeightedRawScore
+						writer.print("\t"+auxScores[6]);  //peakNumAboveThresholdMatches
+						writer.print("\t"+auxScores[11]); //fragmentDeltaMassAverage
+						writer.print("\t"+auxScores[12]); //fragmentDeltaMassVariance
+						writer.print("\t"+auxScores[9]);  //peakAveragePPM
+						writer.print("\t"+auxScores[15]); //varPPM
+						writer.print("\t"+auxScores[4]);  //peakSimilarity
+						writer.print("\t"+auxScores[13]); //duration
+						writer.print("\t"+auxScores[2]);  //midTime
 						String sequence="-."+peptide.getPeptideSeq()+".-";
-						
+
 						String annotation=stripe.getSpectrumName();
 						writer.print("\t"+peptide.getPeptideSeq().length()+"\t"+(peptide.getPrecursorCharge()==2?1:0)+"\t"+(peptide.getPrecursorCharge()==3?1:0)+"\t"+sequence+"\t"+annotation);
 
