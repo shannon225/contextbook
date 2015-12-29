@@ -169,7 +169,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 					int medianIndex=index+scanAveragingHalfWindow;
 					Stripe medianStripe=stripes.get(medianIndex);
 					float[] completeAuxArray=General.concatenate(new float[] {numAboveThresholdMatches[index], numMatches[index], midTime[index]}, 
-							averageAuxScores, new float[] {fragmentDeltaMassAverage[index], fragmentDeltaMassVariance[index], duration, maxIDP, precursorPPMVariance});
+							averageAuxScores, new float[] {fragmentDeltaMassAverage[index], fragmentDeltaMassVariance[index], duration, maxIDP, precursorPPMVariance, bgsubScores[index]});
 					result.addStripe(goodStripes.get(i).x/scanAveragingWindow, completeAuxArray, medianStripe);
 					
 					if (identifiedPeaks>parameters.getNumberOfReportedPeaks()) {
