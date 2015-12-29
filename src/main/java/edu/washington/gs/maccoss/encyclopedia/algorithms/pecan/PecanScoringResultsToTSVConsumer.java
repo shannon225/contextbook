@@ -54,7 +54,7 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 				if (!printedHeader) {
 					// Percolator always assumes linux line endings!
 					writer.print("id\tTD\tScanNr\ttopx\tpeakBGScore\tdeltaCn\t"
-							+ "peakAvgIdotp\tpeakMaxIdotp\tpeakScore\tpeakWScore\tpeakIons\tpeakMassErrMean\tpeakMassErrVar\tprecursorMassErrMean\t"
+							+ "peakAvgIdotp\tpeakMaxIdotp\tpeakScore\tpeakWScore\tmidIons\tpeakIons\tpeakMassErrMean\tpeakMassErrVar\tprecursorMassErrMean\t"
 							+ "precursorMassErrVar\tpeakSimilarity\tduration\tmidTime\t"
 							+ "pepLength\tcharge2\tcharge3\tsequence\tannotation\n");
 					printedHeader=true;
@@ -72,7 +72,7 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 				if (result.getGoodStripes().size()>1) {
 					Pair<ScoredObject<Stripe>, float[]> second=result.getGoodStripes().get(1);
 					secondScore=second.x.x;
-				}				
+				}
 				for (Pair<ScoredObject<Stripe>, float[]> goodStripe : result.getGoodStripes()) {
 					numberProcessed++;
 					
@@ -82,7 +82,8 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 					
 					if (rank<=numberOfPeaksPerPeptide) {
 						float deltaCn=firstScore<=0?0.0f:Math.min(1.0f, (primaryScore-secondScore)/firstScore); // if secondScore<0 then deltaCn can be >1, so protect against that
-						writer.print((peptide.isDecoy()?"decoy":"")+peptide.getPeptideModSeq()+"+"+peptide.getPrecursorCharge()+"\t"+(peptide.isDecoy()?-1:1)+"\t"+stripe.getSpectrumIndex()+"\t"+rank+"\t"+primaryScore+"\t"+deltaCn);
+						writer.print((peptide.isDecoy()?"decoy":"")+peptide.getPeptideModSeq()+"+"+peptide.getPrecursorCharge()+"\t"+(peptide.isDecoy()?-1:1)
+								+"\t"+stripe.getSpectrumIndex()+"\t"+rank+"\t"+auxScores[16]+"\t"+deltaCn);
 
 						/*
 						 * 0) traceNumAboveThresholdIons  
@@ -101,6 +102,7 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 						 * 13) duration
 						 * 14) tpeakMaxIdotp
 						 * 15) varPPM  
+						 * 16) bgSubScore
 						 * 
 						 * peakAvgIdotp	peakMaxIdotp	peakScore	peakWScore	peakIons	peakMassErrMean	peakMassErrVar	precursorMassErrMean	
 						 * precursorMassErrVar	peakSimilarity	duration	midTime
@@ -110,6 +112,7 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 						writer.print("\t"+auxScores[14]); //tpeakMaxIdotp
 						writer.print("\t"+auxScores[3]);  //peakRawScore
 						writer.print("\t"+auxScores[5]);  //peakWeightedRawScore
+						writer.print("\t"+auxScores[0]);  //traceNumAboveThresholdIons
 						writer.print("\t"+auxScores[6]);  //peakNumAboveThresholdMatches
 						writer.print("\t"+auxScores[11]); //fragmentDeltaMassAverage
 						writer.print("\t"+auxScores[12]); //fragmentDeltaMassVariance
