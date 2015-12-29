@@ -32,7 +32,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 	@Override
 	protected Nothing process() {
 		for (LibraryEntry entry : super.entries) {
-			int requiredNumAboveThreshold=(int)(0.5f*entry.getPeptideSeq().length());
+			int requiredNumAboveThreshold=(int)(0.4f*entry.getPeptideSeq().length());
 			
 			int scanAveragingHalfWindow=scanAveragingWindow/2;
 			
@@ -51,6 +51,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 				Stripe stripe=super.stripes.get(i);
 				rawRTs[i]=stripe.getScanStartTime();
 				
+				// fragments are calculated without normalization!
 				PeakScores[] scores=scorer.getIndividualPeakScores(entry, stripe, false);
 				for (int j=0; j<scores.length; j++) {
 					if (scores[j]!=null) {
@@ -88,10 +89,10 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 			float[] fragmentDeltaMassAverage=new float[sumRawScores.length];
 			float[] fragmentDeltaMassVariance=new float[sumRawScores.length];
 			for (int i=0; i<numAboveThresholdMatches.length; i++) {
-				// TODO: this seems questionable that unnormalized intensities are used for individual scores while normalized intensities are used for total scores. -BCS
-				float threshold=Math.max(0.0f, sumRawScores[i]/(entry.getPeptideSeq().length()+1));
+				// TODO: this seems strange that unnormalized intensities are used for individual scores while normalized intensities are used for total scores. -BCS
+				float threshold=Math.max(0.0f, sumRawScores[i]/entry.getMassArray().length);
 				for (int j=0; j<sumFragmentTraces.length; j++) {
-					if (sumFragmentTraces[j][i]>threshold) {
+					if (sumFragmentTraces[j][i]>=threshold) {
 						numAboveThresholdMatches[i]++;
 						fragmentDeltaMassAverage[i]+=sumFragmentDeltaMasses[j][i];
 					}
@@ -123,13 +124,8 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 				int index=goodStripes.get(i).y;
 				if (takenScans.contains(index)) {
 					continue;
-				} else {
-					int lowerWindow=index-2*scanAveragingWindow; // can't pick anything in twice the peak width
-					int upperWindow=index+3*scanAveragingWindow; // +1 to account for the window boundary
-					for (int j=lowerWindow; j<upperWindow; j++) {
-						takenScans.add(j);
-					}
 					
+				} else {
 					float duration=stripes.get(index+scanAveragingWindow-1).getScanStartTime()-stripes.get(index).getScanStartTime();
 					
 					float[][] auxScores=new float[scanAveragingWindow][];
@@ -148,6 +144,9 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 					for (int j=0; j<averageAuxScores.length; j++) {
 						averageAuxScores[j]=averageAuxScores[j]/scanAveragingWindow;
 					}
+
+					// FIXME indexing these is hokey, and should be more firmly rooted in the scoring system
+					//float averageIDP=averageAuxScores[averageAuxScores.length-1];
 
 					float maxIDP=0.0f; // IDP is the last score of the PecanAuxillaryScorer
 					float precursorPPMVariance=0.0f; // PPM is the second to last score of PecanAuxillaryScorer
@@ -177,6 +176,13 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 						break;
 					}
 					identifiedPeaks++;
+
+					// add to takenScans to make sure we don't get a shoulder of this peak
+					int lowerWindow=index-2*scanAveragingWindow; // can't pick anything in twice the peak width
+					int upperWindow=index+3*scanAveragingWindow; // +1 to account for the window boundary
+					for (int j=lowerWindow; j<upperWindow; j++) {
+						takenScans.add(j);
+					}
 				}
 			}
 			
