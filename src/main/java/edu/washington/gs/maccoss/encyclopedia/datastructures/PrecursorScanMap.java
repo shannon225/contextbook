@@ -48,18 +48,18 @@ public class PrecursorScanMap {
 			double target=mz+(isotope*MassConstants.neutronMass/charge);
 			int[] indicies=tolerance.getIndicies(masses, target);
 			float intensity=0.0f;
-			double weightedMz=0.0;
+			double bestMz=target;
+			float bestPeakIntensity=0.0f;
 			for (int j=0; j<indicies.length; j++) {
 				intensity+=intensities[indicies[j]];
-				weightedMz+=intensities[indicies[j]]*masses[indicies[j]];
-			}
-			if (intensity>0) {
-				weightedMz=weightedMz/intensity;
-			} else {
-				weightedMz=mz+tolerance.getTolerance(mz);
+				if (intensities[indicies[j]]>bestPeakIntensity) {
+					bestPeakIntensity=intensities[indicies[j]];
+					bestMz=masses[indicies[j]];
+				}
+				
 			}
 			
-			isotopeIntensities[i]=new Peak(weightedMz, intensity);
+			isotopeIntensities[i]=new Peak(bestMz, intensity);
 		}
 		return isotopeIntensities;
 	}

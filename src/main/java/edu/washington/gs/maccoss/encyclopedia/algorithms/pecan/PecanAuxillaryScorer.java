@@ -109,27 +109,28 @@ public class PecanAuxillaryScorer implements AuxillaryPSMScorer {
 		// weighted average AbsPPM
 		float averagePPM=0.0f; // FINAL SCORE
 		float averageAbsPPM=0.0f; // FINAL SCORE
-		float sumIntensities=0.0f;
+		int peaksUsed=0;
 		// start at 1 to drop "-1" isotope
 		for (int i = 1; i < masses.length; i++) {
 			byte isotope=(byte)(i-1);
 			double predicted=entry.getPrecursorMZ()+(isotope*MassConstants.neutronMass/charge);
 			
 			if (intensities[i]>0) {
-				double delta=masses[i]-predicted;
-				float ppm=(float)((delta/entry.getPrecursorMZ())*1000000.0*intensities[i]);
+				double delta=predicted-masses[i];
+				float ppm=(float)((delta/entry.getPrecursorMZ())*1000000.0);
 				averagePPM+=ppm;
 				averageAbsPPM+=Math.abs(ppm);
-				sumIntensities+=intensities[i];
+				peaksUsed++;
 			}
 		}
-		if (sumIntensities>0) {
-			averagePPM=averagePPM/sumIntensities;
-			averageAbsPPM=averageAbsPPM/sumIntensities;
+		if (peaksUsed>0) {
+			averagePPM=averagePPM/peaksUsed;
+			averageAbsPPM=averagePPM/peaksUsed;
 		} else {
 			averagePPM=maxPPMError;
 			averageAbsPPM=maxPPMError;
 		}
+		
 		// precursor idotp
 		intensities=IsotopicDistributionCalculator.normalizeToMax(intensities);
 		float[] predicted=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());

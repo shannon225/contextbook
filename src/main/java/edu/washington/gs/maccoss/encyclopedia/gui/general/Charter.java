@@ -166,19 +166,23 @@ public class Charter {
 				case point:
 					XYSeries series=new XYSeries(trace.getName());
 					for (int i=0; i<x.length; i++) {
-						series.add(x[i], y[i]);
+						if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
+							series.add(x[i], y[i]);
+						}
 					}
 					dataset.addSeries(series);
 					break;
 
 				case spectrum:
 					for (int i=0; i<x.length; i++) {
-						XYSeries peakSeries=new XYSeries(x[i]);
-						peakSeries.add(x[i], 0);
-						peakSeries.add(x[i], y[i]);
-						dataset.addSeries(peakSeries);
-						renderer.setSeriesStroke(i, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-						renderer.setSeriesPaint(i, new Color(26, 148, 49));
+						if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
+							XYSeries peakSeries=new XYSeries(x[i]);
+							peakSeries.add(x[i], 0);
+							peakSeries.add(x[i], y[i]);
+							dataset.addSeries(peakSeries);
+							renderer.setSeriesStroke(i, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+							renderer.setSeriesPaint(i, new Color(26, 148, 49));
+						}
 					}
 					break;
 

@@ -10,11 +10,18 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 
 public class FragmentationTraceTask extends PeptideScoringTask {
+	public static final byte PLOT_INTENSITIES=0;
+	public static final byte PLOT_SCORES=1;
+	public static final byte PLOT_DELTA_MASSES=2;
+	
+	private final byte plottingMethod;
 
-	public FragmentationTraceTask(PecanRawScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors) {
+	public FragmentationTraceTask(PecanRawScorer scorer, byte plottingMethod, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors) {
 		super(scorer, entries, stripes, precursors);
+		this.plottingMethod=plottingMethod;
 	}
 	private PecanRawScorer getScorer() {
 		return (PecanRawScorer)super.scorer;
@@ -33,10 +40,33 @@ public class FragmentationTraceTask extends PeptideScoringTask {
 				dataPoints[i]=new ArrayList<XYPoint>();
 			}
 			for (Stripe stripe : super.stripes) {
-				float[] fragmentScores=getScorer().auxScore(entry, stripe, precursors);
-				float rt=stripe.getScanStartTime();
-				for (int i=0; i<fragmentScores.length; i++) {
-					dataPoints[i].add(new XYPoint(rt/60.0f, fragmentScores[i]));
+				float rt=stripe.getScanStartTime()/60.0f;
+				
+				if (plottingMethod==PLOT_INTENSITIES) {
+					float[] fragmentScores=getScorer().auxScore(entry, stripe, precursors);
+					for (int i=0; i<fragmentScores.length; i++) {
+						dataPoints[i].add(new XYPoint(rt, fragmentScores[i]));
+					}
+				} else {
+					PeakScores[] scores=getScorer().getIndividualPeakScores(entry, stripe, false);
+					
+					if (plottingMethod==PLOT_DELTA_MASSES) {
+						for (int i=0; i<scores.length; i++) {
+							if (scores[i]!=null) {
+								dataPoints[i].add(new XYPoint(rt, scores[i].getDeltaMass()));
+							} else {
+								dataPoints[i].add(new XYPoint(rt, Double.NaN));
+							}
+						}
+					} else if (plottingMethod==PLOT_SCORES) {
+						for (int i=0; i<scores.length; i++) {
+							if (scores[i]!=null) {
+								dataPoints[i].add(new XYPoint(rt, scores[i].getScore()));
+							} else {
+								dataPoints[i].add(new XYPoint(rt, Double.NaN));
+							}
+						}
+					}
 				}
 			}
 			

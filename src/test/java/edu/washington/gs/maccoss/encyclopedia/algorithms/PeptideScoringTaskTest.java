@@ -42,6 +42,8 @@ import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.set.hash.TDoubleHashSet;
 
 public class PeptideScoringTaskTest {
+	private static final byte PLOTTING_METHOD=FragmentationTraceTask.PLOT_DELTA_MASSES;
+	
 	private static final Range FRAGMENTATION_RANGE=new Range(0f, 2000f);
 	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
 
@@ -60,7 +62,7 @@ public class PeptideScoringTaskTest {
 				"TSGGAGGLGSLR", "VAAENQYGR", "VDFDDIHR", "VGPANPSLQK", "VLSIGDGIAR", "VTLVSAAPEK", "VVDDELATR", "VVFIFGPDK", "WPLYLSTK", "YDHLGDSPK", "YVDMSAKSK", "YVIEFIAR"};
 
 		charges=new byte[] {(byte)3};
-		peptides=new String[] {"IREVGAETIPDTHR"};
+		peptides=new String[] {"IGHTVEREDTPAIR"};
 
 		InputStream is=stripefile.getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
 		ArrayList<FastaEntry> entries=FastaReader.readFasta(is, "ecoli-190209-contam_correctNL.fasta");
@@ -131,7 +133,7 @@ public class PeptideScoringTaskTest {
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						tasks.add(pecanEntry);
 
-						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new FragmentationTraceTask(pecanScorer, tasks, stripes, new PrecursorScanMap(new ArrayList<PrecursorScan>())));
+						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new FragmentationTraceTask(pecanScorer, PLOTTING_METHOD, tasks, stripes, new PrecursorScanMap(new ArrayList<PrecursorScan>())));
 						results.add(value);
 					}
 				}
@@ -155,7 +157,16 @@ public class PeptideScoringTaskTest {
 					}
 				}
 			}
-			Charter.launchChart("RT ("+range+" M/Z)", "Fragment Intensity", true, traces.toArray(new XYTrace[traces.size()]));
+			String yAxisName;
+			if (FragmentationTraceTask.PLOT_INTENSITIES==PLOTTING_METHOD) {
+				yAxisName="Intensity";
+			} else if (FragmentationTraceTask.PLOT_SCORES==PLOTTING_METHOD) {
+				yAxisName="Score";
+			} else if (FragmentationTraceTask.PLOT_DELTA_MASSES==PLOTTING_METHOD) {
+				yAxisName="Delta Mass";
+
+			}
+			Charter.launchChart("RT ("+range+" M/Z)", yAxisName, true, traces.toArray(new XYTrace[traces.size()]));
 		}
 	}
 

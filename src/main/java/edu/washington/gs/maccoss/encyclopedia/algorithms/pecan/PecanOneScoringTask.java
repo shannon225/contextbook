@@ -23,13 +23,10 @@ import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 
 public class PecanOneScoringTask extends AbstractPecanScoringTask {
-	private final float maxPPMError;
 	
 	public PecanOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint> background, PrecursorScanMap precursors,
 			int scanAveragingWindow, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, background, precursors, scanAveragingWindow, resultsQueue, parameters);
-
-		maxPPMError=(float)parameters.getPrecursorTolerance().getPpmTolerance();
 	}
 
 	@Override

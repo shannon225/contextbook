@@ -11,7 +11,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class ExpectedFragmentationScorer implements AuxillaryPSMScorer {
-	private final int startIonIndex=1; //1=start with b2, y2, etc
+	private final int startIonIndex=0; //1=start with b2, y2, etc
 	private final SearchParameters parameters;
 	
 
