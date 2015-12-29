@@ -43,7 +43,10 @@ public class PercolatorExecutor extends ExternalExecutor {
 					return percolator;
 				}
 				case LINUX:
-					throw new EncyclopediaException("Sorry, Percolator for Linux is not set up yet!");
+					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-v2-04.lin");
+					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
+					percolator.setExecutable(true);
+					return percolator;
 			}
 			throw new EncyclopediaException("Sorry, Percolator for "+OSDetector.getOSName(os)+" is not set up yet!");
 		} catch (IOException ioe) {
