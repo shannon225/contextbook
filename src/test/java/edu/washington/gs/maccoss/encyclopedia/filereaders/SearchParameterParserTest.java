@@ -17,7 +17,7 @@ public class SearchParameterParserTest extends TestCase {
 		assertEquals(10.0, params.getFragmentTolerance().getPpmTolerance(), 0.0000001);
 		assertEquals("Trypsin", params.getEnzyme().getName());
 		assertEquals(5, params.getMinPeptideLength());
-		assertEquals(Integer.MAX_VALUE, params.getMaxPeptideLength());
+		assertEquals(100, params.getMaxPeptideLength());
 		assertEquals(1, params.getMaxMissedCleavages());
 		assertEquals(2, params.getMinCharge());
 		assertEquals(3, params.getMaxCharge());
