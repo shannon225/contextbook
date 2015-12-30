@@ -34,6 +34,11 @@ public class PercolatorExecutor extends ExternalExecutor {
 					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-v2-06.exe");
 					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
 					percolator.setExecutable(true);
+					
+					loadLibraryFile(percolator, "xerces-c_3_1.dll");
+					loadLibraryFile(percolator, "msvcr120.dll");
+					loadLibraryFile(percolator, "msvcp120.dll");
+					
 					return percolator;
 				}
 				case MAC: {
@@ -52,5 +57,12 @@ public class PercolatorExecutor extends ExternalExecutor {
 		} catch (IOException ioe) {
 			throw new EncyclopediaException("Unexpected exception finding Percolator", ioe);
 		}
+	}
+
+	public static void loadLibraryFile(File percolator, String target) throws IOException {
+		File file=new File(percolator.getParentFile(), target);
+		file.deleteOnExit();
+		InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/"+target);
+		Files.copy(is, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 	}
 }

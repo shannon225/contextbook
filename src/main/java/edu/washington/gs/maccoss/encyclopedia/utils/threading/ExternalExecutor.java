@@ -7,6 +7,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
+import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
 
 public class ExternalExecutor {
@@ -20,6 +22,11 @@ public class ExternalExecutor {
 	public BlockingQueue<OutputMessage> start() throws IOException {
 		final BlockingQueue<OutputMessage> queue=new LinkedBlockingQueue<OutputMessage>();
 		StringBuilder sb=new StringBuilder();
+		OS os=OSDetector.getOS();
+		if (OS.WINDOWS==os) {
+			sb.append("cmd /c");
+		}
+		
 		for (String arg : cmdAndArgs) {
 			if (sb.length()>0) {
 				sb.append(" ");
