@@ -48,7 +48,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 					return percolator;
 				}
 				case LINUX:
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-v2-04.lin");
+					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-v2-08.lin");
 					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
 					percolator.setExecutable(true);
 					return percolator;

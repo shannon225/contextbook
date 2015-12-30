@@ -12,10 +12,14 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
+import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 
 public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsConsumer {
+	private final OS os=OSDetector.getOS();
+	
 	private final BlockingQueue<PeptideScoringResult> resultsQueue;
 	private final PrintWriter writer;
 	private volatile int numberProcessed=0;
@@ -125,8 +129,16 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 						String annotation=stripe.getSpectrumName();
 						writer.print("\t"+peptide.getPeptideSeq().length()+"\t"+(peptide.getPrecursorCharge()==2?1:0)+"\t"+(peptide.getPrecursorCharge()==3?1:0)+"\t"+sequence+"\t"+annotation);
 
-						// Percolator always assumes linux line endings!
-						writer.print("\n");
+						// Percolator assumes linux line endings on Mac!
+						switch (os) {
+							case MAC:
+								writer.print("\n");
+								break;
+
+							default:
+								writer.println();
+								break;
+						}
 					}
 					rank++;
 					if (rank>3) break;
