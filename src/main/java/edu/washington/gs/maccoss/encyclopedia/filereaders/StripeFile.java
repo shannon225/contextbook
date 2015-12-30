@@ -23,7 +23,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
-public class StripeFile extends SQLFile {
+public class StripeFile extends SQLFile implements StripeFileInterface {
 	public static final String DIA_EXTENSION=".dia";
 	
 	private File userFile=null;
@@ -36,6 +36,10 @@ public class StripeFile extends SQLFile {
 		tempFile.deleteOnExit();
 	}
 	
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface#getRanges()
+	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public HashMap<Range, Float> getRanges() {
 		return (HashMap<Range, Float>)ranges.clone();
@@ -46,6 +50,10 @@ public class StripeFile extends SQLFile {
 		this.ranges.putAll(ranges);
 	}
 
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface#openFile(java.io.File)
+	 */
+	@Override
 	public void openFile(File userFile) throws IOException, SQLException {
 		this.userFile=userFile;
 		openFile();
@@ -96,6 +104,10 @@ public class StripeFile extends SQLFile {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface#openFile()
+	 */
+	@Override
 	public void openFile() throws IOException, SQLException {
 		if (userFile!=null) {
 			Files.copy(userFile.toPath(), tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -173,6 +185,10 @@ public class StripeFile extends SQLFile {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface#getPrecursors(float, float)
+	 */
+	@Override
 	public ArrayList<PrecursorScan> getPrecursors(float minRT, float maxRT) throws IOException, SQLException,DataFormatException {
 		Connection c=getConnection(tempFile);
 		try {
@@ -235,6 +251,10 @@ public class StripeFile extends SQLFile {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface#getStripes(double, float, float, boolean)
+	 */
+	@Override
 	public ArrayList<Stripe> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException,DataFormatException {
 		Connection c=getConnection(tempFile);
 		try {
@@ -295,6 +315,10 @@ public class StripeFile extends SQLFile {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface#close()
+	 */
+	@Override
 	public void close() {
 		if (!tempFile.delete()) {
 			Logger.errorLine("Error deleting temp file!");

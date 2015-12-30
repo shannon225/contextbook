@@ -15,7 +15,7 @@ import gnu.trove.procedure.TIntFloatProcedure;
 public class StripeFileTest {
 	public static void main(String[] args) throws Exception {
 		File diaFile=new File("/Users/searleb/Documents/freezer_experiment/110815_hela_experiment/data/hela_experiment/110415_bcs_hela_starved_DDA.mzML");
-		StripeFile stripefile=MzmlToDIAConverter.getFile(diaFile);
+		StripeFileInterface stripefile=MzmlToDIAConverter.getFile(diaFile);
 		
 		ArrayList<PrecursorScan> scans=stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
 		ArrayList<XYPoint> tic=new ArrayList<XYPoint>();

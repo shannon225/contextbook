@@ -43,7 +43,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -71,7 +71,7 @@ public class Pecanpie {
 			Logger.logLine("\t-f\tbackground FASTA file");
 			Logger.logLine("Other Parameters: ");
 			Logger.logLine("\t-t\ttarget FASTA file (default: background FASTA file)");
-			Logger.logLine("\t-o\toutput report (input file.pecan.txt)");
+			Logger.logLine("\t-o\toutput report file (default: [input file].pecan.txt)");
 			
 			TreeMap<String, String> defaults=new TreeMap<String, String>(SearchParameterParser.getDefaultParameters());
 			for (Entry<String, String> entry : defaults.entrySet()) {
@@ -131,7 +131,7 @@ public class Pecanpie {
 		
 		int cores=Runtime.getRuntime().availableProcessors();
 		
-		StripeFile stripefile=MzmlToDIAConverter.getFile(diaFile);
+		StripeFileInterface stripefile=MzmlToDIAConverter.getFile(diaFile);
 
 		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
 

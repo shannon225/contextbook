@@ -34,6 +34,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -51,7 +52,7 @@ public class PeptideScoringTaskTest {
 		int cores=Runtime.getRuntime().availableProcessors();
 
 		File f=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/20150708_Ecoli_0931_25x4mzDIA_700_800.dia");
-		StripeFile stripefile=new StripeFile();
+		StripeFileInterface stripefile=new StripeFile();
 		stripefile.openFile(f);
 
 		byte[] charges=new byte[] {(byte)3};

@@ -26,7 +26,7 @@ public class MzmlToDIAConverter {
 		System.out.println((System.currentTimeMillis()-time)/1000f+" seconds");
 	}
 
-	public static StripeFile getFile(File f) {
+	public static StripeFileInterface getFile(File f) {
 		if (!f.exists()||!f.canRead()) {
 			throw new EncyclopediaException("Can't read file "+f.getAbsolutePath());
 		}
@@ -51,9 +51,9 @@ public class MzmlToDIAConverter {
 		}
 	}
 
-	public static StripeFile openDIAFile(File f) {
+	public static StripeFileInterface openDIAFile(File f) {
 		try {
-			StripeFile stripefile=new StripeFile();
+			StripeFileInterface stripefile=new StripeFile();
 			stripefile.openFile(f);
 			return stripefile;
 		} catch (IOException ioe) {
@@ -63,7 +63,7 @@ public class MzmlToDIAConverter {
 		}
 	}
 
-	static StripeFile convert(File mzMLFile, File diaFile) {
+	static StripeFileInterface convert(File mzMLFile, File diaFile) {
 		try {
 			Logger.logLine("Indexing "+mzMLFile.getName()+" ...");
 			StripeFile stripeFile=new StripeFile();
