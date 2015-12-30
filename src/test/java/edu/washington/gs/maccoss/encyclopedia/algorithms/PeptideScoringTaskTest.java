@@ -42,7 +42,7 @@ import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.set.hash.TDoubleHashSet;
 
 public class PeptideScoringTaskTest {
-	private static final byte PLOTTING_METHOD=FragmentationTraceTask.PLOT_DELTA_MASSES;
+	private static final byte PLOTTING_METHOD=FragmentationTraceTask.PLOT_INTENSITIES;
 	
 	private static final Range FRAGMENTATION_RANGE=new Range(0f, 2000f);
 	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
@@ -50,19 +50,12 @@ public class PeptideScoringTaskTest {
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		int cores=Runtime.getRuntime().availableProcessors();
 
-		File f=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/20150708_Ecoli_0911_25x4mzDIA_500_600.dia");
+		File f=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/20150708_Ecoli_0931_25x4mzDIA_700_800.dia");
 		StripeFile stripefile=new StripeFile();
 		stripefile.openFile(f);
 
-		byte[] charges=new byte[] {(byte)2, (byte)3};
-		String[] peptides=new String[] {"ADVDAATLAR", "APIQWEER", "ATNLTVSAVR", "AVDSLVPIGR", "AYIDSTDSR", "DGLTDVYNK", "DGPGFYTTR", "DTPGFIVNR", "DVLSNLIPK", "DYPLIPVGK", "EAFLLFDR", "EALISQLTR",
-				"FGGGSVELLK", "GGASDALLYR", "GIWHNYDK", "GLNEAAIVNK", "GPLVQGVDSR", "GSGIQWDLR", "GTAVVNGEFK", "IGGIGTVPVGR", "IGYPAPNFK", "ILQEGVDPK", "IRC[+57]DIANVK", "ITQSNAILR", "IVVHAGGVIR",
-				"KFVADGIFK", "LGFMSAFVK", "LLEAASVSSK", "LLFEELVR", "LNVLANVIR", "LQGDLVTIR", "LTLSALIDGK", "LTLSALVDGK", "LVNMLDAVR", "MFASFPTTK", "NDAGYSEPR", "NTYYASIAK", "QGVLTLEIR", "QIFLGGVDR",
-				"RAEVLDSTK", "RGDFIPGLR", "RLTDADAMK", "RLVVQQAGK", "RWEVAALR", "SFLPLLRR", "SLHTLFGDK", "SVQAAMEKR", "TAYVGENVR", "TDLTAVPASR", "TIPWLENR", "TLEDILFR", "TQLVSNLKK", "TQVQSVIDK",
-				"TSGGAGGLGSLR", "VAAENQYGR", "VDFDDIHR", "VGPANPSLQK", "VLSIGDGIAR", "VTLVSAAPEK", "VVDDELATR", "VVFIFGPDK", "WPLYLSTK", "YDHLGDSPK", "YVDMSAKSK", "YVIEFIAR"};
-
-		charges=new byte[] {(byte)3};
-		peptides=new String[] {"IGHTVEREDTPAIR"};
+		byte[] charges=new byte[] {(byte)3};
+		String[] peptides=new String[] {"AGVPCVPGSDGPLGDDMDKNR"};
 
 		InputStream is=stripefile.getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
 		ArrayList<FastaEntry> entries=FastaReader.readFasta(is, "ecoli-190209-contam_correctNL.fasta");

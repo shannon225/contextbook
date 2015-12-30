@@ -18,9 +18,10 @@ public class SearchParameters {
 	private final int minEluteTime;
 	private final int numberOfReportedPeaks;
 	private final boolean addDecoysToBackgound;
+	private final boolean dontRunDecoys; // only for testing
 	
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme, int minPeptideLength,
-			int maxPeptideLength, int maxMissedCleavages, byte minCharge, byte maxCharge, int minEluteTime, int numberOfReportedPeaks, boolean addDecoysToBackgound) {
+			int maxPeptideLength, int maxMissedCleavages, byte minCharge, byte maxCharge, int minEluteTime, int numberOfReportedPeaks, boolean addDecoysToBackgound, boolean dontRunDecoys) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -34,6 +35,7 @@ public class SearchParameters {
 		this.minEluteTime=minEluteTime;
 		this.numberOfReportedPeaks=numberOfReportedPeaks;
 		this.addDecoysToBackgound=addDecoysToBackgound;
+		this.dontRunDecoys=dontRunDecoys;
 	}
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme) {
@@ -51,6 +53,7 @@ public class SearchParameters {
 		minEluteTime=12;
 		numberOfReportedPeaks=3;
 		addDecoysToBackgound=false;
+		dontRunDecoys=false;
 	}
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme,
@@ -69,6 +72,7 @@ public class SearchParameters {
 		minEluteTime=12;
 		numberOfReportedPeaks=3;
 		addDecoysToBackgound=false;
+		dontRunDecoys=false;
 	}
 
 	public AminoAcidConstants getAAConstants() {
@@ -121,5 +125,9 @@ public class SearchParameters {
 
 	public boolean isAddDecoysToBackgound() {
 		return addDecoysToBackgound;
+	}
+	
+	public boolean isDontRunDecoys() {
+		return dontRunDecoys;
 	}
 }

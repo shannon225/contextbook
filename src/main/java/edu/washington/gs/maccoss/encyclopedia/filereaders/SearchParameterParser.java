@@ -55,6 +55,7 @@ public class SearchParameterParser {
 		final int minEluteTime;
 		final int numberOfReportedPeaks;
 		final boolean addDecoysToBackgound;
+		final boolean dontRunDecoys;
 		
 
 		TCharFloatHashMap fixedMods=new TCharFloatHashMap();
@@ -71,6 +72,8 @@ public class SearchParameterParser {
 			} catch (Exception e) {
 				throw new EncyclopediaException("Error parsing fixed modifications from ["+value+"]", e);
 			}
+		} else {
+			fixedMods.put('C', 57.0214635f);
 		}
 		aaConstants=new AminoAcidConstants(fixedMods);
 		
@@ -124,7 +127,8 @@ public class SearchParameterParser {
 		minEluteTime=getInteger("-minEluteTime", parameters, 12);
 		numberOfReportedPeaks=getInteger("-numberOfReportedPeaks", parameters, 1);
 		addDecoysToBackgound=getBoolean("-addDecoysToBackground", parameters, false);
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound);
+		dontRunDecoys=getBoolean("-dontRunDecoys", parameters, false);
+		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

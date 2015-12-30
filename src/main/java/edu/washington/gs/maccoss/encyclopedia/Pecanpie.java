@@ -279,15 +279,17 @@ public class Pecanpie {
 				for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
 					double mz=parameters.getAAConstants().getChargedMass(sequence, charge);
 					if (range.contains((float)mz)) {
+						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
+						
 						AbstractPecanFragmentationModel model=taskFactory.getFragmentationModel(sequence, parameters.getAAConstants());
 						PecanLibraryEntry pecanEntry=model.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, false);
-						
-						AbstractPecanFragmentationModel revmodel=taskFactory.getFragmentationModel(PeptideUtils.getSmartDecoy(sequence, charge, backgroundProteomeSet, parameters), parameters.getAAConstants());
-						PecanLibraryEntry reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
-
-						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						tasks.add(pecanEntry);
-						tasks.add(reventry);
+						
+						if (!parameters.isDontRunDecoys()) {
+							AbstractPecanFragmentationModel revmodel=taskFactory.getFragmentationModel(PeptideUtils.getSmartDecoy(sequence, charge, backgroundProteomeSet, parameters), parameters.getAAConstants());
+							PecanLibraryEntry reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
+							tasks.add(reventry);
+						}
 
 						executor.submit(taskFactory.getScoringTask(pecanScorer, tasks, stripes, backgroundScores, precursors, scanAveragingMargin, resultsQueue));
 					}

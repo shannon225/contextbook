@@ -30,6 +30,10 @@ public class DigestionEnzyme {
 			
 			return new DigestionEnzyme("Trypsin/p", n, c);
 			
+		} else if ("None".equalsIgnoreCase(enzymeName)) {
+			
+			return new DigestionEnzyme("No Enzyme", n, c);
+			
 		} else if ("Lys-C".equalsIgnoreCase(enzymeName)) {
 			n.add('K');
 			c.addAll(AAs);

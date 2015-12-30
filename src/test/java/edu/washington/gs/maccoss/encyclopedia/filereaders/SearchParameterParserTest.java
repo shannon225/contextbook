@@ -40,7 +40,7 @@ public class SearchParameterParserTest extends TestCase {
 		map.put("-maxCharge", "4");
 		map.put("-minEluteTime", "20");
 		map.put("-numberOfReportedPeaks", "3");
-		map.put("-addDecoysToBackgound", "true");
+		map.put("-addDecoysToBackground", "true");
 		SearchParameters params=SearchParameterParser.parseParameters(map);
 		
 		assertEquals(103.009185+3.0, params.getAAConstants().getMass('C'), 0.000001);

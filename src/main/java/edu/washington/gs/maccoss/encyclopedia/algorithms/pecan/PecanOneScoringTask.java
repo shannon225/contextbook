@@ -100,6 +100,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 						numMatches[i]++;
 					}
 				}
+				
 				if (numAboveThresholdMatches[i]>0) {
 					fragmentDeltaMassAverage[i]=fragmentDeltaMassAverage[i]/numAboveThresholdMatches[i];
 					for (int j=0; j<sumFragmentDeltaMasses.length; j++) {
