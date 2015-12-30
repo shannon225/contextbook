@@ -107,6 +107,13 @@ public class Pecanpie {
 
 		SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
+
+		Logger.logLine("Parameters:");
+		Logger.logLine(" -i "+diaFile.getAbsolutePath());
+		Logger.logLine(" -f "+fastaFile.getAbsolutePath());
+		Logger.logLine(" -t "+arguments.get("-t"));
+		Logger.logLine(" -o "+outputFile.getAbsolutePath());
+		Logger.logLine(parameters.toString());
 		
 		try {
 			runPie(Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);

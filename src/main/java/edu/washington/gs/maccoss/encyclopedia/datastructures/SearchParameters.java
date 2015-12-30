@@ -20,6 +20,26 @@ public class SearchParameters {
 	private final boolean addDecoysToBackgound;
 	private final boolean dontRunDecoys; // only for testing
 	
+	public String toString() {
+		final StringBuilder sb=new StringBuilder();
+		sb.append(" -fixed "+aaConstants.getFixedModString()+"\n");
+		sb.append(" -frag "+FragmentationType.toString(fragType)+"\n");
+		sb.append(" -ptol "+precursorTolerance.getPpmTolerance()+"\n");
+		sb.append(" -ftol "+fragmentTolerance.getPpmTolerance()+"\n");
+		sb.append(" -enzyme "+enzyme.getName()+"\n");
+		sb.append(" -minLength "+minPeptideLength+"\n");
+		sb.append(" -maxLength "+maxPeptideLength+"\n");
+		sb.append(" -maxMissedCleavage "+maxMissedCleavages+"\n");
+		sb.append(" -minCharge "+minCharge+"\n");
+		sb.append(" -maxCharge "+maxCharge+"\n");
+		sb.append(" -minEluteTime "+minEluteTime+"\n");
+		sb.append(" -numberOfReportedPeaks "+numberOfReportedPeaks+"\n");
+		sb.append(" -addDecoysToBackground "+addDecoysToBackgound+"\n");
+		sb.append(" -dontRunDecoys "+dontRunDecoys+"\n");
+		
+		return sb.toString();
+	}
+	
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme, int minPeptideLength,
 			int maxPeptideLength, int maxMissedCleavages, byte minCharge, byte maxCharge, int minEluteTime, int numberOfReportedPeaks, boolean addDecoysToBackgound, boolean dontRunDecoys) {
 		this.aaConstants=aaConstants;

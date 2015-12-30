@@ -55,7 +55,7 @@ public class PeptideScoringTaskTest {
 		stripefile.openFile(f);
 
 		byte[] charges=new byte[] {(byte)3};
-		String[] peptides=new String[] {"AGVPCVPGSDGPLGDDMDKNR"};
+		String[] peptides=new String[] {"QHLYSISDEQLRPYFPENK"};
 
 		InputStream is=stripefile.getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
 		ArrayList<FastaEntry> entries=FastaReader.readFasta(is, "ecoli-190209-contam_correctNL.fasta");

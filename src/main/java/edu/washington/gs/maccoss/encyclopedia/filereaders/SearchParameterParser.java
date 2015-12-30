@@ -25,7 +25,7 @@ public class SearchParameterParser {
 		map.put("-ftol", "10");
 		map.put("-enzyme", "trypsin");
 		map.put("-minLength", "5");
-		map.put("-maxLength", Integer.toString(Integer.MAX_VALUE));
+		map.put("-maxLength", "100");
 		map.put("-maxMissedCleavage", "1");
 		map.put("-minCharge", "2");
 		map.put("-maxCharge", "3");
@@ -120,7 +120,7 @@ public class SearchParameterParser {
 		}
 
 		minPeptideLength=getInteger("-minLength", parameters, 5);
-		maxPeptideLength=getInteger("-maxLength", parameters, Integer.MAX_VALUE);
+		maxPeptideLength=getInteger("-maxLength", parameters, 100);
 		maxMissedCleavages=getInteger("-maxMissedCleavage", parameters, 1);
 		minCharge=(byte)getInteger("-minCharge", parameters, 2);
 		maxCharge=(byte)getInteger("-maxCharge", parameters, 3);

@@ -54,7 +54,7 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 				if (!printedHeader) {
 					// Percolator always assumes linux line endings!
 					writer.print("id\tTD\tScanNr\ttopx\tpeakBGScore\tdeltaCn\t"
-							+ "peakAvgIdotp\tpeakMaxIdotp\tpeakScore\tpeakWScore\tmidIons\tpeakIons\tpeakMassErrMean\tpeakMassErrVar\tprecursorMassErrMean\t"
+							+ "peakAvgIdotp\tpeakMaxIdotp\tpeakScore\tpeakWScore\tmidIons\tpeakMassErrMean\tpeakMassErrVar\tprecursorMassErrMean\t"
 							+ "precursorMassErrVar\tpeakSimilarity\tduration\tmidTime\t"
 							+ "pepLength\tcharge2\tcharge3\tsequence\tannotation\n");
 					printedHeader=true;
@@ -113,7 +113,6 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 						writer.print("\t"+auxScores[3]);  //peakRawScore
 						writer.print("\t"+auxScores[5]);  //peakWeightedRawScore
 						writer.print("\t"+auxScores[0]);  //traceNumAboveThresholdIons
-						writer.print("\t"+auxScores[6]);  //peakNumAboveThresholdMatches
 						writer.print("\t"+auxScores[11]); //fragmentDeltaMassAverage
 						writer.print("\t"+auxScores[12]); //fragmentDeltaMassVariance
 						writer.print("\t"+auxScores[9]);  //peakAveragePPM

@@ -11,6 +11,7 @@ import gnu.trove.procedure.TCharFloatProcedure;
 public class AminoAcidConstants {
 	
 	// ordered by H C O N S
+	private final TCharFloatHashMap fixedMods;
 	private final TCharObjectHashMap<int[]> atomicComposition=new TCharObjectHashMap<int[]>();
 	final private TCharDoubleHashMap massesByAA=new TCharDoubleHashMap();
 	final private TIntCharHashMap aasByNominal=new TIntCharHashMap();
@@ -22,6 +23,8 @@ public class AminoAcidConstants {
 		this(new TCharFloatHashMap(new char[] {'C'}, new float[] {57.0214635f}));
 	}
 	public AminoAcidConstants(TCharFloatHashMap fixedMods) {
+		this.fixedMods=fixedMods;
+		
 		atomicComposition.put('A', new int[] {5, 3, 1, 1, 0});
 		if (fixedMods.contains('C')&&Math.round(fixedMods.get('C'))==57) {
 			atomicComposition.put('C', new int[] {8, 5, 2, 2, 1}); // assumes +57 is carbamidomethyl alkylation
@@ -87,6 +90,23 @@ public class AminoAcidConstants {
 				return true;
 			}
 		});
+	}
+	
+	public String getFixedModString() {
+		final StringBuilder sb=new StringBuilder();
+		fixedMods.forEachEntry(new TCharFloatProcedure() {
+			@Override
+			public boolean execute(char arg0, float arg1) {
+				if (sb.length()>0) {
+					sb.append(",");
+				}
+				sb.append(arg0);
+				sb.append("=");
+				sb.append(arg1);
+				return true;
+			}
+		});
+		return sb.toString();
 	}
 	
 	public double getMass(char aa) {
