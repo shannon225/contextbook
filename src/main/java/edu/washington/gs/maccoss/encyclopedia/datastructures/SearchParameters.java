@@ -57,6 +57,24 @@ public class SearchParameters {
 		this.addDecoysToBackgound=addDecoysToBackgound;
 		this.dontRunDecoys=dontRunDecoys;
 	}
+	
+	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme,
+			int maxMissedCleavages, byte minCharge, byte maxCharge) {
+		this.aaConstants=aaConstants;
+		this.fragType=fragType;
+		this.precursorTolerance=precursorTolerance;
+		this.fragmentTolerance=fragmentTolerance;
+		this.enzyme=enzyme;
+		minPeptideLength=5;
+		maxPeptideLength=99;
+		this.maxMissedCleavages=maxMissedCleavages;
+		this.minCharge=minCharge;
+		this.maxCharge=maxCharge;
+		minEluteTime=12;
+		numberOfReportedPeaks=3;
+		addDecoysToBackgound=false;
+		dontRunDecoys=false;
+	}
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme) {
 		this.aaConstants=aaConstants;

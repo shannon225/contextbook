@@ -53,6 +53,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
@@ -116,20 +118,22 @@ public class Pecanpie {
 		Logger.logLine(parameters.toString());
 		
 		try {
-			runPie(Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
+			runPie(new EmptyProgressIndicator(), Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
 		} catch (Exception e) {
 			System.err.println("Encountered Fatal Error!");
 			e.printStackTrace();
 		}
 	}
 
-	public static void runPie(Optional<ArrayList<FastaEntry>> targetList, File diaFile, File fastaFile, File featureFile, File outputFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+	public static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaEntry>> targetList, File diaFile, File fastaFile, File featureFile, File outputFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		long startTime=System.currentTimeMillis();
 		PSMScorer backgroundScorer=taskFactory.getBackgroundScorer();
 		PSMScorer pecanScorer=taskFactory.getPecanScorer();
 		SearchParameters parameters=taskFactory.getParameters();
 		
 		int cores=Runtime.getRuntime().availableProcessors();
+
+		progress.update("Converting files...", Float.MIN_VALUE);
 		
 		StripeFileInterface stripefile=MzmlToDIAConverter.getFile(diaFile);
 
@@ -194,8 +198,10 @@ public class Pecanpie {
 		Thread consumerThread=new Thread(resultsConsumer);
 		consumerThread.start();
 		
+		int rangesFinished=0;
 		// get stripes
 		for (Range range : ranges) {
+			progress.update("Working on "+range+" m/z", (1.0f+rangesFinished)/(2.0f+ranges.size()));
 			int index=Arrays.binarySearch(binBoundaries, range.getMiddle());
 			index=(-(index+1))-1;
 			TDoubleIntHashMap map=binCounters[index];
@@ -308,12 +314,15 @@ public class Pecanpie {
 				Thread.sleep(500);
 			}
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+			
+			rangesFinished++;
 		}
 		resultsQueue.put(PeptideScoringResult.POISON_RESULT);
 
 		consumerThread.join();
 		resultsConsumer.close();
-		
+
+		progress.update("Running Percolator", (1.0f+rangesFinished)/(2.0f+ranges.size()));
 		PercolatorExecutor e=new PercolatorExecutor(featureFile);
 		BlockingQueue<OutputMessage> result=e.start();
 		
@@ -324,11 +333,11 @@ public class Pecanpie {
 		while (!e.isFinished()||!result.isEmpty()) {
 			if (!result.isEmpty()) {
 				OutputMessage data=result.take();
-				if (data.isStdOutput) {
+				if (data.isStdOutput()) {
 					if (isFirst) {
 						isFirst=false;
 					} else if (record) {
-						StringTokenizer st=new StringTokenizer(data.message);
+						StringTokenizer st=new StringTokenizer(data.getMessage());
 						st.nextToken(); // PSMid
 						st.nextToken(); // score
 						float qvalue=Float.parseFloat(st.nextToken());
@@ -338,9 +347,9 @@ public class Pecanpie {
 							record=false;
 						}
 					}
-					writer.println(data.message);
+					writer.println(data.getMessage());
 				} else {
-					Logger.logLine(data.message);
+					Logger.logLine(data.getMessage());
 				}
 			} else {
 				Thread.sleep(10);
@@ -350,6 +359,7 @@ public class Pecanpie {
 		writer.close();
 		
 		Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+countBelow1pFDR+" peaks identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
+		progress.update(countBelow1pFDR+" peaks identified at 1% FDR", 1.0f);
 	}
 
 	public static boolean arePeptidesInRange(HashSet<FastaEntry> targets, Range range, SearchParameters parameters) {

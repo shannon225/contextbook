@@ -12,7 +12,7 @@ public class ExternalExecutorTest {
 		int count=0;
 		while (!e.isFinished()||!result.isEmpty()) {
 			OutputMessage data=result.take();
-			if (data.message.startsWith(">")) {
+			if (data.getMessage().startsWith(">")) {
 				count++;
 				if (count%1000==0) System.out.println(count+", "+result.size()+", "+e.isFinished());
 			}

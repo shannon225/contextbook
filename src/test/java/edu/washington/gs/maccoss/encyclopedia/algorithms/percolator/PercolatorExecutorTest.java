@@ -21,10 +21,10 @@ public class PercolatorExecutorTest extends TestCase {
 		while (!e.isFinished()||!result.isEmpty()) {
 			if (!result.isEmpty()) {
 				OutputMessage data=result.take();
-				if (data.isStdOutput) {
+				if (data.isStdOutput()) {
 					outputlines++;
 				} else {
-					System.out.println(data.message);
+					System.out.println(data.getMessage());
 				}
 			} else {
 				Thread.sleep(10);
@@ -47,7 +47,7 @@ public class PercolatorExecutorTest extends TestCase {
 		while (!e.isFinished()||!result.isEmpty()) {
 			if (!result.isEmpty()) {
 				OutputMessage data=result.take();
-				if (data.isStdOutput) {
+				if (data.isStdOutput()) {
 					outputlines++;
 				}
 			} else {

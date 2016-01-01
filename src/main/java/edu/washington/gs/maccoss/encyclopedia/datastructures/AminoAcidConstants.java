@@ -15,6 +15,21 @@ public class AminoAcidConstants {
 	private final TCharObjectHashMap<int[]> atomicComposition=new TCharObjectHashMap<int[]>();
 	final private TCharDoubleHashMap massesByAA=new TCharDoubleHashMap();
 	final private TIntCharHashMap aasByNominal=new TIntCharHashMap();
+	
+	public static AminoAcidConstants getConstants(String name) {
+		if ("C+57 (Carbamidomethyl)".equalsIgnoreCase(name)) {
+			return new AminoAcidConstants(new TCharFloatHashMap(new char[] {'C'}, new float[] {57.0214635f}));
+			
+		} else if ("C+58 (Carboxymethyl)".equalsIgnoreCase(name)) {
+			return new AminoAcidConstants(new TCharFloatHashMap(new char[] {'C'}, new float[] {58.005479f}));
+			
+		}else if ("C+46 (MMTS)".equalsIgnoreCase(name)) {
+			return new AminoAcidConstants(new TCharFloatHashMap(new char[] {'C'}, new float[] {45.987721f}));
+			
+		} else {
+			return new AminoAcidConstants(new TCharFloatHashMap());
+		}
+	}
 
 	/**
 	 * assumes +57 C-alkylation

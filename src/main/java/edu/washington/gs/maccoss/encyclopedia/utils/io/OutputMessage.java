@@ -1,8 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.io;
 
 public class OutputMessage {
-	public final String message;
-	public final boolean isStdOutput;
+	private final String message;
+	private final boolean isStdOutput;
 
 	public OutputMessage(String message, boolean isStdOutput) {
 		this.message=message;
@@ -11,6 +11,13 @@ public class OutputMessage {
 	
 	@Override
 	public String toString() {
+		return message;
+	}
+	
+	public boolean isStdOutput() {
+		return isStdOutput;
+	}
+	public String getMessage() {
 		return message;
 	}
 }

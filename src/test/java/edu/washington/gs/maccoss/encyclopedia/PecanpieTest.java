@@ -13,6 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
 public class PecanpieTest {
 	public static void main(String[] args) {
@@ -30,7 +31,7 @@ public class PecanpieTest {
 		targets=null;
 		
 		try {
-			Pecanpie.runPie(Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
+			Pecanpie.runPie(new EmptyProgressIndicator(), Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
 		} catch (Exception e) {
 			System.err.println("Encountered Fatal Error!");
 			e.printStackTrace();
