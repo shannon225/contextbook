@@ -37,14 +37,16 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.LogConsole;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.ProgressRenderer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 
 public class PecanPanel extends JPanel {
 	private static final long serialVersionUID=1L;
 
-	public static final String copy="<html><b><p style=\"font-size:20px; font-family: Helvetica, sans-serif\">PECAN: Peptide Detection Directly from Data-Independent Acquisition (DIA) MS/MS Data<br><br></p>"
+	public static final String copy="<html><b><p style=\"font-size:20px; font-family: Helvetica, sans-serif\">PECAN: Peptide Detection Directly from Data-Independent Acquisition (DIA) MS/MS Data<br></p>"
 			+ "<p style=\"font-size:12px; font-family: Helvetica, sans-serif\">PECAN extracts peptide fragmentation chromatograms from MZML files, assigns peaks, and calculates various peak features. These features are interpreted by Percolator to identify peptides.";
 	
 	private final FileChooserPanel backgroundFasta;
@@ -98,12 +100,15 @@ public class PecanPanel extends JPanel {
 		chargeRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
 		chargeRange.add(new JSpinner(maxCharge));
 		options.add(new LabeledComponent("Charge range", chargeRange));
-
+		
+		LogConsole console=new LogConsole();
+		Logger.addRecorder(console);
 		
 		JPanel optionsWrapper=new JPanel(new BorderLayout());
 		optionsWrapper.setOpaque(true);
 		optionsWrapper.setBackground(Color.white);
 		optionsWrapper.add(options, BorderLayout.NORTH);
+		optionsWrapper.add(console, BorderLayout.CENTER);
 		
 		split.setLeftComponent(optionsWrapper);
 
@@ -142,7 +147,7 @@ public class PecanPanel extends JPanel {
 		filesWrapper.add(table, BorderLayout.CENTER);
 		
 		split.setRightComponent(filesWrapper);
-		split.setDividerLocation(300);
+		split.setDividerLocation(400);
 
 		this.add(split, BorderLayout.CENTER);
 	}
