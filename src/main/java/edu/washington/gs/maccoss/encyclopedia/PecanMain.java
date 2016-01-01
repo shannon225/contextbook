@@ -8,6 +8,7 @@ import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.pecan.PecanPanel;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class PecanMain {
 	public static void main(String[] args) {
@@ -19,10 +20,12 @@ public class PecanMain {
 		});
 
 		f.getContentPane().add(new PecanPanel(), BorderLayout.CENTER);
-
+		
 		f.pack();
 		f.setSize(new Dimension(1100, 800));
 		f.setVisible(true);
+
+		Logger.logLine("Pecanpie version 0.1");
 	}
 
 }

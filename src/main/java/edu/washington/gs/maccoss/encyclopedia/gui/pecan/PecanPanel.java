@@ -102,6 +102,7 @@ public class PecanPanel extends JPanel {
 		options.add(new LabeledComponent("Charge range", chargeRange));
 		
 		LogConsole console=new LogConsole();
+		console.errorLine("Console:");
 		Logger.addRecorder(console);
 		
 		JPanel optionsWrapper=new JPanel(new BorderLayout());

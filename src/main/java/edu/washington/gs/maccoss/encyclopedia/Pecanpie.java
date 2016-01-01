@@ -133,10 +133,12 @@ public class Pecanpie {
 		
 		int cores=Runtime.getRuntime().availableProcessors();
 
+		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);
 		
 		StripeFileInterface stripefile=MzmlToDIAConverter.getFile(diaFile);
 
+		Logger.logLine("Processing precursors scans...");
 		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
 
 		HashSet<FastaEntry> targets=new HashSet<FastaEntry>();
@@ -150,7 +152,8 @@ public class Pecanpie {
 				backgroundProteome.add(target.getSequence());
 			}
 		}
-		
+
+		Logger.logLine("Reading FASTA peptides...");
 		// add database to proteome
 		ArrayList<FastaEntry> entries=FastaReader.readFasta(fastaFile);
 		for (FastaEntry entry : entries) {
