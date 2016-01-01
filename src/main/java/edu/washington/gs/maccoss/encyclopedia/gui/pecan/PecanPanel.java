@@ -38,6 +38,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LogConsole;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.ProgressRenderer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -104,12 +105,16 @@ public class PecanPanel extends JPanel {
 		LogConsole console=new LogConsole();
 		console.errorLine("Console:");
 		Logger.addRecorder(console);
+
+		MemoryMonitor memory=new MemoryMonitor();
+		memory.start();
 		
 		JPanel optionsWrapper=new JPanel(new BorderLayout());
 		optionsWrapper.setOpaque(true);
 		optionsWrapper.setBackground(Color.white);
 		optionsWrapper.add(options, BorderLayout.NORTH);
 		optionsWrapper.add(console, BorderLayout.CENTER);
+		optionsWrapper.add(memory, BorderLayout.SOUTH);
 		
 		split.setLeftComponent(optionsWrapper);
 
