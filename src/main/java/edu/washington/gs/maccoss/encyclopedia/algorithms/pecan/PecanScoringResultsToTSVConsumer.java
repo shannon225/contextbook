@@ -56,11 +56,20 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 				PeptideScoringResult result=resultsQueue.take();
 				if (PeptideScoringResult.POISON_RESULT==result) break;
 				if (!printedHeader) {
-					// Percolator always assumes linux line endings!
 					writer.print("id\tTD\tScanNr\ttopx\tpeakBGScore\tdeltaCn\t"
 							+ "peakAvgIdotp\tpeakMaxIdotp\tpeakScore\tpeakWScore\tmidIons\tpeakMassErrMean\tpeakMassErrVar\tprecursorMassErrMean\t"
 							+ "precursorMassErrVar\tpeakSimilarity\tduration\tmidTime\t"
-							+ "pepLength\tcharge2\tcharge3\tsequence\tannotation\n");
+							+ "pepLength\tcharge2\tcharge3\tprecursorMz\tsequence\tannotation");
+					// Percolator assumes linux line endings on Mac!
+					switch (os) {
+						case MAC:
+							writer.print("\n");
+							break;
+
+						default:
+							writer.println();
+							break;
+					}
 					printedHeader=true;
 				}
 				LibraryEntry peptide=result.getEntry();
@@ -86,7 +95,8 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 					
 					if (rank<=numberOfPeaksPerPeptide) {
 						float deltaCn=firstScore<=0?0.0f:Math.min(1.0f, (primaryScore-secondScore)/firstScore); // if secondScore<0 then deltaCn can be >1, so protect against that
-						writer.print((peptide.isDecoy()?"decoy":"")+peptide.getPeptideModSeq()+"+"+peptide.getPrecursorCharge()+"\t"+(peptide.isDecoy()?-1:1)
+						String psmID = getPSMID(peptide);
+						writer.print(psmID+"\t"+(peptide.isDecoy()?-1:1)
 								+"\t"+stripe.getSpectrumIndex()+"\t"+rank+"\t"+auxScores[16]+"\t"+deltaCn);
 
 						/*
@@ -127,7 +137,7 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 						String sequence="-."+peptide.getPeptideSeq()+".-";
 
 						String annotation=stripe.getSpectrumName();
-						writer.print("\t"+peptide.getPeptideSeq().length()+"\t"+(peptide.getPrecursorCharge()==2?1:0)+"\t"+(peptide.getPrecursorCharge()==3?1:0)+"\t"+sequence+"\t"+annotation);
+						writer.print("\t"+peptide.getPeptideSeq().length()+"\t"+(peptide.getPrecursorCharge()==2?1:0)+"\t"+(peptide.getPrecursorCharge()==3?1:0)+"\t"+peptide.getPrecursorMZ()+"\t"+sequence+"\t"+annotation);
 
 						// Percolator assumes linux line endings on Mac!
 						switch (os) {
@@ -148,5 +158,23 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 			Logger.errorLine("DIA writing interrupted!");
 			Logger.errorException(ie);
 		}
+	}
+
+	public static String getPSMID(LibraryEntry peptide) {
+		return (peptide.isDecoy()?"decoy":"")+peptide.getPeptideModSeq()+"+"+peptide.getPrecursorCharge();
+	}
+
+	public static boolean isPSMIDDecoy(String psmID) {
+		return psmID.startsWith("decoy");
+	}
+	
+	public static String getPeptideSequence(String psmID) {
+		if (psmID.startsWith("decoy")) {
+			psmID=psmID.substring(5);
+		}
+		return psmID.substring(0, psmID.indexOf('+'));
+	}
+	public static byte getCharge(String psmID) {
+		return Byte.parseByte(psmID.substring(psmID.indexOf('+')+1));
 	}
 }

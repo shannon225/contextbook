@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -18,7 +19,17 @@ public class PecanOneFragmentationModel extends AbstractPecanFragmentationModel 
 	public PecanOneFragmentationModel(String modifiedSequence, AminoAcidConstants aaConstants) {
 		super(modifiedSequence, aaConstants);
 	}
+	public PecanLibraryEntry getUnitSpectrum(byte precursorCharge, SearchParameters params) {
+		double[] ions=getPrimaryIons(params.getFragType(), precursorCharge);
+		float[] unitIntensities=new float[ions.length];
+		Arrays.fill(unitIntensities, 1.0f);
+		float euclidianDistance=(float)Math.sqrt(ions.length);
 
+		String sequence=getModifiedSequence();
+		double precursorMZ=params.getAAConstants().getChargedMass(sequence, precursorCharge);
+
+		return new PecanLibraryEntry(precursorMZ, precursorCharge, sequence, 1, 0.0f, 0, ions, unitIntensities, false, euclidianDistance);
+	}
 	public PecanLibraryEntry getPecanSpectrum(byte precursorCharge, double[] sortedBinCounterKeys, TDoubleIntHashMap binCounter, Range fragmentationRange, SearchParameters params, boolean isDecoy) {
 		TDoubleFloatHashMap peakMap=new TDoubleFloatHashMap();
 		double[] ions=getPrimaryIons(params.getFragType(), precursorCharge);
@@ -55,12 +66,7 @@ public class PecanOneFragmentationModel extends AbstractPecanFragmentationModel 
 		Collections.sort(peaks);
 		Pair<double[], float[]> arrays=Peak.toArrays(peaks);
 		
-		StringBuilder sb=new StringBuilder();
-		String[] aas=getAas();
-		for (String aa : aas) {
-			sb.append(aa);
-		}
-		String sequence=sb.toString();
+		String sequence=getModifiedSequence();
 		double precursorMZ=params.getAAConstants().getChargedMass(sequence, precursorCharge);
 
 		return new PecanLibraryEntry(precursorMZ, precursorCharge, sequence, 1, 0.0f, 0, arrays.x, arrays.y, isDecoy, euclidianDistance);	

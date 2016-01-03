@@ -13,5 +13,6 @@ public abstract class AbstractPecanFragmentationModel extends FragmentationModel
 		super(modifiedSequence, aaConstants);
 	}
 	
+	public abstract PecanLibraryEntry getUnitSpectrum(byte precursorCharge, SearchParameters params);
 	public abstract PecanLibraryEntry getPecanSpectrum(byte precursorCharge, double[] sortedBinCounterKeys, TDoubleIntHashMap binCounter, Range fragmentationRange, SearchParameters params, boolean isDecoy);
 }

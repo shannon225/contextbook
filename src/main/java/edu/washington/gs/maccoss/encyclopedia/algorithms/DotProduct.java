@@ -38,11 +38,12 @@ public class DotProduct implements PSMScorer {
 		int libraryIndex=0;
 		int spectrumIndex=0;
 		while (true) {
-			int compare=tolerance.compareTo(libraryMasses[libraryIndex], spectrumMasses[spectrumIndex]);
+			double targetMass=libraryMasses[libraryIndex];
+			int compare=tolerance.compareTo(targetMass, spectrumMasses[spectrumIndex]);
 			if (compare==0) {
 				float score=libraryIntensities[libraryIndex]*spectrumIntensities[spectrumIndex];
-				float deltaMass=(float)(libraryIntensities[libraryIndex]-spectrumMasses[spectrumIndex]);
-				peakscores[libraryIndex]=new PeakScores(score, deltaMass);
+				float deltaMass=(float)(targetMass-spectrumMasses[spectrumIndex]);
+				peakscores[libraryIndex]=new PeakScores(score, targetMass, deltaMass);
 				libraryIndex++;
 				spectrumIndex++;
 			} else if (compare>0) {

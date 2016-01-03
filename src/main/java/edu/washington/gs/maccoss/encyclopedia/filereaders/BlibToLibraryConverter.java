@@ -19,7 +19,9 @@ public class BlibToLibraryConverter {
 		LibraryFile library=new LibraryFile();
 		library.openFile();
 		for (File blibFile : blibFiles) {
-			(new BlibFile(blibFile)).getStreamEntriesToLibrary(library);	
+			BlibFile blib = new BlibFile();
+			blib.openFile(blibFile);
+			blib.getStreamEntriesToLibrary(library);	
 		}
 		library.saveAsFile(libraryFile);
 	}

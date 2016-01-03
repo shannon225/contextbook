@@ -2,7 +2,6 @@ package edu.washington.gs.maccoss.encyclopedia;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,7 +9,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
-import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
@@ -50,9 +48,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
-import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -203,8 +201,9 @@ public class Pecanpie {
 		
 		int rangesFinished=0;
 		// get stripes
+		float numberOfTasks=2.0f+ranges.size();
 		for (Range range : ranges) {
-			progress.update("Working on "+range+" m/z", (1.0f+rangesFinished)/(2.0f+ranges.size()));
+			progress.update("Working on "+range+" m/z", (1.0f+rangesFinished)/numberOfTasks);
 			int index=Arrays.binarySearch(binBoundaries, range.getMiddle());
 			index=(-(index+1))-1;
 			TDoubleIntHashMap map=binCounters[index];
@@ -325,44 +324,11 @@ public class Pecanpie {
 		consumerThread.join();
 		resultsConsumer.close();
 
-		progress.update("Running Percolator", (1.0f+rangesFinished)/(2.0f+ranges.size()));
-		PercolatorExecutor e=new PercolatorExecutor(featureFile);
-		BlockingQueue<OutputMessage> result=e.start();
+		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
+		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolator(featureFile, outputFile, parameters.getPercolatorThreshold());
 		
-		int countBelow1pFDR=0;
-		boolean isFirst=true;
-		boolean record=true;
-		PrintWriter writer=new PrintWriter(outputFile, "UTF-8");
-		while (!e.isFinished()||!result.isEmpty()) {
-			if (!result.isEmpty()) {
-				OutputMessage data=result.take();
-				if (data.isStdOutput()) {
-					if (isFirst) {
-						isFirst=false;
-					} else if (record) {
-						StringTokenizer st=new StringTokenizer(data.getMessage());
-						st.nextToken(); // PSMid
-						st.nextToken(); // score
-						float qvalue=Float.parseFloat(st.nextToken());
-						if (qvalue<0.01f) {
-							countBelow1pFDR++;
-						} else {
-							record=false;
-						}
-					}
-					writer.println(data.getMessage());
-				} else {
-					Logger.logLine(data.getMessage());
-				}
-			} else {
-				Thread.sleep(10);
-			}
-		}
-		writer.flush();
-		writer.close();
-		
-		Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+countBelow1pFDR+" peaks identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
-		progress.update(countBelow1pFDR+" peaks identified at 1% FDR", 1.0f);
+		Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
+		progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 	}
 
 	public static boolean arePeptidesInRange(HashSet<FastaEntry> targets, Range range, SearchParameters parameters) {

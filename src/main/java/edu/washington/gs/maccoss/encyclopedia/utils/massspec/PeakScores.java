@@ -2,15 +2,21 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 public class PeakScores {
 	private final float score;
+	private final double targetMass;
 	private final float deltaMass;
-	public PeakScores(float score, float deltaMass) {
+	public PeakScores(float score, double targetMass, float deltaMass) {
 		this.score = score;
+		this.targetMass=targetMass;
 		this.deltaMass = deltaMass;
+	}
+	public double getTargetMass() {
+		return targetMass;
 	}
 	
 	public float getDeltaMass() {
 		return deltaMass;
 	}
+	
 	public float getScore() {
 		return score;
 	}

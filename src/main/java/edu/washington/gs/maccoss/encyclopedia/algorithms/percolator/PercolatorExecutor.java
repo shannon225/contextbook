@@ -1,29 +1,86 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
+import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 
 public class PercolatorExecutor extends ExternalExecutor {
 	
-	public PercolatorExecutor(File tsv) {
+	PercolatorExecutor(File tsv) {
 		super(generateCommand(tsv));
 	}
 	
-	public static String[] generateCommand(File tsv) {
+	public static ArrayList<ScoredObject<String>> executePercolator(File featureFile, File outputFile, float threshold)
+			throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+		PercolatorExecutor e=new PercolatorExecutor(featureFile);
+		BlockingQueue<OutputMessage> result=e.start();
+		
+		boolean isFirst=true;
+		boolean record=true;
+		PrintWriter writer=new PrintWriter(outputFile, "UTF-8");
+		ArrayList<ScoredObject<String>> passingPeptides=new ArrayList<ScoredObject<String>>();
+		while (!e.isFinished()||!result.isEmpty()) {
+			if (!result.isEmpty()) {
+				OutputMessage data=result.take();
+				if (data.isStdOutput()) {
+					if (isFirst) {
+						isFirst=false;
+					} else if (record) {
+						StringTokenizer st=new StringTokenizer(data.getMessage());
+						String psmID=st.nextToken(); // PSMid
+						st.nextToken(); // score
+						float qvalue=Float.parseFloat(st.nextToken()); //Q-value
+						//st.nextToken(); // PEP
+						//String peptideString=st.nextToken();
+						//String peptideSequence = parsePeptideSequence(peptideString);
+						
+						if (qvalue<threshold) {
+							ScoredObject<String> peptide=new ScoredObject<String>(qvalue, psmID);
+							passingPeptides.add(peptide);
+						} else {
+							record=false;
+						}
+					}
+					writer.println(data.getMessage());
+				} else {
+					Logger.logLine(data.getMessage());
+				}
+			} else {
+				Thread.sleep(10);
+			}
+		}
+		writer.flush();
+		writer.close();
+		return passingPeptides;
+	}
+
+	static String parsePeptideSequence(String peptideString) {
+		return peptideString.substring(peptideString.indexOf('.')+1, peptideString.lastIndexOf('.'));
+	}
+	
+	static String[] generateCommand(File tsv) {
 		File percolator=getPercolator();
 		
 		return new String[] {percolator.getAbsolutePath(), tsv.getAbsolutePath()};
 	}
 	
-	public static File getPercolator() {
+	static File getPercolator() {
 		try {
 			File percolator=File.createTempFile("Percolator", ".exe");
 			percolator.deleteOnExit();
@@ -59,7 +116,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 		}
 	}
 
-	public static void loadLibraryFile(File percolator, String target) throws IOException {
+	static void loadLibraryFile(File percolator, String target) throws IOException {
 		File file=new File(percolator.getParentFile(), target);
 		file.deleteOnExit();
 		InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/"+target);

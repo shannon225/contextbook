@@ -10,8 +10,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 
 //@Immutable
-public class LibraryEntry {
-
+public class LibraryEntry implements Comparable<LibraryEntry> {
+	private final int spectrumIndex;
 	private final double precursorMZ;
 	private final byte precursorCharge;
 	private final String peptideModSeq;
@@ -21,7 +21,13 @@ public class LibraryEntry {
 	private final double[] massArray;
 	private final float[] intensityArray;
 
+
 	public LibraryEntry(double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray) {
+		this(1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray);
+	}
+
+	public LibraryEntry(int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray) {
+		this.spectrumIndex=spectrumIndex;
 		this.precursorMZ=precursorMZ;
 		this.precursorCharge=precursorCharge;
 		this.peptideModSeq=peptideModSeq;
@@ -30,6 +36,20 @@ public class LibraryEntry {
 		this.score=score;
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
+	}
+	
+	@Override
+	public int compareTo(LibraryEntry o) {
+		if (o==null) return 1;
+		int c=peptideModSeq.compareTo(o.peptideModSeq);
+		if (c!=0) return c;
+		c=Byte.compare(precursorCharge, o.precursorCharge);
+		if (c!=0) return c;
+		return Float.compare(retentionTime, o.retentionTime);
+	}
+	
+	public int getSpectrumIndex() {
+		return spectrumIndex;
 	}
 	
 	public boolean isDecoy() {

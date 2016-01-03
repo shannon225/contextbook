@@ -53,7 +53,8 @@ public class PecanRawScorer implements PSMScorer {
 		if (libraryMasses.length==0||spectrumMasses.length==0) return individualPeakScores;
 
 		for (int i=0; i<libraryMasses.length; i++) {
-			int[] indicies=fragmentTolerance.getIndicies(spectrumMasses, libraryMasses[i]);
+			double targetMass=libraryMasses[i];
+			int[] indicies=fragmentTolerance.getIndicies(spectrumMasses, targetMass);
 			float intensity=0.0f;
 			float bestPeakIntensity=0.0f;
 			float deltaMass=0.0f;
@@ -62,12 +63,12 @@ public class PecanRawScorer implements PSMScorer {
 				
 				if (spectrumIntensities[indicies[j]]>bestPeakIntensity) {
 					bestPeakIntensity=spectrumIntensities[indicies[j]];
-					deltaMass=(float)((libraryMasses[i]-spectrumMasses[indicies[j]])*1000000.0/libraryMasses[i]);
+					deltaMass=(float)((targetMass-spectrumMasses[indicies[j]])*1000000.0/targetMass);
 				}
 			}
 			float peakScore=libraryIntensities[i]*intensity;
 			if (intensity>0.0f) {
-				individualPeakScores[i]=new PeakScores(peakScore, deltaMass);
+				individualPeakScores[i]=new PeakScores(peakScore, targetMass, deltaMass);
 			}
 		}
 		

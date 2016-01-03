@@ -32,6 +32,12 @@ public class PercolatorExecutorTest extends TestCase {
 		}
 		System.out.println("total processed: "+outputlines);
 	}
+	
+	public void testParsePeptideSequence() {
+		String peptideString="-.FNNFINDSLLEGAIDALKR.-";
+		String parsed=PercolatorExecutor.parsePeptideSequence(peptideString);
+		assertEquals("FNNFINDSLLEGAIDALKR", parsed);
+	}
 
 	public void testPercolatorExecutor() throws Exception {
 		InputStream is=getClass().getResourceAsStream("/pecan.feature.txt");

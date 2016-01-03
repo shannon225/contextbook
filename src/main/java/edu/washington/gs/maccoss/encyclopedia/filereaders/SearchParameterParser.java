@@ -56,7 +56,7 @@ public class SearchParameterParser {
 		final int numberOfReportedPeaks;
 		final boolean addDecoysToBackgound;
 		final boolean dontRunDecoys;
-		
+		final float percolatorThreshold;
 
 		TCharFloatHashMap fixedMods=new TCharFloatHashMap();
 		String value=parameters.get("-fixed");
@@ -128,7 +128,8 @@ public class SearchParameterParser {
 		numberOfReportedPeaks=getInteger("-numberOfReportedPeaks", parameters, 1);
 		addDecoysToBackgound=getBoolean("-addDecoysToBackground", parameters, false);
 		dontRunDecoys=getBoolean("-dontRunDecoys", parameters, false);
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys);
+		percolatorThreshold=getFloat("-percolatorThreshold", parameters, 0.01f);
+		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {
@@ -153,6 +154,25 @@ public class SearchParameterParser {
 		} catch (NumberFormatException nfe) {
 			throw new EncyclopediaException("Error parsing "+parameterName+" from ["+value+"]", nfe);
 		}
+	}
+
+	public static float getFloat(String parameterName, HashMap<String, String> parameters, float defaultValue) {
+		String value=parameters.get(parameterName);
+		if (value==null) {
+			return defaultValue;
+		}
+		try {
+			return Float.parseFloat(value);
+		} catch (NumberFormatException nfe) {
+			throw new EncyclopediaException("Error parsing "+parameterName+" from ["+value+"]", nfe);
+		}
+	}
+	
+	public static Pair<String, String> parseEntry(String eachline) {
+		String first=eachline.substring(0, eachline.indexOf('=')-1);
+		String second=eachline.substring(eachline.indexOf('=')+1);
+		Pair<String, String> entry=new Pair<String, String>(first, second);
+		return entry;
 	}
 	
 	public static HashMap<String, String> readFile(File f) {
@@ -186,12 +206,5 @@ public class SearchParameterParser {
 		} catch (IOException ioe) {
 			throw new EncyclopediaException("Error parsing parameters from ["+f.getAbsolutePath()+"]");
 		}
-	}
-	
-	public static Pair<String, String> parseEntry(String eachline) {
-		String first=eachline.substring(0, eachline.indexOf('=')-1);
-		String second=eachline.substring(eachline.indexOf('=')+1);
-		Pair<String, String> entry=new Pair<String, String>(first, second);
-		return entry;
 	}
 }

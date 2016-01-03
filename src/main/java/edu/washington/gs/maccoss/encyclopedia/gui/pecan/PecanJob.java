@@ -65,7 +65,7 @@ public class PecanJob extends SwingWorker<Nothing, ProgressMessage> {
 	@Override
 	protected void process(List<ProgressMessage> chunks) {
 		for (ProgressMessage p : chunks) {
-			if (progress<p.getProgress()) {
+			if (progress<=p.getProgress()) {
 				progress=p.getProgress();
 				message=p.getMessage();
 				processor.fireJobUpdated(this);
@@ -75,6 +75,18 @@ public class PecanJob extends SwingWorker<Nothing, ProgressMessage> {
 	
 	public File getDiaFile() {
 		return diaFile;
+	}
+	
+	public File getOutputFile() {
+		return outputFile;
+	}
+	
+	public File getFeatureFile() {
+		return featureFile;
+	}
+	
+	public PecanScoringFactory getTaskFactory() {
+		return taskFactory;
 	}
 	
 	public ProgressMessage getProgressMessage() {
