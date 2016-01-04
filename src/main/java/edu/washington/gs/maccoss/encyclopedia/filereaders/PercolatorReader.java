@@ -9,14 +9,16 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 
 public class PercolatorReader {
-	public static ArrayList<ScoredObject<String>> getPassingPeptides(File f) {
+	public static ArrayList<ScoredObject<String>> getPassingPeptides(File f, final float qValueThreshold) {
 		final ArrayList<ScoredObject<String>> data=new ArrayList<ScoredObject<String>>();
 		TableParserMuscle muscle=new TableParserMuscle() {
 			@Override
 			public void processRow(Map<String, String> row) {
 				String psmID=row.get("PSMId");
 				float qvalue=Float.parseFloat(row.get("q-value"));
-				data.add(new ScoredObject<String>(qvalue, psmID));
+				if (qvalue<qValueThreshold) {
+					data.add(new ScoredObject<String>(qvalue, psmID));
+				}
 			}
 		};
 

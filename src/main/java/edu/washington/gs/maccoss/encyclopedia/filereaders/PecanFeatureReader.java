@@ -92,10 +92,12 @@ public class PecanFeatureReader {
 					TDoubleArrayList mzs=new TDoubleArrayList();
 					TFloatArrayList intens=new TFloatArrayList();
 					for (PeakScores scores : individualPeakScores) {
-						float peakScore=scores.getScore();
-						if (peakScore>0) {
-							mzs.add(scores.getTargetMass());
-							intens.add(peakScore);
+						if (scores!=null) {
+							float peakScore=scores.getScore();
+							if (peakScore>0) {
+								mzs.add(scores.getTargetMass());
+								intens.add(peakScore);
+							}
 						}
 					}
 

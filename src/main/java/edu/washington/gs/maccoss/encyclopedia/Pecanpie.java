@@ -61,8 +61,6 @@ import gnu.trove.set.hash.TDoubleHashSet;
 
 public class Pecanpie {
 	public static void main(String[] args) {
-		Logger.logLine("Pecanpie version 0.1");
-		
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
 		if (arguments.size()==0||arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")||arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
@@ -88,13 +86,6 @@ public class Pecanpie {
 		File diaFile=new File(arguments.get("-i"));
 		File fastaFile=new File(arguments.get("-f"));
 		
-		ArrayList<FastaEntry> targets;
-		if (arguments.containsKey("-t")) {
-			targets=FastaReader.readFasta(new File(arguments.get("-t")));
-		} else {
-			targets=null;
-		}
-		
 		File outputFile;
 		if (arguments.containsKey("-o")) {
 			outputFile=new File(arguments.get("-o"));
@@ -107,6 +98,14 @@ public class Pecanpie {
 
 		SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
+		Logger.logLine("Pecanpie version "+factory.getVersion());
+		
+		ArrayList<FastaEntry> targets;
+		if (arguments.containsKey("-t")) {
+			targets=FastaReader.readFasta(new File(arguments.get("-t")));
+		} else {
+			targets=null;
+		}
 
 		Logger.logLine("Parameters:");
 		Logger.logLine(" -i "+diaFile.getAbsolutePath());

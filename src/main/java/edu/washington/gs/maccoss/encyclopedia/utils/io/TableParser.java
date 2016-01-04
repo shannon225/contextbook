@@ -41,8 +41,12 @@ public class TableParser {
 				int count=0;
 				while (st.hasMoreTokens()) {
 					String entry=st.nextToken();
+					if (count>=headers.size()) {
+						break;
+					}
 					map.put(headers.get(count), entry);
 					count++;
+					
 				}
 				
 				muscle.processRow(map);

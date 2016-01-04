@@ -107,6 +107,10 @@ public class AminoAcidConstants {
 		});
 	}
 	
+	public TCharFloatHashMap getFixedMods() {
+		return fixedMods;
+	}
+	
 	public String getFixedModString() {
 		final StringBuilder sb=new StringBuilder();
 		fixedMods.forEachEntry(new TCharFloatProcedure() {

@@ -25,7 +25,7 @@ public class PecanMain {
 		f.setSize(new Dimension(1100, 800));
 		f.setVisible(true);
 
-		Logger.logLine("Pecanpie version 0.1");
+		Logger.logLine("Pecanpie Graphical Interface");
 	}
 
 }

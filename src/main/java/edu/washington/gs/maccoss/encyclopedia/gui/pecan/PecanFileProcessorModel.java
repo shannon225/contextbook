@@ -24,6 +24,10 @@ public class PecanFileProcessorModel extends AbstractTableModel {
 		executor=new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 	}
 	
+	public ArrayList<PecanJob> getQueue() {
+		return queue;
+	}
+	
 	@Override
 	public int getRowCount() {
 		return queue.size();

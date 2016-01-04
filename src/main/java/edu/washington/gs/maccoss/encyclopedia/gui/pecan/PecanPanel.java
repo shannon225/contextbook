@@ -28,6 +28,7 @@ import javax.swing.table.TableColumn;
 
 import com.google.common.base.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.PecanToBLIB;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
@@ -43,6 +44,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.ProgressRenderer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
 public class PecanPanel extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -138,8 +140,28 @@ public class PecanPanel extends JPanel {
 			}
 		});
 		
+		JButton saveBlib=new JButton("Save BLIB");
+		saveBlib.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFrame frame = (JFrame)SwingUtilities.getRoot(PecanPanel.this);
+				FileDialog dialog=new FileDialog(frame, "Save a BLIB file", FileDialog.SAVE);
+				dialog.setFilenameFilter(new SimpleFilenameFilter(".blib"));
+				dialog.setVisible(true);
+				if (dialog.getFiles()!=null&&dialog.getFiles().length>0) {
+					File blibFile=dialog.getFiles()[0];
+					
+					PecanToBLIB.convert(new EmptyProgressIndicator(), pecanModel.getQueue(), blibFile);
+				}
+			}
+		});
+		
+		JPanel buttonPanel=new JPanel(new FlowLayout());
+		buttonPanel.add(chooseFile);
+		buttonPanel.add(saveBlib);
+		
 		files.add(new JLabel("<html><p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>MZML Files: "), BorderLayout.WEST);
-		files.add(chooseFile, BorderLayout.EAST);
+		files.add(buttonPanel, BorderLayout.EAST);
 		
 		JPanel filesWrapper=new JPanel(new BorderLayout());
 		filesWrapper.setOpaque(true);
@@ -159,13 +181,22 @@ public class PecanPanel extends JPanel {
 	}
 	
 	public PecanJob getJob(File diaFile) {
+		SearchParameters parameters=getParameters();
 		File fastaFile=backgroundFasta.getFile();
 		if (fastaFile==null) return null;
-		
+		return getJob(diaFile, fastaFile, pecanModel, parameters);
+	}
+
+	public static PecanJob getJob(File diaFile, File fastaFile, PecanFileProcessorModel processor, SearchParameters parameters) {
 		File outputFile=new File(diaFile.getAbsolutePath()+".pecan.txt");
 		File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
-		
 		ArrayList<FastaEntry> targets=null;
+		
+		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
+		return new PecanJob(processor, Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
+	}
+
+	private SearchParameters getParameters() {
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
@@ -176,9 +207,6 @@ public class PecanPanel extends JPanel {
 		byte maxMissedCleavageValue=((Integer)maxMissedCleavage.getValue()).byteValue();
 		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme,
 				maxMissedCleavageValue, minChargeValue, maxChargeValue);
-		
-		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
-		
-		return new PecanJob(pecanModel, Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
+		return parameters;
 	}
 }

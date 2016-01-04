@@ -15,6 +15,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 
 public interface PecanScoringFactory {
+	public String getVersion();
 	public SearchParameters getParameters();
 	public AbstractPecanFragmentationModel getFragmentationModel(String modifiedSequence, AminoAcidConstants aaConstants);
 	public PSMScorer getBackgroundScorer();
