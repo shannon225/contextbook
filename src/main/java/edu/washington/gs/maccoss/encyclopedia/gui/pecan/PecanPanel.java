@@ -128,6 +128,7 @@ public class PecanPanel extends JPanel {
 			public void actionPerformed(ActionEvent e) {
 				JFrame frame = (JFrame)SwingUtilities.getRoot(PecanPanel.this);
 				FileDialog dialog=new FileDialog(frame, "Select a MZML file", FileDialog.LOAD);
+				dialog.setMultipleMode(true);
 				dialog.setFilenameFilter(new SimpleFilenameFilter(".mzml", ".dia"));
 				dialog.setVisible(true);
 				if (dialog.getFiles()!=null) {

@@ -53,7 +53,7 @@ public class TableParser {
 			}
 
 		} catch (IOException ioe) {
-			Logger.errorLine("I/O Error found reading FASTA ["+f.getName()+"]");
+			Logger.errorLine("I/O Error found reading table ["+f.getName()+"]");
 			Logger.errorException(ioe);
 		} finally {
 			if (in!=null) {
@@ -65,5 +65,4 @@ public class TableParser {
 			}
 		}
 	}
-
 }
