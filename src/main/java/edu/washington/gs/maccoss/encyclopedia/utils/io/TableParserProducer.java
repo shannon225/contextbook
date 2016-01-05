@@ -6,18 +6,32 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
-public class TableParser {
+public class TableParserProducer implements Runnable {
+	public static final HashMap<String, String> POISON_BLOCK=new HashMap<String, String>();
+	
+	private final BlockingQueue<Map<String, String>> blockingQueue;
+	private final File f;
+	private final String delim;
+	
 	/**
 	 * Note: does not respect either escaping or quotations! 
 	 * @param f
 	 * @param delim
 	 * @return
 	 */
-	public static void readTable(File f, String delim, TableParserMuscle muscle) {
+	public TableParserProducer(BlockingQueue<Map<String, String>> blockingQueue, File f, String delim) {
+		this.blockingQueue=blockingQueue;
+		this.f=f;
+		this.delim=delim;
+	}
+	
+	public void run() {
 		BufferedReader in=null;
 		
 		try {
@@ -35,7 +49,7 @@ public class TableParser {
 					continue;
 				}
 
-				HashMap<String, String> map=new HashMap<String, String>();
+				HashMap<String, String> row=new HashMap<String, String>();
 				
 				st=new StringTokenizer(eachline, delim);
 				int count=0;
@@ -44,13 +58,15 @@ public class TableParser {
 					if (count>=headers.size()) {
 						break;
 					}
-					map.put(headers.get(count), entry);
+					row.put(headers.get(count), entry);
 					count++;
 					
 				}
 				
-				muscle.processRow(map);
+				blockingQueue.add(row);
 			}
+			
+			blockingQueue.add(POISON_BLOCK);
 
 		} catch (IOException ioe) {
 			Logger.errorLine("I/O Error found reading table ["+f.getName()+"]");

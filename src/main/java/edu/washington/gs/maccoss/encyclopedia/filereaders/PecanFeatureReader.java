@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
@@ -15,7 +17,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
@@ -31,7 +35,24 @@ public class PecanFeatureReader {
 		}
 
 		PecanFeatureMuscle muscle=new PecanFeatureMuscle(savedIDs, stripeFile, factory);
-		TableParser.readTable(f, "\t", muscle);
+
+		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
+		TableParserProducer producer=new TableParserProducer(blockingQueue, f, "\t");
+		TableParserConsumer consumer=new TableParserConsumer(blockingQueue, muscle);
+
+		Thread producerThread=new Thread(producer);
+		Thread consumerThread=new Thread(consumer);
+		producerThread.start();
+		consumerThread.start();
+
+		try {
+			producerThread.join();
+			consumerThread.join();
+		} catch (InterruptedException ie) {
+			Logger.errorLine("Percolator reading interrupted!");
+			Logger.errorException(ie);
+		}
+		
 		return muscle.getSavedEntries();
 	}
 
