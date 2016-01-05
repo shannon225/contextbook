@@ -28,7 +28,7 @@ public class PercolatorReader {
 		};
 		
 		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
-		TableParserProducer producer=new TableParserProducer(blockingQueue, f, "\t");
+		TableParserProducer producer=new TableParserProducer(blockingQueue, f, "\t", 1);
 		TableParserConsumer consumer=new TableParserConsumer(blockingQueue, muscle);
 
 		Thread producerThread=new Thread(producer);

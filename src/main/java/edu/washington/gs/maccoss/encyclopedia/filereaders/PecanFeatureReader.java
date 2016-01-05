@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.zip.DataFormatException;
 
@@ -34,26 +35,40 @@ public class PecanFeatureReader {
 			savedIDs.put(psm.y, psm.x);
 		}
 
-		PecanFeatureMuscle muscle=new PecanFeatureMuscle(savedIDs, stripeFile, factory);
-
+		int cores=Runtime.getRuntime().availableProcessors();
+		
 		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
-		TableParserProducer producer=new TableParserProducer(blockingQueue, f, "\t");
-		TableParserConsumer consumer=new TableParserConsumer(blockingQueue, muscle);
+		TableParserProducer producer=new TableParserProducer(blockingQueue, f, "\t", cores);
+		
+		ConcurrentLinkedQueue<LibraryEntry> savedEntries=new ConcurrentLinkedQueue<LibraryEntry>();
 
 		Thread producerThread=new Thread(producer);
-		Thread consumerThread=new Thread(consumer);
 		producerThread.start();
-		consumerThread.start();
+
+		Thread[] consumers=new Thread[cores];
+		for (int i=0; i<consumers.length; i++) {
+			PecanFeatureMuscle muscle=new PecanFeatureMuscle(savedIDs, stripeFile, factory, savedEntries);
+			TableParserConsumer consumer=new TableParserConsumer(blockingQueue, muscle);
+			consumers[i]=new Thread(consumer);
+			consumers[i].start();
+		}
 
 		try {
 			producerThread.join();
-			consumerThread.join();
+			for (int i=0; i<consumers.length; i++) {
+				consumers[i].join();
+			}
 		} catch (InterruptedException ie) {
 			Logger.errorLine("Percolator reading interrupted!");
 			Logger.errorException(ie);
 		}
 		
-		return muscle.getSavedEntries();
+		ArrayList<LibraryEntry> entryList=new ArrayList<LibraryEntry>();
+		for (LibraryEntry entry : savedEntries) {
+			entryList.add(entry);
+		}
+		
+		return entryList;
 	}
 
 	public static class PecanFeatureMuscle implements TableParserMuscle {
@@ -64,19 +79,16 @@ public class PecanFeatureReader {
 		private final SearchParameters params;
 		private final PecanScoringFactory factory;
 
-		private final ArrayList<LibraryEntry> savedEntries=new ArrayList<LibraryEntry>();
+		private final ConcurrentLinkedQueue<LibraryEntry> savedEntries;
 
-		public PecanFeatureMuscle(TObjectFloatHashMap<String> savedIDs, StripeFileInterface stripeFile, PecanScoringFactory factory) {
-			this.savedIDs=savedIDs;
+		public PecanFeatureMuscle(TObjectFloatHashMap<String> savedIDs, StripeFileInterface stripeFile, PecanScoringFactory factory, ConcurrentLinkedQueue<LibraryEntry> savedEntries) {
+			this.savedIDs=new TObjectFloatHashMap<String>(savedIDs); // to guarantee immutability
 			this.stripeFile=stripeFile;
 
 			scorer=factory.getPecanScorer();
 			params=factory.getParameters();
 			this.factory=factory;
-		}
-		
-		public ArrayList<LibraryEntry> getSavedEntries() {
-			return savedEntries;
+			this.savedEntries=savedEntries;
 		}
 
 		@Override

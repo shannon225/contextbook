@@ -18,8 +18,9 @@ public abstract class SwingJob extends SwingWorker<Nothing, ProgressMessage> {
 		super();
 		this.processor=processor;
 	}
-	
+
 	public abstract void runJob() throws Exception;
+
 	public abstract String getJobTitle();
 
 	@Override
@@ -41,12 +42,16 @@ public abstract class SwingJob extends SwingWorker<Nothing, ProgressMessage> {
 
 	@Override
 	protected void process(List<ProgressMessage> chunks) {
+		boolean updated=false;
 		for (ProgressMessage p : chunks) {
 			if (progress<=p.getProgress()) {
 				progress=p.getProgress();
 				message=p.getMessage();
-				processor.fireJobUpdated(this);
+				updated=true;
 			}
+		}
+		if (updated) {
+			processor.fireJobUpdated(this);
 		}
 	}
 
@@ -61,7 +66,9 @@ public abstract class SwingJob extends SwingWorker<Nothing, ProgressMessage> {
 	}
 
 	public ProgressMessage getProgressMessage() {
-		return new ProgressMessage(message, progress);
+		synchronized (this) {
+			return new ProgressMessage(message, progress);
+		}
 	}
 
 	public float getTotalProgress() {
@@ -71,7 +78,7 @@ public abstract class SwingJob extends SwingWorker<Nothing, ProgressMessage> {
 	public String getMessage() {
 		return message;
 	}
-	
+
 	public boolean isFinished() {
 		return getProgressMessage().isFinished();
 	}

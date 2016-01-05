@@ -63,22 +63,28 @@ public class PecanToBLIB {
 			for (int i=0; i<pecanJobs.size(); i++) {
 				float localComplete=0.0f;
 				PecanJobData job=pecanJobs.get(i);
-				progress.update(job.getDiaFile().getName()+": Reading Percolator Results", (i+localComplete)*increment);
+				File diaFile=job.getDiaFile();
+				progress.update(diaFile.getName()+": Reading Percolator Results", (i+localComplete)*increment);
 
 				File featureFile=job.getFeatureFile();
 				File percolatorFile=job.getOutputFile();
+				
+				if (!diaFile.exists()||!featureFile.exists()||!percolatorFile.exists()) {
+					continue;
+				}
+				
 				StripeFile stripeFile=new StripeFile();
-				stripeFile.openFile(job.getDiaFile());
+				stripeFile.openFile(diaFile);
 				PecanScoringFactory taskFactory=job.getTaskFactory();
 
 				ArrayList<ScoredObject<String>> passingPeptides=PercolatorReader.getPassingPeptides(percolatorFile, taskFactory.getParameters().getPercolatorThreshold());
 
 				localComplete=0.1f;
-				progress.update(job.getDiaFile().getName()+": Extracting Spectral Data for "+passingPeptides.size()+" Peptides", (i+localComplete)*increment);
+				progress.update(diaFile.getName()+": Extracting Spectral Data for "+passingPeptides.size()+" Peptides", (i+localComplete)*increment);
 				ArrayList<LibraryEntry> libraryEntries=PecanFeatureReader.parsePecanFeatures(featureFile, passingPeptides, stripeFile, taskFactory);
 
 				localComplete=0.9f;
-				progress.update(job.getDiaFile().getName()+": Writing Skyline BLIB", (i+localComplete)*increment);
+				progress.update(diaFile.getName()+": Writing Skyline BLIB", (i+localComplete)*increment);
 
 				int[] counters=blib.addLibrary(job, libraryEntries, idCounter, jobCounter, modCounter);
 				idCounter=counters[0];

@@ -18,6 +18,7 @@ public class TableParserProducer implements Runnable {
 	private final BlockingQueue<Map<String, String>> blockingQueue;
 	private final File f;
 	private final String delim;
+	private final int numConsumers;
 	
 	/**
 	 * Note: does not respect either escaping or quotations! 
@@ -25,10 +26,11 @@ public class TableParserProducer implements Runnable {
 	 * @param delim
 	 * @return
 	 */
-	public TableParserProducer(BlockingQueue<Map<String, String>> blockingQueue, File f, String delim) {
+	public TableParserProducer(BlockingQueue<Map<String, String>> blockingQueue, File f, String delim, int numConsumers) {
 		this.blockingQueue=blockingQueue;
 		this.f=f;
 		this.delim=delim;
+		this.numConsumers=numConsumers;
 	}
 	
 	public void run() {
@@ -38,35 +40,40 @@ public class TableParserProducer implements Runnable {
 			in=new BufferedReader(new FileReader(f));
 			
 			String eachline=in.readLine(); // header
-			StringTokenizer st=new StringTokenizer(eachline, delim);
-			ArrayList<String> headers=new ArrayList<String>();
-			while (st.hasMoreTokens()) {
-				headers.add(st.nextToken());
-			}
 			
-			while ((eachline=in.readLine())!=null) {
-				if (eachline.trim().length()==0) {
-					continue;
+			if (eachline!=null) {
+				StringTokenizer st=new StringTokenizer(eachline, delim);
+				ArrayList<String> headers=new ArrayList<String>();
+				while (st.hasMoreTokens()) {
+					headers.add(st.nextToken());
 				}
 
-				HashMap<String, String> row=new HashMap<String, String>();
-				
-				st=new StringTokenizer(eachline, delim);
-				int count=0;
-				while (st.hasMoreTokens()) {
-					String entry=st.nextToken();
-					if (count>=headers.size()) {
-						break;
+				while ((eachline=in.readLine())!=null) {
+					if (eachline.trim().length()==0) {
+						continue;
 					}
-					row.put(headers.get(count), entry);
-					count++;
-					
+
+					HashMap<String, String> row=new HashMap<String, String>();
+
+					st=new StringTokenizer(eachline, delim);
+					int count=0;
+					while (st.hasMoreTokens()) {
+						String entry=st.nextToken();
+						if (count>=headers.size()) {
+							break;
+						}
+						row.put(headers.get(count), entry);
+						count++;
+
+					}
+
+					blockingQueue.add(row);
 				}
-				
-				blockingQueue.add(row);
 			}
 			
-			blockingQueue.add(POISON_BLOCK);
+			for (int i=0; i<numConsumers; i++) {
+				blockingQueue.add(POISON_BLOCK);
+			}
 
 		} catch (IOException ioe) {
 			Logger.errorLine("I/O Error found reading table ["+f.getName()+"]");
