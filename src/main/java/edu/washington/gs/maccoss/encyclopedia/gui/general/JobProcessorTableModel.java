@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.gui.pecan;
+package edu.washington.gs.maccoss.encyclopedia.gui.general;
 
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
@@ -11,21 +11,17 @@ import javax.swing.table.AbstractTableModel;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-public class PecanFileProcessorModel extends AbstractTableModel {
+public class JobProcessorTableModel extends AbstractTableModel implements JobProcessor {
 	private static final long serialVersionUID=1L;
 	
 	private final String[] columnNames= {"File", "Progress"};
-	private final ArrayList<PecanJob> queue=new ArrayList<PecanJob>();
+	private final ArrayList<SwingJob> queue=new ArrayList<SwingJob>();
 	private final ExecutorService executor;
 	
-	public PecanFileProcessorModel() {
+	public JobProcessorTableModel() {
 		ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("Pecan-%d").setDaemon(true).build();
 		LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 		executor=new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
-	}
-	
-	public ArrayList<PecanJob> getQueue() {
-		return queue;
 	}
 	
 	@Override
@@ -47,10 +43,10 @@ public class PecanFileProcessorModel extends AbstractTableModel {
 	
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
-		PecanJob job=queue.get(rowIndex);
+		SwingJob job=queue.get(rowIndex);
 		switch (columnIndex) {
 			case 0:
-				return job.getDiaFile().getName();
+				return job.getJobTitle();
 			case 1:
 				return job.getProgressMessage();
 
@@ -59,13 +55,29 @@ public class PecanFileProcessorModel extends AbstractTableModel {
 		}
 	}
 	
-	public void addJob(PecanJob job) {
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.gui.pecan.JobProcessor#getQueue()
+	 */
+	@Override
+	public ArrayList<SwingJob> getQueue() {
+		return queue;
+	}
+	
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.gui.pecan.JobProcessor#addJob(edu.washington.gs.maccoss.encyclopedia.gui.pecan.PecanJob)
+	 */
+	@Override
+	public void addJob(SwingJob job) {
 		queue.add(job);
 		executor.submit(job);
 		fireTableDataChanged();
 	}
 	
-	public void fireJobUpdated(PecanJob job) {
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.gui.pecan.JobProcessor#fireJobUpdated(edu.washington.gs.maccoss.encyclopedia.gui.pecan.PecanJob)
+	 */
+	@Override
+	public void fireJobUpdated(SwingJob job) {
 		for (int i=0; i<queue.size(); i++) {
 			if (job==queue.get(i)) {
 				fireTableRowsUpdated(i, i);

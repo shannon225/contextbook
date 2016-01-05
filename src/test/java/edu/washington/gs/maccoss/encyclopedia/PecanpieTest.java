@@ -19,8 +19,7 @@ public class PecanpieTest {
 	public static void main(String[] args) {
 		// EXAMPLE
 		File diaFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/20150708_Ecoli_0911_25x4mzDIA_500_600.dia");
-		//File fastaFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/ecoli-190209-contam_correctNL.fasta");
-		File fastaFile=new File("/Users/searleb/Documents/projects/pecan/v0.9.7/ecoli_20150911_uniprot_sp_digested_Mass600to4000.fasta"); //FIXME
+		File fastaFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/ecoli-190209-contam_correctNL.fasta");
 		File featureFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/encyc_report.feature.txt");
 		File outputFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/encyc_report.percolator.txt");
 		SearchParameters parameters=new SearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));

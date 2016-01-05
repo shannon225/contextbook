@@ -28,8 +28,8 @@ import javax.swing.table.TableColumn;
 
 import com.google.common.base.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.PecanToBLIB;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -37,6 +37,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LogConsole;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
@@ -44,7 +46,6 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.ProgressRenderer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
-import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
 public class PecanPanel extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -63,7 +64,7 @@ public class PecanPanel extends JPanel {
 	private final SpinnerModel maxCharge = new SpinnerNumberModel(3, 2, 4, 1);
 	private final SpinnerModel maxMissedCleavage = new SpinnerNumberModel(1, 0, 3, 1);
 	
-	PecanFileProcessorModel pecanModel=new PecanFileProcessorModel();
+	JobProcessorTableModel pecanModel=new JobProcessorTableModel();
 	
 	public PecanPanel() {
 		super(new BorderLayout());
@@ -121,7 +122,7 @@ public class PecanPanel extends JPanel {
 		split.setLeftComponent(optionsWrapper);
 
 		JPanel files=new JPanel(new BorderLayout());
-		JButton chooseFile=new JButton("Add");
+		JButton chooseFile=new JButton("Add MZML");
 		chooseFile.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -151,7 +152,10 @@ public class PecanPanel extends JPanel {
 				if (dialog.getFiles()!=null&&dialog.getFiles().length>0) {
 					File blibFile=dialog.getFiles()[0];
 					
-					PecanToBLIB.convert(new EmptyProgressIndicator(), pecanModel.getQueue(), blibFile);
+					PecanToBLIBJob job=new PecanToBLIBJob(blibFile, pecanModel);
+					if (job!=null) {
+						pecanModel.addJob(job);
+					}
 				}
 			}
 		});
@@ -160,7 +164,7 @@ public class PecanPanel extends JPanel {
 		buttonPanel.add(chooseFile);
 		buttonPanel.add(saveBlib);
 		
-		files.add(new JLabel("<html><p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>MZML Files: "), BorderLayout.WEST);
+		files.add(new JLabel("<html><p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Pecan Jobs: "), BorderLayout.WEST);
 		files.add(buttonPanel, BorderLayout.EAST);
 		
 		JPanel filesWrapper=new JPanel(new BorderLayout());
@@ -187,13 +191,13 @@ public class PecanPanel extends JPanel {
 		return getJob(diaFile, fastaFile, pecanModel, parameters);
 	}
 
-	public static PecanJob getJob(File diaFile, File fastaFile, PecanFileProcessorModel processor, SearchParameters parameters) {
+	public static PecanJob getJob(File diaFile, File fastaFile, JobProcessor processor, SearchParameters parameters) {
 		File outputFile=new File(diaFile.getAbsolutePath()+".pecan.txt");
 		File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
 		ArrayList<FastaEntry> targets=null;
 		
 		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
-		return new PecanJob(processor, Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
+		return new PecanJob(processor, new PecanJobData(Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory));
 	}
 
 	private SearchParameters getParameters() {

@@ -1,0 +1,83 @@
+package edu.washington.gs.maccoss.encyclopedia.gui.general;
+
+import java.util.List;
+
+import javax.swing.SwingWorker;
+
+import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.ProgressMessage;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
+
+public abstract class SwingJob extends SwingWorker<Nothing, ProgressMessage> {
+
+	protected volatile String message="";
+	protected volatile float progress=0.0f;
+	protected final JobProcessor processor;
+
+	public SwingJob(JobProcessor processor) {
+		super();
+		this.processor=processor;
+	}
+	
+	public abstract void runJob() throws Exception;
+	public abstract String getJobTitle();
+
+	@Override
+	protected Nothing doInBackground() {
+		try {
+			runJob();
+		} catch (Exception e) {
+			publish(new ProgressMessage("Encountered Fatal Error!", -1.0f));
+			e.printStackTrace();
+		}
+		return Nothing.NOTHING;
+	}
+
+	@Override
+	protected void done() {
+		progress=1.0f;
+		processor.fireJobUpdated(this);
+	}
+
+	@Override
+	protected void process(List<ProgressMessage> chunks) {
+		for (ProgressMessage p : chunks) {
+			if (progress<=p.getProgress()) {
+				progress=p.getProgress();
+				message=p.getMessage();
+				processor.fireJobUpdated(this);
+			}
+		}
+	}
+
+	public ProgressIndicator getProgressIndicator() {
+		final ProgressIndicator indicator=new ProgressIndicator() {
+			@Override
+			public void update(String message, float totalProgress) {
+				publish(new ProgressMessage(message, totalProgress));
+			}
+		};
+		return indicator;
+	}
+
+	public ProgressMessage getProgressMessage() {
+		return new ProgressMessage(message, progress);
+	}
+
+	public float getTotalProgress() {
+		return progress;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+	
+	public boolean isFinished() {
+		return getProgressMessage().isFinished();
+	}
+
+	public boolean isError() {
+		return getProgressMessage().isError();
+	}
+
+}

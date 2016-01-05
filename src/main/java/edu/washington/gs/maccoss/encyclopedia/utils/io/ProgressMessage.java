@@ -16,4 +16,12 @@ public class ProgressMessage extends OutputMessage {
 	public float getProgress() {
 		return progress;
 	}
+	
+	public boolean isError() {
+		return progress<0.0f;
+	}
+	
+	public boolean isFinished() {
+		return progress>=1.0f;
+	}
 }

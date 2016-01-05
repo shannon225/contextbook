@@ -28,6 +28,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.AbstractPecanFragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
@@ -121,8 +122,11 @@ public class Pecanpie {
 			e.printStackTrace();
 		}
 	}
-
-	public static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaEntry>> targetList, File diaFile, File fastaFile, File featureFile, File outputFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+	public static void runPie(ProgressIndicator progress, PecanJobData jobData) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+		runPie(progress, jobData.getTargetList(), jobData.getDiaFile(), jobData.getFastaFile(), jobData.getFeatureFile(), jobData.getOutputFile(), jobData.getTaskFactory());
+	}
+		
+	static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaEntry>> targetList, File diaFile, File fastaFile, File featureFile, File outputFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		long startTime=System.currentTimeMillis();
 		PSMScorer backgroundScorer=taskFactory.getBackgroundScorer();
 		PSMScorer pecanScorer=taskFactory.getPecanScorer();

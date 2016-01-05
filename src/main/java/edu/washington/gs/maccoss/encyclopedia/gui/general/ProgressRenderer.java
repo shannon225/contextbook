@@ -31,10 +31,10 @@ public class ProgressRenderer extends DefaultTableCellRenderer {
 	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 		ProgressMessage f=(ProgressMessage)value;
 		String text=f.getMessage();
-		if (f.getProgress()<0) {
+		if (f.isError()) {
 			this.setBackground(Color.pink);
 			this.setOpaque(true);
-		} else if (f.getProgress()>=1.0f) {
+		} else if (f.isFinished()) {
 			this.setBackground(new Color(150, 255, 150));
 			this.setOpaque(true);
 		} else {

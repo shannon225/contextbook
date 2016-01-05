@@ -15,10 +15,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.zip.DataFormatException;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.gui.pecan.PecanJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -92,7 +92,7 @@ public class BlibFile extends SQLFile {
 		library.createIndices();
 	}
 
-	public int[] addLibrary(PecanJob job, ArrayList<LibraryEntry> entries, int idCounter, int jobCounter, int modCounter) throws IOException, SQLException {
+	public int[] addLibrary(PecanJobData job, ArrayList<LibraryEntry> entries, int idCounter, int jobCounter, int modCounter) throws IOException, SQLException {
 		String diaFileName=job.getDiaFile().getName();
 		String spectrumIDPrefix=diaFileName;
 		if (spectrumIDPrefix.indexOf('.')>0) {

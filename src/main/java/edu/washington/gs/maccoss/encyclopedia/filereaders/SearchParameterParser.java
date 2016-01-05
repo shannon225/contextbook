@@ -32,6 +32,8 @@ public class SearchParameterParser {
 		map.put("-minEluteTime", "12");
 		map.put("-numberOfReportedPeaks", "1");
 		map.put("-addDecoysToBackground", "false");
+		map.put("-dontRunDecoys", "false");
+		map.put("-percolatorThreshold", "0.01");
 		return map;
 	}
 	

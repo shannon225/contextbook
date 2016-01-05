@@ -43,7 +43,7 @@ import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.set.hash.TDoubleHashSet;
 
 public class PeptideScoringTaskTest {
-	private static final byte PLOTTING_METHOD=FragmentationTraceTask.PLOT_INTENSITIES;
+	private static byte PLOTTING_METHOD=FragmentationTraceTask.PLOT_INTENSITIES; // not final to avoid test warnings
 	
 	private static final Range FRAGMENTATION_RANGE=new Range(0f, 2000f);
 	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
@@ -158,7 +158,8 @@ public class PeptideScoringTaskTest {
 				yAxisName="Score";
 			} else if (FragmentationTraceTask.PLOT_DELTA_MASSES==PLOTTING_METHOD) {
 				yAxisName="Delta Mass";
-
+			} else {
+				yAxisName="Unknown";
 			}
 			Charter.launchChart("RT ("+range+" M/Z)", yAxisName, true, traces.toArray(new XYTrace[traces.size()]));
 		}

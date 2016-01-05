@@ -69,12 +69,12 @@ public class SearchParameters {
 		this.fragmentTolerance=fragmentTolerance;
 		this.enzyme=enzyme;
 		minPeptideLength=5;
-		maxPeptideLength=99;
+		maxPeptideLength=100;
 		this.maxMissedCleavages=maxMissedCleavages;
 		this.minCharge=minCharge;
 		this.maxCharge=maxCharge;
 		minEluteTime=12;
-		numberOfReportedPeaks=3;
+		numberOfReportedPeaks=1;
 		addDecoysToBackgound=false;
 		dontRunDecoys=false;
 		percolatorThreshold=0.01f;
@@ -88,12 +88,12 @@ public class SearchParameters {
 		this.enzyme=enzyme;
 
 		minPeptideLength=5;
-		maxPeptideLength=99;
+		maxPeptideLength=100;
 		maxMissedCleavages=1;
 		minCharge=2;
 		maxCharge=3;
 		minEluteTime=12;
-		numberOfReportedPeaks=3;
+		numberOfReportedPeaks=1;
 		addDecoysToBackgound=false;
 		dontRunDecoys=false;
 		percolatorThreshold=0.01f;
@@ -109,11 +109,11 @@ public class SearchParameters {
 		this.maxMissedCleavages=maxMissedCleavages;
 
 		minPeptideLength=5;
-		maxPeptideLength=99;
+		maxPeptideLength=100;
 		minCharge=2;
 		maxCharge=3;
 		minEluteTime=12;
-		numberOfReportedPeaks=3;
+		numberOfReportedPeaks=1;
 		addDecoysToBackgound=false;
 		dontRunDecoys=false;
 		percolatorThreshold=0.01f;
