@@ -196,7 +196,7 @@ public class FragmentationModel {
 				double modificationMass = Double.valueOf(massText);
 				masses.set(masses.size()-1, masses.get(masses.size()-1)+modificationMass);
 				neutralLosses.set(masses.size()-1, MassConstants.getNeutralLoss(modificationMass));
-				aas.set(masses.size()-1, aas.get(masses.size()-1)+"["+massText+"]");
+				aas.set(masses.size()-1, aas.get(masses.size()-1)+(modificationMass>=0?"[+":"[")+modificationMass+"]");
 			} else {
 				masses.add(aaConstants.getMass(ca[i]));
 				neutralLosses.add(0.0);

@@ -18,7 +18,7 @@ public class LibraryEntryTest extends TestCase {
 		
 		LibraryEntry entry=new LibraryEntry(518.73841, (byte)2, "PEPT[+80]IDER", 1, 0.0f, 0.0f, massArray, intensityArray);
 		ReverseLibraryEntry reverse=entry.getReverse(new MassTolerance(10.0f), PARAMETERS.getAAConstants());
-		assertEquals("REDIT[+80]PEP", reverse.getPeptideModSeq());
+		assertEquals("REDIT[+80.0]PEP", reverse.getPeptideModSeq());
 		
 		double[] reverseMasses=reverse.getMassArray();
 		double[] expectedReversedMasses = new double[] { 116.0712, 157.10898,

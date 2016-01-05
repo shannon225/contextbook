@@ -106,6 +106,7 @@ public class BlibFile extends SQLFile {
 		
 		AminoAcidConstants aaConstants=job.getTaskFactory().getParameters().getAAConstants();
 		TCharFloatHashMap fixedMods=aaConstants.getFixedMods();
+		char[] fixedModdedAAs=fixedMods.keys();
 		modCounter++;
 		
 		Connection c=getConnection(tempFile);
@@ -143,7 +144,13 @@ public class BlibFile extends SQLFile {
 					prep.setString(2, entry.getPeptideSeq()); // pepSeq
 					prep.setDouble(3, entry.getPrecursorMZ()); // precursorMZ
 					prep.setInt(4, entry.getPrecursorCharge()); // precursorCharge
-					prep.setString(5, entry.getPeptideModSeq()); // peptideModSeq
+					String peptideModSeq=entry.getPeptideModSeq();
+					for (char aa : fixedModdedAAs) {
+						float mass=fixedMods.get(aa);
+						String replacement=aa+(mass>=0?"[+":"[")+mass+"]";
+						peptideModSeq=peptideModSeq.replace(Character.toString(aa), replacement);
+					}
+					prep.setString(5, peptideModSeq); // peptideModSeq
 					prep.setString(6, "-"); // prevAA
 					prep.setString(7, "-"); // nextAA
 					prep.setInt(8, 1); // copies
@@ -167,7 +174,7 @@ public class BlibFile extends SQLFile {
 					prepRTs.setInt(5,  0);
 					prepRTs.addBatch();
 					
-					FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), aaConstants);
+					FragmentationModel model=new FragmentationModel(peptideModSeq, aaConstants);
 					String[] aas=model.getAas();
 					for (int i=0; i<aas.length; i++) {
 						boolean added=false;

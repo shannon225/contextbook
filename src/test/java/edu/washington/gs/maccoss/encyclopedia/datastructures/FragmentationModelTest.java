@@ -11,6 +11,18 @@ import junit.framework.TestCase;
 public class FragmentationModelTest extends TestCase {
 	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50),
 			DigestionEnzyme.getEnzyme("trypsin"));
+	
+	public void testGetModifiedSequence() {
+		String sequence="PEPT[+80]IDER";
+		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
+
+		assertEquals("PEPT[+80.0]IDER", model.getModifiedSequence());
+
+		sequence="[-17]EPTIDER";
+		model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
+
+		assertEquals("E[-17.0]PTIDER", model.getModifiedSequence());
+	}
 
 	public void testPrimaryIons() {
 		String sequence="PEPT[+80]IDER";

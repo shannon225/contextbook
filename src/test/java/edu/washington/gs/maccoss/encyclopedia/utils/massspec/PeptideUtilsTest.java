@@ -27,7 +27,7 @@ public class PeptideUtilsTest extends TestCase {
 
 	public void testReverse() {
 		String s=PeptideUtils.reverse("ABC[+57]DEFGHIJK", PARAMETERS);
-		assertEquals("JIHGFEDC[+57]BAK", s);
+		assertEquals("JIHGFEDC[+57.0]BAK", s);
 	}
 	
 	public void testShuffle() {

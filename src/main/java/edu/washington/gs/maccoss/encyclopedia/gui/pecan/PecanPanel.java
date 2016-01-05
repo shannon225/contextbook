@@ -152,6 +152,14 @@ public class PecanPanel extends JPanel {
 				dialog.setVisible(true);
 				if (dialog.getFiles()!=null&&dialog.getFiles().length>0) {
 					File blibFile=dialog.getFiles()[0];
+					String fileName=blibFile.getName();
+					if (!fileName.toLowerCase().endsWith(".blib")) {
+						blibFile=new File(blibFile.getParentFile(), fileName+".blib");
+
+						if (blibFile.exists()) {
+							// FIXME ask if you want to overwrite this updated file location!
+						}
+					}
 					
 					PecanToBLIBJob job=new PecanToBLIBJob(blibFile, pecanModel);
 					if (job!=null) {

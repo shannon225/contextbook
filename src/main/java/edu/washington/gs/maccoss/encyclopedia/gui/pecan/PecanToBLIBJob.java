@@ -26,7 +26,6 @@ public class PecanToBLIBJob extends SwingJob {
 	public void runJob() throws Exception {
 		ArrayList<PecanJobData> jobData=new ArrayList<PecanJobData>();
 		for (SwingJob job : processor.getQueue()) {
-			System.out.println(job.getTotalProgress()+", "+job.getJobTitle()+"\t"+job.isFinished());
 			if (job instanceof PecanJob) {
 				jobData.add(((PecanJob)job).getPecanData());
 			}

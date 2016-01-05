@@ -331,6 +331,7 @@ public class Pecanpie {
 		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolator(featureFile, outputFile, parameters.getPercolatorThreshold());
 		
 		Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
+		Logger.logLine(""); 
 		progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 	}
 

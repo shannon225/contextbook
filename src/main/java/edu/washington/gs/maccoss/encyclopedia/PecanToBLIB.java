@@ -27,26 +27,30 @@ public class PecanToBLIB {
 	public static void main(String[] args) {
 		SearchParameters parameters=SearchParameterParser.parseParameters(SearchParameterParser.getDefaultParameters());
 		File fastaFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/ecoli-190209-contam_correctNL.fasta");
-		File blibFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/test.blib");
+		File blibFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/ecoli.blib");
 		ArrayList<FastaEntry> targets=null;
 		
-		File diaFile1=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/20150708_Ecoli_0911_25x4mzDIA_500_600.dia");
+		PecanJobData job1=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/pecan/ecoli_dataset/20150708_Ecoli_0911_25x4mzDIA_500_600.dia");
+		PecanJobData job2=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/pecan/ecoli_dataset/20150708_Ecoli_0911_25x4mzDIA_600_700.dia");
+		PecanJobData job3=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/pecan/ecoli_dataset/20150708_Ecoli_0911_25x4mzDIA_700_800.dia");
+		PecanJobData job4=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/pecan/ecoli_dataset/20150708_Ecoli_0911_25x4mzDIA_800_900.dia");
+
+		ArrayList<PecanJobData> jobs=new ArrayList<PecanJobData>();
+		jobs.add(job1);
+		jobs.add(job2);
+		jobs.add(job3);
+		jobs.add(job4);
+		
+		convert(new EmptyProgressIndicator(), jobs, blibFile);
+	}
+
+	public static PecanJobData getData(SearchParameters parameters, File fastaFile, ArrayList<FastaEntry> targets, String dia) {
+		File diaFile1=new File(dia);
 		File outputFile1=new File(diaFile1.getAbsolutePath()+".pecan.txt");
 		File featureFile1=new File(outputFile1.getAbsolutePath()+".features.txt");
 		PecanScoringFactory factory1=new PecanOneScoringFactory(parameters, featureFile1);
 		PecanJobData job1=new PecanJobData(Optional.fromNullable(targets), diaFile1, fastaFile,featureFile1, outputFile1, factory1);
-
-		File diaFile2=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/20150708_Ecoli_0911_25x4mzDIA_600_700.dia");
-		File outputFile2=new File(diaFile2.getAbsolutePath()+".pecan.txt");
-		File featureFile2=new File(outputFile2.getAbsolutePath()+".features.txt");
-		PecanScoringFactory factory2=new PecanOneScoringFactory(parameters, featureFile2);
-		PecanJobData job2=new PecanJobData(Optional.fromNullable(targets), diaFile2, fastaFile,featureFile2, outputFile2, factory2);
-		
-		ArrayList<PecanJobData> jobs=new ArrayList<PecanJobData>();
-		jobs.add(job1);
-		jobs.add(job2);
-		
-		convert(new EmptyProgressIndicator(), jobs, blibFile);
+		return job1;
 	}
 	
 	public static void convert(ProgressIndicator progress, ArrayList<PecanJobData> pecanJobs, File blibFile) {
@@ -64,6 +68,7 @@ public class PecanToBLIB {
 				float localComplete=0.0f;
 				PecanJobData job=pecanJobs.get(i);
 				File diaFile=job.getDiaFile();
+				Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
 				progress.update(diaFile.getName()+": Reading Percolator Results", (i+localComplete)*increment);
 
 				File featureFile=job.getFeatureFile();
@@ -80,10 +85,12 @@ public class PecanToBLIB {
 				ArrayList<ScoredObject<String>> passingPeptides=PercolatorReader.getPassingPeptides(percolatorFile, taskFactory.getParameters().getPercolatorThreshold());
 
 				localComplete=0.1f;
+				Logger.logLine("Extracting Spectral Data for "+passingPeptides.size()+" Peptides from "+diaFile.getName()+"...");
 				progress.update(diaFile.getName()+": Extracting Spectral Data for "+passingPeptides.size()+" Peptides", (i+localComplete)*increment);
 				ArrayList<LibraryEntry> libraryEntries=PecanFeatureReader.parsePecanFeatures(featureFile, passingPeptides, stripeFile, taskFactory);
 
 				localComplete=0.9f;
+				Logger.logLine("Writing Skyline BLIB from "+diaFile.getName()+"...");
 				progress.update(diaFile.getName()+": Writing Skyline BLIB", (i+localComplete)*increment);
 
 				int[] counters=blib.addLibrary(job, libraryEntries, idCounter, jobCounter, modCounter);
