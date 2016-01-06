@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 
 import com.google.common.base.Optional;
 
@@ -14,14 +15,16 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanFeatureReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 
 public class PecanToBLIB {
 	public static void main(String[] args) {
@@ -44,7 +47,7 @@ public class PecanToBLIB {
 		convert(new EmptyProgressIndicator(), jobs, blibFile);
 	}
 
-	public static PecanJobData getData(SearchParameters parameters, File fastaFile, ArrayList<FastaEntry> targets, String dia) {
+	static PecanJobData getData(SearchParameters parameters, File fastaFile, ArrayList<FastaEntry> targets, String dia) {
 		File diaFile1=new File(dia);
 		File outputFile1=new File(diaFile1.getAbsolutePath()+".pecan.txt");
 		File featureFile1=new File(outputFile1.getAbsolutePath()+".features.txt");
@@ -65,11 +68,11 @@ public class PecanToBLIB {
 
 			float increment=1.0f/pecanJobs.size();
 			for (int i=0; i<pecanJobs.size(); i++) {
-				float localComplete=0.0f;
+				ProgressIndicator subProgress=new SubProgressIndicator(progress, increment);
 				PecanJobData job=pecanJobs.get(i);
 				File diaFile=job.getDiaFile();
 				Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
-				progress.update(diaFile.getName()+": Reading Percolator Results", (i+localComplete)*increment);
+				subProgress.update(diaFile.getName()+": Reading Percolator Results", 0.0f);
 
 				File featureFile=job.getFeatureFile();
 				File percolatorFile=job.getOutputFile();
@@ -77,26 +80,25 @@ public class PecanToBLIB {
 				if (!diaFile.exists()||!featureFile.exists()||!percolatorFile.exists()) {
 					continue;
 				}
-				
-				StripeFile stripeFile=new StripeFile();
-				stripeFile.openFile(diaFile);
+
+				StripeFileInterface stripeFile=MzmlToDIAConverter.getFile(diaFile);
 				PecanScoringFactory taskFactory=job.getTaskFactory();
 
 				ArrayList<ScoredObject<String>> passingPeptides=PercolatorReader.getPassingPeptides(percolatorFile, taskFactory.getParameters().getPercolatorThreshold());
 
-				localComplete=0.1f;
 				Logger.logLine("Extracting Spectral Data for "+passingPeptides.size()+" Peptides from "+diaFile.getName()+"...");
-				progress.update(diaFile.getName()+": Extracting Spectral Data for "+passingPeptides.size()+" Peptides", (i+localComplete)*increment);
+				subProgress.update(diaFile.getName()+": Extracting Spectral Data for "+passingPeptides.size()+" Peptides", 0.1f);
+
 				ArrayList<LibraryEntry> libraryEntries=PecanFeatureReader.parsePecanFeatures(featureFile, passingPeptides, stripeFile, taskFactory);
 
-				localComplete=0.9f;
 				Logger.logLine("Writing Skyline BLIB from "+diaFile.getName()+"...");
-				progress.update(diaFile.getName()+": Writing Skyline BLIB", (i+localComplete)*increment);
+				subProgress.update(diaFile.getName()+": Writing Skyline BLIB", 0.9f);
 
 				int[] counters=blib.addLibrary(job, libraryEntries, idCounter, jobCounter, modCounter);
 				idCounter=counters[0];
 				jobCounter=counters[1];
 				modCounter=counters[2];
+				subProgress.update(diaFile.getName()+": Finished writing to Skyline BLIB at"+new Date().toString(), 1.0f);
 			}
 
 			blib.createIndices();

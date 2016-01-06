@@ -19,9 +19,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -53,6 +53,16 @@ public class PecanFeatureReader {
 			consumers[i].start();
 		}
 
+		while (isAlive(consumers)) {
+			String message=savedEntries.size()+" of "+scoredPSMIDs.size()+" peptides re-extracted";
+			Logger.logLine(message+"...");
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException ie) {
+				ie.printStackTrace();
+			}
+		}
+
 		try {
 			producerThread.join();
 			for (int i=0; i<consumers.length; i++) {
@@ -67,8 +77,15 @@ public class PecanFeatureReader {
 		for (LibraryEntry entry : savedEntries) {
 			entryList.add(entry);
 		}
-		
+
 		return entryList;
+	}
+	
+	private static boolean isAlive(Thread[] consumers) {
+		for (int i=0; i<consumers.length; i++) {
+			if (consumers[i].isAlive()) return true;
+		}
+		return false;
 	}
 
 	public static class PecanFeatureMuscle implements TableParserMuscle {
@@ -140,10 +157,13 @@ public class PecanFeatureReader {
 					savedEntries.add(entry);
 
 				} catch (IOException ioe) {
+					Logger.errorLine("Error processing "+stripeFile.getFile().getName());
 					throw new EncyclopediaException("Error parsing Stripe file", ioe);
 				} catch (SQLException sqle) {
+					Logger.errorLine("Error processing "+stripeFile.getFile().getName());
 					throw new EncyclopediaException("Error parsing Stripe file", sqle);
 				} catch (DataFormatException dfe) {
+					Logger.errorLine("Error processing "+stripeFile.getFile().getName());
 					throw new EncyclopediaException("Error parsing Stripe file", dfe);
 				}
 

@@ -206,7 +206,10 @@ public class Pecanpie {
 		// get stripes
 		float numberOfTasks=2.0f+ranges.size();
 		for (Range range : ranges) {
-			progress.update("Working on "+range+" m/z", (1.0f+rangesFinished)/numberOfTasks);
+			String baseMessage="Working on "+range+" m/z";
+			float baseIncrement=1.0f/numberOfTasks;
+			float baseProgress=(1.0f+rangesFinished)/numberOfTasks;
+			progress.update(baseMessage, baseProgress);
 			int index=Arrays.binarySearch(binBoundaries, range.getMiddle());
 			index=(-(index+1))-1;
 			TDoubleIntHashMap map=binCounters[index];
@@ -232,11 +235,13 @@ public class Pecanpie {
 
 			ArrayList<Future<HashMap<LibraryEntry, PeptideScoringResult>>> results=new ArrayList<Future<HashMap<LibraryEntry, PeptideScoringResult>>>();
 
+			int count=0;
 			for (String peptide : backgroundDecoys[index]) {
 				for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
 					double mz=parameters.getAAConstants().getChargedMass(peptide, charge);
 
 					if (range.contains((float)mz)) {
+						count++;
 						String random=PeptideUtils.getDecoy(peptide, backgroundProteomeSet, parameters);
 						AbstractPecanFragmentationModel randmodel=taskFactory.getFragmentationModel(random, parameters.getAAConstants());
 						PecanLibraryEntry randentry=randmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
@@ -252,6 +257,8 @@ public class Pecanpie {
 			executor.shutdown();
 			while (!executor.isTerminated()) {
 				Logger.logLine(workQueue.size()+" background peptides remaining for "+range+"...");
+				float finishedFraction=(count-workQueue.size())/(float)count;
+				progress.update(baseMessage, baseProgress+baseIncrement*finishedFraction*0.2f);
 				Thread.sleep(500);
 			}
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
@@ -292,11 +299,13 @@ public class Pecanpie {
 			});
 			//Charter.launchChart("RT ("+range+" M/Z)", "Fragment Intensity", true, new XYTrace(means, GraphType.line, "Background"));
 
+			count=0;
 			for (FastaEntry peptide : targets) {
 				String sequence=peptide.getSequence();
 				for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
 					double mz=parameters.getAAConstants().getChargedMass(sequence, charge);
 					if (range.contains((float)mz)) {
+						count++;
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						
 						AbstractPecanFragmentationModel model=taskFactory.getFragmentationModel(sequence, parameters.getAAConstants());
@@ -316,6 +325,8 @@ public class Pecanpie {
 			executor.shutdown();
 			while (!executor.isTerminated()) {
 				Logger.logLine(workQueue.size()+" peptides remaining for "+range+"...");
+				float finishedFraction=(count-workQueue.size())/(float)count;
+				progress.update(baseMessage, baseProgress+baseIncrement*(0.2f+finishedFraction*0.8f));
 				Thread.sleep(500);
 			}
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);

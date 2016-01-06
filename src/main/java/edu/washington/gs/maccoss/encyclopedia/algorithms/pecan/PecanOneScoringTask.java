@@ -90,7 +90,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 			float[] fragmentDeltaMassVariance=new float[sumRawScores.length];
 			for (int i=0; i<numAboveThresholdMatches.length; i++) {
 				// TODO: this seems strange that unnormalized intensities are used for individual scores while normalized intensities are used for total scores. -BCS
-				float threshold=Math.max(0.0f, sumRawScores[i]/entry.getMassArray().length);
+				float threshold=Math.max(Float.MIN_VALUE, sumRawScores[i]/entry.getMassArray().length);
 				for (int j=0; j<sumFragmentTraces.length; j++) {
 					if (sumFragmentTraces[j][i]>=threshold) {
 						numAboveThresholdMatches[i]++;
@@ -198,12 +198,14 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 			
 			result.setTrace(new XYTrace(scoreMap, GraphType.line, entry.getPeptideModSeq()));
 			
-			try {
-				resultsQueue.put(result);
-			} catch (InterruptedException ie) {
-				Logger.errorLine("Analysis interrupted!");
-				Logger.errorException(ie);
-				return Nothing.NOTHING;
+			if (result.size()>0) {
+				try {
+					resultsQueue.put(result);
+				} catch (InterruptedException ie) {
+					Logger.errorLine("Analysis interrupted!");
+					Logger.errorException(ie);
+					return Nothing.NOTHING;
+				}
 			}
 		}
 		return Nothing.NOTHING;

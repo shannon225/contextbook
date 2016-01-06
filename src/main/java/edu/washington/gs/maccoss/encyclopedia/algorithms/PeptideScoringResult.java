@@ -19,6 +19,10 @@ public class PeptideScoringResult {
 		this.entry=entry;
 	}
 	
+	public int size() {
+		return goodStripes.size();
+	}
+	
 	public LibraryEntry getEntry() {
 		return entry;
 	}

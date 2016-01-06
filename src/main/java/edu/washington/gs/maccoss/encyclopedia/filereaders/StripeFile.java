@@ -36,6 +36,11 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		tempFile.deleteOnExit();
 	}
 	
+	public File getFile() {
+		if (userFile==null) return tempFile;
+		return userFile;
+	}
+	
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface#getRanges()
 	 */

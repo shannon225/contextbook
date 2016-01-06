@@ -98,6 +98,10 @@ public class MzmlToDIAConverter {
 				stripeFile.setRanges(dutyCycleMap);
 
 				stripeFile.saveAsFile(diaFile);
+				stripeFile.close();
+				
+				stripeFile=new StripeFile();
+				stripeFile.openFile(diaFile);
 				Logger.logLine("Finished writing "+diaFile.getName()+"!");
 
 				return stripeFile;

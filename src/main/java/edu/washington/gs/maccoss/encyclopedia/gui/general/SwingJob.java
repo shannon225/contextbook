@@ -57,9 +57,15 @@ public abstract class SwingJob extends SwingWorker<Nothing, ProgressMessage> {
 
 	public ProgressIndicator getProgressIndicator() {
 		final ProgressIndicator indicator=new ProgressIndicator() {
+			volatile private float totalProgress=0.0f;
 			@Override
 			public void update(String message, float totalProgress) {
 				publish(new ProgressMessage(message, totalProgress));
+				this.totalProgress=totalProgress;
+			}
+			@Override
+			public float getTotalProgress() {
+				return totalProgress;
 			}
 		};
 		return indicator;
