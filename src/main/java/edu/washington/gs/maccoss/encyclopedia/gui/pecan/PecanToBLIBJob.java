@@ -7,7 +7,6 @@ import edu.washington.gs.maccoss.encyclopedia.PecanToBLIB;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
-import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
 public class PecanToBLIBJob extends SwingJob {
 	private final File blibFile;
@@ -31,6 +30,6 @@ public class PecanToBLIBJob extends SwingJob {
 			}
 		}
 
-		PecanToBLIB.convert(new EmptyProgressIndicator(), jobData, blibFile);
+		PecanToBLIB.convert(getProgressIndicator(), jobData, blibFile);
 	}
 }

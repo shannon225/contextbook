@@ -47,4 +47,8 @@ public class PecanJobData {
 	public PecanScoringFactory getTaskFactory() {
 		return taskFactory;
 	}
+	
+	public boolean hasBeenRun() {
+		return diaFile.exists()&&featureFile.exists()&&outputFile.exists();
+	}
 }

@@ -26,8 +26,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 		super(generateCommand(tsv));
 	}
 	
-	public static ArrayList<ScoredObject<String>> executePercolator(File featureFile, File outputFile, float threshold)
-			throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+	public static ArrayList<ScoredObject<String>> executePercolator(File featureFile, File outputFile, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		PercolatorExecutor e=new PercolatorExecutor(featureFile);
 		BlockingQueue<OutputMessage> result=e.start();
 		
