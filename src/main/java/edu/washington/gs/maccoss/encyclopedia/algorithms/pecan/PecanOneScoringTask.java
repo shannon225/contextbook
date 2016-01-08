@@ -33,7 +33,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 	@Override
 	protected Nothing process() {
 		for (LibraryEntry entry : super.entries) {
-			int requiredNumAboveThreshold=(int)(0.4f*entry.getPeptideSeq().length());
+			int requiredNumAboveThreshold=(int)(parameters.getBeta()*entry.getPeptideSeq().length());
 			
 			int scanAveragingHalfWindow=scanAveragingWindow/2;
 			
@@ -53,8 +53,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 				Stripe stripe=super.stripes.get(i);
 				rawRTs[i]=stripe.getScanStartTime();
 				
-				// fragments are calculated without normalization!
-				PeakScores[] scores=scorer.getIndividualPeakScores(entry, stripe, false);
+				PeakScores[] scores=scorer.getIndividualPeakScores(entry, stripe, true);
 				for (int j=0; j<scores.length; j++) {
 					if (scores[j]!=null) {
 						fragmentTraces[j][i]=scores[j].getScore();
@@ -98,8 +97,8 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 			float[] fragmentDeltaMassAverage=new float[sumRawScores.length];
 			float[] fragmentDeltaMassVariance=new float[sumRawScores.length];
 			for (int i=0; i<numAboveThresholdMatches.length; i++) {
-				// TODO: this seems strange that unnormalized intensities are used for individual scores while normalized intensities are used for total scores. -BCS
-				float threshold=Math.max(Float.MIN_VALUE, sumRawScores[i]/entry.getMassArray().length);
+				//float threshold=Math.max(Float.MIN_VALUE, sumRawScores[i]/entry.getMassArray().length);
+				float threshold=Math.max(Float.MIN_VALUE, sumRawScores[i]/(float)Math.pow(entry.getMassArray().length, parameters.getAlpha()));
 				for (int j=0; j<sumFragmentTraces.length; j++) {
 					if (sumFragmentTraces[j][i]>=threshold) {
 						numAboveThresholdMatches[i]++;

@@ -34,6 +34,8 @@ public class SearchParameterParser {
 		map.put("-addDecoysToBackground", "false");
 		map.put("-dontRunDecoys", "false");
 		map.put("-percolatorThreshold", "0.01");
+		map.put("-alpha", "1.8");
+		map.put("-beta", "0.4");
 		return map;
 	}
 	
@@ -59,6 +61,8 @@ public class SearchParameterParser {
 		final boolean addDecoysToBackgound;
 		final boolean dontRunDecoys;
 		final float percolatorThreshold;
+		final float alpha;
+		final float beta;
 
 		TCharFloatHashMap fixedMods=new TCharFloatHashMap();
 		String value=parameters.get("-fixed");
@@ -131,7 +135,9 @@ public class SearchParameterParser {
 		addDecoysToBackgound=getBoolean("-addDecoysToBackground", parameters, false);
 		dontRunDecoys=getBoolean("-dontRunDecoys", parameters, false);
 		percolatorThreshold=getFloat("-percolatorThreshold", parameters, 0.01f);
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold);
+		alpha=getFloat("-alpha", parameters, 1.8f);
+		beta=getFloat("-beta", parameters, 0.4f);
+		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

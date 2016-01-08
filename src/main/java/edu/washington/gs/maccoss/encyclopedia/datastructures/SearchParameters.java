@@ -20,6 +20,8 @@ public class SearchParameters {
 	private final boolean addDecoysToBackgound;
 	private final boolean dontRunDecoys; // only for testing
 	private final float percolatorThreshold;
+	private final float alpha;
+	private final float beta;
 	
 	public String toString() {
 		final StringBuilder sb=new StringBuilder();
@@ -43,7 +45,7 @@ public class SearchParameters {
 	}
 	
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme, int minPeptideLength,
-			int maxPeptideLength, int maxMissedCleavages, byte minCharge, byte maxCharge, int minEluteTime, int numberOfReportedPeaks, boolean addDecoysToBackgound, boolean dontRunDecoys, float percolatorThreshold) {
+			int maxPeptideLength, int maxMissedCleavages, byte minCharge, byte maxCharge, int minEluteTime, int numberOfReportedPeaks, boolean addDecoysToBackgound, boolean dontRunDecoys, float percolatorThreshold, float alpha, float beta) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -59,6 +61,8 @@ public class SearchParameters {
 		this.addDecoysToBackgound=addDecoysToBackgound;
 		this.dontRunDecoys=dontRunDecoys;
 		this.percolatorThreshold=percolatorThreshold;
+		this.alpha=alpha;
+		this.beta=beta;
 	}
 	
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme,
@@ -78,6 +82,8 @@ public class SearchParameters {
 		addDecoysToBackgound=false;
 		dontRunDecoys=false;
 		percolatorThreshold=0.01f;
+		alpha=1.8f;
+		beta=0.4f;
 	}
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme) {
@@ -97,6 +103,8 @@ public class SearchParameters {
 		addDecoysToBackgound=false;
 		dontRunDecoys=false;
 		percolatorThreshold=0.01f;
+		alpha=1.8f;
+		beta=0.4f;
 	}
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme,
@@ -117,6 +125,8 @@ public class SearchParameters {
 		addDecoysToBackgound=false;
 		dontRunDecoys=false;
 		percolatorThreshold=0.01f;
+		alpha=1.8f;
+		beta=0.4f;
 	}
 
 	public AminoAcidConstants getAAConstants() {
@@ -177,5 +187,13 @@ public class SearchParameters {
 	
 	public float getPercolatorThreshold() {
 		return percolatorThreshold;
+	}
+	
+	public float getAlpha() {
+		return alpha;
+	}
+	
+	public float getBeta() {
+		return beta;
 	}
 }
