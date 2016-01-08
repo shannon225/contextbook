@@ -121,7 +121,7 @@ public class PeptideScoringTaskTest {
 				for (byte charge : charges) {
 					double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
 					if (range.contains((float)mz)) {
-						PecanOneFragmentationModel model=new PecanOneFragmentationModel(peptide, PARAMETERS.getAAConstants());
+						PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaEntry(peptide), PARAMETERS.getAAConstants());
 						PecanLibraryEntry pecanEntry=model.getPecanSpectrum(charge, keys, map, FRAGMENTATION_RANGE, PARAMETERS, false);
 
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();

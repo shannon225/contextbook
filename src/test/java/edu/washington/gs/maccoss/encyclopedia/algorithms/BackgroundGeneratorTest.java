@@ -50,7 +50,7 @@ public class BackgroundGeneratorTest extends TestCase {
 		double[] keys=binCounters[index].keys();
 		Arrays.sort(keys);
 
-		PecanOneFragmentationModel model=new PecanOneFragmentationModel(peptide, PARAMETERS.getAAConstants());
+		PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaEntry(peptide), PARAMETERS.getAAConstants());
 		double[] ions=model.getPrimaryIons(PARAMETERS.getFragType(), charge);
 		int[] expectedCounts=new int[] {184, 356, 33, 24, 8, 19, 10, 16, 11, 15, 7, 10, 4, 8, 6, 9, 16, 17};
 		for (int i=0; i<ions.length; i++) {
@@ -77,7 +77,7 @@ public class BackgroundGeneratorTest extends TestCase {
 		keys=binCounters[index].keys();
 		Arrays.sort(keys);
 
-		model=new PecanOneFragmentationModel(peptide, PARAMETERS.getAAConstants());
+		model=new PecanOneFragmentationModel(new FastaEntry(peptide), PARAMETERS.getAAConstants());
 		ions=model.getPrimaryIons(PARAMETERS.getFragType(), charge);
 		expectedCounts=new int[] {392, 41, 5, 62, 6, 5, 10, 5, 12, 18, 8, 10, 7, 14, 37, 8, 15, 22, 29, 32};
 		for (int i=0; i<ions.length; i++) {

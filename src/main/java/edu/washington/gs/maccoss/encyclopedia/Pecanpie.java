@@ -243,7 +243,7 @@ public class Pecanpie {
 					if (range.contains((float)mz)) {
 						count++;
 						String random=PeptideUtils.getDecoy(peptide, backgroundProteomeSet, parameters);
-						AbstractPecanFragmentationModel randmodel=taskFactory.getFragmentationModel(random, parameters.getAAConstants());
+						AbstractPecanFragmentationModel randmodel=taskFactory.getFragmentationModel(new FastaEntry(random), parameters.getAAConstants());
 						PecanLibraryEntry randentry=randmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
 
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
@@ -308,12 +308,14 @@ public class Pecanpie {
 						count++;
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						
-						AbstractPecanFragmentationModel model=taskFactory.getFragmentationModel(sequence, parameters.getAAConstants());
+						AbstractPecanFragmentationModel model=taskFactory.getFragmentationModel(peptide, parameters.getAAConstants());
 						PecanLibraryEntry pecanEntry=model.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, false);
 						tasks.add(pecanEntry);
 						
 						if (!parameters.isDontRunDecoys()) {
-							AbstractPecanFragmentationModel revmodel=taskFactory.getFragmentationModel(PeptideUtils.getSmartDecoy(sequence, charge, backgroundProteomeSet, parameters), parameters.getAAConstants());
+							String smartDecoy=PeptideUtils.getSmartDecoy(sequence, charge, backgroundProteomeSet, parameters);
+							FastaEntry decoyPeptide=new FastaEntry(peptide.getFilename(), ">DECOY_"+peptide.getAccession(), smartDecoy);
+							AbstractPecanFragmentationModel revmodel=taskFactory.getFragmentationModel(decoyPeptide, parameters.getAAConstants());
 							PecanLibraryEntry reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
 							tasks.add(reventry);
 						}

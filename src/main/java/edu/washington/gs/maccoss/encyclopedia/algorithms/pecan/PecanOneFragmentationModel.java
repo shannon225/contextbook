@@ -8,6 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PecanLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import gnu.trove.map.hash.TDoubleFloatHashMap;
@@ -15,9 +16,10 @@ import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.procedure.TDoubleFloatProcedure;
 
 public class PecanOneFragmentationModel extends AbstractPecanFragmentationModel {
-
-	public PecanOneFragmentationModel(String modifiedSequence, AminoAcidConstants aaConstants) {
-		super(modifiedSequence, aaConstants);
+	private final String accession;
+	public PecanOneFragmentationModel(FastaEntry peptide, AminoAcidConstants aaConstants) {
+		super(peptide.getSequence(), aaConstants);
+		this.accession=peptide.getAccession();
 	}
 	public PecanLibraryEntry getUnitSpectrum(byte precursorCharge, SearchParameters params) {
 		double[] ions=getPrimaryIons(params.getFragType(), precursorCharge);
@@ -28,7 +30,7 @@ public class PecanOneFragmentationModel extends AbstractPecanFragmentationModel 
 		String sequence=getModifiedSequence();
 		double precursorMZ=params.getAAConstants().getChargedMass(sequence, precursorCharge);
 
-		return new PecanLibraryEntry(precursorMZ, precursorCharge, sequence, 1, 0.0f, 0, ions, unitIntensities, false, euclidianDistance);
+		return new PecanLibraryEntry(accession, precursorMZ, precursorCharge, sequence, 1, 0.0f, 0, ions, unitIntensities, false, euclidianDistance);
 	}
 	public PecanLibraryEntry getPecanSpectrum(byte precursorCharge, double[] sortedBinCounterKeys, TDoubleIntHashMap binCounter, Range fragmentationRange, SearchParameters params, boolean isDecoy) {
 		TDoubleFloatHashMap peakMap=new TDoubleFloatHashMap();
@@ -69,6 +71,6 @@ public class PecanOneFragmentationModel extends AbstractPecanFragmentationModel 
 		String sequence=getModifiedSequence();
 		double precursorMZ=params.getAAConstants().getChargedMass(sequence, precursorCharge);
 
-		return new PecanLibraryEntry(precursorMZ, precursorCharge, sequence, 1, 0.0f, 0, arrays.x, arrays.y, isDecoy, euclidianDistance);	
+		return new PecanLibraryEntry(accession, precursorMZ, precursorCharge, sequence, 1, 0.0f, 0, arrays.x, arrays.y, isDecoy, euclidianDistance);	
 	}
 }

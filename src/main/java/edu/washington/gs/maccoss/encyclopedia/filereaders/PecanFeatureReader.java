@@ -135,7 +135,7 @@ public class PecanFeatureReader {
 						}
 					}
 
-					AbstractPecanFragmentationModel model=factory.getFragmentationModel(peptideModSeq, params.getAAConstants());
+					AbstractPecanFragmentationModel model=factory.getFragmentationModel(new FastaEntry(peptideModSeq), params.getAAConstants());
 					LibraryEntry unitEntry=model.getUnitSpectrum(precursorCharge, params);
 					PeakScores[] individualPeakScores=scorer.getIndividualPeakScores(unitEntry, bestStripe, true);
 

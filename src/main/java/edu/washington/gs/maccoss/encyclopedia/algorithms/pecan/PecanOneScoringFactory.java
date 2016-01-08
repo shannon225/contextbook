@@ -11,6 +11,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
@@ -35,8 +36,8 @@ public class PecanOneScoringFactory implements PecanScoringFactory {
 	}
 	
 	@Override
-	public AbstractPecanFragmentationModel getFragmentationModel(String modifiedSequence, AminoAcidConstants aaConstants) {
-		return new PecanOneFragmentationModel(modifiedSequence, aaConstants);
+	public AbstractPecanFragmentationModel getFragmentationModel(FastaEntry peptide, AminoAcidConstants aaConstants) {
+		return new PecanOneFragmentationModel(peptide, aaConstants);
 	}
 
 	@Override

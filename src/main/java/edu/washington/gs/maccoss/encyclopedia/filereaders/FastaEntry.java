@@ -7,10 +7,23 @@ public class FastaEntry implements Comparable<FastaEntry> {
 	private final String annotation;
 	private final String sequence;
 
+
+	public FastaEntry(String sequence) {
+		this("Unknown File", "Unknown Annotation", sequence);
+	}
 	public FastaEntry(String filename, String annotation, String sequence) {
 		this.filename=filename;
 		this.annotation=annotation;
 		this.sequence=sequence;
+	}
+	
+	public String getAccession() {
+		int start=annotation.charAt(0)=='>'?1:0;
+		int stop=annotation.indexOf(' ');
+		if (stop<0) {
+			stop=annotation.length();
+		}
+		return annotation.substring(start, stop);
 	}
 
 	public String getAnnotation() {

@@ -85,7 +85,7 @@ public class PecanAuxillaryScorer implements AuxillaryPSMScorer {
 			}
 		}
 		
-		return new float[] {rawScore, peakSimilarity, weightedRawScore, numAboveThresholdMatches, numMatches, averageAbsPPM, averagePPM, isotopeDotProduct};
+		return new float[] {rawScore, peakSimilarity, spectrumMagnitude, weightedRawScore, numAboveThresholdMatches, numMatches, averageAbsPPM, averagePPM, isotopeDotProduct};
 	}
 	
 	@Override

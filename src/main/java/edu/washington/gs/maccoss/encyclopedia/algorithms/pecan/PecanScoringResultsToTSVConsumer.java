@@ -8,6 +8,7 @@ import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PecanLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -56,9 +57,9 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 				PeptideScoringResult result=resultsQueue.take();
 				if (PeptideScoringResult.POISON_RESULT==result) break;
 				if (!printedHeader) {
-					writer.print("id\tTD\tScanNr\ttopx\tpeakBGScore\tdeltaCn\t"
-							+ "peakAvgIdotp\tpeakMaxIdotp\tpeakScore\tpeakWScore\tmidIons\tpeakMassErrMean\tpeakMassErrVar\tprecursorMassErrMean\t"
-							+ "precursorMassErrVar\tpeakSimilarity\tduration\tmidTime\t"
+					writer.print("id\tTD\tScanNr\ttopN\trank\tpeakZScore\tpeakCalibratedScore\tdeltaSn\t"
+							+ "avgIdotp\tmidIdotp\tpeakScore\tpeakWeightedScore\tNCI\tCIMassErrMean\tCIMassErrVar\tprecursorMassErrMean\t"
+							+ "precursorMassErrVar\tpeakSimilarity\tsampledTimes\tmidTime\tspectraNorm\t"
 							+ "pepLength\tcharge2\tcharge3\tprecursorMz\tsequence\tannotation");
 					// Percolator assumes linux line endings on Mac!
 					switch (os) {
@@ -96,8 +97,6 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 					if (rank<=numberOfPeaksPerPeptide) {
 						float deltaCn=firstScore<=0?0.0f:Math.min(1.0f, (primaryScore-secondScore)/firstScore); // if secondScore<0 then deltaCn can be >1, so protect against that
 						String psmID = getPSMID(peptide);
-						writer.print(psmID+"\t"+(peptide.isDecoy()?-1:1)
-								+"\t"+stripe.getSpectrumIndex()+"\t"+rank+"\t"+auxScores[16]+"\t"+deltaCn);
 
 						/*
 						 * 0) traceNumAboveThresholdIons  
@@ -105,39 +104,63 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 						 * 2) midTime  
 						 * 3) peakRawScore  
 						 * 4) peakSimilarity  
-						 * 5) peakWeightedRawScore  
-						 * 6) peakNumAboveThresholdMatches  
-						 * 7) peakNumMatches  
-						 * 8) peakAverageAbsPPM  
-						 * 9) peakAveragePPM  
-						 * 10) peakIsotopeDotProduct  
-						 * 11) fragmentDeltaMassAverage
-						 * 12) fragmentDeltaMassVariance
-						 * 13) duration
-						 * 14) tpeakMaxIdotp
-						 * 15) varPPM  
-						 * 16) bgSubScore
+						 * 5) peakEuclideanDistance
+						 * 6) peakWeightedRawScore  
+						 * 7) peakNumAboveThresholdMatches  
+						 * 8) peakNumMatches  
+						 * 9) peakAverageAbsPPM  
+						 * 10) peakAveragePPM  
+						 * 11) peakIsotopeDotProduct  
+						 * 12) fragmentDeltaMassAverage
+						 * 13) fragmentDeltaMassVariance
+						 * 14) duration
+						 * 15) tpeakMaxIdotp
+						 * 16) tpeakMidIdotp
+						 * 17) varPPM  
+						 * 18) bgSubScore
+						 * 19) zScore
+						 * 20) rank
 						 * 
 						 * peakAvgIdotp	peakMaxIdotp	peakScore	peakWScore	peakIons	peakMassErrMean	peakMassErrVar	precursorMassErrMean	
 						 * precursorMassErrVar	peakSimilarity	duration	midTime
 						 */
 
-						writer.print("\t"+auxScores[10]); //peakIsotopeDotProduct
-						writer.print("\t"+auxScores[14]); //tpeakMaxIdotp
+						writer.print(psmID);
+						writer.print("\t"+(peptide.isDecoy()?-1:1));
+						writer.print("\t"+stripe.getSpectrumIndex());
+						writer.print("\t"+rank);
+						writer.print("\t"+auxScores[20]);
+						writer.print("\t"+auxScores[19]);
+						writer.print("\t"+auxScores[18]);
+						writer.print("\t"+deltaCn);
+						writer.print("\t"+auxScores[11]); //peakIsotopeDotProduct
+						writer.print("\t"+auxScores[16]); //tpeakMidIdotp
 						writer.print("\t"+auxScores[3]);  //peakRawScore
-						writer.print("\t"+auxScores[5]);  //peakWeightedRawScore
+						writer.print("\t"+auxScores[6]);  //peakWeightedRawScore
 						writer.print("\t"+auxScores[0]);  //traceNumAboveThresholdIons
-						writer.print("\t"+auxScores[11]); //fragmentDeltaMassAverage
-						writer.print("\t"+auxScores[12]); //fragmentDeltaMassVariance
-						writer.print("\t"+auxScores[9]);  //peakAveragePPM
-						writer.print("\t"+auxScores[15]); //varPPM
+						writer.print("\t"+auxScores[12]); //fragmentDeltaMassAverage
+						writer.print("\t"+auxScores[13]); //fragmentDeltaMassVariance
+						writer.print("\t"+auxScores[10]);  //peakAveragePPM
+						writer.print("\t"+auxScores[17]); //varPPM
 						writer.print("\t"+auxScores[4]);  //peakSimilarity
-						writer.print("\t"+auxScores[13]); //duration
+						writer.print("\t"+auxScores[14]); //duration
 						writer.print("\t"+auxScores[2]);  //midTime
-						String sequence="-."+peptide.getPeptideSeq()+".-";
+						writer.print("\t"+auxScores[5]);  //peakEuclideanDistance
 
-						String annotation=stripe.getSpectrumName();
-						writer.print("\t"+peptide.getPeptideSeq().length()+"\t"+(peptide.getPrecursorCharge()==2?1:0)+"\t"+(peptide.getPrecursorCharge()==3?1:0)+"\t"+peptide.getPrecursorMZ()+"\t"+sequence+"\t"+annotation);
+						writer.print("\t"+peptide.getPeptideSeq().length());
+						writer.print("\t"+(peptide.getPrecursorCharge()==2?1:0));
+						writer.print("\t"+(peptide.getPrecursorCharge()==3?1:0));
+						writer.print("\t"+peptide.getPrecursorMZ());
+
+						String sequence="-."+peptide.getPeptideSeq()+".-";
+						String annotation;
+						if (peptide instanceof PecanLibraryEntry) {
+							annotation=((PecanLibraryEntry)peptide).getAccession();
+						} else {
+							annotation=stripe.getSpectrumName();
+						}
+						writer.print("\t"+sequence);
+						writer.print("\t"+annotation);
 
 						// Percolator assumes linux line endings on Mac!
 						switch (os) {

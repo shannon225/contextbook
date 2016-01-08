@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 
@@ -39,6 +40,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 			float[] rawRTs=new float[super.stripes.size()];
 			float[] rawScores=new float[super.stripes.size()];
 			float[] bgsubScores=new float[super.stripes.size()];
+			float[] zScores=new float[super.stripes.size()];
 			float[][] fragmentTraces=new float[entry.getMassArray().length][];
 			float[][] fragmentDeltaMasses=new float[entry.getMassArray().length][];
 			
@@ -68,13 +70,20 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 				XYPoint meanStdev=background.get((double)rt);
 				if (meanStdev!=null) {
 					bgsubScores[i]=(float)(rawScores[i]-meanStdev.x);
+					if (meanStdev.y==0) {
+						zScores[i]=0.0f;
+					} else {
+						zScores[i]=(float)((rawScores[i]-meanStdev.x)/meanStdev.y);
+					}
 				} else {
 					bgsubScores[i]=rawScores[i];
+					zScores[i]=0.0f;
 				}
 			}
 
 			float[] sumRawScores=movingForwardSum(rawScores, scanAveragingWindow);
 			float[] sumBgsubScores=movingForwardSum(bgsubScores, scanAveragingWindow);
+			float[] sumZScores=movingForwardSum(zScores, scanAveragingWindow);
 			float[][] sumFragmentTraces=new float[entry.getIntensityArray().length][];
 			float[][] sumFragmentDeltaMasses=new float[entry.getIntensityArray().length][];
 			for (int i=0; i<sumFragmentTraces.length; i++) {
@@ -117,6 +126,9 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 				}
 			}
 			Collections.sort(goodStripes);
+			
+			float[] sortedBGScores=sumBgsubScores.clone();
+			Arrays.sort(sortedBGScores);
 
 			PeptideScoringResult result=new PeptideScoringResult(entry);
 			TIntHashSet takenScans=new TIntHashSet();
@@ -150,6 +162,8 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 					//float averageIDP=averageAuxScores[averageAuxScores.length-1];
 
 					float maxIDP=0.0f; // IDP is the last score of the PecanAuxillaryScorer
+					int midIndex=auxScores.length/2;
+					float midIDP=auxScores[midIndex][auxScores[midIndex].length-1];
 					float precursorPPMVariance=0.0f; // PPM is the second to last score of PecanAuxillaryScorer
 					for (int scanIndex=0; scanIndex<auxScores.length; scanIndex++) {
 						// FIXME indexing these is hokey, and should be more firmly rooted in the scoring system
@@ -165,11 +179,18 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 					}
 					precursorPPMVariance=precursorPPMVariance/(auxScores.length-1);
 					
+					// rank in sortedBGScores
+					int indexInSortedBGScores=Arrays.binarySearch(sortedBGScores, goodStripes.get(i).x);
+					if (indexInSortedBGScores<0) {
+						indexInSortedBGScores=-(indexInSortedBGScores+1);
+					}
+					int rank=sortedBGScores.length-indexInSortedBGScores;
+					
 					// averaging forward, so current scan is actually the median for half a window back
 					int medianIndex=index+scanAveragingHalfWindow;
 					Stripe medianStripe=stripes.get(medianIndex);
-					float[] completeAuxArray=General.concatenate(new float[] {numAboveThresholdMatches[index], numMatches[index], midTime[index]}, 
-							averageAuxScores, new float[] {fragmentDeltaMassAverage[index], fragmentDeltaMassVariance[index], duration, maxIDP, precursorPPMVariance, bgsubScores[index]});
+					float[] completeAuxArray=General.concatenate(new float[] {numAboveThresholdMatches[index], numMatches[index], midTime[index]}, averageAuxScores, 
+							new float[] {fragmentDeltaMassAverage[index], fragmentDeltaMassVariance[index], duration, maxIDP, midIDP, precursorPPMVariance, bgsubScores[index], sumZScores[index]/scanAveragingWindow, rank});
 					result.addStripe(goodStripes.get(i).x/scanAveragingWindow, completeAuxArray, medianStripe);
 					
 					if (identifiedPeaks>parameters.getNumberOfReportedPeaks()) {
