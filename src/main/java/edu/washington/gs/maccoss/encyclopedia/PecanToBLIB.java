@@ -79,8 +79,9 @@ public class PecanToBLIB {
 		
 		try {
 			TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
-			float threshold=representativeJob.getTaskFactory().getParameters().getPercolatorThreshold();
-			ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolator(bigFeatureFile, bigPercolatorFile, threshold);
+			SearchParameters parameters=representativeJob.getTaskFactory().getParameters();
+			float threshold=parameters.getPercolatorThreshold();
+			ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolator(parameters.getPercolatorLocation(), bigFeatureFile, bigPercolatorFile, threshold);
 			Logger.logLine("Identified "+passingPeptides.size()+" peptides across all files at a "+(threshold*100.0f)+" FDR threshold.");
 			convert(progress, pecanJobs, blibFile, Optional.of(passingPeptides));
 			progress.update(passingPeptides.size()+" peptides identified at "+(threshold*100.0f)+"% FDR", 1.0f);

@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.concurrent.BlockingQueue;
 
+import com.google.common.base.Optional;
+
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
@@ -21,13 +23,16 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 
 public class PercolatorExecutor extends ExternalExecutor {
-	
+
 	PercolatorExecutor(File tsv) {
-		super(generateCommand(tsv));
+		super(generateCommand(tsv, Optional.fromNullable((File)null)));
+	}
+	PercolatorExecutor(File tsv, Optional<File> percolatorLocation) {
+		super(generateCommand(tsv, percolatorLocation));
 	}
 	
-	public static ArrayList<ScoredObject<String>> executePercolator(File featureFile, File outputFile, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
-		PercolatorExecutor e=new PercolatorExecutor(featureFile);
+	public static ArrayList<ScoredObject<String>> executePercolator(Optional<File> percolatorLocation, File featureFile, File outputFile, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+		PercolatorExecutor e=new PercolatorExecutor(featureFile, percolatorLocation);
 		BlockingQueue<OutputMessage> result=e.start();
 		
 		boolean isFirst=true;
@@ -73,13 +78,15 @@ public class PercolatorExecutor extends ExternalExecutor {
 		return peptideString.substring(peptideString.indexOf('.')+1, peptideString.lastIndexOf('.'));
 	}
 	
-	static String[] generateCommand(File tsv) {
-		File percolator=getPercolator();
+	static String[] generateCommand(File tsv, Optional<File> percolatorLocation) {
+		File percolator=getPercolator(percolatorLocation);
 		
 		return new String[] {percolator.getAbsolutePath(), tsv.getAbsolutePath()};
 	}
 	
-	static File getPercolator() {
+	static File getPercolator(Optional<File> percolatorLocation) {
+		if (percolatorLocation.isPresent()) return percolatorLocation.get();
+		
 		try {
 			File percolator=File.createTempFile("Percolator", ".exe");
 			percolator.deleteOnExit();

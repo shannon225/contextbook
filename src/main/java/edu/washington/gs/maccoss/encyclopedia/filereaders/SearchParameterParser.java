@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import gnu.trove.map.hash.TCharFloatHashMap;
@@ -36,6 +37,7 @@ public class SearchParameterParser {
 		map.put("-percolatorThreshold", "0.01");
 		map.put("-alpha", "1.8");
 		map.put("-beta", "0.4");
+		map.put("-percolatorLocation", "internal");
 		return map;
 	}
 	
@@ -137,7 +139,20 @@ public class SearchParameterParser {
 		percolatorThreshold=getFloat("-percolatorThreshold", parameters, 0.01f);
 		alpha=getFloat("-alpha", parameters, 1.8f);
 		beta=getFloat("-beta", parameters, 0.4f);
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta);
+
+		value=parameters.get("-percolatorLocation");
+		File percolator=null;
+		if (value==null||"internal".equalsIgnoreCase(value)) {
+			percolator=null;
+		} else {
+			percolator=new File(value);
+			if (!percolator.exists()||!percolator.canExecute()) {
+				Logger.errorLine("Could not execute external Percolator from ["+value+"]. Falling back to internal Percolator");
+				percolator=null;
+			}
+		}
+		
+		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolator);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

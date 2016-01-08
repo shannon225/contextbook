@@ -1,5 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import java.io.File;
+
+import com.google.common.base.Optional;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 
@@ -22,6 +26,7 @@ public class SearchParameters {
 	private final float percolatorThreshold;
 	private final float alpha;
 	private final float beta;
+	private final File percolatorLocation;
 	
 	public String toString() {
 		final StringBuilder sb=new StringBuilder();
@@ -45,7 +50,7 @@ public class SearchParameters {
 	}
 	
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme, int minPeptideLength,
-			int maxPeptideLength, int maxMissedCleavages, byte minCharge, byte maxCharge, int minEluteTime, int numberOfReportedPeaks, boolean addDecoysToBackgound, boolean dontRunDecoys, float percolatorThreshold, float alpha, float beta) {
+			int maxPeptideLength, int maxMissedCleavages, byte minCharge, byte maxCharge, int minEluteTime, int numberOfReportedPeaks, boolean addDecoysToBackgound, boolean dontRunDecoys, float percolatorThreshold, float alpha, float beta, File percolatorLocation) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -63,6 +68,7 @@ public class SearchParameters {
 		this.percolatorThreshold=percolatorThreshold;
 		this.alpha=alpha;
 		this.beta=beta;
+		this.percolatorLocation=percolatorLocation;
 	}
 	
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme,
@@ -84,6 +90,7 @@ public class SearchParameters {
 		percolatorThreshold=0.01f;
 		alpha=1.8f;
 		beta=0.4f;
+		percolatorLocation=null;
 	}
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme) {
@@ -105,6 +112,7 @@ public class SearchParameters {
 		percolatorThreshold=0.01f;
 		alpha=1.8f;
 		beta=0.4f;
+		percolatorLocation=null;
 	}
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme,
@@ -127,6 +135,7 @@ public class SearchParameters {
 		percolatorThreshold=0.01f;
 		alpha=1.8f;
 		beta=0.4f;
+		percolatorLocation=null;
 	}
 
 	public AminoAcidConstants getAAConstants() {
@@ -195,5 +204,9 @@ public class SearchParameters {
 	
 	public float getBeta() {
 		return beta;
+	}
+	
+	public Optional<File> getPercolatorLocation() {
+		return Optional.fromNullable(percolatorLocation);
 	}
 }

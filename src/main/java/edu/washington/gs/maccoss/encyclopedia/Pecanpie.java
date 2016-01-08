@@ -63,7 +63,10 @@ import gnu.trove.set.hash.TDoubleHashSet;
 public class Pecanpie {
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
-		if (arguments.size()==0||arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
+		if (arguments.size()==0) {
+			PecanMain.main(args);
+			
+		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("Pecanpie Help");
 			Logger.logLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.logLine("Required Parameters: ");
@@ -78,52 +81,53 @@ public class Pecanpie {
 				Logger.logLine("\t"+entry.getKey()+"\t(default: "+entry.getValue()+")");
 			}
 			System.exit(1);
+			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
 			Logger.logLine("Pecanpie version "+PecanOneScoringFactory.version);
 			System.exit(1);
-		}
-		
-		if (!arguments.containsKey("-i")||!arguments.containsKey("-f")) {
-			Logger.errorLine("You are required to specify an input file (-i) and a background FASTA file (-f)");
-			System.exit(1);
-		}
-
-		File diaFile=new File(arguments.get("-i"));
-		File fastaFile=new File(arguments.get("-f"));
-		
-		File outputFile;
-		if (arguments.containsKey("-o")) {
-			outputFile=new File(arguments.get("-o"));
+			
 		} else {
-			outputFile=new File(diaFile.getAbsolutePath()+".pecan.txt");
-		}
-		
-		
-		File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
+			if (!arguments.containsKey("-i")||!arguments.containsKey("-f")) {
+				Logger.errorLine("You are required to specify an input file (-i) and a background FASTA file (-f)");
+				System.exit(1);
+			}
 
-		SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
-		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
-		Logger.logLine("Pecanpie version "+factory.getVersion());
-		
-		ArrayList<FastaEntry> targets;
-		if (arguments.containsKey("-t")) {
-			targets=FastaReader.readFasta(new File(arguments.get("-t")));
-		} else {
-			targets=null;
-		}
+			File diaFile=new File(arguments.get("-i"));
+			File fastaFile=new File(arguments.get("-f"));
 
-		Logger.logLine("Parameters:");
-		Logger.logLine(" -i "+diaFile.getAbsolutePath());
-		Logger.logLine(" -f "+fastaFile.getAbsolutePath());
-		Logger.logLine(" -t "+arguments.get("-t"));
-		Logger.logLine(" -o "+outputFile.getAbsolutePath());
-		Logger.logLine(parameters.toString());
-		
-		try {
-			runPie(new EmptyProgressIndicator(), Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
-		} catch (Exception e) {
-			System.err.println("Encountered Fatal Error!");
-			e.printStackTrace();
+			File outputFile;
+			if (arguments.containsKey("-o")) {
+				outputFile=new File(arguments.get("-o"));
+			} else {
+				outputFile=new File(diaFile.getAbsolutePath()+".pecan.txt");
+			}
+
+			File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
+
+			SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
+			PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
+			Logger.logLine("Pecanpie version "+factory.getVersion());
+
+			ArrayList<FastaEntry> targets;
+			if (arguments.containsKey("-t")) {
+				targets=FastaReader.readFasta(new File(arguments.get("-t")));
+			} else {
+				targets=null;
+			}
+
+			Logger.logLine("Parameters:");
+			Logger.logLine(" -i "+diaFile.getAbsolutePath());
+			Logger.logLine(" -f "+fastaFile.getAbsolutePath());
+			Logger.logLine(" -t "+arguments.get("-t"));
+			Logger.logLine(" -o "+outputFile.getAbsolutePath());
+			Logger.logLine(parameters.toString());
+
+			try {
+				runPie(new EmptyProgressIndicator(), Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
+			} catch (Exception e) {
+				System.err.println("Encountered Fatal Error!");
+				e.printStackTrace();
+			}
 		}
 	}
 	public static void runPie(ProgressIndicator progress, PecanJobData jobData) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
@@ -345,7 +349,7 @@ public class Pecanpie {
 		resultsConsumer.close();
 
 		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
-		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolator(featureFile, outputFile, parameters.getPercolatorThreshold());
+		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolator(parameters.getPercolatorLocation(), featureFile, outputFile, parameters.getPercolatorThreshold());
 		
 		Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 

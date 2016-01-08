@@ -17,6 +17,7 @@ import javax.swing.JComboBox;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
@@ -49,6 +50,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 
 public class PecanPanel extends JPanel {
 	private static final long serialVersionUID=1L;
+	public static ImageIcon image=new ImageIcon(PecanPanel.class.getClassLoader().getResource("images/pecan.png"));
 
 	public static final String copy="<html><b><p style=\"font-size:20px; font-family: Helvetica, sans-serif\">PECAN: Peptide Detection Directly from Data-Independent Acquisition (DIA) MS/MS Data<br></p>"
 			+ "<p style=\"font-size:12px; font-family: Helvetica, sans-serif\">PECAN extracts peptide fragmentation chromatograms from MZML files, assigns peaks, and calculates various peak features. These features are interpreted by Percolator to identify peptides.";
@@ -127,15 +129,21 @@ public class PecanPanel extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JFrame frame = (JFrame)SwingUtilities.getRoot(PecanPanel.this);
-				FileDialog dialog=new FileDialog(frame, "Select a MZML file", FileDialog.LOAD);
-				dialog.setMultipleMode(true);
-				dialog.setFilenameFilter(new SimpleFilenameFilter(".mzml", ".dia"));
-				dialog.setVisible(true);
-				if (dialog.getFiles()!=null) {
-					for (File file : dialog.getFiles()) {
-						PecanJob job=getJob(file);
-						if (job!=null) {
-							pecanModel.addJob(job);
+				
+				if (backgroundFasta.getFile()==null) {
+					JOptionPane.showMessageDialog(frame, "Please load a background FASTA file first!");
+					
+				} else {
+					FileDialog dialog=new FileDialog(frame, "Select a MZML file", FileDialog.LOAD);
+					dialog.setMultipleMode(true);
+					dialog.setFilenameFilter(new SimpleFilenameFilter(".mzml", ".dia"));
+					dialog.setVisible(true);
+					if (dialog.getFiles()!=null) {
+						for (File file : dialog.getFiles()) {
+							PecanJob job=getJob(file);
+							if (job!=null) {
+								pecanModel.addJob(job);
+							}
 						}
 					}
 				}
@@ -147,23 +155,33 @@ public class PecanPanel extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JFrame frame = (JFrame)SwingUtilities.getRoot(PecanPanel.this);
-				FileDialog dialog=new FileDialog(frame, "Save a BLIB file", FileDialog.SAVE);
-				dialog.setFilenameFilter(new SimpleFilenameFilter(".blib"));
-				dialog.setVisible(true);
-				if (dialog.getFiles()!=null&&dialog.getFiles().length>0) {
-					File blibFile=dialog.getFiles()[0];
-					String fileName=blibFile.getName();
-					if (!fileName.toLowerCase().endsWith(".blib")) {
-						blibFile=new File(blibFile.getParentFile(), fileName+".blib");
 
-						if (blibFile.exists()) {
-							// FIXME ask if you want to overwrite this updated file location!
-						}
-					}
+				if (backgroundFasta.getFile()==null) {
+					JOptionPane.showMessageDialog(frame, "Please load a background FASTA file first!");
 					
-					PecanToBLIBJob job=new PecanToBLIBJob(blibFile, pecanModel);
-					if (job!=null) {
-						pecanModel.addJob(job);
+				} else if (pecanModel.getRowCount()==0) {
+					JOptionPane.showMessageDialog(frame, "Please queue some MZMLs first!");
+					
+				} else {
+					FileDialog dialog=new FileDialog(frame, "Save a BLIB file", FileDialog.SAVE);
+					dialog.setFilenameFilter(new SimpleFilenameFilter(".blib"));
+					dialog.setVisible(true);
+					if (dialog.getFiles()!=null&&dialog.getFiles().length>0) {
+						File blibFile=dialog.getFiles()[0];
+						String fileName=blibFile.getName();
+						if (!fileName.toLowerCase().endsWith(".blib")) {
+							blibFile=new File(blibFile.getParentFile(), fileName+".blib");
+
+							if (blibFile.exists()) {
+								// FIXME ask if you want to overwrite this
+								// updated file location!
+							}
+						}
+
+						PecanToBLIBJob job=new PecanToBLIBJob(blibFile, pecanModel);
+						if (job!=null) {
+							pecanModel.addJob(job);
+						}
 					}
 				}
 			}
