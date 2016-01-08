@@ -63,7 +63,8 @@ import gnu.trove.set.hash.TDoubleHashSet;
 public class Pecanpie {
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
-		if (arguments.size()==0||arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")||arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
+		if (arguments.size()==0||arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
+			Logger.logLine("Pecanpie Help");
 			Logger.logLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.logLine("Required Parameters: ");
 			Logger.logLine("\t-i\tinput .DIA or .MZML file");
@@ -76,6 +77,9 @@ public class Pecanpie {
 			for (Entry<String, String> entry : defaults.entrySet()) {
 				Logger.logLine("\t"+entry.getKey()+"\t(default: "+entry.getValue()+")");
 			}
+			System.exit(1);
+		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
+			Logger.logLine("Pecanpie version "+PecanOneScoringFactory.version);
 			System.exit(1);
 		}
 		
