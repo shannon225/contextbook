@@ -139,7 +139,7 @@ public class PecanToBLIB {
 		File featureFile=job.getFeatureFile();
 
 		PecanScoringFactory taskFactory=job.getTaskFactory();
-		StripeFileInterface stripeFile=MzmlToDIAConverter.getFile(diaFile);
+		StripeFileInterface stripeFile=MzmlToDIAConverter.getFile(diaFile, taskFactory.getParameters());
 		Logger.logLine("Extracting Spectral Data for "+passingPeptides.size()+" Peptides from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Extracting Spectral Data for "+passingPeptides.size()+" Peptides", 0.1f);
 

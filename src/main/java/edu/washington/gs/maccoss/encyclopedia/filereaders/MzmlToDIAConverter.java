@@ -8,7 +8,9 @@ import java.util.Map.Entry;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.OverlapDeconvoluter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -19,14 +21,18 @@ public class MzmlToDIAConverter {
 	public static final String MZML_EXTENSION=".mzml";
 
 	public static void main(String[] args) {
+		HashMap<String, String> paramMap=SearchParameterParser.getDefaultParameters();
+		paramMap.put("-deconvoluteOverlappingWindows", "true");
+		SearchParameters parameters=SearchParameterParser.parseParameters(paramMap);
+		
 		Long time=System.currentTimeMillis();
-		File xmlFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/20150708_Ecoli_0911_25x4mzDIA_500_600.mzML");
-		File saveFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/20150708_Ecoli_0911_25x4mzDIA_500_600.dia");
-		convert(xmlFile, saveFile);
+		File xmlFile=new File("/Users/searleb/Documents/school/projects/mzml/q06255_rl_MCF7_CTL_IMAC_GpX_10.mzML");
+		File saveFile=new File("/Users/searleb/Documents/school/projects/mzml/q06255_rl_MCF7_CTL_IMAC_GpX_10.dia");
+		convert(xmlFile, saveFile, parameters);
 		System.out.println((System.currentTimeMillis()-time)/1000f+" seconds");
 	}
 
-	public static StripeFileInterface getFile(File f) {
+	public static StripeFileInterface getFile(File f, SearchParameters parameters) {
 		if (!f.exists()||!f.canRead()) {
 			throw new EncyclopediaException("Can't read file "+f.getAbsolutePath());
 		}
@@ -45,7 +51,7 @@ public class MzmlToDIAConverter {
 		
 		// otherwise check for MZML and convert
 		if (f.getName().toLowerCase().endsWith(MZML_EXTENSION)) {
-			return convert(f, diaFile);
+			return convert(f, diaFile, parameters);
 		} else {
 			throw new EncyclopediaException("Can't read file type "+f.getAbsolutePath());
 		}
@@ -63,7 +69,7 @@ public class MzmlToDIAConverter {
 		}
 	}
 
-	static StripeFileInterface convert(File mzMLFile, File diaFile) {
+	static StripeFileInterface convert(File mzMLFile, File diaFile, SearchParameters parameters) {
 		try {
 			Logger.logLine("Indexing "+mzMLFile.getName()+" ...");
 			StripeFile stripeFile=new StripeFile();
@@ -74,21 +80,48 @@ public class MzmlToDIAConverter {
 
 			BlockingQueue<MzmlBlock> mzmlBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);
 			MzmlToDIAProducer producer=new MzmlToDIAProducer(unmarshaller, mzmlBlockQueue);
-			MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(mzmlBlockQueue, stripeFile);
+			
+			// will be populated after we join back up. Since we're not looking
+			// at it until after the join, we're safe to not have to worry about
+			// concurrency.
+			HashMap<Range, TFloatArrayList> retentionTimesByStripe=producer.getRetentionTimesByStripe();
+			Thread[] threads;
+			
+			if (parameters.isDeconvoluteOverlappingWindows()) {
+				BlockingQueue<MzmlBlock> deconvolutionBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);
+				OverlapDeconvoluter deconvoluter=new OverlapDeconvoluter(parameters.getFragmentTolerance(), mzmlBlockQueue, deconvolutionBlockQueue);
+				retentionTimesByStripe=deconvoluter.getRetentionTimesByStripe();
+				MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(deconvolutionBlockQueue, stripeFile);
 
-			Logger.logLine("Converting "+mzMLFile.getName()+" ...");
-			Thread producerThread=new Thread(producer);
-			Thread consumerThread=new Thread(consumer);
-			producerThread.start();
-			consumerThread.start();
+				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
+				Thread producerThread=new Thread(producer);
+				Thread deconvoluterThread=new Thread(deconvoluter);
+				Thread consumerThread=new Thread(consumer);
+
+				threads=new Thread[] {producerThread, deconvoluterThread, consumerThread};
+				
+			} else {
+				MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(mzmlBlockQueue, stripeFile);
+
+				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
+				Thread producerThread=new Thread(producer);
+				Thread consumerThread=new Thread(consumer);
+
+				threads=new Thread[] {producerThread, consumerThread};
+			}
+			
+			for (int i=0; i<threads.length; i++) {
+				threads[i].start();
+			}
 
 			try {
-				producerThread.join();
-				consumerThread.join();
+				for (int i=0; i<threads.length; i++) {
+					threads[i].join();
+				}
 
 				Logger.logLine("Finalizing "+diaFile.getName()+" ...");
 				HashMap<Range, Float> dutyCycleMap=new HashMap<Range, Float>();
-				for (Entry<Range, TFloatArrayList> entry : producer.getRetentionTimesByStripe().entrySet()) {
+				for (Entry<Range, TFloatArrayList> entry : retentionTimesByStripe.entrySet()) {
 					Range range=entry.getKey();
 					TFloatArrayList rts=entry.getValue();
 					float[] deltas=General.firstDerivative(rts.toArray());

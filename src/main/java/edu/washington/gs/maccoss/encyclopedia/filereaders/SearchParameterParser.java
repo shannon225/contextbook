@@ -38,7 +38,12 @@ public class SearchParameterParser {
 		map.put("-alpha", "1.8");
 		map.put("-beta", "0.4");
 		map.put("-percolatorLocation", "internal");
+		map.put("-deconvoluteOverlappingWindows", "false");
 		return map;
+	}
+	
+	public static SearchParameters getDefaultParametersObject() {
+		return parseParameters(getDefaultParameters());
 	}
 	
 	public static SearchParameters parseParameters(File defaultParameters, HashMap<String, String> parameters) {
@@ -65,6 +70,7 @@ public class SearchParameterParser {
 		final float percolatorThreshold;
 		final float alpha;
 		final float beta;
+		final boolean deconvoluteOverlappingWindows;
 
 		TCharFloatHashMap fixedMods=new TCharFloatHashMap();
 		String value=parameters.get("-fixed");
@@ -139,6 +145,7 @@ public class SearchParameterParser {
 		percolatorThreshold=getFloat("-percolatorThreshold", parameters, 0.01f);
 		alpha=getFloat("-alpha", parameters, 1.8f);
 		beta=getFloat("-beta", parameters, 0.4f);
+		deconvoluteOverlappingWindows=getBoolean("-deconvoluteOverlappingWindows", parameters, false);
 
 		value=parameters.get("-percolatorLocation");
 		File percolator=null;
@@ -152,7 +159,7 @@ public class SearchParameterParser {
 			}
 		}
 		
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolator);
+		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolator, deconvoluteOverlappingWindows);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

@@ -27,6 +27,7 @@ public class SearchParameters {
 	private final float alpha;
 	private final float beta;
 	private final File percolatorLocation;
+	private final boolean deconvoluteOverlappingWindows;
 	
 	public String toString() {
 		final StringBuilder sb=new StringBuilder();
@@ -45,12 +46,13 @@ public class SearchParameters {
 		sb.append(" -addDecoysToBackground "+addDecoysToBackgound+"\n");
 		sb.append(" -dontRunDecoys "+dontRunDecoys+"\n");
 		sb.append(" -percolatorThreshold "+percolatorThreshold+"\n");
+		sb.append(" -deconvoluteOverlappingWindows "+deconvoluteOverlappingWindows+"\n");
 		
 		return sb.toString();
 	}
 	
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme, int minPeptideLength,
-			int maxPeptideLength, int maxMissedCleavages, byte minCharge, byte maxCharge, int minEluteTime, int numberOfReportedPeaks, boolean addDecoysToBackgound, boolean dontRunDecoys, float percolatorThreshold, float alpha, float beta, File percolatorLocation) {
+			int maxPeptideLength, int maxMissedCleavages, byte minCharge, byte maxCharge, int minEluteTime, int numberOfReportedPeaks, boolean addDecoysToBackgound, boolean dontRunDecoys, float percolatorThreshold, float alpha, float beta, File percolatorLocation, boolean deconvoluteOverlappingWindows) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -69,6 +71,7 @@ public class SearchParameters {
 		this.alpha=alpha;
 		this.beta=beta;
 		this.percolatorLocation=percolatorLocation;
+		this.deconvoluteOverlappingWindows=deconvoluteOverlappingWindows;
 	}
 	
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme,
@@ -91,6 +94,7 @@ public class SearchParameters {
 		alpha=1.8f;
 		beta=0.4f;
 		percolatorLocation=null;
+		deconvoluteOverlappingWindows=false;
 	}
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme) {
@@ -113,6 +117,7 @@ public class SearchParameters {
 		alpha=1.8f;
 		beta=0.4f;
 		percolatorLocation=null;
+		deconvoluteOverlappingWindows=false;
 	}
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme,
@@ -136,6 +141,7 @@ public class SearchParameters {
 		alpha=1.8f;
 		beta=0.4f;
 		percolatorLocation=null;
+		deconvoluteOverlappingWindows=false;
 	}
 
 	public AminoAcidConstants getAAConstants() {
@@ -208,5 +214,8 @@ public class SearchParameters {
 	
 	public Optional<File> getPercolatorLocation() {
 		return Optional.fromNullable(percolatorLocation);
+	}
+	public boolean isDeconvoluteOverlappingWindows() {
+		return deconvoluteOverlappingWindows;
 	}
 }
