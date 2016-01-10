@@ -75,7 +75,7 @@ public class SearchParameters {
 	}
 	
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme,
-			int maxMissedCleavages, byte minCharge, byte maxCharge) {
+			int maxMissedCleavages, byte minCharge, byte maxCharge, boolean deconvoluteOverlappingWindows) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -94,7 +94,7 @@ public class SearchParameters {
 		alpha=1.8f;
 		beta=0.4f;
 		percolatorLocation=null;
-		deconvoluteOverlappingWindows=false;
+		this.deconvoluteOverlappingWindows=deconvoluteOverlappingWindows;
 	}
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme) {

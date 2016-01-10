@@ -101,7 +101,7 @@ public class MzmlToDIAProducer implements Runnable {
 			}
 
 			try {
-				if (precursors.size()>200||stripes.size()>2000) {
+				if (precursors.size()>100||stripes.size()>1000) {
 					mzmlBlockQueue.put(new MzmlBlock(precursors, stripes));
 					precursors.clear();
 					stripes.clear();

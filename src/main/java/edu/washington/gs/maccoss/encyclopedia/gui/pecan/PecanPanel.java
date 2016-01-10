@@ -56,6 +56,7 @@ public class PecanPanel extends JPanel {
 			+ "<p style=\"font-size:12px; font-family: Helvetica, sans-serif\">PECAN extracts peptide fragmentation chromatograms from MZML files, assigns peaks, and calculates various peak features. These features are interpreted by Percolator to identify peptides.";
 	
 	private final FileChooserPanel backgroundFasta;
+	private final JComboBox<String> overlap=new JComboBox<String>(new String[] {"Not Overlapped", "Overlapped"});
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "PepsinA"});
 	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "None"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {"HCD (Y-Only)", "CID (B/Y)", "ETD (C/Z/Z+1)"});
@@ -92,6 +93,7 @@ public class PecanPanel extends JPanel {
 		
 		backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta"));
 		options.add(backgroundFasta);
+		options.add(new LabeledComponent("Precursor Isolation Windows", overlap));
 		options.add(new LabeledComponent("Enzyme", enzyme));
 		options.add(new LabeledComponent("Fixed", fixed));
 		options.add(new LabeledComponent("Fragmentation", fragType));
@@ -228,6 +230,7 @@ public class PecanPanel extends JPanel {
 	}
 
 	private SearchParameters getParameters() {
+		boolean deconvoluteOverlappingWindows="Overlapped".equalsIgnoreCase((String)overlap.getSelectedItem());
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
@@ -237,7 +240,7 @@ public class PecanPanel extends JPanel {
 		byte maxChargeValue=((Integer)maxCharge.getValue()).byteValue();
 		byte maxMissedCleavageValue=((Integer)maxMissedCleavage.getValue()).byteValue();
 		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme,
-				maxMissedCleavageValue, minChargeValue, maxChargeValue);
+				maxMissedCleavageValue, minChargeValue, maxChargeValue, deconvoluteOverlappingWindows);
 		return parameters;
 	}
 }
