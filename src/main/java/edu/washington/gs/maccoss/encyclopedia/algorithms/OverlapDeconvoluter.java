@@ -88,16 +88,20 @@ public class OverlapDeconvoluter implements Runnable {
 					}
 					
 					if (!earlyLow.getRange().contains(center.getRange().getStart())) {
+						System.out.println("earlyLow: "+earlyLow.getRange()+" doesn't contain "+center.getRange());
 						earlyLow=null;
 					}
 					if (!lateLow.getRange().contains(center.getRange().getStart())) {
+						System.out.println("lateLow: "+lateLow.getRange()+" doesn't contain "+center.getRange());
 						lateLow=null;
 					}
 					
 					if (!earlyHigh.getRange().contains(center.getRange().getStop())) {
+						System.out.println("earlyHigh: "+earlyHigh.getRange()+" doesn't contain "+center.getRange());
 						earlyHigh=null;
 					}
 					if (!lateHigh.getRange().contains(center.getRange().getStop())) {
+						System.out.println("lateHigh: "+lateHigh.getRange()+" doesn't contain "+center.getRange());
 						lateHigh=null;
 					}
 					
@@ -128,6 +132,9 @@ public class OverlapDeconvoluter implements Runnable {
 		stripeRTs.add(thisStripe.getScanStartTime());
 	}
 	
+	public static float conflict=0.0f; // FIXME REMOVE
+	public static float total=0.0f; //FIXME REMPOVE
+	
 	public static Pair<Stripe, Stripe> deconvolute(Stripe earlyLow, Stripe earlyHigh, Stripe center, Stripe lateLow, Stripe lateHigh, MassTolerance tolerance) {
 		float[] intensities=center.getIntensityArray();
 		double[] masses=center.getMassArray();
@@ -152,17 +159,22 @@ public class OverlapDeconvoluter implements Runnable {
 				float fractionLow=totalLow/total;
 				if (fractionLow>0.0f) {
 					float intensity=intensities[i]*fractionLow;
+					conflict+=intensity;
 					lowerPeaks.add(new Peak(masses[i], intensity));
 				}
 				
 				float fractionHigh=totalHigh/total;
 				if (fractionHigh>0.0f) {
 					float intensity=intensities[i]*fractionHigh;
+					conflict+=intensity;
 					upperPeaks.add(new Peak(masses[i], intensity));
 				}
+				System.out.println(fractionLow+"\t"+fractionHigh+"\t"+totalLow+"\t"+totalHigh+"\t"+total);
+				
+				total+=intensities[i];
 			}
 		}
-		
+		//System.out.println((conflict/total*100)+"%");
 		Stripe lowerStripe=getDeconvolutedStripe(center, lowerRange, lowerPeaks, false);
 		Stripe upperStripe=getDeconvolutedStripe(center, upperRange, upperPeaks, true);
 		
