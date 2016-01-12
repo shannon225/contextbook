@@ -28,15 +28,25 @@ public class OverlapDeconvoluter implements Runnable {
 	public HashMap<Range, TFloatArrayList> getRetentionTimesByStripe() {
 		return retentionTimesByStripe;
 	}
-
+	
 	public void run() {
 		Range cycleStart=null;
+		
 		int cycleLength=-1;
 		int cycleLengthP2=-1;
 		int cycleCenter=-1;
+		boolean isEven=true;
+
+		// to keep track of whether we're on the early block or the late block
+		Range minimumRange=null;
+		Range maximumRange=null;
+		Range previousRange=new Range(Float.MAX_VALUE, Float.MAX_VALUE);
+		boolean isOnEarlyBlock=false;
 		
+		int totalProcessed=0;
+
 		try {
-			LinkedList<Stripe> currentCycle=new LinkedList<Stripe>();
+			LinkedList<Pair<Stripe, Boolean>> currentCycle=new LinkedList<Pair<Stripe, Boolean>>();
 			while (true) {
 				MzmlBlock block=inputQueue.take();
 				if (MzmlBlock.POISON_BLOCK==block) {
@@ -44,41 +54,81 @@ public class OverlapDeconvoluter implements Runnable {
 					// needs to join up here if we start using multiple threads
 					break;
 				}
-				if (cycleStart==null) {
-					cycleStart=block.getStripes().get(0).getRange();
-				}
-				ArrayList<Stripe> deconvolutedStripes=new ArrayList<Stripe>();
 				
-				for (Stripe stripe : block.getStripes()) {
-					if (cycleLength==-1) {
-						if (currentCycle.size()>0&&cycleStart.equals(stripe.getRange())) {
-							cycleLength=currentCycle.size();
+				// scan ahead to set up
+				if (cycleStart==null) {
+					STARTUP: for (Stripe stripe : block.getStripes()) {
+						if (cycleStart==null) {
+							cycleStart=block.getStripes().get(0).getRange();
+							minimumRange=cycleStart;
+							maximumRange=cycleStart;
+							cycleLength++;
+							continue STARTUP;
+						}
+						
+						// FYI: this approach burns half of the first duty cycle
+						// and half of the last one. We could try to recover
+						// that data but it's probably not worth anything
+						if (stripe.getRange().compareTo(minimumRange)<0) {
+							minimumRange=stripe.getRange();
+						} else if (stripe.getRange().compareTo(maximumRange)>0) {
+							maximumRange=stripe.getRange();
+						}
+						
+						cycleLength++;
+						if (cycleStart.equals(stripe.getRange())) {
 							cycleLengthP2=cycleLength+2;
 							cycleCenter=(int)Math.ceil(cycleLength/2.0f);
+							isEven=cycleLength%2==0;
+							break STARTUP;
 						}
-						currentCycle.add(stripe);
-						continue;
+						
+					}
+				}
+				
+				ArrayList<Stripe> deconvolutedStripes=new ArrayList<Stripe>();
+				BLOCK: for (Stripe stripe : block.getStripes()) {
+					totalProcessed++;
+					
+					if (stripe.getRange().compareTo(previousRange)<0) {
+						// cycled back
+						if (stripe.getRange().compareTo(minimumRange)==0) {
+							// early block
+							isOnEarlyBlock=true;
+						} else {
+							isOnEarlyBlock=false;
+						}
 					}
 
-					currentCycle.add(stripe);
+					currentCycle.add(new Pair<Stripe, Boolean>(stripe, isOnEarlyBlock));
+					previousRange=stripe.getRange();
 					if (currentCycle.size()>cycleLengthP2) {
 						currentCycle.removeFirst();
+					} else if (currentCycle.size()<cycleLengthP2) {
+						continue BLOCK;
 					}
 					
-					// START THREADABLE SECTION (should I need to)
+					boolean firstIsOnEarlyBlock=true;
+					boolean secondIsOnEarlyBlock=true;
 					Stripe earlyLow=null;
 					Stripe earlyHigh=null;
 					Stripe center=null;
+					Stripe centerPlusOne=null;
 					Stripe lateLow=null;
 					Stripe lateHigh=null;
 					int count=0;
-					for (Stripe s : currentCycle) {
+					for (Pair<Stripe, Boolean> p : currentCycle) {
+						Stripe s=p.x;
 						if (count==0) {
 							earlyLow=s;
+							firstIsOnEarlyBlock=p.y;
 						} else if (count==1) {
 							earlyHigh=s;
+							secondIsOnEarlyBlock=p.y;
 						} else if (count==cycleCenter) {
 							center=s;
+						} else if (count==cycleCenter+1) {
+							centerPlusOne=s;
 						} else if (count==cycleLengthP2-2) {
 							lateLow=s;
 						} else if (count==cycleLengthP2-1) {
@@ -86,33 +136,45 @@ public class OverlapDeconvoluter implements Runnable {
 						}
 						count++;
 					}
+
+					// START THREADABLE SECTION (should I need to)
+					ArrayList<Pair<Stripe, Stripe>> deconvoluted=new ArrayList<Pair<Stripe,Stripe>>();
+					if (!isEven) {
+						// odd logic for choosing the center is easy...
+						deconvoluted.add(deconvolute(earlyLow, earlyHigh, center, lateLow, lateHigh, tolerance));
+					} else {
+						// but bin splitting logic for even bin numbers is a little crazy!
+						if (earlyLow.getRange().compareTo(maximumRange)==0&&earlyHigh.getRange().compareTo(minimumRange)==0) {
+							// spanning outside, so ignore
+						} else if (earlyLow.getRange().compareTo(minimumRange)==0) {
+							// center is left side of right block so C
+							deconvoluted.add(deconvolute(earlyLow, earlyHigh, center, lateLow, lateHigh, tolerance));
+						} else if (earlyHigh.getRange().compareTo(maximumRange)==0) {
+							// center is right side of left block so C+1
+							deconvoluted.add(deconvolute(earlyLow, earlyHigh, centerPlusOne, lateLow, lateHigh, tolerance));
+						} else if (firstIsOnEarlyBlock&&secondIsOnEarlyBlock) {
+							// middle on late block so C
+							deconvoluted.add(deconvolute(earlyLow, earlyHigh, center, lateLow, lateHigh, tolerance));
+						} else if (!firstIsOnEarlyBlock&&!secondIsOnEarlyBlock) {
+							// middle on early block so C+1
+							deconvoluted.add(deconvolute(earlyLow, earlyHigh, centerPlusOne, lateLow, lateHigh, tolerance));
+						} else {
+							// split (both centers are outer edges), so do both
+							deconvoluted.add(deconvolute(earlyLow, earlyHigh, center, lateLow, lateHigh, tolerance));
+							deconvoluted.add(deconvolute(earlyLow, earlyHigh, centerPlusOne, lateLow, lateHigh, tolerance));
+						}
+					}
 					
-					if (!earlyLow.getRange().contains(center.getRange().getStart())) {
-						System.out.println("earlyLow: "+earlyLow.getRange()+" doesn't contain "+center.getRange());
-						earlyLow=null;
-					}
-					if (!lateLow.getRange().contains(center.getRange().getStart())) {
-						System.out.println("lateLow: "+lateLow.getRange()+" doesn't contain "+center.getRange());
-						lateLow=null;
-					}
-					
-					if (!earlyHigh.getRange().contains(center.getRange().getStop())) {
-						System.out.println("earlyHigh: "+earlyHigh.getRange()+" doesn't contain "+center.getRange());
-						earlyHigh=null;
-					}
-					if (!lateHigh.getRange().contains(center.getRange().getStop())) {
-						System.out.println("lateHigh: "+lateHigh.getRange()+" doesn't contain "+center.getRange());
-						lateHigh=null;
-					}
-					
-					Pair<Stripe, Stripe> deconvoluted=deconvolute(earlyLow, earlyHigh, center, lateLow, lateHigh, tolerance);
 					// END THREADABLE SECTION
 					
-					deconvolutedStripes.add(deconvoluted.x);
-					deconvolutedStripes.add(deconvoluted.y);
+					for (Pair<Stripe, Stripe> pair : deconvoluted) {
+						deconvolutedStripes.add(pair.x);
+						deconvolutedStripes.add(pair.y);
+						
+						addRetentionTime(pair.x);
+						addRetentionTime(pair.y);
+					}
 					
-					addRetentionTime(deconvoluted.x);
-					addRetentionTime(deconvoluted.y);
 					
 				}
 				outputQueue.put(new MzmlBlock(block.getPrecursors(), deconvolutedStripes));
@@ -122,6 +184,7 @@ public class OverlapDeconvoluter implements Runnable {
 			Logger.errorException(ie);
 		}
 	}
+	
 	public void addRetentionTime(Stripe thisStripe) {
 		Range range=thisStripe.getRange();
 		TFloatArrayList stripeRTs=retentionTimesByStripe.get(range);
@@ -132,10 +195,24 @@ public class OverlapDeconvoluter implements Runnable {
 		stripeRTs.add(thisStripe.getScanStartTime());
 	}
 	
-	public static float conflict=0.0f; // FIXME REMOVE
-	public static float total=0.0f; //FIXME REMPOVE
+	public static float[] conflict=new float[30]; // FIXME REMOVE
+	public static float[] totalTotal=new float[30]; //FIXME REMPOVE
 	
 	public static Pair<Stripe, Stripe> deconvolute(Stripe earlyLow, Stripe earlyHigh, Stripe center, Stripe lateLow, Stripe lateHigh, MassTolerance tolerance) {
+		
+		if (!earlyLow.getRange().contains(center.getRange().getStart())) {
+			earlyLow=null;
+		}
+		if (!lateLow.getRange().contains(center.getRange().getStart())) {
+			lateLow=null;
+		}
+		if (!earlyHigh.getRange().contains(center.getRange().getStop())) {
+			earlyHigh=null;
+		}
+		if (!lateHigh.getRange().contains(center.getRange().getStop())) {
+			lateHigh=null;
+		}
+		
 		float[] intensities=center.getIntensityArray();
 		double[] masses=center.getMassArray();
 		
@@ -159,22 +236,31 @@ public class OverlapDeconvoluter implements Runnable {
 				float fractionLow=totalLow/total;
 				if (fractionLow>0.0f) {
 					float intensity=intensities[i]*fractionLow;
-					conflict+=intensity;
+					if (fractionLow<0.999f) {
+						conflict[(int)Math.floor(masses[i]/100)]+=intensity;
+					}
 					lowerPeaks.add(new Peak(masses[i], intensity));
 				}
 				
 				float fractionHigh=totalHigh/total;
 				if (fractionHigh>0.0f) {
 					float intensity=intensities[i]*fractionHigh;
-					conflict+=intensity;
+					if (fractionHigh<0.999f) {
+						conflict[(int)Math.floor(masses[i]/100)]+=intensity;
+					}
 					upperPeaks.add(new Peak(masses[i], intensity));
 				}
-				System.out.println(fractionLow+"\t"+fractionHigh+"\t"+totalLow+"\t"+totalHigh+"\t"+total);
 				
-				total+=intensities[i];
+				totalTotal[(int)Math.floor(masses[i]/100)]+=intensities[i];
 			}
 		}
-		//System.out.println((conflict/total*100)+"%");
+		
+		/*System.out.print(center.getScanStartTime()/60f);
+		for (int i=0; i<conflict.length; i++) {
+			System.out.print("\t"+Math.round(conflict[i]/totalTotal[i]*1000f)/10f+"%");
+		}
+		System.out.println();*/
+		
 		Stripe lowerStripe=getDeconvolutedStripe(center, lowerRange, lowerPeaks, false);
 		Stripe upperStripe=getDeconvolutedStripe(center, upperRange, upperPeaks, true);
 		

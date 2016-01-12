@@ -26,8 +26,8 @@ public class MzmlToDIAConverter {
 		SearchParameters parameters=SearchParameterParser.parseParameters(paramMap);
 		
 		Long time=System.currentTimeMillis();
-		File xmlFile=new File("/Users/searleb/Documents/school/projects/mzml/q06255_rl_MCF7_CTL_IMAC_GpX_10.mzML");
-		File saveFile=new File("/Users/searleb/Documents/school/projects/mzml/q06255_rl_MCF7_CTL_IMAC_GpX_10.dia");
+		File xmlFile=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/121015_BCS_HeLa_6mz_700_800.mzML");
+		File saveFile=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/121015_BCS_HeLa_6mz_700_800.dia");
 		convert(xmlFile, saveFile, parameters);
 		System.out.println((System.currentTimeMillis()-time)/1000f+" seconds");
 	}
