@@ -22,7 +22,7 @@ public class MzmlToDIAConverter {
 
 	public static void main(String[] args) {
 		HashMap<String, String> paramMap=SearchParameterParser.getDefaultParameters();
-		paramMap.put("-deconvoluteOverlappingWindows", "true");
+		paramMap.put("-deconvoluteOverlappingWindows", "false");
 		SearchParameters parameters=SearchParameterParser.parseParameters(paramMap);
 		
 		Long time=System.currentTimeMillis();

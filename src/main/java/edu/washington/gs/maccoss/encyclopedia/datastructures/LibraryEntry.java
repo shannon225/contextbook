@@ -10,7 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 
 //@Immutable
-public class LibraryEntry implements Comparable<LibraryEntry> {
+public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 	private final int spectrumIndex;
 	private final double precursorMZ;
 	private final byte precursorCharge;
@@ -84,6 +84,16 @@ public class LibraryEntry implements Comparable<LibraryEntry> {
 
 	public float getRetentionTime() {
 		return retentionTime;
+	}
+	
+	@Override
+	public float getScanStartTime() {
+		return getRetentionTime();
+	}
+	
+	@Override
+	public String getSpectrumName() {
+		return peptideModSeq+"+"+precursorCharge;
 	}
 
 	public float getScore() {

@@ -42,8 +42,6 @@ public class OverlapDeconvoluter implements Runnable {
 		Range maximumRange=null;
 		Range previousRange=new Range(Float.MAX_VALUE, Float.MAX_VALUE);
 		boolean isOnEarlyBlock=false;
-		
-		int totalProcessed=0;
 
 		try {
 			LinkedList<Pair<Stripe, Boolean>> currentCycle=new LinkedList<Pair<Stripe, Boolean>>();
@@ -88,8 +86,6 @@ public class OverlapDeconvoluter implements Runnable {
 				
 				ArrayList<Stripe> deconvolutedStripes=new ArrayList<Stripe>();
 				BLOCK: for (Stripe stripe : block.getStripes()) {
-					totalProcessed++;
-					
 					if (stripe.getRange().compareTo(previousRange)<0) {
 						// cycled back
 						if (stripe.getRange().compareTo(minimumRange)==0) {
@@ -195,9 +191,6 @@ public class OverlapDeconvoluter implements Runnable {
 		stripeRTs.add(thisStripe.getScanStartTime());
 	}
 	
-	public static float[] conflict=new float[30]; // FIXME REMOVE
-	public static float[] totalTotal=new float[30]; //FIXME REMPOVE
-	
 	public static Pair<Stripe, Stripe> deconvolute(Stripe earlyLow, Stripe earlyHigh, Stripe center, Stripe lateLow, Stripe lateHigh, MassTolerance tolerance) {
 		
 		if (!earlyLow.getRange().contains(center.getRange().getStart())) {
@@ -221,6 +214,7 @@ public class OverlapDeconvoluter implements Runnable {
 		
 		ArrayList<Peak> lowerPeaks=new ArrayList<Peak>();
 		ArrayList<Peak> upperPeaks=new ArrayList<Peak>();
+		ArrayList<Peak> removedPeaks=new ArrayList<Peak>();
 		
 		for (int i=0; i<masses.length; i++) {
 			float earlyLowIntensity=getIntensity(tolerance, masses[i], earlyLow);
@@ -236,30 +230,18 @@ public class OverlapDeconvoluter implements Runnable {
 				float fractionLow=totalLow/total;
 				if (fractionLow>0.0f) {
 					float intensity=intensities[i]*fractionLow;
-					if (fractionLow<0.999f) {
-						conflict[(int)Math.floor(masses[i]/100)]+=intensity;
-					}
 					lowerPeaks.add(new Peak(masses[i], intensity));
 				}
 				
 				float fractionHigh=totalHigh/total;
 				if (fractionHigh>0.0f) {
 					float intensity=intensities[i]*fractionHigh;
-					if (fractionHigh<0.999f) {
-						conflict[(int)Math.floor(masses[i]/100)]+=intensity;
-					}
 					upperPeaks.add(new Peak(masses[i], intensity));
 				}
-				
-				totalTotal[(int)Math.floor(masses[i]/100)]+=intensities[i];
+			} else {
+				removedPeaks.add(new Peak(masses[i], intensities[i]));
 			}
 		}
-		
-		/*System.out.print(center.getScanStartTime()/60f);
-		for (int i=0; i<conflict.length; i++) {
-			System.out.print("\t"+Math.round(conflict[i]/totalTotal[i]*1000f)/10f+"%");
-		}
-		System.out.println();*/
 		
 		Stripe lowerStripe=getDeconvolutedStripe(center, lowerRange, lowerPeaks, false);
 		Stripe upperStripe=getDeconvolutedStripe(center, upperRange, upperPeaks, true);

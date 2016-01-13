@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
@@ -13,6 +14,21 @@ public class XYTrace {
 	private final String name;
 	private final ArrayList<XYPoint> points;
 	private final GraphType type;
+	
+	public XYTrace(Spectrum spectrum) {
+		this.type=GraphType.spectrum;
+		this.points=new ArrayList<XYPoint>();
+		this.name=spectrum.getSpectrumName();
+		
+		double[] mzs=spectrum.getMassArray();
+		float[] intensities=spectrum.getIntensityArray();
+		
+		for (int i=0; i<intensities.length; i++) {
+			points.add(new XYPoint(mzs[i], intensities[i]));
+		}
+		
+		Collections.sort(points);
+	}
 
 	public XYTrace(Collection<XYPoint> points, GraphType type, String name) {
 		this.type=type;

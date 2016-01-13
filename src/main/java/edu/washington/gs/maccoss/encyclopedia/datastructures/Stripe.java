@@ -2,7 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 
 //@Immutable
-public class Stripe implements Comparable<Stripe> {
+public class Stripe implements Comparable<Stripe>, Spectrum {
 	private final String spectrumName;
 	private final String precursorName;
 	private final int spectrumIndex;

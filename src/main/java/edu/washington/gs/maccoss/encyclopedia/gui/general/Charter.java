@@ -23,6 +23,7 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
@@ -41,8 +42,26 @@ public class Charter {
 		launchChart("M/Z", "Intensity", false, trace, trace2);
 	}
 
+	public static void launchChart(Spectrum trace) {
+		launchChart(trace, trace.getSpectrumName());
+	}
+	public static void launchChart(Spectrum trace, String title) {
+		final JFrame f=new JFrame(title);
+		f.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				System.exit(0);
+			}
+		});
+
+		f.getContentPane().add(getChart("M/Z", "Intensity", false, new XYTrace(trace)), BorderLayout.CENTER);
+
+		f.pack();
+		f.setSize(new Dimension(1000, 500));
+		f.setVisible(true);
+	}
+
 	public static void launchChart(String xAxis, String yAxis, boolean displayLegend, XYTrace... traces) {
-		final JFrame f=new JFrame("Runs vs Reference");
+		final JFrame f=new JFrame(xAxis);
 		f.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				System.exit(0);
@@ -57,7 +76,7 @@ public class Charter {
 	}
 
 	public static void launchChart(String xAxis, String yAxis, boolean displayLegend, XYZTrace dataset) {
-		final JFrame f=new JFrame("Runs vs Reference");
+		final JFrame f=new JFrame(xAxis);
 		f.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				System.exit(0);
