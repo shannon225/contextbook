@@ -37,6 +37,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
@@ -56,6 +57,7 @@ public class PecanPanel extends JPanel {
 			+ "<p style=\"font-size:12px; font-family: Helvetica, sans-serif\">PECAN extracts peptide fragmentation chromatograms from MZML files, assigns peaks, and calculates various peak features. These features are interpreted by Percolator to identify peptides.";
 	
 	private final FileChooserPanel backgroundFasta;
+	private final FileChooserPanel targetFasta;
 	private final JComboBox<String> overlap=new JComboBox<String>(new String[] {"Not Overlapped", "Overlapped"});
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "PepsinA"});
 	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "None"});
@@ -91,8 +93,22 @@ public class PecanPanel extends JPanel {
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(new LabeledComponent("<p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Parameters", new JLabel()));
 		
-		backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta"));
+		backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta")) {
+			private static final long serialVersionUID=1L;
+
+			@Override
+			public void update(File... filename) {
+				super.update(filename);
+				if (filename!=null&&filename.length>0&&filename[0]!=null) {
+					if (targetFasta.getFile()==null) {
+						targetFasta.update(filename);
+					}
+				}
+			}
+		};
 		options.add(backgroundFasta);
+		targetFasta=new FileChooserPanel(null, "Target", new SimpleFilenameFilter(".fas", ".fasta"));
+		options.add(targetFasta);
 		options.add(new LabeledComponent("Precursor Isolation Windows", overlap));
 		options.add(new LabeledComponent("Enzyme", enzyme));
 		options.add(new LabeledComponent("Fixed", fixed));
@@ -134,6 +150,8 @@ public class PecanPanel extends JPanel {
 				
 				if (backgroundFasta.getFile()==null) {
 					JOptionPane.showMessageDialog(frame, "Please load a background FASTA file first!");
+				} else if (targetFasta.getFile()==null) {
+						JOptionPane.showMessageDialog(frame, "Please load a target FASTA file first!");
 					
 				} else {
 					FileDialog dialog=new FileDialog(frame, "Select a MZML file", FileDialog.LOAD);
@@ -160,6 +178,8 @@ public class PecanPanel extends JPanel {
 
 				if (backgroundFasta.getFile()==null) {
 					JOptionPane.showMessageDialog(frame, "Please load a background FASTA file first!");
+				} else if (targetFasta.getFile()==null) {
+					JOptionPane.showMessageDialog(frame, "Please load a target FASTA file first!");
 					
 				} else if (pecanModel.getRowCount()==0) {
 					JOptionPane.showMessageDialog(frame, "Please queue some MZMLs first!");
@@ -217,13 +237,29 @@ public class PecanPanel extends JPanel {
 		SearchParameters parameters=getParameters();
 		File fastaFile=backgroundFasta.getFile();
 		if (fastaFile==null) return null;
-		return getJob(diaFile, fastaFile, pecanModel, parameters);
+		File targetFile=targetFasta.getFile();
+		if (targetFile==null) return null;
+		return getJob(diaFile, fastaFile, targetFile, pecanModel, parameters);
 	}
 
-	public static PecanJob getJob(File diaFile, File fastaFile, JobProcessor processor, SearchParameters parameters) {
+	public static PecanJob getJob(File diaFile, File fastaFile, File targetFile, JobProcessor processor, SearchParameters parameters) {
 		File outputFile=new File(diaFile.getAbsolutePath()+".pecan.txt");
 		File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
+		
 		ArrayList<FastaEntry> targets=null;
+		if (targetFile!=null&&!targetFile.equals(fastaFile)) {
+			Logger.logLine("Reading targets from ["+targetFile.getName()+"]");
+			targets=new ArrayList<FastaEntry>();
+			
+			ArrayList<FastaEntry> targetProteins=FastaReader.readFasta(targetFile);
+			for (FastaEntry entry : targetProteins) {
+				ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages());
+				for (String peptide : peptides) {
+					FastaEntry pe=entry.getSubEntry(peptide);
+					targets.add(pe);
+				}
+			}
+		}
 		
 		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
 		return new PecanJob(processor, new PecanJobData(Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory));
