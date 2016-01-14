@@ -17,6 +17,7 @@ import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -153,13 +154,13 @@ public class LibraryFile extends SQLFile {
 		}
 	}
 
-	public ArrayList<LibraryEntry> getEntries(double minPrecursorMz, double maxPrecursorMz) throws IOException, SQLException, DataFormatException {
+	public ArrayList<LibraryEntry> getEntries(Range precursorMz) throws IOException, SQLException, DataFormatException {
 		Connection c=getConnection(tempFile);
 		try {
 			Statement s=c.createStatement();
 			try {
 				ResultSet rs=s.executeQuery("select PrecursorMZ, PrecursorCharge, PeptideModSeq, Copies, RetentionTime, Score, PeakCount, MassArray, IntensityArray from entries " +
-						"where PrecursorMz between "+minPrecursorMz+" and "+maxPrecursorMz);
+						"where PrecursorMz between "+precursorMz.getStart()+" and "+precursorMz.getStop());
 
 				ArrayList<LibraryEntry> entry=new ArrayList<LibraryEntry>();
 				while (rs.next()) {

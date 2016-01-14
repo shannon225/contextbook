@@ -20,16 +20,16 @@ import java.util.zip.DataFormatException;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PecanLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
@@ -46,7 +46,7 @@ public class PeptideScoringTaskTest {
 	private static byte PLOTTING_METHOD=FragmentationTraceTask.PLOT_INTENSITIES; // not final to avoid test warnings
 	
 	private static final Range FRAGMENTATION_RANGE=new Range(0f, 2000f);
-	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
+	private static final PecanSearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
 
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		int cores=Runtime.getRuntime().availableProcessors();

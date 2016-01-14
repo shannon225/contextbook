@@ -4,12 +4,12 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PecanLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
@@ -18,7 +18,7 @@ import gnu.trove.map.hash.TDoubleIntHashMap;
 import junit.framework.TestCase;
 
 public class BackgroundGeneratorTest extends TestCase {
-	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50),
+	private static final PecanSearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50),
 			DigestionEnzyme.getEnzyme("trypsin"), 0);
 
 	public void testGenerateBackground() {

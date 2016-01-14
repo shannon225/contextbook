@@ -9,8 +9,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.OverlapDeconvoluter;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -21,9 +21,9 @@ public class MzmlToDIAConverter {
 	public static final String MZML_EXTENSION=".mzml";
 
 	public static void main(String[] args) {
-		HashMap<String, String> paramMap=SearchParameterParser.getDefaultParameters();
+		HashMap<String, String> paramMap=PecanParameterParser.getDefaultParameters();
 		paramMap.put("-deconvoluteOverlappingWindows", "false");
-		SearchParameters parameters=SearchParameterParser.parseParameters(paramMap);
+		SearchParameters parameters=PecanParameterParser.parseParameters(paramMap);
 		
 		Long time=System.currentTimeMillis();
 		File xmlFile=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/121015_BCS_HeLa_6mz_700_800.mzML");

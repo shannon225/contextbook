@@ -2,14 +2,14 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.util.HashMap;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import junit.framework.TestCase;
 
 public class SearchParameterParserTest extends TestCase {
 	public void testDefaultParsing() {
-		HashMap<String, String> input=SearchParameterParser.getDefaultParameters();
-		SearchParameters params=SearchParameterParser.parseParameters(input);
+		HashMap<String, String> input=PecanParameterParser.getDefaultParameters();
+		PecanSearchParameters params=PecanParameterParser.parseParameters(input);
 
 		assertEquals(160.03065030151367, params.getAAConstants().getMass('C'), 0.000001);
 		assertEquals(FragmentationType.YONLY, params.getFragType());
@@ -41,7 +41,7 @@ public class SearchParameterParserTest extends TestCase {
 		map.put("-minEluteTime", "20");
 		map.put("-numberOfReportedPeaks", "3");
 		map.put("-addDecoysToBackground", "true");
-		SearchParameters params=SearchParameterParser.parseParameters(map);
+		PecanSearchParameters params=PecanParameterParser.parseParameters(map);
 		
 		assertEquals(103.009185+3.0, params.getAAConstants().getMass('C'), 0.000001);
 		assertEquals(101.047679+6.0, params.getAAConstants().getMass('T'), 0.000001);

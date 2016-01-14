@@ -9,7 +9,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
@@ -26,14 +25,14 @@ import gnu.trove.set.hash.TIntHashSet;
 public class PecanOneScoringTask extends AbstractPecanScoringTask {
 	
 	public PecanOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint> background, PrecursorScanMap precursors,
-			int scanAveragingWindow, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
+			int scanAveragingWindow, BlockingQueue<PeptideScoringResult> resultsQueue, PecanSearchParameters parameters) {
 		super(scorer, entries, stripes, background, precursors, scanAveragingWindow, resultsQueue, parameters);
 	}
 
 	@Override
 	protected Nothing process() {
 		for (LibraryEntry entry : super.entries) {
-			int requiredNumAboveThreshold=(int)(parameters.getBeta()*entry.getPeptideSeq().length());
+			int requiredNumAboveThreshold=(int)(getPecanSearchParameters().getBeta()*entry.getPeptideSeq().length());
 			
 			int scanAveragingHalfWindow=scanAveragingWindow/2;
 			
@@ -98,7 +97,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 			float[] fragmentDeltaMassVariance=new float[sumRawScores.length];
 			for (int i=0; i<numAboveThresholdMatches.length; i++) {
 				//float threshold=Math.max(Float.MIN_VALUE, sumRawScores[i]/entry.getMassArray().length);
-				float threshold=Math.max(Float.MIN_VALUE, sumRawScores[i]/(float)Math.pow(entry.getMassArray().length, parameters.getAlpha()));
+				float threshold=Math.max(Float.MIN_VALUE, sumRawScores[i]/(float)Math.pow(entry.getMassArray().length, getPecanSearchParameters().getAlpha()));
 				for (int j=0; j<sumFragmentTraces.length; j++) {
 					if (sumFragmentTraces[j][i]>=threshold) {
 						numAboveThresholdMatches[i]++;
@@ -192,7 +191,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 							new float[] {fragmentDeltaMassAverage[index], fragmentDeltaMassVariance[index], duration, maxIDP, midIDP, precursorPPMVariance, bgsubScores[index], sumZScores[index]/scanAveragingWindow, rank});
 					result.addStripe(goodStripes.get(i).x/scanAveragingWindow, completeAuxArray, medianStripe);
 					
-					if (identifiedPeaks>parameters.getNumberOfReportedPeaks()) {
+					if (identifiedPeaks>getPecanSearchParameters().getNumberOfReportedPeaks()) {
 						// keep N+1 peaks
 						break;
 					}

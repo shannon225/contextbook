@@ -1,13 +1,14 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import junit.framework.TestCase;
 
 public class MassConstantsTest extends TestCase {
-	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
+	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
 	
 	public void testGetMass() {
 		String sequence="PEPTIDER";

@@ -9,7 +9,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
@@ -18,10 +17,10 @@ import gnu.trove.map.hash.TDoubleObjectHashMap;
 
 public class PecanOneScoringFactory implements PecanScoringFactory {
 	public static final String version="0.1";
-	private final SearchParameters parameters;
+	private final PecanSearchParameters parameters;
 	private final File outputFile;
 
-	public PecanOneScoringFactory(SearchParameters parameters, File outputFile) {
+	public PecanOneScoringFactory(PecanSearchParameters parameters, File outputFile) {
 		this.parameters=parameters;
 		this.outputFile=outputFile;
 	}
@@ -31,7 +30,7 @@ public class PecanOneScoringFactory implements PecanScoringFactory {
 	}
 	
 	@Override
-	public SearchParameters getParameters() {
+	public PecanSearchParameters getParameters() {
 		return parameters;
 	}
 	

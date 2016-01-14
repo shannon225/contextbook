@@ -3,14 +3,16 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 import java.util.Arrays;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import gnu.trove.map.hash.TDoubleIntHashMap;
 import junit.framework.TestCase;
 
 public class FragmentationModelTest extends TestCase {
-	private static final SearchParameters PARAMETERS=new SearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50),
+	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50),
 			DigestionEnzyme.getEnzyme("trypsin"));
 	
 	public void testGetModifiedSequence() {

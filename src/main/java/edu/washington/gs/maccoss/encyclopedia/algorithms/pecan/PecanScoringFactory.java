@@ -8,7 +8,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
@@ -17,7 +16,7 @@ import gnu.trove.map.hash.TDoubleObjectHashMap;
 
 public interface PecanScoringFactory {
 	public String getVersion();
-	public SearchParameters getParameters();
+	public PecanSearchParameters getParameters();
 	public AbstractPecanFragmentationModel getFragmentationModel(FastaEntry peptide, AminoAcidConstants aaConstants);
 	public PSMScorer getBackgroundScorer();
 	public PSMScorer getPecanScorer();

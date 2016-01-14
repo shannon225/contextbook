@@ -11,15 +11,16 @@ import com.google.common.base.Optional;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanFeatureReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
@@ -30,7 +31,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicat
 
 public class PecanToBLIB {
 	public static void main(String[] args) {
-		SearchParameters parameters=SearchParameterParser.parseParameters(SearchParameterParser.getDefaultParameters());
+		PecanSearchParameters parameters=PecanParameterParser.parseParameters(PecanParameterParser.getDefaultParameters());
 		File fastaFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/ecoli-190209-contam_correctNL.fasta");
 		File blibFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/ecoli.blib");
 		ArrayList<FastaEntry> targets=null;
@@ -49,7 +50,7 @@ public class PecanToBLIB {
 		convert(new EmptyProgressIndicator(), jobs, blibFile);
 	}
 
-	static PecanJobData getData(SearchParameters parameters, File fastaFile, ArrayList<FastaEntry> targets, String dia) {
+	static PecanJobData getData(PecanSearchParameters parameters, File fastaFile, ArrayList<FastaEntry> targets, String dia) {
 		File diaFile1=new File(dia);
 		File outputFile1=new File(diaFile1.getAbsolutePath()+".pecan.txt");
 		File featureFile1=new File(outputFile1.getAbsolutePath()+".features.txt");

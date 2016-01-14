@@ -29,19 +29,19 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.AbstractPecanFragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PecanLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
@@ -76,7 +76,7 @@ public class Pecanpie {
 			Logger.logLine("\t-t\ttarget FASTA file (default: background FASTA file)");
 			Logger.logLine("\t-o\toutput report file (default: [input file].pecan.txt)");
 			
-			TreeMap<String, String> defaults=new TreeMap<String, String>(SearchParameterParser.getDefaultParameters());
+			TreeMap<String, String> defaults=new TreeMap<String, String>(PecanParameterParser.getDefaultParameters());
 			for (Entry<String, String> entry : defaults.entrySet()) {
 				Logger.logLine("\t"+entry.getKey()+"\t(default: "+entry.getValue()+")");
 			}
@@ -104,7 +104,7 @@ public class Pecanpie {
 
 			File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
 
-			SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
+			PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 			PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
 			Logger.logLine("Pecanpie version "+factory.getVersion());
 
@@ -138,7 +138,7 @@ public class Pecanpie {
 		long startTime=System.currentTimeMillis();
 		PSMScorer backgroundScorer=taskFactory.getBackgroundScorer();
 		PSMScorer pecanScorer=taskFactory.getPecanScorer();
-		SearchParameters parameters=taskFactory.getParameters();
+		PecanSearchParameters parameters=taskFactory.getParameters();
 		
 		int cores=Runtime.getRuntime().availableProcessors();
 
@@ -356,7 +356,7 @@ public class Pecanpie {
 		progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 	}
 
-	public static boolean arePeptidesInRange(HashSet<FastaEntry> targets, Range range, SearchParameters parameters) {
+	public static boolean arePeptidesInRange(HashSet<FastaEntry> targets, Range range, PecanSearchParameters parameters) {
 		// first check to see if we need to process this stripe
 		boolean hasPeptides=false;
 		outer:for (FastaEntry peptide : targets) {

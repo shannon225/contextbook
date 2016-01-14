@@ -2,9 +2,9 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;

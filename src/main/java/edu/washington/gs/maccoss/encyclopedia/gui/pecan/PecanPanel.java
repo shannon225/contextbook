@@ -33,9 +33,9 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
@@ -234,7 +234,7 @@ public class PecanPanel extends JPanel {
 	}
 	
 	public PecanJob getJob(File diaFile) {
-		SearchParameters parameters=getParameters();
+		PecanSearchParameters parameters=getParameters();
 		File fastaFile=backgroundFasta.getFile();
 		if (fastaFile==null) return null;
 		File targetFile=targetFasta.getFile();
@@ -242,7 +242,7 @@ public class PecanPanel extends JPanel {
 		return getJob(diaFile, fastaFile, targetFile, pecanModel, parameters);
 	}
 
-	public static PecanJob getJob(File diaFile, File fastaFile, File targetFile, JobProcessor processor, SearchParameters parameters) {
+	public static PecanJob getJob(File diaFile, File fastaFile, File targetFile, JobProcessor processor, PecanSearchParameters parameters) {
 		File outputFile=new File(diaFile.getAbsolutePath()+".pecan.txt");
 		File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
 		
@@ -265,7 +265,7 @@ public class PecanPanel extends JPanel {
 		return new PecanJob(processor, new PecanJobData(Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory));
 	}
 
-	private SearchParameters getParameters() {
+	private PecanSearchParameters getParameters() {
 		boolean deconvoluteOverlappingWindows="Overlapped".equalsIgnoreCase((String)overlap.getSelectedItem());
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem());
@@ -275,7 +275,7 @@ public class PecanPanel extends JPanel {
 		byte minChargeValue=((Integer)minCharge.getValue()).byteValue();
 		byte maxChargeValue=((Integer)maxCharge.getValue()).byteValue();
 		byte maxMissedCleavageValue=((Integer)maxMissedCleavage.getValue()).byteValue();
-		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme,
+		PecanSearchParameters parameters=new PecanSearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme,
 				maxMissedCleavageValue, minChargeValue, maxChargeValue, deconvoluteOverlappingWindows);
 		return parameters;
 	}

@@ -1,23 +1,20 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import gnu.trove.map.hash.TCharFloatHashMap;
 
-public class SearchParameterParser {
+public class PecanParameterParser {
 	public static HashMap<String,String> getDefaultParameters() {
 		HashMap<String, String> map=new HashMap<String, String>();
 		map.put("-fixed", "C=57.0214635");
@@ -25,7 +22,18 @@ public class SearchParameterParser {
 		map.put("-ptol", "10");
 		map.put("-ftol", "10");
 		map.put("-enzyme", "trypsin");
+		map.put("-minLength", "5");
+		map.put("-maxLength", "100");
+		map.put("-maxMissedCleavage", "1");
+		map.put("-minCharge", "2");
+		map.put("-maxCharge", "3");
+		map.put("-minEluteTime", "12");
+		map.put("-numberOfReportedPeaks", "1");
+		map.put("-addDecoysToBackground", "false");
+		map.put("-dontRunDecoys", "false");
 		map.put("-percolatorThreshold", "0.01");
+		map.put("-alpha", "1.8");
+		map.put("-beta", "0.4");
 		map.put("-percolatorLocation", "internal");
 		map.put("-deconvoluteOverlappingWindows", "false");
 		return map;
@@ -36,18 +44,29 @@ public class SearchParameterParser {
 	}
 	
 	public static SearchParameters parseParameters(File defaultParameters, HashMap<String, String> parameters) {
-		HashMap<String, String> map=readFile(defaultParameters);
+		HashMap<String, String> map=SearchParameterParser.readFile(defaultParameters);
 		map.putAll(parameters);
 		return parseParameters(map);
 	}
 	
-	public static SearchParameters parseParameters(HashMap<String, String> parameters) {
+	public static PecanSearchParameters parseParameters(HashMap<String, String> parameters) {
 		final AminoAcidConstants aaConstants;
 		final FragmentationType fragType;
 		final MassTolerance precursorTolerance;
 		final MassTolerance fragmentTolerance;
 		final DigestionEnzyme enzyme;
+		final int minPeptideLength;
+		final int maxPeptideLength;
+		final int maxMissedCleavages;
+		final byte minCharge;
+		final byte maxCharge;
+		final int minEluteTime;
+		final int numberOfReportedPeaks;
+		final boolean addDecoysToBackgound;
+		final boolean dontRunDecoys;
 		final float percolatorThreshold;
+		final float alpha;
+		final float beta;
 		final boolean deconvoluteOverlappingWindows;
 
 		TCharFloatHashMap fixedMods=new TCharFloatHashMap();
@@ -111,8 +130,19 @@ public class SearchParameterParser {
 			enzyme=DigestionEnzyme.getEnzyme(value);
 		}
 
-		percolatorThreshold=getFloat("-percolatorThreshold", parameters, 0.01f);
-		deconvoluteOverlappingWindows=getBoolean("-deconvoluteOverlappingWindows", parameters, false);
+		minPeptideLength=SearchParameterParser.getInteger("-minLength", parameters, 5);
+		maxPeptideLength=SearchParameterParser.getInteger("-maxLength", parameters, 100);
+		maxMissedCleavages=SearchParameterParser.getInteger("-maxMissedCleavage", parameters, 1);
+		minCharge=(byte)SearchParameterParser.getInteger("-minCharge", parameters, 2);
+		maxCharge=(byte)SearchParameterParser.getInteger("-maxCharge", parameters, 3);
+		minEluteTime=SearchParameterParser.getInteger("-minEluteTime", parameters, 12);
+		numberOfReportedPeaks=SearchParameterParser.getInteger("-numberOfReportedPeaks", parameters, 1);
+		addDecoysToBackgound=SearchParameterParser.getBoolean("-addDecoysToBackground", parameters, false);
+		dontRunDecoys=SearchParameterParser.getBoolean("-dontRunDecoys", parameters, false);
+		percolatorThreshold=SearchParameterParser.getFloat("-percolatorThreshold", parameters, 0.01f);
+		alpha=SearchParameterParser.getFloat("-alpha", parameters, 1.8f);
+		beta=SearchParameterParser.getFloat("-beta", parameters, 0.4f);
+		deconvoluteOverlappingWindows=SearchParameterParser.getBoolean("-deconvoluteOverlappingWindows", parameters, false);
 
 		value=parameters.get("-percolatorLocation");
 		File percolator=null;
@@ -126,82 +156,6 @@ public class SearchParameterParser {
 			}
 		}
 		
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorThreshold, percolator, deconvoluteOverlappingWindows);
-	}
-
-	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {
-		String value=parameters.get(parameterName);
-		if (value==null) {
-			return defaultValue;
-		}
-		if ("false".equalsIgnoreCase(value)) return false;
-		if ("true".equalsIgnoreCase(value)) return true;
-		if ("f".equalsIgnoreCase(value)) return false;
-		if ("t".equalsIgnoreCase(value)) return true;
-		throw new EncyclopediaException("Error parsing "+parameterName+" from ["+value+"]");
-	}
-
-	public static int getInteger(String parameterName, HashMap<String, String> parameters, int defaultValue) {
-		String value=parameters.get(parameterName);
-		if (value==null) {
-			return defaultValue;
-		}
-		try {
-			return Integer.parseInt(value);
-		} catch (NumberFormatException nfe) {
-			throw new EncyclopediaException("Error parsing "+parameterName+" from ["+value+"]", nfe);
-		}
-	}
-
-	public static float getFloat(String parameterName, HashMap<String, String> parameters, float defaultValue) {
-		String value=parameters.get(parameterName);
-		if (value==null) {
-			return defaultValue;
-		}
-		try {
-			return Float.parseFloat(value);
-		} catch (NumberFormatException nfe) {
-			throw new EncyclopediaException("Error parsing "+parameterName+" from ["+value+"]", nfe);
-		}
-	}
-	
-	public static Pair<String, String> parseEntry(String eachline) {
-		String first=eachline.substring(0, eachline.indexOf('=')-1);
-		String second=eachline.substring(eachline.indexOf('=')+1);
-		Pair<String, String> entry=new Pair<String, String>(first, second);
-		return entry;
-	}
-	
-	public static HashMap<String, String> readFile(File f) {
-		try {
-			BufferedReader in=new BufferedReader(new FileReader(f));
-
-			HashMap<String, String> map=new HashMap<String, String>();
-			try {
-				String eachline;
-				while ((eachline=in.readLine())!=null) {
-					if (eachline.trim().length()==0) {
-						continue;
-					}
-					Pair<String, String> entry=parseEntry(eachline);
-					
-					map.put(entry.x, entry.y);
-				}
-				return map;
-
-			} catch (IOException ioe) {
-				throw new EncyclopediaException("Error parsing parameters from ["+f.getAbsolutePath()+"]");
-			} finally {
-				if (in!=null) {
-					try {
-						in.close();
-					} catch (IOException ioe) {
-						ioe.printStackTrace();
-					}
-				}
-			}
-		} catch (IOException ioe) {
-			throw new EncyclopediaException("Error parsing parameters from ["+f.getAbsolutePath()+"]");
-		}
+		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolator, deconvoluteOverlappingWindows);
 	}
 }

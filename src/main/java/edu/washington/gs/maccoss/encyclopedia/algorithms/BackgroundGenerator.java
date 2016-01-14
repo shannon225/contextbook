@@ -5,8 +5,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
@@ -29,7 +29,7 @@ public class BackgroundGenerator {
 	 */
 
 	public static Triplet<TDoubleIntHashMap[], ArrayList<String>[], HashSet<String>[]> generateBackground(double[] binBoundaries, boolean[] useBin, Collection<FastaEntry> targets,
-			HashSet<String> backgroundProteome, SearchParameters parameters) {
+			HashSet<String> backgroundProteome, PecanSearchParameters parameters) {
 		@SuppressWarnings("unchecked")
 		HashSet<String>[] backgroundDecoys=new HashSet[binBoundaries.length];
 		for (int i=0; i<backgroundDecoys.length; i++) {
@@ -68,7 +68,7 @@ public class BackgroundGenerator {
 	}
 
 	public static Pair<TDoubleIntHashMap[], ArrayList<String>[]> generateBackground(double[] binBoundaries, boolean[] useBins, Collection<String> peptides, HashSet<String>[] backgroundDecoys,
-			SearchParameters params) {
+			PecanSearchParameters params) {
 		TDoubleIntHashMap[] binCounters=new TDoubleIntHashMap[binBoundaries.length-1];
 		@SuppressWarnings("unchecked")
 		HashSet<String>[] allPeptides=new HashSet[binBoundaries.length-1];
@@ -139,7 +139,7 @@ public class BackgroundGenerator {
 	 * @param fasta
 	 * @param params
 	 */
-	public static Pair<TDoubleIntHashMap[], ArrayList<String>[]> generateBackground(double[] binBoundaries, Collection<FastaEntry> entries, boolean digest, SearchParameters params) {
+	public static Pair<TDoubleIntHashMap[], ArrayList<String>[]> generateBackground(double[] binBoundaries, Collection<FastaEntry> entries, boolean digest, PecanSearchParameters params) {
 		@SuppressWarnings("unchecked")
 		HashSet<String>[] backgroundDecoys=new HashSet[binBoundaries.length];
 		boolean[] useBins=new boolean[binBoundaries.length];

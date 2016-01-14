@@ -1,4 +1,6 @@
-package edu.washington.gs.maccoss.encyclopedia.datastructures;
+package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
+
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 
 //@Immutable
 public class PecanLibraryEntry extends LibraryEntry {
