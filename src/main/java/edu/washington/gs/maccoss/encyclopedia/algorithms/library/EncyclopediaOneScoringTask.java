@@ -21,7 +21,11 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 
 	@Override
 	protected Nothing process() {
-		// TODO Auto-generated method stub
+		for (LibraryEntry entry : super.entries) {
+			for (int i=0; i<super.stripes.size(); i++) {
+				Stripe stripe=super.stripes.get(i);
+			}
+		}
 		return null;
 	}
 
