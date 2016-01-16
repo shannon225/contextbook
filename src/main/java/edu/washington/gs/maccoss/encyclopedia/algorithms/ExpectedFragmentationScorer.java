@@ -3,20 +3,19 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 import java.util.ArrayList;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import gnu.trove.list.array.TFloatArrayList;
 
-public class ExpectedFragmentationScorer implements AuxillaryPSMScorer {
+public class ExpectedFragmentationScorer extends AuxillaryPSMScorer {
 	private final int startIonIndex=0; //1=start with b2, y2, etc
-	private final SearchParameters parameters;
 	
 
 	public ExpectedFragmentationScorer(SearchParameters parameters) {
-		this.parameters=parameters;
+		super(parameters);
 	}
 
 	@Override

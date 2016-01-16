@@ -1,24 +1,17 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import gnu.trove.list.array.TFloatArrayList;
 
 //@Immutable
-public class PecanAuxillaryScorer implements AuxillaryPSMScorer {
-	private final SearchParameters parameters;
-	private final float maxPPMError;
+public class PecanAuxillaryScorer extends AuxillaryPSMScorer {
 
 	public PecanAuxillaryScorer(SearchParameters parameters) {
-		this.parameters=parameters;
-		maxPPMError=(float)parameters.getPrecursorTolerance().getPpmTolerance();
+		super(parameters);
 	}
 
 	@Override
@@ -95,65 +88,7 @@ public class PecanAuxillaryScorer implements AuxillaryPSMScorer {
 
 	@Override
 	public float[] getMissingDataScores(LibraryEntry entry) {
-		return new float[] {0, 0, 0, 0, 0, maxPPMError, maxPPMError, 0};
-	}
-
-
-	public float[] getPrecursorScores(LibraryEntry entry, float spectrumRT, PrecursorScanMap precursors) {
-		byte charge=entry.getPrecursorCharge();
-		Peak[] precursorPacket=precursors.getIsotopePacket(entry.getPrecursorMZ(), spectrumRT, charge, parameters.getPrecursorTolerance());
-		Pair<double[], float[]> pair=Peak.toArrays(precursorPacket);
-		double[] masses=pair.x;
-		float[] intensities=pair.y;
-		
-		// weighted average AbsPPM
-		float averagePPM=0.0f; // FINAL SCORE
-		float averageAbsPPM=0.0f; // FINAL SCORE
-		int peaksUsed=0;
-		// start at 1 to drop "-1" isotope
-		for (int i = 1; i < masses.length; i++) {
-			byte isotope=(byte)(i-1);
-			double predicted=entry.getPrecursorMZ()+(isotope*MassConstants.neutronMass/charge);
-			
-			if (intensities[i]>0) {
-				double delta=predicted-masses[i];
-				float ppm=(float)((delta/entry.getPrecursorMZ())*1000000.0);
-				averagePPM+=ppm;
-				averageAbsPPM+=Math.abs(ppm);
-				peaksUsed++;
-			}
-		}
-		if (peaksUsed>0) {
-			averagePPM=averagePPM/peaksUsed;
-			averageAbsPPM=averagePPM/peaksUsed;
-		} else {
-			averagePPM=maxPPMError;
-			averageAbsPPM=maxPPMError;
-		}
-		
-		// precursor idotp
-		intensities=IsotopicDistributionCalculator.normalizeToMax(intensities);
-		float[] predicted=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
-		float isotopeDotProduct=0.0f; // FINAL SCORE
-		float euclideanDistanceIntensities=0.0f;
-		float euclideanDistancePredicted=0.0f;
-		for (int i = 0; i < PrecursorScanMap.isotopes.length; i++) {
-			byte isotope=PrecursorScanMap.isotopes[i];
-			if (isotope>=0) {
-				// intensities[i] contains an extra -1 isotope
-				isotopeDotProduct+=intensities[i]*predicted[isotope];
-				euclideanDistanceIntensities+=intensities[i]*intensities[i];
-				euclideanDistancePredicted+=predicted[isotope]*predicted[isotope];
-			}
-		}
-		if (euclideanDistanceIntensities>0.0f&&euclideanDistancePredicted>0.0f) {
-			euclideanDistanceIntensities=(float)Math.sqrt(euclideanDistanceIntensities);
-			euclideanDistancePredicted=(float)Math.sqrt(euclideanDistancePredicted);
-			isotopeDotProduct=isotopeDotProduct/(euclideanDistanceIntensities*euclideanDistancePredicted);
-		} else {
-			isotopeDotProduct=0.0f;
-		}
-		
-		return new float[] {averageAbsPPM, isotopeDotProduct, averagePPM};
+		float maxPrePPMError=(float)parameters.getPrecursorTolerance().getPpmTolerance();
+		return new float[] {0, 0, 0, 0, 0, maxPrePPMError, maxPrePPMError, 0};
 	}
 }

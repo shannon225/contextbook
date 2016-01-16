@@ -5,8 +5,8 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
@@ -41,13 +41,12 @@ public class PecanOneFragmentationModel extends AbstractPecanFragmentationModel 
 			}
 			double[] matches=params.getFragmentTolerance().getMatches(sortedBinCounterKeys, ions[i]);
 			
-			int total=0;
+			int total=1;
 			if (matches.length>0) {
 				for (int j=0; j<matches.length; j++) {
 					total+=binCounter.get(matches[j]);
 				}
 			}
-			if (total==0) total=1; // TODO not quite adding one pseudocount (which would probably be more robust)
 			
 			float score=100.0f/total;
 			peakMap.put(ions[i], score);

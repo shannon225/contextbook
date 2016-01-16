@@ -195,7 +195,7 @@ public class PecanPanel extends JPanel {
 							blibFile=new File(blibFile.getParentFile(), fileName+".blib");
 
 							if (blibFile.exists()) {
-								// FIXME ask if you want to overwrite this
+								// TODO ask if you want to overwrite this
 								// updated file location!
 							}
 						}

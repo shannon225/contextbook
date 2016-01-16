@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -24,8 +25,7 @@ public class EncyclopediaOneScoringFactory implements LibraryScoringFactory {
 
 	@Override
 	public PSMScorer getLibraryScorer() {
-		// FIXME Auto-generated method stub
-		return null;
+		return new EncyclopediaOneScorer(parameters); 
 	}
 
 	@Override

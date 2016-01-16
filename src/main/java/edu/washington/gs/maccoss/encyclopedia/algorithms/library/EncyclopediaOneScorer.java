@@ -1,0 +1,77 @@
+package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
+
+import java.util.ArrayList;
+
+import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
+
+public class EncyclopediaOneScorer implements PSMScorer {
+	private final SearchParameters parameters;
+	private final EncyclopediaAuxillaryPSMScorer auxScorer;
+
+	public EncyclopediaOneScorer(SearchParameters parameters) {
+		this.parameters=parameters;
+		auxScorer=new EncyclopediaAuxillaryPSMScorer(parameters);
+	}
+	
+	@Override
+	public float[] auxScore(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
+		return auxScorer.score(entry, spectrum, precursors);
+	}
+	@Override
+	public String[] getAuxScoreNames(LibraryEntry entry) {
+		return auxScorer.getScoreNames(entry);
+	}
+
+	@Override
+	public float score(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
+		return PeakScores.sumScores(getIndividualPeakScores(entry, spectrum, true)); // dot product
+	}
+
+	@Override
+	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize) {
+		MassTolerance tolerance=parameters.getFragmentTolerance();
+		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+		double[] ions=model.getPrimaryIons(parameters.getFragType(), entry.getPrecursorCharge());
+		
+		double[] predictedMasses=entry.getMassArray();
+		float[] predictedIntensities=entry.getIntensityArray();
+		
+		double[] acquiredMasses=spectrum.getMassArray();
+		float[] acquiredIntensities=spectrum.getIntensityArray();
+		
+		ArrayList<PeakScores> scoredPeaks=new ArrayList<PeakScores>();
+		for (double target : ions) {
+			float predictedIntensity=tolerance.getIntegratedIntensity(predictedMasses, predictedIntensities, target);
+			
+			if (predictedIntensity>0) {
+				int[] indicies=tolerance.getIndicies(acquiredMasses, target);
+				float intensity=0.0f;
+				float bestPeakIntensity=0.0f;
+				float deltaMass=0.0f;
+				for (int j=0; j<indicies.length; j++) {
+					intensity+=acquiredIntensities[indicies[j]];
+					
+					if (acquiredIntensities[indicies[j]]>bestPeakIntensity) {
+						bestPeakIntensity=acquiredIntensities[indicies[j]];
+						deltaMass=(float)((target-predictedMasses[indicies[j]])*1000000.0/target);
+					}
+				}
+				float peakScore=predictedIntensity*intensity;
+				if (intensity>0.0f) {
+					scoredPeaks.add(new PeakScores(peakScore, target, deltaMass));
+				} else {
+					scoredPeaks.add(null);
+				}
+			}
+		}
+		return scoredPeaks.toArray(new PeakScores[scoredPeaks.size()]);
+	}
+
+}

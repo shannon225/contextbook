@@ -109,4 +109,18 @@ public class MassTolerance {
 		}
 		return matches;
 	}
+	
+	/**
+	 * @param peaks -- assumes sorted array of peaks
+	 * @param target
+	 * @return all matching masses in range
+	 */
+	public float getIntegratedIntensity(double[] masses, float[] intensities, double target) {
+		int[] indicies=getIndicies(masses, target);
+		float intensity=0.0f;
+		for (int i=0; i<indicies.length; i++) {
+			intensity+=intensities[indicies[i]];
+		}
+		return intensity;
+	}
 }

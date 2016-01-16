@@ -10,12 +10,20 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
+import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 
-public interface LibraryScoringFactory {
-	public String getVersion();
-	public SearchParameters getParameters();
-	public PSMScorer getLibraryScorer();
-	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue);
-	public PeptideScoringResultsConsumer getResultsConsumer(BlockingQueue<PeptideScoringResult> resultsQueue);
+public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
+
+	public EncyclopediaOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
+			SearchParameters parameters) {
+		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
+	}
+
+	@Override
+	protected Nothing process() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	
 }

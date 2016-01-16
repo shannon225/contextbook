@@ -156,7 +156,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 						averageAuxScores[j]=averageAuxScores[j]/scanAveragingWindow;
 					}
 
-					// FIXME indexing these is hokey, and should be more firmly rooted in the scoring system
+					// TODO indexing these is hokey, and should be more firmly rooted in the scoring system
 					//float averageIDP=averageAuxScores[averageAuxScores.length-1];
 
 					float maxIDP=0.0f; // IDP is the last score of the PecanAuxillaryScorer
@@ -164,7 +164,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 					float midIDP=auxScores[midIndex][auxScores[midIndex].length-1];
 					float precursorPPMVariance=0.0f; // PPM is the second to last score of PecanAuxillaryScorer
 					for (int scanIndex=0; scanIndex<auxScores.length; scanIndex++) {
-						// FIXME indexing these is hokey, and should be more firmly rooted in the scoring system
+						// TODO indexing these is hokey, and should be more firmly rooted in the scoring system
 						int idpIndex=auxScores[scanIndex].length-1;
 						int ppmIndex=auxScores[scanIndex].length-2;
 						
