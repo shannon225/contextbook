@@ -83,7 +83,7 @@ public abstract class AbstractLibraryScoringTask extends ThreadableTask<Nothing>
 		return sumScores;
 	}
 	
-	protected float[] movingCenteredSum(float[] scores, int scanAveragingWindow) {
+	protected float[] movingCenteredAverage(float[] scores, int scanAveragingWindow) {
 		// moving sum on background subtracted scores, this approach uses less data for the first and last scanAveragingMargin scans
 		int scanAveragingMargin=(scanAveragingWindow-1)/2;
 		

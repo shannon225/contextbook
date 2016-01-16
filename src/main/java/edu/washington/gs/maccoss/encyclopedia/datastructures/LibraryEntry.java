@@ -21,7 +21,6 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 	private final double[] massArray;
 	private final float[] intensityArray;
 
-
 	public LibraryEntry(double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray) {
 		this(1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray);
 	}

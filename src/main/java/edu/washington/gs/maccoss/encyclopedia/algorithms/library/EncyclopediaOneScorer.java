@@ -13,11 +13,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 
 public class EncyclopediaOneScorer implements PSMScorer {
 	private final SearchParameters parameters;
-	private final EncyclopediaAuxillaryPSMScorer auxScorer;
+	private final EncyclopediaOneAuxillaryPSMScorer auxScorer;
 
 	public EncyclopediaOneScorer(SearchParameters parameters) {
 		this.parameters=parameters;
-		auxScorer=new EncyclopediaAuxillaryPSMScorer(parameters);
+		auxScorer=new EncyclopediaOneAuxillaryPSMScorer(parameters);
 	}
 	
 	@Override

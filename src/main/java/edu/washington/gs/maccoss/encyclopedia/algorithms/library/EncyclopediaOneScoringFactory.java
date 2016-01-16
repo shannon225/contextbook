@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVConsumer;
 
 public class EncyclopediaOneScoringFactory implements LibraryScoringFactory {
 	public static final String version="0.1";
@@ -30,15 +31,13 @@ public class EncyclopediaOneScoringFactory implements LibraryScoringFactory {
 
 	@Override
 	public PeptideScoringResultsConsumer getResultsConsumer(BlockingQueue<PeptideScoringResult> resultsQueue) {
-		// FIXME Auto-generated method stub
-		return null;
+		return new ScoringResultsToTSVConsumer(outputFile, getLibraryScorer(), resultsQueue, 1);
 	}
 
 	@Override
 	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors,
 			BlockingQueue<PeptideScoringResult> resultsQueue) {
-		// FIXME Auto-generated method stub
-		return null;
+		return new EncyclopediaOneScoringTask(scorer, entries, stripes, precursors, resultsQueue, parameters);
 	}
 
 	@Override

@@ -10,9 +10,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
 
-public class EncyclopediaAuxillaryPSMScorer extends AuxillaryPSMScorer {
+public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 
-	public EncyclopediaAuxillaryPSMScorer(SearchParameters parameters) {
+	public EncyclopediaOneAuxillaryPSMScorer(SearchParameters parameters) {
 		super(parameters);
 	}
 	
@@ -35,6 +35,7 @@ public class EncyclopediaAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		float[] acquiredIntensities=spectrum.getIntensityArray();
 		
 		int numberOfMatchingPeaks=0;
+		float dotProduct=0.0f;
 		TFloatArrayList predictedTargetIntensities=new TFloatArrayList();
 		TFloatArrayList actualTargetIntensities=new TFloatArrayList();
 		TFloatArrayList fragmentDeltaMasses=new TFloatArrayList();
@@ -58,6 +59,7 @@ public class EncyclopediaAuxillaryPSMScorer extends AuxillaryPSMScorer {
 				if (intensity>0) {
 					numberOfMatchingPeaks++;
 				}
+				dotProduct+=predictedIntensity*intensity;
 				predictedTargetIntensities.add(predictedIntensity);
 				actualTargetIntensities.add(intensity);
 				fragmentDeltaMasses.add(deltaMass);
@@ -82,12 +84,12 @@ public class EncyclopediaAuxillaryPSMScorer extends AuxillaryPSMScorer {
 			sumOfSquaredErrors+=delta*delta;
 		}
 		
-		return new float[] {sumOfSquaredErrors, numberOfMatchingPeaks, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
+		return new float[] {dotProduct, sumOfSquaredErrors, numberOfMatchingPeaks, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
 	}
 
 	@Override
 	public String[] getScoreNames(LibraryEntry entry) {
-		return new String[] {"sumOfSquaredErrors", "numberOfMatchingPeaks", "averageAbsFragDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsPPM", "averagePPM"};
+		return new String[] {"dotProduct", "sumOfSquaredErrors", "numberOfMatchingPeaks", "averageAbsFragDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsPPM", "averagePPM"};
 	}
 	
 	@Override
