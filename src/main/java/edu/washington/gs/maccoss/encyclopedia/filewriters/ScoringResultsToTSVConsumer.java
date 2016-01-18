@@ -62,7 +62,7 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 						writer.print(name);
 						writer.print('\t');
 					}
-					writer.print("pepLength\tcharge2\tcharge3\tprecursorMz\tsequence\tannotation");
+					writer.print("pepLength\tcharge2\tcharge3\tprecursorMz\tRTinMin\tsequence\tannotation");
 					// Percolator assumes linux line endings on Mac!
 					switch (os) {
 						case MAC:
@@ -115,6 +115,7 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 						writer.print("\t"+(peptide.getPrecursorCharge()==2?1:0));
 						writer.print("\t"+(peptide.getPrecursorCharge()==3?1:0));
 						writer.print("\t"+peptide.getPrecursorMZ());
+						writer.print("\t"+stripe.getScanStartTime()/60f);
 
 						String sequence="-."+peptide.getPeptideSeq()+".-";
 						String annotation=stripe.getSpectrumName();
