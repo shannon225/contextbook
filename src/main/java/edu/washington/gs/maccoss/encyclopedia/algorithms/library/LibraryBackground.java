@@ -9,7 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 
 public class LibraryBackground {
-	private final int[] background=new int[2000];
+	private final int[] background=new int[4000];
 	private final int total;
 	
 	public static void main(String[] args) throws Exception {
@@ -43,6 +43,7 @@ public class LibraryBackground {
 	
 	public float getFraction(double mass) {
 		int index=(int)mass; // truncate
-		return (total/(float)background.length)/(float)background[index];
+		int count=index>=background.length?1:background[index];
+		return (total/(float)background.length)/(float)count;
 	}
 }

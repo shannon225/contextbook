@@ -25,4 +25,26 @@ public class Log {
 		}
 		return r;
 	}
+	
+	private static final float[] logInts=getLogInts(1000); 
+	private static float[] getLogInts(int length) {
+		float[] logs=new float[length];
+		for (int i=0; i<logs.length; i++) {
+			logs[i]=log10(i+1.0f);
+		}
+		return logs;
+	}
+	
+	/**
+	 * an approximation
+	 * @param value
+	 * @return
+	 */
+	public static float logFactorial(int value) {
+		float sum=0.0f;
+		for (int i=0; i<value; i++) {
+			sum+=logInts[i];
+		}
+		return sum;
+	}
 }

@@ -136,7 +136,9 @@ public class Encyclopedia {
 		for (Range range : stripefile.getRanges().keySet()) {
 			boundaries.add(range.getStart());
 			boundaries.add(range.getStop());
-			ranges.add(range);
+			if (!parameters.useTargetWindowCenter()||range.contains(parameters.getTargetWindowCenter())) {
+				ranges.add(range);
+			}
 		}
 		Collections.sort(ranges);
 		

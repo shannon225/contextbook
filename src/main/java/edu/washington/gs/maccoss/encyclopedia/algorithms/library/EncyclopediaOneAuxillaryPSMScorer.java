@@ -8,6 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -112,8 +113,15 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 			sumOfSquaredErrors+=deltaSquared;
 			weightedSumOfSquaredErrors+=deltaSquared*background.getFraction(target);
 		}
+
+		float xTandem;
+		if (numberOfMatchingPeaks==0) {
+			xTandem=0.0f;
+		} else {
+			xTandem=Log.log10(dotProduct)+Log.logFactorial(numberOfMatchingPeaks); // really log10(X!Tandem score)
+		}
 		
-		return new float[] {dotProduct, weightedDotProduct, sumOfSquaredErrors, weightedSumOfSquaredErrors, numberOfMatchingPeaks, fractionSum, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
+		return new float[] {xTandem, dotProduct, weightedDotProduct, sumOfSquaredErrors, weightedSumOfSquaredErrors, numberOfMatchingPeaks, fractionSum, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
 	}
 
 	@Override
@@ -122,7 +130,7 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 	}
 
 	public static String[] getScoreNames() {
-		return new String[] {"dotProduct", "weightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "fractionSum", "averageAbsFragDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsPPM", "averagePPM"};
+		return new String[] {"xTandem", "dotProduct", "weightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "fractionSum", "averageAbsFragDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsPPM", "averagePPM"};
 	}
 	
 	@Override

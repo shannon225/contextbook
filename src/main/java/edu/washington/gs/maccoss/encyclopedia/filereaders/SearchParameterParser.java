@@ -21,7 +21,7 @@ public class SearchParameterParser {
 	public static HashMap<String,String> getDefaultParameters() {
 		HashMap<String, String> map=new HashMap<String, String>();
 		map.put("-fixed", "C=57.0214635");
-		map.put("-frag", "YONLY");
+		map.put("-frag", "CID");
 		map.put("-ptol", "10");
 		map.put("-ftol", "10");
 		map.put("-enzyme", "trypsin");
@@ -50,6 +50,7 @@ public class SearchParameterParser {
 		final float percolatorThreshold;
 		final boolean deconvoluteOverlappingWindows;
 		final int numberOfThreadsUsed;
+		final float targetWindowCenter;
 
 		TCharFloatHashMap fixedMods=new TCharFloatHashMap();
 		String value=parameters.get("-fixed");
@@ -72,7 +73,7 @@ public class SearchParameterParser {
 		
 		value=parameters.get("-frag");
 		if (value==null) {
-			fragType=FragmentationType.YONLY;
+			fragType=FragmentationType.CID;
 		} else if ("CID".equals(value)) {
 			fragType=FragmentationType.CID;
 		} else if ("ETD".equals(value)) {
@@ -115,6 +116,7 @@ public class SearchParameterParser {
 		percolatorThreshold=getFloat("-percolatorThreshold", parameters, 0.01f);
 		deconvoluteOverlappingWindows=getBoolean("-deconvoluteOverlappingWindows", parameters, false);
 		numberOfThreadsUsed=SearchParameterParser.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
+		targetWindowCenter=SearchParameterParser.getFloat("-targetWindowCenter", parameters, -1f);
 
 		value=parameters.get("-percolatorLocation");
 		File percolator=null;
@@ -128,7 +130,7 @@ public class SearchParameterParser {
 			}
 		}
 		
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorThreshold, percolator, deconvoluteOverlappingWindows, numberOfThreadsUsed);
+		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorThreshold, percolator, deconvoluteOverlappingWindows, numberOfThreadsUsed, targetWindowCenter);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

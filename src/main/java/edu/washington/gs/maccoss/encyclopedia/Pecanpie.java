@@ -184,8 +184,10 @@ public class Pecanpie {
 		for (Range range : stripefile.getRanges().keySet()) {
 			boundaries.add(range.getStart());
 			boundaries.add(range.getStop());
-			if (arePeptidesInRange(targets, range, parameters)) {
-				ranges.add(range);
+			if (!parameters.useTargetWindowCenter()||range.contains(parameters.getTargetWindowCenter())) {
+				if (arePeptidesInRange(targets, range, parameters)) {
+					ranges.add(range);
+				}
 			}
 		}
 		Collections.sort(ranges);

@@ -10,6 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 
 public class EncyclopediaOneScorer implements PSMScorer {
 	private final SearchParameters parameters;
@@ -31,7 +32,17 @@ public class EncyclopediaOneScorer implements PSMScorer {
 
 	@Override
 	public float score(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
-		return PeakScores.sumScores(getIndividualPeakScores(entry, spectrum, true)); // dot product
+		PeakScores[] individualPeakScores=getIndividualPeakScores(entry, spectrum, true);
+		int count=0; // number of matches
+		for (int i=0; i<individualPeakScores.length; i++) {
+			if (individualPeakScores[i]!=null) count++;
+		}
+		
+		if (count==0) return 0.0f;
+		
+		float dotProduct=PeakScores.sumScores(individualPeakScores); // dot product
+		
+		return Log.log10(dotProduct)+Log.logFactorial(count); // X!Tandem score
 	}
 
 	@Override
