@@ -25,13 +25,13 @@ public class EncyclopediaOneScoringFactory implements LibraryScoringFactory {
 	}
 
 	@Override
-	public PSMScorer getLibraryScorer() {
-		return new EncyclopediaOneScorer(parameters); 
+	public PSMScorer getLibraryScorer(LibraryBackground background) {
+		return new EncyclopediaOneScorer(parameters, background); 
 	}
 
 	@Override
 	public PeptideScoringResultsConsumer getResultsConsumer(BlockingQueue<PeptideScoringResult> resultsQueue) {
-		return new ScoringResultsToTSVConsumer(outputFile, getLibraryScorer(), resultsQueue, 1);
+		return new ScoringResultsToTSVConsumer(outputFile, EncyclopediaOneAuxillaryPSMScorer.getScoreNames(), resultsQueue, 1);
 	}
 
 	@Override

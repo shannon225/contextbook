@@ -18,10 +18,10 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndic
 public class PecanpieTest {
 	public static void main(String[] args) {
 		// EXAMPLE
-		File diaFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/20150708_Ecoli_0911_25x4mzDIA_500_600.dia");
-		File fastaFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/ecoli-190209-contam_correctNL.fasta");
-		File featureFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/encyc_report.feature.txt");
-		File outputFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/encyc_report.percolator.txt");
+		File diaFile=new File("/Users/searleb/Documents/school/projects/pecandata/DIA_1xGFP_20x20mz_500to900_rep1.mzML");
+		File fastaFile=new File("/Users/searleb/Documents/school/projects/pecandata/UP000005640_9606.fasta");
+		File featureFile=new File("/Users/searleb/Documents/school/projects/pecandata/encyc_report.feature.txt");
+		File outputFile=new File("/Users/searleb/Documents/school/projects/pecandata/encyc_report.percolator.txt");
 		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
 		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
 		

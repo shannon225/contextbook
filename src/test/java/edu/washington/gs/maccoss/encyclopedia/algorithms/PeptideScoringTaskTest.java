@@ -49,8 +49,7 @@ public class PeptideScoringTaskTest {
 	private static final PecanSearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
 
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
-		int cores=Runtime.getRuntime().availableProcessors();
-
+		
 		File f=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/20150708_Ecoli_0931_25x4mzDIA_700_800.dia");
 		StripeFileInterface stripefile=new StripeFile();
 		stripefile.openFile(f);
@@ -73,7 +72,8 @@ public class PeptideScoringTaskTest {
 		ArrayList<String>[] backgroundProteomes=background.y;
 		
 		PecanRawScorer pecanScorer=new PecanRawScorer(PARAMETERS.getFragmentTolerance(), new ExpectedFragmentationScorer(PARAMETERS));
-		
+		int cores=PARAMETERS.getNumberOfThreadsUsed();
+
 		// get stripes
 		for (Entry<Range, Float> entry : stripefile.getRanges().entrySet()) {
 			Range range=entry.getKey();
@@ -127,7 +127,7 @@ public class PeptideScoringTaskTest {
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						tasks.add(pecanEntry);
 
-						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new FragmentationTraceTask(pecanScorer, PLOTTING_METHOD, tasks, stripes, new PrecursorScanMap(new ArrayList<PrecursorScan>())));
+						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new FragmentationTraceTask(pecanScorer, PLOTTING_METHOD, tasks, stripes, new PrecursorScanMap(new ArrayList<PrecursorScan>()), PARAMETERS.getAAConstants()));
 						results.add(value);
 					}
 				}

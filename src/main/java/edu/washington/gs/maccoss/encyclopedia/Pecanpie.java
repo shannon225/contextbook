@@ -140,7 +140,7 @@ public class Pecanpie {
 		PSMScorer pecanScorer=taskFactory.getPecanScorer();
 		PecanSearchParameters parameters=taskFactory.getParameters();
 		
-		int cores=Runtime.getRuntime().availableProcessors();
+		int cores=parameters.getNumberOfThreadsUsed();
 
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);
@@ -257,7 +257,7 @@ public class Pecanpie {
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						tasks.add(randentry);
 
-						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new PeptideScoringTask(backgroundScorer, tasks, stripes, precursors));
+						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new PeptideScoringTask(backgroundScorer, tasks, stripes, precursors, parameters.getAAConstants()));
 						results.add(value);
 					}
 				}

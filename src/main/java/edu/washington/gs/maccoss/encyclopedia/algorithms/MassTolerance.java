@@ -46,20 +46,29 @@ public class MassTolerance {
 	 * @return can return null!
 	 */
 	public Optional<Double> getMatch(double[] peaks, double target) {
+		Optional<Integer> index=getIndex(peaks, target);
+		if (index.isPresent()) {
+			return Optional.of(peaks[index.get()]);
+		} else {
+			return Optional.absent();
+		}
+	}
+
+	public Optional<Integer> getIndex(double[] peaks, double target) {
 		int value=Arrays.binarySearch(peaks, target);
 		// exact match (not likely)
-		if (value>=0) return Optional.of(peaks[value]);
+		if (value>=0) return Optional.of(value);
 		
 		// insertion point
 		value=-(value+1);
 		
 		if (value>0) {
 			// look below
-			if (compareTo(peaks[value-1], target)==0) return Optional.of(peaks[value-1]);
+			if (compareTo(peaks[value-1], target)==0) return Optional.of(value-1);
 		}
 		if (value<peaks.length) {
 			// look up
-			if (compareTo(peaks[value], target)==0) return Optional.of(peaks[value]);
+			if (compareTo(peaks[value], target)==0) return Optional.of(value);
 		}
 		
 		return Optional.absent();

@@ -6,7 +6,6 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.concurrent.BlockingQueue;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -24,12 +23,12 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 	private final PrintWriter writer;
 	private volatile int numberProcessed=0;
 	private final int numberOfPeaksPerPeptide;
-	private final PSMScorer scorer;
+	private final String[] scoreNames;
 
-	public ScoringResultsToTSVConsumer(File outputFile, PSMScorer scorer, BlockingQueue<PeptideScoringResult> resultsQueue, int numberOfPeaksPerPeptide) {
+	public ScoringResultsToTSVConsumer(File outputFile, String[] scoreNames, BlockingQueue<PeptideScoringResult> resultsQueue, int numberOfPeaksPerPeptide) {
 		this.resultsQueue=resultsQueue;
 		this.numberOfPeaksPerPeptide=numberOfPeaksPerPeptide;
-		this.scorer=scorer;
+		this.scoreNames=scoreNames;
 		try {
 			writer=new PrintWriter(outputFile, "UTF-8");
 		} catch (FileNotFoundException e) {
@@ -59,15 +58,9 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 				if (PeptideScoringResult.POISON_RESULT==result) break;
 				if (!printedHeader) {
 					writer.print("id\tTD\tScanNr\ttopN\tdeltaCN\t");
-					try {
-						String[] scoreNames=scorer.getAuxScoreNames(null);
-						for (String name : scoreNames) {
-							writer.print(name);
-							writer.print('\t');
-						}
-					} catch (NullPointerException npe) {
-						Logger.errorLine("Sorry, can't write score names for "+scorer.getClass().getName());
-						// essentially ignore
+					for (String name : scoreNames) {
+						writer.print(name);
+						writer.print('\t');
 					}
 					writer.print("pepLength\tcharge2\tcharge3\tprecursorMz\tsequence\tannotation");
 					// Percolator assumes linux line endings on Mac!

@@ -15,9 +15,9 @@ public class PecanAuxillaryScorer extends AuxillaryPSMScorer {
 	}
 
 	@Override
-	public float[] score(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
+	public float[] score(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		// precursor scoring
-		float[] precursorScores=getPrecursorScores(entry, spectrum.getScanStartTime(), precursors);
+		float[] precursorScores=getPrecursorScores(entry, spectrum.getScanStartTime(), predictedIsotopeDistribution, precursors);
 		float averageAbsPPM=precursorScores[0]; // FINAL SCORE
 		float isotopeDotProduct=precursorScores[1]; // FINAL SCORE
 		float averagePPM=precursorScores[2]; // FINAL SCORE

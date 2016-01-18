@@ -19,7 +19,7 @@ public class ExpectedFragmentationScorer extends AuxillaryPSMScorer {
 	}
 
 	@Override
-	public float[] score(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
+	public float[] score(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		MassTolerance tolerance=parameters.getFragmentTolerance();
 		double[] masses=spectrum.getMassArray();

@@ -7,7 +7,11 @@ import com.google.common.base.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import gnu.trove.list.array.TDoubleArrayList;
 
 //@Immutable
 public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
@@ -114,8 +118,78 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 		}
 		return peaks;
 	}
-	
-	public ReverseLibraryEntry getReverse(MassTolerance tolerance, AminoAcidConstants aaConstants) {
+
+	public ReverseLibraryEntry getReverse(SearchParameters parameters) {
+		String reverseSequence=PeptideUtils.reverse(peptideModSeq, parameters);
+		
+		FragmentationModel forwardModel=new FragmentationModel(peptideModSeq, parameters.getAAConstants());
+		FragmentationModel reverseModel=new FragmentationModel(reverseSequence, parameters.getAAConstants());
+		
+		TDoubleArrayList forwardIons=new TDoubleArrayList();
+		TDoubleArrayList reverseIons=new TDoubleArrayList();
+		switch (parameters.getFragType()) {
+		case YONLY:
+			forwardIons.add(forwardModel.getYIons());
+			reverseIons.add(reverseModel.getYIons());
+			break;
+
+		case CID:
+			forwardIons.add(forwardModel.getBIons());
+			reverseIons.add(reverseModel.getBIons());
+			forwardIons.add(forwardModel.getYIons());
+			reverseIons.add(reverseModel.getYIons());
+			break;
+
+		case ETD:
+			forwardIons.add(forwardModel.getCIons());
+			reverseIons.add(reverseModel.getCIons());
+			forwardIons.add(forwardModel.getZIons());
+			reverseIons.add(reverseModel.getZIons());
+			forwardIons.add(forwardModel.getZp1Ions());
+			reverseIons.add(reverseModel.getZp1Ions());
+			break;
+			
+		}
+		
+		if (precursorCharge>2) {
+			forwardIons.add(FragmentationModel.getPlus2s(forwardIons.toArray()));
+			reverseIons.add(FragmentationModel.getPlus2s(reverseIons.toArray()));
+		}
+		
+		assert(forwardIons.size()==reverseIons.size());
+		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
+		for (int i=0; i<forwardIons.size(); i++) {
+			points.add(new XYPoint(forwardIons.get(i), reverseIons.get(i)));
+		}
+		Collections.sort(points);
+		Pair<double[], double[]> matchedMasses=XYTrace.toArrays(points);
+		double[] modelMasses=matchedMasses.x;
+		double[] shiftedMasses=matchedMasses.y;
+
+		MassTolerance tolerance=parameters.getFragmentTolerance();
+		ArrayList<Peak> reversedPeaks=new ArrayList<Peak>();
+		for (int i=0; i<massArray.length; i++) {
+			double mass=massArray[i];
+			float intensity=intensityArray[i];
+			
+			Optional<Integer> matchIndex=tolerance.getIndex(modelMasses, mass);
+			if (matchIndex.isPresent()) {
+				double shiftedMass=shiftedMasses[matchIndex.get()];
+				double delta=modelMasses[matchIndex.get()]-mass; // add back error if there is any
+				
+				// shift sequence specific ions
+				reversedPeaks.add(new Peak(shiftedMass-delta, intensity));
+			} else {
+				// add unknown peak with no modifications
+				reversedPeaks.add(new Peak(mass, intensity));
+			}
+		}
+		Collections.sort(reversedPeaks);
+		Pair<double[], float[]> arrays=Peak.toArrays(reversedPeaks);
+		return new ReverseLibraryEntry(precursorMZ, precursorCharge, reverseSequence, copies, retentionTime, score, arrays.x, arrays.y);	
+	}
+
+	public ReverseLibraryEntry getOldReverse(MassTolerance tolerance, AminoAcidConstants aaConstants) {
 		FragmentationModel model=new FragmentationModel(peptideModSeq, aaConstants);
 		double[] bs=model.getBIons();
 		double[] ys=model.getYIons();

@@ -15,14 +15,14 @@ public class EncyclopediaOneScorer implements PSMScorer {
 	private final SearchParameters parameters;
 	private final EncyclopediaOneAuxillaryPSMScorer auxScorer;
 
-	public EncyclopediaOneScorer(SearchParameters parameters) {
+	public EncyclopediaOneScorer(SearchParameters parameters, LibraryBackground background) {
 		this.parameters=parameters;
-		auxScorer=new EncyclopediaOneAuxillaryPSMScorer(parameters);
+		auxScorer=new EncyclopediaOneAuxillaryPSMScorer(parameters, background);
 	}
 	
 	@Override
-	public float[] auxScore(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
-		return auxScorer.score(entry, spectrum, precursors);
+	public float[] auxScore(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
+		return auxScorer.score(entry, spectrum, predictedIsotopeDistribution, precursors);
 	}
 	@Override
 	public String[] getAuxScoreNames(LibraryEntry entry) {
@@ -30,7 +30,7 @@ public class EncyclopediaOneScorer implements PSMScorer {
 	}
 
 	@Override
-	public float score(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
+	public float score(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		return PeakScores.sumScores(getIndividualPeakScores(entry, spectrum, true)); // dot product
 	}
 
@@ -60,7 +60,7 @@ public class EncyclopediaOneScorer implements PSMScorer {
 					
 					if (acquiredIntensities[indicies[j]]>bestPeakIntensity) {
 						bestPeakIntensity=acquiredIntensities[indicies[j]];
-						deltaMass=(float)((target-predictedMasses[indicies[j]])*1000000.0/target);
+						deltaMass=(float)((target-acquiredMasses[indicies[j]])*1000000.0/target);
 					}
 				}
 				float peakScore=predictedIntensity*intensity;

@@ -19,13 +19,13 @@ public class PecanRawScorer implements PSMScorer {
 	}
 
 	@Override
-	public float score(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
+	public float score(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		return PeakScores.sumScores(getIndividualPeakScores(entry, spectrum, true)); // dot product
 	}
 
 	@Override
-	public float[] auxScore(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
-		return auxScorer.score(entry, spectrum, precursors);
+	public float[] auxScore(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
+		return auxScorer.score(entry, spectrum, predictedIsotopeDistribution, precursors);
 	}
 	
 	@Override

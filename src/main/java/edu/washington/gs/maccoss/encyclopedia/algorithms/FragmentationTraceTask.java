@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -19,8 +20,8 @@ public class FragmentationTraceTask extends PeptideScoringTask {
 	
 	private final byte plottingMethod;
 
-	public FragmentationTraceTask(PecanRawScorer scorer, byte plottingMethod, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors) {
-		super(scorer, entries, stripes, precursors);
+	public FragmentationTraceTask(PecanRawScorer scorer, byte plottingMethod, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, AminoAcidConstants aaConstants) {
+		super(scorer, entries, stripes, precursors, aaConstants);
 		this.plottingMethod=plottingMethod;
 	}
 	private PecanRawScorer getScorer() {
@@ -32,6 +33,7 @@ public class FragmentationTraceTask extends PeptideScoringTask {
 		HashMap<LibraryEntry, PeptideScoringResult> map=new HashMap<LibraryEntry, PeptideScoringResult>();
 		
 		for (LibraryEntry entry : super.entries) {
+			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), aaConstants);
 			String[] scoreNames=getScorer().getAuxScoreNames(entry);
 			
 			@SuppressWarnings("unchecked")
@@ -43,7 +45,7 @@ public class FragmentationTraceTask extends PeptideScoringTask {
 				float rt=stripe.getScanStartTime()/60.0f;
 				
 				if (plottingMethod==PLOT_INTENSITIES) {
-					float[] fragmentScores=getScorer().auxScore(entry, stripe, precursors);
+					float[] fragmentScores=getScorer().auxScore(entry, stripe, predictedIsotopeDistribution, precursors);
 					for (int i=0; i<fragmentScores.length; i++) {
 						dataPoints[i].add(new XYPoint(rt, fragmentScores[i]));
 					}

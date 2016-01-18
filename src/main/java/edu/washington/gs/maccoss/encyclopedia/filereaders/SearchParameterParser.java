@@ -49,6 +49,7 @@ public class SearchParameterParser {
 		final DigestionEnzyme enzyme;
 		final float percolatorThreshold;
 		final boolean deconvoluteOverlappingWindows;
+		final int numberOfThreadsUsed;
 
 		TCharFloatHashMap fixedMods=new TCharFloatHashMap();
 		String value=parameters.get("-fixed");
@@ -113,6 +114,7 @@ public class SearchParameterParser {
 
 		percolatorThreshold=getFloat("-percolatorThreshold", parameters, 0.01f);
 		deconvoluteOverlappingWindows=getBoolean("-deconvoluteOverlappingWindows", parameters, false);
+		numberOfThreadsUsed=SearchParameterParser.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
 
 		value=parameters.get("-percolatorLocation");
 		File percolator=null;
@@ -126,7 +128,7 @@ public class SearchParameterParser {
 			}
 		}
 		
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorThreshold, percolator, deconvoluteOverlappingWindows);
+		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorThreshold, percolator, deconvoluteOverlappingWindows, numberOfThreadsUsed);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

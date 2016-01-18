@@ -73,6 +73,10 @@ public class XYTrace {
 	}
 
 	public Pair<double[], double[]> toArrays() {
+		return toArrays(points);
+	}
+
+	public static Pair<double[], double[]> toArrays(ArrayList<XYPoint> points) {
 		TDoubleArrayList xs=new TDoubleArrayList();
 		TDoubleArrayList ys=new TDoubleArrayList();
 		for (PointInterface point : points) {

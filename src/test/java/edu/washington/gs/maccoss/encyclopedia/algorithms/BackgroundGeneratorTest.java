@@ -66,7 +66,7 @@ public class BackgroundGeneratorTest extends TestCase {
 			}
 		}
 		PecanLibraryEntry entry=model.getPecanSpectrum(charge, keys, binCounters[index], new Range(0f, 200000f), PARAMETERS, false);
-		assertEquals(45.135918f, entry.getEuclidianDistance(), 0.0001f);
+		assertEquals(39.129665f, entry.getEuclidianDistance(), 0.0001f);
 
 		peptide="FGGGSVELLK";
 		mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
@@ -94,6 +94,6 @@ public class BackgroundGeneratorTest extends TestCase {
 		}
 
 		entry=model.getPecanSpectrum(charge, keys, binCounters[index], new Range(0f, 200000f), PARAMETERS, false);
-		assertEquals(49.48101f, entry.getEuclidianDistance(), 0.0001f);
+		assertEquals(42.785778f, entry.getEuclidianDistance(), 0.0001f);
 	}
 }

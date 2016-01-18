@@ -16,7 +16,7 @@ public class DotProduct implements PSMScorer {
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer#score(edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry, edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe)
 	 */
-	public float score(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
+	public float score(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		return PeakScores.sumScores(getIndividualPeakScores(entry, spectrum, false));
 	}
 	
@@ -59,7 +59,7 @@ public class DotProduct implements PSMScorer {
 	}
 	
 	@Override
-	public float[] auxScore(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
+	public float[] auxScore(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		return new float[0];
 	}
 }

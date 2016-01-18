@@ -12,7 +12,7 @@ import junit.framework.TestCase;
 public class PercolatorExecutorTest extends TestCase {
 	
 	public static void main(String[] args) throws Exception {
-		File featureFile=new File("/Users/searleb/Downloads/20150708_Ecoli_0911_25x4mzDIA_700_800.pecan.feature");
+		File featureFile=new File("/Users/searleb/Documents/school/projects/pecandata/full_DIA_1xGFP_20x20mz_500to900_rep1.mzML.pecan.txt.features.txt");
 		PercolatorExecutor e=new PercolatorExecutor(featureFile);
 		BlockingQueue<OutputMessage> result=e.start();
 		

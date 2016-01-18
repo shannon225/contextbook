@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -29,12 +30,14 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 	protected Nothing process() {
 		for (LibraryEntry entry : super.entries) {
 			PeptideScoringResult result=new PeptideScoringResult(entry);
+			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
+			
 			float[][] scores=new float[super.stripes.size()][];
 			float[] primary=new float[super.stripes.size()];
 			for (int i=0; i<super.stripes.size(); i++) {
 				Stripe stripe=super.stripes.get(i);
-				scores[i]=scorer.auxScore(entry, stripe, precursors);
-				primary[i]=scorer.score(entry, stripe, precursors);
+				scores[i]=scorer.auxScore(entry, stripe, predictedIsotopeDistribution, precursors);
+				primary[i]=scorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
 			}
 			
 			float[] averagePrimary=movingCenteredAverage(primary, movingAverageLength);

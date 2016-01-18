@@ -17,9 +17,10 @@ public class SearchParameters {
 	protected final float percolatorThreshold;
 	protected final File percolatorLocation;
 	protected final boolean deconvoluteOverlappingWindows;
+	protected final int numberOfThreadsUsed;	
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme,
-			float percolatorThreshold, File percolatorLocation, boolean deconvoluteOverlappingWindows) {
+			float percolatorThreshold, File percolatorLocation, boolean deconvoluteOverlappingWindows, int numberOfThreadsUsed) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -28,8 +29,22 @@ public class SearchParameters {
 		this.percolatorThreshold=percolatorThreshold;
 		this.percolatorLocation=percolatorLocation;
 		this.deconvoluteOverlappingWindows=deconvoluteOverlappingWindows;
+		this.numberOfThreadsUsed=numberOfThreadsUsed;
 	}
 
+	public String toString() {
+		final StringBuilder sb=new StringBuilder();
+		sb.append(" -fixed "+aaConstants.getFixedModString()+"\n");
+		sb.append(" -frag "+FragmentationType.toString(fragType)+"\n");
+		sb.append(" -ptol "+precursorTolerance.getPpmTolerance()+"\n");
+		sb.append(" -ftol "+fragmentTolerance.getPpmTolerance()+"\n");
+		sb.append(" -enzyme "+enzyme.getName()+"\n");
+		sb.append(" -percolatorThreshold "+percolatorThreshold+"\n");
+		sb.append(" -percolatorLocation "+percolatorLocation+"\n");
+		sb.append(" -deconvoluteOverlappingWindows "+deconvoluteOverlappingWindows+"\n");
+		sb.append(" -numberOfThreadsUsed "+numberOfThreadsUsed+"\n");
+		return sb.toString();
+	}
 
 	public AminoAcidConstants getAAConstants() {
 		return aaConstants;
@@ -62,5 +77,7 @@ public class SearchParameters {
 	public boolean isDeconvoluteOverlappingWindows() {
 		return deconvoluteOverlappingWindows;
 	}
-
+	public int getNumberOfThreadsUsed() {
+		return numberOfThreadsUsed;
+	}
 }

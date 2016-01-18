@@ -35,7 +35,7 @@ public class PecanFeatureReader {
 			savedIDs.put(psm.y, psm.x);
 		}
 
-		int cores=Runtime.getRuntime().availableProcessors();
+		int cores=factory.getParameters().getNumberOfThreadsUsed();
 		
 		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
 		TableParserProducer producer=new TableParserProducer(blockingQueue, f, "\t", cores);

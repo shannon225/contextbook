@@ -129,13 +129,13 @@ public class FragmentationModelTest extends TestCase {
 
 	public void testPecanLibraryEntry() {
 		PecanLibraryEntry entry=getPecanEntry();
-		assertEquals(4.2574906f, entry.getEuclidianDistance(), 0.00001f);
+		assertEquals(4.2574906f, entry.getEuclidianDistance(), 0.1f);
 
 		float[] expectedIntensities=new float[] {0.01644819f, 0.0056204866f, 0.084794275f, 0.091038816f, 0.30905282f, 0.14498773f, 0.35056737f, 0.28298813f, 0.34541196f, 0.37883893f, 0.39810196f,
 				0.27311644f, 0.20603521f, 0.21352741f, 0.16540855f, 0.18790412f, 0.09470973f, 0.095479734f};
 		float[] intensities=entry.getIntensityArray();
 		for (int i=0; i<intensities.length; i++) {
-			assertEquals(expectedIntensities[i], intensities[i], 0.00001f);
+			assertEquals(expectedIntensities[i], intensities[i], expectedIntensities[i]/20f);
 		}
 	}
 

@@ -39,13 +39,14 @@ public class PecanSearchParameters extends SearchParameters {
 		sb.append(" -dontRunDecoys "+dontRunDecoys+"\n");
 		sb.append(" -percolatorThreshold "+percolatorThreshold+"\n");
 		sb.append(" -deconvoluteOverlappingWindows "+deconvoluteOverlappingWindows+"\n");
+		sb.append(" -numberOfThreadsUsed "+numberOfThreadsUsed+"\n");
 		
 		return sb.toString();
 	}
 	
 	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme, int minPeptideLength,
-			int maxPeptideLength, int maxMissedCleavages, byte minCharge, byte maxCharge, int minEluteTime, int numberOfReportedPeaks, boolean addDecoysToBackgound, boolean dontRunDecoys, float percolatorThreshold, float alpha, float beta, File percolatorLocation, boolean deconvoluteOverlappingWindows) {
-		super(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorThreshold, percolatorLocation, deconvoluteOverlappingWindows);
+			int maxPeptideLength, int maxMissedCleavages, byte minCharge, byte maxCharge, int minEluteTime, int numberOfReportedPeaks, boolean addDecoysToBackgound, boolean dontRunDecoys, float percolatorThreshold, float alpha, float beta, File percolatorLocation, boolean deconvoluteOverlappingWindows, int numberOfThreadsUsed) {
+		super(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorThreshold, percolatorLocation, deconvoluteOverlappingWindows, numberOfThreadsUsed);
 		this.minPeptideLength=minPeptideLength;
 		this.maxPeptideLength=maxPeptideLength;
 		this.maxMissedCleavages=maxMissedCleavages;
@@ -61,7 +62,7 @@ public class PecanSearchParameters extends SearchParameters {
 	
 	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme,
 			int maxMissedCleavages, byte minCharge, byte maxCharge, boolean deconvoluteOverlappingWindows) {
-		super(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, 0.01f, null, deconvoluteOverlappingWindows);
+		super(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, 0.01f, null, deconvoluteOverlappingWindows, Runtime.getRuntime().availableProcessors());
 		minPeptideLength=5;
 		maxPeptideLength=100;
 		this.maxMissedCleavages=maxMissedCleavages;
@@ -76,7 +77,7 @@ public class PecanSearchParameters extends SearchParameters {
 	}
 
 	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme) {
-		super(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, 0.01f, null, false);
+		super(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, 0.01f, null, false, Runtime.getRuntime().availableProcessors());
 		minPeptideLength=5;
 		maxPeptideLength=100;
 		maxMissedCleavages=1;
@@ -92,7 +93,7 @@ public class PecanSearchParameters extends SearchParameters {
 
 	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme,
 			int maxMissedCleavages) {
-		super(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, 0.01f, null, false);
+		super(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, 0.01f, null, false, Runtime.getRuntime().availableProcessors());
 		this.maxMissedCleavages=maxMissedCleavages;
 		minPeptideLength=5;
 		maxPeptideLength=100;

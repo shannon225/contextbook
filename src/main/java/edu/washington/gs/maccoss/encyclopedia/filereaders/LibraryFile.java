@@ -16,13 +16,12 @@ import java.util.Map.Entry;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
-public class LibraryFile extends SQLFile {
+public class LibraryFile extends SQLFile implements LibraryInterface {
 	private File userFile=null;
 	private final File tempFile;
 
@@ -100,36 +99,11 @@ public class LibraryFile extends SQLFile {
 		}
 	}
 
-	public void addPrecursor(ArrayList<PrecursorScan> precursors) throws IOException, SQLException {
-		Connection c=getConnection(tempFile);
-		try {
-			PreparedStatement prep=c.prepareStatement("insert into precursor (SpectrumName, SpectrumIndex, ScanStartTime, PeakCount, MassArray, IntensityArray) VALUES (?,?,?,?,?,?)");
-			try {
-				for (PrecursorScan precursor : precursors) {
-					prep.setString(1, precursor.getSpectrumName());
-					prep.setInt(2, precursor.getSpectrumIndex());
-					prep.setFloat(3, precursor.getScanStartTime());
-					prep.setFloat(4, precursor.getMassArray().length);
-					prep.setBytes(5, CompressionUtils.compress(ByteConverter.toByteArray(precursor.getMassArray())));
-					prep.setBytes(6, CompressionUtils.compress(ByteConverter.toByteArray(precursor.getIntensityArray())));
-					prep.addBatch();
-				}
-				prep.executeBatch();
-				prep.close();
-				c.commit();
-			} finally {
-				prep.close();
-			}
-		} finally {
-			c.close();
-		}
-	}
-
 	public void addEntries(ArrayList<LibraryEntry> entries) throws IOException, SQLException {
 		Connection c=getConnection(tempFile);
 		try {
 			PreparedStatement prep=c
-					.prepareStatement("insert into entries (PrecursorMZ, PrecursorCharge, PeptideModSeq, Copies, RetentionTime, Score, PeakCount, MassArray, IntensityArray) VALUES (?,?,?,?,?,?,?,?,?)");
+					.prepareStatement("insert into entries (PrecursorMZ, PrecursorCharge, PeptideModSeq, Copies, RetentionTime, Score, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray) VALUES (?,?,?,?,?,?,?,?,?,?)");
 			try {
 				for (LibraryEntry entry : entries) {
 					prep.setDouble(1, entry.getPrecursorMZ());
@@ -138,9 +112,12 @@ public class LibraryFile extends SQLFile {
 					prep.setInt(4, entry.getCopies());
 					prep.setFloat(5, entry.getRetentionTime());
 					prep.setFloat(6, entry.getScore());
-					prep.setFloat(7, entry.getMassArray().length);
-					prep.setBytes(8, CompressionUtils.compress(ByteConverter.toByteArray(entry.getMassArray())));
-					prep.setBytes(9, CompressionUtils.compress(ByteConverter.toByteArray(entry.getIntensityArray())));
+					byte[] massByteArray=ByteConverter.toByteArray(entry.getMassArray());
+					prep.setInt(7, massByteArray.length);
+					prep.setBytes(8, CompressionUtils.compress(massByteArray));
+					byte[] intensityByteArray=ByteConverter.toByteArray(entry.getIntensityArray());
+					prep.setInt(9, intensityByteArray.length);
+					prep.setBytes(10, CompressionUtils.compress(intensityByteArray));
 					prep.addBatch();
 				}
 				prep.executeBatch();
@@ -154,12 +131,53 @@ public class LibraryFile extends SQLFile {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
+	 */
+	@Override
+	public ArrayList<LibraryEntry> getEntries(String peptideModSeq) throws IOException, SQLException, DataFormatException {
+		Connection c=getConnection(tempFile);
+		try {
+			Statement s=c.createStatement();
+			try {
+				ResultSet rs=s.executeQuery("select PrecursorMZ, PrecursorCharge, PeptideModSeq, Copies, RetentionTime, Score, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray from entries " +
+						"where PeptideModSeq = \""+peptideModSeq+"\"");
+
+				ArrayList<LibraryEntry> entry=new ArrayList<LibraryEntry>();
+				while (rs.next()) {
+
+					double precursorMZ=rs.getDouble(1);
+					byte precursorCharge=(byte)rs.getInt(2);
+					peptideModSeq=rs.getString(3);
+					int copies=rs.getInt(4);
+					float retentionTime=rs.getFloat(5); 
+					float score=rs.getFloat(6);
+					int massEncodedLength=rs.getInt(7);
+					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), massEncodedLength));
+					int intensityEncodedLength=rs.getInt(9);
+					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(10), intensityEncodedLength));
+					entry.add(new LibraryEntry(precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));
+				}
+
+				return entry;
+			} finally {
+				s.close();
+			}
+		} finally {
+			c.close();
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
+	 */
+	@Override
 	public ArrayList<LibraryEntry> getEntries(Range precursorMz) throws IOException, SQLException, DataFormatException {
 		Connection c=getConnection(tempFile);
 		try {
 			Statement s=c.createStatement();
 			try {
-				ResultSet rs=s.executeQuery("select PrecursorMZ, PrecursorCharge, PeptideModSeq, Copies, RetentionTime, Score, PeakCount, MassArray, IntensityArray from entries " +
+				ResultSet rs=s.executeQuery("select PrecursorMZ, PrecursorCharge, PeptideModSeq, Copies, RetentionTime, Score, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray from entries " +
 						"where PrecursorMz between "+precursorMz.getStart()+" and "+precursorMz.getStop());
 
 				ArrayList<LibraryEntry> entry=new ArrayList<LibraryEntry>();
@@ -170,10 +188,11 @@ public class LibraryFile extends SQLFile {
 					String peptideModSeq=rs.getString(3);
 					int copies=rs.getInt(4);
 					float retentionTime=rs.getFloat(5); 
-					float score=rs.getFloat(6); 
-					int peakCount=rs.getInt(7);
-					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), peakCount));
-					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(9), peakCount));
+					float score=rs.getFloat(6);
+					int massEncodedLength=rs.getInt(7);
+					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), massEncodedLength));
+					int intensityEncodedLength=rs.getInt(9);
+					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(10), intensityEncodedLength));
 					entry.add(new LibraryEntry(precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));
 				}
 
@@ -192,7 +211,7 @@ public class LibraryFile extends SQLFile {
 			Statement s=c.createStatement();
 			try {
 				s.execute("create table if not exists metadata ( Key string not null, Value string not null, primary key (Key) )");
-				s.execute("create table if not exists entries (PrecursorMz double not null, PrecursorCharge int not null, PeptideModSeq string not null, Copies int not null, RetentionTime double not null, Score double not null, PeakCount, MassArray blob not null, IntensityArray blob not null)");
+				s.execute("create table if not exists entries (PrecursorMz double not null, PrecursorCharge int not null, PeptideModSeq string not null, Copies int not null, RetentionTime double not null, Score double not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null)");
 
 				c.commit();
 			} finally {

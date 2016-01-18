@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -32,6 +33,8 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 	@Override
 	protected Nothing process() {
 		for (LibraryEntry entry : super.entries) {
+			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
+			
 			int requiredNumAboveThreshold=(int)(getPecanSearchParameters().getBeta()*entry.getPeptideSeq().length());
 			
 			int scanAveragingHalfWindow=scanAveragingWindow/2;
@@ -62,7 +65,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 						fragmentDeltaMasses[j][i]=0.0f;
 					}
 				}
-				rawScores[i]+=scorer.score(entry, stripe, precursors);
+				rawScores[i]+=scorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
 				
 				float rt=stripe.getScanStartTime();
 				XYPoint meanStdev=background.get((double)rt);
@@ -142,7 +145,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 					float[][] auxScores=new float[scanAveragingWindow][];
 					for (int j=0; j<scanAveragingWindow; j++) {
 						Stripe stripe=stripes.get(index+j);
-						auxScores[j]=scorer.auxScore(entry, stripe, precursors);
+						auxScores[j]=scorer.auxScore(entry, stripe, predictedIsotopeDistribution, precursors);
 					}
 					
 					float[] averageAuxScores=new float[auxScores[0].length];

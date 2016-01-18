@@ -36,6 +36,7 @@ public class PecanParameterParser {
 		map.put("-beta", "0.4");
 		map.put("-percolatorLocation", "internal");
 		map.put("-deconvoluteOverlappingWindows", "false");
+		map.put("-numberOfThreadsUsed", Integer.toString(Runtime.getRuntime().availableProcessors()));
 		return map;
 	}
 	
@@ -68,6 +69,7 @@ public class PecanParameterParser {
 		final float alpha;
 		final float beta;
 		final boolean deconvoluteOverlappingWindows;
+		final int numberOfThreadsUsed;
 
 		TCharFloatHashMap fixedMods=new TCharFloatHashMap();
 		String value=parameters.get("-fixed");
@@ -143,6 +145,7 @@ public class PecanParameterParser {
 		alpha=SearchParameterParser.getFloat("-alpha", parameters, 1.8f);
 		beta=SearchParameterParser.getFloat("-beta", parameters, 0.4f);
 		deconvoluteOverlappingWindows=SearchParameterParser.getBoolean("-deconvoluteOverlappingWindows", parameters, false);
+		numberOfThreadsUsed=SearchParameterParser.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
 
 		value=parameters.get("-percolatorLocation");
 		File percolator=null;
@@ -156,6 +159,6 @@ public class PecanParameterParser {
 			}
 		}
 		
-		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolator, deconvoluteOverlappingWindows);
+		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolator, deconvoluteOverlappingWindows, numberOfThreadsUsed);
 	}
 }

@@ -16,8 +16,8 @@ public class CombinablePSMScorer implements PSMScorer {
 	}
 
 	@Override
-	public float[] auxScore(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
-		return scorer.auxScore(entry, spectrum, precursors);
+	public float[] auxScore(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
+		return scorer.auxScore(entry, spectrum, predictedIsotopeDistribution, precursors);
 	}
 	
 	@Override
@@ -31,7 +31,7 @@ public class CombinablePSMScorer implements PSMScorer {
 	}
 	
 	@Override
-	public float score(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors) {
-		return combiner.getScore(scorer.auxScore(entry, spectrum, precursors));
+	public float score(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
+		return combiner.getScore(scorer.auxScore(entry, spectrum, predictedIsotopeDistribution, precursors));
 	}
 }

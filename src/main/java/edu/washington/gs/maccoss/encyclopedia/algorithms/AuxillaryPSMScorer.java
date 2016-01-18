@@ -20,11 +20,11 @@ public abstract class AuxillaryPSMScorer {
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer#score(edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry, edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe)
 	 */
-	public abstract float[] score(LibraryEntry entry, Stripe spectrum, PrecursorScanMap precursors);
+	public abstract float[] score(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors);
 	public abstract float[] getMissingDataScores(LibraryEntry entry);
 	public abstract String[] getScoreNames(LibraryEntry entry);
 
-	public float[] getPrecursorScores(LibraryEntry entry, float spectrumRT, PrecursorScanMap precursors) {
+	public float[] getPrecursorScores(LibraryEntry entry, float spectrumRT, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		byte charge=entry.getPrecursorCharge();
 		Peak[] precursorPacket=precursors.getIsotopePacket(entry.getPrecursorMZ(), spectrumRT, charge, parameters.getPrecursorTolerance());
 		Pair<double[], float[]> pair=Peak.toArrays(precursorPacket);
@@ -58,7 +58,6 @@ public abstract class AuxillaryPSMScorer {
 		
 		// precursor idotp
 		intensities=IsotopicDistributionCalculator.normalizeToMax(intensities);
-		float[] predicted=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
 		float isotopeDotProduct=0.0f; // FINAL SCORE
 		float euclideanDistanceIntensities=0.0f;
 		float euclideanDistancePredicted=0.0f;
@@ -66,9 +65,9 @@ public abstract class AuxillaryPSMScorer {
 			byte isotope=PrecursorScanMap.isotopes[i];
 			if (isotope>=0) {
 				// intensities[i] contains an extra -1 isotope
-				isotopeDotProduct+=intensities[i]*predicted[isotope];
+				isotopeDotProduct+=intensities[i]*predictedIsotopeDistribution[isotope];
 				euclideanDistanceIntensities+=intensities[i]*intensities[i];
-				euclideanDistancePredicted+=predicted[isotope]*predicted[isotope];
+				euclideanDistancePredicted+=predictedIsotopeDistribution[isotope]*predictedIsotopeDistribution[isotope];
 			}
 		}
 		if (euclideanDistanceIntensities>0.0f&&euclideanDistancePredicted>0.0f) {

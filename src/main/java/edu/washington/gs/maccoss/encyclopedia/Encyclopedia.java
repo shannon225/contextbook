@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
@@ -24,17 +23,17 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -122,12 +121,11 @@ public class Encyclopedia {
 		runSearch(progress, library, stripefile, featureFile, outputFile, taskFactory);
 	}
 		
-	static void runSearch(ProgressIndicator progress, LibraryFile library, StripeFileInterface stripefile, File featureFile, File outputFile, LibraryScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+	public static void runSearch(ProgressIndicator progress, LibraryInterface library, StripeFileInterface stripefile, File featureFile, File outputFile, LibraryScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		long startTime=System.currentTimeMillis();
-		PSMScorer pecanScorer=taskFactory.getLibraryScorer();
 		SearchParameters parameters=taskFactory.getParameters();
 		
-		int cores=Runtime.getRuntime().availableProcessors();
+		int cores=parameters.getNumberOfThreadsUsed();
 
 		Logger.logLine("Processing precursors scans...");
 		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
@@ -180,12 +178,16 @@ public class Encyclopedia {
 			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
 			int count=0;
-			for (LibraryEntry entry : library.getEntries(range)) {
+			ArrayList<LibraryEntry> entries=library.getEntries(range);
+			LibraryBackground background=new LibraryBackground(entries);
+			PSMScorer scorer=taskFactory.getLibraryScorer(background);
+			
+			for (LibraryEntry entry : entries) {
 				count++;
 				ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 				tasks.add(entry);
-				tasks.add(entry.getReverse(parameters.getFragmentTolerance(), parameters.getAAConstants()));
-				executor.submit(taskFactory.getScoringTask(pecanScorer, tasks, stripes, precursors, resultsQueue));
+				tasks.add(entry.getReverse(parameters));
+				executor.submit(taskFactory.getScoringTask(scorer, tasks, stripes, precursors, resultsQueue));
 			}
 			
 			executor.shutdown();
@@ -211,20 +213,4 @@ public class Encyclopedia {
 		Logger.logLine(""); 
 		progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 	}
-
-	public static boolean arePeptidesInRange(HashSet<FastaEntry> targets, Range range, PecanSearchParameters parameters) {
-		// first check to see if we need to process this stripe
-		boolean hasPeptides=false;
-		outer:for (FastaEntry peptide : targets) {
-			for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
-				double mz=parameters.getAAConstants().getChargedMass(peptide.getSequence(), charge);
-				if (range.contains((float)mz)) {
-					hasPeptides=true;
-					break outer;
-				}
-			}
-		}
-		return hasPeptides;
-	}
-
 }

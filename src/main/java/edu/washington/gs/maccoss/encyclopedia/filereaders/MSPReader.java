@@ -26,7 +26,18 @@ public class MSPReader {
 
 		LibraryFile library=new LibraryFile();
 		library.openFile();
-		library.addEntries(entries);
+		library.dropIndices();
+		
+		int batchSize=entries.size()/100;
+		int start=0;
+		int stop=batchSize;
+		while (true) {
+			if (start>=entries.size()) break;
+			library.addEntries(new ArrayList<LibraryEntry>(entries.subList(start, stop)));
+			start=stop;
+			stop=Math.min(entries.size(), stop+batchSize);;
+			System.out.println((start*100/entries.size())+"%");
+		}
 		library.createIndices();
 		File libraryFile=new File("/Users/searleb/Documents/school/projects/pecandata/cptac2_human_hcd_selected.elib");
 		library.saveAsFile(libraryFile);
