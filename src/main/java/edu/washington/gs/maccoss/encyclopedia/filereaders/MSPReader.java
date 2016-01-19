@@ -21,7 +21,7 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 
 public class MSPReader {
 	public static void main(String[] args) throws Exception {
-		File f=new File("/Users/searleb/Documents/school/projects/pecandata/cptac2_human_hcd_selected.msp");
+		File f=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/yeast/yeast_qtof_consensus_final_true_lib.msp");
 		ArrayList<LibraryEntry> entries=readMSP(f);
 
 		LibraryFile library=new LibraryFile();
@@ -39,7 +39,7 @@ public class MSPReader {
 			System.out.println((start*100/entries.size())+"%");
 		}
 		library.createIndices();
-		File libraryFile=new File("/Users/searleb/Documents/school/projects/pecandata/cptac2_human_hcd_selected.elib");
+		File libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/yeast/yeast_qtof_consensus_final_true_lib.elib");
 		library.saveAsFile(libraryFile);
 	}
 	

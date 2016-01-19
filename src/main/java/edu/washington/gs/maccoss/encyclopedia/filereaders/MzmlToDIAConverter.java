@@ -22,12 +22,12 @@ public class MzmlToDIAConverter {
 
 	public static void main(String[] args) {
 		HashMap<String, String> paramMap=PecanParameterParser.getDefaultParameters();
-		paramMap.put("-deconvoluteOverlappingWindows", "false");
+		paramMap.put("-deconvoluteOverlappingWindows", "true");
 		SearchParameters parameters=PecanParameterParser.parseParameters(paramMap);
 		
 		Long time=System.currentTimeMillis();
-		File xmlFile=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/121015_BCS_HeLa_6mz_700_800.mzML");
-		File saveFile=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/121015_BCS_HeLa_6mz_700_800.dia");
+		File xmlFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/yeast/Q_2014_0523_11_0_amol_uL_20mz_overlap.mzML");
+		File saveFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/yeast/Q_2014_0523_11_0_amol_uL_20mz_overlap.dia");
 		convert(xmlFile, saveFile, parameters);
 		System.out.println((System.currentTimeMillis()-time)/1000f+" seconds");
 	}

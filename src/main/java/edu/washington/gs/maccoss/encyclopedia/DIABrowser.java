@@ -10,13 +10,12 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.DIABrowserPanel;
-import edu.washington.gs.maccoss.encyclopedia.gui.pecan.PecanPanel;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 
 public class DIABrowser {
-	public static ImageIcon image=new ImageIcon(PecanPanel.class.getClassLoader().getResource("images/orbi.png"));
+	//public static ImageIcon image=new ImageIcon(DIABrowser.class.getClassLoader().getResource("images/orbi.png"));
 	
 	public static void main(String[] args) {
 		try {
@@ -37,7 +36,7 @@ public class DIABrowser {
 		}
 		
 		final JFrame f=new JFrame("DIA Browser");
-		f.setIconImage(image.getImage());
+		//f.setIconImage(image.getImage());
 		f.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				System.exit(0);

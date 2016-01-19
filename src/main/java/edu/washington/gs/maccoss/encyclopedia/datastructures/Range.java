@@ -45,7 +45,7 @@ public class Range implements Comparable<Range> {
 	}
 	
 	public float getRange() {
-		return start-stop;
+		return stop-start;
 	}
 	
 	public boolean contains(float value) {
