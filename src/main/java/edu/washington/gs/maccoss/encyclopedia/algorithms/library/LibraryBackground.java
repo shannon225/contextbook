@@ -16,7 +16,7 @@ public class LibraryBackground {
 		File libraryFile=new File("/Users/searleb/Documents/school/projects/pecandata/cptac2_human_hcd_selected.elib");
 		LibraryFile file=new LibraryFile();
 		file.openFile(libraryFile);
-		ArrayList<LibraryEntry> entries=file.getEntries(new Range(700, 800));
+		ArrayList<LibraryEntry> entries=file.getEntries(new Range(700, 800), false);
 		LibraryBackground background=new LibraryBackground(entries);
 		for (int i=0; i<background.background.length; i++) {
 			System.out.println(i+"\t"+background.getFraction(i+0.1)); // to avoid rounding errors

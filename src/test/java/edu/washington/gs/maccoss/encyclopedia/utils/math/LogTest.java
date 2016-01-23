@@ -12,4 +12,11 @@ public class LogTest extends TestCase {
 			assertEquals(log, Log.logFactorial(i), 0.0001f);
 		}
 	}
+	
+	public void testLog() {
+		float dotProduct=1.2046795E+38f;
+		int count=5;
+		float f=Log.log10(dotProduct)+Log.logFactorial(count);
+		assertEquals(40.160053, f, 0.0001);
+	}
 }

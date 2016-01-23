@@ -14,6 +14,7 @@ import java.util.concurrent.BlockingQueue;
 
 import com.google.common.base.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
@@ -24,15 +25,35 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 
 public class PercolatorExecutor extends ExternalExecutor {
 
-	PercolatorExecutor(File tsv) {
-		super(generateCommand(tsv, Optional.fromNullable((File)null)));
+	PercolatorExecutor(File tsv, File outputFile) {
+		super(generateCommand(tsv, outputFile, Optional.fromNullable((File)null)));
 	}
-	PercolatorExecutor(File tsv, Optional<File> percolatorLocation) {
-		super(generateCommand(tsv, percolatorLocation));
+	PercolatorExecutor(File tsv, File outputFile, Optional<File> percolatorLocation) {
+		super(generateCommand(tsv, outputFile, percolatorLocation));
 	}
 	
+	/*public static ArrayList<ScoredObject<String>> executePercolator(Optional<File> percolatorLocation, File featureFile, File percolatorResultFile, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+		PercolatorExecutor e=new PercolatorExecutor(featureFile, percolatorResultFile, percolatorLocation);
+		BlockingQueue<OutputMessage> result=e.start();
+		
+		while (!e.isFinished()||!result.isEmpty()) {
+			if (!result.isEmpty()) {
+				OutputMessage data=result.take();
+				if (!data.isStdOutput()) {
+					Logger.logLine(data.getMessage());
+				}
+			} else {
+				Thread.sleep(10);
+			}
+		}
+
+		ArrayList<ScoredObject<String>> passingPeptides=PercolatorReader.getPassingPeptidesFromXML(percolatorResultFile, threshold);
+		
+		return passingPeptides;
+	}*/
+	
 	public static ArrayList<ScoredObject<String>> executePercolator(Optional<File> percolatorLocation, File featureFile, File outputFile, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
-		PercolatorExecutor e=new PercolatorExecutor(featureFile, percolatorLocation);
+		PercolatorExecutor e=new PercolatorExecutor(featureFile, new File(outputFile.getAbsolutePath()+".xml"), percolatorLocation);
 		BlockingQueue<OutputMessage> result=e.start();
 		
 		boolean isFirst=true;
@@ -78,10 +99,11 @@ public class PercolatorExecutor extends ExternalExecutor {
 		return peptideString.substring(peptideString.indexOf('.')+1, peptideString.lastIndexOf('.'));
 	}
 	
-	static String[] generateCommand(File tsv, Optional<File> percolatorLocation) {
+	static String[] generateCommand(File tsv, File outputFile, Optional<File> percolatorLocation) {
 		File percolator=getPercolator(percolatorLocation);
-		
+
 		return new String[] {percolator.getAbsolutePath(), tsv.getAbsolutePath()};
+		//return new String[] {percolator.getAbsolutePath(), "-X", outputFile.getAbsolutePath(), "--decoy-xml-output", tsv.getAbsolutePath()};
 	}
 	
 	static File getPercolator(Optional<File> percolatorLocation) {

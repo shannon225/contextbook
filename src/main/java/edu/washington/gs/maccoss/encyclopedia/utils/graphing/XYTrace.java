@@ -7,6 +7,7 @@ import java.util.Collections;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.procedure.TFloatFloatProcedure;
 
@@ -84,5 +85,15 @@ public class XYTrace {
 			ys.add(point.getY());
 		}
 		return new Pair<double[], double[]>(xs.toArray(), ys.toArray());
+	}
+
+	public static Pair<float[], float[]> toFloatArrays(ArrayList<XYPoint> points) {
+		TFloatArrayList xs=new TFloatArrayList();
+		TFloatArrayList ys=new TFloatArrayList();
+		for (PointInterface point : points) {
+			xs.add((float)point.getX());
+			ys.add((float)point.getY());
+		}
+		return new Pair<float[], float[]>(xs.toArray(), ys.toArray());
 	}
 }

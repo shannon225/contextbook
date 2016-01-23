@@ -20,6 +20,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class LibraryFile extends SQLFile implements LibraryInterface {
 	private File userFile=null;
@@ -135,7 +136,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
 	 */
 	@Override
-	public ArrayList<LibraryEntry> getEntries(String peptideModSeq) throws IOException, SQLException, DataFormatException {
+	public ArrayList<LibraryEntry> getEntries(String peptideModSeq, boolean sqrt) throws IOException, SQLException, DataFormatException {
 		Connection c=getConnection(tempFile);
 		try {
 			Statement s=c.createStatement();
@@ -156,6 +157,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), massEncodedLength));
 					int intensityEncodedLength=rs.getInt(9);
 					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(10), intensityEncodedLength));
+					if (sqrt) {
+						intensityArray=General.protectedSqrt(intensityArray);
+					}
 					entry.add(new LibraryEntry(precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));
 				}
 
@@ -172,7 +176,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
 	 */
 	@Override
-	public ArrayList<LibraryEntry> getEntries(Range precursorMz) throws IOException, SQLException, DataFormatException {
+	public ArrayList<LibraryEntry> getEntries(Range precursorMz, boolean sqrt) throws IOException, SQLException, DataFormatException {
 		Connection c=getConnection(tempFile);
 		try {
 			Statement s=c.createStatement();
@@ -193,6 +197,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), massEncodedLength));
 					int intensityEncodedLength=rs.getInt(9);
 					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(10), intensityEncodedLength));
+					if (sqrt) {
+						intensityArray=General.protectedSqrt(intensityArray);
+					}
 					entry.add(new LibraryEntry(precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));
 				}
 

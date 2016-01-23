@@ -39,8 +39,8 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		float[] acquiredIntensities=spectrum.getIntensityArray();
 		
 		int numberOfMatchingPeaks=0;
-		float dotProduct=0.0f;
-		float weightedDotProduct=0.0f;
+		double dotProduct=0.0;
+		double weightedDotProduct=0.0;
 		float fractionSum=0.0f;
 		TDoubleArrayList predictedTargets=new TDoubleArrayList();
 		TFloatArrayList predictedTargetIntensities=new TFloatArrayList();
@@ -66,7 +66,7 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 				if (intensity>0) {
 					numberOfMatchingPeaks++;
 				}
-				float product=predictedIntensity*intensity;
+				double product=predictedIntensity*intensity;
 				dotProduct+=product;
 				float fraction=background.getFraction(target);
 				weightedDotProduct+=product*fraction;
@@ -118,10 +118,10 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		if (numberOfMatchingPeaks==0) {
 			xTandem=0.0f;
 		} else {
-			xTandem=Log.log10(dotProduct)+Log.logFactorial(numberOfMatchingPeaks); // really log10(X!Tandem score)
+			xTandem=((float)Log.log10(dotProduct))+Log.logFactorial(numberOfMatchingPeaks); // really log10(X!Tandem score)
 		}
 		
-		return new float[] {xTandem, dotProduct, weightedDotProduct, sumOfSquaredErrors, weightedSumOfSquaredErrors, numberOfMatchingPeaks, fractionSum, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
+		return new float[] {xTandem, (float)dotProduct, (float)weightedDotProduct, sumOfSquaredErrors, weightedSumOfSquaredErrors, numberOfMatchingPeaks, fractionSum, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
 	}
 
 	@Override

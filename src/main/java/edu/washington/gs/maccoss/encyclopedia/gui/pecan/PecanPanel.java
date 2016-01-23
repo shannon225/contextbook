@@ -52,6 +52,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 public class PecanPanel extends JPanel {
 	private static final long serialVersionUID=1L;
 	public static ImageIcon image=new ImageIcon(PecanPanel.class.getClassLoader().getResource("images/pecan.png"));
+	private static int numberOfCores=Runtime.getRuntime().availableProcessors();
 
 	public static final String copy="<html><b><p style=\"font-size:20px; font-family: Helvetica, sans-serif\">PECAN: Peptide Detection Directly from Data-Independent Acquisition (DIA) MS/MS Data<br></p>"
 			+ "<p style=\"font-size:12px; font-family: Helvetica, sans-serif\">PECAN extracts peptide fragmentation chromatograms from MZML files, assigns peaks, and calculates various peak features. These features are interpreted by Percolator to identify peptides.";
@@ -68,6 +69,7 @@ public class PecanPanel extends JPanel {
 	private final SpinnerModel minCharge = new SpinnerNumberModel(2, 1, 2, 1);
 	private final SpinnerModel maxCharge = new SpinnerNumberModel(3, 2, 4, 1);
 	private final SpinnerModel maxMissedCleavage = new SpinnerNumberModel(1, 0, 3, 1);
+	private final SpinnerModel numberOfJobs = new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
 	
 	JobProcessorTableModel pecanModel=new JobProcessorTableModel();
 	
@@ -116,6 +118,7 @@ public class PecanPanel extends JPanel {
 		options.add(new LabeledComponent("Precursor (PPM)", new JSpinner(precursorPPM)));
 		options.add(new LabeledComponent("Fragment (PPM)", new JSpinner(fragmentPPM)));
 		options.add(new LabeledComponent("Maximum Missed Cleavage", new JSpinner(maxMissedCleavage)));
+		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
 
 		JPanel chargeRange=new JPanel(new FlowLayout());
 		chargeRange.setOpaque(true);
@@ -275,8 +278,9 @@ public class PecanPanel extends JPanel {
 		byte minChargeValue=((Integer)minCharge.getValue()).byteValue();
 		byte maxChargeValue=((Integer)maxCharge.getValue()).byteValue();
 		byte maxMissedCleavageValue=((Integer)maxMissedCleavage.getValue()).byteValue();
+		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		PecanSearchParameters parameters=new PecanSearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme,
-				maxMissedCleavageValue, minChargeValue, maxChargeValue, deconvoluteOverlappingWindows);
+				maxMissedCleavageValue, minChargeValue, maxChargeValue, deconvoluteOverlappingWindows, numberOfJobsValue);
 		return parameters;
 	}
 }

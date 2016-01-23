@@ -7,6 +7,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.RescoredPeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -39,6 +40,11 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 	}
 
 	@Override
+	public BlockingQueue<PeptideScoringResult> getResultsQueue() {
+		return resultsQueue;
+	}
+
+	@Override
 	public void close() {
 		writer.flush();
 		writer.close();
@@ -61,6 +67,9 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 					for (String name : scoreNames) {
 						writer.print(name);
 						writer.print('\t');
+					}
+					if (result instanceof RescoredPeptideScoringResult) {
+						writer.print("deltaRT\t");//discriminantScore\t");
 					}
 					writer.print("pepLength\tcharge2\tcharge3\tprecursorMz\tRTinMin\tsequence\tannotation");
 					// Percolator assumes linux line endings on Mac!

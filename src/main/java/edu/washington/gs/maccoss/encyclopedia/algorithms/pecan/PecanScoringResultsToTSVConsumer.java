@@ -36,6 +36,11 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 			throw new EncyclopediaException("Error setting up output file: "+outputFile.getAbsolutePath(), e);
 		}
 	}
+	
+	@Override
+	public BlockingQueue<PeptideScoringResult> getResultsQueue() {
+		return resultsQueue;
+	}
 
 	@Override
 	public void close() {

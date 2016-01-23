@@ -22,12 +22,12 @@ public class EncyclopediaOneScoringTaskTest {
 		File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
 
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
-		LibraryScoringFactory taskFactory=new EncyclopediaOneScoringFactory(parameters, featureFile);
+		LibraryScoringFactory taskFactory=new EncyclopediaOneScoringFactory(parameters);
 
 		LibraryFile library=new LibraryFile();
 		library.openFile(libraryFile);
 		
-		ArrayList<LibraryEntry> entries=library.getEntries("VDIDAPDVEVHDPDWHLK");
+		ArrayList<LibraryEntry> entries=library.getEntries("VDIDAPDVEVHDPDWHLK", false);
 		MockLibrary mockLib=new MockLibrary(entries.toArray(new LibraryEntry[entries.size()]));
 		
 		StripeFileInterface stripefile=MzmlToDIAConverter.getFile(diaFile, parameters);

@@ -164,6 +164,13 @@ public class Charter {
 
 					break;
 
+				case tinypoint:
+					renderer=new XYLineAndShapeRenderer();
+					renderer.setSeriesShape(0, new Ellipse2D.Double(0, 0, 1, 1));
+					((XYLineAndShapeRenderer)renderer).setBaseLinesVisible(false);
+
+					break;
+
 				case spectrum:
 					renderer=new XYLineAndShapeRenderer();
 					((XYLineAndShapeRenderer)renderer).setBaseShapesVisible(false);
@@ -183,6 +190,7 @@ public class Charter {
 				case area:
 				case line:
 				case point:
+				case tinypoint:
 					XYSeries series=new XYSeries(trace.getName());
 					for (int i=0; i<x.length; i++) {
 						if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {

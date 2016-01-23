@@ -197,7 +197,7 @@ public class OverlapDeconvoluter implements Runnable {
 
 	private static Stripe getDeconvolutedStripe(Stripe center, Range lowerRange, ArrayList<Peak> lowerPeaks, boolean useNegativeScanNumber) {
 		Pair<double[], float[]> arrays=Peak.toArrays(lowerPeaks);
-		int scanNumber=useNegativeScanNumber?(-center.getSpectrumIndex()):center.getSpectrumIndex();
+		int scanNumber=useNegativeScanNumber?(Integer.MAX_VALUE-center.getSpectrumIndex()):center.getSpectrumIndex();
 		
 		Stripe lowerStripe=new Stripe(center.getSpectrumName(), center.getPrecursorName(), scanNumber, center.getScanStartTime(), lowerRange.getStart(), lowerRange.getStop(), arrays.x, arrays.y);
 		return lowerStripe;

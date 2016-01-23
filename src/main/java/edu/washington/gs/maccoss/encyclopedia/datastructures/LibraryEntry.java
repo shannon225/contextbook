@@ -6,6 +6,7 @@ import java.util.Collections;
 import com.google.common.base.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.SSRCalc;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -35,7 +36,12 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 		this.precursorCharge=precursorCharge;
 		this.peptideModSeq=peptideModSeq;
 		this.copies=copies;
-		this.retentionTime=retentionTime;
+		if (retentionTime>0.0f) { 
+			this.retentionTime=retentionTime;
+		} else {
+			// ignores mods! This would be a problem if everything is modified (IMac prep)
+			this.retentionTime=(float)SSRCalc.getHydrophobicity(peptideModSeq);
+		}
 		this.score=score;
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;

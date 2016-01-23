@@ -120,7 +120,7 @@ public class PecanFeatureReader {
 				float retentionTime=Float.parseFloat(row.get("midTime"));
 				float score=savedIDs.get(psmID);
 
-				float duration=Float.parseFloat(row.get("duration"));
+				float duration=Float.parseFloat(row.get("sampledTimes"));
 
 				try {
 					ArrayList<Stripe> stripes=stripeFile.getStripes(precursorMZ, retentionTime-duration, retentionTime+duration, false);

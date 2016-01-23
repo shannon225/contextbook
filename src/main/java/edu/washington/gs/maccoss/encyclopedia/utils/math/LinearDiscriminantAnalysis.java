@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
+import java.util.ArrayList;
+
 public class LinearDiscriminantAnalysis implements ScoreCombiner {
 	private final double[] coefficients;
 	private final double constant;
@@ -38,6 +40,18 @@ public class LinearDiscriminantAnalysis implements ScoreCombiner {
 	
 	public double getConstant() {
 		return constant;
+	}
+	public static LinearDiscriminantAnalysis buildModel(ArrayList<float[]> positiveData, ArrayList<float[]> negativeData) {
+		double[][] positive=new double[positiveData.size()][];
+		double[][] negative=new double[negativeData.size()][];
+		
+		for (int i=0; i<positive.length; i++) {
+			positive[i]=General.toDoubleArray(positiveData.get(i));
+		}
+		for (int i=0; i<negative.length; i++) {
+			negative[i]=General.toDoubleArray(negativeData.get(i));
+		}
+		return buildModel(positive, negative);
 	}
 
 	public static LinearDiscriminantAnalysis buildModel(double[][] positiveData, double[][] negativeData) {

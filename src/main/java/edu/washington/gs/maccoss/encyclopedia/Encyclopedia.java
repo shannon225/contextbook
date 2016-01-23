@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
@@ -39,8 +40,18 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.SaveResultsConsumer;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.TeeResultsConsumer;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearDiscriminantAnalysis;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RunningMedianWarper;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
@@ -90,7 +101,7 @@ public class Encyclopedia {
 			File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
 
 			SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
-			LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters, featureFile);
+			LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
 			Logger.logLine("Encyclopedia version "+factory.getVersion());
 
 			Logger.logLine("Parameters:");
@@ -151,11 +162,18 @@ public class Encyclopedia {
 			index=(-(index+1))-1;
 			useBin[index]=true;
 		}
+
+		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>());
+		SaveResultsConsumer saveResultsConsumer=new SaveResultsConsumer(new LinkedBlockingQueue<PeptideScoringResult>());
 		
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
-		PeptideScoringResultsConsumer resultsConsumer=taskFactory.getResultsConsumer(resultsQueue);
-		Thread consumerThread=new Thread(resultsConsumer);
-		consumerThread.start();
+		TeeResultsConsumer teeConsumer=new TeeResultsConsumer(resultsQueue, writeResultsConsumer, saveResultsConsumer);
+		Thread consumer1Thread=new Thread(teeConsumer);
+		Thread consumer2Thread=new Thread(writeResultsConsumer);
+		Thread consumer3Thread=new Thread(saveResultsConsumer);
+		consumer1Thread.start();
+		consumer2Thread.start();
+		consumer3Thread.start();
 		
 		int rangesFinished=0;
 		// get stripes
@@ -180,7 +198,7 @@ public class Encyclopedia {
 			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
 			int count=0;
-			ArrayList<LibraryEntry> entries=library.getEntries(range);
+			ArrayList<LibraryEntry> entries=library.getEntries(range, true);
 			LibraryBackground background=new LibraryBackground(entries);
 			PSMScorer scorer=taskFactory.getLibraryScorer(background);
 			
@@ -205,14 +223,106 @@ public class Encyclopedia {
 		}
 		resultsQueue.put(PeptideScoringResult.POISON_RESULT);
 
-		consumerThread.join();
-		resultsConsumer.close();
+		consumer1Thread.join();
+		consumer2Thread.join();
+		consumer3Thread.join();
+		teeConsumer.close();
 
-		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
-		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolator(parameters.getPercolatorLocation(), featureFile, outputFile, parameters.getPercolatorThreshold());
+		progress.update("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)", (1.0f+rangesFinished)/numberOfTasks);
+		File percolatorResultFile=new File(outputFile.getAbsolutePath()+".xml");
 		
-		Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
+		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolator(parameters.getPercolatorLocation(), featureFile, percolatorResultFile, 1.0f);
+		
+		// FIXME trim to parameters.getPercolatorThreshold()
+
+		ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
+		Pair<RunningMedianWarper, LinearDiscriminantAnalysis> rescoringModel=getRescoringModel(passingPeptides, data);
+		System.out.println("LDA: "+rescoringModel.y);
+		
+		// rewrite results with better scores
+		writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>());
+		Thread finalWriteConsumerThread=new Thread(writeResultsConsumer);
+		finalWriteConsumerThread.start();
+		BlockingQueue<PeptideScoringResult> resultList=writeResultsConsumer.getResultsQueue();
+		for (PeptideScoringResult result : data) {
+			PeptideScoringResult rescore=result.rescore(rescoringModel);
+			if (rescore.getGoodStripes().size()>0) { 
+				//System.out.println(rescore.getGoodStripes().get(0).x.x);
+			} else {
+				//System.out.println("empty for: "+result.getGoodStripes().size());
+			}
+			resultList.add(rescore);
+		}
+		resultList.add(PeptideScoringResult.POISON_RESULT);
+		finalWriteConsumerThread.join();
+		writeResultsConsumer.close();
+
+		progress.update("Re-running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)", (1.0f+rangesFinished)/numberOfTasks);
+		passingPeptides=PercolatorExecutor.executePercolator(parameters.getPercolatorLocation(), featureFile, outputFile, parameters.getPercolatorThreshold());
+		
+		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 
 		progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+	}
+
+	public static Pair<RunningMedianWarper, LinearDiscriminantAnalysis> getRescoringModel(ArrayList<ScoredObject<String>> passingPeptides, ArrayList<PeptideScoringResult> data) {
+		HashSet<String> passingSeqs=new HashSet<String>();
+		for (ScoredObject<String> pass : passingPeptides) {
+			passingSeqs.add(pass.y);
+		}
+		
+		HashSet<XYPoint> rtSet=new HashSet<XYPoint>();
+		ArrayList<PeptideScoringResult> positiveResults=new ArrayList<PeptideScoringResult>();
+		ArrayList<PeptideScoringResult> negativeResults=new ArrayList<PeptideScoringResult>();
+		
+		for (PeptideScoringResult result : data) {
+			if (result.getGoodStripes().size()>0) {
+				String peptideModSeq=result.getEntry().getPeptideModSeq();
+				if (passingSeqs.contains(peptideModSeq+"+"+result.getEntry().getPrecursorCharge())) {
+					positiveResults.add(result);
+					LibraryEntry entry=result.getEntry();
+					float entryTime=entry.getScanStartTime();
+					
+					Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
+					XYPoint point=new XYPoint(entryTime, first.x.y.getScanStartTime()/60.0f);
+					rtSet.add(point);
+				} else {
+					negativeResults.add(result);
+				}
+			}
+		}
+		ArrayList<XYPoint> rts=new ArrayList<XYPoint>(rtSet);
+		Collections.sort(rts);
+
+		int order=Math.max(3, Math.round(rts.size()/10f));
+		RunningMedianWarper rtWarper=new RunningMedianWarper(rts, order, true);
+
+		XYTrace trace=new XYTrace(rts, GraphType.tinypoint, "RT");
+		XYTrace median=new XYTrace(rtWarper.getKnots(), GraphType.line, "Warp");
+		Charter.launchChart("Calculated RT", "Actual RT", false, median, trace);
+
+		ArrayList<float[]> positiveScores=new ArrayList<float[]>();
+		ArrayList<float[]> negativeScores=new ArrayList<float[]>();
+		for (PeptideScoringResult result : positiveResults) {
+			Pair<ScoredObject<Stripe>, float[]> stripeData=result.getGoodStripes().get(0);
+			float[] scores=stripeData.y;
+			float entryTime=result.getEntry().getScanStartTime();
+			float deltaRT=rtWarper.getYValue(entryTime)-stripeData.x.y.getScanStartTime()/60.0f;
+			float[] withDeltaRT=General.concatenate(scores, deltaRT);
+			positiveScores.add(withDeltaRT);
+		}
+
+		for (PeptideScoringResult result : negativeResults) {
+			Pair<ScoredObject<Stripe>, float[]> stripeData=result.getGoodStripes().get(0);
+			float[] scores=stripeData.y;
+			float entryTime=result.getEntry().getScanStartTime();
+			float deltaRT=rtWarper.getYValue(entryTime)-stripeData.x.y.getScanStartTime()/60.0f;
+			float[] withDeltaRT=General.concatenate(scores, deltaRT);
+			negativeScores.add(withDeltaRT);
+		}
+		LinearDiscriminantAnalysis scoringModel=LinearDiscriminantAnalysis.buildModel(positiveScores, negativeScores);
+		
+		Pair<RunningMedianWarper, LinearDiscriminantAnalysis> rescoringModel=new Pair<RunningMedianWarper, LinearDiscriminantAnalysis>(rtWarper, scoringModel);
+		return rescoringModel;
 	}
 }

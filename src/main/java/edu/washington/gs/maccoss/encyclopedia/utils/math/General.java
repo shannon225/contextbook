@@ -1,6 +1,23 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
 public class General {
+	
+	public static float[] toFloatArray(double[] a) {
+		float[] f=new float[a.length];
+		for (int i=0; i<f.length; i++) {
+			f[i]=(float)a[i];
+		}
+		return f;
+	}
+	
+	public static double[] toDoubleArray(float[] a) {
+		double[] f=new double[a.length];
+		for (int i=0; i<f.length; i++) {
+			f[i]=a[i];
+		}
+		return f;
+	}
+	
 	public static float[] concatenate(float[] a, float... f) {
 		float[] r=new float[a.length+f.length];
 		System.arraycopy(a, 0, r, 0, a.length);

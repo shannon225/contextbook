@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 
 import com.google.common.base.Optional;
 
@@ -31,22 +32,27 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicat
 
 public class PecanToBLIB {
 	public static void main(String[] args) {
-		PecanSearchParameters parameters=PecanParameterParser.parseParameters(PecanParameterParser.getDefaultParameters());
-		File fastaFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/ecoli-190209-contam_correctNL.fasta");
-		File blibFile=new File("/Users/searleb/Documents/projects/pecan/ecoli_dataset/ecoli.blib");
+		HashMap<String, String> defaultParameters=PecanParameterParser.getDefaultParameters();
+		defaultParameters.put("-frag", "CID");
+		PecanSearchParameters parameters=PecanParameterParser.parseParameters(defaultParameters);
+		File fastaFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/UP000005640_9606.fasta");
+		File blibFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/hela_6mz.blib");
 		ArrayList<FastaEntry> targets=null;
 		
-		PecanJobData job1=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/pecan/ecoli_dataset/20150708_Ecoli_0911_25x4mzDIA_500_600.dia");
-		PecanJobData job2=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/pecan/ecoli_dataset/20150708_Ecoli_0911_25x4mzDIA_600_700.dia");
-		PecanJobData job3=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/pecan/ecoli_dataset/20150708_Ecoli_0911_25x4mzDIA_700_800.dia");
-		PecanJobData job4=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/pecan/ecoli_dataset/20150708_Ecoli_0911_25x4mzDIA_800_900.dia");
+		PecanJobData job1=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_400_500.mzML");
+		PecanJobData job2=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_500_600.mzML");
+		PecanJobData job3=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_600_700.mzML");
+		PecanJobData job4=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_700_800.mzML");
+		PecanJobData job5=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_800_900.mzML");
+		PecanJobData job6=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_900_1000.mzML");
 
 		ArrayList<PecanJobData> jobs=new ArrayList<PecanJobData>();
 		jobs.add(job1);
 		jobs.add(job2);
 		jobs.add(job3);
 		jobs.add(job4);
-		
+		jobs.add(job5);
+		jobs.add(job6);
 		convert(new EmptyProgressIndicator(), jobs, blibFile);
 	}
 
@@ -115,7 +121,7 @@ public class PecanToBLIB {
 				if (passingPeptides.isPresent()) {
 					localPassingPeptides=passingPeptides.get();
 				} else {
-					localPassingPeptides=PercolatorReader.getPassingPeptides(job.getOutputFile(), pecanJobs.get(i).getTaskFactory().getParameters().getPercolatorThreshold());
+					localPassingPeptides=PercolatorReader.getPassingPeptidesFromXML(job.getOutputFile(), pecanJobs.get(i).getTaskFactory().getParameters().getPercolatorThreshold());
 				}
 				
 				counterTotals=convertFile(subProgress, job, localPassingPeptides, counterTotals, blib);

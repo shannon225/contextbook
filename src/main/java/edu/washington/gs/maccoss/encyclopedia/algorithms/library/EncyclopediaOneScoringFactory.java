@@ -15,13 +15,11 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsC
 import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVConsumer;
 
 public class EncyclopediaOneScoringFactory implements LibraryScoringFactory {
-	public static final String version="0.1";
+	public static final String version="0.1.1";
 	private final SearchParameters parameters;
-	private final File outputFile;
 
-	public EncyclopediaOneScoringFactory(SearchParameters parameters, File outputFile) {
+	public EncyclopediaOneScoringFactory(SearchParameters parameters) {
 		this.parameters=parameters;
-		this.outputFile=outputFile;
 	}
 
 	@Override
@@ -30,7 +28,7 @@ public class EncyclopediaOneScoringFactory implements LibraryScoringFactory {
 	}
 
 	@Override
-	public PeptideScoringResultsConsumer getResultsConsumer(BlockingQueue<PeptideScoringResult> resultsQueue) {
+	public PeptideScoringResultsConsumer getResultsConsumer(File outputFile, BlockingQueue<PeptideScoringResult> resultsQueue) {
 		return new ScoringResultsToTSVConsumer(outputFile, EncyclopediaOneAuxillaryPSMScorer.getScoreNames(), resultsQueue, 1);
 	}
 

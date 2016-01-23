@@ -37,7 +37,8 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 			for (int i=0; i<super.stripes.size(); i++) {
 				Stripe stripe=super.stripes.get(i);
 				scores[i]=scorer.auxScore(entry, stripe, predictedIsotopeDistribution, precursors);
-				primary[i]=scorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
+				primary[i]=scores[i][0];
+				//primary[i]=scorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
 			}
 			
 			float[] averagePrimary=movingCenteredAverage(primary, movingAverageLength);

@@ -11,7 +11,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import jdk.nashorn.internal.ir.annotations.Immutable;
 
 /**
- * use for testing
+ * use for testing, does not SQRT!
  * @author searleb
  *
  */
@@ -24,7 +24,7 @@ public class MockLibrary implements LibraryInterface {
 	}
 
 	@Override
-	public ArrayList<LibraryEntry> getEntries(String peptideModSeq) throws IOException, SQLException, DataFormatException {
+	public ArrayList<LibraryEntry> getEntries(String peptideModSeq, boolean sqrt) throws IOException, SQLException, DataFormatException {
 		ArrayList<LibraryEntry> returnables=new ArrayList<LibraryEntry>();
 		for (LibraryEntry entry : entries) {
 			if (peptideModSeq.equals(entry.getPeptideModSeq())) {
@@ -35,7 +35,7 @@ public class MockLibrary implements LibraryInterface {
 	}
 
 	@Override
-	public ArrayList<LibraryEntry> getEntries(Range precursorMz) throws IOException, SQLException, DataFormatException {
+	public ArrayList<LibraryEntry> getEntries(Range precursorMz, boolean sqrt) throws IOException, SQLException, DataFormatException {
 		ArrayList<LibraryEntry> returnables=new ArrayList<LibraryEntry>();
 		for (LibraryEntry entry : entries) {
 			if (precursorMz.contains((float)entry.getPrecursorMZ())) {

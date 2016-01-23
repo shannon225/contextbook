@@ -12,8 +12,9 @@ import junit.framework.TestCase;
 public class PercolatorExecutorTest extends TestCase {
 	
 	public static void main(String[] args) throws Exception {
-		File featureFile=new File("/Users/searleb/Documents/school/projects/pecandata/DIA_1xGFP_20x20mz_500to900_rep1.mzML.pecan.txt.features.txt");
-		PercolatorExecutor e=new PercolatorExecutor(featureFile);
+		File featureFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML.pecan.txt.features.txt");
+		File outputFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML.pecan.txt.txt");
+		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile);
 		BlockingQueue<OutputMessage> result=e.start();
 		
 		int outputlines=0;
@@ -43,9 +44,13 @@ public class PercolatorExecutorTest extends TestCase {
 		InputStream is=getClass().getResourceAsStream("/pecan.feature.txt");
 		File featureFile=File.createTempFile("pecan", ".feature");
 		featureFile.deleteOnExit();
+
+		File outputFile=File.createTempFile("percolator", ".xml");
+		featureFile.deleteOnExit();
+		
 		Files.copy(is, featureFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		
-		PercolatorExecutor e=new PercolatorExecutor(featureFile);
+		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile);
 		BlockingQueue<OutputMessage> result=e.start();
 		
 		int outputlines=0;

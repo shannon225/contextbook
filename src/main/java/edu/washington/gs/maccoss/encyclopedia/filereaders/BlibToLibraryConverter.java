@@ -13,8 +13,9 @@ public class BlibToLibraryConverter {
 
 		blibDir=new File("/Users/searleb/Documents/school/projects/");
 		blibFiles=new File[] {new File(blibDir, "VillenJ_Exactive_HumanPhosphoproteome.blib")};
+		blibFiles=new File[] {new File("/Users/searleb/Documents/projects/encyclopedia/mzml/hela_6mz.blib")};
 		
-		File libraryFile=new File("/Users/searleb/Documents/school/projects/qe_phospho.elib");
+		File libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/hela_6mz.elib");
 
 		LibraryFile library=new LibraryFile();
 		library.openFile();

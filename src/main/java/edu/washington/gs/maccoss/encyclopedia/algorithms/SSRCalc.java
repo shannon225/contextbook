@@ -1309,6 +1309,13 @@ public class SSRCalc {
 				"EVAVIKDGVDAGGSYVFVQR", "VQDPASIGFGQLPPAANYEK", "QVFVYSGGADVGDKIVAVER", "YPFINCTHCGPR", "PGCHTCNIFPYR", "LPEGSKWQDWR", "WDQWKSGEPLR", "IYGPKGIGALYVR", "YGLLNDVRVLDK", "DLVRVDNLLGYK",
 				"VYLAGIGKPGYIR", "SHPAGALGARLLNK", "TTIMNFRHLLEQHQLAR" };
 		try {
+			long time=System.currentTimeMillis();
+			for (int i=0; i<5000; i++) { // 100000 calculations
+				for (String string : pep) {
+					getHydrophobicity(string);
+				}
+			}
+			System.out.println((System.currentTimeMillis()-time)/1000f+" seconds");
 			for (String string : pep) {
 				System.out.println(string+"\t"+getHydrophobicity(string));
 			}

@@ -155,7 +155,7 @@ public class BlibFile extends SQLFile {
 					prep.setString(7, "-"); // nextAA
 					prep.setInt(8, 1); // copies
 					prep.setInt(9, entry.getMassArray().length); // numPeaks
-					prep.setDouble(10, entry.getRetentionTime()); // retentionTime
+					prep.setDouble(10, entry.getRetentionTime()/60f); // retentionTime
 					prep.setInt(11, jobCounter); // fileID
 					prep.setString(12, diaFileName+"."+entry.getSpectrumIndex()+"."+entry.getSpectrumIndex()+"."+entry.getPrecursorCharge()); // SpecIDinFile
 					prep.setDouble(13, entry.getScore()); // score
@@ -170,7 +170,7 @@ public class BlibFile extends SQLFile {
 					prepRTs.setInt(1,  idCounter);
 					prepRTs.setInt(2,  0);
 					prepRTs.setInt(3,  jobCounter);
-					prepRTs.setDouble(4,  entry.getRetentionTime());
+					prepRTs.setDouble(4,  entry.getRetentionTime()/60f); // convert to minutes
 					prepRTs.setInt(5,  0);
 					prepRTs.addBatch();
 					

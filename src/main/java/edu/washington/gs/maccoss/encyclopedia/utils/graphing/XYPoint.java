@@ -33,4 +33,14 @@ public class XYPoint implements PointInterface {
 		if (y<o.getY()) return -1;
 		return 0;
 	}
+	
+	@Override
+	public int hashCode() {
+		return Double.hashCode(x)+Double.hashCode(y);
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		return compareTo((PointInterface)obj)==0;
+	}
 }
