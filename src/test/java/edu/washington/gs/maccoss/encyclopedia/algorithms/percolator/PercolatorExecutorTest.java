@@ -14,7 +14,7 @@ public class PercolatorExecutorTest extends TestCase {
 	public static void main(String[] args) throws Exception {
 		File featureFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML.pecan.txt.features.txt");
 		File outputFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML.pecan.txt.txt");
-		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile);
+		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, false);
 		BlockingQueue<OutputMessage> result=e.start();
 		
 		int outputlines=0;
@@ -50,7 +50,7 @@ public class PercolatorExecutorTest extends TestCase {
 		
 		Files.copy(is, featureFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		
-		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile);
+		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, true);
 		BlockingQueue<OutputMessage> result=e.start();
 		
 		int outputlines=0;
