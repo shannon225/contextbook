@@ -23,6 +23,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import gnu.trove.map.hash.TCharFloatHashMap;
+import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class BlibFile extends SQLFile {
 	private final File tempFile;
@@ -49,7 +50,7 @@ public class BlibFile extends SQLFile {
 		this.userFile=userFile;
 	}
 	
-	public void getStreamEntriesToLibrary(LibraryFile library) throws IOException, SQLException, DataFormatException {
+	public void getStreamEntriesToLibrary(LibraryFile library, TObjectFloatHashMap<String> irtMap) throws IOException, SQLException, DataFormatException {
 		library.dropIndices();
 		
 		Connection c=getConnection(tempFile);
@@ -61,6 +62,8 @@ public class BlibFile extends SQLFile {
 								+"where RefSpectra.id == RefSpectraPeaks.RefSpectraID");
 
 				ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
+				int missing=0;
+				int total=0;
 				while (rs.next()) {
 					double precursorMZ=rs.getDouble(1);
 					byte precursorCharge=(byte)rs.getInt(2);
@@ -71,6 +74,15 @@ public class BlibFile extends SQLFile {
 					float score=(float)rs.getDouble(7);
 					double[] massArray=decompressDouble(rs.getBytes(8), numPeaks);
 					float[] intensityArray=decompressFloat(rs.getBytes(9), numPeaks);
+					
+					if (irtMap!=null) {
+						if (irtMap.contains(peptideModSeq)) {
+							retentionTime=irtMap.get(peptideModSeq);
+						} else {
+							missing++;
+						}
+					}
+					total++;
 
 					entries.add(new LibraryEntry(precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));
 					
@@ -79,6 +91,9 @@ public class BlibFile extends SQLFile {
 						entries.clear();
 						Logger.log(".");
 					}
+				}
+				if (missing>0) {
+					System.out.println("Missing iRT for "+missing+" of "+total+" peptides, using RT in file.");
 				}
 
 				library.addEntries(entries);

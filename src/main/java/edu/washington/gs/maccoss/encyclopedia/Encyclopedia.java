@@ -280,6 +280,7 @@ public class Encyclopedia {
 					
 					Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
 					XYPoint point=new XYPoint(entryTime, first.x.y.getScanStartTime()/60.0f);
+					System.out.println("map.put("+point.x+"f, "+point.y+"f);");
 					rtSet.add(point);
 				}
 			}

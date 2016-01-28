@@ -19,7 +19,11 @@ public class EncyclopediaTest {
 				"-targetWindowCenter", "750", 
 				"-deconvoluteOverlappingWindows", "true"});
 		*/
+		Encyclopedia.main(new String[] { "-i", "/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/110415_bcs_hela_phospho_igf1_6mz_980_1140.mzML", 
+				"-l", "/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/VillenJ_Exactive_HumanPhosphoproteome.elib",
+				"-deconvoluteOverlappingWindows", "true"});
 
+		/*
 		Encyclopedia.main(new String[] { "-i", "/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/110415_bcs_hela_phospho_igf1_6mz_500_660.mzML", 
 				"-l", "/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/VillenJ_Exactive_HumanPhosphoproteome.elib",
 				"-deconvoluteOverlappingWindows", "true"});
@@ -60,6 +64,6 @@ public class EncyclopediaTest {
 		jobs.add(job4);
 		jobs.add(job5);
 		PecanToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile);
-				
+		*/	
 	}
 }

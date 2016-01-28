@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.zip.DataFormatException;
 
+import gnu.trove.map.hash.TObjectFloatHashMap;
+
 public class BlibToLibraryConverter {
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException {
 		File blibDir=new File("/Users/searleb/Documents/villen_manuscript/phospho/");
@@ -18,13 +20,17 @@ public class BlibToLibraryConverter {
 		
 		File libraryFile=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
 		//File libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/hela_6mz.elib");
+		
+		File iRTLibraryFile=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/phosphoiRT.irtdb");
+		IRTdbFile irt=new IRTdbFile(iRTLibraryFile);
+		TObjectFloatHashMap<String> irtMap=irt.getIRTs();
 
 		LibraryFile library=new LibraryFile();
 		library.openFile();
 		for (File blibFile : blibFiles) {
 			BlibFile blib = new BlibFile();
 			blib.openFile(blibFile);
-			blib.getStreamEntriesToLibrary(library);	
+			blib.getStreamEntriesToLibrary(library, irtMap);	
 		}
 		library.saveAsFile(libraryFile);
 	}
