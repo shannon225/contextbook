@@ -27,6 +27,10 @@ public class PercolatorPSM implements Comparable<PercolatorPSM> {
 		this.proteinID=proteinID;
 	}
 	
+	public PercolatorPSM clone(float newQValue) {
+		return new PercolatorPSM(psmID, isDecoy, svmScore, newQValue, pepValue, pValue, sequence, nTermChar, cTermChar, proteinID);
+	}
+	
 	@Override
 	public int compareTo(PercolatorPSM o) {
 		if (o==null) return 1;
@@ -85,5 +89,17 @@ public class PercolatorPSM implements Comparable<PercolatorPSM> {
 	    sb.toString()+
 	    "      </psm_ids>\n"+
 	    "    </peptide>\n";
+	}
+	
+	public float getQValue() {
+		return qValue;
+	}
+	
+	public String getPsmID() {
+		return psmID;
+	}
+	
+	public boolean isDecoy() {
+		return isDecoy;
 	}
 }

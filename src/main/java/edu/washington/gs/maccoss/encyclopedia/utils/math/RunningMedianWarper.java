@@ -62,7 +62,16 @@ public class RunningMedianWarper implements Function {
 	}
 	
 	public static float linearInterp(double minX, double X, double maxX, double minY, double maxY) {
-		return (float)(((maxY-minY)/maxX-minX)*(X-minX)+minY);
+		double deltaX=maxX-minX;
+		if (deltaX==0) {
+			return (float)(maxY+minY)/2f;
+		}
+		double deltaY=maxY-minY;
+		if (deltaY==0) {
+			return (float)maxY;
+		}
+		float interp=(float)(((maxY-minY)/deltaX)*(X-minX)+minY);
+		return interp;
 	}
 
 	public static int calculateBinNumber(double x, double[] xs) {

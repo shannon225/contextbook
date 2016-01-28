@@ -2,21 +2,53 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
 import java.util.ArrayList;
 
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import gnu.trove.list.array.TFloatArrayList;
 import junit.framework.TestCase;
 
 public class MedianInterpolatorTest extends TestCase {
 	public void testInterpolation() throws Exception {
 		ArrayList<XYPoint> rts=getTestData();
-		//XYTrace trace=new XYTrace(rts, GraphType.point, "RT");
+		XYTrace trace=new XYTrace(rts, GraphType.tinypoint, "RT");
 		
 		System.out.println(rts.size());
 		int order=Math.max(3, Math.round(rts.size()/10f));
 		RunningMedianWarper warper=new RunningMedianWarper(rts, order, true);
-		//XYTrace median=new XYTrace(warper.getKnots(), GraphType.line, "Warp");
+		XYTrace median=new XYTrace(warper.getKnots(), GraphType.line, "Warp");
 		
-		//Charter.launchChart("Calculated RT", "Actual RT", false, median, median2, trace);
-		//Thread.sleep(Long.MAX_VALUE);
+		Charter.launchChart("Calculated RT", "Actual RT", false, median, trace);
+		
+		
+		TFloatArrayList deltas=new TFloatArrayList();
+		for (XYPoint xyPoint : rts) {
+			float delta=(float)xyPoint.y-warper.getYValue((float)xyPoint.x);
+			deltas.add(delta);
+		}
+		
+		float[] deltaArray=deltas.toArray();
+		ArrayList<XYPoint> histogram=PivotTableGenerator.createPivotTable(deltaArray);
+		XYTrace histTrace=new XYTrace(histogram, GraphType.line, "Delta RT");
+		
+		float mean=General.mean(deltaArray);
+		float stdev=General.stdev(deltaArray);
+		
+		ArrayList<XYPoint> stdevList=new ArrayList<XYPoint>();
+		stdevList.add(new XYPoint(mean-3*stdev, 10));
+		stdevList.add(new XYPoint(mean-2*stdev, 10));
+		stdevList.add(new XYPoint(mean-stdev, 10));
+		stdevList.add(new XYPoint(mean, 10));
+		stdevList.add(new XYPoint(mean+3*stdev, 10));
+		stdevList.add(new XYPoint(mean+2*stdev, 10));
+		stdevList.add(new XYPoint(mean+stdev, 10));
+		
+		XYTrace stdevs=new XYTrace(stdevList, GraphType.point, "Stdevs");
+		
+		Charter.launchChart("Delta RT", "Count", false, histTrace, stdevs);
+		
+		Thread.sleep(Long.MAX_VALUE);
 		
 		XYPoint previous=null;
 		for (XYPoint xyPoint : warper.getKnots()) {

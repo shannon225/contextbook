@@ -21,20 +21,32 @@ public class PercolatorData {
 	private final int peptidesQLevel;
 	private final ArrayList<PercolatorPSM> psms;
 	
-	public PercolatorData(int majorVersion, int minorVersion, String percolatorVersion, String commandLine, String otherCommandLine, float pi0psMs, float pi0Peptides, int psmsQLevel,
+	public PercolatorData(int majorVersion, int minorVersion, String percolatorVersion, String commandLine, String otherCommandLine, float pi0PSMs, float pi0Peptides, int psmsQLevel,
 			int peptidesQLevel, ArrayList<PercolatorPSM> psms) {
 		this.majorVersion=majorVersion;
 		this.minorVersion=minorVersion;
 		this.percolatorVersion=percolatorVersion;
 		this.commandLine=commandLine;
 		this.otherCommandLine=otherCommandLine;
-		this.pi0PSMs=pi0psMs;
+		this.pi0PSMs=pi0PSMs;
 		this.pi0Peptides=pi0Peptides;
 		this.psmsQLevel=psmsQLevel;
 		this.peptidesQLevel=peptidesQLevel;
 		this.psms=new ArrayList<PercolatorPSM>(psms);
 		Collections.sort(this.psms);
 		Collections.reverse(this.psms);
+	}
+	
+	
+	
+	public PercolatorData clone(ArrayList<PercolatorPSM> newPSMs) {
+		return new PercolatorData(majorVersion, minorVersion, percolatorVersion, commandLine, otherCommandLine, pi0PSMs, pi0Peptides, psmsQLevel, peptidesQLevel, newPSMs);
+	}
+
+
+
+	public ArrayList<PercolatorPSM> getPsms() {
+		return psms;
 	}
 	
 	public void writeToFile(File outputFile) {

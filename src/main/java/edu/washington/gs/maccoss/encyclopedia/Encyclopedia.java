@@ -207,7 +207,7 @@ public class Encyclopedia {
 				ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 				tasks.add(entry);
 				tasks.add(entry.getReverse(parameters));
-				executor.submit(taskFactory.getScoringTask(scorer, tasks, stripes, precursors, resultsQueue));
+				executor.submit(taskFactory.getScoringTask(scorer, tasks, stripes, dutyCycle, precursors, resultsQueue));
 			}
 			
 			executor.shutdown();
@@ -231,25 +231,17 @@ public class Encyclopedia {
 		progress.update("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)", (1.0f+rangesFinished)/numberOfTasks);
 		File percolatorResultFile=new File(outputFile.getAbsolutePath()+".xml");
 		
-		ArrayList<ScoredObject<String>> allPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, percolatorResultFile, 1.0f);
+		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, percolatorResultFile, parameters.getPercolatorThreshold());
 		
 		ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
-		Pair<RunningMedianWarper, ArrayList<ScoredObject<String>>> rescoringModel=getRescoringModel(allPeptides, data, parameters);
-		ArrayList<ScoredObject<String>> passingPeptides=rescoringModel.y;
+		Pair<RunningMedianWarper, ArrayList<ScoredObject<String>>> rescoringModel=getRescoringModel(passingPeptides, data, parameters);
 		
-		// FIXME rewrite Percolator file with filtered scores
-		
-		/*writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>());
+		writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>());
 		Thread finalWriteConsumerThread=new Thread(writeResultsConsumer);
 		finalWriteConsumerThread.start();
 		BlockingQueue<PeptideScoringResult> resultList=writeResultsConsumer.getResultsQueue();
 		for (PeptideScoringResult result : data) {
-			PeptideScoringResult rescore=result.rescore(rescoringModel);
-			if (rescore.getGoodStripes().size()>0) { 
-				//System.out.println(rescore.getGoodStripes().get(0).x.x);
-			} else {
-				//System.out.println("empty for: "+result.getGoodStripes().size());
-			}
+			PeptideScoringResult rescore=result.rescore(rescoringModel.x);
 			resultList.add(rescore);
 		}
 		resultList.add(PeptideScoringResult.POISON_RESULT);
@@ -257,8 +249,8 @@ public class Encyclopedia {
 		writeResultsConsumer.close();
 
 		progress.update("Re-running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)", (1.0f+rangesFinished)/numberOfTasks);
-		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, outputFile, parameters.getPercolatorThreshold());
-		*/
+		passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, outputFile, parameters.getPercolatorThreshold());
+		
 		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 
 		progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);

@@ -33,9 +33,9 @@ public class EncyclopediaOneScoringFactory implements LibraryScoringFactory {
 	}
 
 	@Override
-	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors,
+	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors,
 			BlockingQueue<PeptideScoringResult> resultsQueue) {
-		return new EncyclopediaOneScoringTask(scorer, entries, stripes, precursors, resultsQueue, parameters);
+		return new EncyclopediaOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, resultsQueue, parameters);
 	}
 
 	@Override

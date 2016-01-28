@@ -17,17 +17,19 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import gnu.trove.set.hash.TIntHashSet;
 
 public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
+	private final float dutyCycle;
 	
-	public EncyclopediaOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
+	public EncyclopediaOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
 			SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
+		this.dutyCycle=dutyCycle;
 	}
 	
-	private static final int movingAverageLength=10;
 	private static final int peaksKept=5;
 
 	@Override
 	protected Nothing process() {
+		int movingAverageLength=Math.round(25.0f/dutyCycle);
 		for (LibraryEntry entry : super.entries) {
 			PeptideScoringResult result=new PeptideScoringResult(entry);
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
