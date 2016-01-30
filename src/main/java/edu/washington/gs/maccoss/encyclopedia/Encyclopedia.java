@@ -231,7 +231,7 @@ public class Encyclopedia {
 		progress.update("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)", (1.0f+rangesFinished)/numberOfTasks);
 		File percolatorResultFile=new File(outputFile.getAbsolutePath()+".xml");
 		
-		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, percolatorResultFile, parameters.getPercolatorThreshold());
+		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolatorXML(parameters.getPercolatorLocation(), featureFile, percolatorResultFile, 1.0f);
 		
 		ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
 		Pair<RunningMedianWarper, ArrayList<ScoredObject<String>>> rescoringModel=getRescoringModel(passingPeptides, data, parameters);
@@ -280,7 +280,7 @@ public class Encyclopedia {
 					
 					Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
 					XYPoint point=new XYPoint(entryTime, first.x.y.getScanStartTime()/60.0f);
-					System.out.println("map.put("+point.x+"f, "+point.y+"f);");
+					System.out.println("add(rts,"+entry.isDecoy()+","+(float)entryTime+"f,"+(float)point.y+"f);");
 					rtSet.add(point);
 				}
 			}

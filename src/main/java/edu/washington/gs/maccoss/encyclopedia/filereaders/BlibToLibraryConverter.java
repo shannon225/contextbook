@@ -21,7 +21,7 @@ public class BlibToLibraryConverter {
 		File libraryFile=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
 		//File libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/hela_6mz.elib");
 		
-		File iRTLibraryFile=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/phosphoiRT.irtdb");
+		File iRTLibraryFile=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/HumanPhosphoProteomeRT.irtdb");
 		IRTdbFile irt=new IRTdbFile(iRTLibraryFile);
 		TObjectFloatHashMap<String> irtMap=irt.getIRTs();
 

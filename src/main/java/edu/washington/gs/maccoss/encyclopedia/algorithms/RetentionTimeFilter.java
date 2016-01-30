@@ -1,6 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorData;
@@ -9,15 +11,56 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RunningMedianWarper;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class RetentionTimeFilter {
 	private final Function rtWarper;
-	public RetentionTimeFilter(Function rtWarper) {
-		this.rtWarper=rtWarper;
+	public RetentionTimeFilter(ArrayList<XYPoint> rts) {
+		Collections.sort(rts);
+		int order=Math.max(3, Math.round(rts.size()/50f));
+		RunningMedianWarper warper=new RunningMedianWarper(rts, order, true);
+
+		TFloatArrayList deltas=new TFloatArrayList();
+		for (int i=0; i<rts.size(); i++) {
+			XYPoint xyPoint=rts.get(i);
+			float delta=(float)xyPoint.y-warper.getYValue((float)xyPoint.x);
+			deltas.add(delta);
+		}
+		float[] deltaArray=deltas.toArray();
+
+		float[] stdevs=new float[deltaArray.length];
+		for (int i=0; i<deltaArray.length; i++) {
+			float[] deltarange=RunningMedianWarper.extractRange(deltaArray, order, i);
+			float sumSquares=0.0f;
+			for (int j=0; j<deltarange.length; j++) {
+				sumSquares+=deltarange[j]*deltarange[j];
+			}
+			// assumes law of large numbers (not n-1), so n=1 safe, but garbage at the wings
+			stdevs[i]=(float)Math.sqrt(sumSquares/deltarange.length);
+		}
+		Arrays.sort(deltaArray);
+		
+		ArrayList<XYPoint> selectedRTs=new ArrayList<XYPoint>();
+		ArrayList<XYPoint> lowerBounds=new ArrayList<XYPoint>();
+		ArrayList<XYPoint> upperBounds=new ArrayList<XYPoint>();
+		for (int i=0; i<rts.size(); i++) {
+			XYPoint xyPoint=rts.get(i);
+			float mapping=warper.getYValue((float)xyPoint.x);
+			float lowerBound=mapping-stdevs[i];
+			float upperBound=mapping+stdevs[i];
+			if (xyPoint.y<=upperBound&&xyPoint.y>=lowerBound) {
+				selectedRTs.add(xyPoint);
+			}
+			lowerBounds.add(new XYPoint(rts.get(i).x, lowerBound));
+			upperBounds.add(new XYPoint(rts.get(i).x, upperBound));
+		}
+		
+		rtWarper=new RunningMedianWarper(selectedRTs, order, true);
 	}
 	
 	public PercolatorData filterData(PercolatorData perc, ArrayList<PeptideScoringResult> data, SearchParameters parameters) {

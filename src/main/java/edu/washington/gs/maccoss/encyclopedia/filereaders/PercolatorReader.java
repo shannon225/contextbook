@@ -104,7 +104,8 @@ public class PercolatorReader {
 			
 			String eachline;
 			while ((eachline=in.readLine())!=null) {
-				if (eachline.trim().length()==0) {
+				eachline=eachline.trim();
+				if (eachline.length()==0) {
 					continue;
 				}
 				if (parsePeptides) {

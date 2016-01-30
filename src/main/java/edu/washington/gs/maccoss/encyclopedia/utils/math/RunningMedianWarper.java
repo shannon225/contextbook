@@ -122,6 +122,13 @@ public class RunningMedianWarper implements Function {
 	}
 
 	private static float getMedian(float[] y, int order, int i) {
+		float[] array=extractRange(y, order, i);
+		float median=QuickMedian.median(array);
+		
+		return median;
+	}
+
+	public static float[] extractRange(float[] y, int order, int i) {
 		TFloatArrayList selected=new TFloatArrayList();
 		int minRange=i-Math.max(0, i-order);
 		int maxRange=Math.min(y.length, i+order)-i;
@@ -134,8 +141,8 @@ public class RunningMedianWarper implements Function {
 		for (int j=i+1; j<i+finalRange; j++) {
 			selected.add(y[j]);
 		}
-		float median=QuickMedian.median(selected.toArray());
-		return median;
+		float[] array=selected.toArray();
+		return array;
 	}
 
 }
