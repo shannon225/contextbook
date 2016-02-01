@@ -34,8 +34,10 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
@@ -45,18 +47,22 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 public class DIABrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
 	
-	private final SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
-	private final PecanRawScorer scorer=new PecanRawScorer(parameters.getFragmentTolerance(), new ExpectedFragmentationScorer(parameters));
+	private final PecanRawScorer scorer;
 
+	private final SearchParameters parameters;
 	private final FileChooserPanel diaFile;
 	private final JTextField peptide=new JTextField("YLDGLTAER");
 	private final SpinnerModel charge=new SpinnerNumberModel(2, 1, 5, 1);
 	private final JSplitPane split=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
-	private StripeFile dia=null;
+	private StripeFileInterface dia=null;
 
 	public DIABrowserPanel() {
 		super(new BorderLayout());
+		HashMap<String, String> map=SearchParameterParser.getDefaultParameters();
+		map.put("-deconvoluteOverlappingWindows", "true");
+		parameters=SearchParameterParser.parseParameters(map);
+		scorer=new PecanRawScorer(parameters.getFragmentTolerance(), new ExpectedFragmentationScorer(parameters));
 
 		diaFile=new FileChooserPanel(null, "DIA File", new SimpleFilenameFilter(".dia", ".mzml")) {
 			private static final long serialVersionUID=1L;
@@ -64,14 +70,15 @@ public class DIABrowserPanel extends JPanel {
 			@Override
 			public void update(File... filename) {
 				super.update(filename);
-				if (filename!=null&&filename.length>0) {
+				if (filename!=null&&filename.length>0&&filename[0]!=null) {
 					try {
 						Logger.logLine("Reading file...");
-						dia=new StripeFile();
-						dia.openFile(filename[0]);
+
+						dia=MzmlToDIAConverter.getFile(filename[0], parameters);
 						Logger.logLine("Finished reading file.");
 						resetPeptide(peptide.getText(), (Integer) charge.getValue());
 					} catch (Exception e) {
+						e.printStackTrace();
 						JOptionPane.showMessageDialog(DIABrowserPanel.this, "Sorry, there was a problem reading ["+filename[0].getName()+"]: "+e.getMessage(), "Error Opening DIA File",
 								JOptionPane.ERROR_MESSAGE);
 					}
@@ -133,7 +140,7 @@ public class DIABrowserPanel extends JPanel {
 				JOptionPane.showMessageDialog(DIABrowserPanel.this, "Sorry, there was a problem reading the precursor window that contains ["+entry.getPrecursorMZ()+"]: "+e.getMessage(), "Error Reading DIA File",
 						JOptionPane.ERROR_MESSAGE);
 			}
-			Logger.logLine("Finished reading peptide.");
+			Logger.logLine("Finished reading peptide "+peptide);
 		}
 	}
 }
