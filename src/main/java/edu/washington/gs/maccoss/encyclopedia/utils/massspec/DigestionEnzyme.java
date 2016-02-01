@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import gnu.trove.list.array.TIntArrayList;
@@ -11,6 +12,21 @@ public class DigestionEnzyme {
 	private final String name;
 	private final TCharHashSet nterm;
 	private final TCharHashSet cterm;
+	
+	public static HashSet<String> getAvailableEnzymes() {
+		HashSet<String> enzymes=new HashSet<String>();
+		enzymes.add("Trypsin");
+		enzymes.add("Trypsin/p");
+		enzymes.add("Lys-C");
+		enzymes.add("Lys-N");
+		enzymes.add("Arg-C");
+		enzymes.add("CNBr");
+		enzymes.add("Chymotrypsin");
+		enzymes.add("PepsinA");
+		enzymes.add("Elastase");
+		enzymes.add("Thermolysin");
+		return enzymes;
+	}
 	
 	public static DigestionEnzyme getEnzyme(String enzymeName) {
 		TCharHashSet n=new TCharHashSet();
@@ -69,6 +85,26 @@ public class DigestionEnzyme {
 			c.remove('P');
 			
 			return new DigestionEnzyme("Chymotrypsin", n, c);
+			
+		} else if ("Elastase".equalsIgnoreCase(enzymeName)) {
+			n.add('A');
+			n.add('V');
+			c.addAll(AAs);
+			
+			return new DigestionEnzyme("Elastase", n, c);
+			
+		} else if ("Thermolysin".equalsIgnoreCase(enzymeName)) {
+			c.add('A');
+			c.add('F');
+			c.add('I');
+			c.add('L');
+			c.add('M');
+			c.add('V');
+			n.addAll(AAs);
+			n.remove('D');
+			n.remove('E');
+			
+			return new DigestionEnzyme("Thermolysin", n, c);
 			
 		} else if ("PepsinA".equalsIgnoreCase(enzymeName)) {
 			n.add('F');

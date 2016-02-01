@@ -8,6 +8,32 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import junit.framework.TestCase;
 
 public class DigestionEnzymeTest extends TestCase {
+	public void testXanderCleavages() {
+		System.out.println("BOLA2T:");
+		String sequence="MELSAEYLREKLQRDLEAEHVEVEDTTLNRCSCSFRVLVVSAKFEGKPLLQRHRFCTE";
+		for (String name : DigestionEnzyme.getAvailableEnzymes()) {
+			DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme(name);
+			ArrayList<String> sequences=enzyme.digestProtein(sequence, 6, 40, 0);
+			for (String string : sequences) {
+				if (string.indexOf("RHRF")>=0) {
+					System.out.println(enzyme.getName()+": "+string);
+				}
+			}
+		}
+		
+		System.out.println("\nBOLA2F:");
+		sequence="MELSAEYLREKLQRDLEAEHVEVEDTTLNRCSCSFRVLVVSAKFEGKPLLQRHSLDPSMTIHCDMVITYGLDQLENCQTCGTDYIISVLNLLTLIVEQINTKLPSSFVEKLFIPSSKLLFLRYHKDKEVVAVAHAVYQAMLSLKNIPVLETAYKLILGEMTCALNNLLHSLQLPEACSEIKHEAFKNHVFNVDNAKFVVKFDLSALTTIGNAKNSSL";
+		for (String name : DigestionEnzyme.getAvailableEnzymes()) {
+			DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme(name);
+			ArrayList<String> sequences=enzyme.digestProtein(sequence, 6, 40, 0);
+			for (String string : sequences) {
+				if (string.indexOf("RHSL")>=0) {
+					System.out.println(enzyme.getName()+": "+string);
+				}
+			}
+		}
+	}
+	
 	public void testMissedCleavages() {
 
 		String bsa=">ALBU_HUMAN Serum albumin OS=Homo sapiens GN=ALB PE=1 SV=2\n"+"MKWVTFISLLFLFSSAYSRGVFRRDAHKSEVAHRFKDLGEENFKALVLIAFAQYLQQCPF\n"
