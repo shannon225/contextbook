@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -42,16 +43,10 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.SaveResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.TeeResultsConsumer;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearDiscriminantAnalysis;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.RunningMedianWarper;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
@@ -231,17 +226,17 @@ public class Encyclopedia {
 		progress.update("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)", (1.0f+rangesFinished)/numberOfTasks);
 		File percolatorResultFile=new File(outputFile.getAbsolutePath()+".xml");
 		
-		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolatorXML(parameters.getPercolatorLocation(), featureFile, percolatorResultFile, 1.0f);
+		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolatorXML(parameters.getPercolatorLocation(), featureFile, percolatorResultFile, parameters.getPercolatorThreshold());
 		
 		ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
-		Pair<RunningMedianWarper, ArrayList<ScoredObject<String>>> rescoringModel=getRescoringModel(passingPeptides, data, parameters);
+		RetentionTimeFilter filter=getRescoringModel(passingPeptides, data);
 		
 		writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>());
 		Thread finalWriteConsumerThread=new Thread(writeResultsConsumer);
 		finalWriteConsumerThread.start();
 		BlockingQueue<PeptideScoringResult> resultList=writeResultsConsumer.getResultsQueue();
 		for (PeptideScoringResult result : data) {
-			PeptideScoringResult rescore=result.rescore(rescoringModel.x);
+			PeptideScoringResult rescore=result.rescore(filter);
 			resultList.add(rescore);
 		}
 		resultList.add(PeptideScoringResult.POISON_RESULT);
@@ -256,47 +251,23 @@ public class Encyclopedia {
 		progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 	}
 
-	public static Pair<RunningMedianWarper, ArrayList<ScoredObject<String>>> getRescoringModel(ArrayList<ScoredObject<String>> allPeptides, ArrayList<PeptideScoringResult> data, SearchParameters parameters) {
-		ArrayList<ScoredObject<String>> passingPeptides=new ArrayList<ScoredObject<String>>();
-		for (ScoredObject<String> peptide : allPeptides) {
-			if (peptide.x<=parameters.getPercolatorThreshold()) {
-				passingPeptides.add(peptide);
-			}
-		}
-		
-		HashSet<String> passingSeqs=new HashSet<String>();
-		for (ScoredObject<String> pass : passingPeptides) {
-			passingSeqs.add(pass.y);
-		}
-		
+	public static RetentionTimeFilter getRescoringModel(ArrayList<ScoredObject<String>> passingPeptides, ArrayList<PeptideScoringResult> data) {
 		HashSet<XYPoint> rtSet=new HashSet<XYPoint>();
 		
 		for (PeptideScoringResult result : data) {
 			if (result.getGoodStripes().size()>0) {
-				String peptideModSeq=result.getEntry().getPeptideModSeq();
-				if (passingSeqs.contains(peptideModSeq+"+"+result.getEntry().getPrecursorCharge())) {
-					LibraryEntry entry=result.getEntry();
-					float entryTime=entry.getScanStartTime();
-					
-					Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
-					XYPoint point=new XYPoint(entryTime, first.x.y.getScanStartTime()/60.0f);
-					System.out.println("add(rts,"+entry.isDecoy()+","+(float)entryTime+"f,"+(float)point.y+"f);");
-					rtSet.add(point);
-				}
+				LibraryEntry entry=result.getEntry();
+				float entryTime=entry.getScanStartTime();
+
+				Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
+				XYPoint point=new XYPoint(entryTime, first.x.y.getScanStartTime()/60.0f);
+				System.out.println(entryTime+"\t"+point.y);
+				rtSet.add(point);
 			}
 		}
 		ArrayList<XYPoint> rts=new ArrayList<XYPoint>(rtSet);
-		Collections.sort(rts);
-
-		int order=Math.max(3, Math.round(rts.size()/10f));
-		RunningMedianWarper rtWarper=new RunningMedianWarper(rts, order, true);
-
-		XYTrace trace=new XYTrace(rts, GraphType.tinypoint, "RT");
-		XYTrace median=new XYTrace(rtWarper.getKnots(), GraphType.line, "Warp");
-		Charter.launchChart("Calculated RT", "Actual RT", false, median, trace);
-
-		// FIXME trim to parameters.getPercolatorThreshold()
-
-		return new Pair<RunningMedianWarper, ArrayList<ScoredObject<String>>>(rtWarper, passingPeptides);
+		RetentionTimeFilter filter=new RetentionTimeFilter(rts);
+		filter.plot(rts);
+		return filter;
 	}
 }

@@ -1,147 +1,152 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPSM;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.ProphetMixtureModel;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RunningMedianWarper;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Gaussian;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.UnitDistribution;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class RetentionTimeFilter {
-	private final Function rtWarper;
+	private final RunningMedianWarper rtWarper;
+	private final ProphetMixtureModel model;
+	
 	public RetentionTimeFilter(ArrayList<XYPoint> rts) {
 		Collections.sort(rts);
 		int order=Math.max(3, Math.round(rts.size()/50f));
+		
+		// 5 iterations is sufficient
 		RunningMedianWarper warper=new RunningMedianWarper(rts, order, true);
-
+		Pair<RunningMedianWarper, ProphetMixtureModel> pair=runIteration(rts, warper);
+		pair=runIteration(rts, pair.x);
+		pair=runIteration(rts, pair.x);
+		pair=runIteration(rts, pair.x);
+		rtWarper=pair.x;
+		model=pair.y;
+	}
+	
+	public void plot(ArrayList<XYPoint> rts) {
 		TFloatArrayList deltas=new TFloatArrayList();
+		ArrayList<XYPoint> removedRTs=new ArrayList<XYPoint>();
+		ArrayList<XYPoint> selectedRTs=new ArrayList<XYPoint>();
+		for (int i=0; i<rts.size(); i++) {
+			XYPoint xyPoint=rts.get(i);
+			float actualRT=(float)xyPoint.y;
+			float modelRT=rtWarper.getYValue((float)xyPoint.x);
+			float delta=actualRT-modelRT;
+			deltas.add(delta);
+			
+			float prob=getProbabilityFitsModel((float)xyPoint.y, (float)xyPoint.x);
+			if (prob>=0.5f) {
+				selectedRTs.add(xyPoint);
+			} else {
+				removedRTs.add(xyPoint);
+			}
+		}
+		float[] deltaArray=deltas.toArray();
+		ArrayList<XYPoint> histogram=PivotTableGenerator.createPivotTable(deltaArray);
+		XYTrace histTrace=new XYTrace(histogram, GraphType.line, "Delta RT");
+		
+		ArrayList<XYPoint> positivePoints=new ArrayList<XYPoint>();
+		ArrayList<XYPoint> negativePoints=new ArrayList<XYPoint>();
+		for (XYPoint xyPoint : histogram) {
+			double x=xyPoint.getX();
+			positivePoints.add(new XYPoint(x, model.getPositive().getProbability(x)));
+			negativePoints.add(new XYPoint(x, model.getNegative().getProbability(x)));
+		}
+
+		XYTrace posTrace=new XYTrace(positivePoints, GraphType.line, "Positive");
+		XYTrace negTrace=new XYTrace(negativePoints, GraphType.line, "Negative");
+		
+		Charter.launchChart("Delta RT", "Count", true, histTrace, posTrace, negTrace);
+		
+		XYTrace median2=new XYTrace(rtWarper.getKnots(), GraphType.line, "Retention Time Fit");
+		XYTrace selectedTrace=new XYTrace(selectedRTs, GraphType.tinypoint, "Data Used In Fit");
+		XYTrace trace=new XYTrace(removedRTs, GraphType.tinypoint, "Data Removed From Fit");
+		Charter.launchChart("Calculated RT", "Actual RT", true, median2, selectedTrace, trace);
+	}
+	
+	public float getYValue(float xrt) {
+		return rtWarper.getYValue(xrt);
+	}
+	
+	public float getProbabilityFitsModel(float actualRT, float modelRT) {
+		float delta=actualRT-getYValue(modelRT);
+		float probability=model.getProbability(delta);
+		return probability;
+	}
+
+	public Pair<RunningMedianWarper,ProphetMixtureModel> runIteration(ArrayList<XYPoint> rts, RunningMedianWarper warper) {
+		TFloatArrayList deltas=new TFloatArrayList();
+		float min=Float.MAX_VALUE;
+		float max=-Float.MAX_VALUE;
 		for (int i=0; i<rts.size(); i++) {
 			XYPoint xyPoint=rts.get(i);
 			float delta=(float)xyPoint.y-warper.getYValue((float)xyPoint.x);
 			deltas.add(delta);
+			if (delta>max) max=delta;
+			if (delta<min) min=delta;
 		}
 		float[] deltaArray=deltas.toArray();
-
-		float[] stdevs=new float[deltaArray.length];
-		for (int i=0; i<deltaArray.length; i++) {
-			float[] deltarange=RunningMedianWarper.extractRange(deltaArray, order, i);
-			float sumSquares=0.0f;
-			for (int j=0; j<deltarange.length; j++) {
-				sumSquares+=deltarange[j]*deltarange[j];
-			}
-			// assumes law of large numbers (not n-1), so n=1 safe, but garbage at the wings
-			stdevs[i]=(float)Math.sqrt(sumSquares/deltarange.length);
+		
+		float median=QuickMedian.select(deltaArray, 0.5f);
+		float iqr=QuickMedian.iqr(deltaArray);
+		float quarterMaxRange=(max-min)/4.0f;
+		Distribution positive=new Gaussian(median, iqr/1.35f, 0.5f);
+		Distribution negative=new UnitDistribution(median, quarterMaxRange, 0.5f, min, max);
+		
+		ProphetMixtureModel model=new ProphetMixtureModel(positive, negative, true);
+		model.train(deltaArray, 10);
+		positive=model.getPositive();
+		negative=model.getNegative();
+		
+		/*
+		ArrayList<XYPoint> histogram=PivotTableGenerator.createPivotTable(deltaArray);
+		XYTrace histTrace=new XYTrace(histogram, GraphType.line, "Delta RT");
+		
+		ArrayList<XYPoint> positivePoints=new ArrayList<XYPoint>();
+		ArrayList<XYPoint> negativePoints=new ArrayList<XYPoint>();
+		for (XYPoint xyPoint : histogram) {
+			double x=xyPoint.getX();
+			positivePoints.add(new XYPoint(x, positive.getProbability(x)));
+			negativePoints.add(new XYPoint(x, negative.getProbability(x)));
 		}
-		Arrays.sort(deltaArray);
+
+		XYTrace posTrace=new XYTrace(positivePoints, GraphType.line, "Positive");
+		XYTrace negTrace=new XYTrace(negativePoints, GraphType.line, "Negative");
+		
+		Charter.launchChart("Delta RT", "Count", true, histTrace, posTrace, negTrace);
+		*/
 		
 		ArrayList<XYPoint> selectedRTs=new ArrayList<XYPoint>();
-		ArrayList<XYPoint> lowerBounds=new ArrayList<XYPoint>();
-		ArrayList<XYPoint> upperBounds=new ArrayList<XYPoint>();
 		for (int i=0; i<rts.size(); i++) {
 			XYPoint xyPoint=rts.get(i);
-			float mapping=warper.getYValue((float)xyPoint.x);
-			float lowerBound=mapping-stdevs[i];
-			float upperBound=mapping+stdevs[i];
-			if (xyPoint.y<=upperBound&&xyPoint.y>=lowerBound) {
+			float delta=(float)xyPoint.y-warper.getYValue((float)xyPoint.x);
+			if (model.getProbability(delta)>=0.5f) {
 				selectedRTs.add(xyPoint);
 			}
-			lowerBounds.add(new XYPoint(rts.get(i).x, lowerBound));
-			upperBounds.add(new XYPoint(rts.get(i).x, upperBound));
-		}
-		
-		rtWarper=new RunningMedianWarper(selectedRTs, order, true);
-	}
-	
-	public PercolatorData filterData(PercolatorData perc, ArrayList<PeptideScoringResult> data, SearchParameters parameters) {
-		ArrayList<PercolatorPSM> psms=perc.getPsms(); //already reverse sorted
-
-		HashSet<String> passingPSMIDs=new HashSet<String>();
-		for (PercolatorPSM psm : psms) {
-			if (psm.getQValue()<=parameters.getPercolatorThreshold()) {
-				passingPSMIDs.add(psm.getPsmID());
-			}
-		}
-		
-		TFloatArrayList deltas=new TFloatArrayList();
-
-		for (PeptideScoringResult result : data) {
-			if (result.getGoodStripes().size()>0) {
-				String peptideModSeq=result.getEntry().getPeptideModSeq();
-				if (passingPSMIDs.contains(peptideModSeq+"+"+result.getEntry().getPrecursorCharge())) {
-					LibraryEntry entry=result.getEntry();
-					float entryTime=rtWarper.getYValue(entry.getRetentionTime());
-					
-					Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
-					float deltaRT=first.x.y.getScanStartTime()/60f-entryTime;
-					deltas.add(deltaRT);					
-				}
-			}
-		}
-		
-		float[] deltaArray=deltas.toArray();
-		float mean=General.mean(deltaArray);
-		float stdev=General.stdev(deltaArray);
-		float upperThreshold=mean+2.0f*stdev;
-		float lowerThreshold=mean-2.0f*stdev;
-
-		HashSet<String> rtFilteredPSMIDs=new HashSet<String>();
-		for (PeptideScoringResult result : data) {
-			if (result.getGoodStripes().size()>0) {
-				String peptideModSeq=result.getEntry().getPeptideModSeq();
-				LibraryEntry entry=result.getEntry();
-				float entryTime=rtWarper.getYValue(entry.getRetentionTime());
-
-				Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
-				float deltaRT=first.x.y.getScanStartTime()/60f-entryTime;
-
-				if (deltaRT<=upperThreshold&&deltaRT>=lowerThreshold) {
-					rtFilteredPSMIDs.add(peptideModSeq);
-				}
-			}
 		}
 
-		int decoys=0;
-		int nondecoys=0;
-		TFloatArrayList qvalues=new TFloatArrayList();
-		for (PercolatorPSM psm : psms) {
-			if (rtFilteredPSMIDs.contains(psm.getPsmID())) {
-				if (psm.isDecoy()) {
-					decoys++;
-				} else {
-					nondecoys++;
-				}
-			}
-			qvalues.add(decoys/(float)(decoys+nondecoys));
-		}
-		
-		// convert FDRs to q-values
-		float minValue=Float.MAX_VALUE;
-		for (int i=qvalues.size()-1; i>=0; i--) {
-			if (qvalues.get(i)>minValue) {
-				qvalues.set(i, minValue);
-			} else {
-				minValue=qvalues.get(i);
-			}
-		}
+		int order=Math.max(3, Math.round(selectedRTs.size()/50f));
+		warper=new RunningMedianWarper(selectedRTs, order, true);
 
-		ArrayList<PercolatorPSM> rtFilteredPSMs=new ArrayList<PercolatorPSM>();
-		for (int i=0; i<psms.size(); i++) {
-			if (rtFilteredPSMIDs.contains(psms.get(i).getPsmID())) {
-				rtFilteredPSMs.add(psms.get(i).clone(qvalues.get(i)));
-			}
-		}
-		
-		return perc.clone(rtFilteredPSMs);
+		/*
+		XYTrace median2=new XYTrace(warper.getKnots(), GraphType.line, "corrected");
+		XYTrace selectedTrace=new XYTrace(selectedRTs, GraphType.tinypoint, "Selected");
+
+		XYTrace trace=new XYTrace(rts, GraphType.tinypoint, "RT");
+		Charter.launchChart("Calculated RT", "Actual RT", true, median2, selectedTrace, trace);
+		*/
+		return new Pair<RunningMedianWarper, ProphetMixtureModel>(warper, model);
 	}
 }

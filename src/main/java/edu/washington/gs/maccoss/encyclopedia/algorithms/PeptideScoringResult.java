@@ -7,7 +7,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.RunningMedianWarper;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 
 public class PeptideScoringResult {
@@ -21,32 +20,23 @@ public class PeptideScoringResult {
 		this.entry=entry;
 	}
 	
-	public PeptideScoringResult rescore(RunningMedianWarper warper) {
+	public PeptideScoringResult rescore(RetentionTimeFilter filter) {
 		PeptideScoringResult newResult=new RescoredPeptideScoringResult(entry);
 		newResult.setTrace(trace);
-		
-		/*float bestScore=-Float.MAX_VALUE;
-		float[] bestAuxs=null;
-		Stripe bestStripe=null;
-		*/
 		
 		for (Pair<ScoredObject<Stripe>, float[]> pair : goodStripes) {
 			float score=pair.x.x;
 			Stripe stripe=pair.x.y;
 			float[] scores=pair.y;
-			float entryTime=warper.getYValue(entry.getRetentionTime());
-			float deltaRT=Math.abs(stripe.getScanStartTime()/60f-entryTime);
-			float[] scoresWithRT=General.concatenate(scores, deltaRT);
-			newResult.addStripe(score, scoresWithRT, stripe);
-			/*if (newScore>bestScore) {
-				bestScore=newScore;
-				bestAuxs=scoresWithRT;
-				bestStripe=stripe;
-			}*/
+			float actualRT=stripe.getScanStartTime()/60f;
+			float modelRT=entry.getRetentionTime();
+			boolean passes=filter.getProbabilityFitsModel(actualRT, modelRT)>=0.05f;
+			if (passes) {
+				float deltaRT=Math.abs(actualRT-filter.getYValue(modelRT));
+				float[] scoresWithRT=General.concatenate(scores, deltaRT);
+				newResult.addStripe(score, scoresWithRT, stripe);
+			}
 		}
-		/*if (bestStripe!=null) {
-			newResult.addStripe(bestScore, bestAuxs, bestStripe);
-		}*/
 		
 		return newResult;
 	}

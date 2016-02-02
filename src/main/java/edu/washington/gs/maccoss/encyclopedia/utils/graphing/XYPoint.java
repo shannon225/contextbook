@@ -10,6 +10,11 @@ public class XYPoint implements PointInterface {
 		this.x=x;
 		this.y=y;
 	}
+	
+	@Override
+	public String toString() {
+		return x+","+y;
+	}
 
 	@Override
 	public double getX() {
