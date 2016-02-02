@@ -261,7 +261,7 @@ public class Encyclopedia {
 
 				Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
 				XYPoint point=new XYPoint(entryTime, first.x.y.getScanStartTime()/60.0f);
-				System.out.println(entryTime+"\t"+point.y);
+				//System.out.println(entryTime+"\t"+point.y);
 				rtSet.add(point);
 			}
 		}

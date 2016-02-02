@@ -24,18 +24,37 @@ public class PeptideScoringResult {
 		PeptideScoringResult newResult=new RescoredPeptideScoringResult(entry);
 		newResult.setTrace(trace);
 		
+		boolean anyFoundWithRTFilter=false;
+		boolean bestSet=false;
+		float bestScore=0.0f;
+		float[] bestScores=null;
+		Stripe bestStripe=null;
+		
 		for (Pair<ScoredObject<Stripe>, float[]> pair : goodStripes) {
 			float score=pair.x.x;
 			Stripe stripe=pair.x.y;
 			float[] scores=pair.y;
 			float actualRT=stripe.getScanStartTime()/60f;
 			float modelRT=entry.getRetentionTime();
-			boolean passes=filter.getProbabilityFitsModel(actualRT, modelRT)>=0.05f;
+			boolean passes=filter.getProbabilityFitsModel(actualRT, modelRT)>=0.5f;
 			if (passes) {
 				float deltaRT=Math.abs(actualRT-filter.getYValue(modelRT));
 				float[] scoresWithRT=General.concatenate(scores, deltaRT);
 				newResult.addStripe(score, scoresWithRT, stripe);
+				anyFoundWithRTFilter=true;
+			} else if (!bestSet) {
+				bestSet=true;
+				bestScore=score;
+				float deltaRT=Math.abs(actualRT-filter.getYValue(modelRT));
+				float[] scoresWithRT=General.concatenate(scores, deltaRT);
+				bestScores=scoresWithRT;
+				bestStripe=stripe;
 			}
+		}
+		
+		// if nothing passes the RT filter then use the top match
+		if (!anyFoundWithRTFilter) {
+			newResult.addStripe(bestScore, bestScores, bestStripe);
 		}
 		
 		return newResult;

@@ -14,7 +14,7 @@ import junit.framework.TestCase;
 
 public class ProphetMixtureModelTest extends TestCase {
 	public void testModel() throws Exception {
-		ArrayList<XYPoint> rts=MedianInterpolatorTest.getAltPhosphoData();
+		ArrayList<XYPoint> rts=MedianInterpolatorTest.getPhosphoData();
 		Collections.sort(rts);
 		int order=Math.max(3, Math.round(rts.size()/50f));
 		RunningMedianWarper warper=new RunningMedianWarper(rts, order, true);
@@ -36,10 +36,14 @@ public class ProphetMixtureModelTest extends TestCase {
 		
 		Distribution positive=new Gaussian(median, iqr, 0.95f);
 		Distribution negative=new Gaussian(median, quarterMaxRange, 0.05f);
-		ProphetMixtureModel model=new ProphetMixtureModel(positive, negative);
+		ProphetMixtureModel model=new ProphetMixtureModel(positive, negative, false);
 		model.train(deltaArray, 10);
 		positive=model.getPositive();
 		negative=model.getNegative();
+		assertTrue(positive.getPrior()>negative.getPrior());
+		assertTrue(Math.abs(positive.getMean())<5);
+		assertTrue(Math.abs(negative.getMean())<10);
+		assertTrue(positive.getStdev()<negative.getStdev());
 		
 		ArrayList<XYPoint> histogram=PivotTableGenerator.createPivotTable(deltaArray);
 		XYTrace histTrace=new XYTrace(histogram, GraphType.line, "Delta RT");
@@ -55,8 +59,8 @@ public class ProphetMixtureModelTest extends TestCase {
 		XYTrace posTrace=new XYTrace(positivePoints, GraphType.line, "Positive");
 		XYTrace negTrace=new XYTrace(negativePoints, GraphType.line, "Negative");
 		
-		Charter.launchChart("Delta RT", "Count", true, histTrace, posTrace, negTrace);
+		//Charter.launchChart("Delta RT", "Count", true, histTrace, posTrace, negTrace);
 		
-		Thread.sleep(Long.MAX_VALUE);
+		//Thread.sleep(Long.MAX_VALUE);
 	}
 }
