@@ -5,6 +5,36 @@ import java.util.ArrayList;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 
 public class PivotTableGenerator {
+	public static ArrayList<XYPoint>[] createPivotTables(float[][] datas) {
+		float actualMin=Float.MAX_VALUE;
+		float actualMax=-Float.MAX_VALUE;
+		
+		int length=0;
+		for (int a=0; a<datas.length; a++) {
+			float[] data=datas[a];
+			length+=data.length;
+			for (int i=0; i<data.length; i++) {
+				if (data[i]>actualMax) {
+					actualMax=data[i];
+				}
+				if (data[i]<actualMin) {
+					actualMin=data[i];
+				}
+			}
+		}
+		
+		int binCount=(length/datas.length)/20;
+
+		@SuppressWarnings("unchecked")
+		ArrayList<XYPoint>[] traces=new ArrayList[datas.length];
+		for (int a=0; a<datas.length; a++) {
+			float[] data=datas[a];
+			ArrayList<XYPoint> trace=createPivotTable(data, actualMin, actualMax, (actualMax-actualMin)/binCount);
+			traces[a]=trace;
+		}
+		return traces;
+	}
+	
 	public static ArrayList<XYPoint> createPivotTable(float[] data) {
 		float actualMin=Float.MAX_VALUE;
 		float actualMax=-Float.MAX_VALUE;

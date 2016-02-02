@@ -8,8 +8,11 @@ import java.awt.Font;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.swing.JFrame;
+import javax.swing.JTabbedPane;
 
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -57,6 +60,26 @@ public class Charter {
 
 		f.pack();
 		f.setSize(new Dimension(1000, 500));
+		f.setVisible(true);
+	}
+
+	public static void launchCharts(String title, Map<String, ChartPanel> panelMap) {
+		final JFrame f=new JFrame(title);
+		f.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				System.exit(0);
+			}
+		});
+		
+		JTabbedPane tabs=new JTabbedPane();
+		for (Entry<String, ChartPanel> entry : panelMap.entrySet()) {
+			tabs.addTab(entry.getKey(), entry.getValue());
+		}
+
+		f.getContentPane().add(tabs, BorderLayout.CENTER);
+
+		f.pack();
+		f.setSize(new Dimension(1000, 770));
 		f.setVisible(true);
 	}
 
