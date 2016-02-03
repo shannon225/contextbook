@@ -3,13 +3,26 @@ package edu.washington.gs.maccoss.encyclopedia;
 public class EncyclopediaTest {
 	public static void main(String[] args) {
 		/*
-		Encyclopedia.main(new String[] { "-i", "/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML", 
-				//"-l", "/Users/searleb/Documents/projects/encyclopedia/mzml/cptac2_human_hcd_selected.elib",
-				"-l", "/Users/searleb/Documents/projects/encyclopedia/mzml/hela_6mz.elib",
-				"-targetWindowCenter", "750", 
+		Encyclopedia.main(new String[] { "-i", "/Users/searleb/Documents/projects/encyclopedia/mzml/momo/20150301_A1_DIA_1.mzML", 
+				"-l", "/Users/searleb/Documents/projects/encyclopedia/mzml/momo/20151125_122sample_id_iRT.elib",
 				"-deconvoluteOverlappingWindows", "true"});
 		*/
 		
+		Encyclopedia.main(new String[] { "-i", "/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML", 
+				//"-l", "/Users/searleb/Documents/projects/encyclopedia/mzml/cptac2_human_hcd_selected.elib",
+				"-l", "/Users/searleb/Documents/projects/encyclopedia/mzml/hela_6mz.elib",
+				"-deconvoluteOverlappingWindows", "true"});
+		
+		
+		/*
+		// NEGATIVE!
+		Encyclopedia.main(new String[] { "-i", "/Users/searleb/Documents/projects/encyclopedia/mzml/yeast/Q_2014_0523_12_0_amol_uL_20mz.mzML", 
+				//"-l", "/Users/searleb/Documents/projects/encyclopedia/mzml/cptac2_human_hcd_selected.elib",
+				"-l", "/Users/searleb/Documents/projects/encyclopedia/mzml/hela_6mz.elib",
+				//"-targetWindowCenter", "750", 
+				"-deconvoluteOverlappingWindows", "true"});
+		
+		/*
 		Encyclopedia.main(new String[] { "-i", "/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/110415_bcs_hela_phospho_igf1_6mz_980_1140.mzML", 
 				"-l", "/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/VillenJ_Exactive_HumanPhosphoproteome.elib",
 				"-deconvoluteOverlappingWindows", "true"});

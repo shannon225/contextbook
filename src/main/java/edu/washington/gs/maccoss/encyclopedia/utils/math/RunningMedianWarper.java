@@ -15,10 +15,16 @@ public class RunningMedianWarper implements Function {
 	private final double[] y; 
 	public RunningMedianWarper(ArrayList<XYPoint> points, int order, boolean onlyAscending) {
 		knots=warp(points, order, onlyAscending);
-		Collections.sort(knots);
-		Pair<double[], double[]> xys=XYTrace.toArrays(knots);
-		this.x=xys.x;
-		this.y=xys.y;
+		if (knots.size()==0) {
+			knots.add(new XYPoint(0,0));
+			this.x=new double[1];
+			this.y=new double[1];
+		} else {
+			Collections.sort(knots);
+			Pair<double[], double[]> xys=XYTrace.toArrays(knots);
+			this.x=xys.x;
+			this.y=xys.y;
+		}
 	}
 	
 	public ArrayList<XYPoint> getKnots() {
@@ -37,8 +43,8 @@ public class RunningMedianWarper implements Function {
 		int upperBin=calculateBinNumber(xi, x);
 
 		// boundary conditions
-		if (upperBin==0) return (float)y[0];
-		if (upperBin==x.length) return (float)y[y.length-1];
+		if (upperBin<=0) return (float)y[0];
+		if (upperBin>=x.length) return (float)y[y.length-1];
 
 		return linearInterp(x[upperBin-1], (float)xi, x[upperBin], y[upperBin-1], y[upperBin]);
 	}
@@ -84,6 +90,8 @@ public class RunningMedianWarper implements Function {
 	}
 	
 	public static ArrayList<XYPoint> warp(ArrayList<XYPoint> points, int order, boolean onlyAscending) {
+		if (points.size()==0) return points;
+		
 		Pair<float[], float[]>xys=XYTrace.toFloatArrays(points);
 		float[] x=xys.x;
 		float[] y=xys.y;

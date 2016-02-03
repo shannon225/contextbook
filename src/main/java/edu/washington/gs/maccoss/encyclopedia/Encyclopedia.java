@@ -226,7 +226,8 @@ public class Encyclopedia {
 		progress.update("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)", (1.0f+rangesFinished)/numberOfTasks);
 		File percolatorResultFile=new File(outputFile.getAbsolutePath()+".xml");
 		
-		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolatorXML(parameters.getPercolatorLocation(), featureFile, percolatorResultFile, parameters.getPercolatorThreshold());
+		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, percolatorResultFile, parameters.getPercolatorThreshold());
+		Logger.logLine("First pass: "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
 		
 		ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
 		RetentionTimeFilter filter=getRescoringModel(passingPeptides, data);
@@ -252,17 +253,25 @@ public class Encyclopedia {
 	}
 
 	public static RetentionTimeFilter getRescoringModel(ArrayList<ScoredObject<String>> passingPeptides, ArrayList<PeptideScoringResult> data) {
+		HashSet<String> passingSeqs=new HashSet<String>();
+		for (ScoredObject<String> pass : passingPeptides) {
+			passingSeqs.add(pass.y);
+		}
+		
 		HashSet<XYPoint> rtSet=new HashSet<XYPoint>();
 		
 		for (PeptideScoringResult result : data) {
 			if (result.getGoodStripes().size()>0) {
-				LibraryEntry entry=result.getEntry();
-				float entryTime=entry.getScanStartTime();
+				String peptideModSeq=result.getEntry().getPeptideModSeq();
+				if (passingSeqs.contains(peptideModSeq+"+"+result.getEntry().getPrecursorCharge())) {
+					LibraryEntry entry=result.getEntry();
+					float entryTime=entry.getScanStartTime();
 
-				Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
-				XYPoint point=new XYPoint(entryTime, first.x.y.getScanStartTime()/60.0f);
-				//System.out.println(entryTime+"\t"+point.y);
-				rtSet.add(point);
+					Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
+					XYPoint point=new XYPoint(entryTime, first.x.y.getScanStartTime()/60.0f);
+					// System.out.println(entryTime+"\t"+point.y);
+					rtSet.add(point);
+				}
 			}
 		}
 		ArrayList<XYPoint> rts=new ArrayList<XYPoint>(rtSet);

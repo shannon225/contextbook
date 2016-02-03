@@ -50,7 +50,7 @@ public abstract class AuxillaryPSMScorer {
 		}
 		if (peaksUsed>0) {
 			averagePPM=averagePPM/peaksUsed;
-			averageAbsPPM=averagePPM/peaksUsed;
+			averageAbsPPM=averageAbsPPM/peaksUsed;
 		} else {
 			averagePPM=maxPPMError;
 			averageAbsPPM=maxPPMError;

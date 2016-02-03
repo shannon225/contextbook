@@ -1,5 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
@@ -7,12 +10,15 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
+	private static final int numPeaksUsedInAverage=3;
+	
 	private final LibraryBackground background;
 
 	public EncyclopediaOneAuxillaryPSMScorer(SearchParameters parameters, LibraryBackground background) {
@@ -41,12 +47,10 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		int numberOfMatchingPeaks=0;
 		double dotProduct=0.0;
 		double weightedDotProduct=0.0;
-		float fractionSum=0.0f;
 		TDoubleArrayList predictedTargets=new TDoubleArrayList();
 		TFloatArrayList predictedTargetIntensities=new TFloatArrayList();
 		TFloatArrayList actualTargetIntensities=new TFloatArrayList();
-		TFloatArrayList fragmentDeltaMasses=new TFloatArrayList();
-		float averageAbsFragDeltaMass=0.0f;
+		ArrayList<XYPoint> fragmentDeltaMasses=new ArrayList<XYPoint>();
 		for (double target : ions) {
 			float predictedIntensity=tolerance.getIntegratedIntensity(predictedMasses, predictedIntensities, target);
 			
@@ -70,25 +74,34 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 				dotProduct+=product;
 				float fraction=background.getFraction(target);
 				weightedDotProduct+=product*fraction;
-				fractionSum+=fraction;
 				predictedTargets.add(target);
 				predictedTargetIntensities.add(predictedIntensity);
 				actualTargetIntensities.add(intensity);
-				fragmentDeltaMasses.add(deltaMass);
-				averageAbsFragDeltaMass+=Math.abs(deltaMass);
+				
+				fragmentDeltaMasses.add(new XYPoint(intensity, deltaMass));
 			}
 		}
+		
+		float averageFragmentDeltaMasses=0.0f, averageAbsFragDeltaMass=0.0f;
 		if (fragmentDeltaMasses.size()==0) {
 			averageAbsFragDeltaMass=(float)tolerance.getPpmTolerance();
-		} else {
-			averageAbsFragDeltaMass=averageAbsFragDeltaMass/fragmentDeltaMasses.size();
-		}
-		
-		float averageFragmentDeltaMasses;
-		if (fragmentDeltaMasses.size()==0) {
 			averageFragmentDeltaMasses=(float)tolerance.getPpmTolerance();
 		} else {
-			averageFragmentDeltaMasses=General.mean(fragmentDeltaMasses.toArray());
+			Collections.sort(fragmentDeltaMasses);
+			Collections.reverse(fragmentDeltaMasses);
+			
+			int count=0;
+			for (XYPoint xyPoint : fragmentDeltaMasses) {
+				averageFragmentDeltaMasses+=(float)xyPoint.y;
+				averageAbsFragDeltaMass+=Math.abs((float)xyPoint.y);
+				count++;
+				if (count>numPeaksUsedInAverage) break;
+			}
+			for (int i=count; i<numPeaksUsedInAverage; i++) {
+				averageAbsFragDeltaMass+=(float)tolerance.getPpmTolerance();
+			}
+			averageFragmentDeltaMasses=averageFragmentDeltaMasses/count;
+			averageAbsFragDeltaMass=averageAbsFragDeltaMass/numPeaksUsedInAverage;
 		}
 
 		float[] predictedTargetIntensitiesArray=predictedTargetIntensities.toArray();
@@ -99,6 +112,12 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		
 		float sumOfSquaredErrors=0.0f; // normalized to sum of targeted intensities
 		float weightedSumOfSquaredErrors=0.0f;
+
+		if (predictedTargetIntensitiesArray.length==0) {
+			sumOfSquaredErrors=1.0f;
+			weightedSumOfSquaredErrors=10.0f;
+		}
+		
 		for (int i=0; i<predictedTargetIntensitiesArray.length; i++) {
 			float predicted=predictedTargetIntensitiesArray[i]/sumPredictedTargets;
 			float actual;
@@ -118,10 +137,10 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		if (numberOfMatchingPeaks==0) {
 			xTandem=0.0f;
 		} else {
-			xTandem=((float)Log.log10(dotProduct))+Log.logFactorial(numberOfMatchingPeaks); // really log10(X!Tandem score)
+			xTandem=((float)Log.protectedLog10(dotProduct))+Log.logFactorial(numberOfMatchingPeaks); // really log10(X!Tandem score)
 		}
 		
-		return new float[] {xTandem, (float)dotProduct, (float)weightedDotProduct, sumOfSquaredErrors, weightedSumOfSquaredErrors, numberOfMatchingPeaks, fractionSum, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
+		return new float[] {xTandem, (float)Log.protectedLog10(dotProduct), (float)Log.protectedLog10(weightedDotProduct), sumOfSquaredErrors, weightedSumOfSquaredErrors, numberOfMatchingPeaks, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
 	}
 
 	@Override
@@ -130,7 +149,7 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 	}
 
 	public static String[] getScoreNames() {
-		return new String[] {"xTandem", "dotProduct", "weightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "fractionSum", "averageAbsFragDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsPPM", "averagePPM"};
+		return new String[] {"xTandem", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "averageAbsFragDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsPPM", "averagePPM"};
 	}
 	
 	@Override
@@ -138,6 +157,6 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		float maxFragPPMError=(float)parameters.getFragmentTolerance().getPpmTolerance();
 		float maxPrePPMError=(float)parameters.getPrecursorTolerance().getPpmTolerance();
 	
-		return new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, maxFragPPMError, maxFragPPMError, 0.0f, maxPrePPMError, maxPrePPMError};
+		return new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, maxFragPPMError, maxFragPPMError, 0.0f, maxPrePPMError, maxPrePPMError};
 	}
 }
