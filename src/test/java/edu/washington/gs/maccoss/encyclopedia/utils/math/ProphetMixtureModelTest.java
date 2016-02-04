@@ -3,10 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Gaussian;
 import gnu.trove.list.array.TFloatArrayList;
@@ -46,7 +43,7 @@ public class ProphetMixtureModelTest extends TestCase {
 		assertTrue(positive.getStdev()<negative.getStdev());
 		
 		ArrayList<XYPoint> histogram=PivotTableGenerator.createPivotTable(deltaArray);
-		XYTrace histTrace=new XYTrace(histogram, GraphType.line, "Delta RT");
+		//XYTrace histTrace=new XYTrace(histogram, GraphType.line, "Delta RT");
 		
 		ArrayList<XYPoint> positivePoints=new ArrayList<XYPoint>();
 		ArrayList<XYPoint> negativePoints=new ArrayList<XYPoint>();
@@ -56,8 +53,8 @@ public class ProphetMixtureModelTest extends TestCase {
 			negativePoints.add(new XYPoint(x, negative.getProbability(x)));
 		}
 
-		XYTrace posTrace=new XYTrace(positivePoints, GraphType.line, "Positive");
-		XYTrace negTrace=new XYTrace(negativePoints, GraphType.line, "Negative");
+		//XYTrace posTrace=new XYTrace(positivePoints, GraphType.line, "Positive");
+		//XYTrace negTrace=new XYTrace(negativePoints, GraphType.line, "Negative");
 		
 		//Charter.launchChart("Delta RT", "Count", true, histTrace, posTrace, negTrace);
 		
