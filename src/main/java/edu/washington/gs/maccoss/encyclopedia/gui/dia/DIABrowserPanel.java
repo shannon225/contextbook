@@ -25,7 +25,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.ExpectedFragmentationSc
 import edu.washington.gs.maccoss.encyclopedia.algorithms.FragmentationScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.FragmentationTraceTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -116,7 +115,7 @@ public class DIABrowserPanel extends JPanel {
 			Logger.logLine("Parsing peptide...");
 			PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaEntry(peptide), parameters.getAAConstants());
 			ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
-			PecanLibraryEntry entry=model.getUnitSpectrum((byte)charge, parameters);
+			LibraryEntry entry=model.getUnitSpectrum((byte)charge, parameters);
 			entries.add(entry);
 			
 			try {

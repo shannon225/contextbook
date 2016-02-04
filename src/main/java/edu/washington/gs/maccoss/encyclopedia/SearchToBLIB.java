@@ -5,71 +5,30 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 
 import com.google.common.base.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanFeatureReader;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
-import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 
-public class PecanToBLIB {
-	public static void main(String[] args) {
-		HashMap<String, String> defaultParameters=PecanParameterParser.getDefaultParameters();
-		defaultParameters.put("-frag", "CID");
-		PecanSearchParameters parameters=PecanParameterParser.parseParameters(defaultParameters);
-		File fastaFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/UP000005640_9606.fasta");
-		File blibFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/hela_6mz.blib");
-		ArrayList<FastaEntry> targets=null;
-		
-		PecanJobData job1=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_400_500.mzML");
-		PecanJobData job2=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_500_600.mzML");
-		PecanJobData job3=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_600_700.mzML");
-		PecanJobData job4=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_700_800.mzML");
-		PecanJobData job5=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_800_900.mzML");
-		PecanJobData job6=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_900_1000.mzML");
-
-		ArrayList<PecanJobData> jobs=new ArrayList<PecanJobData>();
-		jobs.add(job1);
-		jobs.add(job2);
-		jobs.add(job3);
-		jobs.add(job4);
-		jobs.add(job5);
-		jobs.add(job6);
-		convert(new EmptyProgressIndicator(), jobs, blibFile);
-	}
-
-	static PecanJobData getData(PecanSearchParameters parameters, File fastaFile, ArrayList<FastaEntry> targets, String dia) {
-		File diaFile1=new File(dia);
-		File outputFile1=new File(diaFile1.getAbsolutePath()+".pecan.txt");
-		File featureFile1=new File(outputFile1.getAbsolutePath()+".features.txt");
-		PecanScoringFactory factory1=new PecanOneScoringFactory(parameters, featureFile1);
-		PecanJobData job1=new PecanJobData(Optional.fromNullable(targets), diaFile1, fastaFile,featureFile1, outputFile1, factory1);
-		return job1;
-	}
-
-	public static void convert(ProgressIndicator progress, ArrayList<PecanJobData> pecanJobs, File blibFile) {
+public class SearchToBLIB {
+	public static void convert(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File blibFile) {
 		ArrayList<File> featureFiles=new ArrayList<File>();
-		PecanJobData representativeJob=null;
+		SearchJobData representativeJob=null;
 		for (int i=0; i<pecanJobs.size(); i++) {
-			PecanJobData job=pecanJobs.get(i);
+			SearchJobData job=pecanJobs.get(i);
 			if (!job.hasBeenRun()) {
 				continue;
 			}
@@ -86,7 +45,7 @@ public class PecanToBLIB {
 		
 		try {
 			TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
-			SearchParameters parameters=representativeJob.getTaskFactory().getParameters();
+			SearchParameters parameters=representativeJob.getParameters();
 			float threshold=parameters.getPercolatorThreshold();
 			ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), bigFeatureFile, bigPercolatorFile, threshold);
 			Logger.logLine("Identified "+passingPeptides.size()+" peptides across all files at a "+(threshold*100.0f)+" FDR threshold.");
@@ -101,7 +60,7 @@ public class PecanToBLIB {
 		}
 	}
 	
-	static void convert(ProgressIndicator progress, ArrayList<PecanJobData> pecanJobs, File blibFile, Optional<ArrayList<ScoredObject<String>>> passingPeptides) {
+	static void convert(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File blibFile, Optional<ArrayList<ScoredObject<String>>> passingPeptides) {
 		try {
 			BlibFile blib=new BlibFile();
 			blib.openFile();
@@ -111,7 +70,7 @@ public class PecanToBLIB {
 
 			float increment=1.0f/pecanJobs.size();
 			for (int i=0; i<pecanJobs.size(); i++) {
-				PecanJobData job=pecanJobs.get(i);
+				SearchJobData job=pecanJobs.get(i);
 				if (!job.hasBeenRun()) {
 					continue;
 				}
@@ -121,7 +80,7 @@ public class PecanToBLIB {
 				if (passingPeptides.isPresent()) {
 					localPassingPeptides=passingPeptides.get();
 				} else {
-					localPassingPeptides=PercolatorReader.getPassingPeptidesFromXML(job.getOutputFile(), pecanJobs.get(i).getTaskFactory().getParameters().getPercolatorThreshold());
+					localPassingPeptides=PercolatorReader.getPassingPeptidesFromXML(job.getOutputFile(), pecanJobs.get(i).getParameters().getPercolatorThreshold());
 				}
 				
 				counterTotals=convertFile(subProgress, job, localPassingPeptides, counterTotals, blib);
@@ -138,19 +97,18 @@ public class PecanToBLIB {
 		}
 	}
 
-	static int[] convertFile(ProgressIndicator subProgress, PecanJobData job, ArrayList<ScoredObject<String>> passingPeptides, int[] counterTotals, BlibFile blib) throws IOException, SQLException {
+	static int[] convertFile(ProgressIndicator subProgress, SearchJobData job, ArrayList<ScoredObject<String>> passingPeptides, int[] counterTotals, BlibFile blib) throws IOException, SQLException {
 		File diaFile=job.getDiaFile();
 		Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Reading Percolator Results", 0.0f);
 
 		File featureFile=job.getFeatureFile();
 
-		PecanScoringFactory taskFactory=job.getTaskFactory();
-		StripeFileInterface stripeFile=MzmlToDIAConverter.getFile(diaFile, taskFactory.getParameters());
+		StripeFileInterface stripeFile=MzmlToDIAConverter.getFile(diaFile, job.getParameters());
 		Logger.logLine("Extracting Spectral Data for "+passingPeptides.size()+" Peptides from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Extracting Spectral Data for "+passingPeptides.size()+" Peptides", 0.1f);
 
-		ArrayList<LibraryEntry> libraryEntries=PecanFeatureReader.parsePecanFeatures(featureFile, passingPeptides, stripeFile, taskFactory);
+		ArrayList<LibraryEntry> libraryEntries=PecanFeatureReader.parsePecanFeatures(featureFile, passingPeptides, stripeFile, job.getParameters());
 
 		Logger.logLine("Writing Skyline BLIB from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Writing Skyline BLIB", 0.9f);

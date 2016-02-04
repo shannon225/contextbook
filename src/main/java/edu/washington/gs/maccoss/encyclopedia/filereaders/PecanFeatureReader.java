@@ -10,10 +10,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.zip.DataFormatException;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.DotProduct;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.AbstractPecanFragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringResultsToTSVConsumer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -29,13 +29,13 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class PecanFeatureReader {
-	public static ArrayList<LibraryEntry> parsePecanFeatures(File f, ArrayList<ScoredObject<String>> scoredPSMIDs, StripeFileInterface stripeFile, PecanScoringFactory factory) {
+	public static ArrayList<LibraryEntry> parsePecanFeatures(File f, ArrayList<ScoredObject<String>> scoredPSMIDs, StripeFileInterface stripeFile, SearchParameters parameters) {
 		final TObjectFloatHashMap<String> savedIDs=new TObjectFloatHashMap<String>();
 		for (ScoredObject<String> psm : scoredPSMIDs) {
 			savedIDs.put(psm.y, psm.x);
 		}
 
-		int cores=factory.getParameters().getNumberOfThreadsUsed();
+		int cores=parameters.getNumberOfThreadsUsed();
 		
 		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
 		TableParserProducer producer=new TableParserProducer(blockingQueue, f, "\t", cores);
@@ -47,7 +47,7 @@ public class PecanFeatureReader {
 
 		Thread[] consumers=new Thread[cores];
 		for (int i=0; i<consumers.length; i++) {
-			PecanFeatureMuscle muscle=new PecanFeatureMuscle(savedIDs, stripeFile, factory, savedEntries);
+			PecanFeatureMuscle muscle=new PecanFeatureMuscle(savedIDs, stripeFile, parameters, savedEntries);
 			TableParserConsumer consumer=new TableParserConsumer(blockingQueue, muscle);
 			consumers[i]=new Thread(consumer);
 			consumers[i].start();
@@ -94,17 +94,15 @@ public class PecanFeatureReader {
 
 		private final PSMScorer scorer;
 		private final SearchParameters params;
-		private final PecanScoringFactory factory;
 
 		private final ConcurrentLinkedQueue<LibraryEntry> savedEntries;
 
-		public PecanFeatureMuscle(TObjectFloatHashMap<String> savedIDs, StripeFileInterface stripeFile, PecanScoringFactory factory, ConcurrentLinkedQueue<LibraryEntry> savedEntries) {
+		public PecanFeatureMuscle(TObjectFloatHashMap<String> savedIDs, StripeFileInterface stripeFile, SearchParameters parameters, ConcurrentLinkedQueue<LibraryEntry> savedEntries) {
 			this.savedIDs=new TObjectFloatHashMap<String>(savedIDs); // to guarantee immutability
 			this.stripeFile=stripeFile;
 
-			scorer=factory.getPecanScorer();
-			params=factory.getParameters();
-			this.factory=factory;
+			scorer=new DotProduct(parameters.getFragmentTolerance());
+			params=parameters;
 			this.savedEntries=savedEntries;
 		}
 
@@ -135,7 +133,7 @@ public class PecanFeatureReader {
 						}
 					}
 
-					AbstractPecanFragmentationModel model=factory.getFragmentationModel(new FastaEntry(peptideModSeq), params.getAAConstants());
+					FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
 					LibraryEntry unitEntry=model.getUnitSpectrum(precursorCharge, params);
 					PeakScores[] individualPeakScores=scorer.getIndividualPeakScores(unitEntry, bestStripe, true);
 

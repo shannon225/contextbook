@@ -3,8 +3,8 @@ package edu.washington.gs.maccoss.encyclopedia.gui.pecan;
 import java.io.File;
 import java.util.ArrayList;
 
-import edu.washington.gs.maccoss.encyclopedia.PecanToBLIB;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
+import edu.washington.gs.maccoss.encyclopedia.SearchToBLIB;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 
@@ -23,13 +23,13 @@ public class PecanToBLIBJob extends SwingJob {
 
 	@Override
 	public void runJob() throws Exception {
-		ArrayList<PecanJobData> jobData=new ArrayList<PecanJobData>();
+		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
 		for (SwingJob job : processor.getQueue()) {
 			if (job instanceof PecanJob) {
 				jobData.add(((PecanJob)job).getPecanData());
 			}
 		}
 
-		PecanToBLIB.convert(getProgressIndicator(), jobData, blibFile);
+		SearchToBLIB.convert(getProgressIndicator(), jobData, blibFile);
 	}
 }

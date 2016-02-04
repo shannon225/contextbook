@@ -15,10 +15,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.zip.DataFormatException;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -107,7 +107,7 @@ public class BlibFile extends SQLFile {
 		library.createIndices();
 	}
 
-	public int[] addLibrary(PecanJobData job, ArrayList<LibraryEntry> entries, int idCounter, int jobCounter, int modCounter) throws IOException, SQLException {
+	public int[] addLibrary(SearchJobData job, ArrayList<LibraryEntry> entries, int idCounter, int jobCounter, int modCounter) throws IOException, SQLException {
 		String diaFileName=job.getDiaFile().getName();
 		String spectrumIDPrefix=diaFileName;
 		if (spectrumIDPrefix.indexOf('.')>0) {
@@ -119,7 +119,7 @@ public class BlibFile extends SQLFile {
 			rootName=rootName.substring(0, rootName.length()-5);
 		}
 		
-		AminoAcidConstants aaConstants=job.getTaskFactory().getParameters().getAAConstants();
+		AminoAcidConstants aaConstants=job.getParameters().getAAConstants();
 		TCharFloatHashMap fixedMods=aaConstants.getFixedMods();
 		char[] fixedModdedAAs=fixedMods.keys();
 		modCounter++;
@@ -142,7 +142,7 @@ public class BlibFile extends SQLFile {
 			
 			byte scoreTypeID=1;
 			if (numberOfScores==0) {
-				normalStatement.executeUpdate("insert into ScoreTypes (id, scoreType) VALUES ("+scoreTypeID+",\"Pecan_"+job.getTaskFactory().getVersion()+"\");");
+				normalStatement.executeUpdate("insert into ScoreTypes (id, scoreType) VALUES ("+scoreTypeID+",\"Pecan_"+job.getVersion()+"\");");
 			}
 			
 			normalStatement.close();

@@ -21,6 +21,17 @@ public class FragmentationModel {
 		aas=tuple.z;
 	}
 	
+	public LibraryEntry getUnitSpectrum(byte precursorCharge, SearchParameters params) {
+		double[] ions=getPrimaryIons(params.getFragType(), precursorCharge);
+		float[] unitIntensities=new float[ions.length];
+		Arrays.fill(unitIntensities, 1.0f);
+
+		String sequence=getModifiedSequence();
+		double precursorMZ=params.getAAConstants().getChargedMass(sequence, precursorCharge);
+
+		return new LibraryEntry(precursorMZ, precursorCharge, sequence, 1, 0.0f, 0.0f, ions, unitIntensities);
+	}
+	
 	public String[] getAas() {
 		return aas;
 	}
