@@ -3,6 +3,11 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math;
 public class Log {
 	private static final double log10=Math.log(10.0);
 
+	public static float protectedLog10(float v) {
+		if (v<=0) return 0.0f;
+		return (float)(Math.log(v)/log10);
+	}
+
 	public static double protectedLog10(double v) {
 		if (v<=0) return 0.0;
 		return Math.log(v)/log10;

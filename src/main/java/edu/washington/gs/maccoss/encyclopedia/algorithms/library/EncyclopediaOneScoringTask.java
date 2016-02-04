@@ -34,12 +34,10 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 			PeptideScoringResult result=new PeptideScoringResult(entry);
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
 			
-			float[][] scores=new float[super.stripes.size()][];
 			float[] primary=new float[super.stripes.size()];
 			for (int i=0; i<super.stripes.size(); i++) {
 				Stripe stripe=super.stripes.get(i);
-				scores[i]=scorer.auxScore(entry, stripe, predictedIsotopeDistribution, precursors);
-				primary[i]=scores[i][0];
+				primary[i]=scorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
 			}
 			
 			float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
@@ -59,8 +57,9 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 					continue;
 					
 				} else {
-					float[] auxScoreArray=scores[index];
-					result.addStripe(score, auxScoreArray, super.stripes.get(index));
+					Stripe stripe=super.stripes.get(index);
+					float[] auxScoreArray=scorer.auxScore(entry, stripe, predictedIsotopeDistribution, precursors);
+					result.addStripe(score, auxScoreArray, stripe);
 					
 					// block out a 40 scan window
 					int lowerWindow=index-2*movingAverageLength;

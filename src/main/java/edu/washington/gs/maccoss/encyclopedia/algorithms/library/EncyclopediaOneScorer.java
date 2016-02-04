@@ -42,7 +42,7 @@ public class EncyclopediaOneScorer implements PSMScorer {
 		
 		float dotProduct=PeakScores.sumScores(individualPeakScores); // dot product
 		
-		return Log.log10(dotProduct)+Log.logFactorial(count); // X!Tandem score
+		return Log.protectedLog10(dotProduct)+Log.logFactorial(count); // X!Tandem score
 	}
 
 	@Override
