@@ -8,6 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Gaussian;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ThreadableTask;
 
 public abstract class AbstractLibraryScoringTask extends ThreadableTask<Nothing> {
@@ -97,6 +98,33 @@ public abstract class AbstractLibraryScoringTask extends ThreadableTask<Nothing>
 				}
 			}
 			sumScores[i]=sum/scanAveragingWindow;
+		}
+		return sumScores;
+	}
+	
+	protected float[] gaussianCenteredAverage(float[] scores, int scanAveragingWindow) {
+		float mean=(scanAveragingWindow-1)/2.0f; // -1 to get the real center index
+		float stdev=(scanAveragingWindow-1)/6.0f; // minus the center, calculate the stdev (6 assumes a peak is 3 stdevs on either side of the center)
+		Gaussian g=new Gaussian(mean, stdev, 1.0f);
+		float[] probs=new float[scanAveragingWindow];
+		for (int i=0; i<scanAveragingWindow; i++) {
+			probs[i]=(float)g.getPDF(i);
+		}
+		
+		// moving sum on background subtracted scores, this approach uses less data for the first and last scanAveragingMargin scans
+		int scanAveragingMargin=(scanAveragingWindow-1)/2;
+		
+		float[] sumScores=new float[scores.length];
+		for (int i=0; i<scores.length; i++) {
+			float sum=0.0f;
+			for (int j=0; j<scanAveragingWindow; j++) {
+				float prob=probs[j];
+				int index=i+j-scanAveragingMargin;
+				if (index>=0&&index<scores.length) {
+					sum+=prob*scores[index];
+				}
+			}
+			sumScores[i]=sum;
 		}
 		return sumScores;
 	}

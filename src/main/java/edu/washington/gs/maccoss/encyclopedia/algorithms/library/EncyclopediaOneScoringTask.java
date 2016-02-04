@@ -29,7 +29,7 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 
 	@Override
 	protected Nothing process() {
-		int movingAverageLength=Math.round(25.0f/dutyCycle);
+		int movingAverageLength=Math.round(parameters.getExpectedPeakWidth()/dutyCycle);
 		for (LibraryEntry entry : super.entries) {
 			PeptideScoringResult result=new PeptideScoringResult(entry);
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
@@ -40,10 +40,9 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 				Stripe stripe=super.stripes.get(i);
 				scores[i]=scorer.auxScore(entry, stripe, predictedIsotopeDistribution, precursors);
 				primary[i]=scores[i][0];
-				//primary[i]=scorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
 			}
 			
-			float[] averagePrimary=movingCenteredAverage(primary, movingAverageLength);
+			float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
 
 			ArrayList<ScoredIndex> goodStripes=new ArrayList<ScoredIndex>();
 			for (int i=0; i<averagePrimary.length; i++) {
