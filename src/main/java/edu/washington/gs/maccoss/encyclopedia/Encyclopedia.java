@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.RetentionTimeFilter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -90,10 +91,10 @@ public class Encyclopedia {
 			if (arguments.containsKey("-o")) {
 				outputFile=new File(arguments.get("-o"));
 			} else {
-				outputFile=new File(diaFile.getAbsolutePath()+".pecan.txt");
+				outputFile=new File(diaFile.getAbsolutePath()+".percolator.txt");
 			}
 
-			File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
+			File featureFile=new File(diaFile.getAbsolutePath()+".features.txt");
 
 			SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 			LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
@@ -107,15 +108,22 @@ public class Encyclopedia {
 			Logger.logLine(parameters.toString());
 
 			try {
-				runSearch(new EmptyProgressIndicator(), libraryFile, diaFile, featureFile, outputFile, factory);
+				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, libraryFile, featureFile, outputFile, factory);
+				runSearch(new EmptyProgressIndicator(), job);
 			} catch (Exception e) {
 				System.err.println("Encountered Fatal Error!");
 				e.printStackTrace();
 			}
 		}
 	}
-	
-	static void runSearch(ProgressIndicator progress, File libraryFile, File diaFile, File featureFile, File outputFile, LibraryScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+
+	public static void runSearch(ProgressIndicator progress, EncyclopediaJobData job) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+		File libraryFile=job.getLibraryFile();
+		File diaFile=job.getDiaFile();
+		File featureFile=job.getFeatureFile();
+		File outputFile=job.getOutputFile();
+		LibraryScoringFactory taskFactory=job.getTaskFactory();
+		
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);
 		
@@ -224,7 +232,7 @@ public class Encyclopedia {
 		teeConsumer.close();
 
 		progress.update("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)", (1.0f+rangesFinished)/numberOfTasks);
-		File percolatorResultFile=new File(outputFile.getAbsolutePath()+".xml");
+		File percolatorResultFile=new File(outputFile.getAbsolutePath()+".first_round.txt");
 		
 		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, percolatorResultFile, parameters.getPercolatorThreshold());
 		Logger.logLine("First pass: "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");

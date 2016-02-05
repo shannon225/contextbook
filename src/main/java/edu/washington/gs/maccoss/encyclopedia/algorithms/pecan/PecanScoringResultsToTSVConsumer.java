@@ -199,9 +199,9 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 		if (psmID.startsWith("decoy")) {
 			psmID=psmID.substring(5);
 		}
-		return psmID.substring(0, psmID.indexOf('+'));
+		return psmID.substring(0, psmID.lastIndexOf('+'));
 	}
 	public static byte getCharge(String psmID) {
-		return Byte.parseByte(psmID.substring(psmID.indexOf('+')+1));
+		return Byte.parseByte(psmID.substring(psmID.lastIndexOf('+')+1));
 	}
 }

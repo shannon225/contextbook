@@ -14,7 +14,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanFeatureReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchFeatureReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -40,14 +40,19 @@ public class SearchToBLIB {
 		
 		if (representativeJob==null) return;
 		
-		File bigFeatureFile=new File(representativeJob.getFeatureFile().getParentFile(), "concatenated_pecan_features.txt");
-		File bigPercolatorFile=new File(representativeJob.getFeatureFile().getParentFile(), "concatenated_pecan_results.txt");
-		
+		File bigFeatureFile=new File(representativeJob.getFeatureFile().getParentFile(), "concatenated_features.txt");
+		File bigPercolatorFile=new File(representativeJob.getFeatureFile().getParentFile(), "concatenated_results.txt");
+
+		SearchParameters parameters=representativeJob.getParameters();
+		float threshold=parameters.getPercolatorThreshold();
 		try {
-			TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
-			SearchParameters parameters=representativeJob.getParameters();
-			float threshold=parameters.getPercolatorThreshold();
-			ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), bigFeatureFile, bigPercolatorFile, threshold);
+			ArrayList<ScoredObject<String>> passingPeptides;
+			if (bigPercolatorFile.exists()) {
+				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(bigPercolatorFile, threshold);
+			} else {
+				TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
+				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), bigFeatureFile, bigPercolatorFile, threshold);
+			}
 			Logger.logLine("Identified "+passingPeptides.size()+" peptides across all files at a "+(threshold*100.0f)+" FDR threshold.");
 			convert(progress, pecanJobs, blibFile, Optional.of(passingPeptides));
 			progress.update(passingPeptides.size()+" peptides identified at "+(threshold*100.0f)+"% FDR", 1.0f);
@@ -80,7 +85,7 @@ public class SearchToBLIB {
 				if (passingPeptides.isPresent()) {
 					localPassingPeptides=passingPeptides.get();
 				} else {
-					localPassingPeptides=PercolatorReader.getPassingPeptidesFromXML(job.getOutputFile(), pecanJobs.get(i).getParameters().getPercolatorThreshold());
+					localPassingPeptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), pecanJobs.get(i).getParameters().getPercolatorThreshold());
 				}
 				
 				counterTotals=convertFile(subProgress, job, localPassingPeptides, counterTotals, blib);
@@ -97,7 +102,7 @@ public class SearchToBLIB {
 		}
 	}
 
-	static int[] convertFile(ProgressIndicator subProgress, SearchJobData job, ArrayList<ScoredObject<String>> passingPeptides, int[] counterTotals, BlibFile blib) throws IOException, SQLException {
+	static int[] convertFile(ProgressIndicator subProgress, SearchJobData job, ArrayList<ScoredObject<String>> passingPeptides, ArrayList<ScoredObject<String>> localPassingPeptides, int[] counterTotals, BlibFile blib) throws IOException, SQLException {
 		File diaFile=job.getDiaFile();
 		Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Reading Percolator Results", 0.0f);
@@ -108,7 +113,7 @@ public class SearchToBLIB {
 		Logger.logLine("Extracting Spectral Data for "+passingPeptides.size()+" Peptides from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Extracting Spectral Data for "+passingPeptides.size()+" Peptides", 0.1f);
 
-		ArrayList<LibraryEntry> libraryEntries=PecanFeatureReader.parsePecanFeatures(featureFile, passingPeptides, stripeFile, job.getParameters());
+		ArrayList<LibraryEntry> libraryEntries=SearchFeatureReader.parseSearchFeatures(featureFile, passingPeptides, stripeFile, job.getParameters());
 
 		Logger.logLine("Writing Skyline BLIB from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Writing Skyline BLIB", 0.9f);

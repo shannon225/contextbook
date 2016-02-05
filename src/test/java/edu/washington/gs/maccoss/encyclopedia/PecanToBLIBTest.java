@@ -16,7 +16,6 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
 public class PecanToBLIBTest {
-
 	public static void main(String[] args) {
 		HashMap<String, String> defaultParameters=PecanParameterParser.getDefaultParameters();
 		defaultParameters.put("-frag", "CID");
