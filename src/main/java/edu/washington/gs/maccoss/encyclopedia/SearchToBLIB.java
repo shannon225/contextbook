@@ -81,14 +81,15 @@ public class SearchToBLIB {
 				}
 				ProgressIndicator subProgress=new SubProgressIndicator(progress, increment);
 				
-				ArrayList<ScoredObject<String>> localPassingPeptides;
+				ArrayList<ScoredObject<String>> globalPassingPeptides;
+				ArrayList<ScoredObject<String>>	localPassingPeptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), pecanJobs.get(i).getParameters().getPercolatorThreshold());
 				if (passingPeptides.isPresent()) {
-					localPassingPeptides=passingPeptides.get();
+					globalPassingPeptides=passingPeptides.get();
 				} else {
-					localPassingPeptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), pecanJobs.get(i).getParameters().getPercolatorThreshold());
+					globalPassingPeptides=localPassingPeptides;
 				}
 				
-				counterTotals=convertFile(subProgress, job, localPassingPeptides, counterTotals, blib);
+				counterTotals=convertFile(subProgress, job, globalPassingPeptides, localPassingPeptides, counterTotals, blib);
 			}
 
 			blib.createIndices();
@@ -102,7 +103,7 @@ public class SearchToBLIB {
 		}
 	}
 
-	static int[] convertFile(ProgressIndicator subProgress, SearchJobData job, ArrayList<ScoredObject<String>> passingPeptides, ArrayList<ScoredObject<String>> localPassingPeptides, int[] counterTotals, BlibFile blib) throws IOException, SQLException {
+	static int[] convertFile(ProgressIndicator subProgress, SearchJobData job, ArrayList<ScoredObject<String>> globalPassingPeptides, ArrayList<ScoredObject<String>> localPassingPeptides, int[] counterTotals, BlibFile blib) throws IOException, SQLException {
 		File diaFile=job.getDiaFile();
 		Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Reading Percolator Results", 0.0f);
@@ -110,10 +111,10 @@ public class SearchToBLIB {
 		File featureFile=job.getFeatureFile();
 
 		StripeFileInterface stripeFile=MzmlToDIAConverter.getFile(diaFile, job.getParameters());
-		Logger.logLine("Extracting Spectral Data for "+passingPeptides.size()+" Peptides from "+diaFile.getName()+"...");
-		subProgress.update(diaFile.getName()+": Extracting Spectral Data for "+passingPeptides.size()+" Peptides", 0.1f);
+		Logger.logLine("Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides from "+diaFile.getName()+"...");
+		subProgress.update(diaFile.getName()+": Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides", 0.1f);
 
-		ArrayList<LibraryEntry> libraryEntries=SearchFeatureReader.parseSearchFeatures(featureFile, passingPeptides, stripeFile, job.getParameters());
+		ArrayList<LibraryEntry> libraryEntries=SearchFeatureReader.parseSearchFeatures(featureFile, globalPassingPeptides, localPassingPeptides, stripeFile, job.getParameters());
 
 		Logger.logLine("Writing Skyline BLIB from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Writing Skyline BLIB", 0.9f);
