@@ -204,6 +204,9 @@ public class Charter {
 				default:
 					throw new EncyclopediaException("unsupported graphing type!");
 			}
+			if (trace.getColor().isPresent()) {
+				renderer.setSeriesPaint(0, trace.getColor().get());
+			}
 
 			Pair<double[], double[]> values=trace.toArrays();
 			double[] x=values.x;

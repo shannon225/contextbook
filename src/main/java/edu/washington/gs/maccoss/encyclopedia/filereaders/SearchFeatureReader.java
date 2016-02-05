@@ -11,15 +11,22 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.zip.DataFormatException;
 
+import org.jfree.chart.ChartPanel;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.DotProduct;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringResultsToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
@@ -133,6 +140,7 @@ public class SearchFeatureReader {
 
 				String samplingTimeString=row.get("sampledTimes");
 				float duration=samplingTimeString==null?(params.getExpectedPeakWidth()):Float.parseFloat(samplingTimeString);
+				duration=duration*3;
 
 				try {
 					ArrayList<Stripe> stripes=stripeFile.getStripes(precursorMZ, retentionTime-duration, retentionTime+duration, false);
@@ -151,36 +159,48 @@ public class SearchFeatureReader {
 							bestDelta=delta;
 							bestScores=individualPeakScores;
 						}
-						if (peptideModSeq.equals("AAPQS[+80.0]PSVPK")) {
-							System.out.println(peptideModSeq+": "+stripe.getSpectrumIndex()+"\t"+stripe.getScanStartTime()+"\t (target: "+retentionTime+")");
+					}
+					
+					// no signal of any kind at retention time!
+					if (bestScores==null) return;
+					
+					TFloatArrayList[] traces=new TFloatArrayList[bestScores.length];
+					for (int i=0; i<traces.length; i++) {
+						traces[i]=new TFloatArrayList();
+					}
+					for (PeakScores[] peakScores : scoreList) {
+						for (int i=0; i<peakScores.length; i++) {
+							if (peakScores[i]!=null) {
+								traces[i].add(peakScores[i].getScore());
+							} else {
+								traces[i].add(0.0f);
+							}
 						}
 					}
 					
-					int group=0;
-					if (peptideModSeq.equals("AAPQS[+80.0]PSVPK")) {
-						//System.out.println("ArrayList<PeakScores[]> scoreList=new ArrayList<PeakScores[]>();");
-						for (PeakScores[] peakScores : scoreList) {
-							//System.out.println("PeakScores[] peakScores=new PeakScores["+peakScores.length+"];");
-							for (int i=0; i<peakScores.length; i++) {
-								if (peakScores[i]!=null) {
-									//System.out.println("peakScores["+i+"]=new PeakScores("+peakScores[i].getScore()+", "+peakScores[i].getTargetMass()+", "+peakScores[i].getDeltaMass()+");");
-									System.out.println(group+"\t"+i+"\t"+peakScores[i].getScore()+"\t"+peakScores[i].getTargetMass()+"\t"+peakScores[i].getDeltaMass());
-								}
-							}
-							//System.out.println("scoreList.add(peakScores);");
-							group++;
+					ArrayList<PeakScores> keptPeaks=new ArrayList<PeakScores>();
+					ArrayList<float[]> chromatograms=new ArrayList<float[]>();
+					for (int i=0; i<bestScores.length; i++) {
+						if (bestScores[i]!=null&&bestScores[i].getScore()>0) {
+							chromatograms.add(traces[i].toArray());
+							keptPeaks.add(bestScores[i]);
 						}
 					}
+					float[] correlations=TransitionRefiner.identifyTransitions(peptideModSeq, chromatograms);
 
 					TDoubleArrayList mzs=new TDoubleArrayList();
 					TFloatArrayList intens=new TFloatArrayList();
-					for (PeakScores scores : bestScores) {
-						if (scores!=null) {
+					for (int i=0; i<keptPeaks.size(); i++) {
+						PeakScores scores=keptPeaks.get(i);
+						if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
 							float peakScore=scores.getScore();
 							if (peakScore>0) {
 								mzs.add(scores.getTargetMass());
 								intens.add(peakScore);
 							}
+						} else {
+							mzs.add(scores.getTargetMass());
+							intens.add(Float.MIN_VALUE);
 						}
 					}
 

@@ -1,8 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.graphing;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+
+import com.google.common.base.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -15,8 +18,10 @@ public class XYTrace {
 	private final String name;
 	private final ArrayList<XYPoint> points;
 	private final GraphType type;
+	private final Optional<Color> color;
 	
 	public XYTrace(Spectrum spectrum) {
+		color=Optional.absent();
 		this.type=GraphType.spectrum;
 		this.points=new ArrayList<XYPoint>();
 		this.name=spectrum.getSpectrumName();
@@ -31,15 +36,21 @@ public class XYTrace {
 		Collections.sort(points);
 	}
 
-	public XYTrace(Collection<XYPoint> points, GraphType type, String name) {
+	public XYTrace(Collection<XYPoint> points, GraphType type, String name, Color color) {
+		this.color=Optional.fromNullable(color);
 		this.type=type;
 		this.points=new ArrayList<XYPoint>(points);
 		this.name=name;
 		
 		Collections.sort(this.points);
 	}
+
+	public XYTrace(Collection<XYPoint> points, GraphType type, String name) {
+		this(points, type, name, null);
+	}
 	
-	public XYTrace(double[] x, double[] y, GraphType type, String name) {
+	public XYTrace(double[] x, double[] y, GraphType type, String name, Color color) {
+		this.color=Optional.fromNullable(color);
 		this.type=type;
 		this.points=new ArrayList<XYPoint>();
 		this.name=name;
@@ -51,7 +62,12 @@ public class XYTrace {
 		Collections.sort(points);
 	}
 	
-	public XYTrace(TFloatFloatHashMap map, GraphType type, String name) {
+	public XYTrace(double[] x, double[] y, GraphType type, String name) {
+		this(x, y, type, name, null);
+	}
+	
+	public XYTrace(TFloatFloatHashMap map, GraphType type, String name, Color color) {
+		this.color=Optional.fromNullable(color);
 		this.type=type;
 		this.points=new ArrayList<XYPoint>();
 		this.name=name;
@@ -63,6 +79,13 @@ public class XYTrace {
 			}
 		});
 		Collections.sort(points);
+	}
+	public XYTrace(TFloatFloatHashMap map, GraphType type, String name) {
+		this(map, type, name, null);
+	}
+	
+	public Optional<Color> getColor() {
+		return color;
 	}
 	
 	public String getName() {

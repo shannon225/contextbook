@@ -51,6 +51,19 @@ public class General {
 		return sb.toString();
 	}
 	
+	public static float[] normalize(float[] v) {
+		float sum=sum(v);
+		return divide(v, sum);
+	}
+	
+	public static float[] divide(float[] v, float d) {
+		float[] f=new float[v.length];
+		for (int i=0; i<v.length; i++) {
+			f[i]=v[i]/d;
+		}
+		return f;
+	}
+	
 	public static float[] firstDerivative(float[] v) {
 		float[] d=new float[v.length-1];
 		for (int i=1; i<v.length; i++) {
@@ -77,6 +90,16 @@ public class General {
 	public static float mean(float[] v) {
 		float sum=sum(v);
 		return sum/v.length;
+	}
+	
+	public static float mean(float[] v, int startIndex, int stopIndex) {
+		float sum=0.0f;
+		int count=0;
+		for (int i=startIndex; i<=stopIndex; i++) {
+			sum+=v[i];
+			count++;
+		}
+		return sum/count;
 	}
 
 	public static float sum(float[] v) {
