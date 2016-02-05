@@ -11,22 +11,20 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.zip.DataFormatException;
 
-import org.jfree.chart.ChartPanel;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.DotProduct;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringResultsToTSVConsumer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoPermuter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
@@ -34,7 +32,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
+import gnu.trove.set.hash.TFloatHashSet;
 
 public class SearchFeatureReader {
 	public static ArrayList<LibraryEntry> parseSearchFeatures(File f, ArrayList<ScoredObject<String>> globalPassingPSMIDs, ArrayList<ScoredObject<String>> localPassingPSMIDs, StripeFileInterface stripeFile, SearchParameters parameters) {
@@ -140,88 +140,143 @@ public class SearchFeatureReader {
 
 				String samplingTimeString=row.get("sampledTimes");
 				float duration=samplingTimeString==null?(params.getExpectedPeakWidth()):Float.parseFloat(samplingTimeString);
-				duration=duration*3;
-
-				try {
-					ArrayList<Stripe> stripes=stripeFile.getStripes(precursorMZ, retentionTime-duration, retentionTime+duration, false);
-
-					FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-					LibraryEntry unitEntry=model.getUnitSpectrum(precursorCharge, params);
-
-					float bestDelta=Float.MAX_VALUE;
-					PeakScores[] bestScores=null;
-					ArrayList<PeakScores[]> scoreList=new ArrayList<PeakScores[]>();
-					for (Stripe stripe : stripes) {
-						float delta=Math.abs(stripe.getScanStartTime()-retentionTime);
-						PeakScores[] individualPeakScores=scorer.getIndividualPeakScores(unitEntry, stripe, true);
-						scoreList.add(individualPeakScores);
-						if (delta<bestDelta) {
-							bestDelta=delta;
-							bestScores=individualPeakScores;
-						}
+				
+				Pair<double[], float[]> spectrum;
+				if (params.isRunPhosphoLocalization()) {
+					ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptideModSeq, params.getAAConstants());
+					if (permutations.size()==1) {
+						spectrum=extractSpectrum(precursorMZ, precursorCharge, peptideModSeq, retentionTime, duration);
+					} else {
+						TFloatHashSet totalSites=extractPhosphoForms(precursorMZ, precursorCharge, permutations, retentionTime);
+						System.out.println(totalSites.size()); //FIXME
+						
+						spectrum=extractSpectrum(precursorMZ, precursorCharge, peptideModSeq, retentionTime, duration);
 					}
-					
-					// no signal of any kind at retention time!
-					if (bestScores==null) return;
-					
-					TFloatArrayList[] traces=new TFloatArrayList[bestScores.length];
-					for (int i=0; i<traces.length; i++) {
-						traces[i]=new TFloatArrayList();
-					}
-					for (PeakScores[] peakScores : scoreList) {
-						for (int i=0; i<peakScores.length; i++) {
-							if (peakScores[i]!=null) {
-								traces[i].add(peakScores[i].getScore());
-							} else {
-								traces[i].add(0.0f);
-							}
-						}
-					}
-					
-					ArrayList<PeakScores> keptPeaks=new ArrayList<PeakScores>();
-					ArrayList<float[]> chromatograms=new ArrayList<float[]>();
-					for (int i=0; i<bestScores.length; i++) {
-						if (bestScores[i]!=null&&bestScores[i].getScore()>0) {
-							chromatograms.add(traces[i].toArray());
-							keptPeaks.add(bestScores[i]);
-						}
-					}
-					float[] correlations=TransitionRefiner.identifyTransitions(peptideModSeq, chromatograms);
-
-					TDoubleArrayList mzs=new TDoubleArrayList();
-					TFloatArrayList intens=new TFloatArrayList();
-					for (int i=0; i<keptPeaks.size(); i++) {
-						PeakScores scores=keptPeaks.get(i);
-						if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
-							float peakScore=scores.getScore();
-							if (peakScore>0) {
-								mzs.add(scores.getTargetMass());
-								intens.add(peakScore);
-							}
-						} else {
-							mzs.add(scores.getTargetMass());
-							intens.add(Float.MIN_VALUE);
-						}
-					}
-
-					double[] massArray=mzs.toArray();
-					float[] intensityArray=intens.toArray();
-					LibraryEntry entry=new LibraryEntry(scanID, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray);
+				} else {
+					spectrum=extractSpectrum(precursorMZ, precursorCharge, peptideModSeq, retentionTime, duration);
+				}
+				if (spectrum!=null) {
+					LibraryEntry entry=new LibraryEntry(scanID, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, spectrum.x, spectrum.y);
 					savedEntries.add(entry);
+				}
+			}
+		}
 
-				} catch (IOException ioe) {
-					Logger.errorLine("Error processing "+stripeFile.getFile().getName());
-					throw new EncyclopediaException("Error parsing Stripe file", ioe);
-				} catch (SQLException sqle) {
-					Logger.errorLine("Error processing "+stripeFile.getFile().getName());
-					throw new EncyclopediaException("Error parsing Stripe file", sqle);
-				} catch (DataFormatException dfe) {
-					Logger.errorLine("Error processing "+stripeFile.getFile().getName());
-					throw new EncyclopediaException("Error parsing Stripe file", dfe);
+		private TFloatHashSet extractPhosphoForms(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime) {
+			float duration=6*60f; // search for 6 minutes
+			
+			EncyclopediaOneScorer encyclopediaScorer=new EncyclopediaOneScorer(params, null); // not using aux scoring
+
+			try {
+				ArrayList<Stripe> stripes=stripeFile.getStripes(precursorMZ, retentionTime-duration, retentionTime+duration, false);
+
+				TFloatHashSet list=new TFloatHashSet();
+				for (String peptideModSeq : peptideModSeqs) {
+					FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+					LibraryEntry unitEntry=model.getUnitSpectrum(precursorCharge, params);	
+
+					TFloatFloatHashMap rtScoreMap=new TFloatFloatHashMap();
+					for (Stripe spectrum : stripes) {
+						float score=encyclopediaScorer.score(unitEntry, spectrum);
+						rtScoreMap.put(spectrum.getScanStartTime(), score);
+					}
+					
+					EValueCalculator calculator=new EValueCalculator(rtScoreMap);
+					System.out.println(peptideModSeq+"\t"+calculator.getMaxRT()+"\t"+calculator.getNegLog10EValue()+"\t"+calculator.getMaxRawScore()); //FIXME
+					list.add(calculator.getMaxRT());
+				}
+				return list; 
+
+			} catch (IOException ioe) {
+				Logger.errorLine("Error processing "+stripeFile.getFile().getName());
+				throw new EncyclopediaException("Error parsing Stripe file", ioe);
+			} catch (SQLException sqle) {
+				Logger.errorLine("Error processing "+stripeFile.getFile().getName());
+				throw new EncyclopediaException("Error parsing Stripe file", sqle);
+			} catch (DataFormatException dfe) {
+				Logger.errorLine("Error processing "+stripeFile.getFile().getName());
+				throw new EncyclopediaException("Error parsing Stripe file", dfe);
+			}
+		}
+
+		private Pair<double[], float[]> extractSpectrum(double precursorMZ, byte precursorCharge, String peptideModSeq, float retentionTime, float duration) {
+			
+			try {
+				ArrayList<Stripe> stripes=stripeFile.getStripes(precursorMZ, retentionTime-duration, retentionTime+duration, false);
+
+				FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+				LibraryEntry unitEntry=model.getUnitSpectrum(precursorCharge, params);
+
+				float bestDelta=Float.MAX_VALUE;
+				PeakScores[] bestScores=null;
+				ArrayList<PeakScores[]> scoreList=new ArrayList<PeakScores[]>();
+				for (Stripe stripe : stripes) {
+					float delta=Math.abs(stripe.getScanStartTime()-retentionTime);
+					PeakScores[] individualPeakScores=scorer.getIndividualPeakScores(unitEntry, stripe, true);
+					scoreList.add(individualPeakScores);
+					if (delta<bestDelta) {
+						bestDelta=delta;
+						bestScores=individualPeakScores;
+					}
+				}
+				
+				// no signal of any kind at retention time!
+				if (bestScores==null) return null;
+				
+				TFloatArrayList[] traces=new TFloatArrayList[bestScores.length];
+				for (int i=0; i<traces.length; i++) {
+					traces[i]=new TFloatArrayList();
+				}
+				for (PeakScores[] peakScores : scoreList) {
+					for (int i=0; i<peakScores.length; i++) {
+						if (peakScores[i]!=null) {
+							traces[i].add(peakScores[i].getScore());
+						} else {
+							traces[i].add(0.0f);
+						}
+					}
+				}
+				
+				ArrayList<PeakScores> keptPeaks=new ArrayList<PeakScores>();
+				ArrayList<float[]> chromatograms=new ArrayList<float[]>();
+				for (int i=0; i<bestScores.length; i++) {
+					if (bestScores[i]!=null&&bestScores[i].getScore()>0) {
+						chromatograms.add(traces[i].toArray());
+						keptPeaks.add(bestScores[i]);
+					}
+				}
+				float[] correlations=TransitionRefiner.identifyTransitions(peptideModSeq, chromatograms);
+
+				TDoubleArrayList mzs=new TDoubleArrayList();
+				TFloatArrayList intens=new TFloatArrayList();
+				for (int i=0; i<keptPeaks.size(); i++) {
+					PeakScores scores=keptPeaks.get(i);
+					if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+						float peakScore=scores.getScore();
+						if (peakScore>0) {
+							mzs.add(scores.getTargetMass());
+							intens.add(peakScore);
+						}
+					} else {
+						mzs.add(scores.getTargetMass());
+						intens.add(Float.MIN_VALUE);
+					}
 				}
 
+				double[] massArray=mzs.toArray();
+				float[] intensityArray=intens.toArray();
+				return new Pair<double[], float[]>(massArray, intensityArray);
+
+			} catch (IOException ioe) {
+				Logger.errorLine("Error processing "+stripeFile.getFile().getName());
+				throw new EncyclopediaException("Error parsing Stripe file", ioe);
+			} catch (SQLException sqle) {
+				Logger.errorLine("Error processing "+stripeFile.getFile().getName());
+				throw new EncyclopediaException("Error parsing Stripe file", sqle);
+			} catch (DataFormatException dfe) {
+				Logger.errorLine("Error processing "+stripeFile.getFile().getName());
+				throw new EncyclopediaException("Error parsing Stripe file", dfe);
 			}
 		}
 	};
-
 }

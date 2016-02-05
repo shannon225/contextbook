@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -34,6 +35,15 @@ public class FragmentationModel {
 	
 	public String[] getAas() {
 		return aas;
+	}
+	
+	public static Pair<Character, Double> parseAA(String aa) {
+		char c=aa.charAt(0);
+		if (aa.length()>1) {
+			double mod=Double.parseDouble(aa.substring(aa.indexOf('[')+1, aa.indexOf(']')));
+			return new Pair<Character, Double>(c, mod);
+		}
+		return new Pair<Character, Double>(c, null);
 	}
 	
 	public String getModifiedSequence() {

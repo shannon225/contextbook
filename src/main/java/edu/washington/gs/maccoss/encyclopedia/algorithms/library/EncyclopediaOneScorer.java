@@ -32,6 +32,10 @@ public class EncyclopediaOneScorer implements PSMScorer {
 
 	@Override
 	public float score(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
+		return score(entry, spectrum);
+	}
+
+	public float score(LibraryEntry entry, Stripe spectrum) {
 		PeakScores[] individualPeakScores=getIndividualPeakScores(entry, spectrum, true);
 		int count=0; // number of matches
 		for (int i=0; i<individualPeakScores.length; i++) {

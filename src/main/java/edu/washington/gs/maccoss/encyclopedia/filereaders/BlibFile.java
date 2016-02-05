@@ -22,6 +22,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import gnu.trove.map.hash.TCharFloatHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
@@ -193,14 +194,15 @@ public class BlibFile extends SQLFile {
 					String[] aas=model.getAas();
 					for (int i=0; i<aas.length; i++) {
 						boolean added=false;
-						if (fixedMods.contains(aas[i].charAt(0))) {
+						Pair<Character, Double> aa=FragmentationModel.parseAA(aas[i]);
+						if (fixedMods.contains(aa.x)) {
 							prepMods.setInt(1, modCounter);
 							prepMods.setInt(2, idCounter);
 							prepMods.setInt(3, (i+1));
 							prepMods.setFloat(4, fixedMods.get(aas[i].charAt(0)));
 							added=true;
-						} else if (aas[i].length()>1) {
-							float mass=Float.parseFloat(aas[i].substring(aas[i].indexOf('[')+1, aas[i].indexOf(']')));
+						} else if (aa.y!=null) {
+							float mass=aa.y.floatValue();
 							int index;
 							if (aas[i].charAt(0)=='[') {
 								// prefix mod

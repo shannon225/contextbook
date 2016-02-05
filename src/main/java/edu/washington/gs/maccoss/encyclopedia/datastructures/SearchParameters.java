@@ -20,6 +20,7 @@ public class SearchParameters {
 	protected final int numberOfThreadsUsed;	
 	protected final float targetWindowCenter;
 	protected final float expectedPeakWidth;
+	protected final boolean runPhosphoLocalization;
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, File percolatorLocation, boolean deconvoluteOverlappingWindows, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter) {
@@ -34,6 +35,7 @@ public class SearchParameters {
 		this.numberOfThreadsUsed=numberOfThreadsUsed;
 		this.expectedPeakWidth=expectedPeakWidth;
 		this.targetWindowCenter=targetWindowCenter;
+		this.runPhosphoLocalization=true; //FIXME
 	}
 
 	public String toString() {
@@ -97,5 +99,9 @@ public class SearchParameters {
 	
 	public float getExpectedPeakWidth() {
 		return expectedPeakWidth;
+	}
+	
+	public boolean isRunPhosphoLocalization() {
+		return runPhosphoLocalization;
 	}
 }
