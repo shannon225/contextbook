@@ -145,15 +145,15 @@ public class SearchFeatureReader {
 				if (params.isRunPhosphoLocalization()) {
 					ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptideModSeq, params.getAAConstants());
 					if (permutations.size()==1) {
-						spectrum=extractSpectrum(precursorMZ, precursorCharge, peptideModSeq, retentionTime, duration);
+						spectrum=extractSpectrum(precursorMZ, precursorCharge, peptideModSeq, retentionTime, duration, false);
+						//System.out.println("single\t"+peptideModSeq);
 					} else {
-						TFloatHashSet totalSites=extractPhosphoForms(precursorMZ, precursorCharge, permutations, retentionTime);
-						System.out.println(totalSites.size()); //FIXME
+						//boolean multiple=extractPhosphoForms(precursorMZ, precursorCharge, permutations, retentionTime);
 						
-						spectrum=extractSpectrum(precursorMZ, precursorCharge, peptideModSeq, retentionTime, duration);
+						spectrum=extractSpectrum(precursorMZ, precursorCharge, peptideModSeq, retentionTime, duration, false);
 					}
 				} else {
-					spectrum=extractSpectrum(precursorMZ, precursorCharge, peptideModSeq, retentionTime, duration);
+					spectrum=extractSpectrum(precursorMZ, precursorCharge, peptideModSeq, retentionTime, duration, false);
 				}
 				if (spectrum!=null) {
 					LibraryEntry entry=new LibraryEntry(scanID, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, spectrum.x, spectrum.y);
@@ -162,30 +162,62 @@ public class SearchFeatureReader {
 			}
 		}
 
-		private TFloatHashSet extractPhosphoForms(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime) {
+		private boolean extractPhosphoForms(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime) {
 			float duration=6*60f; // search for 6 minutes
 			
 			EncyclopediaOneScorer encyclopediaScorer=new EncyclopediaOneScorer(params, null); // not using aux scoring
 
 			try {
 				ArrayList<Stripe> stripes=stripeFile.getStripes(precursorMZ, retentionTime-duration, retentionTime+duration, false);
+				
+				TFloatArrayList allBestTimes=new TFloatArrayList();
 
 				TFloatHashSet list=new TFloatHashSet();
 				for (String peptideModSeq : peptideModSeqs) {
 					FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
 					LibraryEntry unitEntry=model.getUnitSpectrum(precursorCharge, params);	
 
+					TFloatArrayList bestTimes=new TFloatArrayList();
+					float bestScore=0.0f;
 					TFloatFloatHashMap rtScoreMap=new TFloatFloatHashMap();
 					for (Stripe spectrum : stripes) {
-						float score=encyclopediaScorer.score(unitEntry, spectrum);
+						//float score=encyclopediaScorer.score(unitEntry, spectrum);
+						PeakScores[] individualPeakScores=encyclopediaScorer.getIndividualPeakScores(unitEntry, spectrum, false);
+						float score=0.0f;
+						for (int i=0; i<individualPeakScores.length; i++) {
+							if (individualPeakScores[i]!=null) {
+								score++;
+							}
+						}
 						rtScoreMap.put(spectrum.getScanStartTime(), score);
+						if (score>9.5f) { // at least 5 transitions
+							if (bestScore<score) {
+								bestScore=score;
+								bestTimes.clear();
+								bestTimes.add(spectrum.getScanStartTime());
+							} else if (bestScore==score) {
+								bestTimes.add(spectrum.getScanStartTime());
+							}
+						}
 					}
 					
+					allBestTimes.addAll(bestTimes);
+					
 					EValueCalculator calculator=new EValueCalculator(rtScoreMap);
-					System.out.println(peptideModSeq+"\t"+calculator.getMaxRT()+"\t"+calculator.getNegLog10EValue()+"\t"+calculator.getMaxRawScore()); //FIXME
+					//System.out.println(peptideModSeq+"\t"+calculator.getMaxRT()+"\t"+calculator.getNegLog10EValue()+"\t"+calculator.getMaxRawScore()); //FIXME
 					list.add(calculator.getMaxRT());
 				}
-				return list; 
+				
+				if (allBestTimes.size()>1) {
+					float range=allBestTimes.max()-allBestTimes.min();
+					if (range>=60) {
+						//System.out.println("multiple\t"+peptideModSeqs.get(0));
+						return true;
+					}
+				} else if (allBestTimes.size()==1) {
+					//System.out.println("single\t"+peptideModSeqs.get(0));
+				}
+				return false;
 
 			} catch (IOException ioe) {
 				Logger.errorLine("Error processing "+stripeFile.getFile().getName());
@@ -199,7 +231,7 @@ public class SearchFeatureReader {
 			}
 		}
 
-		private Pair<double[], float[]> extractSpectrum(double precursorMZ, byte precursorCharge, String peptideModSeq, float retentionTime, float duration) {
+		private Pair<double[], float[]> extractSpectrum(double precursorMZ, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean plot) {
 			
 			try {
 				ArrayList<Stripe> stripes=stripeFile.getStripes(precursorMZ, retentionTime-duration, retentionTime+duration, false);
@@ -245,10 +277,11 @@ public class SearchFeatureReader {
 						keptPeaks.add(bestScores[i]);
 					}
 				}
-				float[] correlations=TransitionRefiner.identifyTransitions(peptideModSeq, chromatograms);
+				float[] correlations=TransitionRefiner.identifyTransitions(peptideModSeq, chromatograms, plot);
 
 				TDoubleArrayList mzs=new TDoubleArrayList();
 				TFloatArrayList intens=new TFloatArrayList();
+				//int count=0;
 				for (int i=0; i<keptPeaks.size(); i++) {
 					PeakScores scores=keptPeaks.get(i);
 					if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
@@ -256,12 +289,15 @@ public class SearchFeatureReader {
 						if (peakScore>0) {
 							mzs.add(scores.getTargetMass());
 							intens.add(peakScore);
+							//count++;
 						}
 					} else {
 						mzs.add(scores.getTargetMass());
 						intens.add(Float.MIN_VALUE);
 					}
 				}
+				
+				//System.out.println(peptideModSeq+"\t"+keptPeaks.size()+"\t"+count);
 
 				double[] massArray=mzs.toArray();
 				float[] intensityArray=intens.toArray();

@@ -32,23 +32,29 @@ public class PhosphoPermuter {
 			}
 			
 			if (isSTY) {
-				styIndices.add(sb.length());
-				sb.append(aaValue);
 				if (aa.y!=null) {
 					if (MassConstants.isPhosphoMass(aa.y)) {
 						phosphoCount++;
 					} else {
-						throw new EncyclopediaException("Unexpected STY modification: "+aas[i]+". Please report back so we know how to deal with this in the future!");
+						// STY with a non-phospho mod, so add as if it were another amino acid and continue
+						sb.append(aas[i]);
+						continue;
 					}
 				}
+				styIndices.add(sb.length());
+				sb.append(aaValue);
 			} else {
 				// non-phospho mods get added as is
 				sb.append(aas[i]);
 			}
 		}
-
+		
 		ArrayList<String> sequences=new ArrayList<String>();
-		if (phosphoCount==1) {
+		if (phosphoCount==0) {
+			StringBuilder seq=new StringBuilder(sb);
+			sequences.add(seq.toString());
+			
+		} else if (phosphoCount==1) {
 			for (int j=0; j<styIndices.size(); j++) {
 				StringBuilder seq=new StringBuilder(sb);
 				seq.insert(styIndices.get(j)+1, phospho);
@@ -109,6 +115,7 @@ public class PhosphoPermuter {
 					}
 				}
 			}
+			
 		} else {
 			throw new EncyclopediaException("Sorry, no support for more than 5 phosphorylations: (you tried "+phosphoCount+" from "+peptideModSeq+"). Please report back so we know how to deal with this in the future!");
 		}

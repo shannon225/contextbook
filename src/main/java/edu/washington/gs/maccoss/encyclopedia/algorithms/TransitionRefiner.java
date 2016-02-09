@@ -39,9 +39,6 @@ public class TransitionRefiner {
 	}
 	public static float[] identifyTransitions(String peptideModSeq, ArrayList<float[]> chromatograms, boolean plot) {
 		ArrayList<float[]> normalizedChromatograms=normalize(chromatograms);
-		for (float[] fs : normalizedChromatograms) {
-			System.out.println(fs.length);
-		}
 		
 		float[] medianChromatogram=new float[chromatograms.get(0).length];
 		float maxMedian=0.0f;

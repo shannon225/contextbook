@@ -29,6 +29,7 @@ public class SearchParameterParser {
 		map.put("-percolatorLocation", "internal");
 		map.put("-expectedPeakWidth", "25");
 		map.put("-deconvoluteOverlappingWindows", "false");
+		map.put("-runPhosphoLocalization", "false");
 		return map;
 	}
 	
@@ -53,6 +54,7 @@ public class SearchParameterParser {
 		final int numberOfThreadsUsed;
 		final float targetWindowCenter;
 		final float expectedPeakWidth;
+		final boolean runPhosphoLocalization;
 
 		TCharFloatHashMap fixedMods=new TCharFloatHashMap();
 		String value=parameters.get("-fixed");
@@ -120,7 +122,8 @@ public class SearchParameterParser {
 		numberOfThreadsUsed=SearchParameterParser.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
 		targetWindowCenter=SearchParameterParser.getFloat("-targetWindowCenter", parameters, -1f);
 		expectedPeakWidth=SearchParameterParser.getFloat("-expectedPeakWidth", parameters, 25f);
-
+		runPhosphoLocalization=getBoolean("-runPhosphoLocalization", parameters, false);
+		
 		value=parameters.get("-percolatorLocation");
 		File percolator=null;
 		if (value==null||"internal".equalsIgnoreCase(value)) {
@@ -133,7 +136,7 @@ public class SearchParameterParser {
 			}
 		}
 		
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorThreshold, percolator, deconvoluteOverlappingWindows, numberOfThreadsUsed, expectedPeakWidth, targetWindowCenter);
+		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorThreshold, percolator, deconvoluteOverlappingWindows, numberOfThreadsUsed, expectedPeakWidth, targetWindowCenter, runPhosphoLocalization);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {
