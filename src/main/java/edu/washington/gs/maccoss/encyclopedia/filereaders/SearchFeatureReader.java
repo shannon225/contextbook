@@ -141,19 +141,15 @@ public class SearchFeatureReader {
 				String samplingTimeString=row.get("sampledTimes");
 				float duration=samplingTimeString==null?(params.getExpectedPeakWidth()):Float.parseFloat(samplingTimeString);
 				
-				Pair<double[], float[]> spectrum;
+				Pair<double[], float[]> spectrum=extractSpectrum(precursorMZ, precursorCharge, peptideModSeq, retentionTime, duration, false);
 				if (params.isRunPhosphoLocalization()) {
 					ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptideModSeq, params.getAAConstants());
 					if (permutations.size()==1) {
-						spectrum=extractSpectrum(precursorMZ, precursorCharge, peptideModSeq, retentionTime, duration, false);
-						//System.out.println("single\t"+peptideModSeq);
+						System.out.println("single\t"+peptideModSeq);
 					} else {
-						//boolean multiple=extractPhosphoForms(precursorMZ, precursorCharge, permutations, retentionTime);
-						
-						spectrum=extractSpectrum(precursorMZ, precursorCharge, peptideModSeq, retentionTime, duration, false);
+						boolean multiple=extractPhosphoForms(precursorMZ, precursorCharge, permutations, retentionTime);
+						System.out.println("multiple\t"+peptideModSeq+"\t"+multiple);
 					}
-				} else {
-					spectrum=extractSpectrum(precursorMZ, precursorCharge, peptideModSeq, retentionTime, duration, false);
 				}
 				if (spectrum!=null) {
 					LibraryEntry entry=new LibraryEntry(scanID, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, spectrum.x, spectrum.y);
