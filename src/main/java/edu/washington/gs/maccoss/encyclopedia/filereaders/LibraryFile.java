@@ -136,13 +136,13 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
 	 */
 	@Override
-	public ArrayList<LibraryEntry> getEntries(String peptideModSeq, boolean sqrt) throws IOException, SQLException, DataFormatException {
+	public ArrayList<LibraryEntry> getEntries(String peptideModSeq, byte charge, boolean sqrt) throws IOException, SQLException, DataFormatException {
 		Connection c=getConnection(tempFile);
 		try {
 			Statement s=c.createStatement();
 			try {
 				ResultSet rs=s.executeQuery("select PrecursorMZ, PrecursorCharge, PeptideModSeq, Copies, RetentionTime, Score, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray from entries " +
-						"where PeptideModSeq = \""+peptideModSeq+"\"");
+						"where PeptideModSeq = \""+peptideModSeq+"\" and PrecursorCharge = "+charge);
 
 				ArrayList<LibraryEntry> entry=new ArrayList<LibraryEntry>();
 				while (rs.next()) {

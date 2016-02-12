@@ -19,6 +19,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.DataFormatException;
 
+import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
@@ -238,7 +239,7 @@ public class Encyclopedia {
 		Logger.logLine("First pass: "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
 		
 		ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
-		RetentionTimeFilter filter=getRescoringModel(passingPeptides, data);
+		RetentionTimeFilter filter=getRescoringModel(passingPeptides, data, outputFile);
 		
 		writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>());
 		Thread finalWriteConsumerThread=new Thread(writeResultsConsumer);
@@ -260,7 +261,7 @@ public class Encyclopedia {
 		progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 	}
 
-	public static RetentionTimeFilter getRescoringModel(ArrayList<ScoredObject<String>> passingPeptides, ArrayList<PeptideScoringResult> data) {
+	public static RetentionTimeFilter getRescoringModel(ArrayList<ScoredObject<String>> passingPeptides, ArrayList<PeptideScoringResult> data, File imageFileSeed) {
 		HashSet<String> passingSeqs=new HashSet<String>();
 		for (ScoredObject<String> pass : passingPeptides) {
 			passingSeqs.add(pass.y);
@@ -283,8 +284,10 @@ public class Encyclopedia {
 			}
 		}
 		ArrayList<XYPoint> rts=new ArrayList<XYPoint>(rtSet);
+		Logger.logLine("Generating retention time mapping using "+rts.size()+" points...");
 		RetentionTimeFilter filter=new RetentionTimeFilter(rts);
-		filter.plot(rts);
+		
+		filter.plot(rts, Optional.fromNullable(imageFileSeed));
 		return filter;
 	}
 }

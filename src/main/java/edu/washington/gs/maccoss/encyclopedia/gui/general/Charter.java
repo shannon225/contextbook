@@ -5,9 +5,13 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics2D;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -26,8 +30,16 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
+import com.itextpdf.awt.PdfGraphics2D;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.pdf.PdfContentByte;
+import com.itextpdf.text.pdf.PdfTemplate;
+import com.itextpdf.text.pdf.PdfWriter;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -42,7 +54,10 @@ public class Charter {
 				644.3249822, 755.3933965, 772.3835602, 852.4461605, 885.4676242, 980.5411235, 998.5516882}, new double[] {0.021099463, 0.00721319, 0.10845732, 0.116413645, 0.39157316, 0.1849763,
 				0.443399, 0.35894206, 0.43697295, 0.47858942, 0.5025189, 0.34656474, 0.26218376, 0.27163184, 0.2108471, 0.23929471, 0.12108889, 0.12206937}, GraphType.line, "Trace2");
 		
-		launchChart("M/Z", "Intensity", false, trace, trace2);
+		ChartPanel chart=getChart("M/Z", "Intensity", false, trace, trace2);
+
+		
+		writeAsPDF(chart.getChart(), new File("/Users/searleb/Documents/projects/encyclopedia/mzml/test.pdf"), new Dimension(792, 612));
 	}
 
 	public static void launchChart(Spectrum trace) {
@@ -79,7 +94,7 @@ public class Charter {
 		f.getContentPane().add(tabs, BorderLayout.CENTER);
 
 		f.pack();
-		f.setSize(new Dimension(1000, 770));
+		f.setSize(new Dimension(792, 612));
 		f.setVisible(true);
 	}
 
@@ -94,7 +109,7 @@ public class Charter {
 		f.getContentPane().add(getChart(xAxis, yAxis, displayLegend, traces), BorderLayout.CENTER);
 
 		f.pack();
-		f.setSize(new Dimension(1000, 770));
+		f.setSize(new Dimension(792, 612));
 		f.setVisible(true);
 	}
 
@@ -106,11 +121,40 @@ public class Charter {
 			}
 		});
 
-		f.getContentPane().add(getChart(xAxis, yAxis, displayLegend, dataset), BorderLayout.CENTER);
+		Dimension d=new Dimension(792, 612);
+		ChartPanel chart=getChart(xAxis, yAxis, displayLegend, dataset);
+		f.getContentPane().add(chart, BorderLayout.CENTER);
 
 		f.pack();
-		f.setSize(new Dimension(1000, 770));
+		f.setSize(d);
 		f.setVisible(true);
+	}
+
+	public static void writeAsPDF(File f, String xAxis, String yAxis, boolean displayLegend, XYTrace... traces) {
+		Dimension d=new Dimension(792, 612);
+		writeAsPDF(getChart(xAxis, yAxis, displayLegend, traces).getChart(), f, d);
+	}
+
+	public static void writeAsPDF(JFreeChart chart, File f, Dimension d) {
+		try {
+			Rectangle pagesize=new Rectangle(d.width, d.height);
+			Document document=new Document(pagesize);
+			FileOutputStream os=new FileOutputStream(f);
+			PdfWriter writer=PdfWriter.getInstance(document, os);
+			document.open();
+	        PdfContentByte canvas = writer.getDirectContent();
+	        PdfTemplate template = canvas.createTemplate(d.width, d.height);
+	        Graphics2D g2d = new PdfGraphics2D(template, d.width, d.height);
+	        
+			Rectangle2D r2D=new Rectangle2D.Double(0, 0, d.width, d.height);
+			chart.draw(g2d, r2D);
+			g2d.dispose();
+			canvas.addTemplate(template, 0, 0);
+			document.close();
+			os.close();
+		} catch (Exception e) {
+			Logger.errorException(e);
+		}
 	}
 
 	public static ChartPanel getChart(String xAxisName, String yAxisName, boolean displayLegend, XYZTrace dataset) {
@@ -254,10 +298,6 @@ public class Charter {
 		plot.setRangeGridlinePaint(Color.gray);
 		JFreeChart chart=new JFreeChart(plot);
 		chart.setBackgroundPaint(Color.white);
-		ChartPanel chartPanel=new ChartPanel(chart, false);
-		if (!displayLegend) {
-			chartPanel.getChart().removeLegend();
-		}
 
 		NumberAxis rangeAxis=(NumberAxis)((XYPlot)plot).getRangeAxis();
 
@@ -270,6 +310,11 @@ public class Charter {
 		if (domainAxis!=null) {
 			domainAxis.setLabelFont(font2);
 			domainAxis.setTickLabelFont(font);
+		}
+		
+		ChartPanel chartPanel=new ChartPanel(chart, false);
+		if (!displayLegend) {
+			chartPanel.getChart().removeLegend();
 		}
 
 		return chartPanel;

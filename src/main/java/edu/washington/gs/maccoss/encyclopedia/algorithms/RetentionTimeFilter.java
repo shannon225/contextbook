@@ -1,7 +1,10 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+
+import com.google.common.base.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -34,8 +37,12 @@ public class RetentionTimeFilter {
 		rtWarper=pair.x;
 		model=pair.y;
 	}
-	
 	public void plot(ArrayList<XYPoint> rts) {
+		File seed=null;
+		plot(rts, Optional.fromNullable(seed));
+	}
+	
+	public void plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed) {
 		TFloatArrayList deltas=new TFloatArrayList();
 		ArrayList<XYPoint> removedRTs=new ArrayList<XYPoint>();
 		ArrayList<XYPoint> selectedRTs=new ArrayList<XYPoint>();
@@ -68,12 +75,18 @@ public class RetentionTimeFilter {
 		XYTrace posTrace=new XYTrace(positivePoints, GraphType.line, "Positive");
 		XYTrace negTrace=new XYTrace(negativePoints, GraphType.line, "Negative");
 		
-		Charter.launchChart("Delta RT", "Count", true, histTrace, posTrace, negTrace);
-		
 		XYTrace median2=new XYTrace(rtWarper.getKnots(), GraphType.line, "Retention Time Fit");
 		XYTrace selectedTrace=new XYTrace(selectedRTs, GraphType.tinypoint, "Data Used In Fit");
 		XYTrace trace=new XYTrace(removedRTs, GraphType.tinypoint, "Data Removed From Fit");
-		Charter.launchChart("Calculated RT", "Actual RT", true, median2, selectedTrace, trace);
+		
+		if (saveFileSeed.isPresent()) {
+			String saveFilePrefix=saveFileSeed.get().getAbsolutePath();
+			Charter.writeAsPDF(new File(saveFilePrefix+".delta_rt.pdf"), "Delta RT", "Count", true, histTrace, posTrace, negTrace);
+			Charter.writeAsPDF(new File(saveFilePrefix+".rt_fit.pdf"), "Calculated RT", "Actual RT", true, median2, selectedTrace, trace);
+		} else {
+			Charter.launchChart("Delta RT", "Count", true, histTrace, posTrace, negTrace);
+			Charter.launchChart("Calculated RT", "Actual RT", true, median2, selectedTrace, trace);
+		}
 	}
 	
 	public float getYValue(float xrt) {

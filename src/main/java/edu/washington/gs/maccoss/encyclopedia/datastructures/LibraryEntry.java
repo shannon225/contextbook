@@ -16,6 +16,8 @@ import gnu.trove.list.array.TDoubleArrayList;
 
 //@Immutable
 public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
+	private static final float minimumIntensityThreshold=10.0f*Float.MIN_VALUE;
+	
 	private final int spectrumIndex;
 	private final double precursorMZ;
 	private final byte precursorCharge;
@@ -45,6 +47,36 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 		this.score=score;
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
+	}
+	
+	public LibraryEntry toUnitSpectrum() {
+		float[] unit=new float[intensityArray.length];
+		for (int i=0; i<unit.length; i++) {
+			if (intensityArray[i]>minimumIntensityThreshold) {
+				unit[i]=1.0f;
+			}
+		}
+		return new LibraryEntry(spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, unit);
+	}
+	
+	public float getTIC() {
+		float tic=0.0f;
+		for (int i=0; i<intensityArray.length; i++) {
+			if (intensityArray[i]>minimumIntensityThreshold) {
+				tic+=intensityArray[i];
+			}
+		}
+		return tic;
+	}
+	
+	public int getIonCount() {
+		int count=0;
+		for (int i=0; i<intensityArray.length; i++) {
+			if (intensityArray[i]>minimumIntensityThreshold) {
+				count++;
+			}
+		}
+		return count;
 	}
 	
 	@Override

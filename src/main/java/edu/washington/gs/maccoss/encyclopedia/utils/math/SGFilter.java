@@ -21,7 +21,6 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
 import java.util.Arrays;
 
-//import org.apache.commons.math.linear.RealMatrixImpl
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.DecompositionSolver;
@@ -133,7 +132,7 @@ public class SGFilter {
 	 * leftPad} and/or {@code rightPad} if you want to augment data on
 	 * boundaries to achieve smoother results for your purpose. If you do not
 	 * need this feature you may pass empty arrays (filter will use 0s in this
-	 * place, so you may want to use appropriate preprocessor)
+	 * place)
 	 * 
 	 * @param data
 	 *            data for filter

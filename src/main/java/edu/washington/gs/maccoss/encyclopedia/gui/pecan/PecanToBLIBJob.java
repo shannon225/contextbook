@@ -3,8 +3,11 @@ package edu.washington.gs.maccoss.encyclopedia.gui.pecan;
 import java.io.File;
 import java.util.ArrayList;
 
+import com.google.common.base.Optional;
+
 import edu.washington.gs.maccoss.encyclopedia.SearchToBLIB;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 
@@ -30,6 +33,7 @@ public class PecanToBLIBJob extends SwingJob {
 			}
 		}
 
-		SearchToBLIB.convert(getProgressIndicator(), jobData, blibFile);
+		LibraryFile libraryTemplate=null;
+		SearchToBLIB.convert(getProgressIndicator(), jobData, blibFile, Optional.fromNullable(libraryTemplate));
 	}
 }

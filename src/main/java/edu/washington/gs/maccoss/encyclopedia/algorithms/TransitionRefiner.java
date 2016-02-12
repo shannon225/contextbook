@@ -6,7 +6,10 @@ import java.util.HashMap;
 
 import org.jfree.chart.ChartPanel;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -21,7 +24,12 @@ public class TransitionRefiner {
 	
 	public static void main(String[] args) {
 		ArrayList<float[]> chromatograms=new ArrayList<float[]>();
-		chromatograms.add(new float[] {78122.11f, 98378.266f, 142467.98f, 160690.98f, 222905.19f, 232847.81f, 307916.06f, 287985.97f, 354645.78f, 292500.47f, 363600.66f, 315389.8f, 347600.38f, 301699.44f, 294894.66f, 221306.75f, 186132.05f, 170257.3f, 146349.67f});
+		float[] top=new float[] {78122.11f, 98378.266f, 142467.98f, 160690.98f, 222905.19f, 232847.81f, 307916.06f, 287985.97f, 354645.78f, 292500.47f, 363600.66f, 315389.8f, 347600.38f, 301699.44f, 294894.66f, 221306.75f, 186132.05f, 170257.3f, 146349.67f};
+		float[] rts=new float[top.length];
+		for (int i=0; i<rts.length; i++) {
+			rts[i]=i;
+		}
+		chromatograms.add(top);
 		chromatograms.add(new float[] {45688.473f, 52552.156f, 77305.87f, 75685.37f, 118698.836f, 108305.95f, 149139.72f, 148315.0f, 177143.22f, 185055.73f, 182493.88f, 157640.7f, 178510.28f, 137231.45f, 147941.67f, 128270.27f, 115709.18f, 144451.12f, 134215.73f});
 		chromatograms.add(new float[] {12591.294f, 9210.12f, 12560.381f, 9796.7705f, 16568.979f, 13401.578f, 23627.754f, 31735.346f, 32540.912f, 44866.586f, 31987.303f, 26937.012f, 22891.26f, 14829.437f, 14344.313f, 11883.415f, 9714.611f, 11929.409f, 8152.291f});
 		chromatograms.add(new float[] {369690.44f, 456645.72f, 651469.06f, 798680.9f, 1050497.0f, 1078652.0f, 1415159.4f, 1470529.2f, 1595412.0f, 1727540.2f, 1660950.8f, 1535321.1f, 1659728.6f, 1265447.8f, 1308786.6f, 952438.1f, 909168.4f, 707203.4f, 555946.06f});
@@ -31,13 +39,21 @@ public class TransitionRefiner {
 		chromatograms.add(new float[] {88673.75f, 108412.02f, 134443.86f, 186275.72f, 229804.58f, 255614.5f, 297812.0f, 274456.28f, 308098.8f, 310620.28f, 303670.72f, 276719.75f, 319922.88f, 289453.9f, 259773.83f, 232285.22f, 194102.6f, 149186.31f, 134754.16f});
 		chromatograms.add(new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10589.013f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f});
 		chromatograms.add(new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 11368.357f, 0.0f, 0.0f, 23255.867f, 0.0f, 0.0f, 0.0f});
-		identifyTransitions("AAPQS[+80.0]PSVPK", chromatograms, true);
+		
+		Triplet<float[], float[], Range> trio=identifyTransitions("AAPQS[+80.0]PSVPK", chromatograms, rts, true);
+		float[] correlations=trio.x;
+		float[] integrations=trio.y;
+		for (int i=0; i<integrations.length; i++) {
+			System.out.println(correlations[i]+"\t"+integrations[i]);
+		}
 	}
 
-	public static float[] identifyTransitions(String peptideModSeq, ArrayList<float[]> chromatograms) {
-		return identifyTransitions(peptideModSeq, chromatograms, false);
+	public static Triplet<float[], float[], Range> identifyTransitions(String peptideModSeq, ArrayList<float[]> chromatograms, float[] retentionTimes) {
+		return identifyTransitions(peptideModSeq, chromatograms, retentionTimes, false);
 	}
-	public static float[] identifyTransitions(String peptideModSeq, ArrayList<float[]> chromatograms, boolean plot) {
+	public static Triplet<float[], float[], Range> identifyTransitions(String peptideModSeq, ArrayList<float[]> chromatograms, float[] retentionTimes, boolean plot) {
+		if (chromatograms.size()==0) return new Triplet<float[], float[], Range>(new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]));
+		
 		ArrayList<float[]> normalizedChromatograms=normalize(chromatograms);
 		
 		float[] medianChromatogram=new float[chromatograms.get(0).length];
@@ -73,25 +89,35 @@ public class TransitionRefiner {
 		
 		int startIndex=firstData<=0?0:firstData-1;
 		int stopIndex=lastData>=medianChromatogram.length-1?medianChromatogram.length-1:lastData+1;
+		Range range=new Range(retentionTimes[startIndex], retentionTimes[stopIndex]);
 
 		float medianMean=General.mean(medianChromatogram, startIndex, stopIndex);
 		float[] correlationArray=new float[normalizedChromatograms.size()];
+		float[] integrationArray=new float[correlationArray.length];
 		for (int i=0; i<normalizedChromatograms.size(); i++) {
-			float[] chromatogram=normalizedChromatograms.get(i);
-			float fragmentMean=General.mean(chromatogram, startIndex, stopIndex);
+			float[] normalizedChromatogram=normalizedChromatograms.get(i);
+			float fragmentMean=General.mean(normalizedChromatogram, startIndex, stopIndex);
 			
 			float medianDeltaSquareSum=0.0f;
 			float fragmentDeltaSquareSum=0.0f;
 			float deltaProductSum=0.0f;
 			for (int j=startIndex; j<=stopIndex; j++) {
 				float deltaMedian=medianChromatogram[j]-medianMean;
-				float deltaFragment=chromatogram[j]-fragmentMean;
+				float deltaFragment=normalizedChromatogram[j]-fragmentMean;
 				medianDeltaSquareSum+=deltaMedian*deltaMedian;
 				fragmentDeltaSquareSum+=deltaFragment*deltaFragment;
 				deltaProductSum+=deltaMedian*deltaFragment;
 			}
-			
+			// calculate correlation
 			correlationArray[i]=deltaProductSum/((float)Math.sqrt(medianDeltaSquareSum*fragmentDeltaSquareSum));
+			
+			// calculate area
+			float[] chromatogram=chromatograms.get(i);
+			integrationArray[i]=0.0f;
+			for (int j=startIndex+1; j<=stopIndex; j++) {
+				float trapezoid=(retentionTimes[j]-retentionTimes[j-1])*(chromatogram[j-1]+chromatogram[j])/2.0f;
+				integrationArray[i]+=trapezoid;
+			}
 		}
 		
 		if (plot) {
@@ -105,7 +131,7 @@ public class TransitionRefiner {
 			Charter.launchCharts(peptideModSeq+" chart", panels);
 		}
 		
-		return correlationArray;
+		return new Triplet<float[], float[], Range>(correlationArray, integrationArray, range);
 	}
 
 	public static ChartPanel getChart(ArrayList<float[]> chromatograms, float[] correlationArray, XYTrace start, XYTrace stop) {

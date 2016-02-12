@@ -11,6 +11,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.zip.DataFormatException;
 
+import com.google.common.base.Optional;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.DotProduct;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
@@ -19,17 +21,20 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOne
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringResultsToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoPermuter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
@@ -37,7 +42,7 @@ import gnu.trove.map.hash.TObjectFloatHashMap;
 import gnu.trove.set.hash.TFloatHashSet;
 
 public class SearchFeatureReader {
-	public static ArrayList<LibraryEntry> parseSearchFeatures(File f, ArrayList<ScoredObject<String>> globalPassingPSMIDs, ArrayList<ScoredObject<String>> localPassingPSMIDs, StripeFileInterface stripeFile, SearchParameters parameters) {
+	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(File f, ArrayList<ScoredObject<String>> globalPassingPSMIDs, ArrayList<ScoredObject<String>> localPassingPSMIDs, StripeFileInterface stripeFile, Optional<LibraryFile> libraryFile, SearchParameters parameters) {
 		HashSet<String> passingPeptideSequences=new HashSet<String>();
 		for (ScoredObject<String> psm : globalPassingPSMIDs) {
 			String peptideModSeq=PecanScoringResultsToTSVConsumer.getPeptideSequence(psm.y);
@@ -57,14 +62,14 @@ public class SearchFeatureReader {
 		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
 		TableParserProducer producer=new TableParserProducer(blockingQueue, f, "\t", cores);
 		
-		ConcurrentLinkedQueue<LibraryEntry> savedEntries=new ConcurrentLinkedQueue<LibraryEntry>();
+		ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries=new ConcurrentLinkedQueue<IntegratedLibraryEntry>();
 
 		Thread producerThread=new Thread(producer);
 		producerThread.start();
 
 		Thread[] consumers=new Thread[cores];
 		for (int i=0; i<consumers.length; i++) {
-			SearchFeatureMuscle muscle=new SearchFeatureMuscle(savedIDs, stripeFile, parameters, savedEntries);
+			SearchFeatureMuscle muscle=new SearchFeatureMuscle(libraryFile, savedIDs, stripeFile, parameters, savedEntries);
 			TableParserConsumer consumer=new TableParserConsumer(blockingQueue, muscle);
 			consumers[i]=new Thread(consumer);
 			consumers[i].start();
@@ -90,8 +95,8 @@ public class SearchFeatureReader {
 			Logger.errorException(ie);
 		}
 		
-		ArrayList<LibraryEntry> entryList=new ArrayList<LibraryEntry>();
-		for (LibraryEntry entry : savedEntries) {
+		ArrayList<IntegratedLibraryEntry> entryList=new ArrayList<IntegratedLibraryEntry>();
+		for (IntegratedLibraryEntry entry : savedEntries) {
 			entryList.add(entry);
 		}
 
@@ -106,21 +111,26 @@ public class SearchFeatureReader {
 	}
 
 	public static class SearchFeatureMuscle implements TableParserMuscle {
+		private final Optional<LibraryFile> library;
 		private final TObjectFloatHashMap<String> savedIDs;
 		private final StripeFileInterface stripeFile;
+		private final boolean limitToQuantifiable;
 
 		private final PSMScorer scorer;
 		private final SearchParameters params;
 
-		private final ConcurrentLinkedQueue<LibraryEntry> savedEntries;
+		private final ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries;
 
-		public SearchFeatureMuscle(TObjectFloatHashMap<String> savedIDs, StripeFileInterface stripeFile, SearchParameters parameters, ConcurrentLinkedQueue<LibraryEntry> savedEntries) {
+		public SearchFeatureMuscle(Optional<LibraryFile> library, TObjectFloatHashMap<String> savedIDs, StripeFileInterface stripeFile, SearchParameters parameters, ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries) {
+			this.library=library;
 			this.savedIDs=new TObjectFloatHashMap<String>(savedIDs); // to guarantee immutability
 			this.stripeFile=stripeFile;
 
 			scorer=new DotProduct(parameters.getFragmentTolerance());
 			params=parameters;
 			this.savedEntries=savedEntries;
+			
+			this.limitToQuantifiable=true; //library.isPresent();
 		}
 
 		@Override
@@ -141,7 +151,7 @@ public class SearchFeatureReader {
 				String samplingTimeString=row.get("sampledTimes");
 				float duration=samplingTimeString==null?(params.getExpectedPeakWidth()):Float.parseFloat(samplingTimeString);
 				
-				Pair<double[], float[]> spectrum=extractSpectrum(precursorMZ, precursorCharge, peptideModSeq, retentionTime, duration, false);
+				Optional<Triplet<double[], float[], Range>> spectrum=extractSpectrum(library, precursorMZ, precursorCharge, peptideModSeq, retentionTime, duration, limitToQuantifiable);
 				if (params.isRunPhosphoLocalization()) {
 					ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptideModSeq, params.getAAConstants());
 					if (permutations.size()==1) {
@@ -151,8 +161,14 @@ public class SearchFeatureReader {
 						System.out.println("multiple\t"+peptideModSeq+"\t"+multiple);
 					}
 				}
-				if (spectrum!=null) {
-					LibraryEntry entry=new LibraryEntry(scanID, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, spectrum.x, spectrum.y);
+				if (spectrum.isPresent()) {
+					// FIXME need to not add duplicates!!!! for now just run SQL:
+					// delete from entries where RowId not in (SELECT MIN(RowId) FROM entries GROUP BY PeptideModSeq, PrecursorCharge)
+					Triplet<double[], float[], Range> spec=spectrum.get();
+					IntegratedLibraryEntry entry=new IntegratedLibraryEntry(scanID, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, spec.x, spec.y, spec.z);
+					if (limitToQuantifiable) {
+						if (entry.getIonCount()<4||entry.getTIC()<1.0f) return; // FIXME HACKS GALORE
+					}
 					savedEntries.add(entry);
 				}
 			}
@@ -227,18 +243,52 @@ public class SearchFeatureReader {
 			}
 		}
 
-		private Pair<double[], float[]> extractSpectrum(double precursorMZ, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean plot) {
+		private Optional<Triplet<double[], float[], Range>> extractSpectrum(Optional<LibraryFile> library, double precursorMZ, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable) {
+			LibraryEntry unitEntry=null;
+			if (library.isPresent()) {
+				try {
+					ArrayList<LibraryEntry> entries=library.get().getEntries(peptideModSeq, precursorCharge, false);
+					if (entries.size()>0) {
+						unitEntry=entries.get(0).toUnitSpectrum();
+					} else {
+						 // if library is ok but spectrum is not in library, just return null (don't quantify)
+						return Optional.absent();
+					}
+					if (unitEntry.getIonCount()<4) { // FIXME HACKS GALORE
+						 // if unit spectrum has fewer than 4 peaks, just return null (don't quantify)
+						return Optional.absent();
+					}
+				} catch (IOException ioe) {
+					Logger.errorLine("Error processing "+stripeFile.getFile().getName());
+					throw new EncyclopediaException("Error parsing Stripe file", ioe);
+				} catch (SQLException sqle) {
+					Logger.errorLine("Error processing "+stripeFile.getFile().getName());
+					throw new EncyclopediaException("Error parsing Stripe file", sqle);
+				} catch (DataFormatException dfe) {
+					Logger.errorLine("Error processing "+stripeFile.getFile().getName());
+					throw new EncyclopediaException("Error parsing Stripe file", dfe);
+				}
+			}
 			
+			if (unitEntry==null) {
+				FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+				unitEntry=model.getUnitSpectrum(precursorCharge, params);
+			}
+			
+			return Optional.fromNullable(extractSpectrum(unitEntry, precursorMZ, peptideModSeq, retentionTime, duration, limitToQuantifiable));
+		}
+
+		public Triplet<double[], float[], Range> extractSpectrum(LibraryEntry unitEntry, double precursorMZ, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable) {
 			try {
 				ArrayList<Stripe> stripes=stripeFile.getStripes(precursorMZ, retentionTime-duration, retentionTime+duration, false);
 
-				FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-				LibraryEntry unitEntry=model.getUnitSpectrum(precursorCharge, params);
 
 				float bestDelta=Float.MAX_VALUE;
 				PeakScores[] bestScores=null;
 				ArrayList<PeakScores[]> scoreList=new ArrayList<PeakScores[]>();
+				TFloatArrayList retentionTimes=new TFloatArrayList();
 				for (Stripe stripe : stripes) {
+					retentionTimes.add(stripe.getScanStartTime());
 					float delta=Math.abs(stripe.getScanStartTime()-retentionTime);
 					PeakScores[] individualPeakScores=scorer.getIndividualPeakScores(unitEntry, stripe, true);
 					scoreList.add(individualPeakScores);
@@ -269,23 +319,30 @@ public class SearchFeatureReader {
 				ArrayList<float[]> chromatograms=new ArrayList<float[]>();
 				for (int i=0; i<bestScores.length; i++) {
 					if (bestScores[i]!=null&&bestScores[i].getScore()>0) {
-						chromatograms.add(traces[i].toArray());
+						float[] chromatogram=traces[i].toArray();
+						chromatogram=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatogram);
+						chromatograms.add(chromatogram);
 						keptPeaks.add(bestScores[i]);
 					}
 				}
-				float[] correlations=TransitionRefiner.identifyTransitions(peptideModSeq, chromatograms, plot);
-
+				Triplet<float[], float[], Range> trio=TransitionRefiner.identifyTransitions(peptideModSeq, chromatograms, retentionTimes.toArray());
+				float[] correlations=trio.x;
+				float[] integrations=trio.y;
+				
 				TDoubleArrayList mzs=new TDoubleArrayList();
 				TFloatArrayList intens=new TFloatArrayList();
-				//int count=0;
+				int count=0;
+				int quantCount=0;
+				float correlationThreshold=limitToQuantifiable?TransitionRefiner.quantitativeCorrelationThreshold:TransitionRefiner.identificationCorrelationThreshold;
 				for (int i=0; i<keptPeaks.size(); i++) {
 					PeakScores scores=keptPeaks.get(i);
-					if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+					if (correlations[i]>=correlationThreshold) {
+						quantCount++;
 						float peakScore=scores.getScore();
 						if (peakScore>0) {
 							mzs.add(scores.getTargetMass());
-							intens.add(peakScore);
-							//count++;
+							intens.add(integrations[i]);
+							count++;
 						}
 					} else {
 						mzs.add(scores.getTargetMass());
@@ -293,11 +350,11 @@ public class SearchFeatureReader {
 					}
 				}
 				
-				//System.out.println(peptideModSeq+"\t"+keptPeaks.size()+"\t"+count);
+				//System.out.println(peptideModSeq+"\t"+keptPeaks.size()+"\t"+count+"\t"+quantCount);
 
 				double[] massArray=mzs.toArray();
 				float[] intensityArray=intens.toArray();
-				return new Pair<double[], float[]>(massArray, intensityArray);
+				return new Triplet<double[], float[], Range>(massArray, intensityArray, trio.z);
 
 			} catch (IOException ioe) {
 				Logger.errorLine("Error processing "+stripeFile.getFile().getName());

@@ -27,20 +27,18 @@ public class EncyclopediaTest {
 				"-deconvoluteOverlappingWindows", "true"});
 		*/
 
-		/*
-		EncyclopediaJobData job=new EncyclopediaJobData(new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML"), 
-				new File("/Users/searleb/Documents/projects/encyclopedia/mzml/hela_6mz.elib"),  factory);
-		 */
+		File libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/hela_6mz.elib");
+		run(new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML"), libraryFile, factory);
 		
-		File libraryFile=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
-
 		/*
+		libraryFile=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
+
+	
 		run(new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/110415_bcs_hela_phospho_igf1_6mz_500_660.mzML"), libraryFile, factory);
 		run(new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/110415_bcs_hela_phospho_igf1_6mz_660_820.mzML"), libraryFile, factory);
 		run(new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/110415_bcs_hela_phospho_igf1_6mz_820_980.mzML"), libraryFile, factory);
 		run(new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/110415_bcs_hela_phospho_igf1_6mz_980_1140.mzML"), libraryFile, factory);
 		run(new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/110415_bcs_hela_phospho_igf1_6mz_1140_1300.mzML"), libraryFile, factory);
-		*/
 		
 		run(new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/110415_bcs_hela_phospho_starved_6mz_500_660.mzML"), libraryFile, factory);
 		run(new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/110415_bcs_hela_phospho_starved_6mz_660_820.mzML"), libraryFile, factory);
@@ -50,6 +48,7 @@ public class EncyclopediaTest {
 
 		run(new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/110515_bcs_hela_phospho_starved_20mz_500_900.mzML"), libraryFile, factory);
 		run(new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/110515_bcs_hela_phospho_starved_20Mz_900_1300.mzML"), libraryFile, factory);
+		*/
 		
 		/*
 		// NEGATIVE!

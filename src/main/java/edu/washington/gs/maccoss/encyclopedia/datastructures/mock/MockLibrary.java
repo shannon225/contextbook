@@ -24,10 +24,10 @@ public class MockLibrary implements LibraryInterface {
 	}
 
 	@Override
-	public ArrayList<LibraryEntry> getEntries(String peptideModSeq, boolean sqrt) throws IOException, SQLException, DataFormatException {
+	public ArrayList<LibraryEntry> getEntries(String peptideModSeq, byte charge, boolean sqrt) throws IOException, SQLException, DataFormatException {
 		ArrayList<LibraryEntry> returnables=new ArrayList<LibraryEntry>();
 		for (LibraryEntry entry : entries) {
-			if (peptideModSeq.equals(entry.getPeptideModSeq())) {
+			if (peptideModSeq.equals(entry.getPeptideModSeq())&&charge==entry.getPrecursorCharge()) {
 				returnables.add(entry);
 			}
 		}

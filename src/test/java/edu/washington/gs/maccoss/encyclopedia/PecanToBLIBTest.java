@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFacto
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
@@ -38,7 +39,9 @@ public class PecanToBLIBTest {
 		jobs.add(job4);
 		jobs.add(job5);
 		jobs.add(job6);
-		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile);
+		
+		LibraryFile libraryTemplate=null;
+		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, Optional.fromNullable(libraryTemplate));
 	}
 
 	private static SearchJobData getData(PecanSearchParameters parameters, File fastaFile, ArrayList<FastaEntry> targets, String dia) {

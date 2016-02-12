@@ -27,7 +27,8 @@ public class EncyclopediaOneScoringTaskTest {
 		LibraryFile library=new LibraryFile();
 		library.openFile(libraryFile);
 		
-		ArrayList<LibraryEntry> entries=library.getEntries("VDIDAPDVEVHDPDWHLK", false);
+		ArrayList<LibraryEntry> entries=library.getEntries("VDIDAPDVEVHDPDWHLK", (byte)2, false);
+		entries.addAll(library.getEntries("VDIDAPDVEVHDPDWHLK", (byte)3, false));
 		MockLibrary mockLib=new MockLibrary(entries.toArray(new LibraryEntry[entries.size()]));
 		
 		StripeFileInterface stripefile=MzmlToDIAConverter.getFile(diaFile, parameters);

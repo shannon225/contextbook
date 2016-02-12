@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.zip.DataFormatException;
 
+import com.google.common.base.Optional;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -51,7 +53,7 @@ public class BlibFile extends SQLFile {
 		this.userFile=userFile;
 	}
 	
-	public void getStreamEntriesToLibrary(LibraryFile library, TObjectFloatHashMap<String> irtMap) throws IOException, SQLException, DataFormatException {
+	public void getStreamEntriesToLibrary(LibraryFile library, Optional<TObjectFloatHashMap<String>> irtMap) throws IOException, SQLException, DataFormatException {
 		library.dropIndices();
 		
 		Connection c=getConnection(tempFile);
@@ -76,9 +78,9 @@ public class BlibFile extends SQLFile {
 					double[] massArray=decompressDouble(rs.getBytes(8), numPeaks);
 					float[] intensityArray=decompressFloat(rs.getBytes(9), numPeaks);
 					
-					if (irtMap!=null) {
-						if (irtMap.contains(peptideModSeq)) {
-							retentionTime=irtMap.get(peptideModSeq);
+					if (irtMap.isPresent()) {
+						if (irtMap.get().contains(peptideModSeq)) {
+							retentionTime=irtMap.get().get(peptideModSeq);
 						} else {
 							missing++;
 						}
@@ -107,7 +109,6 @@ public class BlibFile extends SQLFile {
 		
 		library.createIndices();
 	}
-
 	public int[] addLibrary(SearchJobData job, ArrayList<LibraryEntry> entries, int idCounter, int jobCounter, int modCounter) throws IOException, SQLException {
 		String diaFileName=job.getDiaFile().getName();
 		String spectrumIDPrefix=diaFileName;
