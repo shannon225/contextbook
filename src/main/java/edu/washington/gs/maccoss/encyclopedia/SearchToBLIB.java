@@ -118,13 +118,19 @@ public class SearchToBLIB {
 		subProgress.update(diaFile.getName()+": Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides", 0.1f);
 
 		ArrayList<IntegratedLibraryEntry> libraryEntries=SearchFeatureReader.parseSearchFeatures(featureFile, globalPassingPeptides, localPassingPeptides, stripeFile, libraryFile, job.getParameters());
+
+		float totalTIC=0.0f;
+		for (IntegratedLibraryEntry entry : libraryEntries) {
+			totalTIC+=entry.getTIC();
+		}
+		float normalizer=totalTIC/1e12f;
 		
 		File integrationFile=new File(diaFile.getAbsolutePath()+".integration.txt");
 
 		PrintWriter writer=new PrintWriter(integrationFile, "UTF-8");
-		writer.println("File\tPeptideModSeq\tPrecursorCharge\tFragmentIons\tRTStart\tRTCenter\tRTStop\tTIC");
+		writer.println("File\tPeptideModSeq\tPrecursorCharge\tFragmentIons\tRTStart\tRTCenter\tRTStop\tTIC\tNormTIC");
 		for (IntegratedLibraryEntry entry : libraryEntries) {
-			writer.println(diaFile.getName()+"\t"+entry.getPeptideModSeq()+"\t"+entry.getPrecursorCharge()+"\t"+entry.getIonCount()+"\t"+entry.getRtRange().getStart()+"\t"+entry.getRetentionTime()+"\t"+entry.getRtRange().getStop()+"\t"+entry.getTIC());
+			writer.println(diaFile.getName()+"\t"+entry.getPeptideModSeq()+"\t"+entry.getPrecursorCharge()+"\t"+entry.getIonCount()+"\t"+entry.getRtRange().getStart()+"\t"+entry.getRetentionTime()+"\t"+entry.getRtRange().getStop()+"\t"+entry.getTIC()+"\t"+(entry.getTIC()/normalizer));
 		}
 		writer.flush();
 		writer.close();

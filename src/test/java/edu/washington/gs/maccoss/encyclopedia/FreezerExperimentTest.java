@@ -35,8 +35,18 @@ public class FreezerExperimentTest {
 		libraryTemplate.openFile(libraryTemplateFile);
 		
 		File[] files=dir.listFiles();
+		long totalTime=0;
+		int fileCount=0;
+		
+		int totalCount=0;
 		for (File file : files) {
 			if (file.getName().endsWith("mzML")) {
+				totalCount++;
+			}
+		}
+		for (File file : files) {
+			if (file.getName().endsWith("mzML")) {
+				long currentTime=System.currentTimeMillis();
 				EncyclopediaTest.run(file, libraryFile, factory);
 
 				File blibFile=new File(file.getAbsolutePath()+".quant.blib");
@@ -46,6 +56,13 @@ public class FreezerExperimentTest {
 				jobs.add(job);
 
 				SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, Optional.fromNullable(libraryTemplate));
+				
+				fileCount++;
+				long fileTime=System.currentTimeMillis()-currentTime;
+				totalTime+=fileTime;
+				float averageTimePer=totalTime/1000f/60f/fileCount;
+				float remaining=(totalCount-fileCount)*averageTimePer/60f;
+				System.out.println("Processed "+fileCount+"/"+totalCount+" files in "+Math.round(10f*totalTime/1000f/60f/60f)/10f+" hours (average of "+Math.round(10f*averageTimePer)/10f+" minutes per file, "+Math.round(10f*remaining)/10f+" hours remaining)");
 			}
 		}
 	}
