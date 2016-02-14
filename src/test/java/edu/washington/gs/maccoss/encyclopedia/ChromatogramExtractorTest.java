@@ -27,6 +27,10 @@ public class ChromatogramExtractorTest extends TestCase {
 		libraryTemplate.openFile(libraryTemplateFile);
 		
 		File[] files=dir.listFiles();
+		/*files=new File[] {
+				new File("/Users/searleb/Documents/projects/encyclopedia/mzml/freezer/121115_bcs_hela_24mz_400_1000_rt_7D_2.mzML")
+		};*/
+		
 		long totalTime=0;
 		int fileCount=0;
 		

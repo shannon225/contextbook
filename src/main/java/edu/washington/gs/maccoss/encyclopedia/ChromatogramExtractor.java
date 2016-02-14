@@ -59,18 +59,18 @@ public class ChromatogramExtractor {
 		ArrayList<LibraryEntry> entries=libraryFile.getAllEntries(false);
 		HashMap<String, LibraryEntry> entireEntryMap=new HashMap<String, LibraryEntry>();
 		for (LibraryEntry entry : entries) {
-			LibraryEntry unitEntry=entries.get(0).toUnitSpectrum(minChromatogramCount);
-			if (unitEntry.getIonCount()<minChromatogramCount) {
+			LibraryEntry unitEntry=entry.toUnitSpectrum(minChromatogramCount);
+			if (unitEntry.getIonCount()<=minChromatogramCount) {
 				entireEntryMap.put(entry.getPeptideModSeq(), unitEntry);
 			}
 		}
 		
-		final HashMap<String, LibraryEntry> keptEntryMap=new HashMap<String, LibraryEntry>();
+		final HashSet<LibraryEntry> keptEntryMap=new HashSet<LibraryEntry>();
 		for (ScoredObject<String> psm : localPassingPeptides) {
 			String peptideModSeq=PecanScoringResultsToTSVConsumer.getPeptideSequence(psm.y);
 			LibraryEntry entry=entireEntryMap.get(peptideModSeq);
 			if (entry!=null&&passingPeptideSequences.contains(peptideModSeq)) {
-				keptEntryMap.put(peptideModSeq, entry);
+				keptEntryMap.add(entry);
 			}
 		}
 				
@@ -92,7 +92,7 @@ public class ChromatogramExtractor {
 
 		File integrationFile=new File(diaFile.getAbsolutePath()+".quant.txt");
 		PrintWriter writer=new PrintWriter(integrationFile, "UTF-8");
-		writer.println("File\tPeptideModSeq\tPrecursorCharge\tFragmentIons\tRTStart\tRTCenter\tRTStop\tTIC\tNormTIC");
+		writer.println("File\tPeptideModSeq\tPrecursorCharge\tRTStart\tRTCenter\tRTStop\tTIC");
 
 		for (Range range : ranges) {
 			Logger.logLine("Working on "+range+" m/z");
@@ -108,10 +108,9 @@ public class ChromatogramExtractor {
 			LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 			ExecutorService executor=new ThreadPoolExecutor(parameters.getNumberOfThreadsUsed(), parameters.getNumberOfThreadsUsed(), Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
-			for (LibraryEntry unitEntry : keptEntryMap.values()) {
+			for (LibraryEntry unitEntry : keptEntryMap) {
 				PSM psm=psmData.get(unitEntry.getPeptideModSeq());
-				
-				if (range.contains((float)psm.precursorMZ)) {
+				if (psm!=null&&range.contains((float)psm.precursorMZ)) {
 					int index=stripeScanIDs.binarySearch(psm.scanID);
 					if (index<0) {
 						if (index<0) {
@@ -167,7 +166,7 @@ public class ChromatogramExtractor {
 				String rtString=row.get("midTime");
 				if (rtString==null) rtString=row.get("RTinMin");
 				float retentionTime=Float.parseFloat(rtString)*60f;
-				map.put(psmID, new PSM(scanID, precursorMZ, precursorCharge, retentionTime, peptideModSeq));
+				map.put(peptideModSeq, new PSM(scanID, precursorMZ, precursorCharge, retentionTime, peptideModSeq));
 			}
 		};
 		TableParserConsumer consumer=new TableParserConsumer(blockingQueue, muscle);
