@@ -211,6 +211,41 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			c.close();
 		}
 	}
+	
+	public ArrayList<LibraryEntry> getAllEntries(boolean sqrt) throws IOException, SQLException, DataFormatException {
+		Connection c=getConnection(tempFile);
+		try {
+			Statement s=c.createStatement();
+			try {
+				ResultSet rs=s.executeQuery("select PrecursorMZ, PrecursorCharge, PeptideModSeq, Copies, RetentionTime, Score, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray from entries");
+
+				ArrayList<LibraryEntry> entry=new ArrayList<LibraryEntry>();
+				while (rs.next()) {
+
+					double precursorMZ=rs.getDouble(1);
+					byte precursorCharge=(byte)rs.getInt(2);
+					String peptideModSeq=rs.getString(3);
+					int copies=rs.getInt(4);
+					float retentionTime=rs.getFloat(5); 
+					float score=rs.getFloat(6);
+					int massEncodedLength=rs.getInt(7);
+					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), massEncodedLength));
+					int intensityEncodedLength=rs.getInt(9);
+					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(10), intensityEncodedLength));
+					if (sqrt) {
+						intensityArray=General.protectedSqrt(intensityArray);
+					}
+					entry.add(new LibraryEntry(precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));
+				}
+
+				return entry;
+			} finally {
+				s.close();
+			}
+		} finally {
+			c.close();
+		}
+	}
 
 	private void createNewTables() throws IOException, SQLException {
 		Connection c=getConnection(tempFile);

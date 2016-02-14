@@ -283,78 +283,7 @@ public class SearchFeatureReader {
 				ArrayList<Stripe> stripes=stripeFile.getStripes(precursorMZ, retentionTime-duration, retentionTime+duration, false);
 
 
-				float bestDelta=Float.MAX_VALUE;
-				PeakScores[] bestScores=null;
-				ArrayList<PeakScores[]> scoreList=new ArrayList<PeakScores[]>();
-				TFloatArrayList retentionTimes=new TFloatArrayList();
-				for (Stripe stripe : stripes) {
-					retentionTimes.add(stripe.getScanStartTime());
-					float delta=Math.abs(stripe.getScanStartTime()-retentionTime);
-					PeakScores[] individualPeakScores=scorer.getIndividualPeakScores(unitEntry, stripe, true);
-					scoreList.add(individualPeakScores);
-					if (delta<bestDelta) {
-						bestDelta=delta;
-						bestScores=individualPeakScores;
-					}
-				}
-				
-				// no signal of any kind at retention time!
-				if (bestScores==null) return null;
-				
-				TFloatArrayList[] traces=new TFloatArrayList[bestScores.length];
-				for (int i=0; i<traces.length; i++) {
-					traces[i]=new TFloatArrayList();
-				}
-				for (PeakScores[] peakScores : scoreList) {
-					for (int i=0; i<peakScores.length; i++) {
-						if (peakScores[i]!=null) {
-							traces[i].add(peakScores[i].getScore());
-						} else {
-							traces[i].add(0.0f);
-						}
-					}
-				}
-				
-				ArrayList<PeakScores> keptPeaks=new ArrayList<PeakScores>();
-				ArrayList<float[]> chromatograms=new ArrayList<float[]>();
-				for (int i=0; i<bestScores.length; i++) {
-					if (bestScores[i]!=null&&bestScores[i].getScore()>0) {
-						float[] chromatogram=traces[i].toArray();
-						chromatogram=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatogram);
-						chromatograms.add(chromatogram);
-						keptPeaks.add(bestScores[i]);
-					}
-				}
-				Triplet<float[], float[], Range> trio=TransitionRefiner.identifyTransitions(peptideModSeq, chromatograms, retentionTimes.toArray());
-				float[] correlations=trio.x;
-				float[] integrations=trio.y;
-				
-				TDoubleArrayList mzs=new TDoubleArrayList();
-				TFloatArrayList intens=new TFloatArrayList();
-				int count=0;
-				int quantCount=0;
-				float correlationThreshold=limitToQuantifiable?TransitionRefiner.quantitativeCorrelationThreshold:TransitionRefiner.identificationCorrelationThreshold;
-				for (int i=0; i<keptPeaks.size(); i++) {
-					PeakScores scores=keptPeaks.get(i);
-					if (correlations[i]>=correlationThreshold) {
-						quantCount++;
-						float peakScore=scores.getScore();
-						if (peakScore>0) {
-							mzs.add(scores.getTargetMass());
-							intens.add(integrations[i]);
-							count++;
-						}
-					} else {
-						mzs.add(scores.getTargetMass());
-						intens.add(Float.MIN_VALUE);
-					}
-				}
-				
-				//System.out.println(peptideModSeq+"\t"+keptPeaks.size()+"\t"+count+"\t"+quantCount);
-
-				double[] massArray=mzs.toArray();
-				float[] intensityArray=intens.toArray();
-				return new Triplet<double[], float[], Range>(massArray, intensityArray, trio.z);
+				return quantifyPeptide(scorer, unitEntry, peptideModSeq, retentionTime, limitToQuantifiable, stripes);
 
 			} catch (IOException ioe) {
 				Logger.errorLine("Error processing "+stripeFile.getFile().getName());
@@ -367,5 +296,81 @@ public class SearchFeatureReader {
 				throw new EncyclopediaException("Error parsing Stripe file", dfe);
 			}
 		}
+
 	};
+
+	public static Triplet<double[], float[], Range> quantifyPeptide(PSMScorer scorer, LibraryEntry unitEntry, String peptideModSeq, float retentionTime, boolean limitToQuantifiable, ArrayList<Stripe> stripes) {
+		float bestDelta=Float.MAX_VALUE;
+		PeakScores[] bestScores=null;
+		ArrayList<PeakScores[]> scoreList=new ArrayList<PeakScores[]>();
+		TFloatArrayList retentionTimes=new TFloatArrayList();
+		for (Stripe stripe : stripes) {
+			retentionTimes.add(stripe.getScanStartTime());
+			float delta=Math.abs(stripe.getScanStartTime()-retentionTime);
+			PeakScores[] individualPeakScores=scorer.getIndividualPeakScores(unitEntry, stripe, true);
+			scoreList.add(individualPeakScores);
+			if (delta<bestDelta) {
+				bestDelta=delta;
+				bestScores=individualPeakScores;
+			}
+		}
+		
+		// no signal of any kind at retention time!
+		if (bestScores==null) return null;
+		
+		TFloatArrayList[] traces=new TFloatArrayList[bestScores.length];
+		for (int i=0; i<traces.length; i++) {
+			traces[i]=new TFloatArrayList();
+		}
+		for (PeakScores[] peakScores : scoreList) {
+			for (int i=0; i<peakScores.length; i++) {
+				if (peakScores[i]!=null) {
+					traces[i].add(peakScores[i].getScore());
+				} else {
+					traces[i].add(0.0f);
+				}
+			}
+		}
+		
+		ArrayList<PeakScores> keptPeaks=new ArrayList<PeakScores>();
+		ArrayList<float[]> chromatograms=new ArrayList<float[]>();
+		for (int i=0; i<bestScores.length; i++) {
+			if (bestScores[i]!=null&&bestScores[i].getScore()>0) {
+				float[] chromatogram=traces[i].toArray();
+				chromatogram=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatogram);
+				chromatograms.add(chromatogram);
+				keptPeaks.add(bestScores[i]);
+			}
+		}
+		Triplet<float[], float[], Range> trio=TransitionRefiner.identifyTransitions(peptideModSeq, chromatograms, retentionTimes.toArray());
+		float[] correlations=trio.x;
+		float[] integrations=trio.y;
+		
+		TDoubleArrayList mzs=new TDoubleArrayList();
+		TFloatArrayList intens=new TFloatArrayList();
+		int count=0;
+		int quantCount=0;
+		float correlationThreshold=0.0f;//limitToQuantifiable?TransitionRefiner.quantitativeCorrelationThreshold:TransitionRefiner.identificationCorrelationThreshold;
+		for (int i=0; i<keptPeaks.size(); i++) {
+			PeakScores scores=keptPeaks.get(i);
+			if (correlations[i]>=correlationThreshold) {
+				quantCount++;
+				float peakScore=scores.getScore();
+				if (peakScore>0) {
+					mzs.add(scores.getTargetMass());
+					intens.add(integrations[i]);
+					count++;
+				}
+			} else {
+				mzs.add(scores.getTargetMass());
+				intens.add(Float.MIN_VALUE);
+			}
+		}
+		
+		//System.out.println(peptideModSeq+"\t"+keptPeaks.size()+"\t"+count+"\t"+quantCount);
+
+		double[] massArray=mzs.toArray();
+		float[] intensityArray=intens.toArray();
+		return new Triplet<double[], float[], Range>(massArray, intensityArray, trio.z);
+	}
 }

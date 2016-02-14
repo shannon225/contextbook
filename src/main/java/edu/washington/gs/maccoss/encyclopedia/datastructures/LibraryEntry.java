@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 import com.google.common.base.Optional;
@@ -48,11 +49,25 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
 	}
-	
+
 	public LibraryEntry toUnitSpectrum() {
+		return toUnitSpectrum(-1);
+	}
+	public LibraryEntry toUnitSpectrum(int numPeaks) {
+		float threshold;
+		if (numPeaks<=0) {
+			threshold=minimumIntensityThreshold;
+		} else {
+			float[] intensityArrayClone=intensityArray.clone();
+			Arrays.sort(intensityArrayClone);
+			int i=intensityArrayClone.length-numPeaks;
+			if (i<0) i=0;
+			threshold=intensityArrayClone[i];
+		}
+		
 		float[] unit=new float[intensityArray.length];
 		for (int i=0; i<unit.length; i++) {
-			if (intensityArray[i]>minimumIntensityThreshold) {
+			if (intensityArray[i]>=threshold) {
 				unit[i]=1.0f;
 			}
 		}

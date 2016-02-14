@@ -158,14 +158,7 @@ public class Encyclopedia {
 		Collections.sort(ranges);
 		
 		double[] binBoundaries=boundaries.toArray();
-		boolean[] useBin=new boolean[binBoundaries.length];
 		Arrays.sort(binBoundaries);
-
-		for (Range range : ranges) {
-			int index=Arrays.binarySearch(binBoundaries, range.getMiddle());
-			index=(-(index+1))-1;
-			useBin[index]=true;
-		}
 
 		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>());
 		SaveResultsConsumer saveResultsConsumer=new SaveResultsConsumer(new LinkedBlockingQueue<PeptideScoringResult>());
@@ -187,8 +180,6 @@ public class Encyclopedia {
 			float baseIncrement=1.0f/numberOfTasks;
 			float baseProgress=(1.0f+rangesFinished)/numberOfTasks;
 			progress.update(baseMessage, baseProgress);
-			int index=Arrays.binarySearch(binBoundaries, range.getMiddle());
-			index=(-(index+1))-1;
 			
 			float dutyCycle=stripefile.getRanges().get(range);
 			Logger.logLine("Processing "+range+" ("+dutyCycle+")");
