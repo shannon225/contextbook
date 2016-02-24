@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
 public class Log {
 	private static final double log10=Math.log(10.0);
+	private static final double log2=Math.log(2.0);
 
 	public static float protectedLog10(float v) {
 		if (v<=0) return 0.0f;
@@ -18,6 +19,9 @@ public class Log {
 	}
 	public static float log10(float v) {
 		return (float)(Math.log(v)/log10);
+	}
+	public static float log2(float v) {
+		return (float)(Math.log(v)/log2);
 	}
 
 	public static float[] log10(float[] v) {
