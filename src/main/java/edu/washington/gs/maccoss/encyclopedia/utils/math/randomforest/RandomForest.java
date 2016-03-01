@@ -18,7 +18,7 @@ import gnu.trove.set.hash.TFloatHashSet;
 
 public class RandomForest {
 	public static final float log2=(float)Math.log(2.0f);
-	public static final int hardMinInEachGroup=2;//9; FIXME
+	public static final int hardMinInEachGroup=9;
 
 	public static RocPlot classify(ArrayList<Record> records, TIntIntHashMap enrichedIndicies) {
 		
