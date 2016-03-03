@@ -62,7 +62,7 @@ public class DIABrowserPanel extends JPanel {
 		parameters=SearchParameterParser.parseParameters(map);
 		scorer=new PecanRawScorer(parameters.getFragmentTolerance(), new ExpectedFragmentationScorer(parameters));
 
-		diaFile=new FileChooserPanel(null, "DIA File", new SimpleFilenameFilter(".dia", ".mzml")) {
+		diaFile=new FileChooserPanel(null, "DIA File", new SimpleFilenameFilter(".dia", ".mzml"), true) {
 			private static final long serialVersionUID=1L;
 
 			@Override

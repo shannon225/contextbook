@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
@@ -19,7 +20,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.DataFormatException;
 
-import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
@@ -36,7 +36,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
@@ -58,15 +58,19 @@ public class Encyclopedia {
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
 		if (arguments.size()==0) {
-			PecanMain.main(args);
+			SearchGUIMain.runGUI(false);
+			
+		} else if (arguments.containsKey("-pecan")) {
+			Pecanpie.main(args);
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("Encyclopedia Help");
 			Logger.logLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.logLine("Required Parameters: ");
 			Logger.logLine("\t-i\tinput .DIA or .MZML file");
-			Logger.logLine("\t-l\tlibrary .ELIB file");
+			Logger.logLine("\t-l\tlibrary .BLIB or .ELIB file");
 			Logger.logLine("Other Parameters: ");
+			Logger.logLine("\t-irtdb\tlibrary .IRTDB file");
 			Logger.logLine("\t-o\toutput report file (default: [input file].pecan.txt)");
 			
 			TreeMap<String, String> defaults=new TreeMap<String, String>(PecanParameterParser.getDefaultParameters());
@@ -87,6 +91,9 @@ public class Encyclopedia {
 
 			File diaFile=new File(arguments.get("-i"));
 			File libraryFile=new File(arguments.get("-l"));
+			
+			String irtFileName=arguments.get("-irtdb");
+			File irtFile=irtFileName==null?null:new File(irtFileName);
 
 			File outputFile;
 			if (arguments.containsKey("-o")) {
@@ -104,12 +111,14 @@ public class Encyclopedia {
 			Logger.logLine("Parameters:");
 			Logger.logLine(" -i "+diaFile.getAbsolutePath());
 			Logger.logLine(" -l "+libraryFile.getAbsolutePath());
+			Logger.logLine(" -irtdb "+irtFileName);
 			Logger.logLine(" -t "+arguments.get("-t"));
 			Logger.logLine(" -o "+outputFile.getAbsolutePath());
 			Logger.logLine(parameters.toString());
 
 			try {
-				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, libraryFile, featureFile, outputFile, factory);
+				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile, Optional.ofNullable(irtFile));
+				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, featureFile, outputFile, factory);
 				runSearch(new EmptyProgressIndicator(), job);
 			} catch (Exception e) {
 				System.err.println("Encountered Fatal Error!");
@@ -119,7 +128,6 @@ public class Encyclopedia {
 	}
 
 	public static void runSearch(ProgressIndicator progress, EncyclopediaJobData job) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
-		File libraryFile=job.getLibraryFile();
 		File diaFile=job.getDiaFile();
 		File featureFile=job.getFeatureFile();
 		File outputFile=job.getOutputFile();
@@ -128,12 +136,9 @@ public class Encyclopedia {
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);
 		
-		LibraryFile library=new LibraryFile();
-		library.openFile(libraryFile);
-
 		SearchParameters parameters=taskFactory.getParameters();
 		StripeFileInterface stripefile=MzmlToDIAConverter.getFile(diaFile, parameters);
-		runSearch(progress, library, stripefile, featureFile, outputFile, taskFactory);
+		runSearch(progress, job.getLibrary(), stripefile, featureFile, outputFile, taskFactory);
 	}
 		
 	public static void runSearch(ProgressIndicator progress, LibraryInterface library, StripeFileInterface stripefile, File featureFile, File outputFile, LibraryScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
@@ -223,33 +228,37 @@ public class Encyclopedia {
 		consumer3Thread.join();
 		teeConsumer.close();
 
-		progress.update("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)", (1.0f+rangesFinished)/numberOfTasks);
-		File percolatorResultFile=new File(outputFile.getAbsolutePath()+".first_round.txt");
-		
-		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, percolatorResultFile, parameters.getPercolatorThreshold());
-		Logger.logLine("First pass: "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
-		
-		ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
-		RetentionTimeFilter filter=getRescoringModel(passingPeptides, data, outputFile);
-		
-		writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>());
-		Thread finalWriteConsumerThread=new Thread(writeResultsConsumer);
-		finalWriteConsumerThread.start();
-		BlockingQueue<PeptideScoringResult> resultList=writeResultsConsumer.getResultsQueue();
-		for (PeptideScoringResult result : data) {
-			PeptideScoringResult rescore=result.rescore(filter);
-			resultList.add(rescore);
+		try {
+			progress.update("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)", (1.0f+rangesFinished)/numberOfTasks);
+			File percolatorResultFile=new File(outputFile.getAbsolutePath()+".first_round.txt");
+			
+			ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, percolatorResultFile, parameters.getPercolatorThreshold());
+			Logger.logLine("First pass: "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
+			
+			ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
+			RetentionTimeFilter filter=getRescoringModel(passingPeptides, data, outputFile);
+			
+			writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>());
+			Thread finalWriteConsumerThread=new Thread(writeResultsConsumer);
+			finalWriteConsumerThread.start();
+			BlockingQueue<PeptideScoringResult> resultList=writeResultsConsumer.getResultsQueue();
+			for (PeptideScoringResult result : data) {
+				PeptideScoringResult rescore=result.rescore(filter);
+				resultList.add(rescore);
+			}
+			resultList.add(PeptideScoringResult.POISON_RESULT);
+			finalWriteConsumerThread.join();
+			writeResultsConsumer.close();
+	
+			progress.update("Re-running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)", (1.0f+rangesFinished)/numberOfTasks);
+			passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, outputFile, parameters.getPercolatorThreshold());
+			
+			Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
+			Logger.logLine(""); 
+			progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+		} catch (Exception e) {
+			progress.update("Fatal Error: "+e.getMessage(), -1.0f);
 		}
-		resultList.add(PeptideScoringResult.POISON_RESULT);
-		finalWriteConsumerThread.join();
-		writeResultsConsumer.close();
-
-		progress.update("Re-running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)", (1.0f+rangesFinished)/numberOfTasks);
-		passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, outputFile, parameters.getPercolatorThreshold());
-		
-		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
-		Logger.logLine(""); 
-		progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 	}
 
 	public static RetentionTimeFilter getRescoringModel(ArrayList<ScoredObject<String>> passingPeptides, ArrayList<PeptideScoringResult> data, File imageFileSeed) {
@@ -278,7 +287,7 @@ public class Encyclopedia {
 		Logger.logLine("Generating retention time mapping using "+rts.size()+" points...");
 		RetentionTimeFilter filter=new RetentionTimeFilter(rts);
 		
-		filter.plot(rts, Optional.fromNullable(imageFileSeed));
+		filter.plot(rts, Optional.ofNullable(imageFileSeed));
 		return filter;
 	}
 }

@@ -2,8 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
 import java.io.File;
 import java.util.ArrayList;
-
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;

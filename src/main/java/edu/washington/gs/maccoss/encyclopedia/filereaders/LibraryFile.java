@@ -23,11 +23,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class LibraryFile extends SQLFile implements LibraryInterface {
+	public static final String ELIB=".elib";
 	private File userFile=null;
 	private final File tempFile;
 
 	public LibraryFile() throws IOException {
-		tempFile=File.createTempFile("encyclopedia_", ".elib");
+		tempFile=File.createTempFile("encyclopedia_", ELIB);
 		tempFile.deleteOnExit();
 	}
 

@@ -3,8 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.SSRCalc;

@@ -4,8 +4,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -21,7 +20,7 @@ public class XYTrace {
 	private final Optional<Color> color;
 	
 	public XYTrace(Spectrum spectrum) {
-		color=Optional.absent();
+		color=Optional.empty();
 		this.type=GraphType.spectrum;
 		this.points=new ArrayList<XYPoint>();
 		this.name=spectrum.getSpectrumName();
@@ -37,7 +36,7 @@ public class XYTrace {
 	}
 
 	public XYTrace(Collection<XYPoint> points, GraphType type, String name, Color color) {
-		this.color=Optional.fromNullable(color);
+		this.color=Optional.ofNullable(color);
 		this.type=type;
 		this.points=new ArrayList<XYPoint>(points);
 		this.name=name;
@@ -50,7 +49,7 @@ public class XYTrace {
 	}
 	
 	public XYTrace(double[] x, double[] y, GraphType type, String name, Color color) {
-		this.color=Optional.fromNullable(color);
+		this.color=Optional.ofNullable(color);
 		this.type=type;
 		this.points=new ArrayList<XYPoint>();
 		this.name=name;
@@ -67,7 +66,7 @@ public class XYTrace {
 	}
 	
 	public XYTrace(TFloatFloatHashMap map, GraphType type, String name, Color color) {
-		this.color=Optional.fromNullable(color);
+		this.color=Optional.ofNullable(color);
 		this.type=type;
 		this.points=new ArrayList<XYPoint>();
 		this.name=name;

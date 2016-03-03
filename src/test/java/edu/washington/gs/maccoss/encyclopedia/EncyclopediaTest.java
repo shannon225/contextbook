@@ -4,12 +4,15 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
@@ -108,8 +111,9 @@ public class EncyclopediaTest {
 	}
 
 	public static void run(File diaFile, File libraryFile, EncyclopediaOneScoringFactory factory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+		LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile, Optional.ofNullable((File)null));
 		EncyclopediaJobData job;
-		job=new EncyclopediaJobData(diaFile, libraryFile, factory);
+		job=new EncyclopediaJobData(diaFile, library, factory);
 		Encyclopedia.runSearch(new EmptyProgressIndicator(), job);
 	}
 }

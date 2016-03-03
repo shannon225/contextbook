@@ -19,13 +19,15 @@ import javax.swing.SwingUtilities;
 public class FileChooserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
 	
-	private File file;
+	private File file=null;
 	private final JLabel fileLabel;
 	private final JButton chooseFile;
 	private final JPanel top;
+	private final boolean required;
 	
-	public FileChooserPanel(File f, final String fileType, final FilenameFilter filter) {
+	public FileChooserPanel(File f, final String fileType, final FilenameFilter filter, boolean required) {
 		super(new BorderLayout());
+		this.required=required;
 		fileLabel=new JLabel("Please select file...");
 		chooseFile=new JButton("Edit");
 		
@@ -71,7 +73,11 @@ public class FileChooserPanel extends JPanel {
 		if (filename==null||filename.length==0||filename[0]==null) {
 			file=null;
 			fileLabel.setText("Please select file...");
-			top.setBackground(Color.pink);
+			if (required) {
+				top.setBackground(Color.pink);
+			} else {
+				top.setBackground(Color.lightGray);
+			}
 		} else {
 			file=filename[0];
 			fileLabel.setText(file.getName());

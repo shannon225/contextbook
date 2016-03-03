@@ -2,8 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia;
 
 import java.io.File;
 import java.util.ArrayList;
-
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
@@ -30,7 +29,7 @@ public class PecanpieTest {
 		targets=null;
 		
 		try {
-			Pecanpie.runPie(new EmptyProgressIndicator(), Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
+			Pecanpie.runPie(new EmptyProgressIndicator(), Optional.ofNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
 		} catch (Exception e) {
 			System.err.println("Encountered Fatal Error!");
 			e.printStackTrace();

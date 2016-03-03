@@ -15987,14 +15987,3 @@ max	class	peptide
 0.964387255	-1	LASVPAGGAVAVSAAPGSAAPAAGSAPAAAEEKK
 0.973676422	-1	GPPPPPGDENR
 0.979086919	-1	LEAAIAEAEER
-		
-		time
-		very gradual
-		gradual
-		fast
-		very fast
-		
-		very gradual
-		gradual
-		fast
-		very fast

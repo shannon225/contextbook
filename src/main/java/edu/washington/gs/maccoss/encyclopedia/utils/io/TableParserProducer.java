@@ -9,10 +9,9 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.concurrent.BlockingQueue;
-
-import com.google.common.base.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -56,7 +55,7 @@ public class TableParserProducer implements Runnable {
 		this.in=new BufferedReader(new InputStreamReader(s));
 		this.delim=delim;
 		this.numConsumers=numConsumers;
-		this.optionalFile=Optional.absent();
+		this.optionalFile=Optional.empty();
 	}
 	
 	public void run() {

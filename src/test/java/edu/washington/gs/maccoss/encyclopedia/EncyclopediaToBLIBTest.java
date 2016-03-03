@@ -3,8 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -54,7 +53,7 @@ public class EncyclopediaToBLIBTest {
 		jobs.add(job5);
 		*/
 		
-		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, Optional.fromNullable(libraryTemplate));
+		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, Optional.ofNullable(libraryTemplate));
 	}
 
 	private static SearchJobData getData(SearchParameters parameters, String dia) {

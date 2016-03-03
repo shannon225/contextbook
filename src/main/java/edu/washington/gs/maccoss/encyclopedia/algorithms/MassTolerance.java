@@ -1,8 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.util.Arrays;
-
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 import gnu.trove.list.array.TIntArrayList;
 
@@ -50,7 +49,7 @@ public class MassTolerance {
 		if (index.isPresent()) {
 			return Optional.of(peaks[index.get()]);
 		} else {
-			return Optional.absent();
+			return Optional.empty();
 		}
 	}
 
@@ -71,7 +70,7 @@ public class MassTolerance {
 			if (compareTo(peaks[value], target)==0) return Optional.of(value);
 		}
 		
-		return Optional.absent();
+		return Optional.empty();
 	}
 	
 	/**

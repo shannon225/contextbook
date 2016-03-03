@@ -13,9 +13,8 @@ import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Optional;
 import java.util.zip.DataFormatException;
-
-import com.google.common.base.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
@@ -29,11 +28,12 @@ import gnu.trove.map.hash.TCharFloatHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class BlibFile extends SQLFile {
+	public static final String BLIB=".blib";
 	private final File tempFile;
 	private File userFile;
 
 	public BlibFile() throws IOException {
-		tempFile=File.createTempFile("encyclopedia_", ".blib");
+		tempFile=File.createTempFile("encyclopedia_", BLIB);
 		tempFile.deleteOnExit();
 	}
 
@@ -117,7 +117,7 @@ public class BlibFile extends SQLFile {
 		}
 		
 		String rootName=userFile.getName();
-		if (rootName.endsWith(".blib")) {
+		if (rootName.endsWith(BLIB)) {
 			rootName=rootName.substring(0, rootName.length()-5);
 		}
 		

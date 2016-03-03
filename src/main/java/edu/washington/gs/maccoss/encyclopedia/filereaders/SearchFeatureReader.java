@@ -6,12 +6,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.zip.DataFormatException;
-
-import com.google.common.base.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.DotProduct;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
@@ -252,11 +251,11 @@ public class SearchFeatureReader {
 						unitEntry=entries.get(0).toUnitSpectrum();
 					} else {
 						 // if library is ok but spectrum is not in library, just return null (don't quantify)
-						return Optional.absent();
+						return Optional.empty();
 					}
 					if (unitEntry.getIonCount()<4) { // FIXME HACKS GALORE
 						 // if unit spectrum has fewer than 4 peaks, just return null (don't quantify)
-						return Optional.absent();
+						return Optional.empty();
 					}
 				} catch (IOException ioe) {
 					Logger.errorLine("Error processing "+stripeFile.getFile().getName());
@@ -275,7 +274,7 @@ public class SearchFeatureReader {
 				unitEntry=model.getUnitSpectrum(precursorCharge, params);
 			}
 			
-			return Optional.fromNullable(extractSpectrum(unitEntry, precursorMZ, peptideModSeq, retentionTime, duration, limitToQuantifiable));
+			return Optional.ofNullable(extractSpectrum(unitEntry, precursorMZ, peptideModSeq, retentionTime, duration, limitToQuantifiable));
 		}
 
 		public Triplet<double[], float[], Range> extractSpectrum(LibraryEntry unitEntry, double precursorMZ, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable) {

@@ -3,8 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -39,7 +38,7 @@ public class RetentionTimeFilter {
 	}
 	public void plot(ArrayList<XYPoint> rts) {
 		File seed=null;
-		plot(rts, Optional.fromNullable(seed));
+		plot(rts, Optional.ofNullable(seed));
 	}
 	
 	public void plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed) {

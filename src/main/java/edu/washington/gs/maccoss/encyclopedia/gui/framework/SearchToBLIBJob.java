@@ -1,9 +1,8 @@
-package edu.washington.gs.maccoss.encyclopedia.gui.pecan;
+package edu.washington.gs.maccoss.encyclopedia.gui.framework;
 
 import java.io.File;
 import java.util.ArrayList;
-
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.SearchToBLIB;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
@@ -11,10 +10,10 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 
-public class PecanToBLIBJob extends SwingJob {
+public class SearchToBLIBJob extends SwingJob {
 	private final File blibFile;
 
-	public PecanToBLIBJob(File blibFile, JobProcessor processor) {
+	public SearchToBLIBJob(File blibFile, JobProcessor processor) {
 		super(processor);
 		this.blibFile=blibFile;
 	}
@@ -28,12 +27,12 @@ public class PecanToBLIBJob extends SwingJob {
 	public void runJob() throws Exception {
 		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
 		for (SwingJob job : processor.getQueue()) {
-			if (job instanceof PecanJob) {
-				jobData.add(((PecanJob)job).getPecanData());
+			if (job instanceof SearchJob) {
+				jobData.add(((SearchJob)job).getSearchData());
 			}
 		}
 
 		LibraryFile libraryTemplate=null;
-		SearchToBLIB.convert(getProgressIndicator(), jobData, blibFile, Optional.fromNullable(libraryTemplate));
+		SearchToBLIB.convert(getProgressIndicator(), jobData, blibFile, Optional.ofNullable(libraryTemplate));
 	}
 }

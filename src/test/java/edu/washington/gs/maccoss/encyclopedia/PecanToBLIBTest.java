@@ -3,8 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
@@ -41,7 +40,7 @@ public class PecanToBLIBTest {
 		jobs.add(job6);
 		
 		LibraryFile libraryTemplate=null;
-		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, Optional.fromNullable(libraryTemplate));
+		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, Optional.ofNullable(libraryTemplate));
 	}
 
 	private static SearchJobData getData(PecanSearchParameters parameters, File fastaFile, ArrayList<FastaEntry> targets, String dia) {
@@ -49,7 +48,7 @@ public class PecanToBLIBTest {
 		File outputFile1=new File(diaFile1.getAbsolutePath()+".pecan.txt");
 		File featureFile1=new File(outputFile1.getAbsolutePath()+".features.txt");
 		PecanScoringFactory factory1=new PecanOneScoringFactory(parameters, featureFile1);
-		SearchJobData job1=new PecanJobData(Optional.fromNullable(targets), diaFile1, fastaFile,featureFile1, outputFile1, factory1);
+		SearchJobData job1=new PecanJobData(Optional.ofNullable(targets), diaFile1, fastaFile,featureFile1, outputFile1, factory1);
 		return job1;
 	}
 }

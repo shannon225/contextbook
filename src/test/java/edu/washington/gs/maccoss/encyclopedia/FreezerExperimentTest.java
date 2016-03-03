@@ -3,8 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
@@ -58,7 +57,7 @@ public class FreezerExperimentTest {
 				ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 				jobs.add(job);
 
-				SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, Optional.fromNullable(libraryTemplate));
+				SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, Optional.ofNullable(libraryTemplate));
 				
 				fileCount++;
 				long fileTime=System.currentTimeMillis()-currentTime;

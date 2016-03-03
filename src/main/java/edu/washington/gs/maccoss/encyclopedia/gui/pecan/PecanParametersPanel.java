@@ -2,32 +2,21 @@ package edu.washington.gs.maccoss.encyclopedia.gui.pecan;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.FileDialog;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Optional;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JEditorPane;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
-import javax.swing.JSplitPane;
-import javax.swing.JTable;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingUtilities;
-import javax.swing.table.TableColumn;
-
-import com.google.common.base.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
@@ -38,28 +27,28 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.LogConsole;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.ProgressRenderer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 
-public class PecanPanel extends JPanel {
+public class PecanParametersPanel extends JPanel {
 	private static final long serialVersionUID=1L;
-	public static ImageIcon image=new ImageIcon(PecanPanel.class.getClassLoader().getResource("images/pecan.png"));
-	private static int numberOfCores=Runtime.getRuntime().availableProcessors();
-
-	public static final String copy="<html><b><p style=\"font-size:20px; font-family: Helvetica, sans-serif\">PECAN: Peptide Detection Directly from Data-Independent Acquisition (DIA) MS/MS Data<br></p>"
-			+ "<p style=\"font-size:12px; font-family: Helvetica, sans-serif\">PECAN extracts peptide fragmentation chromatograms from MZML files, assigns peaks, and calculates various peak features. These features are interpreted by Percolator to identify peptides.";
+	private static final int numberOfCores=Runtime.getRuntime().availableProcessors();
+	public static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/pecan.png"));
+	public static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">PECAN: Peptide Detection Directly from Data-Independent Acquisition (DIA) MS/MS Data<br></p></b>"
+			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">PECAN extracts peptide fragmentation chromatograms from MZML files, assigns peaks, and calculates various peak features. These features are interpreted by Percolator to identify peptides.";
+	
 	
 	private final FileChooserPanel backgroundFasta;
 	private final FileChooserPanel targetFasta;
-	private final JComboBox<String> overlap=new JComboBox<String>(new String[] {"Not Overlapped", "Overlapped"});
+	private final JComboBox<String> overlap=new JComboBox<String>(new String[] {"Overlapped", "Not Overlapped"});
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "PepsinA"});
 	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "None"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {"HCD (Y-Only)", "CID (B/Y)", "ETD (C/Z/Z+1)"});
@@ -70,32 +59,23 @@ public class PecanPanel extends JPanel {
 	private final SpinnerModel maxCharge = new SpinnerNumberModel(3, 2, 4, 1);
 	private final SpinnerModel maxMissedCleavage = new SpinnerNumberModel(1, 0, 3, 1);
 	private final SpinnerModel numberOfJobs = new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
-	
-	JobProcessorTableModel pecanModel=new JobProcessorTableModel();
-	
-	public PecanPanel() {
+
+	public PecanParametersPanel() {
 		super(new BorderLayout());
-	    
-		setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-		setBackground(Color.white);
 
 		JPanel top=new JPanel(new BorderLayout());
-		ImageIcon image=new ImageIcon(this.getClass().getClassLoader().getResource("images/pecan.png"));
 		top.add(new JLabel(image), BorderLayout.WEST);
 		JEditorPane editor=new JEditorPane("text/html", copy);
 		editor.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		top.add(editor, BorderLayout.CENTER);
 		top.setBackground(Color.white);
-
 		this.add(top, BorderLayout.NORTH);
-
-		JSplitPane split=new JSplitPane();
-
+		
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(new LabeledComponent("<p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Parameters", new JLabel()));
 		
-		backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta")) {
+		backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta"), true) {
 			private static final long serialVersionUID=1L;
 
 			@Override
@@ -109,7 +89,7 @@ public class PecanPanel extends JPanel {
 			}
 		};
 		options.add(backgroundFasta);
-		targetFasta=new FileChooserPanel(null, "Target", new SimpleFilenameFilter(".fas", ".fasta"));
+		targetFasta=new FileChooserPanel(null, "Target", new SimpleFilenameFilter(".fas", ".fasta"), true);
 		options.add(targetFasta);
 		options.add(new LabeledComponent("Precursor Isolation Windows", overlap));
 		options.add(new LabeledComponent("Enzyme", enzyme));
@@ -128,124 +108,34 @@ public class PecanPanel extends JPanel {
 		chargeRange.add(new JSpinner(maxCharge));
 		options.add(new LabeledComponent("Charge range", chargeRange));
 		
-		LogConsole console=new LogConsole();
-		console.errorLine("Console:");
-		Logger.addRecorder(console);
 
-		MemoryMonitor memory=new MemoryMonitor();
-		memory.start();
-		
-		JPanel optionsWrapper=new JPanel(new BorderLayout());
-		optionsWrapper.setOpaque(true);
-		optionsWrapper.setBackground(Color.white);
-		optionsWrapper.add(options, BorderLayout.NORTH);
-		optionsWrapper.add(console, BorderLayout.CENTER);
-		optionsWrapper.add(memory, BorderLayout.SOUTH);
-		
-		split.setLeftComponent(optionsWrapper);
-
-		JPanel files=new JPanel(new BorderLayout());
-		JButton chooseFile=new JButton("Add MZML");
-		chooseFile.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFrame frame = (JFrame)SwingUtilities.getRoot(PecanPanel.this);
-				
-				if (backgroundFasta.getFile()==null) {
-					JOptionPane.showMessageDialog(frame, "Please load a background FASTA file first!");
-				} else if (targetFasta.getFile()==null) {
-						JOptionPane.showMessageDialog(frame, "Please load a target FASTA file first!");
-					
-				} else {
-					FileDialog dialog=new FileDialog(frame, "Select a MZML file", FileDialog.LOAD);
-					dialog.setMultipleMode(true);
-					dialog.setFilenameFilter(new SimpleFilenameFilter(".mzml", ".dia"));
-					dialog.setVisible(true);
-					if (dialog.getFiles()!=null) {
-						for (File file : dialog.getFiles()) {
-							PecanJob job=getJob(file);
-							if (job!=null) {
-								pecanModel.addJob(job);
-							}
-						}
-					}
-				}
-			}
-		});
-		
-		JButton saveBlib=new JButton("Save BLIB");
-		saveBlib.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFrame frame = (JFrame)SwingUtilities.getRoot(PecanPanel.this);
-
-				if (backgroundFasta.getFile()==null) {
-					JOptionPane.showMessageDialog(frame, "Please load a background FASTA file first!");
-				} else if (targetFasta.getFile()==null) {
-					JOptionPane.showMessageDialog(frame, "Please load a target FASTA file first!");
-					
-				} else if (pecanModel.getRowCount()==0) {
-					JOptionPane.showMessageDialog(frame, "Please queue some MZMLs first!");
-					
-				} else {
-					FileDialog dialog=new FileDialog(frame, "Save a BLIB file", FileDialog.SAVE);
-					dialog.setFilenameFilter(new SimpleFilenameFilter(".blib"));
-					dialog.setVisible(true);
-					if (dialog.getFiles()!=null&&dialog.getFiles().length>0) {
-						File blibFile=dialog.getFiles()[0];
-						String fileName=blibFile.getName();
-						if (!fileName.toLowerCase().endsWith(".blib")) {
-							blibFile=new File(blibFile.getParentFile(), fileName+".blib");
-
-							if (blibFile.exists()) {
-								// TODO ask if you want to overwrite this
-								// updated file location!
-							}
-						}
-
-						PecanToBLIBJob job=new PecanToBLIBJob(blibFile, pecanModel);
-						if (job!=null) {
-							pecanModel.addJob(job);
-						}
-					}
-				}
-			}
-		});
-		
-		JPanel buttonPanel=new JPanel(new FlowLayout());
-		buttonPanel.add(chooseFile);
-		buttonPanel.add(saveBlib);
-		
-		files.add(new JLabel("<html><p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Pecan Jobs: "), BorderLayout.WEST);
-		files.add(buttonPanel, BorderLayout.EAST);
-		
-		JPanel filesWrapper=new JPanel(new BorderLayout());
-		filesWrapper.setOpaque(true);
-		filesWrapper.setBackground(Color.white);
-		filesWrapper.add(files, BorderLayout.NORTH);
-		
-		JTable table=new JTable(pecanModel);
-        TableColumn column = table.getColumnModel().getColumn(1);
-        column.setCellRenderer(new ProgressRenderer());
-        
-		filesWrapper.add(table, BorderLayout.CENTER);
-		
-		split.setRightComponent(filesWrapper);
-		split.setDividerLocation(400);
-
-		this.add(split, BorderLayout.CENTER);
+		this.add(options, BorderLayout.CENTER);
 	}
 	
-	public PecanJob getJob(File diaFile) {
+	public Optional<String> canLoadData() {
+		if (backgroundFasta.getFile()==null) {
+			return Optional.of("Please load a background FASTA file first!");
+		} else if (targetFasta.getFile()==null) {
+			return Optional.of("Please load a target FASTA file first!");		
+		}
+		return Optional.empty();
+	}
+	
+	public SwingJob getJob(File diaFile, JobProcessorTableModel model) {
 		PecanSearchParameters parameters=getParameters();
 		File fastaFile=backgroundFasta.getFile();
 		if (fastaFile==null) return null;
 		File targetFile=targetFasta.getFile();
 		if (targetFile==null) return null;
-		return getJob(diaFile, fastaFile, targetFile, pecanModel, parameters);
+		SearchJob job=getJob(diaFile, fastaFile, targetFile, model, parameters);
+
+		if (job!=null) {
+			model.addJob(job);
+		}
+		return job;
 	}
 
-	public static PecanJob getJob(File diaFile, File fastaFile, File targetFile, JobProcessor processor, PecanSearchParameters parameters) {
+	static SearchJob getJob(File diaFile, File fastaFile, File targetFile, JobProcessor processor, PecanSearchParameters parameters) {
 		File outputFile=new File(diaFile.getAbsolutePath()+".pecan.txt");
 		File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
 		
@@ -265,7 +155,7 @@ public class PecanPanel extends JPanel {
 		}
 		
 		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
-		return new PecanJob(processor, new PecanJobData(Optional.fromNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory));
+		return new PecanJob(processor, new PecanJobData(Optional.ofNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory));
 	}
 
 	private PecanSearchParameters getParameters() {

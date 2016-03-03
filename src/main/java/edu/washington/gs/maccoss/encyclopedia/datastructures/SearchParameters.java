@@ -1,8 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.io.File;
-
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
@@ -82,7 +81,7 @@ public class SearchParameters {
 	}
 
 	public Optional<File> getPercolatorLocation() {
-		return Optional.fromNullable(percolatorLocation);
+		return Optional.ofNullable(percolatorLocation);
 	}
 
 	public boolean isDeconvoluteOverlappingWindows() {

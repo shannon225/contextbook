@@ -9,10 +9,9 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.concurrent.BlockingQueue;
-
-import com.google.common.base.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -26,7 +25,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 public class PercolatorExecutor extends ExternalExecutor {
 
 	PercolatorExecutor(File tsv, File outputFile, boolean useXML) {
-		super(generateCommand(tsv, outputFile, Optional.fromNullable((File)null), useXML));
+		super(generateCommand(tsv, outputFile, Optional.ofNullable((File)null), useXML));
 	}
 	PercolatorExecutor(File tsv, File outputFile, Optional<File> percolatorLocation, boolean useXML) {
 		super(generateCommand(tsv, outputFile, percolatorLocation, useXML));
@@ -56,6 +55,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, percolatorLocation, false);
 		BlockingQueue<OutputMessage> result=e.start();
 		
+		String errorMessage=null;
 		boolean isFirst=true;
 		boolean record=true;
 		PrintWriter writer=new PrintWriter(outputFile, "UTF-8");
@@ -85,6 +85,10 @@ public class PercolatorExecutor extends ExternalExecutor {
 					writer.println(data.getMessage());
 				} else {
 					Logger.logLine(data.getMessage());
+					String trim=data.getMessage().trim();
+					if (trim.startsWith("Error : ")) {
+						errorMessage=trim.substring(8);
+					}
 				}
 			} else {
 				Thread.sleep(10);
@@ -92,6 +96,9 @@ public class PercolatorExecutor extends ExternalExecutor {
 		}
 		writer.flush();
 		writer.close();
+		if (errorMessage!=null) {
+			throw new EncyclopediaException(errorMessage);
+		}
 		return passingPeptides;
 	}
 

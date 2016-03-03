@@ -19,7 +19,7 @@ public class JobProcessorTableModel extends AbstractTableModel implements JobPro
 	private final ExecutorService executor;
 	
 	public JobProcessorTableModel() {
-		ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("Pecan-%d").setDaemon(true).build();
+		ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("EncyclopeDIA-%d").setDaemon(true).build();
 		LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 		executor=new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 	}

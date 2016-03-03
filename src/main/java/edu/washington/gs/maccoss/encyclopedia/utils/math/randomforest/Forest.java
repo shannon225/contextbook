@@ -1,8 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math.randomforest;
 
-import gnu.trove.map.hash.TIntIntHashMap;
-
 import java.util.ArrayList;
+
+import gnu.trove.map.hash.TIntIntHashMap;
 
 public class Forest {
 	ArrayList<TreeNode> trees=new ArrayList<TreeNode>();

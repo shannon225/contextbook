@@ -1,8 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.util.HashSet;
-
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
