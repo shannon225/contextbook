@@ -13,13 +13,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.Vector;
 import java.util.zip.DataFormatException;
+
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
@@ -34,6 +43,19 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	public StripeFile() throws IOException {
 		tempFile=File.createTempFile("encyclopedia_", DIA_EXTENSION);
 		tempFile.deleteOnExit();
+	}
+
+	
+	public CachedStripeFile cache() throws IOException, SQLException, DataFormatException {
+		Logger.logLine("Caching precursors...");
+		ArrayList<PrecursorScan> precursors=getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
+		HashMap<Range, ArrayList<Stripe>> stripes=new HashMap<Range, ArrayList<Stripe>>();
+		for (Range range : ranges.keySet()) {
+			Logger.logLine("Caching range "+range.toString()+"...");
+			stripes.put(range, getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, false));
+		}
+		Logger.logLine("Finished caching "+userFile.getName());
+		return new CachedStripeFile(userFile, ranges, precursors, stripes);
 	}
 	
 	public File getFile() {
@@ -260,39 +282,71 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface#getStripes(double, float, float, boolean)
 	 */
 	@Override
-	public ArrayList<Stripe> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException,DataFormatException {
+	public ArrayList<Stripe> getStripes(double targetMz, float minRT, float maxRT, final boolean sqrt) throws IOException, SQLException {
 		Connection c=getConnection(tempFile);
 		try {
 			Statement s=c.createStatement();
 			try {
 				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray from spectra "
 						+"where IsolationWindowLower <= "+targetMz+" and IsolationWindowUpper >= "+targetMz+" and ScanStartTime between "+minRT+" and "+maxRT);
+				
+				final Vector<Stripe> stripes=new Vector<Stripe>();
+				
+				int cores=Runtime.getRuntime().availableProcessors();
+				ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("SWATH_"+targetMz+"-%d").setDaemon(true).build();
+				LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
+				ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
-				ArrayList<Stripe> stripes=new ArrayList<Stripe>();
 				while (rs.next()) {
-					String spectrumName=rs.getString(1);
-					String precursorName=rs.getString(2);
-					int spectrumIndex=rs.getInt(3);
-					float scanStartTime=rs.getFloat(4);
-					float isolationWindowLower=rs.getFloat(5);
-					float isolationWindowUpper=rs.getFloat(6);
-					int massEncodedLength=rs.getInt(7);
-					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), massEncodedLength));
-					int intensityEncodedLength=rs.getInt(9);
-					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(10), intensityEncodedLength));
-					if (sqrt) {
-						intensityArray=General.protectedSqrt(intensityArray);
-					}
-					stripes.add(new Stripe(spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray));
+					final String spectrumName=rs.getString(1);
+					final String precursorName=rs.getString(2);
+					final int spectrumIndex=rs.getInt(3);
+					final float scanStartTime=rs.getFloat(4);
+					final float isolationWindowLower=rs.getFloat(5);
+					final float isolationWindowUpper=rs.getFloat(6);
+					final int massEncodedLength=rs.getInt(7);
+					final byte[] massBytes=rs.getBytes(8);
+					final int intensityEncodedLength=rs.getInt(9);
+					final byte[] intensityBytes=rs.getBytes(10);
+					executor.submit(new Runnable() {
+						@Override
+						public void run() {
+							try {
+								addStripe(stripes, sqrt, spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massEncodedLength, massBytes,
+										intensityEncodedLength, intensityBytes);
+							} catch (DataFormatException dfe) {
+								throw new EncyclopediaException(dfe);
+							} catch (IOException ioe) {
+								throw new EncyclopediaException(ioe);
+							}
+						}
+					});
 				}
 
-				return stripes;
+				executor.shutdown();
+				try {
+					executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+				} catch (InterruptedException ie) {
+					throw new EncyclopediaException(ie);
+				}
+				return new ArrayList<Stripe>(stripes);
 			} finally {
 				s.close();
 			}
 		} finally {
 			c.close();
 		}
+	}
+
+
+	private void addStripe(Vector<Stripe> stripes, boolean sqrt, String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, float isolationWindowLower,
+			float isolationWindowUpper, int massEncodedLength, byte[] massBytes, int intensityEncodedLength, byte[] intensityBytes) throws IOException, DataFormatException {
+		double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(massBytes, massEncodedLength));
+		float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(intensityBytes, intensityEncodedLength));
+		if (sqrt) {
+			intensityArray=General.protectedSqrt(intensityArray);
+		}
+		stripes.add(new Stripe(spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray));
 	}
 
 	private void createNewTables() throws IOException, SQLException {

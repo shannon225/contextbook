@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 //@Immutable
 public class Stripe implements Comparable<Stripe>, Spectrum {
@@ -28,6 +29,10 @@ public class Stripe implements Comparable<Stripe>, Spectrum {
 			magnitude+=f*f;
 		}
 		intensityMagnitude=(float)Math.sqrt(magnitude);
+	}
+	
+	public Stripe sqrt() {
+		return new Stripe(spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massArray, General.protectedSqrt(intensityArray));
 	}
 	
 	@Override
