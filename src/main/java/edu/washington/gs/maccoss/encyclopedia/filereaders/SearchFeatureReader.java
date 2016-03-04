@@ -129,7 +129,7 @@ public class SearchFeatureReader {
 			params=parameters;
 			this.savedEntries=savedEntries;
 			
-			this.limitToQuantifiable=true; //library.isPresent();
+			this.limitToQuantifiable=false;//true; //library.isPresent();
 		}
 
 		@Override
@@ -253,8 +253,8 @@ public class SearchFeatureReader {
 						 // if library is ok but spectrum is not in library, just return null (don't quantify)
 						return Optional.empty();
 					}
-					if (unitEntry.getIonCount()<4) { // FIXME HACKS GALORE
-						 // if unit spectrum has fewer than 4 peaks, just return null (don't quantify)
+					if (unitEntry.getIonCount()<1) { // FIXME HACKS GALORE
+						 // if unit spectrum has fewer than 1 peaks, just return null (don't quantify)
 						return Optional.empty();
 					}
 				} catch (IOException ioe) {
@@ -349,7 +349,7 @@ public class SearchFeatureReader {
 		TFloatArrayList intens=new TFloatArrayList();
 		int count=0;
 		int quantCount=0;
-		float correlationThreshold=0.0f;//limitToQuantifiable?TransitionRefiner.quantitativeCorrelationThreshold:TransitionRefiner.identificationCorrelationThreshold;
+		float correlationThreshold=limitToQuantifiable?TransitionRefiner.quantitativeCorrelationThreshold:TransitionRefiner.identificationCorrelationThreshold;
 		for (int i=0; i<keptPeaks.size(); i++) {
 			PeakScores scores=keptPeaks.get(i);
 			if (correlations[i]>=correlationThreshold) {

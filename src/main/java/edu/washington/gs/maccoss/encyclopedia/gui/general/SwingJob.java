@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.swing.SwingWorker;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.ProgressMessage;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
@@ -29,14 +30,18 @@ public abstract class SwingJob extends SwingWorker<Nothing, ProgressMessage> {
 			runJob();
 		} catch (Exception e) {
 			publish(new ProgressMessage("Encountered Fatal Error!", -1.0f));
-			e.printStackTrace();
+			progress=-1.0f;
+			message="Encountered Fatal Error!";
+			Logger.errorException(e);
 		}
 		return Nothing.NOTHING;
 	}
 
 	@Override
 	protected void done() {
-		progress=1.0f;
+		if (progress>0) { // not in error
+			progress=1.0f;
+		}
 		processor.fireJobUpdated(this);
 	}
 

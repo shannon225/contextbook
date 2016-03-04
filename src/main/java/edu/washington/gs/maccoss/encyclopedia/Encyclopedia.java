@@ -46,6 +46,7 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsC
 import edu.washington.gs.maccoss.encyclopedia.filewriters.SaveResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.TeeResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -256,8 +257,10 @@ public class Encyclopedia {
 			Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 			Logger.logLine(""); 
 			progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
-		} catch (Exception e) {
+		} catch (EncyclopediaException e) {
+			Logger.errorLine("Fatal Error: "+e.getMessage());
 			progress.update("Fatal Error: "+e.getMessage(), -1.0f);
+			throw e;
 		}
 	}
 
@@ -278,7 +281,6 @@ public class Encyclopedia {
 
 					Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
 					XYPoint point=new XYPoint(entryTime, first.x.y.getScanStartTime()/60.0f);
-					// System.out.println(entryTime+"\t"+point.y);
 					rtSet.add(point);
 				}
 			}

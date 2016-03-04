@@ -151,7 +151,7 @@ public class SearchPanel extends JPanel {
 		filesWrapper.add(table, BorderLayout.CENTER);
 		
 		split.setRightComponent(filesWrapper);
-		split.setDividerLocation(525);
+		split.setDividerLocation(600);
 
 		this.add(split, BorderLayout.CENTER);
 	}

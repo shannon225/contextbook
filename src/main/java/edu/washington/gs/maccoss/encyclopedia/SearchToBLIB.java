@@ -49,12 +49,12 @@ public class SearchToBLIB {
 		float threshold=parameters.getPercolatorThreshold();
 		try {
 			ArrayList<ScoredObject<String>> passingPeptides;
-			if (bigPercolatorFile.exists()) {
-				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(bigPercolatorFile, threshold);
-			} else {
+			//if (bigPercolatorFile.exists()) {
+			//	passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(bigPercolatorFile, threshold);
+			//} else {
 				TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
 				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), bigFeatureFile, bigPercolatorFile, threshold);
-			}
+			//}
 			Logger.logLine("Identified "+passingPeptides.size()+" peptides across all files at a "+(threshold*100.0f)+" FDR threshold.");
 			convert(progress, pecanJobs, blibFile, libraryFile, Optional.of(passingPeptides));
 			progress.update(passingPeptides.size()+" peptides identified at "+(threshold*100.0f)+"% FDR", 1.0f);
@@ -117,19 +117,14 @@ public class SearchToBLIB {
 		subProgress.update(diaFile.getName()+": Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides", 0.1f);
 
 		ArrayList<IntegratedLibraryEntry> libraryEntries=SearchFeatureReader.parseSearchFeatures(featureFile, globalPassingPeptides, localPassingPeptides, stripeFile, libraryFile, job.getParameters());
-
-		float totalTIC=0.0f;
-		for (IntegratedLibraryEntry entry : libraryEntries) {
-			totalTIC+=entry.getTIC();
-		}
-		float normalizer=totalTIC/1e12f;
 		
 		File integrationFile=new File(diaFile.getAbsolutePath()+".integration.txt");
 
 		PrintWriter writer=new PrintWriter(integrationFile, "UTF-8");
-		writer.println("File\tPeptideModSeq\tPrecursorCharge\tFragmentIons\tRTStart\tRTCenter\tRTStop\tTIC\tNormTIC");
+		writer.println("File Name\tPeptide Modified Sequence\tMin Start Time\tMax End Time\tPrecursor Charge\tPrecursorIsDecoy\tIon Count\tRetention Time Center\tTIC");
+		
 		for (IntegratedLibraryEntry entry : libraryEntries) {
-			writer.println(diaFile.getName()+"\t"+entry.getPeptideModSeq()+"\t"+entry.getPrecursorCharge()+"\t"+entry.getIonCount()+"\t"+entry.getRtRange().getStart()+"\t"+entry.getRetentionTime()+"\t"+entry.getRtRange().getStop()+"\t"+entry.getTIC()+"\t"+(entry.getTIC()/normalizer));
+			writer.println(diaFile.getName()+"\t"+entry.getPeptideModSeq()+"\t"+entry.getRtRange().getStart()/60f+"\t"+entry.getRtRange().getStop()/60f+"\t"+entry.getPrecursorCharge()+"\tFALSE\t"+entry.getIonCount()+"\t"+entry.getRetentionTime()/60f+"\t"+entry.getTIC());
 		}
 		writer.flush();
 		writer.close();

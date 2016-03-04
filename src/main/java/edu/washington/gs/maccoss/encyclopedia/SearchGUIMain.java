@@ -63,7 +63,7 @@ public class SearchGUIMain {
 		f.getContentPane().add(new SearchPanel(pecanpie), BorderLayout.CENTER);
 
 		f.pack();
-		f.setSize(new Dimension(1100, 800));
+		f.setSize(new Dimension(1250, 750));
 		f.setVisible(true);
 
 		Logger.logLine(shortName+" Graphical Interface");
