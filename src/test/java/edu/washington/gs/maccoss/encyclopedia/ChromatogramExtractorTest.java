@@ -10,9 +10,8 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
-import junit.framework.TestCase;
 
-public class ChromatogramExtractorTest extends TestCase {
+public class ChromatogramExtractorTest {
 	public static void main(String[] args) throws Exception {
 		// process all files in this directory
 		File dir=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/freezer/");

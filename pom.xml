@@ -42,34 +42,7 @@
 					</execution>
 				</executions>
 				<configuration>
-					<finalName>pecanpie-${version}</finalName>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<addClasspath>true</addClasspath>
-							<classpathPrefix>lib/</classpathPrefix>
-							<mainClass>edu.washington.gs.maccoss.encyclopedia.Pecanpie</mainClass>
-						</manifest>
-					</archive>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
+<!-- 					<finalName>pecanpie-${version}</finalName> -->
 					<finalName>encyclopedia-${version}</finalName>
 				</configuration>
 			</plugin>
@@ -81,6 +54,7 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
+<!-- 							<mainClass>edu.washington.gs.maccoss.encyclopedia.Pecanpie</mainClass>  -->
 							<mainClass>edu.washington.gs.maccoss.encyclopedia.Encyclopedia</mainClass>
 						</manifest>
 					</archive>
