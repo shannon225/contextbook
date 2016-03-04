@@ -22,14 +22,13 @@ import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumn;
 
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.pecan.PecanParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LogConsole;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.ProgressRenderer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
-import edu.washington.gs.maccoss.encyclopedia.gui.pecan.EncyclopediaParametersPanel;
-import edu.washington.gs.maccoss.encyclopedia.gui.pecan.ParametersPanelInterface;
-import edu.washington.gs.maccoss.encyclopedia.gui.pecan.PecanParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class SearchPanel extends JPanel {

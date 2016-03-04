@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.gui.pecan;
+package edu.washington.gs.maccoss.encyclopedia.gui.framework;
 
 import java.io.File;
 import java.util.Optional;

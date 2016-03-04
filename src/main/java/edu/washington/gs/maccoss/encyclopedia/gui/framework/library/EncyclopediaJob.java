@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.gui.pecan;
+package edu.washington.gs.maccoss.encyclopedia.gui.framework.library;
 
 import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;

@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.gui.pecan;
+package edu.washington.gs.maccoss.encyclopedia.gui.framework.pecan;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
