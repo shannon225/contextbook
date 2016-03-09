@@ -7,9 +7,11 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
@@ -65,6 +67,12 @@ public class SearchGUIMain {
 		f.pack();
 		f.setSize(new Dimension(1250, 750));
 		f.setVisible(true);
+
+		Runtime instance=Runtime.getRuntime();
+		long mbOfMemory=(instance.maxMemory()/MemoryMonitor.mb);
+		if (mbOfMemory<1000) {
+			JOptionPane.showMessageDialog(f, "Warning, you only have "+mbOfMemory+" MB of memory allocated.\nPlease make sure you are running 64-bit Java!", "Warning, Low Memory!", JOptionPane.WARNING_MESSAGE, image);
+		}
 
 		Logger.logLine(shortName+" Graphical Interface");
 	}

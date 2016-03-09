@@ -11,7 +11,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 public class MemoryMonitor extends JLabel {
 	private static final long serialVersionUID=1L;
 	
-	private static final int mb=1024*1024;
+	public static final int mb=1024*1024;
 	
 	public MemoryMonitor() {
 		setHorizontalAlignment(SwingConstants.RIGHT);
