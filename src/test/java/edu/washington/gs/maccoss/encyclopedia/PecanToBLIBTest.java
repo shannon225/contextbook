@@ -23,7 +23,7 @@ public class PecanToBLIBTest {
 		defaultParameters.put("-frag", "CID");
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(defaultParameters);
 		File fastaFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/UP000005640_9606.fasta");
-		File blibFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/test_hela_6mz.blib");
+		File blibFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/slow_test_hela_6mz.blib");
 		ArrayList<FastaEntry> targets=null;
 		
 		/*SearchJobData job1=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_400_500.mzML");
