@@ -154,12 +154,6 @@ public class PeptideQuantExtractor {
 			}
 
 			executor.shutdown();
-			while (!executor.isTerminated()) {
-				Logger.logLine(workQueue.size()+" peptides remaining for "+range+"...");
-				float finishedFraction=(count-workQueue.size())/(float)count;
-				progress.update(baseMessage, baseProgress+baseIncrement*(0.2f+finishedFraction*0.8f));
-				Thread.sleep(100);
-			}
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 			
 			rangesFinished++;

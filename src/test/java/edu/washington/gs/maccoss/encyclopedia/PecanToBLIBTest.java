@@ -26,7 +26,7 @@ public class PecanToBLIBTest {
 		File blibFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/test_hela_6mz.blib");
 		ArrayList<FastaEntry> targets=null;
 		
-		SearchJobData job1=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_400_500.mzML");
+		/*SearchJobData job1=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_400_500.mzML");
 		SearchJobData job2=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_500_600.mzML");
 		SearchJobData job3=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_600_700.mzML");
 		SearchJobData job4=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_700_800.mzML");
@@ -39,7 +39,12 @@ public class PecanToBLIBTest {
 		jobs.add(job3);
 		jobs.add(job4);
 		jobs.add(job5);
-		jobs.add(job6);
+		jobs.add(job6);*/
+		
+		SearchJobData job1=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/freezer/121115_bcs_hela_24mz_400_1000_0D_1.mzML");
+
+		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
+		jobs.add(job1);
 		
 		LibraryInterface libraryTemplate=null;
 		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, Optional.ofNullable(libraryTemplate));
@@ -49,7 +54,7 @@ public class PecanToBLIBTest {
 
 	private static SearchJobData getData(PecanSearchParameters parameters, File fastaFile, ArrayList<FastaEntry> targets, String dia) {
 		File diaFile1=new File(dia);
-		File outputFile1=new File(diaFile1.getAbsolutePath()+".pecan.txt");
+		File outputFile1=new File(diaFile1.getAbsolutePath()+".percolator.txt");
 		File featureFile1=new File(outputFile1.getAbsolutePath()+".features.txt");
 		PecanScoringFactory factory1=new PecanOneScoringFactory(parameters, featureFile1);
 		SearchJobData job1=new PecanJobData(Optional.ofNullable(targets), diaFile1, fastaFile,featureFile1, outputFile1, factory1);

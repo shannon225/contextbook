@@ -49,12 +49,13 @@ public class SearchToBLIB {
 		float threshold=parameters.getPercolatorThreshold();
 		try {
 			ArrayList<ScoredObject<String>> passingPeptides;
-			//if (bigPercolatorFile.exists()) {
-			//	passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(bigPercolatorFile, threshold);
-			//} else {
+			if (featureFiles.size()==1) {
+				// if there's only one file then don't need to re-run percolator
+				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(representativeJob.getOutputFile(), threshold);
+			} else {
 				TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
 				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), bigFeatureFile, bigPercolatorFile, threshold);
-			//}
+			}
 			Logger.logLine("Identified "+passingPeptides.size()+" peptides across all files at a "+(threshold*100.0f)+" FDR threshold.");
 			convert(progress, pecanJobs, blibFile, libraryFile, Optional.of(passingPeptides));
 			progress.update(passingPeptides.size()+" peptides identified at "+(threshold*100.0f)+"% FDR", 1.0f);
