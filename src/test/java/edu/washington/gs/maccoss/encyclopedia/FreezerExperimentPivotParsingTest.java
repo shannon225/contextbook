@@ -27,6 +27,7 @@ import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class FreezerExperimentPivotParsingTest {
 	
+	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws Exception {
 		File dir=new File("/Users/searleb/Documents/school/projects/freezer/integration/");
 		final TObjectFloatHashMap<String> sampleNormalizers=getSamplesFromTSV(new File(dir, "sample_intensities.txt"));
@@ -35,7 +36,7 @@ public class FreezerExperimentPivotParsingTest {
 		System.out.println(peptides.size()+" total peptides");
 
 		File[] files=dir.listFiles();
-		long totalTime=0;
+		/*long totalTime=0;
 		int fileCount=0;
 		
 		int totalCount=0;
@@ -43,7 +44,7 @@ public class FreezerExperimentPivotParsingTest {
 			if (file.getName().endsWith(".integration.txt")) {
 				totalCount++;
 			}
-		}
+		}*/
 		float[] timing=new float[] { 0.0f, 4.0f/24.0f, 12.0f/24.0f, 1f, 2f, 3f, 4f, 7f, 14f, 28f, 50f };
 
 		TreeMap<String, TFloatArrayList[]> table4c=new TreeMap<String, TFloatArrayList[]>();

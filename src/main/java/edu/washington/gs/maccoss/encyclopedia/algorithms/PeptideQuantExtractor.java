@@ -120,7 +120,6 @@ public class PeptideQuantExtractor {
 		float numberOfTasks=2.0f+ranges.size();
 		for (Range range : ranges) {
 			String baseMessage="Working on "+range+" m/z";
-			float baseIncrement=1.0f/numberOfTasks;
 			float baseProgress=(1.0f+rangesFinished)/numberOfTasks;
 			progress.update(baseMessage, baseProgress);
 
@@ -135,8 +134,6 @@ public class PeptideQuantExtractor {
 			LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
-			int count=0;
-			
 			if (library.isPresent()) {
 				ArrayList<LibraryEntry> entries=library.get().getEntries(range, true);
 				for (LibraryEntry libraryEntry : entries) {
