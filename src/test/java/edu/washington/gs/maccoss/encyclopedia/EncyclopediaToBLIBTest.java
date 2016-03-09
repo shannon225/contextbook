@@ -8,6 +8,7 @@ import java.util.Optional;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
@@ -53,7 +54,7 @@ public class EncyclopediaToBLIBTest {
 		jobs.add(job5);
 		*/
 		
-		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, Optional.ofNullable(libraryTemplate));
+		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, Optional.ofNullable((LibraryInterface)libraryTemplate));
 	}
 
 	private static SearchJobData getData(SearchParameters parameters, String dia) {

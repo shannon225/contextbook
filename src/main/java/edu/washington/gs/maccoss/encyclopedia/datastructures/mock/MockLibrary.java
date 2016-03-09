@@ -22,6 +22,11 @@ public class MockLibrary implements LibraryInterface {
 	public MockLibrary(LibraryEntry[] entries) {
 		this.entries=entries;
 	}
+	
+	@Override
+	public String getName() {
+		return "Testing library of "+entries.length+" entries";
+	}
 
 	@Override
 	public ArrayList<LibraryEntry> getEntries(String peptideModSeq, byte charge, boolean sqrt) throws IOException, SQLException, DataFormatException {

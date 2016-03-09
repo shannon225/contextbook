@@ -35,7 +35,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
@@ -74,9 +73,6 @@ public class DIABrowserPanel extends JPanel {
 						Logger.logLine("Reading file...");
 
 						dia=MzmlToDIAConverter.getFile(filename[0], parameters);
-						if (dia instanceof StripeFile) {
-							dia=((StripeFile) dia).cache();
-						}
 						Logger.logLine("Finished reading file.");
 						resetPeptide(peptide.getText(), (Integer) charge.getValue());
 					} catch (Exception e) {

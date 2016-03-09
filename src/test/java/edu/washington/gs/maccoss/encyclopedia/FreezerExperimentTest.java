@@ -9,6 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOne
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
@@ -57,7 +58,7 @@ public class FreezerExperimentTest {
 				ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 				jobs.add(job);
 
-				SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, Optional.ofNullable(libraryTemplate));
+				SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, Optional.ofNullable((LibraryInterface)libraryTemplate));
 				
 				fileCount++;
 				long fileTime=System.currentTimeMillis()-currentTime;

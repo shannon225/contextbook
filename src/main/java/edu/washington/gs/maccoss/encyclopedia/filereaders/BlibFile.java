@@ -188,7 +188,7 @@ public class BlibFile extends SQLFile {
 					prepRTs.setInt(2,  0);
 					prepRTs.setInt(3,  jobCounter);
 					prepRTs.setDouble(4,  entry.getRetentionTime()/60f); // convert to minutes
-					prepRTs.setInt(5,  0);
+					prepRTs.setInt(5,  1);
 					prepRTs.addBatch();
 					
 					FragmentationModel model=new FragmentationModel(peptideModSeq, aaConstants);

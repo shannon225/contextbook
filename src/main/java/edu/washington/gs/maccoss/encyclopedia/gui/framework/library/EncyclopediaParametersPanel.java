@@ -35,6 +35,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import gnu.trove.map.hash.TCharFloatHashMap;
 
 public class EncyclopediaParametersPanel extends JPanel implements ParametersPanelInterface {
 	private static final long serialVersionUID=1L;
@@ -48,7 +49,6 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	private final FileChooserPanel irtFileChooser;
 	private final JComboBox<String> overlap=new JComboBox<String>(new String[] {"Overlapped", "Not Overlapped"});
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "PepsinA"});
-	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "None"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {"CID (B/Y)", "HCD (Y-Only)", "ETD (C/Z/Z+1)"});
 
 	private final SpinnerModel precursorPPM = new SpinnerNumberModel(10, 1, 1000, 1);
@@ -76,7 +76,6 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		options.add(irtFileChooser);
 		options.add(new LabeledComponent("Precursor Isolation Windows", overlap));
 		options.add(new LabeledComponent("Enzyme", enzyme));
-		options.add(new LabeledComponent("Fixed", fixed));
 		options.add(new LabeledComponent("Fragmentation", fragType));
 		options.add(new LabeledComponent("Precursor (PPM)", new JSpinner(precursorPPM)));
 		options.add(new LabeledComponent("Fragment (PPM)", new JSpinner(fragmentPPM)));
@@ -127,7 +126,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	private SearchParameters getParameters() {
 		boolean deconvoluteOverlappingWindows="Overlapped".equalsIgnoreCase((String)overlap.getSelectedItem());
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
-		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem());
+		AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharFloatHashMap());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
 		float precursorPPMValue=((Integer)precursorPPM.getValue()).floatValue();
 		float fragmentPPMValue=((Integer)fragmentPPM.getValue()).floatValue();

@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.StringTokenizer;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -44,7 +43,7 @@ public class SearchParameterParser {
 	}
 	
 	public static SearchParameters parseParameters(HashMap<String, String> parameters) {
-		final AminoAcidConstants aaConstants;
+		final AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharFloatHashMap());
 		final FragmentationType fragType;
 		final MassTolerance precursorTolerance;
 		final MassTolerance fragmentTolerance;
@@ -55,27 +54,8 @@ public class SearchParameterParser {
 		final float targetWindowCenter;
 		final float expectedPeakWidth;
 		final boolean runPhosphoLocalization;
-
-		TCharFloatHashMap fixedMods=new TCharFloatHashMap();
-		String value=parameters.get("-fixed");
-		if (value!=null) {
-			try {
-				StringTokenizer st=new StringTokenizer(value, ",");
-				while (st.hasMoreTokens()) {
-					String token=st.nextToken();
-					char aa=token.charAt(0);
-					float mass=Float.parseFloat(token.substring(2)); // +1 for '=' (could actually be any deliminator)
-					fixedMods.put(aa, mass);
-				}
-			} catch (Exception e) {
-				throw new EncyclopediaException("Error parsing fixed modifications from ["+value+"]", e);
-			}
-		} else {
-			fixedMods.put('C', 57.0214635f);
-		}
-		aaConstants=new AminoAcidConstants(fixedMods);
 		
-		value=parameters.get("-frag");
+		String value=parameters.get("-frag");
 		if (value==null) {
 			fragType=FragmentationType.CID;
 		} else if ("CID".equals(value)) {

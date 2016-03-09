@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,7 +52,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
-import gnu.trove.set.hash.TDoubleHashSet;
 
 public class Encyclopedia {
 	public static void main(String[] args) {
@@ -152,19 +150,13 @@ public class Encyclopedia {
 		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
 
 		// get targeted ranges
-		TDoubleHashSet boundaries=new TDoubleHashSet();
 		ArrayList<Range> ranges=new ArrayList<Range>();
 		for (Range range : stripefile.getRanges().keySet()) {
-			boundaries.add(range.getStart());
-			boundaries.add(range.getStop());
 			if (!parameters.useTargetWindowCenter()||range.contains(parameters.getTargetWindowCenter())) {
 				ranges.add(range);
 			}
 		}
 		Collections.sort(ranges);
-		
-		double[] binBoundaries=boundaries.toArray();
-		Arrays.sort(binBoundaries);
 
 		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>());
 		SaveResultsConsumer saveResultsConsumer=new SaveResultsConsumer(new LinkedBlockingQueue<PeptideScoringResult>());
@@ -177,9 +169,9 @@ public class Encyclopedia {
 		consumer1Thread.start();
 		consumer2Thread.start();
 		consumer3Thread.start();
-		
-		int rangesFinished=0;
+
 		// get stripes
+		int rangesFinished=0;
 		float numberOfTasks=2.0f+ranges.size();
 		for (Range range : ranges) {
 			String baseMessage="Working on "+range+" m/z";

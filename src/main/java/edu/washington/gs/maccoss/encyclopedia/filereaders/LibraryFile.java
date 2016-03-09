@@ -31,6 +31,10 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		tempFile=File.createTempFile("encyclopedia_", ELIB);
 		tempFile.deleteOnExit();
 	}
+	
+	public String getName() {
+		return userFile==null?tempFile.getName():userFile.getName();
+	}
 
 	public void openFile(File userFile) throws IOException, SQLException {
 		this.userFile=userFile;

@@ -11,17 +11,19 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFacto
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
 public class PecanToBLIBTest {
 	public static void main(String[] args) {
+		long time=System.currentTimeMillis();
+		
 		HashMap<String, String> defaultParameters=PecanParameterParser.getDefaultParameters();
 		defaultParameters.put("-frag", "CID");
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(defaultParameters);
 		File fastaFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/UP000005640_9606.fasta");
-		File blibFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/hela_6mz.blib");
+		File blibFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/test_hela_6mz.blib");
 		ArrayList<FastaEntry> targets=null;
 		
 		SearchJobData job1=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_400_500.mzML");
@@ -39,8 +41,10 @@ public class PecanToBLIBTest {
 		jobs.add(job5);
 		jobs.add(job6);
 		
-		LibraryFile libraryTemplate=null;
+		LibraryInterface libraryTemplate=null;
 		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, Optional.ofNullable(libraryTemplate));
+		
+		System.out.println((System.currentTimeMillis()-time)/1000+" seconds");
 	}
 
 	private static SearchJobData getData(PecanSearchParameters parameters, File fastaFile, ArrayList<FastaEntry> targets, String dia) {

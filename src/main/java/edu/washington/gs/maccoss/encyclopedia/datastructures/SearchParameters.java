@@ -39,7 +39,6 @@ public class SearchParameters {
 
 	public String toString() {
 		final StringBuilder sb=new StringBuilder();
-		sb.append(" -fixed "+aaConstants.getFixedModString()+"\n");
 		sb.append(" -frag "+FragmentationType.toString(fragType)+"\n");
 		sb.append(" -ptol "+precursorTolerance.getPpmTolerance()+"\n");
 		sb.append(" -ftol "+fragmentTolerance.getPpmTolerance()+"\n");

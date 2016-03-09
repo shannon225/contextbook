@@ -11,5 +11,5 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 public interface LibraryInterface {
 	ArrayList<LibraryEntry> getEntries(String peptideModSeq, byte charge, boolean sqrt) throws IOException, SQLException, DataFormatException;
 	ArrayList<LibraryEntry> getEntries(Range precursorMz, boolean sqrt) throws IOException, SQLException, DataFormatException;
-
+	String getName();
 }
