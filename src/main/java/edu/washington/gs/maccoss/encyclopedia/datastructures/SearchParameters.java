@@ -20,9 +20,10 @@ public class SearchParameters {
 	protected final float targetWindowCenter;
 	protected final float expectedPeakWidth;
 	protected final boolean runPhosphoLocalization;
+	protected final float precursorWindowSize;
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme,
-			float percolatorThreshold, File percolatorLocation, boolean deconvoluteOverlappingWindows, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, boolean runPhosphoLocalization) {
+			float percolatorThreshold, File percolatorLocation, boolean deconvoluteOverlappingWindows, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, boolean runPhosphoLocalization) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -34,6 +35,7 @@ public class SearchParameters {
 		this.numberOfThreadsUsed=numberOfThreadsUsed;
 		this.expectedPeakWidth=expectedPeakWidth;
 		this.targetWindowCenter=targetWindowCenter;
+		this.precursorWindowSize=precursorWindowSize;
 		this.runPhosphoLocalization=runPhosphoLocalization;
 	}
 
@@ -48,6 +50,7 @@ public class SearchParameters {
 		sb.append(" -deconvoluteOverlappingWindows "+deconvoluteOverlappingWindows+"\n");
 		sb.append(" -numberOfThreadsUsed "+numberOfThreadsUsed+"\n");
 		sb.append(" -expectedPeakWidth "+expectedPeakWidth+"\n");
+		sb.append(" -precursorWindowSize "+precursorWindowSize+"\n");
 		sb.append(" -runPhosphoLocalization "+runPhosphoLocalization+"\n");
 		if (useTargetWindowCenter()) {
 			sb.append(" -targetWindowCenter "+targetWindowCenter+"\n");
@@ -98,6 +101,10 @@ public class SearchParameters {
 	
 	public float getExpectedPeakWidth() {
 		return expectedPeakWidth;
+	}
+	
+	public float getPrecursorWindowSize() {
+		return precursorWindowSize;
 	}
 	
 	public boolean isRunPhosphoLocalization() {

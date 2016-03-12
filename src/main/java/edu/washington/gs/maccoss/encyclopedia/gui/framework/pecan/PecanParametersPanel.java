@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.io.File;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Optional;
 
@@ -12,6 +13,7 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JEditorPane;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -27,6 +29,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
@@ -38,7 +41,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 
-public class PecanParametersPanel extends JPanel {
+public class PecanParametersPanel extends JPanel implements ParametersPanelInterface {
 	private static final long serialVersionUID=1L;
 	private static final int numberOfCores=Runtime.getRuntime().availableProcessors();
 	public static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/pecan.png"));
@@ -53,6 +56,8 @@ public class PecanParametersPanel extends JPanel {
 	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "None"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {"HCD (Y-Only)", "CID (B/Y)", "ETD (C/Z/Z+1)"});
 
+	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance());
+	
 	private final SpinnerModel precursorPPM = new SpinnerNumberModel(10, 1, 1000, 1);
 	private final SpinnerModel fragmentPPM = new SpinnerNumberModel(10, 1, 1000, 1);
 	private final SpinnerModel minCharge = new SpinnerNumberModel(2, 1, 2, 1);
@@ -92,6 +97,7 @@ public class PecanParametersPanel extends JPanel {
 		targetFasta=new FileChooserPanel(null, "Target", new SimpleFilenameFilter(".fas", ".fasta"), true);
 		options.add(targetFasta);
 		options.add(new LabeledComponent("Precursor Isolation Windows", overlap));
+		options.add(new LabeledComponent("Precursor Window Width (blank=extract from file)", precursorWindowWidth));
 		options.add(new LabeledComponent("Enzyme", enzyme));
 		options.add(new LabeledComponent("Fixed", fixed));
 		options.add(new LabeledComponent("Fragmentation", fragType));
@@ -168,9 +174,11 @@ public class PecanParametersPanel extends JPanel {
 		byte minChargeValue=((Integer)minCharge.getValue()).byteValue();
 		byte maxChargeValue=((Integer)maxCharge.getValue()).byteValue();
 		byte maxMissedCleavageValue=((Integer)maxMissedCleavage.getValue()).byteValue();
+		Number value=(Number)precursorWindowWidth.getValue();
+		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		PecanSearchParameters parameters=new PecanSearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme,
-				maxMissedCleavageValue, minChargeValue, maxChargeValue, deconvoluteOverlappingWindows, numberOfJobsValue);
+				maxMissedCleavageValue, minChargeValue, maxChargeValue, deconvoluteOverlappingWindows, precursorWindowWidthValue, numberOfJobsValue);
 		return parameters;
 	}
 }

@@ -25,6 +25,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import gnu.trove.map.hash.TCharFloatHashMap;
+import gnu.trove.map.hash.TIntFloatHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class BlibFile extends SQLFile {
@@ -53,6 +54,7 @@ public class BlibFile extends SQLFile {
 		this.userFile=userFile;
 	}
 	
+	@SuppressWarnings("resource") // this is properly closed, Eclipse just can't follow the if/else logic
 	public void getStreamEntriesToLibrary(LibraryFile library, Optional<TObjectFloatHashMap<String>> irtMap) throws IOException, SQLException, DataFormatException {
 		library.dropIndices();
 		
@@ -60,24 +62,43 @@ public class BlibFile extends SQLFile {
 		try {
 			Statement s=c.createStatement();
 			try {
-				ResultSet rs=s
-						.executeQuery("select RefSpectra.precursorMZ, RefSpectra.precursorCharge, RefSpectra.peptideModSeq, RefSpectra.copies, RefSpectra.numPeaks, RefSpectra.retentionTime, RefSpectra.score, RefSpectraPeaks.peakMZ, RefSpectraPeaks.peakIntensity from RefSpectra, RefSpectraPeaks "
-								+"where RefSpectra.id == RefSpectraPeaks.RefSpectraID");
+				ResultSet rs=s.executeQuery("select RefSpectraID, retentionTime from RetentionTimes where bestSpectrum=1");
+				TIntFloatHashMap rtMap=new TIntFloatHashMap();
+				while (rs.next()) {
+					int refSpectraID=rs.getInt(1);
+					float rt=rs.getFloat(2);
+					rtMap.put(refSpectraID, rt);
+				}
+
+				boolean hasScore=doesColumnExist(tempFile, "RefSpectra", "score");
+				if (hasScore) {
+					rs=s.executeQuery(
+							"select RefSpectra.id, RefSpectra.precursorMZ, RefSpectra.precursorCharge, RefSpectra.peptideModSeq, RefSpectra.copies, RefSpectra.numPeaks, RefSpectraPeaks.peakMZ, RefSpectraPeaks.peakIntensity, RefSpectra.score from RefSpectra, RefSpectraPeaks "
+									+"where RefSpectra.id == RefSpectraPeaks.RefSpectraID");
+				} else {
+					rs=s.executeQuery(
+							"select RefSpectra.id, RefSpectra.precursorMZ, RefSpectra.precursorCharge, RefSpectra.peptideModSeq, RefSpectra.copies, RefSpectra.numPeaks, RefSpectraPeaks.peakMZ, RefSpectraPeaks.peakIntensity from RefSpectra, RefSpectraPeaks "
+									+"where RefSpectra.id == RefSpectraPeaks.RefSpectraID");
+				}
 
 				ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
 				int missing=0;
 				int total=0;
 				while (rs.next()) {
-					double precursorMZ=rs.getDouble(1);
-					byte precursorCharge=(byte)rs.getInt(2);
-					String peptideModSeq=rs.getString(3);
-					int copies=rs.getInt(4);
-					int numPeaks=rs.getInt(5);
-					float retentionTime=(float)rs.getDouble(6);
-					float score=(float)rs.getDouble(7);
-					double[] massArray=decompressDouble(rs.getBytes(8), numPeaks);
-					float[] intensityArray=decompressFloat(rs.getBytes(9), numPeaks);
+					int refSpectraID=rs.getInt(1);
+					double precursorMZ=rs.getDouble(2);
+					byte precursorCharge=(byte)rs.getInt(3);
+					String peptideModSeq=rs.getString(4);
+					int copies=rs.getInt(5);
+					int numPeaks=rs.getInt(6);
+					double[] massArray=decompressDouble(rs.getBytes(7), numPeaks);
+					float[] intensityArray=decompressFloat(rs.getBytes(8), numPeaks);
+					float score=0.0f;
+					if (hasScore) {
+						score=(float)rs.getDouble(9);
+					}
 					
+					float retentionTime=rtMap.get(refSpectraID);
 					if (irtMap.isPresent()) {
 						if (irtMap.get().contains(peptideModSeq)) {
 							retentionTime=irtMap.get().get(peptideModSeq);
@@ -100,6 +121,8 @@ public class BlibFile extends SQLFile {
 				}
 
 				library.addEntries(entries);
+				
+				rs.close();
 			} finally {
 				s.close();
 			}

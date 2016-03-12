@@ -8,7 +8,6 @@ import org.jfree.chart.ChartPanel;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
-import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -39,19 +38,20 @@ public class TransitionRefiner {
 		chromatograms.add(new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10589.013f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f});
 		chromatograms.add(new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 11368.357f, 0.0f, 0.0f, 23255.867f, 0.0f, 0.0f, 0.0f});
 		
-		Triplet<float[], float[], Range> trio=identifyTransitions("AAPQS[+80.0]PSVPK", chromatograms, rts, true);
-		float[] correlations=trio.x;
-		float[] integrations=trio.y;
+		TransitionRefinementData data=identifyTransitions("AAPQS[+80.0]PSVPK", chromatograms, rts, true);
+		float[] correlations=data.getCorrelationArray();
+		float[] integrations=data.getIntegrationArray();
 		for (int i=0; i<integrations.length; i++) {
 			System.out.println(correlations[i]+"\t"+integrations[i]);
 		}
+		Charter.launchCharts("TITLE", getChartPanels(data));
 	}
 
-	public static Triplet<float[], float[], Range> identifyTransitions(String peptideModSeq, ArrayList<float[]> chromatograms, float[] retentionTimes) {
+	public static TransitionRefinementData identifyTransitions(String peptideModSeq, ArrayList<float[]> chromatograms, float[] retentionTimes) {
 		return identifyTransitions(peptideModSeq, chromatograms, retentionTimes, false);
 	}
-	public static Triplet<float[], float[], Range> identifyTransitions(String peptideModSeq, ArrayList<float[]> chromatograms, float[] retentionTimes, boolean plot) {
-		if (chromatograms.size()==0) return new Triplet<float[], float[], Range>(new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]));
+	public static TransitionRefinementData identifyTransitions(String peptideModSeq, ArrayList<float[]> chromatograms, float[] retentionTimes, boolean plot) {
+		if (chromatograms.size()==0) return new TransitionRefinementData(chromatograms, new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]));
 		
 		ArrayList<float[]> normalizedChromatograms=normalize(chromatograms);
 		
@@ -126,15 +126,32 @@ public class TransitionRefiner {
 			HashMap<String, ChartPanel> panels=new HashMap<String, ChartPanel>();
 			panels.put("unnormalized", getChart(chromatograms, correlationArray, start, stop));
 			panels.put("normalized", getChart(normalizedChromatograms, correlationArray, start, stop));
-			panels.put("median", Charter.getChart("scan", "intensity", false, toXYTrace(medianChromatogram, "median", null), start, stop));
+			panels.put("median", Charter.getChart("scan", "intensity", false, toXYTrace(medianChromatogram, null, "median", null), start, stop));
 			Charter.launchCharts(peptideModSeq+" chart", panels);
 		}
 		
-		return new Triplet<float[], float[], Range>(correlationArray, integrationArray, range);
+		return new TransitionRefinementData(chromatograms, correlationArray, integrationArray, medianChromatogram, range);
+	}
+	
+	public static HashMap<String, ChartPanel> getChartPanels(TransitionRefinementData data) {
+		HashMap<String, ChartPanel> panels=new HashMap<String, ChartPanel>();
+		float[] rts=null;
+		if (data!=null&&data.getRtArray()!=null&&data.getRtArray().isPresent()) {
+			rts=data.getRtArray().get();
+		}
+		panels.put("unnormalized", getChart(data.getChromatograms(), data.getCorrelationArray(), rts));
+		panels.put("median", Charter.getChart("scan", "intensity", false, toXYTrace(data.getMedianChromatogram(), rts, "median", null)));
+		return panels;
 	}
 
-	public static ChartPanel getChart(ArrayList<float[]> chromatograms, float[] correlationArray, XYTrace start, XYTrace stop) {
-		XYTrace[] xytraces=new XYTrace[chromatograms.size()+2];
+	public static ChartPanel getChart(ArrayList<float[]> chromatograms, float[] correlationArray,  XYTrace start, XYTrace stop) {
+		return getChart(chromatograms, correlationArray, null, start, stop);
+	}
+	public static ChartPanel getChart(ArrayList<float[]> chromatograms, float[] correlationArray, float[] rts) {
+		return getChart(chromatograms, correlationArray, rts, null, null);
+	}
+	private static ChartPanel getChart(ArrayList<float[]> chromatograms, float[] correlationArray, float[] rts, XYTrace start, XYTrace stop) {
+		ArrayList<XYTrace> xytraces=new ArrayList<XYTrace>();
 		for (int i=0; i<chromatograms.size(); i++) {
 			float[] fs=chromatograms.get(i);
 			
@@ -147,11 +164,11 @@ public class TransitionRefiner {
 				c=Color.red;
 			}
 
-			xytraces[i]=toXYTrace(fs, ""+i, c);
+			xytraces.add(toXYTrace(fs, rts, ""+i, c));
 		}
-		xytraces[xytraces.length-2]=start;
-		xytraces[xytraces.length-1]=stop;
-		ChartPanel panel=Charter.getChart("scan", "intensity", true, xytraces);
+		if (start!=null) xytraces.add(start);
+		if (stop!=null) xytraces.add(stop);
+		ChartPanel panel=Charter.getChart("scan", "intensity", true, xytraces.toArray(new XYTrace[xytraces.size()]));
 		return panel;
 	}
 	public static XYTrace toBoundaries(float f, String name) {
@@ -161,11 +178,16 @@ public class TransitionRefiner {
 		return new XYTrace(points, GraphType.line, name);
 	}
 
-	public static XYTrace toXYTrace(float[] fs, String name, Color color) {
+	public static XYTrace toXYTrace(float[] fs, float[] rts, String name, Color color) {
 		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
 		for (int j=0; j<fs.length; j++) {
-			XYPoint point=new XYPoint(j, fs[j]);
-			points.add(point);
+			if (rts==null) {
+				XYPoint point=new XYPoint(j, fs[j]);
+				points.add(point);
+			} else {
+				XYPoint point=new XYPoint(rts[j], fs[j]);
+				points.add(point);
+			}
 		}
 		XYTrace trace=new XYTrace(points, GraphType.line, name, color);
 		return trace;

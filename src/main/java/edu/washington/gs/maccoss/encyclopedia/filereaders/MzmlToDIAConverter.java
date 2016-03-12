@@ -79,7 +79,7 @@ public class MzmlToDIAConverter {
 			stripeFile.setFileName(mzMLFile.getName(), unmarshaller.getMzMLId(), mzMLFile.getAbsolutePath());
 
 			BlockingQueue<MzmlBlock> mzmlBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);
-			MzmlToDIAProducer producer=new MzmlToDIAProducer(unmarshaller, mzmlBlockQueue);
+			MzmlToDIAProducer producer=new MzmlToDIAProducer(unmarshaller, mzmlBlockQueue, parameters);
 			
 			// will be populated after we join back up. Since we're not looking
 			// at it until after the join, we're safe to not have to worry about

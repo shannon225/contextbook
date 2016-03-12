@@ -157,9 +157,9 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 
 	public void setFileName(String fileName, String sourceName, String fileLocation) throws IOException, SQLException {
 		HashMap<String, String> map=new HashMap<String, String>();
-		map.put("filename", fileName);
-		map.put("sourcename", sourceName);
-		map.put("filelocation", fileLocation);
+		map.put("filename", fileName==null?"unknown":fileName);
+		map.put("sourcename", sourceName==null?"unknown":sourceName);
+		map.put("filelocation", fileLocation==null?"unknown":fileLocation);
 		addMetadata(map);
 	}
 

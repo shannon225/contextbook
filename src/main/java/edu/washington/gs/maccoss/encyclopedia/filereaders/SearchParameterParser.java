@@ -53,6 +53,7 @@ public class SearchParameterParser {
 		final int numberOfThreadsUsed;
 		final float targetWindowCenter;
 		final float expectedPeakWidth;
+		final float precursorWindowSize;
 		final boolean runPhosphoLocalization;
 		
 		String value=parameters.get("-frag");
@@ -101,6 +102,7 @@ public class SearchParameterParser {
 		deconvoluteOverlappingWindows=getBoolean("-deconvoluteOverlappingWindows", parameters, false);
 		numberOfThreadsUsed=SearchParameterParser.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
 		targetWindowCenter=SearchParameterParser.getFloat("-targetWindowCenter", parameters, -1f);
+		precursorWindowSize=SearchParameterParser.getFloat("-precursorWindowSize", parameters, -1f);
 		expectedPeakWidth=SearchParameterParser.getFloat("-expectedPeakWidth", parameters, 25f);
 		runPhosphoLocalization=getBoolean("-runPhosphoLocalization", parameters, false);
 		
@@ -116,7 +118,7 @@ public class SearchParameterParser {
 			}
 		}
 		
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorThreshold, percolator, deconvoluteOverlappingWindows, numberOfThreadsUsed, expectedPeakWidth, targetWindowCenter, runPhosphoLocalization);
+		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorThreshold, percolator, deconvoluteOverlappingWindows, numberOfThreadsUsed, expectedPeakWidth, targetWindowCenter, precursorWindowSize, runPhosphoLocalization);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

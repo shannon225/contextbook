@@ -7,6 +7,7 @@ import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -23,11 +24,13 @@ import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 public class MzmlToDIAProducer implements Runnable {
 	private final BlockingQueue<MzmlBlock> mzmlBlockQueue;
 	private final MzMLUnmarshaller unmarshaller;
+	private final SearchParameters parameters;
 	private final HashMap<Range, TFloatArrayList> retentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 
-	public MzmlToDIAProducer(MzMLUnmarshaller unmarshaller, BlockingQueue<MzmlBlock> mzmlBlockQueue) {
+	public MzmlToDIAProducer(MzMLUnmarshaller unmarshaller, BlockingQueue<MzmlBlock> mzmlBlockQueue, SearchParameters parameters) {
 		this.unmarshaller=unmarshaller;
 		this.mzmlBlockQueue=mzmlBlockQueue;
+		this.parameters=parameters;
 	}
 	
 	public HashMap<Range, TFloatArrayList> getRetentionTimesByStripe() {
@@ -45,6 +48,8 @@ public class MzmlToDIAProducer implements Runnable {
 		ArrayList<Stripe> stripes=new ArrayList<Stripe>();
 		int count=0;
 		int previousReport=0;
+		
+		float defaultOffset=parameters.getPrecursorWindowSize()/2.0f;
 		
 		while (spectrumIterator.hasNext()) {
 			Spectrum spectrum=spectrumIterator.next();
@@ -86,8 +91,20 @@ public class MzmlToDIAProducer implements Runnable {
 			} else {
 				HashMap<String, CVParam> isolationCVParams=asCVMap(p.getIsolationWindow().getCvParam());
 				float isolationWindowTarget=Float.parseFloat(isolationCVParams.get("MS:1000827").getValue());
-				float isolationWindowLowerOffset=Float.parseFloat(isolationCVParams.get("MS:1000828").getValue());
-				float isolationWindowUpperOffset=Float.parseFloat(isolationCVParams.get("MS:1000829").getValue());
+				CVParam lowerParam=isolationCVParams.get("MS:1000828");
+				CVParam upperParam=isolationCVParams.get("MS:1000829");
+				float isolationWindowLowerOffset;
+				float isolationWindowUpperOffset;
+				if (lowerParam==null||upperParam==null) {
+					if (defaultOffset<=0) {
+						throw new EncyclopediaException("Error reading mzML! Precursor window offsets not specified and no default window size specified!");
+					}
+					isolationWindowLowerOffset=defaultOffset;
+					isolationWindowUpperOffset=defaultOffset;
+				} else {
+					isolationWindowLowerOffset=Float.parseFloat(lowerParam.getValue());
+					isolationWindowUpperOffset=Float.parseFloat(upperParam.getValue());
+				}
 				
 				Stripe stripe=new Stripe(spectrumName, p.getSpectrumRef(), spectrumIndex, scanStartTime, isolationWindowTarget-isolationWindowLowerOffset, isolationWindowTarget+isolationWindowUpperOffset, massArray, intensityArray);
 				stripes.add(stripe);

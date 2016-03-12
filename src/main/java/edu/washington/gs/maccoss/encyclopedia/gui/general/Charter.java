@@ -55,9 +55,23 @@ public class Charter {
 				0.443399, 0.35894206, 0.43697295, 0.47858942, 0.5025189, 0.34656474, 0.26218376, 0.27163184, 0.2108471, 0.23929471, 0.12108889, 0.12206937}, GraphType.line, "Trace2");
 		
 		ChartPanel chart=getChart("M/Z", "Intensity", false, trace, trace2);
-
+		launchChart(chart, "Title!");
 		
-		writeAsPDF(chart.getChart(), new File("/Users/searleb/Documents/projects/encyclopedia/mzml/test.pdf"), new Dimension(792, 612));
+		//writeAsPDF(chart.getChart(), new File("/Users/searleb/Documents/projects/encyclopedia/mzml/test.pdf"), new Dimension(792, 612));
+	}
+	public static void launchChart(ChartPanel chart, String title) {
+		final JFrame f=new JFrame(title);
+		f.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				System.exit(0);
+			}
+		});
+
+		f.getContentPane().add(chart, BorderLayout.CENTER);
+
+		f.pack();
+		f.setSize(new Dimension(792, 612));
+		f.setVisible(true);
 	}
 
 	public static void launchChart(Spectrum trace) {
@@ -71,7 +85,7 @@ public class Charter {
 			}
 		});
 
-		f.getContentPane().add(getChart("M/Z", "Intensity", false, new XYTrace(trace)), BorderLayout.CENTER);
+		f.getContentPane().add(getChart(trace), BorderLayout.CENTER);
 
 		f.pack();
 		f.setSize(new Dimension(1000, 500));
@@ -86,16 +100,21 @@ public class Charter {
 			}
 		});
 		
-		JTabbedPane tabs=new JTabbedPane();
-		for (Entry<String, ChartPanel> entry : panelMap.entrySet()) {
-			tabs.addTab(entry.getKey(), entry.getValue());
-		}
+		JTabbedPane tabs=getTabbedChartPane(panelMap);
 
 		f.getContentPane().add(tabs, BorderLayout.CENTER);
 
 		f.pack();
 		f.setSize(new Dimension(792, 612));
 		f.setVisible(true);
+	}
+	
+	public static JTabbedPane getTabbedChartPane(Map<String, ChartPanel> panelMap) {
+		JTabbedPane tabs=new JTabbedPane();
+		for (Entry<String, ChartPanel> entry : panelMap.entrySet()) {
+			tabs.addTab(entry.getKey(), entry.getValue());
+		}
+		return tabs;
 	}
 
 	public static void launchChart(String xAxis, String yAxis, boolean displayLegend, XYTrace... traces) {
@@ -196,6 +215,12 @@ public class Charter {
 		}
 
 		return chartPanel;
+	}
+
+	public static ChartPanel getChart(Spectrum trace) {
+		ChartPanel chart=getChart("M/Z", "Intensity", false, new XYTrace(trace));
+		chart.getChart().setTitle(trace.getSpectrumName());
+		return chart;
 	}
 
 	public static ChartPanel getChart(String xAxis, String yAxis, boolean displayLegend, XYTrace... traces) {
@@ -316,6 +341,11 @@ public class Charter {
 		if (!displayLegend) {
 			chartPanel.getChart().removeLegend();
 		}
+
+		chartPanel.setMinimumDrawWidth(0);
+		chartPanel.setMinimumDrawHeight(0);
+		chartPanel.setMaximumDrawWidth(Integer.MAX_VALUE);
+		chartPanel.setMaximumDrawHeight(Integer.MAX_VALUE);
 
 		return chartPanel;
 	}

@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.gui.framework.library;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.io.File;
+import java.text.NumberFormat;
 import java.util.Optional;
 
 import javax.swing.BorderFactory;
@@ -10,6 +11,7 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JEditorPane;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -51,6 +53,8 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "PepsinA"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {"CID (B/Y)", "HCD (Y-Only)", "ETD (C/Z/Z+1)"});
 
+	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance());
+
 	private final SpinnerModel precursorPPM = new SpinnerNumberModel(10, 1, 1000, 1);
 	private final SpinnerModel fragmentPPM = new SpinnerNumberModel(10, 1, 1000, 1);
 	private final SpinnerModel numberOfJobs = new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
@@ -75,6 +79,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		irtFileChooser=new FileChooserPanel(null, "IRT Database", new SimpleFilenameFilter(".irtdb"), false);
 		options.add(irtFileChooser);
 		options.add(new LabeledComponent("Precursor Isolation Windows", overlap));
+		options.add(new LabeledComponent("Precursor Window Width (blank=extract from file)", precursorWindowWidth));
 		options.add(new LabeledComponent("Enzyme", enzyme));
 		options.add(new LabeledComponent("Fragmentation", fragType));
 		options.add(new LabeledComponent("Precursor (PPM)", new JSpinner(precursorPPM)));
@@ -131,7 +136,9 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		float precursorPPMValue=((Integer)precursorPPM.getValue()).floatValue();
 		float fragmentPPMValue=((Integer)fragmentPPM.getValue()).floatValue();
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
-		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme, 0.01f, null, deconvoluteOverlappingWindows, numberOfJobsValue, 25f, -1f, false);
+		Number value=(Number)precursorWindowWidth.getValue();
+		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
+		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme, 0.01f, null, deconvoluteOverlappingWindows, numberOfJobsValue, 25f, -1f, precursorWindowWidthValue, false);
 		return parameters;
 	}
 }

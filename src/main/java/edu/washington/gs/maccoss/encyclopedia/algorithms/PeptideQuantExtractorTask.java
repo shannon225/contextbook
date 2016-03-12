@@ -13,14 +13,12 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
-import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ThreadableTask;
@@ -38,7 +36,19 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	private final SearchParameters params;
 
 	private final PSMData psmdata;
-	private final ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries;
+	private final ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries; // CAN BE NULL
+
+	public PeptideQuantExtractorTask(PSMData psmdata, Optional<LibraryInterface> library, ArrayList<Stripe> stripes, SearchParameters parameters) {
+		this.psmdata=psmdata;
+		this.library=library;
+		this.stripes=stripes;
+
+		scorer=new DotProduct(parameters.getFragmentTolerance());
+		params=parameters;
+		this.savedEntries=null;
+		
+		this.limitToQuantifiable=false;//true; //library.isPresent();
+	}
 
 	public PeptideQuantExtractorTask(PSMData psmdata, Optional<LibraryInterface> library, ArrayList<Stripe> stripes, SearchParameters parameters, ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries) {
 		this.psmdata=psmdata;
@@ -69,7 +79,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 
 	@Override
 	protected Nothing process() {
-		Optional<Triplet<double[], float[], Range>> spectrum=extractSpectrum(library, psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable);
+		Optional<TransitionRefinementData> spectrum=extractSpectrum(library, psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable);
 		if (params.isRunPhosphoLocalization()) {
 			ArrayList<String> permutations=PhosphoPermuter.getPermutations(psmdata.getPeptideModSeq(), params.getAAConstants());
 			if (permutations.size()==1) {
@@ -82,14 +92,16 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		if (spectrum.isPresent()) {
 			// FIXME need to not add duplicates!!!! for now just run SQL:
 			// delete from entries where RowId not in (SELECT MIN(RowId) FROM entries GROUP BY PeptideModSeq, PrecursorCharge)
-			Triplet<double[], float[], Range> spec=spectrum.get();
-			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), spec.x, spec.y, spec.z);
+			TransitionRefinementData data=spectrum.get();
+			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), data.getMassArray().get(), data.getIntensityArray().get(), data.getRange());
 			if (limitToQuantifiable) {
 				if (entry.getIonCount()<4||entry.getTIC()<1.0f) {
 					return Nothing.NOTHING;
 				}
 			}
-			savedEntries.add(entry);
+			if (savedEntries!=null) {
+				savedEntries.add(entry);
+			}
 		}
 		return Nothing.NOTHING;
 	}
@@ -108,7 +120,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		TFloatHashSet list=new TFloatHashSet();
 		for (String peptideModSeq : peptideModSeqs) {
 			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-			LibraryEntry unitEntry=model.getUnitSpectrum(precursorCharge, params);
+			LibraryEntry unitEntry=model.getUnitSpectrum(precursorCharge, retentionTime, params);
 
 			TFloatArrayList bestTimes=new TFloatArrayList();
 			float bestScore=0.0f;
@@ -153,7 +165,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		return false;
 	}
 
-	private Optional<Triplet<double[], float[], Range>> extractSpectrum(Optional<LibraryInterface> library, double precursorMZ, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable) {
+	private Optional<TransitionRefinementData> extractSpectrum(Optional<LibraryInterface> library, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable) {
 		LibraryEntry unitEntry=null;
 		if (library.isPresent()) {
 			try {
@@ -182,26 +194,25 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		
 		if (unitEntry==null) {
 			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-			unitEntry=model.getUnitSpectrum(precursorCharge, params);
+			unitEntry=model.getUnitSpectrum(precursorCharge, retentionTime, params);
 		}
 		
-		return Optional.ofNullable(extractSpectrum(unitEntry, precursorMZ, peptideModSeq, retentionTime, duration, limitToQuantifiable));
+		return Optional.ofNullable(extractSpectrum(unitEntry, duration, limitToQuantifiable));
 	}
 
-	public Triplet<double[], float[], Range> extractSpectrum(LibraryEntry unitEntry, double precursorMZ, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable) {
-		ArrayList<Stripe> stripes=getScanSubset(retentionTime-duration, retentionTime+duration);
-		return quantifyPeptide(scorer, unitEntry, peptideModSeq, retentionTime, limitToQuantifiable, stripes);
+	public TransitionRefinementData extractSpectrum(LibraryEntry unitEntry, float duration, boolean limitToQuantifiable) {
+		ArrayList<Stripe> stripes=getScanSubset(unitEntry.getRetentionTime()-duration, unitEntry.getRetentionTime()+duration);
+		return quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes);
 	}
 
-	public static Triplet<double[], float[], Range> quantifyPeptide(PSMScorer scorer, LibraryEntry unitEntry, String peptideModSeq, float retentionTime, boolean limitToQuantifiable,
-			ArrayList<Stripe> stripes) {
+	public static TransitionRefinementData quantifyPeptide(PSMScorer scorer, LibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<Stripe> stripes) {
 		float bestDelta=Float.MAX_VALUE;
 		PeakScores[] bestScores=null;
 		ArrayList<PeakScores[]> scoreList=new ArrayList<PeakScores[]>();
 		TFloatArrayList retentionTimes=new TFloatArrayList();
 		for (Stripe stripe : stripes) {
 			retentionTimes.add(stripe.getScanStartTime());
-			float delta=Math.abs(stripe.getScanStartTime()-retentionTime);
+			float delta=Math.abs(stripe.getScanStartTime()-unitEntry.getRetentionTime());
 			PeakScores[] individualPeakScores=scorer.getIndividualPeakScores(unitEntry, stripe, true);
 			scoreList.add(individualPeakScores);
 			if (delta<bestDelta) {
@@ -209,7 +220,6 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 				bestScores=individualPeakScores;
 			}
 		}
-
 		// no signal of any kind at retention time!
 		if (bestScores==null) return null;
 
@@ -237,9 +247,10 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 				keptPeaks.add(bestScores[i]);
 			}
 		}
-		Triplet<float[], float[], Range> trio=TransitionRefiner.identifyTransitions(peptideModSeq, chromatograms, retentionTimes.toArray());
-		float[] correlations=trio.x;
-		float[] integrations=trio.y;
+		
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions(unitEntry.getPeptideModSeq(), chromatograms, retentionTimes.toArray());
+		float[] correlations=data.getCorrelationArray();
+		float[] integrations=data.getIntegrationArray();
 
 		TDoubleArrayList mzs=new TDoubleArrayList();
 		TFloatArrayList intens=new TFloatArrayList();
@@ -266,6 +277,6 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 
 		double[] massArray=mzs.toArray();
 		float[] intensityArray=intens.toArray();
-		return new Triplet<double[], float[], Range>(massArray, intensityArray, trio.z);
+		return data.addPeakData(massArray, intensityArray, retentionTimes.toArray());
 	}
 }
