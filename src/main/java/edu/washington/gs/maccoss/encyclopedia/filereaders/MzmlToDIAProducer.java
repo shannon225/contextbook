@@ -13,6 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.set.hash.TIntHashSet;
 import uk.ac.ebi.jmzml.model.mzml.BinaryDataArrayList;
 import uk.ac.ebi.jmzml.model.mzml.CVParam;
 import uk.ac.ebi.jmzml.model.mzml.Precursor;
@@ -50,6 +51,7 @@ public class MzmlToDIAProducer implements Runnable {
 		int previousReport=0;
 		
 		float defaultOffset=parameters.getPrecursorWindowSize()/2.0f;
+		TIntHashSet spectrumIndices=new TIntHashSet();
 		
 		while (spectrumIterator.hasNext()) {
 			Spectrum spectrum=spectrumIterator.next();
@@ -64,6 +66,12 @@ public class MzmlToDIAProducer implements Runnable {
 
 			String spectrumName=spectrum.getId();
 			int spectrumIndex=spectrum.getIndex();
+			if (spectrumIndices.contains(spectrumIndex)) {
+				System.out.println("Duplicate\t"+spectrumIndex);
+			} else {
+				spectrumIndices.add(spectrumIndex);
+			}
+			
 			HashMap<String, CVParam> cvparams=asCVMap(spectrum.getScanList().getScan().get(0).getCvParam());
 			CVParam scanStartTimeCVParams=cvparams.get("MS:1000016");
 			float multiplier;
@@ -82,6 +90,10 @@ public class MzmlToDIAProducer implements Runnable {
 			
 			float scanStartTime=multiplier*Float.parseFloat(scanStartTimeCVParams.getValue());
 			BinaryDataArrayList bdal=spectrum.getBinaryDataArrayList();
+			if (bdal==null||bdal.getBinaryDataArray()==null||bdal.getBinaryDataArray().get(0)==null||bdal.getBinaryDataArray().get(1)==null) {
+				Logger.errorLine("Skipping unexpected empty binary data for spectrum"+" ("+spectrumIndex+"): "+spectrumName);
+				continue;
+			}
 
 			double[] massArray=ByteConverter.toDoubleArray(bdal.getBinaryDataArray().get(0).getBinaryDataAsNumberArray());
 			float[] intensityArray=ByteConverter.toFloatArray(bdal.getBinaryDataArray().get(1).getBinaryDataAsNumberArray());

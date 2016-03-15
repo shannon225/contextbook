@@ -57,6 +57,7 @@ public class TransitionRefiner {
 		
 		float[] medianChromatogram=new float[chromatograms.get(0).length];
 		float maxMedian=0.0f;
+		int maxIndex=0;
 		for (int i=0; i<medianChromatogram.length; i++) {
 			TFloatArrayList list=new TFloatArrayList();
 			for (float[] chromatogram : normalizedChromatograms) {
@@ -69,25 +70,50 @@ public class TransitionRefiner {
 			medianChromatogram[i]=QuickMedian.median(list.toArray());
 			if (medianChromatogram[i]>maxMedian) {
 				maxMedian=medianChromatogram[i];
+				maxIndex=i;
 			}
 		}
 
 		float threshold=maxMedian*0.01f; // 1% of max
-		int firstData=-1;
-		int lastData=-1;
-		for (int i=0; i<medianChromatogram.length; i++) {
-			if (medianChromatogram[i]>=threshold) {
-				if (firstData==-1) {
-					firstData=i;
-				}
-				if (i>lastData) {
-					lastData=i;
-				}
+		
+		int increasing=0;
+		int firstData=maxIndex;
+		for (int i=maxIndex-1; i>=0; i--) {
+			if (medianChromatogram[i]>medianChromatogram[firstData]) {
+				increasing++;
+			} else if (increasing>0) {
+				increasing--;
+			}
+			if (increasing>2) {
+				break;
+			}
+			
+			if (medianChromatogram[i]<medianChromatogram[firstData]) firstData=i;
+			if (medianChromatogram[i]<threshold) {
+				break;
 			}
 		}
 		
-		int startIndex=firstData<=0?0:firstData-1;
-		int stopIndex=lastData>=medianChromatogram.length-1?medianChromatogram.length-1:lastData+1;
+		increasing=0;
+		int lastData=maxIndex;
+		for (int i=maxIndex+1; i<medianChromatogram.length; i++) {
+			if (medianChromatogram[i]>medianChromatogram[lastData]) {
+				increasing++;
+			} else if (increasing>0) {
+				increasing--;
+			}
+			if (increasing>2) {
+				break;
+			}
+			
+			if (medianChromatogram[i]<medianChromatogram[lastData]) lastData=i;
+			if (medianChromatogram[i]<threshold) {
+				break;
+			}
+		}
+		
+		int startIndex=firstData<=0?0:firstData;
+		int stopIndex=lastData>=medianChromatogram.length-1?medianChromatogram.length-1:lastData;
 		Range range=new Range(retentionTimes[startIndex], retentionTimes[stopIndex]);
 
 		float medianMean=General.mean(medianChromatogram, startIndex, stopIndex);
@@ -124,9 +150,9 @@ public class TransitionRefiner {
 			XYTrace stop=toBoundaries(lastData+1, "stop");
 
 			HashMap<String, ChartPanel> panels=new HashMap<String, ChartPanel>();
-			panels.put("unnormalized", getChart(chromatograms, correlationArray, start, stop));
-			panels.put("normalized", getChart(normalizedChromatograms, correlationArray, start, stop));
-			panels.put("median", Charter.getChart("scan", "intensity", false, toXYTrace(medianChromatogram, null, "median", null), start, stop));
+			panels.put("unnormalized", getChart(chromatograms, correlationArray, start, stop, null));
+			panels.put("normalized", getChart(normalizedChromatograms, correlationArray, start, stop, null));
+			panels.put("median", Charter.getChart("scan", "intensity", false, toXYTrace(medianChromatogram, null, "median", null, null), start, stop));
 			Charter.launchCharts(peptideModSeq+" chart", panels);
 		}
 		
@@ -139,18 +165,18 @@ public class TransitionRefiner {
 		if (data!=null&&data.getRtArray()!=null&&data.getRtArray().isPresent()) {
 			rts=data.getRtArray().get();
 		}
-		panels.put("unnormalized", getChart(data.getChromatograms(), data.getCorrelationArray(), rts));
-		panels.put("median", Charter.getChart("scan", "intensity", false, toXYTrace(data.getMedianChromatogram(), rts, "median", null)));
+		panels.put("unnormalized", getChart(data.getChromatograms(), data.getCorrelationArray(), rts, data.getRange()));
+		panels.put("median", Charter.getChart("scan", "intensity", false, toXYTrace(data.getMedianChromatogram(), rts, "median", null, data.getRange())));
 		return panels;
 	}
 
-	public static ChartPanel getChart(ArrayList<float[]> chromatograms, float[] correlationArray,  XYTrace start, XYTrace stop) {
-		return getChart(chromatograms, correlationArray, null, start, stop);
+	public static ChartPanel getChart(ArrayList<float[]> chromatograms, float[] correlationArray,  XYTrace start, XYTrace stop, Range rtRange) {
+		return getChart(chromatograms, correlationArray, null, start, stop, rtRange);
 	}
-	public static ChartPanel getChart(ArrayList<float[]> chromatograms, float[] correlationArray, float[] rts) {
-		return getChart(chromatograms, correlationArray, rts, null, null);
+	public static ChartPanel getChart(ArrayList<float[]> chromatograms, float[] correlationArray, float[] rts, Range rtRange) {
+		return getChart(chromatograms, correlationArray, rts, null, null, rtRange);
 	}
-	private static ChartPanel getChart(ArrayList<float[]> chromatograms, float[] correlationArray, float[] rts, XYTrace start, XYTrace stop) {
+	private static ChartPanel getChart(ArrayList<float[]> chromatograms, float[] correlationArray, float[] rts, XYTrace start, XYTrace stop, Range rtRange) {
 		ArrayList<XYTrace> xytraces=new ArrayList<XYTrace>();
 		for (int i=0; i<chromatograms.size(); i++) {
 			float[] fs=chromatograms.get(i);
@@ -164,7 +190,7 @@ public class TransitionRefiner {
 				c=Color.red;
 			}
 
-			xytraces.add(toXYTrace(fs, rts, ""+i, c));
+			xytraces.add(toXYTrace(fs, rts, ""+i, c, rtRange));
 		}
 		if (start!=null) xytraces.add(start);
 		if (stop!=null) xytraces.add(stop);
@@ -178,14 +204,16 @@ public class TransitionRefiner {
 		return new XYTrace(points, GraphType.line, name);
 	}
 
-	public static XYTrace toXYTrace(float[] fs, float[] rts, String name, Color color) {
+	public static XYTrace toXYTrace(float[] fs, float[] rts, String name, Color color, Range rtRange) {
 		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
 		for (int j=0; j<fs.length; j++) {
 			if (rts==null) {
 				XYPoint point=new XYPoint(j, fs[j]);
 				points.add(point);
 			} else {
-				XYPoint point=new XYPoint(rts[j], fs[j]);
+				if (rtRange!=null&&!rtRange.contains(rts[j])) continue;
+				
+				XYPoint point=new XYPoint(rts[j]/60f, fs[j]);
 				points.add(point);
 			}
 		}

@@ -60,6 +60,7 @@ public class ResultsBrowserPanel extends JPanel {
 	private final FileChooserPanel rawFileChooser;
 	private final JSplitPane dataSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane rawSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+	private final JSplitPane peakPickingSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JSplitPane split=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JTable table;
 	private final LibraryEntryTableModel model;
@@ -167,12 +168,14 @@ public class ResultsBrowserPanel extends JPanel {
 
 	public void resetPeptide(LibraryEntry entry) {
 		int location=dataSplit.getDividerLocation();
-		if (location==0) {
-			location=500;
+		System.out.println("location:"+location);
+		if (location<=5) {
+			location=800;
 		}
 		int locationRaw=rawSplit.getDividerLocation();
-		if (locationRaw==0) {
-			locationRaw=250;
+		System.out.println("locationRaw:"+locationRaw);
+		if (locationRaw<=5) {
+			locationRaw=400;
 		}
 		
 		if (entry==null) {
@@ -211,8 +214,9 @@ public class ResultsBrowserPanel extends JPanel {
 				TransitionRefinementData data=quantTask.extractSpectrum(unit, 2*rtRange, false);
 				if (data!=null) {
 					HashMap<String, ChartPanel> panels=TransitionRefiner.getChartPanels(data);
-					JTabbedPane tabs=Charter.getTabbedChartPane(panels);
-					rawSplit.setBottomComponent(tabs);
+					peakPickingSplit.setLeftComponent(panels.get("median"));
+					peakPickingSplit.setRightComponent(panels.get("unnormalized"));
+					rawSplit.setBottomComponent(peakPickingSplit);
 				} else {
 					rawSplit.setBottomComponent(new JLabel("No quant data?"));
 				}
