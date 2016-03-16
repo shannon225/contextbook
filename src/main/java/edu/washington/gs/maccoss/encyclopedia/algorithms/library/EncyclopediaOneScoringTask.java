@@ -64,7 +64,7 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 					// block out a 40 scan window
 					int lowerWindow=index-2*movingAverageLength;
 					int upperWindow=index+2*movingAverageLength;
-					for (int j=lowerWindow; j<upperWindow; j++) {
+					for (int j=lowerWindow; j<=upperWindow; j++) {
 						takenScans.add(j);
 					}
 					

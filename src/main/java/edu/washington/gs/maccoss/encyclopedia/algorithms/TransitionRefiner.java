@@ -55,8 +55,8 @@ public class TransitionRefiner {
 		
 		ArrayList<float[]> normalizedChromatograms=normalize(chromatograms);
 		
+		// find the maximum point
 		float[] medianChromatogram=new float[chromatograms.get(0).length];
-		float maxMedian=0.0f;
 		int maxIndex=0;
 		for (int i=0; i<medianChromatogram.length; i++) {
 			TFloatArrayList list=new TFloatArrayList();
@@ -68,46 +68,65 @@ public class TransitionRefiner {
 				}
 			}
 			medianChromatogram[i]=QuickMedian.median(list.toArray());
-			if (medianChromatogram[i]>maxMedian) {
-				maxMedian=medianChromatogram[i];
+			if (medianChromatogram[i]>medianChromatogram[maxIndex]) {
 				maxIndex=i;
 			}
 		}
 
-		float threshold=maxMedian*0.01f; // 1% of max
+		float threshold=medianChromatogram[maxIndex]*0.01f; // 1% of max
 		
+		// left of center (decreasing index)
 		int increasing=0;
 		int firstData=maxIndex;
 		for (int i=maxIndex-1; i>=0; i--) {
+			// navigate down the slope of the peak:
+			// count the number of consecutive uphill points (count the aggregate, so +1 for increasing, -1 for decreasing)
 			if (medianChromatogram[i]>medianChromatogram[firstData]) {
 				increasing++;
 			} else if (increasing>0) {
 				increasing--;
 			}
-			if (increasing>2) {
+			
+			// create peak boundary if we've seen 3 or more consecutively increasing points and we're less than 50% of the max
+			if (increasing>2&&medianChromatogram[maxIndex]/2.0f>medianChromatogram[firstData]) {
 				break;
 			}
 			
-			if (medianChromatogram[i]<medianChromatogram[firstData]) firstData=i;
-			if (medianChromatogram[i]<threshold) {
+			// if we're lower than the previous local minimum, set the new minimum
+			if (medianChromatogram[i]<medianChromatogram[firstData]) {
+				firstData=i;
+			}
+			
+			// create peak boundary if the local minimum is less than 1%
+			if (medianChromatogram[firstData]<threshold) {
 				break;
 			}
 		}
 		
+		// right of center (increasing index)
 		increasing=0;
 		int lastData=maxIndex;
 		for (int i=maxIndex+1; i<medianChromatogram.length; i++) {
+			// navigate down the slope of the peak:
+			// count the number of consecutive uphill points (count the aggregate, so +1 for increasing, -1 for decreasing)
 			if (medianChromatogram[i]>medianChromatogram[lastData]) {
 				increasing++;
 			} else if (increasing>0) {
 				increasing--;
 			}
-			if (increasing>2) {
+			
+			// create peak boundary if we've seen 3 or more consecutively increasing points and we're less than 50% of the max
+			if (increasing>2&&medianChromatogram[maxIndex]/2.0f>medianChromatogram[lastData]) {
 				break;
 			}
+
+			// if we're lower than the previous local minimum, set the new minimum
+			if (medianChromatogram[i]<medianChromatogram[lastData]) {
+				lastData=i;
+			}
 			
-			if (medianChromatogram[i]<medianChromatogram[lastData]) lastData=i;
-			if (medianChromatogram[i]<threshold) {
+			// create peak boundary if the local minimum is less than 1%
+			if (medianChromatogram[lastData]<threshold) {
 				break;
 			}
 		}
