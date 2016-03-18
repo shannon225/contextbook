@@ -80,6 +80,10 @@ public class Stripe implements Comparable<Stripe>, Spectrum {
 	public float getIsolationWindowUpper() {
 		return isolationWindowUpper;
 	}
+	
+	public float getIsolationWindowCenter() {
+		return (isolationWindowLower+isolationWindowUpper)/2.0f;
+	}
 
 	public double[] getMassArray() {
 		return massArray;

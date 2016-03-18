@@ -49,5 +49,16 @@ public class MockLibrary implements LibraryInterface {
 		}
 		return returnables;
 	}
+	
+	@Override
+	public Range getMinMaxMZ() throws IOException, SQLException {
+		double min=Double.MAX_VALUE;
+		double max=0.0;
+		for (LibraryEntry entry : entries) {
+			if (entry.getPrecursorMZ()>max) max=entry.getPrecursorMZ();
+			if (entry.getPrecursorMZ()<min) min=entry.getPrecursorMZ();
+		}
+		return new Range((float)min, (float)max);
+	}
 
 }

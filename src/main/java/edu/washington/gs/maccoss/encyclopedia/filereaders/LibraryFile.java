@@ -181,6 +181,32 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
 	 */
 	@Override
+	public Range getMinMaxMZ() throws IOException, SQLException {
+		Connection c=getConnection(tempFile);
+		try {
+			Statement s=c.createStatement();
+			try {
+				ResultSet rs=s.executeQuery("select min(PrecursorMZ), max(PrecursorMZ) from entries");
+
+				while (rs.next()) {
+					double min=rs.getDouble(1);
+					double max=rs.getDouble(2);
+					return new Range((float)min, (float)max);
+				}
+
+				return new Range(0, 0);
+			} finally {
+				s.close();
+			}
+		} finally {
+			c.close();
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
+	 */
+	@Override
 	public ArrayList<LibraryEntry> getEntries(Range precursorMz, boolean sqrt) throws IOException, SQLException, DataFormatException {
 		Connection c=getConnection(tempFile);
 		try {

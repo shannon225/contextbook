@@ -69,6 +69,10 @@ public abstract class SwingJob extends SwingWorker<Nothing, ProgressMessage> {
 				this.totalProgress=totalProgress;
 			}
 			@Override
+			public void update(String message) {
+				publish(new ProgressMessage(message, totalProgress));
+			}
+			@Override
 			public float getTotalProgress() {
 				return totalProgress;
 			}

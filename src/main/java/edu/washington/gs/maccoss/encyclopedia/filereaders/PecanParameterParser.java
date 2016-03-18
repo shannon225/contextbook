@@ -7,6 +7,7 @@ import java.util.StringTokenizer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -69,7 +70,7 @@ public class PecanParameterParser {
 		final float percolatorThreshold;
 		final float alpha;
 		final float beta;
-		final boolean deconvoluteOverlappingWindows;
+		final DataAcquisitionType dataAcquisitionType;
 		final int numberOfThreadsUsed;
 		final float targetWindowCenter;
 		final float precursorWindowSize;
@@ -92,18 +93,25 @@ public class PecanParameterParser {
 			fixedMods.put('C', 57.0214635f);
 		}
 		aaConstants=new AminoAcidConstants(fixedMods);
-		
+
 		value=parameters.get("-frag");
 		if (value==null) {
 			fragType=FragmentationType.YONLY;
-		} else if ("CID".equals(value)) {
-			fragType=FragmentationType.CID;
-		} else if ("ETD".equals(value)) {
-			fragType=FragmentationType.ETD;
-		} else if ("YONLY".equals(value)) {
-			fragType=FragmentationType.YONLY;
 		} else {
+			fragType=FragmentationType.getFragmentationType(value);
+		}
+		if (fragType==null) {
 			throw new EncyclopediaException("Error parsing fragmentation type from ["+value+"]");
+		}
+		
+		value=parameters.get("-acquisition");
+		if (value==null) {
+			dataAcquisitionType=DataAcquisitionType.DIA;
+		} else {
+			dataAcquisitionType=DataAcquisitionType.getAcquisitionType(value);
+		}
+		if (dataAcquisitionType==null) {
+			throw new EncyclopediaException("Error parsing acquisition type from ["+value+"]");
 		}
 		
 		value=parameters.get("-ptol");
@@ -147,7 +155,6 @@ public class PecanParameterParser {
 		percolatorThreshold=SearchParameterParser.getFloat("-percolatorThreshold", parameters, 0.01f);
 		alpha=SearchParameterParser.getFloat("-alpha", parameters, 1.8f);
 		beta=SearchParameterParser.getFloat("-beta", parameters, 0.4f);
-		deconvoluteOverlappingWindows=SearchParameterParser.getBoolean("-deconvoluteOverlappingWindows", parameters, false);
 		numberOfThreadsUsed=SearchParameterParser.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
 		targetWindowCenter=SearchParameterParser.getFloat("-targetWindowCenter", parameters, -1f);
 		precursorWindowSize=SearchParameterParser.getFloat("-precursorWindowSize", parameters, -1f);
@@ -164,6 +171,6 @@ public class PecanParameterParser {
 			}
 		}
 		
-		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolator, deconvoluteOverlappingWindows, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize);
+		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolator, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize);
 	}
 }

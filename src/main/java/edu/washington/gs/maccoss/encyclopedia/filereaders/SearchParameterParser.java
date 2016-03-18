@@ -8,6 +8,7 @@ import java.util.HashMap;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -49,7 +50,7 @@ public class SearchParameterParser {
 		final MassTolerance fragmentTolerance;
 		final DigestionEnzyme enzyme;
 		final float percolatorThreshold;
-		final boolean deconvoluteOverlappingWindows;
+		final DataAcquisitionType dataAcquisitionType;
 		final int numberOfThreadsUsed;
 		final float targetWindowCenter;
 		final float expectedPeakWidth;
@@ -59,14 +60,21 @@ public class SearchParameterParser {
 		String value=parameters.get("-frag");
 		if (value==null) {
 			fragType=FragmentationType.CID;
-		} else if ("CID".equals(value)) {
-			fragType=FragmentationType.CID;
-		} else if ("ETD".equals(value)) {
-			fragType=FragmentationType.ETD;
-		} else if ("YONLY".equals(value)) {
-			fragType=FragmentationType.YONLY;
 		} else {
+			fragType=FragmentationType.getFragmentationType(value);
+		}
+		if (fragType==null) {
 			throw new EncyclopediaException("Error parsing fragmentation type from ["+value+"]");
+		}
+		
+		value=parameters.get("-acquisition");
+		if (value==null) {
+			dataAcquisitionType=DataAcquisitionType.DIA;
+		} else {
+			dataAcquisitionType=DataAcquisitionType.getAcquisitionType(value);
+		}
+		if (dataAcquisitionType==null) {
+			throw new EncyclopediaException("Error parsing acquisition type from ["+value+"]");
 		}
 		
 		value=parameters.get("-ptol");
@@ -99,7 +107,6 @@ public class SearchParameterParser {
 		}
 
 		percolatorThreshold=getFloat("-percolatorThreshold", parameters, 0.01f);
-		deconvoluteOverlappingWindows=getBoolean("-deconvoluteOverlappingWindows", parameters, false);
 		numberOfThreadsUsed=SearchParameterParser.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
 		targetWindowCenter=SearchParameterParser.getFloat("-targetWindowCenter", parameters, -1f);
 		precursorWindowSize=SearchParameterParser.getFloat("-precursorWindowSize", parameters, -1f);
@@ -118,7 +125,7 @@ public class SearchParameterParser {
 			}
 		}
 		
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorThreshold, percolator, deconvoluteOverlappingWindows, numberOfThreadsUsed, expectedPeakWidth, targetWindowCenter, precursorWindowSize, runPhosphoLocalization);
+		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorThreshold, percolator, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth, targetWindowCenter, precursorWindowSize, runPhosphoLocalization);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

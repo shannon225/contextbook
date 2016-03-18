@@ -105,7 +105,7 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 					Stripe stripe=goodStripe.x.y;
 					float[] auxScores=goodStripe.y;
 					
-					if (rank<=numberOfPeaksPerPeptide) {
+					if (stripe!=null&&rank<=numberOfPeaksPerPeptide) {
 						float deltaCn=firstScore<=0?0.0f:Math.min(1.0f, (primaryScore-secondScore)/firstScore); // if secondScore<0 then deltaCn can be >1, so protect against that
 						String psmID = getPSMID(peptide);
 

@@ -57,6 +57,9 @@ public class EValueCalculator {
 		b=equation.y;
 		negLog10EValue=-(maxScore*m+b);
 	}
+	public float getNegLog10EValue(float score) {
+		return -(maxScore*m+b);
+	}
 	
 	public float getNegLog10EValue() {
 		return negLog10EValue;

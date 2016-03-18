@@ -37,13 +37,8 @@ public class FileChooserPanel extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JFrame frame = (JFrame)SwingUtilities.getRoot(FileChooserPanel.this);
-				FileDialog dialog=new FileDialog(frame, "Select a "+fileType+" file", FileDialog.LOAD);
-				if (file!=null) {
-					dialog.setFile(file.getAbsolutePath());
-				}
-				dialog.setFilenameFilter(filter);
-				dialog.setVisible(true);
-				update(dialog.getFiles());
+				File[] files=getFiles(file, fileType, filter, frame);
+				update(files);
 			}
 		});
 		
@@ -83,5 +78,16 @@ public class FileChooserPanel extends JPanel {
 			fileLabel.setText(file.getName());
 			top.setBackground(Color.white);
 		}
+	}
+
+	public static File[] getFiles(File startingFile, String fileType, FilenameFilter filter, JFrame frame) {
+		FileDialog dialog=new FileDialog(frame, "Select a "+fileType+" file", FileDialog.LOAD);
+		if (startingFile!=null) {
+			dialog.setFile(startingFile.getAbsolutePath());
+		}
+		dialog.setFilenameFilter(filter);
+		dialog.setVisible(true);
+		File[] files=dialog.getFiles();
+		return files;
 	}
 }

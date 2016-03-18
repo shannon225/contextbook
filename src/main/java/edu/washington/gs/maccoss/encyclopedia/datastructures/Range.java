@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import java.util.ArrayList;
 
 //@Immutable
 public class Range implements Comparable<Range> {
@@ -53,6 +54,19 @@ public class Range implements Comparable<Range> {
 			return true;
 		}
 		return false;
+	}
+	
+	public ArrayList<Range> chunkIntoBins(int binCount) {
+		float delta=getRange()/binCount;
+		
+		ArrayList<Range> ranges=new ArrayList<Range>();
+		float currentMin=start;
+		for (int i=0; i<binCount; i++) {
+			float currentMax=currentMin+delta;
+			ranges.add(new Range(currentMin, currentMax));
+			currentMin=currentMax;
+		}
+		return ranges;
 	}
 	
 	/**

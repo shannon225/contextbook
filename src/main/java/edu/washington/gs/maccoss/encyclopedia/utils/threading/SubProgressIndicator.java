@@ -17,6 +17,11 @@ public class SubProgressIndicator implements ProgressIndicator {
 	}
 	
 	@Override
+	public void update(String message) {
+		progress.update(message);
+	}	
+	
+	@Override
 	public float getTotalProgress() {
 		return progress.getTotalProgress();
 	}

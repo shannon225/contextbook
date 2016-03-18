@@ -1,7 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -137,7 +139,11 @@ public class Encyclopedia {
 		
 		SearchParameters parameters=taskFactory.getParameters();
 		StripeFileInterface stripefile=MzmlToDIAConverter.getFile(diaFile, parameters);
-		runSearch(progress, job.getLibrary(), stripefile, featureFile, outputFile, taskFactory);
+		if (parameters.isDDA()) {
+			EncyclopediaDDA.runSearch(progress, job.getLibrary(), stripefile, featureFile, outputFile, taskFactory);
+		} else {
+			runSearch(progress, job.getLibrary(), stripefile, featureFile, outputFile, taskFactory);
+		}
 	}
 		
 	public static void runSearch(ProgressIndicator progress, LibraryInterface library, StripeFileInterface stripefile, File featureFile, File outputFile, LibraryScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
@@ -220,35 +226,46 @@ public class Encyclopedia {
 		consumer2Thread.join();
 		consumer3Thread.join();
 		teeConsumer.close();
+		progress.update("Organizing results", (1.0f+rangesFinished)/numberOfTasks);
 
+		ArrayList<ScoredObject<String>> passingPeptides=percolatePeptides(progress, featureFile, outputFile, taskFactory, saveResultsConsumer);
+		
+		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
+		Logger.logLine(""); 
+	}
+
+	public static ArrayList<ScoredObject<String>> percolatePeptides(ProgressIndicator progress, File featureFile, File outputFile, LibraryScoringFactory taskFactory, SaveResultsConsumer saveResultsConsumer) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+		SearchParameters parameters=taskFactory.getParameters();
+		
+		ArrayList<ScoredObject<String>> passingPeptides;
 		try {
-			progress.update("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)", (1.0f+rangesFinished)/numberOfTasks);
+			progress.update("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)");
 			File percolatorResultFile=new File(outputFile.getAbsolutePath()+".first_round.txt");
 			
-			ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, percolatorResultFile, parameters.getPercolatorThreshold());
-			Logger.logLine("First pass: "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
+			passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, percolatorResultFile, parameters.getPercolatorThreshold());
+			Logger.logLine("First pass: "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
 			
 			ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
 			RetentionTimeFilter filter=getRescoringModel(passingPeptides, data, outputFile);
 			
-			writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>());
-			Thread finalWriteConsumerThread=new Thread(writeResultsConsumer);
+			PeptideScoringResultsConsumer rescoredResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>());
+			Thread finalWriteConsumerThread=new Thread(rescoredResultsConsumer);
 			finalWriteConsumerThread.start();
-			BlockingQueue<PeptideScoringResult> resultList=writeResultsConsumer.getResultsQueue();
+			BlockingQueue<PeptideScoringResult> resultList=rescoredResultsConsumer.getResultsQueue();
 			for (PeptideScoringResult result : data) {
 				PeptideScoringResult rescore=result.rescore(filter);
 				resultList.add(rescore);
 			}
 			resultList.add(PeptideScoringResult.POISON_RESULT);
 			finalWriteConsumerThread.join();
-			writeResultsConsumer.close();
+			rescoredResultsConsumer.close();
 	
-			progress.update("Re-running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)", (1.0f+rangesFinished)/numberOfTasks);
+			progress.update("Re-running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)");
 			passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, outputFile, parameters.getPercolatorThreshold());
 			
-			Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
-			Logger.logLine(""); 
 			progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+			return passingPeptides;
+			
 		} catch (EncyclopediaException e) {
 			Logger.errorLine("Fatal Error: "+e.getMessage());
 			progress.update("Fatal Error: "+e.getMessage(), -1.0f);

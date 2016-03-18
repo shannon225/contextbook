@@ -9,7 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 public class LibraryEntryTableModel extends AbstractTableModel {
 	private static final long serialVersionUID=1L;
 	
-	private final String[] columns=new String[] {"Precursor M/Z", "Charge", "Peptide", "Retention Time", "Score"};
+	private final String[] columns=new String[] {"#", "Precursor M/Z", "Charge", "Peptide", "Retention Time", "Score"};
 
 	ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
 	
@@ -41,11 +41,12 @@ public class LibraryEntryTableModel extends AbstractTableModel {
 	@Override
 	public Class<?> getColumnClass(int columnIndex) {
 		switch (columnIndex) {
-			case 0: return Double.class;
-			case 1: return Byte.class;
-			case 2: return String.class;
-			case 3: return Float.class;
+			case 0: return Integer.class;
+			case 1: return Double.class;
+			case 2: return Byte.class;
+			case 3: return String.class;
 			case 4: return Float.class;
+			case 5: return Float.class;
 		}
 		return Object.class;
 	}
@@ -55,11 +56,12 @@ public class LibraryEntryTableModel extends AbstractTableModel {
 		LibraryEntry entry=getSelectedRow(rowIndex);
 		
 		switch (columnIndex) {
-			case 0: return entry.getPrecursorMZ();
-			case 1: return entry.getPrecursorCharge();
-			case 2: return entry.getPeptideModSeq();
-			case 3: return entry.getRetentionTime();
-			case 4: return entry.getScore();
+			case 0: return rowIndex;
+			case 1: return entry.getPrecursorMZ();
+			case 2: return entry.getPrecursorCharge();
+			case 3: return entry.getPeptideModSeq();
+			case 4: return entry.getRetentionTime();
+			case 5: return entry.getScore();
 		}
 		return null;
 	}

@@ -128,7 +128,9 @@ public class MzmlToDIAConverter {
 					float averageDutyCycle=General.mean(deltas);
 					dutyCycleMap.put(range, averageDutyCycle);
 				}
-				stripeFile.setRanges(dutyCycleMap);
+				if (!parameters.isDDA()) {
+					stripeFile.setRanges(dutyCycleMap);
+				}
 
 				stripeFile.saveAsFile(diaFile);
 				stripeFile.close();
@@ -148,6 +150,7 @@ public class MzmlToDIAConverter {
 		} catch (IOException ioe) {
 			throw new EncyclopediaException("DIA writing IO error!", ioe);
 		} catch (SQLException sqle) {
+			sqle.printStackTrace();
 			throw new EncyclopediaException("DIA writing SQL error!", sqle);
 		}
 	}

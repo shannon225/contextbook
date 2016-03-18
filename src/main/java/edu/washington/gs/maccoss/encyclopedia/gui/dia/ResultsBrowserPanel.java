@@ -107,7 +107,15 @@ public class ResultsBrowserPanel extends JPanel {
 		options.add(rawFileChooser);
 		
 		model=new LibraryEntryTableModel();
-		table=new JTable(model);
+		table=new JTable(model) {
+			private static final long serialVersionUID=1L;
+
+			@Override
+			public Object getValueAt(int row, int column) {
+				if (column==0) return row+1;
+				return super.getValueAt(row, column);
+			}
+		};
 		table.setAutoCreateRowSorter(true);
 		
 		JPanel left=new JPanel(new BorderLayout());

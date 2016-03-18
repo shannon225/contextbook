@@ -50,9 +50,30 @@ public class CachedStripeFile implements StripeFileInterface {
 	}
 
 	@Override
-	public ArrayList<Stripe> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException, DataFormatException {
+	public ArrayList<Stripe> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
 		for (Entry<Range, ArrayList<Stripe>> entry : stripes.entrySet()) {
 			if (entry.getKey().contains((float)targetMz)) {
+				ArrayList<Stripe> subset=new ArrayList<Stripe>();
+				for (Stripe scan : entry.getValue()) {
+					if (scan.getScanStartTime()>=minRT&&scan.getScanStartTime()<=maxRT) {
+						if (sqrt) {
+							subset.add(scan.sqrt());
+						} else {
+							subset.add(scan);
+						}
+					}
+				}
+				return subset;
+			}
+		}
+		
+		return new ArrayList<Stripe>();
+	}
+	
+	@Override
+	public ArrayList<Stripe> getStripes(Range targetMzRange, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
+		for (Entry<Range, ArrayList<Stripe>> entry : stripes.entrySet()) {
+			if (targetMzRange.contains(entry.getKey().getMiddle())) {
 				ArrayList<Stripe> subset=new ArrayList<Stripe>();
 				for (Stripe scan : entry.getValue()) {
 					if (scan.getScanStartTime()>=minRT&&scan.getScanStartTime()<=maxRT) {

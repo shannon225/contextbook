@@ -12,6 +12,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.jfree.chart.ChartPanel;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -24,11 +26,7 @@ import gnu.trove.list.array.TFloatArrayList;
 
 public class PecanFeatureReaderTest {
 	public static void main(String[] args) {
-		File featureFile=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/110415_bcs_hela_phospho_igf1_6mz_980_1140.mzML.pecan.txt.features.txt");
-		featureFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML.pecan.txt.features.txt");
-		featureFile=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/concatenated_features.txt");
-		//featureFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/yeast/Q_2014_0523_12_0_amol_uL_20mz.mzML.pecan.txt.features.txt");
-		//featureFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/momo/20150301_A1_DIA_1.mzML.pecan.txt.features.txt");
+		File featureFile=FileChooserPanel.getFiles(null, "Feature text files", new SimpleFilenameFilter("features.txt"), null)[0];
 		
 		final HashMap<String, TFloatArrayList> targetData=new HashMap<String, TFloatArrayList>();
 		final HashMap<String, TFloatArrayList> decoyData=new HashMap<String, TFloatArrayList>();

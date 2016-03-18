@@ -15,7 +15,7 @@ public class SearchParameters {
 	protected final DigestionEnzyme enzyme;
 	protected final float percolatorThreshold;
 	protected final File percolatorLocation;
-	protected final boolean deconvoluteOverlappingWindows;
+	protected final DataAcquisitionType dataAcquisitionType;
 	protected final int numberOfThreadsUsed;	
 	protected final float targetWindowCenter;
 	protected final float expectedPeakWidth;
@@ -23,7 +23,7 @@ public class SearchParameters {
 	protected final float precursorWindowSize;
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme,
-			float percolatorThreshold, File percolatorLocation, boolean deconvoluteOverlappingWindows, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, boolean runPhosphoLocalization) {
+			float percolatorThreshold, File percolatorLocation, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, boolean runPhosphoLocalization) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -31,7 +31,7 @@ public class SearchParameters {
 		this.enzyme=enzyme;
 		this.percolatorThreshold=percolatorThreshold;
 		this.percolatorLocation=percolatorLocation;
-		this.deconvoluteOverlappingWindows=deconvoluteOverlappingWindows;
+		this.dataAcquisitionType=dataAcquisitionType;
 		this.numberOfThreadsUsed=numberOfThreadsUsed;
 		this.expectedPeakWidth=expectedPeakWidth;
 		this.targetWindowCenter=targetWindowCenter;
@@ -47,7 +47,7 @@ public class SearchParameters {
 		sb.append(" -enzyme "+enzyme.getName()+"\n");
 		sb.append(" -percolatorThreshold "+percolatorThreshold+"\n");
 		sb.append(" -percolatorLocation "+percolatorLocation+"\n");
-		sb.append(" -deconvoluteOverlappingWindows "+deconvoluteOverlappingWindows+"\n");
+		sb.append(" -deconvoluteOverlappingWindows "+DataAcquisitionType.toString(dataAcquisitionType)+"\n");
 		sb.append(" -numberOfThreadsUsed "+numberOfThreadsUsed+"\n");
 		sb.append(" -expectedPeakWidth "+expectedPeakWidth+"\n");
 		sb.append(" -precursorWindowSize "+precursorWindowSize+"\n");
@@ -87,8 +87,13 @@ public class SearchParameters {
 	}
 
 	public boolean isDeconvoluteOverlappingWindows() {
-		return deconvoluteOverlappingWindows;
+		return dataAcquisitionType==DataAcquisitionType.OVERLAPPING_DIA;
 	}
+	
+	public boolean isDDA() {
+		return dataAcquisitionType==DataAcquisitionType.DDA;
+	}
+	
 	public int getNumberOfThreadsUsed() {
 		return numberOfThreadsUsed;
 	}

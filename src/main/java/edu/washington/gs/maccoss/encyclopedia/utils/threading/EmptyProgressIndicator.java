@@ -21,6 +21,13 @@ public class EmptyProgressIndicator implements ProgressIndicator {
 	}
 	
 	@Override
+	public void update(String message) {
+		if (print) {
+			System.out.println(((int)(totalProgress*100))+"%\t"+message);
+		}
+	}
+	
+	@Override
 	public float getTotalProgress() {
 		return totalProgress;
 	}

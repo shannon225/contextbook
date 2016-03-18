@@ -123,8 +123,7 @@ public class PeptideQuantExtractor {
 			float baseProgress=(1.0f+rangesFinished)/numberOfTasks;
 			progress.update(baseMessage, baseProgress);
 
-			float dutyCycle=stripefile.getRanges().get(range);
-			Logger.logLine("Processing "+range+" ("+dutyCycle+")");
+			Logger.logLine("Processing "+range);
 
 			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 			Collections.sort(stripes);

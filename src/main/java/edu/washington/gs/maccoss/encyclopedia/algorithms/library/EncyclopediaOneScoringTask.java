@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
@@ -13,7 +14,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
+import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 
 public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
@@ -42,11 +45,16 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 			
 			float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
 
+			TFloatFloatHashMap map=new TFloatFloatHashMap();
 			ArrayList<ScoredIndex> goodStripes=new ArrayList<ScoredIndex>();
 			for (int i=0; i<averagePrimary.length; i++) {
 				goodStripes.add(new ScoredIndex(primary[i], i));
+				map.put(i, primary[i]);
 			}
 			Collections.sort(goodStripes);
+
+			
+			EValueCalculator calculator=new EValueCalculator(map);
 
 			TIntHashSet takenScans=new TIntHashSet();
 			int identifiedPeaks=0;
@@ -59,7 +67,11 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 				} else {
 					Stripe stripe=super.stripes.get(index);
 					float[] auxScoreArray=scorer.auxScore(entry, stripe, predictedIsotopeDistribution, precursors);
-					result.addStripe(score, auxScoreArray, stripe);
+					float evalue=calculator.getNegLog10EValue(score);
+					if (Float.isNaN(evalue)) {
+						evalue=-1.0f;
+					}
+					result.addStripe(score, General.concatenate(auxScoreArray, evalue), stripe);
 					
 					// block out a 40 scan window
 					int lowerWindow=index-2*movingAverageLength;
