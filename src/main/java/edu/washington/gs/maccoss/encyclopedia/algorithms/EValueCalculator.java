@@ -37,7 +37,9 @@ public class EValueCalculator {
 		scoreMap.forEachEntry(new TFloatFloatProcedure() {
 			public boolean execute(float arg0, float arg1) {
 				int index=getIndex(arg1);
-				counts[index]++;
+				if (index>=0) {
+					counts[index]++;
+				}
 				return true;
 			}
 		});
@@ -94,7 +96,8 @@ public class EValueCalculator {
 			index=counts.length-1;
 		}
 		if (index<0) {
-			throw new EncyclopediaException("No score bins available for scoring system! Empty library spectrum?");
+			return -1;
+			//throw new EncyclopediaException("No score bins available for scoring system! Empty library spectrum?");
 		}
 		return index;
 	}

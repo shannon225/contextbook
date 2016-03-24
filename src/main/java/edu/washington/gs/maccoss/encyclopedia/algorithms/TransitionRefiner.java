@@ -170,6 +170,7 @@ public class TransitionRefiner {
 
 			HashMap<String, ChartPanel> panels=new HashMap<String, ChartPanel>();
 			panels.put("unnormalized", getChart(chromatograms, correlationArray, start, stop, null));
+			panels.put("unnormalized_uncolored", getChart(chromatograms, new float[correlationArray.length], start, stop, null));
 			panels.put("normalized", getChart(normalizedChromatograms, correlationArray, start, stop, null));
 			panels.put("median", Charter.getChart("scan", "intensity", false, toXYTrace(medianChromatogram, null, "median", null, null), start, stop));
 			Charter.launchCharts(peptideModSeq+" chart", panels);
