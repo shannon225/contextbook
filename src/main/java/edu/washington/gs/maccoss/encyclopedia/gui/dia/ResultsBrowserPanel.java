@@ -184,6 +184,11 @@ public class ResultsBrowserPanel extends JPanel {
 		if (locationRaw<=5) {
 			locationRaw=400;
 		}
+		int locationPP=peakPickingSplit.getDividerLocation();
+		System.out.println("locationPP:"+locationPP);
+		if (locationPP<=5) {
+			locationPP=400;
+		}
 		
 		if (entry==null) {
 			dataSplit.setTopComponent(new JLabel("Select a peptide!"));
@@ -224,6 +229,7 @@ public class ResultsBrowserPanel extends JPanel {
 					peakPickingSplit.setLeftComponent(panels.get("median"));
 					peakPickingSplit.setRightComponent(panels.get("unnormalized"));
 					rawSplit.setBottomComponent(peakPickingSplit);
+					peakPickingSplit.setDividerLocation(locationPP);
 				} else {
 					rawSplit.setBottomComponent(new JLabel("No quant data?"));
 				}
