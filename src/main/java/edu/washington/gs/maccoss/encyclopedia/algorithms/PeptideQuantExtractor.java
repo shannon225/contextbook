@@ -37,7 +37,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class PeptideQuantExtractor {
-	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, File f, ArrayList<ScoredObject<String>> globalPassingPSMIDs, ArrayList<ScoredObject<String>> localPassingPSMIDs, StripeFileInterface stripeFile, Optional<LibraryInterface> library, final SearchParameters parameters) {
+	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, File f, boolean limitToQuantifiable, ArrayList<ScoredObject<String>> globalPassingPSMIDs, ArrayList<ScoredObject<String>> localPassingPSMIDs, StripeFileInterface stripeFile, Optional<LibraryInterface> library, final SearchParameters parameters) {
 		HashSet<String> passingPeptideSequences=new HashSet<String>();
 		for (ScoredObject<String> psm : globalPassingPSMIDs) {
 			String peptideModSeq=PecanScoringResultsToTSVConsumer.getPeptideSequence(psm.y);
@@ -80,7 +80,7 @@ public class PeptideQuantExtractor {
 		TableParser.parseTSV(f, muscle);
 
 		try {
-			return extractPeptides(progress, library, stripeFile, data, parameters);
+			return extractPeptides(progress, library, stripeFile, data, limitToQuantifiable, parameters);
 		} catch (IOException ioe) {
 			Logger.errorLine("Error processing "+stripeFile.getFile().getName());
 			throw new EncyclopediaException("Error parsing Stripe file", ioe);
@@ -96,7 +96,7 @@ public class PeptideQuantExtractor {
 		}
 	}
 	
-	public static ArrayList<IntegratedLibraryEntry> extractPeptides(ProgressIndicator progress, Optional<LibraryInterface> library, StripeFileInterface stripefile, ArrayList<PSMData> data, SearchParameters parameters) throws IOException, SQLException, DataFormatException, InterruptedException {
+	public static ArrayList<IntegratedLibraryEntry> extractPeptides(ProgressIndicator progress, Optional<LibraryInterface> library, StripeFileInterface stripefile, ArrayList<PSMData> data, boolean limitToQuantifiable, SearchParameters parameters) throws IOException, SQLException, DataFormatException, InterruptedException {
 		ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries=new ConcurrentLinkedQueue<IntegratedLibraryEntry>();
 		int cores=parameters.getNumberOfThreadsUsed();
 		
@@ -138,13 +138,13 @@ public class PeptideQuantExtractor {
 				for (LibraryEntry libraryEntry : entries) {
 					PSMData psm=peptideModSeqs.get(libraryEntry.getPeptideModSeq());
 					if (psm!=null&&range.contains((float)psm.getPrecursorMZ())) {
-						executor.submit(new PeptideQuantExtractorTask(psm, library, stripes, parameters, savedEntries));
+						executor.submit(new PeptideQuantExtractorTask(psm, library, stripes, parameters, savedEntries, limitToQuantifiable));
 					}
 				}
 			} else {
 				for (PSMData psm : data) {
 					if (range.contains((float)psm.getPrecursorMZ())) {
-						executor.submit(new PeptideQuantExtractorTask(psm, library, stripes, parameters, savedEntries));
+						executor.submit(new PeptideQuantExtractorTask(psm, library, stripes, parameters, savedEntries, limitToQuantifiable));
 					}
 				}
 			}

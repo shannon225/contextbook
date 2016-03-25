@@ -10,17 +10,17 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 
-public class SearchToBLIBJob extends SwingJob {
-	private final File blibFile;
+public class SearchToELIBJob extends SwingJob {
+	private final File elibFile;
 
-	public SearchToBLIBJob(File blibFile, JobProcessor processor) {
+	public SearchToELIBJob(File blibFile, JobProcessor processor) {
 		super(processor);
-		this.blibFile=blibFile;
+		this.elibFile=blibFile;
 	}
 	
 	@Override
 	public String getJobTitle() {
-		return "Write BLIB "+blibFile.getName();
+		return "Write Library "+elibFile.getName();
 	}
 
 	@Override
@@ -33,6 +33,6 @@ public class SearchToBLIBJob extends SwingJob {
 		}
 
 		LibraryInterface libraryTemplate=null;
-		SearchToBLIB.convert(getProgressIndicator(), jobData, blibFile, true, Optional.ofNullable(libraryTemplate));
+		SearchToBLIB.convert(getProgressIndicator(), jobData, elibFile, false, Optional.ofNullable(libraryTemplate));
 	}
 }

@@ -54,7 +54,7 @@ public class EncyclopediaToBLIBTest {
 		jobs.add(job5);
 		*/
 		
-		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, Optional.ofNullable((LibraryInterface)libraryTemplate));
+		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, true, Optional.ofNullable((LibraryInterface)libraryTemplate));
 	}
 
 	private static SearchJobData getData(SearchParameters parameters, String dia) {

@@ -132,8 +132,46 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		
+		JButton saveElib=new JButton("Save Library");
+		saveElib.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFrame frame = (JFrame)SwingUtilities.getRoot(SearchPanel.this);
+
+				Optional<String> maybeError=getVisibleTab().canLoadData();
+				if (maybeError.isPresent()) {
+					JOptionPane.showMessageDialog(frame, maybeError.get());
+				} else if (processorTableModel.getRowCount()==0) {
+					JOptionPane.showMessageDialog(frame, "Please queue some MZMLs first!");
+					
+				} else {
+					FileDialog dialog=new FileDialog(frame, "Save a ELIB file", FileDialog.SAVE);
+					dialog.setFilenameFilter(new SimpleFilenameFilter(".elib"));
+					dialog.setVisible(true);
+					if (dialog.getFiles()!=null&&dialog.getFiles().length>0) {
+						File elibFile=dialog.getFiles()[0];
+						String fileName=elibFile.getName();
+						if (!fileName.toLowerCase().endsWith(".elib")) {
+							elibFile=new File(elibFile.getParentFile(), fileName+".elib");
+
+							if (elibFile.exists()) {
+								// TODO ask if you want to overwrite this
+								// updated file location!
+							}
+						}
+
+						SearchToELIBJob job=new SearchToELIBJob(elibFile, processorTableModel);
+						if (job!=null) {
+							processorTableModel.addJob(job);
+						}
+					}
+				}
+			}
+		});
+		
 		JPanel buttonPanel=new JPanel(new FlowLayout());
 		buttonPanel.add(chooseFile);
+		buttonPanel.add(saveElib);
 		buttonPanel.add(saveBlib);
 		
 		files.add(new JLabel("<html><p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Jobs: "), BorderLayout.WEST);

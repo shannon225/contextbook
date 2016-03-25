@@ -222,7 +222,7 @@ public class ResultsBrowserPanel extends JPanel {
 				rawSplit.setTopComponent(chart);
 				
 				PSMData psmdata=new PSMData(entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), entry.getRetentionTime()*60f, entry.getScore(), 2*rtRange);
-				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(psmdata, Optional.ofNullable((LibraryInterface)null), stripes, parameters);
+				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(psmdata, Optional.ofNullable((LibraryInterface)null), stripes, parameters, false);
 				TransitionRefinementData data=quantTask.extractSpectrum(unit, 2*rtRange, false);
 				if (data!=null) {
 					HashMap<String, ChartPanel> panels=TransitionRefiner.getChartPanels(data);

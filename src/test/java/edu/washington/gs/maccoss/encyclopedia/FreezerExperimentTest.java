@@ -58,7 +58,7 @@ public class FreezerExperimentTest {
 				ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 				jobs.add(job);
 
-				SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, Optional.ofNullable((LibraryInterface)libraryTemplate));
+				SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, true, Optional.ofNullable((LibraryInterface)libraryTemplate));
 				
 				fileCount++;
 				long fileTime=System.currentTimeMillis()-currentTime;

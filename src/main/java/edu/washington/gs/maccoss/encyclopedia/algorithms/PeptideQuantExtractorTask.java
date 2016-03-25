@@ -38,7 +38,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	private final PSMData psmdata;
 	private final ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries; // CAN BE NULL
 
-	public PeptideQuantExtractorTask(PSMData psmdata, Optional<LibraryInterface> library, ArrayList<Stripe> stripes, SearchParameters parameters) {
+	public PeptideQuantExtractorTask(PSMData psmdata, Optional<LibraryInterface> library, ArrayList<Stripe> stripes, SearchParameters parameters, boolean limitToQuantifiable) {
 		this.psmdata=psmdata;
 		this.library=library;
 		this.stripes=stripes;
@@ -47,10 +47,10 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		params=parameters;
 		this.savedEntries=null;
 		
-		this.limitToQuantifiable=true; //library.isPresent();
+		this.limitToQuantifiable=limitToQuantifiable; //library.isPresent();
 	}
 
-	public PeptideQuantExtractorTask(PSMData psmdata, Optional<LibraryInterface> library, ArrayList<Stripe> stripes, SearchParameters parameters, ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries) {
+	public PeptideQuantExtractorTask(PSMData psmdata, Optional<LibraryInterface> library, ArrayList<Stripe> stripes, SearchParameters parameters, ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries, boolean limitToQuantifiable) {
 		this.psmdata=psmdata;
 		this.library=library;
 		this.stripes=stripes;
@@ -59,7 +59,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		params=parameters;
 		this.savedEntries=savedEntries;
 		
-		this.limitToQuantifiable=true; //library.isPresent();
+		this.limitToQuantifiable=limitToQuantifiable; //library.isPresent();
 	}
 	
 	public ArrayList<Stripe> getScanSubset(float minRT, float maxRT) {
@@ -256,7 +256,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		TFloatArrayList intens=new TFloatArrayList();
 		//int count=0;
 		//int quantCount=0;
-		float correlationThreshold=limitToQuantifiable?TransitionRefiner.quantitativeCorrelationThreshold:TransitionRefiner.identificationCorrelationThreshold;
+		float correlationThreshold=limitToQuantifiable?TransitionRefiner.quantitativeCorrelationThreshold:0.0f;//TransitionRefiner.identificationCorrelationThreshold;
 		for (int i=0; i<keptPeaks.size(); i++) {
 			PeakScores scores=keptPeaks.get(i);
 			if (correlations[i]>=correlationThreshold) {
@@ -267,11 +267,10 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 					intens.add(integrations[i]);
 					//count++;
 				}
-			} else {
-				mzs.add(scores.getTargetMass());
-				intens.add(Float.MIN_VALUE);
 			}
 		}
+		
+		if (mzs.size()==0) return null;
 
 		// System.out.println(peptideModSeq+"\t"+keptPeaks.size()+"\t"+count+"\t"+quantCount);
 

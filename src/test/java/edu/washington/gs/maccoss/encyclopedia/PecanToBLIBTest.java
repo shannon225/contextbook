@@ -47,7 +47,7 @@ public class PecanToBLIBTest {
 		jobs.add(job1);
 		
 		LibraryInterface libraryTemplate=null;
-		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, Optional.ofNullable(libraryTemplate));
+		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, true, Optional.ofNullable(libraryTemplate));
 		
 		System.out.println((System.currentTimeMillis()-time)/1000+" seconds");
 	}
