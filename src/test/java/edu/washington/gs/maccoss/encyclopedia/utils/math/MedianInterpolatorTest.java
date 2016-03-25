@@ -32,7 +32,7 @@ public class MedianInterpolatorTest extends TestCase {
 		
 		XYPoint previous=null;
 		for (XYPoint xyPoint : warper.getKnots()) {
-			assert(xyPoint.compareTo(previous)>0);
+			assert(xyPoint.compareTo(previous)>=0);
 			previous=xyPoint;
 		}
 	}

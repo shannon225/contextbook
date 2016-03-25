@@ -51,9 +51,9 @@ public class SearchPanel extends JPanel {
 
 		optionsTabs=new JTabbedPane();
 		if (!pecanpie) {
-			optionsTabs.addTab("Encyclopedia", EncyclopediaParametersPanel.image, new EncyclopediaParametersPanel(), "Encyclopedia Library Search");
+			optionsTabs.addTab("Encyclopedia", EncyclopediaParametersPanel.smallimage, new EncyclopediaParametersPanel(), "Encyclopedia Library Search");
 		}
-		optionsTabs.addTab("Pecan", PecanParametersPanel.image, new PecanParametersPanel(), "Pecan Peptide Search");
+		optionsTabs.addTab("Pecan", PecanParametersPanel.smallimage, new PecanParametersPanel(), "Pecan Peptide Search");
 		
 		LogConsole console=new LogConsole();
 		console.errorLine("Console:");

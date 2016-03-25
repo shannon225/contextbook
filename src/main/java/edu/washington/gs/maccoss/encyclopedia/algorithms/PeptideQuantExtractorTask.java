@@ -47,7 +47,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		params=parameters;
 		this.savedEntries=null;
 		
-		this.limitToQuantifiable=false;//true; //library.isPresent();
+		this.limitToQuantifiable=true; //library.isPresent();
 	}
 
 	public PeptideQuantExtractorTask(PSMData psmdata, Optional<LibraryInterface> library, ArrayList<Stripe> stripes, SearchParameters parameters, ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries) {
@@ -59,7 +59,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		params=parameters;
 		this.savedEntries=savedEntries;
 		
-		this.limitToQuantifiable=false;//true; //library.isPresent();
+		this.limitToQuantifiable=true; //library.isPresent();
 	}
 	
 	public ArrayList<Stripe> getScanSubset(float minRT, float maxRT) {
