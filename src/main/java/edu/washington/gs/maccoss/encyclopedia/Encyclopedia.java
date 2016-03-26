@@ -41,6 +41,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
@@ -129,9 +130,19 @@ public class Encyclopedia {
 	}
 
 	public static void runSearch(ProgressIndicator progress, EncyclopediaJobData job) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+		File outputFile=job.getOutputFile();
+		if (outputFile.exists()&&outputFile.canRead()) {
+			try {
+				ArrayList<ScoredObject<String>> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(outputFile, job.getParameters().getPercolatorThreshold());
+				progress.update("Previously found "+passingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+				return;
+			} catch (Exception e) {
+				// problem! so just continue on and overwrite old result
+			}
+		}
+		
 		File diaFile=job.getDiaFile();
 		File featureFile=job.getFeatureFile();
-		File outputFile=job.getOutputFile();
 		LibraryScoringFactory taskFactory=job.getTaskFactory();
 		
 		Logger.logLine("Converting files...");

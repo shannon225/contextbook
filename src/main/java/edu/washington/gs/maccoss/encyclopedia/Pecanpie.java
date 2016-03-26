@@ -42,6 +42,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
@@ -131,6 +132,17 @@ public class Pecanpie {
 		}
 	}
 	public static void runPie(ProgressIndicator progress, PecanJobData jobData) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+		File outputFile=jobData.getOutputFile();
+		if (outputFile.exists()&&outputFile.canRead()) {
+			try {
+				ArrayList<ScoredObject<String>> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(outputFile, jobData.getParameters().getPercolatorThreshold());
+				progress.update("Previously found "+passingPeptides.size()+" peptides identified at "+(jobData.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+				return;
+			} catch (Exception e) {
+				// problem! so just continue on and overwrite old result
+			}
+		}
+		
 		runPie(progress, jobData.getTargetList(), jobData.getDiaFile(), jobData.getFastaFile(), jobData.getFeatureFile(), jobData.getOutputFile(), jobData.getTaskFactory());
 	}
 		
