@@ -72,6 +72,7 @@ public class Encyclopedia {
 			Logger.logLine("\t-i\tinput .DIA or .MZML file");
 			Logger.logLine("\t-l\tlibrary .BLIB or .ELIB file");
 			Logger.logLine("Other Parameters: ");
+			Logger.logLine("\t-pecan\trun Pecanpie (use -pecan -h for Pecan help)");
 			Logger.logLine("\t-irtdb\tlibrary .IRTDB file");
 			Logger.logLine("\t-o\toutput report file (default: [input file].pecan.txt)");
 			
