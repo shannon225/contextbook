@@ -50,7 +50,7 @@ public class DIABrowser {
 				f.getContentPane().add(new ResultsBrowserPanel(), BorderLayout.CENTER);
 
 				f.pack();
-				f.setSize(new Dimension(2000, 1200));
+				f.setSize(new Dimension(1900, 1030)); // for 1920x1080
 				f.setVisible(true);
 			}
 		});

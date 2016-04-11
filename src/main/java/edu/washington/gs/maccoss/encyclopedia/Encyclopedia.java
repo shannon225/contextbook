@@ -62,6 +62,9 @@ public class Encyclopedia {
 		if (arguments.size()==0) {
 			SearchGUIMain.runGUI(false);
 			
+		} else if (arguments.containsKey("-browser")) {
+			DIABrowser.main(args);
+			
 		} else if (arguments.containsKey("-pecan")) {
 			Pecanpie.main(args);
 			

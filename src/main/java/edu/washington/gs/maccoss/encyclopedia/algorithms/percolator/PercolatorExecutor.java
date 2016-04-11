@@ -89,6 +89,9 @@ public class PercolatorExecutor extends ExternalExecutor {
 					if (trim.startsWith("Error : ")) {
 						errorMessage=trim.substring(8);
 					}
+					if (trim.startsWith("bad allocation")) {
+						errorMessage=trim;
+					}
 				}
 			} else {
 				Thread.sleep(10);
