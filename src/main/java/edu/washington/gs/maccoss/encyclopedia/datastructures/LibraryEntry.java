@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
@@ -27,12 +28,14 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 	private final float score;
 	private final double[] massArray;
 	private final float[] intensityArray;
+	private final HashSet<String> accessions;
 
-	public LibraryEntry(double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray) {
-		this(1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray);
+	public LibraryEntry(HashSet<String> accessions, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray) {
+		this(accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray);
 	}
 
-	public LibraryEntry(int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray) {
+	public LibraryEntry(HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray) {
+		this.accessions=new HashSet<String>(accessions);
 		this.spectrumIndex=spectrumIndex;
 		this.precursorMZ=precursorMZ;
 		this.precursorCharge=precursorCharge;
@@ -70,7 +73,7 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 				unit[i]=1.0f;
 			}
 		}
-		return new LibraryEntry(spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, unit);
+		return new LibraryEntry(accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, unit);
 	}
 	
 	public float getTIC() {
@@ -238,45 +241,11 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 		}
 		Collections.sort(reversedPeaks);
 		Pair<double[], float[]> arrays=Peak.toArrays(reversedPeaks);
-		return new ReverseLibraryEntry(precursorMZ, precursorCharge, reverseSequence, copies, retentionTime, score, arrays.x, arrays.y);	
-	}
-
-	public ReverseLibraryEntry getOldReverse(MassTolerance tolerance, AminoAcidConstants aaConstants) {
-		FragmentationModel model=new FragmentationModel(peptideModSeq, aaConstants);
-		double[] bs=model.getBIons();
-		double[] ys=model.getYIons();
 		
-		ArrayList<Peak> reversedPeaks=new ArrayList<Peak>();
-		for (int i = 0; i < massArray.length; i++) {
-			// check if b ion
-			Optional<Double> match = tolerance.getMatch(bs, massArray[i]);
-			if (match.isPresent()) {
-				// b+18.01057=reversed y
-				reversedPeaks.add(new Peak(match.get()+18.01057, intensityArray[i]));
-				continue;
-			}
-			
-			// check if y ion
-			match = tolerance.getMatch(ys, massArray[i]);
-			if (match.isPresent()) {
-				// y-18.01057=reversed b
-				reversedPeaks.add(new Peak(match.get()-18.01057, intensityArray[i]));
-				continue;
-			}
-			
-			// if not b or y, then keep as is
-			reversedPeaks.add(new Peak(massArray[i], intensityArray[i]));
+		HashSet<String> revAcc=new HashSet<String>();
+		for (String accession : accessions) {
+			revAcc.add("DECOY_"+accession);
 		}
-		
-		Collections.sort(reversedPeaks);
-		Pair<double[], float[]> arrays=Peak.toArrays(reversedPeaks);
-		
-		StringBuilder sb=new StringBuilder();
-		String[] aas=model.getAas();
-		for (int i = aas.length-1; i >=0; i--) {
-			sb.append(aas[i]);
-		}
-
-		return new ReverseLibraryEntry(precursorMZ, precursorCharge, sb.toString(), copies, retentionTime, score, arrays.x, arrays.y);	
+		return new ReverseLibraryEntry(revAcc, precursorMZ, precursorCharge, reverseSequence, copies, retentionTime, score, arrays.x, arrays.y);	
 	}
 }

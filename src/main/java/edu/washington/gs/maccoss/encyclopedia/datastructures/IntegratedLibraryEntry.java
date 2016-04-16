@@ -1,12 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import java.util.HashSet;
 
 public class IntegratedLibraryEntry extends LibraryEntry {
 	private final Range rtRange;
 	
-	public IntegratedLibraryEntry(int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray,
+	public IntegratedLibraryEntry(HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray,
 			float[] intensityArray, Range rtRange) {
-		super(spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray);
+		super(accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray);
 		this.rtRange=rtRange;
 	}
 	

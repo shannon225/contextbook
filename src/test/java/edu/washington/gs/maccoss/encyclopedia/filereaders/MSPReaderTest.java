@@ -27,6 +27,8 @@ public class MSPReaderTest extends TestCase {
 		strings=MSPReader.split(str);
 		assertEquals(32, strings.size());
 		
+		assertEquals("sp|P55011|S12A2_HUMAN Solute carrier family 12 member 2 [Homo sapiens]", strings.get("Protein"));
+		
 	}
 
 	public void testFastaReader() {

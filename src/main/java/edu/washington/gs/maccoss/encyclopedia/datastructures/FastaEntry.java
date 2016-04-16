@@ -1,12 +1,11 @@
-package edu.washington.gs.maccoss.encyclopedia.filereaders;
+package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import gnu.trove.map.hash.TIntIntHashMap;
 
-public class FastaEntry implements Comparable<FastaEntry> {
+public class FastaEntry implements FastaEntryInterface {
 	private final String filename;
 	private final String annotation;
 	private final String sequence;
-
 
 	public FastaEntry(String sequence) {
 		this("Unknown File", "Unknown Annotation", sequence);
@@ -17,6 +16,10 @@ public class FastaEntry implements Comparable<FastaEntry> {
 		this.sequence=sequence;
 	}
 	
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntryInterface#getAccession()
+	 */
+	@Override
 	public String getAccession() {
 		int start=annotation.charAt(0)=='>'?1:0;
 		int stop=annotation.indexOf(' ');
@@ -26,22 +29,35 @@ public class FastaEntry implements Comparable<FastaEntry> {
 		return annotation.substring(start, stop);
 	}
 
-	public String getAnnotation() {
-		return annotation;
-	}
-
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntryInterface#getFilename()
+	 */
+	@Override
 	public String getFilename() {
 		return filename;
 	}
 
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntryInterface#getSequence()
+	 */
+	@Override
 	public String getSequence() {
 		return sequence;
 	}
-	
-	public FastaEntry getSubEntry(String subSequence) {
-		return new FastaEntry(filename, annotation, subSequence);
+
+	@Override
+	public FastaPeptideEntry getSubEntry(String subSequence) {
+		return new FastaPeptideEntry(filename, getAccession(), subSequence);
 	}
 	
+	public FastaPeptideEntry getEntryAsPeptide() {
+		return new FastaPeptideEntry(filename, getAccession(), sequence);
+	}
+	
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntryInterface#addStatistics(gnu.trove.map.hash.TIntIntHashMap)
+	 */
+	@Override
 	public void addStatistics(TIntIntHashMap map) {
 		getStatistics(sequence, map);
 	}
@@ -66,14 +82,14 @@ public class FastaEntry implements Comparable<FastaEntry> {
 		return compareTo((FastaEntry)obj)==0;
 	}
 	@Override
-	public int compareTo(FastaEntry o) {
+	public int compareTo(FastaEntryInterface o) {
 		if (o==null) return 1;
 		
-		int c=annotation.compareTo(o.annotation);
+		int c=getAccession().compareTo(o.getAccession());
 		if (c!=0) return c;
-		c=filename.compareTo(o.filename);
+		c=filename.compareTo(o.getFilename());
 		if (c!=0) return c;
-		c=sequence.compareTo(o.sequence);
+		c=sequence.compareTo(o.getSequence());
 		
 		return c;
 		

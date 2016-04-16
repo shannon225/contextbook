@@ -1,23 +1,24 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 
 //@Immutable
 public class PecanLibraryEntry extends LibraryEntry {
-	private final String accession;
+	private final FastaPeptideEntry entry;
 	private final float euclidianDistance;
 	private final boolean isDecoy;
 
-	public PecanLibraryEntry(String accession, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, boolean isDecoy,
+	public PecanLibraryEntry(FastaPeptideEntry entry, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, boolean isDecoy,
 			float euclidianDistance) {
-		super(precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray);
-		this.accession=accession;
+		super(entry.getAccessions(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray);
+		this.entry=entry;
 		this.isDecoy=isDecoy;
 		this.euclidianDistance=euclidianDistance;
 	}
 	
 	public String getAccession() {
-		return accession;
+		return entry.getAccession();
 	}
 
 	@Override

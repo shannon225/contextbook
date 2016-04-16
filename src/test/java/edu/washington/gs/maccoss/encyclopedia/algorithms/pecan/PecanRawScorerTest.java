@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
+import java.util.HashSet;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -22,7 +24,7 @@ public class PecanRawScorerTest extends TestCase {
 	}
 	
 	public LibraryEntry getEntry(double[] masses, float[] intensities) {
-		return new LibraryEntry(1, (byte)1, "", 1, 1, 1, masses, intensities);
+		return new LibraryEntry(new HashSet<String>(), 1, (byte)1, "", 1, 1, 1, masses, intensities);
 	}
 	public Stripe getStripe(double[] masses, float[] intensities) {
 		return new Stripe("", "", 1, 1, 1, 1, masses, intensities);

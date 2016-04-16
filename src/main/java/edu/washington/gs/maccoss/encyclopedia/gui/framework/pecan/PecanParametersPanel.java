@@ -27,8 +27,9 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFacto
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
@@ -147,16 +148,16 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		File outputFile=new File(diaFile.getAbsolutePath()+".pecan.txt");
 		File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
 		
-		ArrayList<FastaEntry> targets=null;
+		ArrayList<FastaPeptideEntry> targets=null;
 		if (targetFile!=null&&!targetFile.equals(fastaFile)) {
 			Logger.logLine("Reading targets from ["+targetFile.getName()+"]");
-			targets=new ArrayList<FastaEntry>();
+			targets=new ArrayList<FastaPeptideEntry>();
 			
-			ArrayList<FastaEntry> targetProteins=FastaReader.readFasta(targetFile);
-			for (FastaEntry entry : targetProteins) {
+			ArrayList<FastaEntryInterface> targetProteins=FastaReader.readFasta(targetFile);
+			for (FastaEntryInterface entry : targetProteins) {
 				ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages());
 				for (String peptide : peptides) {
-					FastaEntry pe=entry.getSubEntry(peptide);
+					FastaPeptideEntry pe=entry.getSubEntry(peptide);
 					targets.add(pe);
 				}
 			}

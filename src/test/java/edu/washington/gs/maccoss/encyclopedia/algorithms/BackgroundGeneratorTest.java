@@ -8,9 +8,10 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanLibraryEntry
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -23,7 +24,7 @@ public class BackgroundGeneratorTest extends TestCase {
 
 	public void testGenerateBackground() {
 		InputStream is=getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
-		ArrayList<FastaEntry> entries=FastaReader.readFasta(is, "contam_correctNL.fasta");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(is, "contam_correctNL.fasta");
 		TDoubleArrayList bins=new TDoubleArrayList();
 		for (double i=400.0; i<=900.0; i+=5.0) {
 			bins.add(i);
@@ -50,7 +51,7 @@ public class BackgroundGeneratorTest extends TestCase {
 		double[] keys=binCounters[index].keys();
 		Arrays.sort(keys);
 
-		PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaEntry(peptide), PARAMETERS.getAAConstants());
+		PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaPeptideEntry(peptide), PARAMETERS.getAAConstants());
 		double[] ions=model.getPrimaryIons(PARAMETERS.getFragType(), charge);
 		int[] expectedCounts=new int[] {184, 356, 33, 24, 8, 19, 10, 16, 11, 15, 7, 10, 4, 8, 6, 9, 16, 17};
 		for (int i=0; i<ions.length; i++) {
@@ -77,7 +78,7 @@ public class BackgroundGeneratorTest extends TestCase {
 		keys=binCounters[index].keys();
 		Arrays.sort(keys);
 
-		model=new PecanOneFragmentationModel(new FastaEntry(peptide), PARAMETERS.getAAConstants());
+		model=new PecanOneFragmentationModel(new FastaPeptideEntry(peptide), PARAMETERS.getAAConstants());
 		ions=model.getPrimaryIons(PARAMETERS.getFragType(), charge);
 		expectedCounts=new int[] {392, 41, 5, 62, 6, 5, 10, 5, 12, 18, 8, 10, 7, 14, 37, 8, 15, 22, 29, 32};
 		for (int i=0; i<ions.length; i++) {

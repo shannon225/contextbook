@@ -6,7 +6,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import gnu.trove.map.hash.TDoubleIntHashMap;
 import junit.framework.TestCase;
@@ -900,7 +899,7 @@ public class FragmentationModelTest extends TestCase {
 		Arrays.sort(keys);
 
 		String peptide="ILQEGVDPK";
-		PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaEntry(peptide), PARAMETERS.getAAConstants());
+		PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaPeptideEntry(peptide), PARAMETERS.getAAConstants());
 		PecanLibraryEntry entry=model.getPecanSpectrum((byte)2, keys, map, new Range(0f, 200000f), PARAMETERS, false);
 		return entry;
 	}

@@ -9,8 +9,8 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
@@ -24,7 +24,7 @@ public class PecanToBLIBTest {
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(defaultParameters);
 		File fastaFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/UP000005640_9606.fasta");
 		File blibFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/slow_test_hela_6mz.blib");
-		ArrayList<FastaEntry> targets=null;
+		ArrayList<FastaPeptideEntry> targets=null;
 		
 		/*SearchJobData job1=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_400_500.mzML");
 		SearchJobData job2=getData(parameters, fastaFile, targets, "/Users/searleb/Documents/projects/encyclopedia/mzml/121015_BCS_HeLa_6mz_500_600.mzML");
@@ -52,7 +52,7 @@ public class PecanToBLIBTest {
 		System.out.println((System.currentTimeMillis()-time)/1000+" seconds");
 	}
 
-	private static SearchJobData getData(PecanSearchParameters parameters, File fastaFile, ArrayList<FastaEntry> targets, String dia) {
+	private static SearchJobData getData(PecanSearchParameters parameters, File fastaFile, ArrayList<FastaPeptideEntry> targets, String dia) {
 		File diaFile1=new File(dia);
 		File outputFile1=new File(diaFile1.getAbsolutePath()+".percolator.txt");
 		File featureFile1=new File(outputFile1.getAbsolutePath()+".features.txt");

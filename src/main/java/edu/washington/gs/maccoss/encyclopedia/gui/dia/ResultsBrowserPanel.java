@@ -30,6 +30,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementDat
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
@@ -38,7 +39,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -199,7 +199,7 @@ public class ResultsBrowserPanel extends JPanel {
 			dataSplit.setBottomComponent(Charter.getChart(entry));
 		} else {
 			Logger.logLine("Parsing peptide...");
-			PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaEntry(entry.getPeptideModSeq()), parameters.getAAConstants());
+			PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaPeptideEntry(entry.getPeptideModSeq()), parameters.getAAConstants());
 			ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
 			LibraryEntry unit=model.getUnitSpectrum((byte)entry.getPrecursorCharge(), entry.getRetentionTime()*60f, parameters, 200.0);
 			entries.add(unit);

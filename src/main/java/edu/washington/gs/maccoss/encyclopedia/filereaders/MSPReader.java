@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.StringTokenizer;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -79,6 +80,7 @@ public class MSPReader {
 		try {
 			
 			String peptideModSeq=null;
+			String accession=null;
 			byte precursorCharge=0;
 			double precursorMZ=0.0;
 			float retentionTime=0.0f;
@@ -92,7 +94,9 @@ public class MSPReader {
 				if (eachline.startsWith("Name: ")) {
 					if (peaks.size()>0) {
 						Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
-						LibraryEntry entry=new LibraryEntry(precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y);
+						HashSet<String> accessions=new HashSet<String>();
+						accessions.add(accession);
+						LibraryEntry entry=new LibraryEntry(accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y);
 						entryList.add(entry);
 						peaks.clear();
 					}
@@ -110,6 +114,14 @@ public class MSPReader {
 					HashMap<String, String> map=split(eachline);
 					precursorMZ=Double.parseDouble(map.get("Parent"));
 					score=1.0f-Float.parseFloat(map.get("Unassigned"));
+					
+					accession=map.get("Protein");
+					if (accession!=null) {
+						int stop=accession.indexOf(' ');
+						if (stop>0) {
+							accession=accession.substring(0, stop);
+						}
+					}
 					
 					String fullName=map.get("Fullname");
 					String sequence=fullName.substring(fullName.indexOf('.')+1, fullName.lastIndexOf('.'));
@@ -157,7 +169,9 @@ public class MSPReader {
 			}
 			if (peaks.size()>0) {
 				Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
-				LibraryEntry entry=new LibraryEntry(precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y);
+				HashSet<String> accessions=new HashSet<String>();
+				accessions.add(accession);
+				LibraryEntry entry=new LibraryEntry(accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y);
 				entryList.add(entry);
 			}
 			return entryList;

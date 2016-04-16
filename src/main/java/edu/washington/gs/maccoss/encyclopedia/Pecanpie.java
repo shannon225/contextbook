@@ -34,11 +34,13 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFa
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
@@ -109,9 +111,9 @@ public class Pecanpie {
 			PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
 			Logger.logLine("Pecanpie version "+factory.getVersion());
 
-			ArrayList<FastaEntry> targets;
+			ArrayList<FastaPeptideEntry> targets;
 			if (arguments.containsKey("-t")) {
-				targets=FastaReader.readFasta(new File(arguments.get("-t")));
+				targets=FastaReader.readPeptideFasta(new File(arguments.get("-t")));
 			} else {
 				targets=null;
 			}
@@ -146,7 +148,7 @@ public class Pecanpie {
 		runPie(progress, jobData.getTargetList(), jobData.getDiaFile(), jobData.getFastaFile(), jobData.getFeatureFile(), jobData.getOutputFile(), jobData.getTaskFactory());
 	}
 		
-	static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaEntry>> targetList, File diaFile, File fastaFile, File featureFile, File outputFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+	static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, File featureFile, File outputFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		long startTime=System.currentTimeMillis();
 		PSMScorer backgroundScorer=taskFactory.getBackgroundScorer();
 		PSMScorer pecanScorer=taskFactory.getPecanScorer();
@@ -162,13 +164,13 @@ public class Pecanpie {
 		Logger.logLine("Processing precursors scans...");
 		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
 
-		HashSet<FastaEntry> targets=new HashSet<FastaEntry>();
+		PeptideDatabase targets=new PeptideDatabase();
 		HashSet<String> backgroundProteome=new HashSet<String>();
 
 		// pecan generates backgrounds using unique fasta peptides, target/decoy sequences, and 2000 random decoys for each window
 		// add targets to proteome
 		if (targetList.isPresent()) {
-			for (FastaEntry target : targetList.get()) {
+			for (FastaPeptideEntry target : targetList.get()) {
 				targets.add(target);
 				backgroundProteome.add(target.getSequence());
 			}
@@ -176,15 +178,15 @@ public class Pecanpie {
 
 		Logger.logLine("Reading FASTA peptides...");
 		// add database to proteome
-		ArrayList<FastaEntry> entries=FastaReader.readFasta(fastaFile);
-		for (FastaEntry entry : entries) {
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(fastaFile);
+		for (FastaEntryInterface entry : entries) {
 			ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages());
 			backgroundProteome.addAll(peptides);
 
 			if (!targetList.isPresent()) {
 				// search all peptides in database
 				for (String peptide : peptides) {
-					FastaEntry pe=entry.getSubEntry(peptide);
+					FastaPeptideEntry pe=entry.getSubEntry(peptide);
 					targets.add(pe);
 				}
 			}
@@ -265,7 +267,7 @@ public class Pecanpie {
 					if (range.contains((float)mz)) {
 						count++;
 						String random=PeptideUtils.getDecoy(peptide, backgroundProteomeSet, parameters);
-						AbstractPecanFragmentationModel randmodel=taskFactory.getFragmentationModel(new FastaEntry(random), parameters.getAAConstants());
+						AbstractPecanFragmentationModel randmodel=taskFactory.getFragmentationModel(new FastaPeptideEntry(random), parameters.getAAConstants());
 						PecanLibraryEntry randentry=randmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
 
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
@@ -322,7 +324,7 @@ public class Pecanpie {
 			//Charter.launchChart("RT ("+range+" M/Z)", "Fragment Intensity", true, new XYTrace(means, GraphType.line, "Background"));
 
 			count=0;
-			for (FastaEntry peptide : targets) {
+			for (FastaPeptideEntry peptide : targets) {
 				String sequence=peptide.getSequence();
 				for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
 					double mz=parameters.getAAConstants().getChargedMass(sequence, charge);
@@ -336,7 +338,7 @@ public class Pecanpie {
 						
 						if (!parameters.isDontRunDecoys()) {
 							String smartDecoy=PeptideUtils.getSmartDecoy(sequence, charge, backgroundProteomeSet, parameters);
-							FastaEntry decoyPeptide=new FastaEntry(peptide.getFilename(), ">DECOY_"+peptide.getAccession(), smartDecoy);
+							FastaPeptideEntry decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), ">DECOY_"+peptide.getAccession(), smartDecoy);
 							AbstractPecanFragmentationModel revmodel=taskFactory.getFragmentationModel(decoyPeptide, parameters.getAAConstants());
 							PecanLibraryEntry reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
 							tasks.add(reventry);
@@ -370,10 +372,10 @@ public class Pecanpie {
 		progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 	}
 
-	public static boolean arePeptidesInRange(HashSet<FastaEntry> targets, Range range, PecanSearchParameters parameters) {
+	public static boolean arePeptidesInRange(PeptideDatabase targets, Range range, PecanSearchParameters parameters) {
 		// first check to see if we need to process this stripe
 		boolean hasPeptides=false;
-		outer:for (FastaEntry peptide : targets) {
+		outer:for (FastaEntryInterface peptide : targets) {
 			for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
 				double mz=parameters.getAAConstants().getChargedMass(peptide.getSequence(), charge);
 				if (range.contains((float)mz)) {

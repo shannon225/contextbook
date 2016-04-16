@@ -13,6 +13,7 @@ import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
@@ -108,7 +109,7 @@ public class BlibFile extends SQLFile {
 					}
 					total++;
 
-					entries.add(new LibraryEntry(precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));
+					entries.add(new LibraryEntry(new HashSet<String>(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));
 					
 					if (entries.size()>1000) {
 						library.addEntries(entries);

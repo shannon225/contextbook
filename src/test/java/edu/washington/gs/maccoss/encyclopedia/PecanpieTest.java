@@ -9,8 +9,8 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFa
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
@@ -24,8 +24,8 @@ public class PecanpieTest {
 		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
 		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
 		
-		ArrayList<FastaEntry> targets=new ArrayList<FastaEntry>();
-		targets.add(new FastaEntry("FILE", ">Protein", "IGHTVEREDTPAIR"));
+		ArrayList<FastaPeptideEntry> targets=new ArrayList<FastaPeptideEntry>();
+		targets.add(new FastaPeptideEntry("FILE", ">Protein", "IGHTVEREDTPAIR"));
 		targets=null;
 		
 		try {

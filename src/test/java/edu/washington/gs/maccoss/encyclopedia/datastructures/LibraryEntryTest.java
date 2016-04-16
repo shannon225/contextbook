@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import java.util.HashSet;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
@@ -17,7 +19,7 @@ public class LibraryEntryTest extends TestCase {
 				7f, 8f, 9f, 10f, 11f, 12f, 13f, 14f, 15f, 16f, 17f, 18f, 19f,
 				20f, 21f, 22f, 23f, 24f, 25f };
 		
-		LibraryEntry entry=new LibraryEntry(518.73841, (byte)2, "PEPT[+80]IDER", 1, 0.0f, 0.0f, massArray, intensityArray);
+		LibraryEntry entry=new LibraryEntry(new HashSet<String>(), 518.73841, (byte)2, "PEPT[+80]IDER", 1, 0.0f, 0.0f, massArray, intensityArray);
 		ReverseLibraryEntry reverse=entry.getReverse(PARAMETERS);
 		assertEquals("EDIT[+80.0]PEPR", reverse.getPeptideModSeq());
 		

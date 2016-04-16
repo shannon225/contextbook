@@ -6,8 +6,9 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
@@ -28,7 +29,7 @@ public class BackgroundGenerator {
 	 * @param params
 	 */
 
-	public static Triplet<TDoubleIntHashMap[], ArrayList<String>[], HashSet<String>[]> generateBackground(double[] binBoundaries, boolean[] useBin, Collection<FastaEntry> targets,
+	public static Triplet<TDoubleIntHashMap[], ArrayList<String>[], HashSet<String>[]> generateBackground(double[] binBoundaries, boolean[] useBin, PeptideDatabase targets,
 			HashSet<String> backgroundProteome, PecanSearchParameters parameters) {
 		@SuppressWarnings("unchecked")
 		HashSet<String>[] backgroundDecoys=new HashSet[binBoundaries.length];
@@ -55,7 +56,7 @@ public class BackgroundGenerator {
 
 		if (parameters.isAddDecoysToBackgound()) {
 			// add reverse targets to proteome
-			for (FastaEntry entry : targets) {
+			for (FastaEntryInterface entry : targets) {
 				for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
 					String decoy=PeptideUtils.getSmartDecoy(entry.getSequence(), charge, backgroundProteome, parameters);
 					backgroundProteome.add(decoy);
@@ -139,7 +140,7 @@ public class BackgroundGenerator {
 	 * @param fasta
 	 * @param params
 	 */
-	public static Pair<TDoubleIntHashMap[], ArrayList<String>[]> generateBackground(double[] binBoundaries, Collection<FastaEntry> entries, boolean digest, PecanSearchParameters params) {
+	public static Pair<TDoubleIntHashMap[], ArrayList<String>[]> generateBackground(double[] binBoundaries, Collection<FastaEntryInterface> entries, boolean digest, PecanSearchParameters params) {
 		@SuppressWarnings("unchecked")
 		HashSet<String>[] backgroundDecoys=new HashSet[binBoundaries.length];
 		boolean[] useBins=new boolean[binBoundaries.length];
@@ -149,7 +150,7 @@ public class BackgroundGenerator {
 		}
 
 		HashSet<String> sequences=new HashSet<String>();
-		for (FastaEntry entry : entries) {
+		for (FastaEntryInterface entry : entries) {
 			ArrayList<String> peptides;
 			if (digest) {
 				peptides=params.getEnzyme().digestProtein(entry.getSequence(), params.getMinPeptideLength(), params.getMaxPeptideLength(), params.getMaxMissedCleavages());

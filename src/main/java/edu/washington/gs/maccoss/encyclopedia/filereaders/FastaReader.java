@@ -10,12 +10,25 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class FastaReader {
-	public static ArrayList<FastaEntry> readFasta(File f) {
+	public static ArrayList<FastaPeptideEntry> readPeptideFasta(File f) {
+		ArrayList<FastaEntryInterface> fasta=readFasta(f);
+		
+		ArrayList<FastaPeptideEntry> peptides=new ArrayList<FastaPeptideEntry>();
+		for (FastaEntryInterface sequence : fasta) {
+			peptides.add(sequence.getEntryAsPeptide());
+		}
+		return peptides;
+	}
+	
+	public static ArrayList<FastaEntryInterface> readFasta(File f) {
 		BufferedReader in=null;
-		ArrayList<FastaEntry> entryList=new ArrayList<FastaEntry>();
+		ArrayList<FastaEntryInterface> entryList=new ArrayList<FastaEntryInterface>();
 		try {
 			in=new BufferedReader(new FileReader(f));
 			return readFasta(in, f.getName());
@@ -35,16 +48,16 @@ public class FastaReader {
 		}
 	}
 	
-	public static ArrayList<FastaEntry> readFasta(String s, String fileName) {
+	public static ArrayList<FastaEntryInterface> readFasta(String s, String fileName) {
 		return readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)))), fileName);
 	}
 	
-	public static ArrayList<FastaEntry> readFasta(InputStream s, String fileName) {
+	public static ArrayList<FastaEntryInterface> readFasta(InputStream s, String fileName) {
 		return readFasta(new BufferedReader(new InputStreamReader(s)), fileName);
 	}
 	
-	public static ArrayList<FastaEntry> readFasta(BufferedReader in, String fileName) {
-		ArrayList<FastaEntry> entryList=new ArrayList<FastaEntry>();
+	public static ArrayList<FastaEntryInterface> readFasta(BufferedReader in, String fileName) {
+		ArrayList<FastaEntryInterface> entryList=new ArrayList<FastaEntryInterface>();
 		try {
 			String eachline;
 			String annotation=null;

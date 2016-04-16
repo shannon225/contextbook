@@ -3,7 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import junit.framework.TestCase;
 
@@ -43,7 +43,7 @@ public class DigestionEnzymeTest extends TestCase {
 				+"QLGEYKFQNALLVRYTKKVPQVSTPTLVEVSRNLGKVGSKCCKHPEAKRMPCAEDYLSVV\n"+"LNQLCVLHEKTPVSDRVTKCCTESLVNRRPCFSALEVDETYVPKEFNAETFTFHADICTL\n"
 				+"SEKERQIKKQTALVELVKHKPKATKEQLKAVMDDFAAFVEKCCKADDKETCFAEEGKKLV\n"+"AASQAALGL";
 
-		FastaEntry entry=FastaReader.readFasta(bsa, "").get(0);
+		FastaEntryInterface entry=FastaReader.readFasta(bsa, "").get(0);
 		String sequence=entry.getSequence();
 		
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
@@ -178,7 +178,7 @@ public class DigestionEnzymeTest extends TestCase {
 				+"QLGEYKFQNALLVRYTKKVPQVSTPTLVEVSRNLGKVGSKCCKHPEAKRMPCAEDYLSVV\n"+"LNQLCVLHEKTPVSDRVTKCCTESLVNRRPCFSALEVDETYVPKEFNAETFTFHADICTL\n"
 				+"SEKERQIKKQTALVELVKHKPKATKEQLKAVMDDFAAFVEKCCKADDKETCFAEEGKKLV\n"+"AASQAALGL";
 
-		FastaEntry entry=FastaReader.readFasta(bsa, "").get(0);
+		FastaEntryInterface entry=FastaReader.readFasta(bsa, "").get(0);
 		String sequence=entry.getSequence();
 		
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
