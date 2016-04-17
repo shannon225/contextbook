@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
@@ -42,29 +43,46 @@ public class BlibToLibraryConverter {
 		
 		// first try to read if .ELIB
 		if (f.getName().toLowerCase().endsWith(LibraryFile.ELIB)) {
-			return openLibraryFile(f);
+			Optional<LibraryInterface> optional=openLibraryFile(f);
+			if (optional.isPresent()) return optional.get();
 		}
 		
 		// then try to change name to .ELIB and read
 		String absolutePath=f.getAbsolutePath();
 		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.ELIB);
 		if (libraryFile.exists()&&libraryFile.canRead()) {
-			return openLibraryFile(libraryFile);
+			Optional<LibraryInterface> optional=openLibraryFile(libraryFile);
+			if (optional.isPresent()) return optional.get();
 		}
 		
 		// otherwise check for BLIB and convert
 		if (f.getName().toLowerCase().endsWith(BlibFile.BLIB)) {
 			return convert(f, libraryFile, irtFile);
-		} else {
-			throw new EncyclopediaException("Can't read file type "+f.getAbsolutePath());
 		}
+
+		// finally, if we've got a bogus ELIB, look for the BLIB and convert again
+		File blibLibraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+BlibFile.BLIB);
+		if (blibLibraryFile.exists()&&blibLibraryFile.canRead()) {
+			return convert(blibLibraryFile, libraryFile, irtFile);
+		}
+
+		throw new EncyclopediaException("Can't read file type "+f.getAbsolutePath());
 	}
 
-	static LibraryInterface openLibraryFile(File f) {
+	static Optional<LibraryInterface> openLibraryFile(File f) {
 		try {
 			LibraryFile elibFile=new LibraryFile();
 			elibFile.openFile(f);
-			return elibFile;
+			HashMap<String, String>metadata=elibFile.getMetadata();
+			String version=metadata.get(LibraryFile.VERSION_STRING);
+			if (version!=null&&version.equals(LibraryFile.MOST_RECENT_VERSION)) {
+				return Optional.of((LibraryInterface)elibFile);
+			} else {
+				Logger.errorLine(f.getName()+" is an old Library file (version:"+version+")! Deleting to update to new version.");
+				f.delete();
+			}
+			return Optional.empty();
+			
 		} catch (IOException ioe) {
 			throw new EncyclopediaException("Error reading ELIB file!", ioe);
 		} catch (SQLException sqle) {

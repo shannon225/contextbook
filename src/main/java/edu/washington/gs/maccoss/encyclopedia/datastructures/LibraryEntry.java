@@ -51,6 +51,10 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
 	}
+	
+	public HashSet<String> getAccessions() {
+		return accessions;
+	}
 
 	public LibraryEntry toUnitSpectrum() {
 		return toUnitSpectrum(-1);

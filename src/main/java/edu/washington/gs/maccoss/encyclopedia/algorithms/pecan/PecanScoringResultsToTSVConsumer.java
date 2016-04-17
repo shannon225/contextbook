@@ -4,10 +4,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -64,7 +66,7 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 					writer.print("id\tTD\tScanNr\ttopN\trank\tpeakZScore\tpeakCalibratedScore\tdeltaSn\t"
 							+ "avgIdotp\tmidIdotp\tpeakScore\tpeakWeightedScore\tNCI\tCIMassErrMean\tCIMassErrVar\tprecursorMassErrMean\t"
 							+ "precursorMassErrVar\tpeakSimilarity\tsampledTimes\tmidTime\tspectraNorm\t"
-							+ "pepLength\tcharge2\tcharge3\tprecursorMz\tsequence\tannotation");
+							+ "pepLength\tcharge2\tcharge3\tprecursorMz\tsequence\tprotein");
 					// Percolator assumes linux line endings on Mac!
 					switch (os) {
 						case MAC:
@@ -157,14 +159,10 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 						writer.print("\t"+peptide.getPrecursorMZ());
 
 						String sequence="-."+peptide.getPeptideSeq()+".-";
-						String annotation;
-						if (peptide instanceof PecanLibraryEntry) {
-							annotation=((PecanLibraryEntry)peptide).getAccession();
-						} else {
-							annotation=stripe.getSpectrumName();
-						}
 						writer.print("\t"+sequence);
-						writer.print("\t"+annotation);
+						
+						HashSet<String> accessions=peptide.getAccessions();
+						writer.print("\t"+PSMData.accessionsToString(accessions));
 
 						// Percolator assumes linux line endings on Mac!
 						switch (os) {

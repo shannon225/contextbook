@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.zip.DataFormatException;
@@ -79,7 +80,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 
 	@Override
 	protected Nothing process() {
-		Optional<TransitionRefinementData> spectrum=extractSpectrum(library, psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable);
+		Optional<TransitionRefinementData> spectrum=extractSpectrum(psmdata.getAccessions(), library, psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable);
 		if (params.isRunPhosphoLocalization()) {
 			ArrayList<String> permutations=PhosphoPermuter.getPermutations(psmdata.getPeptideModSeq(), params.getAAConstants());
 			if (permutations.size()==1) {
@@ -93,7 +94,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			// FIXME need to not add duplicates!!!! for now just run SQL:
 			// delete from entries where RowId not in (SELECT MIN(RowId) FROM entries GROUP BY PeptideModSeq, PrecursorCharge)
 			TransitionRefinementData data=spectrum.get();
-			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), data.getMassArray().get(), data.getIntensityArray().get(), data.getRange());
+			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), data.getMassArray().get(), data.getIntensityArray().get(), data.getRange());
 			if (limitToQuantifiable) {
 				if (entry.getIonCount()<4||entry.getTIC()<1.0f) {
 					return Nothing.NOTHING;
@@ -120,7 +121,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		TFloatHashSet list=new TFloatHashSet();
 		for (String peptideModSeq : peptideModSeqs) {
 			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-			LibraryEntry unitEntry=model.getUnitSpectrum(precursorCharge, retentionTime, params);
+			LibraryEntry unitEntry=model.getUnitSpectrum(new HashSet<String>(), precursorCharge, retentionTime, params);
 
 			TFloatArrayList bestTimes=new TFloatArrayList();
 			float bestScore=0.0f;
@@ -165,7 +166,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		return false;
 	}
 
-	private Optional<TransitionRefinementData> extractSpectrum(Optional<LibraryInterface> library, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable) {
+	private Optional<TransitionRefinementData> extractSpectrum(HashSet<String> accessions, Optional<LibraryInterface> library, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable) {
 		LibraryEntry unitEntry=null;
 		if (library.isPresent()) {
 			try {
@@ -194,7 +195,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		
 		if (unitEntry==null) {
 			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-			unitEntry=model.getUnitSpectrum(precursorCharge, retentionTime, params);
+			unitEntry=model.getUnitSpectrum(accessions, precursorCharge, retentionTime, params);
 		}
 		
 		return Optional.ofNullable(extractSpectrum(unitEntry, duration, limitToQuantifiable));

@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -22,11 +23,11 @@ public class FragmentationModel {
 		aas=tuple.z;
 	}
 	
-	public LibraryEntry getUnitSpectrum(byte precursorCharge, float retentionTime, SearchParameters params) {
-		return getUnitSpectrum(precursorCharge, retentionTime, params, 0.0);
+	public LibraryEntry getUnitSpectrum(HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params) {
+		return getUnitSpectrum(accessions, precursorCharge, retentionTime, params, 0.0);
 	}
 
-	public LibraryEntry getUnitSpectrum(byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass) {
+	public LibraryEntry getUnitSpectrum(HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass) {
 		double[] ions=getPrimaryIons(params.getFragType(), precursorCharge);
 		TDoubleArrayList ionsList=new TDoubleArrayList();
 		for (int i=0; i<ions.length; i++) {
@@ -42,7 +43,7 @@ public class FragmentationModel {
 		String sequence=getModifiedSequence();
 		double precursorMZ=params.getAAConstants().getChargedMass(sequence, precursorCharge);
 
-		return new LibraryEntry(precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, ions, unitIntensities);
+		return new LibraryEntry(accessions, precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, ions, unitIntensities);
 	}
 	
 	public String[] getAas() {

@@ -64,15 +64,23 @@ public class PeptideQuantExtractor {
 					// FIXME need to get peptide charge from window
 					byte precursorCharge=PecanScoringResultsToTSVConsumer.getCharge(psmID);
 					String peptideModSeq=PecanScoringResultsToTSVConsumer.getPeptideSequence(psmID);
-					String rtString=row.get("midTime");
-					if (rtString==null) rtString=row.get("RTinMin");
-					float retentionTime=Float.parseFloat(rtString)*60f;
+					
+					float retentionTime;// in seconds
+					String rtString=row.get("midTime"); // in seconds
+					if (rtString!=null) {
+						retentionTime=Float.parseFloat(rtString); 
+					} else {
+						rtString=row.get("RTinMin"); // in minutes so *60
+						retentionTime=Float.parseFloat(rtString)*60f;
+					}
 					float score=savedIDs.get(psmID);
 
 					String samplingTimeString=row.get("sampledTimes");
 					float duration=samplingTimeString==null?(parameters.getExpectedPeakWidth()):Float.parseFloat(samplingTimeString);
 					
-					data.add(new PSMData(scanID, precursorMZ, precursorCharge, peptideModSeq, retentionTime, score, duration));
+					String proteinString=row.get("protein");
+					HashSet<String> accessions=PSMData.stringToAccessions(proteinString);
+					data.add(new PSMData(accessions, scanID, precursorMZ, precursorCharge, peptideModSeq, retentionTime, score, duration));
 				}
 			}
 		};

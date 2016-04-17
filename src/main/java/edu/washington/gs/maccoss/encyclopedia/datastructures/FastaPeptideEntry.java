@@ -68,7 +68,7 @@ public class FastaPeptideEntry implements FastaEntryInterface {
 		Collections.sort(list);
 		StringBuilder sb=new StringBuilder();
 		for (String string : list) {
-			if (sb.length()>0) sb.append(";");
+			if (sb.length()>0) sb.append(PSMData.ACCESSION_TOKEN);
 			sb.append(string);
 		}
 		return sb.toString();

@@ -4,11 +4,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.RescoredPeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -71,7 +73,7 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 					if (result instanceof RescoredPeptideScoringResult) {
 						writer.print("deltaRT\t");//discriminantScore\t");
 					}
-					writer.print("pepLength\tcharge2\tcharge3\tprecursorMz\tRTinMin\tsequence\tannotation");
+					writer.print("pepLength\tcharge2\tcharge3\tprecursorMz\tRTinMin\tsequence\tprotein");
 					// Percolator assumes linux line endings on Mac!
 					switch (os) {
 						case MAC:
@@ -127,9 +129,10 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 						writer.print("\t"+stripe.getScanStartTime()/60f);
 
 						String sequence="-."+peptide.getPeptideSeq()+".-";
-						String annotation=stripe.getSpectrumName();
 						writer.print("\t"+sequence);
-						writer.print("\t"+annotation);
+
+						HashSet<String> accessions=peptide.getAccessions();
+						writer.print("\t"+PSMData.accessionsToString(accessions));
 
 						// Percolator assumes linux line endings on Mac!
 						switch (os) {

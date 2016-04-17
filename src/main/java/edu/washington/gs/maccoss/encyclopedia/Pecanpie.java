@@ -338,7 +338,7 @@ public class Pecanpie {
 						
 						if (!parameters.isDontRunDecoys()) {
 							String smartDecoy=PeptideUtils.getSmartDecoy(sequence, charge, backgroundProteomeSet, parameters);
-							FastaPeptideEntry decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), ">DECOY_"+peptide.getAccession(), smartDecoy);
+							FastaPeptideEntry decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), "DECOY_"+peptide.getAccession(), smartDecoy);
 							AbstractPecanFragmentationModel revmodel=taskFactory.getFragmentationModel(decoyPeptide, parameters.getAAConstants());
 							PecanLibraryEntry reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
 							tasks.add(reventry);

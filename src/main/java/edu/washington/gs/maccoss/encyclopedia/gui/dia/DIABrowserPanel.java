@@ -6,6 +6,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map.Entry;
 
 import javax.swing.JButton;
@@ -115,7 +116,7 @@ public class DIABrowserPanel extends JPanel {
 			Logger.logLine("Parsing peptide...");
 			PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaPeptideEntry(peptide), parameters.getAAConstants());
 			ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
-			LibraryEntry entry=model.getUnitSpectrum((byte)charge, 0.0f, parameters);
+			LibraryEntry entry=model.getUnitSpectrum(new HashSet<String>(), (byte)charge, 0.0f, parameters);
 			entries.add(entry);
 			
 			try {
