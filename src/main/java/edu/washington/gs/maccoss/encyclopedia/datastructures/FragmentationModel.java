@@ -23,11 +23,11 @@ public class FragmentationModel {
 		aas=tuple.z;
 	}
 	
-	public LibraryEntry getUnitSpectrum(HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params) {
-		return getUnitSpectrum(accessions, precursorCharge, retentionTime, params, 0.0);
+	public LibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params) {
+		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, 0.0);
 	}
 
-	public LibraryEntry getUnitSpectrum(HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass) {
+	public LibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass) {
 		double[] ions=getPrimaryIons(params.getFragType(), precursorCharge);
 		TDoubleArrayList ionsList=new TDoubleArrayList();
 		for (int i=0; i<ions.length; i++) {
@@ -43,7 +43,7 @@ public class FragmentationModel {
 		String sequence=getModifiedSequence();
 		double precursorMZ=params.getAAConstants().getChargedMass(sequence, precursorCharge);
 
-		return new LibraryEntry(accessions, precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, ions, unitIntensities);
+		return new LibraryEntry(filename, accessions, precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, ions, unitIntensities);
 	}
 	
 	public String[] getAas() {

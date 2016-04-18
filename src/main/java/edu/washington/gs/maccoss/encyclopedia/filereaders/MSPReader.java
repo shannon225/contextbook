@@ -22,7 +22,7 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 
 public class MSPReader {
 	public static void main(String[] args) throws Exception {
-		File f=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/yeast/yeast_qtof_consensus_final_true_lib.msp");
+		File f=new File("/Users/searleb/Documents/school/projects/pecandata/cptac2_human_hcd_selected.msp");
 		ArrayList<LibraryEntry> entries=readMSP(f);
 
 		LibraryFile library=new LibraryFile();
@@ -36,11 +36,11 @@ public class MSPReader {
 			if (start>=entries.size()) break;
 			library.addEntries(new ArrayList<LibraryEntry>(entries.subList(start, stop)));
 			start=stop;
-			stop=Math.min(entries.size(), stop+batchSize);;
+			stop=Math.min(entries.size(), stop+batchSize);
 			System.out.println((start*100/entries.size())+"%");
 		}
 		library.createIndices();
-		File libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/yeast/yeast_qtof_consensus_final_true_lib.elib");
+		File libraryFile=new File("/Users/searleb/Documents/school/projects/pecandata/cptac2_human_hcd_selected.elib");
 		library.saveAsFile(libraryFile);
 	}
 	
@@ -96,7 +96,7 @@ public class MSPReader {
 						Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
 						HashSet<String> accessions=new HashSet<String>();
 						accessions.add(accession);
-						LibraryEntry entry=new LibraryEntry(accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y);
+						LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y);
 						entryList.add(entry);
 						peaks.clear();
 					}
@@ -171,7 +171,7 @@ public class MSPReader {
 				Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
 				HashSet<String> accessions=new HashSet<String>();
 				accessions.add(accession);
-				LibraryEntry entry=new LibraryEntry(accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y);
+				LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y);
 				entryList.add(entry);
 			}
 			return entryList;

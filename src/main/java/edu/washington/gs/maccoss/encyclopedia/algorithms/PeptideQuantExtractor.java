@@ -133,6 +133,7 @@ public class PeptideQuantExtractor {
 
 			Logger.logLine("Processing "+range);
 
+			String filename=stripefile.getFile().getName();
 			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 			Collections.sort(stripes);
 
@@ -146,13 +147,13 @@ public class PeptideQuantExtractor {
 				for (LibraryEntry libraryEntry : entries) {
 					PSMData psm=peptideModSeqs.get(libraryEntry.getPeptideModSeq());
 					if (psm!=null&&range.contains((float)psm.getPrecursorMZ())) {
-						executor.submit(new PeptideQuantExtractorTask(psm, library, stripes, parameters, savedEntries, limitToQuantifiable));
+						executor.submit(new PeptideQuantExtractorTask(filename, psm, library, stripes, parameters, savedEntries, limitToQuantifiable));
 					}
 				}
 			} else {
 				for (PSMData psm : data) {
 					if (range.contains((float)psm.getPrecursorMZ())) {
-						executor.submit(new PeptideQuantExtractorTask(psm, library, stripes, parameters, savedEntries, limitToQuantifiable));
+						executor.submit(new PeptideQuantExtractorTask(filename, psm, library, stripes, parameters, savedEntries, limitToQuantifiable));
 					}
 				}
 			}

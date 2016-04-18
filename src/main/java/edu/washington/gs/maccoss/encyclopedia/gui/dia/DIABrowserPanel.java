@@ -116,7 +116,7 @@ public class DIABrowserPanel extends JPanel {
 			Logger.logLine("Parsing peptide...");
 			PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaPeptideEntry(peptide), parameters.getAAConstants());
 			ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
-			LibraryEntry entry=model.getUnitSpectrum(new HashSet<String>(), (byte)charge, 0.0f, parameters);
+			LibraryEntry entry=model.getUnitSpectrum(dia.getFile().getName(), new HashSet<String>(), (byte)charge, 0.0f, parameters);
 			entries.add(entry);
 			
 			try {

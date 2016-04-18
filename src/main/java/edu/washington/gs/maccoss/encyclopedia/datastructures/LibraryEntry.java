@@ -19,6 +19,7 @@ import gnu.trove.list.array.TDoubleArrayList;
 public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 	private static final float minimumIntensityThreshold=10.0f*Float.MIN_VALUE;
 	
+	private final String source;
 	private final int spectrumIndex;
 	private final double precursorMZ;
 	private final byte precursorCharge;
@@ -30,11 +31,12 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 	private final float[] intensityArray;
 	private final HashSet<String> accessions;
 
-	public LibraryEntry(HashSet<String> accessions, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray) {
-		this(accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray);
+	public LibraryEntry(String source, HashSet<String> accessions, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray) {
+		this(source, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray);
 	}
 
-	public LibraryEntry(HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray) {
+	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray) {
+		this.source=source;
 		this.accessions=new HashSet<String>(accessions);
 		this.spectrumIndex=spectrumIndex;
 		this.precursorMZ=precursorMZ;
@@ -50,6 +52,10 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 		this.score=score;
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
+	}
+	
+	public String getSource() {
+		return source;
 	}
 	
 	public HashSet<String> getAccessions() {
@@ -77,7 +83,7 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 				unit[i]=1.0f;
 			}
 		}
-		return new LibraryEntry(accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, unit);
+		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, unit);
 	}
 	
 	public float getTIC() {
@@ -250,6 +256,6 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 		for (String accession : accessions) {
 			revAcc.add("DECOY_"+accession);
 		}
-		return new ReverseLibraryEntry(revAcc, precursorMZ, precursorCharge, reverseSequence, copies, retentionTime, score, arrays.x, arrays.y);	
+		return new ReverseLibraryEntry(source, revAcc, precursorMZ, precursorCharge, reverseSequence, copies, retentionTime, score, arrays.x, arrays.y);	
 	}
 }

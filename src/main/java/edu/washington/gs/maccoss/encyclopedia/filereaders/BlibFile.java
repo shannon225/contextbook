@@ -57,6 +57,12 @@ public class BlibFile extends SQLFile {
 	
 	@SuppressWarnings("resource") // this is properly closed, Eclipse just can't follow the if/else logic
 	public void getStreamEntriesToLibrary(LibraryFile library, Optional<TObjectFloatHashMap<String>> irtMap) throws IOException, SQLException, DataFormatException {
+		String filename;
+		if (userFile!=null) {
+			filename=userFile.getName();
+		} else {
+			filename=tempFile.getName();
+		}
 		library.dropIndices();
 		
 		Connection c=getConnection(tempFile);
@@ -109,7 +115,8 @@ public class BlibFile extends SQLFile {
 					}
 					total++;
 
-					entries.add(new LibraryEntry(new HashSet<String>(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));
+					// FIXME THIS IS A PROBLEM! WE NEED TO ASSOCIATE PROTEINS WITH BLIB PEPTIDES
+					entries.add(new LibraryEntry(filename, new HashSet<String>(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));
 					
 					if (entries.size()>1000) {
 						library.addEntries(entries);

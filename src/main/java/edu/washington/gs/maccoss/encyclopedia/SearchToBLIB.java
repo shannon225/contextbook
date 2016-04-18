@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -223,15 +224,10 @@ public class SearchToBLIB {
 
 		ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, featureFile, false, globalPassingPeptides, localPassingPeptides, stripeFile, libraryFile, job.getParameters());
 		
-		ArrayList<LibraryEntry> recasted=new ArrayList<LibraryEntry>();
-		for (IntegratedLibraryEntry entry : libraryEntries) {
-			recasted.add(entry);
-		}
-
 		Logger.logLine("Writing Encyclopedia ELIB from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Writing Encyclopedia ELIB", 0.99999f);
 
-		elib.addEntries(recasted);
+		elib.addIntegratedEntries(libraryEntries, TransitionRefiner.identificationCorrelationThreshold);
 		subProgress.update(diaFile.getName()+": Finished writing to Encyclopedia ELIB at"+new Date().toString(), 1.0f);
 	}
 }

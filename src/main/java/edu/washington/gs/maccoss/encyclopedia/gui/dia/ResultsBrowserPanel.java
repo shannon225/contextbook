@@ -201,7 +201,7 @@ public class ResultsBrowserPanel extends JPanel {
 			Logger.logLine("Parsing peptide...");
 			PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaPeptideEntry(entry.getPeptideModSeq()), parameters.getAAConstants());
 			ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
-			LibraryEntry unit=model.getUnitSpectrum(entry.getAccessions(), (byte)entry.getPrecursorCharge(), entry.getRetentionTime()*60f, parameters, 200.0);
+			LibraryEntry unit=model.getUnitSpectrum(dia.getFile().getName(), entry.getAccessions(), (byte)entry.getPrecursorCharge(), entry.getRetentionTime()*60f, parameters, 200.0);
 			entries.add(unit);
 			
 			try {
@@ -222,7 +222,7 @@ public class ResultsBrowserPanel extends JPanel {
 				rawSplit.setTopComponent(chart);
 				
 				PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), entry.getRetentionTime()*60f, entry.getScore(), 2*rtRange);
-				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(psmdata, Optional.ofNullable((LibraryInterface)null), stripes, parameters, false);
+				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(dia.getFile().getName(), psmdata, Optional.ofNullable((LibraryInterface)null), stripes, parameters, false);
 				TransitionRefinementData data=quantTask.extractSpectrum(unit, 2*rtRange, false);
 				if (data!=null) {
 					HashMap<String, ChartPanel> panels=TransitionRefiner.getChartPanels(data);

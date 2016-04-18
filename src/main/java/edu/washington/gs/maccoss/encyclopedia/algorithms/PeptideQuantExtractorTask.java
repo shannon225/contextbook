@@ -30,6 +30,7 @@ import gnu.trove.set.hash.TFloatHashSet;
 
 public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	private final Optional<LibraryInterface> library;
+	private final String filename;
 	private final ArrayList<Stripe> stripes;
 	private final boolean limitToQuantifiable;
 
@@ -39,7 +40,8 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	private final PSMData psmdata;
 	private final ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries; // CAN BE NULL
 
-	public PeptideQuantExtractorTask(PSMData psmdata, Optional<LibraryInterface> library, ArrayList<Stripe> stripes, SearchParameters parameters, boolean limitToQuantifiable) {
+	public PeptideQuantExtractorTask(String filename, PSMData psmdata, Optional<LibraryInterface> library, ArrayList<Stripe> stripes, SearchParameters parameters, boolean limitToQuantifiable) {
+		this.filename=filename;
 		this.psmdata=psmdata;
 		this.library=library;
 		this.stripes=stripes;
@@ -51,7 +53,8 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		this.limitToQuantifiable=limitToQuantifiable; //library.isPresent();
 	}
 
-	public PeptideQuantExtractorTask(PSMData psmdata, Optional<LibraryInterface> library, ArrayList<Stripe> stripes, SearchParameters parameters, ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries, boolean limitToQuantifiable) {
+	public PeptideQuantExtractorTask(String filename, PSMData psmdata, Optional<LibraryInterface> library, ArrayList<Stripe> stripes, SearchParameters parameters, ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries, boolean limitToQuantifiable) {
+		this.filename=filename;
 		this.psmdata=psmdata;
 		this.library=library;
 		this.stripes=stripes;
@@ -94,7 +97,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			// FIXME need to not add duplicates!!!! for now just run SQL:
 			// delete from entries where RowId not in (SELECT MIN(RowId) FROM entries GROUP BY PeptideModSeq, PrecursorCharge)
 			TransitionRefinementData data=spectrum.get();
-			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), data.getMassArray().get(), data.getIntensityArray().get(), data.getRange());
+			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(filename, psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), data.getMassArray().get(), data.getIntensityArray().get(), data);
 			if (limitToQuantifiable) {
 				if (entry.getIonCount()<4||entry.getTIC()<1.0f) {
 					return Nothing.NOTHING;
@@ -121,7 +124,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		TFloatHashSet list=new TFloatHashSet();
 		for (String peptideModSeq : peptideModSeqs) {
 			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-			LibraryEntry unitEntry=model.getUnitSpectrum(new HashSet<String>(), precursorCharge, retentionTime, params);
+			LibraryEntry unitEntry=model.getUnitSpectrum(filename, new HashSet<String>(), precursorCharge, retentionTime, params);
 
 			TFloatArrayList bestTimes=new TFloatArrayList();
 			float bestScore=0.0f;
@@ -195,7 +198,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		
 		if (unitEntry==null) {
 			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-			unitEntry=model.getUnitSpectrum(accessions, precursorCharge, retentionTime, params);
+			unitEntry=model.getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params);
 		}
 		
 		return Optional.ofNullable(extractSpectrum(unitEntry, duration, limitToQuantifiable));
@@ -222,7 +225,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			}
 		}
 		// no signal of any kind at retention time!
-		if (bestScores==null) return null;
+		if (bestScores==null||bestScores.length==0) return null;
 
 		TFloatArrayList[] traces=new TFloatArrayList[bestScores.length];
 		for (int i=0; i<traces.length; i++) {

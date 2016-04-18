@@ -40,6 +40,25 @@ public class TransitionRefinementData {
 		this.rtArray=Optional.ofNullable(rtArray);
 	}
 	
+	public float getTotalIntensity(float minimumCorrelation) {
+		float total=0.0f;
+		for (int i=0; i<correlationArray.length; i++) {
+			if (correlationArray[i]>=minimumCorrelation) {
+				total+=integrationArray[i];
+			}
+		}
+		return total;
+	}
+	public int getTotalQuantIons(float minimumCorrelation) {
+		int total=0;
+		for (int i=0; i<correlationArray.length; i++) {
+			if (correlationArray[i]>=minimumCorrelation) {
+				total++;
+			}
+		}
+		return total;
+	}
+	
 	public TransitionRefinementData addPeakData(double[] mass, float[] intensity, float[] rts) {
 		return new TransitionRefinementData(chromatograms, correlationArray, integrationArray, medianChromatogram, range, mass, intensity, rts);
 	}

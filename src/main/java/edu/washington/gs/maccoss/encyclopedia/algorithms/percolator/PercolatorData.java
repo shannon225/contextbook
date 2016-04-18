@@ -19,6 +19,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import gnu.trove.list.array.TFloatArrayList;
 
+// TODO NOTE THIS IS INCOMPLETE!
 public class PercolatorData {
 	private final int majorVersion;
 	private final int minorVersion;
@@ -88,7 +89,7 @@ public class PercolatorData {
 			}
 			writer.println("  </psms>");
 			
-			// FIXME write peptides
+			// TODO write peptides
 			writer.flush();
 		} catch (FileNotFoundException e) {
 			throw new EncyclopediaException("Error setting up output file: "+outputFile.getAbsolutePath(), e);

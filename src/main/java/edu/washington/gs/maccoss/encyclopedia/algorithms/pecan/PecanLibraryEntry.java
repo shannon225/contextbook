@@ -11,7 +11,7 @@ public class PecanLibraryEntry extends LibraryEntry {
 
 	public PecanLibraryEntry(FastaPeptideEntry entry, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, boolean isDecoy,
 			float euclidianDistance) {
-		super(entry.getAccessions(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray);
+		super(entry.getFilename(), entry.getAccessions(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray);
 		this.entry=entry;
 		this.isDecoy=isDecoy;
 		this.euclidianDistance=euclidianDistance;
