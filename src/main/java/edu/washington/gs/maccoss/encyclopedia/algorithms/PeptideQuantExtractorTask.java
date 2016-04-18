@@ -243,16 +243,18 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 
 		ArrayList<PeakScores> keptPeaks=new ArrayList<PeakScores>();
 		ArrayList<float[]> chromatograms=new ArrayList<float[]>();
+		TDoubleArrayList fragmentMasses=new TDoubleArrayList();
 		for (int i=0; i<bestScores.length; i++) {
 			if (bestScores[i]!=null&&bestScores[i].getScore()>0) {
 				float[] chromatogram=traces[i].toArray();
 				chromatogram=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatogram);
 				chromatograms.add(chromatogram);
 				keptPeaks.add(bestScores[i]);
+				fragmentMasses.add(bestScores[i].getTargetMass());
 			}
 		}
 		
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions(unitEntry.getPeptideModSeq(), chromatograms, retentionTimes.toArray());
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions(unitEntry.getPeptideModSeq(), fragmentMasses.toArray(), chromatograms, retentionTimes.toArray());
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 

@@ -133,7 +133,7 @@ public class PeptideQuantExtractor {
 
 			Logger.logLine("Processing "+range);
 
-			String filename=stripefile.getFile().getName();
+			String filename=stripefile.getOriginalFileName();
 			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 			Collections.sort(stripes);
 

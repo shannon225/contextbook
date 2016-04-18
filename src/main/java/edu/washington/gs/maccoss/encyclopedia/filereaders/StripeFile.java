@@ -36,6 +36,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	public static final String DIA_EXTENSION=".dia";
 	
 	private File userFile=null;
+	private volatile String originalFileName=null;
 	private final File tempFile;
 	
 	private final HashMap<Range, Float> ranges=new HashMap<Range, Float>();
@@ -44,7 +45,31 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		tempFile=File.createTempFile("encyclopedia_", DIA_EXTENSION);
 		tempFile.deleteOnExit();
 	}
-
+	
+	/**
+	 * it's ok that this can generate races to set originalFileName, since as long as we don't overwrite with null it'll never change
+	 * @return
+	 * @throws IOException
+	 * @throws SQLException
+	 */
+	public String getOriginalFileName() {
+		if (originalFileName!=null) {
+			return originalFileName;
+		} else {
+			try {
+				Map<String, String> metadata=getMetadata();
+				String fname=metadata.get("filename");
+				if (fname!=null) {
+					originalFileName=fname;
+				}
+				return fname;
+			} catch (IOException ioe) {
+				return null;
+			} catch (SQLException sqle) {
+				return null;
+			}
+		}
+	}
 	
 	public CachedStripeFile cache() throws IOException, SQLException, DataFormatException {
 		Logger.logLine("Caching precursors...");
@@ -169,6 +194,29 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		map.put("sourcename", sourceName==null?"unknown":sourceName);
 		map.put("filelocation", fileLocation==null?"unknown":fileLocation);
 		addMetadata(map);
+	}
+	
+	public HashMap<String, String> getMetadata() throws IOException, SQLException {
+		Connection c=getConnection(tempFile);
+		try {
+			Statement s=c.createStatement();
+			try {
+				ResultSet rs=s.executeQuery("select Key, Value from metadata");
+
+				HashMap<String, String> map=new HashMap<String, String>();
+				while (rs.next()) {
+					String key=rs.getString(1);
+					String value=rs.getString(2);
+					map.put(key, value);
+				}
+
+				return map;
+			} finally {
+				s.close();
+			}
+		} finally {
+			c.close();
+		}
 	}
 
 	public void addMetadata(Map<String, String> data) throws IOException, SQLException {

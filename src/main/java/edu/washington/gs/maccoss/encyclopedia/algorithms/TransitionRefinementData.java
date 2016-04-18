@@ -6,6 +6,7 @@ import java.util.Optional;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 
 public class TransitionRefinementData {
+	private final double[] fragmentMassArray;
 	private final ArrayList<float[]> chromatograms;
 	private final float[] correlationArray;
 	private final float[] integrationArray;
@@ -16,8 +17,8 @@ public class TransitionRefinementData {
 	private final Optional<float[]> rtArray;
 	
 	
-	public TransitionRefinementData(ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] medianChromatogram, Range range) {
-		this(chromatograms, correlationArray, integrationArray, medianChromatogram, range, null, null, null);
+	public TransitionRefinementData(double[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] medianChromatogram, Range range) {
+		this(fragmentMassArray, chromatograms, correlationArray, integrationArray, medianChromatogram, range, null, null, null);
 	}
 
 	/**
@@ -29,7 +30,8 @@ public class TransitionRefinementData {
 	 * @param massArray CAN BE NULL
 	 * @param intensityArray CAN BE NULL
 	 */
-	public TransitionRefinementData(ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] medianChromatogram, Range range, double[] massArray, float[] intensityArray, float[] rtArray) {
+	public TransitionRefinementData(double[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] medianChromatogram, Range range, double[] massArray, float[] intensityArray, float[] rtArray) {
+		this.fragmentMassArray=fragmentMassArray;
 		this.chromatograms=chromatograms;
 		this.correlationArray=correlationArray;
 		this.integrationArray=integrationArray;
@@ -60,7 +62,11 @@ public class TransitionRefinementData {
 	}
 	
 	public TransitionRefinementData addPeakData(double[] mass, float[] intensity, float[] rts) {
-		return new TransitionRefinementData(chromatograms, correlationArray, integrationArray, medianChromatogram, range, mass, intensity, rts);
+		return new TransitionRefinementData(fragmentMassArray, chromatograms, correlationArray, integrationArray, medianChromatogram, range, mass, intensity, rts);
+	}
+	
+	public double[] getFragmentMassArray() {
+		return fragmentMassArray;
 	}
 	
 	public ArrayList<float[]> getChromatograms() {

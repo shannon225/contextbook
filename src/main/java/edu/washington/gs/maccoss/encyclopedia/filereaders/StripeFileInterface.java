@@ -28,4 +28,6 @@ public interface StripeFileInterface {
 	void close();
 
 	File getFile();
+	
+	String getOriginalFileName();
 }

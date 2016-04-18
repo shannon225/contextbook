@@ -37,6 +37,11 @@ public class CachedStripeFile implements StripeFileInterface {
 	@Override
 	public void openFile() throws IOException, SQLException {
 	}
+	
+	@Override
+	public String getOriginalFileName() {
+		return userFile.getName();
+	}
 
 	@Override
 	public ArrayList<PrecursorScan> getPrecursors(float minRT, float maxRT) throws IOException, SQLException, DataFormatException {

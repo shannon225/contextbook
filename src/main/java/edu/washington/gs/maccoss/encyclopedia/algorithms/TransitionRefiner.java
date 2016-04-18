@@ -37,8 +37,9 @@ public class TransitionRefiner {
 		chromatograms.add(new float[] {88673.75f, 108412.02f, 134443.86f, 186275.72f, 229804.58f, 255614.5f, 297812.0f, 274456.28f, 308098.8f, 310620.28f, 303670.72f, 276719.75f, 319922.88f, 289453.9f, 259773.83f, 232285.22f, 194102.6f, 149186.31f, 134754.16f});
 		chromatograms.add(new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10589.013f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f});
 		chromatograms.add(new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 11368.357f, 0.0f, 0.0f, 23255.867f, 0.0f, 0.0f, 0.0f});
+		double[] fragmentMasses=new double[] {1, 2, 3, 4, 5, 6, 7, 8, 9};
 		
-		TransitionRefinementData data=identifyTransitions("AAPQS[+80.0]PSVPK", chromatograms, rts, true);
+		TransitionRefinementData data=identifyTransitions("AAPQS[+80.0]PSVPK", fragmentMasses, chromatograms, rts, true);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		for (int i=0; i<integrations.length; i++) {
@@ -47,11 +48,11 @@ public class TransitionRefiner {
 		Charter.launchCharts("TITLE", getChartPanels(data));
 	}
 
-	public static TransitionRefinementData identifyTransitions(String peptideModSeq, ArrayList<float[]> chromatograms, float[] retentionTimes) {
-		return identifyTransitions(peptideModSeq, chromatograms, retentionTimes, false);
+	public static TransitionRefinementData identifyTransitions(String peptideModSeq, double[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes) {
+		return identifyTransitions(peptideModSeq, fragmentMasses, chromatograms, retentionTimes, false);
 	}
-	public static TransitionRefinementData identifyTransitions(String peptideModSeq, ArrayList<float[]> chromatograms, float[] retentionTimes, boolean plot) {
-		if (chromatograms.size()==0) return new TransitionRefinementData(chromatograms, new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]));
+	public static TransitionRefinementData identifyTransitions(String peptideModSeq, double[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, boolean plot) {
+		if (chromatograms.size()==0) return new TransitionRefinementData(new double[0], chromatograms, new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]));
 		
 		ArrayList<float[]> normalizedChromatograms=normalize(chromatograms);
 		
@@ -154,6 +155,9 @@ public class TransitionRefiner {
 			}
 			// calculate correlation
 			correlationArray[i]=deltaProductSum/((float)Math.sqrt(medianDeltaSquareSum*fragmentDeltaSquareSum));
+			if (correlationArray[i]>1.0f) {
+				correlationArray[i]=1.0f; // there can be minor floating point errors in the sqrt
+			}
 			
 			// calculate area
 			float[] chromatogram=chromatograms.get(i);
@@ -176,7 +180,7 @@ public class TransitionRefiner {
 			Charter.launchCharts(peptideModSeq+" chart", panels);
 		}
 		
-		return new TransitionRefinementData(chromatograms, correlationArray, integrationArray, medianChromatogram, range);
+		return new TransitionRefinementData(fragmentMasses, chromatograms, correlationArray, integrationArray, medianChromatogram, range);
 	}
 	
 	public static HashMap<String, ChartPanel> getChartPanels(TransitionRefinementData data) {
