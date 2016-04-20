@@ -4,11 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -52,35 +54,39 @@ public class PeptideQuantExtractor {
 			}
 		}
 
-		final ArrayList<PSMData> data=new ArrayList<PSMData>();
+		final Vector<PSMData> data=new Vector<PSMData>();
 		
 		TableParserMuscle muscle=new TableParserMuscle() {
 			@Override
 			public void processRow(Map<String, String> row) {
 				String psmID=row.get("id");
 				if (savedIDs.contains(psmID)) {
-					int scanID=Integer.parseInt(row.get("ScanNr"));
-					double precursorMZ=Double.parseDouble(row.get("precursorMz"));
-					// FIXME need to get peptide charge from window
-					byte precursorCharge=PecanScoringResultsToTSVConsumer.getCharge(psmID);
-					String peptideModSeq=PecanScoringResultsToTSVConsumer.getPeptideSequence(psmID);
-					
-					float retentionTime;// in seconds
-					String rtString=row.get("midTime"); // in seconds
-					if (rtString!=null) {
-						retentionTime=Float.parseFloat(rtString); 
-					} else {
-						rtString=row.get("RTinMin"); // in minutes so *60
-						retentionTime=Float.parseFloat(rtString)*60f;
-					}
-					float score=savedIDs.get(psmID);
+					boolean isDecoy=PecanScoringResultsToTSVConsumer.isPSMIDDecoy(psmID);
+					if (!isDecoy) {
+						
+						int scanID=Integer.parseInt(row.get("ScanNr"));
+						double precursorMZ=Double.parseDouble(row.get("precursorMz"));
+						// FIXME need to get peptide charge from window
+						byte precursorCharge=PecanScoringResultsToTSVConsumer.getCharge(psmID);
+						String peptideModSeq=PecanScoringResultsToTSVConsumer.getPeptideSequence(psmID);
 
-					String samplingTimeString=row.get("sampledTimes");
-					float duration=samplingTimeString==null?(parameters.getExpectedPeakWidth()):Float.parseFloat(samplingTimeString);
-					
-					String proteinString=row.get("protein");
-					HashSet<String> accessions=PSMData.stringToAccessions(proteinString);
-					data.add(new PSMData(accessions, scanID, precursorMZ, precursorCharge, peptideModSeq, retentionTime, score, duration));
+						float retentionTime;// in seconds
+						String rtString=row.get("midTime"); // in seconds
+						if (rtString!=null) {
+							retentionTime=Float.parseFloat(rtString);
+						} else {
+							rtString=row.get("RTinMin"); // in minutes so *60
+							retentionTime=Float.parseFloat(rtString)*60f;
+						}
+						float score=savedIDs.get(psmID);
+
+						String samplingTimeString=row.get("sampledTimes");
+						float duration=samplingTimeString==null?(parameters.getExpectedPeakWidth()):Float.parseFloat(samplingTimeString);
+
+						String proteinString=row.get("protein");
+						HashSet<String> accessions=PSMData.stringToAccessions(proteinString);
+						data.add(new PSMData(accessions, scanID, precursorMZ, precursorCharge, peptideModSeq, retentionTime, score, duration));
+					}
 				}
 			}
 		};
@@ -104,7 +110,7 @@ public class PeptideQuantExtractor {
 		}
 	}
 	
-	public static ArrayList<IntegratedLibraryEntry> extractPeptides(ProgressIndicator progress, Optional<LibraryInterface> library, StripeFileInterface stripefile, ArrayList<PSMData> data, boolean limitToQuantifiable, SearchParameters parameters) throws IOException, SQLException, DataFormatException, InterruptedException {
+	public static ArrayList<IntegratedLibraryEntry> extractPeptides(ProgressIndicator progress, Optional<LibraryInterface> library, StripeFileInterface stripefile, Collection<PSMData> data, boolean limitToQuantifiable, SearchParameters parameters) throws IOException, SQLException, DataFormatException, InterruptedException {
 		ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries=new ConcurrentLinkedQueue<IntegratedLibraryEntry>();
 		int cores=parameters.getNumberOfThreadsUsed();
 		
