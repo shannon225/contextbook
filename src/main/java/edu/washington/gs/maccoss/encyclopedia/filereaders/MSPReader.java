@@ -13,7 +13,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.StringTokenizer;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideTrie;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -23,7 +25,28 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 public class MSPReader {
 	public static void main(String[] args) throws Exception {
 		File f=new File("/Users/searleb/Documents/school/projects/pecandata/cptac2_human_hcd_selected.msp");
-		ArrayList<LibraryEntry> entries=readMSP(f);
+		ArrayList<LibraryEntry> entries=readMSP(f, false);
+		
+		File fasta=new File("/Users/searleb/Documents/school/projects/pecandata/UP000005640_9606.fasta");
+		ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fasta);
+
+		long currentTime=System.currentTimeMillis();
+		System.out.println("CONSTRUCTING TRIE: "+(System.currentTimeMillis()-currentTime)/1000);
+		PeptideTrie trie=new PeptideTrie(entries);
+		System.out.println("SEARCHING TRIE: "+(System.currentTimeMillis()-currentTime)/1000);
+		for (FastaEntryInterface fastaEntryInterface : proteins) {
+			trie.addFasta(fastaEntryInterface);
+		}
+		System.out.println("ANALYZING TRIE: "+(System.currentTimeMillis()-currentTime)/1000);
+		int[] counts=new int[21];
+		for (LibraryEntry entry : entries) {
+			int size=Math.min(counts.length-1, entry.getAccessions().size());
+			counts[size]++;
+		}
+		System.out.println("HISTOGRAM: "+(System.currentTimeMillis()-currentTime)/1000);
+		for (int i=0; i<counts.length; i++) {
+			System.out.println(i+"\t"+counts[i]);
+		}
 
 		LibraryFile library=new LibraryFile();
 		library.openFile();
@@ -44,12 +67,12 @@ public class MSPReader {
 		library.saveAsFile(libraryFile);
 	}
 	
-	public static ArrayList<LibraryEntry> readMSP(File f) {
+	public static ArrayList<LibraryEntry> readMSP(File f, boolean keepAccessions) {
 		BufferedReader in=null;
 		ArrayList<LibraryEntry> entryList=new ArrayList<LibraryEntry>();
 		try {
 			in=new BufferedReader(new FileReader(f));
-			return readMSP(in, f.getName());
+			return readMSP(in, f.getName(), keepAccessions);
 
 		} catch (IOException ioe) {
 			Logger.errorLine("I/O Error found reading NIST MSP Library ["+f.getAbsolutePath()+"]");
@@ -66,15 +89,15 @@ public class MSPReader {
 		}
 	}
 	
-	public static ArrayList<LibraryEntry> readMSP(String s, String fileName) {
-		return readMSP(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)))), fileName);
+	public static ArrayList<LibraryEntry> readMSP(String s, String fileName, boolean keepAccessions) {
+		return readMSP(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)))), fileName, keepAccessions);
 	}
 	
-	public static ArrayList<LibraryEntry> readMSP(InputStream s, String fileName) {
-		return readMSP(new BufferedReader(new InputStreamReader(s)), fileName);
+	public static ArrayList<LibraryEntry> readMSP(InputStream s, String fileName, boolean keepAccessions) {
+		return readMSP(new BufferedReader(new InputStreamReader(s)), fileName, keepAccessions);
 	}
 	
-	public static ArrayList<LibraryEntry> readMSP(BufferedReader in, String fileName) {
+	public static ArrayList<LibraryEntry> readMSP(BufferedReader in, String fileName, boolean keepAccessions) {
 		ArrayList<LibraryEntry> entryList=new ArrayList<LibraryEntry>();
 		String eachline=null;
 		try {
@@ -95,7 +118,7 @@ public class MSPReader {
 					if (peaks.size()>0) {
 						Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
 						HashSet<String> accessions=new HashSet<String>();
-						accessions.add(accession);
+						if (accession!=null) accessions.add(accession);
 						LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y);
 						entryList.add(entry);
 						peaks.clear();
@@ -115,11 +138,13 @@ public class MSPReader {
 					precursorMZ=Double.parseDouble(map.get("Parent"));
 					score=1.0f-Float.parseFloat(map.get("Unassigned"));
 					
-					accession=map.get("Protein");
-					if (accession!=null) {
-						int stop=accession.indexOf(' ');
-						if (stop>0) {
-							accession=accession.substring(0, stop);
+					if (keepAccessions) {
+						accession=map.get("Protein");
+						if (accession!=null) {
+							int stop=accession.indexOf(' ');
+							if (stop>0) {
+								accession=accession.substring(0, stop);
+							}
 						}
 					}
 					
@@ -170,7 +195,7 @@ public class MSPReader {
 			if (peaks.size()>0) {
 				Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
 				HashSet<String> accessions=new HashSet<String>();
-				accessions.add(accession);
+				if (accession!=null) accessions.add(accession);
 				LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y);
 				entryList.add(entry);
 			}
