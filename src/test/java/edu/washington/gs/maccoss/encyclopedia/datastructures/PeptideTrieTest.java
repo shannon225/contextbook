@@ -10,7 +10,7 @@ public class PeptideTrieTest extends TestCase {
 
 	public void testTrie() {
 		InputStream is=getClass().getResourceAsStream("/truncated.msp");
-		ArrayList<LibraryEntry> entries=MSPReader.readMSP(is, "truncated.msp");
+		ArrayList<LibraryEntry> entries=MSPReader.readMSP(is, "truncated.msp", true);
 		PeptideTrie trie=new PeptideTrie(entries);
 		
 		FastaEntry fasta=new FastaEntry("File", "gi|155030192", 

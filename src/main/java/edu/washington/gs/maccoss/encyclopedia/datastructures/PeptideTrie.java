@@ -24,7 +24,7 @@ public class PeptideTrie {
 		}
 	}
 	
-	public void addFasta(FastaEntry fasta) {
+	public void addFasta(FastaEntryInterface fasta) {
 		String accession=fasta.getAccession();
 		char[] sequence=fasta.getSequence().toCharArray();
 		for (int i=sequence.length-1; i>=0; i--) {
