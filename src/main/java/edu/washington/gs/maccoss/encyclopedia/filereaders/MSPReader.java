@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,35 +25,49 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 
 public class MSPReader {
 	public static void main(String[] args) throws Exception {
-		File f=new File("/Users/searleb/Documents/school/projects/pecandata/cptac2_human_hcd_selected.msp");
-		ArrayList<LibraryEntry> entries=readMSP(f, false);
+		File mspFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/cptac2_human_hcd_selected.msp");
+		File fastaFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/UP000005640_9606.fasta");
+		File libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/cptac2_human_hcd_selected.elib");
 		
-		File fasta=new File("/Users/searleb/Documents/school/projects/pecandata/UP000005640_9606.fasta");
-		ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fasta);
+		convertMSP(mspFile, fastaFile, libraryFile);
+	}
+	public static void convertMSP(File mspFile, File fastaFile) throws IOException, SQLException {
+		String absolutePath=mspFile.getAbsolutePath();
+		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.ELIB);
+		convertMSP(mspFile, fastaFile, libraryFile);
+	}
 
-		long currentTime=System.currentTimeMillis();
-		System.out.println("CONSTRUCTING TRIE: "+(System.currentTimeMillis()-currentTime)/1000);
+	public static void convertMSP(File mspFile, File fastaFile, File libraryFile) throws IOException, SQLException {
+		Logger.logLine("Reading MSP file "+mspFile.getName());
+		ArrayList<LibraryEntry> entries=readMSP(mspFile, false);
+
+		Logger.logLine("Reading Fasta file "+fastaFile.getName());
+		ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile);
+
+		Logger.logLine("Constructing trie from library peptides");
 		PeptideTrie trie=new PeptideTrie(entries);
-		System.out.println("SEARCHING TRIE: "+(System.currentTimeMillis()-currentTime)/1000);
 		for (FastaEntryInterface fastaEntryInterface : proteins) {
 			trie.addFasta(fastaEntryInterface);
 		}
-		System.out.println("ANALYZING TRIE: "+(System.currentTimeMillis()-currentTime)/1000);
 		int[] counts=new int[21];
 		for (LibraryEntry entry : entries) {
 			int size=Math.min(counts.length-1, entry.getAccessions().size());
 			counts[size]++;
 		}
-		System.out.println("HISTOGRAM: "+(System.currentTimeMillis()-currentTime)/1000);
+		Logger.logLine("Accession count histogram: ");
 		for (int i=0; i<counts.length; i++) {
-			System.out.println(i+"\t"+counts[i]);
+			Logger.logLine(i+" Acc\t"+counts[i]+" Counts");
 		}
 
 		LibraryFile library=new LibraryFile();
 		library.openFile();
 		library.dropIndices();
-		
-		int batchSize=entries.size()/100;
+
+		if (counts[0]>0) {
+			Logger.errorLine(counts[0]+" library entries can't be linked to proteins! These entries will be dropped.");
+		}
+		Logger.logLine("Writing library file "+libraryFile.getName());
+		int batchSize=entries.size()/10;
 		int start=0;
 		int stop=batchSize;
 		while (true) {
@@ -60,10 +75,9 @@ public class MSPReader {
 			library.addEntries(new ArrayList<LibraryEntry>(entries.subList(start, stop)));
 			start=stop;
 			stop=Math.min(entries.size(), stop+batchSize);
-			System.out.println((start*100/entries.size())+"%");
+			Logger.logLine((start*100/entries.size())+"%");
 		}
 		library.createIndices();
-		File libraryFile=new File("/Users/searleb/Documents/school/projects/pecandata/cptac2_human_hcd_selected.elib");
 		library.saveAsFile(libraryFile);
 	}
 	

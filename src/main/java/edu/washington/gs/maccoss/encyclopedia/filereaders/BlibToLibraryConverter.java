@@ -54,17 +54,6 @@ public class BlibToLibraryConverter {
 			Optional<LibraryInterface> optional=openLibraryFile(libraryFile);
 			if (optional.isPresent()) return optional.get();
 		}
-		
-		// otherwise check for BLIB and convert
-		if (f.getName().toLowerCase().endsWith(BlibFile.BLIB)) {
-			return convert(f, libraryFile, irtFile);
-		}
-
-		// finally, if we've got a bogus ELIB, look for the BLIB and convert again
-		File blibLibraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+BlibFile.BLIB);
-		if (blibLibraryFile.exists()&&blibLibraryFile.canRead()) {
-			return convert(blibLibraryFile, libraryFile, irtFile);
-		}
 
 		throw new EncyclopediaException("Can't read file type "+f.getAbsolutePath());
 	}
@@ -90,7 +79,13 @@ public class BlibToLibraryConverter {
 		}
 	}
 
-	static LibraryInterface convert(File blibFile, File elibFile, Optional<File> irtFile) {
+	public static LibraryInterface convert(File blibFile, Optional<File> irtFile, File fastaFile) {
+		String absolutePath=blibFile.getAbsolutePath();
+		File elibFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.ELIB);
+		return convert(blibFile, elibFile, irtFile, fastaFile);
+	}
+	
+	static LibraryInterface convert(File blibFile, File elibFile, Optional<File> irtFile, File fastaFile) {
 		TObjectFloatHashMap<String> irtMap=null;
 		try {
 			Logger.logLine("Indexing "+blibFile.getName()+" ...");
@@ -103,7 +98,7 @@ public class BlibToLibraryConverter {
 				IRTdbFile irt=new IRTdbFile(irtFile.get());
 				irtMap=irt.getIRTs();
 			}
-			blib.getStreamEntriesToLibrary(elib, Optional.ofNullable(irtMap));	
+			blib.getStreamEntriesToLibrary(elib, Optional.ofNullable(irtMap), fastaFile);	
 			elib.saveAsFile(elibFile);
 			return elib;
 			

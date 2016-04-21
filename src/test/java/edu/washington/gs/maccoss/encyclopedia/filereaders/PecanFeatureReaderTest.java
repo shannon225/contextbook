@@ -9,6 +9,8 @@ import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import javax.swing.JFrame;
+
 import org.jfree.chart.ChartPanel;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
@@ -26,7 +28,7 @@ import gnu.trove.list.array.TFloatArrayList;
 
 public class PecanFeatureReaderTest {
 	public static void main(String[] args) {
-		File featureFile=FileChooserPanel.getFiles(null, "Feature text files", new SimpleFilenameFilter("features.txt"), null)[0];
+		File featureFile=FileChooserPanel.getFiles(null, "Feature text files", new SimpleFilenameFilter("features.txt"), (JFrame)null)[0];
 		
 		final HashMap<String, TFloatArrayList> targetData=new HashMap<String, TFloatArrayList>();
 		final HashMap<String, TFloatArrayList> decoyData=new HashMap<String, TFloatArrayList>();

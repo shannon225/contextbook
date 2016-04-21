@@ -2,7 +2,10 @@ package edu.washington.gs.maccoss.encyclopedia.gui.general;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dialog;
 import java.awt.FileDialog;
+import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -11,7 +14,6 @@ import java.io.FilenameFilter;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -24,9 +26,13 @@ public class FileChooserPanel extends JPanel {
 	private final JButton chooseFile;
 	private final JPanel top;
 	private final boolean required;
-	
-	public FileChooserPanel(File f, final String fileType, final FilenameFilter filter, boolean required) {
+	private final String fileType;
+	private final FilenameFilter filter;
+
+	public FileChooserPanel(File f, String fileTypeLocal, FilenameFilter filterLocal, boolean required) {
 		super(new BorderLayout());
+		this.fileType=fileTypeLocal;
+		this.filter=filterLocal;
 		this.required=required;
 		fileLabel=new JLabel("Please select file...");
 		chooseFile=new JButton("Edit");
@@ -36,9 +42,7 @@ public class FileChooserPanel extends JPanel {
 		chooseFile.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JFrame frame = (JFrame)SwingUtilities.getRoot(FileChooserPanel.this);
-				File[] files=getFiles(file, fileType, filter, frame);
-				update(files);
+				askForFiles();
 			}
 		});
 		
@@ -53,6 +57,18 @@ public class FileChooserPanel extends JPanel {
 		
 		setToolTipText(fileLabel.getText());
 		update(f);
+	}
+
+	public void askForFiles() {
+		Component root=SwingUtilities.getRoot(FileChooserPanel.this);
+		File[] files;
+		if (root instanceof Frame) {
+			files=getFiles(file, fileType, filter, (Frame)root);
+		} else {
+			files=getFiles(file, fileType, filter, (Dialog)root);
+			
+		}
+		update(files);
 	}
 	
 	@Override
@@ -80,7 +96,18 @@ public class FileChooserPanel extends JPanel {
 		}
 	}
 
-	public static File[] getFiles(File startingFile, String fileType, FilenameFilter filter, JFrame frame) {
+	public static File[] getFiles(File startingFile, String fileType, FilenameFilter filter, Dialog frame) {
+		FileDialog dialog=new FileDialog(frame, "Select a "+fileType+" file", FileDialog.LOAD);
+		if (startingFile!=null) {
+			dialog.setFile(startingFile.getAbsolutePath());
+		}
+		dialog.setFilenameFilter(filter);
+		dialog.setVisible(true);
+		File[] files=dialog.getFiles();
+		return files;
+	}
+
+	public static File[] getFiles(File startingFile, String fileType, FilenameFilter filter, Frame frame) {
 		FileDialog dialog=new FileDialog(frame, "Select a "+fileType+" file", FileDialog.LOAD);
 		if (startingFile!=null) {
 			dialog.setFile(startingFile.getAbsolutePath());

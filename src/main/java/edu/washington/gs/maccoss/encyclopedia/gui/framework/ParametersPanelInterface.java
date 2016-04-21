@@ -10,5 +10,6 @@ public interface ParametersPanelInterface {
 
 	Optional<String> canLoadData();
 	SwingJob getJob(File diaFile, JobProcessorTableModel model);
+	void askForSetupFile();
 
 }

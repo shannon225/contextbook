@@ -18,8 +18,10 @@ import java.util.Optional;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideTrie;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
@@ -56,15 +58,17 @@ public class BlibFile extends SQLFile {
 	}
 	
 	@SuppressWarnings("resource") // this is properly closed, Eclipse just can't follow the if/else logic
-	public void getStreamEntriesToLibrary(LibraryFile library, Optional<TObjectFloatHashMap<String>> irtMap) throws IOException, SQLException, DataFormatException {
+	public void getStreamEntriesToLibrary(LibraryFile library, Optional<TObjectFloatHashMap<String>> irtMap, File fastaFile) throws IOException, SQLException, DataFormatException {
+		Logger.logLine("Reading BLIB file");
+		
 		String filename;
 		if (userFile!=null) {
 			filename=userFile.getName();
 		} else {
 			filename=tempFile.getName();
 		}
-		library.dropIndices();
-		
+
+		ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
 		Connection c=getConnection(tempFile);
 		try {
 			Statement s=c.createStatement();
@@ -88,7 +92,6 @@ public class BlibFile extends SQLFile {
 									+"where RefSpectra.id == RefSpectraPeaks.RefSpectraID");
 				}
 
-				ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
 				int missing=0;
 				int total=0;
 				while (rs.next()) {
@@ -115,20 +118,37 @@ public class BlibFile extends SQLFile {
 					}
 					total++;
 
-					// FIXME THIS IS A PROBLEM! WE NEED TO ASSOCIATE PROTEINS WITH BLIB PEPTIDES
 					entries.add(new LibraryEntry(filename, new HashSet<String>(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));
-					
-					if (entries.size()>1000) {
-						library.addEntries(entries);
-						entries.clear();
-						Logger.log(".");
-					}
 				}
 				if (missing>0) {
-					System.out.println("Missing iRT for "+missing+" of "+total+" peptides, using RT in file.");
+					Logger.logLine("Missing iRT for "+missing+" of "+total+" peptides, using RT in file.");
 				}
 
+				Logger.logLine("Reading Fasta file "+fastaFile.getName());
+				ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile);
+				
+				Logger.logLine("Constructing trie from library peptides");
+				PeptideTrie trie=new PeptideTrie(entries);
+				for (FastaEntryInterface fastaEntryInterface : proteins) {
+					trie.addFasta(fastaEntryInterface);
+				}
+				int[] counts=new int[21];
+				for (LibraryEntry entry : entries) {
+					int size=Math.min(counts.length-1, entry.getAccessions().size());
+					counts[size]++;
+				}
+				Logger.logLine("Accession count histogram: ");
+				for (int i=0; i<counts.length; i++) {
+					Logger.logLine(i+" Acc\t"+counts[i]+" Counts");
+				}
+
+				if (counts[0]>0) {
+					Logger.errorLine(counts[0]+" library entries can't be linked to proteins! These entries will be dropped.");
+				}
+				Logger.logLine("Writing library file "+library.getName());
+				library.dropIndices();
 				library.addEntries(entries);
+				library.createIndices();
 				
 				rs.close();
 			} finally {
@@ -138,7 +158,6 @@ public class BlibFile extends SQLFile {
 			c.close();
 		}
 		
-		library.createIndices();
 	}
 	public int[] addLibrary(SearchJobData job, ArrayList<LibraryEntry> entries, int idCounter, int jobCounter, int modCounter) throws IOException, SQLException {
 		String diaFileName=job.getDiaFile().getName();

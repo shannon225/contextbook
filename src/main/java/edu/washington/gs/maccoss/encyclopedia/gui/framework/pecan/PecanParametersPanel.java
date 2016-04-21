@@ -121,6 +121,11 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		this.add(options, BorderLayout.CENTER);
 	}
 	
+	@Override
+	public void askForSetupFile() {
+		backgroundFasta.askForFiles();
+	}
+	
 	public Optional<String> canLoadData() {
 		if (backgroundFasta.getFile()==null) {
 			return Optional.of("Please load a background FASTA file first!");

@@ -76,7 +76,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(new LabeledComponent("<p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Parameters", new JLabel()));
 		
-		libraryFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".elib", ".blib"), true);
+		libraryFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".elib"), true);
 		options.add(libraryFileChooser);
 		irtFileChooser=new FileChooserPanel(null, "IRT Database", new SimpleFilenameFilter(".irtdb"), false);
 		options.add(irtFileChooser);
@@ -89,6 +89,11 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
 
 		this.add(options, BorderLayout.CENTER);
+	}
+	
+	@Override
+	public void askForSetupFile() {
+		libraryFileChooser.askForFiles();
 	}
 	
 	/* (non-Javadoc)

@@ -62,7 +62,9 @@ public class SearchGUIMain {
 			}
 		});
 
-		f.getContentPane().add(new SearchPanel(pecanpie), BorderLayout.CENTER);
+		SearchPanel panel=new SearchPanel(pecanpie);
+		f.getContentPane().add(panel, BorderLayout.CENTER);
+		f.setJMenuBar(panel.createMenus());
 
 		f.pack();
 		f.setSize(new Dimension(1250, 750));
