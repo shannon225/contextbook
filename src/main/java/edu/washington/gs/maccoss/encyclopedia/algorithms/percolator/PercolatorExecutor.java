@@ -112,10 +112,22 @@ public class PercolatorExecutor extends ExternalExecutor {
 	static String[] generateCommand(File tsv, File outputFile, Optional<File> percolatorLocation, boolean useXML) {
 		File percolator=getPercolator(percolatorLocation);
 
-		if (useXML) {
-			return new String[] {percolator.getAbsolutePath(), "-X", outputFile.getAbsolutePath(), "--decoy-xml-output", tsv.getAbsolutePath()};
-		} else {
-			return new String[] {percolator.getAbsolutePath(), tsv.getAbsolutePath()};
+		OS os=OSDetector.getOS();
+		switch (os) {
+			case MAC: {
+				if (useXML) {
+					return new String[] {percolator.getAbsolutePath(), "-X", outputFile.getAbsolutePath(), "--decoy-xml-output", tsv.getAbsolutePath()};
+				} else {
+					return new String[] {percolator.getAbsolutePath(), tsv.getAbsolutePath()};
+				}
+			}
+			default: {
+				if (useXML) {
+					return new String[] {percolator.getAbsolutePath(), "-y", "-X", outputFile.getAbsolutePath(), "--decoy-xml-output", tsv.getAbsolutePath()};
+				} else {
+					return new String[] {percolator.getAbsolutePath(), "-y", tsv.getAbsolutePath()};
+				}	
+			}
 		}
 	}
 	
@@ -129,13 +141,14 @@ public class PercolatorExecutor extends ExternalExecutor {
 			OS os=OSDetector.getOS();
 			switch (os) {
 				case WINDOWS: {
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-v2-06.exe");
+					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-v2-10.exe");
 					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
 					percolator.setExecutable(true);
 					
-					loadLibraryFile(percolator, "xerces-c_3_1.dll");
-					loadLibraryFile(percolator, "msvcr120.dll");
-					loadLibraryFile(percolator, "msvcp120.dll");
+					// not necessary for the crux version of percolator
+					//loadLibraryFile(percolator, "xerces-c_3_1.dll");
+					//loadLibraryFile(percolator, "msvcr120.dll");
+					//loadLibraryFile(percolator, "msvcp120.dll");
 					
 					return percolator;
 				}
@@ -146,7 +159,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 					return percolator;
 				}
 				case LINUX:
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-v2-08.lin");
+					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-v2-10.lin");
 					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
 					percolator.setExecutable(true);
 					return percolator;

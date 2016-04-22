@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.zip.DataFormatException;
 
@@ -111,7 +110,7 @@ public class EncyclopediaTest {
 	}
 
 	public static void run(File diaFile, File libraryFile, EncyclopediaOneScoringFactory factory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
-		LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile, Optional.ofNullable((File)null));
+		LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
 		EncyclopediaJobData job;
 		job=new EncyclopediaJobData(diaFile, library, factory);
 		Encyclopedia.runSearch(new EmptyProgressIndicator(), job);

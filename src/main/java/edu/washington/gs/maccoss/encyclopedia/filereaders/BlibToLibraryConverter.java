@@ -12,31 +12,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class BlibToLibraryConverter {
-	public static void main(String[] args) throws IOException, SQLException, DataFormatException {
-		File[] blibFiles;
-		File iRTLibraryFile;
-		/*
-		File blibDir=new File("/Users/searleb/Documents/villen_manuscript/phospho/");
-		File[] blibFiles=new File[] {new File(blibDir, "GerberS.blib"), new File(blibDir, "MannM_HumanPhospho.blib"), new File(blibDir, "VillenJ_Velos_1to200.blib"), new File(blibDir, "HeckA.blib"),
-				new File(blibDir, "VillenJ_Exactive_HumanPhosphoproteome.blib"), new File(blibDir, "VillenJ_Velos_201to424_HumanPhospho.blib")};
 
-		
-		//blibFiles=new File[] {new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.blib")};
-		//libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.elib");
-		 * 
-		blibDir=new File("/Users/searleb/Documents/school/projects/");
-		blibFiles=new File[] {new File(blibDir, "VillenJ_Exactive_HumanPhosphoproteome.blib")};
-		blibFiles=new File[] {new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/VillenJ_Exactive_HumanPhosphoproteome.blib")};
-		libraryFile=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
-		iRTLibraryFile=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/HumanPhosphoProteomeRT.irtdb");
-		*/
-		
-		blibFiles=new File[] {new File("/Users/searleb/Documents/projects/encyclopedia/mzml/momo/20151125_122sample_id_iRT.blib")};
-		iRTLibraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/momo/20151125_122sample_id_iRT.irtdb");
-		getFile(blibFiles[0], Optional.ofNullable(iRTLibraryFile));
-	}
-
-	public static LibraryInterface getFile(File f, Optional<File> irtFile) {
+	public static LibraryInterface getFile(File f) {
 		if (!f.exists()||!f.canRead()) {
 			throw new EncyclopediaException("Can't read file "+f.getAbsolutePath());
 		}

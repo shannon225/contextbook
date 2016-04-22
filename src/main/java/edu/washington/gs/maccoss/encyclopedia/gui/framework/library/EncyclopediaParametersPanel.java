@@ -50,7 +50,6 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	
 	
 	private final FileChooserPanel libraryFileChooser;
-	private final FileChooserPanel irtFileChooser;
 	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {"Overlapping DIA", "Non-Overlapping DIA", "DDA"});
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "PepsinA"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {"CID (B/Y)", "HCD (Y-Only)", "ETD (C/Z/Z+1)"});
@@ -78,8 +77,6 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		
 		libraryFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".elib"), true);
 		options.add(libraryFileChooser);
-		irtFileChooser=new FileChooserPanel(null, "IRT Database", new SimpleFilenameFilter(".irtdb"), false);
-		options.add(irtFileChooser);
 		options.add(new LabeledComponent("Data Acquisition Type", acquisition));
 		options.add(new LabeledComponent("Precursor Window Width (blank=extract from file)", precursorWindowWidth));
 		options.add(new LabeledComponent("Enzyme", enzyme));
@@ -115,8 +112,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		SearchParameters parameters=getParameters();
 		File libraryFile=libraryFileChooser.getFile();
 		if (libraryFile==null) return null;
-		Optional<File> irtdbFile=Optional.ofNullable(irtFileChooser.getFile());
-		SearchJob job=getJob(diaFile, libraryFile, irtdbFile, model, parameters);
+		SearchJob job=getJob(diaFile, libraryFile, model, parameters);
 
 		if (job!=null) {
 			model.addJob(job);
@@ -124,11 +120,11 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		return job;
 	}
 
-	static SearchJob getJob(File diaFile, File libraryFile, Optional<File> irtdbFile, JobProcessor processor, SearchParameters parameters) {
+	static SearchJob getJob(File diaFile, File libraryFile, JobProcessor processor, SearchParameters parameters) {
 		File outputFile=new File(diaFile.getAbsolutePath()+".percolator.txt");
 		File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
 		
-		LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile, irtdbFile);
+		LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
 		
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
 		EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, featureFile, outputFile, factory);

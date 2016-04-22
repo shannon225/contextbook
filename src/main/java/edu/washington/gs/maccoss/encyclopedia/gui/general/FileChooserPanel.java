@@ -31,6 +31,9 @@ public class FileChooserPanel extends JPanel {
 
 	public FileChooserPanel(File f, String fileTypeLocal, FilenameFilter filterLocal, boolean required) {
 		super(new BorderLayout());
+		this.setOpaque(true);
+		this.setBackground(Color.white);
+		
 		this.fileType=fileTypeLocal;
 		this.filter=filterLocal;
 		this.required=required;

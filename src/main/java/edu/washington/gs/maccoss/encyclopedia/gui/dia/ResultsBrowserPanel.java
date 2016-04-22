@@ -138,7 +138,7 @@ public class ResultsBrowserPanel extends JPanel {
 		SwingWorkerProgress<ArrayList<LibraryEntry>> worker=new SwingWorkerProgress<ArrayList<LibraryEntry>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Library") {
 			@Override
 			protected ArrayList<LibraryEntry> doInBackgroundForReal() throws Exception {
-				LibraryInterface library=BlibToLibraryConverter.getFile(f, Optional.ofNullable((File)null));
+				LibraryInterface library=BlibToLibraryConverter.getFile(f);
 				ArrayList<LibraryEntry> entries=library.getEntries(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), false);
 				return entries;
 			}

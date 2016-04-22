@@ -73,10 +73,9 @@ public class Encyclopedia {
 			Logger.logLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.logLine("Required Parameters: ");
 			Logger.logLine("\t-i\tinput .DIA or .MZML file");
-			Logger.logLine("\t-l\tlibrary .BLIB or .ELIB file");
+			Logger.logLine("\t-l\tlibrary .ELIB file");
 			Logger.logLine("Other Parameters: ");
 			Logger.logLine("\t-pecan\trun Pecanpie (use -pecan -h for Pecan help)");
-			Logger.logLine("\t-irtdb\tlibrary .IRTDB file");
 			Logger.logLine("\t-o\toutput report file (default: [input file].pecan.txt)");
 			
 			TreeMap<String, String> defaults=new TreeMap<String, String>(PecanParameterParser.getDefaultParameters());
@@ -97,9 +96,6 @@ public class Encyclopedia {
 
 			File diaFile=new File(arguments.get("-i"));
 			File libraryFile=new File(arguments.get("-l"));
-			
-			String irtFileName=arguments.get("-irtdb");
-			File irtFile=irtFileName==null?null:new File(irtFileName);
 
 			File outputFile;
 			if (arguments.containsKey("-o")) {
@@ -117,13 +113,12 @@ public class Encyclopedia {
 			Logger.logLine("Parameters:");
 			Logger.logLine(" -i "+diaFile.getAbsolutePath());
 			Logger.logLine(" -l "+libraryFile.getAbsolutePath());
-			Logger.logLine(" -irtdb "+irtFileName);
 			Logger.logLine(" -t "+arguments.get("-t"));
 			Logger.logLine(" -o "+outputFile.getAbsolutePath());
 			Logger.logLine(parameters.toString());
 
 			try {
-				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile, Optional.ofNullable(irtFile));
+				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
 				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, featureFile, outputFile, factory);
 				runSearch(new EmptyProgressIndicator(), job);
 			} catch (Exception e) {
