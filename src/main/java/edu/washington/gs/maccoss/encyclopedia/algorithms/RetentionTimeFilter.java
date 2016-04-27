@@ -80,8 +80,8 @@ public class RetentionTimeFilter {
 		
 		if (saveFileSeed.isPresent()) {
 			String saveFilePrefix=saveFileSeed.get().getAbsolutePath();
-			Charter.writeAsPDF(new File(saveFilePrefix+".delta_rt.pdf"), "Delta RT", "Count", true, histTrace, posTrace, negTrace);
-			Charter.writeAsPDF(new File(saveFilePrefix+".rt_fit.pdf"), "Calculated RT", "Actual RT", true, median2, selectedTrace, trace);
+			Charter.writeAsPDF(new File(saveFilePrefix+".delta_rt.pdf"), "Delta RT", "Count", true, negTrace, posTrace, histTrace);
+			Charter.writeAsPDF(new File(saveFilePrefix+".rt_fit.pdf"), "Calculated RT", "Actual RT", true, trace, selectedTrace, median2);
 		} else {
 			Charter.launchChart("Delta RT", "Count", true, histTrace, posTrace, negTrace);
 			Charter.launchChart("Calculated RT", "Actual RT", true, median2, selectedTrace, trace);

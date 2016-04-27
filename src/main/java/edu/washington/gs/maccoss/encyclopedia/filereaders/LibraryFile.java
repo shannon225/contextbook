@@ -29,7 +29,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 public class LibraryFile extends SQLFile implements LibraryInterface {
 	public static final String ELIB=".elib";
 	public static final String VERSION_STRING="version";
-	public static final String MOST_RECENT_VERSION="0.1";
+	public static final String[] ACCEPTABLE_VERSIONS=new String[] {"0.1", "0.1.1"};
+	public static final String MOST_RECENT_VERSION="0.1.1";
 	
 	private File userFile=null;
 	private final File tempFile;
@@ -37,6 +38,15 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	public LibraryFile() throws IOException {
 		tempFile=File.createTempFile("encyclopedia_", ELIB);
 		tempFile.deleteOnExit();
+	}
+	
+	public static boolean isVersionAcceptable(String version) {
+		if (version==null) return false;
+		
+		for (String string : ACCEPTABLE_VERSIONS) {
+			if (string.equals(version)) return true;
+		}
+		return false;
 	}
 	
 	public String getName() {
@@ -154,11 +164,25 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		// then add integrated areas
 		Connection c=getConnection(tempFile);
 		try {
-			PreparedStatement peptidePrep=c.prepareStatement("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, SourceFile, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, MedianChromatogramEncodedLength, MedianChromatogramArray) VALUES (?,?,?,?,?,?,?,?,?)");
-			PreparedStatement fragmentPrep=c.prepareStatement("INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, SourceFile, IonType, FragmentMass, Correlation, Intensity) VALUES (?,?,?,?,?,?,?)");
+			PreparedStatement peptidePrep=c.prepareStatement("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, SourceFile, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, BestFragmentCorrelation, BestFragmentDeltaMass, MedianChromatogramEncodedLength, MedianChromatogramArray) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+			PreparedStatement fragmentPrep=c.prepareStatement("INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, SourceFile, IonType, FragmentMass, Correlation, DeltaMass, Intensity) VALUES (?,?,?,?,?,?,?,?)");
 			try {
 				for (IntegratedLibraryEntry entry : entries) {
 					TransitionRefinementData data=entry.getRefinementData();
+
+					float[] correlationArray=data.getCorrelationArray();
+					float[] integrationArray=data.getIntegrationArray();
+					double[] fragmentMassArray=data.getFragmentMassArray();
+					float[] deltaMassArray=data.getDeltaMassArray().get();
+					
+					float bestCorrelation=-1.0f;
+					float bestDeltaMass=10.0f;
+					for (int i=0; i<deltaMassArray.length; i++) {
+						if (correlationArray[i]>bestCorrelation) {
+							bestCorrelation=correlationArray[i];
+							bestDeltaMass=deltaMassArray[i]*1000000.0f/(float)fragmentMassArray[i];
+						}
+					}
 					
 					peptidePrep.setInt(1, entry.getPrecursorCharge());
 					peptidePrep.setString(2, entry.getPeptideModSeq());
@@ -167,21 +191,23 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					peptidePrep.setFloat(5, data.getRange().getStop());
 					peptidePrep.setFloat(6, data.getTotalIntensity(minimumCorrelation));
 					peptidePrep.setInt(7, data.getTotalQuantIons(minimumCorrelation));
+					peptidePrep.setFloat(8, bestCorrelation);
+					peptidePrep.setFloat(9, bestDeltaMass);
 					byte[] intensityByteArray=ByteConverter.toByteArray(data.getMedianChromatogram());
-					peptidePrep.setInt(8, intensityByteArray.length);
-					peptidePrep.setBytes(9, CompressionUtils.compress(intensityByteArray));
+					peptidePrep.setInt(10, intensityByteArray.length);
+					peptidePrep.setBytes(11, CompressionUtils.compress(intensityByteArray));
 					peptidePrep.addBatch();
-
-					float[] correlationArray=data.getCorrelationArray();
+					
 					for (int i=0; i<correlationArray.length; i++) {
 						if (correlationArray[i]>=minimumCorrelation) {
 							fragmentPrep.setInt(1, entry.getPrecursorCharge());
 							fragmentPrep.setString(2, entry.getPeptideModSeq());
 							fragmentPrep.setString(3, entry.getSource());
 							fragmentPrep.setString(4, "BY");
-							fragmentPrep.setDouble(5, data.getFragmentMassArray()[i]);
+							fragmentPrep.setDouble(5, fragmentMassArray[i]);
 							fragmentPrep.setFloat(6, correlationArray[i]);
-							fragmentPrep.setFloat(7, data.getIntegrationArray()[i]);
+							fragmentPrep.setFloat(7, deltaMassArray[i]);
+							fragmentPrep.setFloat(8, integrationArray[i]);
 							fragmentPrep.addBatch();
 						}
 					}
@@ -396,11 +422,33 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try {
 			Statement s=c.createStatement();
 			try {
-				s.execute("create table if not exists metadata ( Key string not null, Value string not null, primary key (Key) )");
-				s.execute("create table if not exists entries ( PrecursorMz double not null, PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, Copies int not null, RTInSeconds double not null, Score double not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, SourceFile string not null )");
-				s.execute("create table if not exists proteins ( PeptideSeq string not null, ProteinAccessions string not null, primary key (PeptideSeq) )");
-				s.execute("create table if not exists peptidequants ( PrecursorCharge int not null, PeptideModSeq string not null, SourceFile string not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null )");
-				s.execute("create table if not exists fragmentquants ( PrecursorCharge int not null, PeptideModSeq string not null, SourceFile string not null, IonType string not null, FragmentMass double not null, Correlation double not null, Intensity double not null )");
+				s.execute("CREATE TABLE IF NOT EXISTS metadata ( "
+						+ "Key string not null, Value string not null, "
+						+ "PRIMARY KEY (Key) "
+						+ ")");
+				
+				s.execute("CREATE TABLE IF NOT EXISTS entries ( "
+						+ "PrecursorMz double not null, PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, Copies int not null, RTInSeconds double not null, Score double not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, SourceFile string not null, "
+						+ "PRIMARY KEY (PrecursorCharge, PeptideModSeq, SourceFile), "
+						+ "FOREIGN KEY (PeptideSeq) REFERENCES proteins (PeptideSeq) "
+						+ ")");
+				
+				s.execute("CREATE TABLE IF NOT EXISTS proteins ( "
+						+ "PeptideSeq string not null, ProteinAccessions string not null, "
+						+ "PRIMARY KEY (PeptideSeq) "
+						+ ")");
+				
+				s.execute("CREATE TABLE IF NOT EXISTS peptidequants ( "
+						+ "PrecursorCharge int not null, PeptideModSeq string not null, SourceFile string not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, BestFragmentCorrelation double not null, BestFragmentDeltaMass double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null,"
+						+ "PRIMARY KEY (PrecursorCharge, PeptideModSeq, SourceFile), "
+						+ "FOREIGN KEY (PrecursorCharge, PeptideModSeq, SourceFile) REFERENCES entries (PrecursorCharge, PeptideModSeq, SourceFile) "
+						+ ")");
+				
+				s.execute("CREATE TABLE IF NOT EXISTS fragmentquants ( "
+						+ "PrecursorCharge int not null, PeptideModSeq string not null, SourceFile string not null, IonType string not null, FragmentMass double not null, Correlation double not null, DeltaMass double not null, Intensity double not null, "
+						+ "FOREIGN KEY (PrecursorCharge, PeptideModSeq, SourceFile) REFERENCES entries (PrecursorCharge, PeptideModSeq, SourceFile) "
+						+ ")");
+				
 				c.commit();
 			} finally {
 				s.close();

@@ -41,11 +41,10 @@ public class BlibToLibraryConverter {
 			elibFile.openFile(f);
 			HashMap<String, String>metadata=elibFile.getMetadata();
 			String version=metadata.get(LibraryFile.VERSION_STRING);
-			if (version!=null&&version.equals(LibraryFile.MOST_RECENT_VERSION)) {
+			if (LibraryFile.isVersionAcceptable(version)) {
 				return Optional.of((LibraryInterface)elibFile);
 			} else {
-				Logger.errorLine(f.getName()+" is an old Library file (version:"+version+")! Deleting to update to new version.");
-				f.delete();
+				Logger.errorLine(f.getName()+" is an old Library file (version:"+version+")! Please delete it!");
 			}
 			return Optional.empty();
 			

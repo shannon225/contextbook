@@ -14,12 +14,14 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ThreadableTask;
@@ -210,6 +212,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	}
 
 	public static TransitionRefinementData quantifyPeptide(PSMScorer scorer, LibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<Stripe> stripes) {
+		// find the center
 		float bestDelta=Float.MAX_VALUE;
 		PeakScores[] bestScores=null;
 		ArrayList<PeakScores[]> scoreList=new ArrayList<PeakScores[]>();
@@ -227,51 +230,79 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		// no signal of any kind at retention time!
 		if (bestScores==null||bestScores.length==0) return null;
 
+		// get each scan (fragments by RT)
 		TFloatArrayList[] traces=new TFloatArrayList[bestScores.length];
+		@SuppressWarnings("unchecked")
+		ArrayList<XYZPoint>[] deltaMassesByRT=new ArrayList[bestScores.length];
 		for (int i=0; i<traces.length; i++) {
 			traces[i]=new TFloatArrayList();
+			deltaMassesByRT[i]=new ArrayList<XYZPoint>();
 		}
-		for (PeakScores[] peakScores : scoreList) {
+		for (int index=0; index<scoreList.size(); index++) {
+			PeakScores[] peakScores=scoreList.get(index);
 			for (int i=0; i<peakScores.length; i++) {
 				if (peakScores[i]!=null) {
 					traces[i].add(peakScores[i].getScore());
+					deltaMassesByRT[i].add(new XYZPoint(retentionTimes.get(index), peakScores[i].getDeltaMass(), peakScores[i].getScore()));
 				} else {
 					traces[i].add(0.0f);
 				}
 			}
 		}
 
-		ArrayList<PeakScores> keptPeaks=new ArrayList<PeakScores>();
+		// invert each scan into fragment chromatograms (RTs by fragment)
+		ArrayList<PeakScores> bestKeptPeaks=new ArrayList<PeakScores>();
 		ArrayList<float[]> chromatograms=new ArrayList<float[]>();
+		ArrayList<ArrayList<XYZPoint>> chromatogramDeltaMassesByRT=new ArrayList<ArrayList<XYZPoint>>();
 		TDoubleArrayList fragmentMasses=new TDoubleArrayList();
 		for (int i=0; i<bestScores.length; i++) {
 			if (bestScores[i]!=null&&bestScores[i].getScore()>0) {
 				float[] chromatogram=traces[i].toArray();
 				chromatogram=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatogram);
 				chromatograms.add(chromatogram);
-				keptPeaks.add(bestScores[i]);
+				chromatogramDeltaMassesByRT.add(deltaMassesByRT[i]);
+				bestKeptPeaks.add(bestScores[i]);
 				fragmentMasses.add(bestScores[i].getTargetMass());
 			}
 		}
 		
+		// identify transitions
 		TransitionRefinementData data=TransitionRefiner.identifyTransitions(unitEntry.getPeptideModSeq(), fragmentMasses.toArray(), chromatograms, retentionTimes.toArray());
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 
 		TDoubleArrayList mzs=new TDoubleArrayList();
 		TFloatArrayList intens=new TFloatArrayList();
-		//int count=0;
-		//int quantCount=0;
-		float correlationThreshold=limitToQuantifiable?TransitionRefiner.quantitativeCorrelationThreshold:0.0f;//TransitionRefiner.identificationCorrelationThreshold;
-		for (int i=0; i<keptPeaks.size(); i++) {
-			PeakScores scores=keptPeaks.get(i);
+		TFloatArrayList deltaMasses=new TFloatArrayList(); // will ultimately be the length of the correlations array
+
+		float correlationThreshold=limitToQuantifiable?TransitionRefiner.quantitativeCorrelationThreshold:0.0f;
+		for (int i=0; i<bestKeptPeaks.size(); i++) {
+			// calculate delta mass for each fragment ion
+			Range rtRange=data.getRange();
+			
+			float totalDeltaMasses=0.0f;
+			float totalIntensities=0.0f;
+			for (XYZPoint point : chromatogramDeltaMassesByRT.get(i)) {
+				if (rtRange.contains((float)point.getX())) {
+					totalDeltaMasses+=point.getY();
+					totalIntensities+=point.getZ();
+				}
+			}
+			
+			float deltaMass=0.0f;
+			if (totalIntensities>0.0f) {
+				deltaMass=totalDeltaMasses/totalIntensities;
+			}
+			deltaMasses.add(deltaMass);
+			
+			// generate spectrum peaks for only each "kept" fragment ion
 			if (correlations[i]>=correlationThreshold) {
-				//quantCount++;
-				float peakScore=scores.getScore();
+				// grab mz
+				PeakScores bestScore=bestKeptPeaks.get(i);
+				float peakScore=bestScore.getScore();
 				if (peakScore>0) {
-					mzs.add(scores.getTargetMass());
+					mzs.add(bestScore.getTargetMass());
 					intens.add(integrations[i]);
-					//count++;
 				}
 			}
 		}
@@ -282,6 +313,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 
 		double[] massArray=mzs.toArray();
 		float[] intensityArray=intens.toArray();
-		return data.addPeakData(massArray, intensityArray, retentionTimes.toArray());
+		float[] deltaMassArray=deltaMasses.toArray();
+		return data.addPeakData(deltaMassArray, massArray, intensityArray, retentionTimes.toArray());
 	}
 }

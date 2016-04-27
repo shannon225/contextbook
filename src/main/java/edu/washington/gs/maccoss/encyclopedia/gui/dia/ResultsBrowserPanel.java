@@ -221,7 +221,7 @@ public class ResultsBrowserPanel extends JPanel {
 				ChartPanel chart=Charter.getChart("RT ("+entry.getPrecursorMZ()+" M/Z)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
 				rawSplit.setTopComponent(chart);
 				
-				PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), entry.getRetentionTime()*60f, entry.getScore(), 2*rtRange);
+				PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), entry.getRetentionTime()*60f, entry.getScore(), 1.0f-entry.getScore(), 2*rtRange);
 				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(dia.getOriginalFileName(), psmdata, Optional.ofNullable((LibraryInterface)null), stripes, parameters, false);
 				TransitionRefinementData data=quantTask.extractSpectrum(unit, 2*rtRange, false);
 				if (data!=null) {

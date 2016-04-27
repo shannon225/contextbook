@@ -80,12 +80,21 @@ public class PeptideQuantExtractor {
 						}
 						float score=savedIDs.get(psmID);
 
+						float sortingScore;
+						String sortingScoreString=row.get("xTandem"); // Encyclopedia
+						if (sortingScoreString!=null) {
+							sortingScore=Float.parseFloat(sortingScoreString);
+						} else {
+							sortingScoreString=row.get("peakBGScore"); // Pecan
+							sortingScore=Float.parseFloat(sortingScoreString);
+						}
+
 						String samplingTimeString=row.get("sampledTimes");
 						float duration=samplingTimeString==null?(parameters.getExpectedPeakWidth()):Float.parseFloat(samplingTimeString);
 
 						String proteinString=row.get("protein");
 						HashSet<String> accessions=PSMData.stringToAccessions(proteinString);
-						data.add(new PSMData(accessions, scanID, precursorMZ, precursorCharge, peptideModSeq, retentionTime, score, duration));
+						data.add(new PSMData(accessions, scanID, precursorMZ, precursorCharge, peptideModSeq, retentionTime, score, sortingScore, duration));
 					}
 				}
 			}
@@ -94,7 +103,21 @@ public class PeptideQuantExtractor {
 		TableParser.parseTSV(f, muscle);
 
 		try {
-			return extractPeptides(progress, library, stripeFile, data, limitToQuantifiable, parameters);
+			HashMap<String, PSMData> uniquedData=new HashMap<String, PSMData>();
+			for (PSMData psmData : data) {
+				String key=psmData.getPeptideModSeq()+"+"+psmData.getPrecursorCharge();
+				PSMData prev=uniquedData.get(key);
+				if (prev!=null) {
+					if (prev.getSortingScore()<psmData.getSortingScore()) {
+						// scores scores are high
+						uniquedData.put(key, psmData);
+					}
+				} else {
+					uniquedData.put(key, psmData);
+				}
+			}
+			
+			return extractPeptides(progress, library, stripeFile, uniquedData.values(), limitToQuantifiable, parameters);
 		} catch (IOException ioe) {
 			Logger.errorLine("Error processing "+stripeFile.getFile().getName());
 			throw new EncyclopediaException("Error parsing Stripe file", ioe);

@@ -10,10 +10,11 @@ public class PSMData {
 	private final String peptideModSeq;
 	private final float retentionTime;
 	private final float score;
+	private final float sortingScore;
 	private final float duration;
 	private final HashSet<String> accessions;
 
-	public PSMData(HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, float retentionTime, float score, float duration) {
+	public PSMData(HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, float retentionTime, float score, float sortingScore, float duration) {
 		this.accessions=accessions;
 		this.spectrumIndex=spectrumIndex;
 		this.precursorMZ=precursorMZ;
@@ -21,6 +22,7 @@ public class PSMData {
 		this.peptideModSeq=peptideModSeq;
 		this.retentionTime=retentionTime;
 		this.score=score;
+		this.sortingScore=sortingScore;
 		this.duration=duration;
 	}
 	
@@ -50,6 +52,10 @@ public class PSMData {
 
 	public float getScore() {
 		return score;
+	}
+	
+	public float getSortingScore() {
+		return sortingScore;
 	}
 	
 	public float getDuration() {

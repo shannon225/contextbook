@@ -51,7 +51,7 @@ public class TransitionRefiner {
 	public static TransitionRefinementData identifyTransitions(String peptideModSeq, double[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes) {
 		return identifyTransitions(peptideModSeq, fragmentMasses, chromatograms, retentionTimes, false);
 	}
-	public static TransitionRefinementData identifyTransitions(String peptideModSeq, double[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, boolean plot) {
+	static TransitionRefinementData identifyTransitions(String peptideModSeq, double[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, boolean plot) {
 		if (chromatograms.size()==0) return new TransitionRefinementData(new double[0], chromatograms, new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]));
 		
 		ArrayList<float[]> normalizedChromatograms=normalize(chromatograms);
