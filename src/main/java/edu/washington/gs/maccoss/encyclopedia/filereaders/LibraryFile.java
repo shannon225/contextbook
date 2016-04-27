@@ -164,8 +164,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		// then add integrated areas
 		Connection c=getConnection(tempFile);
 		try {
-			PreparedStatement peptidePrep=c.prepareStatement("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, SourceFile, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, BestFragmentCorrelation, BestFragmentDeltaMass, MedianChromatogramEncodedLength, MedianChromatogramArray) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
-			PreparedStatement fragmentPrep=c.prepareStatement("INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, SourceFile, IonType, FragmentMass, Correlation, DeltaMass, Intensity) VALUES (?,?,?,?,?,?,?,?)");
+			PreparedStatement peptidePrep=c.prepareStatement("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, SourceFile, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+			PreparedStatement fragmentPrep=c.prepareStatement("INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, SourceFile, IonType, FragmentMass, Correlation, DeltaMassPPM, Intensity) VALUES (?,?,?,?,?,?,?,?)");
 			try {
 				for (IntegratedLibraryEntry entry : entries) {
 					TransitionRefinementData data=entry.getRefinementData();
@@ -174,13 +174,15 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					float[] integrationArray=data.getIntegrationArray();
 					double[] fragmentMassArray=data.getFragmentMassArray();
 					float[] deltaMassArray=data.getDeltaMassArray().get();
+					float[] ppmArray=new float[deltaMassArray.length];
 					
 					float bestCorrelation=-1.0f;
 					float bestDeltaMass=10.0f;
 					for (int i=0; i<deltaMassArray.length; i++) {
+						ppmArray[i]=deltaMassArray[i]*1000000.0f/(float)fragmentMassArray[i];
 						if (correlationArray[i]>bestCorrelation) {
 							bestCorrelation=correlationArray[i];
-							bestDeltaMass=deltaMassArray[i]*1000000.0f/(float)fragmentMassArray[i];
+							bestDeltaMass=ppmArray[i];
 						}
 					}
 					
@@ -206,7 +208,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 							fragmentPrep.setString(4, "BY");
 							fragmentPrep.setDouble(5, fragmentMassArray[i]);
 							fragmentPrep.setFloat(6, correlationArray[i]);
-							fragmentPrep.setFloat(7, deltaMassArray[i]);
+							fragmentPrep.setFloat(7, ppmArray[i]);
 							fragmentPrep.setFloat(8, integrationArray[i]);
 							fragmentPrep.addBatch();
 						}
@@ -439,13 +441,13 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						+ ")");
 				
 				s.execute("CREATE TABLE IF NOT EXISTS peptidequants ( "
-						+ "PrecursorCharge int not null, PeptideModSeq string not null, SourceFile string not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, BestFragmentCorrelation double not null, BestFragmentDeltaMass double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null,"
+						+ "PrecursorCharge int not null, PeptideModSeq string not null, SourceFile string not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null,"
 						+ "PRIMARY KEY (PrecursorCharge, PeptideModSeq, SourceFile), "
 						+ "FOREIGN KEY (PrecursorCharge, PeptideModSeq, SourceFile) REFERENCES entries (PrecursorCharge, PeptideModSeq, SourceFile) "
 						+ ")");
 				
 				s.execute("CREATE TABLE IF NOT EXISTS fragmentquants ( "
-						+ "PrecursorCharge int not null, PeptideModSeq string not null, SourceFile string not null, IonType string not null, FragmentMass double not null, Correlation double not null, DeltaMass double not null, Intensity double not null, "
+						+ "PrecursorCharge int not null, PeptideModSeq string not null, SourceFile string not null, IonType string not null, FragmentMass double not null, Correlation double not null, DeltaMassPPM double not null, Intensity double not null, "
 						+ "FOREIGN KEY (PrecursorCharge, PeptideModSeq, SourceFile) REFERENCES entries (PrecursorCharge, PeptideModSeq, SourceFile) "
 						+ ")");
 				
