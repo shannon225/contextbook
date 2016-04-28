@@ -58,7 +58,7 @@ public class BlibFile extends SQLFile {
 	}
 	
 	@SuppressWarnings("resource") // this is properly closed, Eclipse just can't follow the if/else logic
-	public void getStreamEntriesToLibrary(LibraryFile library, Optional<TObjectFloatHashMap<String>> irtMap, File fastaFile) throws IOException, SQLException, DataFormatException {
+	public void getCopyEntriesToLibrary(LibraryFile library, Optional<TObjectFloatHashMap<String>> irtMap, File fastaFile) throws IOException, SQLException, DataFormatException {
 		Logger.logLine("Reading BLIB file");
 		
 		String filename;

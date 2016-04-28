@@ -74,7 +74,7 @@ public class BlibToLibraryConverter {
 				IRTdbFile irt=new IRTdbFile(irtFile.get());
 				irtMap=irt.getIRTs();
 			}
-			blib.getStreamEntriesToLibrary(elib, Optional.ofNullable(irtMap), fastaFile);	
+			blib.getCopyEntriesToLibrary(elib, Optional.ofNullable(irtMap), fastaFile);	
 			elib.saveAsFile(elibFile);
 			return elib;
 			
