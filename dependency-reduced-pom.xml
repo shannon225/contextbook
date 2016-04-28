@@ -4,7 +4,7 @@
   <groupId>maccoss</groupId>
   <artifactId>encyclopedia</artifactId>
   <name>encyclopedia</name>
-  <version>0.1.8</version>
+  <version>0.1.9</version>
   <url>http://maven.apache.org</url>
   <build>
     <plugins>
@@ -19,7 +19,7 @@
           </execution>
         </executions>
         <configuration>
-          <finalName>encyclopedia-${version}</finalName>
+          <finalName>${targetName}</finalName>
         </configuration>
       </plugin>
       <plugin>
@@ -29,7 +29,7 @@
             <manifest>
               <addClasspath>true</addClasspath>
               <classpathPrefix>lib/</classpathPrefix>
-              <mainClass>edu.washington.gs.maccoss.encyclopedia.Encyclopedia</mainClass>
+              <mainClass>${buildTarget}</mainClass>
             </manifest>
           </archive>
         </configuration>
@@ -56,6 +56,8 @@
     </dependency>
   </dependencies>
   <properties>
+    <buildTarget>edu.washington.gs.maccoss.encyclopedia.Encyclopedia</buildTarget>
+    <targetName>encyclopedia-${version}</targetName>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 </project>

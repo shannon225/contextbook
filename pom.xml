@@ -9,8 +9,12 @@
 
 	<name>encyclopedia</name>
 	<url>http://maven.apache.org</url>
-
+	
 	<properties>
+		<targetName>encyclopedia-${version}</targetName>
+		<buildTarget>edu.washington.gs.maccoss.encyclopedia.Encyclopedia</buildTarget>
+<!--		<targetName>pecanpie</<targetName> -->
+<!--		<buildTarget>edu.washington.gs.maccoss.encyclopedia.Pecanpie</buildTarget> -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
@@ -42,8 +46,7 @@
 					</execution>
 				</executions>
 				<configuration>
-<!-- 					<finalName>pecanpie-${version}</finalName> -->
-					<finalName>encyclopedia-${version}</finalName>
+					<finalName>${targetName}</finalName>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -54,8 +57,7 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
-<!-- 							<mainClass>edu.washington.gs.maccoss.encyclopedia.Pecanpie</mainClass>  -->
-							<mainClass>edu.washington.gs.maccoss.encyclopedia.Encyclopedia</mainClass>
+							<mainClass>${buildTarget}</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
