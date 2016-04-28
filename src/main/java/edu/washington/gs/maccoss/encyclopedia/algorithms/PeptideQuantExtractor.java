@@ -82,12 +82,16 @@ public class PeptideQuantExtractor {
 
 						float sortingScore;
 						String sortingScoreString=row.get("xTandem"); // Encyclopedia
-						if (sortingScoreString!=null) {
-							sortingScore=Float.parseFloat(sortingScoreString);
-						} else {
-							sortingScoreString=row.get("peakBGScore"); // Pecan
-							sortingScore=Float.parseFloat(sortingScoreString);
+						if (sortingScoreString==null) {
+							sortingScoreString=row.get("peakZScore"); // Pecan
 						}
+						if (sortingScoreString==null) {
+							sortingScoreString=row.get("peakBGScore"); // Pecan
+						}
+						if (sortingScoreString==null) {
+							Logger.errorLine("Can't parse score from header from ["+row.keySet()+"]");
+						}
+						sortingScore=Float.parseFloat(sortingScoreString);
 
 						String samplingTimeString=row.get("sampledTimes");
 						float duration=samplingTimeString==null?(parameters.getExpectedPeakWidth()):Float.parseFloat(samplingTimeString);
