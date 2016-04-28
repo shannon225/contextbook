@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
+import java.util.Set;
+
 public class General {
 	
 	public static float[] toFloatArray(double[] a) {
@@ -38,6 +40,17 @@ public class General {
 			lastIndex+=a[i].length;
 		}
 		return r;
+	}
+	
+	public static String toString(@SuppressWarnings("rawtypes") Set i) {
+		StringBuilder sb=new StringBuilder();
+		for (Object g : i) {
+			if (sb.length()>0) {
+				sb.append(',');
+			}
+			sb.append(g);
+		}
+		return sb.toString();
 	}
 	
 	public static String toString(int[] i) {
