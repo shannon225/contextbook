@@ -10,7 +10,7 @@ public class EncyclopediaJobData extends SearchJobData {
 	private final LibraryScoringFactory taskFactory;
 	
 	public EncyclopediaJobData(File diaFile, LibraryInterface library, LibraryScoringFactory taskFactory) {
-		super(diaFile, new File(diaFile.getAbsolutePath()+".features.txt"), new File(diaFile.getAbsolutePath()+".percolator.txt"), taskFactory.getParameters(), taskFactory.getVersion());
+		super(diaFile, new File(diaFile.getAbsolutePath()+".features.txt"), new File(diaFile.getAbsolutePath()+".encyclopedia.txt"), taskFactory.getParameters(), taskFactory.getVersion());
 		this.library=library;
 		this.taskFactory=taskFactory;
 	}

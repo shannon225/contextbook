@@ -137,7 +137,7 @@ public class Pecanpie {
 		File outputFile=jobData.getOutputFile();
 		if (outputFile.exists()&&outputFile.canRead()) {
 			try {
-				ArrayList<ScoredObject<String>> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(outputFile, jobData.getParameters().getPercolatorThreshold());
+				ArrayList<ScoredObject<String>> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(outputFile, jobData.getParameters().getEffectivePercolatorThreshold());
 				progress.update("Previously found "+passingPeptides.size()+" peptides identified at "+(jobData.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 				return;
 			} catch (Exception e) {
@@ -229,6 +229,7 @@ public class Pecanpie {
 		int rangesFinished=0;
 		// get stripes
 		float numberOfTasks=2.0f+ranges.size();
+		boolean everyOtherDecoy=true;
 		for (Range range : ranges) {
 			String baseMessage="Working on "+range+" m/z";
 			float baseIncrement=1.0f/numberOfTasks;
@@ -342,6 +343,23 @@ public class Pecanpie {
 							AbstractPecanFragmentationModel revmodel=taskFactory.getFragmentationModel(decoyPeptide, parameters.getAAConstants());
 							PecanLibraryEntry reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
 							tasks.add(reventry);
+
+							if (parameters.isAddExtraDecoys()) {
+								if (everyOtherDecoy) {
+									String shuffledSequence=PeptideUtils.shuffle(sequence, parameters);
+									FastaPeptideEntry shuffledPeptide=new FastaPeptideEntry(peptide.getFilename(), "SHUFFLE_"+peptide.getAccession(), shuffledSequence);
+									revmodel=taskFactory.getFragmentationModel(shuffledPeptide, parameters.getAAConstants());
+									reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
+									tasks.add(reventry);
+									
+									smartDecoy=PeptideUtils.getSmartDecoy(shuffledSequence, charge, backgroundProteomeSet, parameters);
+									decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), "DECOY_"+peptide.getAccession(), smartDecoy);
+									revmodel=taskFactory.getFragmentationModel(decoyPeptide, parameters.getAAConstants());
+									reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
+									tasks.add(reventry);
+								}
+								everyOtherDecoy=!everyOtherDecoy;
+							}
 						}
 
 						executor.submit(taskFactory.getScoringTask(pecanScorer, tasks, stripes, backgroundScores, precursors, scanAveragingMargin, resultsQueue));
@@ -365,7 +383,7 @@ public class Pecanpie {
 		resultsConsumer.close();
 
 		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
-		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, outputFile, parameters.getPercolatorThreshold());
+		ArrayList<ScoredObject<String>> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, outputFile, parameters.getEffectivePercolatorThreshold());
 		
 		Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 

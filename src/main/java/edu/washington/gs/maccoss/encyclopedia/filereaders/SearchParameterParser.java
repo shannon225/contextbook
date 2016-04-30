@@ -56,6 +56,7 @@ public class SearchParameterParser {
 		final float expectedPeakWidth;
 		final float precursorWindowSize;
 		final boolean runPhosphoLocalization;
+		final boolean addExtraDecoys;
 		
 		String value=parameters.get("-frag");
 		if (value==null) {
@@ -112,6 +113,7 @@ public class SearchParameterParser {
 		precursorWindowSize=SearchParameterParser.getFloat("-precursorWindowSize", parameters, -1f);
 		expectedPeakWidth=SearchParameterParser.getFloat("-expectedPeakWidth", parameters, 25f);
 		runPhosphoLocalization=getBoolean("-runPhosphoLocalization", parameters, false);
+		addExtraDecoys=getBoolean("-addExtraDecoys", parameters, false);
 		
 		value=parameters.get("-percolatorLocation");
 		File percolator=null;
@@ -125,7 +127,7 @@ public class SearchParameterParser {
 			}
 		}
 		
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorThreshold, percolator, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth, targetWindowCenter, precursorWindowSize, runPhosphoLocalization);
+		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorThreshold, percolator, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth, targetWindowCenter, precursorWindowSize, runPhosphoLocalization, addExtraDecoys);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

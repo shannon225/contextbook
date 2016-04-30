@@ -22,6 +22,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringF
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ReverseLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -64,6 +65,7 @@ public class EncyclopediaDDA {
 		ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 		
 		// get stripes
+		boolean everyOtherDecoy=true;
 		for (Range range : ranges) {
 			Logger.logLine("Processing "+range);
 			
@@ -73,7 +75,15 @@ public class EncyclopediaDDA {
 			PSMScorer scorer=taskFactory.getLibraryScorer(background);
 			ArrayList<LibraryEntry> reverses=new ArrayList<LibraryEntry>();
 			for (LibraryEntry entry : entries) {
-				reverses.add(entry.getReverse(parameters));
+				reverses.add(entry.getDecoy(parameters, false));
+				if (parameters.isAddExtraDecoys()) {
+					if (everyOtherDecoy) {
+						ReverseLibraryEntry shuffle=entry.getDecoy(parameters, true);
+						reverses.add(shuffle);
+						reverses.add(shuffle.getDecoy(parameters, false));
+					}
+					everyOtherDecoy=!everyOtherDecoy;
+				}
 			}
 			entries.addAll(reverses);
 			executor.submit(taskFactory.getDDAScoringTask(scorer, entries, stripes, precursors, resultsQueue));
@@ -97,7 +107,7 @@ public class EncyclopediaDDA {
 
 		ArrayList<ScoredObject<String>> passingPeptides=Encyclopedia.percolatePeptides(progress, featureFile, outputFile, stripefile, taskFactory, saveResultsConsumer);
 		
-		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
+		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getEffectivePercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 
 	}
 }

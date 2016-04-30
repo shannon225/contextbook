@@ -106,7 +106,7 @@ public class PercolatorData {
 
 		HashSet<String> passingPSMIDs=new HashSet<String>();
 		for (PercolatorPSM psm : psms) {
-			if (psm.getQValue()<=parameters.getPercolatorThreshold()) {
+			if (psm.getQValue()<=parameters.getEffectivePercolatorThreshold()) {
 				passingPSMIDs.add(psm.getPsmID());
 			}
 		}

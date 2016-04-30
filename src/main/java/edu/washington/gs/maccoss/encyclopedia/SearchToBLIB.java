@@ -48,7 +48,7 @@ public class SearchToBLIB {
 		File bigPercolatorFile=new File(representativeJob.getFeatureFile().getParentFile(), "concatenated_results.txt");
 
 		SearchParameters parameters=representativeJob.getParameters();
-		float threshold=parameters.getPercolatorThreshold();
+		float threshold=parameters.getEffectivePercolatorThreshold();
 		try {
 			ArrayList<ScoredObject<String>> passingPeptides;
 			if (featureFiles.size()==1) {
@@ -91,7 +91,7 @@ public class SearchToBLIB {
 				ProgressIndicator subProgress=new SubProgressIndicator(progress, increment);
 				
 				ArrayList<ScoredObject<String>> globalPassingPeptides;
-				ArrayList<ScoredObject<String>>	localPassingPeptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), pecanJobs.get(i).getParameters().getPercolatorThreshold());
+				ArrayList<ScoredObject<String>>	localPassingPeptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), pecanJobs.get(i).getParameters().getEffectivePercolatorThreshold());
 				if (passingPeptides.isPresent()) {
 					globalPassingPeptides=passingPeptides.get();
 				} else {
@@ -178,7 +178,7 @@ public class SearchToBLIB {
 				ProgressIndicator subProgress=new SubProgressIndicator(progress, increment);
 				
 				ArrayList<ScoredObject<String>> globalPassingPeptides;
-				ArrayList<ScoredObject<String>>	localPassingPeptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), pecanJobs.get(i).getParameters().getPercolatorThreshold());
+				ArrayList<ScoredObject<String>>	localPassingPeptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), pecanJobs.get(i).getParameters().getEffectivePercolatorThreshold());
 				if (passingPeptides.isPresent()) {
 					globalPassingPeptides=passingPeptides.get();
 				} else {

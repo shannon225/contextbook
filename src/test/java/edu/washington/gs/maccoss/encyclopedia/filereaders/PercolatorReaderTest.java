@@ -46,7 +46,7 @@ public class PercolatorReaderTest extends TestCase {
 				20f, 21f, 22f, 23f, 24f, 25f };
 		
 		LibraryEntry entry=new LibraryEntry("", new HashSet<String>(), 518.73841, (byte)2, "PEPT[+80]IDER", 1, 0.0f, 0.0f, massArray, intensityArray);
-		ReverseLibraryEntry reverse=entry.getReverse(PARAMETERS);
+		ReverseLibraryEntry reverse=entry.getDecoy(PARAMETERS, false);
 
 		File diaFile=new File("/Users/searleb/Documents/freezer_experiment/110815_hela_experiment/data/hela_experiment/110415_bcs_hela_starved_DDA.mzML");
 		String psmid=PercolatorReader.getPSMID(entry, diaFile);

@@ -184,8 +184,13 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 		return peaks;
 	}
 
-	public ReverseLibraryEntry getReverse(SearchParameters parameters) {
-		String reverseSequence=PeptideUtils.reverse(peptideModSeq, parameters);
+	public ReverseLibraryEntry getDecoy(SearchParameters parameters, boolean shuffle) {
+		String reverseSequence;
+		if (shuffle) {
+			reverseSequence=PeptideUtils.reverse(peptideModSeq, parameters);
+		} else {
+			reverseSequence=PeptideUtils.shuffle(peptideModSeq, parameters);
+		}
 		
 		FragmentationModel forwardModel=new FragmentationModel(peptideModSeq, parameters.getAAConstants());
 		FragmentationModel reverseModel=new FragmentationModel(reverseSequence, parameters.getAAConstants());
@@ -254,7 +259,11 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 		
 		HashSet<String> revAcc=new HashSet<String>();
 		for (String accession : accessions) {
-			revAcc.add("DECOY_"+accession);
+			if (shuffle) {
+				revAcc.add("DECOY_"+accession);
+			} else {
+				revAcc.add("SHUFFLE_"+accession);
+			}
 		}
 		return new ReverseLibraryEntry(source, revAcc, precursorMZ, precursorCharge, reverseSequence, copies, retentionTime, score, arrays.x, arrays.y);	
 	}

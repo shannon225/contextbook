@@ -35,6 +35,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorEx
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ReverseLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
@@ -101,7 +102,7 @@ public class Encyclopedia {
 			if (arguments.containsKey("-o")) {
 				outputFile=new File(arguments.get("-o"));
 			} else {
-				outputFile=new File(diaFile.getAbsolutePath()+".percolator.txt");
+				outputFile=new File(diaFile.getAbsolutePath()+".encyclopedia.txt");
 			}
 
 			File featureFile=new File(diaFile.getAbsolutePath()+".features.txt");
@@ -132,7 +133,7 @@ public class Encyclopedia {
 		File outputFile=job.getOutputFile();
 		if (outputFile.exists()&&outputFile.canRead()) {
 			try {
-				ArrayList<ScoredObject<String>> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(outputFile, job.getParameters().getPercolatorThreshold());
+				ArrayList<ScoredObject<String>> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(outputFile, job.getParameters().getEffectivePercolatorThreshold());
 				progress.update("Previously found "+passingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 				return;
 			} catch (Exception e) {
@@ -189,6 +190,7 @@ public class Encyclopedia {
 		// get stripes
 		int rangesFinished=0;
 		float numberOfTasks=2.0f+ranges.size();
+		boolean everyOtherDecoy=true;
 		for (Range range : ranges) {
 			String baseMessage="Working on "+range+" m/z";
 			float baseIncrement=1.0f/numberOfTasks;
@@ -215,7 +217,15 @@ public class Encyclopedia {
 				count++;
 				ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 				tasks.add(entry);
-				tasks.add(entry.getReverse(parameters));
+				tasks.add(entry.getDecoy(parameters, false));
+				if (parameters.isAddExtraDecoys()) {
+					if (everyOtherDecoy) {
+						ReverseLibraryEntry shuffle=entry.getDecoy(parameters, true);
+						tasks.add(shuffle);
+						tasks.add(shuffle.getDecoy(parameters, false));
+					}
+					everyOtherDecoy=!everyOtherDecoy;
+				}
 				executor.submit(taskFactory.getScoringTask(scorer, tasks, stripes, dutyCycle, precursors, resultsQueue));
 			}
 			
@@ -240,7 +250,7 @@ public class Encyclopedia {
 
 		ArrayList<ScoredObject<String>> passingPeptides=percolatePeptides(progress, featureFile, outputFile, stripefile, taskFactory, saveResultsConsumer);
 		
-		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
+		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peptides processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 
 	}
 
@@ -252,7 +262,7 @@ public class Encyclopedia {
 			progress.update("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)");
 			File percolatorResultFile=new File(outputFile.getAbsolutePath()+".first_round.txt");
 			
-			passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, percolatorResultFile, parameters.getPercolatorThreshold());
+			passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, percolatorResultFile, parameters.getEffectivePercolatorThreshold());
 			Logger.logLine("First pass: "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
 			
 			ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
@@ -271,7 +281,7 @@ public class Encyclopedia {
 			rescoredResultsConsumer.close();
 	
 			progress.update("Re-running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)");
-			passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, outputFile, parameters.getPercolatorThreshold());
+			passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, outputFile, parameters.getEffectivePercolatorThreshold());
 			
 			progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 			return passingPeptides;

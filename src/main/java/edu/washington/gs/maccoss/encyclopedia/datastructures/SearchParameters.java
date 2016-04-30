@@ -21,9 +21,10 @@ public class SearchParameters {
 	protected final float expectedPeakWidth;
 	protected final boolean runPhosphoLocalization;
 	protected final float precursorWindowSize;
+	protected final boolean addExtraDecoys;
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme,
-			float percolatorThreshold, File percolatorLocation, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, boolean runPhosphoLocalization) {
+			float percolatorThreshold, File percolatorLocation, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, boolean runPhosphoLocalization, boolean addExtraDecoys) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -37,6 +38,7 @@ public class SearchParameters {
 		this.targetWindowCenter=targetWindowCenter;
 		this.precursorWindowSize=precursorWindowSize;
 		this.runPhosphoLocalization=runPhosphoLocalization;
+		this.addExtraDecoys=addExtraDecoys;
 	}
 
 	public String toString() {
@@ -52,6 +54,7 @@ public class SearchParameters {
 		sb.append(" -expectedPeakWidth "+expectedPeakWidth+"\n");
 		sb.append(" -precursorWindowSize "+precursorWindowSize+"\n");
 		sb.append(" -runPhosphoLocalization "+runPhosphoLocalization+"\n");
+		sb.append(" -addExtraDecoys "+addExtraDecoys+"\n");
 		if (useTargetWindowCenter()) {
 			sb.append(" -targetWindowCenter "+targetWindowCenter+"\n");
 		}
@@ -80,6 +83,10 @@ public class SearchParameters {
 
 	public float getPercolatorThreshold() {
 		return percolatorThreshold;
+	}
+
+	public float getEffectivePercolatorThreshold() {
+		return addExtraDecoys?percolatorThreshold*2.0f:percolatorThreshold;
 	}
 
 	public Optional<File> getPercolatorLocation() {
@@ -114,5 +121,8 @@ public class SearchParameters {
 	
 	public boolean isRunPhosphoLocalization() {
 		return runPhosphoLocalization;
+	}
+	public boolean isAddExtraDecoys() {
+		return addExtraDecoys;
 	}
 }

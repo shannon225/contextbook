@@ -121,7 +121,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	}
 
 	static SearchJob getJob(File diaFile, File libraryFile, JobProcessor processor, SearchParameters parameters) {
-		File outputFile=new File(diaFile.getAbsolutePath()+".percolator.txt");
+		File outputFile=new File(diaFile.getAbsolutePath()+".encyclopedia.txt");
 		File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
 		
 		LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
@@ -141,7 +141,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		Number value=(Number)precursorWindowWidth.getValue();
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
-		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme, 0.01f, null, dataAcquisitionType, numberOfJobsValue, 25f, -1f, precursorWindowWidthValue, false);
+		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme, 0.01f, null, dataAcquisitionType, numberOfJobsValue, 25f, -1f, precursorWindowWidthValue, false, true);
 		return parameters;
 	}
 }
