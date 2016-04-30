@@ -174,7 +174,7 @@ public class Encyclopedia {
 		}
 		Collections.sort(ranges);
 
-		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>());
+		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>(), stripefile.getFile());
 		SaveResultsConsumer saveResultsConsumer=new SaveResultsConsumer(new LinkedBlockingQueue<PeptideScoringResult>());
 		
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
@@ -238,13 +238,13 @@ public class Encyclopedia {
 		teeConsumer.close();
 		progress.update("Organizing results", (1.0f+rangesFinished)/numberOfTasks);
 
-		ArrayList<ScoredObject<String>> passingPeptides=percolatePeptides(progress, featureFile, outputFile, taskFactory, saveResultsConsumer);
+		ArrayList<ScoredObject<String>> passingPeptides=percolatePeptides(progress, featureFile, outputFile, stripefile, taskFactory, saveResultsConsumer);
 		
 		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 
 	}
 
-	public static ArrayList<ScoredObject<String>> percolatePeptides(ProgressIndicator progress, File featureFile, File outputFile, LibraryScoringFactory taskFactory, SaveResultsConsumer saveResultsConsumer) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+	public static ArrayList<ScoredObject<String>> percolatePeptides(ProgressIndicator progress, File featureFile, File outputFile, StripeFileInterface stripefile, LibraryScoringFactory taskFactory, SaveResultsConsumer saveResultsConsumer) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		SearchParameters parameters=taskFactory.getParameters();
 		
 		ArrayList<ScoredObject<String>> passingPeptides;
@@ -258,7 +258,7 @@ public class Encyclopedia {
 			ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
 			RetentionTimeFilter filter=getRescoringModel(passingPeptides, data, outputFile);
 			
-			PeptideScoringResultsConsumer rescoredResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>());
+			PeptideScoringResultsConsumer rescoredResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>(), stripefile.getFile());
 			Thread finalWriteConsumerThread=new Thread(rescoredResultsConsumer);
 			finalWriteConsumerThread.start();
 			BlockingQueue<PeptideScoringResult> resultList=rescoredResultsConsumer.getResultsQueue();

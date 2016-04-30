@@ -46,7 +46,7 @@ public class EncyclopediaDDA {
 		// get targeted ranges
 		ArrayList<Range> ranges=library.getMinMaxMZ().chunkIntoBins(200);
 
-		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>());
+		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>(), stripefile.getFile());
 		SaveResultsConsumer saveResultsConsumer=new SaveResultsConsumer(new LinkedBlockingQueue<PeptideScoringResult>());
 		
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
@@ -95,7 +95,7 @@ public class EncyclopediaDDA {
 		teeConsumer.close();
 		progress.update("Organizing results", 0.9f);
 
-		ArrayList<ScoredObject<String>> passingPeptides=Encyclopedia.percolatePeptides(progress, featureFile, outputFile, taskFactory, saveResultsConsumer);
+		ArrayList<ScoredObject<String>> passingPeptides=Encyclopedia.percolatePeptides(progress, featureFile, outputFile, stripefile, taskFactory, saveResultsConsumer);
 		
 		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peaks identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 

@@ -26,6 +26,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
@@ -129,8 +130,7 @@ public class SearchPanel extends JPanel {
 		JTable table=new JTable(processorTableModel);
         TableColumn column = table.getColumnModel().getColumn(1);
         column.setCellRenderer(new ProgressRenderer());
-        
-		filesWrapper.add(table, BorderLayout.CENTER);
+		filesWrapper.add(new JScrollPane(table), BorderLayout.CENTER);
 		
 		split.setRightComponent(filesWrapper);
 		split.setDividerLocation(600);

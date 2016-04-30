@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.RescoredPeptideScoringR
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
@@ -27,8 +28,10 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 	private volatile int numberProcessed=0;
 	private final int numberOfPeaksPerPeptide;
 	private final String[] scoreNames;
+	private final File diaFile;
 
-	public ScoringResultsToTSVConsumer(File outputFile, String[] scoreNames, BlockingQueue<PeptideScoringResult> resultsQueue, int numberOfPeaksPerPeptide) {
+	public ScoringResultsToTSVConsumer(File outputFile, File diaFile, String[] scoreNames, BlockingQueue<PeptideScoringResult> resultsQueue, int numberOfPeaksPerPeptide) {
+		this.diaFile=diaFile;
 		this.resultsQueue=resultsQueue;
 		this.numberOfPeaksPerPeptide=numberOfPeaksPerPeptide;
 		this.scoreNames=scoreNames;
@@ -109,7 +112,7 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 					
 					if (stripe!=null&&rank<=numberOfPeaksPerPeptide) {
 						float deltaCn=firstScore<=0?0.0f:Math.min(1.0f, (primaryScore-secondScore)/firstScore); // if secondScore<0 then deltaCn can be >1, so protect against that
-						String psmID = getPSMID(peptide);
+						String psmID=PercolatorReader.getPSMID(peptide, diaFile);
 
 						writer.print(psmID);
 						writer.print("\t"+(peptide.isDecoy()?-1:1));
@@ -153,23 +156,5 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 			Logger.errorLine("DIA writing interrupted!");
 			Logger.errorException(ie);
 		}
-	}
-
-	public static String getPSMID(LibraryEntry peptide) {
-		return (peptide.isDecoy()?"decoy":"")+peptide.getPeptideModSeq()+"+"+peptide.getPrecursorCharge();
-	}
-
-	public static boolean isPSMIDDecoy(String psmID) {
-		return psmID.startsWith("decoy");
-	}
-	
-	public static String getPeptideSequence(String psmID) {
-		if (psmID.startsWith("decoy")) {
-			psmID=psmID.substring(5);
-		}
-		return psmID.substring(0, psmID.indexOf('+'));
-	}
-	public static byte getCharge(String psmID) {
-		return Byte.parseByte(psmID.substring(psmID.indexOf('+')+1));
 	}
 }

@@ -56,7 +56,7 @@ public class PecanOneScoringFactory implements PecanScoringFactory {
 	}
 
 	@Override
-	public PeptideScoringResultsConsumer getResultsConsumer(BlockingQueue<PeptideScoringResult> resultsQueue) {
-		return new PecanScoringResultsToTSVConsumer(outputFile, resultsQueue, parameters.getNumberOfReportedPeaks());
+	public PeptideScoringResultsConsumer getResultsConsumer(BlockingQueue<PeptideScoringResult> resultsQueue, File diaFile) {
+		return new PecanScoringResultsToTSVConsumer(outputFile, diaFile, resultsQueue, parameters.getNumberOfReportedPeaks());
 	}
 }

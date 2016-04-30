@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
@@ -136,5 +137,41 @@ public class PercolatorReader {
 				}
 			}
 		}
+	}
+	
+	public static String getPSMID(LibraryEntry peptide, File diaFile) {
+		return diaFile.getName()+":"+(peptide.isDecoy()?"decoy":"")+peptide.getPeptideModSeq()+"+"+peptide.getPrecursorCharge();
+	}
+
+	public static boolean isPSMIDDecoy(String psmID) {
+		psmID=getPeptideData(psmID);
+		return psmID.startsWith("decoy");
+	}
+	
+	public static String getPeptideSequence(String psmID) {
+		psmID=getPeptideData(psmID);
+		if (psmID.startsWith("decoy")) {
+			psmID=psmID.substring(5);
+		}
+		return psmID.substring(0, psmID.lastIndexOf('+'));
+	}
+	public static byte getCharge(String psmID) {
+		return Byte.parseByte(psmID.substring(psmID.lastIndexOf('+')+1));
+	}
+
+	public static String getFile(String psmID) {
+		int colonIndex=psmID.indexOf(":");
+		if (colonIndex>=0) {
+			return psmID.substring(0, colonIndex);
+		}
+		return "";
+	}
+
+	private static String getPeptideData(String psmID) {
+		int colonIndex=psmID.indexOf(":");
+		if (colonIndex>=0) {
+			return psmID.substring(colonIndex+1);
+		}
+		return psmID;
 	}
 }

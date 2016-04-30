@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
@@ -21,5 +22,5 @@ public interface PecanScoringFactory {
 	public PSMScorer getBackgroundScorer();
 	public PSMScorer getPecanScorer();
 	public AbstractPecanScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint> background, PrecursorScanMap precursors, int scanAveragingMargin, BlockingQueue<PeptideScoringResult> resultsQueue);
-	public PeptideScoringResultsConsumer getResultsConsumer(BlockingQueue<PeptideScoringResult> resultsQueue);
+	public PeptideScoringResultsConsumer getResultsConsumer(BlockingQueue<PeptideScoringResult> resultsQueue, File diaFile);
 }

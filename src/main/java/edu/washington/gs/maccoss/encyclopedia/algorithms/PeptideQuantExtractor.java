@@ -21,7 +21,6 @@ import java.util.zip.DataFormatException;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringResultsToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
@@ -29,6 +28,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -42,13 +42,13 @@ public class PeptideQuantExtractor {
 	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, File f, boolean limitToQuantifiable, ArrayList<ScoredObject<String>> globalPassingPSMIDs, ArrayList<ScoredObject<String>> localPassingPSMIDs, StripeFileInterface stripeFile, Optional<LibraryInterface> library, final SearchParameters parameters) {
 		HashSet<String> passingPeptideSequences=new HashSet<String>();
 		for (ScoredObject<String> psm : globalPassingPSMIDs) {
-			String peptideModSeq=PecanScoringResultsToTSVConsumer.getPeptideSequence(psm.y);
+			String peptideModSeq=PercolatorReader.getPeptideSequence(psm.y);
 			passingPeptideSequences.add(peptideModSeq);
 		}
 		
 		final TObjectFloatHashMap<String> savedIDs=new TObjectFloatHashMap<String>();
 		for (ScoredObject<String> psm : localPassingPSMIDs) {
-			String peptideModSeq=PecanScoringResultsToTSVConsumer.getPeptideSequence(psm.y);
+			String peptideModSeq=PercolatorReader.getPeptideSequence(psm.y);
 			if (passingPeptideSequences.contains(peptideModSeq)) {
 				savedIDs.put(psm.y, psm.x);
 			}
@@ -61,14 +61,14 @@ public class PeptideQuantExtractor {
 			public void processRow(Map<String, String> row) {
 				String psmID=row.get("id");
 				if (savedIDs.contains(psmID)) {
-					boolean isDecoy=PecanScoringResultsToTSVConsumer.isPSMIDDecoy(psmID);
+					boolean isDecoy=PercolatorReader.isPSMIDDecoy(psmID);
 					if (!isDecoy) {
 						
 						int scanID=Integer.parseInt(row.get("ScanNr"));
 						double precursorMZ=Double.parseDouble(row.get("precursorMz"));
 						// FIXME need to get peptide charge from window
-						byte precursorCharge=PecanScoringResultsToTSVConsumer.getCharge(psmID);
-						String peptideModSeq=PecanScoringResultsToTSVConsumer.getPeptideSequence(psmID);
+						byte precursorCharge=PercolatorReader.getCharge(psmID);
+						String peptideModSeq=PercolatorReader.getPeptideSequence(psmID);
 
 						float retentionTime;// in seconds
 						String rtString=row.get("midTime"); // in seconds
@@ -90,6 +90,7 @@ public class PeptideQuantExtractor {
 						}
 						if (sortingScoreString==null) {
 							Logger.errorLine("Can't parse score from header from ["+row.keySet()+"]");
+							throw new EncyclopediaException("Can't parse score from header from ["+row.keySet()+"]");
 						}
 						sortingScore=Float.parseFloat(sortingScoreString);
 
