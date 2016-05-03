@@ -22,8 +22,8 @@ public class PercolatorReaderTest extends TestCase {
 	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
 	
 	public static void main(String[] args) {
-		File f=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/110415_bcs_hela_phospho_igf1_6mz_980_1140.mzML.pecan.txt.xml");
-		ArrayList<ScoredObject<String>> data=PercolatorReader.getPassingPeptidesFromXML(f, 1.0f);
+		File f=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/110315_bcs_hela_phospho_starved_DDA.dia.percolator.txt");
+		ArrayList<ScoredObject<String>> data=PercolatorReader.getPassingPeptidesFromTSV(f, 1.0f);
 		System.out.println(data.size());
 	}
 	public void testParsing() {
@@ -48,7 +48,7 @@ public class PercolatorReaderTest extends TestCase {
 		LibraryEntry entry=new LibraryEntry("", new HashSet<String>(), 518.73841, (byte)2, "PEPT[+80]IDER", 1, 0.0f, 0.0f, massArray, intensityArray);
 		ReverseLibraryEntry reverse=entry.getReverse(PARAMETERS);
 
-		File diaFile=new File("/Users/searleb/Documents/freezer_experiment/110815_hela_experiment/data/hela_experiment/110415_bcs_hela_starved_DDA.mzML");
+		File diaFile=new File("/Users/searleb/Documents/freezer_experiment/110815_hela_experiment/data/hela_experiment/110415_bcs_hela_starved_DDA.mzML"); // FIXME unit test is not platform independent (will fail on windows machines)
 		String psmid=PercolatorReader.getPSMID(entry, diaFile);
 		assertEquals(FORWARD_PSMID, psmid);
 

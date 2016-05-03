@@ -286,7 +286,7 @@ public class Encyclopedia {
 	public static RetentionTimeFilter getRescoringModel(ArrayList<ScoredObject<String>> passingPeptides, ArrayList<PeptideScoringResult> data, File imageFileSeed) {
 		HashSet<String> passingSeqs=new HashSet<String>();
 		for (ScoredObject<String> pass : passingPeptides) {
-			passingSeqs.add(pass.y);
+			passingSeqs.add(PercolatorReader.getPeptideData(pass.y));
 		}
 		
 		HashSet<XYPoint> rtSet=new HashSet<XYPoint>();

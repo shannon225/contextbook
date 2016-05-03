@@ -167,7 +167,7 @@ public class PercolatorReader {
 		return "";
 	}
 
-	private static String getPeptideData(String psmID) {
+	public static String getPeptideData(String psmID) {
 		int colonIndex=psmID.indexOf(":");
 		if (colonIndex>=0) {
 			return psmID.substring(colonIndex+1);
