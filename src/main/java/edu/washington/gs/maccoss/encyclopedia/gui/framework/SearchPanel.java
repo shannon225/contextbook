@@ -36,6 +36,7 @@ import javax.swing.table.TableColumn;
 
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
+import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.pecan.PecanParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
@@ -54,6 +55,7 @@ public class SearchPanel extends JPanel {
 	private static final ImageIcon skylineIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/skyline_icon.png"));
 	private static final ImageIcon openDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/filedb.png"));
 	private static final ImageIcon convertDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/convertdb.png"));
+	private static final ImageIcon diaBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/orbi_icon.png"));
 	
 	JobProcessorTableModel processorTableModel=new JobProcessorTableModel();
 	
@@ -184,6 +186,19 @@ public class SearchPanel extends JPanel {
 		saveBLIB.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		fileMenu.add(saveBLIB);
 
+		JMenu viewMenu=new JMenu("View");
+		viewMenu.setMnemonic(KeyEvent.VK_V);
+		bar.add(viewMenu);
+
+		JMenuItem launchBrowser=new JMenuItem("Launch ELIB Browser", diaBrowserIcon);
+		launchBrowser.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				launchBrowser();
+			}
+		});
+		viewMenu.add(launchBrowser);
+
 		JMenu convertMenu=new JMenu("Convert");
 		convertMenu.setMnemonic(KeyEvent.VK_C);
 		bar.add(convertMenu);
@@ -206,11 +221,23 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(convertMSP);
 		
+
+		
 		return bar;
 	}
 	
 	public ParametersPanelInterface getVisibleTab() {
 		return (ParametersPanelInterface)optionsTabs.getSelectedComponent();
+	}
+	
+	public void launchBrowser() {
+		final JFrame dialog=new JFrame("Convert BLIB to Library");
+
+		dialog.getContentPane().add(new ResultsBrowserPanel(), BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(1900, 1030);
+		dialog.setVisible(true);
 	}
 	
 	public void convertBLIB() {
