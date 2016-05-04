@@ -156,7 +156,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 					return percolator;
 				}
 				case MAC: {
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-v2-06.mac");
+					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-v2-10.mac");
 					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
 					percolator.setExecutable(true);
 					return percolator;

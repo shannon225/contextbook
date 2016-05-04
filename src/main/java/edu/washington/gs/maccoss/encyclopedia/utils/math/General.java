@@ -64,6 +64,17 @@ public class General {
 		return sb.toString();
 	}
 	
+	public static String toString(byte[] i) {
+		StringBuilder sb=new StringBuilder();
+		for (int g : i) {
+			if (sb.length()>0) {
+				sb.append(',');
+			}
+			sb.append(g);
+		}
+		return sb.toString();
+	}
+	
 	public static String toString(float[] f) {
 		StringBuilder sb=new StringBuilder();
 		for (float g : f) {

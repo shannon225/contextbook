@@ -86,7 +86,8 @@ public class SearchParameters {
 	}
 
 	public float getEffectivePercolatorThreshold() {
-		return addExtraDecoys?percolatorThreshold*2.0f:percolatorThreshold;
+		// assumes T+50%*Random versus D+50%*Random 
+		return addExtraDecoys?percolatorThreshold*1.5f:percolatorThreshold;
 	}
 
 	public Optional<File> getPercolatorLocation() {

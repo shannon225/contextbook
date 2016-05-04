@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 public class Logger {
+	
 	private static final SimpleDateFormat format=new SimpleDateFormat("[HH:mm:ss] ");
 	private static final ArrayList<LogRecorder> recorders=new ArrayList<LogRecorder>();
 	public static void addRecorder(LogRecorder recorder) {

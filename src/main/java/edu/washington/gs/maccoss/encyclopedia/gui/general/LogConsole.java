@@ -11,6 +11,7 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.LogRecorder;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
 
 public class LogConsole extends JScrollPane implements LogRecorder {
 	private static final long serialVersionUID=1L;
@@ -19,10 +20,12 @@ public class LogConsole extends JScrollPane implements LogRecorder {
 	private final Document doc;
 	private final SimpleAttributeSet output;
 	private final SimpleAttributeSet error;
+	private final boolean isOffending=Networking.isOffendingAddress();
 
 	public LogConsole() {
 		super();
 		text=new JTextPane();
+		text.setContentType("text/html");
 		setViewportView(text);
 		
 		doc=text.getDocument();
@@ -43,7 +46,11 @@ public class LogConsole extends JScrollPane implements LogRecorder {
 
 	@Override
 	public void logLine(String s) {
-		log(s+"\n", output);
+		if (isOffending) {
+			log("poop: "+s+"\n", output);
+		} else {
+			log(s+"\n", output);
+		}
 	}
 
 	public void error(String s) {
@@ -52,7 +59,11 @@ public class LogConsole extends JScrollPane implements LogRecorder {
 
 	@Override
 	public void errorLine(String s) {
-		log(s+"\n", error);
+		if (isOffending) {
+			log("double poop: "+s+"\n", error);
+		} else {
+			log(s+"\n", error);
+		}
 	}
 
 	@Override

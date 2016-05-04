@@ -1,5 +1,9 @@
-package edu.washington.gs.maccoss.encyclopedia.filereaders;
+package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,6 +14,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JFrame;
+import javax.swing.JTabbedPane;
 
 import org.jfree.chart.ChartPanel;
 
@@ -26,10 +31,25 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import gnu.trove.list.array.TFloatArrayList;
 
-public class PecanFeatureReaderTest {
+public class FeatureGrapher {
 	public static void main(String[] args) {
 		File featureFile=FileChooserPanel.getFiles(null, "Feature text files", new SimpleFilenameFilter("features.txt"), (JFrame)null)[0];
-		
+
+		final JFrame f=new JFrame(featureFile.getName()+" Statistics");
+		f.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				System.exit(0);
+			}
+		});
+
+		f.getContentPane().add(graphFeatures(featureFile), BorderLayout.CENTER);
+
+		f.pack();
+		f.setSize(new Dimension(792, 612));
+		f.setVisible(true);
+	}
+
+	public static JTabbedPane graphFeatures(File featureFile) {
 		final HashMap<String, TFloatArrayList> targetData=new HashMap<String, TFloatArrayList>();
 		final HashMap<String, TFloatArrayList> decoyData=new HashMap<String, TFloatArrayList>();
 		TableParserMuscle muscle=new TableParserMuscle() {
@@ -101,7 +121,7 @@ public class PecanFeatureReaderTest {
 			
 			panelMap.put(key, Charter.getChart(key, "Count", true, traces));
 		}
-		Charter.launchCharts(featureFile.getName()+" Statistics", panelMap);
+		return Charter.getTabbedChartPane(panelMap);
 	}
 
 }
