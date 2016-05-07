@@ -38,6 +38,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.LindsaysSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.pecan.PecanParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
@@ -47,6 +48,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.ProgressRenderer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
 
 public class SearchPanel extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -70,8 +72,9 @@ public class SearchPanel extends JPanel {
 		JSplitPane split=new JSplitPane();
 
 		optionsTabs=new JTabbedPane();
+		EncyclopediaParametersPanel encyclopedia=Networking.isOffendingAddress()?new LindsaysSpecialEncyclopediaPanel():new EncyclopediaParametersPanel();
 		if (!pecanpie) {
-			optionsTabs.addTab("Encyclopedia", EncyclopediaParametersPanel.smallimage, new EncyclopediaParametersPanel(), "Encyclopedia Library Search");
+			optionsTabs.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
 		}
 		optionsTabs.addTab("Pecan", PecanParametersPanel.smallimage, new PecanParametersPanel(), "Pecan Peptide Search");
 		

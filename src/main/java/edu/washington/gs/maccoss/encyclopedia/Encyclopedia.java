@@ -155,6 +155,7 @@ public class Encyclopedia {
 		} else {
 			runSearch(progress, job.getLibrary(), stripefile, featureFile, outputFile, taskFactory);
 		}
+		stripefile.close();
 	}
 		
 	public static void runSearch(ProgressIndicator progress, LibraryInterface library, StripeFileInterface stripefile, File featureFile, File outputFile, LibraryScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {

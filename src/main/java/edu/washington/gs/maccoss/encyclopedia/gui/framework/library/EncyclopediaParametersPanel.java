@@ -43,11 +43,12 @@ import gnu.trove.map.hash.TCharFloatHashMap;
 public class EncyclopediaParametersPanel extends JPanel implements ParametersPanelInterface {
 	private static final long serialVersionUID=1L;
 	private static final int numberOfCores=Runtime.getRuntime().availableProcessors();
-	public static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_small_icon.png"));
-	public static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_icon.png"));
-	public static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">EncyclopeDIA: Library Searching Directly from Data-Independent Acquisition (DIA) MS/MS Data<br></p></b>"
+	private static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_small_icon.png"));
+	private static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_icon.png"));
+	private static final String programName="EncyclopeDIA";
+	private static final String programShortDescription="EncyclopeDIA Library Search";
+	private static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">EncyclopeDIA: Library Searching Directly from Data-Independent Acquisition (DIA) MS/MS Data<br></p></b>"
 			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">EncyclopeDIA extracts peptide fragmentation chromatograms from MZML files, matches them to spectra in libraries, and calculates various scoring features. These features are interpreted by Percolator to identify peptides.";
-	
 	
 	private final FileChooserPanel libraryFileChooser;
 	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {"Overlapping DIA", "Non-Overlapping DIA", "DDA"});
@@ -64,8 +65,8 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		super(new BorderLayout());
 
 		JPanel top=new JPanel(new BorderLayout());
-		top.add(new JLabel(image), BorderLayout.WEST);
-		JEditorPane editor=new JEditorPane("text/html", copy);
+		top.add(new JLabel(getImage()), BorderLayout.WEST);
+		JEditorPane editor=new JEditorPane("text/html", getCopy());
 		editor.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		top.add(editor, BorderLayout.CENTER);
 		top.setBackground(Color.white);
@@ -86,6 +87,26 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
 
 		this.add(options, BorderLayout.CENTER);
+	}
+	
+	public String getProgramName() {
+		return programName;
+	}
+	
+	public String getProgramShortDescription() {
+		return programShortDescription;
+	}
+	
+	public ImageIcon getSmallImage() {
+		return smallimage;
+	}
+	
+	public ImageIcon getImage() {
+		return image;
+	}
+	
+	public String getCopy() {
+		return copy;
 	}
 	
 	@Override

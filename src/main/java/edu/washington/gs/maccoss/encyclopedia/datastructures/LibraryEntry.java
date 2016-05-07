@@ -228,8 +228,15 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 		
 		assert(forwardIons.size()==reverseIons.size());
 		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
-		for (int i=0; i<forwardIons.size(); i++) {
+		int size=Math.min(forwardIons.size(), reverseIons.size()); //FIXME !!! HOW TO DEAL WITH LINKING UP NEUTRAL LOSSES IN DECOY PEPTIES????
+		for (int i=0; i<size; i++) {
+			try {
 			points.add(new XYPoint(forwardIons.get(i), reverseIons.get(i)));
+			} catch (Exception e) {
+				System.out.println("WTF: "+peptideModSeq+"+"+precursorCharge+" vs "+reverseSequence+"+"+precursorCharge+", "+forwardIons.size()+" = "+forwardModel.getBIons().length+" + "+forwardModel.getYIons().length+"\t"+reverseIons.size()+" = "+reverseModel.getBIons().length+" + "+reverseModel.getYIons().length);
+			
+				throw new RuntimeException(e);
+			}
 		}
 		Collections.sort(points);
 		Pair<double[], double[]> matchedMasses=XYTrace.toArrays(points);

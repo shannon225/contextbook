@@ -15,6 +15,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
 
 public class SearchGUIMain {
 	public static void main(String[] args) {
@@ -29,6 +30,7 @@ public class SearchGUIMain {
 			Logger.errorException(e);
 		}
 
+		boolean isOffending=Networking.isOffendingAddress();
 		String shortName;
 		String name;
 		ImageIcon image;
@@ -36,6 +38,10 @@ public class SearchGUIMain {
 			shortName="PecanPie";
 			name="Pecan: Peptide Centric Analysis";
 			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/pecan_icon.png"));
+		} else if (isOffending) {
+			shortName="PoopeDIA";
+			name="Lindsay's PoopeDIA: Peptide Searching for DIA";
+			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mike_icon.png"));
 		} else {
 			shortName="EncyclopeDIA";
 			name="EncyclopeDIA: Peptide Searching for DIA";

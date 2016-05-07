@@ -38,7 +38,7 @@ public class SearchParameters {
 		this.targetWindowCenter=targetWindowCenter;
 		this.precursorWindowSize=precursorWindowSize;
 		this.runPhosphoLocalization=runPhosphoLocalization;
-		this.addExtraDecoys=addExtraDecoys;
+		this.addExtraDecoys=false; //addExtraDecoys;
 	}
 
 	public String toString() {

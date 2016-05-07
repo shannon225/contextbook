@@ -63,9 +63,11 @@ public class MzmlToDIAConverter {
 			stripefile.openFile(f);
 			return stripefile;
 		} catch (IOException ioe) {
-			Logger.logException(ioe);
+			Logger.errorLine("Unexpected exception reading DIA file: "+f.getName());
+			Logger.errorException(ioe);
 			throw new EncyclopediaException("Error reading DIA file!", ioe);
 		} catch (SQLException sqle) {
+			Logger.errorLine("Unexpected exception reading DIA file: "+f.getName());
 			Logger.logException(sqle);
 			throw new EncyclopediaException("Error reading DIA file!", sqle);
 		}

@@ -8,7 +8,7 @@ import java.net.UnknownHostException;
 public class Networking {
 	final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
 	private static final String[] poopAddresses=new String[] {
-		"98-90-96-DF-EE-BC","98-5A-EB-D0-2F-5F"
+		"98-90-96-DF-EE-BC"
 	};
 	
 	public static void main(String arg[]) {

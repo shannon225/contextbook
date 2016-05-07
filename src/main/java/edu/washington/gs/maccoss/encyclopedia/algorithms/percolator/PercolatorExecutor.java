@@ -115,23 +115,11 @@ public class PercolatorExecutor extends ExternalExecutor {
 	static String[] generateCommand(File tsv, File outputFile, Optional<File> percolatorLocation, boolean useXML) {
 		File percolator=getPercolator(percolatorLocation);
 
-		OS os=OSDetector.getOS();
-		switch (os) {
-			case MAC: {
-				if (useXML) {
-					return new String[] {percolator.getAbsolutePath(), "-X", outputFile.getAbsolutePath(), "--decoy-xml-output", tsv.getAbsolutePath()};
-				} else {
-					return new String[] {percolator.getAbsolutePath(), tsv.getAbsolutePath()};
-				}
-			}
-			default: {
-				if (useXML) {
-					return new String[] {percolator.getAbsolutePath(), "-y", "-X", outputFile.getAbsolutePath(), "--decoy-xml-output", tsv.getAbsolutePath()};
-				} else {
-					return new String[] {percolator.getAbsolutePath(), "-y", tsv.getAbsolutePath()};
-				}	
-			}
-		}
+		if (useXML) {
+			return new String[] {percolator.getAbsolutePath(), "-y", "-X", outputFile.getAbsolutePath(), "--decoy-xml-output", tsv.getAbsolutePath()};
+		} else {
+			return new String[] {percolator.getAbsolutePath(), "-y", tsv.getAbsolutePath()};
+		}	
 	}
 	
 	static File getPercolator(Optional<File> percolatorLocation) {
