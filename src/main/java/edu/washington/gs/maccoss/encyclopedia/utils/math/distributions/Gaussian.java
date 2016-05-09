@@ -16,6 +16,11 @@ public class Gaussian implements Distribution {
 		this.constant=1.0/(stdev*Math.sqrt(2*Math.PI));
 		this.doubleVariance=2.0*variance;
 	}
+	
+	@Override
+	public String toString() {
+		return "Gaussian, m:"+mean+", sd:"+stdev+", p:"+prior;
+	}
 
 	@Override
 	public double getPrior() {

@@ -75,7 +75,7 @@ public class PercolatorReader {
 			return readPercolator(in, f.getName());
 
 		} catch (IOException ioe) {
-			Logger.errorLine("I/O Error found reading FASTA ["+f.getAbsolutePath()+"]");
+			Logger.errorLine("I/O Error found reading Percolator file ["+f.getAbsolutePath()+"]");
 			Logger.errorException(ioe);
 			return entryList;
 		} finally {

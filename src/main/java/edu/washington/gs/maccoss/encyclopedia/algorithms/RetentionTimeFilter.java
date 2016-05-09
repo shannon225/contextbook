@@ -20,6 +20,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.UnitDistr
 import gnu.trove.list.array.TFloatArrayList;
 
 public class RetentionTimeFilter {
+	public static final float rejectionPValue=0.05f;
 	private final RunningMedianWarper rtWarper;
 	private final ProphetMixtureModel model;
 	
@@ -30,6 +31,7 @@ public class RetentionTimeFilter {
 		// 5 iterations is sufficient
 		RunningMedianWarper warper=new RunningMedianWarper(rts, order, true);
 		Pair<RunningMedianWarper, ProphetMixtureModel> pair=runIteration(rts, warper);
+		
 		pair=runIteration(rts, pair.x);
 		pair=runIteration(rts, pair.x);
 		pair=runIteration(rts, pair.x);
@@ -53,7 +55,7 @@ public class RetentionTimeFilter {
 			deltas.add(delta);
 			
 			float prob=getProbabilityFitsModel((float)xyPoint.y, (float)xyPoint.x);
-			if (prob>=0.5f) {
+			if (prob>=rejectionPValue) {
 				selectedRTs.add(xyPoint);
 			} else {
 				removedRTs.add(xyPoint);
@@ -81,10 +83,10 @@ public class RetentionTimeFilter {
 		if (saveFileSeed.isPresent()) {
 			String saveFilePrefix=saveFileSeed.get().getAbsolutePath();
 			Charter.writeAsPDF(new File(saveFilePrefix+".delta_rt.pdf"), "Delta RT", "Count", true, negTrace, posTrace, histTrace);
-			Charter.writeAsPDF(new File(saveFilePrefix+".rt_fit.pdf"), "Calculated RT", "Actual RT", true, trace, selectedTrace, median2);
+			Charter.writeAsPDF(new File(saveFilePrefix+".rt_fit.pdf"), "Library RT", "Actual RT", true, trace, selectedTrace, median2);
 		} else {
 			Charter.launchChart("Delta RT", "Count", true, histTrace, posTrace, negTrace);
-			Charter.launchChart("Calculated RT", "Actual RT", true, median2, selectedTrace, trace);
+			Charter.launchChart("Library RT", "Actual RT", true, median2, selectedTrace, trace);
 		}
 	}
 	
@@ -114,7 +116,8 @@ public class RetentionTimeFilter {
 		float median=QuickMedian.select(deltaArray, 0.5f);
 		float iqr=QuickMedian.iqr(deltaArray);
 		float quarterMaxRange=(max-min)/4.0f;
-		Distribution positive=new Gaussian(median, iqr/1.35f, 0.5f);
+		float stdev=iqr==0.0f?quarterMaxRange/4.0f:iqr/1.35f;
+		Distribution positive=new Gaussian(median, stdev, 0.5f);
 		Distribution negative=new UnitDistribution(median, quarterMaxRange, 0.5f, min, max);
 		
 		ProphetMixtureModel model=new ProphetMixtureModel(positive, negative, true);
@@ -144,7 +147,7 @@ public class RetentionTimeFilter {
 		for (int i=0; i<rts.size(); i++) {
 			XYPoint xyPoint=rts.get(i);
 			float delta=(float)xyPoint.y-warper.getYValue((float)xyPoint.x);
-			if (model.getProbability(delta)>=0.5f) {
+			if (model.getProbability(delta)>=rejectionPValue) {
 				selectedRTs.add(xyPoint);
 			}
 		}

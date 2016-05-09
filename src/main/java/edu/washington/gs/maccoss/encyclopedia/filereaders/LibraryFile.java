@@ -155,11 +155,21 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 	public void addIntegratedEntries(ArrayList<IntegratedLibraryEntry> entries, float minimumCorrelation) throws IOException, SQLException {
 		// first add normal data
-		ArrayList<LibraryEntry> recasted=new ArrayList<LibraryEntry>();
+		HashMap<String, LibraryEntry> repeatsCatcher=new HashMap<String, LibraryEntry>();
 		for (IntegratedLibraryEntry entry : entries) {
-			recasted.add(entry);
+			String key=entry.getPeptideModSeq()+"+"+entry.getPrecursorCharge()+","+entry.getSource();
+			LibraryEntry prev=repeatsCatcher.get(key);
+			if (prev==null) {
+				repeatsCatcher.put(key, entry);
+			} else {
+				Logger.errorLine("Found collision writing elib: "+key+" ("+entry.getScore()+" vs"+prev.getScore()+"), keeping best scoring. Let Brian know if you see this!");
+				if (entry.getScore()>prev.getScore()) {
+					repeatsCatcher.put(key, entry);
+				}
+			}
 		}
-		addEntries(recasted);
+		ArrayList<LibraryEntry> uniqueEntries=new ArrayList<LibraryEntry>(repeatsCatcher.values());
+		addEntries(uniqueEntries);
 		
 		// then add integrated areas
 		Connection c=getConnection(tempFile);
@@ -167,7 +177,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			PreparedStatement peptidePrep=c.prepareStatement("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, SourceFile, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
 			PreparedStatement fragmentPrep=c.prepareStatement("INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, SourceFile, IonType, FragmentMass, Correlation, DeltaMassPPM, Intensity) VALUES (?,?,?,?,?,?,?,?)");
 			try {
-				for (IntegratedLibraryEntry entry : entries) {
+				for (LibraryEntry recast : uniqueEntries) {
+					IntegratedLibraryEntry entry=(IntegratedLibraryEntry)recast;
 					TransitionRefinementData data=entry.getRefinementData();
 
 					float[] correlationArray=data.getCorrelationArray();

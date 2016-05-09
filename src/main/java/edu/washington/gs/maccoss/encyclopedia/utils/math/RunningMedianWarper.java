@@ -14,12 +14,24 @@ public class RunningMedianWarper implements Function {
 	private final double[] x; 
 	private final double[] y; 
 	public RunningMedianWarper(ArrayList<XYPoint> points, int order, boolean onlyAscending) {
+		double minX=Double.MAX_VALUE;
+		double minY=Double.MAX_VALUE;
+		double maxX=-Double.MAX_VALUE;
+		double maxY=-Double.MAX_VALUE;
+		for (XYPoint xyPoint : points) {
+			if (xyPoint.x>maxX) maxX=xyPoint.x;
+			if (xyPoint.y>maxY) maxY=xyPoint.y;
+			if (xyPoint.x<minX) minX=xyPoint.x;
+			if (xyPoint.y<minY) minY=xyPoint.y;
+		}
 		knots=warp(points, order, onlyAscending);
 		if (knots.size()==0) {
 			knots.add(new XYPoint(0,0));
 			this.x=new double[1];
 			this.y=new double[1];
 		} else {
+			knots.add(new XYPoint(minX, minY));
+			knots.add(new XYPoint(maxX, maxY));
 			Collections.sort(knots);
 			Pair<double[], double[]> xys=XYTrace.toArrays(knots);
 			this.x=xys.x;

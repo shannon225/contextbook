@@ -14,6 +14,12 @@ public class UnitDistribution implements Distribution {
 		this.min=min;
 		this.max=max;
 	}
+	
+	@Override
+	public String toString() {
+		return "Unit, m:"+mean+", sd:"+stdev+", p:"+prior;
+	}
+	
 	public double getMean() {
 		return mean;
 	}

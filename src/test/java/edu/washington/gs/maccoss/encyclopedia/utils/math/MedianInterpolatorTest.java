@@ -17,7 +17,11 @@ import junit.framework.TestCase;
 
 public class MedianInterpolatorTest extends TestCase {
 	public static void main(String[] args) {
-		ArrayList<XYPoint> rts=getPhosphoData();
+		ArrayList<XYPoint> rts=getSyntheticData();
+		rts.addAll(getLowNoiseData());
+		rts.addAll(getLowNoiseData());
+		//rts=getSyntheticData();
+		//rts=getPhosphoData();
 		//rts=getCleanData();
 		RetentionTimeFilter filter=new RetentionTimeFilter(rts);
 		filter.plot(rts);
@@ -35,6 +39,21 @@ public class MedianInterpolatorTest extends TestCase {
 			assert(xyPoint.compareTo(previous)>=0);
 			previous=xyPoint;
 		}
+	}
+	
+	public static ArrayList<XYPoint> getSyntheticData() {
+		InputStream is=MedianInterpolatorTest.class.getResourceAsStream("/retention_times_synthetic.txt");
+		return getData(is);
+	}
+	
+	public static ArrayList<XYPoint> getLowNoiseData() {
+		InputStream is=MedianInterpolatorTest.class.getResourceAsStream("/retention_times_synthetic_lownoise.txt");
+		return getData(is);
+	}
+	
+	public static ArrayList<XYPoint> getSyntheticShortData() {
+		InputStream is=MedianInterpolatorTest.class.getResourceAsStream("/retention_times_synthetic_short.txt");
+		return getData(is);
 	}
 	
 	public static ArrayList<XYPoint> getCleanData() {

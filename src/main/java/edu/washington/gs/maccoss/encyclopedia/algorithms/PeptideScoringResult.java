@@ -36,7 +36,7 @@ public class PeptideScoringResult {
 			float[] scores=pair.y;
 			float actualRT=stripe.getScanStartTime()/60f;
 			float modelRT=entry.getRetentionTime();
-			boolean passes=filter.getProbabilityFitsModel(actualRT, modelRT)>=0.5f;
+			boolean passes=filter.getProbabilityFitsModel(actualRT, modelRT)>=RetentionTimeFilter.rejectionPValue;
 			if (passes) {
 				float deltaRT=Math.abs(actualRT-filter.getYValue(modelRT));
 				float[] scoresWithRT=General.concatenate(scores, deltaRT);
