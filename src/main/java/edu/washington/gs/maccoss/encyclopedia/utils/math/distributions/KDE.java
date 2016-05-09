@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math.distributions;
 import java.util.ArrayList;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.WeightedValue;
 
 public class KDE {
 	private final ArrayList<Distribution> data;
@@ -11,8 +12,15 @@ public class KDE {
 	private final float[] histogram;
 	private final float sumPriors;
 
-	public KDE(ArrayList<Distribution> data) {
-		this.data=data;
+	public KDE(ArrayList<WeightedValue> values) {
+		double stdev=WeightedValue.stdev(values);
+		// Silverman's (1986) rule of thumb (wikipedia)
+		double bandwidth=stdev*Math.pow(4.0/3.0/values.size(), 1.0/5.0);
+		
+		data=new ArrayList<Distribution>();
+		for (WeightedValue value : values) {
+			data.add(new CosineGaussian(value.getValue(), bandwidth, value.getWeight()));
+		}
 		
 		float min=Float.MAX_VALUE;
 		float max=-Float.MAX_VALUE;
