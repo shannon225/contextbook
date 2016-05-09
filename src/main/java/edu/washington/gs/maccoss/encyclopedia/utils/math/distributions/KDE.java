@@ -19,7 +19,8 @@ public class KDE {
 		
 		data=new ArrayList<Distribution>();
 		for (WeightedValue value : values) {
-			data.add(new CosineGaussian(value.getValue(), bandwidth, value.getWeight()));
+			// division by 2.3548 converts bandwidth (fwhm) to stdev for gaussians
+			data.add(new CosineGaussian(value.getValue(), bandwidth/2.3548, value.getWeight()));
 		}
 		
 		float min=Float.MAX_VALUE;
