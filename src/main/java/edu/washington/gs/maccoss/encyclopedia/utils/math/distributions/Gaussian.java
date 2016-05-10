@@ -18,6 +18,11 @@ public class Gaussian implements Distribution {
 	}
 	
 	@Override
+	public String getName() {
+		return "Gaussian";
+	}
+	
+	@Override
 	public String toString() {
 		return "Gaussian, m:"+mean+", sd:"+stdev+", p:"+prior;
 	}

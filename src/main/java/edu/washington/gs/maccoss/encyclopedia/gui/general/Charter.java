@@ -12,6 +12,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -37,13 +38,16 @@ import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfTemplate;
 import com.itextpdf.text.pdf.PdfWriter;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
 
 public class Charter {
 	public static void main(String[] args) {
@@ -225,6 +229,18 @@ public class Charter {
 		ChartPanel chart=getChart("M/Z", "Intensity", false, new XYTrace(trace));
 		chart.getChart().setTitle(trace.getSpectrumName());
 		return chart;
+	}
+	
+	public static ChartPanel getChart(Distribution dist, Range range) {
+		int n=100;
+		
+		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
+		for (int i=0; i<n; i++) {
+			float value=(i/(float)n)*range.getRange()+range.getStart();
+			points.add(new XYPoint(value, dist.getProbability(value)));
+		}
+		
+		return getChart("Value", "Probability", false, new XYTrace(points, GraphType.line, dist.getName()));
 	}
 
 	public static ChartPanel getChart(String xAxis, String yAxis, boolean displayLegend, XYTrace... traces) {

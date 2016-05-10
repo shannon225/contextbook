@@ -138,6 +138,7 @@ public class SearchToBLIB {
 
 		//ArrayList<IntegratedLibraryEntry> libraryEntries=SearchFeatureReader.parseSearchFeatures(featureFile, globalPassingPeptides, localPassingPeptides, stripeFile, Optional.ofNullable((LibraryFile)null), job.getParameters());
 		ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, featureFile, true, globalPassingPeptides, localPassingPeptides, stripeFile, libraryFile, job.getParameters());
+		stripeFile.close();
 		
 		File integrationFile=new File(diaFile.getAbsolutePath()+".integration.txt");
 
@@ -223,6 +224,7 @@ public class SearchToBLIB {
 		subProgress.update(diaFile.getName()+": Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides", 0.00001f);
 
 		ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, featureFile, false, globalPassingPeptides, localPassingPeptides, stripeFile, libraryFile, job.getParameters());
+		stripeFile.close();
 		
 		Logger.logLine("Writing Encyclopedia ELIB from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Writing Encyclopedia ELIB", 0.99999f);

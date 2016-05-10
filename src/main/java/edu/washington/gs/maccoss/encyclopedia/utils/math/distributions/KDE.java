@@ -3,26 +3,35 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math.distributions;
 import java.util.ArrayList;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.WeightedValue;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
-public class KDE {
+public class KDE implements Distribution {
 	private final ArrayList<Distribution> data;
 	private final Range range;
 	private final int numberOfBins=100;
-	private final float[] histogram;
-	private final float sumPriors;
+	private final double[] histogram;
+	private final double sumPriors;
+	private final double sumHistogram;
+	private final double prior;
+	private final double mean;
+	private final double stdev;
 
-	public KDE(ArrayList<WeightedValue> values) {
-		double stdev=WeightedValue.stdev(values);
+	public KDE(ArrayList<WeightedValue> values, double prior) {
+		this.prior=prior;
+		stdev=WeightedValue.stdev(values);
+		mean=WeightedValue.mean(values);
 		// Silverman's (1986) rule of thumb (wikipedia)
 		double bandwidth=stdev*Math.pow(4.0/3.0/values.size(), 1.0/5.0);
-		
+
 		data=new ArrayList<Distribution>();
 		for (WeightedValue value : values) {
-			// division by 2.3548 converts bandwidth (fwhm) to stdev for gaussians
+			// division by 2.3548 converts bandwidth (fwhm) to stdev for
+			// gaussians
 			data.add(new CosineGaussian(value.getValue(), bandwidth/2.3548, value.getWeight()));
 		}
-		
+
 		float min=Float.MAX_VALUE;
 		float max=-Float.MAX_VALUE;
 		for (Distribution dist : data) {
@@ -32,35 +41,41 @@ public class KDE {
 			if (max<localMax) max=localMax;
 		}
 		range=new Range(min, max);
-		float binsize=(max-min)/numberOfBins;
+		double binsize=(max-min)/numberOfBins;
 
-		histogram=new float[numberOfBins];
-		float[] binValues=new float[histogram.length];
+		histogram=new double[numberOfBins];
+		double[] binValues=new double[histogram.length];
 		for (int i=0; i<histogram.length; i++) {
 			binValues[i]=i*binsize+min;
 		}
 
-		float total=0.0f;
+		double total=0.0;
 		for (Distribution dist : data) {
 			total+=dist.getPrior();
-			float localMin=(float)(dist.getMean()-2.0f*dist.getStdev());
-			float localMax=(float)(dist.getMean()+2.0f*dist.getStdev());
+			double localMin=(double)(dist.getMean()-2.0f*dist.getStdev());
+			double localMax=(double)(dist.getMean()+2.0f*dist.getStdev());
 			int startIndex=Math.max(0, (int)Math.floor((localMin-min)/binsize));
 			int stopIndex=Math.min(histogram.length-1, (int)Math.ceil((localMax-min)/binsize));
 
 			for (int i=startIndex; i<=stopIndex; i++) {
-				float probability=(float)dist.getProbability(binValues[i]);
-				if (!Float.isNaN(probability)&&!Float.isInfinite(probability)) {
+				double probability=(double)dist.getProbability(binValues[i]);
+				if (!Double.isNaN(probability)&&!Double.isInfinite(probability)) {
 					histogram[i]+=probability;
 				}
 			}
 		}
+		sumHistogram=General.sum(histogram);
 		sumPriors=total;
 	}
+	
+	@Override
+	public String getName() {
+		return "KDE";
+	}
 
-	public int getBin(float value) {
-		float girth=range.getRange();
-		float binsize=girth/numberOfBins;
+	public int getBin(double value) {
+		double girth=range.getRange();
+		double binsize=girth/numberOfBins;
 
 		int thisBin;
 		if (value<=range.getStart()) {
@@ -72,9 +87,9 @@ public class KDE {
 		}
 		return thisBin;
 	}
-	
-	public float getMode() {
-		float maxProb=-Float.MAX_VALUE;
+
+	public double getMode() {
+		double maxProb=-Float.MAX_VALUE;
 		int bestIndex=-1;
 		for (int i=0; i<histogram.length; i++) {
 			if (maxProb<histogram[i]) {
@@ -85,25 +100,63 @@ public class KDE {
 		if (bestIndex==-1) {
 			return range.getMiddle();
 		}
-		return bestIndex/(float)numberOfBins*range.getRange()+range.getStart();
+		return bestIndex/(double)numberOfBins*range.getRange()+range.getStart();
+	}
+	
+	@Override
+	public double getProbability(double x) {
+		return getPDF(x)*getPrior();
 	}
 
-	public float getProbability(float value) {
-		if (sumPriors==0.0f) return 0.0f; // no probability
-		
-		float sum=0.0f;
+	@Override
+	public double getPDF(double value) {
+		if (sumPriors==0.0f) return 0.0; // no probability
+
+		double sum=0.0;
 		for (Distribution dist : data) {
-			float localMin=(float)(dist.getMean()-2.0f*dist.getStdev());
-			float localMax=(float)(dist.getMean()+2.0f*dist.getStdev());
-			if (value>localMin||value<localMax) {
+			double localMin=(double)(dist.getMean()-2.0f*dist.getStdev());
+			double localMax=(double)(dist.getMean()+2.0f*dist.getStdev());
+			if (value<localMin||value>localMax) {
 				continue;
 			}
-			
-			float probability=(float)dist.getProbability(value);
-			if (!Float.isNaN(probability)&&!Float.isInfinite(probability)) {
+
+			double probability=(double)dist.getProbability(value);
+			if (!Double.isNaN(probability)&&!Double.isInfinite(probability)) {
 				sum+=probability;
 			}
 		}
 		return sum/sumPriors;
+	}
+
+	@Override
+	public double getCDF(double value) {
+		if (sumHistogram==0.0f) return 0.0; // no probability
+
+		int bin=getBin(value);
+		double sum=0.0;
+		for (int i=bin; i<histogram.length; i++) {
+			sum+=histogram[i];
+		}
+		return sum/sumHistogram;
+	}
+
+	@Override
+	public double getPrior() {
+		return prior;
+	}
+
+	@Override
+	public double getStdev() {
+		return stdev;
+	}
+
+	@Override
+	public double getMean() {
+		return mean;
+	}
+	
+	@Override
+	public Distribution clone(double mean, double stdev, double prior) {
+		throw new EncyclopediaException("Sorry, cannot create a new KDE from just a mean and standard deviation!");
 	}
 }

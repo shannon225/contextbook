@@ -15,7 +15,7 @@ public class WeightedValue extends XYPoint {
 		return getY();
 	}
 	
-	public static double average(ArrayList<WeightedValue> values) {
+	public static double mean(ArrayList<WeightedValue> values) {
 		if (values==null||values.size()==0) return 0.0;
 		
 		double weightSum=0.0;

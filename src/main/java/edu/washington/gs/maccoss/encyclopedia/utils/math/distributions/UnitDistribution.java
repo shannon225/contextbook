@@ -16,6 +16,11 @@ public class UnitDistribution implements Distribution {
 	}
 	
 	@Override
+	public String getName() {
+		return "Unit";
+	}
+	
+	@Override
 	public String toString() {
 		return "Unit, m:"+mean+", sd:"+stdev+", p:"+prior;
 	}

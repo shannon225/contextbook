@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math.distributions;
 
 public interface Distribution {
+	String getName();
 
 	Distribution clone(double mean, double stdev, double prior);
 

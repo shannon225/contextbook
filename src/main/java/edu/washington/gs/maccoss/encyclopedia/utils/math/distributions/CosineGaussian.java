@@ -19,9 +19,17 @@ public class CosineGaussian implements Distribution {
 		M=Math.PI/(4.0*stdev);
 		this.min=mean-2.0*stdev;
 		this.max=mean+2.0*stdev;
-
 	}
 	
+	@Override
+	public String getName() {
+		return "Cosine Distribution";
+	}
+	
+	@Override
+	public String toString() {
+		return "Cosine, m:"+mean+", sd:"+stdev+", p:"+prior;
+	}
 	
 	@Override
 	public Distribution clone(double mean, double stdev, double prior) {
