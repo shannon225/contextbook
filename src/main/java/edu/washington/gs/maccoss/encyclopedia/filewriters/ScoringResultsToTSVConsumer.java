@@ -112,7 +112,7 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 					
 					if (stripe!=null&&rank<=numberOfPeaksPerPeptide) {
 						float deltaCn=firstScore<=0?0.0f:Math.min(1.0f, (primaryScore-secondScore)/firstScore); // if secondScore<0 then deltaCn can be >1, so protect against that
-						String psmID=PercolatorReader.getPSMID(peptide, diaFile);
+						String psmID=PercolatorReader.getPSMID(peptide, stripe.getScanStartTime(), diaFile);
 
 						writer.print(psmID);
 						writer.print("\t"+(peptide.isDecoy()?-1:1));

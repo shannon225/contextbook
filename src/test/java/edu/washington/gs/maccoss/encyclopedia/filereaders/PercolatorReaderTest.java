@@ -16,8 +16,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import junit.framework.TestCase;
 
 public class PercolatorReaderTest extends TestCase {
-	private static final String REVERSE_PSMID="110415_bcs_hela_starved_DDA.mzML:decoyEDIT[+80.0]PEPR+2";
-	private static final String FORWARD_PSMID="110415_bcs_hela_starved_DDA.mzML:PEPT[+80]IDER+2";
+	private static final String REVERSE_PSMID="110415_bcs_hela_starved_DDA.mzML:11.096461:decoyET[+80.0]PDIPER+2";
+	private static final String FORWARD_PSMID="110415_bcs_hela_starved_DDA.mzML:11.096461:PEPT[+80]IDER+2";
 	
 	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
 	
@@ -49,10 +49,12 @@ public class PercolatorReaderTest extends TestCase {
 		ReverseLibraryEntry reverse=entry.getDecoy(PARAMETERS, false);
 
 		File diaFile=new File("/Users/searleb/Documents/freezer_experiment/110815_hela_experiment/data/hela_experiment/110415_bcs_hela_starved_DDA.mzML"); // FIXME unit test is not platform independent (will fail on windows machines)
-		String psmid=PercolatorReader.getPSMID(entry, diaFile);
+		String psmid=PercolatorReader.getPSMID(entry, 11.096461f, diaFile);
+		System.out.println(psmid);
 		assertEquals(FORWARD_PSMID, psmid);
 
-		String revpsmid=PercolatorReader.getPSMID(reverse, diaFile);
+		String revpsmid=PercolatorReader.getPSMID(reverse, 11.096461f, diaFile);
+		System.out.println(revpsmid);
 		assertEquals(REVERSE_PSMID, revpsmid);
 	}
 	
@@ -63,7 +65,7 @@ public class PercolatorReaderTest extends TestCase {
 
 	public void testGetPeptideSequence() {
 		assertEquals("PEPT[+80]IDER", PercolatorReader.getPeptideSequence(FORWARD_PSMID));
-		assertEquals("EDIT[+80.0]PEPR", PercolatorReader.getPeptideSequence(REVERSE_PSMID));
+		assertEquals("ET[+80.0]PDIPER", PercolatorReader.getPeptideSequence(REVERSE_PSMID));
 	}
 	
 	public void testGetCharge() {

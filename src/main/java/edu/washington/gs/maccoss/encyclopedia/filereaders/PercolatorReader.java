@@ -139,8 +139,8 @@ public class PercolatorReader {
 		}
 	}
 	
-	public static String getPSMID(LibraryEntry peptide, File diaFile) {
-		return diaFile.getName()+":"+(peptide.isDecoy()?"decoy":"")+peptide.getPeptideModSeq()+"+"+peptide.getPrecursorCharge();
+	public static String getPSMID(LibraryEntry peptide, float rt, File diaFile) {
+		return diaFile.getName()+":"+rt+":"+(peptide.isDecoy()?"decoy":"")+peptide.getPeptideModSeq()+"+"+peptide.getPrecursorCharge();
 	}
 
 	public static boolean isPSMIDDecoy(String psmID) {
@@ -166,9 +166,18 @@ public class PercolatorReader {
 		}
 		return "";
 	}
+	
+	public static float getRT(String psmID) {
+		int colonIndex=psmID.indexOf(":");
+		int colonIndex2=psmID.lastIndexOf(":");
+		if (colonIndex2>colonIndex) {
+			return Float.parseFloat(psmID.substring(colonIndex+1, colonIndex2));
+		}
+		return 0.0f;
+	}
 
 	public static String getPeptideData(String psmID) {
-		int colonIndex=psmID.indexOf(":");
+		int colonIndex=psmID.lastIndexOf(":");
 		if (colonIndex>=0) {
 			return psmID.substring(colonIndex+1);
 		}
