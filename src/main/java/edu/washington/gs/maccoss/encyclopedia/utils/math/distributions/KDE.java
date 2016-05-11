@@ -10,7 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 public class KDE implements Distribution {
 	private final ArrayList<Distribution> data;
 	private final Range range;
-	private final int numberOfBins=100;
+	private final int numberOfBins=20;
 	private final double[] histogram;
 	private final double sumPriors;
 	private final double sumHistogram;

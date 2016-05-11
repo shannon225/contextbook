@@ -3,8 +3,8 @@ package edu.washington.gs.maccoss.encyclopedia.utils.graphing;
 import java.util.ArrayList;
 
 public class WeightedValue extends XYPoint {
-	public WeightedValue(double x, double y) {
-		super(x, y);
+	public WeightedValue(double value, double weight) {
+		super(value, weight);
 	}
 
 	public double getValue() {

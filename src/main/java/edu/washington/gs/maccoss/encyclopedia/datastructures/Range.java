@@ -80,4 +80,45 @@ public class Range implements Comparable<Range> {
 		if (stop<o.stop) return -1;
 		return 0;
 	}
+	
+	public float linearInterp(float X, float minY, float maxY) {
+		float deltaX=getRange();
+		if (deltaX==0) {
+			float half=(maxY+minY)/2f;
+			if (half<minY) return minY;
+			if (half>maxY) return maxY;
+			return half;
+		}
+		float deltaY=maxY-minY;
+		if (deltaY==0) {
+			return maxY;
+		}
+		float interp=((deltaY/deltaX)*(X-getStart())+minY);
+		if (interp<minY) return minY;
+		if (interp>maxY) return maxY;
+		return interp;
+	}
+	
+	public int linearInterp(float X, int minY, int maxY) {
+		return Math.round(linearInterp(X, (float)minY, (float)maxY));
+	}
+	
+	public float mapBackToRange(float Y, float minY, float maxY) {
+		float deltaX=getRange();
+		if (deltaX==0) {
+			return getStop();
+		}
+		
+		float deltaY=maxY-minY;
+		if (deltaY==0) {
+			float half=(getStart()+getStop())/2f;
+			if (half<getStart()) return getStart();
+			if (half>getStop()) return getStop();
+			return half;
+		}
+		float interp=((deltaX/deltaY)*(Y-minY)+getStart());
+		if (interp<getStart()) return getStart();
+		if (interp>getStop()) return getStop();
+		return interp;
+	}
 }

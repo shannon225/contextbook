@@ -20,6 +20,8 @@ public class MedianInterpolatorTest extends TestCase {
 		ArrayList<XYPoint> rts=getSyntheticData();
 		rts.addAll(getLowNoiseData());
 		rts.addAll(getLowNoiseData());
+		rts.addAll(getLowNoiseData());
+		//rts.addAll(getLowNoiseData());
 		//rts=getSyntheticData();
 		//rts=getPhosphoData();
 		//rts=getCleanData();

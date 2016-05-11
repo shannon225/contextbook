@@ -2,42 +2,33 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ProphetMixtureModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.RunningMedianWarper;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Gaussian;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.TwoDimensionalKDE;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.UnitDistribution;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class RetentionTimeFilter {
 	public static final float rejectionPValue=0.05f;
-	private final RunningMedianWarper rtWarper;
+	private final Function rtWarper;
 	private final ProphetMixtureModel model;
 	
 	public RetentionTimeFilter(ArrayList<XYPoint> rts) {
-		Collections.sort(rts);
-		int order=Math.max(3, Math.round(rts.size()/50f));
-		
-		// 5 iterations is sufficient
-		RunningMedianWarper warper=new RunningMedianWarper(rts, order, true);
-		Pair<RunningMedianWarper, ProphetMixtureModel> pair=runIteration(rts, warper);
-		
-		pair=runIteration(rts, pair.x);
-		pair=runIteration(rts, pair.x);
-		pair=runIteration(rts, pair.x);
-		rtWarper=pair.x;
-		model=pair.y;
+		TwoDimensionalKDE twoDimKDE=new TwoDimensionalKDE(rts);
+		rtWarper=twoDimKDE.trace();
+		model=generateMixtureModel(rts, rtWarper);
 	}
+	
 	public void plot(ArrayList<XYPoint> rts) {
 		File seed=null;
 		plot(rts, Optional.ofNullable(seed));
@@ -100,7 +91,7 @@ public class RetentionTimeFilter {
 		return probability;
 	}
 
-	public Pair<RunningMedianWarper,ProphetMixtureModel> runIteration(ArrayList<XYPoint> rts, RunningMedianWarper warper) {
+	public ProphetMixtureModel generateMixtureModel(ArrayList<XYPoint> rts, Function warper) {
 		TFloatArrayList deltas=new TFloatArrayList();
 		float min=Float.MAX_VALUE;
 		float max=-Float.MAX_VALUE;
@@ -116,52 +107,13 @@ public class RetentionTimeFilter {
 		float median=QuickMedian.select(deltaArray, 0.5f);
 		float iqr=QuickMedian.iqr(deltaArray);
 		float quarterMaxRange=(max-min)/4.0f;
-		float stdev=iqr==0.0f?quarterMaxRange/4.0f:iqr/1.35f;
-		Distribution positive=new Gaussian(median, stdev, 0.5f);
+		Distribution positive=new Gaussian(median, iqr/1.35f, 0.5f);
 		Distribution negative=new UnitDistribution(median, quarterMaxRange, 0.5f, min, max);
 		
 		ProphetMixtureModel model=new ProphetMixtureModel(positive, negative, true);
 		model.train(deltaArray, 10);
 		positive=model.getPositive();
 		negative=model.getNegative();
-		
-		/*
-		ArrayList<XYPoint> histogram=PivotTableGenerator.createPivotTable(deltaArray);
-		XYTrace histTrace=new XYTrace(histogram, GraphType.line, "Delta RT");
-		
-		ArrayList<XYPoint> positivePoints=new ArrayList<XYPoint>();
-		ArrayList<XYPoint> negativePoints=new ArrayList<XYPoint>();
-		for (XYPoint xyPoint : histogram) {
-			double x=xyPoint.getX();
-			positivePoints.add(new XYPoint(x, positive.getProbability(x)));
-			negativePoints.add(new XYPoint(x, negative.getProbability(x)));
-		}
-
-		XYTrace posTrace=new XYTrace(positivePoints, GraphType.line, "Positive");
-		XYTrace negTrace=new XYTrace(negativePoints, GraphType.line, "Negative");
-		
-		Charter.launchChart("Delta RT", "Count", true, histTrace, posTrace, negTrace);
-		*/
-		
-		ArrayList<XYPoint> selectedRTs=new ArrayList<XYPoint>();
-		for (int i=0; i<rts.size(); i++) {
-			XYPoint xyPoint=rts.get(i);
-			float delta=(float)xyPoint.y-warper.getYValue((float)xyPoint.x);
-			if (model.getProbability(delta)>=rejectionPValue) {
-				selectedRTs.add(xyPoint);
-			}
-		}
-
-		int order=Math.max(3, Math.round(selectedRTs.size()/50f));
-		warper=new RunningMedianWarper(selectedRTs, order, true);
-
-		/*
-		XYTrace median2=new XYTrace(warper.getKnots(), GraphType.line, "corrected");
-		XYTrace selectedTrace=new XYTrace(selectedRTs, GraphType.tinypoint, "Selected");
-
-		XYTrace trace=new XYTrace(rts, GraphType.tinypoint, "RT");
-		Charter.launchChart("Calculated RT", "Actual RT", true, median2, selectedTrace, trace);
-		*/
-		return new Pair<RunningMedianWarper, ProphetMixtureModel>(warper, model);
+		return model;
 	}
 }

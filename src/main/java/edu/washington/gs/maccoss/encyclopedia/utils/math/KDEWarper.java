@@ -1,0 +1,178 @@
+package edu.washington.gs.maccoss.encyclopedia.utils.math;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.WeightedValue;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.CauchyDistribution;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.KDE;
+
+public class KDEWarper implements Function {
+	private final ArrayList<XYPoint> knots;
+	private final double[] x; 
+	private final double[] y; 
+	public KDEWarper(ArrayList<XYPoint> points, int order, boolean onlyAscending) {
+		double minX=Double.MAX_VALUE;
+		double minY=Double.MAX_VALUE;
+		double maxX=-Double.MAX_VALUE;
+		double maxY=-Double.MAX_VALUE;
+		for (XYPoint xyPoint : points) {
+			if (xyPoint.x>maxX) maxX=xyPoint.x;
+			if (xyPoint.y>maxY) maxY=xyPoint.y;
+			if (xyPoint.x<minX) minX=xyPoint.x;
+			if (xyPoint.y<minY) minY=xyPoint.y;
+		}
+		knots=warp(points, order, onlyAscending);
+		if (knots.size()==0) {
+			knots.add(new XYPoint(0,0));
+			this.x=new double[1];
+			this.y=new double[1];
+		} else {
+			knots.add(new XYPoint(minX, minY));
+			knots.add(new XYPoint(maxX, maxY));
+			Collections.sort(knots);
+			Pair<double[], double[]> xys=XYTrace.toArrays(knots);
+			this.x=xys.x;
+			this.y=xys.y;
+		}
+	}
+	
+	public ArrayList<XYPoint> getKnots() {
+		return knots;
+	}
+	
+	@Override
+	public boolean isXInsideBoundaries(float xi) {
+		int upperBin=calculateBinNumber(xi, x);
+		if (upperBin==0) return false;
+		if (upperBin==x.length) return false;
+		return true;
+	}
+	
+	public float getYValue(float xi) {
+		int upperBin=calculateBinNumber(xi, x);
+
+		// boundary conditions
+		if (upperBin<=0) return (float)y[0];
+		if (upperBin>=x.length) return (float)y[y.length-1];
+
+		return linearInterp(x[upperBin-1], (float)xi, x[upperBin], y[upperBin-1], y[upperBin]);
+	}
+	
+	@Override
+	public boolean isYInsideBoundaries(float yi) {
+		int upperBin=calculateBinNumber(yi, y);
+		if (upperBin==0) return false;
+		if (upperBin==y.length) return false;
+		return true;
+	}
+	
+	public float getXValue(float yi) {
+		int upperBin=calculateBinNumber(yi, y);
+
+		// boundary conditions
+		if (upperBin==0) return (float)x[0];
+		if (upperBin==y.length) return (float)x[y.length-1];
+
+		return linearInterp(y[upperBin-1], (float)yi, y[upperBin], x[upperBin-1], x[upperBin]);
+	}
+	
+	public static float linearInterp(double minX, double X, double maxX, double minY, double maxY) {
+		double deltaX=maxX-minX;
+		if (deltaX==0) {
+			return (float)(maxY+minY)/2f;
+		}
+		double deltaY=maxY-minY;
+		if (deltaY==0) {
+			return (float)maxY;
+		}
+		float interp=(float)(((maxY-minY)/deltaX)*(X-minX)+minY);
+		return interp;
+	}
+
+	public static int calculateBinNumber(double x, double[] xs) {
+		int binNumber=Arrays.binarySearch(xs, x);
+		if (binNumber<0) {
+			binNumber=(-(binNumber+1));
+		}
+
+		return binNumber;
+	}
+	
+	public static ArrayList<XYPoint> warp(ArrayList<XYPoint> points, int order, boolean onlyAscending) {
+		if (points.size()==0) return points;
+		
+		Pair<float[], float[]>xys=XYTrace.toFloatArrays(points);
+		float[] x=xys.x;
+		float[] y=xys.y;
+		float[] newX=new float[x.length];
+		float[] newY=new float[x.length];
+		for (int i=0; i<y.length; i++) {
+			newX[i]=x[i];
+			newY[i]=getMode(x, y, order, i);
+		}
+		ArrayList<XYPoint> values=new ArrayList<XYPoint>();
+		float lastX=newX[newY.length/2];
+		float lastY=newY[newY.length/2];
+		for (int i=newY.length/2; i<newY.length; i++) {
+			if (onlyAscending) {
+				if (newX[i]<lastX) continue;
+				if (newY[i]<lastY) continue;
+			}
+			values.add(new XYPoint(newX[i], newY[i]));
+			lastX=newX[i];
+			lastY=newY[i];
+		}
+		
+		lastX=newX[newY.length/2];
+		lastY=newY[newY.length/2];
+		for (int i=newY.length/2-1; i>=0; i--) {
+			if (onlyAscending) {
+				if (newX[i]>lastX) continue;
+				if (newY[i]>lastY) continue;
+			}
+			values.add(0, new XYPoint(newX[i], newY[i]));
+			lastX=newX[i];
+			lastY=newY[i];
+		}
+		
+		return values;
+	}
+	
+	private static final CauchyDistribution influenceDist=new CauchyDistribution(0, 0.5, 1.0);
+	
+	private static float getMode(float[] x, float[] y, int order, int i) {
+		int minRange=i-Math.max(0, i-order);
+		int maxRange=Math.min(y.length-1, i+order)-i;
+		int finalRange=Math.min(minRange, maxRange);
+		//float valueRange=Math.max(Math.abs(x[i]-x[i-finalRange]), Math.abs(x[i]+x[i+finalRange]));
+
+		ArrayList<WeightedValue> values=new ArrayList<WeightedValue>();
+		for (int j=i; j>=i-finalRange; j--) {
+			float weight=(x[j]-x[i]);
+			values.add(new WeightedValue(y[j], influenceDist.getPDF(weight)));
+		}
+		for (int j=i+1; j<i+finalRange; j++) {
+			float weight=(x[j]-x[i]);
+			values.add(new WeightedValue(y[j], influenceDist.getPDF(weight)));
+		}
+		if (values.size()==1) return (float)values.get(0).getValue();
+		KDE kde=new KDE(values, 1.0);
+		
+		/*if (i>500&&i<550) {
+			System.out.println(values.size()+", "+i+", "+finalRange);
+			for (WeightedValue weightedValue : values) {
+				System.out.println(weightedValue);
+			}
+			System.out.println(x[i]+", "+y[i]+" --> "+kde.getMode());
+			System.out.println();
+		} else if (i>550) {
+			System.exit(1);
+		}*/
+		return (float)kde.getMode();
+	}
+}

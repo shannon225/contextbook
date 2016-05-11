@@ -8,8 +8,7 @@ public class CosineGaussianTest extends TestCase {
 	public static void main(String[] args) {
 		CosineGaussian dist=new CosineGaussian(5, 2, 5);
 		Range range=new Range(0, 10);
-		Charter.launchChart(Charter.getChart(dist, range), "cosine");
-		
+		Charter.launchChart(Charter.getChart(dist, range), "cosine");	
 	}
 	
 	public void testGaussian() {
@@ -25,5 +24,4 @@ public class CosineGaussianTest extends TestCase {
 			assertEquals(pdfs[i]*prior, g.getProbability(xs[i]), prior*0.1f);
 		}
 	}
-
 }
