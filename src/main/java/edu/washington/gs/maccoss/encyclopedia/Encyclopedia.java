@@ -25,7 +25,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.RetentionTimeFilter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
@@ -311,6 +311,7 @@ public class Encyclopedia {
 
 					Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
 					XYPoint point=new XYPoint(entryTime, first.x.y.getScanStartTime()/60.0f);
+					System.out.println(point.x+"\t"+point.y);
 					rtSet.add(point);
 				}
 			}

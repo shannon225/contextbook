@@ -30,6 +30,17 @@
 				<enabled>false</enabled>
 			</snapshots>
 		</repository>
+		<repository>
+			<id>jzy3d-releases</id>
+			<name>Jzy3d Snapshots</name>
+			<url>http://maven.jzy3d.org/releases</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
 	</repositories>
 
 	<build>
@@ -106,6 +117,11 @@
 			<groupId>com.itextpdf</groupId>
 			<artifactId>itextpdf</artifactId>
 			<version>5.5.8</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jzy3d</groupId>
+			<artifactId>jzy3d-api</artifactId>
+			<version>0.9.1</version>
 		</dependency>
 	</dependencies>
 </project>

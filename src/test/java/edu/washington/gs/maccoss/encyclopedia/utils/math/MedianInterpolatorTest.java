@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,7 +8,7 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.RetentionTimeFilter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
@@ -66,6 +67,38 @@ public class MedianInterpolatorTest extends TestCase {
 	public static ArrayList<XYPoint> getPhosphoData() {
 		InputStream is=MedianInterpolatorTest.class.getResourceAsStream("/retention_times_dirty.txt");
 		return getData(is);
+	}
+
+	public static ArrayList<XYPoint> getData(File f) {
+		final ArrayList<XYPoint> rts=new ArrayList<XYPoint>();
+
+		TableParserMuscle muscle=new TableParserMuscle() {
+			@Override
+			public void processRow(Map<String, String> row) {
+				float predicted=Float.parseFloat(row.get("predicted"));
+				float actual=Float.parseFloat(row.get("actual"));
+				rts.add(new XYPoint(predicted, actual));
+			}
+		};
+
+		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
+		TableParserProducer producer=new TableParserProducer(blockingQueue, f, "\t", 1);
+		TableParserConsumer consumer=new TableParserConsumer(blockingQueue, muscle);
+
+		Thread producerThread=new Thread(producer);
+		Thread consumerThread=new Thread(consumer);
+		producerThread.start();
+		consumerThread.start();
+
+		try {
+			producerThread.join();
+			consumerThread.join();
+		} catch (InterruptedException ie) {
+			Logger.errorLine("Percolator reading interrupted!");
+			Logger.errorException(ie);
+		}
+
+		return rts;
 	}
 
 	public static ArrayList<XYPoint> getData(InputStream is) {

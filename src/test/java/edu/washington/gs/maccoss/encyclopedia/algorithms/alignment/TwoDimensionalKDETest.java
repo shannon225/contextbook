@@ -1,8 +1,10 @@
-package edu.washington.gs.maccoss.encyclopedia.utils.math.distributions;
+package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
 import java.util.ArrayList;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TwoDimensionalKDE;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter3d;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -17,25 +19,15 @@ public class TwoDimensionalKDETest extends TestCase {
 		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
 		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
 		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
+		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
+		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
 		//rts=MedianInterpolatorTest.getSyntheticData();
 		rts=MedianInterpolatorTest.getPhosphoData();
 		//rts=MedianInterpolatorTest.getCleanData();
 		TwoDimensionalKDE filter=new TwoDimensionalKDE(rts);
-		//filter.plot();
 		
-		float[][] stamp=filter.getStamp(rts.size());
-		for (int i=0; i<stamp.length; i++) {
-			for (int j=0; j<stamp[i].length; j++) {
-				
-				String value=Float.toString(Math.round(stamp[i][j]*10000f)/100f);
-				if (value.length()>3) {
-					System.out.print(value+" ");
-				} else {
-					System.out.print(value+"0 ");
-				}
-			}
-			System.out.println();
-		}
+		Charter3d.plot(filter, filter.getXRange(), filter.getYRange(), filter.getResolution()/5);
+		
 		plot(rts, filter.trace());
 	}
 
