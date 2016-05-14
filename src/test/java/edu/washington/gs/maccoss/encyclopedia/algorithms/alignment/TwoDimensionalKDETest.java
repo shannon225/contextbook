@@ -13,7 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.MedianInterpolatorTest;
 import gnu.trove.list.array.TFloatArrayList;
 import junit.framework.TestCase;
 
-public class TwoDimensionalKDETest extends TestCase {
+public class TwoDimensionalKDETest {
 	public static void main(String[] args) {
 		ArrayList<XYPoint> rts=MedianInterpolatorTest.getSyntheticData();
 		rts.addAll(MedianInterpolatorTest.getLowNoiseData());

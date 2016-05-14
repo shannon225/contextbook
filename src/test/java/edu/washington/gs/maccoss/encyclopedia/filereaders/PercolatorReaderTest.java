@@ -16,7 +16,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import junit.framework.TestCase;
 
 public class PercolatorReaderTest extends TestCase {
-	private static final String REVERSE_PSMID="110415_bcs_hela_starved_DDA.mzML:11.096461:decoyET[+80.0]PDIPER+2";
+	private static final String REVERSE_PSMID="110415_bcs_hela_starved_DDA.mzML:11.096461:decoyEDIT[+80.0]PEPR+2";
 	private static final String FORWARD_PSMID="110415_bcs_hela_starved_DDA.mzML:11.096461:PEPT[+80]IDER+2";
 	
 	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
@@ -65,7 +65,7 @@ public class PercolatorReaderTest extends TestCase {
 
 	public void testGetPeptideSequence() {
 		assertEquals("PEPT[+80]IDER", PercolatorReader.getPeptideSequence(FORWARD_PSMID));
-		assertEquals("ET[+80.0]PDIPER", PercolatorReader.getPeptideSequence(REVERSE_PSMID));
+		assertEquals("EDIT[+80.0]PEPR", PercolatorReader.getPeptideSequence(REVERSE_PSMID));
 	}
 	
 	public void testGetCharge() {

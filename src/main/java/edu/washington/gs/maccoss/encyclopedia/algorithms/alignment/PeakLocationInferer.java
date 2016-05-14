@@ -19,6 +19,34 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 
 public class PeakLocationInferer {
+	HashMap<SearchJobData, RetentionTimeFilter> alignmentMap;
+	HashMap<IntegratedLibraryEntry, Float> alignedRTInSecMap;
+	
+	/*static PeakLocationInferer getAlignmentData(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File blibFile, ArrayList<ScoredObject<String>> passingPeptides) {
+		ProgressIndicator subProgress1=new SubProgressIndicator(progress, 0.5f);
+		HashMap<SearchJobData, ArrayList<IntegratedLibraryEntry>> archetypalPeptides=getArchetypalPeptides(subProgress1, pecanJobs, blibFile, passingPeptides);
+		
+		SearchJobData bestJob=null;
+		int max=-1;
+		for (Entry<SearchJobData, ArrayList<IntegratedLibraryEntry>> entry : archetypalPeptides.entrySet()) {
+			int length=entry.getValue().size();
+			if (length>max) {
+				max=length;
+				bestJob=entry.getKey();
+			}
+		}
+		
+		ArrayList<ScoredObject<String>> 
+
+		ProgressIndicator subProgress2=new SubProgressIndicator(progress, 0.5f);
+
+		for (SearchJobData job : pecanJobs) {
+			ArrayList<ScoredObject<String>> peptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), job.getParameters().getPercolatorThreshold());
+			for (ScoredObject<String> peptide : peptides) {
+				
+			}
+		}
+	}*/
 	
 	static HashMap<SearchJobData, ArrayList<IntegratedLibraryEntry>> getArchetypalPeptides(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File blibFile, ArrayList<ScoredObject<String>> passingPeptides) {
 		HashMap<String, SearchJobData> jobsByFile=new HashMap<String, SearchJobData>();

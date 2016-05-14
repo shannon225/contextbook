@@ -65,6 +65,6 @@ public class PercolatorExecutorTest extends TestCase {
 				Thread.sleep(10);
 			}
 		}
-		assertEquals(593, outputlines-1); // number of spectra above 1% FDR (-1 for header)
+		assertEquals(712, outputlines-1); // number of spectra above 1% FDR (-1 for header)
 	}
 }
