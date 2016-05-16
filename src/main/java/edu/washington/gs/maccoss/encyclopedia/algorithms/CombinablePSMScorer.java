@@ -31,6 +31,11 @@ public class CombinablePSMScorer implements PSMScorer {
 	}
 	
 	@Override
+	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize, double[] ions) {
+		return scorer.getIndividualPeakScores(entry, spectrum, normalize, ions);
+	}
+	
+	@Override
 	public float score(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		return combiner.getScore(scorer.auxScore(entry, spectrum, predictedIsotopeDistribution, precursors));
 	}

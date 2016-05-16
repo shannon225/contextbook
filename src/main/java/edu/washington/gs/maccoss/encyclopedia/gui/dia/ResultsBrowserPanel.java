@@ -72,6 +72,7 @@ public class ResultsBrowserPanel extends JPanel {
 		super(new BorderLayout());
 		
 		HashMap<String, String> map=SearchParameterParser.getDefaultParameters();
+		map.put("-runPhosphoLocalization", "true");
 		map.put("-deconvoluteOverlappingWindows", "true");
 		map.put("-fixed", "");
 		parameters=SearchParameterParser.parseParameters(map);
@@ -206,7 +207,7 @@ public class ResultsBrowserPanel extends JPanel {
 			entries.add(unit);
 			
 			try {
-				float rtRange=60f;
+				float rtRange=300f;
 				ArrayList<Stripe> stripes=dia.getStripes(entry.getPrecursorMZ(), entry.getRetentionTime()-rtRange, entry.getRetentionTime()+rtRange, false);
 				FragmentationTraceTask task=new FragmentationTraceTask(scorer, FragmentationTraceTask.PLOT_INTENSITIES, entries, stripes, new PrecursorScanMap(new ArrayList<PrecursorScan>()), parameters.getAAConstants());
 				HashMap<LibraryEntry, PeptideScoringResult> result=task.call();
@@ -225,6 +226,9 @@ public class ResultsBrowserPanel extends JPanel {
 				PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), entry.getRetentionTime(), entry.getScore(), 1.0f-entry.getScore(), 2*rtRange);
 				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(dia.getOriginalFileName(), psmdata, Optional.ofNullable((LibraryInterface)null), stripes, parameters, false);
 				TransitionRefinementData data=quantTask.extractSpectrum(unit, 2*rtRange, false);
+				if (parameters.isRunPhosphoLocalization()) {
+					quantTask.runLocalization();
+				}
 				if (data!=null) {
 					HashMap<String, ChartPanel> panels=TransitionRefiner.getChartPanels(data);
 					peakPickingSplit.setLeftComponent(panels.get("median"));

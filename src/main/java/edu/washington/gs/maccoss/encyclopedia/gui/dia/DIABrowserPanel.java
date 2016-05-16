@@ -1,8 +1,12 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,6 +14,7 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -19,6 +24,7 @@ import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.UIManager;
 
 import org.jfree.chart.ChartPanel;
 
@@ -41,6 +47,8 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
+import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 
 public class DIABrowserPanel extends JPanel {
@@ -50,15 +58,55 @@ public class DIABrowserPanel extends JPanel {
 
 	private final SearchParameters parameters;
 	private final FileChooserPanel diaFile;
-	private final JTextField peptide=new JTextField("YLDGLTAER");
+	private final JTextField peptide=new JTextField("MQS[+80]LSLNK"); // YLDGLTAER");
 	private final SpinnerModel charge=new SpinnerNumberModel(2, 1, 5, 1);
 	private final JSplitPane split=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
 	private StripeFileInterface dia=null;
 
+	public static void main(String[] args) {
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e) {
+			Logger.errorLine("Error setting look and feel!");
+			Logger.errorException(e);
+		}
+		OS os=OSDetector.getOS();
+		switch (os) {
+			case MAC:
+				System.setProperty("com.apple.mrj.application.apple.menu.about.name", "DIA Browser");
+				System.setProperty("apple.laf.useScreenMenuBar", "true");
+				break;
+
+			default:
+				break;
+		}
+
+		EventQueue.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				final JFrame f=new JFrame("DIA Browser");
+				f.addWindowListener(new WindowAdapter() {
+					public void windowClosing(WindowEvent e) {
+						System.exit(0);
+					}
+				});
+
+				f.getContentPane().add(new DIABrowserPanel(), BorderLayout.CENTER);
+
+				f.pack();
+				f.setSize(new Dimension(1900, 1030)); // for 1920x1080
+				f.setVisible(true);
+			}
+		});
+
+		Logger.logLine("Launching DIA Browser");
+	}
+	
 	public DIABrowserPanel() {
 		super(new BorderLayout());
 		HashMap<String, String> map=SearchParameterParser.getDefaultParameters();
+		map.put("-runPhosphoLocalization", "true");
 		map.put("-deconvoluteOverlappingWindows", "true");
 		parameters=SearchParameterParser.parseParameters(map);
 		scorer=new PecanRawScorer(parameters.getFragmentTolerance(), new ExpectedFragmentationScorer(parameters));

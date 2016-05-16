@@ -22,6 +22,14 @@ public class FragmentationModel {
 		neutralLosses=tuple.y;
 		aas=tuple.z;
 	}
+
+	public double getChargedMass(byte charge) {
+		double mass=MassConstants.oh2;
+		for (int i=0; i<masses.length; i++) {
+			mass+=masses[i];
+		}
+		return (mass+MassConstants.protonMass*charge)/charge;
+	}
 	
 	public LibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params) {
 		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, 0.0);
@@ -41,7 +49,7 @@ public class FragmentationModel {
 		Arrays.fill(unitIntensities, 1.0f);
 
 		String sequence=getModifiedSequence();
-		double precursorMZ=params.getAAConstants().getChargedMass(sequence, precursorCharge);
+		double precursorMZ=getChargedMass(precursorCharge);
 
 		return new LibraryEntry(filename, accessions, precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, ions, unitIntensities);
 	}

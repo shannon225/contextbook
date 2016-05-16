@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 
 //@Immutable
@@ -24,8 +25,18 @@ public class DotProduct implements PSMScorer {
 	public String[] getAuxScoreNames(LibraryEntry entry) {
 		return new String[0];
 	}
+
 	@Override
 	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize) {
+		return getIndividualPeakScores(entry, spectrum, normalize, null);
+	}
+	
+	@Override
+	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize, double[] ions) {
+		if (ions!=null) {
+			throw new EncyclopediaException("DotProduct doesn't currently handle ion selection. Please report this bug!");
+		}
+		
 		double[] libraryMasses=entry.getMassArray();
 		float[] libraryIntensities=entry.getIntensityArray();
 		

@@ -8,8 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.zip.DataFormatException;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoPermuter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -27,8 +26,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ThreadableTask;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
-import gnu.trove.map.hash.TFloatFloatHashMap;
-import gnu.trove.set.hash.TFloatHashSet;
 
 public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	private final Optional<LibraryInterface> library;
@@ -87,13 +84,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	protected Nothing process() {
 		Optional<TransitionRefinementData> spectrum=extractSpectrum(psmdata.getAccessions(), library, psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable);
 		if (params.isRunPhosphoLocalization()) {
-			ArrayList<String> permutations=PhosphoPermuter.getPermutations(psmdata.getPeptideModSeq(), params.getAAConstants());
-			if (permutations.size()==1) {
-				System.out.println("single\t"+psmdata.getPeptideModSeq());
-			} else {
-				boolean multiple=extractPhosphoForms(psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime());
-				System.out.println("multiple\t"+psmdata.getPeptideModSeq()+"\t"+multiple);
-			}
+			runLocalization();
 		}
 		if (spectrum.isPresent()) {
 			// FIXME need to not add duplicates!!!! for now just run SQL:
@@ -112,63 +103,9 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		return Nothing.NOTHING;
 	}
 
-
-
-	private boolean extractPhosphoForms(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime) {
-		float duration=6*60f; // search for 6 minutes
-		
-		EncyclopediaOneScorer encyclopediaScorer=new EncyclopediaOneScorer(params, null); // not using aux scoring
-
-		ArrayList<Stripe> stripes=getScanSubset(retentionTime-duration, retentionTime+duration);
-
-		TFloatArrayList allBestTimes=new TFloatArrayList();
-
-		TFloatHashSet list=new TFloatHashSet();
-		for (String peptideModSeq : peptideModSeqs) {
-			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-			LibraryEntry unitEntry=model.getUnitSpectrum(filename, new HashSet<String>(), precursorCharge, retentionTime, params);
-
-			TFloatArrayList bestTimes=new TFloatArrayList();
-			float bestScore=0.0f;
-			TFloatFloatHashMap rtScoreMap=new TFloatFloatHashMap();
-			for (Stripe spectrum : stripes) {
-				// float score=encyclopediaScorer.score(unitEntry, spectrum);
-				PeakScores[] individualPeakScores=encyclopediaScorer.getIndividualPeakScores(unitEntry, spectrum, false);
-				float score=0.0f;
-				for (int i=0; i<individualPeakScores.length; i++) {
-					if (individualPeakScores[i]!=null) {
-						score++;
-					}
-				}
-				rtScoreMap.put(spectrum.getScanStartTime(), score);
-				if (score>9.5f) { // at least 5 transitions
-					if (bestScore<score) {
-						bestScore=score;
-						bestTimes.clear();
-						bestTimes.add(spectrum.getScanStartTime());
-					} else if (bestScore==score) {
-						bestTimes.add(spectrum.getScanStartTime());
-					}
-				}
-			}
-
-			allBestTimes.addAll(bestTimes);
-
-			EValueCalculator calculator=new EValueCalculator(rtScoreMap);
-			// System.out.println(peptideModSeq+"\t"+calculator.getMaxRT()+"\t"+calculator.getNegLog10EValue()+"\t"+calculator.getMaxRawScore()); //FIXME
-			list.add(calculator.getMaxRT());
-		}
-
-		if (allBestTimes.size()>1) {
-			float range=allBestTimes.max()-allBestTimes.min();
-			if (range>=60) {
-				// System.out.println("multiple\t"+peptideModSeqs.get(0));
-				return true;
-			}
-		} else if (allBestTimes.size()==1) {
-			// System.out.println("single\t"+peptideModSeqs.get(0));
-		}
-		return false;
+	public void runLocalization() {
+		PhosphoLocalizer localizer=new PhosphoLocalizer(filename, params, psmdata, stripes);
+		localizer.runPhosphoLocalization();
 	}
 
 	private Optional<TransitionRefinementData> extractSpectrum(HashSet<String> accessions, Optional<LibraryInterface> library, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable) {

@@ -51,9 +51,15 @@ public class EncyclopediaOneScorer implements PSMScorer {
 
 	@Override
 	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize) {
-		MassTolerance tolerance=parameters.getFragmentTolerance();
 		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		double[] ions=model.getPrimaryIons(parameters.getFragType(), entry.getPrecursorCharge());
+		
+		return getIndividualPeakScores(entry, spectrum, normalize, ions);
+	}
+
+	@Override
+	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize, double[] ions) {
+		MassTolerance tolerance=parameters.getFragmentTolerance();
 		
 		double[] predictedMasses=entry.getMassArray();
 		float[] predictedIntensities=entry.getIntensityArray();
