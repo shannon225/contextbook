@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.RetentionTimeFilter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;

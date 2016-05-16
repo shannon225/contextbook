@@ -4,7 +4,7 @@
   <groupId>maccoss</groupId>
   <artifactId>encyclopedia</artifactId>
   <name>encyclopedia</name>
-  <version>0.1.9</version>
+  <version>0.2.0</version>
   <url>http://maven.apache.org</url>
   <build>
     <plugins>
@@ -45,6 +45,15 @@
       <id>ebi-repo</id>
       <name>The EBI Maven 2 repository</name>
       <url>http://www.ebi.ac.uk/~maven/m2repo</url>
+    </repository>
+    <repository>
+      <releases />
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>jzy3d-releases</id>
+      <name>Jzy3d Snapshots</name>
+      <url>http://maven.jzy3d.org/releases</url>
     </repository>
   </repositories>
   <dependencies>

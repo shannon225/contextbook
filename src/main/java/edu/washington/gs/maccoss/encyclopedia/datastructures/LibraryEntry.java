@@ -186,9 +186,9 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 	public ReverseLibraryEntry getDecoy(SearchParameters parameters, boolean shuffle) {
 		String reverseSequence;
 		if (shuffle) {
-			reverseSequence=PeptideUtils.reverse(peptideModSeq, parameters);
-		} else {
 			reverseSequence=PeptideUtils.shuffle(peptideModSeq, parameters);
+		} else {
+			reverseSequence=PeptideUtils.reverse(peptideModSeq, parameters);
 		}
 		
 		FragmentationModel forwardModel=new FragmentationModel(peptideModSeq, parameters.getAAConstants());

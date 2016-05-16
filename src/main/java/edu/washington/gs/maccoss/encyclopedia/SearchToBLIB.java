@@ -6,8 +6,6 @@ import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map.Entry;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractor;
@@ -46,8 +44,12 @@ public class SearchToBLIB {
 		
 		if (representativeJob==null) return;
 		
-		File bigFeatureFile=new File(representativeJob.getFeatureFile().getParentFile(), "concatenated_features.txt");
-		File bigPercolatorFile=new File(representativeJob.getFeatureFile().getParentFile(), "concatenated_results.txt");
+		String filename=libFile.getName();
+		if (filename.lastIndexOf('.')>0) {
+			filename=filename.substring(0, filename.lastIndexOf('.'));
+		}
+		File bigFeatureFile=new File(representativeJob.getFeatureFile().getParentFile(), filename+"_concatenated_features.txt");
+		File bigPercolatorFile=new File(representativeJob.getFeatureFile().getParentFile(), filename+"_concatenated_results.txt");
 
 		SearchParameters parameters=representativeJob.getParameters();
 		float threshold=parameters.getEffectivePercolatorThreshold();
@@ -56,6 +58,9 @@ public class SearchToBLIB {
 			if (featureFiles.size()==1) {
 				// if there's only one file then don't need to re-run percolator
 				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(representativeJob.getOutputFile(), threshold);
+			} else if (bigPercolatorFile.exists()&&bigPercolatorFile.canRead()) {
+				// if we've already run percolator then don't need to re-run percolator
+				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(bigPercolatorFile, threshold);
 			} else {
 				TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
 				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), bigFeatureFile, bigPercolatorFile, threshold);
@@ -74,46 +79,6 @@ public class SearchToBLIB {
 			Logger.errorLine("Error creating concatenated feature file");
 			Logger.errorException(ie);
 		}
-	}
-	
-	static HashMap<SearchJobData, ArrayList<IntegratedLibraryEntry>> getArchetypalPeptides(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File blibFile, Optional<LibraryInterface> libraryFile, ArrayList<ScoredObject<String>> passingPeptides) {
-		HashMap<String, SearchJobData> jobsByFile=new HashMap<String, SearchJobData>();
-		HashMap<String, ArrayList<ScoredObject<String>>> peptidesByFile=new HashMap<String, ArrayList<ScoredObject<String>>>();
-		for (SearchJobData job : pecanJobs) {
-			String name=job.getDiaFile().getName();
-			name=name.substring(0, name.lastIndexOf('.'));
-			jobsByFile.put(name, job);
-			peptidesByFile.put(name, new ArrayList<ScoredObject<String>>());
-		}
-
-		for (ScoredObject<String> psm : passingPeptides) {
-			String name=PercolatorReader.getFile(psm.y);
-			name=name.substring(0, name.lastIndexOf('.'));
-			ArrayList<ScoredObject<String>> list=peptidesByFile.get(name);
-			if (list==null) {
-				Logger.errorLine("Unexpected file ["+name+"] when parsing Percolator result! Ignoring peptide.");
-			} else {
-				list.add(psm);
-			}
-		}
-
-		HashMap<SearchJobData, ArrayList<IntegratedLibraryEntry>> archetypalPeptides=new HashMap<SearchJobData, ArrayList<IntegratedLibraryEntry>>();
-		float increment=1.0f/pecanJobs.size();
-		for (Entry<String, ArrayList<ScoredObject<String>>> entry : peptidesByFile.entrySet()) {
-			ProgressIndicator subProgress=new SubProgressIndicator(progress, increment);
-			
-			SearchJobData job=jobsByFile.get(entry.getKey());
-			ArrayList<ScoredObject<String>> peptides=entry.getValue();
-			
-			StripeFileInterface stripeFile=MzmlToDIAConverter.getFile(job.getDiaFile(), job.getParameters());
-			Logger.logLine("Extracting Spectral Data for "+peptides.size()+" Peptides from "+job.getDiaFile().getName()+"...");
-			subProgress.update(job.getDiaFile().getName()+": Extracting Spectral Data for "+peptides.size()+" Peptides", 0.00001f);
-
-			ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job.getFeatureFile(), true, passingPeptides, peptides, stripeFile, libraryFile, job.getParameters());
-			archetypalPeptides.put(job, libraryEntries);
-			stripeFile.close();
-		}
-		return archetypalPeptides;
 	}
 	
 	static void convertBlib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File blibFile, Optional<LibraryInterface> libraryFile, Optional<ArrayList<ScoredObject<String>>> passingPeptides) {

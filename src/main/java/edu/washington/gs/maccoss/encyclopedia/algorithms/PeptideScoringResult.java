@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.util.ArrayList;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;

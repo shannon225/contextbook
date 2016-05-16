@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms;
+package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -14,7 +14,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.ProphetMixtureModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Gaussian;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.TwoDimensionalKDE;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.UnitDistribution;
 import gnu.trove.list.array.TFloatArrayList;
 
