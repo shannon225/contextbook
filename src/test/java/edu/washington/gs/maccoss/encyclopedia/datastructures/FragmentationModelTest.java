@@ -52,11 +52,11 @@ public class FragmentationModelTest extends TestCase {
 		double[] expectedY=new double[] {175.11955, 304.16214, 419.18908, 532.27314, 633.32082, 730.37359, 859.41618, 956.46894};
 
 		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
-		double[] bs=model.getBIons();
+		double[] bs=FragmentIon.getMasses(model.getBIons());
 		for (int i=0; i<bs.length; i++) {
 			assertEquals(expectedB[i], bs[i], 0.001);
 		}
-		double[] ys=model.getYIons();
+		double[] ys=FragmentIon.getMasses(model.getYIons());
 		for (int i=0; i<ys.length; i++) {
 			assertEquals(expectedY[i], ys[i], 0.001);
 		}
@@ -72,11 +72,11 @@ public class FragmentationModelTest extends TestCase {
 		Arrays.sort(expectedY);
 
 		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
-		double[] bs=model.getBIons();
+		double[] bs=FragmentIon.getMasses(model.getBIons());
 		for (int i=0; i<bs.length; i++) {
 			assertEquals(expectedB[i], bs[i], 0.001);
 		}
-		double[] ys=model.getYIons();
+		double[] ys=FragmentIon.getMasses(model.getYIons());
 		for (int i=0; i<ys.length; i++) {
 			assertEquals(expectedY[i], ys[i], 0.001);
 		}

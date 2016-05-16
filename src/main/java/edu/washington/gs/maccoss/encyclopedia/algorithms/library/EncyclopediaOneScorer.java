@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -52,13 +53,13 @@ public class EncyclopediaOneScorer implements PSMScorer {
 	@Override
 	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize) {
 		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
-		double[] ions=model.getPrimaryIons(parameters.getFragType(), entry.getPrecursorCharge());
+		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge());
 		
 		return getIndividualPeakScores(entry, spectrum, normalize, ions);
 	}
 
 	@Override
-	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize, double[] ions) {
+	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize, FragmentIon[] ions) {
 		MassTolerance tolerance=parameters.getFragmentTolerance();
 		
 		double[] predictedMasses=entry.getMassArray();
@@ -68,7 +69,9 @@ public class EncyclopediaOneScorer implements PSMScorer {
 		float[] acquiredIntensities=spectrum.getIntensityArray();
 		
 		ArrayList<PeakScores> scoredPeaks=new ArrayList<PeakScores>();
-		for (double target : ions) {
+		for (FragmentIon targetIon : ions) {
+			double target=targetIon.mass;
+			
 			float predictedIntensity=tolerance.getIntegratedIntensity(predictedMasses, predictedIntensities, target);
 			
 			if (predictedIntensity>0) {
@@ -86,7 +89,7 @@ public class EncyclopediaOneScorer implements PSMScorer {
 				}
 				float peakScore=predictedIntensity*intensity;
 				if (intensity>0.0f) {
-					scoredPeaks.add(new PeakScores(peakScore, target, deltaMass));
+					scoredPeaks.add(new PeakScores(peakScore, targetIon, deltaMass));
 				} else {
 					scoredPeaks.add(null);
 				}

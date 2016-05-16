@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -10,5 +11,5 @@ public interface PSMScorer {
 	public abstract float[] auxScore(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors);
 	public abstract String[] getAuxScoreNames(LibraryEntry entry);
 	public abstract PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize);
-	public abstract PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize, double[] ions);
+	public abstract PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize, FragmentIon[] ions);
 }

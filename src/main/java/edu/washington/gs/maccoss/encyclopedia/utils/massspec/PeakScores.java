@@ -1,16 +1,22 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentIon;
+
 public class PeakScores {
 	private final float score;
-	private final double targetMass;
+	private final FragmentIon target;
 	private final float deltaMass;
-	public PeakScores(float score, double targetMass, float deltaMass) {
+	public PeakScores(float score, FragmentIon target, float deltaMass) {
 		this.score = score;
-		this.targetMass=targetMass;
+		this.target=target;
 		this.deltaMass = deltaMass;
 	}
 	public double getTargetMass() {
-		return targetMass;
+		return target.mass;
+	}
+	
+	public FragmentIon getTarget() {
+		return target;
 	}
 	
 	public float getDeltaMass() {

@@ -13,7 +13,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
-import gnu.trove.list.array.TDoubleArrayList;
 
 //@Immutable
 public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
@@ -195,35 +194,35 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 		FragmentationModel forwardModel=new FragmentationModel(peptideModSeq, parameters.getAAConstants());
 		FragmentationModel reverseModel=new FragmentationModel(reverseSequence, parameters.getAAConstants());
 		
-		TDoubleArrayList forwardIons=new TDoubleArrayList();
-		TDoubleArrayList reverseIons=new TDoubleArrayList();
+		ArrayList<FragmentIon> forwardIons=new ArrayList<FragmentIon>();
+		ArrayList<FragmentIon> reverseIons=new ArrayList<FragmentIon>();
 		switch (parameters.getFragType()) {
 		case YONLY:
-			forwardIons.add(forwardModel.getYIons());
-			reverseIons.add(reverseModel.getYIons());
+			Collections.addAll(forwardIons, forwardModel.getYIons());
+			Collections.addAll(reverseIons, reverseModel.getYIons());
 			break;
 
 		case CID:
-			forwardIons.add(forwardModel.getBIons());
-			reverseIons.add(reverseModel.getBIons());
-			forwardIons.add(forwardModel.getYIons());
-			reverseIons.add(reverseModel.getYIons());
+			Collections.addAll(forwardIons, forwardModel.getBIons());
+			Collections.addAll(reverseIons, reverseModel.getBIons());
+			Collections.addAll(forwardIons, forwardModel.getYIons());
+			Collections.addAll(reverseIons, reverseModel.getYIons());
 			break;
 
 		case ETD:
-			forwardIons.add(forwardModel.getCIons());
-			reverseIons.add(reverseModel.getCIons());
-			forwardIons.add(forwardModel.getZIons());
-			reverseIons.add(reverseModel.getZIons());
-			forwardIons.add(forwardModel.getZp1Ions());
-			reverseIons.add(reverseModel.getZp1Ions());
+			Collections.addAll(forwardIons, forwardModel.getCIons());
+			Collections.addAll(reverseIons, reverseModel.getCIons());
+			Collections.addAll(forwardIons, forwardModel.getZIons());
+			Collections.addAll(reverseIons, reverseModel.getZIons());
+			Collections.addAll(forwardIons, forwardModel.getZp1Ions());
+			Collections.addAll(reverseIons, reverseModel.getZp1Ions());
 			break;
 			
 		}
 		
 		if (precursorCharge>2) {
-			forwardIons.add(FragmentationModel.getPlus2s(forwardIons.toArray()));
-			reverseIons.add(FragmentationModel.getPlus2s(reverseIons.toArray()));
+			Collections.addAll(forwardIons, FragmentationModel.getPlus2s(forwardIons.toArray(new FragmentIon[forwardIons.size()])));
+			Collections.addAll(reverseIons, FragmentationModel.getPlus2s(reverseIons.toArray(new FragmentIon[forwardIons.size()])));
 		}
 		
 		assert(forwardIons.size()==reverseIons.size());
@@ -231,7 +230,7 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 		int size=Math.min(forwardIons.size(), reverseIons.size()); //FIXME !!! HOW TO DEAL WITH LINKING UP NEUTRAL LOSSES IN DECOY PEPTIES????
 		for (int i=0; i<size; i++) {
 			try {
-			points.add(new XYPoint(forwardIons.get(i), reverseIons.get(i)));
+				points.add(new XYPoint(forwardIons.get(i).mass, reverseIons.get(i).mass));
 			} catch (Exception e) {
 				System.out.println("WTF: "+peptideModSeq+"+"+precursorCharge+" vs "+reverseSequence+"+"+precursorCharge+", "+forwardIons.size()+" = "+forwardModel.getBIons().length+" + "+forwardModel.getYIons().length+"\t"+reverseIons.size()+" = "+reverseModel.getBIons().length+" + "+reverseModel.getYIons().length);
 			

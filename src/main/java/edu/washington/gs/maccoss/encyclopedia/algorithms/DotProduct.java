@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.IonType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -32,7 +34,7 @@ public class DotProduct implements PSMScorer {
 	}
 	
 	@Override
-	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize, double[] ions) {
+	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize, FragmentIon[] ions) {
 		if (ions!=null) {
 			throw new EncyclopediaException("DotProduct doesn't currently handle ion selection. Please report this bug!");
 		}
@@ -54,7 +56,7 @@ public class DotProduct implements PSMScorer {
 			if (compare==0) {
 				float score=libraryIntensities[libraryIndex]*spectrumIntensities[spectrumIndex];
 				float deltaMass=(float)(targetMass-spectrumMasses[spectrumIndex]);
-				peakscores[libraryIndex]=new PeakScores(score, targetMass, deltaMass);
+				peakscores[libraryIndex]=new PeakScores(score, new FragmentIon(targetMass, (byte)0, IonType.y), deltaMass); // FIXME target is a hack!
 				libraryIndex++;
 				spectrumIndex++;
 			} else if (compare>0) {

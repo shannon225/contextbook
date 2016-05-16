@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScorer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
@@ -53,28 +54,27 @@ public class PhosphoLocalizer {
 
 		ArrayList<Stripe> stripes=getScanSubset(retentionTime-duration, retentionTime+duration);
 		
-		HashMap<String, LibraryEntry> entryMap=new HashMap<String, LibraryEntry>();
+		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : peptideModSeqs) {
 			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-			LibraryEntry unitEntry=model.getUnitSpectrum(filename, new HashSet<String>(), precursorCharge, retentionTime, params);
-			entryMap.put(peptideModSeq, unitEntry);
+			entryMap.put(peptideModSeq, model);
 		}
 		
-		HashMap<String, double[]> uniqueIons=new HashMap<String, double[]>();
-		for (Entry<String, LibraryEntry> entry : entryMap.entrySet()) {
+		HashMap<String, FragmentIon[]> uniqueIons=new HashMap<String, FragmentIon[]>();
+		for (Entry<String, FragmentationModel> entry : entryMap.entrySet()) {
 			String peptideModSeq=entry.getKey();
-			LibraryEntry unitEntry=entry.getValue();
-			TDoubleHashSet ions=new TDoubleHashSet(unitEntry.getMassArray());
+			FragmentationModel unitEntry=entry.getValue();
+			HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(unitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge)));
 
-			for (Entry<String, LibraryEntry> otherEntry : entryMap.entrySet()) {
+			for (Entry<String, FragmentationModel> otherEntry : entryMap.entrySet()) {
 				String otherPeptideModSeq=otherEntry.getKey();
 				if (peptideModSeq!=otherPeptideModSeq) {
 					// actual != is ok here because we're dealing with the same objects
-					LibraryEntry otherUnitEntry=otherEntry.getValue();
-					ions.removeAll(otherUnitEntry.getMassArray());
+					FragmentationModel otherUnitEntry=otherEntry.getValue();
+					ions.removeAll(Arrays.asList(otherUnitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge)));
 				}
 			}
-			double[] ionArray=ions.toArray();
+			FragmentIon[] ionArray=ions.toArray(new FragmentIon[ions.size()]);
 			Arrays.sort(ionArray);
 			uniqueIons.put(peptideModSeq, ionArray);
 		}
@@ -82,9 +82,9 @@ public class PhosphoLocalizer {
 		final TFloatObjectHashMap<String> allBestTimes=new TFloatObjectHashMap<String>();
 		TFloatHashSet list=new TFloatHashSet();
 		
-		for (Entry<String, LibraryEntry> entry : entryMap.entrySet()) {
+		for (Entry<String, FragmentationModel> entry : entryMap.entrySet()) {
 			String peptideModSeq=entry.getKey();
-			LibraryEntry unitEntry=entry.getValue();
+			LibraryEntry unitEntry=entry.getValue().getUnitSpectrum(filename, new HashSet<String>(), precursorCharge, retentionTime, params);
 
 			TFloatObjectHashMap<String> bestTimes=new TFloatObjectHashMap<String>();
 			float bestScore=0.0f;
@@ -101,7 +101,7 @@ public class PhosphoLocalizer {
 					System.out.println(peptideModSeq+": "+uniqueIons.get(peptideModSeq).length+"/"+unitEntry.getIonCount());
 					for (int i=0; i<uniquePeakScores.length; i++) {
 						if (uniquePeakScores[i]!=null&&uniquePeakScores[i].getScore()>0.0f) {
-							System.out.println("\t"+uniquePeakScores[i].getScore()+" for "+uniquePeakScores[i].getTargetMass()+" m/z");
+							System.out.println("\t"+uniquePeakScores[i].getScore()+" for "+uniquePeakScores[i].getTarget()+" ("+uniquePeakScores[i].getTargetMass()+" m/z)");
 						}
 					}
 					String uniqueString=uniqueScore>0?(peptideModSeq+"("+Math.round(uniqueScore)+")"):unknownKey;

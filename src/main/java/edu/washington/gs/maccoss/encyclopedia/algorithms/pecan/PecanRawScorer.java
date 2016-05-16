@@ -3,6 +3,8 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.IonType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -40,7 +42,7 @@ public class PecanRawScorer implements PSMScorer {
 	}
 	
 	@Override
-	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize, double[] ions) {
+	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize, FragmentIon[] ions) {
 		if (ions!=null) {
 			throw new EncyclopediaException("PecanRawScorer doesn't currently handle ion selection. Please report this bug!");
 		}
@@ -77,7 +79,7 @@ public class PecanRawScorer implements PSMScorer {
 			}
 			float peakScore=libraryIntensities[i]*intensity;
 			if (intensity>0.0f) {
-				individualPeakScores[i]=new PeakScores(peakScore, targetMass, deltaMass);
+				individualPeakScores[i]=new PeakScores(peakScore, new FragmentIon(targetMass, (byte)0, IonType.y), deltaMass);// FIXME target is a hack!
 			}
 		}
 		
