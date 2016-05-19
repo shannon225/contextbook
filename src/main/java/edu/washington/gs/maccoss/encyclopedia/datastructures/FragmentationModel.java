@@ -113,7 +113,7 @@ public class FragmentationModel {
 				if (precursorCharge>3) { // one charge gets quenched in fragmentation
 					return concatAndSort(cIonsCID, getPlus2s(cIonsCID), zIonsCID, getPlus2s(zIonsCID), zp1IonsCID, getPlus2s(zp1IonsCID));
 				} else {
-					return concatAndSort(getCIons(), getZIons(), getZp1Ions());
+					return concatAndSort(cIonsCID, zIonsCID, zp1IonsCID);
 				}
 			default:
 				throw new EncyclopediaException("Unknown fragmentation type ["+type+"]");

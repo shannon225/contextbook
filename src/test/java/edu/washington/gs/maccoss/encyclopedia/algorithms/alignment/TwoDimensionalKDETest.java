@@ -2,7 +2,6 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
 import java.util.ArrayList;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TwoDimensionalKDE;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter3d;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
@@ -11,7 +10,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.MedianInterpolatorTest;
 import gnu.trove.list.array.TFloatArrayList;
-import junit.framework.TestCase;
 
 public class TwoDimensionalKDETest {
 	public static void main(String[] args) {

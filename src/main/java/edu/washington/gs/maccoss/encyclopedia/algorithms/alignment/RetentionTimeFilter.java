@@ -1,7 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
+import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
@@ -52,30 +54,64 @@ public class RetentionTimeFilter {
 			}
 		}
 		float[] deltaArray=deltas.toArray();
+		Arrays.sort(deltaArray);
+		int min=0; //Math.round(deltaArray.length*0.05f);
+		int max=deltaArray.length-1; //Math.round(deltaArray.length*0.95f);
+		//float[] truncatedDeltaArray=new float[max-min];
+		//System.arraycopy(deltaArray, min, truncatedDeltaArray, 0, max-min);
+		
 		ArrayList<XYPoint> histogram=PivotTableGenerator.createPivotTable(deltaArray);
-		XYTrace histTrace=new XYTrace(histogram, GraphType.line, "Delta RT");
+		XYTrace histTrace=new XYTrace(histogram, GraphType.area, "Delta RT", new Color(26, 198, 49), 3.0f);
 		
 		ArrayList<XYPoint> positivePoints=new ArrayList<XYPoint>();
 		ArrayList<XYPoint> negativePoints=new ArrayList<XYPoint>();
-		for (XYPoint xyPoint : histogram) {
-			double x=xyPoint.getX();
+		
+		int numPoints=500;
+		double range=deltaArray[max]-deltaArray[min];
+		for (int i=0; i<numPoints; i++) {
+			double x=deltaArray[min]+i*range/numPoints;
 			positivePoints.add(new XYPoint(x, model.getPositive().getProbability(x)));
 			negativePoints.add(new XYPoint(x, model.getNegative().getProbability(x)));
 		}
 
-		XYTrace posTrace=new XYTrace(positivePoints, GraphType.line, "Positive");
-		XYTrace negTrace=new XYTrace(negativePoints, GraphType.line, "Negative");
+		double histSum=0.0;
+		for (XYPoint xyPoint : histogram) {
+			histSum+=xyPoint.getY();
+		}
 		
-		XYTrace median2=new XYTrace(rtWarper.getKnots(), GraphType.line, "Retention Time Fit");
-		XYTrace selectedTrace=new XYTrace(selectedRTs, GraphType.tinypoint, "Data Used In Fit");
-		XYTrace trace=new XYTrace(removedRTs, GraphType.tinypoint, "Data Removed From Fit");
+		double distSum=0;
+		for (XYPoint xyPoint : positivePoints) {
+			distSum+=xyPoint.getY();
+		}
+		for (XYPoint xyPoint : negativePoints) {
+			distSum+=xyPoint.getY();
+		}
+		double normalizer=distSum>0?(histSum*numPoints)/(distSum*histogram.size()):1.0;
+		ArrayList<XYPoint> normPositivePoints=new ArrayList<XYPoint>();
+		for (XYPoint xyPoint : positivePoints) {
+			normPositivePoints.add(new XYPoint(xyPoint.x, xyPoint.y*normalizer));
+		}
+		positivePoints=normPositivePoints;
+		
+		ArrayList<XYPoint> normNegativePoints=new ArrayList<XYPoint>();
+		for (XYPoint xyPoint : negativePoints) {
+			normNegativePoints.add(new XYPoint(xyPoint.x, xyPoint.y*normalizer));
+		}
+		negativePoints=normNegativePoints;
+
+		XYTrace posTrace=new XYTrace(positivePoints, GraphType.line, "Positive", Color.BLUE, 2.0f);
+		XYTrace negTrace=new XYTrace(negativePoints, GraphType.line, "Negative", Color.RED, 2.0f);
+		
+		XYTrace median2=new XYTrace(rtWarper.getKnots(), GraphType.line, "Retention Time Fit", new Color(26, 198, 49, 100), 3.0f);
+		XYTrace selectedTrace=new XYTrace(selectedRTs, GraphType.tinypoint, "Data Used In Fit", Color.BLUE, 3.0f);
+		XYTrace trace=new XYTrace(removedRTs, GraphType.tinypoint, "Data Removed From Fit", Color.RED, 3.0f);
 		
 		if (saveFileSeed.isPresent()) {
 			String saveFilePrefix=saveFileSeed.get().getAbsolutePath();
 			Charter.writeAsPDF(new File(saveFilePrefix+".delta_rt.pdf"), "Delta RT", "Count", true, negTrace, posTrace, histTrace);
-			Charter.writeAsPDF(new File(saveFilePrefix+".rt_fit.pdf"), "Library RT", "Actual RT", true, trace, selectedTrace, median2);
+			Charter.writeAsPDF(new File(saveFilePrefix+".rt_fit.pdf"), "Library RT", "Actual RT", true, median2, selectedTrace, trace);
 		} else {
-			Charter.launchChart("Delta RT", "Count", true, histTrace, posTrace, negTrace);
+			Charter.launchChart("Delta RT", "Count", true, negTrace, posTrace, histTrace);
 			Charter.launchChart("Library RT", "Actual RT", true, median2, selectedTrace, trace);
 		}
 	}
@@ -102,6 +138,9 @@ public class RetentionTimeFilter {
 			if (delta<min) min=delta;
 		}
 		float[] deltaArray=deltas.toArray();
+		//Arrays.sort(deltaArray);
+		//min=deltaArray[Math.round(deltaArray.length*0.05f)];
+		//max=deltaArray[Math.round(deltaArray.length*0.95f)];
 		
 		float median=QuickMedian.select(deltaArray, 0.5f);
 		float iqr=QuickMedian.iqr(deltaArray);

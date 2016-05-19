@@ -15,12 +15,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.map.hash.TFloatObjectHashMap;
 import gnu.trove.procedure.TFloatObjectProcedure;
-import gnu.trove.set.hash.TDoubleHashSet;
 import gnu.trove.set.hash.TFloatHashSet;
 
 public class PhosphoLocalizer {

@@ -222,7 +222,7 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 		
 		if (precursorCharge>2) {
 			Collections.addAll(forwardIons, FragmentationModel.getPlus2s(forwardIons.toArray(new FragmentIon[forwardIons.size()])));
-			Collections.addAll(reverseIons, FragmentationModel.getPlus2s(reverseIons.toArray(new FragmentIon[forwardIons.size()])));
+			Collections.addAll(reverseIons, FragmentationModel.getPlus2s(reverseIons.toArray(new FragmentIon[reverseIons.size()])));
 		}
 		
 		assert(forwardIons.size()==reverseIons.size());

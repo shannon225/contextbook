@@ -241,7 +241,7 @@ public class TransitionRefiner {
 				points.add(point);
 			}
 		}
-		XYTrace trace=new XYTrace(points, GraphType.line, name, color);
+		XYTrace trace=new XYTrace(points, GraphType.line, name, color, 2.0f);
 		return trace;
 	}
 

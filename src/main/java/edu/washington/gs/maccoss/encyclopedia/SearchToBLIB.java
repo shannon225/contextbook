@@ -11,6 +11,7 @@ import java.util.Optional;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
@@ -23,7 +24,6 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 
@@ -54,7 +54,7 @@ public class SearchToBLIB {
 		SearchParameters parameters=representativeJob.getParameters();
 		float threshold=parameters.getEffectivePercolatorThreshold();
 		try {
-			ArrayList<ScoredObject<String>> passingPeptides;
+			ArrayList<PercolatorPeptide> passingPeptides;
 			if (featureFiles.size()==1) {
 				// if there's only one file then don't need to re-run percolator
 				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(representativeJob.getOutputFile(), threshold);
@@ -81,7 +81,7 @@ public class SearchToBLIB {
 		}
 	}
 	
-	static void convertBlib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File blibFile, Optional<LibraryInterface> libraryFile, Optional<ArrayList<ScoredObject<String>>> passingPeptides) {
+	static void convertBlib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File blibFile, Optional<LibraryInterface> libraryFile, Optional<ArrayList<PercolatorPeptide>> passingPeptides) {
 		try {
 			BlibFile blib=new BlibFile();
 			blib.openFile();
@@ -97,8 +97,8 @@ public class SearchToBLIB {
 				}
 				ProgressIndicator subProgress=new SubProgressIndicator(progress, increment);
 				
-				ArrayList<ScoredObject<String>> globalPassingPeptides;
-				ArrayList<ScoredObject<String>>	localPassingPeptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), pecanJobs.get(i).getParameters().getEffectivePercolatorThreshold());
+				ArrayList<PercolatorPeptide> globalPassingPeptides;
+				ArrayList<PercolatorPeptide> localPassingPeptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), pecanJobs.get(i).getParameters().getEffectivePercolatorThreshold());
 				if (passingPeptides.isPresent()) {
 					globalPassingPeptides=passingPeptides.get();
 				} else {
@@ -132,7 +132,7 @@ public class SearchToBLIB {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	static int[] convertFileBlib(ProgressIndicator subProgress, SearchJobData job, ArrayList<ScoredObject<String>> globalPassingPeptides, ArrayList<ScoredObject<String>> localPassingPeptides, int[] counterTotals, BlibFile blib, Optional<LibraryInterface> libraryFile) throws IOException, SQLException {
+	static int[] convertFileBlib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, int[] counterTotals, BlibFile blib, Optional<LibraryInterface> libraryFile) throws IOException, SQLException {
 		File diaFile=job.getDiaFile();
 		Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Reading Percolator Results", 0.0f);
@@ -171,7 +171,7 @@ public class SearchToBLIB {
 		return counterTotals;
 	}
 	
-	static void convertElib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File elibFile, Optional<LibraryInterface> libraryFile, Optional<ArrayList<ScoredObject<String>>> passingPeptides) {
+	static void convertElib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File elibFile, Optional<LibraryInterface> libraryFile, Optional<ArrayList<PercolatorPeptide>> passingPeptides) {
 		try {
 			LibraryFile elib=new LibraryFile();
 			elib.openFile();
@@ -185,8 +185,8 @@ public class SearchToBLIB {
 				}
 				ProgressIndicator subProgress=new SubProgressIndicator(progress, increment);
 				
-				ArrayList<ScoredObject<String>> globalPassingPeptides;
-				ArrayList<ScoredObject<String>>	localPassingPeptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), pecanJobs.get(i).getParameters().getEffectivePercolatorThreshold());
+				ArrayList<PercolatorPeptide> globalPassingPeptides;
+				ArrayList<PercolatorPeptide> localPassingPeptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), pecanJobs.get(i).getParameters().getEffectivePercolatorThreshold());
 				if (passingPeptides.isPresent()) {
 					globalPassingPeptides=passingPeptides.get();
 				} else {
@@ -219,7 +219,7 @@ public class SearchToBLIB {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	static void convertFileElib(ProgressIndicator subProgress, SearchJobData job, ArrayList<ScoredObject<String>> globalPassingPeptides, ArrayList<ScoredObject<String>> localPassingPeptides, LibraryFile elib, Optional<LibraryInterface> libraryFile) throws IOException, SQLException {
+	static void convertFileElib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, LibraryFile elib, Optional<LibraryInterface> libraryFile) throws IOException, SQLException {
 		File diaFile=job.getDiaFile();
 		Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Reading Percolator Results", 0.0f);

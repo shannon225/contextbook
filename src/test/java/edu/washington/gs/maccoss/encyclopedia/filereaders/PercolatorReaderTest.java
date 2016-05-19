@@ -6,13 +6,13 @@ import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ReverseLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import junit.framework.TestCase;
 
 public class PercolatorReaderTest extends TestCase {
@@ -23,8 +23,8 @@ public class PercolatorReaderTest extends TestCase {
 	
 	public static void main(String[] args) {
 		File f=new File("/Users/searleb/Documents/projects/pecan/bcs_hela/phospho/110315_bcs_hela_phospho_starved_DDA.dia.percolator.txt");
-		ArrayList<ScoredObject<String>> data=PercolatorReader.getPassingPeptidesFromTSV(f, 1.0f);
-		System.out.println(data.size());
+		ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(f, 1.0f);
+		System.out.println(passingPeptidesFromTSV.size());
 	}
 	public void testParsing() {
 		String eachline="<q_value>3.385e-01</q_value>";

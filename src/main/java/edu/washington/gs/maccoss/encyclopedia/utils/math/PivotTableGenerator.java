@@ -56,7 +56,7 @@ public class PivotTableGenerator {
 		int numberOfBins=(int)((maximum-minimum)/binsize)+1;
 		int[] histogram=new int[numberOfBins];
 		for (int i=0; i<data.length; i++) {
-			int index=Math.round((data[i]-minimum)/binsize);
+			int index=(int)Math.floor((data[i]-minimum)/binsize);
 			if (index<0) index=0;
 			if (index>=numberOfBins) index=numberOfBins-1;
 			

@@ -296,6 +296,9 @@ public class Charter {
 			if (trace.getColor().isPresent()) {
 				renderer.setSeriesPaint(0, trace.getColor().get());
 			}
+			if (trace.getThickness().isPresent()) {
+				renderer.setSeriesStroke(0, new BasicStroke(trace.getThickness().get(), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+			}
 
 			Pair<double[], double[]> values=trace.toArrays();
 			double[] x=values.x;

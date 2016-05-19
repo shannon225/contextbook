@@ -18,9 +18,11 @@ public class XYTrace {
 	private final ArrayList<XYPoint> points;
 	private final GraphType type;
 	private final Optional<Color> color;
+	private final Optional<Float> thickness;
 	
 	public XYTrace(Spectrum spectrum) {
 		color=Optional.empty();
+		thickness=Optional.empty();
 		this.type=GraphType.spectrum;
 		this.points=new ArrayList<XYPoint>();
 		this.name=spectrum.getSpectrumName();
@@ -35,8 +37,9 @@ public class XYTrace {
 		Collections.sort(points);
 	}
 
-	public XYTrace(Collection<XYPoint> points, GraphType type, String name, Color color) {
+	public XYTrace(Collection<XYPoint> points, GraphType type, String name, Color color, Float thickness) {
 		this.color=Optional.ofNullable(color);
+		this.thickness=Optional.ofNullable(thickness);
 		this.type=type;
 		this.points=new ArrayList<XYPoint>(points);
 		this.name=name;
@@ -45,11 +48,12 @@ public class XYTrace {
 	}
 
 	public XYTrace(Collection<XYPoint> points, GraphType type, String name) {
-		this(points, type, name, null);
+		this(points, type, name, null, null);
 	}
 	
-	public XYTrace(double[] x, double[] y, GraphType type, String name, Color color) {
+	public XYTrace(double[] x, double[] y, GraphType type, String name, Color color, Float thickness) {
 		this.color=Optional.ofNullable(color);
+		this.thickness=Optional.ofNullable(thickness);
 		this.type=type;
 		this.points=new ArrayList<XYPoint>();
 		this.name=name;
@@ -62,11 +66,12 @@ public class XYTrace {
 	}
 	
 	public XYTrace(double[] x, double[] y, GraphType type, String name) {
-		this(x, y, type, name, null);
+		this(x, y, type, name, null, null);
 	}
 	
-	public XYTrace(TFloatFloatHashMap map, GraphType type, String name, Color color) {
+	public XYTrace(TFloatFloatHashMap map, GraphType type, String name, Color color, Float thickness) {
 		this.color=Optional.ofNullable(color);
+		this.thickness=Optional.ofNullable(thickness);
 		this.type=type;
 		this.points=new ArrayList<XYPoint>();
 		this.name=name;
@@ -80,11 +85,15 @@ public class XYTrace {
 		Collections.sort(points);
 	}
 	public XYTrace(TFloatFloatHashMap map, GraphType type, String name) {
-		this(map, type, name, null);
+		this(map, type, name, null, null);
 	}
 	
 	public Optional<Color> getColor() {
 		return color;
+	}
+	
+	public Optional<Float> getThickness() {
+		return thickness;
 	}
 	
 	public String getName() {

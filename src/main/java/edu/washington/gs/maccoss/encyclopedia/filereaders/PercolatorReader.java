@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
@@ -21,16 +22,18 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 
 public class PercolatorReader {
-	public static ArrayList<ScoredObject<String>> getPassingPeptidesFromTSV(File f, final float qValueThreshold) {
-		final ArrayList<ScoredObject<String>> data=new ArrayList<ScoredObject<String>>();
+	public static ArrayList<PercolatorPeptide> getPassingPeptidesFromTSV(File f, final float qValueThreshold) {
+		final ArrayList<PercolatorPeptide> data=new ArrayList<PercolatorPeptide>();
 		
 		TableParserMuscle muscle=new TableParserMuscle() {
 			@Override
 			public void processRow(Map<String, String> row) {
-				String psmID=row.get("PSMId");
 				float qvalue=Float.parseFloat(row.get("q-value"));
 				if (qvalue<qValueThreshold) {
-					data.add(new ScoredObject<String>(qvalue, psmID));
+					float posteriorErrorProb=Float.parseFloat(row.get("posterior_error_prob"));
+					String psmID=row.get("PSMId");
+					String proteinIds=row.get("proteinIds");
+					data.add(new PercolatorPeptide(psmID, proteinIds, qvalue, posteriorErrorProb));
 				}
 			}
 		};

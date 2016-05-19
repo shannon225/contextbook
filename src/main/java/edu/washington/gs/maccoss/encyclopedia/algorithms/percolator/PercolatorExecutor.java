@@ -51,7 +51,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 		return passingPeptides;
 	}
 	
-	public static ArrayList<ScoredObject<String>> executePercolatorTSV(Optional<File> percolatorLocation, File featureFile, File outputFile, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+	public static ArrayList<PercolatorPeptide> executePercolatorTSV(Optional<File> percolatorLocation, File featureFile, File outputFile, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, percolatorLocation, false);
 		BlockingQueue<OutputMessage> result=e.start();
 		
@@ -59,7 +59,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 		boolean isFirst=true;
 		boolean record=true;
 		PrintWriter writer=new PrintWriter(outputFile, "UTF-8");
-		ArrayList<ScoredObject<String>> passingPeptides=new ArrayList<ScoredObject<String>>();
+		ArrayList<PercolatorPeptide> passingPeptides=new ArrayList<PercolatorPeptide>();
 		while (!e.isFinished()||!result.isEmpty()) {
 			if (!result.isEmpty()) {
 				OutputMessage data=result.take();
@@ -71,13 +71,14 @@ public class PercolatorExecutor extends ExternalExecutor {
 						String psmID=st.nextToken(); // PSMid
 						st.nextToken(); // score
 						float qvalue=Float.parseFloat(st.nextToken()); //Q-value
-						//st.nextToken(); // PEP
+						float pep=Float.parseFloat(st.nextToken()); // PEP
+						st.nextToken(); // peptide
+						String proteinIds=st.nextToken();
 						//String peptideString=st.nextToken();
 						//String peptideSequence = parsePeptideSequence(peptideString);
 						
 						if (qvalue<threshold) {
-							ScoredObject<String> peptide=new ScoredObject<String>(qvalue, psmID);
-							passingPeptides.add(peptide);
+							passingPeptides.add(new PercolatorPeptide(psmID, proteinIds, qvalue, pep));
 						} else {
 							record=false;
 						}

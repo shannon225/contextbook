@@ -21,6 +21,7 @@ import java.util.zip.DataFormatException;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
@@ -34,23 +35,22 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class PeptideQuantExtractor {
-	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, File f, boolean limitToQuantifiable, ArrayList<ScoredObject<String>> globalPassingPSMIDs, ArrayList<ScoredObject<String>> localPassingPSMIDs, StripeFileInterface stripeFile, Optional<LibraryInterface> library, final SearchParameters parameters) {
+	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, File f, boolean limitToQuantifiable, ArrayList<PercolatorPeptide> globalPassingPSMIDs, ArrayList<PercolatorPeptide> localPassingPSMIDs, StripeFileInterface stripeFile, Optional<LibraryInterface> library, final SearchParameters parameters) {
 		HashSet<String> passingPeptideSequences=new HashSet<String>();
-		for (ScoredObject<String> psm : globalPassingPSMIDs) {
-			String peptideModSeq=PercolatorReader.getPeptideSequence(psm.y);
+		for (PercolatorPeptide psm : globalPassingPSMIDs) {
+			String peptideModSeq=PercolatorReader.getPeptideSequence(psm.getPsmID());
 			passingPeptideSequences.add(peptideModSeq);
 		}
 		
 		final TObjectFloatHashMap<String> savedIDs=new TObjectFloatHashMap<String>();
-		for (ScoredObject<String> psm : localPassingPSMIDs) {
-			String peptideModSeq=PercolatorReader.getPeptideSequence(psm.y);
+		for (PercolatorPeptide psm : localPassingPSMIDs) {
+			String peptideModSeq=PercolatorReader.getPeptideSequence(psm.getPsmID());
 			if (passingPeptideSequences.contains(peptideModSeq)) {
-				savedIDs.put(psm.y, psm.x);
+				savedIDs.put(psm.getPsmID(), psm.getQValue());
 			}
 		}
 
