@@ -64,7 +64,13 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 	public LibraryEntry toUnitSpectrum() {
 		return toUnitSpectrum(-1);
 	}
+	public LibraryEntry toUnitSpectrum(float rt) {
+		return toUnitSpectrum(-1, rt);
+	}
 	public LibraryEntry toUnitSpectrum(int numPeaks) {
+		return toUnitSpectrum(numPeaks, retentionTime);
+	}
+	public LibraryEntry toUnitSpectrum(int numPeaks, float rt) {
 		float threshold;
 		if (numPeaks<=0) {
 			threshold=minimumIntensityThreshold;
@@ -82,7 +88,7 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 				unit[i]=1.0f;
 			}
 		}
-		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, unit);
+		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, rt, score, massArray, unit);
 	}
 	
 	public float getTIC() {

@@ -38,6 +38,15 @@ public class EncyclopediaOneScorer implements PSMScorer {
 
 	public float score(LibraryEntry entry, Stripe spectrum) {
 		PeakScores[] individualPeakScores=getIndividualPeakScores(entry, spectrum, true);
+		return scoreIons(individualPeakScores);
+	}
+
+	public float score(LibraryEntry entry, Stripe spectrum, FragmentIon[] ions) {
+		PeakScores[] individualPeakScores=getIndividualPeakScores(entry, spectrum, true, ions);
+		return scoreIons(individualPeakScores);
+	}
+
+	private float scoreIons(PeakScores[] individualPeakScores) {
 		int count=0; // number of matches
 		for (int i=0; i<individualPeakScores.length; i++) {
 			if (individualPeakScores[i]!=null) count++;
@@ -97,5 +106,4 @@ public class EncyclopediaOneScorer implements PSMScorer {
 		}
 		return scoredPeaks.toArray(new PeakScores[scoredPeaks.size()]);
 	}
-
 }

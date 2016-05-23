@@ -6,7 +6,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
 
+import org.apache.commons.math3.distribution.BinomialDistribution;
+import org.apache.commons.math3.special.Beta;
+
+import edu.washington.gs.maccoss.encyclopedia.algorithms.DotProduct;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractorTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
@@ -14,11 +21,12 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.BinomialCalculator;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.map.hash.TFloatObjectHashMap;
 import gnu.trove.procedure.TFloatObjectProcedure;
-import gnu.trove.set.hash.TFloatHashSet;
 
 public class PhosphoLocalizer {
 	private static final String unknownKey="unknown";
@@ -26,12 +34,16 @@ public class PhosphoLocalizer {
 	private final SearchParameters params;
 	private final PSMData psmdata;
 	private final ArrayList<Stripe> stripes;
+	private final EncyclopediaOneScorer encyclopediaScorer;
+	private final DotProduct dotProduct;
 
 	public PhosphoLocalizer(String filename, SearchParameters params, PSMData psmdata, ArrayList<Stripe> stripes) {
 		this.filename=filename;
 		this.params=params;
 		this.psmdata=psmdata;
 		this.stripes=stripes;
+		encyclopediaScorer=new EncyclopediaOneScorer(params, null); // not using aux scoring
+		dotProduct=new DotProduct(params.getFragmentTolerance());
 	}
 
 	public void runPhosphoLocalization() {
@@ -45,9 +57,10 @@ public class PhosphoLocalizer {
 	}
 
 	private boolean extractPhosphoForms(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime) {
-		float duration=6*60f; // search for 6 minutes
+		MassTolerance fragmentTolerance=params.getFragmentTolerance();
+		float prior=(float)fragmentTolerance.getTolerance(500.0)/100.0f; // equivalent to high mass accuracy a-score
 		
-		EncyclopediaOneScorer encyclopediaScorer=new EncyclopediaOneScorer(params, null); // not using aux scoring
+		float duration=6*60f; // search for 6 minutes
 
 		ArrayList<Stripe> stripes=getScanSubset(retentionTime-duration, retentionTime+duration);
 		
@@ -77,63 +90,66 @@ public class PhosphoLocalizer {
 		}
 
 		final TFloatObjectHashMap<String> allBestTimes=new TFloatObjectHashMap<String>();
-		TFloatHashSet list=new TFloatHashSet();
 		
 		for (Entry<String, FragmentationModel> entry : entryMap.entrySet()) {
 			String peptideModSeq=entry.getKey();
 			LibraryEntry unitEntry=entry.getValue().getUnitSpectrum(filename, new HashSet<String>(), precursorCharge, retentionTime, params);
 
-			TFloatObjectHashMap<String> bestTimes=new TFloatObjectHashMap<String>();
-			float bestScore=0.0f;
 			TFloatFloatHashMap rtScoreMap=new TFloatFloatHashMap();
+			TFloatArrayList scores=new TFloatArrayList();
 			for (Stripe spectrum : stripes) {
-				// float score=encyclopediaScorer.score(unitEntry, spectrum);
-				PeakScores[] individualPeakScores=encyclopediaScorer.getIndividualPeakScores(unitEntry, spectrum, false);
-				float score=score(individualPeakScores);
-				
+				float score=encyclopediaScorer.score(unitEntry, spectrum);
+				scores.add(score);
 				rtScoreMap.put(spectrum.getScanStartTime(), score);
-				if (score>9.5f) { // at least 5 transitions
-					PeakScores[] uniquePeakScores=encyclopediaScorer.getIndividualPeakScores(unitEntry, spectrum, false, uniqueIons.get(peptideModSeq));
-					float uniqueScore=score(uniquePeakScores);
-					System.out.println(peptideModSeq+": "+uniqueIons.get(peptideModSeq).length+"/"+unitEntry.getIonCount());
-					for (int i=0; i<uniquePeakScores.length; i++) {
-						if (uniquePeakScores[i]!=null&&uniquePeakScores[i].getScore()>0.0f) {
-							System.out.println("\t"+uniquePeakScores[i].getScore()+" for "+uniquePeakScores[i].getTarget()+" ("+uniquePeakScores[i].getTargetMass()+" m/z)");
+			}
+			EValueCalculator calculator=new EValueCalculator(rtScoreMap);
+
+			TFloatFloatHashMap uniqueRtScoreMap=new TFloatFloatHashMap();
+			FragmentIon[] targets=uniqueIons.get(peptideModSeq);
+			int bestFound=0;
+			int bestLookedFor=0;
+			float bestEvalue=0.0f;
+			for (int i=0; i<stripes.size(); i++) {
+				Stripe spectrum=stripes.get(i);
+				float score=scores.get(i);
+				float evalue=calculator.getNegLog10EValue(score);
+				if (evalue>-1.0f) {
+					double[] masses=FragmentIon.getMasses(targets);
+					float[] unitIntensities=new float[masses.length];
+					Arrays.fill(unitIntensities, 1.0f);
+					LibraryEntry localUnit=new LibraryEntry(unitEntry.getSource(), unitEntry.getAccessions(), unitEntry.getSpectrumIndex(), precursorMZ, precursorCharge, peptideModSeq, 1, spectrum.getScanStartTime(), score, masses, unitIntensities);
+					
+					TransitionRefinementData data=PeptideQuantExtractorTask.quantifyPeptide(dotProduct, localUnit, false, stripes);
+					if (data==null) continue;
+					
+					int found=0;
+					int lookedFor=0;
+					ArrayList<float[]> chromatograms=data.getChromatograms();
+					for (float[] fs : chromatograms) {
+						for (int j=0; j<fs.length; j++) {
+							lookedFor++;
+							if (fs[j]>0.0f) {
+								found++;
+							}
 						}
 					}
-					String uniqueString=uniqueScore>0?(peptideModSeq+"("+Math.round(uniqueScore)+")"):unknownKey;
-					if (bestScore<score) {
-						bestScore=score;
-						bestTimes.clear();
-						bestTimes.put(spectrum.getScanStartTime(), uniqueString);
-					} else if (bestScore==score) {
-						bestTimes.put(spectrum.getScanStartTime(), uniqueString);
+					if (found>bestFound) {
+						bestFound=found;
+						bestLookedFor=lookedFor;
+						bestEvalue=evalue;
+					}
+
+					if (lookedFor>0&&found>0) {
+						double pValue=cumulativeBinomalGreaterOrEqual(lookedFor, found, prior);
+						uniqueRtScoreMap.put(spectrum.getScanStartTime(), -10.0f*(float)Log.log10(pValue));
+						System.out.println(peptideModSeq+" --> "+spectrum.getScanStartTime()/60.0f+", "+pValue+" ("+bestFound+"/"+bestLookedFor+")");
 					}
 				}
 			}
+			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
 
-			bestTimes.forEachEntry(new TFloatObjectProcedure<String>() {
-				@Override
-				public boolean execute(float a, String b) {
-					String prev=allBestTimes.get(a);
-					if (prev!=null) {
-						if (unknownKey.equals(b)) {
-							// ignore
-						} else if (unknownKey.equals(prev)) {
-							allBestTimes.put(a, b);
-						} else {
-							allBestTimes.put(a, prev+","+b);
-						}
-					} else {
-						allBestTimes.put(a, b);
-					}
-					return true;
-				}
-			});
-
-			EValueCalculator calculator=new EValueCalculator(rtScoreMap);
-			// System.out.println(peptideModSeq+"\t"+calculator.getMaxRT()+"\t"+calculator.getNegLog10EValue()+"\t"+calculator.getMaxRawScore()); //FIXME
-			list.add(calculator.getMaxRT());
+			float bestRT=uniqueCalculator.getMaxRT();
+			System.out.println("FINAL: "+peptideModSeq+" --> "+bestRT/60.0f+", "+uniqueCalculator.getMaxRawScore()+" ("+bestFound+"/"+bestLookedFor+") evalue: "+bestEvalue);
 		}
 
 		if (allBestTimes.size()>1) {
@@ -153,15 +169,26 @@ public class PhosphoLocalizer {
 		}
 		return false;
 	}
+	private static double cumulativeBinomalGreaterOrEqual(int n, int k, double p) {
+		BinomialCalculator dist=new BinomialCalculator(n, p);
+		return dist.cumulativeProbabilityGreaterThan(k-1);
+	}
 
-	private float score(PeakScores[] individualPeakScores) {
-		float score=0.0f;
-		for (int i=0; i<individualPeakScores.length; i++) {
-			if (individualPeakScores[i]!=null&&individualPeakScores[i].getScore()>0.0f) {
-				score++;
+	public static int countMatchingTargets(Stripe spectrum, FragmentIon[] targets, MassTolerance tolerance) {
+		double[] acquiredMasses=spectrum.getMassArray();
+		float[] acquiredIntensities=spectrum.getIntensityArray();
+		
+		int count=0;
+		for (FragmentIon fragmentIon : targets) {
+			double target=fragmentIon.mass;
+			int[] indicies=tolerance.getIndicies(acquiredMasses, target);
+			for (int i=0; i<indicies.length; i++) {
+				if (acquiredIntensities[indicies[i]]>0.0f) {
+					count++;
+				}
 			}
 		}
-		return score;
+		return count;
 	}
 	
 	public ArrayList<Stripe> getScanSubset(float minRT, float maxRT) {
