@@ -7,9 +7,12 @@ import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TDoubleIntHashMap;
+import gnu.trove.set.hash.TDoubleHashSet;
 
 /**
  * follows BackgroundGenerator from Pecan, but deviates in how it is generated/used
@@ -22,7 +25,7 @@ public class BackgroundFrequencyCalculator {
 	private final double[][] sortedMapKeys;
 	private final int totalCount;
 	
-	public BackgroundFrequencyCalculator(double[] binBoundaries, TDoubleIntHashMap[] binCounters) {
+	BackgroundFrequencyCalculator(double[] binBoundaries, TDoubleIntHashMap[] binCounters) {
 		this.binBoundaries=binBoundaries;
 		this.binCounters=binCounters;
 		sortedMapKeys=new double[binCounters.length][];
@@ -35,7 +38,15 @@ public class BackgroundFrequencyCalculator {
 		this.totalCount=total;
 	}
 	
-	public static BackgroundFrequencyCalculator generateBackground(double[] binBoundaries, boolean[] useBins, LibraryFile library) throws DataFormatException, SQLException, IOException {
+	public static BackgroundFrequencyCalculator generateBackground(StripeFile diafile, LibraryFile library) throws DataFormatException, SQLException, IOException {
+		TDoubleHashSet boundaries=new TDoubleHashSet();
+		for (Range range : diafile.getRanges().keySet()) {
+			boundaries.add(range.getStart());
+			boundaries.add(range.getStop());
+		}
+		double[] binBoundaries=boundaries.toArray();
+		Arrays.sort(binBoundaries);
+		
 		TDoubleIntHashMap[] binCounters=new TDoubleIntHashMap[binBoundaries.length-1];
 		for (int i=0; i<binCounters.length; i++) {
 			binCounters[i]=new TDoubleIntHashMap();
@@ -46,7 +57,7 @@ public class BackgroundFrequencyCalculator {
 			int index=Arrays.binarySearch(binBoundaries, entry.getPrecursorMZ());
 			index=(-(index+1))-1;
 
-			if (index<0||index>=binCounters.length||!useBins[index]) continue;
+			if (index<0||index>=binCounters.length) continue;
 			
 			for (double ion : ions) {
 				binCounters[index].adjustOrPutValue(ion, 1, 1);
