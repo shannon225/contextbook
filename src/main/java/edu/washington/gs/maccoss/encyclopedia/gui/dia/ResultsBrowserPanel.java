@@ -30,6 +30,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementDat
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
@@ -66,6 +67,7 @@ public class ResultsBrowserPanel extends JPanel {
 	private final SearchParameters parameters;
 	private final PecanRawScorer scorer;
 	
+	private LibraryInterface library=null;
 	private StripeFileInterface dia=null;
 
 	public ResultsBrowserPanel() {
@@ -139,7 +141,7 @@ public class ResultsBrowserPanel extends JPanel {
 		SwingWorkerProgress<ArrayList<LibraryEntry>> worker=new SwingWorkerProgress<ArrayList<LibraryEntry>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Library") {
 			@Override
 			protected ArrayList<LibraryEntry> doInBackgroundForReal() throws Exception {
-				LibraryInterface library=BlibToLibraryConverter.getFile(f);
+				library=BlibToLibraryConverter.getFile(f);
 				ArrayList<LibraryEntry> entries=library.getEntries(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), false);
 				return entries;
 			}
@@ -222,9 +224,10 @@ public class ResultsBrowserPanel extends JPanel {
 				}
 				ChartPanel chart=Charter.getChart("RT ("+entry.getPrecursorMZ()+" M/Z)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
 				rawSplit.setTopComponent(chart);
-				
+
+				PhosphoLocalizer localizer=new PhosphoLocalizer(dia, library, parameters);
 				PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), entry.getRetentionTime(), entry.getScore(), 1.0f-entry.getScore(), 2*rtRange);
-				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(dia.getOriginalFileName(), psmdata, Optional.ofNullable((LibraryInterface)null), stripes, parameters, false);
+				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(dia.getOriginalFileName(), psmdata, Optional.ofNullable(localizer), stripes, parameters, false);
 				TransitionRefinementData data=quantTask.extractSpectrum(unit, 2*rtRange, false);
 				if (parameters.isRunPhosphoLocalization()) {
 					quantTask.runLocalization();

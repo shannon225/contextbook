@@ -3,12 +3,9 @@ package edu.washington.gs.maccoss.encyclopedia;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
@@ -22,14 +19,9 @@ public class EncyclopediaToBLIBTest {
 		boolean generateQuantLib=true;
 		File blibFile;
 		SearchJobData job1;
-		LibraryFile libraryTemplate=null;
 		if (generateQuantLib) {
 			blibFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000_Quant.blib");
 			job1=getData(parameters, "/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML");
-
-			File libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.elib");
-			libraryTemplate=new LibraryFile();
-			libraryTemplate.openFile(libraryFile);
 		} else {
 			blibFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.blib");
 			job1=getData(parameters, "/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML");
@@ -54,7 +46,7 @@ public class EncyclopediaToBLIBTest {
 		jobs.add(job5);
 		*/
 		
-		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, true, Optional.ofNullable((LibraryInterface)libraryTemplate));
+		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, true);
 	}
 
 	private static SearchJobData getData(SearchParameters parameters, String dia) {

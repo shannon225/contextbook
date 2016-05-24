@@ -8,8 +8,8 @@ import java.util.zip.DataFormatException;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.set.hash.TDoubleHashSet;
@@ -38,7 +38,7 @@ public class BackgroundFrequencyCalculator {
 		this.totalCount=total;
 	}
 	
-	public static BackgroundFrequencyCalculator generateBackground(StripeFile diafile, LibraryFile library) throws DataFormatException, SQLException, IOException {
+	public static BackgroundFrequencyCalculator generateBackground(StripeFileInterface diafile, LibraryInterface library) throws DataFormatException, SQLException, IOException {
 		TDoubleHashSet boundaries=new TDoubleHashSet();
 		for (Range range : diafile.getRanges().keySet()) {
 			boundaries.add(range.getStart());
@@ -92,7 +92,7 @@ public class BackgroundFrequencyCalculator {
 	private float[] getFrequencies(int[] counters) {
 		float[] frequencies=new float[counters.length];
 		for (int i=0; i<frequencies.length; i++) {
-			frequencies[i]=counters[i]/totalCount;
+			frequencies[i]=counters[i]/(float)totalCount;
 		}
 		return frequencies;
 	}

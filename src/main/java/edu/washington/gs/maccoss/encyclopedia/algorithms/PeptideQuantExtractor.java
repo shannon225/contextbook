@@ -22,8 +22,8 @@ import java.util.zip.DataFormatException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -39,7 +39,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class PeptideQuantExtractor {
-	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, File f, boolean limitToQuantifiable, ArrayList<PercolatorPeptide> globalPassingPSMIDs, ArrayList<PercolatorPeptide> localPassingPSMIDs, StripeFileInterface stripeFile, Optional<LibraryInterface> library, final SearchParameters parameters) {
+	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, File f, boolean limitToQuantifiable, ArrayList<PercolatorPeptide> globalPassingPSMIDs, ArrayList<PercolatorPeptide> localPassingPSMIDs, StripeFileInterface stripeFile, LibraryInterface searchedLibrary, final SearchParameters parameters) {
 		HashSet<String> passingPeptideSequences=new HashSet<String>();
 		for (PercolatorPeptide psm : globalPassingPSMIDs) {
 			String peptideModSeq=PercolatorReader.getPeptideSequence(psm.getPsmID());
@@ -122,7 +122,7 @@ public class PeptideQuantExtractor {
 				}
 			}
 			
-			return extractPeptides(progress, library, stripeFile, uniquedData.values(), limitToQuantifiable, parameters);
+			return extractPeptides(progress, searchedLibrary, stripeFile, uniquedData.values(), limitToQuantifiable, parameters);
 		} catch (IOException ioe) {
 			Logger.errorLine("Error processing "+stripeFile.getFile().getName());
 			throw new EncyclopediaException("Error parsing Stripe file", ioe);
@@ -138,9 +138,12 @@ public class PeptideQuantExtractor {
 		}
 	}
 	
-	public static ArrayList<IntegratedLibraryEntry> extractPeptides(ProgressIndicator progress, Optional<LibraryInterface> library, StripeFileInterface stripefile, Collection<PSMData> data, boolean limitToQuantifiable, SearchParameters parameters) throws IOException, SQLException, DataFormatException, InterruptedException {
+	public static ArrayList<IntegratedLibraryEntry> extractPeptides(ProgressIndicator progress, LibraryInterface searchedLibrary, StripeFileInterface stripefile, Collection<PSMData> data, boolean limitToQuantifiable, SearchParameters parameters) throws IOException, SQLException, DataFormatException, InterruptedException {
 		ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries=new ConcurrentLinkedQueue<IntegratedLibraryEntry>();
 		int cores=parameters.getNumberOfThreadsUsed();
+
+		String filename=stripefile.getOriginalFileName();
+		PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, searchedLibrary, parameters);
 		
 		// get identified peptides
 		HashMap<String, PSMData> peptideModSeqs=new HashMap<String, PSMData>();
@@ -167,7 +170,6 @@ public class PeptideQuantExtractor {
 
 			Logger.logLine("Processing "+range);
 
-			String filename=stripefile.getOriginalFileName();
 			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 			Collections.sort(stripes);
 
@@ -176,19 +178,10 @@ public class PeptideQuantExtractor {
 			LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
-			if (library.isPresent()) {
-				ArrayList<LibraryEntry> entries=library.get().getEntries(range, true);
-				for (LibraryEntry libraryEntry : entries) {
-					PSMData psm=peptideModSeqs.get(libraryEntry.getPeptideModSeq());
-					if (psm!=null&&range.contains((float)psm.getPrecursorMZ())) {
-						executor.submit(new PeptideQuantExtractorTask(filename, psm, library, stripes, parameters, savedEntries, limitToQuantifiable));
-					}
-				}
-			} else {
-				for (PSMData psm : data) {
-					if (range.contains((float)psm.getPrecursorMZ())) {
-						executor.submit(new PeptideQuantExtractorTask(filename, psm, library, stripes, parameters, savedEntries, limitToQuantifiable));
-					}
+
+			for (PSMData psm : data) {
+				if (range.contains((float)psm.getPrecursorMZ())) {
+					executor.submit(new PeptideQuantExtractorTask(filename, psm, Optional.ofNullable(localizer), stripes, parameters, savedEntries, limitToQuantifiable));
 				}
 			}
 

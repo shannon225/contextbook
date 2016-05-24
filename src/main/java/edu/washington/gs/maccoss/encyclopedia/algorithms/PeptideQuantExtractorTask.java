@@ -1,12 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
@@ -16,9 +13,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
-import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
@@ -28,7 +22,7 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
-	private final Optional<LibraryInterface> library;
+	private final Optional<PhosphoLocalizer> localizer;
 	private final String filename;
 	private final ArrayList<Stripe> stripes;
 	private final boolean limitToQuantifiable;
@@ -39,10 +33,10 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	private final PSMData psmdata;
 	private final ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries; // CAN BE NULL
 
-	public PeptideQuantExtractorTask(String filename, PSMData psmdata, Optional<LibraryInterface> library, ArrayList<Stripe> stripes, SearchParameters parameters, boolean limitToQuantifiable) {
+	public PeptideQuantExtractorTask(String filename, PSMData psmdata, Optional<PhosphoLocalizer> localizer, ArrayList<Stripe> stripes, SearchParameters parameters, boolean limitToQuantifiable) {
 		this.filename=filename;
 		this.psmdata=psmdata;
-		this.library=library;
+		this.localizer=localizer;
 		this.stripes=stripes;
 
 		scorer=new DotProduct(parameters.getFragmentTolerance());
@@ -52,10 +46,10 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		this.limitToQuantifiable=limitToQuantifiable; //library.isPresent();
 	}
 
-	public PeptideQuantExtractorTask(String filename, PSMData psmdata, Optional<LibraryInterface> library, ArrayList<Stripe> stripes, SearchParameters parameters, ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries, boolean limitToQuantifiable) {
+	public PeptideQuantExtractorTask(String filename, PSMData psmdata, Optional<PhosphoLocalizer> localizer, ArrayList<Stripe> stripes, SearchParameters parameters, ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries, boolean limitToQuantifiable) {
 		this.filename=filename;
 		this.psmdata=psmdata;
-		this.library=library;
+		this.localizer=localizer;
 		this.stripes=stripes;
 
 		scorer=new DotProduct(parameters.getFragmentTolerance());
@@ -82,8 +76,8 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 
 	@Override
 	protected Nothing process() {
-		Optional<TransitionRefinementData> spectrum=extractSpectrum(psmdata.getAccessions(), library, psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable);
-		if (params.isRunPhosphoLocalization()) {
+		Optional<TransitionRefinementData> spectrum=extractSpectrum(psmdata.getAccessions(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable);
+		if (params.isRunPhosphoLocalization()&&localizer.isPresent()) {
 			runLocalization();
 		}
 		if (spectrum.isPresent()) {
@@ -104,41 +98,12 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	}
 
 	public void runLocalization() {
-		PhosphoLocalizer localizer=new PhosphoLocalizer(filename, params, psmdata, stripes);
-		localizer.runPhosphoLocalization();
+		localizer.get().runPhosphoLocalization(psmdata, stripes);
 	}
 
-	private Optional<TransitionRefinementData> extractSpectrum(HashSet<String> accessions, Optional<LibraryInterface> library, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable) {
-		LibraryEntry unitEntry=null;
-		if (library.isPresent()) {
-			try {
-				ArrayList<LibraryEntry> entries=library.get().getEntries(peptideModSeq, precursorCharge, false);
-				if (entries.size()>0) {
-					unitEntry=entries.get(0).toUnitSpectrum();
-				} else {
-					 // if library is ok but spectrum is not in library, just return null (don't quantify)
-					return Optional.empty();
-				}
-				if (unitEntry.getIonCount()<1) { // FIXME HACKS GALORE
-					 // if unit spectrum has fewer than 1 peaks, just return null (don't quantify)
-					return Optional.empty();
-				}
-			} catch (IOException ioe) {
-				Logger.errorLine("Error processing "+library.get().getName());
-				throw new EncyclopediaException("Error parsing Stripe file", ioe);
-			} catch (SQLException sqle) {
-				Logger.errorLine("Error processing "+library.get().getName());
-				throw new EncyclopediaException("Error parsing Stripe file", sqle);
-			} catch (DataFormatException dfe) {
-				Logger.errorLine("Error processing "+library.get().getName());
-				throw new EncyclopediaException("Error parsing Stripe file", dfe);
-			}
-		}
-		
-		if (unitEntry==null) {
-			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-			unitEntry=model.getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params);
-		}
+	private Optional<TransitionRefinementData> extractSpectrum(HashSet<String> accessions, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable) {
+		FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+		LibraryEntry unitEntry=model.getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params);
 		
 		return Optional.ofNullable(extractSpectrum(unitEntry, duration, limitToQuantifiable));
 	}

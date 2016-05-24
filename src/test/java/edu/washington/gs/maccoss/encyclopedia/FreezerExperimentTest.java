@@ -3,13 +3,10 @@ package edu.washington.gs.maccoss.encyclopedia;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
@@ -29,10 +26,6 @@ public class FreezerExperimentTest {
 		
 		EncyclopediaOneScoringFactory factory=new EncyclopediaOneScoringFactory(searchParameters);
 		File libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/hela_6mz.elib");
-
-		File libraryTemplateFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.elib");
-		LibraryFile libraryTemplate=new LibraryFile();
-		libraryTemplate.openFile(libraryTemplateFile);
 		
 		File[] files=dir.listFiles();
 		files=new File[] {
@@ -58,7 +51,7 @@ public class FreezerExperimentTest {
 				ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 				jobs.add(job);
 
-				SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, true, Optional.ofNullable((LibraryInterface)libraryTemplate));
+				SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, true);
 				
 				fileCount++;
 				long fileTime=System.currentTimeMillis()-currentTime;

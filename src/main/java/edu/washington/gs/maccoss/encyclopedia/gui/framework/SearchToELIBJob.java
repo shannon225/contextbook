@@ -2,11 +2,9 @@ package edu.washington.gs.maccoss.encyclopedia.gui.framework;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.SearchToBLIB;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 
@@ -32,7 +30,6 @@ public class SearchToELIBJob extends SwingJob {
 			}
 		}
 
-		LibraryInterface libraryTemplate=null;
-		SearchToBLIB.convert(getProgressIndicator(), jobData, elibFile, false, Optional.ofNullable(libraryTemplate));
+		SearchToBLIB.convert(getProgressIndicator(), jobData, elibFile, false);
 	}
 }

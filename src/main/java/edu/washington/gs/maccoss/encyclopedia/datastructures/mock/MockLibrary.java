@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures.mock;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -26,6 +27,9 @@ public class MockLibrary implements LibraryInterface {
 	@Override
 	public String getName() {
 		return "Testing library of "+entries.length+" entries";
+	}
+	public ArrayList<LibraryEntry> getAllEntries(boolean sqrt) throws IOException, SQLException, DataFormatException {
+		return new ArrayList<LibraryEntry>(Arrays.asList(entries));
 	}
 
 	@Override

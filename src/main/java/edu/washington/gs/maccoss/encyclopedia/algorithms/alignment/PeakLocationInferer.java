@@ -4,9 +4,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
-import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
@@ -81,7 +81,11 @@ public class PeakLocationInferer {
 			Logger.logLine("Extracting "+peptides.size()+" Archetypal Peptides from "+job.getDiaFile().getName()+"...");
 			subProgress.update(job.getDiaFile().getName()+": Extracting "+peptides.size()+" Archetypal Peptides", 0.00001f);
 
-			ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job.getFeatureFile(), false, passingPeptides, peptides, stripeFile, Optional.ofNullable((LibraryInterface)null), job.getParameters());
+			LibraryInterface library=null;
+			if (job instanceof EncyclopediaJobData) {
+				library=((EncyclopediaJobData)job).getLibrary();
+			}
+			ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job.getFeatureFile(), false, passingPeptides, peptides, stripeFile, library, job.getParameters());
 			archetypalPeptides.put(job, libraryEntries);
 			stripeFile.close();
 		}
