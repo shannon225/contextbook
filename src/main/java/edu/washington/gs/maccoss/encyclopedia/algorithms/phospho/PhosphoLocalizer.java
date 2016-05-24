@@ -9,38 +9,28 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.zip.DataFormatException;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.DotProduct;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractorTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.BinomialCalculator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
-import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.map.hash.TFloatObjectHashMap;
 
 public class PhosphoLocalizer {
-	private final String filename;
+	private final StripeFileInterface diaFile;
 	private final SearchParameters params;
-	private final EncyclopediaOneScorer encyclopediaScorer;
-	private final DotProduct dotProduct;
 	private final BackgroundFrequencyCalculator background;
 
 	public PhosphoLocalizer(StripeFileInterface diaFile, LibraryInterface searchedLibrary, SearchParameters params) throws IOException,DataFormatException,SQLException {
-		this.filename=diaFile.getOriginalFileName();
+		this.diaFile=diaFile;
 		this.params=params;
-		encyclopediaScorer=new EncyclopediaOneScorer(params, null); // not using aux scoring
-		dotProduct=new DotProduct(params.getFragmentTolerance());
 		background=BackgroundFrequencyCalculator.generateBackground(diaFile, searchedLibrary);
 	}
 
@@ -55,12 +45,18 @@ public class PhosphoLocalizer {
 	}
 
 	private boolean extractPhosphoForms(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<Stripe> allScansInStripe) {
-		MassTolerance fragmentTolerance=params.getFragmentTolerance();
-		float prior=(float)fragmentTolerance.getTolerance(500.0)/100.0f; // equivalent to high mass accuracy a-score
+		float dutyCycle=1.0f;
+		for (Entry<Range, Float> entry : diaFile.getRanges().entrySet()) {
+			if (entry.getKey().contains((float)precursorMZ)) {
+				dutyCycle=entry.getValue();
+				break;
+			}
+		}
+		int movingAverageLength=Math.round(params.getExpectedPeakWidth()/dutyCycle);
 		
 		float duration=6*60f; // search for 6 minutes
 
-		ArrayList<Stripe> stripes=getScanSubset(retentionTime-duration, retentionTime+duration, allScansInStripe);
+		ArrayList<Stripe> stripes=allScansInStripe;//getScanSubset(retentionTime-duration, retentionTime+duration, allScansInStripe);
 		
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : peptideModSeqs) {
@@ -74,75 +70,37 @@ public class PhosphoLocalizer {
 		
 		for (Entry<String, FragmentationModel> entry : entryMap.entrySet()) {
 			String peptideModSeq=entry.getKey();
+			FragmentationModel model=entry.getValue();
+			double[] allIons=model.getPrimaryIons(params.getFragType(), precursorCharge);
 			
-			/*
-			LibraryEntry unitEntry=entry.getValue().getUnitSpectrum(filename, new HashSet<String>(), precursorCharge, retentionTime, params);
-
-			TFloatFloatHashMap rtScoreMap=new TFloatFloatHashMap();
-			TFloatArrayList scores=new TFloatArrayList();
-			for (Stripe spectrum : stripes) {
-				float score=encyclopediaScorer.score(unitEntry, spectrum);
-				scores.add(score);
-				rtScoreMap.put(spectrum.getScanStartTime(), score);
-			}
-			EValueCalculator calculator=new EValueCalculator(rtScoreMap);
-			*/
-
-			TFloatFloatHashMap uniqueRtScoreMap=new TFloatFloatHashMap();
 			FragmentIon[] targets=uniqueIons.get(peptideModSeq);
 			double[] ions=FragmentIon.getMasses(targets);
 			float[] frequencies=background.getFrequencies(ions, precursorMZ, params.getFragmentTolerance());
-			//int bestFound=0;
-			//int bestLookedFor=0;
-			//float bestEvalue=0.0f;
+
+			float[] negLogProbsAll=new float[stripes.size()];
+			float[] negLogProbsSiteSpecific=new float[stripes.size()];
 			for (int i=0; i<stripes.size(); i++) {
 				Stripe spectrum=stripes.get(i);
-				float negLogProb=score(params, ions, frequencies, spectrum);
-				uniqueRtScoreMap.put(spectrum.getScanStartTime(), negLogProb);
-				//System.out.println(peptideModSeq+" --> "+spectrum.getScanStartTime()/60.0f+", "+negLogProb);
-				
-				/*
-				float score=scores.get(i);
-				float evalue=calculator.getNegLog10EValue(score);
-				if (evalue>-1.0f) {
-					double[] masses=ions;
-					float[] unitIntensities=new float[masses.length];
-					Arrays.fill(unitIntensities, 1.0f);
-					LibraryEntry localUnit=new LibraryEntry(unitEntry.getSource(), unitEntry.getAccessions(), unitEntry.getSpectrumIndex(), precursorMZ, precursorCharge, peptideModSeq, 1, spectrum.getScanStartTime(), score, masses, unitIntensities);
-					
-					TransitionRefinementData data=PeptideQuantExtractorTask.quantifyPeptide(dotProduct, localUnit, false, stripes);
-					if (data==null) continue;
-					
-					int found=0;
-					int lookedFor=0;
-					ArrayList<float[]> chromatograms=data.getChromatograms();
-					double[] chromatogramMasses=data.getFragmentMassArray();
-					for (int j=0; j<chromatogramMasses.length; j++) {
-						float[] fs=chromatograms.get(j);
-						for (int k=0; k<fs.length; k++) {
-							lookedFor++;
-							if (fs[k]>0.0f) {
-								found++;
-							}
-						}
-					}
-					if (found>bestFound) {
-						bestFound=found;
-						bestLookedFor=lookedFor;
-						bestEvalue=evalue;
-					}
-
-					if (lookedFor>0&&found>0) {
-						double pValue=cumulativeBinomalGreaterOrEqual(lookedFor, found, prior);
-						uniqueRtScoreMap.put(spectrum.getScanStartTime(), -10.0f*(float)Log.log10(pValue));
-						System.out.println(peptideModSeq+" --> "+spectrum.getScanStartTime()/60.0f+", "+pValue+" ("+bestFound+"/"+bestLookedFor+")");
-					}
-				}*/
+				negLogProbsAll[i]=score(params, allIons, frequencies, spectrum);
+				negLogProbsSiteSpecific[i]=score(params, ions, frequencies, spectrum);
 			}
+			negLogProbsAll=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);
+			negLogProbsSiteSpecific=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
+
+			TFloatFloatHashMap allRtScoreMap=new TFloatFloatHashMap();
+			TFloatFloatHashMap uniqueRtScoreMap=new TFloatFloatHashMap();
+			for (int i=0; i<negLogProbsSiteSpecific.length; i++) {
+				Stripe spectrum=stripes.get(i);
+				allRtScoreMap.put(spectrum.getScanStartTime(), negLogProbsAll[i]);
+				uniqueRtScoreMap.put(spectrum.getScanStartTime(), negLogProbsSiteSpecific[i]);
+			}
+
+			EValueCalculator allCalculator=new EValueCalculator(allRtScoreMap);
 			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
 
 			float bestRT=uniqueCalculator.getMaxRT();
-			System.out.println("FINAL: "+peptideModSeq+" --> "+bestRT/60.0f+", "+uniqueCalculator.getMaxRawScore()); //+" ("+bestFound+"/"+bestLookedFor+") evalue: "+bestEvalue);
+			float allScore=allRtScoreMap.get(bestRT);
+			System.out.println("FINAL: "+peptideModSeq+" --> "+bestRT/60.0f+", site specific: "+uniqueCalculator.getMaxRawScore()+" ("+uniqueCalculator.getNegLog10EValue(bestRT)+"), all: "+allScore+" ("+allCalculator.getNegLog10EValue(allScore)+")");
 		}
 
 		if (allBestTimes.size()>1) {
@@ -154,14 +112,13 @@ public class PhosphoLocalizer {
 				System.out.println(times[i]/60f+"\t"+allBestTimes.get(times[i]));
 			}
 			if (range>=60) {
-				// System.out.println("multiple\t"+peptideModSeqs.get(0));
 				return true;
 			}
 		} else if (allBestTimes.size()==1) {
-			// System.out.println("single\t"+peptideModSeqs.get(0));
 		}
 		return false;
 	}
+	
 	private static float score(SearchParameters parameters, double[] ions, float[] frequencies, Stripe stripe) {
 		if (frequencies.length==0) return 0.0f;
 
@@ -198,27 +155,6 @@ public class PhosphoLocalizer {
 			uniqueIons.put(peptideModSeq, ionArray);
 		}
 		return uniqueIons;
-	}
-	private static double cumulativeBinomalGreaterOrEqual(int n, int k, double p) {
-		BinomialCalculator dist=new BinomialCalculator(n, p);
-		return dist.cumulativeProbabilityGreaterThan(k-1);
-	}
-
-	public static int countMatchingTargets(Stripe spectrum, FragmentIon[] targets, MassTolerance tolerance) {
-		double[] acquiredMasses=spectrum.getMassArray();
-		float[] acquiredIntensities=spectrum.getIntensityArray();
-		
-		int count=0;
-		for (FragmentIon fragmentIon : targets) {
-			double target=fragmentIon.mass;
-			int[] indicies=tolerance.getIndicies(acquiredMasses, target);
-			for (int i=0; i<indicies.length; i++) {
-				if (acquiredIntensities[indicies[i]]>0.0f) {
-					count++;
-				}
-			}
-		}
-		return count;
 	}
 	
 	public ArrayList<Stripe> getScanSubset(float minRT, float maxRT, ArrayList<Stripe> allScansInStripe) {

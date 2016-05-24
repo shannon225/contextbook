@@ -102,7 +102,7 @@ public abstract class AbstractLibraryScoringTask extends ThreadableTask<Nothing>
 		return sumScores;
 	}
 	
-	protected float[] gaussianCenteredAverage(float[] scores, int scanAveragingWindow) {
+	public static float[] gaussianCenteredAverage(float[] scores, int scanAveragingWindow) {
 		float mean=(scanAveragingWindow-1)/2.0f; // -1 to get the real center index
 		float stdev=(scanAveragingWindow-1)/6.0f; // minus the center, calculate the stdev (6 assumes a peak is 3 stdevs on either side of the center)
 		Gaussian g=new Gaussian(mean, stdev, 1.0f);
