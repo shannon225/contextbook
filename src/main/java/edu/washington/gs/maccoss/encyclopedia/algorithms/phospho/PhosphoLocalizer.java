@@ -19,9 +19,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.map.hash.TFloatFloatHashMap;
-import gnu.trove.map.hash.TFloatObjectHashMap;
 
 public class PhosphoLocalizer {
 	private final StripeFileInterface diaFile;
@@ -34,17 +34,19 @@ public class PhosphoLocalizer {
 		background=BackgroundFrequencyCalculator.generateBackground(diaFile, searchedLibrary);
 	}
 
-	public void runPhosphoLocalization(PSMData psmdata, ArrayList<Stripe> stripes) {
+	public HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> runPhosphoLocalization(PSMData psmdata, ArrayList<Stripe> stripes) {
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(psmdata.getPeptideModSeq(), params.getAAConstants());
 		if (permutations.size()==1) {
 			System.out.println("single\t"+psmdata.getPeptideModSeq());
+			return new HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>>();
 		} else {
-			boolean multiple=extractPhosphoForms(psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes);
+			HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> multiple=extractPhosphoForms(psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes);
 			System.out.println("multiple\t"+psmdata.getPeptideModSeq()+"\t"+multiple);
+			return multiple;
 		}
 	}
 
-	private boolean extractPhosphoForms(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<Stripe> allScansInStripe) {
+	private HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> extractPhosphoForms(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<Stripe> allScansInStripe) {
 		float dutyCycle=1.0f;
 		for (Entry<Range, Float> entry : diaFile.getRanges().entrySet()) {
 			if (entry.getKey().contains((float)precursorMZ)) {
@@ -65,9 +67,8 @@ public class PhosphoLocalizer {
 		}
 		
 		HashMap<String, FragmentIon[]> uniqueIons=getUniqueFragmentIons(precursorCharge, entryMap, params);
-
-		final TFloatObjectHashMap<String> allBestTimes=new TFloatObjectHashMap<String>();
 		
+		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=new HashMap<String, Pair<TFloatFloatHashMap,TFloatFloatHashMap>>();
 		for (Entry<String, FragmentationModel> entry : entryMap.entrySet()) {
 			String peptideModSeq=entry.getKey();
 			FragmentationModel model=entry.getValue();
@@ -91,32 +92,19 @@ public class PhosphoLocalizer {
 			TFloatFloatHashMap uniqueRtScoreMap=new TFloatFloatHashMap();
 			for (int i=0; i<negLogProbsSiteSpecific.length; i++) {
 				Stripe spectrum=stripes.get(i);
-				allRtScoreMap.put(spectrum.getScanStartTime(), negLogProbsAll[i]);
-				uniqueRtScoreMap.put(spectrum.getScanStartTime(), negLogProbsSiteSpecific[i]);
+				allRtScoreMap.put(spectrum.getScanStartTime()/60f, negLogProbsAll[i]);
+				uniqueRtScoreMap.put(spectrum.getScanStartTime()/60f, negLogProbsSiteSpecific[i]);
 			}
+			allVsUniqueList.put(peptideModSeq, new Pair<TFloatFloatHashMap, TFloatFloatHashMap>(allRtScoreMap, uniqueRtScoreMap));
 
 			EValueCalculator allCalculator=new EValueCalculator(allRtScoreMap);
 			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
 
 			float bestRT=uniqueCalculator.getMaxRT();
 			float allScore=allRtScoreMap.get(bestRT);
-			System.out.println("FINAL: "+peptideModSeq+" --> "+bestRT/60.0f+", site specific: "+uniqueCalculator.getMaxRawScore()+" ("+uniqueCalculator.getNegLog10EValue(bestRT)+"), all: "+allScore+" ("+allCalculator.getNegLog10EValue(allScore)+")");
+			System.out.println("FINAL: "+peptideModSeq+" --> "+bestRT/60.0f+"/"+allCalculator.getMaxRT()/60.0f+", site specific: "+uniqueCalculator.getMaxRawScore()+" ("+uniqueCalculator.getNegLog10EValue(bestRT)+"), all: "+allScore+" ("+allCalculator.getNegLog10EValue(allScore)+")");
 		}
-
-		if (allBestTimes.size()>1) {
-			float[] times=allBestTimes.keys();
-			Arrays.sort(times);
-			float range=times[times.length-1]-times[0];
-			System.out.println("RANGE: "+range);
-			for (int i=0; i<times.length; i++) {
-				System.out.println(times[i]/60f+"\t"+allBestTimes.get(times[i]));
-			}
-			if (range>=60) {
-				return true;
-			}
-		} else if (allBestTimes.size()==1) {
-		}
-		return false;
+		return allVsUniqueList;
 	}
 	
 	private static float score(SearchParameters parameters, double[] ions, float[] frequencies, Stripe stripe) {
