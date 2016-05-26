@@ -35,23 +35,28 @@ public class FragmentationModel {
 		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, 0.0);
 	}
 
-	public LibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass) {
-		double[] ions=getPrimaryIons(params.getFragType(), precursorCharge);
+	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass) {
+		FragmentIon[] ions=getPrimaryIonObjects(params.getFragType(), precursorCharge);
 		TDoubleArrayList ionsList=new TDoubleArrayList();
+		ArrayList<String> annotationList=new ArrayList<String>();
 		for (int i=0; i<ions.length; i++) {
-			if (ions[i]>=minimumMass) {
-				ionsList.add(ions[i]);
+			if (ions[i].mass>=minimumMass) {
+				ionsList.add(ions[i].mass);
+				annotationList.add(ions[i].toString());
 			}
 		}
-		ions=ionsList.toArray();
+		double[] masses=ionsList.toArray();
 		
-		float[] unitIntensities=new float[ions.length];
+		float[] unitIntensities=new float[masses.length];
 		Arrays.fill(unitIntensities, 1.0f);
+		
+		float[] unitCorrelation=new float[masses.length];
+		Arrays.fill(unitCorrelation, 1.0f);
 
 		String sequence=getModifiedSequence();
 		double precursorMZ=getChargedMass(precursorCharge);
 
-		return new LibraryEntry(filename, accessions, precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, ions, unitIntensities);
+		return new AnnotatedLibraryEntry(filename, accessions, 1, precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, masses, unitIntensities, unitCorrelation, annotationList.toArray(new String[annotationList.size()]));
 	}
 	
 	public String[] getAas() {

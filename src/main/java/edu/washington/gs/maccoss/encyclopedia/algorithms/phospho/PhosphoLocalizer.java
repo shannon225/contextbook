@@ -20,6 +20,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
@@ -54,9 +55,9 @@ public class PhosphoLocalizer {
 				break;
 			}
 		}
-		int movingAverageLength=Math.round(params.getExpectedPeakWidth()/dutyCycle);
+		int movingAverageLength=Math.round(params.getExpectedPeakWidth()/dutyCycle/2.0f);
 		
-		float duration=1000*60f; // search for 6 minutes
+		float duration=6*60f; // search for 6 minutes
 
 		ArrayList<Stripe> stripes=getScanSubset(retentionTime-duration, retentionTime+duration, allScansInStripe);
 		
@@ -72,7 +73,8 @@ public class PhosphoLocalizer {
 		for (Entry<String, FragmentationModel> entry : entryMap.entrySet()) {
 			String peptideModSeq=entry.getKey();
 			FragmentationModel model=entry.getValue();
-			double[] allIons=model.getPrimaryIons(params.getFragType(), precursorCharge);
+			FragmentIon[] allIonsTypes=model.getPrimaryIonObjects(params.getFragType(), precursorCharge);
+			double[] allIons=FragmentIon.getMasses(allIonsTypes);
 			
 			FragmentIon[] targets=uniqueIons.get(peptideModSeq);
 			double[] ions=FragmentIon.getMasses(targets);
@@ -82,11 +84,13 @@ public class PhosphoLocalizer {
 			float[] negLogProbsSiteSpecific=new float[stripes.size()];
 			for (int i=0; i<stripes.size(); i++) {
 				Stripe spectrum=stripes.get(i);
-				negLogProbsAll[i]=score(params, allIons, frequencies, spectrum);
-				negLogProbsSiteSpecific[i]=score(params, ions, frequencies, spectrum);
+				negLogProbsAll[i]=score(params, allIons, allIonsTypes, frequencies, spectrum);
+				negLogProbsSiteSpecific[i]=score(params, ions, targets, frequencies, spectrum);
 			}
-			negLogProbsAll=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);
-			negLogProbsSiteSpecific=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
+			negLogProbsAll=AbstractLibraryScoringTask.movingCenteredSum(negLogProbsAll, movingAverageLength);//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);
+			negLogProbsAll=General.subtract(negLogProbsAll, Log.log10(movingAverageLength));
+			negLogProbsSiteSpecific=AbstractLibraryScoringTask.movingCenteredSum(negLogProbsSiteSpecific, movingAverageLength);//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
+			negLogProbsSiteSpecific=General.subtract(negLogProbsSiteSpecific, Log.log10(movingAverageLength));
 
 			TFloatFloatHashMap allRtScoreMap=new TFloatFloatHashMap();
 			TFloatFloatHashMap uniqueRtScoreMap=new TFloatFloatHashMap();
@@ -110,21 +114,21 @@ public class PhosphoLocalizer {
 		return new PhosphoLocalizationData(allVsUniqueList);
 	}
 	
-	private static float score(SearchParameters parameters, double[] ions, float[] frequencies, Stripe stripe) {
+	private static float score(SearchParameters parameters, double[] ions, FragmentIon[] ionTypes, float[] frequencies, Stripe stripe) {
 		if (frequencies.length==0) return 0.0f;
 
 		double[] massArray=stripe.getMassArray();
 		float logProb=0.0f;
-		int matches=0;
+		ArrayList<FragmentIon> matches=new ArrayList<FragmentIon>();
 		for (int i=0; i<frequencies.length; i++) {
 			float hitProb=frequencies[i]*massArray.length;
 			boolean match=parameters.getFragmentTolerance().getIndex(massArray, ions[i]).isPresent();
 			if (match) {
 				logProb+=Log.log10(hitProb);
-				matches++;
+				matches.add(ionTypes[i]);
 			}
 		}
-		if (ions.length<20) System.out.println(stripe.getScanStartTime()/60f+"\t"+matches+"/"+ions.length+"\t"+(-logProb-Log.log10(frequencies.length))+"\t"+logProb);
+		if (ions.length<20&&matches.size()>0) System.out.println(stripe.getScanStartTime()/60f+"\tFound:"+General.toString(matches)+" ("+matches.size()+"/"+ions.length+")\t"+(-logProb-Log.log10(frequencies.length)));
 		// neg log prob (normalized by N attempts)
 		return -logProb-Log.log10(frequencies.length);
 	}

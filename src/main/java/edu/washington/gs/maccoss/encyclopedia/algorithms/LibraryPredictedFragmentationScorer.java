@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.util.ArrayList;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -40,6 +41,10 @@ public class LibraryPredictedFragmentationScorer extends AuxillaryPSMScorer {
 
 	@Override
 	public String[] getScoreNames(LibraryEntry entry) {
+		if (entry instanceof AnnotatedLibraryEntry) {
+			return ((AnnotatedLibraryEntry)entry).getIonAnnotations();
+		}
+		
 		ArrayList<String> names=new ArrayList<String>();
 
 		double[] predicted=entry.getMassArray();

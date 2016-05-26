@@ -57,11 +57,13 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class ResultsBrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
-	public static final Color[] colors=new Color[] {Color.red, Color.blue, Color.green, Color.cyan, Color.magenta, Color.orange, Color.yellow, Color.pink};
+	public static final Color[] colors=new Color[] {Color.red, Color.blue, Color.green, Color.cyan, Color.magenta, Color.orange, Color.yellow, Color.pink, Color.gray};
 
 	private final FileChooserPanel blibFileChooser;
 	private final FileChooserPanel rawFileChooser;
@@ -226,7 +228,13 @@ public class ResultsBrowserPanel extends JPanel {
 					FragmentationScoringResult peptideResult=(FragmentationScoringResult)resultEntry.getValue();
 
 					for (XYTrace trace : peptideResult.getFragmentationTraces()) {
-						traces.add(trace);
+						double[] intensities=trace.toArrays().y;
+						for (int i=0; i<intensities.length; i++) {
+							if (intensities[i]>0) {
+								traces.add(SkylineSGFilter.paddedSavitzkyGolaySmooth(trace));
+								break;
+							}
+						}
 					}
 				}
 				ChartPanel chart=Charter.getChart("RT ("+entry.getPrecursorMZ()+" M/Z)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
@@ -255,7 +263,7 @@ public class ResultsBrowserPanel extends JPanel {
 						for (Entry<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> phosphoentry : allVsUniqueList.entrySet()) {
 							String seq=phosphoentry.getKey();
 							Pair<TFloatFloatHashMap, TFloatFloatHashMap> pair=phosphoentry.getValue();
-							Color color=colors[i];
+							Color color=i>=colors.length?colors[i-colors.length].brighter():colors[i];
 							phosphoTraces.add(new XYTrace(pair.x, GraphType.line, "ALL_"+seq, new Color(color.getRed(), color.getGreen(), color.getBlue(), 150), 4.0f));
 							phosphoTraces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 2.0f));
 							i++;

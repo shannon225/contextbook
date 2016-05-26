@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
+import java.util.List;
 import java.util.Set;
 
 public class General {
@@ -40,6 +41,28 @@ public class General {
 			lastIndex+=a[i].length;
 		}
 		return r;
+	}
+	
+	public static String toString(Object[] i) {
+		StringBuilder sb=new StringBuilder();
+		for (Object g : i) {
+			if (sb.length()>0) {
+				sb.append(',');
+			}
+			sb.append(g);
+		}
+		return sb.toString();
+	}
+	
+	public static String toString(@SuppressWarnings("rawtypes") List i) {
+		StringBuilder sb=new StringBuilder();
+		for (Object g : i) {
+			if (sb.length()>0) {
+				sb.append(',');
+			}
+			sb.append(g);
+		}
+		return sb.toString();
 	}
 	
 	public static String toString(@SuppressWarnings("rawtypes") Set i) {
@@ -216,6 +239,22 @@ public class General {
 		float[] r=new float[v1.length];
 		for (int i=0; i<r.length; i++) {
 			r[i]=v1[i]*m;
+		}
+		return r;
+	}
+
+	public static float[] add(float[] v1, float v) {
+		float[] r=new float[v1.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=v1[i]+v;
+		}
+		return r;
+	}
+
+	public static float[] subtract(float[] v1, float v) {
+		float[] r=new float[v1.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=v1[i]-v;
 		}
 		return r;
 	}
