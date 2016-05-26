@@ -3,12 +3,12 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class BlibToLibraryConverter {
@@ -39,8 +39,7 @@ public class BlibToLibraryConverter {
 		try {
 			LibraryFile elibFile=new LibraryFile();
 			elibFile.openFile(f);
-			HashMap<String, String>metadata=elibFile.getMetadata();
-			String version=metadata.get(LibraryFile.VERSION_STRING);
+			Version version=elibFile.getVersion();
 			if (LibraryFile.isVersionAcceptable(version)) {
 				return Optional.of((LibraryInterface)elibFile);
 			} else {

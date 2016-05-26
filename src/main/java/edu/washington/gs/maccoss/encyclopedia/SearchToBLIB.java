@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
@@ -25,6 +26,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 
@@ -66,7 +68,9 @@ public class SearchToBLIB {
 				TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
 				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), bigFeatureFile, bigPercolatorFile, threshold);
 			}
-			Logger.logLine("Identified "+passingPeptides.size()+" peptides across all files at a "+(threshold*100.0f)+" FDR threshold.");
+			ArrayList<ScoredObject<String>> proteins=ParsimonyProteinGrouper.groupProtein(passingPeptides);
+			Logger.logLine("Identified "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) across all files at a "+(threshold*100.0f)+"% FDR threshold.");
+			
 			if (writeBlib) {
 				convertBlib(progress, pecanJobs, libFile, Optional.of(passingPeptides));
 			} else {

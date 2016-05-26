@@ -1,9 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -77,11 +79,23 @@ public class EncyclopediaOneScorer implements PSMScorer {
 		double[] acquiredMasses=spectrum.getMassArray();
 		float[] acquiredIntensities=spectrum.getIntensityArray();
 		
+		float[] correlation=entry.getCorrelationArray();
+		
 		ArrayList<PeakScores> scoredPeaks=new ArrayList<PeakScores>();
 		for (FragmentIon targetIon : ions) {
 			double target=targetIon.mass;
 			
-			float predictedIntensity=tolerance.getIntegratedIntensity(predictedMasses, predictedIntensities, target);
+			int[] predictedIndicies=tolerance.getIndicies(predictedMasses, target);
+			float predictedIntensity=0.0f;
+			float maxCorrelation=0.01f;
+			for (int i=0; i<predictedIndicies.length; i++) {
+				if (predictedIntensity<predictedIntensities[predictedIndicies[i]]) {
+					predictedIntensity=predictedIntensities[predictedIndicies[i]];
+				}
+				if (maxCorrelation<correlation[predictedIndicies[i]]) {
+					maxCorrelation=correlation[predictedIndicies[i]];
+				}
+			}
 			
 			if (predictedIntensity>0) {
 				int[] indicies=tolerance.getIndicies(acquiredMasses, target);
@@ -96,7 +110,7 @@ public class EncyclopediaOneScorer implements PSMScorer {
 						deltaMass=(float)((target-acquiredMasses[indicies[j]])*1000000.0/target);
 					}
 				}
-				float peakScore=predictedIntensity*intensity;
+				float peakScore=predictedIntensity*intensity;//*maxCorrelation;
 				if (intensity>0.0f) {
 					scoredPeaks.add(new PeakScores(peakScore, targetIon, deltaMass));
 				} else {

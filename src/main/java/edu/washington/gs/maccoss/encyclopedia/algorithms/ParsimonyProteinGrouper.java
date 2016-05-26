@@ -7,14 +7,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 
 public class ParsimonyProteinGrouper {
-	public static void main(String[] args) {
-		File f=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzml.encyclopedia.txt");
+	public static void main(String[] args) throws Exception {
+		/*File f=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzml.encyclopedia.txt");
 		f=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.dia.encyclopedia.txt");
 		f=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/deep_hela/concatenated_results.txt");
 		
@@ -22,6 +24,18 @@ public class ParsimonyProteinGrouper {
 		ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(f, 0.01f);
 		Logger.logLine("Starting grouping proteins...");
 		groupProtein(passingPeptidesFromTSV);
+		Logger.logLine("Finished!");*/
+		
+		File libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/HumanTotalProteome/HeLa.elib");
+		LibraryFile file=new LibraryFile();
+		file.openFile(libraryFile);
+		
+		ArrayList<PercolatorPeptide> peptides=new ArrayList<PercolatorPeptide>();
+		for (LibraryEntry entry : file.getAllEntries(false)) {
+			peptides.add(entry.getPSMData());
+		}
+		Logger.logLine("Starting grouping proteins...");
+		groupProtein(peptides);
 		Logger.logLine("Finished!");
 	}
 	

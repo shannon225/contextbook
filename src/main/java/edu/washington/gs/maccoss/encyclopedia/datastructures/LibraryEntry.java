@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -8,10 +9,14 @@ import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.SSRCalc;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakChromatogram;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 
 //@Immutable
@@ -28,13 +33,28 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 	private final float score;
 	private final double[] massArray;
 	private final float[] intensityArray;
+	private final float[] correlationArray;
 	private final HashSet<String> accessions;
 
 	public LibraryEntry(String source, HashSet<String> accessions, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray) {
-		this(source, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray);
+		this(source, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, getUnitArray(massArray.length));
+	}
+	
+	private static float[] getUnitArray(int length) {
+		float[] unit=new float[length];
+		Arrays.fill(unit, 1.0f);
+		return unit;
+	}
+
+	public LibraryEntry(String source, HashSet<String> accessions, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray) {
+		this(source, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray);
 	}
 
 	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray) {
+		this(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, getUnitArray(massArray.length));
+		
+	}
+	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray) {
 		this.source=source;
 		this.accessions=new HashSet<String>(accessions);
 		this.spectrumIndex=spectrumIndex;
@@ -51,6 +71,11 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 		this.score=score;
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
+		this.correlationArray=correlationArray;
+	}
+	
+	public PercolatorPeptide getPSMData() {
+		return new PercolatorPeptide(PercolatorReader.getPSMID(this, getRetentionTime(), new File(source)), PSMData.accessionsToString(accessions), getScore(), getScore());
 	}
 	
 	public String getSource() {
@@ -88,7 +113,7 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 				unit[i]=1.0f;
 			}
 		}
-		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, rt, score, massArray, unit);
+		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, rt, score, massArray, unit, correlationArray);
 	}
 	
 	public float getTIC() {
@@ -180,6 +205,10 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 	public float[] getIntensityArray() {
 		return intensityArray;
 	}
+
+	public float[] getCorrelationArray() {
+		return correlationArray;
+	}
 	
 	public ArrayList<Peak> getPeaks() {
 		ArrayList<Peak> peaks=new ArrayList<Peak>();
@@ -247,12 +276,15 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 		Pair<double[], double[]> matchedMasses=XYTrace.toArrays(points);
 		double[] modelMasses=matchedMasses.x;
 		double[] shiftedMasses=matchedMasses.y;
+		
+		float[] correlationArray=this.getCorrelationArray();
 
 		MassTolerance tolerance=parameters.getFragmentTolerance();
-		ArrayList<Peak> reversedPeaks=new ArrayList<Peak>();
+		ArrayList<PeakChromatogram> reversedPeaks=new ArrayList<PeakChromatogram>();
 		for (int i=0; i<massArray.length; i++) {
 			double mass=massArray[i];
 			float intensity=intensityArray[i];
+			float correlation=correlationArray[i];
 			
 			Optional<Integer> matchIndex=tolerance.getIndex(modelMasses, mass);
 			if (matchIndex.isPresent()) {
@@ -260,14 +292,14 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 				double delta=modelMasses[matchIndex.get()]-mass; // add back error if there is any
 				
 				// shift sequence specific ions
-				reversedPeaks.add(new Peak(shiftedMass-delta, intensity));
+				reversedPeaks.add(new PeakChromatogram(shiftedMass-delta, intensity, correlation));
 			} else {
 				// add unknown peak with no modifications
-				reversedPeaks.add(new Peak(mass, intensity));
+				reversedPeaks.add(new PeakChromatogram(mass, intensity, correlation));
 			}
 		}
 		Collections.sort(reversedPeaks);
-		Pair<double[], float[]> arrays=Peak.toArrays(reversedPeaks);
+		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toArrays(reversedPeaks);
 		
 		HashSet<String> revAcc=new HashSet<String>();
 		for (String accession : accessions) {
@@ -277,6 +309,6 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 				revAcc.add("SHUFFLE_"+accession);
 			}
 		}
-		return new ReverseLibraryEntry(source, revAcc, precursorMZ, precursorCharge, reverseSequence, copies, retentionTime, score, arrays.x, arrays.y);	
+		return new ReverseLibraryEntry(source, revAcc, precursorMZ, precursorCharge, reverseSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z);	
 	}
 }

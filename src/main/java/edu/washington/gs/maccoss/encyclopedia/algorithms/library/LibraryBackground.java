@@ -13,7 +13,7 @@ public class LibraryBackground {
 	private final int total;
 	
 	public static void main(String[] args) throws Exception {
-		File libraryFile=new File("/Users/searleb/Documents/school/projects/pecandata/cptac2_human_hcd_selected.elib");
+		File libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/cptac2_human_hcd_selected.elib");
 		LibraryFile file=new LibraryFile();
 		file.openFile(libraryFile);
 		ArrayList<LibraryEntry> entries=file.getEntries(new Range(700, 800), false);
