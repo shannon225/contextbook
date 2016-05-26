@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
@@ -77,13 +78,15 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	@Override
 	protected Nothing process() {
 		Optional<TransitionRefinementData> spectrum=extractSpectrum(psmdata.getAccessions(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable);
+		Optional<PhosphoLocalizationData> phosphoData=Optional.empty();
 		if (params.isRunPhosphoLocalization()&&localizer.isPresent()) {
-			runLocalization();
+			phosphoData=Optional.ofNullable(runLocalization());
 		}
 		if (spectrum.isPresent()) {
 			// FIXME need to not add duplicates!!!! for now just run SQL:
 			// delete from entries where RowId not in (SELECT MIN(RowId) FROM entries GROUP BY PeptideModSeq, PrecursorCharge)
 			TransitionRefinementData data=spectrum.get();
+			data.setPhosphoLocalizationData(phosphoData);
 			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(filename, psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), data.getMassArray().get(), data.getIntensityArray().get(), data);
 			if (limitToQuantifiable) {
 				if (entry.getIonCount()<4||entry.getTIC()<1.0f) {
@@ -97,8 +100,8 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		return Nothing.NOTHING;
 	}
 
-	public void runLocalization() {
-		localizer.get().runPhosphoLocalization(psmdata, stripes);
+	public PhosphoLocalizationData runLocalization() {
+		return localizer.get().runPhosphoLocalization(psmdata, stripes);
 	}
 
 	private Optional<TransitionRefinementData> extractSpectrum(HashSet<String> accessions, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable) {

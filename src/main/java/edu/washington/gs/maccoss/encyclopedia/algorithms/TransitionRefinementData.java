@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 import java.util.ArrayList;
 import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 
 public class TransitionRefinementData {
@@ -19,10 +20,10 @@ public class TransitionRefinementData {
 	private final Optional<float[]> intensityArray; // for every quantified ion
 	
 	private final Optional<float[]> rtArray;
-	
+	private Optional<PhosphoLocalizationData> phosphoLocalizationData;
 	
 	public TransitionRefinementData(double[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] medianChromatogram, Range range) {
-		this(fragmentMassArray, chromatograms, correlationArray, integrationArray, medianChromatogram, range, null, null, null, null);
+		this(fragmentMassArray, chromatograms, correlationArray, integrationArray, medianChromatogram, range, null, null, null, null, null);
 	}
 
 	/**
@@ -34,7 +35,7 @@ public class TransitionRefinementData {
 	 * @param massArray CAN BE NULL
 	 * @param intensityArray CAN BE NULL
 	 */
-	TransitionRefinementData(double[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] medianChromatogram, Range range, float[] deltaMassArray, double[] massArray, float[] intensityArray, float[] rtArray) {
+	TransitionRefinementData(double[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] medianChromatogram, Range range, float[] deltaMassArray, double[] massArray, float[] intensityArray, float[] rtArray, PhosphoLocalizationData phosphoData) {
 		this.fragmentMassArray=fragmentMassArray;
 		this.chromatograms=chromatograms;
 		this.correlationArray=correlationArray;
@@ -45,6 +46,14 @@ public class TransitionRefinementData {
 		this.massArray=Optional.ofNullable(massArray);
 		this.intensityArray=Optional.ofNullable(intensityArray);
 		this.rtArray=Optional.ofNullable(rtArray);
+		phosphoLocalizationData=Optional.ofNullable(phosphoData);
+	}
+	
+	public void setPhosphoLocalizationData(Optional<PhosphoLocalizationData> phosphoLocalizationData) {
+		this.phosphoLocalizationData=phosphoLocalizationData;
+	}
+	public Optional<PhosphoLocalizationData> getPhosphoLocalizationData() {
+		return phosphoLocalizationData;
 	}
 	
 	public float getTotalIntensity(float minimumCorrelation) {
@@ -75,7 +84,7 @@ public class TransitionRefinementData {
 	 * @return
 	 */
 	public TransitionRefinementData addPeakData(float[] deltaMass, double[] mass, float[] intensity, float[] rts) {
-		return new TransitionRefinementData(fragmentMassArray, chromatograms, correlationArray, integrationArray, medianChromatogram, range, deltaMass, mass, intensity, rts);
+		return new TransitionRefinementData(fragmentMassArray, chromatograms, correlationArray, integrationArray, medianChromatogram, range, deltaMass, mass, intensity, rts, phosphoLocalizationData.isPresent()?phosphoLocalizationData.get():null);
 	}
 	
 	public double[] getFragmentMassArray() {

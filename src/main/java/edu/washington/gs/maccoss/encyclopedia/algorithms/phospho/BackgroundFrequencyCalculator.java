@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.zip.DataFormatException;
 
@@ -10,7 +11,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.set.hash.TDoubleHashSet;
 
@@ -23,19 +23,17 @@ public class BackgroundFrequencyCalculator {
 	private final double[] binBoundaries;
 	private final TDoubleIntHashMap[] binCounters;
 	private final double[][] sortedMapKeys;
-	private final int totalCount;
+	private final int numberOfLibraryEntries;
 	
-	BackgroundFrequencyCalculator(double[] binBoundaries, TDoubleIntHashMap[] binCounters) {
+	BackgroundFrequencyCalculator(double[] binBoundaries, TDoubleIntHashMap[] binCounters, int numberOfLibraryEntries) {
 		this.binBoundaries=binBoundaries;
 		this.binCounters=binCounters;
 		sortedMapKeys=new double[binCounters.length][];
-		int total=0;
 		for (int i=0; i<binCounters.length; i++) {
-			total+=General.sum(binCounters[i].values());
 			sortedMapKeys[i]=binCounters[i].keys();
 			Arrays.sort(sortedMapKeys[i]);
 		}
-		this.totalCount=total;
+		this.numberOfLibraryEntries=numberOfLibraryEntries;
 	}
 	
 	public static BackgroundFrequencyCalculator generateBackground(StripeFileInterface diafile, LibraryInterface library) throws DataFormatException, SQLException, IOException {
@@ -52,7 +50,8 @@ public class BackgroundFrequencyCalculator {
 			binCounters[i]=new TDoubleIntHashMap();
 		}
 		
-		for (LibraryEntry entry : library.getAllEntries(false)) {
+		ArrayList<LibraryEntry> allEntries=library.getAllEntries(false);
+		for (LibraryEntry entry : allEntries) {
 			double[] ions=entry.getMassArray();
 			int index=Arrays.binarySearch(binBoundaries, entry.getPrecursorMZ());
 			index=(-(index+1))-1;
@@ -64,7 +63,7 @@ public class BackgroundFrequencyCalculator {
 			}
 		}
 
-		return new BackgroundFrequencyCalculator(binBoundaries, binCounters);
+		return new BackgroundFrequencyCalculator(binBoundaries, binCounters, allEntries.size());
 	}
 	
 	public float[] getFrequencies(double[] ions, double precursorMz, MassTolerance tolerance) {
@@ -92,7 +91,7 @@ public class BackgroundFrequencyCalculator {
 	private float[] getFrequencies(int[] counters) {
 		float[] frequencies=new float[counters.length];
 		for (int i=0; i<frequencies.length; i++) {
-			frequencies[i]=counters[i]/(float)totalCount;
+			frequencies[i]=counters[i]/(float)numberOfLibraryEntries;
 		}
 		return frequencies;
 	}

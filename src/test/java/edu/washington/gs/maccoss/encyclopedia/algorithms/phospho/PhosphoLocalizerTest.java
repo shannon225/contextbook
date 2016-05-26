@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map.Entry;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
@@ -40,7 +39,7 @@ public class PhosphoLocalizerTest {
 		byte precursorCharge;
 		String peptideModSeq;
 		float retentionTime;
-		if (false) {
+		if (true) {
 			precursorMZ=500.730213;
 			precursorCharge=(byte)2;
 			peptideModSeq="MQS[+80.0]LSLNK";
@@ -50,6 +49,12 @@ public class PhosphoLocalizerTest {
 			precursorCharge=(byte)3;
 			peptideModSeq="SRPTS[+80.0]FADELAAR";
 			retentionTime=1591.183f;
+		} else if (true) {
+			precursorMZ=503.551374;
+			precursorCharge=(byte)3;
+			peptideModSeq="A[+42.0]QRHS[+80.0]DSSLEEK";
+			retentionTime=517.8737f;
+			
 		} else {
 			precursorMZ=503.272853;
 			precursorCharge=(byte)3;
@@ -58,7 +63,7 @@ public class PhosphoLocalizerTest {
 		}
 		
 		PSMData psmdata=new PSMData(new HashSet<String>(), 0, precursorMZ, precursorCharge, peptideModSeq, retentionTime, 0, 0, 12);
-		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=localizer.runPhosphoLocalization(psmdata, stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false));
+		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=localizer.runPhosphoLocalization(psmdata, stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false)).getTraces();
 		
 		ArrayList<Color> shades=new ArrayList<Color>(Arrays.asList(colors));
 		ArrayList<XYTrace> traces=new ArrayList<XYTrace>();

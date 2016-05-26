@@ -1,6 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
+import java.util.ArrayList;
+
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearRegression;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.list.array.TFloatArrayList;
@@ -59,7 +64,7 @@ public class EValueCalculator {
 		negLog10EValue=-(maxScore*m+b);
 	}
 	public float getNegLog10EValue(float score) {
-		return -(maxScore*m+b);
+		return -(score*m+b);
 	}
 	
 	public float getNegLog10EValue() {
@@ -99,5 +104,16 @@ public class EValueCalculator {
 			//throw new EncyclopediaException("No score bins available for scoring system! Empty library spectrum?");
 		}
 		return index;
+	}
+	
+	public XYTrace[] toTraces() {
+		ArrayList<XYPoint> points1=new ArrayList<XYPoint>();
+		ArrayList<XYPoint> points2=new ArrayList<XYPoint>();
+		for (int i=0; i<counts.length; i++) {
+			float intensity=(i/(float)counts.length)*maxScore;
+			points1.add(new XYPoint(intensity, counts[i]));
+			points2.add(new XYPoint(intensity, (intensity*m+b)));
+		}
+		return new XYTrace[] {new XYTrace(points1, GraphType.area, "histogram"), new XYTrace(points2, GraphType.line, "fit")};
 	}
 }

@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Frame;
 import java.io.File;
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
@@ -30,6 +32,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementDat
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -51,10 +54,14 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class ResultsBrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
+	public static final Color[] colors=new Color[] {Color.red, Color.blue, Color.green, Color.cyan, Color.magenta, Color.orange, Color.yellow, Color.pink};
 
 	private final FileChooserPanel blibFileChooser;
 	private final FileChooserPanel rawFileChooser;
@@ -229,14 +236,36 @@ public class ResultsBrowserPanel extends JPanel {
 				PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), entry.getRetentionTime(), entry.getScore(), 1.0f-entry.getScore(), 2*rtRange);
 				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(dia.getOriginalFileName(), psmdata, Optional.ofNullable(localizer), stripes, parameters, false);
 				TransitionRefinementData data=quantTask.extractSpectrum(unit, 2*rtRange, false);
-				if (parameters.isRunPhosphoLocalization()) {
-					quantTask.runLocalization();
-				}
 				if (data!=null) {
 					HashMap<String, ChartPanel> panels=TransitionRefiner.getChartPanels(data);
 					peakPickingSplit.setLeftComponent(panels.get("median"));
 					peakPickingSplit.setRightComponent(panels.get("unnormalized"));
-					rawSplit.setBottomComponent(peakPickingSplit);
+
+					JTabbedPane tabs=new JTabbedPane();
+					
+					Optional<PhosphoLocalizationData> phosphoData=Optional.empty();
+					if (parameters.isRunPhosphoLocalization()) {
+						phosphoData=Optional.ofNullable(quantTask.runLocalization());
+					}
+					if (phosphoData.isPresent()) {
+						HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=phosphoData.get().getTraces();
+						
+						ArrayList<XYTrace> phosphoTraces=new ArrayList<XYTrace>();
+						int i=0;
+						for (Entry<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> phosphoentry : allVsUniqueList.entrySet()) {
+							String seq=phosphoentry.getKey();
+							Pair<TFloatFloatHashMap, TFloatFloatHashMap> pair=phosphoentry.getValue();
+							Color color=colors[i];
+							phosphoTraces.add(new XYTrace(pair.x, GraphType.line, "ALL_"+seq, new Color(color.getRed(), color.getGreen(), color.getBlue(), 150), 4.0f));
+							phosphoTraces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 2.0f));
+							i++;
+						}
+						ChartPanel phosphoPane=Charter.getChart("Retention Time", "Score", true, phosphoTraces.toArray(new XYTrace[phosphoTraces.size()]));
+						tabs.add("Phospho Localization", phosphoPane);
+					}
+					tabs.add("Quantification", peakPickingSplit);
+					
+					rawSplit.setBottomComponent(tabs);
 					peakPickingSplit.setDividerLocation(locationPP);
 				} else {
 					rawSplit.setBottomComponent(new JLabel("No quant data?"));

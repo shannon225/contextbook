@@ -34,19 +34,19 @@ public class PhosphoLocalizer {
 		background=BackgroundFrequencyCalculator.generateBackground(diaFile, searchedLibrary);
 	}
 
-	public HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> runPhosphoLocalization(PSMData psmdata, ArrayList<Stripe> stripes) {
+	public PhosphoLocalizationData runPhosphoLocalization(PSMData psmdata, ArrayList<Stripe> stripes) {
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(psmdata.getPeptideModSeq(), params.getAAConstants());
 		if (permutations.size()==1) {
 			System.out.println("single\t"+psmdata.getPeptideModSeq());
-			return new HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>>();
+			return new PhosphoLocalizationData(new HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>>());
 		} else {
-			HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> multiple=extractPhosphoForms(psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes);
+			PhosphoLocalizationData multiple=extractPhosphoForms(psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes);
 			System.out.println("multiple\t"+psmdata.getPeptideModSeq()+"\t"+multiple);
 			return multiple;
 		}
 	}
 
-	private HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> extractPhosphoForms(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<Stripe> allScansInStripe) {
+	private PhosphoLocalizationData extractPhosphoForms(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<Stripe> allScansInStripe) {
 		float dutyCycle=1.0f;
 		for (Entry<Range, Float> entry : diaFile.getRanges().entrySet()) {
 			if (entry.getKey().contains((float)precursorMZ)) {
@@ -56,9 +56,9 @@ public class PhosphoLocalizer {
 		}
 		int movingAverageLength=Math.round(params.getExpectedPeakWidth()/dutyCycle);
 		
-		float duration=6*60f; // search for 6 minutes
+		float duration=1000*60f; // search for 6 minutes
 
-		ArrayList<Stripe> stripes=allScansInStripe;//getScanSubset(retentionTime-duration, retentionTime+duration, allScansInStripe);
+		ArrayList<Stripe> stripes=getScanSubset(retentionTime-duration, retentionTime+duration, allScansInStripe);
 		
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : peptideModSeqs) {
@@ -99,12 +99,15 @@ public class PhosphoLocalizer {
 
 			EValueCalculator allCalculator=new EValueCalculator(allRtScoreMap);
 			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
+			
+			//Charter.launchChart("All Score", "Count", true, allCalculator.toTraces());
+			//Charter.launchChart("Unique Score", "Count", true, uniqueCalculator.toTraces());
 
 			float bestRT=uniqueCalculator.getMaxRT();
 			float allScore=allRtScoreMap.get(bestRT);
-			System.out.println("FINAL: "+peptideModSeq+" --> "+bestRT/60.0f+"/"+allCalculator.getMaxRT()/60.0f+", site specific: "+uniqueCalculator.getMaxRawScore()+" ("+uniqueCalculator.getNegLog10EValue(bestRT)+"), all: "+allScore+" ("+allCalculator.getNegLog10EValue(allScore)+")");
+			System.out.println("FINAL: "+peptideModSeq+" --> "+bestRT+"/"+allCalculator.getMaxRT()+", site specific: "+uniqueCalculator.getMaxRawScore()+" ("+uniqueCalculator.getNegLog10EValue(bestRT)+"), all: "+allScore+" ("+allCalculator.getNegLog10EValue(allScore)+")");
 		}
-		return allVsUniqueList;
+		return new PhosphoLocalizationData(allVsUniqueList);
 	}
 	
 	private static float score(SearchParameters parameters, double[] ions, float[] frequencies, Stripe stripe) {
@@ -112,15 +115,18 @@ public class PhosphoLocalizer {
 
 		double[] massArray=stripe.getMassArray();
 		float logProb=0.0f;
+		int matches=0;
 		for (int i=0; i<frequencies.length; i++) {
 			float hitProb=frequencies[i]*massArray.length;
 			boolean match=parameters.getFragmentTolerance().getIndex(massArray, ions[i]).isPresent();
 			if (match) {
 				logProb+=Log.log10(hitProb);
+				matches++;
 			}
 		}
+		if (ions.length<20) System.out.println(stripe.getScanStartTime()/60f+"\t"+matches+"/"+ions.length+"\t"+(-logProb-Log.log10(frequencies.length))+"\t"+logProb);
 		// neg log prob (normalized by N attempts)
-		return Log.log10(frequencies.length)-logProb;
+		return -logProb-Log.log10(frequencies.length);
 	}
 
 	public static HashMap<String, FragmentIon[]> getUniqueFragmentIons(byte precursorCharge, HashMap<String, FragmentationModel> entryMap, SearchParameters params) {
