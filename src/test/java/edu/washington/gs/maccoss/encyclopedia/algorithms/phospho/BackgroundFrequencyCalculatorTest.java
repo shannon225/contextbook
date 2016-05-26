@@ -16,9 +16,8 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.map.hash.TFloatFloatHashMap;
-import junit.framework.TestCase;
 
-public class BackgroundFrequencyCalculatorTest extends TestCase {
+public class BackgroundFrequencyCalculatorTest {
 	public static void main(String[] args) throws Exception {
 		File libraryFile=new File("/Users/searleb/Documents/school/projects/VillenJ_Exactive_HumanPhosphoproteome.elib");
 		File diaFile=new File("/Users/searleb/Documents/school/projects/mzml/q06048_rl_MCF7_IMAC_GpX_3.dia");
