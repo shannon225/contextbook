@@ -36,6 +36,7 @@ public class PrecursorScanMap {
 			if (index>0) index--;
 			if (index>=rts.length) index--;
 		}
+		if (index<0) return new Peak[0];
 		
 		PrecursorScan scan=precursors.get(index);
 		float[] intensities=scan.getIntensityArray();

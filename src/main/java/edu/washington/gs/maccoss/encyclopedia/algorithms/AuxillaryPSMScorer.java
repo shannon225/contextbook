@@ -27,6 +27,10 @@ public abstract class AuxillaryPSMScorer {
 	public float[] getPrecursorScores(LibraryEntry entry, float spectrumRT, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		byte charge=entry.getPrecursorCharge();
 		Peak[] precursorPacket=precursors.getIsotopePacket(entry.getPrecursorMZ(), spectrumRT, charge, parameters.getPrecursorTolerance());
+		if (precursorPacket.length==0) {
+			return new float[] {maxPPMError, 0.0f, maxPPMError};
+		}
+		
 		Pair<double[], float[]> pair=Peak.toArrays(precursorPacket);
 		double[] masses=pair.x;
 		float[] intensities=pair.y;
@@ -77,7 +81,7 @@ public abstract class AuxillaryPSMScorer {
 		} else {
 			isotopeDotProduct=0.0f;
 		}
-		
+
 		return new float[] {averageAbsPPM, isotopeDotProduct, averagePPM};
 	}
 }
