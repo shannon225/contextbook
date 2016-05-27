@@ -1,6 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
+
 public class FragmentIon implements Comparable<FragmentIon> {
+	private static final MassTolerance tolerance=new MassTolerance(0.1f); 
 	public final double mass;
 	public final byte index;
 	public final IonType type;
@@ -27,7 +30,7 @@ public class FragmentIon implements Comparable<FragmentIon> {
 	@Override
 	public int compareTo(FragmentIon o) {
 		if (o==null) return 1;
-		return Double.compare(mass, o.mass);
+		return tolerance.compareTo(mass, o.mass);
 	}
 	
 	@Override
@@ -38,7 +41,7 @@ public class FragmentIon implements Comparable<FragmentIon> {
 	@Override
 	public boolean equals(Object o) {
 		if (o==null) return false;
-		return mass==((FragmentIon)o).mass;
+		return tolerance.compareTo(mass, ((FragmentIon)o).mass)==0;
 	}
 	
 	public static double[] getMasses(FragmentIon[] ions) {

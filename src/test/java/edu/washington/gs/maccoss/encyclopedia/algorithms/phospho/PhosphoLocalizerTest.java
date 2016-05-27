@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -18,9 +20,11 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TFloatFloatHashMap;
+import junit.framework.TestCase;
 
-public class PhosphoLocalizerTest {
+public class PhosphoLocalizerTest extends TestCase {
 	public static final Color[] colors=new Color[] {Color.red, Color.blue, Color.green, Color.cyan, Color.magenta}; 
 	public static void main(String[] args) throws Exception {
 		File libraryFile=new File("/Users/searleb/Documents/school/projects/VillenJ_Exactive_HumanPhosphoproteome.elib");
@@ -35,34 +39,7 @@ public class PhosphoLocalizerTest {
 		
 		PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, library, parameters);
 		
-		double precursorMZ;
-		byte precursorCharge;
-		String peptideModSeq;
-		float retentionTime;
-		if (true) {
-			precursorMZ=500.730213;
-			precursorCharge=(byte)2;
-			peptideModSeq="MQS[+80.0]LSLNK";
-			retentionTime=1198.3428f;
-		} else if (true) {
-			precursorMZ=500.899664;
-			precursorCharge=(byte)3;
-			peptideModSeq="SRPTS[+80.0]FADELAAR";
-			retentionTime=1591.183f;
-		} else if (true) {
-			precursorMZ=503.551374;
-			precursorCharge=(byte)3;
-			peptideModSeq="A[+42.0]QRHS[+80.0]DSSLEEK";
-			retentionTime=517.8737f;
-			
-		} else {
-			precursorMZ=503.272853;
-			precursorCharge=(byte)3;
-			peptideModSeq="KLS[+80.0]SGDLRVPVTR";
-			retentionTime=1309.1414f;
-		}
-		
-		PSMData psmdata=new PSMData(new HashSet<String>(), 0, precursorMZ, precursorCharge, peptideModSeq, retentionTime, 0, 0, 12);
+		PSMData psmdata=getPeptide(0);
 		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=localizer.runPhosphoLocalization(psmdata, stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false)).getTraces();
 		
 		ArrayList<Color> shades=new ArrayList<Color>(Arrays.asList(colors));
@@ -78,4 +55,67 @@ public class PhosphoLocalizerTest {
 		Charter.launchChart("RT", "Score", false, traces.toArray(new XYTrace[traces.size()]));
 	}
 
+	private static PSMData getPeptide(int index) {
+		double precursorMZ;
+		byte precursorCharge;
+		String peptideModSeq;
+		float retentionTime;
+		if (index==0) {
+			precursorMZ=500.730213;
+			precursorCharge=(byte)2;
+			peptideModSeq="MQS[+80.0]LSLNK";
+			retentionTime=1198.3428f;
+		} else if (index==1) {
+			precursorMZ=500.899664;
+			precursorCharge=(byte)3;
+			peptideModSeq="SRPTS[+80.0]FADELAAR";
+			retentionTime=1591.183f;
+		} else if (index==2) {
+			precursorMZ=503.551374;
+			precursorCharge=(byte)3;
+			peptideModSeq="A[+42.0]QRHS[+80.0]DSSLEEK";
+			retentionTime=517.8737f;
+			
+		} else {
+			precursorMZ=503.272853;
+			precursorCharge=(byte)3;
+			peptideModSeq="KLS[+80.0]SGDLRVPVTR";
+			retentionTime=1309.1414f;
+		}
+		
+		PSMData psmdata=new PSMData(new HashSet<String>(), 0, precursorMZ, precursorCharge, peptideModSeq, retentionTime, 0, 0, 12);
+		return psmdata;
+	}
+
+	public void testIonGeneration() {
+		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
+		
+		byte charge=1;		
+		String peptide="S[+80.0]SSR";
+		
+		ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptide, params.getAAConstants());
+		assertEquals(3, permutations.size());
+		assertTrue(permutations.contains("S[+79.96633]SSR"));
+		assertTrue(permutations.contains("SS[+79.96633]SR"));
+		assertTrue(permutations.contains("SSS[+79.96633]R"));
+		
+		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
+		for (String peptideModSeq : permutations) {
+			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+			entryMap.put(peptideModSeq, model);
+			FragmentIon[] ions=model.getPrimaryIonObjects(params.getFragType(), charge);
+			System.out.println(peptideModSeq);
+			for (int i=0; i<ions.length; i++) {
+				System.out.println(ions[i]+"\t"+ions[i].mass);
+			}
+			System.out.println();
+		}
+
+		HashMap<String, FragmentIon[]> uniqueIons=PhosphoLocalizer.getUniqueFragmentIons(charge, entryMap, params);
+		
+		for (Entry<String, FragmentIon[]> entry : uniqueIons.entrySet()) {
+			System.out.println(entry.getKey());
+			System.out.println(General.toString(entry.getValue()));
+		}
+	}
 }

@@ -84,8 +84,8 @@ public class PhosphoLocalizer {
 			float[] negLogProbsSiteSpecific=new float[stripes.size()];
 			for (int i=0; i<stripes.size(); i++) {
 				Stripe spectrum=stripes.get(i);
-				negLogProbsAll[i]=score(params, allIons, allIonsTypes, frequencies, spectrum);
-				negLogProbsSiteSpecific[i]=score(params, ions, targets, frequencies, spectrum);
+				negLogProbsAll[i]=score(params, allIons, allIonsTypes, frequencies, spectrum, false);
+				negLogProbsSiteSpecific[i]=score(params, ions, targets, frequencies, spectrum, true);
 			}
 			negLogProbsAll=AbstractLibraryScoringTask.movingCenteredSum(negLogProbsAll, movingAverageLength);//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);
 			negLogProbsAll=General.subtract(negLogProbsAll, Log.log10(movingAverageLength));
@@ -114,7 +114,7 @@ public class PhosphoLocalizer {
 		return new PhosphoLocalizationData(allVsUniqueList);
 	}
 	
-	private static float score(SearchParameters parameters, double[] ions, FragmentIon[] ionTypes, float[] frequencies, Stripe stripe) {
+	private static float score(SearchParameters parameters, double[] ions, FragmentIon[] ionTypes, float[] frequencies, Stripe stripe, boolean report) {
 		if (frequencies.length==0) return 0.0f;
 
 		double[] massArray=stripe.getMassArray();
@@ -128,7 +128,7 @@ public class PhosphoLocalizer {
 				matches.add(ionTypes[i]);
 			}
 		}
-		if (ions.length<20&&matches.size()>0) System.out.println(stripe.getScanStartTime()/60f+"\tFound:"+General.toString(matches)+" ("+matches.size()+"/"+ions.length+")\t"+(-logProb-Log.log10(frequencies.length)));
+		if (report&&matches.size()>0) System.out.println(stripe.getScanStartTime()/60f+"\tFound:"+General.toString(matches)+" ("+matches.size()+"/"+ions.length+")\t"+(-logProb-Log.log10(frequencies.length)));
 		// neg log prob (normalized by N attempts)
 		return -logProb-Log.log10(frequencies.length);
 	}

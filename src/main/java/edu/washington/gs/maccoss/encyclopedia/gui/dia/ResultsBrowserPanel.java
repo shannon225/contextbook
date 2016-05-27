@@ -22,6 +22,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import org.jfree.chart.ChartPanel;
+import org.jfree.chart.axis.ValueAxis;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.FragmentationScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.FragmentationTraceTask;
@@ -269,6 +270,9 @@ public class ResultsBrowserPanel extends JPanel {
 							i++;
 						}
 						ChartPanel phosphoPane=Charter.getChart("Retention Time", "Score", true, phosphoTraces.toArray(new XYTrace[phosphoTraces.size()]));
+						ValueAxis axis=phosphoPane.getChart().getXYPlot().getRangeAxis();
+						org.jfree.data.Range range=axis.getRange();
+						axis.setRange(new org.jfree.data.Range(0.0f, Math.max(2.0f, range.getUpperBound())));
 						tabs.add("Phospho Localization", phosphoPane);
 					}
 					tabs.add("Quantification", peakPickingSplit);
