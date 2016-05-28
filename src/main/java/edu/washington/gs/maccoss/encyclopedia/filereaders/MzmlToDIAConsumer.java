@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.concurrent.BlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class MzmlToDIAConsumer implements Runnable {
 	private final BlockingQueue<MzmlBlock> mzmlBlockQueue;
@@ -19,13 +21,21 @@ public class MzmlToDIAConsumer implements Runnable {
 	@Override
 	public void run() {
 		try {
+			float totalPrecursorTIC=0.0f;
 			while (true) {
 				MzmlBlock block=mzmlBlockQueue.take();
 				if (MzmlBlock.POISON_BLOCK==block) break;
 				
+				for (PrecursorScan precursor : block.getPrecursors()) {
+					totalPrecursorTIC+=General.sum(precursor.getIntensityArray());
+				}
+				
 				stripeFile.addPrecursor(block.getPrecursors());
 				stripeFile.addStripe(block.getStripes());
 			}
+			
+			stripeFile.addMetadata(StripeFile.TOTAL_PRECURSOR_TIC_ATTRIBUTE, Float.toString(totalPrecursorTIC));
+			
 		} catch (InterruptedException ie) {
 			Logger.errorLine("DIA writing interrupted!");
 			Logger.errorException(ie);

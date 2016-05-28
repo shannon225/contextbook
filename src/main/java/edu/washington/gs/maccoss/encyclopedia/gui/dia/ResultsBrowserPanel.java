@@ -58,7 +58,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
@@ -256,7 +255,7 @@ public class ResultsBrowserPanel extends JPanel {
 					if (parameters.isRunPhosphoLocalization()) {
 						phosphoData=Optional.ofNullable(quantTask.runLocalization());
 					}
-					if (phosphoData.isPresent()) {
+					if (phosphoData.isPresent()&&!phosphoData.get().isEmpty()) {
 						HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=phosphoData.get().getTraces();
 						
 						ArrayList<XYTrace> phosphoTraces=new ArrayList<XYTrace>();

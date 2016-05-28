@@ -33,6 +33,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class StripeFile extends SQLFile implements StripeFileInterface {
+	private static final String UNKNOWN_VALUE="unknown";
+	public static final String FILELOCATION_ATTRIBUTE="filelocation";
+	public static final String SOURCENAME_ATTRIBUTE="sourcename";
+	public static final String FILENAME_ATTRIBUTE="filename";
+	public static final String TOTAL_PRECURSOR_TIC_ATTRIBUTE="totalPrecursorTIC";
+
 	public static final String DIA_EXTENSION=".dia";
 	
 	private File userFile=null;
@@ -58,7 +64,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		} else {
 			try {
 				Map<String, String> metadata=getMetadata();
-				String fname=metadata.get("filename");
+				String fname=metadata.get(FILENAME_ATTRIBUTE);
 				if (fname!=null) {
 					originalFileName=fname;
 				}
@@ -190,9 +196,15 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 
 	public void setFileName(String fileName, String sourceName, String fileLocation) throws IOException, SQLException {
 		HashMap<String, String> map=new HashMap<String, String>();
-		map.put("filename", fileName==null?"unknown":fileName);
-		map.put("sourcename", sourceName==null?"unknown":sourceName);
-		map.put("filelocation", fileLocation==null?"unknown":fileLocation);
+		map.put(FILENAME_ATTRIBUTE, fileName==null?UNKNOWN_VALUE:fileName);
+		map.put(SOURCENAME_ATTRIBUTE, sourceName==null?UNKNOWN_VALUE:sourceName);
+		map.put(FILELOCATION_ATTRIBUTE, fileLocation==null?UNKNOWN_VALUE:fileLocation);
+		addMetadata(map);
+	}
+
+	public void addMetadata(String key, String value) throws IOException, SQLException {
+		HashMap<String, String> map=new HashMap<String, String>();
+		map.put(key, value==null?UNKNOWN_VALUE:value);
 		addMetadata(map);
 	}
 	

@@ -15,4 +15,8 @@ public class PhosphoLocalizationData {
 	public HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> getTraces() {
 		return traces;
 	}
+	
+	public boolean isEmpty() {
+		return traces==null||traces.size()==0;
+	}
 }
