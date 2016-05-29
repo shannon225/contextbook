@@ -27,6 +27,7 @@ public class ParsimonyProteinGrouper {
 		Logger.logLine("Finished!");*/
 		
 		File libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/HumanTotalProteome/HeLa.elib");
+		libraryFile=new File("/Users/searleb/Documents/school/projects/may_asms/yeast/YeastProteome.elib");
 		LibraryFile file=new LibraryFile();
 		file.openFile(libraryFile);
 		

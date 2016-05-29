@@ -36,6 +36,7 @@ import javax.swing.table.TableColumn;
 
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
+import edu.washington.gs.maccoss.encyclopedia.gui.dia.FeatureGrapher;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.LindsaysSpecialEncyclopediaPanel;
@@ -58,6 +59,7 @@ public class SearchPanel extends JPanel {
 	private static final ImageIcon openDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/filedb.png"));
 	private static final ImageIcon convertDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/convertdb.png"));
 	private static final ImageIcon diaBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/orbi_icon.png"));
+	private static final ImageIcon featureBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/feature_icon.png"));
 	
 	JobProcessorTableModel processorTableModel=new JobProcessorTableModel();
 	
@@ -197,10 +199,19 @@ public class SearchPanel extends JPanel {
 		launchBrowser.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				launchBrowser();
+				launchElibBrowser();
 			}
 		});
 		viewMenu.add(launchBrowser);
+
+		JMenuItem launchFeatureBrowser=new JMenuItem("Launch Feature Browser", featureBrowserIcon);
+		launchFeatureBrowser.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				launchFeatureBrowser();
+			}
+		});
+		viewMenu.add(launchFeatureBrowser);
 
 		JMenu convertMenu=new JMenu("Convert");
 		convertMenu.setMnemonic(KeyEvent.VK_C);
@@ -233,8 +244,22 @@ public class SearchPanel extends JPanel {
 		return (ParametersPanelInterface)optionsTabs.getSelectedComponent();
 	}
 	
-	public void launchBrowser() {
-		final JFrame dialog=new JFrame("Convert BLIB to Library");
+	public void launchFeatureBrowser() {
+		File featureFile=FileChooserPanel.getFiles(null, "Feature text files", new SimpleFilenameFilter("features.txt"), (JFrame)null)[0];
+
+		if (featureFile!=null&&featureFile.exists()) {
+			final JFrame dialog=new JFrame("Global Feature Browser");
+
+			dialog.getContentPane().add(FeatureGrapher.graphFeatures(featureFile), BorderLayout.CENTER);
+			dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+			dialog.pack(); 
+			dialog.setSize(1900, 1030);
+			dialog.setVisible(true);
+		}
+	}
+	
+	public void launchElibBrowser() {
+		final JFrame dialog=new JFrame("ELIB/DIA Detection Browser");
 
 		dialog.getContentPane().add(new ResultsBrowserPanel(), BorderLayout.CENTER);
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);

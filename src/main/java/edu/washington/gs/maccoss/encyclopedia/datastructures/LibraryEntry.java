@@ -299,7 +299,7 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 			}
 		}
 		Collections.sort(reversedPeaks);
-		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toArrays(reversedPeaks);
+		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(reversedPeaks);
 		
 		HashSet<String> revAcc=new HashSet<String>();
 		for (String accession : accessions) {

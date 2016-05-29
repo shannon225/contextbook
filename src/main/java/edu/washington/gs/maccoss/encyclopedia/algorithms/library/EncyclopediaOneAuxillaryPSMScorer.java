@@ -40,6 +40,7 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		
 		double[] predictedMasses=entry.getMassArray();
 		float[] predictedIntensities=entry.getIntensityArray();
+		float[] correlation=entry.getCorrelationArray();
 		
 		double[] acquiredMasses=spectrum.getMassArray();
 		float[] acquiredIntensities=spectrum.getIntensityArray();
@@ -52,7 +53,17 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		TFloatArrayList actualTargetIntensities=new TFloatArrayList();
 		ArrayList<XYPoint> fragmentDeltaMasses=new ArrayList<XYPoint>();
 		for (double target : ions) {
-			float predictedIntensity=tolerance.getIntegratedIntensity(predictedMasses, predictedIntensities, target);
+			int[] predictedIndicies=tolerance.getIndicies(predictedMasses, target);
+			float predictedIntensity=0.0f;
+			float maxCorrelation=0.01f;
+			for (int i=0; i<predictedIndicies.length; i++) {
+				if (predictedIntensity<predictedIntensities[predictedIndicies[i]]) {
+					predictedIntensity=predictedIntensities[predictedIndicies[i]];
+				}
+				if (maxCorrelation<correlation[predictedIndicies[i]]) {
+					maxCorrelation=correlation[predictedIndicies[i]];
+				}
+			}
 			
 			if (predictedIntensity>0) {
 				int[] indicies=tolerance.getIndicies(acquiredMasses, target);
@@ -70,10 +81,10 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 				if (intensity>0) {
 					numberOfMatchingPeaks++;
 				}
-				double product=predictedIntensity*intensity;
-				dotProduct+=product;
+				float peakScore=predictedIntensity*intensity*maxCorrelation;
+				dotProduct+=peakScore;
 				float fraction=background.getFraction(target);
-				weightedDotProduct+=product*fraction;
+				weightedDotProduct+=peakScore*fraction;
 				predictedTargets.add(target);
 				predictedTargetIntensities.add(predictedIntensity);
 				actualTargetIntensities.add(intensity);

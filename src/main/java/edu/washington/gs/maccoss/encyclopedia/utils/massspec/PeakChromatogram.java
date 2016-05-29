@@ -14,7 +14,7 @@ public class PeakChromatogram extends Peak {
 		this.correlation=correlation;
 	}
 	
-	public static Triplet<double[], float[], float[]> toArrays(Collection<PeakChromatogram> peaks) {
+	public static Triplet<double[], float[], float[]> toChromatogramArrays(Collection<PeakChromatogram> peaks) {
 		TDoubleArrayList masses=new TDoubleArrayList();
 		TFloatArrayList intensities=new TFloatArrayList();
 		TFloatArrayList correlations=new TFloatArrayList();
@@ -26,7 +26,7 @@ public class PeakChromatogram extends Peak {
 		return new Triplet<double[], float[], float[]>(masses.toArray(), intensities.toArray(), correlations.toArray());
 	}
 	
-	public static Triplet<double[], float[], float[]> toArrays(PeakChromatogram[] peaks) {
+	public static Triplet<double[], float[], float[]> toChromatogramArrays(PeakChromatogram[] peaks) {
 		TDoubleArrayList masses=new TDoubleArrayList();
 		TFloatArrayList intensities=new TFloatArrayList();
 		TFloatArrayList correlations=new TFloatArrayList();

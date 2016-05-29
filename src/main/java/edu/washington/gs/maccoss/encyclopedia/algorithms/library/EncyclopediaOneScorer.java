@@ -73,11 +73,11 @@ public class EncyclopediaOneScorer implements PSMScorer {
 		
 		double[] predictedMasses=entry.getMassArray();
 		float[] predictedIntensities=entry.getIntensityArray();
+		float[] correlation=entry.getCorrelationArray();
 		
 		double[] acquiredMasses=spectrum.getMassArray();
 		float[] acquiredIntensities=spectrum.getIntensityArray();
 		
-		float[] correlation=entry.getCorrelationArray();
 		
 		ArrayList<PeakScores> scoredPeaks=new ArrayList<PeakScores>();
 		for (FragmentIon targetIon : ions) {
@@ -108,7 +108,7 @@ public class EncyclopediaOneScorer implements PSMScorer {
 						deltaMass=(float)((target-acquiredMasses[indicies[j]])*1000000.0/target);
 					}
 				}
-				float peakScore=predictedIntensity*intensity;//*maxCorrelation;
+				float peakScore=predictedIntensity*intensity*maxCorrelation;
 				if (intensity>0.0f) {
 					scoredPeaks.add(new PeakScores(peakScore, targetIon, deltaMass));
 				} else {

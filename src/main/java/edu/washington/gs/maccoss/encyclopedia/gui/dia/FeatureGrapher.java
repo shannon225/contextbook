@@ -64,6 +64,7 @@ public class FeatureGrapher {
 				row.remove("annotation");
 				row.remove("charge2");
 				row.remove("charge3");
+				row.remove("protein");
 				boolean isTarget=Integer.parseInt(row.remove("TD"))>0;
 				
 				for (Entry<String, String> entry : row.entrySet()) {

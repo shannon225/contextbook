@@ -4,7 +4,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 
 public class ScoredObject<T extends Comparable<T>> extends Pair<Float, T> implements Comparable<ScoredObject<T>> {
 
-	public ScoredObject(Float x, T y) {
+	public ScoredObject(float x, T y) {
 		super(x, y);
 	}
 
@@ -15,5 +15,9 @@ public class ScoredObject<T extends Comparable<T>> extends Pair<Float, T> implem
 		if (c!=0) return c;
 		
 		return y.compareTo(o.y);
+	}
+	
+	public float getScore() {
+		return x;
 	}
 }
