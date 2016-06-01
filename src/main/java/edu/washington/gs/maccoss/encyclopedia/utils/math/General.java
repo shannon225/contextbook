@@ -235,6 +235,14 @@ public class General {
 		return r;
 	}
 
+	public static double[] multiply(double[] v1, double m) {
+		double[] r=new double[v1.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=v1[i]*m;
+		}
+		return r;
+	}
+
 	public static float[] multiply(float[] v1, float m) {
 		float[] r=new float[v1.length];
 		for (int i=0; i<r.length; i++) {

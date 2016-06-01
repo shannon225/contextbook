@@ -68,13 +68,18 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 				rawScores[i]+=scorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
 				
 				float rt=stripe.getScanStartTime();
-				XYPoint meanStdev=background.get((double)rt);
-				if (meanStdev!=null) {
-					bgsubScores[i]=(float)(rawScores[i]-meanStdev.x);
-					if (meanStdev.y==0) {
-						zScores[i]=0.0f;
+				if (background!=null) {
+					XYPoint meanStdev=background.get((double)rt);
+					if (meanStdev!=null) {
+						bgsubScores[i]=(float)(rawScores[i]-meanStdev.x);
+						if (meanStdev.y==0) {
+							zScores[i]=0.0f;
+						} else {
+							zScores[i]=(float)((rawScores[i]-meanStdev.x)/meanStdev.y);
+						}
 					} else {
-						zScores[i]=(float)((rawScores[i]-meanStdev.x)/meanStdev.y);
+						bgsubScores[i]=rawScores[i];
+						zScores[i]=0.0f;
 					}
 				} else {
 					bgsubScores[i]=rawScores[i];
@@ -220,7 +225,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 			
 			result.setTrace(new XYTrace(scoreMap, GraphType.line, entry.getPeptideModSeq()));
 			
-			if (result.size()>0) {
+			if (result.size()>0&&resultsQueue!=null) {
 				try {
 					resultsQueue.put(result);
 				} catch (InterruptedException ie) {

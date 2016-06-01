@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -31,17 +33,22 @@ import org.jfree.chart.ChartPanel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ExpectedFragmentationScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.FragmentationScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.FragmentationTraceTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.IonCountingScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
@@ -50,17 +57,19 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 
 public class DIABrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
 	
 	private final PecanRawScorer scorer;
 
-	private final SearchParameters parameters;
+	private final PecanSearchParameters parameters;
 	private final FileChooserPanel diaFile;
 	private final JTextField peptide=new JTextField("MQS[+80]LSLNK"); // YLDGLTAER");
 	private final SpinnerModel charge=new SpinnerNumberModel(2, 1, 5, 1);
 	private final JSplitPane split=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+	private final JSplitPane scoringSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
 	private StripeFileInterface dia=null;
 
@@ -105,11 +114,8 @@ public class DIABrowserPanel extends JPanel {
 	
 	public DIABrowserPanel() {
 		super(new BorderLayout());
-		HashMap<String, String> map=SearchParameterParser.getDefaultParameters();
-		map.put("-runPhosphoLocalization", "true");
-		map.put("-deconvoluteOverlappingWindows", "true");
-		parameters=SearchParameterParser.parseParameters(map);
-		scorer=new PecanRawScorer(parameters.getFragmentTolerance(), new ExpectedFragmentationScorer(parameters));
+		parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA);
+		scorer=new PecanRawScorer(parameters.getFragmentTolerance(), new ExpectedFragmentationScorer(parameters, 3));
 
 		diaFile=new FileChooserPanel(null, "DIA File", new SimpleFilenameFilter(".dia", ".mzml"), true) {
 			private static final long serialVersionUID=1L;
@@ -181,9 +187,38 @@ public class DIABrowserPanel extends JPanel {
 					}
 				}
 				ChartPanel chart=Charter.getChart("RT ("+entry.getPrecursorMZ()+" M/Z)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
-				split.setBottomComponent(chart);
+				split.setTopComponent(chart);
+				
+
+				
+				BlockingQueue<PeptideScoringResult> ionCountResultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
+				IonCountingScoringTask ionCount=new IonCountingScoringTask(scorer, entries, stripes, 2.5f, new PrecursorScanMap(new ArrayList<PrecursorScan>()), ionCountResultsQueue, parameters);
+				ionCount.call();
+				
+				PeptideScoringResult ionCountResult=ionCountResultsQueue.take();
+				XYTrace ionCounttrace=ionCountResult.getTrace().rescaleX(1.0f/60.0f);
+				
+				ChartPanel ionCountchart=Charter.getChart("RT ("+entry.getPrecursorMZ()+" M/Z)", "RawScore", false, ionCounttrace);
+				
+				scoringSplit.setBottomComponent(ionCountchart);
+				
+				BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
+				PecanOneScoringTask pecan=new PecanOneScoringTask(scorer, entries, stripes, null, new PrecursorScanMap(new ArrayList<PrecursorScan>()), 5, resultsQueue, parameters);
+				pecan.call();
+				
+				PeptideScoringResult pecanresult=resultsQueue.take();
+				XYTrace pecantrace=pecanresult.getTrace().rescaleX(1.0f/60.0f);
+				
+				ChartPanel pecanchart=Charter.getChart("RT ("+entry.getPrecursorMZ()+" M/Z)", "RawScore", false, pecantrace);
+				
+				scoringSplit.setTopComponent(pecanchart);
+
+				
+				split.setBottomComponent(scoringSplit);
+				
 				
 			} catch (Exception e) {
+				e.printStackTrace();
 				JOptionPane.showMessageDialog(DIABrowserPanel.this, "Sorry, there was a problem reading the precursor window that contains ["+entry.getPrecursorMZ()+"]: "+e.getMessage(), "Error Reading DIA File",
 						JOptionPane.ERROR_MESSAGE);
 			}

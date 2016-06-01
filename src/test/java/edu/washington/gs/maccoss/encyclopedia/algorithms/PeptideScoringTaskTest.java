@@ -72,7 +72,7 @@ public class PeptideScoringTaskTest {
 		TDoubleIntHashMap[] binCounters=background.x;
 		ArrayList<String>[] backgroundProteomes=background.y;
 		
-		PecanRawScorer pecanScorer=new PecanRawScorer(PARAMETERS.getFragmentTolerance(), new ExpectedFragmentationScorer(PARAMETERS));
+		PecanRawScorer pecanScorer=new PecanRawScorer(PARAMETERS.getFragmentTolerance(), new ExpectedFragmentationScorer(PARAMETERS, 2));
 		int cores=PARAMETERS.getNumberOfThreadsUsed();
 
 		// get stripes
