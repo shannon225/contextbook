@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
@@ -19,6 +20,12 @@ public class XYTrace {
 	private final GraphType type;
 	private final Optional<Color> color;
 	private final Optional<Float> thickness;
+	
+	public XYTrace rescaleX(float rescaleX) {
+		Pair<double[], double[]> trace=toArrays(points);
+		double[] newx=General.multiply(trace.x, rescaleX);
+		return new XYTrace(newx, trace.y, type, name, color.orElse(null), thickness.orElse(null));
+	}
 	
 	public XYTrace(Spectrum spectrum) {
 		color=Optional.empty();

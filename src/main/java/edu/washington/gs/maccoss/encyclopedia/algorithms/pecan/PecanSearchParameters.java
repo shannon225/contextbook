@@ -79,6 +79,21 @@ public class PecanSearchParameters extends SearchParameters {
 		beta=0.4f;
 	}
 
+	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme, DataAcquisitionType dataAcquisitionType) {
+		super(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, 0.01f, null, dataAcquisitionType, Runtime.getRuntime().availableProcessors(), 24f, -1f, -1f, false, false);
+		minPeptideLength=5;
+		maxPeptideLength=100;
+		maxMissedCleavages=1;
+		minCharge=2;
+		maxCharge=3;
+		minEluteTime=12;
+		numberOfReportedPeaks=1;
+		addDecoysToBackgound=false;
+		dontRunDecoys=false;
+		alpha=1.8f;
+		beta=0.4f;
+	}
+
 	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme) {
 		super(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, 0.01f, null, DataAcquisitionType.DIA, Runtime.getRuntime().availableProcessors(), 24f, -1f, -1f, false, false);
 		minPeptideLength=5;

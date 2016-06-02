@@ -256,7 +256,7 @@ public class ResultsBrowserPanel extends JPanel {
 					if (parameters.isRunPhosphoLocalization()) {
 						phosphoData=Optional.ofNullable(quantTask.runLocalization());
 					}
-					if (phosphoData.isPresent()&&!phosphoData.get().isEmpty()) {
+					if (phosphoData.isPresent()) {
 						HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=phosphoData.get().getTraces();
 						
 						ArrayList<XYTrace> phosphoTraces=new ArrayList<XYTrace>();

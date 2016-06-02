@@ -26,6 +26,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class PhosphoLocalizer {
@@ -74,6 +75,7 @@ public class PhosphoLocalizer {
 		HashMap<String, FragmentIon[]> uniqueIons=getUniqueFragmentIons(precursorCharge, entryMap, params);
 		
 		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=new HashMap<String, Pair<TFloatFloatHashMap,TFloatFloatHashMap>>();
+		TFloatArrayList formsRT=new TFloatArrayList(); 
 		for (Entry<String, FragmentationModel> entry : entryMap.entrySet()) {
 			String peptideModSeq=entry.getKey();
 			FragmentationModel model=entry.getValue();
@@ -116,8 +118,13 @@ public class PhosphoLocalizer {
 
 			float bestRT=uniqueCalculator.getMaxRT();
 			float allScore=allRtScoreMap.get(bestRT);
-			System.out.println("FINAL: "+peptideModSeq+" --> "+bestRT+"/"+allCalculator.getMaxRT()+", site specific: "+uniqueCalculator.getMaxRawScore()+" ("+uniqueCalculator.getNegLog10EValue(bestRT)+"), all: "+allScore+" ("+allCalculator.getNegLog10EValue(allScore)+")");
+			if (uniqueCalculator.getMaxRawScore()>5f) {
+				formsRT.add(bestRT);
+			}
+			//System.out.println("FINAL: "+peptideModSeq+" --> "+bestRT+"/"+allCalculator.getMaxRT()+", site specific: "+uniqueCalculator.getMaxRawScore()+" ("+uniqueCalculator.getNegLog10EValue(bestRT)+"), all: "+allScore+" ("+allCalculator.getNegLog10EValue(allScore)+")");
 		}
+
+		System.out.println(formsRT.size()+"\t"+(formsRT.max()-formsRT.min()));
 		return new PhosphoLocalizationData(allVsUniqueList);
 	}
 	

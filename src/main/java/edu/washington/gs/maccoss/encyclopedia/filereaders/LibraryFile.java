@@ -19,6 +19,7 @@ import java.util.zip.DataFormatException;
 
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Chromatogram;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
@@ -34,8 +35,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 public class LibraryFile extends SQLFile implements LibraryInterface {
 	public static final String ELIB=".elib";
 	public static final String VERSION_STRING="version";
-	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] {new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2)};
-	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 2);
+	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] {new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3)};
+	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 3);
 	
 	private File userFile=null;
 	private final File tempFile;
@@ -184,7 +185,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		// then add integrated areas
 		Connection c=getConnection(tempFile);
 		try {
-			PreparedStatement peptidePrep=c.prepareStatement("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, SourceFile, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+			PreparedStatement peptidePrep=c.prepareStatement("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, SourceFile, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, TopThreeIntensity, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
 			PreparedStatement fragmentPrep=c.prepareStatement("INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, SourceFile, IonType, FragmentMass, Correlation, DeltaMassPPM, Intensity) VALUES (?,?,?,?,?,?,?,?)");
 			try {
 				for (LibraryEntry recast : uniqueEntries) {
@@ -214,11 +215,12 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					peptidePrep.setFloat(5, data.getRange().getStop());
 					peptidePrep.setFloat(6, data.getTotalIntensity(minimumCorrelation));
 					peptidePrep.setInt(7, data.getTotalQuantIons(minimumCorrelation));
-					peptidePrep.setFloat(8, bestCorrelation);
-					peptidePrep.setFloat(9, bestDeltaMass);
+					peptidePrep.setFloat(8, data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, 3));
+					peptidePrep.setFloat(9, bestCorrelation);
+					peptidePrep.setFloat(10, bestDeltaMass);
 					byte[] intensityByteArray=ByteConverter.toByteArray(data.getMedianChromatogram());
-					peptidePrep.setInt(10, intensityByteArray.length);
-					peptidePrep.setBytes(11, CompressionUtils.compress(intensityByteArray));
+					peptidePrep.setInt(11, intensityByteArray.length);
+					peptidePrep.setBytes(12, CompressionUtils.compress(intensityByteArray));
 					peptidePrep.addBatch();
 					
 					for (int i=0; i<correlationArray.length; i++) {
@@ -578,7 +580,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						+ ")");
 				
 				s.execute("CREATE TABLE IF NOT EXISTS peptidequants ( "
-						+ "PrecursorCharge int not null, PeptideModSeq string not null, SourceFile string not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null,"
+						+ "PrecursorCharge int not null, PeptideModSeq string not null, SourceFile string not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, TopThreeIntensity double not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null,"
 						+ "PRIMARY KEY (PrecursorCharge, PeptideModSeq, SourceFile), "
 						+ "FOREIGN KEY (PrecursorCharge, PeptideModSeq, SourceFile) REFERENCES entries (PrecursorCharge, PeptideModSeq, SourceFile) "
 						+ ")");
