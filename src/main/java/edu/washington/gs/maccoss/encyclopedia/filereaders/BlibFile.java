@@ -116,6 +116,9 @@ public class BlibFile extends SQLFile {
 							missing++;
 						}
 					}
+					// RT are usually in minutes, but not always depending on blib version. Warping 
+					// won't be bothered by incorrect absolute values if this assumption is wrong.
+					retentionTime=retentionTime*60.0f;
 					total++;
 
 					entries.add(new LibraryEntry(filename, new HashSet<String>(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));

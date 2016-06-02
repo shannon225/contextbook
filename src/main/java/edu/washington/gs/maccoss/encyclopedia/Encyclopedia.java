@@ -314,7 +314,7 @@ public class Encyclopedia {
 					float entryTime=entry.getScanStartTime();
 
 					Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
-					XYPoint point=new XYPoint(entryTime, first.x.y.getScanStartTime()/60.0f);
+					XYPoint point=new XYPoint(entryTime/60.0f, first.x.y.getScanStartTime()/60.0f);
 					rtSet.add(point);
 				}
 			}

@@ -1,12 +1,19 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.zip.DataFormatException;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
@@ -43,7 +50,7 @@ public class FreezerExperimentTest {
 		for (File file : files) {
 			if (file.getName().endsWith("mzML")) {
 				long currentTime=System.currentTimeMillis();
-				EncyclopediaTest.run(file, libraryFile, factory);
+				run(file, libraryFile, factory);
 
 				File blibFile=new File(file.getAbsolutePath()+".quant.blib");
 				SearchJobData job=getData(extractionParameters, file);
@@ -61,6 +68,13 @@ public class FreezerExperimentTest {
 				System.out.println("Processed "+fileCount+"/"+totalCount+" files in "+Math.round(10f*totalTime/1000f/60f/60f)/10f+" hours (average of "+Math.round(10f*averageTimePer)/10f+" minutes per file, "+Math.round(10f*remaining)/10f+" hours remaining)");
 			}
 		}
+	}
+
+	public static void run(File diaFile, File libraryFile, EncyclopediaOneScoringFactory factory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+		LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
+		EncyclopediaJobData job;
+		job=new EncyclopediaJobData(diaFile, library, factory);
+		Encyclopedia.runSearch(new EmptyProgressIndicator(), job);
 	}
 	
 	private static SearchJobData getData(SearchParameters parameters, File diaFile) {
