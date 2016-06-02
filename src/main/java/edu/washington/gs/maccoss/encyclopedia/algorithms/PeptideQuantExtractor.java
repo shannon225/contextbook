@@ -143,7 +143,10 @@ public class PeptideQuantExtractor {
 		int cores=parameters.getNumberOfThreadsUsed();
 
 		String filename=stripefile.getOriginalFileName();
-		PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, searchedLibrary, parameters);
+		PhosphoLocalizer localizer=null;
+		if (parameters.isRunPhosphoLocalization()&&searchedLibrary!=null) {
+			localizer=new PhosphoLocalizer(stripefile, searchedLibrary, parameters);
+		}
 		
 		// get identified peptides
 		HashMap<String, PSMData> peptideModSeqs=new HashMap<String, PSMData>();

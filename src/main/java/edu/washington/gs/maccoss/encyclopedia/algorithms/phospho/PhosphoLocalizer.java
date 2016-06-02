@@ -19,7 +19,11 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.map.hash.TFloatFloatHashMap;
@@ -57,7 +61,7 @@ public class PhosphoLocalizer {
 		}
 		int movingAverageLength=Math.round(params.getExpectedPeakWidth()/dutyCycle/2.0f);
 		
-		float duration=6*60f; // search for 6 minutes
+		float duration=2*60f; // search for 6 minutes
 
 		ArrayList<Stripe> stripes=getScanSubset(retentionTime-duration, retentionTime+duration, allScansInStripe);
 		
@@ -103,6 +107,9 @@ public class PhosphoLocalizer {
 
 			EValueCalculator allCalculator=new EValueCalculator(allRtScoreMap);
 			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
+
+			XYTrace[] traces=getTraces(params, targets, stripes);
+			Charter.launchChart("Retention Time ("+peptideModSeq+")", "Intensity", true, traces);
 			
 			//Charter.launchChart("All Score", "Count", true, allCalculator.toTraces());
 			//Charter.launchChart("Unique Score", "Count", true, uniqueCalculator.toTraces());
@@ -112,6 +119,31 @@ public class PhosphoLocalizer {
 			System.out.println("FINAL: "+peptideModSeq+" --> "+bestRT+"/"+allCalculator.getMaxRT()+", site specific: "+uniqueCalculator.getMaxRawScore()+" ("+uniqueCalculator.getNegLog10EValue(bestRT)+"), all: "+allScore+" ("+allCalculator.getNegLog10EValue(allScore)+")");
 		}
 		return new PhosphoLocalizationData(allVsUniqueList);
+	}
+	
+	private static XYTrace[] getTraces(SearchParameters parameters, FragmentIon[] ionTypes, ArrayList<Stripe> stripes) {
+		ArrayList<XYPoint>[] traces=new ArrayList[ionTypes.length];
+		boolean[] gotTrace=new boolean[traces.length];
+		for (int i=0; i<traces.length; i++) {
+			traces[i]=new ArrayList<XYPoint>();
+		}
+		for (int i=0; i<stripes.size(); i++) {
+			Stripe spectrum=stripes.get(i);
+			double[] massArray=spectrum.getMassArray();
+			float[] intensityArray=spectrum.getIntensityArray();
+			for (int j=0; j<ionTypes.length; j++) {
+				float intensity=parameters.getFragmentTolerance().getIntegratedIntensity(massArray, intensityArray, ionTypes[j].mass);
+				traces[j].add(new XYPoint(spectrum.getScanStartTime()/60, intensity));
+				if (intensity>0) gotTrace[j]=true;
+			}
+		}
+		ArrayList<XYTrace> kept=new ArrayList<>();
+		for (int i=0; i<traces.length; i++) {
+			if (gotTrace[i]) {
+				kept.add(new XYTrace(traces[i], GraphType.line, ionTypes[i].toString()));
+			}
+		}
+		return kept.toArray(new XYTrace[kept.size()]);
 	}
 	
 	private static float score(SearchParameters parameters, double[] ions, FragmentIon[] ionTypes, float[] frequencies, Stripe stripe, boolean report) {

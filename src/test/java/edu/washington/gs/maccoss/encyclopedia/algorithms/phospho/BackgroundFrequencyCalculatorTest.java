@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -30,7 +31,11 @@ public class BackgroundFrequencyCalculatorTest {
 		StripeFileInterface stripefile=MzmlToDIAConverter.getFile(diaFile, parameters);
 		
 		BackgroundFrequencyCalculator calculator=BackgroundFrequencyCalculator.generateBackground(stripefile, library);
-
+		int[] counters=calculator.getRoundedMassCounters(500.730213);
+		for (int i=0; i<counters.length; i++) {
+			System.out.println(i+"\t"+counters[i]);
+		}
+		
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations("MQS[+80.0]LSLNK", parameters.getAAConstants());

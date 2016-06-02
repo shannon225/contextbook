@@ -231,7 +231,8 @@ public class ResultsBrowserPanel extends JPanel {
 						double[] intensities=trace.toArrays().y;
 						for (int i=0; i<intensities.length; i++) {
 							if (intensities[i]>0) {
-								traces.add(SkylineSGFilter.paddedSavitzkyGolaySmooth(trace));
+								//traces.add(SkylineSGFilter.paddedSavitzkyGolaySmooth(trace));
+								traces.add(trace);
 								break;
 							}
 						}

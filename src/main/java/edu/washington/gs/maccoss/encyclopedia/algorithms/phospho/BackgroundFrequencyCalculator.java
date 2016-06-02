@@ -36,6 +36,28 @@ public class BackgroundFrequencyCalculator {
 		this.numberOfLibraryEntries=numberOfLibraryEntries;
 	}
 	
+	/**
+	 * for display only
+	 * @param precursorMz
+	 * @return
+	 */
+	public int[] getRoundedMassCounters(double precursorMz) {
+		int index=Arrays.binarySearch(binBoundaries, precursorMz);
+		index=(-(index+1))-1;
+		
+		int[] counters=new int[1000];
+
+		double[] matches=sortedMapKeys[index];
+		for (int j=0; j<matches.length; j++) {
+			int count=binCounters[index].get(matches[j]);
+			int i=(int)Math.round(matches[j]);
+			if (i<counters.length) {
+				counters[i]+=count;
+			}
+		}
+		return counters;
+	}
+	
 	public static BackgroundFrequencyCalculator generateBackground(StripeFileInterface diafile, LibraryInterface library) throws DataFormatException, SQLException, IOException {
 		TDoubleHashSet boundaries=new TDoubleHashSet();
 		for (Range range : diafile.getRanges().keySet()) {

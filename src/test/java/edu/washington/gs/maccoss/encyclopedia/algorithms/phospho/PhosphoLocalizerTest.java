@@ -48,8 +48,8 @@ public class PhosphoLocalizerTest extends TestCase {
 			String seq=entry.getKey();
 			Pair<TFloatFloatHashMap, TFloatFloatHashMap> pair=entry.getValue();
 			Color color=shades.remove(0);
-			traces.add(new XYTrace(pair.x, GraphType.line, "ALL_"+seq, color, 5.0f));
-			traces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 3.0f));
+			//traces.add(new XYTrace(pair.x, GraphType.line, "ALL_"+seq, color, 5.0f));
+			traces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 5.0f));
 		}
 		
 		Charter.launchChart("RT", "Score", false, traces.toArray(new XYTrace[traces.size()]));
