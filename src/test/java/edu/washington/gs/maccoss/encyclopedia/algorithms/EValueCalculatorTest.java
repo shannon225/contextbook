@@ -1,9 +1,15 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import junit.framework.TestCase;
 
 public class EValueCalculatorTest extends TestCase {
+	public static void main(String[] args) {
+		TFloatFloatHashMap map=generateData();
+		EValueCalculator calculator=new EValueCalculator(map);
+		Charter.launchChart("score", "count", false, calculator.toTraces());
+	}
 	public void testEValue() {
 		TFloatFloatHashMap map=generateData();
 		EValueCalculator calculator=new EValueCalculator(map);
@@ -12,7 +18,7 @@ public class EValueCalculatorTest extends TestCase {
 		assertEquals(24.838194f, calculator.getNegLog10EValue(), 1e-4f);
 	}
 	
-	public TFloatFloatHashMap generateData() {
+	public static TFloatFloatHashMap generateData() {
 		TFloatFloatHashMap map=new TFloatFloatHashMap();
 		map.put(0.022711715f, 0f);
 		map.put(0.080598f, 0f);

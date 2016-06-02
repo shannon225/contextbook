@@ -214,8 +214,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					peptidePrep.setFloat(4, data.getRange().getStart());
 					peptidePrep.setFloat(5, data.getRange().getStop());
 					peptidePrep.setFloat(6, data.getTotalIntensity(minimumCorrelation));
-					peptidePrep.setFloat(7, data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, 3));
-					peptidePrep.setInt(8, data.getTotalQuantIons(minimumCorrelation));
+					peptidePrep.setInt(7, data.getTotalQuantIons(minimumCorrelation));
+					peptidePrep.setFloat(8, data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, 3));
 					peptidePrep.setFloat(9, bestCorrelation);
 					peptidePrep.setFloat(10, bestDeltaMass);
 					byte[] intensityByteArray=ByteConverter.toByteArray(data.getMedianChromatogram());

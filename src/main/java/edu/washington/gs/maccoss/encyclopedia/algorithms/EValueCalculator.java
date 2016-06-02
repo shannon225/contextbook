@@ -111,7 +111,7 @@ public class EValueCalculator {
 		ArrayList<XYPoint> points2=new ArrayList<XYPoint>();
 		for (int i=0; i<counts.length; i++) {
 			float intensity=(i/(float)counts.length)*maxScore;
-			points1.add(new XYPoint(intensity, counts[i]));
+			points1.add(new XYPoint(intensity, Log.protectedLog10(counts[i])));
 			points2.add(new XYPoint(intensity, (intensity*m+b)));
 		}
 		return new XYTrace[] {new XYTrace(points1, GraphType.area, "histogram"), new XYTrace(points2, GraphType.line, "fit")};
