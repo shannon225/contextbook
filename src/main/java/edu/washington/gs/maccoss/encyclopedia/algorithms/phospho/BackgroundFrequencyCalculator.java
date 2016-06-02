@@ -50,20 +50,24 @@ public class BackgroundFrequencyCalculator {
 			binCounters[i]=new TDoubleIntHashMap();
 		}
 		
-		ArrayList<LibraryEntry> allEntries=library.getAllEntries(false);
-		for (LibraryEntry entry : allEntries) {
-			double[] ions=entry.getMassArray();
-			int index=Arrays.binarySearch(binBoundaries, entry.getPrecursorMZ());
-			index=(-(index+1))-1;
+		int size=1;
+		if (library!=null) {
+			ArrayList<LibraryEntry> allEntries=library.getAllEntries(false);
+			size=allEntries.size();
+			for (LibraryEntry entry : allEntries) {
+				double[] ions=entry.getMassArray();
+				int index=Arrays.binarySearch(binBoundaries, entry.getPrecursorMZ());
+				index=(-(index+1))-1;
 
-			if (index<0||index>=binCounters.length) continue;
-			
-			for (double ion : ions) {
-				binCounters[index].adjustOrPutValue(ion, 1, 1);
+				if (index<0||index>=binCounters.length) continue;
+
+				for (double ion : ions) {
+					binCounters[index].adjustOrPutValue(ion, 1, 1);
+				}
 			}
 		}
 
-		return new BackgroundFrequencyCalculator(binBoundaries, binCounters, allEntries.size());
+		return new BackgroundFrequencyCalculator(binBoundaries, binCounters, size);
 	}
 	
 	public float[] getFrequencies(double[] ions, double precursorMz, MassTolerance tolerance) {
