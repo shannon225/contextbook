@@ -80,7 +80,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		Optional<TransitionRefinementData> spectrum=extractSpectrum(psmdata.getAccessions(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable);
 		Optional<PhosphoLocalizationData> phosphoData=Optional.empty();
 		if (params.isRunPhosphoLocalization()&&localizer.isPresent()) {
-			//phosphoData=Optional.ofNullable(runLocalization());
+			phosphoData=Optional.ofNullable(runLocalization());
 		}
 		if (spectrum.isPresent()) {
 			// FIXME need to not add duplicates!!!! for now just run SQL:

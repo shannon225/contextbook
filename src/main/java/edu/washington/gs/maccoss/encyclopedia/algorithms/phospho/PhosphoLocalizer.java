@@ -43,11 +43,10 @@ public class PhosphoLocalizer {
 	public PhosphoLocalizationData runPhosphoLocalization(PSMData psmdata, ArrayList<Stripe> stripes) {
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(psmdata.getPeptideModSeq(), params.getAAConstants());
 		if (permutations.size()==1) {
-			System.out.println("single\t"+psmdata.getPeptideModSeq());
+			System.out.println("single\t"+psmdata.getPeptideModSeq()+"\t1\t1\t0\t1000");
 			return new PhosphoLocalizationData(new HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>>());
 		} else {
 			PhosphoLocalizationData multiple=extractPhosphoForms(psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes);
-			System.out.println("multiple\t"+psmdata.getPeptideModSeq()+"\t"+multiple);
 			return multiple;
 		}
 	}
@@ -75,7 +74,9 @@ public class PhosphoLocalizer {
 		HashMap<String, FragmentIon[]> uniqueIons=getUniqueFragmentIons(precursorCharge, entryMap, params);
 		
 		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=new HashMap<String, Pair<TFloatFloatHashMap,TFloatFloatHashMap>>();
-		TFloatArrayList formsRT=new TFloatArrayList(); 
+		TFloatArrayList formsRT=new TFloatArrayList();
+		TFloatArrayList scores=new TFloatArrayList(); 
+		
 		for (Entry<String, FragmentationModel> entry : entryMap.entrySet()) {
 			String peptideModSeq=entry.getKey();
 			FragmentationModel model=entry.getValue();
@@ -111,20 +112,25 @@ public class PhosphoLocalizer {
 			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
 
 			XYTrace[] traces=getTraces(params, targets, stripes);
-			Charter.launchChart("Retention Time ("+peptideModSeq+")", "Intensity", true, traces);
+			//Charter.launchChart("Retention Time ("+peptideModSeq+")", "Intensity", true, traces);
 			
 			//Charter.launchChart("All Score", "Count", true, allCalculator.toTraces());
 			//Charter.launchChart("Unique Score", "Count", true, uniqueCalculator.toTraces());
 
 			float bestRT=uniqueCalculator.getMaxRT();
 			float allScore=allRtScoreMap.get(bestRT);
-			if (uniqueCalculator.getMaxRawScore()>5f) {
+			if (uniqueCalculator.getMaxRawScore()>2f) {
 				formsRT.add(bestRT);
+				scores.add(uniqueCalculator.getMaxRawScore());
 			}
 			//System.out.println("FINAL: "+peptideModSeq+" --> "+bestRT+"/"+allCalculator.getMaxRT()+", site specific: "+uniqueCalculator.getMaxRawScore()+" ("+uniqueCalculator.getNegLog10EValue(bestRT)+"), all: "+allScore+" ("+allCalculator.getNegLog10EValue(allScore)+")");
 		}
 
-		System.out.println(formsRT.size()+"\t"+(formsRT.max()-formsRT.min()));
+		if (formsRT.size()==0) {
+			System.out.println("multiple\t"+peptideModSeqs.get(0)+"\t"+peptideModSeqs.size()+"\t0\t0\t0");
+		} else {
+			System.out.println("multiple\t"+peptideModSeqs.get(0)+"\t"+peptideModSeqs.size()+"\t"+formsRT.size()+"\t"+(formsRT.max()-formsRT.min())+"\t"+scores.max());
+		}
 		return new PhosphoLocalizationData(allVsUniqueList);
 	}
 	
@@ -144,7 +150,7 @@ public class PhosphoLocalizer {
 				if (intensity>0) gotTrace[j]=true;
 			}
 		}
-		ArrayList<XYTrace> kept=new ArrayList<>();
+		ArrayList<XYTrace> kept=new ArrayList<XYTrace>();
 		for (int i=0; i<traces.length; i++) {
 			if (gotTrace[i]) {
 				kept.add(new XYTrace(traces[i], GraphType.line, ionTypes[i].toString()));
@@ -167,7 +173,7 @@ public class PhosphoLocalizer {
 				matches.add(ionTypes[i]);
 			}
 		}
-		if (report&&matches.size()>0) System.out.println(stripe.getScanStartTime()/60f+"\tFound:"+General.toString(matches)+" ("+matches.size()+"/"+ions.length+")\t"+(-logProb-Log.log10(frequencies.length)));
+		//if (report&&matches.size()>0) System.out.println(stripe.getScanStartTime()/60f+"\tFound:"+General.toString(matches)+" ("+matches.size()+"/"+ions.length+")\t"+(-logProb-Log.log10(frequencies.length)));
 		// neg log prob (normalized by N attempts)
 		return -logProb-Log.log10(frequencies.length);
 	}

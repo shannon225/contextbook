@@ -36,7 +36,7 @@ public class PeptideScoringResult {
 			Stripe stripe=pair.x.y;
 			float[] scores=pair.y;
 			float actualRT=stripe.getScanStartTime()/60f;
-			float modelRT=entry.getRetentionTime();
+			float modelRT=entry.getRetentionTime()/60f;
 			boolean passes=filter.getProbabilityFitsModel(actualRT, modelRT)>=RetentionTimeFilter.rejectionPValue;
 			if (passes) {
 				float deltaRT=Math.abs(actualRT-filter.getYValue(modelRT));
