@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -30,6 +31,9 @@ public class PhosphoLocalizerTest extends TestCase {
 		File libraryFile=new File("/Users/searleb/Documents/school/projects/VillenJ_Exactive_HumanPhosphoproteome.elib");
 		File diaFile=new File("/Users/searleb/Documents/school/projects/mzml/q06048_rl_MCF7_IMAC_GpX_3.dia");
 
+		//libraryFile=new File("/Users/searleb/Documents/school/projects/test.elib");
+		//diaFile=new File("/Users/searleb/Documents/school/projects/may_asms/phospho/22may2016_mcf7_dia_reserveA_01.mzML");
+
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		
 		LibraryFile library=new LibraryFile();
@@ -40,7 +44,14 @@ public class PhosphoLocalizerTest extends TestCase {
 		PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, library, parameters);
 		
 		PSMData psmdata=getPeptide(0);
+		
+		//ArrayList<String> permutations=new ArrayList<String>();
+		//permutations.add("DKRPLS[+79.96633]GPDVGTPQPAGLASGAK");
+		//permutations.add("DKRPLSGPDVGTPQPAGLAS[+79.96633]GAK");
+		//ArrayList<Stripe> stripes=stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false);
+		//PhosphoLocalizationData multiple=localizer.extractPhosphoForms(psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes);
 		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=localizer.runPhosphoLocalization(psmdata, stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false)).getTraces();
+		//HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=multiple.getTraces();
 		
 		ArrayList<Color> shades=new ArrayList<Color>(Arrays.asList(colors));
 		ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
@@ -52,7 +63,7 @@ public class PhosphoLocalizerTest extends TestCase {
 			traces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 5.0f));
 		}
 		
-		Charter.launchChart("RT", "Score", false, traces.toArray(new XYTrace[traces.size()]));
+		Charter.launchChart("RT", "Score", true, traces.toArray(new XYTrace[traces.size()]));
 	}
 
 	private static PSMData getPeptide(int index) {
@@ -75,7 +86,16 @@ public class PhosphoLocalizerTest extends TestCase {
 			precursorCharge=(byte)3;
 			peptideModSeq="A[+42.0]QRHS[+80.0]DSSLEEK";
 			retentionTime=517.8737f;
-			
+		} else if (index==3) {
+			precursorMZ=503.75254;
+			precursorCharge=(byte)4;
+			peptideModSeq="ASQEPS[+80.0]PKPGTEVIPAAPR";
+			retentionTime=1328.8877f;
+		} else if (index==4) {
+			precursorMZ=767.052219;
+			precursorCharge=(byte)3;
+			peptideModSeq="DKRPLS[+80.0]GPDVGTPQPAGLASGAK";
+			retentionTime=3686.5938f;
 		} else {
 			precursorMZ=503.272853;
 			precursorCharge=(byte)3;

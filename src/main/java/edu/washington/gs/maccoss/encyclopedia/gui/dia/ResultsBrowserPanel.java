@@ -265,7 +265,7 @@ public class ResultsBrowserPanel extends JPanel {
 							String seq=phosphoentry.getKey();
 							Pair<TFloatFloatHashMap, TFloatFloatHashMap> pair=phosphoentry.getValue();
 							Color color=i>=colors.length?colors[i-colors.length].brighter():colors[i];
-							phosphoTraces.add(new XYTrace(pair.x, GraphType.line, "ALL_"+seq, new Color(color.getRed(), color.getGreen(), color.getBlue(), 150), 4.0f));
+							//phosphoTraces.add(new XYTrace(pair.x, GraphType.line, "ALL_"+seq, new Color(color.getRed(), color.getGreen(), color.getBlue(), 150), 4.0f));
 							phosphoTraces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 2.0f));
 							i++;
 						}

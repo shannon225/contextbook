@@ -14,6 +14,15 @@ public class FragmentationModelTest extends TestCase {
 	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50),
 			DigestionEnzyme.getEnzyme("trypsin"));
 	
+	public void testModifiedFragmentation() {
+		String sequence="A[+42.0]QRHS[+79.96633]DSSLEEK";
+		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
+		FragmentIon[] ions=model.getPrimaryIonObjects(FragmentationType.CID, (byte)3);
+		for (int i=0; i<ions.length; i++) {
+			System.out.println(ions[i]+"\t"+ions[i].mass);
+		}
+	}
+	
 	public void testGetModifiedSequence() {
 		String sequence="PEPT[+80]IDER";
 		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
