@@ -1,6 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
+import java.util.ArrayList;
+
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 
 public class SkylineSGFilter {

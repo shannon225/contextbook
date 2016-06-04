@@ -26,6 +26,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
@@ -79,7 +80,7 @@ public class PhosphoLocalizer {
 		int round=0;
 		while (!entryMap.isEmpty()) {
 			round++;
-			if (round>4) break;
+			if (round>1) break;
 			
 			HashMap<String, FragmentIon[]> uniqueIons=getUniqueFragmentIons(precursorCharge, entryMap, params);
 			if (uniqueIons.size()==0) {
@@ -91,8 +92,10 @@ public class PhosphoLocalizer {
 				//break;
 			}
 			HashSet<FragmentIon> totalIons=new HashSet<FragmentIon>();
-			for (FragmentIon[] ions : uniqueIons.values()) {
-				totalIons.addAll(Arrays.asList(ions));
+
+			for (FragmentationModel model : entryMap.values()) {
+				FragmentIon[] allIonsTypes=model.getPrimaryIonObjects(params.getFragType(), precursorCharge);
+				totalIons.addAll(Arrays.asList(allIonsTypes));
 			}
 
 			for (Entry<String, FragmentIon[]> entry : uniqueIons.entrySet()) {
@@ -190,7 +193,8 @@ public class PhosphoLocalizer {
 		ArrayList<XYTrace> kept=new ArrayList<XYTrace>();
 		for (int i=0; i<traces.length; i++) {
 			if (gotTrace[i]) {
-				kept.add(new XYTrace(traces[i], GraphType.line, ionTypes[i].toString()));
+				XYTrace trace=new XYTrace(traces[i], GraphType.line, ionTypes[i].toString()+"["+Math.round(ionTypes[i].mass)+"]", null, 3.0f);
+				kept.add(SkylineSGFilter.paddedSavitzkyGolaySmooth(trace));
 			}
 		}
 		return kept.toArray(new XYTrace[kept.size()]);

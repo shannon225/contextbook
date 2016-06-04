@@ -46,14 +46,14 @@ public class SearchToBLIB {
 		}
 		
 		if (representativeJob==null) return;
-		
+
 		String filename=libFile.getName();
 		if (filename.lastIndexOf('.')>0) {
 			filename=filename.substring(0, filename.lastIndexOf('.'));
 		}
 		File bigFeatureFile=new File(representativeJob.getFeatureFile().getParentFile(), filename+"_concatenated_features.txt");
 		File bigPercolatorFile=new File(representativeJob.getFeatureFile().getParentFile(), filename+"_concatenated_results.txt");
-
+		
 		SearchParameters parameters=representativeJob.getParameters();
 		float threshold=parameters.getEffectivePercolatorThreshold();
 		try {
@@ -68,6 +68,7 @@ public class SearchToBLIB {
 				TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
 				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), bigFeatureFile, bigPercolatorFile, threshold);
 			}
+			
 			ArrayList<ScoredObject<String>> proteins=ParsimonyProteinGrouper.groupProtein(passingPeptides);
 			Logger.logLine("Identified "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) across all files at a "+(threshold*100.0f)+"% FDR threshold.");
 			

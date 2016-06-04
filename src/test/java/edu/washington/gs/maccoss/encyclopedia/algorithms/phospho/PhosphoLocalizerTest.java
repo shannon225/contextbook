@@ -28,11 +28,15 @@ import junit.framework.TestCase;
 public class PhosphoLocalizerTest extends TestCase {
 	public static final Color[] colors=new Color[] {Color.red, Color.blue, Color.green, Color.cyan, Color.magenta}; 
 	public static void main(String[] args) throws Exception {
-		File libraryFile=new File("/Users/searleb/Documents/school/projects/VillenJ_Exactive_HumanPhosphoproteome.elib");
-		File diaFile=new File("/Users/searleb/Documents/school/projects/mzml/q06048_rl_MCF7_IMAC_GpX_3.dia");
+		File libraryFile=new File("/Users/searleb/Documents/school/projects/may_asms/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
+		File diaFile=new File("/Users/searleb/Documents/school/projects/may_asms/hela_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
 
 		//libraryFile=new File("/Users/searleb/Documents/school/projects/test.elib");
 		//diaFile=new File("/Users/searleb/Documents/school/projects/may_asms/phospho/22may2016_mcf7_dia_reserveA_01.mzML");
+
+		//libraryFile=new File("/Users/searleb/Documents/school/projects/test.elib");
+		//diaFile=new File("/Users/searleb/Documents/school/projects/may_asms/phospho/22may2016_mcf7_dia_reserveA_01.mzML");
+
 
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		
@@ -43,7 +47,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		
 		PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, library, parameters);
 		
-		PSMData psmdata=getPeptide(0);
+		PSMData psmdata=getPeptide(10);
 		
 		//ArrayList<String> permutations=new ArrayList<String>();
 		//permutations.add("DKRPLS[+79.96633]GPDVGTPQPAGLASGAK");
@@ -61,6 +65,18 @@ public class PhosphoLocalizerTest extends TestCase {
 			Color color=shades.remove(0);
 			//traces.add(new XYTrace(pair.x, GraphType.line, "ALL_"+seq, color, 5.0f));
 			traces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 5.0f));
+		}
+		
+		Charter.launchChart("RT", "Score", true, traces.toArray(new XYTrace[traces.size()]));
+
+		shades=new ArrayList<Color>(Arrays.asList(colors));
+		traces=new ArrayList<XYTrace>();
+		for (Entry<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> entry : allVsUniqueList.entrySet()) {
+			String seq=entry.getKey();
+			Pair<TFloatFloatHashMap, TFloatFloatHashMap> pair=entry.getValue();
+			Color color=shades.remove(0);
+			traces.add(new XYTrace(pair.x, GraphType.line, "ALL_"+seq, color, 5.0f));
+			//traces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 5.0f));
 		}
 		
 		Charter.launchChart("RT", "Score", true, traces.toArray(new XYTrace[traces.size()]));
@@ -96,6 +112,11 @@ public class PhosphoLocalizerTest extends TestCase {
 			precursorCharge=(byte)3;
 			peptideModSeq="DKRPLS[+80.0]GPDVGTPQPAGLASGAK";
 			retentionTime=3686.5938f;
+		} else if (index==10) {
+			precursorMZ=492.241695;
+			precursorCharge=(byte)3;
+			peptideModSeq="KTAPTLS[+80.0]PEHWK";
+			retentionTime=3873.0986f;
 		} else {
 			precursorMZ=503.272853;
 			precursorCharge=(byte)3;
