@@ -1,7 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
-
 public class MassConstants {
 	public final static double neutronMass=1.0086649158849;
 	public final static double protonMass=1.00727646681290;

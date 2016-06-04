@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import junit.framework.TestCase;
 
 public class MassToleranceTest extends TestCase {

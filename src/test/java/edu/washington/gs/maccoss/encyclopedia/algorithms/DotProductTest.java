@@ -4,6 +4,7 @@ import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import junit.framework.TestCase;
 
 public class DotProductTest extends TestCase {

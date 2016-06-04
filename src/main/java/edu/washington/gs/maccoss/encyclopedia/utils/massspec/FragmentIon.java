@@ -1,6 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.datastructures;
-
-import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
+package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 public class FragmentIon implements Comparable<FragmentIon> {
 	private static final MassTolerance tolerance=new MassTolerance(0.1f); 

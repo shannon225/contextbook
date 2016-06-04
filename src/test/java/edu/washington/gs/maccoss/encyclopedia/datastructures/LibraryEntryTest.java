@@ -2,9 +2,10 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.HashSet;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import junit.framework.TestCase;
 
 public class LibraryEntryTest extends TestCase {

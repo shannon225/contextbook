@@ -37,8 +37,8 @@ public class EncyclopediaDDAScoringTask extends AbstractLibraryScoringTask {
 
 				float[] predictedIsotopeDistribution=getIsotopeDistribution(entry);
 				
-				boolean match=parameters.getPrecursorTolerance().equals(entry.getPrecursorMZ(), stripe.getIsolationWindowCenter());
-				match=match||parameters.getPrecursorTolerance().equals(entry.getPrecursorMZ()+MassConstants.protonMass, stripe.getIsolationWindowCenter());
+				boolean match=parameters.getPrecursorTolerance().equals(entry.getPrecursorMZ(), stripe.getPrecursorMZ());
+				match=match||parameters.getPrecursorTolerance().equals(entry.getPrecursorMZ()+MassConstants.protonMass, stripe.getPrecursorMZ());
 				if (match) {
 					float score=scorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
 					goodHits.add(new ScoredIndex(score, i));

@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.datastructures;
+package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 

@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms;
+package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.util.Arrays;
 import java.util.Optional;

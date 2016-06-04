@@ -8,9 +8,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -21,6 +21,9 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import junit.framework.TestCase;
@@ -49,12 +52,19 @@ public class PhosphoLocalizerTest extends TestCase {
 		
 		PSMData psmdata=getPeptide(10);
 		
+		ArrayList<Spectrum> precursors=new ArrayList<Spectrum>();
+		for (PrecursorScan stripe : stripefile.getPrecursors(0, Float.MAX_VALUE)) {
+			precursors.add(stripe);
+		}
+		Charter.launchChart("Retention Time", "Intensity", true, ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), precursors));
+		
 		//ArrayList<String> permutations=new ArrayList<String>();
 		//permutations.add("DKRPLS[+79.96633]GPDVGTPQPAGLASGAK");
 		//permutations.add("DKRPLSGPDVGTPQPAGLAS[+79.96633]GAK");
 		//ArrayList<Stripe> stripes=stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false);
 		//PhosphoLocalizationData multiple=localizer.extractPhosphoForms(psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes);
-		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=localizer.runPhosphoLocalization(psmdata, stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false)).getTraces();
+		ArrayList<Stripe> stripes=stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false);
+		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=localizer.runDIAPhosphoLocalization(psmdata, stripes).getTraces();
 		//HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=multiple.getTraces();
 		
 		ArrayList<Color> shades=new ArrayList<Color>(Arrays.asList(colors));
@@ -67,7 +77,7 @@ public class PhosphoLocalizerTest extends TestCase {
 			traces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 5.0f));
 		}
 		
-		Charter.launchChart("RT", "Score", true, traces.toArray(new XYTrace[traces.size()]));
+		Charter.launchChart("Retention Time (Site Specific)", "Score", true, traces.toArray(new XYTrace[traces.size()]));
 
 		shades=new ArrayList<Color>(Arrays.asList(colors));
 		traces=new ArrayList<XYTrace>();
@@ -79,7 +89,7 @@ public class PhosphoLocalizerTest extends TestCase {
 			//traces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 5.0f));
 		}
 		
-		Charter.launchChart("RT", "Score", true, traces.toArray(new XYTrace[traces.size()]));
+		Charter.launchChart("Retention Time (All Ions)", "Score", true, traces.toArray(new XYTrace[traces.size()]));
 	}
 
 	private static PSMData getPeptide(int index) {

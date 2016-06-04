@@ -1,8 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 
 //@Immutable
-public class PrecursorScan implements Comparable<PrecursorScan> {
+public class PrecursorScan implements Spectrum, Comparable<PrecursorScan> {
 	private final String spectrumName;
 	private final int spectrumIndex;
 	private final float scanStartTime;
@@ -15,6 +16,11 @@ public class PrecursorScan implements Comparable<PrecursorScan> {
 		this.scanStartTime=scanStartTime;
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
+	}
+	
+	@Override
+	public double getPrecursorMZ() {
+		return -1.0;
 	}
 
 	public String getSpectrumName() {

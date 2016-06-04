@@ -11,7 +11,6 @@ import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
@@ -24,6 +23,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
@@ -41,7 +43,15 @@ public class PhosphoLocalizer {
 		background=BackgroundFrequencyCalculator.generateBackground(diaFile, searchedLibrary);
 	}
 
-	public PhosphoLocalizationData runPhosphoLocalization(PSMData psmdata, ArrayList<Stripe> stripes) {
+	public PhosphoLocalizationData runDIAPhosphoLocalization(PSMData psmdata, ArrayList<Stripe> stripes) {
+		ArrayList<Spectrum> spectra=new ArrayList<Spectrum>();
+		for (Stripe stripe : stripes) {
+			spectra.add(stripe);
+		}
+		return runPhosphoLocalization(psmdata, spectra);
+	}
+
+	public PhosphoLocalizationData runPhosphoLocalization(PSMData psmdata, ArrayList<Spectrum> stripes) {
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(psmdata.getPeptideModSeq(), params.getAAConstants());
 		if (permutations.size()==1) {
 			System.out.println("single\t"+psmdata.getPeptideModSeq()+"\t1\t1\t0\t1000");
@@ -52,7 +62,7 @@ public class PhosphoLocalizer {
 		}
 	}
 
-	PhosphoLocalizationData extractPhosphoForms(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<Stripe> allScansInStripe) {
+	PhosphoLocalizationData extractPhosphoForms(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<Spectrum> allScansInStripe) {
 		float dutyCycle=1.0f;
 		for (Entry<Range, Float> entry : diaFile.getRanges().entrySet()) {
 			if (entry.getKey().contains((float)precursorMZ)) {
@@ -64,7 +74,7 @@ public class PhosphoLocalizer {
 		
 		float duration=5*60f; // search for 5 minutes
 
-		ArrayList<Stripe> stripes=getScanSubset(retentionTime-duration, retentionTime+duration, allScansInStripe);
+		ArrayList<Spectrum> stripes=getScanSubset(retentionTime-duration, retentionTime+duration, allScansInStripe);
 		
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : peptideModSeqs) {
@@ -123,7 +133,7 @@ public class PhosphoLocalizer {
 				float[] negLogProbsAll=new float[stripes.size()];
 				float[] negLogProbsSiteSpecific=new float[stripes.size()];
 				for (int i=0; i<stripes.size(); i++) {
-					Stripe spectrum=stripes.get(i);
+					Spectrum spectrum=stripes.get(i);
 					negLogProbsAll[i]=score(params, allIons, allIonsTypes, frequencies, spectrum, false);
 					negLogProbsSiteSpecific[i]=score(params, ions, targets, frequencies, spectrum, true);
 				}
@@ -135,7 +145,7 @@ public class PhosphoLocalizer {
 				TFloatFloatHashMap allRtScoreMap=new TFloatFloatHashMap();
 				TFloatFloatHashMap uniqueRtScoreMap=new TFloatFloatHashMap();
 				for (int i=0; i<negLogProbsSiteSpecific.length; i++) {
-					Stripe spectrum=stripes.get(i);
+					Spectrum spectrum=stripes.get(i);
 					allRtScoreMap.put(spectrum.getScanStartTime()/60f, negLogProbsAll[i]);
 					uniqueRtScoreMap.put(spectrum.getScanStartTime()/60f, negLogProbsSiteSpecific[i]);
 				}
@@ -143,9 +153,9 @@ public class PhosphoLocalizer {
 
 				EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
 
-				XYTrace[] traces=getTraces(params, targets, stripes);
+				XYTrace[] traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes);
 				Charter.launchChart("Retention Time (Site Specific)", "Intensity", true, traces);
-				traces=getTraces(params, totalIons.toArray(new FragmentIon[totalIons.size()]), stripes);
+				traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), totalIons.toArray(new FragmentIon[totalIons.size()]), stripes);
 				Charter.launchChart("Retention Time (All Ions)", "Intensity", true, traces);
 				
 				//Charter.launchChart("All Score", "Count", true, allCalculator.toTraces());
@@ -171,36 +181,7 @@ public class PhosphoLocalizer {
 		return new PhosphoLocalizationData(allVsUniqueList);
 	}
 	
-	static XYTrace[] getTraces(SearchParameters parameters, FragmentIon[] ionTypes, ArrayList<Stripe> stripes) {
-		@SuppressWarnings("unchecked")
-		ArrayList<XYPoint>[] traces=new ArrayList[ionTypes.length];
-		boolean[] gotTrace=new boolean[traces.length];
-		for (int i=0; i<traces.length; i++) {
-			traces[i]=new ArrayList<XYPoint>();
-		}
-		for (int i=0; i<stripes.size(); i++) {
-			Stripe spectrum=stripes.get(i);
-			double[] massArray=spectrum.getMassArray();
-			float[] intensityArray=spectrum.getIntensityArray();
-			for (int j=0; j<ionTypes.length; j++) {
-				if (ionTypes[j].index<=2) continue;
-				
-				float intensity=parameters.getFragmentTolerance().getIntegratedIntensity(massArray, intensityArray, ionTypes[j].mass);
-				traces[j].add(new XYPoint(spectrum.getScanStartTime()/60, intensity));
-				if (intensity>0) gotTrace[j]=true;
-			}
-		}
-		ArrayList<XYTrace> kept=new ArrayList<XYTrace>();
-		for (int i=0; i<traces.length; i++) {
-			if (gotTrace[i]) {
-				XYTrace trace=new XYTrace(traces[i], GraphType.line, ionTypes[i].toString()+"["+Math.round(ionTypes[i].mass)+"]", null, 3.0f);
-				kept.add(SkylineSGFilter.paddedSavitzkyGolaySmooth(trace));
-			}
-		}
-		return kept.toArray(new XYTrace[kept.size()]);
-	}
-	
-	private static float score(SearchParameters parameters, double[] ions, FragmentIon[] ionTypes, float[] frequencies, Stripe stripe, boolean report) {
+	private static float score(SearchParameters parameters, double[] ions, FragmentIon[] ionTypes, float[] frequencies, Spectrum stripe, boolean report) {
 		if (frequencies.length==0) return 0.0f;
 
 		double[] massArray=stripe.getMassArray();
@@ -244,9 +225,9 @@ public class PhosphoLocalizer {
 		return uniqueIons;
 	}
 	
-	public ArrayList<Stripe> getScanSubset(float minRT, float maxRT, ArrayList<Stripe> allScansInStripe) {
-		ArrayList<Stripe> subset=new ArrayList<Stripe>();
-		for (Stripe scan : allScansInStripe) {
+	public ArrayList<Spectrum> getScanSubset(float minRT, float maxRT, ArrayList<Spectrum> allScansInStripe) {
+		ArrayList<Spectrum> subset=new ArrayList<Spectrum>();
+		for (Spectrum scan : allScansInStripe) {
 			if (scan.getScanStartTime()>=minRT&&scan.getScanStartTime()<=maxRT) {
 				subset.add(scan);
 			}

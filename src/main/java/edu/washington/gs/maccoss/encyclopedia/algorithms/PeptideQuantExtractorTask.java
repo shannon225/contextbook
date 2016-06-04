@@ -101,7 +101,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	}
 
 	public PhosphoLocalizationData runLocalization() {
-		return localizer.get().runPhosphoLocalization(psmdata, stripes);
+		return localizer.get().runDIAPhosphoLocalization(psmdata, stripes);
 	}
 
 	private Optional<TransitionRefinementData> extractSpectrum(HashSet<String> accessions, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable) {

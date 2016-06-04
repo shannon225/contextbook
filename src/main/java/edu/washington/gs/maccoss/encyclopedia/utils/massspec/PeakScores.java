@@ -1,7 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentIon;
-
 public class PeakScores {
 	private final float score;
 	private final FragmentIon target;

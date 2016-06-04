@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.datastructures;
+package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 public enum FragmentationType {
 	CID, ETD, YONLY;

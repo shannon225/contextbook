@@ -3,8 +3,9 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 import java.io.File;
 import java.util.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 public class SearchParameters {
 

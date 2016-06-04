@@ -3,7 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 import java.util.HashMap;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import junit.framework.TestCase;
 
 public class SearchParameterParserTest extends TestCase {

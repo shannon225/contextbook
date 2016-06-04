@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 //@Immutable
@@ -83,6 +84,10 @@ public class Stripe implements Comparable<Stripe>, Spectrum {
 	
 	public float getIsolationWindowCenter() {
 		return (isolationWindowLower+isolationWindowUpper)/2.0f;
+	}
+	
+	public double getPrecursorMZ() {
+		return getIsolationWindowCenter();
 	}
 
 	public double[] getMassArray() {
