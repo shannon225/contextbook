@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,6 +34,7 @@ public class PhosphoLocalizerTest extends TestCase {
 	public static void main(String[] args) throws Exception {
 		File libraryFile=new File("/Users/searleb/Documents/school/projects/may_asms/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
 		File diaFile=new File("/Users/searleb/Documents/school/projects/may_asms/hela_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
+		//diaFile=new File("/Users/searleb/Documents/school/projects/mzml/q06048_rl_MCF7_IMAC_GpX_3.dia");
 
 		//libraryFile=new File("/Users/searleb/Documents/school/projects/test.elib");
 		//diaFile=new File("/Users/searleb/Documents/school/projects/may_asms/phospho/22may2016_mcf7_dia_reserveA_01.mzML");
@@ -49,15 +51,17 @@ public class PhosphoLocalizerTest extends TestCase {
 		StripeFileInterface stripefile=MzmlToDIAConverter.getFile(diaFile, parameters);
 		
 		PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, library, parameters);
-		
+
 		PSMData psmdata=getPeptide(10);
+		//PSMData psmdata=getPeptide(0);
 		
 		ArrayList<Spectrum> precursors=new ArrayList<Spectrum>();
-		for (PrecursorScan stripe : stripefile.getPrecursors(0, Float.MAX_VALUE)) {
+
+		float duration=1.5f*60f; // search for 5 minutes
+		for (PrecursorScan stripe : stripefile.getPrecursors(psmdata.getRetentionTime()-duration, psmdata.getRetentionTime()+duration)) {
 			precursors.add(stripe);
 		}
-		Charter.launchChart("Retention Time", "Intensity", true, ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), precursors));
-		
+		Charter.launchChart("Retention Time", "Intensity", false, new Dimension(800, 250), ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), precursors));
 		//ArrayList<String> permutations=new ArrayList<String>();
 		//permutations.add("DKRPLS[+79.96633]GPDVGTPQPAGLASGAK");
 		//permutations.add("DKRPLSGPDVGTPQPAGLAS[+79.96633]GAK");
@@ -74,10 +78,10 @@ public class PhosphoLocalizerTest extends TestCase {
 			Pair<TFloatFloatHashMap, TFloatFloatHashMap> pair=entry.getValue();
 			Color color=shades.remove(0);
 			//traces.add(new XYTrace(pair.x, GraphType.line, "ALL_"+seq, color, 5.0f));
-			traces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 5.0f));
+			traces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 3.0f));
 		}
 		
-		Charter.launchChart("Retention Time (Site Specific)", "Score", true, traces.toArray(new XYTrace[traces.size()]));
+		Charter.launchChart("Retention Time (Site Specific)", "Score", false, new Dimension(800, 250), traces.toArray(new XYTrace[traces.size()]));
 
 		shades=new ArrayList<Color>(Arrays.asList(colors));
 		traces=new ArrayList<XYTrace>();
@@ -85,11 +89,11 @@ public class PhosphoLocalizerTest extends TestCase {
 			String seq=entry.getKey();
 			Pair<TFloatFloatHashMap, TFloatFloatHashMap> pair=entry.getValue();
 			Color color=shades.remove(0);
-			traces.add(new XYTrace(pair.x, GraphType.line, "ALL_"+seq, color, 5.0f));
+			traces.add(new XYTrace(pair.x, GraphType.line, "ALL_"+seq, color, 3.0f));
 			//traces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 5.0f));
 		}
 		
-		Charter.launchChart("Retention Time (All Ions)", "Score", true, traces.toArray(new XYTrace[traces.size()]));
+		Charter.launchChart("Retention Time (All Ions)", "Score", false, new Dimension(800, 250), traces.toArray(new XYTrace[traces.size()]));
 	}
 
 	private static PSMData getPeptide(int index) {

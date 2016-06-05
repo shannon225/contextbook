@@ -69,7 +69,7 @@ public class Charter {
 				"Trace2");
 
 		ChartPanel chart=getChart("M/Z", "Intensity", false, trace, trace2);
-		// chart=getChart("M/Z", "Intensity", false, trace3);
+		chart=getChart("M/Z", "Intensity", false, trace3);
 		launchChart(chart, "Title!");
 
 		// writeAsPDF(chart.getChart(), new
@@ -114,6 +114,10 @@ public class Charter {
 			tabs.addTab(entry.getKey(), entry.getValue());
 		}
 		return tabs;
+	}
+
+	public static void launchChart(String xAxis, String yAxis, boolean displayLegend, Dimension dim, XYTrace... traces) {
+		launchComponent(getChart(xAxis, yAxis, displayLegend, traces), xAxis, dim);
 	}
 
 	public static void launchChart(String xAxis, String yAxis, boolean displayLegend, XYTrace... traces) {
@@ -188,7 +192,6 @@ public class Charter {
 			domainAxis.setLabelFont(font2);
 			domainAxis.setTickLabelFont(font);
 		}
-
 		return chartPanel;
 	}
 
@@ -231,7 +234,7 @@ public class Charter {
 
 			case line:
 				renderer=new XYLineAndShapeRenderer();
-				renderer.setSeriesStroke(0, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				renderer.setSeriesStroke(0, new BasicStroke(3.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 				((XYLineAndShapeRenderer) renderer).setBaseShapesVisible(false);
 
 				break;
@@ -318,6 +321,7 @@ public class Charter {
 
 		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
 		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
+		Font font3=new Font("News Gothic MT", Font.PLAIN, 18);
 		rangeAxis.setLabelFont(font2);
 		rangeAxis.setTickLabelFont(font);
 
@@ -330,13 +334,15 @@ public class Charter {
 		ChartPanel chartPanel=new ChartPanel(chart, false);
 		if (!displayLegend) {
 			chartPanel.getChart().removeLegend();
+		} else {
+			chartPanel.getChart().getLegend().setItemFont(font3);
 		}
 
 		chartPanel.setMinimumDrawWidth(0);
 		chartPanel.setMinimumDrawHeight(0);
 		chartPanel.setMaximumDrawWidth(Integer.MAX_VALUE);
 		chartPanel.setMaximumDrawHeight(Integer.MAX_VALUE);
-
+		
 		return chartPanel;
 	}
 

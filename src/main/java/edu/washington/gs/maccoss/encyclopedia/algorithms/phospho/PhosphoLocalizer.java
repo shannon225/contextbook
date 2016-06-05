@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
+import java.awt.Dimension;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -20,15 +21,12 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
@@ -72,7 +70,7 @@ public class PhosphoLocalizer {
 		}
 		int movingAverageLength=Math.round(params.getExpectedPeakWidth()/dutyCycle/2.0f);
 		
-		float duration=5*60f; // search for 5 minutes
+		float duration=1.5f*60f; // search for 5 minutes
 
 		ArrayList<Spectrum> stripes=getScanSubset(retentionTime-duration, retentionTime+duration, allScansInStripe);
 		
@@ -154,9 +152,9 @@ public class PhosphoLocalizer {
 				EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
 
 				XYTrace[] traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes);
-				Charter.launchChart("Retention Time (Site Specific)", "Intensity", true, traces);
+				Charter.launchChart("Retention Time (Site Specific)", "Intensity", false, new Dimension(800, 250), traces);
 				traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), totalIons.toArray(new FragmentIon[totalIons.size()]), stripes);
-				Charter.launchChart("Retention Time (All Ions)", "Intensity", true, traces);
+				Charter.launchChart("Retention Time (All Ions)", "Intensity", false, new Dimension(800, 250), traces);
 				
 				//Charter.launchChart("All Score", "Count", true, allCalculator.toTraces());
 				//Charter.launchChart("Unique Score", "Count", true, uniqueCalculator.toTraces());

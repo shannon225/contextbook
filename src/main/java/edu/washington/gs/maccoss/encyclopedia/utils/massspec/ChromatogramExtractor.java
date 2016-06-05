@@ -1,14 +1,17 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
+import java.awt.Color;
 import java.util.ArrayList;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 
 public class ChromatogramExtractor {
 	public static final byte[] isotopes=new byte[] {0, 1, 2};
+	public static final Color[] isotopeColors=new Color[] {Color.BLUE, Color.RED, new Color(0, 180, 0)};
 	public static XYTrace[] extractPrecursorChromatograms(MassTolerance tolerance, double precursorMz, byte charge, ArrayList<Spectrum> precursors) {
 		double[] targetMasses=new double[isotopes.length];
 		for (int i=0; i<targetMasses.length; i++) {
@@ -37,7 +40,7 @@ public class ChromatogramExtractor {
 			} else {
 				name="Precursor";
 			}
-			XYTrace trace=new XYTrace(traces[i], GraphType.line, name, null, 3.0f);
+			XYTrace trace=new XYTrace(traces[i], GraphType.line, name, isotopeColors[i], 3.0f);
 			kept.add(SkylineSGFilter.paddedSavitzkyGolaySmooth(trace));
 		}
 		return kept.toArray(new XYTrace[kept.size()]);
@@ -65,7 +68,8 @@ public class ChromatogramExtractor {
 		ArrayList<XYTrace> kept=new ArrayList<XYTrace>();
 		for (int i=0; i<traces.length; i++) {
 			if (gotTrace[i]) {
-				XYTrace trace=new XYTrace(traces[i], GraphType.line, ionTypes[i].toString(), null, 3.0f);
+				String name=ionTypes[i].toString();
+				XYTrace trace=new XYTrace(traces[i], GraphType.line, name, RandomGenerator.randomColor(name.hashCode()), 3.0f);
 				kept.add(SkylineSGFilter.paddedSavitzkyGolaySmooth(trace));
 			}
 		}
