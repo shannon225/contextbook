@@ -1,6 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
-import java.awt.Dimension;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -19,8 +18,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
@@ -53,13 +52,22 @@ public class PhosphoLocalizer {
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(psmdata.getPeptideModSeq(), params.getAAConstants());
 		if (permutations.size()==1) {
 			System.out.println("single\t"+psmdata.getPeptideModSeq()+"\t1\t1\t0\t1000");
-			return new PhosphoLocalizationData(new HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>>());
+			return new PhosphoLocalizationData(new HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>>(), new HashMap<String, XYTrace[]>());
 		} else {
 			PhosphoLocalizationData multiple=extractPhosphoForms(psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes);
 			return multiple;
 		}
 	}
 
+	/**
+	 * 
+	 * @param precursorMZ
+	 * @param precursorCharge
+	 * @param peptideModSeqs sequences are in phospho order left to right
+	 * @param retentionTime
+	 * @param allScansInStripe
+	 * @return
+	 */
 	PhosphoLocalizationData extractPhosphoForms(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<Spectrum> allScansInStripe) {
 		float dutyCycle=1.0f;
 		for (Entry<Range, Float> entry : diaFile.getRanges().entrySet()) {
@@ -70,7 +78,7 @@ public class PhosphoLocalizer {
 		}
 		int movingAverageLength=Math.round(params.getExpectedPeakWidth()/dutyCycle/2.0f);
 		
-		float duration=1.5f*60f; // search for 5 minutes
+		float duration=5f*60f; // search for 5 minutes
 
 		ArrayList<Spectrum> stripes=getScanSubset(retentionTime-duration, retentionTime+duration, allScansInStripe);
 		
@@ -79,104 +87,172 @@ public class PhosphoLocalizer {
 			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
 			entryMap.put(peptideModSeq, model);
 		}
+		
+		// Iteratively subtract out peaks in either direction.
+		// For SGS[+80]VS[+80]NYR, process:
+		// (S[+80])GSVSNYR, (SGS[+80])VSNYR, (SGSVS[+80])NYR (but drop the last)
+		// then from right to left:
+		// (S[+80]GSVS)NYR, SG(S[+80]VS)NYR, SGSV(S[+80])NYR (but drop the first)
+		//
+		// For multiply phosphorylated SGS[+80]VS[+80]NYR, process:
+		// (S[+80])G(S[+80])VSNYR, (S[+80])G(SVS[+80])NYR, (SGS[+80])V(S[+80])NYR (but drop the last)
+		// then from right to left:
+		// (S[+80])G(S[+80]VS)NYR, (S[+80]GS)V(S[+80])NYR, SG(S[+80])V(S[+80])NYR (but drop the first)
+		
+		ArrayList<Triplet<String, String, FragmentIon[]>> targetPeptidesLeft=new ArrayList<Triplet<String,String,FragmentIon[]>>(); 
+		// go left to right, drop the last
+		for (int i=0; i<peptideModSeqs.size()-1; i++) {
+			String targetPeptide=peptideModSeqs.get(i);
+			String targetPeptideName=getLeftAnnotation(targetPeptide);
 
-		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=new HashMap<String, Pair<TFloatFloatHashMap,TFloatFloatHashMap>>();
+			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
+			// shrink the number of unique ions subtractors to the pool of
+			// remaining sequences to the right
+			for (int j=peptideModSeqs.size()-1; j>=i; j--) {
+				String seq=peptideModSeqs.get(j);
+				modelBatch.put(seq, entryMap.get(seq));
+			}
+			FragmentIon[] targets=PhosphoLocalizer.getUniqueFragmentIons(targetPeptide, precursorCharge, modelBatch, params);
+			targetPeptidesLeft.add(new Triplet<String, String, FragmentIon[]>(targetPeptide, targetPeptideName, targets));
+		}
+		ArrayList<Triplet<String, String, FragmentIon[]>> targetPeptidesRight=new ArrayList<Triplet<String,String,FragmentIon[]>>(); 
+		// go right to left, drop the first
+		for (int i=peptideModSeqs.size()-1; i>=1; i--) {
+			String targetPeptide=peptideModSeqs.get(i);
+			String targetPeptideName=getRightAnnotation(targetPeptide);
+			
+			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
+			// shrink the number of unique ions subtractors to the pool of remaining sequences to the right
+			for (int j=peptideModSeqs.size()-1; j>=i; j--) {
+				String seq=peptideModSeqs.get(j);
+				modelBatch.put(seq, entryMap.get(seq));
+			}
+			FragmentIon[] targets=PhosphoLocalizer.getUniqueFragmentIons(targetPeptide, precursorCharge, modelBatch, params);
+			targetPeptidesRight.add(new Triplet<String, String, FragmentIon[]>(targetPeptide, targetPeptideName, targets));
+		}
+		
+		// interlay the peptides so we look at the most localizing first
+		ArrayList<Triplet<String, String, FragmentIon[]>> targetPeptides=new ArrayList<Triplet<String,String,FragmentIon[]>>();
+		for (int i=0; i<targetPeptidesLeft.size(); i++) {
+			targetPeptides.add(targetPeptidesLeft.get(i));
+			targetPeptides.add(targetPeptidesRight.get(i));
+		}
+
+		// actual localization
 		HashSet<FragmentIon> alreadyTaken=new HashSet<FragmentIon>();
+		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=new HashMap<String, Pair<TFloatFloatHashMap,TFloatFloatHashMap>>();
+		HashMap<String, XYTrace[]> uniqueFragmentIons=new HashMap<String, XYTrace[]>();
 		TFloatArrayList formsRT=new TFloatArrayList();
 		TFloatArrayList scores=new TFloatArrayList(); 
-		scores.add(0.0f);
-		int round=0;
-		while (!entryMap.isEmpty()) {
-			round++;
-			if (round>1) break;
+		
+		for (Triplet<String, String, FragmentIon[]> triplet : targetPeptides) {
+			String targetPeptide=triplet.x;
+			String targetPeptideName=triplet.y;
+			FragmentIon[] targets=triplet.z;
 			
-			HashMap<String, FragmentIon[]> uniqueIons=getUniqueFragmentIons(precursorCharge, entryMap, params);
-			if (uniqueIons.size()==0) {
-				break;
-			}
+			FragmentationModel model=entryMap.get(targetPeptide);
+			FragmentIon[] allIonsTypes=model.getPrimaryIonObjects(params.getFragType(), precursorCharge);
+			double[] allIons=FragmentIon.getMasses(allIonsTypes);
 			
-			if (uniqueIons.size()==1&&alreadyTaken.size()==0) {
-				// can't discriminate between forms at all
-				//break;
+			ArrayList<FragmentIon> allTargets=new ArrayList<FragmentIon>(Arrays.asList(targets));
+			allTargets.removeAll(alreadyTaken);
+			if (allTargets.size()==0) {
+				//System.out.println(targetPeptideName+" is degenerate");
+				continue;
 			}
-			HashSet<FragmentIon> totalIons=new HashSet<FragmentIon>();
+			targets=allTargets.toArray(new FragmentIon[allTargets.size()]);
+			double[] ions=FragmentIon.getMasses(targets);
+			
+			float[] frequencies=background.getFrequencies(ions, precursorMZ, params.getFragmentTolerance());
 
-			for (FragmentationModel model : entryMap.values()) {
-				FragmentIon[] allIonsTypes=model.getPrimaryIonObjects(params.getFragType(), precursorCharge);
-				totalIons.addAll(Arrays.asList(allIonsTypes));
+			float[] negLogProbsAll=new float[stripes.size()];
+			float[] negLogProbsSiteSpecific=new float[stripes.size()];
+			for (int k=0; k<stripes.size(); k++) {
+				Spectrum spectrum=stripes.get(k);
+				negLogProbsAll[k]=score(params, allIons, allIonsTypes, frequencies, spectrum, false);
+				negLogProbsSiteSpecific[k]=score(params, ions, targets, frequencies, spectrum, true);
+			}
+			negLogProbsAll=AbstractLibraryScoringTask.movingCenteredSum(negLogProbsAll, movingAverageLength);//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);
+			negLogProbsAll=General.subtract(negLogProbsAll, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
+			negLogProbsSiteSpecific=AbstractLibraryScoringTask.movingCenteredSum(negLogProbsSiteSpecific, movingAverageLength);//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
+			negLogProbsSiteSpecific=General.subtract(negLogProbsSiteSpecific, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
+
+			TFloatFloatHashMap allRtScoreMap=new TFloatFloatHashMap();
+			TFloatFloatHashMap uniqueRtScoreMap=new TFloatFloatHashMap();
+			for (int k=0; k<negLogProbsSiteSpecific.length; k++) {
+				Spectrum spectrum=stripes.get(k);
+				allRtScoreMap.put(spectrum.getScanStartTime()/60f, negLogProbsAll[k]);
+				uniqueRtScoreMap.put(spectrum.getScanStartTime()/60f, negLogProbsSiteSpecific[k]);
+			}
+			allVsUniqueList.put(targetPeptideName, new Pair<TFloatFloatHashMap, TFloatFloatHashMap>(allRtScoreMap, uniqueRtScoreMap));
+
+			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
+
+			XYTrace[] traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes);
+			uniqueFragmentIons.put(targetPeptideName, traces);
+			//Charter.launchChart("Retention Time (Site Specific)", "Intensity", false, new Dimension(800, 250), traces);
+			//traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), totalIons.toArray(new FragmentIon[totalIons.size()]), stripes);
+			//Charter.launchChart("Retention Time (All Ions)", "Intensity", false, new Dimension(800, 250), traces);
+			
+			//Charter.launchChart("All Score", "Count", true, allCalculator.toTraces());
+			//Charter.launchChart("Unique Score", "Count", true, uniqueCalculator.toTraces());
+
+			float bestRT=uniqueCalculator.getMaxRT();
+			if (uniqueCalculator.getMaxRawScore()>2f) {
+				formsRT.add(bestRT);
+				alreadyTaken.addAll(Arrays.asList(targets));
+				//System.out.println(targetPeptideName+" kept, score: "+uniqueCalculator.getMaxRawScore());
 			}
 
-			for (Entry<String, FragmentIon[]> entry : uniqueIons.entrySet()) {
-				String peptideModSeq=entry.getKey();
-				FragmentIon[] targets=entry.getValue();
-				FragmentationModel model=entryMap.remove(peptideModSeq);
-				FragmentIon[] allIonsTypes=model.getPrimaryIonObjects(params.getFragType(), precursorCharge);
-				double[] allIons=FragmentIon.getMasses(allIonsTypes);
-				
-				ArrayList<FragmentIon> allTargets=new ArrayList<FragmentIon>(Arrays.asList(targets));
-				allTargets.removeAll(alreadyTaken);
-				if (allTargets.size()==0) {
-					continue;
-				}
-				targets=allTargets.toArray(new FragmentIon[allTargets.size()]);
-				double[] ions=FragmentIon.getMasses(targets);
-
-				/*System.out.println(peptideModSeq+" +"+precursorCharge);
-				for (FragmentIon ion : targets) {
-					System.out.println("\t"+ion+", "+Math.round(ion.mass));
-				}*/
-				
-				float[] frequencies=background.getFrequencies(ions, precursorMZ, params.getFragmentTolerance());
-
-				float[] negLogProbsAll=new float[stripes.size()];
-				float[] negLogProbsSiteSpecific=new float[stripes.size()];
-				for (int i=0; i<stripes.size(); i++) {
-					Spectrum spectrum=stripes.get(i);
-					negLogProbsAll[i]=score(params, allIons, allIonsTypes, frequencies, spectrum, false);
-					negLogProbsSiteSpecific[i]=score(params, ions, targets, frequencies, spectrum, true);
-				}
-				negLogProbsAll=AbstractLibraryScoringTask.movingCenteredSum(negLogProbsAll, movingAverageLength);//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);
-				negLogProbsAll=General.subtract(negLogProbsAll, Log.log10(movingAverageLength)+Log.log10(peptideModSeqs.size()));
-				negLogProbsSiteSpecific=AbstractLibraryScoringTask.movingCenteredSum(negLogProbsSiteSpecific, movingAverageLength);//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
-				negLogProbsSiteSpecific=General.subtract(negLogProbsSiteSpecific, Log.log10(movingAverageLength)+Log.log10(peptideModSeqs.size()));
-
-				TFloatFloatHashMap allRtScoreMap=new TFloatFloatHashMap();
-				TFloatFloatHashMap uniqueRtScoreMap=new TFloatFloatHashMap();
-				for (int i=0; i<negLogProbsSiteSpecific.length; i++) {
-					Spectrum spectrum=stripes.get(i);
-					allRtScoreMap.put(spectrum.getScanStartTime()/60f, negLogProbsAll[i]);
-					uniqueRtScoreMap.put(spectrum.getScanStartTime()/60f, negLogProbsSiteSpecific[i]);
-				}
-				allVsUniqueList.put(peptideModSeq, new Pair<TFloatFloatHashMap, TFloatFloatHashMap>(allRtScoreMap, uniqueRtScoreMap));
-
-				EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
-
-				XYTrace[] traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes);
-				Charter.launchChart("Retention Time (Site Specific)", "Intensity", false, new Dimension(800, 250), traces);
-				traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), totalIons.toArray(new FragmentIon[totalIons.size()]), stripes);
-				Charter.launchChart("Retention Time (All Ions)", "Intensity", false, new Dimension(800, 250), traces);
-				
-				//Charter.launchChart("All Score", "Count", true, allCalculator.toTraces());
-				//Charter.launchChart("Unique Score", "Count", true, uniqueCalculator.toTraces());
-
-				float bestRT=uniqueCalculator.getMaxRT();
-				if (uniqueCalculator.getMaxRawScore()>2f) {
-					formsRT.add(bestRT);
-					alreadyTaken.addAll(Arrays.asList(targets));
-				}
-				if (round==1) {
-					scores.add(uniqueCalculator.getMaxRawScore());
-				}
-				//System.out.println("Score: "+uniqueCalculator.getMaxRawScore()+"\n");
-			}
+			scores.add(uniqueCalculator.getMaxRawScore());
 		}
+		
 		if (formsRT.size()==0) {
 			System.out.println("multiple\t"+peptideModSeqs.get(0)+"\t"+peptideModSeqs.size()+"\t0\t0\t0");
 		} else {
 			System.out.println("multiple\t"+peptideModSeqs.get(0)+"\t"+peptideModSeqs.size()+"\t"+formsRT.size()+"\t"+(formsRT.max()-formsRT.min())+"\t"+scores.max());
 		}
 		
-		return new PhosphoLocalizationData(allVsUniqueList);
+		return new PhosphoLocalizationData(allVsUniqueList, uniqueFragmentIons);
+	}
+
+	public static String getLeftAnnotation(String targetPeptide) {
+		StringBuilder sb=new StringBuilder(targetPeptide);
+		for (int j=0; j<sb.length(); j++) {
+			char c=sb.charAt(j);
+			if (c=='S'||c=='T'||c=='Y') {
+				sb.insert(j, "(");
+				break;
+			}
+		}
+		
+		String phospho="[+79.96633]";
+		int index=sb.lastIndexOf(phospho);
+		sb.insert(index+phospho.length(), ")");
+		String targetPeptideName=sb.toString();
+		return targetPeptideName;
+	}
+
+	public static String getRightAnnotation(String targetPeptide) {
+		StringBuilder sb=new StringBuilder(targetPeptide);
+		String phospho="[+79.96633]";
+		int index=sb.indexOf(phospho);
+		sb.insert(index-1, "(");
+
+		int lastIndex=sb.lastIndexOf(phospho);
+		for (int j=sb.length()-1; j>=0; j--) {
+			if (j<lastIndex+phospho.length()) {
+				sb.insert(lastIndex+phospho.length(), ")");
+				break;
+			}
+			char c=sb.charAt(j);
+			if (c=='S'||c=='T'||c=='Y') {
+				sb.insert(j+1, ")");
+				break;
+			}
+		}
+		String targetPeptideName=sb.toString();
+		return targetPeptideName;
 	}
 	
 	private static float score(SearchParameters parameters, double[] ions, FragmentIon[] ionTypes, float[] frequencies, Spectrum stripe, boolean report) {
@@ -196,6 +272,23 @@ public class PhosphoLocalizer {
 		//if (report&&matches.size()>0) System.out.println(stripe.getScanStartTime()/60f+"\tFound:"+General.toString(matches)+" ("+matches.size()+"/"+ions.length+")\t"+(-logProb-Log.log10(frequencies.length)));
 		// neg log prob (normalized by N attempts)
 		return -logProb-Log.log10(frequencies.length);
+	}
+
+	public static FragmentIon[] getUniqueFragmentIons(String peptideModSeq, byte precursorCharge, HashMap<String, FragmentationModel> availableModels, SearchParameters params) {
+		FragmentationModel unitEntry=availableModels.get(peptideModSeq);
+		HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(unitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge)));
+
+		for (Entry<String, FragmentationModel> otherEntry : availableModels.entrySet()) {
+			String otherPeptideModSeq=otherEntry.getKey();
+			if (!peptideModSeq.equals(otherPeptideModSeq)) {
+				FragmentationModel otherUnitEntry=otherEntry.getValue();
+				ions.removeAll(Arrays.asList(otherUnitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge)));
+			}
+		}
+
+		FragmentIon[] ionArray=ions.toArray(new FragmentIon[ions.size()]);
+		Arrays.sort(ionArray);
+		return ionArray;
 	}
 
 	public static HashMap<String, FragmentIon[]> getUniqueFragmentIons(byte precursorCharge, HashMap<String, FragmentationModel> entryMap, SearchParameters params) {

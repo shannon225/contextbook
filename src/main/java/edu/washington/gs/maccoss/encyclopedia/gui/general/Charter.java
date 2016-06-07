@@ -175,17 +175,20 @@ public class Charter {
 		chart.removeLegend();
 		chart.setBackgroundPaint(Color.white);
 
-		ChartPanel chartPanel=new ChartPanel(chart, false);
-		if (!displayLegend) {
-			chartPanel.getChart().removeLegend();
-		}
-
 		NumberAxis rangeAxis=(NumberAxis) plot.getRangeAxis();
 
 		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
 		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
+		Font font3=new Font("News Gothic MT", Font.PLAIN, 18);
 		rangeAxis.setLabelFont(font2);
 		rangeAxis.setTickLabelFont(font);
+
+		ChartPanel chartPanel=new ChartPanel(chart, false);
+		if (!displayLegend) {
+			chartPanel.getChart().removeLegend();
+		} else {
+			chartPanel.getChart().getLegend().setItemFont(font3);
+		}
 
 		NumberAxis domainAxis=(NumberAxis) ((XYPlot) plot).getDomainAxis();
 		if (domainAxis!=null) {

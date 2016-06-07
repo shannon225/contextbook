@@ -81,7 +81,7 @@ public class PhosphoLocalizerTest extends TestCase {
 			traces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 3.0f));
 		}
 		
-		Charter.launchChart("Retention Time (Site Specific)", "Score", false, new Dimension(800, 250), traces.toArray(new XYTrace[traces.size()]));
+		Charter.launchChart("Retention Time (Site Specific)", "Score", true, new Dimension(800, 250), traces.toArray(new XYTrace[traces.size()]));
 
 		shades=new ArrayList<Color>(Arrays.asList(colors));
 		traces=new ArrayList<XYTrace>();
@@ -93,7 +93,7 @@ public class PhosphoLocalizerTest extends TestCase {
 			//traces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 5.0f));
 		}
 		
-		Charter.launchChart("Retention Time (All Ions)", "Score", false, new Dimension(800, 250), traces.toArray(new XYTrace[traces.size()]));
+		Charter.launchChart("Retention Time (All Ions)", "Score", true, new Dimension(800, 250), traces.toArray(new XYTrace[traces.size()]));
 	}
 
 	private static PSMData getPeptide(int index) {
@@ -141,6 +141,35 @@ public class PhosphoLocalizerTest extends TestCase {
 		PSMData psmdata=new PSMData(new HashSet<String>(), 0, precursorMZ, precursorCharge, peptideModSeq, retentionTime, 0, 0, 12);
 		return psmdata;
 	}
+	
+	public void testGetUniqueFragmentIons() {
+		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
+		
+		byte precursorCharge=1;		
+		String peptide="S[+80.0]SSSR";
+		
+		ArrayList<String> peptideModSeqs=PhosphoPermuter.getPermutations(peptide, params.getAAConstants());
+
+		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
+		for (String peptideModSeq : peptideModSeqs) {
+			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+			entryMap.put(peptideModSeq, model);
+		}
+		
+		for (int i=0; i<peptideModSeqs.size()-1; i++) {
+			String targetPeptide=peptideModSeqs.get(i);
+			
+			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
+			// shrink the number of unique ions subtractors to the pool of remaining sequences to the right
+			for (int j=peptideModSeqs.size()-1; j>=i; j--) {
+				String seq=peptideModSeqs.get(j);
+				modelBatch.put(seq, entryMap.get(seq));
+				System.out.println(seq);
+			}
+			FragmentIon[] uniqueIons=PhosphoLocalizer.getUniqueFragmentIons(targetPeptide, precursorCharge, modelBatch, params);
+			System.out.println(targetPeptide+": "+General.toString(uniqueIons));
+		}
+	}
 
 	public void testIonGeneration() {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
@@ -159,18 +188,25 @@ public class PhosphoLocalizerTest extends TestCase {
 			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
 			entryMap.put(peptideModSeq, model);
 			FragmentIon[] ions=model.getPrimaryIonObjects(params.getFragType(), charge);
-			System.out.println(peptideModSeq);
+			//System.out.println(peptideModSeq);
 			for (int i=0; i<ions.length; i++) {
-				System.out.println(ions[i]+"\t"+ions[i].mass);
+				//System.out.println(ions[i]+"\t"+ions[i].mass);
 			}
-			System.out.println();
+			//System.out.println();
 		}
 
 		HashMap<String, FragmentIon[]> uniqueIons=PhosphoLocalizer.getUniqueFragmentIons(charge, entryMap, params);
 		
-		for (Entry<String, FragmentIon[]> entry : uniqueIons.entrySet()) {
-			System.out.println(entry.getKey());
-			System.out.println(General.toString(entry.getValue()));
-		}
+		assertEquals("b1-NL,b1,y3", General.toString(uniqueIons.get("S[+79.96633]SSR")));
+		assertEquals("b2,y2-NL,y2", General.toString(uniqueIons.get("SSS[+79.96633]R")));
+	}
+	
+	public void testAnnotations() {
+		assertEquals("(S[+79.96633])SSR", PhosphoLocalizer.getLeftAnnotation("S[+79.96633]SSR"));
+		assertEquals("(S[+79.96633]SS)R", PhosphoLocalizer.getRightAnnotation("S[+79.96633]SSR"));
+		assertEquals("(SS[+79.96633])SR", PhosphoLocalizer.getLeftAnnotation("SS[+79.96633]SR"));
+		assertEquals("S(S[+79.96633]S)R", PhosphoLocalizer.getRightAnnotation("SS[+79.96633]SR"));
+		assertEquals("(SSS[+79.96633])R", PhosphoLocalizer.getLeftAnnotation("SSS[+79.96633]R"));
+		assertEquals("SS(S[+79.96633])R", PhosphoLocalizer.getRightAnnotation("SSS[+79.96633]R"));
 	}
 }

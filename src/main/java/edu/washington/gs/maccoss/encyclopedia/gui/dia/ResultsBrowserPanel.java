@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.TreeMap;
 
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -58,7 +59,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class ResultsBrowserPanel extends JPanel {
@@ -238,7 +238,7 @@ public class ResultsBrowserPanel extends JPanel {
 						}
 					}
 				}
-				ChartPanel chart=Charter.getChart("RT ("+entry.getPrecursorMZ()+" M/Z)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
+				ChartPanel chart=Charter.getChart("Retention Time", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
 				rawSplit.setTopComponent(chart);
 
 				PhosphoLocalizer localizer=new PhosphoLocalizer(dia, library, parameters);
@@ -258,8 +258,11 @@ public class ResultsBrowserPanel extends JPanel {
 					}
 					if (phosphoData.isPresent()) {
 						HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=phosphoData.get().getTraces();
+						HashMap<String, XYTrace[]> uniqueFragmentIons=phosphoData.get().getUniqueFragmentIons();
 						
 						ArrayList<XYTrace> phosphoTraces=new ArrayList<XYTrace>();
+
+						TreeMap<String, ChartPanel> panelMap=new TreeMap<String, ChartPanel>();
 						int i=0;
 						for (Entry<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> phosphoentry : allVsUniqueList.entrySet()) {
 							String seq=phosphoentry.getKey();
@@ -268,12 +271,16 @@ public class ResultsBrowserPanel extends JPanel {
 							//phosphoTraces.add(new XYTrace(pair.x, GraphType.line, "ALL_"+seq, new Color(color.getRed(), color.getGreen(), color.getBlue(), 150), 4.0f));
 							phosphoTraces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 2.0f));
 							i++;
+							
+							XYTrace[] uniqueFragments=uniqueFragmentIons.get(seq);
+							panelMap.put(seq, Charter.getChart("Retention Time", "Intensity", true, uniqueFragments));
 						}
 						ChartPanel phosphoPane=Charter.getChart("Retention Time", "Score", true, phosphoTraces.toArray(new XYTrace[phosphoTraces.size()]));
 						ValueAxis axis=phosphoPane.getChart().getXYPlot().getRangeAxis();
 						org.jfree.data.Range range=axis.getRange();
 						axis.setRange(new org.jfree.data.Range(0.0f, Math.max(2.0f, range.getUpperBound())));
 						tabs.add("Phospho Localization", phosphoPane);
+						tabs.add("Unique Fragment Ions", Charter.getTabbedChartPane(panelMap));
 					}
 					tabs.add("Quantification", peakPickingSplit);
 					
