@@ -58,6 +58,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
@@ -259,6 +260,7 @@ public class ResultsBrowserPanel extends JPanel {
 					if (phosphoData.isPresent()) {
 						HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=phosphoData.get().getTraces();
 						HashMap<String, XYTrace[]> uniqueFragmentIons=phosphoData.get().getUniqueFragmentIons();
+						HashMap<String, XYPoint> localizationScores=phosphoData.get().getLocalizationScores();
 						
 						ArrayList<XYTrace> phosphoTraces=new ArrayList<XYTrace>();
 
@@ -270,10 +272,14 @@ public class ResultsBrowserPanel extends JPanel {
 							Color color=i>=colors.length?colors[i-colors.length].brighter():colors[i];
 							//phosphoTraces.add(new XYTrace(pair.x, GraphType.line, "ALL_"+seq, new Color(color.getRed(), color.getGreen(), color.getBlue(), 150), 4.0f));
 							phosphoTraces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 2.0f));
+
+							XYPoint point=localizationScores.get(seq);
+							phosphoTraces.add(new XYTrace(new double[] {point.x}, new double[] {point.y}, GraphType.point, "center", color, 2.0f));
 							i++;
 							
 							XYTrace[] uniqueFragments=uniqueFragmentIons.get(seq);
-							panelMap.put(seq, Charter.getChart("Retention Time", "Intensity", true, uniqueFragments));
+							
+							panelMap.put(seq+" ("+(Math.round(point.y*10.0f)/10.0f)+")", Charter.getChart("Retention Time", "Intensity", true, uniqueFragments));
 						}
 						ChartPanel phosphoPane=Charter.getChart("Retention Time", "Score", true, phosphoTraces.toArray(new XYTrace[phosphoTraces.size()]));
 						ValueAxis axis=phosphoPane.getChart().getXYPlot().getRangeAxis();

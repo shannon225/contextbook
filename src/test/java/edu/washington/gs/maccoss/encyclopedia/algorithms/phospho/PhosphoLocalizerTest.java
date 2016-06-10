@@ -81,7 +81,7 @@ public class PhosphoLocalizerTest extends TestCase {
 			traces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 3.0f));
 		}
 		
-		Charter.launchChart("Retention Time (Site Specific)", "Score", true, new Dimension(800, 250), traces.toArray(new XYTrace[traces.size()]));
+		Charter.launchChart("Retention Time (Site Specific)", "Score", false, new Dimension(800, 250), traces.toArray(new XYTrace[traces.size()]));
 
 		shades=new ArrayList<Color>(Arrays.asList(colors));
 		traces=new ArrayList<XYTrace>();
@@ -93,7 +93,7 @@ public class PhosphoLocalizerTest extends TestCase {
 			//traces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 5.0f));
 		}
 		
-		Charter.launchChart("Retention Time (All Ions)", "Score", true, new Dimension(800, 250), traces.toArray(new XYTrace[traces.size()]));
+		Charter.launchChart("Retention Time (All Ions)", "Score", false, new Dimension(800, 250), traces.toArray(new XYTrace[traces.size()]));
 	}
 
 	private static PSMData getPeptide(int index) {

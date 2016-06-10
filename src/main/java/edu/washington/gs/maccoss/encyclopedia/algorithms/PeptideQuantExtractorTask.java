@@ -80,13 +80,13 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		Optional<TransitionRefinementData> spectrum=extractSpectrum(psmdata.getAccessions(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable);
 		Optional<PhosphoLocalizationData> phosphoData=Optional.empty();
 		if (params.isRunPhosphoLocalization()&&localizer.isPresent()) {
-			//phosphoData=Optional.ofNullable(runLocalization());
+			phosphoData=Optional.ofNullable(runLocalization());
 		}
 		if (spectrum.isPresent()) {
 			// FIXME need to not add duplicates!!!! for now just run SQL:
 			// delete from entries where RowId not in (SELECT MIN(RowId) FROM entries GROUP BY PeptideModSeq, PrecursorCharge)
 			TransitionRefinementData data=spectrum.get();
-			data.setPhosphoLocalizationData(phosphoData);
+			//data.setPhosphoLocalizationData(phosphoData);
 			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(filename, psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), data.getMassArray().get(), data.getIntensityArray().get(), data);
 			if (limitToQuantifiable) {
 				if (entry.getIonCount()<4||entry.getTIC()<1.0f) {

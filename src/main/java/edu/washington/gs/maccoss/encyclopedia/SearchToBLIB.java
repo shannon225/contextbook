@@ -6,12 +6,18 @@ import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.TreeMap;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
@@ -19,18 +25,95 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 
 public class SearchToBLIB {
+	public static void main(String[] args) {
+		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
+		if (arguments.size()==0) {
+			SearchGUIMain.runGUI(false);
+			
+		} else if (arguments.containsKey("-browser")) {
+			DIABrowser.main(args);
+			
+		} else if (arguments.containsKey("-pecan")) {
+			Pecanpie.main(args);
+			
+		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
+			Logger.logLine("Encyclopedia Help");
+			Logger.logLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
+			Logger.logLine("Required Parameters: ");
+			Logger.logLine("\t-i\tinput .DIA or .MZML file");
+			Logger.logLine("\t-l\tlibrary .ELIB file");
+			Logger.logLine("Other Parameters: ");
+			Logger.logLine("\t-pecan\trun Pecanpie (use -pecan -h for Pecan help)");
+			Logger.logLine("\t-o\toutput report file (default: [input file].pecan.txt)");
+			
+			TreeMap<String, String> defaults=new TreeMap<String, String>(PecanParameterParser.getDefaultParameters());
+			for (Entry<String, String> entry : defaults.entrySet()) {
+				Logger.logLine("\t"+entry.getKey()+"\t(default: "+entry.getValue()+")");
+			}
+			System.exit(1);
+			
+		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
+			Logger.logLine("Encyclopedia version "+PecanOneScoringFactory.version);
+			System.exit(1);
+			
+		} else {
+			if (!arguments.containsKey("-i")||!arguments.containsKey("-l")) {
+				Logger.errorLine("You are required to specify an input file (-i) and a library file (-l)");
+				System.exit(1);
+			}
+
+			File diaFile=new File(arguments.get("-i"));
+			File libraryFile=new File(arguments.get("-l"));
+
+			File outputFile;
+			if (arguments.containsKey("-o")) {
+				outputFile=new File(arguments.get("-o"));
+			} else {
+				outputFile=new File(diaFile.getAbsolutePath()+".encyclopedia.txt");
+			}
+
+			File featureFile=new File(diaFile.getAbsolutePath()+".features.txt");
+
+			SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
+			LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
+			Logger.logLine("Encyclopedia version "+factory.getVersion());
+
+			Logger.logLine("Parameters:");
+			Logger.logLine(" -i "+diaFile.getAbsolutePath());
+			Logger.logLine(" -l "+libraryFile.getAbsolutePath());
+			Logger.logLine(" -t "+arguments.get("-t"));
+			Logger.logLine(" -o "+outputFile.getAbsolutePath());
+			Logger.logLine(parameters.toString());
+
+			try {
+				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
+				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, featureFile, outputFile, factory);
+				ArrayList<SearchJobData> pecanJobs=new ArrayList<SearchJobData>();
+				pecanJobs.add(job);
+				convert(new EmptyProgressIndicator(), pecanJobs, outputFile, false);
+			} catch (Exception e) {
+				System.err.println("Encountered Fatal Error!");
+				e.printStackTrace();
+			}
+		}
+	}
 	public static void convert(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File libFile, boolean writeBlib) {
 		ArrayList<File> featureFiles=new ArrayList<File>();
 		SearchJobData representativeJob=null;

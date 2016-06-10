@@ -20,6 +20,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
@@ -52,7 +53,7 @@ public class PhosphoLocalizer {
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(psmdata.getPeptideModSeq(), params.getAAConstants());
 		if (permutations.size()==1) {
 			System.out.println("single\t"+psmdata.getPeptideModSeq()+"\t1\t1\t0\t1000");
-			return new PhosphoLocalizationData(new HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>>(), new HashMap<String, XYTrace[]>());
+			return new PhosphoLocalizationData(new HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>>(), new HashMap<String, XYTrace[]>(), new HashMap<String, XYPoint>());
 		} else {
 			PhosphoLocalizationData multiple=extractPhosphoForms(psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes);
 			return multiple;
@@ -140,8 +141,11 @@ public class PhosphoLocalizer {
 
 		// actual localization
 		HashSet<FragmentIon> alreadyTaken=new HashSet<FragmentIon>();
+		
 		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=new HashMap<String, Pair<TFloatFloatHashMap,TFloatFloatHashMap>>();
 		HashMap<String, XYTrace[]> uniqueFragmentIons=new HashMap<String, XYTrace[]>();
+		HashMap<String, XYPoint> localizationScores=new HashMap<String, XYPoint>();
+		
 		TFloatArrayList formsRT=new TFloatArrayList();
 		TFloatArrayList scores=new TFloatArrayList(); 
 		
@@ -198,13 +202,15 @@ public class PhosphoLocalizer {
 			//Charter.launchChart("Unique Score", "Count", true, uniqueCalculator.toTraces());
 
 			float bestRT=uniqueCalculator.getMaxRT();
-			if (uniqueCalculator.getMaxRawScore()>2f) {
+			float maxRawScore=uniqueCalculator.getMaxRawScore();
+			localizationScores.put(targetPeptideName, new XYPoint(bestRT, maxRawScore));
+			if (maxRawScore>2f) {
 				formsRT.add(bestRT);
 				alreadyTaken.addAll(Arrays.asList(targets));
 				//System.out.println(targetPeptideName+" kept, score: "+uniqueCalculator.getMaxRawScore());
 			}
 
-			scores.add(uniqueCalculator.getMaxRawScore());
+			scores.add(maxRawScore);
 		}
 		
 		if (formsRT.size()==0) {
@@ -213,7 +219,7 @@ public class PhosphoLocalizer {
 			System.out.println("multiple\t"+peptideModSeqs.get(0)+"\t"+peptideModSeqs.size()+"\t"+formsRT.size()+"\t"+(formsRT.max()-formsRT.min())+"\t"+scores.max());
 		}
 		
-		return new PhosphoLocalizationData(allVsUniqueList, uniqueFragmentIons);
+		return new PhosphoLocalizationData(allVsUniqueList, uniqueFragmentIons, localizationScores);
 	}
 
 	public static String getLeftAnnotation(String targetPeptide) {
