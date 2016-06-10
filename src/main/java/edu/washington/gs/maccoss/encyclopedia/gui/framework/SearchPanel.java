@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
+import java.awt.Frame;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -36,6 +37,7 @@ import javax.swing.table.TableColumn;
 
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.FeatureGrapher;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
@@ -47,8 +49,10 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.LogConsole;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.ProgressRenderer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
 
 public class SearchPanel extends JPanel {
@@ -291,12 +295,24 @@ public class SearchPanel extends JPanel {
 				dialog.setVisible(false);
 				dialog.dispose();
 
-				File blibFile=blibFileChooser.getFile();
-				File irtFile=iRTFileChooser.getFile();
-				File fastaFile=fastaFileChooser.getFile();
+				final File blibFile=blibFileChooser.getFile();
+				final File irtFile=iRTFileChooser.getFile();
+				final File fastaFile=fastaFileChooser.getFile();
 				
 				if (blibFile!=null&&blibFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
-					BlibToLibraryConverter.convert(blibFile, Optional.ofNullable(irtFile), fastaFile);
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(SearchPanel.this), "Please wait...", "Reading BLIB File") {
+						@Override
+						protected Nothing doInBackgroundForReal() throws Exception {
+							BlibToLibraryConverter.convert(blibFile, Optional.ofNullable(irtFile), fastaFile);
+							Logger.logLine("Finished reading "+blibFile.getName());
+							return Nothing.NOTHING;
+						}
+						@Override
+						protected void doneForReal(Nothing t) {
+						}
+					};
+					worker.execute();
+					
 				} else {
 					JOptionPane.showMessageDialog(frame, "You must specify a BLIB and a FASTA file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
 				}
@@ -329,12 +345,12 @@ public class SearchPanel extends JPanel {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(SearchPanel.this);
 		final JDialog dialog=new JDialog(frame, "Convert NIST MSP to Library", true);
 		
-		final FileChooserPanel blibFileChooser=new FileChooserPanel(null, "MSP", new SimpleFilenameFilter(".msp"), true);
+		final FileChooserPanel mspFileChooser=new FileChooserPanel(null, "MSP", new SimpleFilenameFilter(".msp"), true);
 		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);
 
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
-		options.add(blibFileChooser);
+		options.add(mspFileChooser);
 		options.add(fastaFileChooser);
 		
 		JPanel buttons=new JPanel();
@@ -346,17 +362,23 @@ public class SearchPanel extends JPanel {
 				dialog.setVisible(false);
 				dialog.dispose();
 
-				File blibFile=blibFileChooser.getFile();
-				File fastaFile=fastaFileChooser.getFile();
+				final File mspFile=mspFileChooser.getFile();
+				final File fastaFile=fastaFileChooser.getFile();
 				
-				if (blibFile!=null&&blibFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
-					try {
-						MSPReader.convertMSP(blibFile, fastaFile);
-					} catch (IOException ioe) {
-						throw new EncyclopediaException("ELIB writing IO error!", ioe);
-					} catch (SQLException sqle) {
-						throw new EncyclopediaException("ELIB writing SQL error!", sqle);
-					}
+				if (mspFile!=null&&mspFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(SearchPanel.this), "Please wait...", "Reading MSP File") {
+						@Override
+						protected Nothing doInBackgroundForReal() throws Exception {
+							MSPReader.convertMSP(mspFile, fastaFile);
+							Logger.logLine("Finished reading "+mspFile.getName());
+							return Nothing.NOTHING;
+						}
+
+						@Override
+						protected void doneForReal(Nothing t) {
+						}
+					};
+					worker.execute();
 				} else {
 					JOptionPane.showMessageDialog(frame, "You must specify a MSP and a FASTA file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
 				}

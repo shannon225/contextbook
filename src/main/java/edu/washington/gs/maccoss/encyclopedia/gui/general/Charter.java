@@ -237,7 +237,7 @@ public class Charter {
 
 			case line:
 				renderer=new XYLineAndShapeRenderer();
-				renderer.setSeriesStroke(0, new BasicStroke(3.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				renderer.setSeriesStroke(0, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 				((XYLineAndShapeRenderer) renderer).setBaseShapesVisible(false);
 
 				break;
