@@ -250,7 +250,7 @@ public class ResultsBrowserPanel extends JPanel {
 					HashMap<String, ChartPanel> panels=TransitionRefiner.getChartPanels(data);
 					peakPickingSplit.setLeftComponent(panels.get("median"));
 					peakPickingSplit.setRightComponent(panels.get("unnormalized"));
-
+					
 					JTabbedPane tabs=new JTabbedPane();
 					
 					Optional<PhosphoLocalizationData> phosphoData=Optional.empty();

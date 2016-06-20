@@ -24,8 +24,8 @@ public class MedianInterpolatorTest extends TestCase {
 		rts.addAll(getLowNoiseData());
 		//rts.addAll(getLowNoiseData());
 		//rts=getSyntheticData();
-		//rts=getPhosphoData();
-		rts=getCleanData();
+		rts=getPhosphoData();
+		//rts=getCleanData();
 		RetentionTimeFilter filter=new RetentionTimeFilter(rts);
 		filter.plot(rts);
 	}

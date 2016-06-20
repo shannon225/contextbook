@@ -48,7 +48,7 @@ public class PivotTableGenerator {
 			}
 		}
 		
-		int binCount=data.length/20;
+		int binCount=data.length/25;
 		
 		return createPivotTable(data, actualMin, actualMax, (actualMax-actualMin)/binCount);
 	}

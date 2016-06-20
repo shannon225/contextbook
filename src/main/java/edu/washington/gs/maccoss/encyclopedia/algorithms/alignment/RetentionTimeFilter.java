@@ -20,6 +20,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.UnitDistr
 import gnu.trove.list.array.TFloatArrayList;
 
 public class RetentionTimeFilter {
+	public static final float maxDeltaForHistogram=10.0f; // in minutes
 	public static final float rejectionPValue=0.05f;
 	private final Function rtWarper;
 	private final ProphetMixtureModel model;
@@ -44,7 +45,10 @@ public class RetentionTimeFilter {
 			float actualRT=(float)xyPoint.y;
 			float modelRT=rtWarper.getYValue((float)xyPoint.x);
 			float delta=actualRT-modelRT;
-			deltas.add(delta);
+			
+			if (delta>-maxDeltaForHistogram&&delta<maxDeltaForHistogram) {
+				deltas.add(delta);
+			}
 			
 			float prob=getProbabilityFitsModel((float)xyPoint.y, (float)xyPoint.x);
 			if (prob>=rejectionPValue) {
@@ -87,6 +91,7 @@ public class RetentionTimeFilter {
 			distSum+=xyPoint.getY();
 		}
 		double normalizer=distSum>0?(histSum*numPoints)/(distSum*histogram.size()):1.0;
+		
 		ArrayList<XYPoint> normPositivePoints=new ArrayList<XYPoint>();
 		for (XYPoint xyPoint : positivePoints) {
 			normPositivePoints.add(new XYPoint(xyPoint.x, xyPoint.y*normalizer));
