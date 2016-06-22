@@ -5,11 +5,14 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.HashMap;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
@@ -46,8 +49,14 @@ public class DIABrowser {
 						System.exit(0);
 					}
 				});
+				
+				HashMap<String, String> map=SearchParameterParser.getDefaultParameters();
+				map.put("-runPhosphoLocalization", "true");
+				map.put("-deconvoluteOverlappingWindows", "true");
+				map.put("-fixed", "");
+				SearchParameters parameters=SearchParameterParser.parseParameters(map);
 
-				f.getContentPane().add(new ResultsBrowserPanel(), BorderLayout.CENTER);
+				f.getContentPane().add(new ResultsBrowserPanel(parameters), BorderLayout.CENTER);
 
 				f.pack();
 				f.setSize(new Dimension(1900, 1030)); // for 1920x1080

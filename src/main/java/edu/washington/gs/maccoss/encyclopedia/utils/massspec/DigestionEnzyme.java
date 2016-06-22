@@ -25,6 +25,7 @@ public class DigestionEnzyme {
 		enzymes.add("PepsinA");
 		enzymes.add("Elastase");
 		enzymes.add("Thermolysin");
+		enzymes.add("No Enzyme");
 		return enzymes;
 	}
 	
@@ -45,6 +46,10 @@ public class DigestionEnzyme {
 			c.addAll(AAs);
 			
 			return new DigestionEnzyme("Trypsin/p", n, c);
+			
+		} else if ("No Enzyme".equalsIgnoreCase(enzymeName)) {
+			
+			return new DigestionEnzyme("No Enzyme", n, c);
 			
 		} else if ("None".equalsIgnoreCase(enzymeName)) {
 			

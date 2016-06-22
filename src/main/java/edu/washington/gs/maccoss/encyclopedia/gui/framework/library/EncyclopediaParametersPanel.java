@@ -43,6 +43,7 @@ import gnu.trove.map.hash.TCharFloatHashMap;
 public class EncyclopediaParametersPanel extends JPanel implements ParametersPanelInterface {
 	private static final long serialVersionUID=1L;
 	private static final int numberOfCores=Runtime.getRuntime().availableProcessors();
+	private static final String PHOSPHOPROTEOME="Phosphoproteome";
 	private static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_small_icon.png"));
 	private static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_icon.png"));
 	private static final String programName="EncyclopeDIA";
@@ -54,6 +55,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {"Overlapping DIA", "Non-Overlapping DIA", "DDA"});
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "PepsinA"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {"CID (B/Y)", "HCD (Y-Only)", "ETD (C/Z/Z+1)"});
+	private final JComboBox<String> proteomeType=new JComboBox<String>(new String[] {"Standard Proteome", PHOSPHOPROTEOME});
 
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance());
 
@@ -82,6 +84,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		options.add(new LabeledComponent("Precursor Window Width (blank=extract from file)", precursorWindowWidth));
 		options.add(new LabeledComponent("Enzyme", enzyme));
 		options.add(new LabeledComponent("Fragmentation", fragType));
+		options.add(new LabeledComponent("Proteome Type", proteomeType));
 		options.add(new LabeledComponent("Precursor (PPM)", new JSpinner(precursorPPM)));
 		options.add(new LabeledComponent("Fragment (PPM)", new JSpinner(fragmentPPM)));
 		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
@@ -152,7 +155,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		return new EncyclopediaJob(processor, job);
 	}
 
-	private SearchParameters getParameters() {
+	public SearchParameters getParameters() {
 		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.getAcquisitionType((String)acquisition.getSelectedItem());
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharFloatHashMap());
@@ -162,7 +165,8 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		Number value=(Number)precursorWindowWidth.getValue();
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
-		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme, 0.01f, null, dataAcquisitionType, numberOfJobsValue, 25f, -1f, precursorWindowWidthValue, true, true);
+		boolean isPhospho=PHOSPHOPROTEOME.equals(proteomeType.getSelectedItem());
+		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme, 0.01f, null, dataAcquisitionType, numberOfJobsValue, 25f, -1f, precursorWindowWidthValue, isPhospho, false);
 		return parameters;
 	}
 }

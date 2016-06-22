@@ -55,7 +55,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 	private final FileChooserPanel backgroundFasta;
 	private final FileChooserPanel targetFasta;
 	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {"Overlapping DIA", "Non-Overlapping DIA"});
-	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "PepsinA"});
+	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "PepsinA", "No Enzyme"});
 	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "None"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {"HCD (Y-Only)", "CID (B/Y)", "ETD (C/Z/Z+1)"});
 
@@ -172,7 +172,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		return new PecanJob(processor, new PecanJobData(Optional.ofNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory));
 	}
 
-	private PecanSearchParameters getParameters() {
+	public PecanSearchParameters getParameters() {
 		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.getAcquisitionType((String)acquisition.getSelectedItem());
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem());
