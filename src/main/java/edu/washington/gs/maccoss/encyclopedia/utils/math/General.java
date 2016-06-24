@@ -3,6 +3,8 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math;
 import java.util.List;
 import java.util.Set;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
+
 public class General {
 	
 	public static float[] toFloatArray(double[] a) {
@@ -109,9 +111,16 @@ public class General {
 		return sb.toString();
 	}
 	
-	public static float[] normalize(float[] v) {
-		float sum=sum(v);
+	public static float[] normalize(float[] v, IntRange range) {
+		float sum=sum(v, range);
+		if (sum==0.0f) {
+			return new float[v.length];
+		}
 		return divide(v, sum);
+	}
+	
+	public static float[] normalize(float[] v) {
+		return normalize(v, new IntRange(0, v.length-1));
 	}
 	
 	public static float[] divide(float[] v, float d) {
@@ -160,12 +169,16 @@ public class General {
 		return sum/count;
 	}
 
-	public static float sum(float[] v) {
+	public static float sum(float[] v, IntRange range) {
 		float sum=0.0f;
-		for (int i=0; i<v.length; i++) {
+		for (int i=range.getStart(); i<=range.getStop(); i++) {
 			sum+=v[i];
 		}
 		return sum;
+	}
+
+	public static float sum(float[] v) {
+		return sum(v, new IntRange(0, v.length-1));
 	}
 
 	public static int sum(int[] v) {

@@ -219,7 +219,7 @@ public class ResultsBrowserPanel extends JPanel {
 			entries.add(unit);
 			
 			try {
-				float rtRange=300f;
+				float rtRange=30f;
 				ArrayList<Stripe> stripes=dia.getStripes(entry.getPrecursorMZ(), entry.getRetentionTime()-rtRange, entry.getRetentionTime()+rtRange, false);
 				FragmentationTraceTask task=new FragmentationTraceTask(scorer, FragmentationTraceTask.PLOT_INTENSITIES, entries, stripes, new PrecursorScanMap(new ArrayList<PrecursorScan>()), parameters.getAAConstants());
 				HashMap<LibraryEntry, PeptideScoringResult> result=task.call();
@@ -239,6 +239,21 @@ public class ResultsBrowserPanel extends JPanel {
 						}
 					}
 				}
+				/*for (XYTrace xyTrace : traces) {
+					System.out.println("float[] "+xyTrace.getName()+"=new float[] {");
+					double[] d=xyTrace.toArrays().y;
+					for (int i=0; i<d.length; i++) {
+						System.out.print(d[i]+"f, ");
+					}
+					System.out.println("};");
+					System.out.println("chromatograms.add("+xyTrace.getName()+");");
+				}*/
+				System.out.println("float[] rts=new float[] {");
+				for (double d : traces.get(0).toArrays().x) {
+					System.out.print(d+"f, ");
+				}
+				System.out.println("};");
+				
 				ChartPanel chart=Charter.getChart("Retention Time", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
 				rawSplit.setTopComponent(chart);
 
