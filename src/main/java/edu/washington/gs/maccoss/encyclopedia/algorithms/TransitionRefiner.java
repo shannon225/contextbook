@@ -14,6 +14,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -64,6 +65,11 @@ public class TransitionRefiner {
 		float[] y9=new float[] { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 14231.3134765625f, 49986.1015625f, 82333.5390625f, 28686.3828125f, 4543.765625f, 0.0f, 0.0f, 0.0f, 0.0f,
 				0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
 		chromatograms.add(y9);
+		
+		for (int i=0; i<chromatograms.size(); i++) {
+			float[] chromatogram=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatograms.get(i));
+			chromatograms.set(i, chromatogram);
+		}
 
 		float[] rts=new float[] { 30.342016220092773f, 30.380882263183594f, 30.42345428466797f, 30.462739944458008f, 30.503339767456055f, 30.543596267700195f, 30.583803176879883f, 30.622554779052734f,
 				30.664770126342773f, 30.703386306762695f, 30.74576187133789f, 30.78369140625f, 30.825769424438477f, 30.865869522094727f, 30.906150817871094f, 30.945362091064453f, 30.98526954650879f,
@@ -281,6 +287,8 @@ public class TransitionRefiner {
 				c=new Color(0, 205, 0);
 			} else if (correlationArray[i]>identificationCorrelationThreshold) {
 				c=new Color(255, 215, 0);
+			} else if (correlationArray[i]==0.0f) {
+				c=Color.black;
 			} else {
 				c=Color.red;
 			}
