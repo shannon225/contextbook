@@ -47,7 +47,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
@@ -66,7 +65,7 @@ public class ResultsBrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
 	public static final Color[] colors=new Color[] {Color.red, Color.blue, Color.green, Color.cyan, Color.magenta, Color.orange, Color.yellow, Color.pink, Color.gray};
 
-	private final FileChooserPanel blibFileChooser;
+	private final FileChooserPanel elibFileChooser;
 	private final FileChooserPanel rawFileChooser;
 	private final JSplitPane dataSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane rawSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
@@ -80,20 +79,15 @@ public class ResultsBrowserPanel extends JPanel {
 	private LibraryInterface library=null;
 	private StripeFileInterface dia=null;
 
-	public ResultsBrowserPanel() {
+	public ResultsBrowserPanel(SearchParameters parameters) {
 		super(new BorderLayout());
-		
-		HashMap<String, String> map=SearchParameterParser.getDefaultParameters();
-		map.put("-runPhosphoLocalization", "true");
-		map.put("-deconvoluteOverlappingWindows", "true");
-		map.put("-fixed", "");
-		parameters=SearchParameterParser.parseParameters(map);
+		this.parameters=parameters;
 		scorer=new PecanRawScorer(parameters.getFragmentTolerance(), new LibraryPredictedFragmentationScorer(parameters));
 		
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(new LabeledComponent("<p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Parameters", new JLabel()));
-		blibFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".elib", ".blib"), true) {
+		elibFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".elib"), true) {
 			private static final long serialVersionUID=1L;
 
 			@Override
@@ -104,7 +98,7 @@ public class ResultsBrowserPanel extends JPanel {
 				}
 			}
 		};
-		options.add(blibFileChooser);
+		options.add(elibFileChooser);
 		
 		rawFileChooser=new FileChooserPanel(null, "Raw", new SimpleFilenameFilter(".dia", ".mzML"), true) {
 			private static final long serialVersionUID=1L;

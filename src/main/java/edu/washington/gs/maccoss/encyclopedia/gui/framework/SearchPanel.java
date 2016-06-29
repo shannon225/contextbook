@@ -11,8 +11,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Optional;
 
 import javax.swing.BorderFactory;
@@ -37,7 +35,6 @@ import javax.swing.table.TableColumn;
 
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.FeatureGrapher;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
@@ -50,7 +47,6 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.ProgressRenderer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
-import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
@@ -265,7 +261,7 @@ public class SearchPanel extends JPanel {
 	public void launchElibBrowser() {
 		final JFrame dialog=new JFrame("ELIB/DIA Detection Browser");
 
-		dialog.getContentPane().add(new ResultsBrowserPanel(), BorderLayout.CENTER);
+		dialog.getContentPane().add(new ResultsBrowserPanel(getVisibleTab().getParameters()), BorderLayout.CENTER);
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.pack(); 
 		dialog.setSize(1900, 1030);
