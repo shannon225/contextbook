@@ -233,7 +233,9 @@ public class ResultsBrowserPanel extends JPanel {
 						}
 					}
 				}
-				/*for (XYTrace xyTrace : traces) {
+				
+				/*
+				for (XYTrace xyTrace : traces) {
 					System.out.println("float[] "+xyTrace.getName()+"=new float[] {");
 					double[] d=xyTrace.toArrays().y;
 					for (int i=0; i<d.length; i++) {
@@ -241,12 +243,19 @@ public class ResultsBrowserPanel extends JPanel {
 					}
 					System.out.println("};");
 					System.out.println("chromatograms.add("+xyTrace.getName()+");");
-				}*/
+				}
+
+				System.out.print("String[] ionNames=new String[] {");
+				for (XYTrace xyTrace : traces) {
+					System.out.print("\""+xyTrace.getName()+"\", ");
+				}
+				System.out.println("};");
 				System.out.println("float[] rts=new float[] {");
 				for (double d : traces.get(0).toArrays().x) {
 					System.out.print(d+"f, ");
 				}
 				System.out.println("};");
+				*/
 				
 				ChartPanel chart=Charter.getChart("Retention Time", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
 				rawSplit.setTopComponent(chart);

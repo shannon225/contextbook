@@ -25,6 +25,7 @@ public class TransitionRefiner {
 	
 	public static void main(String[] args) {
 		ArrayList<float[]> chromatograms=new ArrayList<float[]>();
+		String[] ionNames=new String[] {"y2", "b3", "b4", "y3", "b5", "y4", "b6", "y5", "y6", "y7", "y8", "y9"};
 		float[] y2=new float[] { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 7182.16455078125f, 18434.455078125f, 21684.3671875f, 3613.233642578125f, 8689.09765625f, 12955.7373046875f, 28795.33203125f,
 				3359.6435546875f, 7611.09130859375f, 11048.0908203125f, 9528.0302734375f, 12914.23828125f, 8072.17626953125f, 3192.732666015625f, 2322.4375f, 2494.99609375f, 3846.780029296875f,
 				3825.619140625f, 2689.070556640625f };
@@ -74,6 +75,9 @@ public class TransitionRefiner {
 		float[] rts=new float[] { 30.342016220092773f, 30.380882263183594f, 30.42345428466797f, 30.462739944458008f, 30.503339767456055f, 30.543596267700195f, 30.583803176879883f, 30.622554779052734f,
 				30.664770126342773f, 30.703386306762695f, 30.74576187133789f, 30.78369140625f, 30.825769424438477f, 30.865869522094727f, 30.906150817871094f, 30.945362091064453f, 30.98526954650879f,
 				31.024911880493164f, 31.067047119140625f, 31.105043411254883f, 31.147865295410156f, 31.185548782348633f, 31.228477478027344f, 31.267902374267578f, 31.308513641357422f };
+		for (int i=0; i<rts.length; i++) {
+			rts[i]=rts[i]*60.0f;
+		}
 
 		TDoubleArrayList masses=new TDoubleArrayList();
 		int count=0;
@@ -86,7 +90,7 @@ public class TransitionRefiner {
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		for (int i=0; i<integrations.length; i++) {
-			System.out.println(correlations[i]+"\t"+integrations[i]);
+			System.out.println(ionNames[i]+"\t"+correlations[i]+"\t"+integrations[i]);
 		}
 		Charter.launchCharts("TITLE", getChartPanels(data));
 	}
@@ -181,14 +185,12 @@ public class TransitionRefiner {
 		}
 		
 		if (plot) {
-			XYTrace start=toBoundaries(indices.getStart(), "start");
-			XYTrace stop=toBoundaries(indices.getStop(), "stop");
 
 			HashMap<String, ChartPanel> panels=new HashMap<String, ChartPanel>();
-			panels.put("unnormalized", getChart(chromatograms, correlationArray, start, stop, null));
-			panels.put("unnormalized_uncolored", getChart(chromatograms, new float[correlationArray.length], start, stop, null));
-			panels.put("normalized", getChart(normalizedChromatograms, correlationArray, start, stop, null));
-			panels.put("median", Charter.getChart("scan", "intensity", false, toXYTrace(medianChromatogram, null, "median", null, null), start, stop));
+			panels.put("unnormalized", getChart(chromatograms, correlationArray, retentionTimes, range));
+			panels.put("unnormalized_uncolored", getChart(chromatograms, new float[correlationArray.length], retentionTimes, range));
+			panels.put("normalized", getChart(normalizedChromatograms, correlationArray, retentionTimes, range));
+			panels.put("median", Charter.getChart("scan", "intensity", false, toXYTrace(medianChromatogram, retentionTimes, "median", null, null)));
 			Charter.launchCharts(peptideModSeq+" chart", panels);
 		}
 		
@@ -271,13 +273,7 @@ public class TransitionRefiner {
 		return panels;
 	}
 
-	public static ChartPanel getChart(ArrayList<float[]> chromatograms, float[] correlationArray,  XYTrace start, XYTrace stop, Range rtRange) {
-		return getChart(chromatograms, correlationArray, null, start, stop, rtRange);
-	}
-	public static ChartPanel getChart(ArrayList<float[]> chromatograms, float[] correlationArray, float[] rts, Range rtRange) {
-		return getChart(chromatograms, correlationArray, rts, null, null, rtRange);
-	}
-	private static ChartPanel getChart(ArrayList<float[]> chromatograms, float[] correlationArray, float[] rts, XYTrace start, XYTrace stop, Range rtRange) {
+	private static ChartPanel getChart(ArrayList<float[]> chromatograms, float[] correlationArray, float[] rts, Range rtRange) {
 		ArrayList<XYTrace> xytraces=new ArrayList<XYTrace>();
 		for (int i=0; i<chromatograms.size(); i++) {
 			float[] fs=chromatograms.get(i);
@@ -294,10 +290,13 @@ public class TransitionRefiner {
 			}
 
 			xytraces.add(toXYTrace(fs, rts, ""+i, c, rtRange));
+
+			if (rtRange!=null) {
+				xytraces.add(toXYTrace(fs, rts, ""+i, Color.black, null));
+			}
 		}
-		if (start!=null) xytraces.add(start);
-		if (stop!=null) xytraces.add(stop);
-		ChartPanel panel=Charter.getChart("scan", "intensity", true, xytraces.toArray(new XYTrace[xytraces.size()]));
+		
+		ChartPanel panel=Charter.getChart("scan", "intensity", false, xytraces.toArray(new XYTrace[xytraces.size()]));
 		return panel;
 	}
 	public static XYTrace toBoundaries(float f, String name) {
@@ -320,7 +319,7 @@ public class TransitionRefiner {
 				points.add(point);
 			}
 		}
-		XYTrace trace=new XYTrace(points, GraphType.line, name, color, 4.0f);
+		XYTrace trace=new XYTrace(points, GraphType.line, name, color, 3.0f);
 		return trace;
 	}
 
