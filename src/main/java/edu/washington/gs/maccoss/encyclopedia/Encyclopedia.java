@@ -38,6 +38,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ReverseLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
@@ -146,24 +147,26 @@ public class Encyclopedia {
 		
 		File diaFile=job.getDiaFile();
 		File featureFile=job.getFeatureFile();
-		LibraryScoringFactory taskFactory=job.getTaskFactory();
 		
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);
 		
-		SearchParameters parameters=taskFactory.getParameters();
+		SearchParameters parameters=job.getParameters();
 		StripeFileInterface stripefile=MzmlToDIAConverter.getFile(diaFile, parameters);
 		if (parameters.isDDA()) {
-			EncyclopediaDDA.runSearch(progress, job.getLibrary(), stripefile, featureFile, outputFile, taskFactory);
+			EncyclopediaDDA.runSearch(progress, job.getLibrary(), stripefile, featureFile, outputFile, job.getTaskFactory());
 		} else {
-			runSearch(progress, job.getLibrary(), stripefile, featureFile, outputFile, taskFactory);
+			runSearch(progress, job, stripefile, outputFile);
 		}
 		stripefile.close();
 	}
 		
-	public static void runSearch(ProgressIndicator progress, LibraryInterface library, StripeFileInterface stripefile, File featureFile, File outputFile, LibraryScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+	public static void runSearch(ProgressIndicator progress, EncyclopediaJobData job, StripeFileInterface stripefile, File outputFile) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		long startTime=System.currentTimeMillis();
+		LibraryScoringFactory taskFactory=job.getTaskFactory();
 		SearchParameters parameters=taskFactory.getParameters();
+		LibraryInterface library=job.getLibrary();
+		File featureFile=job.getFeatureFile();
 		
 		int cores=parameters.getNumberOfThreadsUsed();
 
@@ -251,6 +254,11 @@ public class Encyclopedia {
 		consumer3Thread.join();
 		teeConsumer.close();
 		progress.update("Organizing results", (1.0f+rangesFinished)/numberOfTasks);
+		
+		File elibFile=new File(stripefile.getFile().getAbsolutePath()+".elib");
+		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
+		jobs.add(job);
+		SearchToBLIB.convert(progress, jobs, elibFile, false);
 
 		ArrayList<PercolatorPeptide> passingPeptides=percolatePeptides(progress, featureFile, outputFile, stripefile, taskFactory, saveResultsConsumer);
 		ArrayList<ScoredObject<String>> proteins=ParsimonyProteinGrouper.groupProtein(passingPeptides);
