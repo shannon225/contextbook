@@ -49,32 +49,32 @@ public class PercolatorReaderTest extends TestCase {
 		ReverseLibraryEntry reverse=entry.getDecoy(PARAMETERS, false);
 
 		File diaFile=new File("/Users/searleb/Documents/freezer_experiment/110815_hela_experiment/data/hela_experiment/110415_bcs_hela_starved_DDA.mzML"); // FIXME unit test is not platform independent (will fail on windows machines)
-		String psmid=PercolatorReader.getPSMID(entry, 11.096461f, diaFile);
+		String psmid=PercolatorPeptide.getPSMID(entry, 11.096461f, diaFile);
 		System.out.println(psmid);
 		assertEquals(FORWARD_PSMID, psmid);
 
-		String revpsmid=PercolatorReader.getPSMID(reverse, 11.096461f, diaFile);
+		String revpsmid=PercolatorPeptide.getPSMID(reverse, 11.096461f, diaFile);
 		System.out.println(revpsmid);
 		assertEquals(REVERSE_PSMID, revpsmid);
 	}
 	
 	public void testIsPSMIDDecoy() {
-		assertFalse(PercolatorReader.isPSMIDDecoy(FORWARD_PSMID));
-		assertTrue(PercolatorReader.isPSMIDDecoy(REVERSE_PSMID));
+		assertFalse(PercolatorPeptide.isPSMIDDecoy(FORWARD_PSMID));
+		assertTrue(PercolatorPeptide.isPSMIDDecoy(REVERSE_PSMID));
 	}
 
 	public void testGetPeptideSequence() {
-		assertEquals("PEPT[+80]IDER", PercolatorReader.getPeptideSequence(FORWARD_PSMID));
-		assertEquals("EDIT[+80.0]PEPR", PercolatorReader.getPeptideSequence(REVERSE_PSMID));
+		assertEquals("PEPT[+80]IDER", PercolatorPeptide.getPeptideSequence(FORWARD_PSMID));
+		assertEquals("EDIT[+80.0]PEPR", PercolatorPeptide.getPeptideSequence(REVERSE_PSMID));
 	}
 	
 	public void testGetCharge() {
-		assertEquals((byte)2, PercolatorReader.getCharge(FORWARD_PSMID));
-		assertEquals((byte)2, PercolatorReader.getCharge(REVERSE_PSMID));
+		assertEquals((byte)2, PercolatorPeptide.getCharge(FORWARD_PSMID));
+		assertEquals((byte)2, PercolatorPeptide.getCharge(REVERSE_PSMID));
 		
 	}
 	public void testGetFile() {
-		assertEquals("110415_bcs_hela_starved_DDA.mzML", PercolatorReader.getFile(FORWARD_PSMID));
-		assertEquals("110415_bcs_hela_starved_DDA.mzML", PercolatorReader.getFile(REVERSE_PSMID));
+		assertEquals("110415_bcs_hela_starved_DDA.mzML", PercolatorPeptide.getFile(FORWARD_PSMID));
+		assertEquals("110415_bcs_hela_starved_DDA.mzML", PercolatorPeptide.getFile(REVERSE_PSMID));
 	}
 }

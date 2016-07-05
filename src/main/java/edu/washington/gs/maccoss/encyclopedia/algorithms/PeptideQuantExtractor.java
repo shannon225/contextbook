@@ -29,7 +29,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -42,13 +41,13 @@ public class PeptideQuantExtractor {
 	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, File f, boolean limitToQuantifiable, ArrayList<PercolatorPeptide> globalPassingPSMIDs, ArrayList<PercolatorPeptide> localPassingPSMIDs, StripeFileInterface stripeFile, LibraryInterface searchedLibrary, final SearchParameters parameters) {
 		HashSet<String> passingPeptideSequences=new HashSet<String>();
 		for (PercolatorPeptide psm : globalPassingPSMIDs) {
-			String peptideModSeq=PercolatorReader.getPeptideSequence(psm.getPsmID());
+			String peptideModSeq=PercolatorPeptide.getPeptideSequence(psm.getPsmID());
 			passingPeptideSequences.add(peptideModSeq);
 		}
 		
 		final TObjectFloatHashMap<String> savedIDs=new TObjectFloatHashMap<String>();
 		for (PercolatorPeptide psm : localPassingPSMIDs) {
-			String peptideModSeq=PercolatorReader.getPeptideSequence(psm.getPsmID());
+			String peptideModSeq=PercolatorPeptide.getPeptideSequence(psm.getPsmID());
 			if (passingPeptideSequences.contains(peptideModSeq)) {
 				savedIDs.put(psm.getPsmID(), psm.getQValue());
 			}
@@ -61,14 +60,14 @@ public class PeptideQuantExtractor {
 			public void processRow(Map<String, String> row) {
 				String psmID=row.get("id");
 				if (savedIDs.contains(psmID)) {
-					boolean isDecoy=PercolatorReader.isPSMIDDecoy(psmID);
+					boolean isDecoy=PercolatorPeptide.isPSMIDDecoy(psmID);
 					if (!isDecoy) {
 						
 						int scanID=Integer.parseInt(row.get("ScanNr"));
 						double precursorMZ=Double.parseDouble(row.get("precursorMz"));
 						// FIXME need to get peptide charge from window
-						byte precursorCharge=PercolatorReader.getCharge(psmID);
-						String peptideModSeq=PercolatorReader.getPeptideSequence(psmID);
+						byte precursorCharge=PercolatorPeptide.getCharge(psmID);
+						String peptideModSeq=PercolatorPeptide.getPeptideSequence(psmID);
 
 						float retentionTime;// in seconds
 						String rtString=row.get("midTime"); // in seconds

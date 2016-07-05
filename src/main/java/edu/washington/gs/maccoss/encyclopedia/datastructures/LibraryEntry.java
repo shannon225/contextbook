@@ -9,7 +9,6 @@ import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.SSRCalc;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -77,7 +76,7 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 	}
 	
 	public PercolatorPeptide getPSMData() {
-		return new PercolatorPeptide(PercolatorReader.getPSMID(this, getRetentionTime(), new File(source)), PSMData.accessionsToString(accessions), getScore(), getScore());
+		return new PercolatorPeptide(PercolatorPeptide.getPSMID(this, getRetentionTime(), new File(source)), PSMData.accessionsToString(accessions), getScore(), getScore());
 	}
 	
 	public String getSource() {

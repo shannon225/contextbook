@@ -15,40 +15,117 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
+import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class PeakLocationInferer {
-	HashMap<SearchJobData, RetentionTimeFilter> alignmentMap;
-	HashMap<IntegratedLibraryEntry, Float> alignedRTInSecMap;
+	// alignments are seed (x) to sample (y)
+	HashMap<SearchJobData, Function> alignmentMap;
 	
-	/*static PeakLocationInferer getAlignmentData(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File blibFile, ArrayList<ScoredObject<String>> passingPeptides) {
+	// alignedRTs are as if they were in the seed (x) file
+	HashMap<String, Float> alignedRTInSecBySequenceMap;
+	
+	HashMap<String, IntegratedLibraryEntry> libraryEntryBySequenceMap;
+	
+	PeakLocationInferer(HashMap<SearchJobData, Function> alignmentMap, HashMap<String, IntegratedLibraryEntry> libraryEntryBySequenceMap, HashMap<String, Float> alignedRTInSecBySequenceMap) {
+		this.alignmentMap=alignmentMap;
+		this.libraryEntryBySequenceMap=libraryEntryBySequenceMap;
+		this.alignedRTInSecBySequenceMap=alignedRTInSecBySequenceMap;
+	}
+	
+	public float getRTInSec(SearchJobData job, String peptide) {
+		Function f=alignmentMap.get(job);
+		Float alignedRT=alignedRTInSecBySequenceMap.get(peptide);
+		if (alignedRT==null) {
+			Logger.errorLine("Couldn't find retention time for peptide ("+peptide+").");
+			return -1;
+		};
+		if (f==null) {
+			// job is the seed 
+			return alignedRT;
+		} else {
+			return f.getYValue(alignedRT);
+		}
+	}
+
+	public static PeakLocationInferer getAlignmentData(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File blibFile, ArrayList<PercolatorPeptide> passingPeptides) {
 		ProgressIndicator subProgress1=new SubProgressIndicator(progress, 0.5f);
 		HashMap<SearchJobData, ArrayList<IntegratedLibraryEntry>> archetypalPeptides=getArchetypalPeptides(subProgress1, pecanJobs, blibFile, passingPeptides);
 		
+		// get best job
 		SearchJobData bestJob=null;
 		int max=-1;
+		HashMap<String, IntegratedLibraryEntry> libraryEntryBySequenceMap=new HashMap<String, IntegratedLibraryEntry>();
 		for (Entry<SearchJobData, ArrayList<IntegratedLibraryEntry>> entry : archetypalPeptides.entrySet()) {
 			int length=entry.getValue().size();
 			if (length>max) {
 				max=length;
 				bestJob=entry.getKey();
 			}
+			
+			// also grab library entry map
+			for (IntegratedLibraryEntry pep : entry.getValue()) {
+				libraryEntryBySequenceMap.put(pep.getPeptideModSeq(), pep);
+			}
 		}
 		
-		ArrayList<ScoredObject<String>> 
+		ArrayList<PercolatorPeptide> alignmentSeed=PercolatorReader.getPassingPeptidesFromTSV(bestJob.getOutputFile(), bestJob.getParameters().getPercolatorThreshold());
+		TObjectFloatHashMap<String> rtsBySequence=new TObjectFloatHashMap<String>();
+		for (PercolatorPeptide peptide : alignmentSeed) {
+			rtsBySequence.put(peptide.getPeptideSequence(), peptide.getRT());
+		}
 
 		ProgressIndicator subProgress2=new SubProgressIndicator(progress, 0.5f);
 
+		// construct alignments
+		HashMap<SearchJobData, Function> alignmentMap=new HashMap<SearchJobData, Function>();
+		HashMap<String, Float> alignedRTInSecBySequenceMap=new HashMap<String, Float>();
+		int count=0;
 		for (SearchJobData job : pecanJobs) {
-			ArrayList<ScoredObject<String>> peptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), job.getParameters().getPercolatorThreshold());
-			for (ScoredObject<String> peptide : peptides) {
+			if (job!=bestJob) {
+				subProgress2.update(job.getDiaFile().getName()+": RT aligning to seed", count/(float)pecanJobs.size());
+				count++;
 				
+				ArrayList<XYPoint> points=new ArrayList<XYPoint>();
+				ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), job.getParameters().getPercolatorThreshold());
+				for (PercolatorPeptide peptide : peptides) {
+					String seq=peptide.getPeptideSequence();
+					if (rtsBySequence.containsKey(seq)) {
+						points.add(new XYPoint(rtsBySequence.get(seq), peptide.getRT()));
+					}
+				}
+				if (points.size()<10) {
+					Logger.errorLine("Not enough points ("+points.size()+") to compute regression between samples, still trying anyways.");
+				}
+				TwoDimensionalKDE twoDimKDE=new TwoDimensionalKDE(points);
+				Function alignment=twoDimKDE.trace();
+				alignmentMap.put(job, alignment);
+				
+				// align local archetyals to the seed
+				ArrayList<IntegratedLibraryEntry> archetypals=archetypalPeptides.get(job);
+				for (IntegratedLibraryEntry entry : archetypals) {
+					float alignedRT=alignment.getXValue(entry.getRetentionTime());
+					alignedRTInSecBySequenceMap.put(entry.getPeptideModSeq(), alignedRT);
+				}
 			}
 		}
-	}*/
+		
+		return new PeakLocationInferer(alignmentMap, libraryEntryBySequenceMap, alignedRTInSecBySequenceMap);
+	}
 	
+	/**
+	 * divvy up all the globally passing peptides by the individual search that best identified them 
+	 * @param progress
+	 * @param pecanJobs
+	 * @param blibFile
+	 * @param passingPeptides
+	 * @return
+	 */
 	static HashMap<SearchJobData, ArrayList<IntegratedLibraryEntry>> getArchetypalPeptides(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File blibFile, ArrayList<PercolatorPeptide> passingPeptides) {
+		// set up data structures
 		HashMap<String, SearchJobData> jobsByFile=new HashMap<String, SearchJobData>();
 		HashMap<String, ArrayList<PercolatorPeptide>> peptidesByFile=new HashMap<String, ArrayList<PercolatorPeptide>>();
 		for (SearchJobData job : pecanJobs) {
@@ -58,8 +135,9 @@ public class PeakLocationInferer {
 			peptidesByFile.put(name, new ArrayList<PercolatorPeptide>());
 		}
 
+		// the best individual search is imbedded in the psmID
 		for (PercolatorPeptide psm : passingPeptides) {
-			String name=PercolatorReader.getFile(psm.getPsmID());
+			String name=psm.getFile();
 			name=name.substring(0, name.lastIndexOf('.'));
 			ArrayList<PercolatorPeptide> list=peptidesByFile.get(name);
 			if (list==null) {
@@ -69,6 +147,7 @@ public class PeakLocationInferer {
 			}
 		}
 
+		// extract out chromatogram library entries
 		HashMap<SearchJobData, ArrayList<IntegratedLibraryEntry>> archetypalPeptides=new HashMap<SearchJobData, ArrayList<IntegratedLibraryEntry>>();
 		float increment=1.0f/pecanJobs.size();
 		for (Entry<String, ArrayList<PercolatorPeptide>> entry : peptidesByFile.entrySet()) {

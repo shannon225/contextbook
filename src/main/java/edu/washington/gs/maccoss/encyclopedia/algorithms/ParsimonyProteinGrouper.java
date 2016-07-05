@@ -46,7 +46,7 @@ public class ParsimonyProteinGrouper {
 		HashMap<String, Protein> proteins=new HashMap<String, ParsimonyProteinGrouper.Protein>();
 		
 		for (PercolatorPeptide percolatorPeptide : passingPeptides) {
-			String sequence=PercolatorReader.getPeptideSequence(percolatorPeptide.getPsmID());
+			String sequence=PercolatorPeptide.getPeptideSequence(percolatorPeptide.getPsmID());
 			HashSet<String> accessions=PSMData.stringToAccessions(percolatorPeptide.getProteinIDs());
 			
 			Peptide peptide=peptides.get(sequence);
