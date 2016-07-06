@@ -288,6 +288,8 @@ public class SearchToBLIB {
 				
 				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides, elib);
 			}
+			
+			elib.setSources(pecanJobs);
 
 			elib.createIndices();
 			elib.saveAsFile(elibFile);

@@ -28,4 +28,12 @@ public class EncyclopediaJobData extends SearchJobData {
 	public LibraryScoringFactory getTaskFactory() {
 		return taskFactory;
 	}
+	
+	public File getFirstPassPercolator() {
+		return new File(getOutputFile().getAbsolutePath()+".first_round.txt");
+	}
+	
+	public File getResultLibrary() {
+		return new File(getOutputFile().getAbsolutePath()+".elib");
+	}
 }

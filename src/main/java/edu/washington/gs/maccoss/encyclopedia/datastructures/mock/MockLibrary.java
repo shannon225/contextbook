@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import jdk.nashorn.internal.ir.annotations.Immutable;
 
 /**
@@ -64,5 +67,8 @@ public class MockLibrary implements LibraryInterface {
 		}
 		return new Range((float)min, (float)max);
 	}
-
+	
+	public Optional<StripeFileInterface> getSource(SearchParameters parameters) {
+		return Optional.empty();
+	}
 }

@@ -147,6 +147,11 @@ public class ResultsBrowserPanel extends JPanel {
 			protected ArrayList<LibraryEntry> doInBackgroundForReal() throws Exception {
 				library=BlibToLibraryConverter.getFile(f);
 				ArrayList<LibraryEntry> entries=library.getEntries(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), false);
+				
+				Optional<StripeFileInterface> source=library.getSource(parameters);
+				if (source.isPresent()) {
+					dia=source.get();
+				}
 				return entries;
 			}
 			@Override

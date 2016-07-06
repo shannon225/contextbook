@@ -15,8 +15,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.StringTokenizer;
 import java.util.zip.DataFormatException;
-
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
@@ -26,6 +27,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEn
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -33,6 +36,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class LibraryFile extends SQLFile implements LibraryInterface {
+	private static final String SOURCEFILE_STRING="sourcefile";
+	private static final String SOURCE_FILE_SPLIT="|";
 	public static final String ELIB=".elib";
 	public static final String VERSION_STRING="version";
 	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] {new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3)};
@@ -101,11 +106,16 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
-	public void setFileName(String fileName, String sourceName, String fileLocation) throws IOException, SQLException {
+	public void setSources(ArrayList<SearchJobData> sources) throws IOException, SQLException {
 		HashMap<String, String> map=new HashMap<String, String>();
-		map.put("filename", fileName);
-		map.put("sourcename", sourceName);
-		map.put("filelocation", fileLocation);
+		StringBuilder sb=new StringBuilder();
+		for (SearchJobData searchJobData : sources) {
+			if (sb.length()>0) {
+				sb.append(SOURCE_FILE_SPLIT);
+			}
+			sb.append(searchJobData.getDiaFile().getAbsolutePath());
+		}
+		map.put(SOURCEFILE_STRING, sb.toString());
 		addMetadata(map);
 	}
 	
@@ -139,6 +149,31 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	public Version getVersion() throws IOException, SQLException {
 		HashMap<String, String> meta=getMetadata();
 		return new Version(meta.get(VERSION_STRING));
+	}
+	
+	public ArrayList<File> getSourceFiles() throws IOException, SQLException {
+		HashMap<String, String> meta=getMetadata();
+		String sources=meta.get(SOURCEFILE_STRING);
+		if (sources==null) return new ArrayList<File>();
+		
+		StringTokenizer st=new StringTokenizer(sources, SOURCE_FILE_SPLIT);
+		ArrayList<File> files=new ArrayList<File>();
+		while (st.hasMoreTokens()) {
+			files.add(new File(st.nextToken()));
+		}
+		return files;
+	}
+	
+	public Optional<StripeFileInterface> getSource(SearchParameters parameters) {
+		try {
+			ArrayList<File> files=getSourceFiles();
+			if (files.size()==0||files.size()>1) return Optional.empty();
+			
+			StripeFileInterface file=MzmlToDIAConverter.getFile(files.get(0), parameters);
+			return Optional.ofNullable(file);
+		} catch (Exception e) {
+			return Optional.empty();
+		}
 	}
 	
 	public HashMap<String, String> getMetadata() throws IOException, SQLException {
