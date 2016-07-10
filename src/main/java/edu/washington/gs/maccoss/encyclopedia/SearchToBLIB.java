@@ -86,10 +86,8 @@ public class SearchToBLIB {
 			if (arguments.containsKey("-o")) {
 				outputFile=new File(arguments.get("-o"));
 			} else {
-				outputFile=new File(diaFile.getAbsolutePath()+".encyclopedia.txt");
+				outputFile=new File(diaFile.getAbsolutePath()+EncyclopediaJobData.OUTPUT_FILE_SUFFIX);
 			}
-
-			File featureFile=new File(diaFile.getAbsolutePath()+".features.txt");
 
 			SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 			LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
@@ -104,7 +102,7 @@ public class SearchToBLIB {
 
 			try {
 				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
-				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, featureFile, outputFile, factory);
+				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, outputFile, factory);
 				ArrayList<SearchJobData> pecanJobs=new ArrayList<SearchJobData>();
 				pecanJobs.add(job);
 				convert(new EmptyProgressIndicator(), pecanJobs, outputFile, false);

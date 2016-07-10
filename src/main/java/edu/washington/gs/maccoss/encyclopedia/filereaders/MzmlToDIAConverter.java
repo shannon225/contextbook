@@ -2,6 +2,8 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -11,6 +13,7 @@ import java.util.concurrent.BlockingQueue;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.OverlapDeconvoluter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -20,16 +23,30 @@ import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 public class MzmlToDIAConverter {
 	public static final String MZML_EXTENSION=".mzml";
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		HashMap<String, String> paramMap=PecanParameterParser.getDefaultParameters();
-		paramMap.put("-deconvoluteOverlappingWindows", "true");
 		SearchParameters parameters=PecanParameterParser.parseParameters(paramMap);
+		System.out.println(parameters);
 		
-		Long time=System.currentTimeMillis();
-		File xmlFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/yeast/Q_2014_0523_11_0_amol_uL_20mz_overlap.mzML");
-		File saveFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/yeast/Q_2014_0523_11_0_amol_uL_20mz_overlap.dia");
-		convert(xmlFile, saveFile, parameters);
-		System.out.println((System.currentTimeMillis()-time)/1000f+" seconds");
+		File dir=new File("/Volumes/WorkingDisk/freezer_experiment/");
+		
+		File[] files=dir.listFiles(new SimpleFilenameFilter(".mzml"));
+		for (int i=0; i<files.length; i++) {
+			System.out.println((i+1)+" / "+files.length+"\t Copying "+files[i].getName()+"...");
+
+			File f=File.createTempFile(files[i].getName(), ".mzml");
+			f.deleteOnExit();
+			Files.copy(files[i].toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			
+			Long time=System.currentTimeMillis();
+			File diaFile=new File(files[i].getAbsolutePath().substring(0, files[i].getAbsolutePath().lastIndexOf('.'))+StripeFile.DIA_EXTENSION);
+			System.out.println("Converting to "+diaFile.getAbsolutePath());
+			
+			convert(f, diaFile, parameters);
+			
+			f.delete();
+			System.out.println("Total time: "+(System.currentTimeMillis()-time)/1000f+" seconds");
+		}
 	}
 
 	public static StripeFileInterface getFile(File f, SearchParameters parameters) {

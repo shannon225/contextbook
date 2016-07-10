@@ -145,13 +145,12 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	}
 
 	static SearchJob getJob(File diaFile, File libraryFile, JobProcessor processor, SearchParameters parameters) {
-		File outputFile=new File(diaFile.getAbsolutePath()+".encyclopedia.txt");
-		File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
+		File outputFile=new File(diaFile.getAbsolutePath()+EncyclopediaJobData.OUTPUT_FILE_SUFFIX);
 		
 		LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
 		
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
-		EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, featureFile, outputFile, factory);
+		EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, outputFile, factory);
 		return new EncyclopediaJob(processor, job);
 	}
 

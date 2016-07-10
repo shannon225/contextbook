@@ -36,7 +36,7 @@ public class PecanParameterParser {
 		map.put("-alpha", "1.8");
 		map.put("-beta", "0.4");
 		map.put("-percolatorLocation", "internal");
-		map.put("-deconvoluteOverlappingWindows", "false");
+		map.put("-acquisition", "overlapping dia");
 		map.put("-precursorWindowSize", "-1");
 		map.put("-numberOfThreadsUsed", Integer.toString(Runtime.getRuntime().availableProcessors()));
 		return map;

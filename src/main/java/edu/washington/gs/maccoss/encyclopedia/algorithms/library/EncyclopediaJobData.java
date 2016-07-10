@@ -6,17 +6,19 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 
 public class EncyclopediaJobData extends SearchJobData {
+	public static final String OUTPUT_FILE_SUFFIX=".encyclopedia.txt";
+	public static final String FEATURE_FILE_SUFFIX=".features.txt";
 	private final LibraryInterface library;
 	private final LibraryScoringFactory taskFactory;
 	
 	public EncyclopediaJobData(File diaFile, LibraryInterface library, LibraryScoringFactory taskFactory) {
-		super(diaFile, new File(diaFile.getAbsolutePath()+".features.txt"), new File(diaFile.getAbsolutePath()+".encyclopedia.txt"), taskFactory.getParameters(), taskFactory.getVersion());
+		super(diaFile, new File(diaFile.getAbsolutePath()+FEATURE_FILE_SUFFIX), new File(diaFile.getAbsolutePath()+OUTPUT_FILE_SUFFIX), taskFactory.getParameters(), taskFactory.getVersion());
 		this.library=library;
 		this.taskFactory=taskFactory;
 	}
 
-	public EncyclopediaJobData(File diaFile, LibraryInterface library, File featureFile, File outputFile, LibraryScoringFactory taskFactory) {
-		super(diaFile, featureFile, outputFile, taskFactory.getParameters(), taskFactory.getVersion());
+	public EncyclopediaJobData(File diaFile, LibraryInterface library, File outputFile, LibraryScoringFactory taskFactory) {
+		super(diaFile, new File(getOutputAbsolutePathPrefix(outputFile.getAbsolutePath())+FEATURE_FILE_SUFFIX), outputFile, taskFactory.getParameters(), taskFactory.getVersion());
 		this.library=library;
 		this.taskFactory=taskFactory;
 	}
@@ -30,10 +32,19 @@ public class EncyclopediaJobData extends SearchJobData {
 	}
 	
 	public File getFirstPassPercolator() {
-		return new File(getOutputFile().getAbsolutePath()+".first_round.txt");
+		String absolutePath=getOutputAbsolutePathPrefix(getOutputFile().getAbsolutePath());
+		return new File(absolutePath+".first_round.txt");
 	}
 	
 	public File getResultLibrary() {
-		return new File(getOutputFile().getAbsolutePath()+".elib");
+		String absolutePath=getOutputAbsolutePathPrefix(getOutputFile().getAbsolutePath());
+		return new File(absolutePath+".elib");
+	}
+
+	public static String getOutputAbsolutePathPrefix(String absolutePath) {
+		if (absolutePath.endsWith(OUTPUT_FILE_SUFFIX)) {
+			absolutePath=absolutePath.substring(0, absolutePath.length()-OUTPUT_FILE_SUFFIX.length());
+		}
+		return absolutePath;
 	}
 }

@@ -105,10 +105,8 @@ public class Encyclopedia {
 			if (arguments.containsKey("-o")) {
 				outputFile=new File(arguments.get("-o"));
 			} else {
-				outputFile=new File(diaFile.getAbsolutePath()+".encyclopedia.txt");
+				outputFile=new File(diaFile.getAbsolutePath()+EncyclopediaJobData.OUTPUT_FILE_SUFFIX);
 			}
-
-			File featureFile=new File(diaFile.getAbsolutePath()+".features.txt");
 
 			SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 			LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
@@ -123,7 +121,7 @@ public class Encyclopedia {
 
 			try {
 				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
-				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, featureFile, outputFile, factory);
+				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, outputFile, factory);
 				runSearch(new EmptyProgressIndicator(), job);
 			} catch (Exception e) {
 				System.err.println("Encountered Fatal Error!");

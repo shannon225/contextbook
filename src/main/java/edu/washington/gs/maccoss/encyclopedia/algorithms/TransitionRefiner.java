@@ -143,7 +143,7 @@ public class TransitionRefiner {
 		}
 		indices=getIndexRange(medianChromatogram, maxIndex);
 		
-		System.out.println(General.toString(medianChromatogram));
+		//System.out.println(General.toString(medianChromatogram));
 		
 		Range range=new Range(retentionTimes[indices.getStart()], retentionTimes[indices.getStop()]);
 
