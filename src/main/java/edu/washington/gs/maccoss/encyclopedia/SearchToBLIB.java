@@ -14,6 +14,7 @@ import java.util.TreeMap;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -156,7 +157,9 @@ public class SearchToBLIB {
 			if (writeBlib) {
 				convertBlib(progress, pecanJobs, libFile, Optional.of(passingPeptides));
 			} else {
-				convertElib(progress, pecanJobs, libFile, Optional.of(passingPeptides));
+				PeakLocationInferrer inferrer=PeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides);
+				
+				convertElib(progress, pecanJobs, libFile, Optional.of(passingPeptides), inferrer);
 			}
 			progress.update(passingPeptides.size()+" peptides identified at "+(threshold*100.0f)+"% FDR", 1.0f);
 		} catch (IOException ioe) {
@@ -224,8 +227,6 @@ public class SearchToBLIB {
 		Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Reading Percolator Results", 0.0f);
 
-		File featureFile=job.getFeatureFile();
-
 		StripeFileInterface stripeFile=MzmlToDIAConverter.getFile(diaFile, job.getParameters());
 		Logger.logLine("Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides", 0.00001f);
@@ -235,7 +236,7 @@ public class SearchToBLIB {
 			library=((EncyclopediaJobData)job).getLibrary();
 		}
 		//ArrayList<IntegratedLibraryEntry> libraryEntries=SearchFeatureReader.parseSearchFeatures(featureFile, globalPassingPeptides, localPassingPeptides, stripeFile, Optional.ofNullable((LibraryFile)null), job.getParameters());
-		ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, featureFile, true, globalPassingPeptides, localPassingPeptides, stripeFile, library, job.getParameters());
+		ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job, true, globalPassingPeptides, localPassingPeptides, Optional.ofNullable((PeakLocationInferrer)null), stripeFile, library, job.getParameters());
 		stripeFile.close();
 		
 		File integrationFile=new File(diaFile.getAbsolutePath()+".integration.txt");
@@ -262,7 +263,7 @@ public class SearchToBLIB {
 		return counterTotals;
 	}
 	
-	static void convertElib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File elibFile, Optional<ArrayList<PercolatorPeptide>> passingPeptides) {
+	static void convertElib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File elibFile, Optional<ArrayList<PercolatorPeptide>> passingPeptides, PeakLocationInferrer inferrer) {
 		try {
 			LibraryFile elib=new LibraryFile();
 			elib.openFile();
@@ -284,7 +285,7 @@ public class SearchToBLIB {
 					globalPassingPeptides=localPassingPeptides;
 				}
 				
-				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides, elib);
+				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides, inferrer, elib);
 			}
 			
 			elib.setSources(pecanJobs);
@@ -312,12 +313,10 @@ public class SearchToBLIB {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	static void convertFileElib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, LibraryFile elib) throws IOException, SQLException {
+	static void convertFileElib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, PeakLocationInferrer inferrer, LibraryFile elib) throws IOException, SQLException {
 		File diaFile=job.getDiaFile();
 		Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Reading Percolator Results", 0.0f);
-
-		File featureFile=job.getFeatureFile();
 
 		StripeFileInterface stripeFile=MzmlToDIAConverter.getFile(diaFile, job.getParameters());
 		Logger.logLine("Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides from "+diaFile.getName()+"...");
@@ -327,7 +326,7 @@ public class SearchToBLIB {
 		if (job instanceof EncyclopediaJobData) {
 			library=((EncyclopediaJobData)job).getLibrary();
 		}
-		ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, featureFile, false, globalPassingPeptides, localPassingPeptides, stripeFile, library, job.getParameters());
+		ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job, false, globalPassingPeptides, localPassingPeptides, Optional.ofNullable(inferrer), stripeFile, library, job.getParameters());
 		stripeFile.close();
 		
 		Logger.logLine("Writing Encyclopedia ELIB from "+diaFile.getName()+"...");

@@ -4,10 +4,12 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -44,6 +46,16 @@ public class MockLibrary implements LibraryInterface {
 			}
 		}
 		return returnables;
+	}
+	
+	@Override
+	public HashMap<PeptidePrecursor, ArrayList<LibraryEntry>> getEntries(ArrayList<PeptidePrecursor> entries, boolean sqrt) throws IOException, SQLException, DataFormatException {
+		HashMap<PeptidePrecursor, ArrayList<LibraryEntry>> map=new HashMap<PeptidePrecursor, ArrayList<LibraryEntry>>();
+		for (PeptidePrecursor peptidePrecursor : entries) {
+			ArrayList<LibraryEntry> results=getEntries(peptidePrecursor.getPeptideModSeq(),  peptidePrecursor.getPrecursorCharge(), sqrt);
+			map.put(peptidePrecursor, results);
+		}
+		return map;
 	}
 
 	@Override
