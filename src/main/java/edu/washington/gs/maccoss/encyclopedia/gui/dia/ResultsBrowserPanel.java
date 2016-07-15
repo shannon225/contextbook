@@ -240,7 +240,7 @@ public class ResultsBrowserPanel extends JPanel {
 				}
 				
 				
-				for (XYTrace xyTrace : traces) {
+				/*for (XYTrace xyTrace : traces) {
 					System.out.println("float[] "+xyTrace.getName()+"=new float[] {");
 					double[] d=xyTrace.toArrays().y;
 					for (int i=0; i<d.length; i++) {
@@ -260,7 +260,7 @@ public class ResultsBrowserPanel extends JPanel {
 					System.out.print(d+"f, ");
 				}
 				System.out.println("};");
-				
+				*/
 				
 				ChartPanel chart=Charter.getChart("Retention Time", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
 				rawSplit.setTopComponent(chart);

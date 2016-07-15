@@ -2,11 +2,16 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
 import java.awt.Color;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -121,6 +126,25 @@ public class RetentionTimeFilter {
 			String saveFilePrefix=saveFileSeed.get().getAbsolutePath();
 			Charter.writeAsPDF(new File(saveFilePrefix+".delta_rt.pdf"), "Delta RT", "Count", true, negTrace, posTrace, histTrace);
 			Charter.writeAsPDF(new File(saveFilePrefix+".rt_fit.pdf"), xAxis, yAxis, true, median2, selectedTrace, trace);
+
+			try {
+				PrintWriter writer=new PrintWriter(new File(saveFilePrefix+".rt_fit.txt"), "UTF-8");
+				writer.println("library\tactual\twarpToActual\tdelta\tfitProb");
+				for (int i=0; i<rts.size(); i++) {
+					XYPoint xyPoint=rts.get(i);
+					float actualRT=(float)xyPoint.y;
+					float modelRT=rtWarper.getYValue((float)xyPoint.x);
+					float delta=actualRT-modelRT;
+
+					float prob=getProbabilityFitsModel((float)xyPoint.y, (float)xyPoint.x);
+					writer.println(xyPoint.x+"\t"+xyPoint.y+"\t"+modelRT+"\t"+delta+"\t"+prob);
+				}
+				writer.flush();
+				writer.close();
+			} catch (IOException e) {
+				Logger.errorLine("Error writing retention time mapping file.");
+				Logger.errorException(e);
+			}
 		} else {
 			Charter.launchChart("Delta RT", "Count", true, negTrace, posTrace, histTrace);
 			Charter.launchChart(xAxis, yAxis, true, median2, selectedTrace, trace);
