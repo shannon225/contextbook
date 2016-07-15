@@ -1,6 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -21,11 +20,13 @@ import java.util.zip.DataFormatException;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -38,18 +39,20 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class PeptideQuantExtractor {
-	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, File f, boolean limitToQuantifiable, ArrayList<PercolatorPeptide> globalPassingPSMIDs, ArrayList<PercolatorPeptide> localPassingPSMIDs, StripeFileInterface stripeFile, LibraryInterface searchedLibrary, final SearchParameters parameters) {
+	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, final SearchJobData job, boolean limitToQuantifiable, ArrayList<PercolatorPeptide> globalPassingPSMIDs, ArrayList<PercolatorPeptide> localPassingPSMIDs, final Optional<PeakLocationInferrer> inferrer, StripeFileInterface stripeFile, LibraryInterface searchedLibrary, final SearchParameters parameters) {
 		HashSet<String> passingPeptideSequences=new HashSet<String>();
+		final TObjectFloatHashMap<String> savedIDs=new TObjectFloatHashMap<String>();
 		for (PercolatorPeptide psm : globalPassingPSMIDs) {
 			String peptideModSeq=PercolatorPeptide.getPeptideSequence(psm.getPsmID());
 			passingPeptideSequences.add(peptideModSeq);
+			savedIDs.put(psm.getPsmID(), psm.getQValue());
 		}
-		
-		final TObjectFloatHashMap<String> savedIDs=new TObjectFloatHashMap<String>();
+
+		final TObjectFloatHashMap<String> localSavedIDs=new TObjectFloatHashMap<String>();
 		for (PercolatorPeptide psm : localPassingPSMIDs) {
 			String peptideModSeq=PercolatorPeptide.getPeptideSequence(psm.getPsmID());
 			if (passingPeptideSequences.contains(peptideModSeq)) {
-				savedIDs.put(psm.getPsmID(), psm.getQValue());
+				localSavedIDs.put(psm.getPsmID(), psm.getQValue());
 			}
 		}
 
@@ -62,21 +65,33 @@ public class PeptideQuantExtractor {
 				if (savedIDs.contains(psmID)) {
 					boolean isDecoy=PercolatorPeptide.isPSMIDDecoy(psmID);
 					if (!isDecoy) {
-						
-						int scanID=Integer.parseInt(row.get("ScanNr"));
-						double precursorMZ=Double.parseDouble(row.get("precursorMz"));
-						// FIXME need to get peptide charge from window
-						byte precursorCharge=PercolatorPeptide.getCharge(psmID);
 						String peptideModSeq=PercolatorPeptide.getPeptideSequence(psmID);
 
 						float retentionTime;// in seconds
-						String rtString=row.get("midTime"); // in seconds
-						if (rtString!=null) {
-							retentionTime=Float.parseFloat(rtString);
+						int scanID;
+						
+						// prefer actual identification, fall back on RT inference
+						if (localSavedIDs.contains(psmID)) {
+							String rtString=row.get("midTime"); // in seconds
+							if (rtString!=null) {
+								retentionTime=Float.parseFloat(rtString);
+							} else {
+								rtString=row.get("RTinMin"); // in minutes so *60
+								retentionTime=Float.parseFloat(rtString)*60f;
+							}
+							scanID=Integer.parseInt(row.get("ScanNr"));
+						} else if (inferrer.isPresent()) {
+							retentionTime=inferrer.get().getRTInSec(job, peptideModSeq);
+							scanID=-1; // negative scan ID for inferred IDs
 						} else {
-							rtString=row.get("RTinMin"); // in minutes so *60
-							retentionTime=Float.parseFloat(rtString)*60f;
+							// not in local search and no RT inference
+							return;
 						}
+						
+						double precursorMZ=Double.parseDouble(row.get("precursorMz"));
+						// FIXME need to get peptide charge from window
+						byte precursorCharge=PercolatorPeptide.getCharge(psmID);
+						
 						float score=savedIDs.get(psmID);
 
 						float sortingScore;
@@ -104,7 +119,7 @@ public class PeptideQuantExtractor {
 			}
 		};
 		
-		TableParser.parseTSV(f, muscle);
+		TableParser.parseTSV(job.getFeatureFile(), muscle);
 
 		try {
 			HashMap<String, PSMData> uniquedData=new HashMap<String, PSMData>();
@@ -145,12 +160,6 @@ public class PeptideQuantExtractor {
 		PhosphoLocalizer localizer=null;
 		if (parameters.isRunPhosphoLocalization()&&searchedLibrary!=null) {
 			localizer=new PhosphoLocalizer(stripefile, searchedLibrary, parameters);
-		}
-		
-		// get identified peptides
-		HashMap<String, PSMData> peptideModSeqs=new HashMap<String, PSMData>();
-		for (PSMData psm : data) {
-			peptideModSeqs.put(psm.getPeptideModSeq(), psm);
 		}
 		
 		// get targeted ranges

@@ -26,6 +26,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibrary
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -352,6 +353,32 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
+	public HashMap<PeptidePrecursor, ArrayList<LibraryEntry>> getEntries(ArrayList<PeptidePrecursor> entries, boolean sqrt) throws IOException, SQLException, DataFormatException {
+		HashMap<PeptidePrecursor, ArrayList<LibraryEntry>> map=new HashMap<PeptidePrecursor, ArrayList<LibraryEntry>>();
+		
+		Connection c=getConnection(tempFile);
+		try {
+			PreparedStatement prep=c.prepareStatement("select e.PrecursorMZ, e.PrecursorCharge, e.PeptideModSeq, e.Copies, e.RTInSeconds, e.Score, e.MassEncodedLength, e.MassArray, e.IntensityEncodedLength, e.IntensityArray, e.CorrelationEncodedLength, e.CorrelationArray blob, e.RTInSecondsStart, e.RTInSecondsStop, e.MedianChromatogramEncodedLength, e.MedianChromatogramArray, p.ProteinAccessions, e.SourceFile from entries e, proteins p"
+						+ " where e.PeptideSeq=p.PeptideSeq and e.PeptideModSeq = ? and e.PrecursorCharge = ?");
+			try {
+				for (PeptidePrecursor precursor : entries) {
+					prep.setString(1, precursor.getPeptideModSeq());
+					prep.setByte(2, precursor.getPrecursorCharge());
+					
+					ResultSet rs=prep.executeQuery();
+					ArrayList<LibraryEntry> entry=extractEntries(sqrt, rs);
+					map.put(precursor, entry);
+				}
+			} finally {
+				prep.close();
+			}
+		} finally {
+			c.close();
+		}
+		
+		return map;
+	}
+	
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
 	 */
@@ -364,52 +391,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				ResultSet rs=s.executeQuery("select e.PrecursorMZ, e.PrecursorCharge, e.PeptideModSeq, e.Copies, e.RTInSeconds, e.Score, e.MassEncodedLength, e.MassArray, e.IntensityEncodedLength, e.IntensityArray, e.CorrelationEncodedLength, e.CorrelationArray blob, e.RTInSecondsStart, e.RTInSecondsStop, e.MedianChromatogramEncodedLength, e.MedianChromatogramArray, p.ProteinAccessions, e.SourceFile from entries e, proteins p"
 						+ " where e.PeptideSeq=p.PeptideSeq and e.PeptideModSeq = \""+peptideModSeq+"\" and e.PrecursorCharge = "+charge);
 
-				ArrayList<LibraryEntry> entry=new ArrayList<LibraryEntry>();
-				while (rs.next()) {
-
-					double precursorMZ=rs.getDouble(1);
-					byte precursorCharge=(byte)rs.getInt(2);
-					peptideModSeq=rs.getString(3);
-					int copies=rs.getInt(4);
-					float retentionTime=rs.getFloat(5); 
-					float score=rs.getFloat(6);
-					int massEncodedLength=rs.getInt(7);
-					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), massEncodedLength));
-					int intensityEncodedLength=rs.getInt(9);
-					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(10), intensityEncodedLength));
-					if (sqrt) {
-						intensityArray=General.protectedSqrt(intensityArray);
-					}
-					
-					float[] correlationArray;
-					float rtInSecondsStart;
-					float rtInSecondsStop;
-					float[] medianChromatogramArray;
-					
-					int correlationEncodedLength=rs.getInt(11);
-					if (correlationEncodedLength==0) {
-						// 0 indicates null, which indicates missing
-						correlationArray=null;
-						rtInSecondsStart=0.0f; 
-						rtInSecondsStop=0.0f; 
-						medianChromatogramArray=null;
-					} else {
-						correlationArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(12), correlationEncodedLength));
-						rtInSecondsStart=rs.getFloat(13);
-						rtInSecondsStop=rs.getFloat(14);
-						int medianChromatogramEncodedLength=rs.getInt(15);
-						medianChromatogramArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(16), medianChromatogramEncodedLength));
-					}
-					
-					HashSet<String> accessions=PSMData.stringToAccessions(rs.getString(17));
-					String sourceFile=rs.getString(18);
-					if (correlationEncodedLength==0) {
-						entry.add(new LibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));
-					} else {
-						entry.add(new ChromatogramLibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray,
-								correlationArray, medianChromatogramArray, new Range(rtInSecondsStart, rtInSecondsStop)));
-					}
-				}
+				ArrayList<LibraryEntry> entry=extractEntries(sqrt, rs);
 
 				return entry;
 			} finally {
@@ -418,6 +400,57 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		} finally {
 			c.close();
 		}
+	}
+
+	private ArrayList<LibraryEntry> extractEntries(boolean sqrt, ResultSet rs) throws SQLException, IOException, DataFormatException {
+		String peptideModSeq;
+		ArrayList<LibraryEntry> entry=new ArrayList<LibraryEntry>();
+		while (rs.next()) {
+
+			double precursorMZ=rs.getDouble(1);
+			byte precursorCharge=(byte)rs.getInt(2);
+			peptideModSeq=rs.getString(3);
+			int copies=rs.getInt(4);
+			float retentionTime=rs.getFloat(5); 
+			float score=rs.getFloat(6);
+			int massEncodedLength=rs.getInt(7);
+			double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), massEncodedLength));
+			int intensityEncodedLength=rs.getInt(9);
+			float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(10), intensityEncodedLength));
+			if (sqrt) {
+				intensityArray=General.protectedSqrt(intensityArray);
+			}
+			
+			float[] correlationArray;
+			float rtInSecondsStart;
+			float rtInSecondsStop;
+			float[] medianChromatogramArray;
+			
+			int correlationEncodedLength=rs.getInt(11);
+			if (correlationEncodedLength==0) {
+				// 0 indicates null, which indicates missing
+				correlationArray=null;
+				rtInSecondsStart=0.0f; 
+				rtInSecondsStop=0.0f; 
+				medianChromatogramArray=null;
+			} else {
+				correlationArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(12), correlationEncodedLength));
+				rtInSecondsStart=rs.getFloat(13);
+				rtInSecondsStop=rs.getFloat(14);
+				int medianChromatogramEncodedLength=rs.getInt(15);
+				medianChromatogramArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(16), medianChromatogramEncodedLength));
+			}
+			
+			HashSet<String> accessions=PSMData.stringToAccessions(rs.getString(17));
+			String sourceFile=rs.getString(18);
+			if (correlationEncodedLength==0) {
+				entry.add(new LibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));
+			} else {
+				entry.add(new ChromatogramLibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray,
+						correlationArray, medianChromatogramArray, new Range(rtInSecondsStart, rtInSecondsStop)));
+			}
+		}
+		return entry;
 	}
 
 	/* (non-Javadoc)

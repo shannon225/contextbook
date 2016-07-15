@@ -3,7 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 import java.util.HashSet;
 import java.util.StringTokenizer;
 
-public class PSMData {
+public class PSMData implements PeptidePrecursor {
 	private final int spectrumIndex;
 	private final double precursorMZ;
 	private final byte precursorCharge;
@@ -24,6 +24,14 @@ public class PSMData {
 		this.score=score;
 		this.sortingScore=sortingScore;
 		this.duration=duration;
+	}
+	
+	@Override
+	public int compareTo(PeptidePrecursor o) {
+		if (o==null) return 1;
+		int c=getPeptideModSeq().compareTo(o.getPeptideModSeq());
+		if (c!=0) return c;
+		return Byte.compare(getPrecursorCharge(), o.getPrecursorCharge());
 	}
 	
 	public HashSet<String> getAccessions() {

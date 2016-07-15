@@ -24,11 +24,17 @@ public class RetentionTimeFilter {
 	public static final float rejectionPValue=0.05f;
 	private final Function rtWarper;
 	private final ProphetMixtureModel model;
+	private final String xAxis,yAxis;
 	
 	public RetentionTimeFilter(ArrayList<XYPoint> rts) {
+		this(rts, "Library RT", "Actual RT");
+	}
+	public RetentionTimeFilter(ArrayList<XYPoint> rts, String xAxis, String yAxis) {
 		TwoDimensionalKDE twoDimKDE=new TwoDimensionalKDE(rts);
 		rtWarper=twoDimKDE.trace();
 		model=generateMixtureModel(rts, rtWarper);
+		this.xAxis=xAxis;
+		this.yAxis=yAxis;
 	}
 	
 	public void plot(ArrayList<XYPoint> rts) {
@@ -114,15 +120,18 @@ public class RetentionTimeFilter {
 		if (saveFileSeed.isPresent()) {
 			String saveFilePrefix=saveFileSeed.get().getAbsolutePath();
 			Charter.writeAsPDF(new File(saveFilePrefix+".delta_rt.pdf"), "Delta RT", "Count", true, negTrace, posTrace, histTrace);
-			Charter.writeAsPDF(new File(saveFilePrefix+".rt_fit.pdf"), "Library RT", "Actual RT", true, median2, selectedTrace, trace);
+			Charter.writeAsPDF(new File(saveFilePrefix+".rt_fit.pdf"), xAxis, yAxis, true, median2, selectedTrace, trace);
 		} else {
 			Charter.launchChart("Delta RT", "Count", true, negTrace, posTrace, histTrace);
-			Charter.launchChart("Library RT", "Actual RT", true, median2, selectedTrace, trace);
+			Charter.launchChart(xAxis, yAxis, true, median2, selectedTrace, trace);
 		}
 	}
 	
 	public float getYValue(float xrt) {
 		return rtWarper.getYValue(xrt);
+	}
+	public float getXValue(float yrt) {
+		return rtWarper.getXValue(yrt);
 	}
 	
 	public float getProbabilityFitsModel(float actualRT, float modelRT) {

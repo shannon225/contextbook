@@ -3,8 +3,9 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 import java.io.File;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 
-public class PercolatorPeptide {
+public class PercolatorPeptide implements PeptidePrecursor {
 	private final String psmID;
 	private final String proteinIDs;
 	private final float qValue;
@@ -15,6 +16,14 @@ public class PercolatorPeptide {
 		this.proteinIDs=proteinIDs;
 		this.qValue=qValue;
 		this.posteriorErrorProb=posteriorErrorProb;
+	}
+	
+	@Override
+	public int compareTo(PeptidePrecursor o) {
+		if (o==null) return 1;
+		int c=getPeptideModSeq().compareTo(o.getPeptideModSeq());
+		if (c!=0) return c;
+		return Byte.compare(getPrecursorCharge(), o.getPrecursorCharge());
 	}
 
 	public String getPsmID() {
@@ -37,11 +46,11 @@ public class PercolatorPeptide {
 		return isPSMIDDecoy(psmID);
 	}
 
-	public String getPeptideSequence() {
+	public String getPeptideModSeq() {
 		return getPeptideSequence(psmID);
 	}
 
-	public byte getCharge() {
+	public byte getPrecursorCharge() {
 		return getCharge(psmID);
 	}
 
