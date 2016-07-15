@@ -2,10 +2,8 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
 import java.awt.Color;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;

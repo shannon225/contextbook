@@ -170,6 +170,8 @@ public class General {
 	}
 
 	public static float sum(float[] v, IntRange range) {
+		if (v==null||v.length==0) return 0.0f;
+		
 		float sum=0.0f;
 		for (int i=range.getStart(); i<=range.getStop(); i++) {
 			sum+=v[i];
@@ -178,6 +180,7 @@ public class General {
 	}
 
 	public static float sum(float[] v) {
+		if (v==null||v.length==0) return 0.0f;
 		return sum(v, new IntRange(0, v.length-1));
 	}
 
