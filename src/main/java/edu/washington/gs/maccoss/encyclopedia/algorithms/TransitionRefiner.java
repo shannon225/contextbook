@@ -191,6 +191,11 @@ public class TransitionRefiner {
 			panels.put("unnormalized_uncolored", getChart(chromatograms, new float[correlationArray.length], retentionTimes, range));
 			panels.put("normalized", getChart(normalizedChromatograms, correlationArray, retentionTimes, range));
 			panels.put("median", Charter.getChart("scan", "intensity", false, toXYTrace(medianChromatogram, retentionTimes, "median", null, null)));
+			
+			ArrayList<XYTrace> traces=getTraces(normalizedChromatograms, correlationArray, retentionTimes, range);
+			traces.add(0, toXYTrace(medianChromatogram, retentionTimes, "median", Color.black, null, GraphType.dashedline, 6.0f));
+			panels.put("traces", Charter.getChart("scan", "intensity", false, traces.toArray(new XYTrace[traces.size()])));
+			
 			Charter.launchCharts(peptideModSeq+" chart", panels);
 		}
 		
@@ -274,6 +279,17 @@ public class TransitionRefiner {
 	}
 
 	private static ChartPanel getChart(ArrayList<float[]> chromatograms, float[] correlationArray, float[] rts, Range rtRange) {
+		ArrayList<XYTrace> xytraces=getTraces(chromatograms, correlationArray, rts, rtRange);
+		
+		return tracesToChart(xytraces);
+	}
+
+	public static ChartPanel tracesToChart(ArrayList<XYTrace> xytraces) {
+		ChartPanel panel=Charter.getChart("scan", "intensity", false, xytraces.toArray(new XYTrace[xytraces.size()]));
+		return panel;
+	}
+
+	private static ArrayList<XYTrace> getTraces(ArrayList<float[]> chromatograms, float[] correlationArray, float[] rts, Range rtRange) {
 		ArrayList<XYTrace> xytraces=new ArrayList<XYTrace>();
 		for (int i=0; i<chromatograms.size(); i++) {
 			float[] fs=chromatograms.get(i);
@@ -284,7 +300,7 @@ public class TransitionRefiner {
 			} else if (correlationArray[i]>identificationCorrelationThreshold) {
 				c=new Color(255, 215, 0);
 			} else if (correlationArray[i]==0.0f) {
-				c=Color.black;
+				c=Color.gray;
 			} else {
 				c=Color.red;
 			}
@@ -292,12 +308,10 @@ public class TransitionRefiner {
 			xytraces.add(toXYTrace(fs, rts, ""+i, c, rtRange));
 
 			if (rtRange!=null) {
-				xytraces.add(toXYTrace(fs, rts, ""+i, Color.black, null));
+				xytraces.add(toXYTrace(fs, rts, ""+i, Color.gray, null));
 			}
 		}
-		
-		ChartPanel panel=Charter.getChart("scan", "intensity", false, xytraces.toArray(new XYTrace[xytraces.size()]));
-		return panel;
+		return xytraces;
 	}
 	public static XYTrace toBoundaries(float f, String name) {
 		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
@@ -307,6 +321,12 @@ public class TransitionRefiner {
 	}
 
 	public static XYTrace toXYTrace(float[] fs, float[] rts, String name, Color color, Range rtRange) {
+		GraphType graphtype=GraphType.line;
+		float thickness=3.0f;
+		return toXYTrace(fs, rts, name, color, rtRange, graphtype, thickness);
+	}
+
+	public static XYTrace toXYTrace(float[] fs, float[] rts, String name, Color color, Range rtRange, GraphType graphtype, float thickness) {
 		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
 		for (int j=0; j<fs.length; j++) {
 			if (rts==null) {
@@ -319,7 +339,7 @@ public class TransitionRefiner {
 				points.add(point);
 			}
 		}
-		XYTrace trace=new XYTrace(points, GraphType.line, name, color, 3.0f);
+		XYTrace trace=new XYTrace(points, graphtype, name, color, thickness);
 		return trace;
 	}
 

@@ -237,7 +237,14 @@ public class Charter {
 
 			case line:
 				renderer=new XYLineAndShapeRenderer();
-				renderer.setSeriesStroke(0, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				renderer.setSeriesStroke(0, new BasicStroke(trace.getThickness().orElse(2.0f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				((XYLineAndShapeRenderer) renderer).setBaseShapesVisible(false);
+
+				break;
+
+			case dashedline:
+				renderer=new XYLineAndShapeRenderer();
+				renderer.setSeriesStroke(0, new BasicStroke(trace.getThickness().orElse(2.0f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 10.0f, new float[] {10.0f}, 0.0f));
 				((XYLineAndShapeRenderer) renderer).setBaseShapesVisible(false);
 
 				break;
@@ -269,9 +276,6 @@ public class Charter {
 			if (trace.getColor().isPresent()) {
 				renderer.setSeriesPaint(0, trace.getColor().get());
 			}
-			if (trace.getThickness().isPresent()) {
-				renderer.setSeriesStroke(0, new BasicStroke(trace.getThickness().get(), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-			}
 
 			Pair<double[], double[]> values=trace.toArrays();
 			double[] x=values.x;
@@ -280,6 +284,7 @@ public class Charter {
 			switch (trace.getType()) {
 			case area:
 			case line:
+			case dashedline:
 			case point:
 			case tinypoint:
 				XYSeries series=new XYSeries(trace.getName());

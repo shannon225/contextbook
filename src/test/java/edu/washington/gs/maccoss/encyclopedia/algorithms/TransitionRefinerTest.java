@@ -7,7 +7,83 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TDoubleArrayList;
 
 public class TransitionRefinerTest {
+
 	public static void main(String[] args) {
+		plotEIGNIISDAMK();
+	}
+	
+	//EIGNIISDAMK+2 (rt=4229.2856)
+	public static void plotEIGNIISDAMK() {
+		ArrayList<float[]> chromatograms=new ArrayList<float[]>();
+		float[] b2=new float[] {83875.0390625f, 102077.375f, 56852.09765625f, 71273.8515625f, 56333.8359375f, 72436.3984375f, 82192.1640625f, 209511.0f, 186783.5f, 294653.34375f, 363570.65625f,
+				272646.5625f, 288544.3125f, 292669.5f, 183966.25f, 166379.015625f, 162588.015625f, 137269.28125f, 141212.984375f, 259367.15625f, 348729.46875f, 114987.4140625f, 81208.6953125f,
+				67690.3125f, 84733.7578125f, 112416.140625f,};
+		chromatograms.add(b2);
+		float[] y2=new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 102044.9921875f, 183339.03125f, 186134.890625f, 269246.34375f, 211908.0625f, 125531.7890625f, 0.0f, 0.0f, 0.0f,
+				0.0f, 0.0f, 0.0f, 3050.194091796875f, 25618.966796875f, 27664.83203125f, 34760.046875f, 21478.712890625f,};
+		chromatograms.add(y2);
+		float[] b3=new float[] {28463.4921875f, 30860.783203125f, 25471.0859375f, 35515.40234375f, 36057.078125f, 28891.68359375f, 30550.974609375f, 41254.03125f, 32727.703125f, 41228.16796875f, 0.0f,
+				30068.244140625f, 49734.046875f, 75036.4296875f, 132127.171875f, 247096.96875f, 345049.8125f, 492589.625f, 350056.84375f, 423721.15625f, 424324.03125f, 155052.625f, 59360.97265625f,
+				53621.98046875f, 44607.37890625f, 65869.4296875f,};
+		chromatograms.add(b3);
+		float[] y3=new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 88795.4765625f, 335280.75f, 297209.59375f, 386607.625f, 335113.21875f, 204680.6875f, 105236.3359375f,
+				41092.90625f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,};
+		chromatograms.add(y3);
+		float[] b4=new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 76503.7734375f, 124448.03125f, 84324.5078125f, 47245.15625f, 59678.08984375f, 88522.765625f,
+				58771.078125f, 144687.5f, 32791.0078125f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,};
+		chromatograms.add(b4);
+		float[] y4=new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 99901.8203125f, 158237.609375f, 145698.984375f, 86498.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+				12157.671875f, 0.0f, 0.0f, 0.0f, 0.0f,};
+		chromatograms.add(y4);
+		float[] b5=new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 35020.3515625f, 42871.60546875f, 30500.185546875f,
+				0.0f, 0.0f, 0.0f, 0.0f,};
+		chromatograms.add(b5);
+		float[] y5=new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 262998.5f, 687530.25f, 700176.0625f, 1041231.75f, 747892.75f, 485779.3125f, 212630.515625f, 142454.09375f,
+				45828.2890625f, 39074.15625f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,};
+		chromatograms.add(y5);
+		float[] y6=new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 13842.5771484375f, 41806.62890625f, 0.0f, 300604.78125f, 664254.625f, 673934.0625f, 898653.125f, 793304.0f, 514485.0625f,
+				358957.46875f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,};
+		chromatograms.add(y6);
+		float[] y7=new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 19504.962890625f, 83693.8203125f, 147224.3125f, 157680.515625f, 281689.28125f, 247816.375f, 144363.15625f, 0.0f, 0.0f,
+				0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,};
+		chromatograms.add(y7);
+		float[] y8=new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 27307.0f, 127635.953125f, 45227.5625f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+				0.0f, 0.0f,};
+		chromatograms.add(y8);
+		float[] y9=new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 168510.5625f, 393503.1875f, 368990.21875f, 611638.8125f, 419877.75f, 324253.5625f, 173974.625f, 90743.15625f,
+				0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 8127.353515625f, 5719.25244140625f, 0.0f, 0.0f,};
+		chromatograms.add(y9);
+		String[] ionNames=new String[] {"b2", "y2", "b3", "y3", "b4", "y4", "b5", "y5", "y6", "y7", "y8", "y9",};
+		float[] rts=new float[] {70.01758575439453f, 70.0562744140625f, 70.09734344482422f, 70.1347885131836f, 70.17521667480469f, 70.21282196044922f, 70.25397491455078f, 70.293701171875f,
+				70.3323974609375f, 70.37088775634766f, 70.40955352783203f, 70.44808959960938f, 70.48809051513672f, 70.52470397949219f, 70.5665054321289f, 70.60203552246094f, 70.64164733886719f,
+				70.67855072021484f, 70.71800994873047f, 70.7557373046875f, 70.79398345947266f, 70.83085632324219f, 70.87123107910156f, 70.9073257446289f, 70.94801330566406f, 70.98357391357422f,};
+
+		/*for (int i=0; i<chromatograms.size(); i++) {
+			float[] chromatogram=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatograms.get(i));
+			chromatograms.set(i, chromatogram);
+		}*/
+
+		for (int i=0; i<rts.length; i++) {
+			rts[i]=rts[i]*60.0f;
+		}
+
+		TDoubleArrayList masses=new TDoubleArrayList();
+		int count=0;
+		for (float[] f : chromatograms) {
+			masses.add(count++);
+		}
+		double[] fragmentMasses=masses.toArray();
+
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions("EIGNIISDAMK", fragmentMasses, chromatograms, rts, true);
+		float[] correlations=data.getCorrelationArray();
+		float[] integrations=data.getIntegrationArray();
+		for (int i=0; i<integrations.length; i++) {
+			System.out.println(ionNames[i]+"\t"+correlations[i]+"\t"+integrations[i]);
+		}
+		Charter.launchCharts("TITLE", TransitionRefiner.getChartPanels(data));
+	}
+
+	public static void plotASVAAQQQEEAR() {
 		ArrayList<float[]> chromatograms=new ArrayList<float[]>();
 		float[] y2=new float[] {37789.328125f, 37134.6796875f, 23441.00390625f, 41935.12890625f, 61996.5234375f, 46208.08984375f, 42318.9375f, 84970.9765625f, 105310.4375f, 183981.203125f,
 				212268.0625f, 284312.4375f, 168349.78125f, 151408.21875f, 63457.26171875f, 63656.53125f, 25506.87890625f, 34634.44921875f, 42233.234375f, 44288.28515625f, 95634.6171875f, 56152.46875f,
@@ -46,7 +122,7 @@ public class TransitionRefinerTest {
 			float[] chromatogram=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatograms.get(i));
 			chromatograms.set(i, chromatogram);
 		}
-		
+
 		for (int i=0; i<rts.length; i++) {
 			rts[i]=rts[i]*60.0f;
 		}
@@ -57,7 +133,7 @@ public class TransitionRefinerTest {
 			masses.add(count++);
 		}
 		double[] fragmentMasses=masses.toArray();
-		
+
 		TransitionRefinementData data=TransitionRefiner.identifyTransitions("ASVAAQQQEEAR", fragmentMasses, chromatograms, rts, true);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
