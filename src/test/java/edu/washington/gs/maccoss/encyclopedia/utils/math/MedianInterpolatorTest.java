@@ -75,7 +75,9 @@ public class MedianInterpolatorTest extends TestCase {
 		TableParserMuscle muscle=new TableParserMuscle() {
 			@Override
 			public void processRow(Map<String, String> row) {
-				float predicted=Float.parseFloat(row.get("predicted"));
+				String s=row.get("predicted");
+				if (s==null) s=row.get("library");
+				float predicted=Float.parseFloat(s)*60f;
 				float actual=Float.parseFloat(row.get("actual"));
 				rts.add(new XYPoint(predicted, actual));
 			}

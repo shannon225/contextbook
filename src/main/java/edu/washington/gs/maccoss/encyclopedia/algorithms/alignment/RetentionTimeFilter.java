@@ -23,21 +23,28 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.UnitDistr
 import gnu.trove.list.array.TFloatArrayList;
 
 public class RetentionTimeFilter {
-	public static final float maxDeltaForHistogram=10.0f; // in minutes
+	private static final String RT_STRING="RT from DDA Library (iRT)";
+	private static final String DELTA_RETENTION_TIME_STRING="Delta RT from DDA Library (min)";//="Delta RT from Chromatogram Library (min)";
+	public static final float maxDeltaForHistogram=20.0f; // in minutes
 	public static final float rejectionPValue=0.05f;
 	private final Function rtWarper;
 	private final ProphetMixtureModel model;
 	private final String xAxis,yAxis;
 	
 	public RetentionTimeFilter(ArrayList<XYPoint> rts) {
-		this(rts, "Library RT", "Actual RT");
+		this(rts, RT_STRING, "Retention Time (min)");
 	}
+	
 	public RetentionTimeFilter(ArrayList<XYPoint> rts, String xAxis, String yAxis) {
 		TwoDimensionalKDE twoDimKDE=new TwoDimensionalKDE(rts);
 		rtWarper=twoDimKDE.trace();
 		model=generateMixtureModel(rts, rtWarper);
 		this.xAxis=xAxis;
 		this.yAxis=yAxis;
+	}
+	
+	public Function getRtWarper() {
+		return rtWarper;
 	}
 	
 	public void plot(ArrayList<XYPoint> rts) {
@@ -74,17 +81,29 @@ public class RetentionTimeFilter {
 		//System.arraycopy(deltaArray, min, truncatedDeltaArray, 0, max-min);
 		
 		ArrayList<XYPoint> histogram=PivotTableGenerator.createPivotTable(deltaArray);
-		XYTrace histTrace=new XYTrace(histogram, GraphType.area, "Delta RT", new Color(26, 198, 49), 3.0f);
+		ArrayList<XYPoint> posHist=new ArrayList<XYPoint>();
+		ArrayList<XYPoint> negHist=new ArrayList<XYPoint>();
+		
+		for (XYPoint xyPoint : histogram) {
+			float prob=getProbabilityFitsModel((float)xyPoint.x);
+			System.out.println(xyPoint.x+"\t"+prob);
+			if (prob>=rejectionPValue) {
+				posHist.add(xyPoint);
+			} else {
+				negHist.add(xyPoint);
+			}
+		}
+
+		XYTrace histTrace=new XYTrace(negHist, GraphType.area, "Delta RT", Color.red, 3.0f);
+		XYTrace posHistTrace=new XYTrace(posHist, GraphType.area, "Delta RT", Color.blue, 3.0f);
 		
 		ArrayList<XYPoint> positivePoints=new ArrayList<XYPoint>();
-		ArrayList<XYPoint> negativePoints=new ArrayList<XYPoint>();
 		
 		int numPoints=500;
 		double range=deltaArray[max]-deltaArray[min];
 		for (int i=0; i<numPoints; i++) {
 			double x=deltaArray[min]+i*range/numPoints;
 			positivePoints.add(new XYPoint(x, model.getPositive().getProbability(x)));
-			negativePoints.add(new XYPoint(x, model.getNegative().getProbability(x)));
 		}
 
 		double histSum=0.0;
@@ -96,9 +115,6 @@ public class RetentionTimeFilter {
 		for (XYPoint xyPoint : positivePoints) {
 			distSum+=xyPoint.getY();
 		}
-		for (XYPoint xyPoint : negativePoints) {
-			distSum+=xyPoint.getY();
-		}
 		double normalizer=distSum>0?(histSum*numPoints)/(distSum*histogram.size()):1.0;
 		
 		ArrayList<XYPoint> normPositivePoints=new ArrayList<XYPoint>();
@@ -107,23 +123,16 @@ public class RetentionTimeFilter {
 		}
 		positivePoints=normPositivePoints;
 		
-		ArrayList<XYPoint> normNegativePoints=new ArrayList<XYPoint>();
-		for (XYPoint xyPoint : negativePoints) {
-			normNegativePoints.add(new XYPoint(xyPoint.x, xyPoint.y*normalizer));
-		}
-		negativePoints=normNegativePoints;
-
-		XYTrace posTrace=new XYTrace(positivePoints, GraphType.line, "Positive", Color.BLUE, 2.0f);
-		XYTrace negTrace=new XYTrace(negativePoints, GraphType.line, "Negative", Color.RED, 2.0f);
+		XYTrace posTrace=new XYTrace(positivePoints, GraphType.line, "Positive", new Color(26, 198, 49, 100), 2.0f);
 		
-		XYTrace median2=new XYTrace(rtWarper.getKnots(), GraphType.line, "Retention Time Fit", new Color(26, 198, 49, 100), 3.0f);
-		XYTrace selectedTrace=new XYTrace(selectedRTs, GraphType.tinypoint, "Data Used In Fit", Color.BLUE, 3.0f);
-		XYTrace trace=new XYTrace(removedRTs, GraphType.tinypoint, "Data Removed From Fit", Color.RED, 3.0f);
+		XYTrace median2=new XYTrace(rtWarper.getKnots(), GraphType.line, "Retention Time Fit", new Color(26, 198, 49, 100), 2.0f);
+		XYTrace selectedTrace=new XYTrace(selectedRTs, GraphType.tinypoint, "Data Used In Fit", Color.BLUE, 2.0f);
+		XYTrace trace=new XYTrace(removedRTs, GraphType.tinypoint, "Data Removed From Fit", Color.RED, 2.0f);
 		
 		if (saveFileSeed.isPresent()) {
 			String saveFilePrefix=saveFileSeed.get().getAbsolutePath();
-			Charter.writeAsPDF(new File(saveFilePrefix+".delta_rt.pdf"), "Delta RT", "Count", true, negTrace, posTrace, histTrace);
-			Charter.writeAsPDF(new File(saveFilePrefix+".rt_fit.pdf"), xAxis, yAxis, true, median2, selectedTrace, trace);
+			Charter.writeAsPDF(new File(saveFilePrefix+".delta_rt.pdf"), DELTA_RETENTION_TIME_STRING, "Number of Peptides", false, posTrace, posHistTrace, histTrace);
+			Charter.writeAsPDF(new File(saveFilePrefix+".rt_fit.pdf"), xAxis, yAxis, false, median2, selectedTrace, trace);
 
 			try {
 				PrintWriter writer=new PrintWriter(new File(saveFilePrefix+".rt_fit.txt"), "UTF-8");
@@ -144,7 +153,7 @@ public class RetentionTimeFilter {
 				Logger.errorException(e);
 			}
 		} else {
-			Charter.launchChart("Delta RT", "Count", true, negTrace, posTrace, histTrace);
+			Charter.launchChart("Delta RT", "Count", true, posTrace, posHistTrace, histTrace);
 			Charter.launchChart(xAxis, yAxis, true, median2, selectedTrace, trace);
 		}
 	}
@@ -158,6 +167,10 @@ public class RetentionTimeFilter {
 	
 	public float getProbabilityFitsModel(float actualRT, float modelRT) {
 		float delta=actualRT-getYValue(modelRT);
+		return getProbabilityFitsModel(delta);
+	}
+
+	private float getProbabilityFitsModel(float delta) {
 		float probability=model.getProbability(delta);
 		return probability;
 	}
@@ -174,12 +187,19 @@ public class RetentionTimeFilter {
 			if (delta<min) min=delta;
 		}
 		float[] deltaArray=deltas.toArray();
+		Arrays.sort(deltaArray);
+		min=deltaArray[Math.round(deltaArray.length*0.01f)];
+		max=deltaArray[Math.round(deltaArray.length*0.99f)];
+		
 		//Arrays.sort(deltaArray);
 		//min=deltaArray[Math.round(deltaArray.length*0.05f)];
 		//max=deltaArray[Math.round(deltaArray.length*0.95f)];
 		
-		float median=QuickMedian.select(deltaArray, 0.5f);
-		float iqr=QuickMedian.iqr(deltaArray);
+		//float median=QuickMedian.select(deltaArray, 0.5f);
+		//float iqr=QuickMedian.iqr(deltaArray);
+		float median=deltaArray[Math.round(deltaArray.length*0.50f)];
+		float iqr=deltaArray[Math.round(deltaArray.length*0.75f)]-deltaArray[Math.round(deltaArray.length*0.25f)];
+		
 		float quarterMaxRange=(max-min)/4.0f;
 		Distribution positive=new Gaussian(median, iqr/1.35f, 0.5f);
 		Distribution negative=new UnitDistribution(median, quarterMaxRange, 0.5f, min, max);

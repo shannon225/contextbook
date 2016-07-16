@@ -129,7 +129,9 @@ public class Charter {
 	}
 
 	public static void writeAsPDF(File f, String xAxis, String yAxis, boolean displayLegend, XYTrace... traces) {
-		Dimension d=new Dimension(792, 612);
+		//Dimension d=new Dimension(792, 612);
+		Dimension d=new Dimension(400, 300);
+		
 		writeAsPDF(getChart(xAxis, yAxis, displayLegend, traces).getChart(), f, d);
 	}
 
@@ -171,15 +173,16 @@ public class Charter {
 		plot.setBackgroundPaint(Color.white);
 		plot.setDomainGridlinesVisible(false);
 		plot.setRangeGridlinePaint(Color.white);
+		plot.setRangeGridlinesVisible(false);
 		JFreeChart chart=new JFreeChart(plot);
 		chart.removeLegend();
 		chart.setBackgroundPaint(Color.white);
 
 		NumberAxis rangeAxis=(NumberAxis) plot.getRangeAxis();
 
-		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
-		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
-		Font font3=new Font("News Gothic MT", Font.PLAIN, 18);
+		Font font=new Font("News Gothic MT", Font.PLAIN, 16);
+		Font font2=new Font("News Gothic MT", Font.PLAIN, 16);
+		Font font3=new Font("News Gothic MT", Font.PLAIN, 16);
 		rangeAxis.setLabelFont(font2);
 		rangeAxis.setTickLabelFont(font);
 
@@ -320,16 +323,18 @@ public class Charter {
 		}
 
 		plot.setBackgroundPaint(Color.white);
-		plot.setDomainGridlinePaint(Color.gray);
-		plot.setRangeGridlinePaint(Color.gray);
+		plot.setDomainGridlinePaint(Color.white);//gray);
+		plot.setDomainGridlinesVisible(false);
+		plot.setRangeGridlinePaint(Color.white);//gray);
+		plot.setRangeGridlinesVisible(false);
 		JFreeChart chart=new JFreeChart(plot);
 		chart.setBackgroundPaint(Color.white);
 
 		NumberAxis rangeAxis=(NumberAxis) ((XYPlot) plot).getRangeAxis();
 
-		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
-		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
-		Font font3=new Font("News Gothic MT", Font.PLAIN, 18);
+		Font font=new Font("News Gothic MT", Font.PLAIN, 12);
+		Font font2=new Font("News Gothic MT", Font.PLAIN, 12);
+		Font font3=new Font("News Gothic MT", Font.PLAIN, 12);
 		rangeAxis.setLabelFont(font2);
 		rangeAxis.setTickLabelFont(font);
 
