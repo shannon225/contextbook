@@ -16,16 +16,19 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ProphetMixtureModel;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Gaussian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.UnitDistribution;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class RetentionTimeFilter {
-	private static final String RT_STRING="RT from DDA Library (iRT)";
-	private static final String DELTA_RETENTION_TIME_STRING="Delta RT from DDA Library (min)";//="Delta RT from Chromatogram Library (min)";
-	public static final float maxDeltaForHistogram=20.0f; // in minutes
+	//private static final String RT_STRING="iRT from DDA Library";
+	//private static final String DELTA_RETENTION_TIME_STRING="Delta RT from DDA Library (min)";
+	//private static final String RT_STRING="RT from Chromatogram Library (min)";
+	//private static final String DELTA_RETENTION_TIME_STRING="Delta RT from Chromatogram Library (min)";
+	private static final String RT_STRING="RT from Library";
+	private static final String DELTA_RETENTION_TIME_STRING="Delta RT from Library (min)";
+	public static final float maxDeltaForHistogram=10.0f; // in minutes
 	public static final float rejectionPValue=0.05f;
 	private final Function rtWarper;
 	private final ProphetMixtureModel model;
@@ -58,9 +61,7 @@ public class RetentionTimeFilter {
 		ArrayList<XYPoint> selectedRTs=new ArrayList<XYPoint>();
 		for (int i=0; i<rts.size(); i++) {
 			XYPoint xyPoint=rts.get(i);
-			float actualRT=(float)xyPoint.y;
-			float modelRT=rtWarper.getYValue((float)xyPoint.x);
-			float delta=actualRT-modelRT;
+			float delta=getDelta((float)xyPoint.y, (float)xyPoint.x);
 			
 			if (delta>-maxDeltaForHistogram&&delta<maxDeltaForHistogram) {
 				deltas.add(delta);
@@ -86,9 +87,9 @@ public class RetentionTimeFilter {
 		
 		for (XYPoint xyPoint : histogram) {
 			float prob=getProbabilityFitsModel((float)xyPoint.x);
-			System.out.println(xyPoint.x+"\t"+prob);
 			if (prob>=rejectionPValue) {
 				posHist.add(xyPoint);
+				negHist.add(new XYPoint(xyPoint.x, 0.0));
 			} else {
 				negHist.add(xyPoint);
 			}
@@ -139,9 +140,8 @@ public class RetentionTimeFilter {
 				writer.println("library\tactual\twarpToActual\tdelta\tfitProb");
 				for (int i=0; i<rts.size(); i++) {
 					XYPoint xyPoint=rts.get(i);
-					float actualRT=(float)xyPoint.y;
 					float modelRT=rtWarper.getYValue((float)xyPoint.x);
-					float delta=actualRT-modelRT;
+					float delta=getDelta((float)xyPoint.y, (float)xyPoint.x);
 
 					float prob=getProbabilityFitsModel((float)xyPoint.y, (float)xyPoint.x);
 					writer.println(xyPoint.x+"\t"+xyPoint.y+"\t"+modelRT+"\t"+delta+"\t"+prob);
@@ -166,8 +166,19 @@ public class RetentionTimeFilter {
 	}
 	
 	public float getProbabilityFitsModel(float actualRT, float modelRT) {
-		float delta=actualRT-getYValue(modelRT);
+		float delta=getDelta(actualRT, modelRT);
+		
 		return getProbabilityFitsModel(delta);
+	}
+
+	private float getDelta(float actualRT, float modelRT) {
+		float one=actualRT-getYValue(modelRT);
+		float two=getXValue(actualRT)-modelRT;
+		if (Math.abs(one)<Math.abs(two)) {
+			return one;
+		} else {
+			return two;
+		}
 	}
 
 	private float getProbabilityFitsModel(float delta) {
@@ -181,15 +192,17 @@ public class RetentionTimeFilter {
 		float max=-Float.MAX_VALUE;
 		for (int i=0; i<rts.size(); i++) {
 			XYPoint xyPoint=rts.get(i);
-			float delta=(float)xyPoint.y-warper.getYValue((float)xyPoint.x);
+			float delta=getDelta((float)xyPoint.y, (float)xyPoint.x);
 			deltas.add(delta);
 			if (delta>max) max=delta;
 			if (delta<min) min=delta;
 		}
 		float[] deltaArray=deltas.toArray();
 		Arrays.sort(deltaArray);
-		min=deltaArray[Math.round(deltaArray.length*0.01f)];
-		max=deltaArray[Math.round(deltaArray.length*0.99f)];
+		
+		// assumes 1% FDR
+		min=deltaArray[Math.round(deltaArray.length*0.005f)];
+		max=deltaArray[Math.round(deltaArray.length*0.995f)];
 		
 		//Arrays.sort(deltaArray);
 		//min=deltaArray[Math.round(deltaArray.length*0.05f)];

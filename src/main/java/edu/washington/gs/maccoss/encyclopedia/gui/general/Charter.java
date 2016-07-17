@@ -180,9 +180,9 @@ public class Charter {
 
 		NumberAxis rangeAxis=(NumberAxis) plot.getRangeAxis();
 
-		Font font=new Font("News Gothic MT", Font.PLAIN, 16);
-		Font font2=new Font("News Gothic MT", Font.PLAIN, 16);
-		Font font3=new Font("News Gothic MT", Font.PLAIN, 16);
+		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
+		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
+		Font font3=new Font("News Gothic MT", Font.PLAIN, 18);
 		rangeAxis.setLabelFont(font2);
 		rangeAxis.setTickLabelFont(font);
 
@@ -332,9 +332,9 @@ public class Charter {
 
 		NumberAxis rangeAxis=(NumberAxis) ((XYPlot) plot).getRangeAxis();
 
-		Font font=new Font("News Gothic MT", Font.PLAIN, 12);
-		Font font2=new Font("News Gothic MT", Font.PLAIN, 12);
-		Font font3=new Font("News Gothic MT", Font.PLAIN, 12);
+		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
+		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
+		Font font3=new Font("News Gothic MT", Font.PLAIN, 18);
 		rangeAxis.setLabelFont(font2);
 		rangeAxis.setTickLabelFont(font);
 
@@ -350,6 +350,10 @@ public class Charter {
 		} else {
 			chartPanel.getChart().getLegend().setItemFont(font3);
 		}
+		//rangeAxis.setTickUnit(new NumberTickUnit(20)); 
+		//domainAxis.setTickUnit(new NumberTickUnit(20));
+		//rangeAxis.setRange(0, 135);
+		//domainAxis.setRange(15, 135);
 
 		chartPanel.setMinimumDrawWidth(0);
 		chartPanel.setMinimumDrawHeight(0);

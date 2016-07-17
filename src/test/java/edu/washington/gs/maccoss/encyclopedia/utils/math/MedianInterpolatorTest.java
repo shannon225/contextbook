@@ -77,7 +77,7 @@ public class MedianInterpolatorTest extends TestCase {
 			public void processRow(Map<String, String> row) {
 				String s=row.get("predicted");
 				if (s==null) s=row.get("library");
-				float predicted=Float.parseFloat(s)*60f;
+				float predicted=Float.parseFloat(s);//*60f;
 				float actual=Float.parseFloat(row.get("actual"));
 				rts.add(new XYPoint(predicted, actual));
 			}
