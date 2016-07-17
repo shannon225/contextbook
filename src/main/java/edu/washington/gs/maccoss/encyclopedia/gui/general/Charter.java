@@ -129,7 +129,9 @@ public class Charter {
 	}
 
 	public static void writeAsPDF(File f, String xAxis, String yAxis, boolean displayLegend, XYTrace... traces) {
-		Dimension d=new Dimension(792, 612);
+		//Dimension d=new Dimension(792, 612);
+		Dimension d=new Dimension(400, 300);
+		
 		writeAsPDF(getChart(xAxis, yAxis, displayLegend, traces).getChart(), f, d);
 	}
 
@@ -171,6 +173,7 @@ public class Charter {
 		plot.setBackgroundPaint(Color.white);
 		plot.setDomainGridlinesVisible(false);
 		plot.setRangeGridlinePaint(Color.white);
+		plot.setRangeGridlinesVisible(false);
 		JFreeChart chart=new JFreeChart(plot);
 		chart.removeLegend();
 		chart.setBackgroundPaint(Color.white);
@@ -320,8 +323,10 @@ public class Charter {
 		}
 
 		plot.setBackgroundPaint(Color.white);
-		plot.setDomainGridlinePaint(Color.gray);
-		plot.setRangeGridlinePaint(Color.gray);
+		plot.setDomainGridlinePaint(Color.white);//gray);
+		plot.setDomainGridlinesVisible(false);
+		plot.setRangeGridlinePaint(Color.white);//gray);
+		plot.setRangeGridlinesVisible(false);
 		JFreeChart chart=new JFreeChart(plot);
 		chart.setBackgroundPaint(Color.white);
 
@@ -345,6 +350,10 @@ public class Charter {
 		} else {
 			chartPanel.getChart().getLegend().setItemFont(font3);
 		}
+		//rangeAxis.setTickUnit(new NumberTickUnit(20)); 
+		//domainAxis.setTickUnit(new NumberTickUnit(20));
+		//rangeAxis.setRange(0, 135);
+		//domainAxis.setRange(15, 135);
 
 		chartPanel.setMinimumDrawWidth(0);
 		chartPanel.setMinimumDrawHeight(0);
