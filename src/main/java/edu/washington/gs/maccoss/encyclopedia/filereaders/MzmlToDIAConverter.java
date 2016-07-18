@@ -28,7 +28,7 @@ public class MzmlToDIAConverter {
 		SearchParameters parameters=PecanParameterParser.parseParameters(paramMap);
 		System.out.println(parameters);
 		
-		File dir=new File("/Volumes/WorkingDisk/freezer_experiment/");
+		File dir=new File("/Volumes/WorkingDisk/14jun2016_mcf7_phospho/hela_timecourse/");
 		
 		File[] files=dir.listFiles(new SimpleFilenameFilter(MZML_EXTENSION));
 		for (int i=0; i<files.length; i++) {
