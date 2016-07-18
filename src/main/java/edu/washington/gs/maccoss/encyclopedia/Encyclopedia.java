@@ -87,7 +87,7 @@ public class Encyclopedia {
 			Logger.logLine("\t-libexport\trun Library Export (use -libexport -h for Library Export help)");
 			Logger.logLine("\t-o\toutput report file (default: [input file]"+EncyclopediaJobData.OUTPUT_FILE_SUFFIX+")");
 			
-			TreeMap<String, String> defaults=new TreeMap<String, String>(PecanParameterParser.getDefaultParameters());
+			TreeMap<String, String> defaults=new TreeMap<String, String>(SearchParameterParser.getDefaultParameters());
 			for (Entry<String, String> entry : defaults.entrySet()) {
 				Logger.logLine("\t"+entry.getKey()+"\t(default: "+entry.getValue()+")");
 			}

@@ -107,7 +107,7 @@ public class PeakLocationInferrer {
 					}
 				}
 				if (points.size()<10) {
-					Logger.errorLine("Not enough points ("+points.size()+") to compute regression between samples, still trying anyways.");
+					Logger.errorLine("Not enough points ("+points.size()+" out of align:"+peptides.size()+" and best:"+rtsBySequence.size()+") to compute regression between samples, still trying anyways.");
 				}
 				
 				RetentionTimeFilter alignment=new RetentionTimeFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
