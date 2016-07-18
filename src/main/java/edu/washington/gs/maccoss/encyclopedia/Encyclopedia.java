@@ -68,6 +68,9 @@ public class Encyclopedia {
 			
 		} else if (arguments.containsKey("-browser")) {
 			DIABrowser.main(args);
+		
+		} else if (arguments.containsKey("-libexport")) {
+			SearchToBLIB.main(args);
 			
 		} else if (arguments.containsKey("-pecan")) {
 			Pecanpie.main(args);
@@ -80,7 +83,9 @@ public class Encyclopedia {
 			Logger.logLine("\t-l\tlibrary .ELIB file");
 			Logger.logLine("Other Parameters: ");
 			Logger.logLine("\t-pecan\trun Pecanpie (use -pecan -h for Pecan help)");
-			Logger.logLine("\t-o\toutput report file (default: [input file].pecan.txt)");
+			Logger.logLine("\t-browser\trun ELIB Browser (use -browser -h for ELIB Browser help)");
+			Logger.logLine("\t-libexport\trun Library Export (use -libexport -h for Library Export help)");
+			Logger.logLine("\t-o\toutput report file (default: [input file]"+EncyclopediaJobData.OUTPUT_FILE_SUFFIX+")");
 			
 			TreeMap<String, String> defaults=new TreeMap<String, String>(PecanParameterParser.getDefaultParameters());
 			for (Entry<String, String> entry : defaults.entrySet()) {

@@ -33,7 +33,9 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
@@ -48,48 +50,30 @@ public class SearchToBLIB {
 		if (arguments.size()==0) {
 			SearchGUIMain.runGUI(false);
 			
-		} else if (arguments.containsKey("-browser")) {
-			DIABrowser.main(args);
-			
-		} else if (arguments.containsKey("-pecan")) {
-			Pecanpie.main(args);
-			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
-			Logger.logLine("Encyclopedia Help");
+			Logger.logLine("SearchToLIB Help");
 			Logger.logLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.logLine("Required Parameters: ");
-			Logger.logLine("\t-i\tinput .DIA or .MZML file");
-			Logger.logLine("\t-l\tlibrary .ELIB file");
-			Logger.logLine("Other Parameters: ");
-			Logger.logLine("\t-pecan\trun Pecanpie (use -pecan -h for Pecan help)");
-			Logger.logLine("\t-o\toutput report file (default: [input file].pecan.txt)");
+			Logger.logLine("\t-i\tinput .DIA or .MZML file or directory");
+			Logger.logLine("\t-l\toriginal library .ELIB file");
+			Logger.logLine("\t-o\toutput library .ELIB file");
 			
-			TreeMap<String, String> defaults=new TreeMap<String, String>(PecanParameterParser.getDefaultParameters());
-			for (Entry<String, String> entry : defaults.entrySet()) {
-				Logger.logLine("\t"+entry.getKey()+"\t(default: "+entry.getValue()+")");
-			}
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("Encyclopedia version "+PecanOneScoringFactory.version);
+			Logger.logLine("Encyclopedia SearchToLIB version "+EncyclopediaOneScoringFactory.version);
 			System.exit(1);
 			
 		} else {
-			if (!arguments.containsKey("-i")||!arguments.containsKey("-l")) {
-				Logger.errorLine("You are required to specify an input file (-i) and a library file (-l)");
+			if (!arguments.containsKey("-i")||!arguments.containsKey("-l")||!arguments.containsKey("-o")) {
+				Logger.errorLine("You are required to specify an input file or directory (-i), an input library file (-l) and an output library file (-o)");
 				System.exit(1);
 			}
 
 			File diaFile=new File(arguments.get("-i"));
 			File libraryFile=new File(arguments.get("-l"));
-
-			File outputFile;
-			if (arguments.containsKey("-o")) {
-				outputFile=new File(arguments.get("-o"));
-			} else {
-				outputFile=new File(diaFile.getAbsolutePath()+EncyclopediaJobData.OUTPUT_FILE_SUFFIX);
-			}
-
+			File outputFile=new File(arguments.get("-o"));
+			
 			SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 			LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
 			Logger.logLine("Encyclopedia version "+factory.getVersion());
@@ -97,15 +81,30 @@ public class SearchToBLIB {
 			Logger.logLine("Parameters:");
 			Logger.logLine(" -i "+diaFile.getAbsolutePath());
 			Logger.logLine(" -l "+libraryFile.getAbsolutePath());
-			Logger.logLine(" -t "+arguments.get("-t"));
 			Logger.logLine(" -o "+outputFile.getAbsolutePath());
 			Logger.logLine(parameters.toString());
 
 			try {
 				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
-				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, outputFile, factory);
+				
 				ArrayList<SearchJobData> pecanJobs=new ArrayList<SearchJobData>();
-				pecanJobs.add(job);
+				if (diaFile.isDirectory()) {
+					File[] files=diaFile.listFiles(new SimpleFilenameFilter(MzmlToDIAConverter.MZML_EXTENSION));
+					if (files.length==0) {
+						files=diaFile.listFiles(new SimpleFilenameFilter(StripeFile.DIA_EXTENSION));
+					}
+					if (files.length==0) {
+						Logger.errorLine("Your specified input (-i) directory didn't contain any .mzML or .DIA files!");
+						System.exit(1);
+					}
+					for (File file : files) {
+						EncyclopediaJobData job=new EncyclopediaJobData(file, library, factory);
+						pecanJobs.add(job);
+					}
+				} else {
+					EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, factory);
+					pecanJobs.add(job);
+				}
 				convert(new EmptyProgressIndicator(), pecanJobs, outputFile, false);
 			} catch (Exception e) {
 				System.err.println("Encountered Fatal Error!");
@@ -157,8 +156,12 @@ public class SearchToBLIB {
 			if (writeBlib) {
 				convertBlib(progress, pecanJobs, libFile, Optional.of(passingPeptides));
 			} else {
-				PeakLocationInferrer inferrer=PeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides);
-				
+				Optional<PeakLocationInferrer> inferrer;
+				if (pecanJobs.size()>1) {
+					inferrer=Optional.of(PeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides));
+				} else {
+					inferrer=Optional.empty();
+				}
 				convertElib(progress, pecanJobs, libFile, Optional.of(passingPeptides), inferrer);
 			}
 			progress.update(passingPeptides.size()+" peptides identified at "+(threshold*100.0f)+"% FDR", 1.0f);
@@ -263,7 +266,7 @@ public class SearchToBLIB {
 		return counterTotals;
 	}
 	
-	static void convertElib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File elibFile, Optional<ArrayList<PercolatorPeptide>> passingPeptides, PeakLocationInferrer inferrer) {
+	static void convertElib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File elibFile, Optional<ArrayList<PercolatorPeptide>> passingPeptides, Optional<PeakLocationInferrer> inferrer) {
 		try {
 			LibraryFile elib=new LibraryFile();
 			elib.openFile();
@@ -313,7 +316,7 @@ public class SearchToBLIB {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	static void convertFileElib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, PeakLocationInferrer inferrer, LibraryFile elib) throws IOException, SQLException {
+	static void convertFileElib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, Optional<PeakLocationInferrer> inferrer, LibraryFile elib) throws IOException, SQLException {
 		File diaFile=job.getDiaFile();
 		Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Reading Percolator Results", 0.0f);
@@ -326,7 +329,7 @@ public class SearchToBLIB {
 		if (job instanceof EncyclopediaJobData) {
 			library=((EncyclopediaJobData)job).getLibrary();
 		}
-		ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job, false, globalPassingPeptides, localPassingPeptides, Optional.ofNullable(inferrer), stripeFile, library, job.getParameters());
+		ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job, false, globalPassingPeptides, localPassingPeptides, inferrer, stripeFile, library, job.getParameters());
 		stripeFile.close();
 		
 		Logger.logLine("Writing Encyclopedia ELIB from "+diaFile.getName()+"...");

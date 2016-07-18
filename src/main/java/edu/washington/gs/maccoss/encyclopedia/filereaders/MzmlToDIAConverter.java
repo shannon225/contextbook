@@ -30,11 +30,11 @@ public class MzmlToDIAConverter {
 		
 		File dir=new File("/Volumes/WorkingDisk/freezer_experiment/");
 		
-		File[] files=dir.listFiles(new SimpleFilenameFilter(".mzml"));
+		File[] files=dir.listFiles(new SimpleFilenameFilter(MZML_EXTENSION));
 		for (int i=0; i<files.length; i++) {
 			System.out.println((i+1)+" / "+files.length+"\t Copying "+files[i].getName()+"...");
 
-			File f=File.createTempFile(files[i].getName(), ".mzml");
+			File f=File.createTempFile(files[i].getName(), MZML_EXTENSION);
 			f.deleteOnExit();
 			Files.copy(files[i].toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
 			
