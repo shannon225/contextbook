@@ -183,7 +183,7 @@ public class PeakLocationInferrer {
 					for (PercolatorPeptide pep : peptides) {
 						recast.add(pep);
 					}
-					System.out.println("Parsed:"+peptides.size());
+					Logger.errorLine("Parsed:"+peptides.size());
 					HashMap<PeptidePrecursor, ArrayList<LibraryEntry>> entries=results.getEntries(recast, false);
 					
 					// all results files are saved as chromatogram libraries
@@ -193,7 +193,7 @@ public class PeakLocationInferrer {
 							bestEntries.add((ChromatogramLibraryEntry)resultEntries.get(0));
 						}
 					}
-					System.out.println("BEST:"+bestEntries.size());
+					Logger.errorLine(resultLibrary.getName()+"produced Parsed:"+peptides.size()+", BEST:"+bestEntries.size());
 					
 					archetypalPeptides.put(job, bestEntries);
 					
