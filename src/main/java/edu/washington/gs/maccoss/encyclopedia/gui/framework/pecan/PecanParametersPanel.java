@@ -186,7 +186,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		PecanSearchParameters parameters=new PecanSearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme,
-				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue);
+				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, 3);
 		return parameters;
 	}
 }

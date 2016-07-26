@@ -21,6 +21,7 @@ import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Chromatogram;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
@@ -33,6 +34,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
@@ -200,7 +202,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
-	public void addIntegratedEntries(ArrayList<IntegratedLibraryEntry> entries, float minimumCorrelation) throws IOException, SQLException {
+	public void addIntegratedEntries(ArrayList<IntegratedLibraryEntry> entries, Optional<PeakLocationInferrer> inferrer) throws IOException, SQLException {
 		// first add normal data
 		HashMap<String, LibraryEntry> repeatsCatcher=new HashMap<String, LibraryEntry>();
 		for (IntegratedLibraryEntry entry : entries) {
@@ -221,7 +223,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		// then add integrated areas
 		Connection c=getConnection(tempFile);
 		try {
-			PreparedStatement peptidePrep=c.prepareStatement("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, SourceFile, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, TopThreeIntensity, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+			PreparedStatement peptidePrep=c.prepareStatement("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, SourceFile, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
 			PreparedStatement fragmentPrep=c.prepareStatement("INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, SourceFile, IonType, FragmentMass, Correlation, DeltaMassPPM, Intensity) VALUES (?,?,?,?,?,?,?,?)");
 			try {
 				for (LibraryEntry recast : uniqueEntries) {
@@ -244,23 +246,29 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						}
 					}
 					
+					Pair<Float, Integer> topN;
+					if (inferrer.isPresent()) {
+						topN=inferrer.get().getTopNIntensity(entry, data);
+					} else {
+						topN=data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
+					}
+					
 					peptidePrep.setInt(1, entry.getPrecursorCharge());
 					peptidePrep.setString(2, entry.getPeptideModSeq());
 					peptidePrep.setString(3, entry.getSource());
 					peptidePrep.setFloat(4, data.getRange().getStart());
 					peptidePrep.setFloat(5, data.getRange().getStop());
-					peptidePrep.setFloat(6, data.getTotalIntensity(minimumCorrelation));
-					peptidePrep.setInt(7, data.getTotalQuantIons(minimumCorrelation));
-					peptidePrep.setFloat(8, data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, 3));
-					peptidePrep.setFloat(9, bestCorrelation);
-					peptidePrep.setFloat(10, bestDeltaMass);
+					peptidePrep.setFloat(6, topN.x);
+					peptidePrep.setInt(7, topN.y);
+					peptidePrep.setFloat(8, bestCorrelation);
+					peptidePrep.setFloat(9, bestDeltaMass);
 					byte[] intensityByteArray=ByteConverter.toByteArray(data.getMedianChromatogram());
-					peptidePrep.setInt(11, intensityByteArray.length);
-					peptidePrep.setBytes(12, CompressionUtils.compress(intensityByteArray));
+					peptidePrep.setInt(10, intensityByteArray.length);
+					peptidePrep.setBytes(11, CompressionUtils.compress(intensityByteArray));
 					peptidePrep.addBatch();
 					
 					for (int i=0; i<correlationArray.length; i++) {
-						if (correlationArray[i]>=minimumCorrelation) {
+						if (correlationArray[i]>=TransitionRefiner.identificationCorrelationThreshold) {
 							fragmentPrep.setInt(1, entry.getPrecursorCharge());
 							fragmentPrep.setString(2, entry.getPeptideModSeq());
 							fragmentPrep.setString(3, entry.getSource());
@@ -310,12 +318,17 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					byte[] intensityByteArray=ByteConverter.toByteArray(entry.getIntensityArray());
 					prep.setInt(10, intensityByteArray.length);
 					prep.setBytes(11, CompressionUtils.compress(intensityByteArray));
-					
+
+					if (entry.getMassArray().length!=entry.getIntensityArray().length) Logger.errorLine("MASS/INTENSITY EQUATION WRITE ERROR! "+entry.getMassArray().length+" != "+entry.getIntensityArray().length+" FOR "+entry.getPeptideModSeq()); // FIXME
+					assert(entry.getMassArray().length==entry.getIntensityArray().length);
 					
 					if (entry instanceof Chromatogram) {
 						Chromatogram cast=(Chromatogram)entry;
 						
 						byte[] correlationByteArray=ByteConverter.toByteArray(cast.getCorrelationArray());
+						if (entry.getMassArray().length!=cast.getCorrelationArray().length) Logger.errorLine("MASS/CORRELATION EQUATION WRITE ERROR! "+entry.getMassArray().length+" != "+cast.getCorrelationArray().length+" FOR "+entry.getPeptideModSeq()); // FIXME
+						assert(entry.getMassArray().length==cast.getCorrelationArray().length);
+						
 						prep.setInt(12, correlationByteArray.length);
 						prep.setBytes(13, CompressionUtils.compress(correlationByteArray));
 						prep.setFloat(14, cast.getRtRange().getStart());
@@ -420,6 +433,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			if (sqrt) {
 				intensityArray=General.protectedSqrt(intensityArray);
 			}
+
+			if (massArray.length!=intensityArray.length) Logger.errorLine("MASS/INTENSITY EQUATION READ ERROR "+massArray.length+" != "+intensityArray.length+" FOR "+peptideModSeq); // FIXME
+			assert(massArray.length==intensityArray.length);
 			
 			float[] correlationArray;
 			float rtInSecondsStart;
@@ -435,6 +451,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				medianChromatogramArray=null;
 			} else {
 				correlationArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(12), correlationEncodedLength));
+				if (massArray.length!=correlationArray.length) Logger.errorLine("MASS/CORRELATION EQUATION READ ERROR! "+massArray.length+" != "+correlationArray.length+" FOR "+peptideModSeq); // FIXME
+				assert(massArray.length==correlationArray.length);
+				
 				rtInSecondsStart=rs.getFloat(13);
 				rtInSecondsStop=rs.getFloat(14);
 				int medianChromatogramEncodedLength=rs.getInt(15);
@@ -648,7 +667,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						+ ")");
 				
 				s.execute("CREATE TABLE IF NOT EXISTS peptidequants ( "
-						+ "PrecursorCharge int not null, PeptideModSeq string not null, SourceFile string not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, TopThreeIntensity double not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null,"
+						+ "PrecursorCharge int not null, PeptideModSeq string not null, SourceFile string not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null,"
 						+ "PRIMARY KEY (PrecursorCharge, PeptideModSeq, SourceFile), "
 						+ "FOREIGN KEY (PrecursorCharge, PeptideModSeq, SourceFile) REFERENCES entries (PrecursorCharge, PeptideModSeq, SourceFile) "
 						+ ")");

@@ -17,9 +17,11 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideTrie;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
@@ -210,6 +212,24 @@ public class BlibFile extends SQLFile {
 			try {
 				for (LibraryEntry entry : entries) {
 					idCounter++;
+					
+					double[] massArray;
+					float[] intensityArray;
+					if (entry instanceof IntegratedLibraryEntry) {
+						TransitionRefinementData data=((IntegratedLibraryEntry) entry).getRefinementData();
+						Optional<double[]> masses=data.getMassArray();
+						if (masses.isPresent()) {
+							massArray=masses.get();
+							intensityArray=data.getIntensityArray().get();
+						} else {
+							massArray=entry.getMassArray();
+							intensityArray=entry.getIntensityArray();
+						}
+					} else {
+						massArray=entry.getMassArray();
+						intensityArray=entry.getIntensityArray();
+					}
+					
 					prep.setInt(1, idCounter); // id
 					prep.setString(2, entry.getPeptideSeq()); // pepSeq
 					prep.setDouble(3, entry.getPrecursorMZ()); // precursorMZ
@@ -224,7 +244,8 @@ public class BlibFile extends SQLFile {
 					prep.setString(6, "-"); // prevAA
 					prep.setString(7, "-"); // nextAA
 					prep.setInt(8, 1); // copies
-					prep.setInt(9, entry.getMassArray().length); // numPeaks
+					
+					prep.setInt(9, massArray.length); // numPeaks
 					prep.setDouble(10, entry.getRetentionTime()/60f); // retentionTime
 					prep.setInt(11, jobCounter); // fileID
 					prep.setString(12, diaFileName+"."+entry.getSpectrumIndex()+"."+entry.getSpectrumIndex()+"."+entry.getPrecursorCharge()); // SpecIDinFile
@@ -233,8 +254,8 @@ public class BlibFile extends SQLFile {
 					prep.addBatch();
 					
 					prepPeaks.setInt(1,  idCounter);
-					prepPeaks.setBytes(2, compressDouble(entry.getMassArray()));
-					prepPeaks.setBytes(3, compressFloat(entry.getIntensityArray()));
+					prepPeaks.setBytes(2, compressDouble(massArray));
+					prepPeaks.setBytes(3, compressFloat(intensityArray));
 					prepPeaks.addBatch();
 					
 					prepRTs.setInt(1,  idCounter);

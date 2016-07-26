@@ -41,12 +41,18 @@ import gnu.trove.map.hash.TObjectFloatHashMap;
 public class PeptideQuantExtractor {
 	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, final SearchJobData job, boolean limitToQuantifiable, ArrayList<PercolatorPeptide> globalPassingPSMIDs, ArrayList<PercolatorPeptide> localPassingPSMIDs, final Optional<PeakLocationInferrer> inferrer, StripeFileInterface stripeFile, LibraryInterface searchedLibrary, final SearchParameters parameters) {
 		HashSet<String> passingPeptideSequences=new HashSet<String>();
-		final TObjectFloatHashMap<String> savedIDs=new TObjectFloatHashMap<String>();
+		final TObjectFloatHashMap<String> savedPeptides=new TObjectFloatHashMap<String>();
 		for (PercolatorPeptide psm : globalPassingPSMIDs) {
-			String peptideModSeq=PercolatorPeptide.getPeptideSequence(psm.getPsmID());
-			passingPeptideSequences.add(peptideModSeq);
-			savedIDs.put(psm.getPsmID(), psm.getQValue());
+			String psmID=psm.getPsmID();
+			boolean isDecoy=PercolatorPeptide.isPSMIDDecoy(psmID);
+			
+			if (!isDecoy) {
+				String peptideModSeq=PercolatorPeptide.getPeptideSequence(psmID);
+				passingPeptideSequences.add(peptideModSeq);
+				savedPeptides.put(peptideModSeq, psm.getQValue());
+			}
 		}
+		Logger.logLine("Number of global peptides: "+savedPeptides.size()+" vs local peptides: "+localPassingPSMIDs.size());
 
 		final TObjectFloatHashMap<String> localSavedIDs=new TObjectFloatHashMap<String>();
 		for (PercolatorPeptide psm : localPassingPSMIDs) {
@@ -62,11 +68,10 @@ public class PeptideQuantExtractor {
 			@Override
 			public void processRow(Map<String, String> row) {
 				String psmID=row.get("id");
-				if (savedIDs.contains(psmID)) {
+				String peptideModSeq=PercolatorPeptide.getPeptideSequence(psmID);
+				if (savedPeptides.contains(peptideModSeq)) {
 					boolean isDecoy=PercolatorPeptide.isPSMIDDecoy(psmID);
 					if (!isDecoy) {
-						String peptideModSeq=PercolatorPeptide.getPeptideSequence(psmID);
-
 						float retentionTime;// in seconds
 						int scanID;
 						
@@ -92,7 +97,7 @@ public class PeptideQuantExtractor {
 						// FIXME need to get peptide charge from window
 						byte precursorCharge=PercolatorPeptide.getCharge(psmID);
 						
-						float score=savedIDs.get(psmID);
+						float score=savedPeptides.get(psmID);
 
 						float sortingScore;
 						String sortingScoreString=row.get("xTandem"); // Encyclopedia
@@ -122,6 +127,7 @@ public class PeptideQuantExtractor {
 		TableParser.parseTSV(job.getFeatureFile(), muscle);
 
 		try {
+			Logger.logLine("Parsed features and scores for "+data.size()+" peptides.");
 			HashMap<String, PSMData> uniquedData=new HashMap<String, PSMData>();
 			for (PSMData psmData : data) {
 				String key=psmData.getPeptideModSeq()+"+"+psmData.getPrecursorCharge();
@@ -155,7 +161,8 @@ public class PeptideQuantExtractor {
 	public static ArrayList<IntegratedLibraryEntry> extractPeptides(ProgressIndicator progress, LibraryInterface searchedLibrary, StripeFileInterface stripefile, Collection<PSMData> data, boolean limitToQuantifiable, SearchParameters parameters) throws IOException, SQLException, DataFormatException, InterruptedException {
 		ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries=new ConcurrentLinkedQueue<IntegratedLibraryEntry>();
 		int cores=parameters.getNumberOfThreadsUsed();
-
+		Logger.logLine("Extracting "+data.size()+" peptides...");
+		
 		String filename=stripefile.getOriginalFileName();
 		PhosphoLocalizer localizer=null;
 		if (parameters.isRunPhosphoLocalization()&&searchedLibrary!=null) {
