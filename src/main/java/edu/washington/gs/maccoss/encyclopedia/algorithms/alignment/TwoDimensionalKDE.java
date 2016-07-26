@@ -106,7 +106,7 @@ public class TwoDimensionalKDE extends Mapper {
 		// Silverman's rule of thumb
 		double bandwidth=Math.pow(points.size(), -1f/6f)*(xstdev+ystdev)/2.0f;
 		// division by 2.3548 converts bandwidth (fwhm) to stdev for gaussians
-		double stdev=Math.min(resolution/10d/4d, bandwidth/2.3448); // max of 10% distributions (4x stdev
+		double stdev=Math.min(resolution/10d/4d, bandwidth/2.3448); // max of 10% distributions (4x stdev)
 		Distribution dist=new CosineGaussian(0.0, stdev, 1.0);
 		float[][] stamp=getStamp(dist);
 		
