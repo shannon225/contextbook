@@ -23,9 +23,11 @@ public class SearchParameters {
 	protected final boolean runPhosphoLocalization;
 	protected final float precursorWindowSize;
 	protected final boolean addExtraDecoys;
+	protected final int numberOfQuantitativePeaks;	
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme,
-			float percolatorThreshold, File percolatorLocation, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, boolean runPhosphoLocalization, boolean addExtraDecoys) {
+			float percolatorThreshold, File percolatorLocation, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
+			int numberOfQuantitativePeaks, boolean runPhosphoLocalization, boolean addExtraDecoys) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -38,6 +40,7 @@ public class SearchParameters {
 		this.expectedPeakWidth=expectedPeakWidth;
 		this.targetWindowCenter=targetWindowCenter;
 		this.precursorWindowSize=precursorWindowSize;
+		this.numberOfQuantitativePeaks=numberOfQuantitativePeaks;
 		this.runPhosphoLocalization=runPhosphoLocalization;
 		this.addExtraDecoys=false; //addExtraDecoys;
 	}
@@ -54,6 +57,7 @@ public class SearchParameters {
 		sb.append(" -numberOfThreadsUsed "+numberOfThreadsUsed+"\n");
 		sb.append(" -expectedPeakWidth "+expectedPeakWidth+"\n");
 		sb.append(" -precursorWindowSize "+precursorWindowSize+"\n");
+		sb.append(" -numberOfQuantitativePeaks "+numberOfQuantitativePeaks+"\n");
 		sb.append(" -runPhosphoLocalization "+runPhosphoLocalization+"\n");
 		sb.append(" -addExtraDecoys "+addExtraDecoys+"\n");
 		if (useTargetWindowCenter()) {
@@ -126,5 +130,8 @@ public class SearchParameters {
 	}
 	public boolean isAddExtraDecoys() {
 		return addExtraDecoys;
+	}
+	public int getNumberOfQuantitativePeaks() {
+		return numberOfQuantitativePeaks;
 	}
 }

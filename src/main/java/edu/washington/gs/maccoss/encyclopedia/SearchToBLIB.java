@@ -7,18 +7,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.TreeMap;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractor;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
@@ -30,7 +26,6 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
@@ -127,6 +122,7 @@ public class SearchToBLIB {
 		}
 		
 		if (representativeJob==null) return;
+		Logger.logLine("Using "+representativeJob.getDiaFile().getName()+" to extract representative search parameters");
 
 		String filename=libFile.getName();
 		if (filename.lastIndexOf('.')>0) {
@@ -158,7 +154,7 @@ public class SearchToBLIB {
 			} else {
 				Optional<PeakLocationInferrer> inferrer;
 				if (pecanJobs.size()>1) {
-					inferrer=Optional.of(PeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides));
+					inferrer=Optional.of(PeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides, parameters));
 				} else {
 					inferrer=Optional.empty();
 				}
@@ -287,6 +283,8 @@ public class SearchToBLIB {
 				} else {
 					globalPassingPeptides=localPassingPeptides;
 				}
+
+				Logger.logLine(job.getDiaFile().getName()+": Number of global peptides: "+globalPassingPeptides.size()+" vs local peptides: "+localPassingPeptides.size());
 				
 				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides, inferrer, elib);
 			}
@@ -332,10 +330,11 @@ public class SearchToBLIB {
 		ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job, false, globalPassingPeptides, localPassingPeptides, inferrer, stripeFile, library, job.getParameters());
 		stripeFile.close();
 		
-		Logger.logLine("Writing Encyclopedia ELIB from "+diaFile.getName()+"...");
+		Logger.logLine("Writing Encyclopedia ELIB from "+diaFile.getName()+" ("+libraryEntries.size()+" entries)...");
 		subProgress.update(diaFile.getName()+": Writing Encyclopedia ELIB", 0.99999f);
 
-		elib.addIntegratedEntries(libraryEntries, TransitionRefiner.identificationCorrelationThreshold);
+		elib.addIntegratedEntries(libraryEntries, inferrer);
+		Logger.logLine("Finished writing to Encyclopedia ELIB at"+new Date().toString());
 		subProgress.update(diaFile.getName()+": Finished writing to Encyclopedia ELIB at"+new Date().toString(), 1.0f);
 	}
 }

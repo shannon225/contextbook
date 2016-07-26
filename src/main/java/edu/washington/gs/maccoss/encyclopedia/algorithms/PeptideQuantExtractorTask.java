@@ -87,7 +87,8 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			// delete from entries where RowId not in (SELECT MIN(RowId) FROM entries GROUP BY PeptideModSeq, PrecursorCharge)
 			TransitionRefinementData data=spectrum.get();
 			data.setPhosphoLocalizationData(phosphoData);
-			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(filename, psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), data.getMassArray().get(), data.getIntensityArray().get(), data);
+
+			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(filename, psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), data.getFragmentMassArray(), data.getIntegrationArray(), data);
 			if (limitToQuantifiable) {
 				if (entry.getIonCount()<4||entry.getTIC()<1.0f) {
 					return Nothing.NOTHING;

@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class TransitionRefinementData {
@@ -56,7 +57,7 @@ public class TransitionRefinementData {
 	public Optional<PhosphoLocalizationData> getPhosphoLocalizationData() {
 		return phosphoLocalizationData;
 	}
-	public float getTopNIntensity(float minimumCorrelation, int n) {
+	public Pair<Float, Integer> getTopNIntensity(float minimumCorrelation, int n) {
 		TFloatArrayList intensities=new TFloatArrayList();
 		for (int i=0; i<correlationArray.length; i++) {
 			if (correlationArray[i]>=minimumCorrelation) {
@@ -72,7 +73,7 @@ public class TransitionRefinementData {
 			if (count>=n) break;
 			count++;
 		}
-		return total;
+		return new Pair<Float, Integer>(total, count);
 	}
 	
 	public float getTotalIntensity(float minimumCorrelation) {

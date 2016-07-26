@@ -165,7 +165,8 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		Number value=(Number)precursorWindowWidth.getValue();
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
 		boolean isPhospho=PHOSPHOPROTEOME.equals(proteomeType.getSelectedItem());
-		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme, 0.01f, null, dataAcquisitionType, numberOfJobsValue, 25f, -1f, precursorWindowWidthValue, isPhospho, false);
+		float targetWindowCenter=450f;//-1f; // FIXME!!!
+		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme, 0.01f, null, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, 3, isPhospho, false);
 		return parameters;
 	}
 }

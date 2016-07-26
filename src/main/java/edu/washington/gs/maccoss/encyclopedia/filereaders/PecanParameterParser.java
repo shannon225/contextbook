@@ -74,6 +74,7 @@ public class PecanParameterParser {
 		final int numberOfThreadsUsed;
 		final float targetWindowCenter;
 		final float precursorWindowSize;
+		final int numberOfQuantitativePeaks;
 
 		TCharFloatHashMap fixedMods=new TCharFloatHashMap();
 		String value=parameters.get("-fixed");
@@ -158,6 +159,7 @@ public class PecanParameterParser {
 		numberOfThreadsUsed=SearchParameterParser.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
 		targetWindowCenter=SearchParameterParser.getFloat("-targetWindowCenter", parameters, -1f);
 		precursorWindowSize=SearchParameterParser.getFloat("-precursorWindowSize", parameters, -1f);
+		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 1);
 
 		value=parameters.get("-percolatorLocation");
 		File percolator=null;
@@ -171,6 +173,6 @@ public class PecanParameterParser {
 			}
 		}
 		
-		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolator, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize);
+		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolator, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks);
 	}
 }

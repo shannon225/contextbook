@@ -21,7 +21,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 
 //@Immutable
-public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
+public class LibraryEntry implements Spectrum, PeptidePrecursor {
 	private static final float minimumIntensityThreshold=10.0f*Float.MIN_VALUE;
 	
 	private final String source;
@@ -138,13 +138,12 @@ public class LibraryEntry implements Comparable<LibraryEntry>, Spectrum {
 	}
 	
 	@Override
-	public int compareTo(LibraryEntry o) {
+	public int compareTo(PeptidePrecursor o) {
 		if (o==null) return 1;
-		int c=peptideModSeq.compareTo(o.peptideModSeq);
+		int c=peptideModSeq.compareTo(o.getPeptideModSeq());
 		if (c!=0) return c;
-		c=Byte.compare(precursorCharge, o.precursorCharge);
-		if (c!=0) return c;
-		return Float.compare(retentionTime, o.retentionTime);
+		c=Byte.compare(precursorCharge, o.getPrecursorCharge());
+		return c;
 	}
 	
 	public int getSpectrumIndex() {

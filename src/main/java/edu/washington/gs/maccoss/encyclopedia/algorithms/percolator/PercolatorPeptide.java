@@ -19,6 +19,19 @@ public class PercolatorPeptide implements PeptidePrecursor {
 	}
 	
 	@Override
+	public int hashCode() {
+		return getPeptideModSeq().hashCode()+16807*getPrecursorCharge();
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof PeptidePrecursor) {
+			return compareTo((PeptidePrecursor)obj)==0;
+		}
+		return false;
+	}
+	
+	@Override
 	public int compareTo(PeptidePrecursor o) {
 		if (o==null) return 1;
 		int c=getPeptideModSeq().compareTo(o.getPeptideModSeq());
