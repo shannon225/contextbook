@@ -111,6 +111,38 @@ public class General {
 		return sb.toString();
 	}
 	
+	public static float[] normalizeAndBackgroundSubtract(float[] v, IntRange range) {
+		v=v.clone();
+		
+		int stop=Math.min(v.length-1, range.getStop()+1);
+		int start=Math.max(0, range.getStart()-1);
+		float deltaY=v[stop]-v[start];
+		float deltaX=stop-start;
+		if (deltaX==0.0f) return new float[v.length];
+		
+		float m=deltaY/deltaX;
+		float b=v[stop]-m*stop;
+		
+		System.out.println("m: "+m+"\tb: "+b);
+		
+		for (int i=0; i<v.length; i++) {
+			float background=m*i+b;
+			System.out.println(i+"\t"+v[i]+"\t"+background+"\t"+range.contains(i));
+			if (background>v[i]) {
+				v[i]=0.0f;
+			} else if (background>0.0f) {
+				v[i]=v[i]-background;
+			}
+		}
+		System.out.println();
+		
+		float sum=sum(v, range);
+		if (sum==0.0f) {
+			return new float[v.length];
+		}
+		return divide(v, sum);
+	}
+	
 	public static float[] normalize(float[] v, IntRange range) {
 		float sum=sum(v, range);
 		if (sum==0.0f) {

@@ -44,15 +44,12 @@ public class PeakLocationInferrer {
 
 	// alignedRTs are as if they were in the seed (x) file
 	private final HashMap<String, Float> alignedRTInMinBySequenceMap;
-
-	private final HashMap<String, ChromatogramLibraryEntry> libraryEntryBySequenceMap;
 	
 	private final HashMap<String, double[]> bestIons;
 	private final SearchParameters params;
 
-	PeakLocationInferrer(HashMap<SearchJobData, RetentionTimeFilter> alignmentMap, HashMap<String, ChromatogramLibraryEntry> libraryEntryBySequenceMap, HashMap<String, Float> alignedRTInMinBySequenceMap, HashMap<String, double[]> bestIons, SearchParameters params) {
+	PeakLocationInferrer(HashMap<SearchJobData, RetentionTimeFilter> alignmentMap, HashMap<String, Float> alignedRTInMinBySequenceMap, HashMap<String, double[]> bestIons, SearchParameters params) {
 		this.alignmentMap=alignmentMap;
-		this.libraryEntryBySequenceMap=libraryEntryBySequenceMap;
 		this.alignedRTInMinBySequenceMap=alignedRTInMinBySequenceMap;
 		this.bestIons=bestIons;
 		this.params=params;
@@ -63,6 +60,7 @@ public class PeakLocationInferrer {
 		double[] masses=data.getFragmentMassArray();
 		float[] correlation=data.getCorrelationArray();
 		float[] intensities=data.getIntegrationArray();
+		float[] background=data.getBackgroundArray();
 		
 		if (topN==null||topN.length==0) {
 			return data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, params.getNumberOfQuantitativePeaks());
@@ -75,7 +73,8 @@ public class PeakLocationInferrer {
 			if (optionalIndex.isPresent()) {
 				int index=optionalIndex.get();
 				if (correlation[index]>=TransitionRefiner.translationalQuantitativeCorrelationThreshold) {
-					sum+=intensities[index];
+					float backgroundPlusOnePseudoCount=background[index]+1.0f;
+					sum+=intensities[index]/backgroundPlusOnePseudoCount;
 					added++;
 				}
 			}
@@ -128,17 +127,11 @@ public class PeakLocationInferrer {
 		// get best job
 		SearchJobData bestJob=null;
 		int max=-1;
-		HashMap<String, ChromatogramLibraryEntry> libraryEntryBySequenceMap=new HashMap<String, ChromatogramLibraryEntry>();
 		for (Entry<SearchJobData, ArrayList<ChromatogramLibraryEntry>> entry : archetypalPeptides.entrySet()) {
 			int length=entry.getValue().size();
 			if (length>max) {
 				max=length;
 				bestJob=entry.getKey();
-			}
-
-			// also grab library entry map
-			for (ChromatogramLibraryEntry pep : entry.getValue()) {
-				libraryEntryBySequenceMap.put(pep.getPeptideModSeq(), pep);
 			}
 		}
 
@@ -191,7 +184,7 @@ public class PeakLocationInferrer {
 			}
 		}
 
-		return new PeakLocationInferrer(alignmentMap, libraryEntryBySequenceMap, alignedRTInMinBySequenceMap, bestIons, params);
+		return new PeakLocationInferrer(alignmentMap, alignedRTInMinBySequenceMap, bestIons, params);
 	}
 
 	/**

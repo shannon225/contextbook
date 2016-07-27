@@ -13,6 +13,7 @@ public class TransitionRefinementData {
 	private final ArrayList<float[]> chromatograms; // every considered ion
 	private final float[] correlationArray; // every considered ion
 	private final float[] integrationArray; // every considered ion
+	private final float[] backgroundArray; // every considered ion
 	private final Optional<float[]> deltaMassArray; // every considered ion
 	
 	private final float[] medianChromatogram;
@@ -24,8 +25,8 @@ public class TransitionRefinementData {
 	private final Optional<float[]> rtArray;
 	private Optional<PhosphoLocalizationData> phosphoLocalizationData;
 	
-	public TransitionRefinementData(double[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] medianChromatogram, Range range) {
-		this(fragmentMassArray, chromatograms, correlationArray, integrationArray, medianChromatogram, range, null, null, null, null, null);
+	public TransitionRefinementData(double[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range) {
+		this(fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, null, null, null, null, null);
 	}
 
 	/**
@@ -37,11 +38,12 @@ public class TransitionRefinementData {
 	 * @param massArray CAN BE NULL
 	 * @param intensityArray CAN BE NULL
 	 */
-	TransitionRefinementData(double[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] medianChromatogram, Range range, float[] deltaMassArray, double[] massArray, float[] intensityArray, float[] rtArray, PhosphoLocalizationData phosphoData) {
+	TransitionRefinementData(double[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range, float[] deltaMassArray, double[] massArray, float[] intensityArray, float[] rtArray, PhosphoLocalizationData phosphoData) {
 		this.fragmentMassArray=fragmentMassArray;
 		this.chromatograms=chromatograms;
 		this.correlationArray=correlationArray;
 		this.integrationArray=integrationArray;
+		this.backgroundArray=backgroundArray;
 		this.medianChromatogram=medianChromatogram;
 		this.range=range;
 		this.deltaMassArray=Optional.ofNullable(deltaMassArray);
@@ -104,7 +106,7 @@ public class TransitionRefinementData {
 	 * @return
 	 */
 	public TransitionRefinementData addPeakData(float[] deltaMass, double[] mass, float[] intensity, float[] rts) {
-		return new TransitionRefinementData(fragmentMassArray, chromatograms, correlationArray, integrationArray, medianChromatogram, range, deltaMass, mass, intensity, rts, phosphoLocalizationData.isPresent()?phosphoLocalizationData.get():null);
+		return new TransitionRefinementData(fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, deltaMass, mass, intensity, rts, phosphoLocalizationData.isPresent()?phosphoLocalizationData.get():null);
 	}
 	
 	public double[] getFragmentMassArray() {
@@ -120,6 +122,9 @@ public class TransitionRefinementData {
 	}
 	public float[] getIntegrationArray() {
 		return integrationArray;
+	}
+	public float[] getBackgroundArray() {
+		return backgroundArray;
 	}
 	public float[] getMedianChromatogram() {
 		return medianChromatogram;

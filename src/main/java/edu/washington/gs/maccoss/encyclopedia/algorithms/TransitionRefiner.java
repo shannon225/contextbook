@@ -104,10 +104,10 @@ public class TransitionRefiner {
 		return identifyTransitions(peptideModSeq, fragmentMasses, chromatograms, retentionTimes, false);
 	}
 	static TransitionRefinementData identifyTransitions(String peptideModSeq, double[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, boolean plot) {
-		if (chromatograms.size()==0) return new TransitionRefinementData(new double[0], chromatograms, new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]));
+		if (chromatograms.size()==0) return new TransitionRefinementData(new double[0], chromatograms, new float[0], new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]));
 		
 		// start across the entire width
-		ArrayList<float[]> normalizedChromatograms=normalize(chromatograms, new IntRange(0, chromatograms.get(0).length-1));
+		ArrayList<float[]> normalizedChromatograms=normalize(chromatograms);
 		// find the maximum point
 		float[] medianChromatogram=new float[chromatograms.get(0).length];
 		int maxIndex=0;
@@ -128,7 +128,7 @@ public class TransitionRefiner {
 		IntRange indices=getIndexRange(medianChromatogram, maxIndex);
 		
 		// then refine on the local area
-		normalizedChromatograms=normalize(chromatograms, indices);
+		normalizedChromatograms=normalizeAndBackgroundSubtract(chromatograms, indices);
 		// find the maximum point
 		medianChromatogram=new float[chromatograms.get(0).length];
 		maxIndex=0;
@@ -147,14 +147,14 @@ public class TransitionRefiner {
 			}
 		}
 		indices=getIndexRange(medianChromatogram, maxIndex);
+		Range range=new Range(retentionTimes[indices.getStart()], retentionTimes[indices.getStop()]);
 		
 		//System.out.println(General.toString(medianChromatogram));
-		
-		Range range=new Range(retentionTimes[indices.getStart()], retentionTimes[indices.getStop()]);
 
 		float medianMean=General.mean(medianChromatogram, indices.getStart(), indices.getStop());
 		float[] correlationArray=new float[normalizedChromatograms.size()];
 		float[] integrationArray=new float[correlationArray.length];
+		float[] backgroundArray=new float[correlationArray.length];
 		for (int i=0; i<normalizedChromatograms.size(); i++) {
 			float[] normalizedChromatogram=normalizedChromatograms.get(i);
 			float fragmentMean=General.mean(normalizedChromatogram, indices.getStart(), indices.getStop());
@@ -170,10 +170,12 @@ public class TransitionRefiner {
 				deltaProductSum+=deltaMedian*deltaFragment;
 			}
 			// calculate correlation
-			float denominator=(float)Math.sqrt(medianDeltaSquareSum*fragmentDeltaSquareSum);
-			if (denominator==0.0f) {
-				correlationArray[i]=1.0f;
+			if (fragmentDeltaSquareSum==0.0f) {
+				correlationArray[i]=Float.MIN_VALUE;
+			} else if (medianDeltaSquareSum==0.0f) {
+				correlationArray[i]=Float.MIN_VALUE;
 			} else {
+				float denominator=(float)Math.sqrt(medianDeltaSquareSum*fragmentDeltaSquareSum);
 				correlationArray[i]=deltaProductSum/denominator;
 				if (correlationArray[i]>1.0f) {
 					correlationArray[i]=1.0f; // there can be minor floating point errors in the sqrt
@@ -187,6 +189,11 @@ public class TransitionRefiner {
 				float trapezoid=(retentionTimes[j]-retentionTimes[j-1])*(chromatogram[j-1]+chromatogram[j])/2.0f;
 				integrationArray[i]+=trapezoid;
 			}
+			
+			// calculate trapezoidal background area
+			backgroundArray[i]=(range.getStop()-range.getStart())*(chromatogram[indices.getStart()]+chromatogram[indices.getStop()])/2.0f;
+			backgroundArray[i]=Math.min(backgroundArray[i], integrationArray[i]); // background can never be greater than the signal
+			integrationArray[i]=integrationArray[i]-backgroundArray[i];
 		}
 		
 		if (plot) {
@@ -204,7 +211,7 @@ public class TransitionRefiner {
 			Charter.launchCharts(peptideModSeq+" chart", panels);
 		}
 		
-		return new TransitionRefinementData(fragmentMasses, chromatograms, correlationArray, integrationArray, medianChromatogram, range);
+		return new TransitionRefinementData(fragmentMasses, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range);
 	}
 
 	private static IntRange getIndexRange(float[] medianChromatogram, int maxIndex) {
@@ -348,10 +355,18 @@ public class TransitionRefiner {
 		return trace;
 	}
 
-	public static ArrayList<float[]> normalize(ArrayList<float[]> chromatograms, IntRange range) {
+	public static ArrayList<float[]> normalize(ArrayList<float[]> chromatograms) {
 		ArrayList<float[]> normalizedChromatograms=new ArrayList<float[]>();
 		for (float[] fs : chromatograms) {
-			normalizedChromatograms.add(General.normalize(fs, range));
+			normalizedChromatograms.add(General.normalize(fs));
+		}
+		return normalizedChromatograms;
+	}
+
+	public static ArrayList<float[]> normalizeAndBackgroundSubtract(ArrayList<float[]> chromatograms, IntRange range) {
+		ArrayList<float[]> normalizedChromatograms=new ArrayList<float[]>();
+		for (float[] fs : chromatograms) {
+			normalizedChromatograms.add(General.normalizeAndBackgroundSubtract(fs, range));
 		}
 		return normalizedChromatograms;
 	}
