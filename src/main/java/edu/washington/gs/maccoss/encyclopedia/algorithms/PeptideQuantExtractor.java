@@ -33,6 +33,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
@@ -86,13 +87,48 @@ public class PeptideQuantExtractor {
 							}
 							scanID=Integer.parseInt(row.get("ScanNr"));
 						} else if (inferrer.isPresent()) {
-							retentionTime=inferrer.get().getRTInSec(job, peptideModSeq);
-							scanID=-1; // negative scan ID for inferred IDs
+							if (localSavedIDs.contains(psmID)) {
+								String rtString=row.get("midTime"); // in seconds
+								if (rtString!=null) {
+									retentionTime=Float.parseFloat(rtString);
+								} else {
+									rtString=row.get("RTinMin"); // in minutes so *60
+									retentionTime=Float.parseFloat(rtString)*60f;
+								}
+								
+								float warpedRT=inferrer.get().getPreciseRTInSec(job, peptideModSeq, retentionTime);
+								if (warpedRT!=retentionTime) {
+									Logger.errorLine("Don't trust ID for "+peptideModSeq+" (global RT:"+warpedRT+", local RT:"+retentionTime+"). Using the warped RT!");
+									// warping is better (original is way outside the warping margins)
+									retentionTime=warpedRT;
+									scanID=-1; // negative scan ID for inferred IDs
+								} else {
+									// original detection is better (within the warping margins)
+									scanID=Integer.parseInt(row.get("ScanNr"));
+								}
+									
+							} else {
+								// no detect, so use warped retention time
+								retentionTime=inferrer.get().getWarpedRTInSec(job, peptideModSeq);
+								scanID=-1; // negative scan ID for inferred IDs
+							}
 						} else {
-							// not in local search and no RT inference
-							return;
+							if (localSavedIDs.contains(psmID)) {
+								// no warping, so use RT
+								String rtString=row.get("midTime"); // in seconds
+								if (rtString!=null) {
+									retentionTime=Float.parseFloat(rtString);
+								} else {
+									rtString=row.get("RTinMin"); // in minutes so *60
+									retentionTime=Float.parseFloat(rtString)*60f;
+								}
+								scanID=Integer.parseInt(row.get("ScanNr"));
+							} else {
+								// not in local search and no warping available
+								return;
+							}
 						}
-						
+
 						double precursorMZ=Double.parseDouble(row.get("precursorMz"));
 						// FIXME need to get peptide charge from window
 						byte precursorCharge=PercolatorPeptide.getCharge(psmID);

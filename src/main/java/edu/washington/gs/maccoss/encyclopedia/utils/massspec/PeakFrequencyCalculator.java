@@ -37,13 +37,13 @@ public class PeakFrequencyCalculator {
 		return masses.toArray();
 	}
 
-	public void increment(double target) {
+	public void increment(double target, float intensity) {
 		int value=binarySearch(peaks, target);
 		if (value>=0) {
-			peaks.get(value).increment();
+			peaks.get(value).increment(intensity);
 		} else {
 			value=-(value+1);
-			peaks.add(value, new Count(target));
+			peaks.add(value, new Count(target, intensity));
 		}
 	}
 
@@ -75,23 +75,26 @@ public class PeakFrequencyCalculator {
 	
 	public class Count implements Comparable<Count> {
 		private final double mass;
+		private float maxIntensity=0.0f;
 		private int count=1;
-		public Count(double mass) {
+		public Count(double mass, float intensity) {
 			this.mass=mass;
+			this.maxIntensity=intensity;
 		}
-		public int increment() {
+		public int increment(float intensity) {
+			if (intensity>maxIntensity) maxIntensity=intensity;
 			return ++count;
 		}
 		
 		@Override
 		/**
-		 * sorts on count first then on mass so that the highest count, highest mass peaks are at the end
+		 * sorts on count first then on mass so that the highest count, highest intensity peaks are at the end
 		 */
 		public int compareTo(Count o) {
 			if (o==null) return 1;
 			int c=count-o.count;
 			if (c!=0) return c;
-			return Double.compare(mass, o.mass);
+			return Double.compare(maxIntensity, o.maxIntensity);
 		}
 	}
 }

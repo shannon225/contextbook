@@ -35,6 +35,7 @@ import javax.swing.table.TableColumn;
 
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
+import edu.washington.gs.maccoss.encyclopedia.gui.dia.DIABrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.FeatureGrapher;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
@@ -59,6 +60,7 @@ public class SearchPanel extends JPanel {
 	private static final ImageIcon openDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/filedb.png"));
 	private static final ImageIcon convertDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/convertdb.png"));
 	private static final ImageIcon diaBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/orbi_icon.png"));
+	private static final ImageIcon peptideBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/peptide_icon.png"));
 	private static final ImageIcon featureBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/feature_icon.png"));
 	
 	JobProcessorTableModel processorTableModel=new JobProcessorTableModel();
@@ -204,6 +206,15 @@ public class SearchPanel extends JPanel {
 		});
 		viewMenu.add(launchBrowser);
 
+		JMenuItem launchPeptideBrowser=new JMenuItem("Launch Peptide Browser", peptideBrowserIcon);
+		launchPeptideBrowser.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				launchPeptideBrowser();
+			}
+		});
+		viewMenu.add(launchPeptideBrowser);
+
 		JMenuItem launchFeatureBrowser=new JMenuItem("Launch Feature Browser", featureBrowserIcon);
 		launchFeatureBrowser.addActionListener(new ActionListener() {
 			@Override
@@ -256,6 +267,16 @@ public class SearchPanel extends JPanel {
 			dialog.setSize(1900, 1030);
 			dialog.setVisible(true);
 		}
+	}
+	
+	public void launchPeptideBrowser() {
+		final JFrame dialog=new JFrame("Peptide/DIA Detection Browser");
+
+		dialog.getContentPane().add(new DIABrowserPanel(getVisibleTab().getParameters()), BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(1900, 1030);
+		dialog.setVisible(true);
 	}
 	
 	public void launchElibBrowser() {

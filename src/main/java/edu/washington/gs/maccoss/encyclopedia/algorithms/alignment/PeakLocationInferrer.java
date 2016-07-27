@@ -37,6 +37,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicat
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class PeakLocationInferrer {
+	private static float RT_OUTLIER_REJECTION_PROBABILITY=0.001f;
+	
 	// alignments are seed (x) to sample (y), in minutes
 	private final HashMap<SearchJobData, RetentionTimeFilter> alignmentMap;
 
@@ -80,15 +82,35 @@ public class PeakLocationInferrer {
 		}
 		return new Pair<Float, Integer>(sum, added);
 	}
+	
+	public float getPreciseRTInSec(SearchJobData job, String peptideModSeq, float detectedRTInSec) {
+		RetentionTimeFilter f=alignmentMap.get(job);
+		Float alignedRTInMin=alignedRTInMinBySequenceMap.get(peptideModSeq);
+		if (alignedRTInMin==null) {
+			return detectedRTInSec;
+		}
+		
+		if (f==null) {
+			return detectedRTInSec;
+		} else {
+			float warpedRTInSec=f.getYValue(alignedRTInMin);
+			float prob=f.getProbabilityFitsModel(detectedRTInSec/60f-warpedRTInSec);
+			if (prob>RT_OUTLIER_REJECTION_PROBABILITY) {
+				return detectedRTInSec;
+			} else {
+				return warpedRTInSec*60f;
+			}
+		}
+	}
 
-	public float getRTInSec(SearchJobData job, String peptideModSeq) {
+	public float getWarpedRTInSec(SearchJobData job, String peptideModSeq) {
 		RetentionTimeFilter f=alignmentMap.get(job);
 		Float alignedRTInMin=alignedRTInMinBySequenceMap.get(peptideModSeq);
 		if (alignedRTInMin==null) {
 			Logger.errorLine("Couldn't find retention time for peptide ("+peptideModSeq+").");
 			return -1;
 		}
-		;
+		
 		if (f==null) {
 			// job is the seed
 			return alignedRTInMin*60f;
@@ -226,15 +248,6 @@ public class PeakLocationInferrer {
 				File resultLibrary=((EncyclopediaJobData) job).getResultLibrary();
 				try {
 					LibraryInterface results=BlibToLibraryConverter.getFile(resultLibrary);
-					
-					/*ArrayList<PeptidePrecursor> recast=new ArrayList<PeptidePrecursor>();
-					for (PercolatorPeptide pep : peptides) {
-						recast.add(pep);
-					}
-					Logger.errorLine("Parsed:"+peptides.size());
-					HashMap<PeptidePrecursor, ArrayList<LibraryEntry>> entries=results.getEntries(recast, false);
-					*/
-					
 					ArrayList<LibraryEntry> entries=results.getAllEntries(false);
 					
 					ArrayList<ChromatogramLibraryEntry> bestEntries=new ArrayList<ChromatogramLibraryEntry>();
@@ -250,10 +263,11 @@ public class PeakLocationInferrer {
 						}
 						
 						double[] masses=chrom.getMassArray();
+						float[] intensity=chrom.getIntensityArray();
 						float[] correlation=chrom.getCorrelationArray();
 						for (int i=0; i<correlation.length; i++) {
 							if (correlation[i]>=TransitionRefiner.quantitativeCorrelationThreshold) {
-								bestIonsMap.increment(masses[i]);
+								bestIonsMap.increment(masses[i], intensity[i]);
 							}
 						}
 
@@ -307,6 +321,6 @@ public class PeakLocationInferrer {
 			double[] ions=entry.getValue().getTopNMasses(numberOfQuantitativePeaks);
 			bestIons.put(peptideModSeq, ions);
 		}
-		return new Pair<HashMap<SearchJobData,ArrayList<ChromatogramLibraryEntry>>, HashMap<String,double[]>>(archetypalPeptides, bestIons);
+		return new Pair<HashMap<SearchJobData, ArrayList<ChromatogramLibraryEntry>>, HashMap<String, double[]>>(archetypalPeptides, bestIons);
 	}
 }

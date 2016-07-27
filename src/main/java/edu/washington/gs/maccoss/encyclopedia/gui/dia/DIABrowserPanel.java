@@ -36,7 +36,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.FragmentationTraceTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IonCountingScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -45,6 +44,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
@@ -64,12 +64,11 @@ public class DIABrowserPanel extends JPanel {
 	
 	private final PecanRawScorer scorer;
 
-	private final PecanSearchParameters parameters;
+	private final SearchParameters parameters;
 	private final FileChooserPanel diaFile;
-	private final JTextField peptide=new JTextField("MQS[+80]LSLNK"); // YLDGLTAER");
+	private final JTextField peptide=new JTextField("YLDGLTAER");
 	private final SpinnerModel charge=new SpinnerNumberModel(2, 1, 5, 1);
 	private final JSplitPane split=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-	private final JSplitPane scoringSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
 	private StripeFileInterface dia=null;
 
@@ -101,7 +100,8 @@ public class DIABrowserPanel extends JPanel {
 					}
 				});
 
-				f.getContentPane().add(new DIABrowserPanel(), BorderLayout.CENTER);
+				SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA);
+				f.getContentPane().add(new DIABrowserPanel(params), BorderLayout.CENTER);
 
 				f.pack();
 				f.setSize(new Dimension(1900, 1030)); // for 1920x1080
@@ -112,9 +112,9 @@ public class DIABrowserPanel extends JPanel {
 		Logger.logLine("Launching DIA Browser");
 	}
 	
-	public DIABrowserPanel() {
+	public DIABrowserPanel(SearchParameters parameters) {
 		super(new BorderLayout());
-		parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA);
+		this.parameters=parameters; 
 		scorer=new PecanRawScorer(parameters.getFragmentTolerance(), new ExpectedFragmentationScorer(parameters, 3));
 
 		diaFile=new FileChooserPanel(null, "DIA File", new SimpleFilenameFilter(".dia", ".mzml"), true) {
@@ -127,7 +127,7 @@ public class DIABrowserPanel extends JPanel {
 					try {
 						Logger.logLine("Reading file...");
 
-						dia=MzmlToDIAConverter.getFile(filename[0], parameters);
+						dia=MzmlToDIAConverter.getFile(filename[0], DIABrowserPanel.this.parameters);
 						Logger.logLine("Finished reading file.");
 						resetPeptide(peptide.getText(), (Integer) charge.getValue());
 					} catch (Exception e) {
@@ -199,22 +199,8 @@ public class DIABrowserPanel extends JPanel {
 				XYTrace ionCounttrace=ionCountResult.getTrace().rescaleX(1.0f/60.0f);
 				
 				ChartPanel ionCountchart=Charter.getChart("RT ("+entry.getPrecursorMZ()+" M/Z)", "RawScore", false, ionCounttrace);
-				
-				scoringSplit.setBottomComponent(ionCountchart);
-				
-				BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
-				PecanOneScoringTask pecan=new PecanOneScoringTask(scorer, entries, stripes, null, new PrecursorScanMap(new ArrayList<PrecursorScan>()), 5, resultsQueue, parameters);
-				pecan.call();
-				
-				PeptideScoringResult pecanresult=resultsQueue.take();
-				XYTrace pecantrace=pecanresult.getTrace().rescaleX(1.0f/60.0f);
-				
-				ChartPanel pecanchart=Charter.getChart("RT ("+entry.getPrecursorMZ()+" M/Z)", "RawScore", false, pecantrace);
-				
-				scoringSplit.setTopComponent(pecanchart);
 
-				
-				split.setBottomComponent(scoringSplit);
+				split.setBottomComponent(ionCountchart);
 				
 				
 			} catch (Exception e) {

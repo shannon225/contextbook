@@ -59,9 +59,10 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance());
 
-	private final SpinnerModel precursorPPM = new SpinnerNumberModel(10, 1, 1000, 1);
-	private final SpinnerModel fragmentPPM = new SpinnerNumberModel(10, 1, 1000, 1);
-	private final SpinnerModel numberOfJobs = new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
+	private final SpinnerModel precursorPPM=new SpinnerNumberModel(10, 1, 1000, 1);
+	private final SpinnerModel fragmentPPM=new SpinnerNumberModel(10, 1, 1000, 1);
+	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
+	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(3, 1, 100, 1);
 
 	public EncyclopediaParametersPanel() {
 		super(new BorderLayout());
@@ -87,6 +88,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		options.add(new LabeledComponent("Proteome Type", proteomeType));
 		options.add(new LabeledComponent("Precursor (PPM)", new JSpinner(precursorPPM)));
 		options.add(new LabeledComponent("Fragment (PPM)", new JSpinner(fragmentPPM)));
+		options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
 		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
 
 		this.add(options, BorderLayout.CENTER);
@@ -165,8 +167,9 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		Number value=(Number)precursorWindowWidth.getValue();
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
 		boolean isPhospho=PHOSPHOPROTEOME.equals(proteomeType.getSelectedItem());
-		float targetWindowCenter=450f;//-1f; // FIXME!!!
-		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme, 0.01f, null, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, 3, isPhospho, false);
+		float targetWindowCenter=-1f;
+		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
+		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme, 0.01f, null, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, isPhospho, false);
 		return parameters;
 	}
 }

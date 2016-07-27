@@ -181,7 +181,7 @@ public class RetentionTimeFilter {
 		}
 	}
 
-	private float getProbabilityFitsModel(float delta) {
+	public float getProbabilityFitsModel(float delta) {
 		float probability=model.getProbability(delta);
 		return probability;
 	}

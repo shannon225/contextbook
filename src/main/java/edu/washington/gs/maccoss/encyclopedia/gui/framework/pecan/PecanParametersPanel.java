@@ -60,13 +60,14 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {"HCD (Y-Only)", "CID (B/Y)", "ETD (C/Z/Z+1)"});
 
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance());
-	
-	private final SpinnerModel precursorPPM = new SpinnerNumberModel(10, 1, 1000, 1);
-	private final SpinnerModel fragmentPPM = new SpinnerNumberModel(10, 1, 1000, 1);
-	private final SpinnerModel minCharge = new SpinnerNumberModel(2, 1, 2, 1);
-	private final SpinnerModel maxCharge = new SpinnerNumberModel(3, 2, 4, 1);
-	private final SpinnerModel maxMissedCleavage = new SpinnerNumberModel(1, 0, 3, 1);
-	private final SpinnerModel numberOfJobs = new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
+
+	private final SpinnerModel precursorPPM=new SpinnerNumberModel(10, 1, 1000, 1);
+	private final SpinnerModel fragmentPPM=new SpinnerNumberModel(10, 1, 1000, 1);
+	private final SpinnerModel minCharge=new SpinnerNumberModel(2, 1, 2, 1);
+	private final SpinnerModel maxCharge=new SpinnerNumberModel(3, 2, 4, 1);
+	private final SpinnerModel maxMissedCleavage=new SpinnerNumberModel(1, 0, 3, 1);
+	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
+	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(3, 1, 100, 1);
 
 	public PecanParametersPanel() {
 		super(new BorderLayout());
@@ -107,6 +108,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		options.add(new LabeledComponent("Precursor (PPM)", new JSpinner(precursorPPM)));
 		options.add(new LabeledComponent("Fragment (PPM)", new JSpinner(fragmentPPM)));
 		options.add(new LabeledComponent("Maximum Missed Cleavage", new JSpinner(maxMissedCleavage)));
+		options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
 		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
 
 		JPanel chargeRange=new JPanel(new FlowLayout());
@@ -185,8 +187,9 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		Number value=(Number)precursorWindowWidth.getValue();
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
+		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		PecanSearchParameters parameters=new PecanSearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme,
-				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, 3);
+				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue);
 		return parameters;
 	}
 }
