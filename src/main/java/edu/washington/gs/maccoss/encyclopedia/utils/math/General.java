@@ -123,18 +123,14 @@ public class General {
 		float m=deltaY/deltaX;
 		float b=v[stop]-m*stop;
 		
-		System.out.println("m: "+m+"\tb: "+b);
-		
 		for (int i=0; i<v.length; i++) {
 			float background=m*i+b;
-			System.out.println(i+"\t"+v[i]+"\t"+background+"\t"+range.contains(i));
 			if (background>v[i]) {
 				v[i]=0.0f;
 			} else if (background>0.0f) {
 				v[i]=v[i]-background;
 			}
 		}
-		System.out.println();
 		
 		float sum=sum(v, range);
 		if (sum==0.0f) {
