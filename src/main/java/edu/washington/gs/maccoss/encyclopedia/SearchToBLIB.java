@@ -322,6 +322,7 @@ public class SearchToBLIB {
 		StripeFileInterface stripeFile=MzmlToDIAConverter.getFile(diaFile, job.getParameters());
 		Logger.logLine("Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides", 0.00001f);
+		elib.addTIC(stripeFile);
 		
 		LibraryInterface library=null;
 		if (job instanceof EncyclopediaJobData) {

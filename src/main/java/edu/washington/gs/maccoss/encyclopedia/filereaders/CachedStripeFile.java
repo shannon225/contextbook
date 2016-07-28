@@ -11,18 +11,31 @@ import java.util.zip.DataFormatException;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class CachedStripeFile implements StripeFileInterface {
 	private final File userFile;
 	private final HashMap<Range, Float> ranges;
 	private final ArrayList<PrecursorScan> precursors;
 	private final HashMap<Range, ArrayList<Stripe>> stripes;
+	private final float tic;
 	
 	public CachedStripeFile(File userFile, HashMap<Range, Float> ranges, ArrayList<PrecursorScan> precursors, HashMap<Range, ArrayList<Stripe>> stripes) {
 		this.userFile=userFile;
 		this.ranges=ranges;
 		this.precursors=precursors;
 		this.stripes=stripes;
+		
+		float sum=0.0f;
+		for (PrecursorScan precursorScan : precursors) {
+			sum+=General.sum(precursorScan.getIntensityArray());
+		}
+		tic=sum;
+	}
+	
+	@Override
+	public float getTIC() throws IOException, SQLException {
+		return tic;
 	}
 
 	@Override

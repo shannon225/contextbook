@@ -8,7 +8,8 @@ import java.net.UnknownHostException;
 public class Networking {
 	final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
 	private static final String[] poopAddresses=new String[] {
-		"98-90-96-DF-EE-BC"
+		"98-90-96-DF-EE-BC",
+		"B8-CA-3A-98-6D-BF"
 	};
 	
 	public static void main(String arg[]) {
@@ -20,16 +21,16 @@ public class Networking {
 		}
 	}
 	
-	public static boolean isOffendingAddress() {
+	public static int isOffendingAddress() {
 		try {
 			byte[] mac=getMacAddress();
 			String address=bytesToHex(mac);
-			for (String b : poopAddresses) {
-				if (b.equals(address)) return true;
+			for (int i=0; i<poopAddresses.length; i++) {
+				if (poopAddresses[i].equals(address)) return (i+1);
 			}
-			return false;
+			return 0;
 		} catch (Exception e) {
-			return false;
+			return 0;
 		}
 	}
 	

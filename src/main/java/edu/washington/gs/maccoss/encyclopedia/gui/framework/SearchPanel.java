@@ -40,6 +40,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.dia.FeatureGrapher;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.LindsaysSpecialEncyclopediaPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.MoMosSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.pecan.PecanParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
@@ -76,7 +77,19 @@ public class SearchPanel extends JPanel {
 		JSplitPane split=new JSplitPane();
 
 		optionsTabs=new JTabbedPane();
-		EncyclopediaParametersPanel encyclopedia=Networking.isOffendingAddress()?new LindsaysSpecialEncyclopediaPanel():new EncyclopediaParametersPanel();
+		EncyclopediaParametersPanel encyclopedia;
+		switch (Networking.isOffendingAddress()) {
+			case 1:
+				encyclopedia=new LindsaysSpecialEncyclopediaPanel();
+				break;
+			case 2:
+				encyclopedia=new MoMosSpecialEncyclopediaPanel();
+				break;
+			default:
+				encyclopedia=new EncyclopediaParametersPanel();
+				break;
+		}
+		
 		if (!pecanpie) {
 			optionsTabs.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
 		}

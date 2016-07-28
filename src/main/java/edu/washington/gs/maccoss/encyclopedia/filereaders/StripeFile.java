@@ -230,6 +230,12 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 			c.close();
 		}
 	}
+	
+	public float getTIC() throws IOException, SQLException {
+		String value=getMetadata().get(StripeFile.TOTAL_PRECURSOR_TIC_ATTRIBUTE);
+		if (value==null) return 0.0f;
+		return Float.parseFloat(value);
+	}
 
 	public void addMetadata(Map<String, String> data) throws IOException, SQLException {
 		Connection c=getConnection(tempFile);

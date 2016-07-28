@@ -30,7 +30,7 @@ public class SearchGUIMain {
 			Logger.errorException(e);
 		}
 
-		boolean isOffending=Networking.isOffendingAddress();
+		int isOffending=Networking.isOffendingAddress();
 		String shortName;
 		String name;
 		ImageIcon image;
@@ -38,10 +38,14 @@ public class SearchGUIMain {
 			shortName="PecanPie";
 			name="Pecan: Peptide Centric Analysis";
 			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/pecan_icon.png"));
-		} else if (isOffending) {
+		} else if (isOffending==1) {
 			shortName="PoopeDIA";
 			name="Lindsay's PoopeDIA: Peptide Searching for DIA";
 			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mike_icon.png"));
+		} else if (isOffending==2) {
+			shortName="DIArreha";
+			name="MoMo's DIArreha: Peptide Searching for DIA";
+			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mike_rotate_icon.png"));
 		} else {
 			shortName="EncyclopeDIA";
 			name="EncyclopeDIA: Peptide Searching for DIA";

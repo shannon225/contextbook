@@ -39,6 +39,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class LibraryFile extends SQLFile implements LibraryInterface {
+	private static final String SOURCEFILE_TIC_PREFIX="TIC_";
 	private static final String SOURCEFILE_STRING="sourcefile";
 	private static final String SOURCE_FILE_SPLIT="|";
 	public static final String ELIB=".elib";
@@ -108,6 +109,23 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			Files.copy(tempFile.toPath(), userFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
 	}
+	
+	public void addTIC(StripeFileInterface diaFile) throws IOException, SQLException {
+		String key=SOURCEFILE_TIC_PREFIX+diaFile.getOriginalFileName();
+		
+		HashMap<String, String> map=new HashMap<String, String>();
+		map.put(key, Float.toString(diaFile.getTIC()));
+		
+		addMetadata(map);
+	}
+	
+	public float getTIC(StripeFileInterface diaFile) throws IOException, SQLException {
+		String key=SOURCEFILE_TIC_PREFIX+diaFile.getOriginalFileName();
+		
+		String value=getMetadata().get(key);
+		if (value==null) return 0.0f;
+		return Float.parseFloat(value);
+	}
 
 	public void setSources(ArrayList<SearchJobData> sources) throws IOException, SQLException {
 		HashMap<String, String> map=new HashMap<String, String>();
@@ -117,6 +135,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				sb.append(SOURCE_FILE_SPLIT);
 			}
 			sb.append(searchJobData.getDiaFile().getAbsolutePath());
+			
 		}
 		map.put(SOURCEFILE_STRING, sb.toString());
 		addMetadata(map);

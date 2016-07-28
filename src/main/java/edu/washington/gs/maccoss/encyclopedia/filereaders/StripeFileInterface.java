@@ -25,6 +25,8 @@ public interface StripeFileInterface {
 
 	ArrayList<Stripe> getStripes(Range targetMzRange, float minRT, float maxRT, final boolean sqrt) throws IOException, SQLException;
 	
+	float getTIC() throws IOException, SQLException;
+	
 	void close();
 
 	File getFile();
