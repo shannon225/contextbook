@@ -46,7 +46,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	public static final String VERSION_STRING="version";
 	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] {new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4)};
 	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 4);
-	
+
 	private File userFile=null;
 	private final File tempFile;
 
@@ -54,16 +54,16 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		tempFile=File.createTempFile("encyclopedia_", ELIB);
 		tempFile.deleteOnExit();
 	}
-	
+
 	public static boolean isVersionAcceptable(Version version) {
 		if (version==null) return false;
-		
+
 		for (Version string : ACCEPTABLE_VERSIONS) {
 			if (string.equals(version)) return true;
 		}
 		return false;
 	}
-	
+
 	public String getName() {
 		return userFile==null?tempFile.getName():userFile.getName();
 	}
@@ -88,7 +88,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	public void saveFile() throws IOException, SQLException {
 		if (userFile!=null) {
 			setFileVersion();
-			
+
 			Connection c=getConnection();
 
 			try {
@@ -97,7 +97,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					s.execute("END");
 					s.execute("VACUUM");
 					s.execute("BEGIN");
-					
+
 					c.commit();
 				} finally {
 					s.close();
@@ -105,20 +105,20 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			} finally {
 				c.close();
 			}
-			
+
 			Files.copy(tempFile.toPath(), userFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
 	}
-	
+
 	public void addTIC(StripeFileInterface diaFile) throws IOException, SQLException {
 		String key=SOURCEFILE_TIC_PREFIX+diaFile.getOriginalFileName();
-		
+
 		HashMap<String, String> map=new HashMap<String, String>();
 		map.put(key, Float.toString(diaFile.getTIC()));
-		
+
 		addMetadata(map);
 	}
-	
+
 	public float getTIC(StripeFileInterface diaFile) throws IOException, SQLException {
 		String originalFileName=diaFile.getOriginalFileName();
 		return getTIC(originalFileName);
@@ -126,7 +126,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 	public float getTIC(String originalFileName) throws IOException, SQLException {
 		String key=SOURCEFILE_TIC_PREFIX+originalFileName;
-		
+
 		String value=getMetadata().get(key);
 		if (value==null) return 0.0f;
 		return Float.parseFloat(value);
@@ -140,12 +140,12 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				sb.append(SOURCE_FILE_SPLIT);
 			}
 			sb.append(searchJobData.getDiaFile().getAbsolutePath());
-			
+
 		}
 		map.put(SOURCEFILE_STRING, sb.toString());
 		addMetadata(map);
 	}
-	
+
 	public void setFileVersion() throws IOException, SQLException {
 		HashMap<String, String> map=new HashMap<String, String>();
 		map.put(VERSION_STRING, MOST_RECENT_VERSION.toString());
@@ -172,17 +172,17 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			c.close();
 		}
 	}
-	
+
 	public Version getVersion() throws IOException, SQLException {
 		HashMap<String, String> meta=getMetadata();
 		return new Version(meta.get(VERSION_STRING));
 	}
-	
+
 	public ArrayList<File> getSourceFiles() throws IOException, SQLException {
 		HashMap<String, String> meta=getMetadata();
 		String sources=meta.get(SOURCEFILE_STRING);
 		if (sources==null) return new ArrayList<File>();
-		
+
 		StringTokenizer st=new StringTokenizer(sources, SOURCE_FILE_SPLIT);
 		ArrayList<File> files=new ArrayList<File>();
 		while (st.hasMoreTokens()) {
@@ -190,19 +190,19 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 		return files;
 	}
-	
+
 	public Optional<StripeFileInterface> getSource(SearchParameters parameters) {
 		try {
 			ArrayList<File> files=getSourceFiles();
 			if (files.size()==0||files.size()>1) return Optional.empty();
-			
+
 			StripeFileInterface file=MzmlToDIAConverter.getFile(files.get(0), parameters);
 			return Optional.ofNullable(file);
 		} catch (Exception e) {
 			return Optional.empty();
 		}
 	}
-	
+
 	public HashMap<String, String> getMetadata() throws IOException, SQLException {
 		Connection c=getConnection();
 		try {
@@ -243,12 +243,14 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 		ArrayList<LibraryEntry> uniqueEntries=new ArrayList<LibraryEntry>(repeatsCatcher.values());
 		addEntries(uniqueEntries);
-		
+
 		// then add integrated areas
 		Connection c=getConnection();
 		try {
-			PreparedStatement peptidePrep=c.prepareStatement("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
-			PreparedStatement fragmentPrep=c.prepareStatement("INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, IonType, FragmentMass, Correlation, Background, DeltaMassPPM, Intensity) VALUES (?,?,?,?,?,?,?,?,?,?)");
+			PreparedStatement peptidePrep=c.prepareStatement(
+					"INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+			PreparedStatement fragmentPrep=c.prepareStatement(
+					"INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, IonType, FragmentMass, Correlation, Background, DeltaMassPPM, Intensity) VALUES (?,?,?,?,?,?,?,?,?,?)");
 			try {
 				for (LibraryEntry recast : uniqueEntries) {
 					IntegratedLibraryEntry entry=(IntegratedLibraryEntry)recast;
@@ -257,11 +259,11 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					float[] correlationArray=data.getCorrelationArray();
 					float[] integrationArray=data.getIntegrationArray();
 					float[] backgroundArray=data.getBackgroundArray();
-					
+
 					double[] fragmentMassArray=data.getFragmentMassArray();
 					float[] deltaMassArray=data.getDeltaMassArray().get();
 					float[] ppmArray=new float[deltaMassArray.length];
-					
+
 					float bestCorrelation=-1.0f;
 					float bestDeltaMass=10.0f;
 					for (int i=0; i<deltaMassArray.length; i++) {
@@ -271,14 +273,14 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 							bestDeltaMass=ppmArray[i];
 						}
 					}
-					
+
 					Pair<Float, Integer> topN;
 					if (inferrer.isPresent()) {
 						topN=inferrer.get().getTopNIntensity(entry, data);
 					} else {
 						topN=data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
 					}
-					
+
 					peptidePrep.setInt(1, entry.getPrecursorCharge());
 					peptidePrep.setString(2, entry.getPeptideModSeq());
 					peptidePrep.setString(3, entry.getPeptideSeq());
@@ -293,7 +295,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					peptidePrep.setInt(11, intensityByteArray.length);
 					peptidePrep.setBytes(12, CompressionUtils.compress(intensityByteArray));
 					peptidePrep.addBatch();
-					
+
 					for (int i=0; i<correlationArray.length; i++) {
 						if (correlationArray[i]>=TransitionRefiner.identificationCorrelationThreshold) {
 							fragmentPrep.setInt(1, entry.getPrecursorCharge());
@@ -309,11 +311,11 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 							fragmentPrep.addBatch();
 						}
 					}
-					
+
 				}
 				peptidePrep.executeBatch();
 				fragmentPrep.executeBatch();
-		
+
 				c.commit();
 			} finally {
 				peptidePrep.close();
@@ -323,16 +325,17 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			c.close();
 		}
 	}
-	
+
 	public void addEntries(ArrayList<LibraryEntry> entries) throws IOException, SQLException {
 		Connection c=getConnection();
 		try {
-			PreparedStatement prep=c.prepareStatement("INSERT INTO entries (PrecursorMZ, PrecursorCharge, PeptideModSeq, PeptideSeq, Copies, RTInSeconds, Score, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, CorrelationEncodedLength, CorrelationArray, RTInSecondsStart, RTInSecondsStop, MedianChromatogramEncodedLength, MedianChromatogramArray, SourceFile) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+			PreparedStatement prep=c.prepareStatement(
+					"INSERT INTO entries (PrecursorMZ, PrecursorCharge, PeptideModSeq, PeptideSeq, Copies, RTInSeconds, Score, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, CorrelationEncodedLength, CorrelationArray, RTInSecondsStart, RTInSecondsStop, MedianChromatogramEncodedLength, MedianChromatogramArray, SourceFile) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 			PreparedStatement proteinPrep=c.prepareStatement("INSERT OR IGNORE INTO proteins (PeptideSeq, ProteinAccessions) VALUES (?,?)");
 			try {
 				for (LibraryEntry entry : entries) {
 					if (entry.getAccessions().size()==0) continue;
-					
+
 					String pepSeq=entry.getPeptideSeq();
 					prep.setDouble(1, entry.getPrecursorMZ());
 					prep.setInt(2, entry.getPrecursorCharge());
@@ -348,21 +351,23 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					prep.setInt(10, intensityByteArray.length);
 					prep.setBytes(11, CompressionUtils.compress(intensityByteArray));
 
-					if (entry.getMassArray().length!=entry.getIntensityArray().length) Logger.errorLine("MASS/INTENSITY EQUATION WRITE ERROR! "+entry.getMassArray().length+" != "+entry.getIntensityArray().length+" FOR "+entry.getPeptideModSeq()); // FIXME
-					assert(entry.getMassArray().length==entry.getIntensityArray().length);
-					
+					if (entry.getMassArray().length!=entry.getIntensityArray().length)
+						Logger.errorLine("MASS/INTENSITY EQUATION WRITE ERROR! "+entry.getMassArray().length+" != "+entry.getIntensityArray().length+" FOR "+entry.getPeptideModSeq()); // FIXME
+					assert (entry.getMassArray().length==entry.getIntensityArray().length);
+
 					if (entry instanceof Chromatogram) {
 						Chromatogram cast=(Chromatogram)entry;
-						
+
 						byte[] correlationByteArray=ByteConverter.toByteArray(cast.getCorrelationArray());
-						if (entry.getMassArray().length!=cast.getCorrelationArray().length) Logger.errorLine("MASS/CORRELATION EQUATION WRITE ERROR! "+entry.getMassArray().length+" != "+cast.getCorrelationArray().length+" FOR "+entry.getPeptideModSeq()); // FIXME
-						assert(entry.getMassArray().length==cast.getCorrelationArray().length);
-						
+						if (entry.getMassArray().length!=cast.getCorrelationArray().length)
+							Logger.errorLine("MASS/CORRELATION EQUATION WRITE ERROR! "+entry.getMassArray().length+" != "+cast.getCorrelationArray().length+" FOR "+entry.getPeptideModSeq()); // FIXME
+						assert (entry.getMassArray().length==cast.getCorrelationArray().length);
+
 						prep.setInt(12, correlationByteArray.length);
 						prep.setBytes(13, CompressionUtils.compress(correlationByteArray));
 						prep.setFloat(14, cast.getRtRange().getStart());
 						prep.setFloat(15, cast.getRtRange().getStop());
-						
+
 						byte[] chromatogramByteArray=ByteConverter.toByteArray(cast.getMedianChromatogram());
 						prep.setInt(16, chromatogramByteArray.length);
 						prep.setBytes(17, CompressionUtils.compress(chromatogramByteArray));
@@ -374,17 +379,17 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						prep.setNull(16, Types.INTEGER);
 						prep.setNull(17, Types.BLOB);
 					}
-					
+
 					prep.setString(18, entry.getSource());
 					prep.addBatch();
-					
+
 					proteinPrep.setString(1, pepSeq);
 					proteinPrep.setString(2, PSMData.accessionsToString(entry.getAccessions()));
 					proteinPrep.addBatch();
 				}
 				prep.executeBatch();
 				proteinPrep.executeBatch();
-				
+
 				c.commit();
 			} finally {
 				prep.close();
@@ -401,16 +406,17 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 	public HashMap<PeptidePrecursor, ArrayList<LibraryEntry>> getEntries(ArrayList<PeptidePrecursor> entries, boolean sqrt) throws IOException, SQLException, DataFormatException {
 		HashMap<PeptidePrecursor, ArrayList<LibraryEntry>> map=new HashMap<PeptidePrecursor, ArrayList<LibraryEntry>>();
-		
+
 		Connection c=getConnection();
 		try {
-			PreparedStatement prep=c.prepareStatement("select e.PrecursorMZ, e.PrecursorCharge, e.PeptideModSeq, e.Copies, e.RTInSeconds, e.Score, e.MassEncodedLength, e.MassArray, e.IntensityEncodedLength, e.IntensityArray, e.CorrelationEncodedLength, e.CorrelationArray blob, e.RTInSecondsStart, e.RTInSecondsStop, e.MedianChromatogramEncodedLength, e.MedianChromatogramArray, p.ProteinAccessions, e.SourceFile from entries e, proteins p"
-						+ " where e.PeptideSeq=p.PeptideSeq and e.PeptideModSeq = ? and e.PrecursorCharge = ?");
+			PreparedStatement prep=c.prepareStatement(
+					"select e.PrecursorMZ, e.PrecursorCharge, e.PeptideModSeq, e.Copies, e.RTInSeconds, e.Score, e.MassEncodedLength, e.MassArray, e.IntensityEncodedLength, e.IntensityArray, e.CorrelationEncodedLength, e.CorrelationArray blob, e.RTInSecondsStart, e.RTInSecondsStop, e.MedianChromatogramEncodedLength, e.MedianChromatogramArray, p.ProteinAccessions, e.SourceFile from entries e, proteins p"
+							+" where e.PeptideSeq=p.PeptideSeq and e.PeptideModSeq = ? and e.PrecursorCharge = ?");
 			try {
 				for (PeptidePrecursor precursor : entries) {
 					prep.setString(1, precursor.getPeptideModSeq());
 					prep.setByte(2, precursor.getPrecursorCharge());
-					
+
 					ResultSet rs=prep.executeQuery();
 					ArrayList<LibraryEntry> entry=extractEntries(sqrt, rs);
 					map.put(precursor, entry);
@@ -421,12 +427,15 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		} finally {
 			c.close();
 		}
-		
+
 		return map;
 	}
-	
-	/* (non-Javadoc)
-	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#
+	 * getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
 	 */
 	@Override
 	public ArrayList<LibraryEntry> getEntries(String peptideModSeq, byte charge, boolean sqrt) throws IOException, SQLException, DataFormatException {
@@ -434,8 +443,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try {
 			Statement s=c.createStatement();
 			try {
-				ResultSet rs=s.executeQuery("select e.PrecursorMZ, e.PrecursorCharge, e.PeptideModSeq, e.Copies, e.RTInSeconds, e.Score, e.MassEncodedLength, e.MassArray, e.IntensityEncodedLength, e.IntensityArray, e.CorrelationEncodedLength, e.CorrelationArray blob, e.RTInSecondsStart, e.RTInSecondsStop, e.MedianChromatogramEncodedLength, e.MedianChromatogramArray, p.ProteinAccessions, e.SourceFile from entries e, proteins p"
-						+ " where e.PeptideSeq=p.PeptideSeq and e.PeptideModSeq = \""+peptideModSeq+"\" and e.PrecursorCharge = "+charge);
+				ResultSet rs=s.executeQuery(
+						"select e.PrecursorMZ, e.PrecursorCharge, e.PeptideModSeq, e.Copies, e.RTInSeconds, e.Score, e.MassEncodedLength, e.MassArray, e.IntensityEncodedLength, e.IntensityArray, e.CorrelationEncodedLength, e.CorrelationArray blob, e.RTInSecondsStart, e.RTInSecondsStop, e.MedianChromatogramEncodedLength, e.MedianChromatogramArray, p.ProteinAccessions, e.SourceFile from entries e, proteins p"
+								+" where e.PeptideSeq=p.PeptideSeq and e.PeptideModSeq = \""+peptideModSeq+"\" and e.PrecursorCharge = "+charge);
 
 				ArrayList<LibraryEntry> entry=extractEntries(sqrt, rs);
 
@@ -457,7 +467,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			byte precursorCharge=(byte)rs.getInt(2);
 			peptideModSeq=rs.getString(3);
 			int copies=rs.getInt(4);
-			float retentionTime=rs.getFloat(5); 
+			float retentionTime=rs.getFloat(5);
 			float score=rs.getFloat(6);
 			int massEncodedLength=rs.getInt(7);
 			double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), massEncodedLength));
@@ -468,31 +478,31 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			}
 
 			if (massArray.length!=intensityArray.length) Logger.errorLine("MASS/INTENSITY EQUATION READ ERROR "+massArray.length+" != "+intensityArray.length+" FOR "+peptideModSeq); // FIXME
-			assert(massArray.length==intensityArray.length);
-			
+			assert (massArray.length==intensityArray.length);
+
 			float[] correlationArray;
 			float rtInSecondsStart;
 			float rtInSecondsStop;
 			float[] medianChromatogramArray;
-			
+
 			int correlationEncodedLength=rs.getInt(11);
 			if (correlationEncodedLength==0) {
 				// 0 indicates null, which indicates missing
 				correlationArray=null;
-				rtInSecondsStart=0.0f; 
-				rtInSecondsStop=0.0f; 
+				rtInSecondsStart=0.0f;
+				rtInSecondsStop=0.0f;
 				medianChromatogramArray=null;
 			} else {
 				correlationArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(12), correlationEncodedLength));
 				if (massArray.length!=correlationArray.length) Logger.errorLine("MASS/CORRELATION EQUATION READ ERROR! "+massArray.length+" != "+correlationArray.length+" FOR "+peptideModSeq); // FIXME
-				assert(massArray.length==correlationArray.length);
-				
+				assert (massArray.length==correlationArray.length);
+
 				rtInSecondsStart=rs.getFloat(13);
 				rtInSecondsStop=rs.getFloat(14);
 				int medianChromatogramEncodedLength=rs.getInt(15);
 				medianChromatogramArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(16), medianChromatogramEncodedLength));
 			}
-			
+
 			HashSet<String> accessions=PSMData.stringToAccessions(rs.getString(17));
 			String sourceFile=rs.getString(18);
 			if (correlationEncodedLength==0) {
@@ -505,8 +515,11 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		return entry;
 	}
 
-	/* (non-Javadoc)
-	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#
+	 * getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
 	 */
 	@Override
 	public Range getMinMaxMZ() throws IOException, SQLException {
@@ -531,8 +544,11 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#
+	 * getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
 	 */
 	@Override
 	public ArrayList<LibraryEntry> getEntries(Range precursorMz, boolean sqrt) throws IOException, SQLException, DataFormatException {
@@ -540,8 +556,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try {
 			Statement s=c.createStatement();
 			try {
-				ResultSet rs=s.executeQuery("select e.PrecursorMZ, e.PrecursorCharge, e.PeptideModSeq, e.Copies, e.RTInSeconds, e.Score, e.MassEncodedLength, e.MassArray, e.IntensityEncodedLength, e.IntensityArray, e.CorrelationEncodedLength, e.CorrelationArray blob, e.RTInSecondsStart, e.RTInSecondsStop, e.MedianChromatogramEncodedLength, e.MedianChromatogramArray, p.ProteinAccessions, e.SourceFile from entries e, proteins p"
-						+ " where e.PeptideSeq=p.PeptideSeq and e.PrecursorMz between "+precursorMz.getStart()+" and "+precursorMz.getStop());
+				ResultSet rs=s.executeQuery(
+						"select e.PrecursorMZ, e.PrecursorCharge, e.PeptideModSeq, e.Copies, e.RTInSeconds, e.Score, e.MassEncodedLength, e.MassArray, e.IntensityEncodedLength, e.IntensityArray, e.CorrelationEncodedLength, e.CorrelationArray blob, e.RTInSecondsStart, e.RTInSecondsStop, e.MedianChromatogramEncodedLength, e.MedianChromatogramArray, p.ProteinAccessions, e.SourceFile from entries e, proteins p"
+								+" where e.PeptideSeq=p.PeptideSeq and e.PrecursorMz between "+precursorMz.getStart()+" and "+precursorMz.getStop());
 
 				ArrayList<LibraryEntry> entry=new ArrayList<LibraryEntry>();
 				while (rs.next()) {
@@ -550,7 +567,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					byte precursorCharge=(byte)rs.getInt(2);
 					String peptideModSeq=rs.getString(3);
 					int copies=rs.getInt(4);
-					float retentionTime=rs.getFloat(5); 
+					float retentionTime=rs.getFloat(5);
 					float score=rs.getFloat(6);
 					int massEncodedLength=rs.getInt(7);
 					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), massEncodedLength));
@@ -559,18 +576,18 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					if (sqrt) {
 						intensityArray=General.protectedSqrt(intensityArray);
 					}
-					
+
 					float[] correlationArray;
 					float rtInSecondsStart;
 					float rtInSecondsStop;
 					float[] medianChromatogramArray;
-					
+
 					int correlationEncodedLength=rs.getInt(11);
 					if (correlationEncodedLength==0) {
 						// 0 indicates null, which indicates missing
 						correlationArray=null;
-						rtInSecondsStart=0.0f; 
-						rtInSecondsStop=0.0f; 
+						rtInSecondsStart=0.0f;
+						rtInSecondsStop=0.0f;
 						medianChromatogramArray=null;
 					} else {
 						correlationArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(12), correlationEncodedLength));
@@ -579,7 +596,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						int medianChromatogramEncodedLength=rs.getInt(15);
 						medianChromatogramArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(16), medianChromatogramEncodedLength));
 					}
-					
+
 					String proteinToken=rs.getString(17);
 					HashSet<String> accessions=PSMData.stringToAccessions(proteinToken);
 					String sourceFile=rs.getString(18);
@@ -599,14 +616,15 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			c.close();
 		}
 	}
-	
+
 	public ArrayList<LibraryEntry> getAllEntries(boolean sqrt) throws IOException, SQLException, DataFormatException {
 		Connection c=getConnection();
 		try {
 			Statement s=c.createStatement();
 			try {
-				ResultSet rs=s.executeQuery("select e.PrecursorMZ, e.PrecursorCharge, e.PeptideModSeq, e.Copies, e.RTInSeconds, e.Score, e.MassEncodedLength, e.MassArray, e.IntensityEncodedLength, e.IntensityArray, e.CorrelationEncodedLength, e.CorrelationArray blob, e.RTInSecondsStart, e.RTInSecondsStop, e.MedianChromatogramEncodedLength, e.MedianChromatogramArray, p.ProteinAccessions, e.SourceFile from entries e, proteins p"
-						+ " where e.PeptideSeq=p.PeptideSeq");
+				ResultSet rs=s.executeQuery(
+						"select e.PrecursorMZ, e.PrecursorCharge, e.PeptideModSeq, e.Copies, e.RTInSeconds, e.Score, e.MassEncodedLength, e.MassArray, e.IntensityEncodedLength, e.IntensityArray, e.CorrelationEncodedLength, e.CorrelationArray blob, e.RTInSecondsStart, e.RTInSecondsStop, e.MedianChromatogramEncodedLength, e.MedianChromatogramArray, p.ProteinAccessions, e.SourceFile from entries e, proteins p"
+								+" where e.PeptideSeq=p.PeptideSeq");
 
 				ArrayList<LibraryEntry> entry=new ArrayList<LibraryEntry>();
 				while (rs.next()) {
@@ -615,7 +633,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					byte precursorCharge=(byte)rs.getInt(2);
 					String peptideModSeq=rs.getString(3);
 					int copies=rs.getInt(4);
-					float retentionTime=rs.getFloat(5); 
+					float retentionTime=rs.getFloat(5);
 					float score=rs.getFloat(6);
 					int massEncodedLength=rs.getInt(7);
 					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), massEncodedLength));
@@ -624,18 +642,18 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					if (sqrt) {
 						intensityArray=General.protectedSqrt(intensityArray);
 					}
-					
+
 					float[] correlationArray;
 					float rtInSecondsStart;
 					float rtInSecondsStop;
 					float[] medianChromatogramArray;
-					
+
 					int correlationEncodedLength=rs.getInt(11);
 					if (correlationEncodedLength==0) {
 						// 0 indicates null, which indicates missing
 						correlationArray=null;
-						rtInSecondsStart=0.0f; 
-						rtInSecondsStop=0.0f; 
+						rtInSecondsStart=0.0f;
+						rtInSecondsStop=0.0f;
 						medianChromatogramArray=null;
 					} else {
 						correlationArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(12), correlationEncodedLength));
@@ -644,7 +662,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						int medianChromatogramEncodedLength=rs.getInt(15);
 						medianChromatogramArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(16), medianChromatogramEncodedLength));
 					}
-					
+
 					HashSet<String> accessions=PSMData.stringToAccessions(rs.getString(17));
 					String sourceFile=rs.getString(18);
 					if (correlationEncodedLength==0) {
@@ -685,36 +703,27 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						s.execute("ALTER TABLE peptidequants ADD COLUMN PeptideSeq string");
 					}
 				} catch (SQLException sqle) {
-					// the metadata table is missing, so do nothing and create it in the next line
+					// the metadata table is missing, so do nothing and create
+					// it in the next line
 				}
-				
-				s.execute("CREATE TABLE IF NOT EXISTS metadata ( "
-						+ "Key string not null, Value string not null, "
-						+ "PRIMARY KEY (Key) "
-						+ ")");
-				
+
+				s.execute("CREATE TABLE IF NOT EXISTS metadata ( "+"Key string not null, Value string not null, "+"PRIMARY KEY (Key) "+")");
+
 				s.execute("CREATE TABLE IF NOT EXISTS entries ( "
-						+ "PrecursorMz double not null, PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, Copies int not null, RTInSeconds double not null, Score double not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, CorrelationEncodedLength int, CorrelationArray blob, RTInSecondsStart double, RTInSecondsStop double, MedianChromatogramEncodedLength int, MedianChromatogramArray blob, SourceFile string not null, "
-						+ "PRIMARY KEY (PrecursorCharge, PeptideModSeq, SourceFile), "
-						+ "FOREIGN KEY (PeptideSeq) REFERENCES proteins (PeptideSeq) "
-						+ ")");
-				
-				s.execute("CREATE TABLE IF NOT EXISTS proteins ( "
-						+ "PeptideSeq string not null, ProteinAccessions string not null, "
-						+ "PRIMARY KEY (PeptideSeq) "
-						+ ")");
-				
+						+"PrecursorMz double not null, PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, Copies int not null, RTInSeconds double not null, Score double not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, CorrelationEncodedLength int, CorrelationArray blob, RTInSecondsStart double, RTInSecondsStop double, MedianChromatogramEncodedLength int, MedianChromatogramArray blob, SourceFile string not null, "
+						+"PRIMARY KEY (PrecursorCharge, PeptideModSeq, SourceFile), "+"FOREIGN KEY (PeptideSeq) REFERENCES proteins (PeptideSeq) "+")");
+
+				s.execute("CREATE TABLE IF NOT EXISTS proteins ( "+"PeptideSeq string not null, ProteinAccessions string not null, "+"PRIMARY KEY (PeptideSeq) "+")");
+
 				s.execute("CREATE TABLE IF NOT EXISTS peptidequants ( "
-						+ "PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null,"
-						+ "PRIMARY KEY (PrecursorCharge, PeptideModSeq, SourceFile), "
-						+ "FOREIGN KEY (PrecursorCharge, PeptideModSeq, SourceFile) REFERENCES entries (PrecursorCharge, PeptideModSeq, SourceFile) "
-						+ ")");
-				
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null,"
+						+"PRIMARY KEY (PrecursorCharge, PeptideModSeq, SourceFile), "
+						+"FOREIGN KEY (PrecursorCharge, PeptideModSeq, SourceFile) REFERENCES entries (PrecursorCharge, PeptideModSeq, SourceFile) "+")");
+
 				s.execute("CREATE TABLE IF NOT EXISTS fragmentquants ( "
-						+ "PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, IonType string not null, FragmentMass double not null, Correlation double not null, Background double not null, DeltaMassPPM double not null, Intensity double not null, "
-						+ "FOREIGN KEY (PrecursorCharge, PeptideModSeq, SourceFile) REFERENCES entries (PrecursorCharge, PeptideModSeq, SourceFile) "
-						+ ")");
-				
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, IonType string not null, FragmentMass double not null, Correlation double not null, Background double not null, DeltaMassPPM double not null, Intensity double not null, "
+						+"FOREIGN KEY (PrecursorCharge, PeptideModSeq, SourceFile) REFERENCES entries (PrecursorCharge, PeptideModSeq, SourceFile) "+")");
+
 				c.commit();
 			} finally {
 				s.close();
@@ -729,7 +738,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try {
 			Statement s=c.createStatement();
 			try {
-				
+
 				s.execute("drop index if exists \"PeptideModSeq_Entries_index\"");
 				s.execute("drop index if exists \"PeptideSeq_Entries_index\"");
 				s.execute("drop index if exists \"PrecursorMz_Entries_index\"");
@@ -753,7 +762,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try {
 			Statement s=c.createStatement();
 			try {
-				
+
 				s.execute("create index if not exists \"PeptideModSeq_Entries_index\" on \"entries\" (\"PeptideModSeq\" ASC)");
 				s.execute("create index if not exists \"PeptideSeq_Entries_index\" on \"entries\" (\"PeptideSeq\" ASC)");
 				s.execute("create index if not exists \"PrecursorMz_Entries_index\" on \"entries\" (\"PrecursorMz\" ASC)");
