@@ -60,7 +60,7 @@ public class PeakLocationInferrer {
 		double[] masses=data.getFragmentMassArray();
 		float[] correlation=data.getCorrelationArray();
 		float[] intensities=data.getIntegrationArray();
-		float[] background=data.getBackgroundArray();
+		//float[] background=data.getBackgroundArray();
 		
 		if (topN==null||topN.length==0) {
 			return data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, params.getNumberOfQuantitativePeaks());
@@ -73,8 +73,7 @@ public class PeakLocationInferrer {
 			if (optionalIndex.isPresent()) {
 				int index=optionalIndex.get();
 				if (correlation[index]>=TransitionRefiner.translationalQuantitativeCorrelationThreshold) {
-					float backgroundPlusOnePseudoCount=background[index]+1.0f;
-					sum+=intensities[index]/backgroundPlusOnePseudoCount;
+					sum+=intensities[index];
 					added++;
 				}
 			}

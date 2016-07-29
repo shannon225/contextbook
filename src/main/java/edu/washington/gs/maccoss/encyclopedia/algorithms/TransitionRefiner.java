@@ -23,7 +23,7 @@ public class TransitionRefiner {
 	public static final float quantitativeCorrelationThreshold=0.9f;
 	
 	// minimum threshold to quantify this peak in any file (assuming it's already determined to be a "best peak"
-	public static final float translationalQuantitativeCorrelationThreshold=0.75f;
+	public static final float translationalQuantitativeCorrelationThreshold=0.001f;// 0.75f; // FIXME THINK ABOUT LIMITING QUANT CORRELATION THRESHOLD
 	
 	// minimum threshold to call this peak as useful for identification purposes
 	public static final float identificationCorrelationThreshold=0.75f;
@@ -193,7 +193,7 @@ public class TransitionRefiner {
 			// calculate trapezoidal background area
 			backgroundArray[i]=(range.getStop()-range.getStart())*(chromatogram[indices.getStart()]+chromatogram[indices.getStop()])/2.0f;
 			backgroundArray[i]=Math.min(backgroundArray[i], integrationArray[i]); // background can never be greater than the signal
-			integrationArray[i]=integrationArray[i]-backgroundArray[i];
+			//integrationArray[i]=integrationArray[i]-backgroundArray[i]; //FIXME PUT BACKGROUND SUBTRACTION IN
 		}
 		
 		if (plot) {
@@ -366,7 +366,9 @@ public class TransitionRefiner {
 	public static ArrayList<float[]> normalizeAndBackgroundSubtract(ArrayList<float[]> chromatograms, IntRange range) {
 		ArrayList<float[]> normalizedChromatograms=new ArrayList<float[]>();
 		for (float[] fs : chromatograms) {
-			normalizedChromatograms.add(General.normalizeAndBackgroundSubtract(fs, range));
+			// FIXME PUT BACKGROUND SUBTRACTION IN
+			//normalizedChromatograms.add(General.normalizeAndBackgroundSubtract(fs, range));
+			normalizedChromatograms.add(General.normalize(fs, range));
 		}
 		return normalizedChromatograms;
 	}

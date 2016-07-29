@@ -23,8 +23,12 @@ import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class LibraryReportExtractor {
 	public static void main(String[] args) throws Exception {
-		File libraryFile=new File("/Volumes/WorkingDisk/yeast_curve_wide.elib");
-		File reportFile=new File("/Volumes/WorkingDisk/yeast_curve_wide.report.txt");
+		//File libraryFile=new File("/Volumes/WorkingDisk/yeast_curve_wide.elib");
+		//File reportFile=new File("/Volumes/WorkingDisk/yeast_curve_wide.report.txt");
+		//File libraryFile=new File("/Volumes/14jun2016_mcf7_phospho/hela_timecourse_wide.elib");
+		//File reportFile=new File("/Volumes/14jun2016_mcf7_phospho/hela_timecourse_wide.report.txt");
+		File libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/hela_timecourse_wide.elib");
+		File reportFile=new File("/Users/searleb/Documents/projects/encyclopedia/hela_timecourse_wide.elib.report.txt");
 		
 		LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
 		extractMatrix((LibraryFile)library, reportFile);

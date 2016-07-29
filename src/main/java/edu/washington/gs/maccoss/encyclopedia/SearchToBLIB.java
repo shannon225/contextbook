@@ -8,9 +8,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
@@ -293,6 +295,14 @@ public class SearchToBLIB {
 
 			elib.createIndices();
 			elib.saveAsFile(elibFile);
+			
+			if (pecanJobs.size()>1) {
+				try {
+					LibraryReportExtractor.extractMatrix(elib, new File(elibFile.getAbsolutePath()+".txt"));
+				} catch (DataFormatException e) {
+					Logger.errorException(e);
+				}
+			}
 			
 		} catch (IOException ioe) {
 			Logger.errorLine("Error creating BLIB file");
