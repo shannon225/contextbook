@@ -182,22 +182,29 @@ public class TransitionRefiner {
 				}
 			}
 			
-			// calculate area
 			float[] chromatogram=chromatograms.get(i);
+			
+			float baseBackground=Math.min(chromatogram[indices.getStart()], chromatogram[indices.getStop()]);
+			
+			backgroundArray[i]=0.0f;
 			integrationArray[i]=0.0f;
 			for (int j=indices.getStart()+1; j<=indices.getStop(); j++) {
+				// calculate trapezoid area like Reimann sums
 				float trapezoid=(retentionTimes[j]-retentionTimes[j-1])*(chromatogram[j-1]+chromatogram[j])/2.0f;
 				integrationArray[i]+=trapezoid;
+
+				// Skyline computes rectangular background based on minimum of the boundaries. If the signal dips below the background, then calculate the trapezoid
+				float lowerBackground=Math.min(baseBackground, chromatogram[j-1]);
+				float upperBackground=Math.min(baseBackground, chromatogram[j]);
+				float trapezoidBackground=(retentionTimes[j]-retentionTimes[j-1])*(lowerBackground+upperBackground)/2.0f;
+				backgroundArray[i]+=trapezoidBackground;
 			}
 			
 			// calculate trapezoidal background area
-			backgroundArray[i]=(range.getStop()-range.getStart())*(chromatogram[indices.getStart()]+chromatogram[indices.getStop()])/2.0f;
-			backgroundArray[i]=Math.min(backgroundArray[i], integrationArray[i]); // background can never be greater than the signal
-			//integrationArray[i]=integrationArray[i]-backgroundArray[i]; //FIXME PUT BACKGROUND SUBTRACTION IN
+			integrationArray[i]=integrationArray[i]-backgroundArray[i];
 		}
 		
 		if (plot) {
-
 			HashMap<String, ChartPanel> panels=new HashMap<String, ChartPanel>();
 			panels.put("unnormalized", getChart(chromatograms, correlationArray, retentionTimes, range));
 			panels.put("unnormalized_uncolored", getChart(chromatograms, new float[correlationArray.length], retentionTimes, range));
@@ -366,7 +373,7 @@ public class TransitionRefiner {
 	public static ArrayList<float[]> normalizeAndBackgroundSubtract(ArrayList<float[]> chromatograms, IntRange range) {
 		ArrayList<float[]> normalizedChromatograms=new ArrayList<float[]>();
 		for (float[] fs : chromatograms) {
-			// FIXME PUT BACKGROUND SUBTRACTION IN
+			// TODO CONSIDER PUTTING BACKGROUND SUBTRACTION INTO CORRELATION! (but not this way)
 			//normalizedChromatograms.add(General.normalizeAndBackgroundSubtract(fs, range));
 			normalizedChromatograms.add(General.normalize(fs, range));
 		}
