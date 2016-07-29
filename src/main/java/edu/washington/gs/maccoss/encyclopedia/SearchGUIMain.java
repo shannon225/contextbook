@@ -43,9 +43,9 @@ public class SearchGUIMain {
 			name="Lindsay's PoopeDIA: Peptide Searching for DIA";
 			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mike_icon.png"));
 		} else if (isOffending==2) {
-			shortName="DIArreha";
-			name="MoMo's DIArreha: Peptide Searching for DIA";
-			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mike_rotate_icon.png"));
+			shortName="ChocopeDIA";
+			name="MoMo's ChocopeDIA: Peptide Searching for DIA";
+			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/chocolate.png"));
 		} else {
 			shortName="EncyclopeDIA";
 			name="EncyclopeDIA: Peptide Searching for DIA";
