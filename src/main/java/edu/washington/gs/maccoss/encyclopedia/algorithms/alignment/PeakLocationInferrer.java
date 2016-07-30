@@ -58,9 +58,7 @@ public class PeakLocationInferrer {
 	public Pair<Float, Integer> getTopNIntensity(PeptidePrecursor peptide, TransitionRefinementData data) {
 		double[] topN=bestIons.get(peptide.getPeptideModSeq());
 		double[] masses=data.getFragmentMassArray();
-		float[] correlation=data.getCorrelationArray();
 		float[] intensities=data.getIntegrationArray();
-		//float[] background=data.getBackgroundArray();
 		
 		if (topN==null||topN.length==0) {
 			return data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, params.getNumberOfQuantitativePeaks());
@@ -72,10 +70,8 @@ public class PeakLocationInferrer {
 			Optional<Integer> optionalIndex=params.getFragmentTolerance().getIndex(masses, topN[i]);
 			if (optionalIndex.isPresent()) {
 				int index=optionalIndex.get();
-				if (correlation[index]>=TransitionRefiner.translationalQuantitativeCorrelationThreshold) {
-					sum+=intensities[index];
-					added++;
-				}
+				sum+=intensities[index];
+				added++;
 			}
 		}
 		return new Pair<Float, Integer>(sum, added);

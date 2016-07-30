@@ -22,9 +22,6 @@ public class TransitionRefiner {
 	// minimum threshold to call this peak as worth quantifying
 	public static final float quantitativeCorrelationThreshold=0.9f;
 	
-	// minimum threshold to quantify this peak in any file (assuming it's already determined to be a "best peak"
-	public static final float translationalQuantitativeCorrelationThreshold=0.001f;// 0.75f; // FIXME THINK ABOUT LIMITING QUANT CORRELATION THRESHOLD
-	
 	// minimum threshold to call this peak as useful for identification purposes
 	public static final float identificationCorrelationThreshold=0.75f;
 	
