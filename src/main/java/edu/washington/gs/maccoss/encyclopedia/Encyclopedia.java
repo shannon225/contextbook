@@ -140,7 +140,17 @@ public class Encyclopedia {
 			try {
 				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(outputFile, job.getParameters().getEffectivePercolatorThreshold());
 				ArrayList<ScoredObject<String>> proteins=ParsimonyProteinGrouper.groupProtein(passingPeptidesFromTSV);
+				
+				File elibFile=job.getResultLibrary();
+				if (!elibFile.exists()) {
+					progress.update("Writing elib result library...");
+					Logger.logLine("Writing elib result library...");
+					ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
+					jobs.add(job);
+					SearchToBLIB.convert(progress, jobs, elibFile, false);
+				}
 				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides ("+proteins.size()+" proteins) identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+
 				return;
 			} catch (Exception e) {
 				// problem! so just continue on and overwrite old result

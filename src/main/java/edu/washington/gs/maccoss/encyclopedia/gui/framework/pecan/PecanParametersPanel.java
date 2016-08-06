@@ -67,7 +67,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 	private final SpinnerModel maxCharge=new SpinnerNumberModel(3, 2, 4, 1);
 	private final SpinnerModel maxMissedCleavage=new SpinnerNumberModel(1, 0, 3, 1);
 	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
-	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(3, 1, 100, 1);
+	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 
 	public PecanParametersPanel() {
 		super(new BorderLayout());

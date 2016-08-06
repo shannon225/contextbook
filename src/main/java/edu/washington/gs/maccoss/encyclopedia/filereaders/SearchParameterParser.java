@@ -30,6 +30,7 @@ public class SearchParameterParser {
 		map.put("-expectedPeakWidth", "25");
 		map.put("-deconvoluteOverlappingWindows", "false");
 		map.put("-runPhosphoLocalization", "false");
+		map.put("-numberOfQuantitativePeaks", "5");
 		return map;
 	}
 	
@@ -115,7 +116,7 @@ public class SearchParameterParser {
 		expectedPeakWidth=SearchParameterParser.getFloat("-expectedPeakWidth", parameters, 25f);
 		runPhosphoLocalization=getBoolean("-runPhosphoLocalization", parameters, false);
 		addExtraDecoys=getBoolean("-addExtraDecoys", parameters, false);
-		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 3);
+		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 5);
 		
 		value=parameters.get("-percolatorLocation");
 		File percolator=null;

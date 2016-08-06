@@ -39,6 +39,7 @@ public class PecanParameterParser {
 		map.put("-acquisition", "overlapping dia");
 		map.put("-precursorWindowSize", "-1");
 		map.put("-numberOfThreadsUsed", Integer.toString(Runtime.getRuntime().availableProcessors()));
+		map.put("-numberOfQuantitativePeaks", "5");
 		return map;
 	}
 	
@@ -159,7 +160,7 @@ public class PecanParameterParser {
 		numberOfThreadsUsed=SearchParameterParser.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
 		targetWindowCenter=SearchParameterParser.getFloat("-targetWindowCenter", parameters, -1f);
 		precursorWindowSize=SearchParameterParser.getFloat("-precursorWindowSize", parameters, -1f);
-		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 1);
+		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 5);
 
 		value=parameters.get("-percolatorLocation");
 		File percolator=null;

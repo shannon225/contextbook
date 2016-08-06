@@ -181,7 +181,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		TFloatArrayList intens=new TFloatArrayList();
 		TFloatArrayList deltaMasses=new TFloatArrayList(); // will ultimately be the length of the correlations array
 
-		float correlationThreshold=limitToQuantifiable?TransitionRefiner.quantitativeCorrelationThreshold:0.0f;
+		float correlationThreshold=limitToQuantifiable?TransitionRefiner.quantitativeCorrelationThreshold:-1f;
 		for (int i=0; i<bestKeptPeaks.size(); i++) {
 			// calculate delta mass for each fragment ion
 			Range rtRange=data.getRange();

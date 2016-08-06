@@ -62,7 +62,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	private final SpinnerModel precursorPPM=new SpinnerNumberModel(10, 1, 1000, 1);
 	private final SpinnerModel fragmentPPM=new SpinnerNumberModel(10, 1, 1000, 1);
 	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
-	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(3, 1, 100, 1);
+	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 
 	public EncyclopediaParametersPanel() {
 		super(new BorderLayout());
