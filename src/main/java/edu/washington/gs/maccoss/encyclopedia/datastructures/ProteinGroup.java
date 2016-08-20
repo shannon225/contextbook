@@ -6,6 +6,7 @@ import java.util.Collections;
 public class ProteinGroup implements Comparable<ProteinGroup> {
 	private final float nspScore;
 	private final ArrayList<String> equivalentAccessions;
+	private final int hash;
 
 	/**
 	 * 
@@ -16,18 +17,28 @@ public class ProteinGroup implements Comparable<ProteinGroup> {
 		this.nspScore=nspScore;
 		this.equivalentAccessions=equivalentAccessions;
 		Collections.sort(equivalentAccessions);
+		
+		hash=getAccessionString(equivalentAccessions).hashCode();
+	}
+
+	private String getAccessionString(ArrayList<String> equivalentAccessions) {
+		return PSMData.accessionsToString(equivalentAccessions);
+	}
+	
+	@Override
+	public int hashCode() {
+		return hash;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj==null||!(obj instanceof ProteinGroup)) return false;
+		return equivalentAccessions.toString().equals(((ProteinGroup)obj).toString());
 	}
 	
 	@Override
 	public String toString() {
-		StringBuilder sb=new StringBuilder();
-		for (String string : equivalentAccessions) {
-			if (sb.length()!=0) {
-				sb.append(";");
-			}
-			sb.append(string);
-		}
-		return sb.toString();
+		return getAccessionString(equivalentAccessions);
 	}
 	
 	@Override

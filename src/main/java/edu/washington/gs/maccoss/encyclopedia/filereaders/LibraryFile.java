@@ -84,6 +84,10 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		this.userFile=userFile;
 		saveFile();
 	}
+	
+	public File getFile() {
+		return userFile;
+	}
 
 	public void saveFile() throws IOException, SQLException {
 		if (userFile!=null) {
@@ -770,7 +774,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				s.execute("create index if not exists \"PeptideModSeq_Peptides_index\" on \"peptidequants\" (\"PeptideModSeq\" ASC)");
 				s.execute("create index if not exists \"PeptideModSeq_Fragments_index\" on \"fragmentquants\" (\"PeptideModSeq\" ASC)");
 				s.execute("create index if not exists \"PeptideSeq_Peptides_index\" on \"peptidequants\" (\"PeptideSeq\" ASC)");
-				s.execute("create index if not exists \"PeptideSeq_Fragments_index\" on \"peptidequants\" (\"PeptideSeq\" ASC)");
+				s.execute("create index if not exists \"PeptideSeq_Fragments_index\" on \"fragmentquants\" (\"PeptideSeq\" ASC)");
 
 				c.commit();
 			} finally {

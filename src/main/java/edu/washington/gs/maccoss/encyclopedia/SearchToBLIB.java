@@ -173,7 +173,7 @@ public class SearchToBLIB {
 			if (writeBlib) {
 				convertBlib(progress, pecanJobs, libFile, Optional.of(passingPeptides), inferrer);
 			} else {
-				convertElib(progress, pecanJobs, libFile, Optional.of(passingPeptides), inferrer);
+				convertElib(progress, pecanJobs, libFile, Optional.of(passingPeptides), inferrer, proteins);
 			}
 			progress.update(passingPeptides.size()+" peptides identified at "+(threshold*100.0f)+"% FDR", 1.0f);
 		} catch (IOException ioe) {
@@ -277,7 +277,7 @@ public class SearchToBLIB {
 		return counterTotals;
 	}
 	
-	static void convertElib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File elibFile, Optional<ArrayList<PercolatorPeptide>> passingPeptides, Optional<PeakLocationInferrer> inferrer) {
+	static void convertElib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File elibFile, Optional<ArrayList<PercolatorPeptide>> passingPeptides, Optional<PeakLocationInferrer> inferrer, ArrayList<ProteinGroup> proteins) {
 		try {
 			LibraryFile elib=new LibraryFile();
 			elib.openFile();
@@ -311,7 +311,7 @@ public class SearchToBLIB {
 			
 			if (pecanJobs.size()>1) {
 				try {
-					LibraryReportExtractor.extractMatrix(elib, new File(elibFile.getAbsolutePath()+".txt"));
+					LibraryReportExtractor.extractMatrix(elib, proteins);
 				} catch (DataFormatException e) {
 					Logger.errorException(e);
 				}

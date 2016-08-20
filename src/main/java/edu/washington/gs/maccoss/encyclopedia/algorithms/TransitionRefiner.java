@@ -83,7 +83,7 @@ public class TransitionRefiner {
 
 		TDoubleArrayList masses=new TDoubleArrayList();
 		int count=0;
-		for (float[] f : chromatograms) {
+		for (int i=0; i<chromatograms.size(); i++) {
 			masses.add(count++);
 		}
 		double[] fragmentMasses=masses.toArray();

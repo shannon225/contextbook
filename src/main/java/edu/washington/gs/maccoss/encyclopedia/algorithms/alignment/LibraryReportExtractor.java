@@ -10,34 +10,33 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.zip.DataFormatException;
 
-import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupQuantifier;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class LibraryReportExtractor {
-	public static void main(String[] args) throws Exception {
-		//File libraryFile=new File("/Volumes/WorkingDisk/yeast_curve_wide.elib");
-		//File reportFile=new File("/Volumes/WorkingDisk/yeast_curve_wide.report.txt");
-		//File libraryFile=new File("/Volumes/14jun2016_mcf7_phospho/hela_timecourse_wide.elib");
-		//File reportFile=new File("/Volumes/14jun2016_mcf7_phospho/hela_timecourse_wide.report.txt");
-		File libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/hela_timecourse_wide.elib");
-		File reportFile=new File("/Users/searleb/Documents/projects/encyclopedia/hela_timecourse_wide.elib.report.txt");
+	
+	public static void extractMatrix(LibraryFile library, ArrayList<ProteinGroup> proteins) throws IOException, SQLException, DataFormatException {
+		File stubFile=library.getFile();
+		if (stubFile==null) {
+			throw new EncyclopediaException("Please save .ELIB before trying to read matrix data from it!");
+		}
+		File peptideReportFile=new File(stubFile.getParentFile(), stubFile.getName()+".peptides.txt");
+		File proteinReportFile=new File(stubFile.getParentFile(), stubFile.getName()+".proteins.txt");
 		
-		LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
-		extractMatrix((LibraryFile)library, reportFile);
-	}
-	public static void extractMatrix(LibraryFile library, File reportFile) throws IOException, SQLException, DataFormatException {
 		Connection c=library.getConnection();
 		try {
 			Statement s=c.createStatement();
-			PrintWriter writer=null;
+			PrintWriter peptideWriter=null;
+			PrintWriter proteinWriter=null;
 			try {
 				ArrayList<String> sourceFiles=new ArrayList<String>();
 				
@@ -50,21 +49,31 @@ public class LibraryReportExtractor {
 				
 				Collections.sort(sourceFiles);
 				
-				writer=new PrintWriter(reportFile, "UTF-8");
-				writer.print("Peptide");
+				ArrayList<ProteinGroupQuantifier> proteinQuantifiers=new ArrayList<ProteinGroupQuantifier>();
+				for (int i=0; i<sourceFiles.size(); i++) {
+					proteinQuantifiers.add(new ProteinGroupQuantifier(proteins));
+				}
+				
+				peptideWriter=new PrintWriter(peptideReportFile, "UTF-8");
+				peptideWriter.print("Peptide");
+				
+				proteinWriter=new PrintWriter(proteinReportFile, "UTF-8");
+				proteinWriter.println("Protein");
 				
 				TObjectFloatHashMap<String> ticBySourceFileMap=new TObjectFloatHashMap<String>();
 				for (String sourceFile : sourceFiles) {
 					float tic=library.getTIC(sourceFile);
 					ticBySourceFileMap.put(sourceFile, tic);
 					
-					writer.print("\t"+sourceFile);
+					peptideWriter.print("\t"+sourceFile);
+					proteinWriter.print("\t"+sourceFile);
 				}
-				writer.println();
+				peptideWriter.println();
+				proteinWriter.println();
 				Logger.logLine("Found "+sourceFiles.size()+" data files");
 				
 				HashMap<String, float[]> intensitiesByPeptideModSeq=new HashMap<String, float[]>();
-				rs=s.executeQuery("select PrecursorCharge, PeptideModSeq, SourceFile, TotalIntensity from peptidequants");
+				rs=s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.SourceFile, pep.TotalIntensity, pro.ProteinAccessions from peptidequants pep, proteins pro where pep.PeptideSeq = pro.PeptideSeq");
 				int count=0;
 				while (rs.next()) {
 					count++;
@@ -75,9 +84,13 @@ public class LibraryReportExtractor {
 					String peptideModSeq=rs.getString(2);
 					String sourceFile=rs.getString(3);
 					float totalIntensity=rs.getFloat(4);
+					String proteinToken=rs.getString(5);
+					HashSet<String> accessions=PSMData.stringToAccessions(proteinToken);
 					
 					int index=Collections.binarySearch(sourceFiles, sourceFile);
 					if (index<0) throw new EncyclopediaException("Unexpected sample: "+sourceFile);
+					
+					proteinQuantifiers.get(index).addIntensity(accessions, totalIntensity);
 					
 					float[] array=intensitiesByPeptideModSeq.get(peptideModSeq);
 					if (array==null) {
@@ -92,10 +105,10 @@ public class LibraryReportExtractor {
 				Logger.logLine("Finished processing "+count+" records, writing report...");
 				
 				for (Entry<String, float[]> entry : intensitiesByPeptideModSeq.entrySet()) {
-					writer.print(entry.getKey());
+					peptideWriter.print(entry.getKey());
 					float[] array=entry.getValue();
 					
-					if (false&&array.length>1) {
+					/*if (array.length>1) {
 						float mean=General.mean(array);
 						float stdev=General.stdev(array);
 						for (int i=0; i<array.length; i++) {
@@ -105,20 +118,30 @@ public class LibraryReportExtractor {
 								array[i]=(array[i]-mean)/stdev;
 							}
 						}
-					}
-					
+					}*/
 					
 					for (float f : array) {
-						writer.print("\t"+f);
+						peptideWriter.print("\t"+f);
 					}
-					writer.println();
+					peptideWriter.println();
 				}
-				Logger.logLine("Finished writing report!");
+				Logger.logLine("Finished writing peptide report!");
+				
+				for (ProteinGroup protein : proteins) {
+					peptideWriter.print(protein.toString());
+					for (ProteinGroupQuantifier proteinQuantifier : proteinQuantifiers) {
+						float intensity=proteinQuantifier.getIntensity(protein);
+						proteinWriter.print("\t"+intensity);
+					}
+					proteinWriter.println();
+				}
+				Logger.logLine("Finished writing protein report!");
 				
 				rs.close();
 			} finally {
 				s.close();
-				if (writer!=null) writer.close();
+				if (peptideWriter!=null) peptideWriter.close();
+				if (proteinWriter!=null) proteinWriter.close();
 			}
 		} finally {
 			c.close();
