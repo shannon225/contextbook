@@ -9,9 +9,9 @@ import java.util.HashSet;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 
 public class ParsimonyProteinGrouper {
 	public static void main(String[] args) throws Exception {
@@ -40,7 +40,7 @@ public class ParsimonyProteinGrouper {
 		Logger.logLine("Finished!");
 	}
 	
-	public static ArrayList<ScoredObject<String>> groupProtein(ArrayList<PercolatorPeptide> passingPeptides) {
+	public static ArrayList<ProteinGroup> groupProtein(ArrayList<PercolatorPeptide> passingPeptides) {
 		HashMap<String, Peptide> peptides=new HashMap<String, ParsimonyProteinGrouper.Peptide>();
 		HashMap<String, Protein> proteins=new HashMap<String, ParsimonyProteinGrouper.Protein>();
 		
@@ -71,15 +71,21 @@ public class ParsimonyProteinGrouper {
 		for (Protein protein : sortedProteins) {
 			protein.recalculateNSP();
 		}
-		ArrayList<ScoredObject<String>> keptProteins=new ArrayList<ScoredObject<String>>();
+		ArrayList<ProteinGroup> keptProteins=new ArrayList<ProteinGroup>();
 		while (sortedProteins.size()>0) {
 			Collections.sort(sortedProteins);
 			Protein highestRankedProtein=sortedProteins.remove(sortedProteins.size()-1);
 			if (highestRankedProtein.getNSP()==0.0f) {
 				break;
 			}
-			keptProteins.add(new ScoredObject<String>(highestRankedProtein.getNSP(), highestRankedProtein.accession));
-			highestRankedProtein.claimAllPeptides();
+			float nspScore=highestRankedProtein.getNSP();
+			ArrayList<Protein> equivalentProteins=highestRankedProtein.claimAllPeptides();
+			
+			ArrayList<String> equivalentAccessions=new ArrayList<String>();
+			for (Protein protein : equivalentProteins) {
+				equivalentAccessions.add(protein.accession);
+			}
+			keptProteins.add(new ProteinGroup(nspScore, equivalentAccessions));
 		}
 		
 		Logger.logLine(keptProteins.size()+" parsimonious proteins from "+peptides.size()+" peptides");

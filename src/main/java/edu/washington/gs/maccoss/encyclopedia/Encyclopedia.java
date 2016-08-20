@@ -36,6 +36,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorEx
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ReverseLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
@@ -139,7 +140,7 @@ public class Encyclopedia {
 		if (outputFile.exists()&&outputFile.canRead()) {
 			try {
 				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(outputFile, job.getParameters().getEffectivePercolatorThreshold());
-				ArrayList<ScoredObject<String>> proteins=ParsimonyProteinGrouper.groupProtein(passingPeptidesFromTSV);
+				ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProtein(passingPeptidesFromTSV);
 				
 				File elibFile=job.getResultLibrary();
 				if (!elibFile.exists()) {
@@ -276,7 +277,7 @@ public class Encyclopedia {
 		SearchToBLIB.convert(progress, jobs, elibFile, false, true);
 
 		Logger.logLine("Grouping proteins...");
-		ArrayList<ScoredObject<String>> proteins=ParsimonyProteinGrouper.groupProtein(passingPeptides);
+		ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProtein(passingPeptides);
 		
 		progress.update("Found "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peptides processed, "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
