@@ -19,6 +19,18 @@ public class ProteinGroup implements Comparable<ProteinGroup> {
 	}
 	
 	@Override
+	public String toString() {
+		StringBuilder sb=new StringBuilder();
+		for (String string : equivalentAccessions) {
+			if (sb.length()!=0) {
+				sb.append(";");
+			}
+			sb.append(string);
+		}
+		return sb.toString();
+	}
+	
+	@Override
 	public int compareTo(ProteinGroup o) {
 		if (o==null) return 1;
 		int c=Float.compare(nspScore, o.nspScore);

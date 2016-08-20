@@ -4,6 +4,11 @@ import gnu.trove.set.hash.TFloatHashSet;
 import junit.framework.TestCase;
 
 public class RandomGeneratorTest extends TestCase {
+	public void testRandomSequence() {
+		int seed=1;
+		String sequence=RandomGenerator.randomSequence(seed);
+		assertEquals("CQGLCIDFNMQPEYGIHIIKC", sequence);
+	}
 	public void testRandomInt() {
 		TFloatHashSet set=new TFloatHashSet();
 		int[] count=new int[1000];

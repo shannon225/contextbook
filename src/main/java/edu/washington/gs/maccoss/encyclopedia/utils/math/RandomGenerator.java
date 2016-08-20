@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Random;
 
 public class RandomGenerator {
+	private static final char[] aas="ACDEFGHIKLMNPQRSTVWY".toCharArray(); 
 	/**
 	 * rand() from ANSI C, should be faster (and easier to control) than java.util.Random, which uses Longs
 	 * @param seed (Please don't use 0 as a seed!)
@@ -21,13 +22,25 @@ public class RandomGenerator {
 	public static float floatFromRandomInt(int random) {
 		return ((random/(float)2147483647)+1f)/2f;
 	}
-	public static float randomIndex(int length, int seed) {
+	public static int randomIndex(int length, int seed) {
 		return (int)(length*floatFromRandomInt(randomInt(seed)));
 	}
 
 	public static void shuffle(List<?> list, int seed) {
 		Collections.shuffle(list, new Random(seed));
     }
+	
+	public static String randomSequence(int seed) {
+		int length=(int)(20*random(seed))+6;
+		
+		StringBuilder sb=new StringBuilder();
+		for (int i=0; i<length; i++) {
+			seed=randomInt(seed);
+			char aa=aas[randomIndex(aas.length, seed)];
+			sb.append(aa);
+		}
+		return sb.toString();
+	}
 	
 	public static Color randomColor(int seed) {
 		int random=randomInt(seed);

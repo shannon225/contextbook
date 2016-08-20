@@ -36,11 +36,11 @@ public class ParsimonyProteinGrouper {
 			peptides.add(entry.getPSMData());
 		}
 		Logger.logLine("Starting grouping proteins...");
-		groupProtein(peptides);
+		groupProteins(peptides);
 		Logger.logLine("Finished!");
 	}
 	
-	public static ArrayList<ProteinGroup> groupProtein(ArrayList<PercolatorPeptide> passingPeptides) {
+	public static ArrayList<ProteinGroup> groupProteins(ArrayList<PercolatorPeptide> passingPeptides) {
 		HashMap<String, Peptide> peptides=new HashMap<String, ParsimonyProteinGrouper.Peptide>();
 		HashMap<String, Protein> proteins=new HashMap<String, ParsimonyProteinGrouper.Protein>();
 		
@@ -81,11 +81,11 @@ public class ParsimonyProteinGrouper {
 			float nspScore=highestRankedProtein.getNSP();
 			ArrayList<Protein> equivalentProteins=highestRankedProtein.claimAllPeptides();
 			
-			ArrayList<String> equivalentAccessions=new ArrayList<String>();
+			HashSet<String> equivalentAccessions=new HashSet<String>();
 			for (Protein protein : equivalentProteins) {
 				equivalentAccessions.add(protein.accession);
 			}
-			keptProteins.add(new ProteinGroup(nspScore, equivalentAccessions));
+			keptProteins.add(new ProteinGroup(nspScore, new ArrayList<String>(equivalentAccessions)));
 		}
 		
 		Logger.logLine(keptProteins.size()+" parsimonious proteins from "+peptides.size()+" peptides");

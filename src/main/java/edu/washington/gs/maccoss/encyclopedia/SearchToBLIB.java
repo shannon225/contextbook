@@ -152,7 +152,7 @@ public class SearchToBLIB {
 				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), bigFeatureFile, bigPercolatorFile, threshold);
 			}
 			
-			ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProtein(passingPeptides);
+			ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides);
 			Logger.logLine("Identified "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) across all files at a "+(threshold*100.0f)+"% FDR threshold.");
 
 			Optional<PeakLocationInferrer> inferrer;

@@ -140,7 +140,7 @@ public class Pecanpie {
 		if (outputFile.exists()&&outputFile.canRead()) {
 			try {
 				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(outputFile, jobData.getParameters().getEffectivePercolatorThreshold());
-				ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProtein(passingPeptidesFromTSV);
+				ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptidesFromTSV);
 				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides ("+proteins.size()+" proteins) identified at "+(jobData.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 				return;
 			} catch (Exception e) {
@@ -387,7 +387,7 @@ public class Pecanpie {
 
 		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
 		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, outputFile, parameters.getEffectivePercolatorThreshold());
-		ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProtein(passingPeptides);
+		ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides);
 		stripefile.close();
 		
 		Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");

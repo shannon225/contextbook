@@ -76,8 +76,13 @@ public class PercolatorPeptide implements PeptidePrecursor {
 	}
 
 	public static String getPSMID(LibraryEntry peptide, float rt, File diaFile) {
-		return diaFile.getName()+":"+rt+":"+(peptide.isDecoy() ? "decoy" : "")+peptide.getPeptideModSeq()+"+"+peptide.getPrecursorCharge();
+		return getPSMID(diaFile.getName(),rt,peptide.isDecoy(),peptide.getPeptideModSeq(),peptide.getPrecursorCharge());
 	}
+	
+	public static String getPSMID(String diaFileName, float rt, boolean isDecoy, String peptideModSeq, byte peptideCharge) {
+		return diaFileName+":"+rt+":"+(isDecoy ? "decoy" : "")+peptideModSeq+"+"+peptideCharge;
+	}
+	
 
 	public static boolean isPSMIDDecoy(String psmID) {
 		psmID=getPeptideData(psmID);
