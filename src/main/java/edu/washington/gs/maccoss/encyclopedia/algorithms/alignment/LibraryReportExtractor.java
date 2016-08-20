@@ -60,14 +60,18 @@ public class LibraryReportExtractor {
 				proteinWriter=new PrintWriter(proteinReportFile, "UTF-8");
 				proteinWriter.println("Protein");
 				
+				float averageTIC=0.0f;
 				TObjectFloatHashMap<String> ticBySourceFileMap=new TObjectFloatHashMap<String>();
 				for (String sourceFile : sourceFiles) {
 					float tic=library.getTIC(sourceFile);
 					ticBySourceFileMap.put(sourceFile, tic);
+					averageTIC+=tic;
 					
 					peptideWriter.print("\t"+sourceFile);
 					proteinWriter.print("\t"+sourceFile);
 				}
+				averageTIC=averageTIC/sourceFiles.size();
+				
 				peptideWriter.println();
 				proteinWriter.println();
 				Logger.logLine("Found "+sourceFiles.size()+" data files");
@@ -89,18 +93,23 @@ public class LibraryReportExtractor {
 					
 					int index=Collections.binarySearch(sourceFiles, sourceFile);
 					if (index<0) throw new EncyclopediaException("Unexpected sample: "+sourceFile);
+
+					float tic=ticBySourceFileMap.get(sourceFile);
+					float normalizedIntensity;
+					if (tic>0.0f) {
+						normalizedIntensity=totalIntensity/tic*averageTIC;
+					} else {
+						normalizedIntensity=totalIntensity;
+					}
 					
-					proteinQuantifiers.get(index).addIntensity(accessions, totalIntensity);
+					proteinQuantifiers.get(index).addIntensity(accessions, normalizedIntensity);
 					
 					float[] array=intensitiesByPeptideModSeq.get(peptideModSeq);
 					if (array==null) {
 						array=new float[sourceFiles.size()];
 						intensitiesByPeptideModSeq.put(peptideModSeq, array);
 					}
-					float tic=ticBySourceFileMap.get(sourceFile);
-					if (tic>0) {
-						array[index]+=totalIntensity;///tic; // sums charge states together
-					}
+					array[index]+=normalizedIntensity; // sums charge states together
 				}
 				Logger.logLine("Finished processing "+count+" records, writing reports...");
 				
