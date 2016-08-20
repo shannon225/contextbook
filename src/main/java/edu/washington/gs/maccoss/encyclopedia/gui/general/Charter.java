@@ -66,7 +66,7 @@ public class Charter {
 				GraphType.line, "Trace2");
 		XYTrace trace3=new XYTrace(new double[] { 114.0913405, 147.1128042, 227.1754045, 244.1655682, 355.2339825, 359.1925112, 458.2609252, 484.2765755, 515.2823892, 541.2980395, 640.3664535,
 				644.3249822, 755.3933965, 772.3835602, 852.4461605, 885.4676242, 980.5411235, 998.5516882 }, new double[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, GraphType.spectrum,
-				"Trace2");
+				"Trace3");
 
 		XYTrace trace4=new XYTrace(
 				new double[] {347.85, 426.35, 551.4, 552.13, 553.31, 553.87, 569.2, 571.3, 621.01, 621.88, 622.21, 637.77, 638.31, 639.15, 640.14, 648.13, 685.4, 703.51, 703.92, 704.61, 705.83,
@@ -76,7 +76,7 @@ public class Charter {
 						1136, 1661, 1544, 1620, 1210, 1770, 1297, 2086, 1635, 1117, 1432, 1652, 2143, 3766, 5043, 2124, 54156, 1310, 1240},
 				GraphType.spectrum, "Trace4");
 
-		ChartPanel chart=getChart("M/Z", "Intensity", false, trace, trace2);
+		ChartPanel chart=getChart("M/Z", "Intensity", false, trace, trace2, trace3);
 		chart=getChart("M/Z", "Intensity", false, trace4);
 		launchChart(chart, "Title!");
 
