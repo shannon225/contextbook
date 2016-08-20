@@ -15,7 +15,7 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsC
 import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVConsumer;
 
 public class EncyclopediaOneScoringFactory implements LibraryScoringFactory {
-	public static final String version="0.2.5";
+	public static final String version="0.2.6";
 	private final SearchParameters parameters;
 
 	public EncyclopediaOneScoringFactory(SearchParameters parameters) {

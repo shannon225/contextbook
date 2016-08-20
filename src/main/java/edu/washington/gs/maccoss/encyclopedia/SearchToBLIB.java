@@ -150,16 +150,20 @@ public class SearchToBLIB {
 			
 			ArrayList<ScoredObject<String>> proteins=ParsimonyProteinGrouper.groupProtein(passingPeptides);
 			Logger.logLine("Identified "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) across all files at a "+(threshold*100.0f)+"% FDR threshold.");
+
+			Optional<PeakLocationInferrer> inferrer;
+			if (pecanJobs.size()>1) {
+				Logger.logLine("Inferring peak boundaries across files...");
+				inferrer=Optional.of(PeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides, parameters));
+				Logger.logLine("...Finished peak inference.");
+			} else {
+				Logger.logLine("Only processing one file so no peak inference is necessary.");
+				inferrer=Optional.empty();
+			}
 			
 			if (writeBlib) {
-				convertBlib(progress, pecanJobs, libFile, Optional.of(passingPeptides));
+				convertBlib(progress, pecanJobs, libFile, Optional.of(passingPeptides), inferrer);
 			} else {
-				Optional<PeakLocationInferrer> inferrer;
-				if (pecanJobs.size()>1) {
-					inferrer=Optional.of(PeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides, parameters));
-				} else {
-					inferrer=Optional.empty();
-				}
 				convertElib(progress, pecanJobs, libFile, Optional.of(passingPeptides), inferrer);
 			}
 			progress.update(passingPeptides.size()+" peptides identified at "+(threshold*100.0f)+"% FDR", 1.0f);
@@ -172,7 +176,7 @@ public class SearchToBLIB {
 		}
 	}
 	
-	static void convertBlib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File blibFile, Optional<ArrayList<PercolatorPeptide>> passingPeptides) {
+	static void convertBlib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File blibFile, Optional<ArrayList<PercolatorPeptide>> passingPeptides, Optional<PeakLocationInferrer> inferrer) {
 		try {
 			BlibFile blib=new BlibFile();
 			blib.openFile();
@@ -196,7 +200,7 @@ public class SearchToBLIB {
 					globalPassingPeptides=localPassingPeptides;
 				}
 				
-				counterTotals=convertFileBlib(subProgress, job, globalPassingPeptides, localPassingPeptides, counterTotals, blib);
+				counterTotals=convertFileBlib(subProgress, job, globalPassingPeptides, localPassingPeptides, counterTotals, inferrer, blib);
 			}
 
 			blib.createIndices();
@@ -223,7 +227,7 @@ public class SearchToBLIB {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	static int[] convertFileBlib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, int[] counterTotals, BlibFile blib) throws IOException, SQLException {
+	static int[] convertFileBlib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, int[] counterTotals, Optional<PeakLocationInferrer> inferrer, BlibFile blib) throws IOException, SQLException {
 		File diaFile=job.getDiaFile();
 		Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Reading Percolator Results", 0.0f);
@@ -237,7 +241,7 @@ public class SearchToBLIB {
 			library=((EncyclopediaJobData)job).getLibrary();
 		}
 		//ArrayList<IntegratedLibraryEntry> libraryEntries=SearchFeatureReader.parseSearchFeatures(featureFile, globalPassingPeptides, localPassingPeptides, stripeFile, Optional.ofNullable((LibraryFile)null), job.getParameters());
-		ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job, true, globalPassingPeptides, localPassingPeptides, Optional.ofNullable((PeakLocationInferrer)null), stripeFile, library, job.getParameters());
+		ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job, true, globalPassingPeptides, localPassingPeptides, inferrer, stripeFile, library, job.getParameters());
 		stripeFile.close();
 		
 		File integrationFile=new File(diaFile.getAbsolutePath()+".integration.txt");
