@@ -25,6 +25,8 @@ public class ProteinGroupQuantifier {
 			if (newGroup!=null) {
 				if (group==null) {
 					group=newGroup;
+				} else if (group.equals(newGroup)) {
+					continue; // still in this group
 				} else {
 					return false; // not unique!
 				}

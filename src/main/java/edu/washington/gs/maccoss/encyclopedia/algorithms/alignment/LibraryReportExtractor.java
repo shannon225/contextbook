@@ -102,7 +102,7 @@ public class LibraryReportExtractor {
 						array[index]+=totalIntensity;///tic; // sums charge states together
 					}
 				}
-				Logger.logLine("Finished processing "+count+" records, writing report...");
+				Logger.logLine("Finished processing "+count+" records, writing reports...");
 				
 				for (Entry<String, float[]> entry : intensitiesByPeptideModSeq.entrySet()) {
 					peptideWriter.print(entry.getKey());
