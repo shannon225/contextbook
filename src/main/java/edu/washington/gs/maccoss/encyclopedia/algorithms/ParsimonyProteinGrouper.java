@@ -151,10 +151,28 @@ public class ParsimonyProteinGrouper {
 			}
 		}
 		
-		public void claimAllPeptides() {
+		/**
+		 * 
+		 * @return returns identical proteins that contain the same peptides
+		 */
+		public ArrayList<Protein> claimAllPeptides() {
+			ArrayList<Protein> identicalProteins=new ArrayList<ParsimonyProteinGrouper.Protein>();
+			boolean first=true;
 			for (Peptide peptide : peptides) {
+				if (first) {
+					identicalProteins.addAll(peptide.proteins);
+				} else {
+					ArrayList<Protein> toBeRemoved=new ArrayList<ParsimonyProteinGrouper.Protein>();
+					for (Protein protein : identicalProteins) {
+						if (!peptide.proteins.contains(protein)) {
+							toBeRemoved.add(protein);
+						}
+					}
+					identicalProteins.removeAll(toBeRemoved);
+				}
 				peptide.claimPeptide(this);
 			}
+			return identicalProteins;
 		}
 
 		@Override
