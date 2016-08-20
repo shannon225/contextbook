@@ -54,6 +54,7 @@ public class SearchToBLIB {
 			Logger.logLine("\t-i\tinput .DIA or .MZML file or directory");
 			Logger.logLine("\t-l\toriginal library .ELIB file");
 			Logger.logLine("\t-o\toutput library .ELIB file");
+			Logger.logLine("\t-a\talign between files (default=true)");
 			
 			System.exit(1);
 			
@@ -70,6 +71,7 @@ public class SearchToBLIB {
 			File diaFile=new File(arguments.get("-i"));
 			File libraryFile=new File(arguments.get("-l"));
 			File outputFile=new File(arguments.get("-o"));
+			boolean alignBetweenFiles=SearchParameterParser.getBoolean("-a", arguments, true);
 			
 			SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 			LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
@@ -79,6 +81,7 @@ public class SearchToBLIB {
 			Logger.logLine(" -i "+diaFile.getAbsolutePath());
 			Logger.logLine(" -l "+libraryFile.getAbsolutePath());
 			Logger.logLine(" -o "+outputFile.getAbsolutePath());
+			Logger.logLine(" -a"+alignBetweenFiles);
 			Logger.logLine(parameters.toString());
 
 			try {
@@ -102,14 +105,15 @@ public class SearchToBLIB {
 					EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, factory);
 					pecanJobs.add(job);
 				}
-				convert(new EmptyProgressIndicator(), pecanJobs, outputFile, false);
+				convert(new EmptyProgressIndicator(), pecanJobs, outputFile, false, alignBetweenFiles);
 			} catch (Exception e) {
 				System.err.println("Encountered Fatal Error!");
 				e.printStackTrace();
 			}
 		}
 	}
-	public static void convert(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File libFile, boolean writeBlib) {
+	
+	public static void convert(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File libFile, boolean writeBlib, boolean alignBetweenFiles) {
 		ArrayList<File> featureFiles=new ArrayList<File>();
 		SearchJobData representativeJob=null;
 		for (int i=0; i<pecanJobs.size(); i++) {
@@ -152,12 +156,17 @@ public class SearchToBLIB {
 			Logger.logLine("Identified "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) across all files at a "+(threshold*100.0f)+"% FDR threshold.");
 
 			Optional<PeakLocationInferrer> inferrer;
+			if (alignBetweenFiles) {
 			if (pecanJobs.size()>1) {
 				Logger.logLine("Inferring peak boundaries across files...");
 				inferrer=Optional.of(PeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides, parameters));
 				Logger.logLine("...Finished peak inference.");
 			} else {
 				Logger.logLine("Only processing one file so no peak inference is necessary.");
+				inferrer=Optional.empty();
+			}
+			} else {
+				Logger.logLine("User requested no RT alignment between files.");
 				inferrer=Optional.empty();
 			}
 			

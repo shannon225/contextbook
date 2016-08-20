@@ -17,6 +17,7 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -67,6 +68,7 @@ public class SearchPanel extends JPanel {
 	JobProcessorTableModel processorTableModel=new JobProcessorTableModel();
 	
 	private final JTabbedPane optionsTabs;
+	private final JCheckBox alignBetweenFiles;
 	
 	public SearchPanel(boolean pecanpie) {
 		super(new BorderLayout());
@@ -113,6 +115,7 @@ public class SearchPanel extends JPanel {
 
 		JPanel files=new JPanel(new BorderLayout());
 		JButton chooseFile=new JButton("Add MZML", openIcon);
+		chooseFile.setToolTipText("Add MZML to analysis stack and process using current settings.");
 		chooseFile.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -120,7 +123,11 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		
+		alignBetweenFiles=new JCheckBox("RT Align", true);
+		alignBetweenFiles.setToolTipText("Align retention times between files. Only uncheck for generating searchable chromatogram libraries where fractions don't share peptides.");
+		
 		JButton saveBlib=new JButton("Save BLIB", skylineIcon);
+		saveBlib.setToolTipText("Save Skyline BLIB library.");
 		saveBlib.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -129,6 +136,7 @@ public class SearchPanel extends JPanel {
 		});
 		
 		JButton saveElib=new JButton("Save Library", openDBIcon);
+		saveElib.setToolTipText("Save chromatogram library and quantitative reports.");
 		saveElib.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -138,6 +146,7 @@ public class SearchPanel extends JPanel {
 		
 		JPanel buttonPanel=new JPanel(new FlowLayout());
 		buttonPanel.add(chooseFile);
+		buttonPanel.add(alignBetweenFiles);
 		buttonPanel.add(saveElib);
 		buttonPanel.add(saveBlib);
 		
@@ -462,7 +471,7 @@ public class SearchPanel extends JPanel {
 					}
 				}
 
-				SearchToBLIBJob job=new SearchToBLIBJob(blibFile, processorTableModel);
+				SearchToBLIBJob job=new SearchToBLIBJob(blibFile, alignBetweenFiles.isSelected(), processorTableModel);
 				if (job!=null) {
 					processorTableModel.addJob(job);
 				}
@@ -495,7 +504,7 @@ public class SearchPanel extends JPanel {
 					}
 				}
 
-				SearchToELIBJob job=new SearchToELIBJob(elibFile, processorTableModel);
+				SearchToELIBJob job=new SearchToELIBJob(elibFile, alignBetweenFiles.isSelected(), processorTableModel);
 				if (job!=null) {
 					processorTableModel.addJob(job);
 				}

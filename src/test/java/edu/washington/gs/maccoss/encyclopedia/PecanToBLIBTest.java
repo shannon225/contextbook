@@ -45,7 +45,7 @@ public class PecanToBLIBTest {
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		jobs.add(job1);
 		
-		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, true);
+		SearchToBLIB.convert(new EmptyProgressIndicator(), jobs, blibFile, true, true);
 		
 		System.out.println((System.currentTimeMillis()-time)/1000+" seconds");
 	}

@@ -147,7 +147,7 @@ public class Encyclopedia {
 					Logger.logLine("Writing elib result library...");
 					ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 					jobs.add(job);
-					SearchToBLIB.convert(progress, jobs, elibFile, false);
+					SearchToBLIB.convert(progress, jobs, elibFile, false, true);
 				}
 				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides ("+proteins.size()+" proteins) identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 
@@ -273,7 +273,7 @@ public class Encyclopedia {
 		File elibFile=job.getResultLibrary();
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		jobs.add(job);
-		SearchToBLIB.convert(progress, jobs, elibFile, false);
+		SearchToBLIB.convert(progress, jobs, elibFile, false, true);
 
 		Logger.logLine("Grouping proteins...");
 		ArrayList<ScoredObject<String>> proteins=ParsimonyProteinGrouper.groupProtein(passingPeptides);

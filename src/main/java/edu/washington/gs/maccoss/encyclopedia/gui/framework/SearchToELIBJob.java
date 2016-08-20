@@ -10,10 +10,12 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 
 public class SearchToELIBJob extends SwingJob {
 	private final File elibFile;
+	private final boolean alignBetweenFiles;
 
-	public SearchToELIBJob(File blibFile, JobProcessor processor) {
+	public SearchToELIBJob(File blibFile, boolean alignBetweenFiles, JobProcessor processor) {
 		super(processor);
 		this.elibFile=blibFile;
+		this.alignBetweenFiles=alignBetweenFiles;
 	}
 	
 	@Override
@@ -30,6 +32,6 @@ public class SearchToELIBJob extends SwingJob {
 			}
 		}
 
-		SearchToBLIB.convert(getProgressIndicator(), jobData, elibFile, false);
+		SearchToBLIB.convert(getProgressIndicator(), jobData, elibFile, false, alignBetweenFiles);
 	}
 }
