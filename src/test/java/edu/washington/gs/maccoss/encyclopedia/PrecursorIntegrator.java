@@ -13,7 +13,7 @@ public class PrecursorIntegrator {
 	public static void main(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 
-		File dir=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/freezer/");
+		File dir=new File("/Users/searleb/Documents/projects/mccauley_prm/");
 		File[] files=dir.listFiles();
 		for (File file : files) {
 			if (file.getName().endsWith("mzML")) {

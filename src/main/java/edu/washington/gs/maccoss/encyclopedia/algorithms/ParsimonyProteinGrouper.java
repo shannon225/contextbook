@@ -69,7 +69,7 @@ public class ParsimonyProteinGrouper {
 
 		ArrayList<Protein> sortedProteins=new ArrayList<ParsimonyProteinGrouper.Protein>(proteins.values());
 		for (Protein protein : sortedProteins) {
-			protein.recalcualteNSP();
+			protein.recalculateNSP();
 		}
 		ArrayList<ScoredObject<String>> keptProteins=new ArrayList<ScoredObject<String>>();
 		while (sortedProteins.size()>0) {
@@ -105,7 +105,7 @@ public class ParsimonyProteinGrouper {
 			for (Protein protein : proteins) {
 				if (protein!=claimer) {
 					protein.removePeptide(this);
-					protein.recalcualteNSP();
+					protein.recalculateNSP();
 				}
 			}
 		}
@@ -144,7 +144,7 @@ public class ParsimonyProteinGrouper {
 			return nsp;
 		}
 
-		public void recalcualteNSP() {
+		public void recalculateNSP() {
 			nsp=0.0f;
 			for (Peptide peptide : peptides) {
 				nsp+=peptide.probability;

@@ -12,7 +12,7 @@ public class MoMosSpecialEncyclopediaPanel extends EncyclopediaParametersPanel {
 	private static final String programName="ChocopeDIA";
 	private static final String programShortDescription="MoMo's ChocopeDIA Library Search";
 	private static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">MoMo's ChocopeDIA: Library Searching Directly from Data-Independent Acquisition (DIA) MS/MS Data<br></p></b>"
-			+"<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">ChocopeDIA extracts peptide fragmentation chromatograms from MZML files, matches them to spectra in libraries, and calculates various scoring features. These features are interpreted by Percolator to identify peptides.";
+			+"<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">ChocopeDIA extracts fancy chocolate from MZML files, matches them to spectra in libraries, and calculates various scoring features. These features are interpreted by Percolator to identify choco-peptides.";
 
 	
 	public String getProgramName() {

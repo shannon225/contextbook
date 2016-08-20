@@ -317,6 +317,7 @@ public class Encyclopedia {
 			
 		} catch (EncyclopediaException e) {
 			Logger.errorLine("Fatal Error: "+e.getMessage());
+			Logger.errorLine("Sorry, not feeling well today! Try again tomorrow!");
 			progress.update("Fatal Error: "+e.getMessage(), -1.0f);
 			throw e;
 		}
