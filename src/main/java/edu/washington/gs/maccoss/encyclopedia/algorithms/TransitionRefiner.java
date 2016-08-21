@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.FloatPair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
@@ -178,24 +179,11 @@ public class TransitionRefiner {
 					correlationArray[i]=1.0f; // there can be minor floating point errors in the sqrt
 				}
 			}
-			
-			float[] chromatogram=chromatograms.get(i);
-			
-			float baseBackground=Math.min(chromatogram[indices.getStart()], chromatogram[indices.getStop()]);
-			
-			backgroundArray[i]=0.0f;
-			integrationArray[i]=0.0f;
-			for (int j=indices.getStart()+1; j<=indices.getStop(); j++) {
-				// calculate trapezoid area like Reimann sums
-				float trapezoid=(retentionTimes[j]-retentionTimes[j-1])*(chromatogram[j-1]+chromatogram[j])/2.0f;
-				integrationArray[i]+=trapezoid;
 
-				// Skyline computes rectangular background based on minimum of the boundaries. If the signal dips below the background, then calculate the trapezoid
-				float lowerBackground=Math.min(baseBackground, chromatogram[j-1]);
-				float upperBackground=Math.min(baseBackground, chromatogram[j]);
-				float trapezoidBackground=(retentionTimes[j]-retentionTimes[j-1])*(lowerBackground+upperBackground)/2.0f;
-				backgroundArray[i]+=trapezoidBackground;
-			}
+			FloatPair intensity=integrate(indices, retentionTimes, chromatograms.get(i));
+
+			integrationArray[i]=intensity.getOne();
+			backgroundArray[i]=intensity.getTwo();
 			
 			// calculate trapezoidal background area
 			integrationArray[i]=integrationArray[i]-backgroundArray[i];
@@ -216,6 +204,33 @@ public class TransitionRefiner {
 		}
 		
 		return new TransitionRefinementData(fragmentMasses, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range);
+	}
+
+	/**
+	 * 
+	 * @param indices
+	 * @param retentionTimes
+	 * @param chromatogram
+	 * @return FloatPair<Intensity,Background>
+	 */
+	public static FloatPair integrate(IntRange indices, float[] retentionTimes, float[] chromatogram) {
+		float background=0.0f;
+		float integration=0.0f;
+		float baseBackground=Math.min(chromatogram[indices.getStart()], chromatogram[indices.getStop()]);
+		
+		for (int j=indices.getStart()+1; j<=indices.getStop(); j++) {
+			// calculate trapezoid area like Reimann sums
+			float trapezoid=(retentionTimes[j]-retentionTimes[j-1])*(chromatogram[j-1]+chromatogram[j])/2.0f;
+			integration+=trapezoid;
+
+			// Skyline computes rectangular background based on minimum of the boundaries. If the signal dips below the background, then calculate the trapezoid
+			float lowerBackground=Math.min(baseBackground, chromatogram[j-1]);
+			float upperBackground=Math.min(baseBackground, chromatogram[j]);
+			float trapezoidBackground=(retentionTimes[j]-retentionTimes[j-1])*(lowerBackground+upperBackground)/2.0f;
+			background+=trapezoidBackground;
+		}
+		FloatPair intensity=new FloatPair(integration, background);
+		return intensity;
 	}
 
 	private static IntRange getIndexRange(float[] medianChromatogram, int maxIndex) {
