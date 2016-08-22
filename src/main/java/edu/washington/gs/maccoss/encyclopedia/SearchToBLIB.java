@@ -309,7 +309,7 @@ public class SearchToBLIB {
 			elib.createIndices();
 			elib.saveAsFile(elibFile);
 			
-			if (pecanJobs.size()>1) {
+			if (pecanJobs.size()>1&&inferrer.isPresent()) {
 				try {
 					LibraryReportExtractor.extractMatrix(elib, proteins);
 				} catch (DataFormatException e) {
