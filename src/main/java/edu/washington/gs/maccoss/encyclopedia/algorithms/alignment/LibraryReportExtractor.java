@@ -137,7 +137,8 @@ public class LibraryReportExtractor {
 				Logger.logLine("Finished writing peptide report!");
 				
 				for (ProteinGroup protein : proteins) {
-					peptideWriter.print(protein.toString());
+					//System.out.println(protein.getEquivalentAccessions().size()+"\t"+protein.getNspScore()+"\t"+protein.toString());
+					proteinWriter.print(protein.toString());
 					for (ProteinGroupQuantifier proteinQuantifier : proteinQuantifiers) {
 						float intensity=proteinQuantifier.getIntensity(protein);
 						proteinWriter.print("\t"+intensity);
