@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.zip.DataFormatException;
 
@@ -228,7 +229,7 @@ public class PeakLocationInferrer {
 
 			SearchJobData job=jobsByFile.get(entry.getKey());
 			
-			TreeSet<PeptidePrecursor> peptides=new TreeSet<PeptidePrecursor>(entry.getValue());
+			ArrayList<PercolatorPeptide> targetPeptides=entry.getValue();
 
 			boolean readFromLibraryResult=false;
 			if (job instanceof EncyclopediaJobData) {
@@ -237,12 +238,22 @@ public class PeakLocationInferrer {
 				try {
 					LibraryInterface results=BlibToLibraryConverter.getFile(resultLibrary);
 					ArrayList<LibraryEntry> entries=results.getAllEntries(false);
-					
 					ArrayList<ChromatogramLibraryEntry> bestEntries=new ArrayList<ChromatogramLibraryEntry>();
-					for (LibraryEntry libEntry : entries) {
+					
+					TreeMap<PeptidePrecursor, LibraryEntry> fastLookupPeptides=new TreeMap<PeptidePrecursor, LibraryEntry>();
+					for (LibraryEntry libraryEntry : entries) {
+						fastLookupPeptides.put(libraryEntry, libraryEntry);
+					}
+					
+					ArrayList<PercolatorPeptide> missingPeptides=new ArrayList<PercolatorPeptide>();
+					for (PercolatorPeptide peptide : targetPeptides) {
+						LibraryEntry libEntry=fastLookupPeptides.get(peptide);
+						if (libEntry==null) {
+							missingPeptides.add(peptide);
+							continue;
+						}
 						// all results files are saved as chromatogram libraries
 						ChromatogramLibraryEntry chrom=(ChromatogramLibraryEntry)libEntry;
-						
 						String peptideModSeq=libEntry.getPeptideModSeq();
 						PeakFrequencyCalculator bestIonsMap=ionCounter.get(peptideModSeq);
 						if (bestIonsMap==null) {
@@ -258,13 +269,16 @@ public class PeakLocationInferrer {
 								bestIonsMap.increment(masses[i], intensity[i]);
 							}
 						}
-
-						if (peptides.contains(libEntry)) {
-							bestEntries.add(chrom);
-						}
+						bestEntries.add(chrom);
 					}
 					
-					Logger.errorLine(resultLibrary.getName()+"produced Parsed:"+peptides.size()+", BEST:"+bestEntries.size());
+					if (missingPeptides.size()>0) {
+						Logger.logLine("Extracting missing "+missingPeptides.size()+" Archetypal Peptides from "+job.getDiaFile().getName()+"...");
+						ArrayList<ChromatogramLibraryEntry> extracted=extractFromDIA(subProgress, job, missingPeptides, passingPeptides);
+						bestEntries.addAll(extracted);
+					}
+					
+					Logger.errorLine(resultLibrary.getName()+"produced Parsed:"+targetPeptides.size()+", BEST:"+bestEntries.size());
 					
 					archetypalPeptides.put(job, bestEntries);
 					
@@ -284,23 +298,10 @@ public class PeakLocationInferrer {
 			
 			// if we can't read data from a library result file (e.g. Pecan), then read directly from the DIA file
 			if (!readFromLibraryResult) {
-				StripeFileInterface stripeFile=MzmlToDIAConverter.getFile(job.getDiaFile(), job.getParameters());
-				Logger.logLine("Extracting "+peptides.size()+" Archetypal Peptides from "+job.getDiaFile().getName()+"...");
-				subProgress.update(job.getDiaFile().getName()+": Extracting "+peptides.size()+" Archetypal Peptides", 0.00001f);
-
-				LibraryInterface library=null;
-				if (job instanceof EncyclopediaJobData) {
-					library=((EncyclopediaJobData) job).getLibrary();
-				}
-				ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job, false, passingPeptides, entry.getValue(), Optional.ofNullable((PeakLocationInferrer)null), stripeFile, library,
-						job.getParameters());
-				ArrayList<ChromatogramLibraryEntry> recast=new ArrayList<ChromatogramLibraryEntry>();
-				for (IntegratedLibraryEntry e : libraryEntries) {
-					recast.add(e);
-				}
-				
-				archetypalPeptides.put(job, recast);
-				stripeFile.close();
+				Logger.logLine("Extracting "+targetPeptides.size()+" Archetypal Peptides from "+job.getDiaFile().getName()+"...");
+				subProgress.update(job.getDiaFile().getName()+": Extracting "+targetPeptides.size()+" Archetypal Peptides", 0.00001f);
+				ArrayList<ChromatogramLibraryEntry> extracted=extractFromDIA(subProgress, job, targetPeptides, passingPeptides);
+				archetypalPeptides.put(job, extracted);
 			}
 		}
 		HashMap<String,double[]> bestIons=new HashMap<String, double[]>();
@@ -310,5 +311,23 @@ public class PeakLocationInferrer {
 			bestIons.put(peptideModSeq, ions);
 		}
 		return new Pair<HashMap<SearchJobData, ArrayList<ChromatogramLibraryEntry>>, HashMap<String, double[]>>(archetypalPeptides, bestIons);
+	}
+
+	private static ArrayList<ChromatogramLibraryEntry> extractFromDIA(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> targetPeptides,
+			ArrayList<PercolatorPeptide> passingPeptides) {
+		StripeFileInterface stripeFile=MzmlToDIAConverter.getFile(job.getDiaFile(), job.getParameters());
+
+		LibraryInterface library=null;
+		if (job instanceof EncyclopediaJobData) {
+			library=((EncyclopediaJobData) job).getLibrary();
+		}
+		ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job, false, passingPeptides, targetPeptides, Optional.ofNullable((PeakLocationInferrer)null), stripeFile, library,
+				job.getParameters());
+		ArrayList<ChromatogramLibraryEntry> recast=new ArrayList<ChromatogramLibraryEntry>();
+		for (IntegratedLibraryEntry e : libraryEntries) {
+			recast.add(e);
+		}
+		stripeFile.close();
+		return recast;
 	}
 }
