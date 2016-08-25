@@ -145,6 +145,13 @@ public class PeakLocationInferrer {
 		// construct alignments
 		HashMap<SearchJobData, RetentionTimeFilter> alignmentMap=new HashMap<SearchJobData, RetentionTimeFilter>();
 		HashMap<String, Float> alignedRTInMinBySequenceMap=new HashMap<String, Float>();
+		// add all bestJob archetypals
+		ArrayList<ChromatogramLibraryEntry> archetypals=archetypalPeptides.get(bestJob);
+		for (ChromatogramLibraryEntry entry : archetypals) {
+			float alignedRT=entry.getRetentionTime()/60f; // no alignment necessary
+			alignedRTInMinBySequenceMap.put(entry.getPeptideModSeq(), alignedRT);
+		}
+		
 		int count=0;
 		for (SearchJobData job : pecanJobs) {
 			if (job!=bestJob) {
@@ -172,7 +179,7 @@ public class PeakLocationInferrer {
 				}
 
 				// align local archetypals to the seed
-				ArrayList<ChromatogramLibraryEntry> archetypals=archetypalPeptides.get(job);
+				archetypals=archetypalPeptides.get(job);
 				for (ChromatogramLibraryEntry entry : archetypals) {
 					float alignedRT=alignment.getXValue(entry.getRetentionTime()/60f);
 					alignedRTInMinBySequenceMap.put(entry.getPeptideModSeq(), alignedRT);
@@ -278,7 +285,7 @@ public class PeakLocationInferrer {
 						bestEntries.addAll(extracted);
 					}
 					
-					Logger.errorLine(resultLibrary.getName()+"produced Parsed:"+targetPeptides.size()+", BEST:"+bestEntries.size());
+					Logger.logLine(resultLibrary.getName()+"produced Parsed:"+targetPeptides.size()+", BEST:"+bestEntries.size());
 					
 					archetypalPeptides.put(job, bestEntries);
 					
