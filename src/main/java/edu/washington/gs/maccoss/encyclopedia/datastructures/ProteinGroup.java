@@ -33,7 +33,8 @@ public class ProteinGroup implements Comparable<ProteinGroup> {
 	@Override
 	public boolean equals(Object obj) {
 		if (obj==null||!(obj instanceof ProteinGroup)) return false;
-		return equivalentAccessions.toString().equals(((ProteinGroup)obj).toString());
+		if (hashCode()!=obj.hashCode()) return false;
+		return equivalentAccessions.toString().equals(((ProteinGroup)obj).equivalentAccessions.toString());
 	}
 	
 	@Override
@@ -49,12 +50,7 @@ public class ProteinGroup implements Comparable<ProteinGroup> {
 		
 		c=Integer.compare(equivalentAccessions.size(), o.equivalentAccessions.size());
 		if (c!=0) return c;
-		
-		for (int i=0; i<equivalentAccessions.size(); i++) {
-			c=equivalentAccessions.get(i).compareTo(o.equivalentAccessions.get(i));
-			if (c!=0) return c;
-		}
-		return 0;
+		return equivalentAccessions.toString().compareTo(((ProteinGroup)o).equivalentAccessions.toString());
 	}
 
 	public float getNspScore() {

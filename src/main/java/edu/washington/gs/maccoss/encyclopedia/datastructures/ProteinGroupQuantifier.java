@@ -5,10 +5,12 @@ import java.util.Collection;
 import java.util.HashMap;
 
 import gnu.trove.map.hash.TObjectFloatHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
 
 public class ProteinGroupQuantifier {
 	private final HashMap<String, ProteinGroup> groups=new HashMap<String, ProteinGroup>();
 	private final TObjectFloatHashMap<ProteinGroup> intensities=new TObjectFloatHashMap<ProteinGroup>();
+	private final TObjectIntHashMap<ProteinGroup> numQuantPeptides=new TObjectIntHashMap<ProteinGroup>();
 
 	public ProteinGroupQuantifier(ArrayList<ProteinGroup> groupList) {
 		for (ProteinGroup group : groupList) {
@@ -35,10 +37,15 @@ public class ProteinGroupQuantifier {
 		if (group==null) return false;
 		
 		intensities.adjustOrPutValue(group, intensity, intensity);
+		numQuantPeptides.adjustOrPutValue(group, 1, 1);
 		return true;
 	}
 	
 	public float getIntensity(ProteinGroup group) {
 		return intensities.get(group);
+	}
+	
+	public int getNumberOfQuantitativePeptides(ProteinGroup group) {
+		return numQuantPeptides.get(group);
 	}
 }
