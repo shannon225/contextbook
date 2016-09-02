@@ -201,8 +201,10 @@ public class RetentionTimeFilter {
 		Arrays.sort(deltaArray);
 		
 		// assumes 1% FDR
-		min=deltaArray[Math.round(deltaArray.length*0.005f)];
-		max=deltaArray[Math.round(deltaArray.length*0.995f)];
+		int lowerIndex=Math.max(Math.round(deltaArray.length*0.005f), deltaArray.length-1);
+		min=deltaArray[lowerIndex];
+		int upperIndex=Math.round(deltaArray.length*0.995f);
+		max=deltaArray[Math.max(upperIndex, deltaArray.length-1)];
 		
 		//Arrays.sort(deltaArray);
 		//min=deltaArray[Math.round(deltaArray.length*0.05f)];
