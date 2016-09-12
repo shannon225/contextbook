@@ -131,7 +131,7 @@ public class PeakLocationInferrer {
 			}
 		}
 
-		Logger.logLine("Seed experiment: "+bestJob.getDiaFile().getName());
+		Logger.logLine("Seed experiment: "+bestJob.getDiaFile().getName()+" ("+max+" archetypal peptides)");
 		Logger.logLine("Seed Percolator file: "+bestJob.getOutputFile().getAbsolutePath());
 		ArrayList<PercolatorPeptide> alignmentSeed=PercolatorReader.getPassingPeptidesFromTSV(bestJob.getOutputFile(), bestJob.getParameters().getPercolatorThreshold());
 		TObjectFloatHashMap<String> rtsBySequence=new TObjectFloatHashMap<String>();
@@ -280,7 +280,7 @@ public class PeakLocationInferrer {
 					}
 					
 					if (missingPeptides.size()>0) {
-						Logger.logLine("Extracting missing "+missingPeptides.size()+" Archetypal Peptides from "+job.getDiaFile().getName()+"...");
+						Logger.logLine("Found "+bestEntries.size()+" archetypal peptides from individual Percolator reports, extracting "+missingPeptides.size()+" additional archetypal peptides from "+job.getDiaFile().getName()+"...");
 						ArrayList<ChromatogramLibraryEntry> extracted=extractFromDIA(subProgress, job, missingPeptides, passingPeptides);
 						bestEntries.addAll(extracted);
 					}

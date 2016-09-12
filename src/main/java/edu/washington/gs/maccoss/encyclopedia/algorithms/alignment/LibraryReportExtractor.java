@@ -58,7 +58,7 @@ public class LibraryReportExtractor {
 				peptideWriter.print("Peptide");
 				
 				proteinWriter=new PrintWriter(proteinReportFile, "UTF-8");
-				proteinWriter.print("Protein");
+				proteinWriter.print("Protein\tnumPeptides");
 				
 				float averageTIC=0.0f;
 				TObjectFloatHashMap<String> ticBySourceFileMap=new TObjectFloatHashMap<String>();
@@ -69,6 +69,7 @@ public class LibraryReportExtractor {
 					
 					peptideWriter.print("\t"+sourceFile);
 					proteinWriter.print("\t"+sourceFile);
+					proteinWriter.print("\tnum_"+sourceFile);
 				}
 				averageTIC=averageTIC/sourceFiles.size();
 				
@@ -79,6 +80,7 @@ public class LibraryReportExtractor {
 				HashMap<String, float[]> intensitiesByPeptideModSeq=new HashMap<String, float[]>();
 				rs=s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.SourceFile, pep.TotalIntensity, pro.ProteinAccessions from peptidequants pep, proteins pro where pep.PeptideSeq = pro.PeptideSeq");
 				int count=0;
+				int totalAdded=0;
 				while (rs.next()) {
 					count++;
 					if (count%10000==0) {
@@ -102,7 +104,10 @@ public class LibraryReportExtractor {
 						normalizedIntensity=totalIntensity;
 					}
 					
-					proteinQuantifiers.get(index).addIntensity(accessions, normalizedIntensity);
+					boolean added=proteinQuantifiers.get(index).addIntensity(accessions, normalizedIntensity);
+					if (added) {
+						totalAdded++;
+					}
 					
 					float[] array=intensitiesByPeptideModSeq.get(peptideModSeq);
 					if (array==null) {
@@ -111,7 +116,7 @@ public class LibraryReportExtractor {
 					}
 					array[index]+=normalizedIntensity; // sums charge states together
 				}
-				Logger.logLine("Finished processing "+count+" records, writing reports...");
+				Logger.logLine("Finished processing "+count+" records, found "+totalAdded+" quantitative unique peptides. Writing reports...");
 				
 				for (Entry<String, float[]> entry : intensitiesByPeptideModSeq.entrySet()) {
 					peptideWriter.print(entry.getKey());
@@ -139,9 +144,11 @@ public class LibraryReportExtractor {
 				for (ProteinGroup protein : proteins) {
 					//System.out.println(protein.getEquivalentAccessions().size()+"\t"+protein.getNspScore()+"\t"+protein.toString());
 					proteinWriter.print(protein.toString());
+					proteinWriter.print("\t"+protein.getEquivalentAccessions().size()); // numPeptides
 					for (ProteinGroupQuantifier proteinQuantifier : proteinQuantifiers) {
 						float intensity=proteinQuantifier.getIntensity(protein);
 						proteinWriter.print("\t"+intensity);
+						proteinWriter.print("\t"+proteinQuantifier.getNumberOfQuantitativePeptides(protein));
 					}
 					proteinWriter.println();
 				}
