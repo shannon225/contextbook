@@ -42,7 +42,7 @@ public class SearchParameters {
 		this.precursorWindowSize=precursorWindowSize;
 		this.numberOfQuantitativePeaks=numberOfQuantitativePeaks;
 		this.runPhosphoLocalization=runPhosphoLocalization;
-		this.addExtraDecoys=false; //addExtraDecoys;
+		this.addExtraDecoys=addExtraDecoys;
 	}
 
 	public String toString() {
