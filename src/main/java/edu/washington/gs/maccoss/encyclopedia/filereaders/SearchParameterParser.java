@@ -30,6 +30,7 @@ public class SearchParameterParser {
 		map.put("-expectedPeakWidth", "25");
 		map.put("-deconvoluteOverlappingWindows", "false");
 		map.put("-runPhosphoLocalization", "false");
+		map.put("-addExtraDecoys", "false");
 		map.put("-numberOfQuantitativePeaks", "5");
 		return map;
 	}
