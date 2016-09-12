@@ -358,7 +358,7 @@ public class SearchToBLIB {
 		subProgress.update(diaFile.getName()+": Writing Encyclopedia ELIB", 0.99999f);
 
 		elib.addIntegratedEntries(libraryEntries, inferrer);
-		Logger.logLine("Finished writing to Encyclopedia ELIB at"+new Date().toString());
-		subProgress.update(diaFile.getName()+": Finished writing to Encyclopedia ELIB at"+new Date().toString(), 1.0f);
+		Logger.logLine("Finished writing to Encyclopedia ELIB at "+new Date().toString());
+		subProgress.update(diaFile.getName()+": Finished writing to Encyclopedia ELIB at "+new Date().toString(), 1.0f);
 	}
 }
