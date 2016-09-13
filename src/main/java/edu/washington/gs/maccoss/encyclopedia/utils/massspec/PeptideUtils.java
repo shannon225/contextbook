@@ -91,11 +91,24 @@ public class PeptideUtils {
 	public static String shuffle(String peptide, SearchParameters parameters) {
 		Triplet<double[], double[], String[]>triplet=FragmentationModel.getMasses(peptide, parameters.getAAConstants());
 		String[] aas=triplet.z;
-		shuffle(aas, parameters.getEnzyme());
+		shuffle(aas, 0, parameters.getEnzyme());
+		return getSequence(aas);
+	}
+
+	/**
+	 * generates reliable random shuffle
+	 * @param peptide
+	 * @param enzyme
+	 * @return
+	 */
+	public static String shuffle(String peptide, int shuffleSeed, SearchParameters parameters) {
+		Triplet<double[], double[], String[]>triplet=FragmentationModel.getMasses(peptide, parameters.getAAConstants());
+		String[] aas=triplet.z;
+		shuffle(aas, shuffleSeed, parameters.getEnzyme());
 		return getSequence(aas);
 	}
 	
-	public static void shuffle(String[] aas, DigestionEnzyme enzyme) {
+	public static void shuffle(String[] aas, int shuffleSeed, DigestionEnzyme enzyme) {
 		int start=0;
 		if (enzyme.isTargetPostSite(aas[start].charAt(0))) {
 			start++;
@@ -107,7 +120,7 @@ public class PeptideUtils {
 		int diff=(stop)-start;
 		
 		// String.hashCode() is cross-platform consistent
-		int seed=getSequence(aas).hashCode();
+		int seed=RandomGenerator.randomInt(shuffleSeed)+getSequence(aas).hashCode();
 		for (int i=0; i<aas.length; i++) {
 			seed=RandomGenerator.randomInt(seed);
 			int index1=start+Math.abs(seed%diff+1);

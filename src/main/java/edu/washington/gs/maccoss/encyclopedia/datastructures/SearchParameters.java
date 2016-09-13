@@ -22,12 +22,12 @@ public class SearchParameters {
 	protected final float expectedPeakWidth;
 	protected final boolean runPhosphoLocalization;
 	protected final float precursorWindowSize;
-	protected final boolean addExtraDecoys;
+	protected final float numberOfExtraDecoyLibrariesSearched;
 	protected final int numberOfQuantitativePeaks;	
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, File percolatorLocation, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
-			int numberOfQuantitativePeaks, boolean runPhosphoLocalization, boolean addExtraDecoys) {
+			int numberOfQuantitativePeaks, boolean runPhosphoLocalization, float getNumberOfExtraDecoyLibrariesSearched) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -42,7 +42,7 @@ public class SearchParameters {
 		this.precursorWindowSize=precursorWindowSize;
 		this.numberOfQuantitativePeaks=numberOfQuantitativePeaks;
 		this.runPhosphoLocalization=runPhosphoLocalization;
-		this.addExtraDecoys=addExtraDecoys;
+		this.numberOfExtraDecoyLibrariesSearched=getNumberOfExtraDecoyLibrariesSearched;
 	}
 
 	public String toString() {
@@ -59,7 +59,7 @@ public class SearchParameters {
 		sb.append(" -precursorWindowSize "+precursorWindowSize+"\n");
 		sb.append(" -numberOfQuantitativePeaks "+numberOfQuantitativePeaks+"\n");
 		sb.append(" -runPhosphoLocalization "+runPhosphoLocalization+"\n");
-		sb.append(" -addExtraDecoys "+addExtraDecoys+"\n");
+		sb.append(" -getNumberOfExtraDecoyLibrariesSearched "+numberOfExtraDecoyLibrariesSearched+"\n");
 		if (useTargetWindowCenter()) {
 			sb.append(" -targetWindowCenter "+targetWindowCenter+"\n");
 		}
@@ -91,8 +91,12 @@ public class SearchParameters {
 	}
 
 	public float getEffectivePercolatorThreshold() {
-		// assumes T+50%*Random versus D+50%*Random 
-		return addExtraDecoys?percolatorThreshold*1.5f:percolatorThreshold;
+		// FDR'=FDR * (XD*(1-((XD-1)*FDR)))
+		// where XD is the numberOfDecoyLibrariesSearched
+		// e.g. if XD=1, then FDR'=FDR*(1*(1-((1-1)*FDR)))=FDR*(1*(1-0))=FDR
+		// e.g. if XD=2, then FDR'=FDR*(2*(1-((2-1)*FDR)))=FDR*(2*(1-FDR))=2*FDR-2*FDR*FDR
+		float numberOfDecoyLibrariesSearched=numberOfExtraDecoyLibrariesSearched+1.0f; // always search 1x decoy minimum
+		return percolatorThreshold*(numberOfDecoyLibrariesSearched*(1-((numberOfDecoyLibrariesSearched-1)*percolatorThreshold)));
 	}
 
 	public Optional<File> getPercolatorLocation() {
@@ -128,8 +132,8 @@ public class SearchParameters {
 	public boolean isRunPhosphoLocalization() {
 		return runPhosphoLocalization;
 	}
-	public boolean isAddExtraDecoys() {
-		return addExtraDecoys;
+	public float getNumberOfExtraDecoyLibrariesSearched() {
+		return numberOfExtraDecoyLibrariesSearched;
 	}
 	public int getNumberOfQuantitativePeaks() {
 		return numberOfQuantitativePeaks;
