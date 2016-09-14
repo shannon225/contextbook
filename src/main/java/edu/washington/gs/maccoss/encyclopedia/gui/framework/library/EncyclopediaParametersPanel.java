@@ -41,10 +41,13 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import gnu.trove.map.hash.TCharFloatHashMap;
 
 public class EncyclopediaParametersPanel extends JPanel implements ParametersPanelInterface {
+	
 	private static final long serialVersionUID=1L;
 	private static final int numberOfCores=Runtime.getRuntime().availableProcessors();
 	private static final String PHOSPHOPROTEOME="Phosphoproteome";
-	private static final String USE_EXTRA_DECOYS="Add 2x decoys (50% slower search)";
+	private static final String[] NUMBER_OF_EXTRA_DECOY_ITEMS=new String[] {"Normal Target/Decoy", "+10% Extra Decoys", "+20% Extra Decoys", "+50% Extra Decoys", "+100% Extra Decoys (2x Time)"};
+	private static final float[] NUMBER_OF_EXTRA_DECOY_VALUES=new float[] {0.0f, 0.1f, 0.2f, 0.5f, 1.0f};
+	
 	private static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_small_icon.png"));
 	private static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_icon.png"));
 	private static final String programName="EncyclopeDIA";
@@ -57,7 +60,6 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "PepsinA"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {"CID (B/Y)", "HCD (Y-Only)", "ETD (C/Z/Z+1)"});
 	private final JComboBox<String> proteomeType=new JComboBox<String>(new String[] {"Standard Proteome", PHOSPHOPROTEOME});
-	private final JComboBox<String> useExtraDecoys=new JComboBox<String>(new String[] {"Add 1x decoys (standard)", USE_EXTRA_DECOYS});
 
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance());
 
@@ -65,6 +67,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	private final SpinnerModel fragmentPPM=new SpinnerNumberModel(10, 1, 1000, 1);
 	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
+	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
 
 	public EncyclopediaParametersPanel() {
 		super(new BorderLayout());
@@ -83,12 +86,12 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		
 		libraryFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".elib"), true);
 		options.add(libraryFileChooser);
+		options.add(new LabeledComponent("Target/Decoy Approach", numberOfExtraDecoyLibraries));
 		options.add(new LabeledComponent("Data Acquisition Type", acquisition));
 		options.add(new LabeledComponent("Precursor Window Width (blank=extract from file)", precursorWindowWidth));
 		options.add(new LabeledComponent("Enzyme", enzyme));
 		options.add(new LabeledComponent("Fragmentation", fragType));
 		options.add(new LabeledComponent("Proteome Type", proteomeType));
-		options.add(new LabeledComponent("Decoy Level", useExtraDecoys));
 		options.add(new LabeledComponent("Precursor (PPM)", new JSpinner(precursorPPM)));
 		options.add(new LabeledComponent("Fragment (PPM)", new JSpinner(fragmentPPM)));
 		options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
@@ -170,10 +173,10 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		Number value=(Number)precursorWindowWidth.getValue();
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
 		boolean isPhospho=PHOSPHOPROTEOME.equals(proteomeType.getSelectedItem());
-		boolean useExtraDecoyBool=USE_EXTRA_DECOYS.equals(useExtraDecoys.getSelectedItem());
+		float numberOfExtraDecoyLibrariesValue=NUMBER_OF_EXTRA_DECOY_VALUES[((Integer)numberOfExtraDecoyLibraries.getSelectedIndex())];
 		float targetWindowCenter=-1f;
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
-		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme, 0.01f, null, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, isPhospho, useExtraDecoyBool);
+		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme, 0.01f, null, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, isPhospho, numberOfExtraDecoyLibrariesValue);
 		return parameters;
 	}
 }

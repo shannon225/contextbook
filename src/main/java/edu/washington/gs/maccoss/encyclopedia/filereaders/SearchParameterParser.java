@@ -30,7 +30,7 @@ public class SearchParameterParser {
 		map.put("-expectedPeakWidth", "25");
 		map.put("-deconvoluteOverlappingWindows", "false");
 		map.put("-runPhosphoLocalization", "false");
-		map.put("-addExtraDecoys", "false");
+		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
 		map.put("-numberOfQuantitativePeaks", "5");
 		return map;
 	}
@@ -59,7 +59,7 @@ public class SearchParameterParser {
 		final float precursorWindowSize;
 		final int numberOfQuantitativePeaks;
 		final boolean runPhosphoLocalization;
-		final boolean addExtraDecoys;
+		final float numberOfExtraDecoyLibrariesSearched;
 		
 		String value=parameters.get("-frag");
 		if (value==null) {
@@ -116,8 +116,15 @@ public class SearchParameterParser {
 		precursorWindowSize=SearchParameterParser.getFloat("-precursorWindowSize", parameters, -1f);
 		expectedPeakWidth=SearchParameterParser.getFloat("-expectedPeakWidth", parameters, 25f);
 		runPhosphoLocalization=getBoolean("-runPhosphoLocalization", parameters, false);
-		addExtraDecoys=getBoolean("-addExtraDecoys", parameters, false);
 		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 5);
+		
+		float tempNumberOfExtraDecoyLibrariesSearched=SearchParameterParser.getFloat("-numberOfExtraDecoyLibrariesSearched", parameters, 0.0f);
+		if (tempNumberOfExtraDecoyLibrariesSearched<0.0f) {
+			Logger.errorLine("-numberOfExtraDecoyLibrariesSearched cannot be less than 0%! Using 0% extra decoys.");
+			numberOfExtraDecoyLibrariesSearched=0.0f;
+		} else {
+			numberOfExtraDecoyLibrariesSearched=tempNumberOfExtraDecoyLibrariesSearched;
+		}
 		
 		value=parameters.get("-percolatorLocation");
 		File percolator=null;
@@ -132,7 +139,7 @@ public class SearchParameterParser {
 		}
 		
 		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorThreshold, percolator, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
-				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, runPhosphoLocalization, addExtraDecoys);
+				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, runPhosphoLocalization, numberOfExtraDecoyLibrariesSearched);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

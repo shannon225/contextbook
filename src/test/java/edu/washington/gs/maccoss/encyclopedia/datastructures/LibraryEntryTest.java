@@ -21,7 +21,7 @@ public class LibraryEntryTest extends TestCase {
 				20f, 21f, 22f, 23f, 24f, 25f };
 		
 		LibraryEntry entry=new LibraryEntry("", new HashSet<String>(), 518.73841, (byte)2, "PEPT[+80]IDER", 1, 0.0f, 0.0f, massArray, intensityArray);
-		ReverseLibraryEntry reverse=entry.getDecoy(PARAMETERS, false);
+		LibraryEntry reverse=entry.getDecoy(PARAMETERS);
 		System.out.println(reverse.getPeptideModSeq());;
 		assertEquals("EDIT[+80.0]PEPR", reverse.getPeptideModSeq());
 		

@@ -24,7 +24,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPe
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ReverseLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -33,6 +32,7 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsC
 import edu.washington.gs.maccoss.encyclopedia.filewriters.SaveResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.TeeResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
 public class EncyclopediaDDA {
@@ -67,9 +67,9 @@ public class EncyclopediaDDA {
 		ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("LIBRARY-%d").setDaemon(true).build();
 		LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 		ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
-		
+
+		int count=0;
 		// get stripes
-		boolean everyOtherDecoy=true;
 		for (Range range : ranges) {
 			Logger.logLine("Processing "+range);
 			
@@ -79,15 +79,24 @@ public class EncyclopediaDDA {
 			PSMScorer scorer=taskFactory.getLibraryScorer(background);
 			ArrayList<LibraryEntry> reverses=new ArrayList<LibraryEntry>();
 			for (LibraryEntry entry : entries) {
-				reverses.add(entry.getDecoy(parameters, false));
-				if (parameters.isAddExtraDecoys()) {
-					if (everyOtherDecoy) {
-						ReverseLibraryEntry shuffle=entry.getDecoy(parameters, true);
-						reverses.add(shuffle);
-						reverses.add(shuffle.getDecoy(parameters, false));
+				count++;
+				reverses.add(entry.getDecoy(parameters));
+
+				float extraDecoys=parameters.getNumberOfExtraDecoyLibrariesSearched();
+				while (extraDecoys>0.0f) {
+					if (extraDecoys<1.0f) {
+						// check percentage
+						float test=RandomGenerator.random(count);
+						if (test>extraDecoys) {
+							break;
+						}
 					}
-					everyOtherDecoy=!everyOtherDecoy;
+					extraDecoys=extraDecoys-1.0f;
+					LibraryEntry shuffle=entry.getShuffle(parameters, Float.hashCode(extraDecoys), false);
+					reverses.add(shuffle);
+					reverses.add(shuffle.getDecoy(parameters));
 				}
+				
 			}
 			entries.addAll(reverses);
 			executor.submit(taskFactory.getDDAScoringTask(scorer, entries, stripes, precursors, resultsQueue));

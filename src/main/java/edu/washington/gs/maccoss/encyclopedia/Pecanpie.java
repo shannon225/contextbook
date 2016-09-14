@@ -57,6 +57,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -232,7 +233,6 @@ public class Pecanpie {
 		int rangesFinished=0;
 		// get stripes
 		float numberOfTasks=2.0f+ranges.size();
-		boolean everyOtherDecoy=true;
 		for (Range range : ranges) {
 			String baseMessage="Working on "+range+" m/z";
 			float baseIncrement=1.0f/numberOfTasks;
@@ -342,26 +342,33 @@ public class Pecanpie {
 						
 						if (!parameters.isDontRunDecoys()) {
 							String smartDecoy=PeptideUtils.getSmartDecoy(sequence, charge, backgroundProteomeSet, parameters);
-							FastaPeptideEntry decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), "DECOY_"+peptide.getAccession(), smartDecoy);
+							FastaPeptideEntry decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), LibraryEntry.DECOY_STRING+peptide.getAccession(), smartDecoy);
 							AbstractPecanFragmentationModel revmodel=taskFactory.getFragmentationModel(decoyPeptide, parameters.getAAConstants());
 							PecanLibraryEntry reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
 							tasks.add(reventry);
 
-							if (parameters.isAddExtraDecoys()) {
-								if (everyOtherDecoy) {
-									String shuffledSequence=PeptideUtils.shuffle(sequence, parameters);
-									FastaPeptideEntry shuffledPeptide=new FastaPeptideEntry(peptide.getFilename(), "SHUFFLE_"+peptide.getAccession(), shuffledSequence);
-									revmodel=taskFactory.getFragmentationModel(shuffledPeptide, parameters.getAAConstants());
-									reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
-									tasks.add(reventry);
-									
-									smartDecoy=PeptideUtils.getSmartDecoy(shuffledSequence, charge, backgroundProteomeSet, parameters);
-									decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), "DECOY_"+peptide.getAccession(), smartDecoy);
-									revmodel=taskFactory.getFragmentationModel(decoyPeptide, parameters.getAAConstants());
-									reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
-									tasks.add(reventry);
+							float extraDecoys=parameters.getNumberOfExtraDecoyLibrariesSearched();
+							while (extraDecoys>0.0f) {
+								if (extraDecoys<1.0f) {
+									// check percentage
+									float test=RandomGenerator.random(count);
+									if (test>extraDecoys) {
+										break;
+									}
 								}
-								everyOtherDecoy=!everyOtherDecoy;
+								extraDecoys=extraDecoys-1.0f;
+
+								String shuffledSequence=PeptideUtils.shuffle(sequence, Float.hashCode(extraDecoys), parameters);
+								FastaPeptideEntry shuffledPeptide=new FastaPeptideEntry(peptide.getFilename(), LibraryEntry.SHUFFLE_STRING+peptide.getAccession(), shuffledSequence);
+								revmodel=taskFactory.getFragmentationModel(shuffledPeptide, parameters.getAAConstants());
+								reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, false);
+								tasks.add(reventry);
+								
+								smartDecoy=PeptideUtils.getSmartDecoy(shuffledSequence, charge, backgroundProteomeSet, parameters);
+								decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), LibraryEntry.DECOY_STRING+LibraryEntry.SHUFFLE_STRING+peptide.getAccession(), smartDecoy);
+								revmodel=taskFactory.getFragmentationModel(decoyPeptide, parameters.getAAConstants());
+								reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
+								tasks.add(reventry);
 							}
 						}
 

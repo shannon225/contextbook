@@ -14,6 +14,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
@@ -32,7 +33,9 @@ public class PercolatorReader {
 					float posteriorErrorProb=Float.parseFloat(row.get("posterior_error_prob"));
 					String psmID=row.get("PSMId");
 					String proteinIds=row.get("proteinIds");
-					data.add(new PercolatorPeptide(psmID, proteinIds, qvalue, posteriorErrorProb));
+					if (!proteinIds.startsWith(LibraryEntry.DECOY_STRING)) {
+						data.add(new PercolatorPeptide(psmID, proteinIds, qvalue, posteriorErrorProb));
+					}
 				}
 			}
 		};

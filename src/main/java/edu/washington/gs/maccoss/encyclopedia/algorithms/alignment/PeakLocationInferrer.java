@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractor;
@@ -133,7 +132,7 @@ public class PeakLocationInferrer {
 
 		Logger.logLine("Seed experiment: "+bestJob.getDiaFile().getName()+" ("+max+" archetypal peptides)");
 		Logger.logLine("Seed Percolator file: "+bestJob.getOutputFile().getAbsolutePath());
-		ArrayList<PercolatorPeptide> alignmentSeed=PercolatorReader.getPassingPeptidesFromTSV(bestJob.getOutputFile(), bestJob.getParameters().getPercolatorThreshold());
+		ArrayList<PercolatorPeptide> alignmentSeed=PercolatorReader.getPassingPeptidesFromTSV(bestJob.getOutputFile(), bestJob.getParameters().getEffectivePercolatorThreshold());
 		TObjectFloatHashMap<String> rtsBySequence=new TObjectFloatHashMap<String>();
 		for (PercolatorPeptide peptide : alignmentSeed) {
 			rtsBySequence.put(peptide.getPeptideModSeq(), peptide.getRT());
@@ -159,7 +158,7 @@ public class PeakLocationInferrer {
 				count++;
 
 				ArrayList<XYPoint> points=new ArrayList<XYPoint>();
-				ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), job.getParameters().getPercolatorThreshold());
+				ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), job.getParameters().getEffectivePercolatorThreshold());
 				for (PercolatorPeptide peptide : peptides) {
 					String seq=peptide.getPeptideModSeq();
 					if (rtsBySequence.containsKey(seq)) {

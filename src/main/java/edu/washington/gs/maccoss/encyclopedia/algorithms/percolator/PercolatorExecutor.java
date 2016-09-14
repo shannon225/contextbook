@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.concurrent.BlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -78,7 +79,9 @@ public class PercolatorExecutor extends ExternalExecutor {
 						//String peptideSequence = parsePeptideSequence(peptideString);
 						
 						if (qvalue<threshold) {
-							passingPeptides.add(new PercolatorPeptide(psmID, proteinIds, qvalue, pep));
+							if (!proteinIds.startsWith(LibraryEntry.DECOY_STRING)) {
+								passingPeptides.add(new PercolatorPeptide(psmID, proteinIds, qvalue, pep));
+							}
 						} else {
 							record=false;
 						}

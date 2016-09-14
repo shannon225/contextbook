@@ -22,6 +22,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 
 //@Immutable
 public class LibraryEntry implements Spectrum, PeptidePrecursor {
+	public static final String SHUFFLE_STRING="SHUFFLE_";
+	public static final String DECOY_STRING="DECOY_";
+
 	private static final float minimumIntensityThreshold=10.0f*Float.MIN_VALUE;
 	
 	private final String source;
@@ -218,7 +221,13 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor {
 		return peaks;
 	}
 
-	public ReverseLibraryEntry getDecoy(SearchParameters parameters, boolean shuffle) {
+	public LibraryEntry getDecoy(SearchParameters parameters) {
+		return getDecoy(parameters, 0, false, true);
+	} 
+	public LibraryEntry getShuffle(SearchParameters parameters, int shuffleSeed, boolean markAsDecoy) {
+		return getDecoy(parameters, shuffleSeed, true, markAsDecoy);
+	} 
+	private LibraryEntry getDecoy(SearchParameters parameters, int shuffleSeed, boolean shuffle, boolean markAsDecoy) {
 		String reverseSequence;
 		if (shuffle) {
 			reverseSequence=PeptideUtils.shuffle(peptideModSeq, parameters);
@@ -262,7 +271,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor {
 		
 		assert(forwardIons.size()==reverseIons.size());
 		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
-		int size=Math.min(forwardIons.size(), reverseIons.size()); //FIXME !!! HOW TO DEAL WITH LINKING UP NEUTRAL LOSSES IN DECOY PEPTIES????
+		int size=Math.min(forwardIons.size(), reverseIons.size()); //FIXME !!! HOW TO DEAL WITH LINKING UP NEUTRAL LOSSES IN DECOY PEPTIDES????
 		for (int i=0; i<size; i++) {
 			try {
 				points.add(new XYPoint(forwardIons.get(i).mass, reverseIons.get(i).mass));
@@ -304,11 +313,15 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor {
 		HashSet<String> revAcc=new HashSet<String>();
 		for (String accession : accessions) {
 			if (shuffle) {
-				revAcc.add("DECOY_"+accession);
+				revAcc.add(DECOY_STRING+accession);
 			} else {
-				revAcc.add("SHUFFLE_"+accession);
+				revAcc.add(SHUFFLE_STRING+accession);
 			}
 		}
-		return new ReverseLibraryEntry(source, revAcc, precursorMZ, precursorCharge, reverseSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z);	
+		if (markAsDecoy) {
+			return new ReverseLibraryEntry(source, revAcc, precursorMZ, precursorCharge, reverseSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z);	
+		} else {
+			return new LibraryEntry(source, revAcc, precursorMZ, precursorCharge, reverseSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z);	
+		}
 	}
 }

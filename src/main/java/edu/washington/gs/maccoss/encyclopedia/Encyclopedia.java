@@ -38,7 +38,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ReverseLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -56,6 +55,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
@@ -209,7 +209,6 @@ public class Encyclopedia {
 		// get stripes
 		int rangesFinished=0;
 		float numberOfTasks=2.0f+ranges.size();
-		boolean everyOtherDecoy=true;
 		for (Range range : ranges) {
 			String baseMessage="Working on "+range+" m/z";
 			float baseIncrement=1.0f/numberOfTasks;
@@ -236,15 +235,23 @@ public class Encyclopedia {
 				count++;
 				ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 				tasks.add(entry);
-				tasks.add(entry.getDecoy(parameters, false));
-				if (parameters.isAddExtraDecoys()) {
-					if (everyOtherDecoy) {
-						ReverseLibraryEntry shuffle=entry.getDecoy(parameters, true);
-						tasks.add(shuffle);
-						tasks.add(shuffle.getDecoy(parameters, false));
+				tasks.add(entry.getDecoy(parameters));
+				
+				float extraDecoys=parameters.getNumberOfExtraDecoyLibrariesSearched();
+				while (extraDecoys>0.0f) {
+					if (extraDecoys<1.0f) {
+						// check percentage
+						float test=RandomGenerator.random(count);
+						if (test>extraDecoys) {
+							break;
+						}
 					}
-					everyOtherDecoy=!everyOtherDecoy;
+					extraDecoys=extraDecoys-1.0f;
+					LibraryEntry shuffle=entry.getShuffle(parameters, Float.hashCode(extraDecoys), false);
+					tasks.add(shuffle);
+					tasks.add(shuffle.getDecoy(parameters));
 				}
+				
 				executor.submit(taskFactory.getScoringTask(scorer, tasks, stripes, dutyCycle, precursors, resultsQueue));
 			}
 			
