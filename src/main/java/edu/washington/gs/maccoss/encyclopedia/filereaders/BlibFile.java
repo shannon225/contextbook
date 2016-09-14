@@ -29,7 +29,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import gnu.trove.map.hash.TCharFloatHashMap;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
@@ -178,7 +178,7 @@ public class BlibFile extends SQLFile {
 		}
 		
 		AminoAcidConstants aaConstants=job.getParameters().getAAConstants();
-		TCharFloatHashMap fixedMods=aaConstants.getFixedMods();
+		TCharDoubleHashMap fixedMods=aaConstants.getFixedMods();
 		modCounter++;
 		
 		Connection c=getConnection(tempFile);
@@ -269,7 +269,7 @@ public class BlibFile extends SQLFile {
 							prepMods.setInt(1, modCounter);
 							prepMods.setInt(2, idCounter);
 							prepMods.setInt(3, (i+1));
-							prepMods.setFloat(4, fixedMods.get(aas[i].charAt(0)));
+							prepMods.setDouble(4, fixedMods.get(aas[i].charAt(0)));
 							added=true;
 						} else if (aa.y!=null) {
 							float mass=aa.y.floatValue();
@@ -284,7 +284,7 @@ public class BlibFile extends SQLFile {
 							prepMods.setInt(1, modCounter);
 							prepMods.setInt(2, idCounter);
 							prepMods.setInt(3, index);
-							prepMods.setFloat(4, mass);
+							prepMods.setDouble(4, mass);
 							added=true;
 						}
 						if (added) {

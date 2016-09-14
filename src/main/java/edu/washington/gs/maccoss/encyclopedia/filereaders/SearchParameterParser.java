@@ -15,7 +15,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
-import gnu.trove.map.hash.TCharFloatHashMap;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class SearchParameterParser {
 	public static HashMap<String,String> getDefaultParameters() {
@@ -46,7 +46,7 @@ public class SearchParameterParser {
 	}
 	
 	public static SearchParameters parseParameters(HashMap<String, String> parameters) {
-		final AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharFloatHashMap());
+		final AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap());
 		final FragmentationType fragType;
 		final MassTolerance precursorTolerance;
 		final MassTolerance fragmentTolerance;

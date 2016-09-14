@@ -13,7 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
-import gnu.trove.map.hash.TCharFloatHashMap;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class PecanParameterParser {
 	public static HashMap<String,String> getDefaultParameters() {
@@ -77,7 +77,7 @@ public class PecanParameterParser {
 		final float precursorWindowSize;
 		final int numberOfQuantitativePeaks;
 
-		TCharFloatHashMap fixedMods=new TCharFloatHashMap();
+		TCharDoubleHashMap fixedMods=new TCharDoubleHashMap();
 		String value=parameters.get("-fixed");
 		if (value!=null) {
 			try {
@@ -85,14 +85,14 @@ public class PecanParameterParser {
 				while (st.hasMoreTokens()) {
 					String token=st.nextToken();
 					char aa=token.charAt(0);
-					float mass=Float.parseFloat(token.substring(2)); // +1 for '=' (could actually be any deliminator)
+					double mass=Double.parseDouble(token.substring(2)); // +1 for '=' (could actually be any deliminator)
 					fixedMods.put(aa, mass);
 				}
 			} catch (Exception e) {
 				throw new EncyclopediaException("Error parsing fixed modifications from ["+value+"]", e);
 			}
 		} else {
-			fixedMods.put('C', 57.0214635f);
+			fixedMods.put('C', 57.0214635);
 		}
 		aaConstants=new AminoAcidConstants(fixedMods);
 

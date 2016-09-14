@@ -33,17 +33,17 @@ public class BackgroundGeneratorTest extends TestCase {
 		double[] binArray=bins.toArray();
 		TDoubleIntHashMap[] binCounters=BackgroundGenerator.generateBackground(binArray, entries, true, PARAMETERS).x;
 
-		int[] expectedSizes=new int[] {22304, 22776, 20464, 22246, 22963, 21688, 22642, 22054, 22086, 23288, 21385, 21099, 22227, 22811, 23823, 23851, 22989, 22937, 22540, 24180, 22933, 23294, 22690,
-				23721, 23387, 22575, 24529, 22983, 22736, 23230, 23185, 22450, 22756, 24773, 22465, 22563, 23405, 25549, 23162, 22418, 24570, 25482, 22735, 23794, 23093, 23225, 23617, 23360, 24293,
-				23101, 23467, 22381, 22140, 21217, 23574, 21759, 22482, 22764, 23304, 23135, 21582, 23212, 23524, 23082, 21996, 23330, 21694, 22175, 23462, 23154, 21503, 23409, 22670, 23195, 23472,
-				22812, 20104, 21767, 23572, 21514, 20528, 21396, 22106, 20500, 19482, 23038, 20752, 22490, 21545, 19864, 19827, 20494, 19252, 20311, 20560, 17937, 21410, 19917, 20206, 20786};
+		int[] expectedSizes=new int[] { 22312, 22778, 20460, 22258, 22958, 21681, 22643, 22048, 22089, 23289, 21389, 21103, 22233, 22812, 23816, 23849, 22989, 22942, 22543, 24179, 22925, 23298, 22690,
+				23727, 23387, 22575, 24528, 22986, 22739, 23232, 23179, 22451, 22762, 24768, 22461, 22562, 23410, 25550, 23169, 22415, 24572, 25486, 22734, 23794, 23094, 23222, 23623, 23369, 24293,
+				23101, 23468, 22380, 22140, 21215, 23576, 21763, 22484, 22764, 23308, 23133, 21584, 23214, 23521, 23085, 21994, 23329, 21697, 22176, 23465, 23156, 21497, 23409, 22671, 23197, 23471,
+				22813, 20105, 21768, 23571, 21514, 20512, 21399, 22106, 20500, 19480, 23036, 20754, 22494, 21547, 19864, 19827, 20495, 19250, 20312, 20563, 17937, 21411, 19921, 20206, 20786 };
 		assertEquals(expectedSizes.length, binCounters.length);
 		for (int i=0; i<binCounters.length; i++) {
 			assertEquals(expectedSizes[i], binCounters[i].size());
 		}
 
 		String peptide="ILQEGVDPK";
-		byte charge=(byte)2;
+		byte charge=(byte) 2;
 		double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
 		int index=Arrays.binarySearch(binArray, mz);
 		index=(-(index+1))-1;
@@ -54,7 +54,7 @@ public class BackgroundGeneratorTest extends TestCase {
 
 		PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaPeptideEntry(peptide), PARAMETERS.getAAConstants());
 		double[] ions=model.getPrimaryIons(PARAMETERS.getFragType(), charge);
-		int[] expectedCounts=new int[] {184, 356, 33, 24, 8, 19, 10, 16, 11, 15, 7, 10, 4, 8, 6, 9, 16, 17};
+		int[] expectedCounts=new int[] { 184, 356, 33, 24, 8, 19, 10, 16, 11, 15, 7, 10, 4, 8, 6, 9, 16, 17 };
 		for (int i=0; i<ions.length; i++) {
 			double[] matches=PARAMETERS.getFragmentTolerance().getMatches(keys, ions[i]);
 
@@ -81,7 +81,7 @@ public class BackgroundGeneratorTest extends TestCase {
 
 		model=new PecanOneFragmentationModel(new FastaPeptideEntry(peptide), PARAMETERS.getAAConstants());
 		ions=model.getPrimaryIons(PARAMETERS.getFragType(), charge);
-		expectedCounts=new int[] {392, 41, 5, 62, 6, 5, 10, 5, 12, 18, 8, 10, 7, 14, 37, 8, 15, 22, 29, 32};
+		expectedCounts=new int[] { 392, 41, 5, 62, 6, 5, 10, 5, 12, 18, 8, 10, 7, 14, 37, 8, 15, 22, 29, 32 };
 		for (int i=0; i<ions.length; i++) {
 			double[] matches=PARAMETERS.getFragmentTolerance().getMatches(keys, ions[i]);
 

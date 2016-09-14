@@ -13,7 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.map.hash.TCharFloatHashMap;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 
 //@Immutable
 public class FragmentationModel {
@@ -280,9 +280,13 @@ public class FragmentationModel {
 		return formatForSkyline(sequence, aaConstants, SKYLINE_PEAK_BOUNDARIES_DF);
 	}
 	
+	public static String formatForEncyclopeDIA(String sequence, AminoAcidConstants aaConstants) {
+		return formatForSkyline(sequence, aaConstants, null);
+	}
+	
 	public static String formatForSkyline(String sequence, AminoAcidConstants aaConstants, DecimalFormat df) {
 		char[] ca=sequence.toCharArray();
-		TCharFloatHashMap fixedMods=aaConstants.getFixedMods();
+		TCharDoubleHashMap fixedMods=aaConstants.getFixedMods();
 		
 		ArrayList<String> aas=new ArrayList<String>();
 		for (int i = 0; i < ca.length; i++) {
@@ -300,7 +304,11 @@ public class FragmentationModel {
 				}
 				String massText = sb.toString();
 				double modificationMass = Double.valueOf(massText);
-				aas.set(aas.size()-1, aas.get(aas.size()-1)+(modificationMass>=0?"[+":"[")+df.format(modificationMass)+"]");
+				String formattedMass=df==null?massText:df.format(modificationMass);
+				if (formattedMass.charAt(0)!='+'&&formattedMass.charAt(0)!='-') {
+					formattedMass="+"+formattedMass;
+				}
+				aas.set(aas.size()-1, aas.get(aas.size()-1)+"["+formattedMass+"]");
 			} else {
 				aas.add(Character.toString(ca[i]));
 			}
@@ -312,9 +320,13 @@ public class FragmentationModel {
 			if (aa.length()==1) {
 				char aaChar=aa.charAt(0);
 				if (fixedMods.contains(aaChar)) {
-					float mass=fixedMods.get(aaChar);
+					double mass=fixedMods.get(aaChar);
 					if (mass!=0.0f) {
-						sb.append((mass>=0?"[+":"[")+df.format(mass)+"]");
+						String formattedMass=df==null?Double.toString(mass):df.format(mass);
+						if (formattedMass.charAt(0)!='+'&&formattedMass.charAt(0)!='-') {
+							formattedMass="+"+formattedMass;
+						}
+						sb.append("["+formattedMass+"]");
 					}
 				}
 			}

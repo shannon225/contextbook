@@ -32,6 +32,9 @@ public class FragmentationModelTest extends TestCase {
 
 		peptideModSeq=FragmentationModel.formatForSkylinePeakBoundaries(sequence, PARAMETERS.getAAConstants());
 		assertEquals("A[+42]QRHS[+80]DSC[+57]C[+57]SLEEK", peptideModSeq);
+
+		peptideModSeq=FragmentationModel.formatForEncyclopeDIA(sequence, PARAMETERS.getAAConstants());
+		assertEquals("A[+42.0]QRHS[+79.96633]DSC[+57.0214635]C[+57.0214635]SLEEK", peptideModSeq);
 	}
 	
 	public void testGetModifiedSequence() {

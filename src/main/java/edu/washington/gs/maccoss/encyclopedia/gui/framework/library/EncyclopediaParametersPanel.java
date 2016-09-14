@@ -38,7 +38,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
-import gnu.trove.map.hash.TCharFloatHashMap;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class EncyclopediaParametersPanel extends JPanel implements ParametersPanelInterface {
 	
@@ -165,7 +165,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	public SearchParameters getParameters() {
 		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.getAcquisitionType((String)acquisition.getSelectedItem());
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
-		AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharFloatHashMap());
+		AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
 		float precursorPPMValue=((Integer)precursorPPM.getValue()).floatValue();
 		float fragmentPPMValue=((Integer)fragmentPPM.getValue()).floatValue();

@@ -11,7 +11,7 @@ public class SearchParameterParserTest extends TestCase {
 		HashMap<String, String> input=PecanParameterParser.getDefaultParameters();
 		PecanSearchParameters params=PecanParameterParser.parseParameters(input);
 
-		assertEquals(160.03065030151367, params.getAAConstants().getMass('C'), 0.000001);
+		assertEquals(160.0306485, params.getAAConstants().getMass('C'), 0.000001);
 		assertEquals(FragmentationType.YONLY, params.getFragType());
 		assertEquals(10.0, params.getPrecursorTolerance().getPpmTolerance(), 0.0000001);
 		assertEquals(10.0, params.getFragmentTolerance().getPpmTolerance(), 0.0000001);

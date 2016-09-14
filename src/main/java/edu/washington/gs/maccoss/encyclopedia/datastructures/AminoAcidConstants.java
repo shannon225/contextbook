@@ -2,32 +2,30 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import gnu.trove.map.hash.TCharDoubleHashMap;
-import gnu.trove.map.hash.TCharFloatHashMap;
 import gnu.trove.map.hash.TCharObjectHashMap;
 import gnu.trove.map.hash.TIntCharHashMap;
 import gnu.trove.procedure.TCharDoubleProcedure;
-import gnu.trove.procedure.TCharFloatProcedure;
 
 public class AminoAcidConstants {
 	
 	// ordered by H C O N S
-	private final TCharFloatHashMap fixedMods;
+	private final TCharDoubleHashMap fixedMods;
 	private final TCharObjectHashMap<int[]> atomicComposition=new TCharObjectHashMap<int[]>();
 	final private TCharDoubleHashMap massesByAA=new TCharDoubleHashMap();
 	final private TIntCharHashMap aasByNominal=new TIntCharHashMap();
 	
 	public static AminoAcidConstants getConstants(String name) {
 		if ("C+57 (Carbamidomethyl)".equalsIgnoreCase(name)) {
-			return new AminoAcidConstants(new TCharFloatHashMap(new char[] {'C'}, new float[] {57.0214635f}));
+			return new AminoAcidConstants(new TCharDoubleHashMap(new char[] {'C'}, new double[] {57.0214635}));
 			
 		} else if ("C+58 (Carboxymethyl)".equalsIgnoreCase(name)) {
-			return new AminoAcidConstants(new TCharFloatHashMap(new char[] {'C'}, new float[] {58.005479f}));
+			return new AminoAcidConstants(new TCharDoubleHashMap(new char[] {'C'}, new double[] {58.005479}));
 			
 		}else if ("C+46 (MMTS)".equalsIgnoreCase(name)) {
-			return new AminoAcidConstants(new TCharFloatHashMap(new char[] {'C'}, new float[] {45.987721f}));
+			return new AminoAcidConstants(new TCharDoubleHashMap(new char[] {'C'}, new double[] {45.987721}));
 			
 		} else {
-			return new AminoAcidConstants(new TCharFloatHashMap());
+			return new AminoAcidConstants(new TCharDoubleHashMap());
 		}
 	}
 
@@ -35,9 +33,9 @@ public class AminoAcidConstants {
 	 * assumes +57 C-alkylation
 	 */
 	public AminoAcidConstants() {
-		this(new TCharFloatHashMap(new char[] {'C'}, new float[] {57.0214635f}));
+		this(new TCharDoubleHashMap(new char[] {'C'}, new double[] {57.0214635}));
 	}
-	public AminoAcidConstants(TCharFloatHashMap fixedMods) {
+	public AminoAcidConstants(TCharDoubleHashMap fixedMods) {
 		this.fixedMods=fixedMods;
 		
 		atomicComposition.put('A', new int[] {5, 3, 1, 1, 0});
@@ -91,9 +89,9 @@ public class AminoAcidConstants {
 		massesByAA.put('Y', 163.06332);
 		massesByAA.put('V', 99.068414);
 		
-		fixedMods.forEachEntry(new TCharFloatProcedure() {
+		fixedMods.forEachEntry(new TCharDoubleProcedure() {
 			@Override
-			public boolean execute(char aa, float m) {
+			public boolean execute(char aa, double m) {
 				massesByAA.adjustOrPutValue(aa, m, m);
 				return true;
 			}
@@ -107,15 +105,15 @@ public class AminoAcidConstants {
 		});
 	}
 	
-	public TCharFloatHashMap getFixedMods() {
+	public TCharDoubleHashMap getFixedMods() {
 		return fixedMods;
 	}
 	
 	public String getFixedModString() {
 		final StringBuilder sb=new StringBuilder();
-		fixedMods.forEachEntry(new TCharFloatProcedure() {
+		fixedMods.forEachEntry(new TCharDoubleProcedure() {
 			@Override
-			public boolean execute(char arg0, float arg1) {
+			public boolean execute(char arg0, double arg1) {
 				if (sb.length()>0) {
 					sb.append(",");
 				}
