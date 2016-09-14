@@ -10,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -164,6 +165,8 @@ public class BlibFile extends SQLFile {
 		}
 		
 	}
+
+	private static DecimalFormat df = new DecimalFormat(".#");
 	public int[] addLibrary(SearchJobData job, ArrayList<LibraryEntry> entries, int idCounter, int jobCounter, int modCounter) throws IOException, SQLException {
 		String diaFileName=job.getDiaFile().getName();
 		String spectrumIDPrefix=diaFileName;
@@ -237,7 +240,7 @@ public class BlibFile extends SQLFile {
 					String peptideModSeq=entry.getPeptideModSeq();
 					for (char aa : fixedModdedAAs) {
 						float mass=fixedMods.get(aa);
-						String replacement=aa+(mass>=0?"[+":"[")+mass+"]";
+						String replacement=aa+(mass>=0?"[+":"[")+df.format(mass)+"]";
 						peptideModSeq=peptideModSeq.replace(Character.toString(aa), replacement);
 					}
 					prep.setString(5, peptideModSeq); // peptideModSeq
