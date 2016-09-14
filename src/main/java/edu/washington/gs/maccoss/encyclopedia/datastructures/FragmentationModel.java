@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -12,6 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.map.hash.TCharFloatHashMap;
 
 //@Immutable
 public class FragmentationModel {
@@ -265,6 +267,59 @@ public class FragmentationModel {
 			}
 		}
 		return new Triplet<double[], double[], String[]>(masses.toArray(), neutralLosses.toArray(), aas.toArray(new String[aas.size()]));
+	}
+
+	private static final DecimalFormat SKYLINE_DF = new DecimalFormat(".#");
+	private static final DecimalFormat SKYLINE_PEAK_BOUNDARIES_DF = new DecimalFormat("#");
+
+	public static String formatForSkyline(String sequence, AminoAcidConstants aaConstants) {
+		return formatForSkyline(sequence, aaConstants, SKYLINE_DF);
+	}
+	
+	public static String formatForSkylinePeakBoundaries(String sequence, AminoAcidConstants aaConstants) {
+		return formatForSkyline(sequence, aaConstants, SKYLINE_PEAK_BOUNDARIES_DF);
+	}
+	
+	public static String formatForSkyline(String sequence, AminoAcidConstants aaConstants, DecimalFormat df) {
+		char[] ca=sequence.toCharArray();
+		TCharFloatHashMap fixedMods=aaConstants.getFixedMods();
+		
+		ArrayList<String> aas=new ArrayList<String>();
+		for (int i = 0; i < ca.length; i++) {
+			if (ca[i]=='[') {
+				StringBuilder sb=new StringBuilder();
+				i++;
+				while (ca[i]!=']') {
+					sb.append(ca[i]);
+					i++;
+				}
+				if (aas.size()==0) {
+					// handling of n-termini mods assumes you can't have multiple []s in a row
+					i++;
+					aas.add(Character.toString(ca[i]));
+				}
+				String massText = sb.toString();
+				double modificationMass = Double.valueOf(massText);
+				aas.set(aas.size()-1, aas.get(aas.size()-1)+(modificationMass>=0?"[+":"[")+df.format(modificationMass)+"]");
+			} else {
+				aas.add(Character.toString(ca[i]));
+			}
+		}
+		
+		StringBuilder sb=new StringBuilder();
+		for (String aa : aas) {
+			sb.append(aa);
+			if (aa.length()==1) {
+				char aaChar=aa.charAt(0);
+				if (fixedMods.contains(aaChar)) {
+					float mass=fixedMods.get(aaChar);
+					if (mass!=0.0f) {
+						sb.append((mass>=0?"[+":"[")+df.format(mass)+"]");
+					}
+				}
+			}
+		}
+		return sb.toString();
 	}
 	
 }
