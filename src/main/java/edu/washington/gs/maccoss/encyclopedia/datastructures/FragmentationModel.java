@@ -58,7 +58,7 @@ public class FragmentationModel {
 		float[] unitCorrelation=new float[masses.length];
 		Arrays.fill(unitCorrelation, 1.0f);
 
-		String sequence=getModifiedSequence();
+		String sequence=getModifiedSequence(params.getAAConstants());
 		double precursorMZ=getChargedMass(precursorCharge);
 
 		return new AnnotatedLibraryEntry(filename, accessions, 1, precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, masses, unitIntensities, unitCorrelation, annotationList.toArray(new String[annotationList.size()]));
@@ -77,10 +77,26 @@ public class FragmentationModel {
 		return new Pair<Character, Double>(c, null);
 	}
 	
-	public String getModifiedSequence() {
+	public String getModifiedSequence(AminoAcidConstants aaConstants) {
+		TCharDoubleHashMap fixedMods=aaConstants.getFixedMods();
+		
 		StringBuilder sb=new StringBuilder();
-		for (String string : aas) {
-			sb.append(string);
+		for (String aa : aas) {
+			sb.append(aa);
+
+			if (aa.length()==1) {
+				char aaChar=aa.charAt(0);
+				if (fixedMods.contains(aaChar)) {
+					double mass=fixedMods.get(aaChar);
+					if (mass!=0.0f) {
+						String formattedMass=Double.toString(mass);
+						if (formattedMass.charAt(0)!='+'&&formattedMass.charAt(0)!='-') {
+							formattedMass="+"+formattedMass;
+						}
+						sb.append("["+formattedMass+"]");
+					}
+				}
+			}
 		}
 		return sb.toString();
 	}

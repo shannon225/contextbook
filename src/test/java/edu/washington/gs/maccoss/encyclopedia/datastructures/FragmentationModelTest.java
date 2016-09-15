@@ -35,18 +35,34 @@ public class FragmentationModelTest extends TestCase {
 
 		peptideModSeq=FragmentationModel.formatForEncyclopeDIA(sequence, PARAMETERS.getAAConstants());
 		assertEquals("A[+42.0]QRHS[+79.96633]DSC[+57.0214635]C[+57.0214635]SLEEK", peptideModSeq);
+
+		peptideModSeq=FragmentationModel.formatForEncyclopeDIA("A[+42.0]QRHS[+79.96633]DSC[+57.0]C[+57.0]SLEEK", PARAMETERS.getAAConstants());
+		assertEquals("A[+42.0]QRHS[+79.96633]DSC[+57.0]C[+57.0]SLEEK", peptideModSeq);
+
+		sequence="Q[-17.0]QRHS[+79.96633]DSCCSLEEK";
+		peptideModSeq=FragmentationModel.formatForSkyline(sequence, PARAMETERS.getAAConstants());
+		assertEquals("Q[-17.0]QRHS[+80.0]DSC[+57.0]C[+57.0]SLEEK", peptideModSeq);
+
+		peptideModSeq=FragmentationModel.formatForSkylinePeakBoundaries(sequence, PARAMETERS.getAAConstants());
+		assertEquals("Q[-17]QRHS[+80]DSC[+57]C[+57]SLEEK", peptideModSeq);
+
+		peptideModSeq=FragmentationModel.formatForEncyclopeDIA(sequence, PARAMETERS.getAAConstants());
+		assertEquals("Q[-17.0]QRHS[+79.96633]DSC[+57.0214635]C[+57.0214635]SLEEK", peptideModSeq);
+
+		peptideModSeq=FragmentationModel.formatForEncyclopeDIA("Q[-17.0]QRHS[+79.96633]DSC[+57.0]C[+57.0]SLEEK", PARAMETERS.getAAConstants());
+		assertEquals("Q[-17.0]QRHS[+79.96633]DSC[+57.0]C[+57.0]SLEEK", peptideModSeq);
 	}
 	
 	public void testGetModifiedSequence() {
 		String sequence="PEPT[+80]IDER";
 		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
 
-		assertEquals("PEPT[+80.0]IDER", model.getModifiedSequence());
+		assertEquals("PEPT[+80.0]IDER", model.getModifiedSequence(PARAMETERS.getAAConstants()));
 
 		sequence="[-17]EPTIDER";
 		model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
 
-		assertEquals("E[-17.0]PTIDER", model.getModifiedSequence());
+		assertEquals("E[-17.0]PTIDER", model.getModifiedSequence(PARAMETERS.getAAConstants()));
 	}
 
 	public void testPrimaryIons() {
