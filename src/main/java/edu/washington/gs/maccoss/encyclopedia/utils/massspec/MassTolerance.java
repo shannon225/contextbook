@@ -132,6 +132,14 @@ public class MassTolerance {
 		return intensity;
 	}
 	
+	public float[] getIntegratedIntensities(double[] masses, float[] intensities, double[] targets) {
+		float[] targetIntensities=new float[targets.length];
+		for (int i=0; i<targets.length; i++) {
+			targetIntensities[i]=getIntegratedIntensity(masses, intensities, targets[i]);
+		}
+		return targetIntensities;
+	}
+	
 	/**
 	 * @param peaks -- assumes sorted array of peaks
 	 * @param target

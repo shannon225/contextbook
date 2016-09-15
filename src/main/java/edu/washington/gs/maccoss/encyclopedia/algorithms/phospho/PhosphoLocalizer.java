@@ -11,6 +11,8 @@ import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
@@ -22,11 +24,14 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
@@ -52,8 +57,8 @@ public class PhosphoLocalizer {
 	public PhosphoLocalizationData runPhosphoLocalization(PSMData psmdata, ArrayList<Spectrum> stripes) {
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(psmdata.getPeptideModSeq(), params.getAAConstants());
 		if (permutations.size()==1) {
-			System.out.println("single\t"+psmdata.getPeptideModSeq()+"\t1\t1\t0\t1000");
-			return new PhosphoLocalizationData(new HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>>(), new HashMap<String, XYTrace[]>(), new HashMap<String, XYPoint>());
+			//System.out.println("single\t"+psmdata.getPeptideModSeq()+"\t1\t1\t0\t1000");
+			return new PhosphoLocalizationData(new HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>>(), new HashMap<String, XYTrace[]>(), new HashMap<String, XYPoint>(), new HashMap<String, TransitionRefinementData>());
 		} else {
 			PhosphoLocalizationData multiple=extractPhosphoForms(psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes);
 			return multiple;
@@ -79,7 +84,7 @@ public class PhosphoLocalizer {
 		}
 		int movingAverageLength=Math.round(params.getExpectedPeakWidth()/dutyCycle/2.0f);
 		
-		float duration=5f*60f; // search for 5 minutes
+		float duration=6f*60f; // search for 6 minutes
 
 		ArrayList<Spectrum> stripes=getScanSubset(retentionTime-duration, retentionTime+duration, allScansInStripe);
 		
@@ -146,6 +151,7 @@ public class PhosphoLocalizer {
 		HashMap<String, XYTrace[]> uniqueFragmentIons=new HashMap<String, XYTrace[]>();
 		HashMap<String, XYPoint> localizationScores=new HashMap<String, XYPoint>();
 		
+		HashMap<String, TransitionRefinementData> passingForms=new HashMap<String, TransitionRefinementData>();
 		TFloatArrayList formsRT=new TFloatArrayList();
 		TFloatArrayList scores=new TFloatArrayList(); 
 		
@@ -207,19 +213,117 @@ public class PhosphoLocalizer {
 			if (maxRawScore>2f) {
 				formsRT.add(bestRT);
 				alreadyTaken.addAll(Arrays.asList(targets));
-				//System.out.println(targetPeptideName+" kept, score: "+uniqueCalculator.getMaxRawScore());
+				TransitionRefinementData quantData=quantifyPeptide(targetPeptide, ions, bestRT, stripes, false);
+				passingForms.put(targetPeptideName, quantData);
+				
 			}
 
 			scores.add(maxRawScore);
 		}
 		
-		if (formsRT.size()==0) {
+		/*if (formsRT.size()==0) {
 			System.out.println("multiple\t"+peptideModSeqs.get(0)+"\t"+peptideModSeqs.size()+"\t0\t0\t0");
 		} else {
 			System.out.println("multiple\t"+peptideModSeqs.get(0)+"\t"+peptideModSeqs.size()+"\t"+formsRT.size()+"\t"+(formsRT.max()-formsRT.min())+"\t"+scores.max());
+		}*/
+		
+		return new PhosphoLocalizationData(allVsUniqueList, uniqueFragmentIons, localizationScores, passingForms);
+	}
+	
+	public TransitionRefinementData quantifyPeptide(String peptideModSeq, double[] targetMasses, float targetRT, ArrayList<Spectrum> stripes, boolean limitToQuantifiable) {
+		float bestDelta=Float.MAX_VALUE;
+		float[] bestIntensities=null;
+		ArrayList<float[]> intensityList=new ArrayList<float[]>();
+		TFloatArrayList retentionTimes=new TFloatArrayList();
+		for (int k=0; k<stripes.size(); k++) {
+			Spectrum spectrum=stripes.get(k);
+			retentionTimes.add(spectrum.getScanStartTime());
+			float delta=Math.abs(spectrum.getScanStartTime()-targetRT);
+			float[] integratedIntensities=params.getFragmentTolerance().getIntegratedIntensities(spectrum.getMassArray(), spectrum.getIntensityArray(), targetMasses);
+			intensityList.add(integratedIntensities);
+			if (delta<bestDelta) {
+				bestDelta=delta;
+				bestIntensities=integratedIntensities;
+			}
+		}
+		// get each scan (fragments by RT)
+		TFloatArrayList[] traces=new TFloatArrayList[bestIntensities.length];
+		@SuppressWarnings("unchecked")
+		ArrayList<XYZPoint>[] deltaMassesByRT=new ArrayList[bestIntensities.length];
+		for (int i=0; i<traces.length; i++) {
+			traces[i]=new TFloatArrayList();
+			deltaMassesByRT[i]=new ArrayList<XYZPoint>();
+		}
+		for (int index=0; index<intensityList.size(); index++) {
+			float[] intensities=intensityList.get(index);
+			for (int i=0; i<intensities.length; i++) {
+				traces[i].add(intensities);
+			}
+		}
+
+		// invert each scan into fragment chromatograms (RTs by fragment)
+		ArrayList<float[]> chromatograms=new ArrayList<float[]>();
+		ArrayList<ArrayList<XYZPoint>> chromatogramDeltaMassesByRT=new ArrayList<ArrayList<XYZPoint>>();
+		TFloatArrayList keptIntensities=new TFloatArrayList();
+		TDoubleArrayList keptMasses=new TDoubleArrayList();
+		for (int i=0; i<bestIntensities.length; i++) {
+			if (bestIntensities[i]>0.0f) {
+				float[] chromatogram=traces[i].toArray();
+				chromatogram=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatogram);
+				chromatograms.add(chromatogram);
+				chromatogramDeltaMassesByRT.add(deltaMassesByRT[i]);
+				keptIntensities.add(bestIntensities[i]);
+				keptMasses.add(targetMasses[i]);
+			}
+		}
+
+		// identify transitions
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions(peptideModSeq, keptMasses.toArray(), chromatograms, retentionTimes.toArray());
+		float[] correlations=data.getCorrelationArray();
+		float[] integrations=data.getIntegrationArray();
+
+		TDoubleArrayList mzs=new TDoubleArrayList();
+		TFloatArrayList intens=new TFloatArrayList();
+		TFloatArrayList deltaMasses=new TFloatArrayList(); // will ultimately be the length of the correlations array
+
+		float correlationThreshold=limitToQuantifiable?TransitionRefiner.quantitativeCorrelationThreshold:-1f;
+		for (int i=0; i<keptIntensities.size(); i++) {
+			// calculate delta mass for each fragment ion
+			Range rtRange=data.getRange();
+			
+			float totalDeltaMasses=0.0f;
+			float totalIntensities=0.0f;
+			for (XYZPoint point : chromatogramDeltaMassesByRT.get(i)) {
+				if (rtRange.contains((float)point.getX())) {
+					totalDeltaMasses+=point.getY();
+					totalIntensities+=point.getZ();
+				}
+			}
+			
+			float deltaMass=0.0f;
+			if (totalIntensities>0.0f) {
+				deltaMass=totalDeltaMasses/totalIntensities;
+			}
+			deltaMasses.add(deltaMass);
+			
+			// generate spectrum peaks for only each "kept" fragment ion
+			if (correlations[i]>=correlationThreshold) {
+				// grab mz
+				if (keptIntensities.get(i)>0) {
+					mzs.add(keptMasses.get(i));
+					intens.add(integrations[i]);
+				}
+			}
 		}
 		
-		return new PhosphoLocalizationData(allVsUniqueList, uniqueFragmentIons, localizationScores);
+		if (mzs.size()==0) return null;
+
+		// System.out.println(peptideModSeq+"\t"+keptPeaks.size()+"\t"+count+"\t"+quantCount);
+
+		double[] massArray=mzs.toArray();
+		float[] intensityArray=intens.toArray();
+		float[] deltaMassArray=deltaMasses.toArray();
+		return data.addPeakData(deltaMassArray, massArray, intensityArray, retentionTimes.toArray());
 	}
 
 	public static String getLeftAnnotation(String targetPeptide) {
