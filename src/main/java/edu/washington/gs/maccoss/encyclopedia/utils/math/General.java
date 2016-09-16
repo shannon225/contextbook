@@ -7,6 +7,16 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
 
 public class General {
 	
+	public static int numberOfOccurances(String s, String target) {
+		int indexOf=s.indexOf(target);
+		int count=0;
+		while (indexOf>=0) {
+			count++;
+			indexOf=s.indexOf(target, indexOf+target.length());
+		}
+		return count;
+	}
+	
 	public static float[] toFloatArray(double[] a) {
 		float[] f=new float[a.length];
 		for (int i=0; i<f.length; i++) {

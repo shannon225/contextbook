@@ -25,15 +25,18 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	private final Optional<float[]> intensityArray; // for every quantified ion
 	
 	private final Optional<float[]> rtArray;
-	private Optional<HashMap<String, TransitionRefinementData>> phosphoLocalizationData;
-	private Optional<String> localizationPeptideModSeq;
-	private Optional<Float> localizationScore;
 	
 	private final String peptideModSeq;
 	private final byte precursorCharge;
 	
+	// NOTE: with mods, the cannonical form points to the modificationQuantData
+	// map of all possible forms. Individual forms are specified as
+	// localizationData. Either set one or the other of these! Don't set both!
+	private Optional<ModificationLocalizationData> localizationData;
+	private Optional<HashMap<String, TransitionRefinementData>> modificationQuantData;
+	
 	public TransitionRefinementData(String peptideModSeq, byte precursorCharge, double[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range) {
-		this(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, null, null, null, null, null, null, null);
+		this(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, null, null, null, null, null, null);
 	}
 
 	/**
@@ -45,7 +48,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	 * @param massArray CAN BE NULL
 	 * @param intensityArray CAN BE NULL
 	 */
-	TransitionRefinementData(String peptideModSeq, byte precursorCharge, double[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range, float[] deltaMassArray, double[] massArray, float[] intensityArray, float[] rtArray, Float localizationScore, String localizationPeptideModSeq, HashMap<String, TransitionRefinementData> phosphoData) {
+	TransitionRefinementData(String peptideModSeq, byte precursorCharge, double[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range, float[] deltaMassArray, double[] massArray, float[] intensityArray, float[] rtArray, ModificationLocalizationData localizationData, HashMap<String, TransitionRefinementData> modificationQuantData) {
 		this.peptideModSeq=peptideModSeq;
 		this.precursorCharge=precursorCharge;
 		this.fragmentMassArray=fragmentMassArray;
@@ -59,9 +62,8 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		this.massArray=Optional.ofNullable(massArray);
 		this.intensityArray=Optional.ofNullable(intensityArray);
 		this.rtArray=Optional.ofNullable(rtArray);
-		this.localizationScore=Optional.ofNullable(localizationScore);
-		this.localizationPeptideModSeq=Optional.ofNullable(localizationPeptideModSeq);
-		phosphoLocalizationData=Optional.ofNullable(phosphoData);
+		this.localizationData=Optional.ofNullable(localizationData);
+		this.modificationQuantData=Optional.ofNullable(modificationQuantData);
 	}
 	
 	@Override
@@ -90,22 +92,19 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		return precursorCharge;
 	}
 	
-	public void setPhosphoLocalizationData(Optional<HashMap<String, TransitionRefinementData>> phosphoLocalizationData) {
-		this.phosphoLocalizationData=phosphoLocalizationData;
+	public void setModificationLocalizationData(Optional<ModificationLocalizationData> newLocalizationData) {
+		this.localizationData=newLocalizationData;
 	}
-	public Optional<HashMap<String, TransitionRefinementData>> getPhosphoLocalizationData() {
-		return phosphoLocalizationData;
+	public void setModificationQuantData(Optional<HashMap<String, TransitionRefinementData>> newQuantData) {
+		this.modificationQuantData=newQuantData;
 	}
-	public void setLocalizationScore(Optional<String> localizationPeptideModSeq, Optional<Float> localizationScore) {
-		this.localizationPeptideModSeq=localizationPeptideModSeq;
-		this.localizationScore=localizationScore;
+	public Optional<ModificationLocalizationData> getLocalizationData() {
+		return localizationData;
 	}
-	public Optional<Float> getLocalizationScore() {
-		return localizationScore;
+	public Optional<HashMap<String, TransitionRefinementData>> getModificationQuantData() {
+		return modificationQuantData;
 	}
-	public Optional<String> getLocalizationPeptideModSeq() {
-		return localizationPeptideModSeq;
-	}
+	
 	public Pair<Float, Integer> getTopNIntensity(float minimumCorrelation, int n) {
 		TFloatArrayList intensities=new TFloatArrayList();
 		for (int i=0; i<correlationArray.length; i++) {
@@ -170,7 +169,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	 * @return
 	 */
 	public TransitionRefinementData addPeakData(float[] deltaMass, double[] mass, float[] intensity, float[] rts) {
-		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, deltaMass, mass, intensity, rts, localizationScore.isPresent()?localizationScore.get():null, localizationPeptideModSeq.isPresent()?localizationPeptideModSeq.get():null, phosphoLocalizationData.isPresent()?phosphoLocalizationData.get():null);
+		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, deltaMass, mass, intensity, rts, localizationData.isPresent()?localizationData.get():null, modificationQuantData.isPresent()?modificationQuantData.get():null);
 	}
 	
 	public double[] getFragmentMassArray() {

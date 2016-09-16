@@ -12,6 +12,7 @@ import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
@@ -37,6 +38,8 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class PhosphoLocalizer {
+	public static final int NOMINAL_MASS=80;
+	private static final String PHOSPHO_MASS_TAG="[+79.96633]";
 	private final StripeFileInterface diaFile;
 	private final SearchParameters params;
 	private final BackgroundFrequencyCalculator background;
@@ -217,7 +220,11 @@ public class PhosphoLocalizer {
 				
 				ArrayList<Spectrum> localStripes=getScanSubset(bestRT-params.getExpectedPeakWidth(), bestRT+params.getExpectedPeakWidth(), allScansInStripe);
 				TransitionRefinementData quantData=quantifyPeptide(targetPeptide, precursorCharge, ions, bestRT, localStripes, false);
-				quantData.setLocalizationScore(Optional.of(targetPeptideName), Optional.of(Float.valueOf(maxRawScore)));
+				int numberOfMods=FragmentationModel.getNumberOfMods(targetPeptide, NOMINAL_MASS);
+				
+				ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideName, maxRawScore, numberOfMods, isLocalized(targetPeptideName));
+
+				quantData.setModificationLocalizationData(Optional.of(modData));
 				passingForms.put(targetPeptideName, quantData);
 				
 			}
@@ -327,6 +334,37 @@ public class PhosphoLocalizer {
 		float[] deltaMassArray=deltaMasses.toArray();
 		return data.addPeakData(deltaMassArray, massArray, intensityArray, retentionTimes.toArray());
 	}
+	
+	public static boolean isLocalized(String targetPeptideName) {
+		char[] ca=targetPeptideName.toCharArray();
+
+		for (int i = 0; i < ca.length; i++) {
+			if (ca[i]=='(') {
+				StringBuilder sb=new StringBuilder();
+				i++;
+				while (ca[i]!=')') {
+					sb.append(ca[i]);
+					i++;
+				}
+				String massText = sb.toString();
+				int mods=FragmentationModel.getNumberOfMods(massText, NOMINAL_MASS);
+				int modables=getNumberOfSTYs(massText);
+				if (modables>mods) return false;
+			}
+		}
+		return true;
+	}
+	
+	private static int getNumberOfSTYs(String sequence) {
+		int total=0;
+		for (int i=0; i<sequence.length(); i++) {
+			char c=sequence.charAt(i);
+			if (c=='S'||c=='T'||c=='Y') {
+				total++;
+			}
+		}
+		return total;
+	}
 
 	public static String getLeftAnnotation(String targetPeptide) {
 		StringBuilder sb=new StringBuilder(targetPeptide);
@@ -338,23 +376,21 @@ public class PhosphoLocalizer {
 			}
 		}
 		
-		String phospho="[+79.96633]";
-		int index=sb.lastIndexOf(phospho);
-		sb.insert(index+phospho.length(), ")");
+		int index=sb.lastIndexOf(PHOSPHO_MASS_TAG);
+		sb.insert(index+PHOSPHO_MASS_TAG.length(), ")");
 		String targetPeptideName=sb.toString();
 		return targetPeptideName;
 	}
 
 	public static String getRightAnnotation(String targetPeptide) {
 		StringBuilder sb=new StringBuilder(targetPeptide);
-		String phospho="[+79.96633]";
-		int index=sb.indexOf(phospho);
+		int index=sb.indexOf(PHOSPHO_MASS_TAG);
 		sb.insert(index-1, "(");
 
-		int lastIndex=sb.lastIndexOf(phospho);
+		int lastIndex=sb.lastIndexOf(PHOSPHO_MASS_TAG);
 		for (int j=sb.length()-1; j>=0; j--) {
-			if (j<lastIndex+phospho.length()) {
-				sb.insert(lastIndex+phospho.length(), ")");
+			if (j<lastIndex+PHOSPHO_MASS_TAG.length()) {
+				sb.insert(lastIndex+PHOSPHO_MASS_TAG.length(), ")");
 				break;
 			}
 			char c=sb.charAt(j);

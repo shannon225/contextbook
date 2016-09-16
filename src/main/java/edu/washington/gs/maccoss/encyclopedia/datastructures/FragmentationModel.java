@@ -284,6 +284,29 @@ public class FragmentationModel {
 		}
 		return new Triplet<double[], double[], String[]>(masses.toArray(), neutralLosses.toArray(), aas.toArray(new String[aas.size()]));
 	}
+	
+	public static int getNumberOfMods(String sequence, int nominalMass) {
+		char[] ca=sequence.toCharArray();
+
+		int total=0;
+		for (int i = 0; i < ca.length; i++) {
+			if (ca[i]=='[') {
+				StringBuilder sb=new StringBuilder();
+				i++;
+				while (ca[i]!=']') {
+					sb.append(ca[i]);
+					i++;
+				}
+				String massText = sb.toString();
+				double modificationMass = Double.valueOf(massText);
+				
+				if (Math.round(modificationMass)==nominalMass) {
+					total++;
+				}
+			}
+		}
+		return total;
+	}
 
 	private static final DecimalFormat SKYLINE_DF = new DecimalFormat(".#");
 	private static final DecimalFormat SKYLINE_PEAK_BOUNDARIES_DF = new DecimalFormat("#");

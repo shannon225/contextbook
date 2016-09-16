@@ -7,6 +7,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import junit.framework.TestCase;
 
 public class GeneralTest extends TestCase {
+	public void testNumberOfOccurances() {
+		String s="THISISATHESISTEST";
+		assertEquals(2, General.numberOfOccurances(s, "TH"));
+		assertEquals(3, General.numberOfOccurances(s, "IS"));
+	}
+	
 	public void testConcatenate() {
 		float[] a1=new float[] {1, 2, 3};
 		float[] a2=new float[] {4, 5, 6};

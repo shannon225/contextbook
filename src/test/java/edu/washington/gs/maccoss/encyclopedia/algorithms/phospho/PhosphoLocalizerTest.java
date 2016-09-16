@@ -142,6 +142,21 @@ public class PhosphoLocalizerTest extends TestCase {
 		return psmdata;
 	}
 	
+	public void testIsLocalized() {
+		String s="(S[+80.0])SSSR";
+		assertTrue(PhosphoLocalizer.isLocalized(s));
+		s="(S[+80.0]S)SSR";
+		assertFalse(PhosphoLocalizer.isLocalized(s));
+		s="(S[+80.0]S[+80.0])SSR";
+		assertTrue(PhosphoLocalizer.isLocalized(s));
+		s="(S[+80.0]S[+80.0]S)SR";
+		assertFalse(PhosphoLocalizer.isLocalized(s));
+		s="(S[+80.0])SS(S[+80.0])R";
+		assertTrue(PhosphoLocalizer.isLocalized(s));
+		s="(S[+80.0])S(SS[+80.0])R";
+		assertFalse(PhosphoLocalizer.isLocalized(s));
+	}
+	
 	public void testGetUniqueFragmentIons() {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
 		
