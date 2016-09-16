@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
@@ -213,7 +214,10 @@ public class PhosphoLocalizer {
 			if (maxRawScore>2f) {
 				formsRT.add(bestRT);
 				alreadyTaken.addAll(Arrays.asList(targets));
-				TransitionRefinementData quantData=quantifyPeptide(targetPeptide, ions, bestRT, stripes, false);
+				
+				ArrayList<Spectrum> localStripes=getScanSubset(bestRT-params.getExpectedPeakWidth(), bestRT+params.getExpectedPeakWidth(), allScansInStripe);
+				TransitionRefinementData quantData=quantifyPeptide(targetPeptide, precursorCharge, ions, bestRT, localStripes, false);
+				quantData.setLocalizationScore(Optional.of(targetPeptideName), Optional.of(Float.valueOf(maxRawScore)));
 				passingForms.put(targetPeptideName, quantData);
 				
 			}
@@ -230,7 +234,7 @@ public class PhosphoLocalizer {
 		return new PhosphoLocalizationData(allVsUniqueList, uniqueFragmentIons, localizationScores, passingForms);
 	}
 	
-	public TransitionRefinementData quantifyPeptide(String peptideModSeq, double[] targetMasses, float targetRT, ArrayList<Spectrum> stripes, boolean limitToQuantifiable) {
+	public TransitionRefinementData quantifyPeptide(String peptideModSeq, byte precursorCharge, double[] targetMasses, float targetRT, ArrayList<Spectrum> stripes, boolean limitToQuantifiable) {
 		float bestDelta=Float.MAX_VALUE;
 		float[] bestIntensities=null;
 		ArrayList<float[]> intensityList=new ArrayList<float[]>();
@@ -257,7 +261,7 @@ public class PhosphoLocalizer {
 		for (int index=0; index<intensityList.size(); index++) {
 			float[] intensities=intensityList.get(index);
 			for (int i=0; i<intensities.length; i++) {
-				traces[i].add(intensities);
+				traces[i].add(intensities[i]);
 			}
 		}
 
@@ -278,7 +282,7 @@ public class PhosphoLocalizer {
 		}
 
 		// identify transitions
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions(peptideModSeq, keptMasses.toArray(), chromatograms, retentionTimes.toArray());
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions(peptideModSeq, precursorCharge, keptMasses.toArray(), chromatograms, retentionTimes.toArray());
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 
@@ -315,8 +319,6 @@ public class PhosphoLocalizer {
 				}
 			}
 		}
-		
-		if (mzs.size()==0) return null;
 
 		// System.out.println(peptideModSeq+"\t"+keptPeaks.size()+"\t"+count+"\t"+quantCount);
 

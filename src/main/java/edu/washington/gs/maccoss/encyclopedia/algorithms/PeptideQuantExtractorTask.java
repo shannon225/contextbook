@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -78,9 +79,12 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	@Override
 	protected Nothing process() {
 		Optional<TransitionRefinementData> spectrum=extractSpectrum(psmdata.getAccessions(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable);
-		Optional<PhosphoLocalizationData> phosphoData=Optional.empty();
+		Optional<HashMap<String, TransitionRefinementData>> phosphoData=Optional.empty();
 		if (params.isRunPhosphoLocalization()&&localizer.isPresent()) {
-			phosphoData=Optional.ofNullable(runLocalization());
+			PhosphoLocalizationData localizationData=runLocalization();
+			if (localizationData!=null) {
+				phosphoData=Optional.ofNullable(localizationData.getPassingForms());
+			}
 		}
 		if (spectrum.isPresent()) {
 			// FIXME need to not add duplicates!!!! for now just run SQL:
@@ -173,7 +177,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		}
 		
 		// identify transitions
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions(unitEntry.getPeptideModSeq(), fragmentMasses.toArray(), chromatograms, retentionTimes.toArray());
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions(unitEntry.getPeptideModSeq(), unitEntry.getPrecursorCharge(), fragmentMasses.toArray(), chromatograms, retentionTimes.toArray());
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 
@@ -212,8 +216,6 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 				}
 			}
 		}
-		
-		if (mzs.size()==0) return null;
 
 		// System.out.println(peptideModSeq+"\t"+keptPeaks.size()+"\t"+count+"\t"+quantCount);
 

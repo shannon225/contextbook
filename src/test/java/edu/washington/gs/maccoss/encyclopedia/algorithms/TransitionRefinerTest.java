@@ -74,7 +74,7 @@ public class TransitionRefinerTest {
 		}
 		double[] fragmentMasses=masses.toArray();
 
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions("EIGNIISDAMK", fragmentMasses, chromatograms, rts, true);
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions("EIGNIISDAMK", (byte)2, fragmentMasses, chromatograms, rts, true);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		for (int i=0; i<integrations.length; i++) {
@@ -134,7 +134,7 @@ public class TransitionRefinerTest {
 		}
 		double[] fragmentMasses=masses.toArray();
 
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions("ASVAAQQQEEAR", fragmentMasses, chromatograms, rts, true);
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions("ASVAAQQQEEAR", (byte)2, fragmentMasses, chromatograms, rts, true);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		for (int i=0; i<integrations.length; i++) {

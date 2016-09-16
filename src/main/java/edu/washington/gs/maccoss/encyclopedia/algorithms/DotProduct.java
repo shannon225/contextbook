@@ -57,8 +57,11 @@ public class DotProduct implements PSMScorer {
 			if (compare==0) {
 				float score=libraryIntensities[libraryIndex]*spectrumIntensities[spectrumIndex];
 				float deltaMass=(float)(targetMass-spectrumMasses[spectrumIndex]);
+				if (peakscores[libraryIndex]!=null) {
+					score+=peakscores[libraryIndex].getScore();
+				}
 				peakscores[libraryIndex]=new PeakScores(score, new FragmentIon(targetMass, (byte)0, IonType.y), deltaMass); // FIXME target is a hack!
-				libraryIndex++;
+				//libraryIndex++; // could match multiple acquired peaks to the same library peak
 				spectrumIndex++;
 			} else if (compare>0) {
 				spectrumIndex++;

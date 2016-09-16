@@ -252,68 +252,25 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		Connection c=getConnection();
 		try {
 			PreparedStatement peptidePrep=c.prepareStatement(
-					"INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+					"INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 			PreparedStatement fragmentPrep=c.prepareStatement(
 					"INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, IonType, FragmentMass, Correlation, Background, DeltaMassPPM, Intensity) VALUES (?,?,?,?,?,?,?,?,?,?)");
 			try {
 				for (LibraryEntry recast : uniqueEntries) {
 					IntegratedLibraryEntry entry=(IntegratedLibraryEntry)recast;
+					String sourceFile=entry.getSource();
 					TransitionRefinementData data=entry.getRefinementData();
-
-					float[] correlationArray=data.getCorrelationArray();
-					float[] integrationArray=data.getIntegrationArray();
-					float[] backgroundArray=data.getBackgroundArray();
-
-					double[] fragmentMassArray=data.getFragmentMassArray();
-					float[] deltaMassArray=data.getDeltaMassArray().get();
-					float[] ppmArray=new float[deltaMassArray.length];
-
-					float bestCorrelation=-1.0f;
-					float bestDeltaMass=10.0f;
-					for (int i=0; i<deltaMassArray.length; i++) {
-						ppmArray[i]=deltaMassArray[i]*1000000.0f/(float)fragmentMassArray[i];
-						if (correlationArray[i]>bestCorrelation) {
-							bestCorrelation=correlationArray[i];
-							bestDeltaMass=ppmArray[i];
+					
+					if (data.getPhosphoLocalizationData().isPresent()) {
+						HashMap<String, TransitionRefinementData> forms=data.getPhosphoLocalizationData().get();
+						for (Entry<String, TransitionRefinementData> mapEntry : forms.entrySet()) {
+							prepareQuantData(mapEntry.getValue(), sourceFile, inferrer, peptidePrep, fragmentPrep);
 						}
-					}
-
-					Pair<Float, Integer> topN;
-					if (inferrer.isPresent()) {
-						topN=inferrer.get().getTopNIntensity(entry, data);
+						if (forms.size()==0) {
+							prepareQuantData(data, sourceFile, inferrer, peptidePrep, fragmentPrep);
+						}
 					} else {
-						topN=data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
-					}
-
-					peptidePrep.setInt(1, entry.getPrecursorCharge());
-					peptidePrep.setString(2, entry.getPeptideModSeq());
-					peptidePrep.setString(3, entry.getPeptideSeq());
-					peptidePrep.setString(4, entry.getSource());
-					peptidePrep.setFloat(5, data.getRange().getStart());
-					peptidePrep.setFloat(6, data.getRange().getStop());
-					peptidePrep.setFloat(7, topN.x);
-					peptidePrep.setInt(8, topN.y);
-					peptidePrep.setFloat(9, bestCorrelation);
-					peptidePrep.setFloat(10, bestDeltaMass);
-					byte[] intensityByteArray=ByteConverter.toByteArray(data.getMedianChromatogram());
-					peptidePrep.setInt(11, intensityByteArray.length);
-					peptidePrep.setBytes(12, CompressionUtils.compress(intensityByteArray));
-					peptidePrep.addBatch();
-
-					for (int i=0; i<correlationArray.length; i++) {
-						if (correlationArray[i]>=TransitionRefiner.identificationCorrelationThreshold) {
-							fragmentPrep.setInt(1, entry.getPrecursorCharge());
-							fragmentPrep.setString(2, entry.getPeptideModSeq());
-							fragmentPrep.setString(3, entry.getPeptideSeq());
-							fragmentPrep.setString(4, entry.getSource());
-							fragmentPrep.setString(5, "BY");
-							fragmentPrep.setDouble(6, fragmentMassArray[i]);
-							fragmentPrep.setFloat(7, correlationArray[i]);
-							fragmentPrep.setFloat(8, backgroundArray[i]);
-							fragmentPrep.setFloat(9, ppmArray[i]);
-							fragmentPrep.setFloat(10, integrationArray[i]);
-							fragmentPrep.addBatch();
-						}
+						prepareQuantData(data, sourceFile, inferrer, peptidePrep, fragmentPrep);
 					}
 
 				}
@@ -327,6 +284,72 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			}
 		} finally {
 			c.close();
+		}
+	}
+
+	public void prepareQuantData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrer> inferrer, PreparedStatement peptidePrep, PreparedStatement fragmentPrep)
+			throws SQLException, IOException {
+		float[] correlationArray=data.getCorrelationArray();
+		float[] integrationArray=data.getIntegrationArray();
+		float[] backgroundArray=data.getBackgroundArray();
+
+		double[] fragmentMassArray=data.getFragmentMassArray();
+		float[] deltaMassArray=data.getDeltaMassArray().get();
+		float[] ppmArray=new float[deltaMassArray.length];
+
+		float bestCorrelation=-1.0f;
+		float bestDeltaMass=10.0f;
+		for (int i=0; i<deltaMassArray.length; i++) {
+			ppmArray[i]=deltaMassArray[i]*1000000.0f/(float)fragmentMassArray[i];
+			if (correlationArray[i]>bestCorrelation) {
+				bestCorrelation=correlationArray[i];
+				bestDeltaMass=ppmArray[i];
+			}
+		}
+
+		Pair<Float, Integer> topN;
+		if (inferrer.isPresent()) {
+			topN=inferrer.get().getTopNIntensity(data);
+		} else {
+			topN=data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
+		}
+
+		peptidePrep.setInt(1, data.getPrecursorCharge());
+		peptidePrep.setString(2, data.getPeptideModSeq());
+		peptidePrep.setString(3, data.getPeptideSeq());
+		peptidePrep.setString(4, sourceFile);
+		if (data.getLocalizationScore().isPresent()) {
+			peptidePrep.setString(5, data.getLocalizationPeptideModSeq().get());
+			peptidePrep.setFloat(6, data.getLocalizationScore().get().floatValue());
+		} else {
+			peptidePrep.setNull(5, Types.VARCHAR);
+			peptidePrep.setNull(6, Types.FLOAT);
+		}
+		peptidePrep.setFloat(7, data.getRange().getStart());
+		peptidePrep.setFloat(8, data.getRange().getStop());
+		peptidePrep.setFloat(9, topN.x);
+		peptidePrep.setInt(10, topN.y);
+		peptidePrep.setFloat(11, bestCorrelation);
+		peptidePrep.setFloat(12, bestDeltaMass);
+		byte[] intensityByteArray=ByteConverter.toByteArray(data.getMedianChromatogram());
+		peptidePrep.setInt(13, intensityByteArray.length);
+		peptidePrep.setBytes(14, CompressionUtils.compress(intensityByteArray));
+		peptidePrep.addBatch();
+
+		for (int i=0; i<correlationArray.length; i++) {
+			if (correlationArray[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+				fragmentPrep.setInt(1, data.getPrecursorCharge());
+				fragmentPrep.setString(2, data.getPeptideModSeq());
+				fragmentPrep.setString(3, data.getPeptideSeq());
+				fragmentPrep.setString(4, sourceFile);
+				fragmentPrep.setString(5, "BY");
+				fragmentPrep.setDouble(6, fragmentMassArray[i]);
+				fragmentPrep.setFloat(7, correlationArray[i]);
+				fragmentPrep.setFloat(8, backgroundArray[i]);
+				fragmentPrep.setFloat(9, ppmArray[i]);
+				fragmentPrep.setFloat(10, integrationArray[i]);
+				fragmentPrep.addBatch();
+			}
 		}
 	}
 
@@ -706,6 +729,11 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						s.execute("ALTER TABLE fragmentquants ADD COLUMN PeptideSeq string");
 						s.execute("ALTER TABLE peptidequants ADD COLUMN PeptideSeq string");
 					}
+
+					if (new Version(0, 1, 5).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
+						s.execute("ALTER TABLE peptidequants ADD COLUMN LocalizationPeptideModSeq string");
+						s.execute("ALTER TABLE peptidequants ADD COLUMN LocalizationScore double");
+					}
 				} catch (SQLException sqle) {
 					// the metadata table is missing, so do nothing and create
 					// it in the next line
@@ -720,7 +748,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				s.execute("CREATE TABLE IF NOT EXISTS proteins ( "+"PeptideSeq string not null, ProteinAccessions string not null, "+"PRIMARY KEY (PeptideSeq) "+")");
 
 				s.execute("CREATE TABLE IF NOT EXISTS peptidequants ( "
-						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null,"
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null,"
 						+"PRIMARY KEY (PrecursorCharge, PeptideModSeq, SourceFile), "
 						+"FOREIGN KEY (PrecursorCharge, PeptideModSeq, SourceFile) REFERENCES entries (PrecursorCharge, PeptideModSeq, SourceFile) "+")");
 

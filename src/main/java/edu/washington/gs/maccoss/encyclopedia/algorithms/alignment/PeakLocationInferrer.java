@@ -55,8 +55,8 @@ public class PeakLocationInferrer {
 		this.params=params;
 	}
 	
-	public Pair<Float, Integer> getTopNIntensity(PeptidePrecursor peptide, TransitionRefinementData data) {
-		double[] topN=bestIons.get(peptide.getPeptideModSeq());
+	public Pair<Float, Integer> getTopNIntensity(TransitionRefinementData data) {
+		double[] topN=bestIons.get(data.getPeptideModSeq());
 		double[] masses=data.getFragmentMassArray();
 		float[] intensities=data.getIntegrationArray();
 		

@@ -155,6 +155,9 @@ public class Encyclopedia {
 				return;
 			} catch (Exception e) {
 				// problem! so just continue on and overwrite old result
+				Logger.logLine("Found unexpected exception trying to read old results: ");
+				Logger.logException(e);
+				Logger.logLine("Just going to go ahead and reprocess this file!");
 			}
 		}
 		

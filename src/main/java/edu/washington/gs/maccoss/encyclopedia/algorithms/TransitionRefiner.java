@@ -89,7 +89,7 @@ public class TransitionRefiner {
 		}
 		double[] fragmentMasses=masses.toArray();
 		
-		TransitionRefinementData data=identifyTransitions("ASVAAQQQEEAR", fragmentMasses, chromatograms, rts, true);
+		TransitionRefinementData data=identifyTransitions("ASVAAQQQEEAR", (byte)2, fragmentMasses, chromatograms, rts, true);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		for (int i=0; i<integrations.length; i++) {
@@ -98,11 +98,11 @@ public class TransitionRefiner {
 		Charter.launchCharts("TITLE", getChartPanels(data));
 	}
 
-	public static TransitionRefinementData identifyTransitions(String peptideModSeq, double[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes) {
-		return identifyTransitions(peptideModSeq, fragmentMasses, chromatograms, retentionTimes, false);
+	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, double[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes) {
+		return identifyTransitions(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, retentionTimes, false);
 	}
-	static TransitionRefinementData identifyTransitions(String peptideModSeq, double[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, boolean plot) {
-		if (chromatograms.size()==0) return new TransitionRefinementData(new double[0], chromatograms, new float[0], new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]));
+	static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, double[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, boolean plot) {
+		if (chromatograms.size()==0) return new TransitionRefinementData(peptideModSeq, precursorCharge, new double[0], chromatograms, new float[0], new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]));
 		
 		// start across the entire width
 		ArrayList<float[]> normalizedChromatograms=normalize(chromatograms);
@@ -203,7 +203,7 @@ public class TransitionRefiner {
 			Charter.launchCharts(peptideModSeq+" chart", panels);
 		}
 		
-		return new TransitionRefinementData(fragmentMasses, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range);
+		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range);
 	}
 
 	/**

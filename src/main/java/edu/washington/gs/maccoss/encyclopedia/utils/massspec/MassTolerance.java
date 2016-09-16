@@ -118,6 +118,32 @@ public class MassTolerance {
 		return matches;
 	}
 	
+
+	public float[] getIntegratedIntensities(double[] masses, float[] intensities, double[] targets) {
+		if (targets.length==0||masses.length==0) return new float[0];
+		
+		float[] tics=new float[targets.length];
+		int libraryIndex=0;
+		int spectrumIndex=0;
+		while (true) {
+			double targetMass=targets[libraryIndex];
+			int compare=compareTo(targetMass, masses[spectrumIndex]);
+			if (compare==0) {
+				tics[libraryIndex]+=intensities[spectrumIndex];
+				//libraryIndex++; // could match multiple acquired peaks to the same library peak
+				spectrumIndex++;
+			} else if (compare>0) {
+				spectrumIndex++;
+			} else {
+				libraryIndex++;
+			}
+			if (libraryIndex>=targets.length) break;
+			if (spectrumIndex>=masses.length) break;
+		}
+		
+		return tics;
+	}
+	
 	/**
 	 * @param peaks -- assumes sorted array of peaks
 	 * @param target
@@ -130,14 +156,6 @@ public class MassTolerance {
 			intensity+=intensities[indicies[i]];
 		}
 		return intensity;
-	}
-	
-	public float[] getIntegratedIntensities(double[] masses, float[] intensities, double[] targets) {
-		float[] targetIntensities=new float[targets.length];
-		for (int i=0; i<targets.length; i++) {
-			targetIntensities[i]=getIntegratedIntensity(masses, intensities, targets[i]);
-		}
-		return targetIntensities;
 	}
 	
 	/**
