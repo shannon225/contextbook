@@ -29,6 +29,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
@@ -234,7 +235,7 @@ public class BlibFile extends SQLFile {
 					prep.setString(2, entry.getPeptideSeq()); // pepSeq
 					prep.setDouble(3, entry.getPrecursorMZ()); // precursorMZ
 					prep.setInt(4, entry.getPrecursorCharge()); // precursorCharge
-					String peptideModSeq=FragmentationModel.formatForSkyline(entry.getPeptideModSeq(), aaConstants);
+					String peptideModSeq=PeptideUtils.formatForSkyline(entry.getPeptideModSeq(), aaConstants);
 					prep.setString(5, peptideModSeq); // peptideModSeq
 					prep.setString(6, "-"); // prevAA
 					prep.setString(7, "-"); // nextAA

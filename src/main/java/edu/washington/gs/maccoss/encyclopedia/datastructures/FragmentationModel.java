@@ -1,6 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -12,6 +11,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
@@ -22,7 +22,7 @@ public class FragmentationModel {
 	private final String[] aas;
 	
 	public FragmentationModel(String modifiedSequence, AminoAcidConstants aaConstants) {
-		Triplet<double[], double[], String[]> tuple = getMasses(modifiedSequence, aaConstants);
+		Triplet<double[], double[], String[]> tuple=PeptideUtils.getMasses(modifiedSequence, aaConstants);
 		masses=tuple.x;
 		neutralLosses=tuple.y;
 		aas=tuple.z;
@@ -245,132 +245,4 @@ public class FragmentationModel {
 		return ionArray;
 	}
 
-	/**
-	 * triplet is (masses, neutral losses, AAs)
-	 * @param sequence
-	 * @return
-	 */
-	public static Triplet<double[], double[], String[]> getMasses(String sequence, AminoAcidConstants aaConstants) {
-		char[] ca=sequence.toCharArray();
-		
-		TDoubleArrayList masses=new TDoubleArrayList();
-		TDoubleArrayList neutralLosses=new TDoubleArrayList();
-		ArrayList<String> aas=new ArrayList<String>();
-		for (int i = 0; i < ca.length; i++) {
-			if (ca[i]=='[') {
-				StringBuilder sb=new StringBuilder();
-				i++;
-				while (ca[i]!=']') {
-					sb.append(ca[i]);
-					i++;
-				}
-				if (masses.size()==0) {
-					// handling of n-termini mods assumes you can't have multiple []s in a row
-					i++;
-					masses.add(aaConstants.getMass(ca[i]));
-					neutralLosses.add(0.0);
-					aas.add(Character.toString(ca[i]));
-				}
-				String massText = sb.toString();
-				double modificationMass = Double.valueOf(massText);
-				masses.set(masses.size()-1, masses.get(masses.size()-1)+modificationMass);
-				neutralLosses.set(masses.size()-1, MassConstants.getNeutralLoss(modificationMass));
-				aas.set(masses.size()-1, aas.get(masses.size()-1)+(modificationMass>=0?"[+":"[")+modificationMass+"]");
-			} else {
-				masses.add(aaConstants.getMass(ca[i]));
-				neutralLosses.add(0.0);
-				aas.add(Character.toString(ca[i]));
-			}
-		}
-		return new Triplet<double[], double[], String[]>(masses.toArray(), neutralLosses.toArray(), aas.toArray(new String[aas.size()]));
-	}
-	
-	public static int getNumberOfMods(String sequence, int nominalMass) {
-		char[] ca=sequence.toCharArray();
-
-		int total=0;
-		for (int i = 0; i < ca.length; i++) {
-			if (ca[i]=='[') {
-				StringBuilder sb=new StringBuilder();
-				i++;
-				while (ca[i]!=']') {
-					sb.append(ca[i]);
-					i++;
-				}
-				String massText = sb.toString();
-				double modificationMass = Double.valueOf(massText);
-				
-				if (Math.round(modificationMass)==nominalMass) {
-					total++;
-				}
-			}
-		}
-		return total;
-	}
-
-	private static final DecimalFormat SKYLINE_DF = new DecimalFormat(".#");
-	private static final DecimalFormat SKYLINE_PEAK_BOUNDARIES_DF = new DecimalFormat("#");
-
-	public static String formatForSkyline(String sequence, AminoAcidConstants aaConstants) {
-		return formatForSkyline(sequence, aaConstants, SKYLINE_DF);
-	}
-	
-	public static String formatForSkylinePeakBoundaries(String sequence, AminoAcidConstants aaConstants) {
-		return formatForSkyline(sequence, aaConstants, SKYLINE_PEAK_BOUNDARIES_DF);
-	}
-	
-	public static String formatForEncyclopeDIA(String sequence, AminoAcidConstants aaConstants) {
-		return formatForSkyline(sequence, aaConstants, null);
-	}
-	
-	public static String formatForSkyline(String sequence, AminoAcidConstants aaConstants, DecimalFormat df) {
-		char[] ca=sequence.toCharArray();
-		TCharDoubleHashMap fixedMods=aaConstants.getFixedMods();
-		
-		ArrayList<String> aas=new ArrayList<String>();
-		for (int i = 0; i < ca.length; i++) {
-			if (ca[i]=='[') {
-				StringBuilder sb=new StringBuilder();
-				i++;
-				while (ca[i]!=']') {
-					sb.append(ca[i]);
-					i++;
-				}
-				if (aas.size()==0) {
-					// handling of n-termini mods assumes you can't have multiple []s in a row
-					i++;
-					aas.add(Character.toString(ca[i]));
-				}
-				String massText = sb.toString();
-				double modificationMass = Double.valueOf(massText);
-				String formattedMass=df==null?massText:df.format(modificationMass);
-				if (formattedMass.charAt(0)!='+'&&formattedMass.charAt(0)!='-') {
-					formattedMass="+"+formattedMass;
-				}
-				aas.set(aas.size()-1, aas.get(aas.size()-1)+"["+formattedMass+"]");
-			} else {
-				aas.add(Character.toString(ca[i]));
-			}
-		}
-		
-		StringBuilder sb=new StringBuilder();
-		for (String aa : aas) {
-			sb.append(aa);
-			if (aa.length()==1) {
-				char aaChar=aa.charAt(0);
-				if (fixedMods.contains(aaChar)) {
-					double mass=fixedMods.get(aaChar);
-					if (mass!=0.0f) {
-						String formattedMass=df==null?Double.toString(mass):df.format(mass);
-						if (formattedMass.charAt(0)!='+'&&formattedMass.charAt(0)!='-') {
-							formattedMass="+"+formattedMass;
-						}
-						sb.append("["+formattedMass+"]");
-					}
-				}
-			}
-		}
-		return sb.toString();
-	}
-	
 }

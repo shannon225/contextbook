@@ -18,6 +18,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ThreadableTask;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -94,14 +95,14 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			if (canRunLocalization()) {
 				if (!phosphoData.isPresent()) {
 					// no need to localize since there's only one form, so annotate this directly on the data object
-					int numberOfMods=FragmentationModel.getNumberOfMods(psmdata.getPeptideModSeq(), PhosphoLocalizer.NOMINAL_MASS);
+					int numberOfMods=PeptideUtils.getNumberOfMods(psmdata.getPeptideModSeq(), PhosphoLocalizer.NOMINAL_MASS);
 					if (numberOfMods>0) {
 						float localizationScore=1000.0f;
 						data.setModificationLocalizationData(Optional.of(new ModificationLocalizationData(psmdata.getPeptideModSeq(), localizationScore, numberOfMods, true)));
 					}
 				} else if (phosphoData.get().size()==0) {
 					// no confident localizations, so annotate this directly on the data object
-					int numberOfMods=FragmentationModel.getNumberOfMods(psmdata.getPeptideModSeq(), PhosphoLocalizer.NOMINAL_MASS);
+					int numberOfMods=PeptideUtils.getNumberOfMods(psmdata.getPeptideModSeq(), PhosphoLocalizer.NOMINAL_MASS);
 					if (numberOfMods>0) {
 						float localizationScore=0.0f;
 						data.setModificationLocalizationData(Optional.of(new ModificationLocalizationData("("+psmdata.getPeptideModSeq()+")", localizationScore, numberOfMods, false)));

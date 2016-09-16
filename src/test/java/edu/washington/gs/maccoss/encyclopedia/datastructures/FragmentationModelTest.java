@@ -25,34 +25,6 @@ public class FragmentationModelTest extends TestCase {
 		}
 	}
 	
-	public void testSkylinePeptideModSeq() {
-		String sequence="A[+42.0]QRHS[+79.96633]DSCCSLEEK";
-		String peptideModSeq=FragmentationModel.formatForSkyline(sequence, PARAMETERS.getAAConstants());
-		assertEquals("A[+42.0]QRHS[+80.0]DSC[+57.0]C[+57.0]SLEEK", peptideModSeq);
-
-		peptideModSeq=FragmentationModel.formatForSkylinePeakBoundaries(sequence, PARAMETERS.getAAConstants());
-		assertEquals("A[+42]QRHS[+80]DSC[+57]C[+57]SLEEK", peptideModSeq);
-
-		peptideModSeq=FragmentationModel.formatForEncyclopeDIA(sequence, PARAMETERS.getAAConstants());
-		assertEquals("A[+42.0]QRHS[+79.96633]DSC[+57.0214635]C[+57.0214635]SLEEK", peptideModSeq);
-
-		peptideModSeq=FragmentationModel.formatForEncyclopeDIA("A[+42.0]QRHS[+79.96633]DSC[+57.0]C[+57.0]SLEEK", PARAMETERS.getAAConstants());
-		assertEquals("A[+42.0]QRHS[+79.96633]DSC[+57.0]C[+57.0]SLEEK", peptideModSeq);
-
-		sequence="Q[-17.0]QRHS[+79.96633]DSCCSLEEK";
-		peptideModSeq=FragmentationModel.formatForSkyline(sequence, PARAMETERS.getAAConstants());
-		assertEquals("Q[-17.0]QRHS[+80.0]DSC[+57.0]C[+57.0]SLEEK", peptideModSeq);
-
-		peptideModSeq=FragmentationModel.formatForSkylinePeakBoundaries(sequence, PARAMETERS.getAAConstants());
-		assertEquals("Q[-17]QRHS[+80]DSC[+57]C[+57]SLEEK", peptideModSeq);
-
-		peptideModSeq=FragmentationModel.formatForEncyclopeDIA(sequence, PARAMETERS.getAAConstants());
-		assertEquals("Q[-17.0]QRHS[+79.96633]DSC[+57.0214635]C[+57.0214635]SLEEK", peptideModSeq);
-
-		peptideModSeq=FragmentationModel.formatForEncyclopeDIA("Q[-17.0]QRHS[+79.96633]DSC[+57.0]C[+57.0]SLEEK", PARAMETERS.getAAConstants());
-		assertEquals("Q[-17.0]QRHS[+79.96633]DSC[+57.0]C[+57.0]SLEEK", peptideModSeq);
-	}
-	
 	public void testGetModifiedSequence() {
 		String sequence="PEPT[+80]IDER";
 		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
@@ -118,50 +90,6 @@ public class FragmentationModelTest extends TestCase {
 		double[] ys=FragmentIon.getMasses(model.getYIons());
 		for (int i=0; i<ys.length; i++) {
 			assertEquals(expectedY[i], ys[i], 0.001);
-		}
-	}
-
-	public void testGetMasses() {
-		String sequence="PEPTIDER";
-		double[] expected=new double[] {97.0528, 129.0426, 97.0528, 101.0477, 113.0841, 115.027, 129.0426, 156.1011};
-		double[] masses=FragmentationModel.getMasses(sequence, PARAMETERS.getAAConstants()).x;
-		for (int i=0; i<masses.length; i++) {
-			assertEquals(expected[i], masses[i], 0.001);
-		}
-
-		sequence="PEPT[+80]IDER";
-		expected=new double[] {97.0528, 129.0426, 97.0528, 101.0477+80.0, 113.0841, 115.027, 129.0426, 156.1011};
-		masses=FragmentationModel.getMasses(sequence, PARAMETERS.getAAConstants()).x;
-		for (int i=0; i<masses.length; i++) {
-			assertEquals(expected[i], masses[i], 0.001);
-		}
-
-		sequence="PE[-17]PTIDER";
-		expected=new double[] {97.0528, 129.0426-17.0, 97.0528, 101.0477, 113.0841, 115.027, 129.0426, 156.1011};
-		masses=FragmentationModel.getMasses(sequence, PARAMETERS.getAAConstants()).x;
-		for (int i=0; i<masses.length; i++) {
-			assertEquals(expected[i], masses[i], 0.001);
-		}
-
-		sequence="[-17]PEPTIDER";
-		expected=new double[] {97.0528-17.0, 129.0426, 97.0528, 101.0477, 113.0841, 115.027, 129.0426, 156.1011};
-		masses=FragmentationModel.getMasses(sequence, PARAMETERS.getAAConstants()).x;
-		for (int i=0; i<masses.length; i++) {
-			assertEquals(expected[i], masses[i], 0.001);
-		}
-
-		sequence="[+42]PEPTIDER";
-		expected=new double[] {97.0528+42.0, 129.0426, 97.0528, 101.0477, 113.0841, 115.027, 129.0426, 156.1011};
-		masses=FragmentationModel.getMasses(sequence, PARAMETERS.getAAConstants()).x;
-		for (int i=0; i<masses.length; i++) {
-			assertEquals(expected[i], masses[i], 0.001);
-		}
-
-		sequence="PEPTIDER[+14]";
-		expected=new double[] {97.0528, 129.0426, 97.0528, 101.0477, 113.0841, 115.027, 129.0426, 156.1011+14.0};
-		masses=FragmentationModel.getMasses(sequence, PARAMETERS.getAAConstants()).x;
-		for (int i=0; i<masses.length; i++) {
-			assertEquals(expected[i], masses[i], 0.001);
 		}
 	}
 

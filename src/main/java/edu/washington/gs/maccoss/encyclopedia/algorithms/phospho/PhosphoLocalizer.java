@@ -29,6 +29,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
@@ -220,7 +221,7 @@ public class PhosphoLocalizer {
 				
 				ArrayList<Spectrum> localStripes=getScanSubset(bestRT-params.getExpectedPeakWidth(), bestRT+params.getExpectedPeakWidth(), allScansInStripe);
 				TransitionRefinementData quantData=quantifyPeptide(targetPeptide, precursorCharge, ions, bestRT, localStripes, false);
-				int numberOfMods=FragmentationModel.getNumberOfMods(targetPeptide, NOMINAL_MASS);
+				int numberOfMods=PeptideUtils.getNumberOfMods(targetPeptide, NOMINAL_MASS);
 				
 				ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideName, maxRawScore, numberOfMods, isLocalized(targetPeptideName));
 
@@ -347,7 +348,7 @@ public class PhosphoLocalizer {
 					i++;
 				}
 				String massText = sb.toString();
-				int mods=FragmentationModel.getNumberOfMods(massText, NOMINAL_MASS);
+				int mods=PeptideUtils.getNumberOfMods(massText, NOMINAL_MASS);
 				int modables=getNumberOfSTYs(massText);
 				if (modables>mods) return false;
 			}
