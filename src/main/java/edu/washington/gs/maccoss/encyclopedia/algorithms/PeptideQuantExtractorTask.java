@@ -92,19 +92,20 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			TransitionRefinementData data=spectrum.get();
 			data.setModificationQuantData(phosphoData);
 			if (canRunLocalization()) {
-			if (!phosphoData.isPresent()) {
-				// no need to localize since there's only one form, so annotate this directly on the data object
-				int numberOfMods=FragmentationModel.getNumberOfMods(psmdata.getPeptideModSeq(), PhosphoLocalizer.NOMINAL_MASS);
-				if (numberOfMods>0) {
-					float localizationScore=1000.0f;
-					data.setModificationLocalizationData(Optional.of(new ModificationLocalizationData(psmdata.getPeptideModSeq(), localizationScore, numberOfMods, true)));
-				}
-			} else if (phosphoData.get().size()==0) {
-				// no confident localizations, so annotate this directly on the data object
-				int numberOfMods=FragmentationModel.getNumberOfMods(psmdata.getPeptideModSeq(), PhosphoLocalizer.NOMINAL_MASS);
-				if (numberOfMods>0) {
-					float localizationScore=0.0f;
-					data.setModificationLocalizationData(Optional.of(new ModificationLocalizationData("("+psmdata.getPeptideModSeq()+")", localizationScore, numberOfMods, false)));
+				if (!phosphoData.isPresent()) {
+					// no need to localize since there's only one form, so annotate this directly on the data object
+					int numberOfMods=FragmentationModel.getNumberOfMods(psmdata.getPeptideModSeq(), PhosphoLocalizer.NOMINAL_MASS);
+					if (numberOfMods>0) {
+						float localizationScore=1000.0f;
+						data.setModificationLocalizationData(Optional.of(new ModificationLocalizationData(psmdata.getPeptideModSeq(), localizationScore, numberOfMods, true)));
+					}
+				} else if (phosphoData.get().size()==0) {
+					// no confident localizations, so annotate this directly on the data object
+					int numberOfMods=FragmentationModel.getNumberOfMods(psmdata.getPeptideModSeq(), PhosphoLocalizer.NOMINAL_MASS);
+					if (numberOfMods>0) {
+						float localizationScore=0.0f;
+						data.setModificationLocalizationData(Optional.of(new ModificationLocalizationData("("+psmdata.getPeptideModSeq()+")", localizationScore, numberOfMods, false)));
+					}
 				}
 			}
 					
