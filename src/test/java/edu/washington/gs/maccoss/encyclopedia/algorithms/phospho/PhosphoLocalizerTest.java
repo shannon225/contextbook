@@ -68,7 +68,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		//ArrayList<Stripe> stripes=stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false);
 		//PhosphoLocalizationData multiple=localizer.extractPhosphoForms(psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes);
 		ArrayList<Stripe> stripes=stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false);
-		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=localizer.runDIAPhosphoLocalization(psmdata, stripes).getTraces();
+		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=localizer.runDIAPhosphoLocalization(psmdata, stripes).get().getTraces();
 		//HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=multiple.getTraces();
 		
 		ArrayList<Color> shades=new ArrayList<Color>(Arrays.asList(colors));

@@ -50,7 +50,7 @@ public class PhosphoLocalizer {
 		background=BackgroundFrequencyCalculator.generateBackground(diaFile, searchedLibrary);
 	}
 
-	public PhosphoLocalizationData runDIAPhosphoLocalization(PSMData psmdata, ArrayList<Stripe> stripes) {
+	public Optional<PhosphoLocalizationData> runDIAPhosphoLocalization(PSMData psmdata, ArrayList<Stripe> stripes) {
 		ArrayList<Spectrum> spectra=new ArrayList<Spectrum>();
 		for (Stripe stripe : stripes) {
 			spectra.add(stripe);
@@ -58,14 +58,14 @@ public class PhosphoLocalizer {
 		return runPhosphoLocalization(psmdata, spectra);
 	}
 
-	public PhosphoLocalizationData runPhosphoLocalization(PSMData psmdata, ArrayList<Spectrum> stripes) {
+	public Optional<PhosphoLocalizationData> runPhosphoLocalization(PSMData psmdata, ArrayList<Spectrum> stripes) {
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(psmdata.getPeptideModSeq(), params.getAAConstants());
 		if (permutations.size()==1) {
 			//System.out.println("single\t"+psmdata.getPeptideModSeq()+"\t1\t1\t0\t1000");
-			return new PhosphoLocalizationData(new HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>>(), new HashMap<String, XYTrace[]>(), new HashMap<String, XYPoint>(), new HashMap<String, TransitionRefinementData>());
+			return Optional.empty();
 		} else {
-			PhosphoLocalizationData multiple=extractPhosphoForms(psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes);
-			return multiple;
+			PhosphoLocalizationData multiple=extractPhosphoForms(psmdata.getPeptideModSeq(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes);
+			return Optional.of(multiple);
 		}
 	}
 
@@ -78,7 +78,7 @@ public class PhosphoLocalizer {
 	 * @param allScansInStripe
 	 * @return
 	 */
-	PhosphoLocalizationData extractPhosphoForms(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<Spectrum> allScansInStripe) {
+	PhosphoLocalizationData extractPhosphoForms(String originalPeptideModSeq, double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<Spectrum> allScansInStripe) {
 		float dutyCycle=1.0f;
 		for (Entry<Range, Float> entry : diaFile.getRanges().entrySet()) {
 			if (entry.getKey().contains((float)precursorMZ)) {

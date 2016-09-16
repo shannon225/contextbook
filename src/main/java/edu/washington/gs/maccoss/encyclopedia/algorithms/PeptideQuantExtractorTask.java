@@ -80,10 +80,10 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	protected Nothing process() {
 		Optional<TransitionRefinementData> spectrum=extractSpectrum(psmdata.getAccessions(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable);
 		Optional<HashMap<String, TransitionRefinementData>> phosphoData=Optional.empty();
-		if (params.isRunPhosphoLocalization()&&localizer.isPresent()) {
-			PhosphoLocalizationData localizationData=runLocalization();
-			if (localizationData!=null) {
-				phosphoData=Optional.ofNullable(localizationData.getPassingForms());
+		if (canRunLocalization()) {
+			Optional<PhosphoLocalizationData> localizationData=runLocalization();
+			if (localizationData.isPresent()) {
+				phosphoData=Optional.ofNullable(localizationData.get().getPassingForms());
 			}
 		}
 		if (spectrum.isPresent()) {
@@ -91,15 +91,23 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			// delete from entries where RowId not in (SELECT MIN(RowId) FROM entries GROUP BY PeptideModSeq, PrecursorCharge)
 			TransitionRefinementData data=spectrum.get();
 			data.setModificationQuantData(phosphoData);
-			if (phosphoData.isPresent()&&phosphoData.get().size()==0) {
+			if (canRunLocalization()) {
+			if (!phosphoData.isPresent()) {
 				// no need to localize since there's only one form, so annotate this directly on the data object
 				int numberOfMods=FragmentationModel.getNumberOfMods(psmdata.getPeptideModSeq(), PhosphoLocalizer.NOMINAL_MASS);
 				if (numberOfMods>0) {
 					float localizationScore=1000.0f;
 					data.setModificationLocalizationData(Optional.of(new ModificationLocalizationData(psmdata.getPeptideModSeq(), localizationScore, numberOfMods, true)));
 				}
+			} else if (phosphoData.get().size()==0) {
+				// no confident localizations, so annotate this directly on the data object
+				int numberOfMods=FragmentationModel.getNumberOfMods(psmdata.getPeptideModSeq(), PhosphoLocalizer.NOMINAL_MASS);
+				if (numberOfMods>0) {
+					float localizationScore=0.0f;
+					data.setModificationLocalizationData(Optional.of(new ModificationLocalizationData("("+psmdata.getPeptideModSeq()+")", localizationScore, numberOfMods, false)));
+				}
 			}
-
+					
 			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(filename, psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), data.getFragmentMassArray(), data.getIntegrationArray(), data);
 			if (limitToQuantifiable) {
 				if (entry.getIonCount()<4||entry.getTIC()<1.0f) {
@@ -113,7 +121,11 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		return Nothing.NOTHING;
 	}
 
-	public PhosphoLocalizationData runLocalization() {
+	private boolean canRunLocalization() {
+		return params.isRunPhosphoLocalization()&&localizer.isPresent();
+	}
+
+	public Optional<PhosphoLocalizationData> runLocalization() {
 		return localizer.get().runDIAPhosphoLocalization(psmdata, stripes);
 	}
 
