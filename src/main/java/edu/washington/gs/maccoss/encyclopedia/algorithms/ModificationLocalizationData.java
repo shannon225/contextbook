@@ -1,12 +1,14 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
+
 public class ModificationLocalizationData {
-	private final String localizationPeptideModSeq;
+	private final AmbiguousPeptideModSeq localizationPeptideModSeq;
 	private final float localizationScore;
 	private final int numberOfMods;
 	private final boolean isSiteSpecific;
 
-	public ModificationLocalizationData(String localizationPeptideModSeq, float localizationScore, int numberOfMods,
+	public ModificationLocalizationData(AmbiguousPeptideModSeq localizationPeptideModSeq, float localizationScore, int numberOfMods,
 			boolean isSiteSpecific) {
 		this.localizationPeptideModSeq=localizationPeptideModSeq;
 		this.localizationScore=localizationScore;
@@ -14,7 +16,7 @@ public class ModificationLocalizationData {
 		this.isSiteSpecific=isSiteSpecific;
 	}
 
-	public String getLocalizationPeptideModSeq() {
+	public AmbiguousPeptideModSeq getLocalizationPeptideModSeq() {
 		return localizationPeptideModSeq;
 	}
 

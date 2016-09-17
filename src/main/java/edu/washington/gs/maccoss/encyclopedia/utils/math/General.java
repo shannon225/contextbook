@@ -6,6 +6,18 @@ import java.util.Set;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
 
 public class General {
+	public static String formatCellToWidth(String s, int w) {
+		char[] ca=new char[w];
+		for (int i=0; i<ca.length; i++) {
+			ca[i]=' ';
+		}
+		for (int i=0; i<s.length(); i++) {
+			if (i<ca.length-1) {
+				ca[i]=s.charAt(i);
+			}
+		}
+		return new String(ca);
+	}
 	
 	public static int numberOfOccurances(String s, String target) {
 		int indexOf=s.indexOf(target);

@@ -39,8 +39,6 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class PhosphoLocalizer {
-	public static final int NOMINAL_MASS=80;
-	private static final String PHOSPHO_MASS_TAG="[+79.96633]";
 	private final StripeFileInterface diaFile;
 	private final SearchParameters params;
 	private final BackgroundFrequencyCalculator background;
@@ -110,11 +108,11 @@ public class PhosphoLocalizer {
 		// then from right to left:
 		// (S[+80])G(S[+80]VS)NYR, (S[+80]GS)V(S[+80])NYR, SG(S[+80])V(S[+80])NYR (but drop the first)
 		
-		ArrayList<Triplet<String, String, FragmentIon[]>> targetPeptidesLeft=new ArrayList<Triplet<String,String,FragmentIon[]>>(); 
+		ArrayList<Triplet<String, AmbiguousPeptideModSeq, FragmentIon[]>> targetPeptidesLeft=new ArrayList<Triplet<String,AmbiguousPeptideModSeq,FragmentIon[]>>(); 
 		// go left to right, drop the last
 		for (int i=0; i<peptideModSeqs.size()-1; i++) {
 			String targetPeptide=peptideModSeqs.get(i);
-			String targetPeptideName=getLeftAnnotation(targetPeptide);
+			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getLeftAmbiguity(targetPeptide, params.getAAConstants());
 
 			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
 			// shrink the number of unique ions subtractors to the pool of
@@ -124,13 +122,13 @@ public class PhosphoLocalizer {
 				modelBatch.put(seq, entryMap.get(seq));
 			}
 			FragmentIon[] targets=PhosphoLocalizer.getUniqueFragmentIons(targetPeptide, precursorCharge, modelBatch, params);
-			targetPeptidesLeft.add(new Triplet<String, String, FragmentIon[]>(targetPeptide, targetPeptideName, targets));
+			targetPeptidesLeft.add(new Triplet<String, AmbiguousPeptideModSeq, FragmentIon[]>(targetPeptide, targetPeptideName, targets));
 		}
-		ArrayList<Triplet<String, String, FragmentIon[]>> targetPeptidesRight=new ArrayList<Triplet<String,String,FragmentIon[]>>(); 
+		ArrayList<Triplet<String, AmbiguousPeptideModSeq, FragmentIon[]>> targetPeptidesRight=new ArrayList<Triplet<String,AmbiguousPeptideModSeq,FragmentIon[]>>(); 
 		// go right to left, drop the first
 		for (int i=peptideModSeqs.size()-1; i>=1; i--) {
 			String targetPeptide=peptideModSeqs.get(i);
-			String targetPeptideName=getRightAnnotation(targetPeptide);
+			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getRightAmbiguity(targetPeptide, params.getAAConstants());
 			
 			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
 			// shrink the number of unique ions subtractors to the pool of remaining sequences to the right
@@ -139,11 +137,11 @@ public class PhosphoLocalizer {
 				modelBatch.put(seq, entryMap.get(seq));
 			}
 			FragmentIon[] targets=PhosphoLocalizer.getUniqueFragmentIons(targetPeptide, precursorCharge, modelBatch, params);
-			targetPeptidesRight.add(new Triplet<String, String, FragmentIon[]>(targetPeptide, targetPeptideName, targets));
+			targetPeptidesRight.add(new Triplet<String, AmbiguousPeptideModSeq, FragmentIon[]>(targetPeptide, targetPeptideName, targets));
 		}
 		
 		// interlay the peptides so we look at the most localizing first
-		ArrayList<Triplet<String, String, FragmentIon[]>> targetPeptides=new ArrayList<Triplet<String,String,FragmentIon[]>>();
+		ArrayList<Triplet<String, AmbiguousPeptideModSeq, FragmentIon[]>> targetPeptides=new ArrayList<Triplet<String,AmbiguousPeptideModSeq,FragmentIon[]>>();
 		for (int i=0; i<targetPeptidesLeft.size(); i++) {
 			targetPeptides.add(targetPeptidesLeft.get(i));
 			targetPeptides.add(targetPeptidesRight.get(i));
@@ -160,9 +158,9 @@ public class PhosphoLocalizer {
 		TFloatArrayList formsRT=new TFloatArrayList();
 		TFloatArrayList scores=new TFloatArrayList(); 
 		
-		for (Triplet<String, String, FragmentIon[]> triplet : targetPeptides) {
+		for (Triplet<String, AmbiguousPeptideModSeq, FragmentIon[]> triplet : targetPeptides) {
 			String targetPeptide=triplet.x;
-			String targetPeptideName=triplet.y;
+			AmbiguousPeptideModSeq targetPeptideName=triplet.y;
 			FragmentIon[] targets=triplet.z;
 			
 			FragmentationModel model=entryMap.get(targetPeptide);
@@ -199,12 +197,13 @@ public class PhosphoLocalizer {
 				allRtScoreMap.put(spectrum.getScanStartTime()/60f, negLogProbsAll[k]);
 				uniqueRtScoreMap.put(spectrum.getScanStartTime()/60f, negLogProbsSiteSpecific[k]);
 			}
-			allVsUniqueList.put(targetPeptideName, new Pair<TFloatFloatHashMap, TFloatFloatHashMap>(allRtScoreMap, uniqueRtScoreMap));
+			String peptideAnnotation=targetPeptideName.getPeptideAnnotation();
+			allVsUniqueList.put(peptideAnnotation, new Pair<TFloatFloatHashMap, TFloatFloatHashMap>(allRtScoreMap, uniqueRtScoreMap));
 
 			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
 
 			XYTrace[] traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes);
-			uniqueFragmentIons.put(targetPeptideName, traces);
+			uniqueFragmentIons.put(peptideAnnotation, traces);
 			//Charter.launchChart("Retention Time (Site Specific)", "Intensity", false, new Dimension(800, 250), traces);
 			//traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), totalIons.toArray(new FragmentIon[totalIons.size()]), stripes);
 			//Charter.launchChart("Retention Time (All Ions)", "Intensity", false, new Dimension(800, 250), traces);
@@ -214,19 +213,19 @@ public class PhosphoLocalizer {
 
 			float bestRT=uniqueCalculator.getMaxRT();
 			float maxRawScore=uniqueCalculator.getMaxRawScore();
-			localizationScores.put(targetPeptideName, new XYPoint(bestRT, maxRawScore));
+			localizationScores.put(peptideAnnotation, new XYPoint(bestRT, maxRawScore));
 			if (maxRawScore>2f) {
 				formsRT.add(bestRT);
 				alreadyTaken.addAll(Arrays.asList(targets));
 				
 				ArrayList<Spectrum> localStripes=getScanSubset(bestRT-params.getExpectedPeakWidth(), bestRT+params.getExpectedPeakWidth(), allScansInStripe);
 				TransitionRefinementData quantData=quantifyPeptide(targetPeptide, precursorCharge, ions, bestRT, localStripes, false);
-				int numberOfMods=PeptideUtils.getNumberOfMods(targetPeptide, NOMINAL_MASS);
+				int numberOfMods=PeptideUtils.getNumberOfMods(targetPeptide, AmbiguousPeptideModSeq.NOMINAL_MASS);
 				
-				ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideName, maxRawScore, numberOfMods, isLocalized(targetPeptideName));
+				ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideName, maxRawScore, numberOfMods, AmbiguousPeptideModSeq.isLocalized(targetPeptideName));
 
 				quantData.setModificationLocalizationData(Optional.of(modData));
-				passingForms.put(targetPeptideName, quantData);
+				passingForms.put(peptideAnnotation, quantData);
 				
 			}
 
@@ -334,74 +333,6 @@ public class PhosphoLocalizer {
 		float[] intensityArray=intens.toArray();
 		float[] deltaMassArray=deltaMasses.toArray();
 		return data.addPeakData(deltaMassArray, massArray, intensityArray, retentionTimes.toArray());
-	}
-	
-	public static boolean isLocalized(String targetPeptideName) {
-		char[] ca=targetPeptideName.toCharArray();
-
-		for (int i = 0; i < ca.length; i++) {
-			if (ca[i]=='(') {
-				StringBuilder sb=new StringBuilder();
-				i++;
-				while (ca[i]!=')') {
-					sb.append(ca[i]);
-					i++;
-				}
-				String massText = sb.toString();
-				int mods=PeptideUtils.getNumberOfMods(massText, NOMINAL_MASS);
-				int modables=getNumberOfSTYs(massText);
-				if (modables>mods) return false;
-			}
-		}
-		return true;
-	}
-	
-	private static int getNumberOfSTYs(String sequence) {
-		int total=0;
-		for (int i=0; i<sequence.length(); i++) {
-			char c=sequence.charAt(i);
-			if (c=='S'||c=='T'||c=='Y') {
-				total++;
-			}
-		}
-		return total;
-	}
-
-	public static String getLeftAnnotation(String targetPeptide) {
-		StringBuilder sb=new StringBuilder(targetPeptide);
-		for (int j=0; j<sb.length(); j++) {
-			char c=sb.charAt(j);
-			if (c=='S'||c=='T'||c=='Y') {
-				sb.insert(j, "(");
-				break;
-			}
-		}
-		
-		int index=sb.lastIndexOf(PHOSPHO_MASS_TAG);
-		sb.insert(index+PHOSPHO_MASS_TAG.length(), ")");
-		String targetPeptideName=sb.toString();
-		return targetPeptideName;
-	}
-
-	public static String getRightAnnotation(String targetPeptide) {
-		StringBuilder sb=new StringBuilder(targetPeptide);
-		int index=sb.indexOf(PHOSPHO_MASS_TAG);
-		sb.insert(index-1, "(");
-
-		int lastIndex=sb.lastIndexOf(PHOSPHO_MASS_TAG);
-		for (int j=sb.length()-1; j>=0; j--) {
-			if (j<lastIndex+PHOSPHO_MASS_TAG.length()) {
-				sb.insert(lastIndex+PHOSPHO_MASS_TAG.length(), ")");
-				break;
-			}
-			char c=sb.charAt(j);
-			if (c=='S'||c=='T'||c=='Y') {
-				sb.insert(j+1, ")");
-				break;
-			}
-		}
-		String targetPeptideName=sb.toString();
-		return targetPeptideName;
 	}
 	
 	private static float score(SearchParameters parameters, double[] ions, FragmentIon[] ionTypes, float[] frequencies, Spectrum stripe, boolean report) {

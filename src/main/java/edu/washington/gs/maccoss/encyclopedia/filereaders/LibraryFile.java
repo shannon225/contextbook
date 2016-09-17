@@ -322,7 +322,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		
 		if (data.getLocalizationData().isPresent()) {
 			ModificationLocalizationData modData=data.getLocalizationData().get();
-			peptidePrep.setString(5, modData.getLocalizationPeptideModSeq());
+			peptidePrep.setString(5, modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
 			peptidePrep.setFloat(6, modData.getLocalizationScore());
 			peptidePrep.setInt(7, modData.getNumberOfMods());
 			peptidePrep.setBoolean(8, modData.isSiteSpecific());

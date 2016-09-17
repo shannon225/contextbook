@@ -140,7 +140,7 @@ public class PeptideUtils {
 		}
 	}
 	
-	private static String getSequence(String[] aas) {
+	public static String getSequence(String[] aas) {
 		StringBuilder sb=new StringBuilder();
 		for (String aa : aas) {
 			sb.append(aa);

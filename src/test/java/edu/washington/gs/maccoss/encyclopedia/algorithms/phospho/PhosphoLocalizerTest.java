@@ -142,21 +142,6 @@ public class PhosphoLocalizerTest extends TestCase {
 		return psmdata;
 	}
 	
-	public void testIsLocalized() {
-		String s="(S[+80.0])SSSR";
-		assertTrue(PhosphoLocalizer.isLocalized(s));
-		s="(S[+80.0]S)SSR";
-		assertFalse(PhosphoLocalizer.isLocalized(s));
-		s="(S[+80.0]S[+80.0])SSR";
-		assertTrue(PhosphoLocalizer.isLocalized(s));
-		s="(S[+80.0]S[+80.0]S)SR";
-		assertFalse(PhosphoLocalizer.isLocalized(s));
-		s="(S[+80.0])SS(S[+80.0])R";
-		assertTrue(PhosphoLocalizer.isLocalized(s));
-		s="(S[+80.0])S(SS[+80.0])R";
-		assertFalse(PhosphoLocalizer.isLocalized(s));
-	}
-	
 	public void testGetUniqueFragmentIons() {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
 		
@@ -214,14 +199,5 @@ public class PhosphoLocalizerTest extends TestCase {
 		
 		assertEquals("b1-NL,b1,y3", General.toString(uniqueIons.get("S[+79.96633]SSR")));
 		assertEquals("b2,y2-NL,y2", General.toString(uniqueIons.get("SSS[+79.96633]R")));
-	}
-	
-	public void testAnnotations() {
-		assertEquals("(S[+79.96633])SSR", PhosphoLocalizer.getLeftAnnotation("S[+79.96633]SSR"));
-		assertEquals("(S[+79.96633]SS)R", PhosphoLocalizer.getRightAnnotation("S[+79.96633]SSR"));
-		assertEquals("(SS[+79.96633])SR", PhosphoLocalizer.getLeftAnnotation("SS[+79.96633]SR"));
-		assertEquals("S(S[+79.96633]S)R", PhosphoLocalizer.getRightAnnotation("SS[+79.96633]SR"));
-		assertEquals("(SSS[+79.96633])R", PhosphoLocalizer.getLeftAnnotation("SSS[+79.96633]R"));
-		assertEquals("SS(S[+79.96633])R", PhosphoLocalizer.getRightAnnotation("SSS[+79.96633]R"));
 	}
 }
