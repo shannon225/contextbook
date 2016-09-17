@@ -6,6 +6,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.set.hash.TIntHashSet;
 import junit.framework.TestCase;
 
@@ -43,10 +44,46 @@ public class AmbiguousPeptideModSeqTest extends TestCase {
 		assertEquals("(S[+79.96633]SS[+79.96633])R", AmbiguousPeptideModSeq.getFullyAmbiguous("S[+79.96633]SS[+79.96633]R",PARAMETERS.getAAConstants()).getPeptideAnnotation());
 	}
 	
+	public void testRemove() {
+		String targetPeptide="S[+79.96633]SSR";
+
+		String[] unambiguousPeptides=new String[] {
+				"S[+79.96633]SSR",
+				"SS[+79.96633]SR",
+				"SSS[+79.96633]R"
+		};
+		String[] expectedResult=new String[] {
+				"S(S[+79.96633]S)R", // moved!
+				"(S[+79.96633]SS)R",
+				"(S[+79.96633]S)SR"
+		};
+		for (int i=0; i<unambiguousPeptides.length; i++) {
+			AmbiguousPeptideModSeq s=AmbiguousPeptideModSeq.getFullyAmbiguous(targetPeptide, PARAMETERS.getAAConstants());
+			AmbiguousPeptideModSeq unambiguous=AmbiguousPeptideModSeq.getUnambigous(unambiguousPeptides[i], PARAMETERS.getAAConstants());
+			;
+
+			assertEquals(expectedResult[i], s.removeAmbiguity(unambiguous).getPeptideAnnotation());
+		}
+	}
+	
 	public void testSets() {
-		AmbiguousPeptideModSeq s=AmbiguousPeptideModSeq.getRightAmbiguity("SS[+79.96633]SR",PARAMETERS.getAAConstants());
-		TIntHashSet[] sets=s.getAmbiguityGroups();
-		assertTrue(sets.length==1);
+		String[] peptides=new String[] {
+				"SS[+79.96633]SR",
+				"S[+79.96633]S[+79.96633]SR",
+				"S[+79.96633]S[+79.96633]S[+79.96633]R",
+				"S[+79.96633]QWEITS[+79.96633]GLKDSS[+79.96633]R"
+		};
+		for (String targetPeptide : peptides) {
+			AmbiguousPeptideModSeq s=AmbiguousPeptideModSeq.getRightAmbiguity(targetPeptide,PARAMETERS.getAAConstants());
+			TIntHashSet[] sets=s.getAmbiguityGroups();
+			assertEquals(PeptideUtils.getNumberOfMods(targetPeptide, 80), sets.length);
+			int[] setData=AmbiguousPeptideModSeq.getModificationGroupsFromSets(sets, s.length());
+			int[] groups=s.getModificationGroup();
+			assertEquals(groups.length, setData.length);
+			for (int i=0; i<groups.length; i++) {
+				assertEquals(groups[i], setData[i]);
+			}
+		}
 	}
 	
 	public void testIsLocalized() {

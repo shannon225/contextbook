@@ -23,7 +23,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
@@ -108,7 +107,7 @@ public class PhosphoLocalizer {
 		// then from right to left:
 		// (S[+80])G(S[+80]VS)NYR, (S[+80]GS)V(S[+80])NYR, SG(S[+80])V(S[+80])NYR (but drop the first)
 		
-		ArrayList<Triplet<String, AmbiguousPeptideModSeq, FragmentIon[]>> targetPeptidesLeft=new ArrayList<Triplet<String,AmbiguousPeptideModSeq,FragmentIon[]>>(); 
+		ArrayList<Pair<AmbiguousPeptideModSeq, FragmentIon[]>> targetPeptidesLeft=new ArrayList<Pair<AmbiguousPeptideModSeq,FragmentIon[]>>(); 
 		// go left to right, drop the last
 		for (int i=0; i<peptideModSeqs.size()-1; i++) {
 			String targetPeptide=peptideModSeqs.get(i);
@@ -122,9 +121,9 @@ public class PhosphoLocalizer {
 				modelBatch.put(seq, entryMap.get(seq));
 			}
 			FragmentIon[] targets=PhosphoLocalizer.getUniqueFragmentIons(targetPeptide, precursorCharge, modelBatch, params);
-			targetPeptidesLeft.add(new Triplet<String, AmbiguousPeptideModSeq, FragmentIon[]>(targetPeptide, targetPeptideName, targets));
+			targetPeptidesLeft.add(new Pair<AmbiguousPeptideModSeq, FragmentIon[]>(targetPeptideName, targets));
 		}
-		ArrayList<Triplet<String, AmbiguousPeptideModSeq, FragmentIon[]>> targetPeptidesRight=new ArrayList<Triplet<String,AmbiguousPeptideModSeq,FragmentIon[]>>(); 
+		ArrayList<Pair<AmbiguousPeptideModSeq, FragmentIon[]>> targetPeptidesRight=new ArrayList<Pair<AmbiguousPeptideModSeq,FragmentIon[]>>(); 
 		// go right to left, drop the first
 		for (int i=peptideModSeqs.size()-1; i>=1; i--) {
 			String targetPeptide=peptideModSeqs.get(i);
@@ -137,11 +136,11 @@ public class PhosphoLocalizer {
 				modelBatch.put(seq, entryMap.get(seq));
 			}
 			FragmentIon[] targets=PhosphoLocalizer.getUniqueFragmentIons(targetPeptide, precursorCharge, modelBatch, params);
-			targetPeptidesRight.add(new Triplet<String, AmbiguousPeptideModSeq, FragmentIon[]>(targetPeptide, targetPeptideName, targets));
+			targetPeptidesRight.add(new Pair<AmbiguousPeptideModSeq, FragmentIon[]>(targetPeptideName, targets));
 		}
 		
 		// interlay the peptides so we look at the most localizing first
-		ArrayList<Triplet<String, AmbiguousPeptideModSeq, FragmentIon[]>> targetPeptides=new ArrayList<Triplet<String,AmbiguousPeptideModSeq,FragmentIon[]>>();
+		ArrayList<Pair<AmbiguousPeptideModSeq, FragmentIon[]>> targetPeptides=new ArrayList<Pair<AmbiguousPeptideModSeq,FragmentIon[]>>();
 		for (int i=0; i<targetPeptidesLeft.size(); i++) {
 			targetPeptides.add(targetPeptidesLeft.get(i));
 			targetPeptides.add(targetPeptidesRight.get(i));
@@ -158,12 +157,24 @@ public class PhosphoLocalizer {
 		TFloatArrayList formsRT=new TFloatArrayList();
 		TFloatArrayList scores=new TFloatArrayList(); 
 		
-		for (Triplet<String, AmbiguousPeptideModSeq, FragmentIon[]> triplet : targetPeptides) {
-			String targetPeptide=triplet.x;
-			AmbiguousPeptideModSeq targetPeptideName=triplet.y;
-			FragmentIon[] targets=triplet.z;
+		ArrayList<AmbiguousPeptideModSeq> previouslyIdentified=new ArrayList<AmbiguousPeptideModSeq>();
+		
+		for (Pair<AmbiguousPeptideModSeq, FragmentIon[]> pair : targetPeptides) {
+			AmbiguousPeptideModSeq targetPeptideAnnotation=pair.x;
+			FragmentIon[] targets=pair.y;
 			
-			FragmentationModel model=entryMap.get(targetPeptide);
+			// it's ok that we don't update the targetIons based on previously IDed, for example:
+			// if we know we've seen: (S[+80])SSSSK
+			// and we're considering: (S[+80]S)SSSK
+			// then it's ok if we use matching ions from to (S[+80])SSSSK to identify S(S[+80])SSSK
+			
+			// fix ambiguity based on previously identified peptides
+			targetPeptideAnnotation=targetPeptideAnnotation.removeAmbiguity(previouslyIdentified);
+
+			String peptideAnnotation=targetPeptideAnnotation.getPeptideAnnotation();
+			String targetPeptideSequence=targetPeptideAnnotation.getPeptideModSeq();
+			FragmentationModel model=entryMap.get(targetPeptideSequence);
+			
 			FragmentIon[] allIonsTypes=model.getPrimaryIonObjects(params.getFragType(), precursorCharge);
 			double[] allIons=FragmentIon.getMasses(allIonsTypes);
 			
@@ -197,7 +208,6 @@ public class PhosphoLocalizer {
 				allRtScoreMap.put(spectrum.getScanStartTime()/60f, negLogProbsAll[k]);
 				uniqueRtScoreMap.put(spectrum.getScanStartTime()/60f, negLogProbsSiteSpecific[k]);
 			}
-			String peptideAnnotation=targetPeptideName.getPeptideAnnotation();
 			allVsUniqueList.put(peptideAnnotation, new Pair<TFloatFloatHashMap, TFloatFloatHashMap>(allRtScoreMap, uniqueRtScoreMap));
 
 			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
@@ -219,10 +229,10 @@ public class PhosphoLocalizer {
 				alreadyTaken.addAll(Arrays.asList(targets));
 				
 				ArrayList<Spectrum> localStripes=getScanSubset(bestRT-params.getExpectedPeakWidth(), bestRT+params.getExpectedPeakWidth(), allScansInStripe);
-				TransitionRefinementData quantData=quantifyPeptide(targetPeptide, precursorCharge, ions, bestRT, localStripes, false);
-				int numberOfMods=PeptideUtils.getNumberOfMods(targetPeptide, AmbiguousPeptideModSeq.NOMINAL_MASS);
+				TransitionRefinementData quantData=quantifyPeptide(targetPeptideSequence, precursorCharge, ions, bestRT, localStripes, false);
+				int numberOfMods=PeptideUtils.getNumberOfMods(targetPeptideSequence, AmbiguousPeptideModSeq.NOMINAL_MASS);
 				
-				ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideName, maxRawScore, numberOfMods, AmbiguousPeptideModSeq.isLocalized(targetPeptideName));
+				ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideAnnotation, maxRawScore, numberOfMods, AmbiguousPeptideModSeq.isLocalized(targetPeptideAnnotation));
 
 				quantData.setModificationLocalizationData(Optional.of(modData));
 				passingForms.put(peptideAnnotation, quantData);

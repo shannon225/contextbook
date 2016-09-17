@@ -1,5 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
+import java.util.Arrays;
+import java.util.List;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -7,6 +10,7 @@ import gnu.trove.set.hash.TIntHashSet;
 
 public class AmbiguousPeptideModSeq {
 	public static final int NOMINAL_MASS=80;
+	private static final int NO_GROUP=0;
 	
 	private final String[] aas;
 	private final boolean[] isModified;
@@ -20,6 +24,14 @@ public class AmbiguousPeptideModSeq {
 		this.modificationGroup=modificationGroup;
 	}
 	
+	public int length() {
+		return aas.length;
+	}
+	
+	int[] getModificationGroup() {
+		return modificationGroup;
+	}
+	
 	public TIntHashSet[] getAmbiguityGroups() {
 		int groupCount=General.max(modificationGroup);
 		TIntHashSet[] groups=new TIntHashSet[groupCount];
@@ -27,13 +39,14 @@ public class AmbiguousPeptideModSeq {
 			groups[i]=new TIntHashSet();
 		}
 		for (int i=0; i<modificationGroup.length; i++) {
-			if (modificationGroup[i]>0) {
+			if (modificationGroup[i]>NO_GROUP) {
 				int index=modificationGroup[i]-1;
 				groups[index].add(i);
 			}
 		}
 		return groups;
 	}
+	
 	public static int[] getModificationGroupsFromSets(TIntHashSet[] sets, int length) {
 		int[] modificationGroup=new int[length];
 		for (int i=0; i<sets.length; i++) {
@@ -44,13 +57,59 @@ public class AmbiguousPeptideModSeq {
 		}
 		return modificationGroup;
 	}
-	
-	/*public AmbiguousPeptideModSeq removeAmbiguity(AmbiguousPeptideModSeq ided) {
+
+	public AmbiguousPeptideModSeq removeAmbiguity(AmbiguousPeptideModSeq... confirmedIDs) {
+		return removeAmbiguity(Arrays.asList(confirmedIDs));
+	}
+	public AmbiguousPeptideModSeq removeAmbiguity(List<AmbiguousPeptideModSeq> confirmedIDs) {
+		String[] newaas=aas.clone();
+		boolean[] newisModified=isModified.clone();
+		boolean[] newmodifiable=modifiable.clone();
+		int[] newmodificationGroup=modificationGroup.clone();
 		
-		for (int i=0; i<ided.modificationGroup.length; i++) {
-			
+		for (AmbiguousPeptideModSeq ided : confirmedIDs) {
+			TIntHashSet[] groups=ided.getAmbiguityGroups();
+			if (groups.length>1) {
+				// TODO think about how to tag IDed sites if there are more than one mod. This is tricky!
+				// i.e. if you see:
+				//            previous id: S(S[+80])QQQS(S[+80])R 
+				//            in question: (SS[+80])QQQS(S[+80])R
+				// then you know you have: (S[+80])SQQQS(S[+80])R
+				//
+				// but if you see:
+				//            previous id: S(S[+80])QQQS(S[+80])R 
+				//            in question: (SS[+80])QQQ(SS[+80])R
+				// then you don't know anything new! The in question peptide could be: 
+				//                 either: S(S[+80])QQQ(S[+80])SR 
+				//                     or: (S[+80])SQQQS(S[+80])R
+				//                     or: (S[+80])SQQQ(S[+80])SR
+				return this;
+			}
+			if (groups[0].size()==1) {
+				// TODO currently can only work with fully localized sites! Think about the complications here if we change this! (There are a lot of complications, this may be impossible)
+				int[] values=groups[0].toArray();
+				for (int i=0; i<values.length; i++) {
+					int prevGroup=newmodificationGroup[values[i]];
+					newmodificationGroup[values[i]]=NO_GROUP;
+					newmodifiable[values[i]]=false;
+					if (newisModified[values[i]]) {
+						for (int j=0; j<newmodificationGroup.length; j++) {
+							if (newmodificationGroup[j]==prevGroup) {
+								// only move mod if we find another slot!
+								newisModified[values[i]]=false;
+								String mod=newaas[values[i]].substring(1);
+								newaas[values[i]]=Character.toString(newaas[values[i]].charAt(0));
+								newisModified[j]=true;
+								newaas[j]=newaas[j]+mod;
+								break;
+							}
+						}
+					}
+				}
+			}
 		}
-	}*/
+		return new AmbiguousPeptideModSeq(newaas, newmodifiable, newisModified, newmodificationGroup);
+	}
 	
 	@Override
 	public int hashCode() {
