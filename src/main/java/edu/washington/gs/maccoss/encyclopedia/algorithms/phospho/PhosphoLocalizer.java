@@ -174,6 +174,10 @@ public class PhosphoLocalizer {
 			String peptideAnnotation=targetPeptideAnnotation.getPeptideAnnotation();
 			String targetPeptideSequence=targetPeptideAnnotation.getPeptideModSeq();
 			FragmentationModel model=entryMap.get(targetPeptideSequence);
+			if (model==null) {
+				// can happen if ambiguity is removed
+				model=new FragmentationModel(targetPeptideSequence, params.getAAConstants());
+			}
 			
 			FragmentIon[] allIonsTypes=model.getPrimaryIonObjects(params.getFragType(), precursorCharge);
 			double[] allIons=FragmentIon.getMasses(allIonsTypes);
@@ -236,6 +240,7 @@ public class PhosphoLocalizer {
 
 				quantData.setModificationLocalizationData(Optional.of(modData));
 				passingForms.put(peptideAnnotation, quantData);
+				previouslyIdentified.add(targetPeptideAnnotation);
 				
 			}
 
