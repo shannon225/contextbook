@@ -58,7 +58,7 @@ public class LibraryReportExtractor {
 				peptideWriter.print("Peptide");
 				
 				proteinWriter=new PrintWriter(proteinReportFile, "UTF-8");
-				proteinWriter.print("Protein\tnumPeptides");
+				proteinWriter.print("Protein\tnumEquivalentAccessions");
 				
 				float averageTIC=0.0f;
 				TObjectFloatHashMap<String> ticBySourceFileMap=new TObjectFloatHashMap<String>();
