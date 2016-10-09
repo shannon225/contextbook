@@ -212,8 +212,8 @@ public class RetentionTimeFilter {
 		
 		//float median=QuickMedian.select(deltaArray, 0.5f);
 		//float iqr=QuickMedian.iqr(deltaArray);
-		float median=deltaArray[Math.round(deltaArray.length*0.50f)];
-		float iqr=deltaArray[Math.round(deltaArray.length*0.75f)]-deltaArray[Math.round(deltaArray.length*0.25f)];
+		float median=deltaArray[Math.min(Math.round(deltaArray.length*0.50f), deltaArray.length-1)];
+		float iqr=deltaArray[Math.min(Math.round(deltaArray.length*0.75f), deltaArray.length-1)]-deltaArray[Math.min(Math.round(deltaArray.length*0.25f), deltaArray.length-1)];
 		
 		float quarterMaxRange=(max-min)/4.0f;
 		Distribution positive=new Gaussian(median, iqr/1.35f, 0.5f);

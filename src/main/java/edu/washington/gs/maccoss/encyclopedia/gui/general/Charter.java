@@ -343,6 +343,9 @@ public class Charter {
 		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
 		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
 		Font font3=new Font("News Gothic MT", Font.PLAIN, 18);
+		font=new Font("News Gothic MT", Font.PLAIN, 16);
+		font2=new Font("News Gothic MT", Font.PLAIN, 16);
+		font3=new Font("News Gothic MT", Font.PLAIN, 16);
 		rangeAxis.setLabelFont(font2);
 		rangeAxis.setTickLabelFont(font);
 
