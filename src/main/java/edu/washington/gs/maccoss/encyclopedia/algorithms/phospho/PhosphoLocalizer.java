@@ -225,7 +225,7 @@ public class PhosphoLocalizer {
 			//Charter.launchChart("All Score", "Count", true, allCalculator.toTraces());
 			//Charter.launchChart("Unique Score", "Count", true, uniqueCalculator.toTraces());
 
-			float bestRT=uniqueCalculator.getMaxRT();
+			float bestRT=uniqueCalculator.getMaxRT()*60f;
 			float maxRawScore=uniqueCalculator.getMaxRawScore();
 			localizationScores.put(peptideAnnotation, new XYPoint(bestRT, maxRawScore));
 			if (maxRawScore>2f) {
