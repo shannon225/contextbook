@@ -18,8 +18,9 @@ public class TwoDimensionalKDETest {
 		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
 		//rts=MedianInterpolatorTest.getSyntheticData();
 		rts=MedianInterpolatorTest.getPhosphoData();
-		rts=MedianInterpolatorTest.getCleanData();
-		
+		//rts=MedianInterpolatorTest.getCleanData();
+		rts=new ArrayList<XYPoint>(rts.subList(0, 10000));
+		System.out.println(rts.size());
 		File f=new File("/Users/searleb/Documents/school/projects/freezer/zeroDay/122715_bcs_hela_24mz_400_1000.dia.encyclopedia.txt.rt_fit.txt");
 		//f=new File("/Users/searleb/Documents/school/projects/freezer/zeroDay/122715_bcs_hela_24mz_400_1000_dda.dia.encyclopedia.txt.rt_fit.txt");
 		//rts=MedianInterpolatorTest.getData(f);
@@ -28,6 +29,6 @@ public class TwoDimensionalKDETest {
 		TwoDimensionalKDE kde=new TwoDimensionalKDE(rts);
 		
 		Charter3d.plot(kde, kde.getXRange(), kde.getYRange(), kde.getResolution()/5);
-		filter.plot(rts, Optional.of(f));
+		//filter.plot(rts, Optional.ofNullable((File)f));
 	}
 }
