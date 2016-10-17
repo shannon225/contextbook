@@ -19,8 +19,8 @@ import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class BackgroundFrequencyCalculatorTest {
 	public static void main(String[] args) throws Exception {
-		File libraryFile=new File("/Users/searleb/Documents/school/projects/VillenJ_Exactive_HumanPhosphoproteome.elib");
-		File diaFile=new File("/Users/searleb/Documents/school/projects/mzml/q06048_rl_MCF7_IMAC_GpX_3.dia");
+		File libraryFile=new File("/Users/searleb/Documents/projects/phosphopedia/VillenJ_Exactive_HumanPhosphoproteome.elib");
+		File diaFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/dec2015_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
 
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		
@@ -32,7 +32,7 @@ public class BackgroundFrequencyCalculatorTest {
 		BackgroundFrequencyCalculator calculator=BackgroundFrequencyCalculator.generateBackground(stripefile, library);
 		int[] counters=calculator.getRoundedMassCounters(500.730213);
 		for (int i=0; i<counters.length; i++) {
-			System.out.println(i+"\t"+counters[i]);
+			//System.out.println(i+"\t"+counters[i]);
 		}
 		
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
@@ -50,19 +50,25 @@ public class BackgroundFrequencyCalculatorTest {
 		for (Entry<String, FragmentationModel> entry : entryMap.entrySet()) {
 			String peptideModSeq=entry.getKey();
 			FragmentIon[] targets=uniqueIons.get(peptideModSeq);
+			targets=entry.getValue().getYIons();
 			double[] ions=FragmentIon.getMasses(targets);
 
 			float[] frequencies=calculator.getFrequencies(ions, 500.730213, parameters.getFragmentTolerance());
 			TFloatFloatHashMap uniqueRtScoreMap=new TFloatFloatHashMap();
+			System.out.println(peptideModSeq);
+			for (int i=0; i<frequencies.length; i++) {
+				System.out.println(targets[i].toString()+"\t"+ions[i]+"\t"+frequencies[i]);
+			}
+			System.out.println();
 
 			for (Stripe stripe : stripes) {
 				float negLogProb=process(parameters, ions, frequencies, stripe);
-				System.out.println(peptideModSeq+"\t"+stripe.getScanStartTime()/60f+"\t"+negLogProb);
+				//System.out.println(peptideModSeq+"\t"+stripe.getScanStartTime()/60f+"\t"+negLogProb);
 				uniqueRtScoreMap.put(stripe.getScanStartTime(), negLogProb);
 			}
 
 			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
-			System.out.println("FINAL: "+peptideModSeq+" --> rt:"+uniqueCalculator.getMaxRT()/60.0f+", s:"+uniqueCalculator.getMaxRawScore()+", e:"+uniqueCalculator.getNegLog10EValue());
+			//System.out.println("FINAL: "+peptideModSeq+" --> rt:"+uniqueCalculator.getMaxRT()/60.0f+", s:"+uniqueCalculator.getMaxRawScore()+", e:"+uniqueCalculator.getNegLog10EValue());
 		}
 
 		stripes=stripefile.getStripes(500.730213, 19.43f*60f, 19.44f*60f, false);

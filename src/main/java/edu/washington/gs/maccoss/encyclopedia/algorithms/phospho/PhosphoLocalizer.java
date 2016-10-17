@@ -159,6 +159,10 @@ public class PhosphoLocalizer {
 		
 		ArrayList<AmbiguousPeptideModSeq> previouslyIdentified=new ArrayList<AmbiguousPeptideModSeq>();
 		
+		String bestPeptideAnnotation=null;
+		TransitionRefinementData bestPassingForm=null;
+		float bestScore=-Float.MAX_VALUE;
+		
 		for (Pair<AmbiguousPeptideModSeq, FragmentIon[]> pair : targetPeptides) {
 			AmbiguousPeptideModSeq targetPeptideAnnotation=pair.x;
 			FragmentIon[] targets=pair.y;
@@ -200,10 +204,10 @@ public class PhosphoLocalizer {
 				negLogProbsAll[k]=score(params, allIons, allIonsTypes, frequencies, spectrum, false);
 				negLogProbsSiteSpecific[k]=score(params, ions, targets, frequencies, spectrum, true);
 			}
-			negLogProbsAll=AbstractLibraryScoringTask.movingCenteredSum(negLogProbsAll, movingAverageLength);//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);
-			negLogProbsAll=General.subtract(negLogProbsAll, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
-			negLogProbsSiteSpecific=AbstractLibraryScoringTask.movingCenteredSum(negLogProbsSiteSpecific, movingAverageLength);//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
-			negLogProbsSiteSpecific=General.subtract(negLogProbsSiteSpecific, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
+			negLogProbsAll=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);
+			//negLogProbsAll=General.subtract(negLogProbsAll, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
+			negLogProbsSiteSpecific=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
+			//negLogProbsSiteSpecific=General.subtract(negLogProbsSiteSpecific, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
 
 			TFloatFloatHashMap allRtScoreMap=new TFloatFloatHashMap();
 			TFloatFloatHashMap uniqueRtScoreMap=new TFloatFloatHashMap();
@@ -236,12 +240,16 @@ public class PhosphoLocalizer {
 				TransitionRefinementData quantData=quantifyPeptide(targetPeptideSequence, precursorCharge, ions, bestRT, localStripes, false);
 				int numberOfMods=PeptideUtils.getNumberOfMods(targetPeptideSequence, AmbiguousPeptideModSeq.NOMINAL_MASS);
 				
-				ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideAnnotation, maxRawScore, numberOfMods, AmbiguousPeptideModSeq.isLocalized(targetPeptideAnnotation));
+				ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideAnnotation, bestRT, maxRawScore, numberOfMods, AmbiguousPeptideModSeq.isLocalized(targetPeptideAnnotation));
 
 				quantData.setModificationLocalizationData(Optional.of(modData));
 				passingForms.put(peptideAnnotation, quantData);
 				previouslyIdentified.add(targetPeptideAnnotation);
 				
+			}
+			
+			if (maxRawScore>bestScore) {
+				// FIXME add unlocalized form here (so score is not 0)
 			}
 
 			scores.add(maxRawScore);
@@ -354,19 +362,18 @@ public class PhosphoLocalizer {
 		if (frequencies.length==0) return 0.0f;
 
 		double[] massArray=stripe.getMassArray();
-		float logProb=0.0f;
+		float logProb=Log.log10(frequencies.length); // bonferroni correction
 		ArrayList<FragmentIon> matches=new ArrayList<FragmentIon>();
 		for (int i=0; i<frequencies.length; i++) {
-			float hitProb=frequencies[i]*massArray.length;
 			boolean match=parameters.getFragmentTolerance().getIndex(massArray, ions[i]).isPresent();
 			if (match) {
-				logProb+=Log.log10(hitProb);
+				logProb+=Log.log10(frequencies[i]);
 				matches.add(ionTypes[i]);
 			}
 		}
 		//if (report&&matches.size()>0) System.out.println(stripe.getScanStartTime()/60f+"\tFound:"+General.toString(matches)+" ("+matches.size()+"/"+ions.length+")\t"+(-logProb-Log.log10(frequencies.length)));
 		// neg log prob (normalized by N attempts)
-		return -logProb-Log.log10(frequencies.length);
+		return -logProb;
 	}
 
 	public static FragmentIon[] getUniqueFragmentIons(String peptideModSeq, byte precursorCharge, HashMap<String, FragmentationModel> availableModels, SearchParameters params) {

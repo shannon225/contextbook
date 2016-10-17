@@ -23,9 +23,10 @@ public class BackgroundFrequencyCalculator {
 	private final double[] binBoundaries;
 	private final TDoubleIntHashMap[] binCounters;
 	private final double[][] sortedMapKeys;
+	private final int[] numberOfSpectra;
 	private final int numberOfLibraryEntries;
 	
-	BackgroundFrequencyCalculator(double[] binBoundaries, TDoubleIntHashMap[] binCounters, int numberOfLibraryEntries) {
+	BackgroundFrequencyCalculator(double[] binBoundaries, TDoubleIntHashMap[] binCounters, int[] numberOfSpectra, int numberOfLibraryEntries) {
 		this.binBoundaries=binBoundaries;
 		this.binCounters=binCounters;
 		sortedMapKeys=new double[binCounters.length][];
@@ -33,6 +34,7 @@ public class BackgroundFrequencyCalculator {
 			sortedMapKeys[i]=binCounters[i].keys();
 			Arrays.sort(sortedMapKeys[i]);
 		}
+		this.numberOfSpectra=numberOfSpectra;
 		this.numberOfLibraryEntries=numberOfLibraryEntries;
 	}
 	
@@ -68,10 +70,12 @@ public class BackgroundFrequencyCalculator {
 		Arrays.sort(binBoundaries);
 		
 		TDoubleIntHashMap[] binCounters=new TDoubleIntHashMap[binBoundaries.length-1];
+		int[] numberOfSpectra=new int[binBoundaries.length-1];
 		for (int i=0; i<binCounters.length; i++) {
 			binCounters[i]=new TDoubleIntHashMap();
+			numberOfSpectra[i]=1; // add pseudocount
 		}
-		
+
 		int size=1;
 		if (library!=null) {
 			ArrayList<LibraryEntry> allEntries=library.getAllEntries(false);
@@ -83,13 +87,14 @@ public class BackgroundFrequencyCalculator {
 
 				if (index<0||index>=binCounters.length) continue;
 
+				numberOfSpectra[index]++;
 				for (double ion : ions) {
 					binCounters[index].adjustOrPutValue(ion, 1, 1);
 				}
 			}
 		}
 
-		return new BackgroundFrequencyCalculator(binBoundaries, binCounters, size);
+		return new BackgroundFrequencyCalculator(binBoundaries, binCounters, numberOfSpectra, size);
 	}
 	
 	public float[] getFrequencies(double[] ions, double precursorMz, MassTolerance tolerance) {
@@ -99,8 +104,10 @@ public class BackgroundFrequencyCalculator {
 		int index=Arrays.binarySearch(binBoundaries, precursorMz);
 		index=(-(index+1))-1;
 		if (index<0||index>=binCounters.length) {
-			return getFrequencies(counters);
+			return getFrequencies(counters, 1);
 		}
+		
+		int numberOfLibraryEntries=numberOfSpectra[index];
 		
 		for (int i=0; i<ions.length; i++) {
 			double[] matches=tolerance.getMatches(sortedMapKeys[index], ions[i]);
@@ -111,13 +118,13 @@ public class BackgroundFrequencyCalculator {
 				}
 			}
 		}
-		return getFrequencies(counters);
+		return getFrequencies(counters, numberOfLibraryEntries);
 	}
 	
-	private float[] getFrequencies(int[] counters) {
+	private float[] getFrequencies(int[] counters, int norm) {
 		float[] frequencies=new float[counters.length];
 		for (int i=0; i<frequencies.length; i++) {
-			frequencies[i]=counters[i]/(float)numberOfLibraryEntries;
+			frequencies[i]=counters[i]/(float)norm;//numberOfLibraryEntries;
 		}
 		return frequencies;
 	}

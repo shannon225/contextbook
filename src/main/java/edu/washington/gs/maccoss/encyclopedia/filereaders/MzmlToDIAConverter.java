@@ -25,10 +25,12 @@ public class MzmlToDIAConverter {
 
 	public static void main(String[] args) throws IOException {
 		HashMap<String, String> paramMap=PecanParameterParser.getDefaultParameters();
+		paramMap.put("-acquisition", "DIA"); // NON-OVERLAPPING!
+		
 		SearchParameters parameters=PecanParameterParser.parseParameters(paramMap);
 		System.out.println(parameters);
 		
-		File dir=new File("/Volumes/WorkingDisk/yeast_curve/");
+		File dir=new File("/Volumes/WorkingDisk/bruker/second_try/");
 		
 		File[] files=dir.listFiles(new SimpleFilenameFilter(MZML_EXTENSION));
 		for (int i=0; i<files.length; i++) {
