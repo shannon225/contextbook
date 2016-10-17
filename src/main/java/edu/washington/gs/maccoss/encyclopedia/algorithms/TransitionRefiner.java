@@ -305,7 +305,7 @@ public class TransitionRefiner {
 			rts=data.getRtArray().get();
 		}
 		panels.put("unnormalized", getChart(data.getChromatograms(), data.getCorrelationArray(), rts, data.getRange()));
-		panels.put("median", Charter.getChart("scan", "intensity", false, toXYTrace(data.getMedianChromatogram(), rts, "median", null, data.getRange())));
+		panels.put("median", Charter.getChart("Retention Time (min)", "intensity", false, toXYTrace(data.getMedianChromatogram(), rts, "median", null, data.getRange())));
 		return panels;
 	}
 
@@ -316,7 +316,7 @@ public class TransitionRefiner {
 	}
 
 	public static ChartPanel tracesToChart(ArrayList<XYTrace> xytraces) {
-		ChartPanel panel=Charter.getChart("scan", "intensity", false, xytraces.toArray(new XYTrace[xytraces.size()]));
+		ChartPanel panel=Charter.getChart("Retention Time (min)", "intensity", false, xytraces.toArray(new XYTrace[xytraces.size()]));
 		return panel;
 	}
 
