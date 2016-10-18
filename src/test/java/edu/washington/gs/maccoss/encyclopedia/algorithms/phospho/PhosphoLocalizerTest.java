@@ -142,6 +142,38 @@ public class PhosphoLocalizerTest extends TestCase {
 		return psmdata;
 	}
 	
+	public void testGetUniqueFragmentIonsRightInwards() {
+		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
+		String peptide="LYSGS[+80.0]PTR";
+		byte precursorCharge=2;
+		
+		ArrayList<String> peptideModSeqs=PhosphoPermuter.getPermutations(peptide, params.getAAConstants());
+
+		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
+		for (String peptideModSeq : peptideModSeqs) {
+			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+			entryMap.put(peptideModSeq, model);
+		}
+		
+		// go right to left, drop the first
+		for (int i=peptideModSeqs.size()-1; i>=1; i--) {
+			String targetPeptide=peptideModSeqs.get(i);
+			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getRightAmbiguity(targetPeptide, params.getAAConstants());
+			
+			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
+			// shrink the number of unique ions subtractors to the pool of remaining sequences to the right
+			for (int j=peptideModSeqs.size()-1; j>=i; j--) {
+				String seq=peptideModSeqs.get(j);
+				modelBatch.put(seq, entryMap.get(seq));
+			}
+			FragmentIon[] targets=PhosphoLocalizer.getUniqueFragmentIons(targetPeptide, precursorCharge, modelBatch, params);
+			System.out.println(targetPeptideName.getPeptideAnnotation()+": "+General.toString(targets));
+			System.out.println(targetPeptideName);
+			System.out.println();
+			assertTrue(targets.length<10);
+		}
+	}
+	
 	public void testGetUniqueFragmentIons() {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
 		
@@ -164,10 +196,9 @@ public class PhosphoLocalizerTest extends TestCase {
 			for (int j=peptideModSeqs.size()-1; j>=i; j--) {
 				String seq=peptideModSeqs.get(j);
 				modelBatch.put(seq, entryMap.get(seq));
-				System.out.println(seq);
 			}
 			FragmentIon[] uniqueIons=PhosphoLocalizer.getUniqueFragmentIons(targetPeptide, precursorCharge, modelBatch, params);
-			System.out.println(targetPeptide+": "+General.toString(uniqueIons));
+			assertTrue(uniqueIons.length<10);
 		}
 	}
 
