@@ -5,6 +5,9 @@ import java.awt.Color;
 import java.awt.Frame;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -53,12 +56,14 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
+import edu.washington.gs.maccoss.encyclopedia.gui.massspec.FragmentationTable;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class ResultsBrowserPanel extends JPanel {
@@ -67,7 +72,7 @@ public class ResultsBrowserPanel extends JPanel {
 
 	private final FileChooserPanel elibFileChooser;
 	private final FileChooserPanel rawFileChooser;
-	private final JSplitPane dataSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+	private final JSplitPane dataSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JSplitPane rawSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane peakPickingSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JSplitPane split=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
@@ -204,12 +209,11 @@ public class ResultsBrowserPanel extends JPanel {
 		}
 		
 		if (entry==null) {
-			dataSplit.setTopComponent(new JLabel("Select a peptide!"));
-			dataSplit.setBottomComponent(new JPanel());
+			dataSplit.setLeftComponent(new JLabel("Select a peptide!"));
 			return;
 		} else if (dia==null) {
-			dataSplit.setTopComponent(new JLabel("Select a raw file!"));
-			dataSplit.setBottomComponent(Charter.getChart(entry));
+			dataSplit.setLeftComponent(new JLabel("Select a raw file!"));
+			dataSplit.setRightComponent(Charter.getChart(entry));
 		} else {
 			Logger.logLine("Parsing peptide...");
 			PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaPeptideEntry(entry.getPeptideModSeq()), parameters.getAAConstants());
@@ -218,7 +222,8 @@ public class ResultsBrowserPanel extends JPanel {
 			entries.add(unit);
 			
 			try {
-				float rtRange=30f;
+				float rtRange=parameters.isRunPhosphoLocalization()?300f:30f;
+				
 				ArrayList<Stripe> stripes=dia.getStripes(entry.getPrecursorMZ(), entry.getRetentionTime()-rtRange, entry.getRetentionTime()+rtRange, false);
 				FragmentationTraceTask task=new FragmentationTraceTask(scorer, FragmentationTraceTask.PLOT_INTENSITIES, entries, stripes, new PrecursorScanMap(new ArrayList<PrecursorScan>()), parameters.getAAConstants());
 				HashMap<LibraryEntry, PeptideScoringResult> result=task.call();
@@ -282,12 +287,13 @@ public class ResultsBrowserPanel extends JPanel {
 					}
 					if (phosphoData.isPresent()) {
 						HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=phosphoData.get().getTraces();
-						HashMap<String, XYTrace[]> uniqueFragmentIons=phosphoData.get().getUniqueFragmentIons();
+						HashMap<String, HashMap<FragmentIon, XYTrace>> uniqueFragmentIons=phosphoData.get().getUniqueFragmentIons();
 						HashMap<String, XYPoint> localizationScores=phosphoData.get().getLocalizationScores();
 						
 						ArrayList<XYTrace> phosphoTraces=new ArrayList<XYTrace>();
 
 						TreeMap<String, ChartPanel> panelMap=new TreeMap<String, ChartPanel>();
+						HashMap<String, String> keyVsName=new HashMap<String, String>();
 						int i=0;
 						for (Entry<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> phosphoentry : allVsUniqueList.entrySet()) {
 							String seq=phosphoentry.getKey();
@@ -300,16 +306,32 @@ public class ResultsBrowserPanel extends JPanel {
 							phosphoTraces.add(new XYTrace(new double[] {point.x/60f}, new double[] {point.y}, GraphType.point, "center", color, 2.0f));
 							i++;
 							
-							XYTrace[] uniqueFragments=uniqueFragmentIons.get(seq);
+							HashMap<FragmentIon, XYTrace> uniqueFragments=uniqueFragmentIons.get(seq);
+							XYTrace[] fragmentTraces=uniqueFragments.values().toArray(new XYTrace[uniqueFragments.size()]);
 							
-							panelMap.put(seq+" ("+(Math.round(point.y*10.0f)/10.0f)+")", Charter.getChart("Retention Time (min)", "Intensity", true, uniqueFragments));
+							keyVsName.put(seq, seq+" ("+(Math.round(point.y*10.0f)/10.0f)+")");
+							panelMap.put(seq, Charter.getChart("Retention Time (min)", "Intensity", true, fragmentTraces));
 						}
 						ChartPanel phosphoPane=Charter.getChart("Retention Time (min)", "Score", true, phosphoTraces.toArray(new XYTrace[phosphoTraces.size()]));
 						ValueAxis axis=phosphoPane.getChart().getXYPlot().getRangeAxis();
 						org.jfree.data.Range range=axis.getRange();
 						axis.setRange(new org.jfree.data.Range(0.0f, Math.max(2.0f, range.getUpperBound())));
 						tabs.add("Phospho Localization", phosphoPane);
-						tabs.add("Unique Fragment Ions", Charter.getTabbedChartPane(panelMap));
+						
+
+						JTabbedPane tabPanel=new JTabbedPane();
+						for (Entry<String, ChartPanel> entryPanel : panelMap.entrySet()) {
+							ChartPanel chartPane=entryPanel.getValue();
+							FragmentationTable fragTable=new FragmentationTable(phosphoData.get(), entryPanel.getKey(), parameters);
+							
+							JPanel localizationPane=new JPanel(new BorderLayout());
+							localizationPane.add(chartPane, BorderLayout.CENTER);
+							localizationPane.add(fragTable, BorderLayout.EAST);
+							
+							tabPanel.addTab(keyVsName.get(entryPanel.getKey()), localizationPane);
+						}
+						tabs.add("Unique Fragment Ions", tabPanel);
+						
 					}
 					tabs.add("Quantification", peakPickingSplit);
 					
@@ -320,15 +342,13 @@ public class ResultsBrowserPanel extends JPanel {
 				}
 
 				rawSplit.setDividerLocation(locationRaw);
-				dataSplit.setTopComponent(rawSplit);
+				dataSplit.setLeftComponent(rawSplit);
 				
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(ResultsBrowserPanel.this, "Sorry, there was a problem reading the precursor window that contains ["+entry.getPrecursorMZ()+"]: "+e.getMessage(), "Error Reading DIA File",
 						JOptionPane.ERROR_MESSAGE);
 				e.printStackTrace();
 			}
-			
-			dataSplit.setBottomComponent(Charter.getChart(entry));
 			Logger.logLine("Finished reading peptide "+entry.getSpectrumName()+" (rt="+ entry.getRetentionTime()+")");
 		}
 		dataSplit.setDividerLocation(location);

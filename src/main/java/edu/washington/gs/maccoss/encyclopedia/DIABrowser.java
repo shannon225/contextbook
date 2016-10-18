@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.util.HashMap;
 
 import javax.swing.ImageIcon;
@@ -22,6 +23,9 @@ public class DIABrowser {
 	public static ImageIcon image=new ImageIcon(DIABrowser.class.getClassLoader().getResource("images/orbi_icon.png"));
 
 	public static void main(String[] args) {
+		final File dia=new File("/Users/searleb/Documents/school/localization_manuscript/elibs/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
+		final File library=new File("/Users/searleb/Documents/school/localization_manuscript/elibs/110515_bcs_hela_phospho_starved_20mz_500_900.dia.elib");
+
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {
@@ -56,7 +60,10 @@ public class DIABrowser {
 				map.put("-fixed", "");
 				SearchParameters parameters=SearchParameterParser.parseParameters(map);
 
-				f.getContentPane().add(new ResultsBrowserPanel(parameters), BorderLayout.CENTER);
+				ResultsBrowserPanel panel=new ResultsBrowserPanel(parameters);
+				panel.updateTable(library);
+				panel.updateRaw(dia);
+				f.getContentPane().add(panel, BorderLayout.CENTER);
 
 				f.pack();
 				f.setSize(new Dimension(1900, 1030)); // for 1920x1080

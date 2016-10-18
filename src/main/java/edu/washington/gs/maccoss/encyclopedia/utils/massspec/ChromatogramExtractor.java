@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -46,7 +47,7 @@ public class ChromatogramExtractor {
 		return kept.toArray(new XYTrace[kept.size()]);
 	}
 	
-	public static XYTrace[] extractFragmentChromatograms(MassTolerance tolerance, FragmentIon[] ionTypes, ArrayList<Spectrum> stripes) {
+	public static HashMap<FragmentIon, XYTrace> extractFragmentChromatograms(MassTolerance tolerance, FragmentIon[] ionTypes, ArrayList<Spectrum> stripes) {
 		@SuppressWarnings("unchecked")
 		ArrayList<XYPoint>[] traces=new ArrayList[ionTypes.length];
 		boolean[] gotTrace=new boolean[traces.length];
@@ -65,15 +66,15 @@ public class ChromatogramExtractor {
 				if (intensity>0) gotTrace[j]=true;
 			}
 		}
-		ArrayList<XYTrace> kept=new ArrayList<XYTrace>();
+		HashMap<FragmentIon, XYTrace> kept=new HashMap<FragmentIon, XYTrace>();
 		for (int i=0; i<traces.length; i++) {
 			if (gotTrace[i]) {
 				String name=ionTypes[i].toString();
 				XYTrace trace=new XYTrace(traces[i], GraphType.line, name, RandomGenerator.randomColor(name.hashCode()), 3.0f);
-				kept.add(SkylineSGFilter.paddedSavitzkyGolaySmooth(trace));
+				kept.put(ionTypes[i], SkylineSGFilter.paddedSavitzkyGolaySmooth(trace));
 			}
 		}
-		return kept.toArray(new XYTrace[kept.size()]);
+		return kept;
 	}
 
 }

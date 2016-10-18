@@ -150,7 +150,8 @@ public class PhosphoLocalizer {
 		HashSet<FragmentIon> alreadyTaken=new HashSet<FragmentIon>();
 		
 		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=new HashMap<String, Pair<TFloatFloatHashMap,TFloatFloatHashMap>>();
-		HashMap<String, XYTrace[]> uniqueFragmentIons=new HashMap<String, XYTrace[]>();
+		HashMap<String, HashMap<FragmentIon, XYTrace>> uniqueFragmentIons=new HashMap<String, HashMap<FragmentIon, XYTrace>>();
+		HashMap<String, FragmentIon[]> uniqueTargetFragments=new HashMap<String, FragmentIon[]>();
 		HashMap<String, XYPoint> localizationScores=new HashMap<String, XYPoint>();
 		
 		HashMap<String, TransitionRefinementData> passingForms=new HashMap<String, TransitionRefinementData>();
@@ -220,8 +221,9 @@ public class PhosphoLocalizer {
 
 			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
 
-			XYTrace[] traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes);
+			HashMap<FragmentIon, XYTrace> traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes);
 			uniqueFragmentIons.put(peptideAnnotation, traces);
+			uniqueTargetFragments.put(peptideAnnotation, targets);
 			//Charter.launchChart("Retention Time (Site Specific)", "Intensity", false, new Dimension(800, 250), traces);
 			//traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), totalIons.toArray(new FragmentIon[totalIons.size()]), stripes);
 			//Charter.launchChart("Retention Time (All Ions)", "Intensity", false, new Dimension(800, 250), traces);
@@ -261,7 +263,7 @@ public class PhosphoLocalizer {
 			System.out.println("multiple\t"+peptideModSeqs.get(0)+"\t"+peptideModSeqs.size()+"\t"+formsRT.size()+"\t"+(formsRT.max()-formsRT.min())+"\t"+scores.max());
 		}*/
 		
-		return new PhosphoLocalizationData(allVsUniqueList, uniqueFragmentIons, localizationScores, passingForms);
+		return new PhosphoLocalizationData(allVsUniqueList, uniqueFragmentIons, uniqueTargetFragments, localizationScores, passingForms);
 	}
 	
 	public TransitionRefinementData quantifyPeptide(String peptideModSeq, byte precursorCharge, double[] targetMasses, float targetRT, ArrayList<Spectrum> stripes, boolean limitToQuantifiable) {
