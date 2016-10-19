@@ -223,8 +223,10 @@ public class PhosphoLocalizer {
 			allVsUniqueList.put(peptideAnnotation, new Pair<TFloatFloatHashMap, TFloatFloatHashMap>(allRtScoreMap, uniqueRtScoreMap));
 
 			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
+			float bestRT=uniqueCalculator.getMaxRT()*60f;
+			float maxRawScore=uniqueCalculator.getMaxRawScore();
 
-			HashMap<FragmentIon, XYTrace> traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes);
+			HashMap<FragmentIon, XYTrace> traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes, bestRT);
 			uniqueFragmentIons.put(peptideAnnotation, traces);
 			uniqueTargetFragments.put(peptideAnnotation, targets);
 			//Charter.launchChart("Retention Time (Site Specific)", "Intensity", false, new Dimension(800, 250), traces);
@@ -234,8 +236,6 @@ public class PhosphoLocalizer {
 			//Charter.launchChart("All Score", "Count", true, allCalculator.toTraces());
 			//Charter.launchChart("Unique Score", "Count", true, uniqueCalculator.toTraces());
 
-			float bestRT=uniqueCalculator.getMaxRT()*60f;
-			float maxRawScore=uniqueCalculator.getMaxRawScore();
 			localizationScores.put(peptideAnnotation, new XYPoint(bestRT, maxRawScore));
 			if (maxRawScore>2f) {
 				formsRT.add(bestRT);
