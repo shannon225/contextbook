@@ -304,9 +304,10 @@ public class ResultsBrowserPanel extends JPanel {
 							i++;
 							
 							HashMap<FragmentIon, XYTrace> uniqueFragments=uniqueFragmentIons.get(seq);
-							Collection<XYTrace> uniqueFragmentsSet=uniqueFragments.values();
-							uniqueFragmentsSet.add(new XYTrace(new double[] {point.x/60f}, new double[] {0.0}, GraphType.point, "center", Color.BLACK, 2.0f));
-							XYTrace[] fragmentTraces=uniqueFragmentsSet.toArray(new XYTrace[uniqueFragments.size()]);
+							ArrayList<XYTrace> uniqueFragmentsList=new ArrayList<XYTrace>(uniqueFragments.values());
+							double maxPoint=XYTrace.getMaxY(uniqueFragmentsList);
+							uniqueFragmentsList.add(new XYTrace(new double[] {point.x/60f, point.x/60f}, new double[] {0.0, maxPoint}, GraphType.dashedline, "center", Color.BLACK, 2.0f));
+							XYTrace[] fragmentTraces=uniqueFragmentsList.toArray(new XYTrace[uniqueFragmentsList.size()]);
 							
 							keyVsName.put(seq, seq+" ("+(Math.round(point.y*10.0f)/10.0f)+")");
 							panelMap.put(seq, Charter.getChart("Retention Time (min)", "Intensity", true, fragmentTraces));

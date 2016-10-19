@@ -43,6 +43,27 @@ public class XYTrace {
 		
 		Collections.sort(points);
 	}
+	
+	public static double getMaxY(Collection<XYTrace> traces) {
+		double max=-Double.MAX_VALUE;
+		for (XYTrace xyTrace : traces) {
+			double newMax=xyTrace.getMaxY();
+			if (newMax>max) {
+				max=newMax;
+			}
+		}
+		return max;
+	}
+	
+	public double getMaxY() {
+		double max=-Double.MAX_VALUE;
+		for (XYPoint xy : points) {
+			if (xy.y>max) {
+				max=xy.y;
+			}
+		}
+		return max;
+	}
 
 	public XYTrace(Collection<XYPoint> points, GraphType type, String name, Color color, Float thickness) {
 		this.color=Optional.ofNullable(color);

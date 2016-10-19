@@ -3,12 +3,15 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
+import gnu.trove.list.array.TFloatArrayList;
 
 public class ChromatogramExtractor {
 	public static final byte[] isotopes=new byte[] {0, 1, 2};
@@ -48,35 +51,50 @@ public class ChromatogramExtractor {
 	}
 	
 	public static HashMap<FragmentIon, XYTrace> extractFragmentChromatograms(MassTolerance tolerance, FragmentIon[] ionTypes, ArrayList<Spectrum> stripes, float targetRTInSec) {
-		@SuppressWarnings("unchecked")
-		ArrayList<XYPoint>[] traces=new ArrayList[ionTypes.length];
-		boolean[] gotTrace=new boolean[traces.length];
-		for (int i=0; i<traces.length; i++) {
-			traces[i]=new ArrayList<XYPoint>();
+		HashMap<FragmentIon, XYTrace> kept=new HashMap<FragmentIon, XYTrace>();
+
+		Spectrum bestStripe=null;
+		float bestDelta=Float.MAX_VALUE;
+		for (Spectrum stripe : stripes) {
+			float delta=Math.abs(stripe.getScanStartTime()-targetRTInSec);
+			if (delta<bestDelta) {
+				bestDelta=delta;
+				bestStripe=stripe;
+			}
 		}
+		// no signal of any kind at retention time!
+		if (bestStripe==null) return kept;
+
+		ArrayList<FragmentIon> centerIonTypes=new ArrayList<FragmentIon>();
+		for (int i=0; i<ionTypes.length; i++) {
+			float intensity=tolerance.getIntegratedIntensity(bestStripe.getMassArray(), bestStripe.getIntensityArray(), ionTypes[i].mass);
+			if (intensity>0) {
+				centerIonTypes.add(ionTypes[i]);
+			}
+		}
+		HashMap<FragmentIon, ArrayList<XYPoint>> traces=new HashMap<FragmentIon, ArrayList<XYPoint>>();
+		for (FragmentIon centerIon : centerIonTypes) {
+			traces.put(centerIon, new ArrayList<XYPoint>());
+		}
+
 		for (int i=0; i<stripes.size(); i++) {
 			Spectrum spectrum=stripes.get(i);
 			double[] massArray=spectrum.getMassArray();
 			float[] intensityArray=spectrum.getIntensityArray();
-			for (int j=0; j<ionTypes.length; j++) {
-				if (ionTypes[j].index<=2) continue;
-				
-				float intensity=tolerance.getIntegratedIntensity(massArray, intensityArray, ionTypes[j].mass);
-				traces[j].add(new XYPoint(spectrum.getScanStartTime()/60, intensity));
-				if (intensity>0) gotTrace[j]=true;
+			for (FragmentIon centerIon : centerIonTypes) {
+				float intensity=tolerance.getIntegratedIntensity(massArray, intensityArray, centerIon.mass);
+				ArrayList<XYPoint> points=traces.get(centerIon);
+				points.add(new XYPoint(spectrum.getScanStartTime()/60, intensity));
 			}
 		}
 		
-		// FIXME REMOVE IONS NOT IN CENTER!
-		
-		HashMap<FragmentIon, XYTrace> kept=new HashMap<FragmentIon, XYTrace>();
-		for (int i=0; i<traces.length; i++) {
-			if (gotTrace[i]) {
-				String name=ionTypes[i].toString();
-				XYTrace trace=new XYTrace(traces[i], GraphType.line, name, RandomGenerator.randomColor(name.hashCode()), 3.0f);
-				kept.put(ionTypes[i], SkylineSGFilter.paddedSavitzkyGolaySmooth(trace));
-			}
+		for (Entry<FragmentIon, ArrayList<XYPoint>> traceData : traces.entrySet()) {
+			FragmentIon key=traceData.getKey();
+			String name=key.toString();
+			XYTrace trace=new XYTrace(traceData.getValue(), GraphType.line, name, RandomGenerator.randomColor(name.hashCode()), 3.0f);
+			kept.put(key, SkylineSGFilter.paddedSavitzkyGolaySmooth(trace));
 		}
+		
 		return kept;
 	}
 
