@@ -23,6 +23,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
@@ -150,6 +151,7 @@ public class PhosphoLocalizer {
 		
 		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=new HashMap<String, Pair<TFloatFloatHashMap,TFloatFloatHashMap>>();
 		HashMap<String, HashMap<FragmentIon, XYTrace>> uniqueFragmentIons=new HashMap<String, HashMap<FragmentIon, XYTrace>>();
+		HashMap<String, HashMap<FragmentIon, XYTrace>> otherFragmentIons=new HashMap<String, HashMap<FragmentIon, XYTrace>>();
 		HashMap<String, FragmentIon[]> uniqueTargetFragments=new HashMap<String, FragmentIon[]>();
 		HashMap<String, XYPoint> localizationScores=new HashMap<String, XYPoint>();
 		
@@ -226,8 +228,15 @@ public class PhosphoLocalizer {
 			float bestRT=uniqueCalculator.getMaxRT()*60f;
 			float maxRawScore=uniqueCalculator.getMaxRawScore();
 
-			HashMap<FragmentIon, XYTrace> traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes, bestRT);
-			uniqueFragmentIons.put(peptideAnnotation, traces);
+			HashMap<FragmentIon, XYTrace> otherTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), allIonsTypes, stripes, bestRT, GraphType.dashedline);
+			HashMap<FragmentIon, XYTrace> uniqueTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes, bestRT, GraphType.line);
+			
+			for (FragmentIon ion : uniqueTraces.keySet()) {
+				otherTraces.remove(ion);
+			}
+			
+			uniqueFragmentIons.put(peptideAnnotation, uniqueTraces);
+			otherFragmentIons.put(peptideAnnotation, otherTraces);
 			uniqueTargetFragments.put(peptideAnnotation, targets);
 			//Charter.launchChart("Retention Time (Site Specific)", "Intensity", false, new Dimension(800, 250), traces);
 			//traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), totalIons.toArray(new FragmentIon[totalIons.size()]), stripes);
@@ -253,6 +262,7 @@ public class PhosphoLocalizer {
 				
 			}
 			
+			// FIXME REMOVE FORMS THAT DON'T HAVE AT LEAST 3 TRANSITIONS (LOCALIZING OR NOT) THAT FOLLOW THE MEDIAN!
 			if (maxRawScore>bestScore) {
 				// FIXME add unlocalized form here (so score is not 0)
 			}
@@ -266,7 +276,7 @@ public class PhosphoLocalizer {
 			System.out.println("multiple\t"+peptideModSeqs.get(0)+"\t"+peptideModSeqs.size()+"\t"+formsRT.size()+"\t"+(formsRT.max()-formsRT.min())+"\t"+scores.max());
 		}*/
 		
-		return new PhosphoLocalizationData(allVsUniqueList, uniqueFragmentIons, uniqueTargetFragments, localizationScores, passingForms);
+		return new PhosphoLocalizationData(allVsUniqueList, uniqueFragmentIons, otherFragmentIons, uniqueTargetFragments, localizationScores, passingForms);
 	}
 	
 	public TransitionRefinementData quantifyPeptide(String peptideModSeq, byte precursorCharge, double[] targetMasses, float targetRT, ArrayList<Spectrum> stripes, boolean limitToQuantifiable) {

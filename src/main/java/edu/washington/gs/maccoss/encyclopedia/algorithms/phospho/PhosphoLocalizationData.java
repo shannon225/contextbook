@@ -10,16 +10,18 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class PhosphoLocalizationData {
-	private final HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> traces;
+	private final HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> scoreTraces;
 	private final HashMap<String, HashMap<FragmentIon, XYTrace>> uniqueFragmentIons;
+	private final HashMap<String, HashMap<FragmentIon, XYTrace>> otherFragmentIons;
 	private final HashMap<String, FragmentIon[]> uniqueTargetFragments;
 	private final HashMap<String, XYPoint> localizationScores;
 	private final HashMap<String, TransitionRefinementData> passingForms;
 
-	public PhosphoLocalizationData(HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> traces, HashMap<String, HashMap<FragmentIon, XYTrace>> uniqueFragmentIons, HashMap<String, FragmentIon[]> uniqueTargetFragments, HashMap<String, XYPoint> localizationScores, HashMap<String, TransitionRefinementData> passingForms) {
-		this.traces=traces;
+	public PhosphoLocalizationData(HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> scoreTraces, HashMap<String, HashMap<FragmentIon, XYTrace>> uniqueFragmentIons, HashMap<String, HashMap<FragmentIon, XYTrace>> otherFragmentIons, HashMap<String, FragmentIon[]> uniqueTargetFragments, HashMap<String, XYPoint> localizationScores, HashMap<String, TransitionRefinementData> passingForms) {
+		this.scoreTraces=scoreTraces;
 		this.uniqueFragmentIons=uniqueFragmentIons;
 		this.uniqueTargetFragments=uniqueTargetFragments;
+		this.otherFragmentIons=otherFragmentIons;
 		this.localizationScores=localizationScores;
 		this.passingForms=passingForms;
 	}
@@ -32,12 +34,16 @@ public class PhosphoLocalizationData {
 		return uniqueFragmentIons;
 	}
 	
+	public HashMap<String, HashMap<FragmentIon, XYTrace>> getOtherFragmentIons() {
+		return otherFragmentIons;
+	}
+	
 	public HashMap<String, FragmentIon[]> getUniqueTargetFragments() {
 		return uniqueTargetFragments;
 	}
 	
-	public HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> getTraces() {
-		return traces;
+	public HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> getScoreTraces() {
+		return scoreTraces;
 	}
 	
 	public HashMap<String, TransitionRefinementData> getPassingForms() {
@@ -45,6 +51,6 @@ public class PhosphoLocalizationData {
 	}
 	
 	public boolean isEmpty() {
-		return traces==null||traces.size()==0;
+		return scoreTraces==null||scoreTraces.size()==0;
 	}
 }

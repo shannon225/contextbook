@@ -284,8 +284,10 @@ public class ResultsBrowserPanel extends JPanel {
 						phosphoData=quantTask.runLocalization();
 					}
 					if (phosphoData.isPresent()) {
-						HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=phosphoData.get().getTraces();
+						HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=phosphoData.get().getScoreTraces();
 						HashMap<String, HashMap<FragmentIon, XYTrace>> uniqueFragmentIons=phosphoData.get().getUniqueFragmentIons();
+						HashMap<String, HashMap<FragmentIon, XYTrace>> otherFragmentIons=phosphoData.get().getOtherFragmentIons();
+						
 						HashMap<String, XYPoint> localizationScores=phosphoData.get().getLocalizationScores();
 						
 						ArrayList<XYTrace> phosphoTraces=new ArrayList<XYTrace>();
@@ -304,7 +306,12 @@ public class ResultsBrowserPanel extends JPanel {
 							i++;
 							
 							HashMap<FragmentIon, XYTrace> uniqueFragments=uniqueFragmentIons.get(seq);
-							ArrayList<XYTrace> uniqueFragmentsList=new ArrayList<XYTrace>(uniqueFragments.values());
+							HashMap<FragmentIon, XYTrace> otherFragments=otherFragmentIons.get(seq);
+							HashMap<FragmentIon, XYTrace> allFragments=new HashMap<FragmentIon, XYTrace>();
+							allFragments.putAll(uniqueFragments);
+							allFragments.putAll(otherFragments);
+							
+							ArrayList<XYTrace> uniqueFragmentsList=new ArrayList<XYTrace>(allFragments.values());
 							double maxPoint=XYTrace.getMaxY(uniqueFragmentsList);
 							uniqueFragmentsList.add(new XYTrace(new double[] {point.x/60f, point.x/60f}, new double[] {0.0, maxPoint}, GraphType.dashedline, "center", Color.BLACK, 2.0f));
 							XYTrace[] fragmentTraces=uniqueFragmentsList.toArray(new XYTrace[uniqueFragmentsList.size()]);

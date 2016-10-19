@@ -50,7 +50,7 @@ public class ChromatogramExtractor {
 		return kept.toArray(new XYTrace[kept.size()]);
 	}
 	
-	public static HashMap<FragmentIon, XYTrace> extractFragmentChromatograms(MassTolerance tolerance, FragmentIon[] ionTypes, ArrayList<Spectrum> stripes, float targetRTInSec) {
+	public static HashMap<FragmentIon, XYTrace> extractFragmentChromatograms(MassTolerance tolerance, FragmentIon[] ionTypes, ArrayList<Spectrum> stripes, float targetRTInSec, GraphType type) {
 		HashMap<FragmentIon, XYTrace> kept=new HashMap<FragmentIon, XYTrace>();
 
 		Spectrum bestStripe=null;
@@ -91,7 +91,18 @@ public class ChromatogramExtractor {
 		for (Entry<FragmentIon, ArrayList<XYPoint>> traceData : traces.entrySet()) {
 			FragmentIon key=traceData.getKey();
 			String name=key.toString();
-			XYTrace trace=new XYTrace(traceData.getValue(), GraphType.line, name, RandomGenerator.randomColor(name.hashCode()), 3.0f);
+			XYTrace trace=null;
+			switch (type) {
+			case line:
+				trace=new XYTrace(traceData.getValue(), GraphType.line, name, RandomGenerator.randomColor(name.hashCode()), 3.0f);
+				break;
+			case dashedline:
+				trace=new XYTrace(traceData.getValue(), GraphType.dashedline, name, RandomGenerator.randomColor(name.hashCode()), 2.0f);
+				break;
+			default:
+				trace=new XYTrace(traceData.getValue(), GraphType.line, name, RandomGenerator.randomColor(name.hashCode()), 3.0f);
+				break;
+			}
 			kept.put(key, SkylineSGFilter.paddedSavitzkyGolaySmooth(trace));
 		}
 		
