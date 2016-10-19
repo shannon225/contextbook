@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Frame;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -296,7 +297,6 @@ public class ResultsBrowserPanel extends JPanel {
 							String seq=phosphoentry.getKey();
 							Pair<TFloatFloatHashMap, TFloatFloatHashMap> pair=phosphoentry.getValue();
 							Color color=i>=colors.length?colors[i-colors.length].brighter():colors[i];
-							//phosphoTraces.add(new XYTrace(pair.x, GraphType.line, "ALL_"+seq, new Color(color.getRed(), color.getGreen(), color.getBlue(), 150), 4.0f));
 							phosphoTraces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 2.0f));
 
 							XYPoint point=localizationScores.get(seq);
@@ -304,7 +304,9 @@ public class ResultsBrowserPanel extends JPanel {
 							i++;
 							
 							HashMap<FragmentIon, XYTrace> uniqueFragments=uniqueFragmentIons.get(seq);
-							XYTrace[] fragmentTraces=uniqueFragments.values().toArray(new XYTrace[uniqueFragments.size()]);
+							Collection<XYTrace> uniqueFragmentsSet=uniqueFragments.values();
+							uniqueFragmentsSet.add(new XYTrace(new double[] {point.x/60f}, new double[] {0.0}, GraphType.point, "center", Color.BLACK, 2.0f));
+							XYTrace[] fragmentTraces=uniqueFragmentsSet.toArray(new XYTrace[uniqueFragments.size()]);
 							
 							keyVsName.put(seq, seq+" ("+(Math.round(point.y*10.0f)/10.0f)+")");
 							panelMap.put(seq, Charter.getChart("Retention Time (min)", "Intensity", true, fragmentTraces));

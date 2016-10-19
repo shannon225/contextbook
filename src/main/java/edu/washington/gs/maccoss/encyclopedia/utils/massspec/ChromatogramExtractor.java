@@ -47,7 +47,7 @@ public class ChromatogramExtractor {
 		return kept.toArray(new XYTrace[kept.size()]);
 	}
 	
-	public static HashMap<FragmentIon, XYTrace> extractFragmentChromatograms(MassTolerance tolerance, FragmentIon[] ionTypes, ArrayList<Spectrum> stripes) {
+	public static HashMap<FragmentIon, XYTrace> extractFragmentChromatograms(MassTolerance tolerance, FragmentIon[] ionTypes, ArrayList<Spectrum> stripes, float targetRTInSec) {
 		@SuppressWarnings("unchecked")
 		ArrayList<XYPoint>[] traces=new ArrayList[ionTypes.length];
 		boolean[] gotTrace=new boolean[traces.length];
@@ -66,6 +66,9 @@ public class ChromatogramExtractor {
 				if (intensity>0) gotTrace[j]=true;
 			}
 		}
+		
+		// FIXME REMOVE IONS NOT IN CENTER!
+		
 		HashMap<FragmentIon, XYTrace> kept=new HashMap<FragmentIon, XYTrace>();
 		for (int i=0; i<traces.length; i++) {
 			if (gotTrace[i]) {
