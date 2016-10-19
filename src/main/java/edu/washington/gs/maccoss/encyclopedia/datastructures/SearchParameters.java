@@ -23,15 +23,19 @@ public class SearchParameters {
 	protected final boolean runPhosphoLocalization;
 	protected final float precursorWindowSize;
 	protected final float numberOfExtraDecoyLibrariesSearched;
-	protected final int numberOfQuantitativePeaks;	
+	protected final int numberOfQuantitativePeaks;
+	protected final double precursorOffsetPPM;
+	protected final double fragmentOffsetPPM;
 
-	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme,
+	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, MassTolerance fragmentTolerance, double fragmentOffsetPPM, DigestionEnzyme enzyme,
 			float percolatorThreshold, File percolatorLocation, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
 			int numberOfQuantitativePeaks, boolean runPhosphoLocalization, float getNumberOfExtraDecoyLibrariesSearched) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
+		this.precursorOffsetPPM=precursorOffsetPPM;
 		this.fragmentTolerance=fragmentTolerance;
+		this.fragmentOffsetPPM=fragmentOffsetPPM;
 		this.enzyme=enzyme;
 		this.percolatorThreshold=percolatorThreshold;
 		this.percolatorLocation=percolatorLocation;
@@ -50,6 +54,8 @@ public class SearchParameters {
 		sb.append(" -frag "+FragmentationType.toString(fragType)+"\n");
 		sb.append(" -ptol "+precursorTolerance.getPpmTolerance()+"\n");
 		sb.append(" -ftol "+fragmentTolerance.getPpmTolerance()+"\n");
+		sb.append(" -poffset "+precursorOffsetPPM+"\n");
+		sb.append(" -foffset "+fragmentOffsetPPM+"\n");
 		sb.append(" -enzyme "+enzyme.getName()+"\n");
 		sb.append(" -percolatorThreshold "+percolatorThreshold+"\n");
 		sb.append(" -percolatorLocation "+percolatorLocation+"\n");
@@ -80,6 +86,14 @@ public class SearchParameters {
 
 	public MassTolerance getPrecursorTolerance() {
 		return precursorTolerance;
+	}
+
+	public double getFragmentOffsetPPM() {
+		return fragmentOffsetPPM;
+	}
+
+	public double getPrecursorOffsetPPM() {
+		return precursorOffsetPPM;
 	}
 
 	public DigestionEnzyme getEnzyme() {

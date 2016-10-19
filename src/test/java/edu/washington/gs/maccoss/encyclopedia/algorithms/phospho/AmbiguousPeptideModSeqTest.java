@@ -44,6 +44,25 @@ public class AmbiguousPeptideModSeqTest extends TestCase {
 		assertEquals("(S[+79.96633]SS[+79.96633])R", AmbiguousPeptideModSeq.getFullyAmbiguous("S[+79.96633]SS[+79.96633]R",PARAMETERS.getAAConstants()).getPeptideAnnotation());
 	}
 	
+	public void testAmbiguousSorting() {
+		String[] peptides=new String[] {
+				"SS[+79.96633]SR",
+				"S[+79.96633]S[+79.96633]SR",
+				"S[+79.96633]S[+79.96633]S[+79.96633]R",
+				"S[+79.96633]QWEITS[+79.96633]GLKDSS[+79.96633]R",
+				"SQWEIT[+79.96633]SGLKDS[+79.96633]S[+79.96633]R"
+		};
+		int[] diffs=new int[] {
+				0, -1, 0, -8, 9
+		};
+		for (int i=0; i<peptides.length; i++) {
+			String targetPeptide=peptides[i];
+			AmbiguousPeptideModSeq left=AmbiguousPeptideModSeq.getLeftAmbiguity(targetPeptide,PARAMETERS.getAAConstants());
+			AmbiguousPeptideModSeq right=AmbiguousPeptideModSeq.getRightAmbiguity(targetPeptide,PARAMETERS.getAAConstants());
+			assertEquals(diffs[i], left.numAmbigousResidues()-right.numAmbigousResidues());
+		}
+	}
+	
 	public void testRemove() {
 		String targetPeptide="S[+79.96633]SSR";
 
@@ -60,9 +79,8 @@ public class AmbiguousPeptideModSeqTest extends TestCase {
 		for (int i=0; i<unambiguousPeptides.length; i++) {
 			AmbiguousPeptideModSeq s=AmbiguousPeptideModSeq.getFullyAmbiguous(targetPeptide, PARAMETERS.getAAConstants());
 			AmbiguousPeptideModSeq unambiguous=AmbiguousPeptideModSeq.getUnambigous(unambiguousPeptides[i], PARAMETERS.getAAConstants());
-			;
-
-			assertEquals(expectedResult[i], s.removeAmbiguity(unambiguous).getPeptideAnnotation());
+			
+			assertEquals(expectedResult[i], s.removeAmbiguity(unambiguous).get().getPeptideAnnotation());
 		}
 	}
 	

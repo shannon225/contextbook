@@ -22,6 +22,8 @@ public class PecanParameterParser {
 		map.put("-frag", "YONLY");
 		map.put("-ptol", "10");
 		map.put("-ftol", "10");
+		map.put("-poffset", "0");
+		map.put("-foffset", "0");
 		map.put("-enzyme", "trypsin");
 		map.put("-minLength", "5");
 		map.put("-maxLength", "100");
@@ -58,6 +60,8 @@ public class PecanParameterParser {
 		final FragmentationType fragType;
 		final MassTolerance precursorTolerance;
 		final MassTolerance fragmentTolerance;
+		final double precursorOffsetPPM;
+		final double fragmentOffsetPPM;
 		final DigestionEnzyme enzyme;
 		final int minPeptideLength;
 		final int maxPeptideLength;
@@ -138,6 +142,28 @@ public class PecanParameterParser {
 			}
 		}
 		
+		value=parameters.get("-poffset");
+		if (value==null) {
+			precursorOffsetPPM=0.0;
+		} else {
+			try {
+				precursorOffsetPPM=Double.parseDouble(value);
+			} catch (NumberFormatException nfe) {
+				throw new EncyclopediaException("Error parsing precursor tolerance from ["+value+"]", nfe);
+			}
+		}
+		
+		value=parameters.get("-foffset");
+		if (value==null) {
+			fragmentOffsetPPM=0.0;
+		} else {
+			try {
+				fragmentOffsetPPM=Double.parseDouble(value);
+			} catch (NumberFormatException nfe) {
+				throw new EncyclopediaException("Error parsing fragment tolerance from ["+value+"]", nfe);
+			}
+		}
+		
 		value=parameters.get("-enzyme");
 		if (value==null) {
 			enzyme=DigestionEnzyme.getEnzyme("trypsin");
@@ -174,6 +200,6 @@ public class PecanParameterParser {
 			}
 		}
 		
-		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolator, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks);
+		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, fragmentTolerance, fragmentOffsetPPM, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolator, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks);
 	}
 }

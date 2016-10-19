@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.set.hash.TIntHashSet;
 import uk.ac.ebi.jmzml.model.mzml.BinaryDataArrayList;
@@ -99,6 +100,9 @@ public class MzmlToDIAProducer implements Runnable {
 			float[] intensityArray=ByteConverter.toFloatArray(bdal.getBinaryDataArray().get(1).getBinaryDataAsNumberArray());
 
 			if (p==null) {
+				if (parameters.getPrecursorOffsetPPM()!=0.0) {
+					massArray=General.subtract(massArray, parameters.getPrecursorOffsetPPM());
+				}
 				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray));
 			} else {
 				HashMap<String, CVParam> isolationCVParams=asCVMap(p.getIsolationWindow().getCvParam());
@@ -117,7 +121,10 @@ public class MzmlToDIAProducer implements Runnable {
 					isolationWindowLowerOffset=Float.parseFloat(lowerParam.getValue());
 					isolationWindowUpperOffset=Float.parseFloat(upperParam.getValue());
 				}
-				
+
+				if (parameters.getFragmentOffsetPPM()!=0.0) {
+					massArray=General.subtract(massArray, parameters.getFragmentOffsetPPM());
+				}
 				Stripe stripe=new Stripe(spectrumName, p.getSpectrumRef(), spectrumIndex, scanStartTime, isolationWindowTarget-isolationWindowLowerOffset, isolationWindowTarget+isolationWindowUpperOffset, massArray, intensityArray);
 				stripes.add(stripe);
 				Range range=stripe.getRange();

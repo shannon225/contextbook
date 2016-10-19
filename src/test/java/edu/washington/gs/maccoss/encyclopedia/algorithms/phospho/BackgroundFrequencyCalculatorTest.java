@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -67,7 +66,7 @@ public class BackgroundFrequencyCalculatorTest {
 				uniqueRtScoreMap.put(stripe.getScanStartTime(), negLogProb);
 			}
 
-			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
+			//EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
 			//System.out.println("FINAL: "+peptideModSeq+" --> rt:"+uniqueCalculator.getMaxRT()/60.0f+", s:"+uniqueCalculator.getMaxRawScore()+", e:"+uniqueCalculator.getNegLog10EValue());
 		}
 

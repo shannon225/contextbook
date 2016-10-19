@@ -30,7 +30,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtract
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -130,8 +129,8 @@ public class PhosphoLocalizer {
 			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getRightAmbiguity(targetPeptide, params.getAAConstants());
 			
 			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
-			// shrink the number of unique ions subtractors to the pool of remaining sequences to the right
-			for (int j=peptideModSeqs.size()-1; j>=i; j--) {
+			// shrink the number of unique ions subtractors to the pool of remaining sequences to the left
+			for (int j=0; j<=i; j++) {
 				String seq=peptideModSeqs.get(j);
 				modelBatch.put(seq, entryMap.get(seq));
 			}
@@ -174,7 +173,11 @@ public class PhosphoLocalizer {
 			// then it's ok if we use matching ions from to (S[+80])SSSSK to identify S(S[+80])SSSK
 			
 			// fix ambiguity based on previously identified peptides
-			targetPeptideAnnotation=targetPeptideAnnotation.removeAmbiguity(previouslyIdentified);
+			Optional<AmbiguousPeptideModSeq> ambiguityRemoved=targetPeptideAnnotation.removeAmbiguity(previouslyIdentified);
+			if (!ambiguityRemoved.isPresent()) {
+				continue;
+			}
+			targetPeptideAnnotation=ambiguityRemoved.get();
 
 			String peptideAnnotation=targetPeptideAnnotation.getPeptideAnnotation();
 			String targetPeptideSequence=targetPeptideAnnotation.getPeptideModSeq();

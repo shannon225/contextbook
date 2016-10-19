@@ -24,6 +24,8 @@ public class SearchParameterParser {
 		map.put("-frag", "CID");
 		map.put("-ptol", "10");
 		map.put("-ftol", "10");
+		map.put("-poffset", "0");
+		map.put("-foffset", "0");
 		map.put("-enzyme", "trypsin");
 		map.put("-percolatorThreshold", "0.01");
 		map.put("-percolatorLocation", "internal");
@@ -50,6 +52,8 @@ public class SearchParameterParser {
 		final FragmentationType fragType;
 		final MassTolerance precursorTolerance;
 		final MassTolerance fragmentTolerance;
+		final double precursorOffsetPPM;
+		final double fragmentOffsetPPM;
 		final DigestionEnzyme enzyme;
 		final float percolatorThreshold;
 		final DataAcquisitionType dataAcquisitionType;
@@ -103,6 +107,28 @@ public class SearchParameterParser {
 			}
 		}
 		
+		value=parameters.get("-poffset");
+		if (value==null) {
+			precursorOffsetPPM=0.0;
+		} else {
+			try {
+				precursorOffsetPPM=Double.parseDouble(value);
+			} catch (NumberFormatException nfe) {
+				throw new EncyclopediaException("Error parsing precursor tolerance from ["+value+"]", nfe);
+			}
+		}
+		
+		value=parameters.get("-foffset");
+		if (value==null) {
+			fragmentOffsetPPM=0.0;
+		} else {
+			try {
+				fragmentOffsetPPM=Double.parseDouble(value);
+			} catch (NumberFormatException nfe) {
+				throw new EncyclopediaException("Error parsing fragment tolerance from ["+value+"]", nfe);
+			}
+		}
+		
 		value=parameters.get("-enzyme");
 		if (value==null) {
 			enzyme=DigestionEnzyme.getEnzyme("trypsin");
@@ -138,7 +164,7 @@ public class SearchParameterParser {
 			}
 		}
 		
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorThreshold, percolator, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
+		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, fragmentTolerance, fragmentOffsetPPM, enzyme, percolatorThreshold, percolator, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
 				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, runPhosphoLocalization, numberOfExtraDecoyLibrariesSearched);
 	}
 

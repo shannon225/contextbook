@@ -27,8 +27,6 @@ public class FragmentationTable extends JPanel {
 		super(new BorderLayout());
 		
 		TransitionRefinementData transitionRefinementData=data.getPassingForms().get(sequenceKey);
-		System.out.println("KEY: "+sequenceKey);
-		System.out.println("FROM: "+General.toString(data.getPassingForms().keySet()));
 		
 		FragmentIon[] all;
 		if (transitionRefinementData!=null) {

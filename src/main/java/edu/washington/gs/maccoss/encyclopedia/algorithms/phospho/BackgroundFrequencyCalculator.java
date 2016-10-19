@@ -24,9 +24,8 @@ public class BackgroundFrequencyCalculator {
 	private final TDoubleIntHashMap[] binCounters;
 	private final double[][] sortedMapKeys;
 	private final int[] numberOfSpectra;
-	private final int numberOfLibraryEntries;
 	
-	BackgroundFrequencyCalculator(double[] binBoundaries, TDoubleIntHashMap[] binCounters, int[] numberOfSpectra, int numberOfLibraryEntries) {
+	BackgroundFrequencyCalculator(double[] binBoundaries, TDoubleIntHashMap[] binCounters, int[] numberOfSpectra) {
 		this.binBoundaries=binBoundaries;
 		this.binCounters=binCounters;
 		sortedMapKeys=new double[binCounters.length][];
@@ -35,7 +34,6 @@ public class BackgroundFrequencyCalculator {
 			Arrays.sort(sortedMapKeys[i]);
 		}
 		this.numberOfSpectra=numberOfSpectra;
-		this.numberOfLibraryEntries=numberOfLibraryEntries;
 	}
 	
 	/**
@@ -76,10 +74,8 @@ public class BackgroundFrequencyCalculator {
 			numberOfSpectra[i]=1; // add pseudocount
 		}
 
-		int size=1;
 		if (library!=null) {
 			ArrayList<LibraryEntry> allEntries=library.getAllEntries(false);
-			size=allEntries.size();
 			for (LibraryEntry entry : allEntries) {
 				double[] ions=entry.getMassArray();
 				int index=Arrays.binarySearch(binBoundaries, entry.getPrecursorMZ());
@@ -94,7 +90,7 @@ public class BackgroundFrequencyCalculator {
 			}
 		}
 
-		return new BackgroundFrequencyCalculator(binBoundaries, binCounters, numberOfSpectra, size);
+		return new BackgroundFrequencyCalculator(binBoundaries, binCounters, numberOfSpectra);
 	}
 	
 	public float[] getFrequencies(double[] ions, double precursorMz, MassTolerance tolerance) {

@@ -262,16 +262,37 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					String sourceFile=entry.getSource();
 					TransitionRefinementData data=entry.getRefinementData();
 					
+					HashMap<String, TransitionRefinementData> uniqueDataMap=new HashMap<String, TransitionRefinementData>();
+
 					if (data.getModificationQuantData().isPresent()) {
 						HashMap<String, TransitionRefinementData> forms=data.getModificationQuantData().get();
+						// preserve only the least ambiguous forms
 						for (Entry<String, TransitionRefinementData> mapEntry : forms.entrySet()) {
-							prepareQuantData(mapEntry.getValue(), sourceFile, inferrer, peptidePrep, fragmentPrep);
+							TransitionRefinementData value=mapEntry.getValue();
+							
+							if (uniqueDataMap.containsKey(value.getPeptideModSeq())) {
+								Optional<ModificationLocalizationData> prevLocalizationData=uniqueDataMap.get(value.getPeptideModSeq()).getLocalizationData();
+								int prevAmbiguityScore=prevLocalizationData.isPresent()?prevLocalizationData.get().getLocalizationPeptideModSeq().numAmbigousResidues():0;
+								int newAmbiguityScore=value.getLocalizationData().isPresent()?value.getLocalizationData().get().getLocalizationPeptideModSeq().numAmbigousResidues():0;
+								if (newAmbiguityScore<prevAmbiguityScore) {
+									// new is less ambiguous
+									uniqueDataMap.put(value.getPeptideModSeq(), value);
+								}
+							} else {
+								uniqueDataMap.put(value.getPeptideModSeq(), value);
+							}
 						}
 						if (forms.size()==0) {
-							prepareQuantData(data, sourceFile, inferrer, peptidePrep, fragmentPrep);
+							// always replace with perfect forms
+							uniqueDataMap.put(data.getPeptideModSeq(), data);
 						}
 					} else {
-						prepareQuantData(data, sourceFile, inferrer, peptidePrep, fragmentPrep);
+						// always replace with perfect forms
+						uniqueDataMap.put(data.getPeptideModSeq(), data);
+					}
+					
+					for (TransitionRefinementData uniqueData : uniqueDataMap.values()) {
+						prepareQuantData(uniqueData, sourceFile, inferrer, peptidePrep, fragmentPrep);
 					}
 
 				}
@@ -288,6 +309,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
+	private static final HashMap<String, String> equality=new HashMap<String, String>();
 	public void prepareQuantData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrer> inferrer, PreparedStatement peptidePrep, PreparedStatement fragmentPrep)
 			throws SQLException, IOException {
 		float[] correlationArray=data.getCorrelationArray();
@@ -313,6 +335,26 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			topN=inferrer.get().getTopNIntensity(data);
 		} else {
 			topN=data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
+		}
+		
+		if (equality.containsKey(data.getPeptideModSeq())) {
+			System.out.println("FOUND EXTERNAL COLLISION! "+data.getPeptideModSeq());
+			System.out.println("PREV: "+equality.get(data.getPeptideModSeq()));
+			if (data.getLocalizationData().isPresent()) {
+				ModificationLocalizationData modData=data.getLocalizationData().get();
+				System.out.println("NEW:  "+modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
+			} else {
+				System.out.println("NEW:  NO LOC: "+data.getPeptideModSeq());
+			}
+			System.exit(1);
+
+		} else {
+			if (data.getLocalizationData().isPresent()) {
+				ModificationLocalizationData modData=data.getLocalizationData().get();
+				equality.put(data.getPeptideModSeq(), modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
+			} else {
+				equality.put(data.getPeptideModSeq(), "NO LOC: "+data.getPeptideModSeq());
+			}
 		}
 
 		peptidePrep.setInt(1, data.getPrecursorCharge());

@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
@@ -22,6 +23,27 @@ public class AmbiguousPeptideModSeq {
 		this.modifiable=modifiable;
 		this.isModified=isModified;
 		this.modificationGroup=modificationGroup;
+	}
+	
+	public int numAmbigousResidues() {
+		int currentIndex=0;
+		int currentTotal=0;
+		int currentGap=0;
+		for (int i=0; i<modificationGroup.length; i++) {
+			if (modificationGroup[i]>0) {
+				if (modificationGroup[i]!=currentIndex) {
+					currentIndex=modificationGroup[i];
+				} else {
+					currentTotal+=currentGap;
+				}
+				currentGap=0;
+				currentTotal++;
+				
+			} else if (currentIndex>0) {
+				currentGap++;
+			}
+		}
+		return currentTotal;
 	}
 	
 	public int length() {
@@ -58,10 +80,10 @@ public class AmbiguousPeptideModSeq {
 		return modificationGroup;
 	}
 
-	public AmbiguousPeptideModSeq removeAmbiguity(AmbiguousPeptideModSeq... confirmedIDs) {
+	public Optional<AmbiguousPeptideModSeq> removeAmbiguity(AmbiguousPeptideModSeq... confirmedIDs) {
 		return removeAmbiguity(Arrays.asList(confirmedIDs));
 	}
-	public AmbiguousPeptideModSeq removeAmbiguity(List<AmbiguousPeptideModSeq> confirmedIDs) {
+	public Optional<AmbiguousPeptideModSeq> removeAmbiguity(List<AmbiguousPeptideModSeq> confirmedIDs) {
 		String[] newaas=aas.clone();
 		boolean[] newisModified=isModified.clone();
 		boolean[] newmodifiable=modifiable.clone();
@@ -83,7 +105,7 @@ public class AmbiguousPeptideModSeq {
 				//                 either: S(S[+80])QQQ(S[+80])SR 
 				//                     or: (S[+80])SQQQS(S[+80])R
 				//                     or: (S[+80])SQQQ(S[+80])SR
-				return this;
+				return Optional.of(this);
 			}
 			if (groups[0].size()==1) {
 				// TODO currently can only work with fully localized sites! Think about the complications here if we change this! (There are a lot of complications, this may be impossible)
@@ -108,7 +130,20 @@ public class AmbiguousPeptideModSeq {
 				}
 			}
 		}
-		return new AmbiguousPeptideModSeq(newaas, newmodifiable, newisModified, newmodificationGroup);
+		AmbiguousPeptideModSeq newSeq=new AmbiguousPeptideModSeq(newaas, newmodifiable, newisModified, newmodificationGroup);
+		
+		boolean ok=false;
+		for (int i=0; i<newmodificationGroup.length; i++) {
+			if (newmodificationGroup[i]>0) {
+				ok=true;
+				break;
+			}
+		}
+		if (!ok) {
+			// removed all ambiguity
+			return Optional.ofNullable(null);
+		}
+		return Optional.of(newSeq);
 	}
 	
 	@Override

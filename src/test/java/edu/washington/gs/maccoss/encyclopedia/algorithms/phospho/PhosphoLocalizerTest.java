@@ -154,7 +154,8 @@ public class PhosphoLocalizerTest extends TestCase {
 			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
 			entryMap.put(peptideModSeq, model);
 		}
-		
+
+		System.out.println("RIGHT TO LEFT");
 		// go right to left, drop the first
 		for (int i=peptideModSeqs.size()-1; i>=1; i--) {
 			String targetPeptide=peptideModSeqs.get(i);
@@ -162,10 +163,32 @@ public class PhosphoLocalizerTest extends TestCase {
 			
 			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
 			// shrink the number of unique ions subtractors to the pool of remaining sequences to the right
+			for (int j=0; j<=i; j++) {
+				String seq=peptideModSeqs.get(j);
+				modelBatch.put(seq, entryMap.get(seq));
+			}
+			System.out.println(targetPeptide+" SIZE: "+modelBatch.size());
+			FragmentIon[] targets=PhosphoLocalizer.getUniqueFragmentIons(targetPeptide, precursorCharge, modelBatch, params);
+			System.out.println(targetPeptideName.getPeptideAnnotation()+": "+General.toString(targets));
+			System.out.println(targetPeptideName);
+			System.out.println();
+			assertTrue(targets.length<10);
+		}
+
+		System.out.println("LEFT TO RIGHT");
+		// go left to right, drop the last
+		for (int i=0; i<peptideModSeqs.size()-1; i++) {
+			String targetPeptide=peptideModSeqs.get(i);
+			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getLeftAmbiguity(targetPeptide, params.getAAConstants());
+
+			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
+			// shrink the number of unique ions subtractors to the pool of
+			// remaining sequences to the right
 			for (int j=peptideModSeqs.size()-1; j>=i; j--) {
 				String seq=peptideModSeqs.get(j);
 				modelBatch.put(seq, entryMap.get(seq));
 			}
+			System.out.println(targetPeptide+" SIZE: "+modelBatch.size());
 			FragmentIon[] targets=PhosphoLocalizer.getUniqueFragmentIons(targetPeptide, precursorCharge, modelBatch, params);
 			System.out.println(targetPeptideName.getPeptideAnnotation()+": "+General.toString(targets));
 			System.out.println(targetPeptideName);
