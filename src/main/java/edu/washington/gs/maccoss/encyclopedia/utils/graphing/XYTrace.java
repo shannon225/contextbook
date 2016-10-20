@@ -135,6 +135,35 @@ public class XYTrace {
 	public Pair<double[], double[]> toArrays() {
 		return toArrays(points);
 	}
+	
+	public String toString() {
+		Pair<double[], double[]> pair=toArrays(points);
+		StringBuilder sb=new StringBuilder("float[] x=new float[] {");
+		boolean first=true;
+		for (double d : pair.x) {
+			if (first) {
+				first=false;
+			} else {
+				sb.append(',');
+			}
+			sb.append(d);
+			sb.append('f');
+		}
+		sb.append("};\n");
+		sb.append("float[] y=new float[] {");
+		first=true;
+		for (double d : pair.y) {
+			if (first) {
+				first=false;
+			} else {
+				sb.append(',');
+			}
+			sb.append(d);
+			sb.append('f');
+		}
+		sb.append("};\n");
+		return sb.toString();
+	}
 
 	public static Pair<double[], double[]> toArrays(ArrayList<XYPoint> points) {
 		TDoubleArrayList xs=new TDoubleArrayList();

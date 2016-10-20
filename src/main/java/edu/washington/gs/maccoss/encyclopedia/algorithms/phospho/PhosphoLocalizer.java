@@ -210,10 +210,14 @@ public class PhosphoLocalizer {
 				negLogProbsAll[k]=score(params, allIons, allIonsTypes, frequencies, spectrum, false);
 				negLogProbsSiteSpecific[k]=score(params, ions, targets, frequencies, spectrum, true);
 			}
-			negLogProbsAll=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);
+			System.out.println(movingAverageLength);
+			negLogProbsAll=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, Math.round(2.0f*params.getExpectedPeakWidth()/dutyCycle));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);
 			//negLogProbsAll=General.subtract(negLogProbsAll, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
-			negLogProbsSiteSpecific=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
+			negLogProbsSiteSpecific=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, Math.round(2.0f*params.getExpectedPeakWidth()/dutyCycle));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
 			//negLogProbsSiteSpecific=General.subtract(negLogProbsSiteSpecific, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
+			//negLogProbsAll=SkylineSGFilter.paddedSavitzkyGolaySmooth(negLogProbsAll);
+			//negLogProbsSiteSpecific=SkylineSGFilter.paddedSavitzkyGolaySmooth(negLogProbsSiteSpecific);
+			
 
 			TFloatFloatHashMap allRtScoreMap=new TFloatFloatHashMap();
 			TFloatFloatHashMap uniqueRtScoreMap=new TFloatFloatHashMap();
@@ -245,22 +249,23 @@ public class PhosphoLocalizer {
 			//Charter.launchChart("All Score", "Count", true, allCalculator.toTraces());
 			//Charter.launchChart("Unique Score", "Count", true, uniqueCalculator.toTraces());
 
-			localizationScores.put(peptideAnnotation, new XYPoint(bestRT, maxRawScore));
 			if (maxRawScore>2f) {
-				formsRT.add(bestRT);
 				alreadyTaken.addAll(Arrays.asList(targets));
 				
 				ArrayList<Spectrum> localStripes=getScanSubset(bestRT-params.getExpectedPeakWidth(), bestRT+params.getExpectedPeakWidth(), allScansInStripe);
 				TransitionRefinementData quantData=quantifyPeptide(targetPeptideSequence, precursorCharge, ions, bestRT, localStripes, false);
 				int numberOfMods=PeptideUtils.getNumberOfMods(targetPeptideSequence, AmbiguousPeptideModSeq.NOMINAL_MASS);
 				
+				bestRT=quantData.getApexRT();
+				formsRT.add(bestRT);
+				
 				ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideAnnotation, bestRT, maxRawScore, numberOfMods, AmbiguousPeptideModSeq.isLocalized(targetPeptideAnnotation));
 
 				quantData.setModificationLocalizationData(Optional.of(modData));
 				passingForms.put(peptideAnnotation, quantData);
 				previouslyIdentified.add(targetPeptideAnnotation);
-				
 			}
+			localizationScores.put(peptideAnnotation, new XYPoint(bestRT, maxRawScore));
 			
 			// FIXME REMOVE FORMS THAT DON'T HAVE AT LEAST 3 TRANSITIONS (LOCALIZING OR NOT) THAT FOLLOW THE MEDIAN!
 			if (maxRawScore>bestScore) {

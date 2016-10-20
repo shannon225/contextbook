@@ -299,7 +299,7 @@ public class ResultsBrowserPanel extends JPanel {
 							String seq=phosphoentry.getKey();
 							Pair<TFloatFloatHashMap, TFloatFloatHashMap> pair=phosphoentry.getValue();
 							Color color=i>=colors.length?colors[i-colors.length].brighter():colors[i];
-							phosphoTraces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 2.0f));
+							phosphoTraces.add(new XYTrace(pair.y, GraphType.line, seq, color, 2.0f));
 
 							XYPoint point=localizationScores.get(seq);
 							phosphoTraces.add(new XYTrace(new double[] {point.x/60f}, new double[] {point.y}, GraphType.point, "center", color, 2.0f));
@@ -318,6 +318,10 @@ public class ResultsBrowserPanel extends JPanel {
 							
 							keyVsName.put(seq, seq+" ("+(Math.round(point.y*10.0f)/10.0f)+")");
 							panelMap.put(seq, Charter.getChart("Retention Time (min)", "Intensity", true, fragmentTraces));
+						}
+						
+						for (XYTrace xyTrace : phosphoTraces) {
+							System.out.println(xyTrace);
 						}
 						ChartPanel phosphoPane=Charter.getChart("Retention Time (min)", "Score", true, phosphoTraces.toArray(new XYTrace[phosphoTraces.size()]));
 						ValueAxis axis=phosphoPane.getChart().getXYPlot().getRangeAxis();

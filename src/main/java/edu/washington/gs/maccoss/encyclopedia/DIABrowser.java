@@ -23,8 +23,10 @@ public class DIABrowser {
 	public static ImageIcon image=new ImageIcon(DIABrowser.class.getClassLoader().getResource("images/orbi_icon.png"));
 
 	public static void main(String[] args) {
-		final File dia=new File("/Users/searleb/Documents/school/localization_manuscript/elibs/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
-		final File library=new File("/Users/searleb/Documents/school/localization_manuscript/elibs/110515_bcs_hela_phospho_starved_20mz_500_900.dia.elib");
+		//final File dia=new File("/Users/searleb/Documents/school/localization_manuscript/elibs/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
+		//final File library=new File("/Users/searleb/Documents/school/localization_manuscript/elibs/110515_bcs_hela_phospho_starved_20mz_500_900.dia.elib");
+		final File dia=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/dec2015_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
+		final File library=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/dec2015_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia.elib");
 
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
