@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
@@ -74,7 +75,7 @@ public class TransitionRefinerTest {
 		}
 		double[] fragmentMasses=masses.toArray();
 
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions("EIGNIISDAMK", (byte)2, fragmentMasses, chromatograms, rts, true);
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions("EIGNIISDAMK", (byte)2, fragmentMasses, chromatograms, rts, Optional.ofNullable((float[])null), true);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		for (int i=0; i<integrations.length; i++) {
@@ -134,7 +135,7 @@ public class TransitionRefinerTest {
 		}
 		double[] fragmentMasses=masses.toArray();
 
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions("ASVAAQQQEEAR", (byte)2, fragmentMasses, chromatograms, rts, true);
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions("ASVAAQQQEEAR", (byte)2, fragmentMasses, chromatograms, rts, Optional.ofNullable((float[])null), true);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		for (int i=0; i<integrations.length; i++) {

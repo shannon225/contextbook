@@ -137,6 +137,8 @@ public class TransitionRefinementData implements PeptidePrecursor {
 				bestMedian=medianChromatogram[i];
 			}
 		}
+		
+		if (bestIndex<0) return 0.0f;
 		return rtArray.get()[bestIndex];
 	}
 	

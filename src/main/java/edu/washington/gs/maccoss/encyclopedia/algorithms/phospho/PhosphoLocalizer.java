@@ -38,6 +38,7 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class PhosphoLocalizer {
+	public static final float MINIMUM_SCORE=2f;
 	private final StripeFileInterface diaFile;
 	private final SearchParameters params;
 	private final BackgroundFrequencyCalculator background;
@@ -84,7 +85,6 @@ public class PhosphoLocalizer {
 				break;
 			}
 		}
-		int movingAverageLength=Math.round(params.getExpectedPeakWidth()/dutyCycle/2.0f);
 		
 		float duration=6f*60f; // search for 6 minutes
 
@@ -161,7 +161,7 @@ public class PhosphoLocalizer {
 		
 		ArrayList<AmbiguousPeptideModSeq> previouslyIdentified=new ArrayList<AmbiguousPeptideModSeq>();
 		
-		String bestPeptideAnnotation=null;
+		AmbiguousPeptideModSeq bestPeptideAnnotation=null;
 		TransitionRefinementData bestPassingForm=null;
 		float bestScore=-Float.MAX_VALUE;
 		
@@ -210,7 +210,6 @@ public class PhosphoLocalizer {
 				negLogProbsAll[k]=score(params, allIons, allIonsTypes, frequencies, spectrum, false);
 				negLogProbsSiteSpecific[k]=score(params, ions, targets, frequencies, spectrum, true);
 			}
-			System.out.println(movingAverageLength);
 			negLogProbsAll=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, Math.round(2.0f*params.getExpectedPeakWidth()/dutyCycle));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);
 			//negLogProbsAll=General.subtract(negLogProbsAll, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
 			negLogProbsSiteSpecific=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, Math.round(2.0f*params.getExpectedPeakWidth()/dutyCycle));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
@@ -249,30 +248,65 @@ public class PhosphoLocalizer {
 			//Charter.launchChart("All Score", "Count", true, allCalculator.toTraces());
 			//Charter.launchChart("Unique Score", "Count", true, uniqueCalculator.toTraces());
 
-			if (maxRawScore>2f) {
-				alreadyTaken.addAll(Arrays.asList(targets));
+			if (maxRawScore>=MINIMUM_SCORE||maxRawScore>bestScore) {
+				bestScore=maxRawScore;
+				boolean isLocalized=maxRawScore>=MINIMUM_SCORE&&AmbiguousPeptideModSeq.isLocalized(targetPeptideAnnotation);
 				
 				ArrayList<Spectrum> localStripes=getScanSubset(bestRT-params.getExpectedPeakWidth(), bestRT+params.getExpectedPeakWidth(), allScansInStripe);
-				TransitionRefinementData quantData=quantifyPeptide(targetPeptideSequence, precursorCharge, ions, bestRT, localStripes, false);
-				int numberOfMods=PeptideUtils.getNumberOfMods(targetPeptideSequence, AmbiguousPeptideModSeq.NOMINAL_MASS);
+				TransitionRefinementData quantData=quantifyPeptide(targetPeptideSequence, precursorCharge, ions, bestRT, localStripes, Optional.ofNullable((float[])null));
+				if (quantData==null) continue;
 				
-				bestRT=quantData.getApexRT();
-				formsRT.add(bestRT);
+				// make sure there are at least 3 "identification" peaks
+				int numIdentificationPeaks=0;
+				float[] correlations=quantData.getCorrelationArray();
+				for (int i=0; i<correlations.length; i++) {
+					if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+						numIdentificationPeaks++;
+					}
+				}
+				// if there's not enough, check for other non-localizing peaks for confirmation
+				if (numIdentificationPeaks<3) {
+					float[] medianChromatogram=quantData.getMedianChromatogram();
+					TransitionRefinementData allQuantData=quantifyPeptide(targetPeptideSequence, precursorCharge, allIons, bestRT, localStripes, Optional.of(medianChromatogram));
+					if (allQuantData==null) continue;
+					
+					numIdentificationPeaks=0;
+					correlations=allQuantData.getCorrelationArray();
+					for (int i=0; i<correlations.length; i++) {
+						if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+							numIdentificationPeaks++;
+						}
+					}
+				}
 				
-				ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideAnnotation, bestRT, maxRawScore, numberOfMods, AmbiguousPeptideModSeq.isLocalized(targetPeptideAnnotation));
+				// only trust this ID if there are enough peaks!
+				if (numIdentificationPeaks>=3&&quantData.getMedianChromatogram().length>0) {
+					int numberOfMods=PeptideUtils.getNumberOfMods(targetPeptideSequence, AmbiguousPeptideModSeq.NOMINAL_MASS);
 
-				quantData.setModificationLocalizationData(Optional.of(modData));
-				passingForms.put(peptideAnnotation, quantData);
-				previouslyIdentified.add(targetPeptideAnnotation);
+					bestRT=quantData.getApexRT();
+					formsRT.add(bestRT);
+
+					ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideAnnotation, bestRT, maxRawScore, numberOfMods, isLocalized);
+
+					quantData.setModificationLocalizationData(Optional.of(modData));
+					
+					bestPassingForm=quantData;
+					bestPeptideAnnotation=targetPeptideAnnotation;
+					
+					if (maxRawScore>MINIMUM_SCORE) {
+						alreadyTaken.addAll(Arrays.asList(targets));
+						passingForms.put(peptideAnnotation, quantData);
+						previouslyIdentified.add(targetPeptideAnnotation);
+					}
+				}
 			}
 			localizationScores.put(peptideAnnotation, new XYPoint(bestRT, maxRawScore));
-			
-			// FIXME REMOVE FORMS THAT DON'T HAVE AT LEAST 3 TRANSITIONS (LOCALIZING OR NOT) THAT FOLLOW THE MEDIAN!
-			if (maxRawScore>bestScore) {
-				// FIXME add unlocalized form here (so score is not 0)
-			}
 
 			scores.add(maxRawScore);
+		}
+		
+		if (passingForms.size()==0&&bestPassingForm!=null) {
+			passingForms.put(bestPeptideAnnotation.getPeptideAnnotation(), bestPassingForm);
 		}
 		
 		/*if (formsRT.size()==0) {
@@ -284,7 +318,7 @@ public class PhosphoLocalizer {
 		return new PhosphoLocalizationData(allVsUniqueList, uniqueFragmentIons, otherFragmentIons, uniqueTargetFragments, localizationScores, passingForms);
 	}
 	
-	public TransitionRefinementData quantifyPeptide(String peptideModSeq, byte precursorCharge, double[] targetMasses, float targetRT, ArrayList<Spectrum> stripes, boolean limitToQuantifiable) {
+	TransitionRefinementData quantifyPeptide(String peptideModSeq, byte precursorCharge, double[] targetMasses, float targetRT, ArrayList<Spectrum> stripes, Optional<float[]> medianChromatogram) {
 		float bestDelta=Float.MAX_VALUE;
 		float[] bestIntensities=null;
 		ArrayList<float[]> intensityList=new ArrayList<float[]>();
@@ -300,6 +334,10 @@ public class PhosphoLocalizer {
 				bestIntensities=integratedIntensities;
 			}
 		}
+		if (bestIntensities.length==0) {
+			return null;
+		}
+		
 		// get each scan (fragments by RT)
 		TFloatArrayList[] traces=new TFloatArrayList[bestIntensities.length];
 		@SuppressWarnings("unchecked")
@@ -332,7 +370,7 @@ public class PhosphoLocalizer {
 		}
 
 		// identify transitions
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions(peptideModSeq, precursorCharge, keptMasses.toArray(), chromatograms, retentionTimes.toArray());
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions(peptideModSeq, precursorCharge, keptMasses.toArray(), chromatograms, retentionTimes.toArray(), medianChromatogram);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 
@@ -340,7 +378,7 @@ public class PhosphoLocalizer {
 		TFloatArrayList intens=new TFloatArrayList();
 		TFloatArrayList deltaMasses=new TFloatArrayList(); // will ultimately be the length of the correlations array
 
-		float correlationThreshold=limitToQuantifiable?TransitionRefiner.quantitativeCorrelationThreshold:-1f;
+		float correlationThreshold=-1f; // Keep all localizing fragments!
 		for (int i=0; i<keptIntensities.size(); i++) {
 			// calculate delta mass for each fragment ion
 			Range rtRange=data.getRange();
@@ -369,8 +407,6 @@ public class PhosphoLocalizer {
 				}
 			}
 		}
-
-		// System.out.println(peptideModSeq+"\t"+keptPeaks.size()+"\t"+count+"\t"+quantCount);
 
 		double[] massArray=mzs.toArray();
 		float[] intensityArray=intens.toArray();

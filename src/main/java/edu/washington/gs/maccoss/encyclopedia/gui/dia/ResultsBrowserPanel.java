@@ -316,7 +316,11 @@ public class ResultsBrowserPanel extends JPanel {
 							uniqueFragmentsList.add(new XYTrace(new double[] {point.x/60f, point.x/60f}, new double[] {0.0, maxPoint}, GraphType.dashedline, "center", Color.BLACK, 2.0f));
 							XYTrace[] fragmentTraces=uniqueFragmentsList.toArray(new XYTrace[uniqueFragmentsList.size()]);
 							
-							keyVsName.put(seq, seq+" ("+(Math.round(point.y*10.0f)/10.0f)+")");
+							if (point.y>=PhosphoLocalizer.MINIMUM_SCORE&&phosphoData.get().getPassingForms().containsKey(seq)) {
+								keyVsName.put(seq, seq+" ("+(Math.round(point.y*10.0f)/10.0f)+")");
+							} else {
+								keyVsName.put(seq, seq+" (not sig)");
+							}
 							panelMap.put(seq, Charter.getChart("Retention Time (min)", "Intensity", true, fragmentTraces));
 						}
 						
@@ -329,7 +333,6 @@ public class ResultsBrowserPanel extends JPanel {
 						axis.setRange(new org.jfree.data.Range(0.0f, Math.max(2.0f, range.getUpperBound())));
 						tabs.add("Phospho Localization", phosphoPane);
 						
-
 						JTabbedPane tabPanel=new JTabbedPane();
 						for (Entry<String, ChartPanel> entryPanel : panelMap.entrySet()) {
 							ChartPanel chartPane=entryPanel.getValue();

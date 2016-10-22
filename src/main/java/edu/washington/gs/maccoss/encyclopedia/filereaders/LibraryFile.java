@@ -309,7 +309,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
-	private static final HashMap<String, String> equality=new HashMap<String, String>();
+	private static final HashMap<String, String> equality=new HashMap<String, String>(); //FIXME move this up and paramaterize this! It looks terrible!
 	public void prepareQuantData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrer> inferrer, PreparedStatement peptidePrep, PreparedStatement fragmentPrep)
 			throws SQLException, IOException {
 		float[] correlationArray=data.getCorrelationArray();
@@ -336,24 +336,25 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		} else {
 			topN=data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
 		}
-		
-		if (equality.containsKey(data.getPeptideModSeq())) {
-			System.out.println("FOUND EXTERNAL COLLISION! "+data.getPeptideModSeq());
-			System.out.println("PREV: "+equality.get(data.getPeptideModSeq()));
+
+		String key=data.getPeptideModSeq()+"+"+data.getPrecursorCharge()+","+sourceFile;
+		if (equality.containsKey(key)) {
+			System.err.println("FOUND EXTERNAL COLLISION, SKIPPING! "+data.getPeptideModSeq());
+			System.err.println("PREV: "+equality.get(key));
 			if (data.getLocalizationData().isPresent()) {
 				ModificationLocalizationData modData=data.getLocalizationData().get();
-				System.out.println("NEW:  "+modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
+				System.err.println("NEW:  "+modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
 			} else {
-				System.out.println("NEW:  NO LOC: "+data.getPeptideModSeq());
+				System.err.println("NEW:  NO LOC: "+data.getPeptideModSeq());
 			}
-			System.exit(1);
+			return;
 
 		} else {
 			if (data.getLocalizationData().isPresent()) {
 				ModificationLocalizationData modData=data.getLocalizationData().get();
-				equality.put(data.getPeptideModSeq(), modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
+				equality.put(key, modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
 			} else {
-				equality.put(data.getPeptideModSeq(), "NO LOC: "+data.getPeptideModSeq());
+				equality.put(key, "NO LOC: "+data.getPeptideModSeq());
 			}
 		}
 

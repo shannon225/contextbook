@@ -35,6 +35,12 @@ public class FragmentationModelTest extends TestCase {
 		model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
 
 		assertEquals("E[-17.0]PTIDER", model.getModifiedSequence(PARAMETERS.getAAConstants()));
+
+		sequence="[+42]S[+80]PEPTIDER";
+		model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
+
+		// FIXME this is bad! should be fixed at some point (if we start seeing weird modification structures)
+		assertEquals("S[+42.0][+80.0]PEPTIDER", model.getModifiedSequence(PARAMETERS.getAAConstants()));
 	}
 
 	public void testPrimaryIons() {
