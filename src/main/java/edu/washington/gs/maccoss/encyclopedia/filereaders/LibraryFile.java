@@ -234,6 +234,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	public void addIntegratedEntries(ArrayList<IntegratedLibraryEntry> entries, Optional<PeakLocationInferrer> inferrer) throws IOException, SQLException {
 		// first add normal data
 		HashMap<String, LibraryEntry> repeatsCatcher=new HashMap<String, LibraryEntry>();
+		HashMap<String, String> ptmRepeatsCatcher=new HashMap<String, String>();
+		
 		for (IntegratedLibraryEntry entry : entries) {
 			String key=entry.getPeptideModSeq()+"+"+entry.getPrecursorCharge()+","+entry.getSource();
 			LibraryEntry prev=repeatsCatcher.get(key);
@@ -292,6 +294,26 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					}
 					
 					for (TransitionRefinementData uniqueData : uniqueDataMap.values()) {
+						String key=data.getPeptideModSeq()+"+"+data.getPrecursorCharge()+","+sourceFile;
+						if (ptmRepeatsCatcher.containsKey(key)) {
+							System.err.println("FOUND EXTERNAL COLLISION, SKIPPING! "+data.getPeptideModSeq());
+							System.err.println("PREV: "+ptmRepeatsCatcher.get(key));
+							if (data.getLocalizationData().isPresent()) {
+								ModificationLocalizationData modData=data.getLocalizationData().get();
+								System.err.println("NEW:  "+modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
+							} else {
+								System.err.println("NEW:  NO LOC: "+data.getPeptideModSeq());
+							}
+							continue;
+
+						} else {
+							if (data.getLocalizationData().isPresent()) {
+								ModificationLocalizationData modData=data.getLocalizationData().get();
+								ptmRepeatsCatcher.put(key, modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
+							} else {
+								ptmRepeatsCatcher.put(key, "NO LOC: "+data.getPeptideModSeq());
+							}
+						}
 						prepareQuantData(uniqueData, sourceFile, inferrer, peptidePrep, fragmentPrep);
 					}
 
@@ -309,7 +331,6 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
-	private static final HashMap<String, String> equality=new HashMap<String, String>(); //FIXME move this up and paramaterize this! It looks terrible!
 	public void prepareQuantData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrer> inferrer, PreparedStatement peptidePrep, PreparedStatement fragmentPrep)
 			throws SQLException, IOException {
 		float[] correlationArray=data.getCorrelationArray();
@@ -335,27 +356,6 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			topN=inferrer.get().getTopNIntensity(data);
 		} else {
 			topN=data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
-		}
-
-		String key=data.getPeptideModSeq()+"+"+data.getPrecursorCharge()+","+sourceFile;
-		if (equality.containsKey(key)) {
-			System.err.println("FOUND EXTERNAL COLLISION, SKIPPING! "+data.getPeptideModSeq());
-			System.err.println("PREV: "+equality.get(key));
-			if (data.getLocalizationData().isPresent()) {
-				ModificationLocalizationData modData=data.getLocalizationData().get();
-				System.err.println("NEW:  "+modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
-			} else {
-				System.err.println("NEW:  NO LOC: "+data.getPeptideModSeq());
-			}
-			return;
-
-		} else {
-			if (data.getLocalizationData().isPresent()) {
-				ModificationLocalizationData modData=data.getLocalizationData().get();
-				equality.put(key, modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
-			} else {
-				equality.put(key, "NO LOC: "+data.getPeptideModSeq());
-			}
 		}
 
 		peptidePrep.setInt(1, data.getPrecursorCharge());
