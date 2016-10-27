@@ -101,7 +101,8 @@ public class MzmlToDIAProducer implements Runnable {
 
 			if (p==null) {
 				if (parameters.getPrecursorOffsetPPM()!=0.0) {
-					massArray=General.subtract(massArray, parameters.getPrecursorOffsetPPM());
+					double[] deltaArray=General.multiply(massArray, parameters.getPrecursorOffsetPPM()/1000000.0);
+					massArray=General.subtract(massArray, deltaArray);
 				}
 				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray));
 			} else {
@@ -123,7 +124,8 @@ public class MzmlToDIAProducer implements Runnable {
 				}
 
 				if (parameters.getFragmentOffsetPPM()!=0.0) {
-					massArray=General.subtract(massArray, parameters.getFragmentOffsetPPM());
+					double[] deltaArray=General.multiply(massArray, parameters.getFragmentOffsetPPM()/1000000.0);
+					massArray=General.subtract(massArray, deltaArray);
 				}
 				Stripe stripe=new Stripe(spectrumName, p.getSpectrumRef(), spectrumIndex, scanStartTime, isolationWindowTarget-isolationWindowLowerOffset, isolationWindowTarget+isolationWindowUpperOffset, massArray, intensityArray);
 				stripes.add(stripe);

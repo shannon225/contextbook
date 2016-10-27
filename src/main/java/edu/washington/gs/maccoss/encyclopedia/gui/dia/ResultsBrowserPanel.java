@@ -205,8 +205,8 @@ public class ResultsBrowserPanel extends JPanel {
 			dataSplit.setLeftComponent(new JLabel("Select a peptide!"));
 			return;
 		} else if (dia==null) {
-			dataSplit.setLeftComponent(new JLabel("Select a raw file!"));
-			dataSplit.setRightComponent(Charter.getChart(entry));
+			dataSplit.setLeftComponent(Charter.getChart(entry));
+			dataSplit.setRightComponent(new FragmentationTable(entry, entry.getPeptideModSeq(), parameters));
 		} else {
 			Logger.logLine("Parsing peptide...");
 			PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaPeptideEntry(entry.getPeptideModSeq()), parameters.getAAConstants());

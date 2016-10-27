@@ -340,6 +340,14 @@ public class General {
 		}
 		return r;
 	}
+
+	public static double[] subtract(double[] v1, double[] v2) {
+		double[] r=new double[v1.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=v1[i]-v2[i];
+		}
+		return r;
+	}
 	
 	public static float max(float[] v) {
 		float max=-Float.MAX_VALUE;

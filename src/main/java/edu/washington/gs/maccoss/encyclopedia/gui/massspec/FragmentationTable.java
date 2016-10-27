@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.gui.massspec;
 
 import java.awt.BorderLayout;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -14,14 +15,40 @@ import javax.swing.table.AbstractTableModel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class FragmentationTable extends JPanel {
 	private static final long serialVersionUID=1L;
 	private static final DecimalFormat MASS_FORMAT = new DecimalFormat(".#");
+	
+	public FragmentationTable(LibraryEntry spec, String sequenceKey, SearchParameters params) {
+		super(new BorderLayout());
+		
+		String peptideModSeq=sequenceKey.replaceAll("\\(", "").replaceAll("\\)", "");
+		FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+		FragmentIon[] all=model.getPrimaryIonObjects(params.getFragType(), spec.getPrecursorCharge());
+		double[] massArray=spec.getMassArray();
+		
+		ArrayList<FragmentIon> matched=new ArrayList<FragmentIon>();
+		for (FragmentIon fragmentIon : all) {
+			boolean match=params.getFragmentTolerance().getIndex(massArray, fragmentIon.mass).isPresent();
+			if (match) {
+				matched.add(fragmentIon);
+			}
+		}
+		
+		FragmentIon[] found=matched.toArray(new FragmentIon[matched.size()]);
+		
+		FragmentationTableModel tableModel=new FragmentationTableModel(all, all, found);
+
+		JTable table=new JTable(tableModel);
+		table.setAutoCreateRowSorter(true);
+
+		add(new JScrollPane(table), BorderLayout.CENTER);
+	}
 	
 	public FragmentationTable(PhosphoLocalizationData data, String sequenceKey, SearchParameters params) {
 		super(new BorderLayout());
