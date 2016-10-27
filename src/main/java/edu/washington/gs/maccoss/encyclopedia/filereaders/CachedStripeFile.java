@@ -19,6 +19,7 @@ public class CachedStripeFile implements StripeFileInterface {
 	private final ArrayList<PrecursorScan> precursors;
 	private final HashMap<Range, ArrayList<Stripe>> stripes;
 	private final float tic;
+	private final float gradientLength;
 	
 	public CachedStripeFile(File userFile, HashMap<Range, Float> ranges, ArrayList<PrecursorScan> precursors, HashMap<Range, ArrayList<Stripe>> stripes) {
 		this.userFile=userFile;
@@ -31,11 +32,26 @@ public class CachedStripeFile implements StripeFileInterface {
 			sum+=General.sum(precursorScan.getIntensityArray());
 		}
 		tic=sum;
+		
+		float maxRT=0.0f;
+		for (ArrayList<Stripe> stripe : stripes.values()) {
+			for (Stripe scan : stripe) {
+				if (scan.getScanStartTime()>maxRT) {
+					maxRT=scan.getScanStartTime();
+				}
+			}
+		}
+		gradientLength=maxRT;
 	}
 	
 	@Override
 	public float getTIC() throws IOException, SQLException {
 		return tic;
+	}
+	
+	@Override
+	public float getGradientLength() throws IOException, SQLException {
+		return gradientLength;
 	}
 
 	@Override

@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.Frame;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -26,11 +25,8 @@ import javax.swing.event.ListSelectionListener;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.axis.ValueAxis;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.FragmentationScoringResult;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.FragmentationTraceTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.LibraryPredictedFragmentationScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractorTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
@@ -40,8 +36,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalize
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -61,6 +55,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
@@ -191,17 +186,17 @@ public class ResultsBrowserPanel extends JPanel {
 
 	public void resetPeptide(LibraryEntry entry) {
 		int location=dataSplit.getDividerLocation();
-		System.out.println("location:"+location);
+		//System.out.println("location:"+location);
 		if (location<=5) {
 			location=800;
 		}
 		int locationRaw=rawSplit.getDividerLocation();
-		System.out.println("locationRaw:"+locationRaw);
+		//System.out.println("locationRaw:"+locationRaw);
 		if (locationRaw<=5) {
 			locationRaw=400;
 		}
 		int locationPP=peakPickingSplit.getDividerLocation();
-		System.out.println("locationPP:"+locationPP);
+		//System.out.println("locationPP:"+locationPP);
 		if (locationPP<=5) {
 			locationPP=400;
 		}
@@ -216,32 +211,18 @@ public class ResultsBrowserPanel extends JPanel {
 			Logger.logLine("Parsing peptide...");
 			PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaPeptideEntry(entry.getPeptideModSeq()), parameters.getAAConstants());
 			ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
-			LibraryEntry unit=model.getUnitSpectrum(dia.getOriginalFileName(), entry.getAccessions(), (byte)entry.getPrecursorCharge(), entry.getRetentionTime(), parameters, 200.0);
+			float targetRT=entry.getRetentionTime();
+			LibraryEntry unit=model.getUnitSpectrum(dia.getOriginalFileName(), entry.getAccessions(), (byte)entry.getPrecursorCharge(), targetRT, parameters, 200.0);
 			entries.add(unit);
 			
 			try {
-				float rtRange=parameters.isRunPhosphoLocalization()?300f:30f;
+				float rtRange=parameters.isRunPhosphoLocalization()?dia.getGradientLength()/20.0f:30f;
 				
-				ArrayList<Stripe> stripes=dia.getStripes(entry.getPrecursorMZ(), entry.getRetentionTime()-rtRange, entry.getRetentionTime()+rtRange, false);
-				FragmentationTraceTask task=new FragmentationTraceTask(scorer, FragmentationTraceTask.PLOT_INTENSITIES, entries, stripes, new PrecursorScanMap(new ArrayList<PrecursorScan>()), parameters.getAAConstants());
-				HashMap<LibraryEntry, PeptideScoringResult> result=task.call();
-				
-				ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
-				for (Entry<LibraryEntry, PeptideScoringResult> resultEntry : result.entrySet()) {
-					FragmentationScoringResult peptideResult=(FragmentationScoringResult)resultEntry.getValue();
+				ArrayList<Stripe> stripes=dia.getStripes(entry.getPrecursorMZ(), targetRT-rtRange, targetRT+rtRange, false);
 
-					for (XYTrace trace : peptideResult.getFragmentationTraces()) {
-						double[] intensities=trace.toArrays().y;
-						for (int i=0; i<intensities.length; i++) {
-							if (intensities[i]>0) {
-								//traces.add(SkylineSGFilter.paddedSavitzkyGolaySmooth(trace));
-								traces.add(trace);
-								break;
-							}
-						}
-					}
-				}
-				
+				Float targetRTFloat=targetRT;
+				HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge()), Stripe.downcast(stripes), targetRTFloat, GraphType.line);
+				ArrayList<XYTrace> traces=new ArrayList<XYTrace>(fragmentTraceMap.values());
 				
 				/*for (XYTrace xyTrace : traces) {
 					System.out.println("float[] "+xyTrace.getName()+"=new float[] {");
@@ -269,9 +250,9 @@ public class ResultsBrowserPanel extends JPanel {
 				rawSplit.setTopComponent(chart);
 
 				PhosphoLocalizer localizer=new PhosphoLocalizer(dia, library, parameters);
-				PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), entry.getRetentionTime(), entry.getScore(), 1.0f-entry.getScore(), 2*rtRange);
+				PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), targetRT, entry.getScore(), 1.0f-entry.getScore(), 2*rtRange);
 				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(dia.getOriginalFileName(), psmdata, Optional.ofNullable(localizer), stripes, parameters, false);
-				TransitionRefinementData data=quantTask.extractSpectrum(unit, 2*rtRange, false);
+				TransitionRefinementData data=quantTask.extractSpectrum(unit, rtRange, false);
 				if (data!=null) {
 					HashMap<String, ChartPanel> panels=TransitionRefiner.getChartPanels(data);
 					peakPickingSplit.setLeftComponent(panels.get("median"));
@@ -324,9 +305,6 @@ public class ResultsBrowserPanel extends JPanel {
 							panelMap.put(seq, Charter.getChart("Retention Time (min)", "Intensity", true, fragmentTraces));
 						}
 						
-						for (XYTrace xyTrace : phosphoTraces) {
-							System.out.println(xyTrace);
-						}
 						ChartPanel phosphoPane=Charter.getChart("Retention Time (min)", "Score", true, phosphoTraces.toArray(new XYTrace[phosphoTraces.size()]));
 						ValueAxis axis=phosphoPane.getChart().getXYPlot().getRangeAxis();
 						org.jfree.data.Range range=axis.getRange();
@@ -363,7 +341,7 @@ public class ResultsBrowserPanel extends JPanel {
 						JOptionPane.ERROR_MESSAGE);
 				e.printStackTrace();
 			}
-			Logger.logLine("Finished reading peptide "+entry.getSpectrumName()+" (rt="+ entry.getRetentionTime()+")");
+			Logger.logLine("Finished reading peptide "+entry.getSpectrumName()+" (rt="+ targetRT+")");
 		}
 		dataSplit.setDividerLocation(location);
 	}

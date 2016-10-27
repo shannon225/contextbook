@@ -38,6 +38,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	public static final String SOURCENAME_ATTRIBUTE="sourcename";
 	public static final String FILENAME_ATTRIBUTE="filename";
 	public static final String TOTAL_PRECURSOR_TIC_ATTRIBUTE="totalPrecursorTIC";
+	public static final String GRADIENT_LENGTH_ATTRIBUTE="gradientLength";
 
 	public static final String DIA_EXTENSION=".dia";
 	
@@ -234,6 +235,34 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	public float getTIC() throws IOException, SQLException {
 		String value=getMetadata().get(StripeFile.TOTAL_PRECURSOR_TIC_ATTRIBUTE);
 		if (value==null) return 0.0f;
+		return Float.parseFloat(value);
+	}
+	
+	public float getGradientLength() throws IOException, SQLException {
+		String value=getMetadata().get(StripeFile.GRADIENT_LENGTH_ATTRIBUTE);
+		if (value==null) {
+			float rt=0.0f;
+			Connection c=getConnection(tempFile);
+			try {
+				Statement s=c.createStatement();
+				try {
+					ResultSet rs=s.executeQuery("select max(scanstarttime) from spectra");
+
+					while (rs.next()) {
+						rt=rs.getFloat(1);
+					}
+				} finally {
+					s.close();
+				}
+			} finally {
+				c.close();
+			}
+			
+			if (rt>0.0f) {
+				addMetadata(StripeFile.GRADIENT_LENGTH_ATTRIBUTE, Float.toString(rt));
+			}
+			return rt;
+		}
 		return Float.parseFloat(value);
 	}
 

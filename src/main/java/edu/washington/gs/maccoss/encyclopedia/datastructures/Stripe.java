@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import java.util.ArrayList;
+
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
@@ -96,5 +98,13 @@ public class Stripe implements Comparable<Stripe>, Spectrum {
 
 	public float[] getIntensityArray() {
 		return intensityArray;
+	}
+	
+	public static ArrayList<Spectrum> downcast(ArrayList<Stripe> stripes) {
+		ArrayList<Spectrum> spectra=new ArrayList<Spectrum>();
+		for (Spectrum spectrum : stripes) {
+			spectra.add(spectrum);
+		}
+		return spectra;
 	}
 }

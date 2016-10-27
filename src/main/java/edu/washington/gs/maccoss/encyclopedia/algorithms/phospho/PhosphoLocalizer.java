@@ -38,15 +38,17 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class PhosphoLocalizer {
-	public static final float MINIMUM_SCORE=2f;
+	public static final float MINIMUM_SCORE=-Log.log10(0.05f);
 	private final StripeFileInterface diaFile;
 	private final SearchParameters params;
 	private final BackgroundFrequencyCalculator background;
+	private final float gradientLength;
 
 	public PhosphoLocalizer(StripeFileInterface diaFile, LibraryInterface searchedLibrary, SearchParameters params) throws IOException,DataFormatException,SQLException {
 		this.diaFile=diaFile;
 		this.params=params;
 		background=BackgroundFrequencyCalculator.generateBackground(diaFile, searchedLibrary);
+		gradientLength=diaFile.getGradientLength();
 	}
 
 	public Optional<PhosphoLocalizationData> runDIAPhosphoLocalization(PSMData psmdata, ArrayList<Stripe> stripes) {
@@ -86,7 +88,8 @@ public class PhosphoLocalizer {
 			}
 		}
 		
-		float duration=6f*60f; // search for 6 minutes
+		float duration=gradientLength/20.0f;
+		//float duration=6f*60f; // search for 6 minutes
 
 		ArrayList<Spectrum> stripes=getScanSubset(retentionTime-duration, retentionTime+duration, allScansInStripe);
 		

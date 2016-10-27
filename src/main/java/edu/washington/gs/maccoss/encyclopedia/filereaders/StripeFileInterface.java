@@ -27,6 +27,8 @@ public interface StripeFileInterface {
 	
 	float getTIC() throws IOException, SQLException;
 	
+	float getGradientLength() throws IOException, SQLException;
+	
 	void close();
 
 	File getFile();
