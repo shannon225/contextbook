@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
+package edu.washington.gs.maccoss.encyclopedia.filewriters;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,7 +23,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class LibraryReportExtractor {
-	
 	public static void extractMatrix(LibraryFile library, ArrayList<ProteinGroup> proteins) throws IOException, SQLException, DataFormatException {
 		File stubFile=library.getFile();
 		if (stubFile==null) {
