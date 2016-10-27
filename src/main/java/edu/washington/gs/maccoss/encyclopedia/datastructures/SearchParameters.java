@@ -59,7 +59,7 @@ public class SearchParameters {
 		sb.append(" -enzyme "+enzyme.getName()+"\n");
 		sb.append(" -percolatorThreshold "+percolatorThreshold+"\n");
 		sb.append(" -percolatorLocation "+percolatorLocation+"\n");
-		sb.append(" -deconvoluteOverlappingWindows "+DataAcquisitionType.toString(dataAcquisitionType)+"\n");
+		sb.append(" -acquisition "+DataAcquisitionType.toString(dataAcquisitionType)+"\n");
 		sb.append(" -numberOfThreadsUsed "+numberOfThreadsUsed+"\n");
 		sb.append(" -expectedPeakWidth "+expectedPeakWidth+"\n");
 		sb.append(" -precursorWindowSize "+precursorWindowSize+"\n");
