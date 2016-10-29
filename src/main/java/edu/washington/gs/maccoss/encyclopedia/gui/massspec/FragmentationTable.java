@@ -42,7 +42,7 @@ public class FragmentationTable extends JPanel {
 		
 		FragmentIon[] found=matched.toArray(new FragmentIon[matched.size()]);
 		
-		FragmentationTableModel tableModel=new FragmentationTableModel(all, all, found);
+		FragmentationTableModel tableModel=new FragmentationTableModel(all, found, found);
 
 		JTable table=new JTable(tableModel);
 		table.setAutoCreateRowSorter(true);
