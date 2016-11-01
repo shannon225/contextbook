@@ -24,10 +24,10 @@ public class FragmentationTable extends JPanel {
 	private static final long serialVersionUID=1L;
 	private static final DecimalFormat MASS_FORMAT = new DecimalFormat(".#");
 	
-	public FragmentationTable(LibraryEntry spec, String sequenceKey, SearchParameters params) {
+	public FragmentationTable(LibraryEntry spec, String peptideModSeq, SearchParameters params) {
 		super(new BorderLayout());
 		
-		String peptideModSeq=sequenceKey.replaceAll("\\(", "").replaceAll("\\)", "");
+		peptideModSeq=peptideModSeq.replaceAll("\\(", "").replaceAll("\\)", "");
 		FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
 		FragmentIon[] all=model.getPrimaryIonObjects(params.getFragType(), spec.getPrecursorCharge());
 		double[] massArray=spec.getMassArray();

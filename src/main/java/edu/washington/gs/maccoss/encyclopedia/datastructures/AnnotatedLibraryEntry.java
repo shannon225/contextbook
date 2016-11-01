@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 
 public class AnnotatedLibraryEntry extends LibraryEntry {
 	private final FragmentIon[] ionAnnotations;
@@ -28,6 +29,23 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 			}
 		}
 	}
+
+	public AnnotatedLibraryEntry(PeptidePrecursor entry, Spectrum spectrum, SearchParameters parameters) {
+		super(spectrum.getSpectrumName(), new HashSet<String>(), 1, parameters.getAAConstants().getChargedMass(entry.getPeptideModSeq(), entry.getPrecursorCharge()), entry.getPrecursorCharge(),
+				entry.getPeptideModSeq(), 1, spectrum.getScanStartTime(), 0.0f, spectrum.getMassArray(), spectrum.getIntensityArray(), new float[spectrum.getMassArray().length]);
+
+		double[] massArray=spectrum.getMassArray();
+		this.ionAnnotations=new FragmentIon[massArray.length];
+
+		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge())) {
+			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.mass);
+			for (int i=0; i<indicies.length; i++) {
+				ionAnnotations[indicies[i]]=fragmentIon;
+			}
+		}
+	}
+	
 
 	/**
 	 * 

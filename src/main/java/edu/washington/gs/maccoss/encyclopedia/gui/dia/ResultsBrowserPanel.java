@@ -25,6 +25,8 @@ import javax.swing.event.ListSelectionListener;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.axis.ValueAxis;
 
+import com.oracle.jrockit.jfr.Transition;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractorTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
@@ -33,10 +35,12 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocaliza
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SimplePeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -57,6 +61,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class ResultsBrowserPanel extends JPanel {
@@ -208,7 +213,7 @@ public class ResultsBrowserPanel extends JPanel {
 			dataSplit.setRightComponent(new FragmentationTable(entry, entry.getPeptideModSeq(), parameters));
 		} else {
 			Logger.logLine("Parsing peptide...");
-			PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaPeptideEntry(entry.getPeptideModSeq()), parameters.getAAConstants());
+			FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 			ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
 			float targetRT=entry.getRetentionTime();
 			LibraryEntry unit=model.getUnitSpectrum(dia.getOriginalFileName(), entry.getAccessions(), (byte)entry.getPrecursorCharge(), targetRT, parameters, 200.0);
@@ -220,7 +225,8 @@ public class ResultsBrowserPanel extends JPanel {
 				ArrayList<Stripe> stripes=dia.getStripes(entry.getPrecursorMZ(), targetRT-rtRange, targetRT+rtRange, false);
 
 				Float targetRTFloat=targetRT;
-				HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge()), Stripe.downcast(stripes), targetRTFloat, GraphType.line);
+				ArrayList<Spectrum> downcastedSpectra=Stripe.downcast(stripes);
+				HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge()), downcastedSpectra, targetRTFloat, GraphType.line);
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>(fragmentTraceMap.values());
 				
 				/*for (XYTrace xyTrace : traces) {
@@ -259,34 +265,36 @@ public class ResultsBrowserPanel extends JPanel {
 					
 					JTabbedPane tabs=new JTabbedPane();
 					
-					Optional<PhosphoLocalizationData> phosphoData=Optional.empty();
+					Optional<PhosphoLocalizationData> maybePhosphoData=Optional.empty();
 					if (parameters.isRunPhosphoLocalization()) {
-						phosphoData=quantTask.runLocalization();
+						maybePhosphoData=quantTask.runLocalization();
 					}
-					if (phosphoData.isPresent()) {
-						HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=phosphoData.get().getScoreTraces();
-						HashMap<String, HashMap<FragmentIon, XYTrace>> uniqueFragmentIons=phosphoData.get().getUniqueFragmentIons();
-						HashMap<String, HashMap<FragmentIon, XYTrace>> otherFragmentIons=phosphoData.get().getOtherFragmentIons();
+					if (maybePhosphoData.isPresent()) {
+						PhosphoLocalizationData actuallyPhosphoData=maybePhosphoData.get();
+						HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=actuallyPhosphoData.getScoreTraces();
+						HashMap<String, HashMap<FragmentIon, XYTrace>> uniqueFragmentIons=actuallyPhosphoData.getUniqueFragmentIons();
+						HashMap<String, HashMap<FragmentIon, XYTrace>> otherFragmentIons=actuallyPhosphoData.getOtherFragmentIons();
 						
-						HashMap<String, XYPoint> localizationScores=phosphoData.get().getLocalizationScores();
+						HashMap<String, XYPoint> localizationScores=actuallyPhosphoData.getLocalizationScores();
 						
 						ArrayList<XYTrace> phosphoTraces=new ArrayList<XYTrace>();
 
-						TreeMap<String, ChartPanel> panelMap=new TreeMap<String, ChartPanel>();
+						JTabbedPane tabPanel=new JTabbedPane();
 						HashMap<String, String> keyVsName=new HashMap<String, String>();
 						int i=0;
 						for (Entry<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> phosphoentry : allVsUniqueList.entrySet()) {
-							String seq=phosphoentry.getKey();
+							String sequenceKey=phosphoentry.getKey();
+							String peptideModSeq=sequenceKey.replaceAll("\\(", "").replaceAll("\\)", "");
 							Pair<TFloatFloatHashMap, TFloatFloatHashMap> pair=phosphoentry.getValue();
 							Color color=i>=colors.length?colors[i-colors.length].brighter():colors[i];
-							phosphoTraces.add(new XYTrace(pair.y, GraphType.line, seq, color, 2.0f));
+							phosphoTraces.add(new XYTrace(pair.y, GraphType.line, sequenceKey, color, 2.0f));
 
-							XYPoint point=localizationScores.get(seq);
+							XYPoint point=localizationScores.get(sequenceKey);
 							phosphoTraces.add(new XYTrace(new double[] {point.x/60f}, new double[] {point.y}, GraphType.point, "center", color, 2.0f));
 							i++;
 							
-							HashMap<FragmentIon, XYTrace> uniqueFragments=uniqueFragmentIons.get(seq);
-							HashMap<FragmentIon, XYTrace> otherFragments=otherFragmentIons.get(seq);
+							HashMap<FragmentIon, XYTrace> uniqueFragments=uniqueFragmentIons.get(sequenceKey);
+							HashMap<FragmentIon, XYTrace> otherFragments=otherFragmentIons.get(sequenceKey);
 							HashMap<FragmentIon, XYTrace> allFragments=new HashMap<FragmentIon, XYTrace>();
 							allFragments.putAll(uniqueFragments);
 							allFragments.putAll(otherFragments);
@@ -296,12 +304,36 @@ public class ResultsBrowserPanel extends JPanel {
 							uniqueFragmentsList.add(new XYTrace(new double[] {point.x/60f, point.x/60f}, new double[] {0.0, maxPoint}, GraphType.dashedline, "center", Color.BLACK, 2.0f));
 							XYTraceInterface[] fragmentTraces=uniqueFragmentsList.toArray(new XYTrace[uniqueFragmentsList.size()]);
 							
-							if (point.y>=PhosphoLocalizer.MINIMUM_SCORE&&phosphoData.get().getPassingForms().containsKey(seq)) {
-								keyVsName.put(seq, seq+" ("+(Math.round(point.y*10.0f)/10.0f)+")");
+							if (point.y>=PhosphoLocalizer.MINIMUM_SCORE&&actuallyPhosphoData.getPassingForms().containsKey(sequenceKey)) {
+								keyVsName.put(sequenceKey, sequenceKey+" ("+(Math.round(point.y*10.0f)/10.0f)+")");
 							} else {
-								keyVsName.put(seq, seq+" (not sig)");
+								keyVsName.put(sequenceKey, sequenceKey+" (not sig)");
 							}
-							panelMap.put(seq, Charter.getChart("Retention Time (min)", "Intensity", true, fragmentTraces));
+
+							ChartPanel chartPane=Charter.getChart("Retention Time (min)", "Intensity", true, fragmentTraces);
+							
+							TransitionRefinementData quantData=actuallyPhosphoData.getPassingForms().get(sequenceKey);
+							AnnotatedLibraryEntry annotatedEntry;
+							/*if (quantData!=null) {
+								annotatedEntry=quantData.getEntry(unit, parameters);
+							} else {
+								Spectrum bestStripe=ChromatogramExtractor.getTargetStripeByRT(downcastedSpectra, (float)point.x);
+								annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(peptideModSeq, entry.getPrecursorCharge()), bestStripe, parameters);
+							}*/
+							Spectrum bestStripe=ChromatogramExtractor.getTargetStripeByRT(downcastedSpectra, (float)point.x);
+							annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(peptideModSeq, entry.getPrecursorCharge()), bestStripe, parameters);
+
+							JPanel specFragPane=new JPanel(new BorderLayout());
+							ChartPanel spectrumPane=Charter.getChart(annotatedEntry);
+							FragmentationTable fragTable=new FragmentationTable(actuallyPhosphoData, sequenceKey, parameters);
+							specFragPane.add(spectrumPane, BorderLayout.NORTH);
+							specFragPane.add(fragTable, BorderLayout.CENTER);
+							
+							JPanel localizationPane=new JPanel(new BorderLayout());
+							localizationPane.add(chartPane, BorderLayout.CENTER);
+							localizationPane.add(specFragPane, BorderLayout.EAST);
+							
+							tabPanel.addTab(keyVsName.get(sequenceKey), localizationPane);
 						}
 						
 						ChartPanel phosphoPane=Charter.getChart("Retention Time (min)", "Score", true, phosphoTraces.toArray(new XYTrace[phosphoTraces.size()]));
@@ -310,17 +342,6 @@ public class ResultsBrowserPanel extends JPanel {
 						axis.setRange(new org.jfree.data.Range(0.0f, Math.max(2.0f, range.getUpperBound())));
 						tabs.add("Phospho Localization", phosphoPane);
 						
-						JTabbedPane tabPanel=new JTabbedPane();
-						for (Entry<String, ChartPanel> entryPanel : panelMap.entrySet()) {
-							ChartPanel chartPane=entryPanel.getValue();
-							FragmentationTable fragTable=new FragmentationTable(phosphoData.get(), entryPanel.getKey(), parameters);
-							
-							JPanel localizationPane=new JPanel(new BorderLayout());
-							localizationPane.add(chartPane, BorderLayout.CENTER);
-							localizationPane.add(fragTable, BorderLayout.EAST);
-							
-							tabPanel.addTab(keyVsName.get(entryPanel.getKey()), localizationPane);
-						}
 						tabs.add("Unique Fragment Ions", tabPanel);
 						
 					}

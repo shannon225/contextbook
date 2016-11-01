@@ -4,10 +4,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class TransitionRefinementData implements PeptidePrecursor {
@@ -64,6 +70,36 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		this.rtArray=Optional.ofNullable(rtArray);
 		this.localizationData=Optional.ofNullable(localizationData);
 		this.modificationQuantData=Optional.ofNullable(modificationQuantData);
+	}
+	
+	public AnnotatedLibraryEntry getEntry(LibraryEntry entry, SearchParameters parameters) {
+		TDoubleArrayList mzs=new TDoubleArrayList();
+		TFloatArrayList intens=new TFloatArrayList();
+		TFloatArrayList corrs=new TFloatArrayList();
+		
+		for (int i=0; i<fragmentMassArray.length; i++) {
+			if (integrationArray[i]>0.0f) {
+				mzs.add(fragmentMassArray[i]);
+				intens.add(integrationArray[i]);
+				corrs.add(correlationArray[i]);
+			}
+		}
+		
+		double[] mzsArray=mzs.toArray();
+		float[] intensArray=intens.toArray();
+		float[] corrsArray=corrs.toArray();
+		FragmentIon[] ionAnnotations=new FragmentIon[mzsArray.length];
+
+		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge())) {
+			int[] indicies=parameters.getFragmentTolerance().getIndicies(mzsArray, fragmentIon.mass);
+			for (int i=0; i<indicies.length; i++) {
+				ionAnnotations[indicies[i]]=fragmentIon;
+			}
+		}
+		
+		return new AnnotatedLibraryEntry(entry.getSource(), entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(),
+				entry.getCopies(), getApexRT(), entry.getScore(), mzsArray, intensArray, corrsArray, ionAnnotations);
 	}
 	
 	@Override

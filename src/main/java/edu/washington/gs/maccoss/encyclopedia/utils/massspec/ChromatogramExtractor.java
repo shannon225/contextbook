@@ -58,15 +58,7 @@ public class ChromatogramExtractor {
 		if (targetRTInSec==null) {
 			centerIonTypes.addAll(Arrays.asList(ionTypes));
 		} else {
-			Spectrum bestStripe=null;
-			float bestDelta=Float.MAX_VALUE;
-			for (Spectrum stripe : stripes) {
-				float delta=Math.abs(stripe.getScanStartTime()-targetRTInSec);
-				if (delta<bestDelta) {
-					bestDelta=delta;
-					bestStripe=stripe;
-				}
-			}
+			Spectrum bestStripe=getTargetStripeByRT(stripes, targetRTInSec);
 			// no signal of any kind at retention time!
 			if (bestStripe==null) return kept;
 
@@ -114,6 +106,19 @@ public class ChromatogramExtractor {
 		}
 		
 		return kept;
+	}
+
+	public static Spectrum getTargetStripeByRT(ArrayList<Spectrum> stripes, Float targetRTInSec) {
+		Spectrum bestStripe=null;
+		float bestDelta=Float.MAX_VALUE;
+		for (Spectrum stripe : stripes) {
+			float delta=Math.abs(stripe.getScanStartTime()-targetRTInSec);
+			if (delta<bestDelta) {
+				bestDelta=delta;
+				bestStripe=stripe;
+			}
+		}
+		return bestStripe;
 	}
 
 }
