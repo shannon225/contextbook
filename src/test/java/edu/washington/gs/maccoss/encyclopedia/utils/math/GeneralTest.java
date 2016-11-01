@@ -4,6 +4,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import junit.framework.TestCase;
 
 public class GeneralTest extends TestCase {
@@ -42,8 +43,8 @@ public class GeneralTest extends TestCase {
 		Charter.launchChart("Intens", "RT", false, getTrace(trace1, rts), getTrace(trace2, rts), getTrace(trace3, rts), getTrace(trace4, rts));
 	}
 
-	private static XYTrace getTrace(float[] b3, float[] rts) {
-		XYTrace xyTrace=new XYTrace(General.toDoubleArray(rts), General.toDoubleArray(b3), GraphType.line, "B3");
+	private static XYTraceInterface getTrace(float[] b3, float[] rts) {
+		XYTraceInterface xyTrace=new XYTrace(General.toDoubleArray(rts), General.toDoubleArray(b3), GraphType.line, "B3");
 		return xyTrace;
 	}
 }

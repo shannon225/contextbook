@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,17 +12,20 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.SSRCalc;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakChromatogram;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 //@Immutable
-public class LibraryEntry implements Spectrum, PeptidePrecursor {
+public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterface {
 	public static final String SHUFFLE_STRING="SHUFFLE_";
 	public static final String DECOY_STRING="DECOY_";
 
@@ -76,6 +80,27 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor {
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
 		this.correlationArray=correlationArray;
+	}
+	
+	@Override
+	public Optional<Color> getColor() {
+		return Optional.ofNullable((Color)null);
+	}
+	@Override
+	public String getName() {
+		return peptideModSeq;
+	}
+	@Override
+	public Optional<Float> getThickness() {
+		return Optional.ofNullable((Float)null);
+	}
+	@Override
+	public GraphType getType() {
+		return GraphType.spectrum;
+	}
+	@Override
+	public Pair<double[], double[]> toArrays() {
+		return new Pair<double[], double[]>(massArray, General.toDoubleArray(intensityArray));
 	}
 	
 	public PercolatorPeptide getPSMData() {

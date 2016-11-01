@@ -12,6 +12,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -22,6 +23,7 @@ import javax.swing.JTabbedPane;
 
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.PaintScale;
@@ -31,6 +33,7 @@ import org.jfree.chart.renderer.xy.XYBlockRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.ui.TextAnchor;
 
 import com.itextpdf.awt.PdfGraphics2D;
 import com.itextpdf.text.Document;
@@ -39,6 +42,8 @@ import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfTemplate;
 import com.itextpdf.text.pdf.PdfWriter;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -46,29 +51,33 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
 
 public class Charter {
 	public static void main(String[] args) {
-		XYTrace trace=new XYTrace(
+		XYTraceInterface trace=new XYTrace(
 				new double[] { 114.0913405, 147.1128042, 227.1754045, 244.1655682, 355.2339825, 359.1925112, 458.2609252, 484.2765755, 515.2823892, 541.2980395, 640.3664535, 644.3249822, 755.3933965,
 						772.3835602, 852.4461605, 885.4676242, 980.5411235, 998.5516882 },
 				new double[] { 0.021099463, 0.00721319, 0.10845732, 0.116413645, 0.39157316, 0.1849763, 0.443399, 0.35894206, 0.43697295, 0.47858942, 0.5025189, 0.34656474, 0.26218376, 0.27163184,
 						0.2108471, 0.23929471, 0.12108889, 0.12206937 },
 				GraphType.spectrum, "Trace");
-		XYTrace trace2=new XYTrace(
+		XYTraceInterface trace2=new XYTrace(
 				new double[] { 114.0913405, 147.1128042, 227.1754045, 244.1655682, 355.2339825, 359.1925112, 458.2609252, 484.2765755, 515.2823892, 541.2980395, 640.3664535, 644.3249822, 755.3933965,
 						772.3835602, 852.4461605, 885.4676242, 980.5411235, 998.5516882 },
 				new double[] { 0.021099463, 0.00721319, 0.10845732, 0.116413645, 0.39157316, 0.1849763, 0.443399, 0.35894206, 0.43697295, 0.47858942, 0.5025189, 0.34656474, 0.26218376, 0.27163184,
 						0.2108471, 0.23929471, 0.12108889, 0.12206937 },
 				GraphType.line, "Trace2");
-		XYTrace trace3=new XYTrace(new double[] { 114.0913405, 147.1128042, 227.1754045, 244.1655682, 355.2339825, 359.1925112, 458.2609252, 484.2765755, 515.2823892, 541.2980395, 640.3664535,
+		XYTraceInterface trace3=new XYTrace(new double[] { 114.0913405, 147.1128042, 227.1754045, 244.1655682, 355.2339825, 359.1925112, 458.2609252, 484.2765755, 515.2823892, 541.2980395, 640.3664535,
 				644.3249822, 755.3933965, 772.3835602, 852.4461605, 885.4676242, 980.5411235, 998.5516882 }, new double[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, GraphType.spectrum,
 				"Trace3");
 
-		XYTrace trace4=new XYTrace(
+		XYTraceInterface trace4=new XYTrace(
 				new double[] {347.85, 426.35, 551.4, 552.13, 553.31, 553.87, 569.2, 571.3, 621.01, 621.88, 622.21, 637.77, 638.31, 639.15, 640.14, 648.13, 685.4, 703.51, 703.92, 704.61, 705.83,
 						706.33, 735.48, 735.9, 736.43, 755.31, 756.12, 757.03, 770.11, 772.55, 772.93, 774.72, 800.35, 824.93, 825.41, 825.85, 826.13, 826.86, 827.46, 843.2, 852.26, 852.86, 853.71,
 						854.45, 870.63, 872.11, 912.62},
@@ -124,11 +133,11 @@ public class Charter {
 		return tabs;
 	}
 
-	public static void launchChart(String xAxis, String yAxis, boolean displayLegend, Dimension dim, XYTrace... traces) {
+	public static void launchChart(String xAxis, String yAxis, boolean displayLegend, Dimension dim, XYTraceInterface... traces) {
 		launchComponent(getChart(xAxis, yAxis, displayLegend, traces), xAxis, dim);
 	}
 
-	public static void launchChart(String xAxis, String yAxis, boolean displayLegend, XYTrace... traces) {
+	public static void launchChart(String xAxis, String yAxis, boolean displayLegend, XYTraceInterface... traces) {
 		launchComponent(getChart(xAxis, yAxis, displayLegend, traces), xAxis, new Dimension(792, 612));
 	}
 
@@ -136,7 +145,7 @@ public class Charter {
 		launchComponent(getChart(xAxis, yAxis, displayLegend, dataset), xAxis, new Dimension(792, 612));
 	}
 
-	public static void writeAsPDF(File f, String xAxis, String yAxis, boolean displayLegend, XYTrace... traces) {
+	public static void writeAsPDF(File f, String xAxis, String yAxis, boolean displayLegend, XYTraceInterface... traces) {
 		//Dimension d=new Dimension(792, 612);
 		Dimension d=new Dimension(400, 300);
 		
@@ -209,6 +218,12 @@ public class Charter {
 		return chartPanel;
 	}
 
+	public static ChartPanel getChart(LibraryEntry trace) {
+		ChartPanel chart=getChart("M/Z", "Intensity", false, trace);
+		chart.getChart().setTitle(trace.getSpectrumName());
+		return chart;
+	}
+
 	public static ChartPanel getChart(Spectrum trace) {
 		ChartPanel chart=getChart("M/Z", "Intensity", false, new XYTrace(trace));
 		chart.getChart().setTitle(trace.getSpectrumName());
@@ -226,8 +241,9 @@ public class Charter {
 
 		return getChart("Value", "Probability", false, new XYTrace(points, GraphType.line, dist.getName()));
 	}
+	private static final DecimalFormat MASS_FORMAT = new DecimalFormat(".#");
 
-	public static ChartPanel getChart(String xAxis, String yAxis, boolean displayLegend, XYTrace... traces) {
+	public static ChartPanel getChart(String xAxis, String yAxis, boolean displayLegend, XYTraceInterface... traces) {
 		NumberAxis numberaxis=new NumberAxis(xAxis);
 		numberaxis.setAutoRangeIncludesZero(false);
 		NumberAxis numberaxis1=new NumberAxis(yAxis);
@@ -238,7 +254,7 @@ public class Charter {
 		plot.setRangeAxis(numberaxis1);
 
 		int count=0;
-		for (XYTrace trace : traces) {
+		for (XYTraceInterface trace : traces) {
 			AbstractXYItemRenderer renderer=new XYLineAndShapeRenderer();
 			switch (trace.getType()) {
 			case area:
@@ -305,14 +321,59 @@ public class Charter {
 				break;
 
 			case spectrum:
-				for (int i=0; i<x.length; i++) {
-					if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
-						XYSeries peakSeries=new XYSeries(x[i]);
-						peakSeries.add(x[i], 0);
-						peakSeries.add(x[i], y[i]);
-						dataset.addSeries(peakSeries);
-						renderer.setSeriesStroke(i, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-						renderer.setSeriesPaint(i, new Color(26, 148, 49));
+				double yThreshold=General.max(y)*0.2;
+				if (trace instanceof AnnotatedLibraryEntry) {
+					AnnotatedLibraryEntry entry=(AnnotatedLibraryEntry)(Spectrum)trace;
+					FragmentIon[] annotations=entry.getIonAnnotations();
+					
+					for (int i=0; i<x.length; i++) {
+						if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
+							XYSeries peakSeries=new XYSeries(x[i]);
+							peakSeries.add(x[i], 0);
+							peakSeries.add(x[i], y[i]);
+							dataset.addSeries(peakSeries);
+
+							if (annotations[i]!=null) {
+								renderer.setSeriesStroke(i, IonType.getStroke(annotations[i].type));
+								renderer.setSeriesPaint(i, IonType.getColor(annotations[i].type));
+								
+								XYTextAnnotation xytextannotation = new XYTextAnnotation(annotations[i].toString(), x[i], y[i]);
+								xytextannotation.setPaint(IonType.getColor(annotations[i].type));
+						        xytextannotation.setFont(IonType.getFont(annotations[i].type));
+						        xytextannotation.setTextAnchor(TextAnchor.BOTTOM_CENTER);
+						        plot.addAnnotation(xytextannotation);
+							} else {
+								renderer.setSeriesStroke(i, IonType.missingStroke);
+								renderer.setSeriesPaint(i, IonType.missingColor);
+								
+								if (y[i]>yThreshold) {
+									XYTextAnnotation xytextannotation = new XYTextAnnotation(MASS_FORMAT.format(x[i]), x[i], y[i]);
+									xytextannotation.setPaint(IonType.missingColor);
+							        xytextannotation.setFont(IonType.missingAnnotationFont);
+							        xytextannotation.setTextAnchor(TextAnchor.BOTTOM_CENTER);
+							        plot.addAnnotation(xytextannotation);
+								}
+							}
+						}
+					}
+				} else {
+					for (int i=0; i<x.length; i++) {
+						if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
+							XYSeries peakSeries=new XYSeries(x[i]);
+							peakSeries.add(x[i], 0);
+							peakSeries.add(x[i], y[i]);
+							dataset.addSeries(peakSeries);
+							renderer.setSeriesStroke(i, IonType.missingStroke);
+							renderer.setSeriesPaint(i, IonType.missingColor);
+							
+							if (y[i]>yThreshold) {
+								XYTextAnnotation xytextannotation = new XYTextAnnotation(MASS_FORMAT.format(x[i]), x[i], y[i]);
+								xytextannotation.setPaint(IonType.missingColor);
+						        xytextannotation.setFont(IonType.missingAnnotationFont);
+						        xytextannotation.setTextAnchor(TextAnchor.BOTTOM_CENTER);
+						        plot.addAnnotation(xytextannotation);
+							}
+						}
 					}
 				}
 				break;

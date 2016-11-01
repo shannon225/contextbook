@@ -20,6 +20,10 @@ public class FragmentIon implements Comparable<FragmentIon> {
 		return new FragmentIon(mass-deltaMass, index, IonType.getNL(type));
 	}
 	
+	public IonType getType() {
+		return type;
+	}
+	
 	@Override
 	public String toString() {
 		return IonType.toString(type, index);

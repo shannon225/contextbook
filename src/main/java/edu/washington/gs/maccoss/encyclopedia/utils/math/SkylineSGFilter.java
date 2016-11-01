@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 
 public class SkylineSGFilter {
 	public static float[] paddedSavitzkyGolaySmooth(float[] intRaw) {
@@ -54,7 +55,7 @@ public class SkylineSGFilter {
 	 * @param trace
 	 * @return
 	 */
-	public static XYTrace paddedSavitzkyGolaySmooth(XYTrace trace) {
+	public static XYTrace paddedSavitzkyGolaySmooth(XYTraceInterface trace) {
 		Pair<double[], double[]> values=trace.toArrays();
 		double[] smoothedY=paddedSavitzkyGolaySmooth(values.y);
 		return new XYTrace(values.x, smoothedY, trace.getType(), trace.getName(), trace.getColor().orElse(null), trace.getThickness().orElse(null));

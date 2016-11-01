@@ -2,16 +2,38 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.HashSet;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+
 public class AnnotatedLibraryEntry extends LibraryEntry {
-	private final String[] ionAnnotations;
-	
-	public AnnotatedLibraryEntry(String sourceFile, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray,
-			float[] intensityArray, float[] correlationArray, String[] ionAnnotations) {
+	private final FragmentIon[] ionAnnotations;
+
+	public AnnotatedLibraryEntry(String sourceFile, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime,
+			float score, double[] massArray, float[] intensityArray, float[] correlationArray, FragmentIon[] ionAnnotations) {
 		super(sourceFile, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray);
 		this.ionAnnotations=ionAnnotations;
 	}
-	
-	public String[] getIonAnnotations() {
+
+	public AnnotatedLibraryEntry(LibraryEntry entry, SearchParameters parameters) {
+		super(entry.getSource(), entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), entry.getCopies(),
+				entry.getRetentionTime(), entry.getScore(), entry.getMassArray(), entry.getIntensityArray(), entry.getCorrelationArray());
+
+		double[] massArray=entry.getMassArray();
+		this.ionAnnotations=new FragmentIon[massArray.length];
+
+		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge())) {
+			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.mass);
+			for (int i=0; i<indicies.length; i++) {
+				ionAnnotations[indicies[i]]=fragmentIon;
+			}
+		}
+	}
+
+	/**
+	 * 
+	 * @return null entries are expected for unannotated peaks!
+	 */
+	public FragmentIon[] getIonAnnotations() {
 		return ionAnnotations;
 	}
 }

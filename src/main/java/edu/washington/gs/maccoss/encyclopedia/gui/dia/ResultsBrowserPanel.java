@@ -25,14 +25,13 @@ import javax.swing.event.ListSelectionListener;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.axis.ValueAxis;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.LibraryPredictedFragmentationScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractorTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
@@ -55,6 +54,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import gnu.trove.map.hash.TFloatFloatHashMap;
@@ -72,7 +72,6 @@ public class ResultsBrowserPanel extends JPanel {
 	private final JTable table;
 	private final LibraryEntryTableModel model;
 	private final SearchParameters parameters;
-	private final PecanRawScorer scorer;
 	
 	private LibraryInterface library=null;
 	private StripeFileInterface dia=null;
@@ -80,7 +79,6 @@ public class ResultsBrowserPanel extends JPanel {
 	public ResultsBrowserPanel(SearchParameters parameters) {
 		super(new BorderLayout());
 		this.parameters=parameters;
-		scorer=new PecanRawScorer(parameters.getFragmentTolerance(), new LibraryPredictedFragmentationScorer(parameters));
 		
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
@@ -205,7 +203,8 @@ public class ResultsBrowserPanel extends JPanel {
 			dataSplit.setLeftComponent(new JLabel("Select a peptide!"));
 			return;
 		} else if (dia==null) {
-			dataSplit.setLeftComponent(Charter.getChart(entry));
+			
+			dataSplit.setLeftComponent(Charter.getChart(new AnnotatedLibraryEntry(entry, parameters)));
 			dataSplit.setRightComponent(new FragmentationTable(entry, entry.getPeptideModSeq(), parameters));
 		} else {
 			Logger.logLine("Parsing peptide...");
@@ -295,7 +294,7 @@ public class ResultsBrowserPanel extends JPanel {
 							ArrayList<XYTrace> uniqueFragmentsList=new ArrayList<XYTrace>(allFragments.values());
 							double maxPoint=XYTrace.getMaxY(uniqueFragmentsList);
 							uniqueFragmentsList.add(new XYTrace(new double[] {point.x/60f, point.x/60f}, new double[] {0.0, maxPoint}, GraphType.dashedline, "center", Color.BLACK, 2.0f));
-							XYTrace[] fragmentTraces=uniqueFragmentsList.toArray(new XYTrace[uniqueFragmentsList.size()]);
+							XYTraceInterface[] fragmentTraces=uniqueFragmentsList.toArray(new XYTrace[uniqueFragmentsList.size()]);
 							
 							if (point.y>=PhosphoLocalizer.MINIMUM_SCORE&&phosphoData.get().getPassingForms().containsKey(seq)) {
 								keyVsName.put(seq, seq+" ("+(Math.round(point.y*10.0f)/10.0f)+")");

@@ -13,6 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ProphetMixtureModel;
@@ -95,8 +96,8 @@ public class RetentionTimeFilter {
 			}
 		}
 
-		XYTrace histTrace=new XYTrace(negHist, GraphType.area, "Delta RT", Color.red, 3.0f);
-		XYTrace posHistTrace=new XYTrace(posHist, GraphType.area, "Delta RT", Color.blue, 3.0f);
+		XYTraceInterface histTrace=new XYTrace(negHist, GraphType.area, "Delta RT", Color.red, 3.0f);
+		XYTraceInterface posHistTrace=new XYTrace(posHist, GraphType.area, "Delta RT", Color.blue, 3.0f);
 		
 		ArrayList<XYPoint> positivePoints=new ArrayList<XYPoint>();
 		
@@ -124,11 +125,11 @@ public class RetentionTimeFilter {
 		}
 		positivePoints=normPositivePoints;
 		
-		XYTrace posTrace=new XYTrace(positivePoints, GraphType.line, "Positive", new Color(26, 198, 49, 100), 2.0f);
+		XYTraceInterface posTrace=new XYTrace(positivePoints, GraphType.line, "Positive", new Color(26, 198, 49, 100), 2.0f);
 		
-		XYTrace median2=new XYTrace(rtWarper.getKnots(), GraphType.line, "Retention Time Fit", new Color(26, 198, 49, 100), 2.0f);
-		XYTrace selectedTrace=new XYTrace(selectedRTs, GraphType.tinypoint, "Data Used In Fit", Color.BLUE, 2.0f);
-		XYTrace trace=new XYTrace(removedRTs, GraphType.tinypoint, "Data Removed From Fit", Color.RED, 2.0f);
+		XYTraceInterface median2=new XYTrace(rtWarper.getKnots(), GraphType.line, "Retention Time Fit", new Color(26, 198, 49, 100), 2.0f);
+		XYTraceInterface selectedTrace=new XYTrace(selectedRTs, GraphType.tinypoint, "Data Used In Fit", Color.BLUE, 2.0f);
+		XYTraceInterface trace=new XYTrace(removedRTs, GraphType.tinypoint, "Data Removed From Fit", Color.RED, 2.0f);
 		
 		if (saveFileSeed.isPresent()) {
 			String saveFilePrefix=saveFileSeed.get().getAbsolutePath();

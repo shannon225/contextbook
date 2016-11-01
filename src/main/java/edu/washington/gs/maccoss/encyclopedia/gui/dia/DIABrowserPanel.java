@@ -53,11 +53,14 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class DIABrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -196,7 +199,10 @@ public class DIABrowserPanel extends JPanel {
 				ionCount.call();
 				
 				PeptideScoringResult ionCountResult=ionCountResultsQueue.take();
-				XYTrace ionCounttrace=ionCountResult.getTrace().rescaleX(1.0f/60.0f);
+				XYTraceInterface xytrace=ionCountResult.getTrace();
+				Pair<double[], double[]> trace=xytrace.toArrays();
+				double[] newx=General.multiply(trace.x, 1.0f/60.0f); // scale to minutes
+				XYTraceInterface ionCounttrace=new XYTrace(newx, trace.y, xytrace.getType(), xytrace.getName(), xytrace.getColor(), xytrace.getThickness());
 				
 				ChartPanel ionCountchart=Charter.getChart("RT ("+entry.getPrecursorMZ()+" M/Z)", "RawScore", false, ionCounttrace);
 

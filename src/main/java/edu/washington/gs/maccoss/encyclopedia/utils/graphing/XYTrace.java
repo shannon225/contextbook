@@ -14,18 +14,12 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.procedure.TFloatFloatProcedure;
 
-public class XYTrace {
+public class XYTrace implements XYTraceInterface {
 	private final String name;
 	private final ArrayList<XYPoint> points;
 	private final GraphType type;
 	private final Optional<Color> color;
 	private final Optional<Float> thickness;
-	
-	public XYTrace rescaleX(float rescaleX) {
-		Pair<double[], double[]> trace=toArrays(points);
-		double[] newx=General.multiply(trace.x, rescaleX);
-		return new XYTrace(newx, trace.y, type, name, color.orElse(null), thickness.orElse(null));
-	}
 	
 	public XYTrace(Spectrum spectrum) {
 		color=Optional.empty();
@@ -64,6 +58,20 @@ public class XYTrace {
 		}
 		return max;
 	}
+	
+	public XYTraceInterface rescaleX(float rescaleX) {
+		Pair<double[], double[]> trace=toArrays(points);
+		double[] newx=General.multiply(trace.x, rescaleX);
+		return new XYTrace(newx, trace.y, type, name, color.orElse(null), thickness.orElse(null));
+	}
+	
+	public XYTrace(double[] x, double[] y, GraphType type, String name, Optional<Color> color, Optional<Float> thickness) {
+		this(x, y, type, name, color.orElse(null), thickness.orElse(null));
+	}
+	
+	public XYTrace(ArrayList<XYPoint> points, GraphType type, String name, Optional<Color> color, Optional<Float> thickness) {
+		this(points, type, name, color.orElse(null), thickness.orElse(null));
+	}
 
 	public XYTrace(Collection<XYPoint> points, GraphType type, String name, Color color, Float thickness) {
 		this.color=Optional.ofNullable(color);
@@ -94,7 +102,7 @@ public class XYTrace {
 	}
 	
 	public XYTrace(double[] x, double[] y, GraphType type, String name) {
-		this(x, y, type, name, null, null);
+		this(x, y, type, name, Optional.ofNullable((Color)null), Optional.ofNullable((Float)null));
 	}
 	
 	public XYTrace(TFloatFloatHashMap map, GraphType type, String name, Color color, Float thickness) {
@@ -116,22 +124,42 @@ public class XYTrace {
 		this(map, type, name, null, null);
 	}
 	
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface#getColor()
+	 */
+	@Override
 	public Optional<Color> getColor() {
 		return color;
 	}
 	
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface#getThickness()
+	 */
+	@Override
 	public Optional<Float> getThickness() {
 		return thickness;
 	}
 	
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface#getName()
+	 */
+	@Override
 	public String getName() {
 		return name;
 	}
 	
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface#getType()
+	 */
+	@Override
 	public GraphType getType() {
 		return type;
 	}
 
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface#toArrays()
+	 */
+	@Override
 	public Pair<double[], double[]> toArrays() {
 		return toArrays(points);
 	}

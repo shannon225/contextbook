@@ -13,6 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.FloatPair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
@@ -368,7 +369,7 @@ public class TransitionRefiner {
 		}
 		return xytraces;
 	}
-	public static XYTrace toBoundaries(float f, String name) {
+	public static XYTraceInterface toBoundaries(float f, String name) {
 		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
 		points.add(new XYPoint(f, -0.1f));
 		points.add(new XYPoint(f, 0.1f));

@@ -6,7 +6,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTime
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 
@@ -15,7 +15,7 @@ public class PeptideScoringResult {
 	
 	private final LibraryEntry entry;
 	private final ArrayList<Pair<ScoredObject<Stripe>, float[]>> goodStripes=new ArrayList<Pair<ScoredObject<Stripe>, float[]>>();
-	private XYTrace trace=null;
+	private XYTraceInterface trace=null;
 	
 	public PeptideScoringResult(LibraryEntry entry) {
 		this.entry=entry;
@@ -73,11 +73,11 @@ public class PeptideScoringResult {
 		goodStripes.add(new Pair<ScoredObject<Stripe>, float[]>(new ScoredObject<Stripe>(score, stripe), auxScoreArray));
 	}
 	
-	public void setTrace(XYTrace trace) {
+	public void setTrace(XYTraceInterface trace) {
 		this.trace=trace;
 	}
 	
-	public XYTrace getTrace() {
+	public XYTraceInterface getTrace() {
 		return trace;
 	}
 	

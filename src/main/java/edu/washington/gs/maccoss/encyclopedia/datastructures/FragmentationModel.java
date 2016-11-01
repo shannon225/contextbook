@@ -43,11 +43,11 @@ public class FragmentationModel {
 	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass) {
 		FragmentIon[] ions=getPrimaryIonObjects(params.getFragType(), precursorCharge);
 		TDoubleArrayList ionsList=new TDoubleArrayList();
-		ArrayList<String> annotationList=new ArrayList<String>();
+		ArrayList<FragmentIon> annotationList=new ArrayList<FragmentIon>();
 		for (int i=0; i<ions.length; i++) {
 			if (ions[i].mass>=minimumMass) {
 				ionsList.add(ions[i].mass);
-				annotationList.add(ions[i].toString());
+				annotationList.add(ions[i]);
 			}
 		}
 		double[] masses=ionsList.toArray();
@@ -61,7 +61,7 @@ public class FragmentationModel {
 		String sequence=getModifiedSequence(params.getAAConstants());
 		double precursorMZ=getChargedMass(precursorCharge);
 
-		return new AnnotatedLibraryEntry(filename, accessions, 1, precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, masses, unitIntensities, unitCorrelation, annotationList.toArray(new String[annotationList.size()]));
+		return new AnnotatedLibraryEntry(filename, accessions, 1, precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, masses, unitIntensities, unitCorrelation, annotationList.toArray(new FragmentIon[annotationList.size()]));
 	}
 	
 	public String[] getAas() {

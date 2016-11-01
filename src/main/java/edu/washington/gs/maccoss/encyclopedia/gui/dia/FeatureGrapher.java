@@ -25,6 +25,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
@@ -116,7 +117,7 @@ public class FeatureGrapher {
 			TFloatArrayList decoys=decoyData.get(key);
 			
 			ArrayList<XYPoint>[] points=PivotTableGenerator.createPivotTables(new float[][] {targets.toArray(), decoys.toArray()});
-			XYTrace[] traces=new XYTrace[2];
+			XYTraceInterface[] traces=new XYTraceInterface[2];
 			traces[0]=new XYTrace(points[0], GraphType.line, "Target");
 			traces[1]=new XYTrace(points[1], GraphType.line, "Decoy");
 			

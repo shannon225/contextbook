@@ -6,6 +6,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearRegression;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.list.array.TFloatArrayList;
@@ -106,7 +107,7 @@ public class EValueCalculator {
 		return index;
 	}
 	
-	public XYTrace[] toTraces() {
+	public XYTraceInterface[] toTraces() {
 		ArrayList<XYPoint> points1=new ArrayList<XYPoint>();
 		ArrayList<XYPoint> points2=new ArrayList<XYPoint>();
 		for (int i=0; i<counts.length; i++) {
@@ -114,6 +115,6 @@ public class EValueCalculator {
 			points1.add(new XYPoint(intensity, Log.protectedLog10(counts[i])));
 			points2.add(new XYPoint(intensity, (intensity*m+b)));
 		}
-		return new XYTrace[] {new XYTrace(points1, GraphType.area, "histogram"), new XYTrace(points2, GraphType.line, "fit")};
+		return new XYTraceInterface[] {new XYTrace(points1, GraphType.area, "histogram"), new XYTrace(points2, GraphType.line, "fit")};
 	}
 }
