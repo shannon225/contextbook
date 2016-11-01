@@ -1,0 +1,4 @@
+TODO:
+- think about conditional probabilities for seeing b11 and then seeing b11+2 (they're very common) versus b11 and b11-NL (they're not uncommon)
+- think about having a different mass accuracy for creating libraries (DDA libraries should probably be done at 50 ppm, not 10 ppm)
+- think about correcting the m/z values of the library to the true targets
