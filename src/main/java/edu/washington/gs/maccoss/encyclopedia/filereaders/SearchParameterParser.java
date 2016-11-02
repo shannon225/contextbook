@@ -24,6 +24,7 @@ public class SearchParameterParser {
 		map.put("-frag", "CID");
 		map.put("-ptol", "10");
 		map.put("-ftol", "10");
+		map.put("-lftol", "10");
 		map.put("-poffset", "0");
 		map.put("-foffset", "0");
 		map.put("-enzyme", "trypsin");
@@ -52,6 +53,7 @@ public class SearchParameterParser {
 		final FragmentationType fragType;
 		final MassTolerance precursorTolerance;
 		final MassTolerance fragmentTolerance;
+		final MassTolerance libraryFragmentTolerance;
 		final double precursorOffsetPPM;
 		final double fragmentOffsetPPM;
 		final DigestionEnzyme enzyme;
@@ -104,6 +106,17 @@ public class SearchParameterParser {
 				fragmentTolerance=new MassTolerance(Double.parseDouble(value));
 			} catch (NumberFormatException nfe) {
 				throw new EncyclopediaException("Error parsing fragment tolerance from ["+value+"]", nfe);
+			}
+		}
+		
+		value=parameters.get("-lftol");
+		if (value==null) {
+			libraryFragmentTolerance=new MassTolerance(10);
+		} else {
+			try {
+				libraryFragmentTolerance=new MassTolerance(Double.parseDouble(value));
+			} catch (NumberFormatException nfe) {
+				throw new EncyclopediaException("Error parsing library fragment tolerance from ["+value+"]", nfe);
 			}
 		}
 		
@@ -164,7 +177,7 @@ public class SearchParameterParser {
 			}
 		}
 		
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, fragmentTolerance, fragmentOffsetPPM, enzyme, percolatorThreshold, percolator, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
+		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolator, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
 				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, runPhosphoLocalization, numberOfExtraDecoyLibrariesSearched);
 	}
 

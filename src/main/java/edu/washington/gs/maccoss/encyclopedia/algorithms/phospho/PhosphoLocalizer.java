@@ -36,6 +36,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
+import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class PhosphoLocalizer {
 	public static final float MINIMUM_SCORE=-Log.log10(0.05f);
@@ -263,7 +264,7 @@ public class PhosphoLocalizer {
 				int numIdentificationPeaks=0;
 				float[] correlations=quantData.getCorrelationArray();
 				for (int i=0; i<correlations.length; i++) {
-					if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+					if (correlations[i]>=TransitionRefiner.quantitativeCorrelationThreshold) {
 						numIdentificationPeaks++;
 					}
 				}
@@ -276,7 +277,7 @@ public class PhosphoLocalizer {
 					numIdentificationPeaks=0;
 					correlations=allQuantData.getCorrelationArray();
 					for (int i=0; i<correlations.length; i++) {
-						if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+						if (correlations[i]>=TransitionRefiner.quantitativeCorrelationThreshold) {
 							numIdentificationPeaks++;
 						}
 					}
@@ -326,6 +327,8 @@ public class PhosphoLocalizer {
 		float[] bestIntensities=null;
 		ArrayList<float[]> intensityList=new ArrayList<float[]>();
 		TFloatArrayList retentionTimes=new TFloatArrayList();
+		TFloatArrayList totalIonCurrent=new TFloatArrayList();
+		TFloatArrayList totalIdentifiedIonCurrent=new TFloatArrayList();
 		for (int k=0; k<stripes.size(); k++) {
 			Spectrum spectrum=stripes.get(k);
 			retentionTimes.add(spectrum.getScanStartTime());
@@ -336,6 +339,12 @@ public class PhosphoLocalizer {
 				bestDelta=delta;
 				bestIntensities=integratedIntensities;
 			}
+			float sumIdentifiedIntensities=0.0f;
+			for (int i=0; i<integratedIntensities.length; i++) {
+				sumIdentifiedIntensities+=integratedIntensities[i];
+			}
+			totalIdentifiedIonCurrent.add(sumIdentifiedIntensities);
+			totalIonCurrent.add(spectrum.getTIC());
 		}
 		if (bestIntensities.length==0) {
 			return null;
@@ -376,6 +385,7 @@ public class PhosphoLocalizer {
 		TransitionRefinementData data=TransitionRefiner.identifyTransitions(peptideModSeq, precursorCharge, keptMasses.toArray(), chromatograms, retentionTimes.toArray(), medianChromatogram);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
+		Range rtRange=data.getRange();
 
 		TDoubleArrayList mzs=new TDoubleArrayList();
 		TFloatArrayList intens=new TFloatArrayList();
@@ -384,7 +394,6 @@ public class PhosphoLocalizer {
 		float correlationThreshold=-1f; // Keep all localizing fragments!
 		for (int i=0; i<keptIntensities.size(); i++) {
 			// calculate delta mass for each fragment ion
-			Range rtRange=data.getRange();
 			
 			float totalDeltaMasses=0.0f;
 			float totalIntensities=0.0f;
@@ -411,27 +420,53 @@ public class PhosphoLocalizer {
 			}
 		}
 
+		float ticSum=0.0f;
+		float identifiedTicSum=0.0f;
+		for (int i=0; i<stripes.size(); i++) {
+			Spectrum stripe=stripes.get(i);
+			if (rtRange.contains(stripe.getScanStartTime())) {
+				identifiedTicSum+=totalIdentifiedIonCurrent.get(i);
+				ticSum+=totalIonCurrent.get(i);
+			}
+		}
+		float identifiedTICRatio=ticSum==0.0f?0.0f:identifiedTicSum/ticSum;
+
 		double[] massArray=mzs.toArray();
 		float[] intensityArray=intens.toArray();
 		float[] deltaMassArray=deltaMasses.toArray();
-		return data.addPeakData(deltaMassArray, massArray, intensityArray, retentionTimes.toArray());
+		return data.addPeakData(deltaMassArray, massArray, intensityArray, retentionTimes.toArray(), identifiedTICRatio);
 	}
 	
 	private static float score(SearchParameters parameters, double[] ions, FragmentIon[] ionTypes, float[] frequencies, Spectrum stripe, boolean report) {
 		if (frequencies.length==0) return 0.0f;
 
 		double[] massArray=stripe.getMassArray();
-		float logProb=Log.log10(frequencies.length); // bonferroni correction
-		ArrayList<FragmentIon> matches=new ArrayList<FragmentIon>();
+		
+		// only keep 
+		HashSet<String> uniqueIonTypes=new HashSet<String>();
+		TObjectFloatHashMap<String> matches=new TObjectFloatHashMap<String>();
+		
 		for (int i=0; i<frequencies.length; i++) {
+			String canonicalIonType=ionTypes[i].toCanonicalIonTypeString();
+			uniqueIonTypes.add(canonicalIonType);
+			
 			boolean match=parameters.getFragmentTolerance().getIndex(massArray, ions[i]).isPresent();
 			if (match) {
-				logProb+=Log.log10(frequencies[i]);
-				matches.add(ionTypes[i]);
+				if (matches.contains(canonicalIonType)) {
+					if (matches.get(canonicalIonType)>frequencies[i]) {
+						matches.put(canonicalIonType, frequencies[i]);
+					}
+				} else {
+					matches.put(canonicalIonType, frequencies[i]);
+				}
 			}
 		}
-		//if (report&&matches.size()>0) System.out.println(stripe.getScanStartTime()/60f+"\tFound:"+General.toString(matches)+" ("+matches.size()+"/"+ions.length+")\t"+(-logProb-Log.log10(frequencies.length)));
-		// neg log prob (normalized by N attempts)
+
+		float logProb=Log.log10(uniqueIonTypes.size()); // bonferroni correction
+		for (float freq : matches.values()) {
+			logProb+=Log.protectedLog10(freq);
+		}
+
 		return -logProb;
 	}
 

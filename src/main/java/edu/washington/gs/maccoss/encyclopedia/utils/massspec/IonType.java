@@ -8,7 +8,13 @@ import java.awt.Stroke;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 
 public enum IonType {
-	a,b,c,x,y,z,z1,ap2,bp2,cp2,xp2,yp2,zp2,z1p2,aNL,bNL,cNL,xNL,yNL,zNL,z1NL,ap2NL,bp2NL,cp2NL,xp2NL,yp2NL,zp2NL,z1p2NL;
+	a,aNL,ap2,ap2NL,
+	b,bNL,bp2,bp2NL,
+	c,cNL,cp2,cp2NL,
+	x,xNL,xp2,xp2NL,
+	y,yNL,yp2,yp2NL,
+	z,zNL,z1,z1NL,zp2,zp2NL,z1p2,z1p2NL;
+	
 	
 	public static final Color oddColor=new Color(26, 148, 49);
 	public static final Color bcColor=new Color(226, 75, 59);
@@ -196,6 +202,41 @@ public enum IonType {
 		return missingAnnotationFont;
 	}
 	
+	public static IonType getCanonicalIonType(IonType t) {
+		switch (t) {
+		case a: return a;
+		case b: return b;
+		case c: return c;
+		case x: return x;
+		case y: return y;
+		case z: return z;
+		case z1: return z;
+		case aNL: return a;
+		case bNL: return b;
+		case cNL: return c;
+		case xNL: return x;
+		case yNL: return y;
+		case zNL: return z;
+		case z1NL: return z;
+
+		case ap2: return a;
+		case bp2: return b;
+		case cp2: return c;
+		case xp2: return x;
+		case yp2: return y;
+		case zp2: return z;
+		case z1p2: return z;
+		case ap2NL: return a;
+		case bp2NL: return b;
+		case cp2NL: return c;
+		case xp2NL: return x;
+		case yp2NL: return y;
+		case zp2NL: return z;
+		case z1p2NL: return z;
+		}
+		throw new EncyclopediaException("Can't get ion class for type: "+toString(t));
+	}
+	
 	@SuppressWarnings("incomplete-switch")
 	public static IonType getNL(IonType t) {
 		switch (t) {
@@ -235,6 +276,6 @@ public enum IonType {
 		case zNL: return zp2NL;
 		case z1NL: return z1p2NL;
 		}
-		throw new EncyclopediaException("Can't make a +2 ion for "+toString(t));
+		throw new EncyclopediaException("Can't make a +2 ion for type: "+toString(t));
 	}
 }

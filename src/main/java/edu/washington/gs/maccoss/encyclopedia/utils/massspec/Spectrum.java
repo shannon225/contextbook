@@ -6,4 +6,5 @@ public interface Spectrum {
 	public double getPrecursorMZ();
 	public double[] getMassArray();
 	public float[] getIntensityArray();
+	public float getTIC();
 }

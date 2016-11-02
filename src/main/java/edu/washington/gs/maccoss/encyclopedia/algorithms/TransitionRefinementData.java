@@ -31,6 +31,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	private final Optional<float[]> intensityArray; // for every quantified ion
 	
 	private final Optional<float[]> rtArray;
+	private final Optional<Float> identifiedTICRatio;
 	
 	private final String peptideModSeq;
 	private final byte precursorCharge;
@@ -42,7 +43,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	private Optional<HashMap<String, TransitionRefinementData>> modificationQuantData;
 	
 	public TransitionRefinementData(String peptideModSeq, byte precursorCharge, double[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range) {
-		this(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, null, null, null, null, null, null);
+		this(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, null, null, null, null, null, null, null);
 	}
 
 	/**
@@ -54,7 +55,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	 * @param massArray CAN BE NULL
 	 * @param intensityArray CAN BE NULL
 	 */
-	TransitionRefinementData(String peptideModSeq, byte precursorCharge, double[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range, float[] deltaMassArray, double[] massArray, float[] intensityArray, float[] rtArray, ModificationLocalizationData localizationData, HashMap<String, TransitionRefinementData> modificationQuantData) {
+	TransitionRefinementData(String peptideModSeq, byte precursorCharge, double[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range, float[] deltaMassArray, double[] massArray, float[] intensityArray, float[] rtArray, ModificationLocalizationData localizationData, HashMap<String, TransitionRefinementData> modificationQuantData, Float identifiedTICRatio) {
 		this.peptideModSeq=peptideModSeq;
 		this.precursorCharge=precursorCharge;
 		this.fragmentMassArray=fragmentMassArray;
@@ -70,6 +71,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		this.rtArray=Optional.ofNullable(rtArray);
 		this.localizationData=Optional.ofNullable(localizationData);
 		this.modificationQuantData=Optional.ofNullable(modificationQuantData);
+		this.identifiedTICRatio=Optional.ofNullable(identifiedTICRatio);
 	}
 	
 	public AnnotatedLibraryEntry getEntry(LibraryEntry entry, SearchParameters parameters) {
@@ -206,8 +208,8 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	 * @param rts used for plotting
 	 * @return
 	 */
-	public TransitionRefinementData addPeakData(float[] deltaMass, double[] mass, float[] intensity, float[] rts) {
-		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, deltaMass, mass, intensity, rts, localizationData.isPresent()?localizationData.get():null, modificationQuantData.isPresent()?modificationQuantData.get():null);
+	public TransitionRefinementData addPeakData(float[] deltaMass, double[] mass, float[] intensity, float[] rts, float identifiedTICRatio) {
+		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, deltaMass, mass, intensity, rts, localizationData.isPresent()?localizationData.get():null, modificationQuantData.isPresent()?modificationQuantData.get():null, identifiedTICRatio);
 	}
 	
 	public double[] getFragmentMassArray() {
@@ -244,5 +246,8 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	}
 	public Optional<float[]> getRtArray() {
 		return rtArray;
+	}
+	public Optional<Float> getIdentifiedTICRatio() {
+		return identifiedTICRatio;
 	}
 }

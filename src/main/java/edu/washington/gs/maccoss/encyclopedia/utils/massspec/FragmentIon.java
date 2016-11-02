@@ -24,6 +24,10 @@ public class FragmentIon implements Comparable<FragmentIon> {
 		return type;
 	}
 	
+	public String toCanonicalIonTypeString() {
+		return IonType.toString(IonType.getCanonicalIonType(type), index);
+	}
+	
 	@Override
 	public String toString() {
 		return IonType.toString(type, index);

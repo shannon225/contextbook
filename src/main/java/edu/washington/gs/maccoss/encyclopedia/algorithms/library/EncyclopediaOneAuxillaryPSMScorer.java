@@ -34,7 +34,8 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		float isotopeDotProduct=precursorScores[1];
 		float averagePPM=precursorScores[2];
 
-		MassTolerance tolerance=parameters.getFragmentTolerance();
+		MassTolerance acquiredTolerance=parameters.getFragmentTolerance();
+		MassTolerance libraryTolerance=parameters.getLibraryFragmentTolerance();
 		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		double[] ions=model.getPrimaryIons(parameters.getFragType(), entry.getPrecursorCharge());
 		
@@ -53,7 +54,7 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		TFloatArrayList actualTargetIntensities=new TFloatArrayList();
 		ArrayList<XYPoint> fragmentDeltaMasses=new ArrayList<XYPoint>();
 		for (double target : ions) {
-			int[] predictedIndicies=tolerance.getIndicies(predictedMasses, target);
+			int[] predictedIndicies=libraryTolerance.getIndicies(predictedMasses, target);
 			float predictedIntensity=0.0f;
 			float maxCorrelation=0.01f;
 			for (int i=0; i<predictedIndicies.length; i++) {
@@ -66,7 +67,7 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 			}
 			
 			if (predictedIntensity>0) {
-				int[] indicies=tolerance.getIndicies(acquiredMasses, target);
+				int[] indicies=acquiredTolerance.getIndicies(acquiredMasses, target);
 				float intensity=0.0f;
 				float bestPeakIntensity=0.0f;
 				float deltaMass=0.0f;
@@ -95,8 +96,8 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		
 		float averageFragmentDeltaMasses=0.0f, averageAbsFragDeltaMass=0.0f;
 		if (fragmentDeltaMasses.size()==0) {
-			averageAbsFragDeltaMass=(float)tolerance.getPpmTolerance();
-			averageFragmentDeltaMasses=(float)tolerance.getPpmTolerance();
+			averageAbsFragDeltaMass=(float)acquiredTolerance.getPpmTolerance();
+			averageFragmentDeltaMasses=(float)acquiredTolerance.getPpmTolerance();
 		} else {
 			Collections.sort(fragmentDeltaMasses);
 			Collections.reverse(fragmentDeltaMasses);
@@ -109,7 +110,7 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 				if (count>numPeaksUsedInAverage) break;
 			}
 			for (int i=count; i<numPeaksUsedInAverage; i++) {
-				averageAbsFragDeltaMass+=(float)tolerance.getPpmTolerance();
+				averageAbsFragDeltaMass+=(float)acquiredTolerance.getPpmTolerance();
 			}
 			averageFragmentDeltaMasses=averageFragmentDeltaMasses/count;
 			averageAbsFragDeltaMass=averageAbsFragDeltaMass/numPeaksUsedInAverage;

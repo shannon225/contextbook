@@ -150,6 +150,8 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		PeakScores[] bestScores=null;
 		ArrayList<PeakScores[]> scoreList=new ArrayList<PeakScores[]>();
 		TFloatArrayList retentionTimes=new TFloatArrayList();
+		TFloatArrayList totalIonCurrent=new TFloatArrayList();
+		TFloatArrayList totalIdentifiedIonCurrent=new TFloatArrayList();
 		for (Stripe stripe : stripes) {
 			retentionTimes.add(stripe.getScanStartTime());
 			float delta=Math.abs(stripe.getScanStartTime()-unitEntry.getRetentionTime());
@@ -159,6 +161,14 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 				bestDelta=delta;
 				bestScores=individualPeakScores;
 			}
+			float sumIdentifiedIntensities=0.0f;
+			for (int i=0; i<individualPeakScores.length; i++) {
+				if (individualPeakScores[i]!=null) {
+					sumIdentifiedIntensities+=individualPeakScores[i].getScore();
+				}
+			}
+			totalIdentifiedIonCurrent.add(sumIdentifiedIntensities);
+			totalIonCurrent.add(stripe.getTIC());
 		}
 		// no signal of any kind at retention time!
 		if (bestScores==null||bestScores.length==0) return null;
@@ -203,6 +213,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		TransitionRefinementData data=TransitionRefiner.identifyTransitions(unitEntry.getPeptideModSeq(), unitEntry.getPrecursorCharge(), fragmentMasses.toArray(), chromatograms, retentionTimes.toArray());
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
+		Range rtRange=data.getRange();
 
 		TDoubleArrayList mzs=new TDoubleArrayList();
 		TFloatArrayList intens=new TFloatArrayList();
@@ -211,7 +222,6 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		float correlationThreshold=limitToQuantifiable?TransitionRefiner.quantitativeCorrelationThreshold:-1f;
 		for (int i=0; i<bestKeptPeaks.size(); i++) {
 			// calculate delta mass for each fragment ion
-			Range rtRange=data.getRange();
 			
 			float totalDeltaMasses=0.0f;
 			float totalIntensities=0.0f;
@@ -240,11 +250,22 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			}
 		}
 
+		float ticSum=0.0f;
+		float identifiedTicSum=0.0f;
+		for (int i=0; i<stripes.size(); i++) {
+			Stripe stripe=stripes.get(i);
+			if (rtRange.contains(stripe.getScanStartTime())) {
+				identifiedTicSum+=totalIdentifiedIonCurrent.get(i);
+				ticSum+=totalIonCurrent.get(i);
+			}
+		}
+		float identifiedTICRatio=ticSum==0.0f?0.0f:identifiedTicSum/ticSum;
+
 		// System.out.println(peptideModSeq+"\t"+keptPeaks.size()+"\t"+count+"\t"+quantCount);
 
 		double[] massArray=mzs.toArray();
 		float[] intensityArray=intens.toArray();
 		float[] deltaMassArray=deltaMasses.toArray();
-		return data.addPeakData(deltaMassArray, massArray, intensityArray, retentionTimes.toArray());
+		return data.addPeakData(deltaMassArray, massArray, intensityArray, retentionTimes.toArray(), identifiedTICRatio);
 	}
 }

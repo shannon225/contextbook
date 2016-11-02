@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 //@Immutable
 public class PrecursorScan implements Spectrum, Comparable<PrecursorScan> {
@@ -9,6 +10,7 @@ public class PrecursorScan implements Spectrum, Comparable<PrecursorScan> {
 	private final float scanStartTime;
 	private final double[] massArray;
 	private final float[] intensityArray;
+	private final float tic;
 
 	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, double[] massArray, float[] intensityArray) {
 		this.spectrumName=spectrumName;
@@ -16,6 +18,12 @@ public class PrecursorScan implements Spectrum, Comparable<PrecursorScan> {
 		this.scanStartTime=scanStartTime;
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
+		this.tic=General.sum(intensityArray);
+	}
+	
+	@Override
+	public float getTIC() {
+		return tic;
 	}
 	
 	@Override

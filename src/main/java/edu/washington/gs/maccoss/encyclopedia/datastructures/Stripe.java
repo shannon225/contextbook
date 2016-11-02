@@ -16,6 +16,7 @@ public class Stripe implements Comparable<Stripe>, Spectrum {
 	private final double[] massArray;
 	private final float[] intensityArray;
 	private final float intensityMagnitude;
+	private final float tic;
 
 	public Stripe(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, float isolationWindowLower, float isolationWindowUpper, double[] massArray, float[] intensityArray) {
 		this.spectrumName=spectrumName;
@@ -27,11 +28,14 @@ public class Stripe implements Comparable<Stripe>, Spectrum {
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
 		
+		float thisTic=0.0f;
 		float magnitude=0.0f;
 		for (float f : intensityArray) {
+			thisTic+=f;
 			magnitude+=f*f;
 		}
 		intensityMagnitude=(float)Math.sqrt(magnitude);
+		tic=thisTic;
 	}
 	
 	public Stripe sqrt() {
@@ -54,6 +58,10 @@ public class Stripe implements Comparable<Stripe>, Spectrum {
 	
 	public float getIntensityMagnitude() {
 		return intensityMagnitude;
+	}
+	
+	public float getTIC() {
+		return tic;
 	}
 	
 	public Range getRange() {

@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.TreeMap;
 
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -25,16 +24,12 @@ import javax.swing.event.ListSelectionListener;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.axis.ValueAxis;
 
-import com.oracle.jrockit.jfr.Transition;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractorTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
@@ -312,8 +307,8 @@ public class ResultsBrowserPanel extends JPanel {
 
 							ChartPanel chartPane=Charter.getChart("Retention Time (min)", "Intensity", true, fragmentTraces);
 							
-							TransitionRefinementData quantData=actuallyPhosphoData.getPassingForms().get(sequenceKey);
-							AnnotatedLibraryEntry annotatedEntry;
+							//TransitionRefinementData quantData=actuallyPhosphoData.getPassingForms().get(sequenceKey);
+							//AnnotatedLibraryEntry annotatedEntry;
 							/*if (quantData!=null) {
 								annotatedEntry=quantData.getEntry(unit, parameters);
 							} else {
@@ -321,7 +316,7 @@ public class ResultsBrowserPanel extends JPanel {
 								annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(peptideModSeq, entry.getPrecursorCharge()), bestStripe, parameters);
 							}*/
 							Spectrum bestStripe=ChromatogramExtractor.getTargetStripeByRT(downcastedSpectra, (float)point.x);
-							annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(peptideModSeq, entry.getPrecursorCharge()), bestStripe, parameters);
+							AnnotatedLibraryEntry annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(peptideModSeq, entry.getPrecursorCharge()), bestStripe, parameters);
 
 							JPanel specFragPane=new JPanel(new BorderLayout());
 							ChartPanel spectrumPane=Charter.getChart(annotatedEntry);

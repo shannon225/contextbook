@@ -69,7 +69,8 @@ public class EncyclopediaOneScorer implements PSMScorer {
 
 	@Override
 	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize, FragmentIon[] ions) {
-		MassTolerance tolerance=parameters.getFragmentTolerance();
+		MassTolerance acquiredTolerance=parameters.getFragmentTolerance();
+		MassTolerance libraryTolerance=parameters.getLibraryFragmentTolerance();
 		
 		double[] predictedMasses=entry.getMassArray();
 		float[] predictedIntensities=entry.getIntensityArray();
@@ -83,7 +84,7 @@ public class EncyclopediaOneScorer implements PSMScorer {
 		for (FragmentIon targetIon : ions) {
 			double target=targetIon.mass;
 			
-			int[] predictedIndicies=tolerance.getIndicies(predictedMasses, target);
+			int[] predictedIndicies=libraryTolerance.getIndicies(predictedMasses, target);
 			float predictedIntensity=0.0f;
 			float maxCorrelation=0.01f;
 			for (int i=0; i<predictedIndicies.length; i++) {
@@ -96,7 +97,7 @@ public class EncyclopediaOneScorer implements PSMScorer {
 			}
 			
 			if (predictedIntensity>0) {
-				int[] indicies=tolerance.getIndicies(acquiredMasses, target);
+				int[] indicies=acquiredTolerance.getIndicies(acquiredMasses, target);
 				float intensity=0.0f;
 				float bestPeakIntensity=0.0f;
 				float deltaMass=0.0f;

@@ -45,8 +45,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	private static final String SOURCE_FILE_SPLIT="|";
 	public static final String ELIB=".elib";
 	public static final String VERSION_STRING="version";
-	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] {new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4), new Version(0, 1, 5)};
-	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 5);
+	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] {new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4), new Version(0, 1, 5), new Version(0, 1, 6)};
+	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 6);
 
 	private File userFile=null;
 	private final File tempFile;
@@ -255,7 +255,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		Connection c=getConnection();
 		try {
 			PreparedStatement peptidePrep=c.prepareStatement(
-					"INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, NumberOfMods, IsSiteSpecific, RTInSecondsCenter, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+					"INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, NumberOfMods, IsSiteSpecific, RTInSecondsCenter, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray,IdentifiedTICRatio) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 			PreparedStatement fragmentPrep=c.prepareStatement(
 					"INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, IonType, FragmentMass, Correlation, Background, DeltaMassPPM, Intensity) VALUES (?,?,?,?,?,?,?,?,?,?)");
 			try {
@@ -388,6 +388,11 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		byte[] intensityByteArray=ByteConverter.toByteArray(data.getMedianChromatogram());
 		peptidePrep.setInt(16, intensityByteArray.length);
 		peptidePrep.setBytes(17, CompressionUtils.compress(intensityByteArray));
+		if (data.getIdentifiedTICRatio().isPresent()) {
+			peptidePrep.setFloat(18, data.getIdentifiedTICRatio().get());
+		} else {
+			peptidePrep.setFloat(18, 0.0f);
+		}
 		peptidePrep.addBatch();
 
 		for (int i=0; i<correlationArray.length; i++) {
@@ -791,6 +796,10 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						s.execute("ALTER TABLE peptidequants ADD COLUMN IsSiteSpecific boolean");
 						s.execute("ALTER TABLE peptidequants ADD COLUMN RTInSecondsCenter double");
 					}
+
+					if (new Version(0, 1, 6).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
+						s.execute("ALTER TABLE peptidequants ADD COLUMN IdentifiedTICRatio double");
+					}
 				} catch (SQLException sqle) {
 					// the metadata table is missing, so do nothing and create
 					// it in the next line
@@ -805,7 +814,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				s.execute("CREATE TABLE IF NOT EXISTS proteins ( "+"PeptideSeq string not null, ProteinAccessions string not null, "+"PRIMARY KEY (PeptideSeq) "+")");
 
 				s.execute("CREATE TABLE IF NOT EXISTS peptidequants ( "
-						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, NumberOfMods int, IsSiteSpecific boolean, RTInSecondsCenter double not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null,"
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, NumberOfMods int, IsSiteSpecific boolean, RTInSecondsCenter double not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null, IdentifiedTICRatio double not null,"
 						+"PRIMARY KEY (PrecursorCharge, PeptideModSeq, SourceFile), "
 						+"FOREIGN KEY (PrecursorCharge, PeptideModSeq, SourceFile) REFERENCES entries (PrecursorCharge, PeptideModSeq, SourceFile) "+")");
 
