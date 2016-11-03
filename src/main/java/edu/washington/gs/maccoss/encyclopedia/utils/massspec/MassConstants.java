@@ -16,9 +16,11 @@ public class MassConstants {
 	}
 	
 	private static final MassTolerance tolerance=new MassTolerance(1.0); // 1 ppm is about the accuracy of floats 
-	public static double getNeutralLoss(double modificationMass) {
+	public static double getNeutralLoss(char aa, double modificationMass) {
 		if (isPhosphoMass(modificationMass)) {
-			return 97.976896;
+			if (aa=='S'||aa=='T') {
+				return 97.976896;
+			}
 		}
 		return 0.0;
 	}

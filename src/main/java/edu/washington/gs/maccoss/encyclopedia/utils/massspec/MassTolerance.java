@@ -118,7 +118,13 @@ public class MassTolerance {
 		return matches;
 	}
 	
-
+	/**
+	 * assumes targets and masses are in sorted order (and intensities follows masses)
+	 * @param masses
+	 * @param intensities
+	 * @param targets
+	 * @return
+	 */
 	public float[] getIntegratedIntensities(double[] masses, float[] intensities, double[] targets) {
 		if (targets.length==0||masses.length==0) return new float[0];
 		

@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.io.File;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEnt
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SimplePeptidePrecursor;
@@ -223,31 +225,15 @@ public class ResultsBrowserPanel extends JPanel {
 				ArrayList<Spectrum> downcastedSpectra=Stripe.downcast(stripes);
 				HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge()), downcastedSpectra, targetRTFloat, GraphType.line);
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>(fragmentTraceMap.values());
-				
-				/*for (XYTrace xyTrace : traces) {
-					System.out.println("float[] "+xyTrace.getName()+"=new float[] {");
-					double[] d=xyTrace.toArrays().y;
-					for (int i=0; i<d.length; i++) {
-						System.out.print(d[i]+"f, ");
-					}
-					System.out.println("};");
-					System.out.println("chromatograms.add("+xyTrace.getName()+");");
-				}
 
-				System.out.print("String[] ionNames=new String[] {");
-				for (XYTrace xyTrace : traces) {
-					System.out.print("\""+xyTrace.getName()+"\", ");
-				}
-				System.out.println("};");
-				System.out.println("float[] rts=new float[] {");
-				for (double d : traces.get(0).toArrays().x) {
-					System.out.print(d+"f, ");
-				}
-				System.out.println("};");
-				*/
+				ArrayList<Spectrum> precursors=PrecursorScan.downcast(dia.getPrecursors(targetRT-rtRange, targetRT+rtRange));
+				ChartPanel precursorChart=Charter.getChart("Retention Time", "Intensity", true, ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), precursors));
 				
-				ChartPanel chart=Charter.getChart("Retention Time (min)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
-				rawSplit.setTopComponent(chart);
+				ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
+				JTabbedPane primaryTabs=new JTabbedPane();
+				primaryTabs.add("Fragments", fragmentChart);
+				primaryTabs.add("Precursors", precursorChart);
+				rawSplit.setTopComponent(primaryTabs);
 
 				PhosphoLocalizer localizer=new PhosphoLocalizer(dia, library, parameters);
 				PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), targetRT, entry.getScore(), 1.0f-entry.getScore(), 2*rtRange);
@@ -266,25 +252,28 @@ public class ResultsBrowserPanel extends JPanel {
 					}
 					if (maybePhosphoData.isPresent()) {
 						PhosphoLocalizationData actuallyPhosphoData=maybePhosphoData.get();
-						HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=actuallyPhosphoData.getScoreTraces();
+						HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> ionsVsUniqueList=actuallyPhosphoData.getScoreTraces();
 						HashMap<String, HashMap<FragmentIon, XYTrace>> uniqueFragmentIons=actuallyPhosphoData.getUniqueFragmentIons();
 						HashMap<String, HashMap<FragmentIon, XYTrace>> otherFragmentIons=actuallyPhosphoData.getOtherFragmentIons();
 						
 						HashMap<String, XYPoint> localizationScores=actuallyPhosphoData.getLocalizationScores();
-						
+
+						ArrayList<XYTrace> complementaryIonsTraces=new ArrayList<XYTrace>();
 						ArrayList<XYTrace> phosphoTraces=new ArrayList<XYTrace>();
 
 						JTabbedPane tabPanel=new JTabbedPane();
 						HashMap<String, String> keyVsName=new HashMap<String, String>();
 						int i=0;
-						for (Entry<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> phosphoentry : allVsUniqueList.entrySet()) {
+						for (Entry<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> phosphoentry : ionsVsUniqueList.entrySet()) {
 							String sequenceKey=phosphoentry.getKey();
 							String peptideModSeq=sequenceKey.replaceAll("\\(", "").replaceAll("\\)", "");
 							Pair<TFloatFloatHashMap, TFloatFloatHashMap> pair=phosphoentry.getValue();
 							Color color=i>=colors.length?colors[i-colors.length].brighter():colors[i];
+							complementaryIonsTraces.add(new XYTrace(pair.x, GraphType.line, sequenceKey, color, 2.0f));
 							phosphoTraces.add(new XYTrace(pair.y, GraphType.line, sequenceKey, color, 2.0f));
 
 							XYPoint point=localizationScores.get(sequenceKey);
+							complementaryIonsTraces.add(new XYTrace(new double[] {point.x/60f}, new double[] {0}, GraphType.point, "center", color, 2.0f));
 							phosphoTraces.add(new XYTrace(new double[] {point.x/60f}, new double[] {point.y}, GraphType.point, "center", color, 2.0f));
 							i++;
 							
@@ -336,6 +325,12 @@ public class ResultsBrowserPanel extends JPanel {
 						org.jfree.data.Range range=axis.getRange();
 						axis.setRange(new org.jfree.data.Range(0.0f, Math.max(2.0f, range.getUpperBound())));
 						tabs.add("Phospho Localization", phosphoPane);
+						
+						ChartPanel coelutingPane=Charter.getChart("Retention Time (min)", "Coeluting Ions", true, complementaryIonsTraces.toArray(new XYTrace[complementaryIonsTraces.size()]));
+						axis=coelutingPane.getChart().getXYPlot().getRangeAxis();
+						range=axis.getRange();
+						axis.setRange(new org.jfree.data.Range(0.0f, Math.max(2.0f, range.getUpperBound())));
+						tabs.add("Coeluting Ions", coelutingPane);
 						
 						tabs.add("Unique Fragment Ions", tabPanel);
 						

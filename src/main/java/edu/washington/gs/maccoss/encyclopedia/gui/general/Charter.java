@@ -83,7 +83,7 @@ public class Charter {
 						854.45, 870.63, 872.11, 912.62},
 				new double[] {1713, 1166, 1941, 1890, 1873, 1465, 1151, 1456, 1936, 2725, 1253, 1352, 2858, 1810, 1334, 2466, 1279, 9072, 4986, 5070, 1320, 1220, 1202, 1550, 5121, 2735, 1452, 1084,
 						1136, 1661, 1544, 1620, 1210, 1770, 1297, 2086, 1635, 1117, 1432, 1652, 2143, 3766, 5043, 2124, 54156, 1310, 1240},
-				GraphType.spectrum, "Trace4");
+				GraphType.dashedline, "Trace4");
 
 		ChartPanel chart=getChart("M/Z", "Intensity", false, trace, trace2, trace3);
 		chart=getChart("M/Z", "Intensity", false, trace4);
@@ -271,7 +271,8 @@ public class Charter {
 
 			case dashedline:
 				renderer=new XYLineAndShapeRenderer();
-				renderer.setSeriesStroke(0, new BasicStroke(trace.getThickness().orElse(2.0f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 10.0f, new float[] {10.0f}, 0.0f));
+				renderer.setSeriesStroke(0, new BasicStroke(trace.getThickness().orElse(2.0f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0.0f, new float[] {10.0f}, 0.0f));
+				((XYLineAndShapeRenderer) renderer).setDrawSeriesLineAsPath(true);
 				((XYLineAndShapeRenderer) renderer).setBaseShapesVisible(false);
 
 				break;

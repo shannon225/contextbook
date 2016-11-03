@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import java.util.ArrayList;
+
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
@@ -62,5 +64,13 @@ public class PrecursorScan implements Spectrum, Comparable<PrecursorScan> {
 
 		c=spectrumName.compareTo(o.spectrumName);
 		return c;
+	}
+	
+	public static ArrayList<Spectrum> downcast(ArrayList<PrecursorScan> precursors) {
+		ArrayList<Spectrum> spectra=new ArrayList<Spectrum>();
+		for (Spectrum spectrum : precursors) {
+			spectra.add(spectrum);
+		}
+		return spectra;
 	}
 }

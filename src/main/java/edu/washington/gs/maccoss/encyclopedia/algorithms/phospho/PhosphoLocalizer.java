@@ -207,33 +207,36 @@ public class PhosphoLocalizer {
 			
 			float[] frequencies=background.getFrequencies(ions, precursorMZ, params.getFragmentTolerance());
 
-			float[] negLogProbsAll=new float[stripes.size()];
+			//float[] negLogProbsAll=new float[stripes.size()];
 			float[] negLogProbsSiteSpecific=new float[stripes.size()];
 			for (int k=0; k<stripes.size(); k++) {
 				Spectrum spectrum=stripes.get(k);
-				negLogProbsAll[k]=score(params, allIons, allIonsTypes, frequencies, spectrum, false);
+				//negLogProbsAll[k]=score(params, allIons, allIonsTypes, frequencies, spectrum, false);
 				negLogProbsSiteSpecific[k]=score(params, ions, targets, frequencies, spectrum, true);
 			}
-			negLogProbsAll=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, Math.round(params.getExpectedPeakWidth()/dutyCycle));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);
+			//negLogProbsAll=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, Math.round(params.getExpectedPeakWidth()/dutyCycle));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);
 			//negLogProbsAll=General.subtract(negLogProbsAll, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
 			negLogProbsSiteSpecific=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, Math.round(params.getExpectedPeakWidth()/dutyCycle));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
 			//negLogProbsSiteSpecific=General.subtract(negLogProbsSiteSpecific, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
 			//negLogProbsAll=SkylineSGFilter.paddedSavitzkyGolaySmooth(negLogProbsAll);
 			//negLogProbsSiteSpecific=SkylineSGFilter.paddedSavitzkyGolaySmooth(negLogProbsSiteSpecific);
-			
 
-			TFloatFloatHashMap allRtScoreMap=new TFloatFloatHashMap();
+			int[] coelutingIons=TransitionRefiner.numberOfCoelutingIons(ions, allIons, stripes, Math.round((params.getExpectedPeakWidth())/dutyCycle), params.getFragmentTolerance());
+
+			TFloatFloatHashMap coelutingIonsMap=new TFloatFloatHashMap();
 			TFloatFloatHashMap uniqueRtScoreMap=new TFloatFloatHashMap();
 			for (int k=0; k<negLogProbsSiteSpecific.length; k++) {
 				Spectrum spectrum=stripes.get(k);
-				allRtScoreMap.put(spectrum.getScanStartTime()/60f, negLogProbsAll[k]);
+				coelutingIonsMap.put(spectrum.getScanStartTime()/60f, coelutingIons[k]);
 				uniqueRtScoreMap.put(spectrum.getScanStartTime()/60f, negLogProbsSiteSpecific[k]);
 			}
-			allVsUniqueList.put(peptideAnnotation, new Pair<TFloatFloatHashMap, TFloatFloatHashMap>(allRtScoreMap, uniqueRtScoreMap));
+			allVsUniqueList.put(peptideAnnotation, new Pair<TFloatFloatHashMap, TFloatFloatHashMap>(coelutingIonsMap, uniqueRtScoreMap));
 
 			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
 			float bestRT=uniqueCalculator.getMaxRT()*60f;
 			float maxRawScore=uniqueCalculator.getMaxRawScore();
+			
+			System.out.println(peptideAnnotation+"\t"+ions.length+"\t"+maxRawScore+"\t"+bestRT);
 
 			HashMap<FragmentIon, XYTrace> otherTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), allIonsTypes, stripes, bestRT, GraphType.dashedline);
 			HashMap<FragmentIon, XYTrace> uniqueTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes, bestRT, GraphType.line);

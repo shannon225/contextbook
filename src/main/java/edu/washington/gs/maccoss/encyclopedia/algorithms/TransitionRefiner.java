@@ -14,12 +14,15 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.FloatPair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class TransitionRefiner {
 	// minimum threshold to call this peak as worth quantifying
@@ -179,30 +182,8 @@ public class TransitionRefiner {
 		float[] backgroundArray=new float[correlationArray.length];
 		for (int i=0; i<normalizedChromatograms.size(); i++) {
 			float[] normalizedChromatogram=normalizedChromatograms.get(i);
-			float fragmentMean=General.mean(normalizedChromatogram, indices.getStart(), indices.getStop());
-			
-			float medianDeltaSquareSum=0.0f;
-			float fragmentDeltaSquareSum=0.0f;
-			float deltaProductSum=0.0f;
-			for (int j=indices.getStart(); j<=indices.getStop(); j++) {
-				float deltaMedian=medianChromatogram[j]-medianMean;
-				float deltaFragment=normalizedChromatogram[j]-fragmentMean;
-				medianDeltaSquareSum+=deltaMedian*deltaMedian;
-				fragmentDeltaSquareSum+=deltaFragment*deltaFragment;
-				deltaProductSum+=deltaMedian*deltaFragment;
-			}
-			// calculate correlation
-			if (fragmentDeltaSquareSum==0.0f) {
-				correlationArray[i]=Float.MIN_VALUE;
-			} else if (medianDeltaSquareSum==0.0f) {
-				correlationArray[i]=Float.MIN_VALUE;
-			} else {
-				float denominator=(float)Math.sqrt(medianDeltaSquareSum*fragmentDeltaSquareSum);
-				correlationArray[i]=deltaProductSum/denominator;
-				if (correlationArray[i]>1.0f) {
-					correlationArray[i]=1.0f; // there can be minor floating point errors in the sqrt
-				}
-			}
+			float correlation=calculateCorrelation(medianMean, indices, medianChromatogram, normalizedChromatogram);
+			correlationArray[i]=correlation;
 
 			FloatPair intensity=integrate(indices, retentionTimes, chromatograms.get(i));
 
@@ -229,6 +210,107 @@ public class TransitionRefiner {
 		}
 		
 		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range);
+	}
+	
+	public static int[] numberOfCoelutingIons(double[] targetMasses, double[] allIons, ArrayList<Spectrum> stripes, int halfPeakWidthInScans, MassTolerance fragmentTolerance) {
+		float[][] targetIntensityArray=new float[stripes.size()][];
+		float[][] allIntensityArray=new float[stripes.size()][];
+		for (int rtIndex=0; rtIndex<stripes.size(); rtIndex++) {
+			Spectrum spectrum=stripes.get(rtIndex);
+			float[] allIntegratedIntensities=fragmentTolerance.getIntegratedIntensities(spectrum.getMassArray(), spectrum.getIntensityArray(), allIons);
+			allIntensityArray[rtIndex]=allIntegratedIntensities;
+			float[] targetIntegratedIntensities=fragmentTolerance.getIntegratedIntensities(spectrum.getMassArray(), spectrum.getIntensityArray(), targetMasses);
+			targetIntensityArray[rtIndex]=targetIntegratedIntensities;
+		}
+
+		float[][] targetChromatograms=extractChromatograms(targetIntensityArray);
+		float[][] allChromatograms=extractChromatograms(allIntensityArray);
+		
+		int[] complementaryIons=new int[stripes.size()];
+		for (int rtIndex=halfPeakWidthInScans; rtIndex<targetIntensityArray.length-halfPeakWidthInScans; rtIndex++) {
+			IntRange indexRange=new IntRange(rtIndex-halfPeakWidthInScans, rtIndex+halfPeakWidthInScans);
+			
+			float[][] targetNormalized=new float[targetChromatograms.length][];
+			for (int ionIndex=0; ionIndex<targetNormalized.length; ionIndex++) {
+				targetNormalized[ionIndex]=General.normalize(General.extract(targetChromatograms[ionIndex], indexRange));
+			}
+			
+			// calculate median
+			float[] median=new float[indexRange.getRange()];
+			for (int localRtIndex=0; localRtIndex<median.length; localRtIndex++) {
+				TFloatArrayList ions=new TFloatArrayList();
+				for (int ionIndex=0; ionIndex<targetNormalized.length; ionIndex++) {
+					if (targetNormalized[ionIndex][localRtIndex]>0.0f) {
+						ions.add(targetNormalized[ionIndex][localRtIndex]);
+					}
+				}
+				median[localRtIndex]=ions.size()==0?0.0f:QuickMedian.median(ions.toArray());
+				//medianMap.put(stripes.get(rtIndex+localRtIndex-halfPeakWidthInScans).getScanStartTime(), median[localRtIndex]);
+			}
+			//traces.add(new XYTrace(medianMap, GraphType.line, Float.toString(stripes.get(rtIndex).getScanStartTime())));
+			
+			// normalize and score all chromatograms
+			IntRange completeLocalRange=new IntRange(0, median.length-1);
+			float medianMean=General.mean(median);
+			for (int ionIndex=0; ionIndex<targetNormalized.length; ionIndex++) {
+				float[] normalizedChromatogram=General.normalize(General.extract(allChromatograms[ionIndex], indexRange));
+				float correlation=TransitionRefiner.calculateCorrelation(medianMean, completeLocalRange, median, normalizedChromatogram);
+				if (correlation>=TransitionRefiner.identificationCorrelationThreshold) {
+					complementaryIons[rtIndex]++;
+				}
+			}
+		}
+
+		int[] maxIons=new int[complementaryIons.length];
+		for (int rtIndex=halfPeakWidthInScans; rtIndex<targetIntensityArray.length-halfPeakWidthInScans; rtIndex++) {
+			IntRange indexRange=new IntRange(rtIndex-halfPeakWidthInScans, rtIndex+halfPeakWidthInScans);
+			for (int localRtIndex=0; localRtIndex<indexRange.getRange(); localRtIndex++) {
+				maxIons[rtIndex+localRtIndex-halfPeakWidthInScans]=General.max(General.extract(complementaryIons, indexRange));
+			}
+		}
+		
+		return maxIons;
+	}
+	
+	static float[][] extractChromatograms(float[][] intensities) {
+		float[][] chromatograms=new float[intensities[0].length][];
+		for (int ionIndex=0; ionIndex<chromatograms.length; ionIndex++) {
+			float[] chromatogram=new float[intensities.length];
+			for (int rtIndex=0; rtIndex<chromatogram.length; rtIndex++) {
+				chromatogram[rtIndex]=intensities[rtIndex][ionIndex];
+			}
+			chromatograms[ionIndex]=chromatogram;
+		}
+		return chromatograms;
+	}
+
+	public static float calculateCorrelation(float medianMean, IntRange indices, float[] medianChromatogram, float[] normalizedChromatogram) {
+		float fragmentMean=General.mean(normalizedChromatogram, indices.getStart(), indices.getStop());
+		
+		float medianDeltaSquareSum=0.0f;
+		float fragmentDeltaSquareSum=0.0f;
+		float deltaProductSum=0.0f;
+		for (int j=indices.getStart(); j<=indices.getStop(); j++) {
+			float deltaMedian=medianChromatogram[j]-medianMean;
+			float deltaFragment=normalizedChromatogram[j]-fragmentMean;
+			medianDeltaSquareSum+=deltaMedian*deltaMedian;
+			fragmentDeltaSquareSum+=deltaFragment*deltaFragment;
+			deltaProductSum+=deltaMedian*deltaFragment;
+		}
+		float correlation;
+		// calculate correlation
+		if (fragmentDeltaSquareSum==0.0f) {
+			correlation=Float.MIN_VALUE;
+		} else if (medianDeltaSquareSum==0.0f) {
+			correlation=Float.MIN_VALUE;
+		} else {
+			float denominator=(float)Math.sqrt(medianDeltaSquareSum*fragmentDeltaSquareSum);
+			correlation=deltaProductSum/denominator;
+			if (correlation>1.0f) {
+				correlation=1.0f; // there can be minor floating point errors in the sqrt
+			}
+		}
+		return correlation;
 	}
 
 	/**

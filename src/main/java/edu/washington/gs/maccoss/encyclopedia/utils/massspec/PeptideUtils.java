@@ -176,8 +176,9 @@ public class PeptideUtils {
 				String massText = sb.toString();
 				double modificationMass = Double.valueOf(massText);
 				masses.set(masses.size()-1, masses.get(masses.size()-1)+modificationMass);
-				neutralLosses.set(masses.size()-1, MassConstants.getNeutralLoss(modificationMass));
-				aas.set(masses.size()-1, aas.get(masses.size()-1)+(modificationMass>=0?"[+":"[")+modificationMass+"]");
+				String aaString=aas.get(masses.size()-1);
+				neutralLosses.set(masses.size()-1, MassConstants.getNeutralLoss(aaString.charAt(0), modificationMass));
+				aas.set(masses.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
 			} else {
 				masses.add(aaConstants.getMass(ca[i]));
 				neutralLosses.add(0.0);

@@ -169,6 +169,22 @@ public class General {
 		return divide(v, sum);
 	}
 	
+	public static int[] extract(int[] v, IntRange range) {
+		int[] r=new int[range.getRange()];
+		for (int i=0; i<r.length; i++) {
+			r[i]=v[i+range.getStart()];
+		}
+		return r;
+	}
+	
+	public static float[] extract(float[] v, IntRange range) {
+		float[] r=new float[range.getRange()];
+		for (int i=0; i<r.length; i++) {
+			r[i]=v[i+range.getStart()];
+		}
+		return r;
+	}
+	
 	public static float[] normalize(float[] v) {
 		return normalize(v, new IntRange(0, v.length-1));
 	}
