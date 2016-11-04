@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import gnu.trove.map.hash.TDoubleIntHashMap;
+import gnu.trove.procedure.TDoubleIntProcedure;
 import gnu.trove.set.hash.TDoubleHashSet;
 
 /**
@@ -41,21 +42,51 @@ public class BackgroundFrequencyCalculator {
 	 * @param precursorMz
 	 * @return
 	 */
-	public int[] getRoundedMassCounters(double precursorMz) {
-		int index=Arrays.binarySearch(binBoundaries, precursorMz);
-		index=(-(index+1))-1;
-		
-		int[] counters=new int[1000];
+	public int[] getRoundedMassCounters() {
+		final TDoubleIntHashMap giantCounter=new TDoubleIntHashMap();
+		for (TDoubleIntHashMap binCounter : binCounters) {
+			binCounter.forEachEntry(new TDoubleIntProcedure() {
+				@Override
+				public boolean execute(double a, int b) {
+					giantCounter.adjustOrPutValue(a, b, b);
+					return true;
+				}
+			});
+		}
 
-		double[] matches=sortedMapKeys[index];
-		for (int j=0; j<matches.length; j++) {
-			int count=binCounters[index].get(matches[j]);
-			int i=(int)Math.round(matches[j]);
-			if (i<counters.length) {
-				counters[i]+=count;
+		final double[] bestMass=new double[1000];
+		final int[] bestMassCount=new int[1000];
+		giantCounter.forEachEntry(new TDoubleIntProcedure() {
+			@Override
+			public boolean execute(double a, int b) {
+				int index=(int)a; // truncates! Should be fine up to 1000 m/z
+				if (b>bestMassCount[index]) {
+					bestMass[index]=a;
+					bestMassCount[index]=b;
+				}
+				return false;
+			}
+		});
+
+		int[] totalCounters=new int[1000];
+		
+		for (int index=0; index<sortedMapKeys.length; index++) {
+			int[] counters=new int[1000];
+			double[] matches=sortedMapKeys[index];
+			for (int j=0; j<matches.length; j++) {
+				int count=binCounters[index].get(matches[j]);
+				int i=(int) Math.round(matches[j]);
+				if (i<counters.length) {
+					if (counters[i]<count) {
+						counters[i]=count;
+					}
+				}
+			}
+			for (int i=0; i<totalCounters.length; i++) {
+				totalCounters[i]+=counters[i];
 			}
 		}
-		return counters;
+		return totalCounters;
 	}
 	
 	public static BackgroundFrequencyCalculator generateBackground(StripeFileInterface diafile, LibraryInterface library) throws DataFormatException, SQLException, IOException {
