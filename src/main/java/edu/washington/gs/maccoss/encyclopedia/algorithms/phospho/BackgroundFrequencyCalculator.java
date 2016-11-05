@@ -21,6 +21,7 @@ import gnu.trove.set.hash.TDoubleHashSet;
  *
  */
 public class BackgroundFrequencyCalculator {
+	private static final int MASS_COUNTER_BIN_COUNT=1000;
 	private final double[] binBoundaries;
 	private final TDoubleIntHashMap[] binCounters;
 	private final double[][] sortedMapKeys;
@@ -42,51 +43,28 @@ public class BackgroundFrequencyCalculator {
 	 * @param precursorMz
 	 * @return
 	 */
-	public int[] getRoundedMassCounters() {
-		final TDoubleIntHashMap giantCounter=new TDoubleIntHashMap();
-		for (TDoubleIntHashMap binCounter : binCounters) {
-			binCounter.forEachEntry(new TDoubleIntProcedure() {
-				@Override
-				public boolean execute(double a, int b) {
-					giantCounter.adjustOrPutValue(a, b, b);
-					return true;
-				}
-			});
+	public float[] getRoundedMassCounters(double precursorMz, MassTolerance tolerance) {
+		int binIndex=getBinIndex(precursorMz);
+		if (binIndex<0||binIndex>=binCounters.length) {
+			return new float[MASS_COUNTER_BIN_COUNT];
 		}
+		TDoubleIntHashMap counter=binCounters[binIndex];
 
-		final double[] bestMass=new double[1000];
-		final int[] bestMassCount=new int[1000];
-		giantCounter.forEachEntry(new TDoubleIntProcedure() {
+		final double[] bestMass=new double[MASS_COUNTER_BIN_COUNT];
+		final int[] bestMassCount=new int[MASS_COUNTER_BIN_COUNT];
+		Arrays.fill(bestMassCount, Integer.MIN_VALUE);
+		counter.forEachEntry(new TDoubleIntProcedure() {
 			@Override
 			public boolean execute(double a, int b) {
 				int index=(int)a; // truncates! Should be fine up to 1000 m/z
-				if (b>bestMassCount[index]) {
+				if (index<MASS_COUNTER_BIN_COUNT&&b>bestMassCount[index]) {
 					bestMass[index]=a;
 					bestMassCount[index]=b;
 				}
-				return false;
+				return true;
 			}
 		});
-
-		int[] totalCounters=new int[1000];
-		
-		for (int index=0; index<sortedMapKeys.length; index++) {
-			int[] counters=new int[1000];
-			double[] matches=sortedMapKeys[index];
-			for (int j=0; j<matches.length; j++) {
-				int count=binCounters[index].get(matches[j]);
-				int i=(int) Math.round(matches[j]);
-				if (i<counters.length) {
-					if (counters[i]<count) {
-						counters[i]=count;
-					}
-				}
-			}
-			for (int i=0; i<totalCounters.length; i++) {
-				totalCounters[i]+=counters[i];
-			}
-		}
-		return totalCounters;
+		return getFrequencies(bestMass, precursorMz, tolerance);
 	}
 	
 	public static BackgroundFrequencyCalculator generateBackground(StripeFileInterface diafile, LibraryInterface library) throws DataFormatException, SQLException, IOException {
@@ -128,8 +106,7 @@ public class BackgroundFrequencyCalculator {
 		int[] counters=new int[ions.length];
 		Arrays.fill(counters, 1); // add pseudocount
 		
-		int index=Arrays.binarySearch(binBoundaries, precursorMz);
-		index=(-(index+1))-1;
+		int index=getBinIndex(precursorMz);
 		if (index<0||index>=binCounters.length) {
 			return getFrequencies(counters, 1);
 		}
@@ -146,6 +123,14 @@ public class BackgroundFrequencyCalculator {
 			}
 		}
 		return getFrequencies(counters, numberOfLibraryEntries);
+	}
+
+	public int getBinIndex(double precursorMz) {
+		int index=Arrays.binarySearch(binBoundaries, precursorMz);
+		if (index<0) {
+			index=(-(index+1))-1;
+		}
+		return index;
 	}
 	
 	private float[] getFrequencies(int[] counters, int norm) {
