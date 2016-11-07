@@ -10,6 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.procedure.TDoubleIntProcedure;
@@ -43,14 +44,14 @@ public class BackgroundFrequencyCalculator {
 	 * @param precursorMz
 	 * @return
 	 */
-	public float[] getRoundedMassCounters(double precursorMz, MassTolerance tolerance) {
+	public Pair<double[], float[]> getRoundedMassCounters(double precursorMz, MassTolerance tolerance) {
+		final double[] bestMass=new double[MASS_COUNTER_BIN_COUNT];
 		int binIndex=getBinIndex(precursorMz);
 		if (binIndex<0||binIndex>=binCounters.length) {
-			return new float[MASS_COUNTER_BIN_COUNT];
+			return new Pair<double[], float[]>(bestMass, new float[MASS_COUNTER_BIN_COUNT]);
 		}
 		TDoubleIntHashMap counter=binCounters[binIndex];
 
-		final double[] bestMass=new double[MASS_COUNTER_BIN_COUNT];
 		final int[] bestMassCount=new int[MASS_COUNTER_BIN_COUNT];
 		Arrays.fill(bestMassCount, Integer.MIN_VALUE);
 		counter.forEachEntry(new TDoubleIntProcedure() {
@@ -64,7 +65,7 @@ public class BackgroundFrequencyCalculator {
 				return true;
 			}
 		});
-		return getFrequencies(bestMass, precursorMz, tolerance);
+		return new Pair<double[], float[]>(bestMass, getFrequencies(bestMass, precursorMz, tolerance));
 	}
 	
 	public static BackgroundFrequencyCalculator generateBackground(StripeFileInterface diafile, LibraryInterface library) throws DataFormatException, SQLException, IOException {
