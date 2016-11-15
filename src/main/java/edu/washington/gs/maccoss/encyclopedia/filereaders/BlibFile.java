@@ -64,13 +64,6 @@ public class BlibFile extends SQLFile {
 	public void getCopyEntriesToLibrary(LibraryFile library, Optional<TObjectFloatHashMap<String>> irtMap, File fastaFile) throws IOException, SQLException, DataFormatException {
 		Logger.logLine("Reading BLIB file");
 		
-		String filename;
-		if (userFile!=null) {
-			filename=userFile.getName();
-		} else {
-			filename=tempFile.getName();
-		}
-
 		ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
 		Connection c=getConnection(tempFile);
 		try {
@@ -87,12 +80,12 @@ public class BlibFile extends SQLFile {
 				boolean hasScore=doesColumnExist(tempFile, "RefSpectra", "score");
 				if (hasScore) {
 					rs=s.executeQuery(
-							"select RefSpectra.id, RefSpectra.precursorMZ, RefSpectra.precursorCharge, RefSpectra.peptideModSeq, RefSpectra.copies, RefSpectra.numPeaks, RefSpectraPeaks.peakMZ, RefSpectraPeaks.peakIntensity, RefSpectra.score from RefSpectra, RefSpectraPeaks "
-									+"where RefSpectra.id == RefSpectraPeaks.RefSpectraID");
+							"select RefSpectra.id, RefSpectra.precursorMZ, RefSpectra.precursorCharge, RefSpectra.peptideModSeq, RefSpectra.copies, RefSpectra.numPeaks, RefSpectraPeaks.peakMZ, RefSpectraPeaks.peakIntensity, RefSpectra.score, SpectrumSourceFiles.fileName from RefSpectra, RefSpectraPeaks, SpectrumSourceFiles "
+									+"where RefSpectra.id == RefSpectraPeaks.RefSpectraID and SpectrumSourceFiles.id == RefSpectra.fileID");
 				} else {
 					rs=s.executeQuery(
-							"select RefSpectra.id, RefSpectra.precursorMZ, RefSpectra.precursorCharge, RefSpectra.peptideModSeq, RefSpectra.copies, RefSpectra.numPeaks, RefSpectraPeaks.peakMZ, RefSpectraPeaks.peakIntensity from RefSpectra, RefSpectraPeaks "
-									+"where RefSpectra.id == RefSpectraPeaks.RefSpectraID");
+							"select RefSpectra.id, RefSpectra.precursorMZ, RefSpectra.precursorCharge, RefSpectra.peptideModSeq, RefSpectra.copies, RefSpectra.numPeaks, RefSpectraPeaks.peakMZ, RefSpectraPeaks.peakIntensity, SpectrumSourceFiles.fileName from RefSpectra, RefSpectraPeaks, SpectrumSourceFiles "
+									+"where RefSpectra.id == RefSpectraPeaks.RefSpectraID and SpectrumSourceFiles.id == RefSpectra.fileID");
 				}
 
 				int missing=0;
@@ -110,6 +103,7 @@ public class BlibFile extends SQLFile {
 					if (hasScore) {
 						score=(float)rs.getDouble(9);
 					}
+					String sourceFile=rs.getString(10);
 					
 					float retentionTime=rtMap.get(refSpectraID);
 					if (irtMap.isPresent()) {
@@ -124,7 +118,7 @@ public class BlibFile extends SQLFile {
 					retentionTime=retentionTime*60.0f;
 					total++;
 
-					entries.add(new LibraryEntry(filename, new HashSet<String>(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));
+					entries.add(new LibraryEntry(sourceFile, new HashSet<String>(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));
 				}
 				if (missing>0) {
 					Logger.logLine("Missing iRT for "+missing+" of "+total+" peptides, using RT in file.");
