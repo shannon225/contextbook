@@ -271,7 +271,7 @@ public class Charter {
 
 			case dashedline:
 				renderer=new XYLineAndShapeRenderer();
-				renderer.setSeriesStroke(0, new BasicStroke(trace.getThickness().orElse(2.0f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0.0f, new float[] {10.0f}, 0.0f));
+				renderer.setSeriesStroke(0, new BasicStroke(trace.getThickness().orElse(2.0f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0.0f, new float[] {3.0f, 5.0f}, 0.0f));
 				((XYLineAndShapeRenderer) renderer).setDrawSeriesLineAsPath(true);
 				((XYLineAndShapeRenderer) renderer).setBaseShapesVisible(false);
 

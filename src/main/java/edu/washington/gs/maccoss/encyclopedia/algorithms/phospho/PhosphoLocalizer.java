@@ -235,8 +235,6 @@ public class PhosphoLocalizer {
 			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
 			float bestRT=uniqueCalculator.getMaxRT()*60f;
 			float maxRawScore=uniqueCalculator.getMaxRawScore();
-			
-			System.out.println(peptideAnnotation+"\t"+ions.length+"\t"+maxRawScore+"\t"+bestRT);
 
 			HashMap<FragmentIon, XYTrace> otherTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), allIonsTypes, stripes, bestRT, GraphType.dashedline);
 			HashMap<FragmentIon, XYTrace> uniqueTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes, bestRT, GraphType.line);
@@ -288,6 +286,7 @@ public class PhosphoLocalizer {
 				
 				// only trust this ID if there are enough peaks!
 				if (numIdentificationPeaks>=3&&quantData.getMedianChromatogram().length>0) {
+					
 					int numberOfMods=PeptideUtils.getNumberOfMods(targetPeptideSequence, AmbiguousPeptideModSeq.NOMINAL_MASS);
 
 					bestRT=quantData.getApexRT();

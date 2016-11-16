@@ -252,7 +252,7 @@ public class TransitionRefiner {
 			// normalize and score all chromatograms
 			IntRange completeLocalRange=new IntRange(0, median.length-1);
 			float medianMean=General.mean(median);
-			for (int ionIndex=0; ionIndex<targetNormalized.length; ionIndex++) {
+			for (int ionIndex=0; ionIndex<allChromatograms.length; ionIndex++) {
 				float[] normalizedChromatogram=General.normalize(General.extract(allChromatograms[ionIndex], indexRange));
 				float correlation=TransitionRefiner.calculateCorrelation(medianMean, completeLocalRange, median, normalizedChromatogram);
 				if (correlation>=TransitionRefiner.identificationCorrelationThreshold) {

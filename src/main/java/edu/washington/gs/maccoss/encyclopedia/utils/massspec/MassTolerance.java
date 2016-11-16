@@ -126,9 +126,11 @@ public class MassTolerance {
 	 * @return
 	 */
 	public float[] getIntegratedIntensities(double[] masses, float[] intensities, double[] targets) {
-		if (targets.length==0||masses.length==0) return new float[0];
-		
 		float[] tics=new float[targets.length];
+		if (targets.length==0||masses.length==0) {
+			return tics;
+		}
+		
 		int libraryIndex=0;
 		int spectrumIndex=0;
 		while (true) {

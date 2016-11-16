@@ -292,26 +292,28 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						// always replace with perfect forms
 						uniqueDataMap.put(data.getPeptideModSeq(), data);
 					}
-					
-					for (TransitionRefinementData uniqueData : uniqueDataMap.values()) {
-						String key=data.getPeptideModSeq()+"+"+data.getPrecursorCharge()+","+sourceFile;
+
+					for (Entry<String, TransitionRefinementData> mapEntry : uniqueDataMap.entrySet()) {
+						TransitionRefinementData uniqueData=mapEntry.getValue();
+						
+						String key=uniqueData.getPeptideModSeq()+"+"+uniqueData.getPrecursorCharge()+","+sourceFile;
 						if (ptmRepeatsCatcher.containsKey(key)) {
-							System.err.println("FOUND EXTERNAL COLLISION, SKIPPING! "+data.getPeptideModSeq());
+							System.err.println("FOUND EXTERNAL COLLISION, SKIPPING! "+uniqueData.getPeptideModSeq()+" (from:"+mapEntry.getKey()+")");
 							System.err.println("PREV: "+ptmRepeatsCatcher.get(key));
-							if (data.getLocalizationData().isPresent()) {
-								ModificationLocalizationData modData=data.getLocalizationData().get();
+							if (uniqueData.getLocalizationData().isPresent()) {
+								ModificationLocalizationData modData=uniqueData.getLocalizationData().get();
 								System.err.println("NEW:  "+modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
 							} else {
-								System.err.println("NEW:  NO LOC: "+data.getPeptideModSeq());
+								System.err.println("NEW:  NO LOC: "+uniqueData.getPeptideModSeq());
 							}
 							continue;
 
 						} else {
-							if (data.getLocalizationData().isPresent()) {
-								ModificationLocalizationData modData=data.getLocalizationData().get();
+							if (uniqueData.getLocalizationData().isPresent()) {
+								ModificationLocalizationData modData=uniqueData.getLocalizationData().get();
 								ptmRepeatsCatcher.put(key, modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
 							} else {
-								ptmRepeatsCatcher.put(key, "NO LOC: "+data.getPeptideModSeq());
+								ptmRepeatsCatcher.put(key, "NO LOC: "+uniqueData.getPeptideModSeq());
 							}
 						}
 						prepareQuantData(uniqueData, sourceFile, inferrer, peptidePrep, fragmentPrep);
