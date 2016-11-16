@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
@@ -73,6 +74,28 @@ public class SearchParameters {
 			sb.append(" -targetWindowCenter "+targetWindowCenter+"\n");
 		}
 		return sb.toString();
+	}
+	
+	public HashMap<String, String> toParameterMap() {
+		HashMap<String, String> map=new HashMap<String, String>();
+		map.put("-frag", FragmentationType.toString(fragType));
+		map.put("-ptol", precursorTolerance.getPpmTolerance()+"");
+		map.put("-ftol", fragmentTolerance.getPpmTolerance()+"");
+		map.put("-lftol", libraryFragmentTolerance.getPpmTolerance()+"");
+		map.put("-poffset", precursorOffsetPPM+"");
+		map.put("-foffset", fragmentOffsetPPM+"");
+		map.put("-enzyme", enzyme.getName());
+		map.put("-percolatorThreshold", percolatorThreshold+"");
+		map.put("-percolatorLocation", percolatorLocation+"");
+		map.put("-acquisition", DataAcquisitionType.toString(dataAcquisitionType));
+		map.put("-numberOfThreadsUsed", numberOfThreadsUsed+"");
+		map.put("-expectedPeakWidth", expectedPeakWidth+"");
+		map.put("-precursorWindowSize", precursorWindowSize+"");
+		map.put("-numberOfQuantitativePeaks", numberOfQuantitativePeaks+"");
+		map.put("-runPhosphoLocalization", runPhosphoLocalization+"");
+		map.put("-getNumberOfExtraDecoyLibrariesSearched", numberOfExtraDecoyLibrariesSearched+"");
+		map.put("-targetWindowCenter", targetWindowCenter+"");
+		return map;
 	}
 
 	public AminoAcidConstants getAAConstants() {
