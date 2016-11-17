@@ -1,9 +1,16 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -51,9 +58,33 @@ public class SearchParameters {
 		this.runPhosphoLocalization=runPhosphoLocalization;
 		this.numberOfExtraDecoyLibrariesSearched=getNumberOfExtraDecoyLibrariesSearched;
 	}
+	
+	public void savePreferences() throws IOException,BackingStoreException {
+		Preferences prefs=Preferences.userRoot().node("encyclopedia");
+		HashMap<String, String> map=toParameterMap();
+		for (Entry<String, String> entry : map.entrySet()) {
+			System.out.println("Writing preference "+entry.getKey()+" = "+entry.getValue());
+			prefs.put(entry.getKey(), entry.getValue());
+		}
+		prefs.flush();
+		//OutputStream stream=new FileOutputStream("encyclopedia.prefs");
+		//prefs.exportNode(stream);
+	}
+	
+	public static SearchParameters readPreferences() throws IOException,BackingStoreException {
+		Preferences prefs=Preferences.userRoot().node("encyclopedia");
+		HashMap<String, String> map=new HashMap<String, String>();
+		for (String key : prefs.keys()) {
+			String value=prefs.get(key, "");
+			System.out.println("Reading preference "+key+" = "+value);
+			map.put(key, value);
+		}
+		return SearchParameterParser.parseParameters(map);
+	}
 
 	public String toString() {
 		final StringBuilder sb=new StringBuilder();
+		sb.append(" -fixed "+aaConstants.getFixedModString()+"\n");
 		sb.append(" -frag "+FragmentationType.toString(fragType)+"\n");
 		sb.append(" -ptol "+precursorTolerance.getPpmTolerance()+"\n");
 		sb.append(" -ftol "+fragmentTolerance.getPpmTolerance()+"\n");
@@ -78,6 +109,7 @@ public class SearchParameters {
 	
 	public HashMap<String, String> toParameterMap() {
 		HashMap<String, String> map=new HashMap<String, String>();
+		map.put("-fixed", aaConstants.getFixedModString());
 		map.put("-frag", FragmentationType.toString(fragType));
 		map.put("-ptol", precursorTolerance.getPpmTolerance()+"");
 		map.put("-ftol", fragmentTolerance.getPpmTolerance()+"");
@@ -97,7 +129,11 @@ public class SearchParameters {
 		map.put("-targetWindowCenter", targetWindowCenter+"");
 		return map;
 	}
-
+	
+	public DataAcquisitionType getDataAcquisitionType() {
+		return dataAcquisitionType;
+	}
+	
 	public AminoAcidConstants getAAConstants() {
 		return aaConstants;
 	}

@@ -192,7 +192,7 @@ public class PecanParameterParser {
 		File percolator=null;
 		if (value==null||"internal".equalsIgnoreCase(value)) {
 			percolator=null;
-		} else {
+		} else if (!"null".equalsIgnoreCase(value)) {
 			percolator=new File(value);
 			if (!percolator.exists()||!percolator.canExecute()) {
 				Logger.errorLine("Could not execute external Percolator from ["+value+"]. Falling back to internal Percolator");

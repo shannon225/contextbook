@@ -34,6 +34,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumn;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.DIABrowserPanel;
@@ -94,6 +95,11 @@ public class SearchPanel extends JPanel {
 		
 		if (!pecanpie) {
 			optionsTabs.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
+			try {
+				encyclopedia.setParameters(SearchParameters.readPreferences());
+			} catch (Exception e) {
+				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
+			}
 		}
 		optionsTabs.addTab("Pecan", PecanParametersPanel.smallimage, new PecanParametersPanel(), "Pecan Peptide Search");
 		

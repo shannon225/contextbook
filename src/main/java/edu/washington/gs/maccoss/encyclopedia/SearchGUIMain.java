@@ -10,6 +10,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -72,7 +73,7 @@ public class SearchGUIMain {
 			}
 		});
 
-		SearchPanel panel=new SearchPanel(pecanpie);
+		final SearchPanel panel=new SearchPanel(pecanpie);
 		f.getContentPane().add(panel, BorderLayout.CENTER);
 		f.setJMenuBar(panel.createMenus());
 
@@ -87,5 +88,18 @@ public class SearchGUIMain {
 		}
 
 		Logger.logLine(shortName+" Graphical Interface");
+		
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				SearchParameters params=panel.getVisibleTab().getParameters();
+				try {
+					params.savePreferences();
+				} catch (Exception e) {
+					Logger.errorLine("Error writing parameters to disk!");
+					Logger.errorException(e);
+				}
+			}
+		});
 	}
 }

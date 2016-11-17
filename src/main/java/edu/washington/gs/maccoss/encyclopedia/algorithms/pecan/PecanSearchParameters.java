@@ -1,10 +1,16 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -28,6 +34,8 @@ public class PecanSearchParameters extends SearchParameters {
 		sb.append(" -frag "+FragmentationType.toString(fragType)+"\n");
 		sb.append(" -ptol "+precursorTolerance.getPpmTolerance()+"\n");
 		sb.append(" -ftol "+fragmentTolerance.getPpmTolerance()+"\n");
+		sb.append(" -poffset "+precursorOffsetPPM+"\n");
+		sb.append(" -foffset "+fragmentOffsetPPM+"\n");
 		sb.append(" -enzyme "+enzyme.getName()+"\n");
 		sb.append(" -minLength "+minPeptideLength+"\n");
 		sb.append(" -maxLength "+maxPeptideLength+"\n");
@@ -39,12 +47,61 @@ public class PecanSearchParameters extends SearchParameters {
 		sb.append(" -addDecoysToBackground "+addDecoysToBackgound+"\n");
 		sb.append(" -dontRunDecoys "+dontRunDecoys+"\n");
 		sb.append(" -percolatorThreshold "+percolatorThreshold+"\n");
-		sb.append(" -deconvoluteOverlappingWindows "+dataAcquisitionType+"\n");
+		sb.append(" -percolatorLocation "+percolatorLocation+"\n");
+		sb.append(" -acquisition "+DataAcquisitionType.toString(dataAcquisitionType)+"\n");
 		sb.append(" -numberOfThreadsUsed "+numberOfThreadsUsed+"\n");
+		sb.append(" -numberOfQuantitativePeaks "+numberOfQuantitativePeaks+"\n");
 		sb.append(" -alpha "+alpha+"\n");
 		sb.append(" -beta "+beta+"\n");
 		
 		return sb.toString();
+	}
+	
+	public HashMap<String, String> toParameterMap() {
+		HashMap<String, String> map=new HashMap<String, String>();
+		map.put("-fixed", aaConstants.getFixedModString());
+		map.put("-frag", FragmentationType.toString(fragType));
+		map.put("-ptol", precursorTolerance.getPpmTolerance()+"");
+		map.put("-ftol", fragmentTolerance.getPpmTolerance()+"");
+		map.put("-poffset", precursorOffsetPPM+"");
+		map.put("-foffset", fragmentOffsetPPM+"");
+		map.put("-enzyme", enzyme.getName());
+		map.put("-minLength", minPeptideLength+"");
+		map.put("-maxLength", maxPeptideLength+"");
+		map.put("-maxMissedCleavage", maxMissedCleavages+"");
+		map.put("-minCharge", minCharge+"");
+		map.put("-maxCharge", maxCharge+"");
+		map.put("-minEluteTime", minEluteTime+"");
+		map.put("-numberOfReportedPeaks", numberOfReportedPeaks+"");
+		map.put("-addDecoysToBackground", addDecoysToBackgound+"");
+		map.put("-dontRunDecoys", dontRunDecoys+"");
+		map.put("-percolatorThreshold", percolatorThreshold+"");
+		map.put("-percolatorLocation", percolatorLocation+"");
+		map.put("-acquisition", DataAcquisitionType.toString(dataAcquisitionType));
+		map.put("-numberOfThreadsUsed", numberOfThreadsUsed+"");
+		map.put("-precursorWindowSize", precursorWindowSize+"");
+		map.put("-numberOfQuantitativePeaks", numberOfQuantitativePeaks+"");
+		map.put("-alpha", alpha+"");
+		map.put("-beta", beta+"");
+		return map;
+	}
+	
+	public void savePreferences() throws IOException,BackingStoreException {
+		Preferences prefs=Preferences.userRoot().node("pecan");
+		HashMap<String, String> map=toParameterMap();
+		for (Entry<String, String> entry : map.entrySet()) {
+			prefs.put(entry.getKey(), entry.getValue());
+		}
+		prefs.flush();
+	}
+	
+	public static PecanSearchParameters readPreferences() throws IOException,BackingStoreException {
+		Preferences prefs=Preferences.userRoot().node("pecan");
+		HashMap<String, String> map=new HashMap<String, String>();
+		for (String key : prefs.keys()) {
+			map.put(key, prefs.get(key, ""));
+		}
+		return PecanParameterParser.parseParameters(map);
 	}
 	
 	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, MassTolerance fragmentTolerance,

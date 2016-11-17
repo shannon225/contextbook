@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.io.File;
 import java.text.NumberFormat;
+import java.util.Arrays;
 import java.util.Optional;
 
 import javax.swing.BorderFactory;
@@ -180,5 +181,26 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), 0.0, new MassTolerance(fragmentPPMValue), 0.0, new MassTolerance(libraryFragmentPPMValue), digestionEnzyme, 0.01f, null, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, isPhospho, numberOfExtraDecoyLibrariesValue);
 		return parameters;
+	}
+	
+	public void setParameters(SearchParameters params) {
+		acquisition.setSelectedItem(DataAcquisitionType.toString(params.getDataAcquisitionType()));
+		enzyme.setSelectedItem(params.getEnzyme().getName());
+		fragType.setSelectedItem(FragmentationType.toString(params.getFragType()));
+		precursorPPM.setValue((int)params.getPrecursorTolerance().getPpmTolerance());
+		fragmentPPM.setValue((int)params.getFragmentTolerance().getPpmTolerance());
+		libraryFragmentPPM.setValue((int)params.getLibraryFragmentTolerance().getPpmTolerance());
+		numberOfJobs.setValue(params.getNumberOfThreadsUsed());
+		if (params.getPrecursorWindowSize()>0) {
+			precursorWindowWidth.setValue(params.getPrecursorWindowSize());
+		} else {
+			precursorWindowWidth.setValue(-1);
+		}
+		proteomeType.setSelectedIndex(params.isRunPhosphoLocalization()?1:0);
+		int index=Arrays.binarySearch(NUMBER_OF_EXTRA_DECOY_VALUES, params.getNumberOfExtraDecoyLibrariesSearched());
+		if (index>=0) {
+			numberOfExtraDecoyLibraries.setSelectedIndex(index);
+		}
+		numberOfQuantitativeIons.setValue(params.getNumberOfQuantitativePeaks());
 	}
 }
