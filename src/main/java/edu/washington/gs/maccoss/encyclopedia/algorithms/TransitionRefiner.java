@@ -22,7 +22,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
-import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class TransitionRefiner {
 	// minimum threshold to call this peak as worth quantifying
