@@ -28,6 +28,17 @@ public class AminoAcidConstants {
 			return new AminoAcidConstants(new TCharDoubleHashMap());
 		}
 	}
+	
+	public static String toName(AminoAcidConstants constants) {
+		if (Math.round(constants.getFixedMods().get('C'))==57) {
+			return "C+57 (Carbamidomethyl)";
+		} else if (Math.round(constants.getFixedMods().get('C'))==58) {
+			return "C+58 (Carboxymethyl)";
+		} else if (Math.round(constants.getFixedMods().get('C'))==46) {
+			return "C+46 (MMTS)";
+		}
+		return "No fixed modifications";
+	}
 
 	/**
 	 * assumes +57 C-alkylation

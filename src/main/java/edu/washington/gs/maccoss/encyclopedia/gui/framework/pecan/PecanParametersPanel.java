@@ -6,6 +6,7 @@ import java.awt.FlowLayout;
 import java.io.File;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Optional;
 
 import javax.swing.BorderFactory;
@@ -56,10 +57,10 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 	
 	private final FileChooserPanel backgroundFasta;
 	private final FileChooserPanel targetFasta;
-	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {"Overlapping DIA", "Non-Overlapping DIA"});
+	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {DataAcquisitionType.toName(DataAcquisitionType.OVERLAPPING_DIA), DataAcquisitionType.toName(DataAcquisitionType.DIA)});
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "PepsinA", "No Enzyme"});
 	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "None"});
-	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {"HCD (Y-Only)", "CID (B/Y)", "ETD (C/Z/Z+1)"});
+	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.YONLY), FragmentationType.toName(FragmentationType.ETD)});
 
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance());
 
@@ -183,11 +184,11 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
-		float precursorPPMValue=((Integer)precursorPPM.getValue()).floatValue();
-		float fragmentPPMValue=((Integer)fragmentPPM.getValue()).floatValue();
-		byte minChargeValue=((Integer)minCharge.getValue()).byteValue();
-		byte maxChargeValue=((Integer)maxCharge.getValue()).byteValue();
-		byte maxMissedCleavageValue=((Integer)maxMissedCleavage.getValue()).byteValue();
+		float precursorPPMValue=((Number)precursorPPM.getValue()).floatValue();
+		float fragmentPPMValue=((Number)fragmentPPM.getValue()).floatValue();
+		byte minChargeValue=((Number)minCharge.getValue()).byteValue();
+		byte maxChargeValue=((Number)maxCharge.getValue()).byteValue();
+		byte maxMissedCleavageValue=((Number)maxMissedCleavage.getValue()).byteValue();
 		Number value=(Number)precursorWindowWidth.getValue();
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
@@ -196,5 +197,28 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		PecanSearchParameters parameters=new PecanSearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme,
 				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, numberOfExtraDecoyLibrariesValue);
 		return parameters;
+	}
+	
+	public void setParameters(PecanSearchParameters params) {
+		acquisition.setSelectedItem(DataAcquisitionType.toName(params.getDataAcquisitionType()));
+		enzyme.setSelectedItem(params.getEnzyme().getName());
+		fixed.setSelectedItem(AminoAcidConstants.toName(params.getAAConstants()));
+		fragType.setSelectedItem(FragmentationType.toName(params.getFragType()));
+		precursorPPM.setValue((int)params.getPrecursorTolerance().getPpmTolerance());
+		fragmentPPM.setValue((int)params.getFragmentTolerance().getPpmTolerance());
+		minCharge.setValue(params.getMinCharge());
+		maxCharge.setValue(params.getMaxCharge());
+		maxMissedCleavage.setValue(params.getMaxMissedCleavages());
+		numberOfJobs.setValue(params.getNumberOfThreadsUsed());
+		if (params.getPrecursorWindowSize()>0) {
+			precursorWindowWidth.setValue(params.getPrecursorWindowSize());
+		} else {
+			precursorWindowWidth.setValue(-1);
+		}
+		int index=Arrays.binarySearch(NUMBER_OF_EXTRA_DECOY_VALUES, params.getNumberOfExtraDecoyLibrariesSearched());
+		if (index>=0) {
+			numberOfExtraDecoyLibraries.setSelectedIndex(index);
+		}
+		numberOfQuantitativeIons.setValue(params.getNumberOfQuantitativePeaks());
 	}
 }

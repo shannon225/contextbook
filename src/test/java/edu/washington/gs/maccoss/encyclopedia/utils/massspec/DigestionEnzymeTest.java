@@ -11,8 +11,7 @@ public class DigestionEnzymeTest extends TestCase {
 	public void testXanderCleavages() {
 		System.out.println("BOLA2T:");
 		String sequence="MELSAEYLREKLQRDLEAEHVEVEDTTLNRCSCSFRVLVVSAKFEGKPLLQRHRFCTE";
-		for (String name : DigestionEnzyme.getAvailableEnzymes()) {
-			DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme(name);
+		for (DigestionEnzyme enzyme : DigestionEnzyme.getAvailableEnzymes()) {
 			ArrayList<String> sequences=enzyme.digestProtein(sequence, 6, 40, 0);
 			for (String string : sequences) {
 				if (string.indexOf("RHRF")>=0) {
@@ -23,8 +22,7 @@ public class DigestionEnzymeTest extends TestCase {
 		
 		System.out.println("\nBOLA2F:");
 		sequence="MELSAEYLREKLQRDLEAEHVEVEDTTLNRCSCSFRVLVVSAKFEGKPLLQRHSLDPSMTIHCDMVITYGLDQLENCQTCGTDYIISVLNLLTLIVEQINTKLPSSFVEKLFIPSSKLLFLRYHKDKEVVAVAHAVYQAMLSLKNIPVLETAYKLILGEMTCALNNLLHSLQLPEACSEIKHEAFKNHVFNVDNAKFVVKFDLSALTTIGNAKNSSL";
-		for (String name : DigestionEnzyme.getAvailableEnzymes()) {
-			DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme(name);
+		for (DigestionEnzyme enzyme : DigestionEnzyme.getAvailableEnzymes()) {
 			ArrayList<String> sequences=enzyme.digestProtein(sequence, 6, 40, 0);
 			for (String string : sequences) {
 				if (string.indexOf("RHSL")>=0) {

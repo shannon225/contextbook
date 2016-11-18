@@ -13,19 +13,19 @@ public class DigestionEnzyme {
 	private final TCharHashSet nterm;
 	private final TCharHashSet cterm;
 	
-	public static HashSet<String> getAvailableEnzymes() {
-		HashSet<String> enzymes=new HashSet<String>();
-		enzymes.add("Trypsin");
-		enzymes.add("Trypsin/p");
-		enzymes.add("Lys-C");
-		enzymes.add("Lys-N");
-		enzymes.add("Arg-C");
-		enzymes.add("CNBr");
-		enzymes.add("Chymotrypsin");
-		enzymes.add("PepsinA");
-		enzymes.add("Elastase");
-		enzymes.add("Thermolysin");
-		enzymes.add("No Enzyme");
+	public static HashSet<DigestionEnzyme> getAvailableEnzymes() {
+		HashSet<DigestionEnzyme> enzymes=new HashSet<DigestionEnzyme>();
+		enzymes.add(getEnzyme("Trypsin"));
+		enzymes.add(getEnzyme("Trypsin/p"));
+		enzymes.add(getEnzyme("Lys-C"));
+		enzymes.add(getEnzyme("Lys-N"));
+		enzymes.add(getEnzyme("Arg-C"));
+		enzymes.add(getEnzyme("CNBr"));
+		enzymes.add(getEnzyme("Chymotrypsin"));
+		enzymes.add(getEnzyme("PepsinA"));
+		enzymes.add(getEnzyme("Elastase"));
+		enzymes.add(getEnzyme("Thermolysin"));
+		enzymes.add(getEnzyme("No Enzyme"));
 		return enzymes;
 	}
 	

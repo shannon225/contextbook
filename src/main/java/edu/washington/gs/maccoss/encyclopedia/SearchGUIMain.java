@@ -11,6 +11,7 @@ import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -92,12 +93,13 @@ public class SearchGUIMain {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
-				SearchParameters params=panel.getVisibleTab().getParameters();
-				try {
-					params.savePreferences();
-				} catch (Exception e) {
-					Logger.errorLine("Error writing parameters to disk!");
-					Logger.errorException(e);
+				for (ParametersPanelInterface p : panel.getAllTabs()) {
+					try {
+						p.getParameters().savePreferences();
+					} catch (Exception e) {
+						Logger.errorLine("Error writing parameters to disk!");
+						Logger.errorException(e);
+					}
 				}
 			}
 		});

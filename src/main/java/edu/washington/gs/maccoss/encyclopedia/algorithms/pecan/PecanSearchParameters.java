@@ -90,6 +90,7 @@ public class PecanSearchParameters extends SearchParameters {
 		Preferences prefs=Preferences.userRoot().node("pecan");
 		HashMap<String, String> map=toParameterMap();
 		for (Entry<String, String> entry : map.entrySet()) {
+			//System.out.println("Writing Pecan preference "+entry.getKey()+" = "+entry.getValue());
 			prefs.put(entry.getKey(), entry.getValue());
 		}
 		prefs.flush();
@@ -99,7 +100,9 @@ public class PecanSearchParameters extends SearchParameters {
 		Preferences prefs=Preferences.userRoot().node("pecan");
 		HashMap<String, String> map=new HashMap<String, String>();
 		for (String key : prefs.keys()) {
-			map.put(key, prefs.get(key, ""));
+			String value=prefs.get(key, "");
+			//System.out.println("Reading Pecan preference "+key+" = "+value);
+			map.put(key, value);
 		}
 		return PecanParameterParser.parseParameters(map);
 	}

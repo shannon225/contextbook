@@ -14,6 +14,18 @@ public enum FragmentationType {
 				return "Unknown";
 		}
 	}
+	public static String toName(FragmentationType type) {
+		switch (type) {
+			case CID:
+				return "CID (B/Y)";
+			case ETD:
+				return "ETD (C/Z/Z+1)";
+			case YONLY:
+				return "HCD (Y-Only)";
+			default:
+				return "Unknown";
+		}
+	}
 	
 	public static FragmentationType getFragmentationType(String s) {
 		if ("CID".equalsIgnoreCase(s)) return CID;

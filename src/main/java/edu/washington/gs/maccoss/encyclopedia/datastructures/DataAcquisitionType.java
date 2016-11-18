@@ -15,6 +15,19 @@ public enum DataAcquisitionType {
 		}
 	}
 	
+	public static String toName(DataAcquisitionType type) {
+		switch (type) {
+			case DDA:
+				return "DDA";
+			case DIA:
+				return "Non-Overlapping DIA";
+			case OVERLAPPING_DIA:
+				return "Overlapping DIA";
+			default:
+				return "Unknown";
+		}
+	}
+	
 	public static DataAcquisitionType getAcquisitionType(String s) {
 		if ("DDA".equalsIgnoreCase(s)) return DDA;
 		if ("FALSE".equalsIgnoreCase(s)) return DIA;

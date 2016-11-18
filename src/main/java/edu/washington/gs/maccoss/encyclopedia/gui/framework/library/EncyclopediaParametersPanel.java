@@ -57,9 +57,9 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">EncyclopeDIA extracts peptide fragmentation chromatograms from MZML files, matches them to spectra in libraries, and calculates various scoring features. These features are interpreted by Percolator to identify peptides.";
 	
 	private final FileChooserPanel libraryFileChooser;
-	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {"Overlapping DIA", "Non-Overlapping DIA", "DDA"});
+	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {DataAcquisitionType.toName(DataAcquisitionType.OVERLAPPING_DIA), DataAcquisitionType.toName(DataAcquisitionType.DIA), DataAcquisitionType.toName(DataAcquisitionType.DDA)});
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "PepsinA"});
-	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {"CID (B/Y)", "HCD (Y-Only)", "ETD (C/Z/Z+1)"});
+	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.YONLY), FragmentationType.toName(FragmentationType.ETD)});
 	private final JComboBox<String> proteomeType=new JComboBox<String>(new String[] {"Standard Proteome", PHOSPHOPROTEOME});
 
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance()); // not displayed anymore
@@ -169,9 +169,9 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
-		float precursorPPMValue=((Integer)precursorPPM.getValue()).floatValue();
-		float fragmentPPMValue=((Integer)fragmentPPM.getValue()).floatValue();
-		float libraryFragmentPPMValue=((Integer)libraryFragmentPPM.getValue()).floatValue();
+		float precursorPPMValue=((Number)precursorPPM.getValue()).floatValue();
+		float fragmentPPMValue=((Number)fragmentPPM.getValue()).floatValue();
+		float libraryFragmentPPMValue=((Number)libraryFragmentPPM.getValue()).floatValue();
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		Number value=(Number)precursorWindowWidth.getValue();
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
@@ -184,9 +184,9 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	}
 	
 	public void setParameters(SearchParameters params) {
-		acquisition.setSelectedItem(DataAcquisitionType.toString(params.getDataAcquisitionType()));
+		acquisition.setSelectedItem(DataAcquisitionType.toName(params.getDataAcquisitionType()));
 		enzyme.setSelectedItem(params.getEnzyme().getName());
-		fragType.setSelectedItem(FragmentationType.toString(params.getFragType()));
+		fragType.setSelectedItem(FragmentationType.toName(params.getFragType()));
 		precursorPPM.setValue((int)params.getPrecursorTolerance().getPpmTolerance());
 		fragmentPPM.setValue((int)params.getFragmentTolerance().getPpmTolerance());
 		libraryFragmentPPM.setValue((int)params.getLibraryFragmentTolerance().getPpmTolerance());

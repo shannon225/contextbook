@@ -1,9 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -63,7 +61,7 @@ public class SearchParameters {
 		Preferences prefs=Preferences.userRoot().node("encyclopedia");
 		HashMap<String, String> map=toParameterMap();
 		for (Entry<String, String> entry : map.entrySet()) {
-			System.out.println("Writing preference "+entry.getKey()+" = "+entry.getValue());
+			//System.out.println("Writing EncyclopeDIA preference "+entry.getKey()+" = "+entry.getValue());
 			prefs.put(entry.getKey(), entry.getValue());
 		}
 		prefs.flush();
@@ -76,7 +74,7 @@ public class SearchParameters {
 		HashMap<String, String> map=new HashMap<String, String>();
 		for (String key : prefs.keys()) {
 			String value=prefs.get(key, "");
-			System.out.println("Reading preference "+key+" = "+value);
+			//System.out.println("Reading EncyclopeDIA preference "+key+" = "+value);
 			map.put(key, value);
 		}
 		return SearchParameterParser.parseParameters(map);

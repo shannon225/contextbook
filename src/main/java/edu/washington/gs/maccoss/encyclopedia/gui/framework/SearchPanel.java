@@ -11,6 +11,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Optional;
 
 import javax.swing.BorderFactory;
@@ -34,6 +36,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumn;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
@@ -101,8 +104,15 @@ public class SearchPanel extends JPanel {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
 			}
 		}
-		optionsTabs.addTab("Pecan", PecanParametersPanel.smallimage, new PecanParametersPanel(), "Pecan Peptide Search");
 		
+		PecanParametersPanel pecan=new PecanParametersPanel();
+		try {
+			pecan.setParameters(PecanSearchParameters.readPreferences());
+		} catch (Exception e) {
+			Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
+		}
+		optionsTabs.addTab("Pecan", PecanParametersPanel.smallimage, pecan, "Pecan Peptide Search");
+
 		LogConsole console=new LogConsole();
 		console.errorLine("Console:");
 		Logger.addRecorder(console);
@@ -277,6 +287,14 @@ public class SearchPanel extends JPanel {
 
 		
 		return bar;
+	}
+	
+	public Collection<ParametersPanelInterface> getAllTabs() {
+		ArrayList<ParametersPanelInterface> list=new ArrayList<ParametersPanelInterface>();
+		for (int i=0; i<optionsTabs.getTabCount(); i++) {
+			list.add((ParametersPanelInterface)optionsTabs.getComponentAt(i));
+		}
+		return list;
 	}
 	
 	public ParametersPanelInterface getVisibleTab() {
