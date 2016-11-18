@@ -13,6 +13,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Optional;
 
 import javax.swing.BorderFactory;
@@ -36,10 +37,14 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumn;
 
+import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
+import edu.washington.gs.maccoss.encyclopedia.Pecanpie;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.DIABrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.FeatureGrapher;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
@@ -99,7 +104,8 @@ public class SearchPanel extends JPanel {
 		if (!pecanpie) {
 			optionsTabs.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
 			try {
-				encyclopedia.setParameters(SearchParameters.readPreferences());
+				HashMap<String, String> map=SearchParameters.readPreferences();
+				encyclopedia.setParameters(SearchParameterParser.parseParameters(map), map.get(Encyclopedia.TARGET_LIBRARY_TAG));
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
 			}
@@ -107,7 +113,8 @@ public class SearchPanel extends JPanel {
 		
 		PecanParametersPanel pecan=new PecanParametersPanel();
 		try {
-			pecan.setParameters(PecanSearchParameters.readPreferences());
+			HashMap<String, String> map=PecanSearchParameters.readPreferences();
+			pecan.setParameters(PecanParameterParser.parseParameters(map), map.get(Pecanpie.BACKGROUND_FASTA_TAG), map.get(Pecanpie.TARGET_FASTA_TAG));
 		} catch (Exception e) {
 			Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
 		}

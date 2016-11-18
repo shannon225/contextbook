@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -57,9 +57,10 @@ public class SearchParameters {
 		this.numberOfExtraDecoyLibrariesSearched=getNumberOfExtraDecoyLibrariesSearched;
 	}
 	
-	public void savePreferences() throws IOException,BackingStoreException {
+	public void savePreferences(File libraryFile) throws IOException,BackingStoreException {
 		Preferences prefs=Preferences.userRoot().node("encyclopedia");
 		HashMap<String, String> map=toParameterMap();
+		if (libraryFile!=null) map.put(Encyclopedia.TARGET_LIBRARY_TAG, libraryFile.getAbsolutePath());
 		for (Entry<String, String> entry : map.entrySet()) {
 			//System.out.println("Writing EncyclopeDIA preference "+entry.getKey()+" = "+entry.getValue());
 			prefs.put(entry.getKey(), entry.getValue());
@@ -69,7 +70,7 @@ public class SearchParameters {
 		//prefs.exportNode(stream);
 	}
 	
-	public static SearchParameters readPreferences() throws IOException,BackingStoreException {
+	public static HashMap<String, String> readPreferences() throws IOException,BackingStoreException {
 		Preferences prefs=Preferences.userRoot().node("encyclopedia");
 		HashMap<String, String> map=new HashMap<String, String>();
 		for (String key : prefs.keys()) {
@@ -77,7 +78,7 @@ public class SearchParameters {
 			//System.out.println("Reading EncyclopeDIA preference "+key+" = "+value);
 			map.put(key, value);
 		}
-		return SearchParameterParser.parseParameters(map);
+		return map;
 	}
 
 	public String toString() {

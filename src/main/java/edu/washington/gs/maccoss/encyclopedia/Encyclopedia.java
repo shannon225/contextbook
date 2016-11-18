@@ -61,6 +61,10 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndic
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
 public class Encyclopedia {
+	public static final String TARGET_LIBRARY_TAG="-l";
+	public static final String OUTPUT_RESULT_TAG="-o";
+	public static final String INPUT_DIA_TAG="-i";
+	
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
 		if (arguments.size()==0) {
@@ -98,17 +102,17 @@ public class Encyclopedia {
 			System.exit(1);
 			
 		} else {
-			if (!arguments.containsKey("-i")||!arguments.containsKey("-l")) {
-				Logger.errorLine("You are required to specify an input file (-i) and a library file (-l)");
+			if (!arguments.containsKey(INPUT_DIA_TAG)||!arguments.containsKey(TARGET_LIBRARY_TAG)) {
+				Logger.errorLine("You are required to specify an input file ("+INPUT_DIA_TAG+") and a library file ("+TARGET_LIBRARY_TAG+")");
 				System.exit(1);
 			}
 
-			File diaFile=new File(arguments.get("-i"));
-			File libraryFile=new File(arguments.get("-l"));
+			File diaFile=new File(arguments.get(INPUT_DIA_TAG));
+			File libraryFile=new File(arguments.get(TARGET_LIBRARY_TAG));
 
 			File outputFile;
-			if (arguments.containsKey("-o")) {
-				outputFile=new File(arguments.get("-o"));
+			if (arguments.containsKey(OUTPUT_RESULT_TAG)) {
+				outputFile=new File(arguments.get(OUTPUT_RESULT_TAG));
 			} else {
 				outputFile=new File(diaFile.getAbsolutePath()+EncyclopediaJobData.OUTPUT_FILE_SUFFIX);
 			}
@@ -118,10 +122,9 @@ public class Encyclopedia {
 			Logger.logLine("Encyclopedia version "+factory.getVersion());
 
 			Logger.logLine("Parameters:");
-			Logger.logLine(" -i "+diaFile.getAbsolutePath());
-			Logger.logLine(" -l "+libraryFile.getAbsolutePath());
-			Logger.logLine(" -t "+arguments.get("-t"));
-			Logger.logLine(" -o "+outputFile.getAbsolutePath());
+			Logger.logLine(" "+INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());
+			Logger.logLine(" "+TARGET_LIBRARY_TAG+" "+libraryFile.getAbsolutePath());
+			Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
 			Logger.logLine(parameters.toString());
 
 			try {

@@ -2,7 +2,6 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter3d;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;

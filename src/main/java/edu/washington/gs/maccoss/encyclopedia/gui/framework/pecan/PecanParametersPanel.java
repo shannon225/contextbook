@@ -199,7 +199,12 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		return parameters;
 	}
 	
-	public void setParameters(PecanSearchParameters params) {
+	public void setParameters(PecanSearchParameters params, String fastaFileName, String targetFileName) {
+		File fastaFile=new File(fastaFileName);
+		if (fastaFile.exists()) backgroundFasta.update(fastaFile);
+		File targetFile=new File(targetFileName);
+		if (targetFile.exists()) targetFasta.update(targetFile);
+		
 		acquisition.setSelectedItem(DataAcquisitionType.toName(params.getDataAcquisitionType()));
 		enzyme.setSelectedItem(params.getEnzyme().getName());
 		fixed.setSelectedItem(AminoAcidConstants.toName(params.getAAConstants()));
@@ -220,5 +225,15 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 			numberOfExtraDecoyLibraries.setSelectedIndex(index);
 		}
 		numberOfQuantitativeIons.setValue(params.getNumberOfQuantitativePeaks());
+	}
+	
+	@Override
+	public void savePreferences() {
+		try {
+			getParameters().savePreferences(backgroundFasta.getFile(), targetFasta.getFile());
+		} catch (Exception e) {
+			Logger.errorLine("Error writing parameters to disk!");
+			Logger.errorException(e);
+		}
 	}
 }

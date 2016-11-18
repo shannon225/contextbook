@@ -94,7 +94,7 @@ public class SearchGUIMain {
 			public void run() {
 				for (ParametersPanelInterface p : panel.getAllTabs()) {
 					try {
-						p.getParameters().savePreferences();
+						p.savePreferences();
 					} catch (Exception e) {
 						Logger.errorLine("Error writing parameters to disk!");
 						Logger.errorException(e);

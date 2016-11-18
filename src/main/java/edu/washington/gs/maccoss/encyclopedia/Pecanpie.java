@@ -67,6 +67,11 @@ import gnu.trove.procedure.TDoubleObjectProcedure;
 import gnu.trove.set.hash.TDoubleHashSet;
 
 public class Pecanpie {
+	public static final String TARGET_FASTA_TAG="-t";
+	public static final String OUTPUT_RESULT_TAG="-o";
+	public static final String INPUT_DIA_TAG="-i";
+	public static final String BACKGROUND_FASTA_TAG="-f";
+
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
 		if (arguments.size()==0) {
@@ -93,17 +98,17 @@ public class Pecanpie {
 			System.exit(1);
 			
 		} else {
-			if (!arguments.containsKey("-i")||!arguments.containsKey("-f")) {
-				Logger.errorLine("You are required to specify an input file (-i) and a background FASTA file (-f)");
+			if (!arguments.containsKey(INPUT_DIA_TAG)||!arguments.containsKey(BACKGROUND_FASTA_TAG)) {
+				Logger.errorLine("You are required to specify an input file ("+INPUT_DIA_TAG+") and a background FASTA file ("+BACKGROUND_FASTA_TAG+")");
 				System.exit(1);
 			}
 
-			File diaFile=new File(arguments.get("-i"));
-			File fastaFile=new File(arguments.get("-f"));
+			File diaFile=new File(arguments.get(INPUT_DIA_TAG));
+			File fastaFile=new File(arguments.get(BACKGROUND_FASTA_TAG));
 
 			File outputFile;
-			if (arguments.containsKey("-o")) {
-				outputFile=new File(arguments.get("-o"));
+			if (arguments.containsKey(OUTPUT_RESULT_TAG)) {
+				outputFile=new File(arguments.get(OUTPUT_RESULT_TAG));
 			} else {
 				outputFile=new File(diaFile.getAbsolutePath()+".pecan.txt");
 			}
@@ -115,17 +120,17 @@ public class Pecanpie {
 			Logger.logLine("Pecanpie version "+factory.getVersion());
 
 			ArrayList<FastaPeptideEntry> targets;
-			if (arguments.containsKey("-t")) {
-				targets=FastaReader.readPeptideFasta(new File(arguments.get("-t")));
+			if (arguments.containsKey(TARGET_FASTA_TAG)) {
+				targets=FastaReader.readPeptideFasta(new File(arguments.get(TARGET_FASTA_TAG)));
 			} else {
 				targets=null;
 			}
 
 			Logger.logLine("Parameters:");
-			Logger.logLine(" -i "+diaFile.getAbsolutePath());
-			Logger.logLine(" -f "+fastaFile.getAbsolutePath());
-			Logger.logLine(" -t "+arguments.get("-t"));
-			Logger.logLine(" -o "+outputFile.getAbsolutePath());
+			Logger.logLine(" "+INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());
+			Logger.logLine(" "+BACKGROUND_FASTA_TAG+" "+fastaFile.getAbsolutePath());
+			Logger.logLine(" "+TARGET_FASTA_TAG+" "+arguments.get(TARGET_FASTA_TAG));
+			Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
 			Logger.logLine(parameters.toString());
 
 			try {

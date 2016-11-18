@@ -14,18 +14,18 @@ public class SearchParametersTest extends TestCase {
 		
 		SearchParameters params=SearchParameterParser.parseParameters(map);
 		assertEquals(1000.0, params.getPrecursorOffsetPPM());
-		params.savePreferences();
+		params.savePreferences(null);
 		
-		SearchParameters readParams=SearchParameters.readPreferences();
+		SearchParameters readParams=SearchParameterParser.parseParameters(SearchParameters.readPreferences());
 		assertEquals(1000.0, readParams.getPrecursorOffsetPPM());
 		
 		map.put("-poffset", "-1000"); // definitely not default!
 		
 		params=SearchParameterParser.parseParameters(map);
 		assertEquals(-1000.0, params.getPrecursorOffsetPPM());
-		params.savePreferences();
+		params.savePreferences(null);
 		
-		readParams=SearchParameters.readPreferences();
+		readParams=SearchParameterParser.parseParameters(SearchParameters.readPreferences());
 		assertEquals(-1000.0, readParams.getPrecursorOffsetPPM());
 	}
 

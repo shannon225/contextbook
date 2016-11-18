@@ -13,4 +13,5 @@ public interface ParametersPanelInterface {
 	SwingJob getJob(File diaFile, JobProcessorTableModel model);
 	void askForSetupFile();
 	SearchParameters getParameters();
+	void savePreferences();
 }

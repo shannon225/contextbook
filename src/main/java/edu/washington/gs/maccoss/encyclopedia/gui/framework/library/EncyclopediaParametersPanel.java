@@ -36,6 +36,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -183,7 +184,12 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		return parameters;
 	}
 	
-	public void setParameters(SearchParameters params) {
+	public void setParameters(SearchParameters params, String libraryFileName) {
+		if (libraryFileName!=null) {
+			File libraryFile=new File(libraryFileName);
+			if (libraryFile.exists()) libraryFileChooser.update(libraryFile);
+		}
+		
 		acquisition.setSelectedItem(DataAcquisitionType.toName(params.getDataAcquisitionType()));
 		enzyme.setSelectedItem(params.getEnzyme().getName());
 		fragType.setSelectedItem(FragmentationType.toName(params.getFragType()));
@@ -202,5 +208,15 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 			numberOfExtraDecoyLibraries.setSelectedIndex(index);
 		}
 		numberOfQuantitativeIons.setValue(params.getNumberOfQuantitativePeaks());
+	}
+	
+	@Override
+	public void savePreferences() {
+		try {
+			getParameters().savePreferences(libraryFileChooser.getFile());
+		} catch (Exception e) {
+			Logger.errorLine("Error writing parameters to disk!");
+			Logger.errorException(e);
+		}
 	}
 }

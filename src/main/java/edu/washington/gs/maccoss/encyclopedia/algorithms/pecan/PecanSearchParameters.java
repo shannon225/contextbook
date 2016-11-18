@@ -7,10 +7,10 @@ import java.util.Map.Entry;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
+import edu.washington.gs.maccoss.encyclopedia.Pecanpie;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -86,9 +86,11 @@ public class PecanSearchParameters extends SearchParameters {
 		return map;
 	}
 	
-	public void savePreferences() throws IOException,BackingStoreException {
+	public void savePreferences(File backgroundFastaFile, File targetFastaFile) throws IOException,BackingStoreException {
 		Preferences prefs=Preferences.userRoot().node("pecan");
 		HashMap<String, String> map=toParameterMap();
+		if (backgroundFastaFile!=null) map.put(Pecanpie.BACKGROUND_FASTA_TAG, backgroundFastaFile.getAbsolutePath());
+		if (targetFastaFile!=null) map.put(Pecanpie.TARGET_FASTA_TAG, targetFastaFile.getAbsolutePath());
 		for (Entry<String, String> entry : map.entrySet()) {
 			//System.out.println("Writing Pecan preference "+entry.getKey()+" = "+entry.getValue());
 			prefs.put(entry.getKey(), entry.getValue());
@@ -96,7 +98,7 @@ public class PecanSearchParameters extends SearchParameters {
 		prefs.flush();
 	}
 	
-	public static PecanSearchParameters readPreferences() throws IOException,BackingStoreException {
+	public static HashMap<String, String> readPreferences() throws IOException,BackingStoreException {
 		Preferences prefs=Preferences.userRoot().node("pecan");
 		HashMap<String, String> map=new HashMap<String, String>();
 		for (String key : prefs.keys()) {
@@ -104,7 +106,7 @@ public class PecanSearchParameters extends SearchParameters {
 			//System.out.println("Reading Pecan preference "+key+" = "+value);
 			map.put(key, value);
 		}
-		return PecanParameterParser.parseParameters(map);
+		return map;
 	}
 	
 	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, MassTolerance fragmentTolerance,

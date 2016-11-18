@@ -17,9 +17,15 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.axis.ValueAxis;
@@ -71,6 +77,8 @@ public class ResultsBrowserPanel extends JPanel {
 	private final JSplitPane peakPickingSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JSplitPane split=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JTable table;
+	private final TableRowSorter<TableModel> rowSorter;
+	private final JTextField jtfFilter;
 	private final LibraryEntryTableModel model;
 	private final SearchParameters parameters;
 	
@@ -120,11 +128,53 @@ public class ResultsBrowserPanel extends JPanel {
 				return super.getValueAt(row, column);
 			}
 		};
-		table.setAutoCreateRowSorter(true);
+		rowSorter=new TableRowSorter<TableModel>(table.getModel());
+		table.setRowSorter(rowSorter);
+
+		jtfFilter=new JTextField();
+		jtfFilter.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				String text=jtfFilter.getText();
+
+				System.out.println("FILTER: "+text);
+				if (text.trim().length()==0) {
+					rowSorter.setRowFilter(null);
+				} else {
+					rowSorter.setRowFilter(RowFilter.regexFilter("(?i)"+text));
+				}
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				String text=jtfFilter.getText();
+
+				if (text.trim().length()==0) {
+					rowSorter.setRowFilter(null);
+				} else {
+					rowSorter.setRowFilter(RowFilter.regexFilter("(?i)"+text));
+				}
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				throw new UnsupportedOperationException("Not supported yet.");
+			}
+		});
+
+
+		JPanel searchPanel=new JPanel(new BorderLayout());
+		searchPanel.add(new JLabel("Search:"), BorderLayout.WEST);
+		searchPanel.add(jtfFilter, BorderLayout.CENTER);
 		
 		JPanel left=new JPanel(new BorderLayout());
 		left.add(options, BorderLayout.NORTH);
 		left.add(new JScrollPane(table), BorderLayout.CENTER);
+
+		setLayout(new BorderLayout());
+		left.add(searchPanel, BorderLayout.SOUTH);
+
+        
 		split.setLeftComponent(left);
 		split.setRightComponent(dataSplit);
 		

@@ -89,7 +89,7 @@ public class ChromatogramExtractor {
 		for (Entry<FragmentIon, ArrayList<XYPoint>> traceData : traces.entrySet()) {
 			FragmentIon key=traceData.getKey();
 			String name=key.toString();
-			XYTraceInterface trace=null;
+			XYTrace trace=null;
 			switch (type) {
 			case line:
 				trace=new XYTrace(traceData.getValue(), GraphType.line, name, RandomGenerator.randomColor(name.hashCode()), 2.0f);
@@ -101,8 +101,9 @@ public class ChromatogramExtractor {
 				trace=new XYTrace(traceData.getValue(), GraphType.line, name, RandomGenerator.randomColor(name.hashCode()), 2.0f);
 				break;
 			}
-			XYTrace sgSmoothed=SkylineSGFilter.paddedSavitzkyGolaySmooth(trace);
-			kept.put(key, sgSmoothed);
+			//XYTrace sgSmoothed=SkylineSGFilter.paddedSavitzkyGolaySmooth(trace);
+			//kept.put(key, sgSmoothed);
+			kept.put(key, trace);
 		}
 		
 		return kept;
