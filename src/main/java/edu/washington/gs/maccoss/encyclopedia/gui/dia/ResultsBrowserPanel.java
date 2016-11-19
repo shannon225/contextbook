@@ -68,7 +68,8 @@ import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class ResultsBrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
-	public static final Color[] colors=new Color[] {Color.red, Color.blue, Color.green, Color.cyan, Color.magenta, Color.orange, Color.yellow, Color.pink, Color.gray};
+	public static final Color[] colors=new Color[] {Color.red, Color.blue, Color.green, Color.cyan, Color.magenta, Color.orange, Color.yellow, Color.pink, Color.gray, 
+			Color.red.darker(), Color.blue.darker(), Color.green.darker(), Color.cyan.darker(), Color.magenta.darker(), Color.orange.darker(), Color.yellow.darker(), Color.pink.darker(), Color.gray.darker()};
 
 	private final FileChooserPanel elibFileChooser;
 	private final FileChooserPanel rawFileChooser;
@@ -176,7 +177,7 @@ public class ResultsBrowserPanel extends JPanel {
 
         
 		split.setLeftComponent(left);
-		split.setRightComponent(dataSplit);
+		split.setRightComponent(new JLabel("Select a peptide!"));
 		
 		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override
@@ -234,10 +235,10 @@ public class ResultsBrowserPanel extends JPanel {
 	}
 
 	public void resetPeptide(LibraryEntry entry) {
-		int location=dataSplit.getDividerLocation();
+		int location=split.getDividerLocation();
 		//System.out.println("location:"+location);
 		if (location<=5) {
-			location=800;
+			location=400;
 		}
 		int locationRaw=rawSplit.getDividerLocation();
 		//System.out.println("locationRaw:"+locationRaw);
@@ -251,12 +252,12 @@ public class ResultsBrowserPanel extends JPanel {
 		}
 		
 		if (entry==null) {
-			dataSplit.setLeftComponent(new JLabel("Select a peptide!"));
+			split.setLeftComponent(new JLabel("Select a peptide!"));
 			return;
 		} else if (dia==null) {
-			
 			dataSplit.setLeftComponent(Charter.getChart(new AnnotatedLibraryEntry(entry, parameters)));
 			dataSplit.setRightComponent(new FragmentationTable(entry, entry.getPeptideModSeq(), parameters));
+			split.setRightComponent(dataSplit);
 		} else {
 			Logger.logLine("Parsing peptide...");
 			FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
@@ -393,7 +394,7 @@ public class ResultsBrowserPanel extends JPanel {
 				}
 
 				rawSplit.setDividerLocation(locationRaw);
-				dataSplit.setLeftComponent(rawSplit);
+				split.setRightComponent(rawSplit);
 				
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(ResultsBrowserPanel.this, "Sorry, there was a problem reading the precursor window that contains ["+entry.getPrecursorMZ()+"]: "+e.getMessage(), "Error Reading DIA File",
@@ -402,6 +403,6 @@ public class ResultsBrowserPanel extends JPanel {
 			}
 			Logger.logLine("Finished reading peptide "+entry.getSpectrumName()+" (rt="+ targetRT+")");
 		}
-		dataSplit.setDividerLocation(location);
+		split.setDividerLocation(location);
 	}
 }

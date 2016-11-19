@@ -101,9 +101,9 @@ public class ChromatogramExtractor {
 				trace=new XYTrace(traceData.getValue(), GraphType.line, name, RandomGenerator.randomColor(name.hashCode()), 2.0f);
 				break;
 			}
-			//XYTrace sgSmoothed=SkylineSGFilter.paddedSavitzkyGolaySmooth(trace);
-			//kept.put(key, sgSmoothed);
-			kept.put(key, trace);
+			XYTrace sgSmoothed=SkylineSGFilter.paddedSavitzkyGolaySmooth(trace);
+			kept.put(key, sgSmoothed);
+			//kept.put(key, trace);
 		}
 		
 		return kept;
