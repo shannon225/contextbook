@@ -14,13 +14,15 @@ public class PhosphoLocalizationData {
 	private final HashMap<String, HashMap<FragmentIon, XYTrace>> uniqueFragmentIons;
 	private final HashMap<String, HashMap<FragmentIon, XYTrace>> otherFragmentIons;
 	private final HashMap<String, FragmentIon[]> uniqueTargetFragments;
+	private final HashMap<String, FragmentIon[]> uniqueIdentifiedTargetFragments;
 	private final HashMap<String, XYPoint> localizationScores;
 	private final HashMap<String, TransitionRefinementData> passingForms;
 
-	public PhosphoLocalizationData(HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> scoreTraces, HashMap<String, HashMap<FragmentIon, XYTrace>> uniqueFragmentIons, HashMap<String, HashMap<FragmentIon, XYTrace>> otherFragmentIons, HashMap<String, FragmentIon[]> uniqueTargetFragments, HashMap<String, XYPoint> localizationScores, HashMap<String, TransitionRefinementData> passingForms) {
+	public PhosphoLocalizationData(HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> scoreTraces, HashMap<String, HashMap<FragmentIon, XYTrace>> uniqueFragmentIons, HashMap<String, HashMap<FragmentIon, XYTrace>> otherFragmentIons, HashMap<String, FragmentIon[]> uniqueTargetFragments, HashMap<String, FragmentIon[]> uniqueIdentifiedTargetFragments, HashMap<String, XYPoint> localizationScores, HashMap<String, TransitionRefinementData> passingForms) {
 		this.scoreTraces=scoreTraces;
 		this.uniqueFragmentIons=uniqueFragmentIons;
 		this.uniqueTargetFragments=uniqueTargetFragments;
+		this.uniqueIdentifiedTargetFragments=uniqueIdentifiedTargetFragments;
 		this.otherFragmentIons=otherFragmentIons;
 		this.localizationScores=localizationScores;
 		this.passingForms=passingForms;
@@ -40,6 +42,10 @@ public class PhosphoLocalizationData {
 	
 	public HashMap<String, FragmentIon[]> getUniqueTargetFragments() {
 		return uniqueTargetFragments;
+	}
+	
+	public HashMap<String, FragmentIon[]> getUniqueIdentifiedTargetFragments() {
+		return uniqueIdentifiedTargetFragments;
 	}
 	
 	public HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> getScoreTraces() {

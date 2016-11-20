@@ -5,7 +5,6 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Set;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -67,8 +66,7 @@ public class FragmentationTable extends JPanel {
 		}
 		
 		FragmentIon[] targets=data.getUniqueTargetFragments().get(sequenceKey);
-		Set<FragmentIon> foundSet=data.getUniqueFragmentIons().get(sequenceKey).keySet();
-		FragmentIon[] found=foundSet.toArray(new FragmentIon[foundSet.size()]);
+		FragmentIon[] found=data.getUniqueIdentifiedTargetFragments().get(sequenceKey);
 		
 		FragmentationTableModel tableModel=new FragmentationTableModel(all, targets, found);
 

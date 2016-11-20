@@ -157,6 +157,7 @@ public class PhosphoLocalizer {
 		HashMap<String, HashMap<FragmentIon, XYTrace>> uniqueFragmentIons=new HashMap<String, HashMap<FragmentIon, XYTrace>>();
 		HashMap<String, HashMap<FragmentIon, XYTrace>> otherFragmentIons=new HashMap<String, HashMap<FragmentIon, XYTrace>>();
 		HashMap<String, FragmentIon[]> uniqueTargetFragments=new HashMap<String, FragmentIon[]>();
+		HashMap<String, FragmentIon[]> uniqueIdentifiedTargetFragments=new HashMap<String, FragmentIon[]>();
 		HashMap<String, XYPoint> localizationScores=new HashMap<String, XYPoint>();
 		
 		HashMap<String, TransitionRefinementData> passingForms=new HashMap<String, TransitionRefinementData>();
@@ -236,8 +237,19 @@ public class PhosphoLocalizer {
 			float bestRT=uniqueCalculator.getMaxRT()*60f;
 			float maxRawScore=uniqueCalculator.getMaxRawScore();
 
+			ArrayList<FragmentIon> identifiedTargets=new ArrayList<FragmentIon>();
+			Spectrum bestStripe=ChromatogramExtractor.getTargetStripeByRT(stripes, bestRT);
+			if (bestStripe!=null) {
+				for (int i=0; i<targets.length; i++) {
+					float intensity=params.getFragmentTolerance().getIntegratedIntensity(bestStripe.getMassArray(), bestStripe.getIntensityArray(), targets[i].mass);
+					if (intensity>0) {
+						identifiedTargets.add(targets[i]);
+					}
+				}
+			}
+
 			HashMap<FragmentIon, XYTrace> otherTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), allIonsTypes, stripes, bestRT, GraphType.dashedline);
-			HashMap<FragmentIon, XYTrace> uniqueTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes, bestRT, GraphType.line);
+			HashMap<FragmentIon, XYTrace> uniqueTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes, null, GraphType.line);
 			
 			for (FragmentIon ion : uniqueTraces.keySet()) {
 				otherTraces.remove(ion);
@@ -246,6 +258,8 @@ public class PhosphoLocalizer {
 			uniqueFragmentIons.put(peptideAnnotation, uniqueTraces);
 			otherFragmentIons.put(peptideAnnotation, otherTraces);
 			uniqueTargetFragments.put(peptideAnnotation, targets);
+			uniqueIdentifiedTargetFragments.put(peptideAnnotation, identifiedTargets.toArray(new FragmentIon[identifiedTargets.size()]));
+			
 			//Charter.launchChart("Retention Time (Site Specific)", "Intensity", false, new Dimension(800, 250), traces);
 			//traces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), totalIons.toArray(new FragmentIon[totalIons.size()]), stripes);
 			//Charter.launchChart("Retention Time (All Ions)", "Intensity", false, new Dimension(800, 250), traces);
@@ -321,7 +335,7 @@ public class PhosphoLocalizer {
 			System.out.println("multiple\t"+peptideModSeqs.get(0)+"\t"+peptideModSeqs.size()+"\t"+formsRT.size()+"\t"+(formsRT.max()-formsRT.min())+"\t"+scores.max());
 		}*/
 		
-		return new PhosphoLocalizationData(allVsUniqueList, uniqueFragmentIons, otherFragmentIons, uniqueTargetFragments, localizationScores, passingForms);
+		return new PhosphoLocalizationData(allVsUniqueList, uniqueFragmentIons, otherFragmentIons, uniqueTargetFragments, uniqueIdentifiedTargetFragments, localizationScores, passingForms);
 	}
 	
 	TransitionRefinementData quantifyPeptide(String peptideModSeq, byte precursorCharge, double[] targetMasses, float targetRT, ArrayList<Spectrum> stripes, Optional<float[]> medianChromatogram) {
