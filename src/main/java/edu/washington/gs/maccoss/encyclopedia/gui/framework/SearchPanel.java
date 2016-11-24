@@ -249,6 +249,7 @@ public class SearchPanel extends JPanel {
 				launchElibBrowser();
 			}
 		});
+		launchBrowser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		viewMenu.add(launchBrowser);
 
 		JMenuItem launchPeptideBrowser=new JMenuItem("Launch Peptide Browser", peptideBrowserIcon);
@@ -335,7 +336,34 @@ public class SearchPanel extends JPanel {
 	public void launchElibBrowser() {
 		final JFrame dialog=new JFrame("ELIB/DIA Detection Browser");
 
-		dialog.getContentPane().add(new ResultsBrowserPanel(getVisibleTab().getParameters()), BorderLayout.CENTER);
+		JMenuBar bar=new JMenuBar();
+		JMenu fileMenu=new JMenu("File");
+		fileMenu.setMnemonic(KeyEvent.VK_F);
+		bar.add(fileMenu);
+		
+		final ResultsBrowserPanel browser=new ResultsBrowserPanel(getVisibleTab().getParameters());
+		JMenuItem openElib=new JMenuItem("Open ELIB...", diaBrowserIcon);
+		openElib.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				browser.askForLibrary();
+			}
+		});
+		openElib.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		fileMenu.add(openElib);
+		
+		JMenuItem rawBrowser=new JMenuItem("Open MZML...", diaBrowserIcon);
+		rawBrowser.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				browser.askForRaw();
+			}
+		});
+		rawBrowser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		fileMenu.add(rawBrowser);
+		dialog.setJMenuBar(bar);
+		
+		dialog.getContentPane().add(browser, BorderLayout.CENTER);
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.pack(); 
 		dialog.setSize(1900, 1030);

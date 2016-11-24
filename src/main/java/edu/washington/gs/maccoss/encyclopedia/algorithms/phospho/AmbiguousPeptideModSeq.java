@@ -17,12 +17,14 @@ public class AmbiguousPeptideModSeq {
 	private final boolean[] isModified;
 	private final boolean[] modifiable;
 	private final int[] modificationGroup;
+	private final byte ambiguityDirection; // left is -1, right is 1, no direction is 0
 	
-	public AmbiguousPeptideModSeq(String[] aas, boolean[] modifiable, boolean[] isModified, int[] modificationGroup) {
+	public AmbiguousPeptideModSeq(String[] aas, boolean[] modifiable, boolean[] isModified, int[] modificationGroup, byte ambiguityDirection) {
 		this.aas=aas;
 		this.modifiable=modifiable;
 		this.isModified=isModified;
 		this.modificationGroup=modificationGroup;
+		this.ambiguityDirection=ambiguityDirection;
 	}
 	
 	public int numAmbigousResidues() {
@@ -130,7 +132,7 @@ public class AmbiguousPeptideModSeq {
 				}
 			}
 		}
-		AmbiguousPeptideModSeq newSeq=new AmbiguousPeptideModSeq(newaas, newmodifiable, newisModified, newmodificationGroup);
+		AmbiguousPeptideModSeq newSeq=new AmbiguousPeptideModSeq(newaas, newmodifiable, newisModified, newmodificationGroup, ambiguityDirection);
 		
 		boolean ok=false;
 		for (int i=0; i<newmodificationGroup.length; i++) {
@@ -184,7 +186,11 @@ public class AmbiguousPeptideModSeq {
 		for (int i=0; i<aas.length; i++) {
 			if (modifiable[i]) {
 				if (modificationGroup[i]!=lastModGroup&&modificationGroup[i]!=0) {
-					sb.append("(");
+					if (ambiguityDirection==-1) {
+						sb.append("<");
+					} else {
+						sb.append("(");
+					}
 					lastModGroup=modificationGroup[i];
 				}
 				sb.append(aas[i]);
@@ -195,7 +201,11 @@ public class AmbiguousPeptideModSeq {
 					}
 				}
 				if (endOfGroup) {
-					sb.append(")");
+					if (ambiguityDirection==1) {
+						sb.append(">");
+					} else {
+						sb.append(")");
+					}
 				}
 			} else {
 				sb.append(aas[i]);
@@ -224,7 +234,7 @@ public class AmbiguousPeptideModSeq {
 				}
 			}
 		}
-		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup);
+		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup, (byte)0);
 	}
 	
 	public static AmbiguousPeptideModSeq getUnambigous(String targetPeptide, AminoAcidConstants aaConstants) {
@@ -248,7 +258,7 @@ public class AmbiguousPeptideModSeq {
 				}
 			}
 		}
-		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup);
+		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup, (byte)0);
 	}
 	
 	public static AmbiguousPeptideModSeq getLeftAmbiguity(String targetPeptide, AminoAcidConstants aaConstants) {
@@ -289,7 +299,7 @@ public class AmbiguousPeptideModSeq {
 				}
 			}
 		}
-		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup);
+		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup, (byte)-1);
 	}
 	
 	public static AmbiguousPeptideModSeq getRightAmbiguity(String targetPeptide, AminoAcidConstants aaConstants) {
@@ -330,7 +340,7 @@ public class AmbiguousPeptideModSeq {
 				}
 			}
 		}
-		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup);
+		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup, (byte)1);
 	}
 
 	public static boolean isLocalized(AmbiguousPeptideModSeq targetPeptideName) {
@@ -340,10 +350,10 @@ public class AmbiguousPeptideModSeq {
 		char[] ca=targetPeptideName.toCharArray();
 
 		for (int i = 0; i < ca.length; i++) {
-			if (ca[i]=='(') {
+			if (ca[i]=='('||ca[i]=='<') {
 				StringBuilder sb=new StringBuilder();
 				i++;
-				while (ca[i]!=')') {
+				while (ca[i]!=')'&&ca[i]!='>') {
 					sb.append(ca[i]);
 					i++;
 				}

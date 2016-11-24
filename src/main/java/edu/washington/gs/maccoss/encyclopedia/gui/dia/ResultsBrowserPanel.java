@@ -189,6 +189,13 @@ public class ResultsBrowserPanel extends JPanel {
 		add(split, BorderLayout.CENTER);
 	}
 	
+	public void askForLibrary() {
+		elibFileChooser.askForFiles();
+	}
+	public void askForRaw() {
+		rawFileChooser.askForFiles();
+	}
+	
 	public void updateTable(final File f) {
 		SwingWorkerProgress<ArrayList<LibraryEntry>> worker=new SwingWorkerProgress<ArrayList<LibraryEntry>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Library") {
 			@Override
