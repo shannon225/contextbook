@@ -452,7 +452,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 			Statement s=c.createStatement();
 			try {
 				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray from spectra "
-						+"where IsolationWindowCenter between "+targetMzRange.getStart()+" and "+targetMzRange.getStop()+" and ScanStartTime between "+minRT+" and "+maxRT);
+						+"where  IsolationWindowLower <= "+targetMzRange.getStop()+" and IsolationWindowUpper >= "+targetMzRange.getStart()+" and ScanStartTime between "+minRT+" and "+maxRT);
 				
 				final Vector<Stripe> stripes=new Vector<Stripe>();
 				

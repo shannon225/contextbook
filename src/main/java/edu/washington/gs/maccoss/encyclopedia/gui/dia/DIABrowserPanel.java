@@ -1,78 +1,76 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.Frame;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map.Entry;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.Collection;
+import java.util.Collections;
 
-import javax.swing.JButton;
+import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JSpinner;
+import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.JToolBar;
-import javax.swing.SpinnerModel;
-import javax.swing.SpinnerNumberModel;
+import javax.swing.RowFilter;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
-import org.jfree.chart.ChartPanel;
-
-import edu.washington.gs.maccoss.encyclopedia.algorithms.ExpectedFragmentationScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.FragmentationScoringResult;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.FragmentationTraceTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.IonCountingScoringTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumComparator;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumUtils;
 
 public class DIABrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
-	
-	private final PecanRawScorer scorer;
+	public static final Color[] colors=new Color[] {Color.red, Color.blue, Color.green, Color.cyan, Color.magenta, Color.orange, Color.yellow, Color.pink, Color.gray, 
+			Color.red.darker(), Color.blue.darker(), Color.green.darker(), Color.cyan.darker(), Color.magenta.darker(), Color.orange.darker(), Color.yellow.darker(), Color.pink.darker(), Color.gray.darker()};
 
+	private final FileChooserPanel rawFileChooser;
+	private final JSplitPane rawSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+	private final JSplitPane split=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+	private final JTable table;
+	private final TableRowSorter<TableModel> rowSorter;
+	private final JTextField jtfFilter;
+	private final DIAScanTableModel model;
 	private final SearchParameters parameters;
-	private final FileChooserPanel diaFile;
-	private final JTextField peptide=new JTextField("YLDGLTAER");
-	private final SpinnerModel charge=new SpinnerNumberModel(2, 1, 5, 1);
-	private final JSplitPane split=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-
+	
 	private StripeFileInterface dia=null;
 
 	public static void main(String[] args) {
@@ -114,107 +112,203 @@ public class DIABrowserPanel extends JPanel {
 
 		Logger.logLine("Launching DIA Browser");
 	}
-	
+
 	public DIABrowserPanel(SearchParameters parameters) {
 		super(new BorderLayout());
-		this.parameters=parameters; 
-		scorer=new PecanRawScorer(parameters.getFragmentTolerance(), new ExpectedFragmentationScorer(parameters, 3));
-
-		diaFile=new FileChooserPanel(null, "DIA File", new SimpleFilenameFilter(".dia", ".mzml"), true) {
+		this.parameters=parameters;
+		
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(new LabeledComponent("<p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Parameters", new JLabel()));
+		
+		rawFileChooser=new FileChooserPanel(null, "Raw", new SimpleFilenameFilter(".dia", ".mzML"), true) {
 			private static final long serialVersionUID=1L;
 
 			@Override
 			public void update(File... filename) {
 				super.update(filename);
 				if (filename!=null&&filename.length>0&&filename[0]!=null) {
-					try {
-						Logger.logLine("Reading file...");
-
-						dia=MzmlToDIAConverter.getFile(filename[0], DIABrowserPanel.this.parameters);
-						Logger.logLine("Finished reading file.");
-						resetPeptide(peptide.getText(), (Integer) charge.getValue());
-					} catch (Exception e) {
-						e.printStackTrace();
-						JOptionPane.showMessageDialog(DIABrowserPanel.this, "Sorry, there was a problem reading ["+filename[0].getName()+"]: "+e.getMessage(), "Error Opening DIA File",
-								JOptionPane.ERROR_MESSAGE);
-					}
-				} else {
-					dia=null;
+					updateRaw(filename[0]);
 				}
 			}
 		};
+		options.add(rawFileChooser);
+		
+		model=new DIAScanTableModel();
+		table=new JTable(model) {
+			private static final long serialVersionUID=1L;
 
-		JToolBar bar=new JToolBar();
-		bar.add(diaFile);
-		bar.add(new JLabel("Peptide Sequence:"));
-		bar.add(peptide);
-		bar.add(new JLabel("Charge:"));
-		bar.add(new JSpinner(charge));
-
-		JButton button=new JButton("GO");
-		button.addActionListener(new ActionListener() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				resetPeptide(peptide.getText(), (Integer) charge.getValue());
+			public Object getValueAt(int row, int column) {
+				if (column==0) return row+1;
+				return super.getValueAt(row, column);
+			}
+		};
+		rowSorter=new TableRowSorter<TableModel>(table.getModel());
+		table.setRowSorter(rowSorter);
+
+		jtfFilter=new JTextField();
+		jtfFilter.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				String text=jtfFilter.getText();
+
+				System.out.println("FILTER: "+text);
+				if (text.trim().length()==0) {
+					rowSorter.setRowFilter(null);
+				} else {
+					rowSorter.setRowFilter(RowFilter.regexFilter("(?i)"+text));
+				}
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				String text=jtfFilter.getText();
+
+				if (text.trim().length()==0) {
+					rowSorter.setRowFilter(null);
+				} else {
+					rowSorter.setRowFilter(RowFilter.regexFilter("(?i)"+text));
+				}
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				throw new UnsupportedOperationException("Not supported yet.");
 			}
 		});
-		bar.add(button);
-		bar.add(new JPanel());
 
-		add(bar, BorderLayout.NORTH);
+
+		JPanel searchPanel=new JPanel(new BorderLayout());
+		searchPanel.add(new JLabel("Search:"), BorderLayout.WEST);
+		searchPanel.add(jtfFilter, BorderLayout.CENTER);
+		
+		JPanel left=new JPanel(new BorderLayout());
+		left.add(options, BorderLayout.NORTH);
+		left.add(new JScrollPane(table), BorderLayout.CENTER);
+
+		setLayout(new BorderLayout());
+		left.add(searchPanel, BorderLayout.SOUTH);
+
+        
+		split.setLeftComponent(left);
+		split.setRightComponent(rawSplit);
+		
+		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+			@Override
+			public void valueChanged(ListSelectionEvent e) {
+				updateToSelected();
+			}
+		});
+		
 		add(split, BorderLayout.CENTER);
 	}
-
-	public void resetPeptide(String peptide, int charge) {
-		if (peptide==null||peptide.length()==0||dia==null) {
-			split.setTopComponent(new JLabel("Select a peptide!"));
-			split.setBottomComponent(new JPanel());
-		} else {
-			Logger.logLine("Parsing peptide...");
-			PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaPeptideEntry(peptide), parameters.getAAConstants());
-			ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
-			LibraryEntry entry=model.getUnitSpectrum(dia.getOriginalFileName(), new HashSet<String>(), (byte)charge, 0.0f, parameters);
-			entries.add(entry);
-			
-			try {
-				ArrayList<Stripe> stripes=dia.getStripes(entry.getPrecursorMZ(), 0.0f, Float.MAX_VALUE, false);
-				FragmentationTraceTask task=new FragmentationTraceTask(scorer, FragmentationTraceTask.PLOT_INTENSITIES, entries, stripes, new PrecursorScanMap(new ArrayList<PrecursorScan>()), parameters.getAAConstants());
-				HashMap<LibraryEntry, PeptideScoringResult> result=task.call();
-				
-				ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
-				for (Entry<LibraryEntry, PeptideScoringResult> resultEntry : result.entrySet()) {
-					FragmentationScoringResult peptideResult=(FragmentationScoringResult)resultEntry.getValue();
-
-					for (XYTrace trace : peptideResult.getFragmentationTraces()) {
-						traces.add(trace);
-					}
-				}
-				ChartPanel chart=Charter.getChart("RT ("+entry.getPrecursorMZ()+" M/Z)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
-				split.setTopComponent(chart);
-				
-
-				
-				BlockingQueue<PeptideScoringResult> ionCountResultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
-				IonCountingScoringTask ionCount=new IonCountingScoringTask(scorer, entries, stripes, 2.5f, new PrecursorScanMap(new ArrayList<PrecursorScan>()), ionCountResultsQueue, parameters);
-				ionCount.call();
-				
-				PeptideScoringResult ionCountResult=ionCountResultsQueue.take();
-				XYTraceInterface xytrace=ionCountResult.getTrace();
-				Pair<double[], double[]> trace=xytrace.toArrays();
-				double[] newx=General.multiply(trace.x, 1.0f/60.0f); // scale to minutes
-				XYTraceInterface ionCounttrace=new XYTrace(newx, trace.y, xytrace.getType(), xytrace.getName(), xytrace.getColor(), xytrace.getThickness());
-				
-				ChartPanel ionCountchart=Charter.getChart("RT ("+entry.getPrecursorMZ()+" M/Z)", "RawScore", false, ionCounttrace);
-
-				split.setBottomComponent(ionCountchart);
-				
-				
-			} catch (Exception e) {
-				e.printStackTrace();
-				JOptionPane.showMessageDialog(DIABrowserPanel.this, "Sorry, there was a problem reading the precursor window that contains ["+entry.getPrecursorMZ()+"]: "+e.getMessage(), "Error Reading DIA File",
-						JOptionPane.ERROR_MESSAGE);
-			}
-			Logger.logLine("Finished reading peptide "+peptide);
-		}
+	public void askForRaw() {
+		rawFileChooser.askForFiles();
 	}
+	
+	private float maxTIC=0.0f;
+	private XYTrace chromatogram=null;
+
+	public void updateRaw(final File f) {
+		SwingWorkerProgress<ArrayList<Spectrum>> worker=new SwingWorkerProgress<ArrayList<Spectrum>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Raw File") {
+			@Override
+			protected ArrayList<Spectrum> doInBackgroundForReal() throws Exception {
+				dia=MzmlToDIAConverter.getFile(f, parameters);
+				Logger.logLine("Read "+dia.getOriginalFileName()+", ("+dia.getRanges().size()+" total windows)");
+				ArrayList<Spectrum> scans=new ArrayList<Spectrum>();
+				Collection<XYPoint> tics=new ArrayList<XYPoint>();
+				maxTIC=0.0f;
+				
+				ArrayList<PrecursorScan> precursors=dia.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
+				int increment=precursors.size()/1000;
+				int scanCount=0;
+				float tic=0.0f;
+				for (PrecursorScan precursorScan : precursors) {
+					scans.add(precursorScan);
+					tic+=precursorScan.getTIC();
+					if (scanCount%increment==0) {
+						tics.add(new XYPoint(precursorScan.getScanStartTime()/60f, tic));
+						if (tic>maxTIC) {
+							maxTIC=tic;
+						}
+						tic=0;
+					}
+					scanCount++;
+				}
+				chromatogram=new XYTrace(tics, GraphType.area, "Precursor TIC");
+				
+				for (Stripe stripe : dia.getStripes(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), -Float.MAX_VALUE, Float.MAX_VALUE, false)) {
+					scans.add(stripe);
+				}
+				
+				Collections.sort(scans, new SpectrumComparator(SpectrumComparator.compareWithRT));
+				
+				return scans;
+			}
+			@Override
+			protected void doneForReal(ArrayList<Spectrum> t) {
+				model.updateEntries(t);
+			}
+		};
+		worker.execute();
+	}
+
+	public void updateToSelected() {
+		int[] selection=table.getSelectedRows();
+		if (selection.length<=0) return;
+		
+		ArrayList<Spectrum> entries=new ArrayList<Spectrum>();
+		for (int row : selection) {
+			Spectrum entry=model.getSelectedRow(table.convertRowIndexToModel(row));
+			entries.add(entry);
+		}
+		resetScan(entries);
+	}
+
+	public void resetScan(ArrayList<Spectrum> entries) {
+		int location=split.getDividerLocation();
+		//System.out.println("location:"+location);
+		if (location<=5) {
+			location=400;
+		}
+		int locationRaw=rawSplit.getDividerLocation();
+		//System.out.println("locationRaw:"+locationRaw);
+		if (locationRaw<=5) {
+			locationRaw=400;
+		}
+		
+		
+		if (entries==null) {
+			if (chromatogram!=null) {
+				rawSplit.setTopComponent(Charter.getChart("Retention Time", "Precursor TIC", false, chromatogram));
+			} else {
+				split.setLeftComponent(new JLabel("Select a scan!"));
+				return;
+			}
+		} else {
+				if (entries.size()==1) {
+					rawSplit.setBottomComponent(Charter.getChart(entries.get(0)));
+					float rt=entries.get(0).getScanStartTime()/60f;
+					XYTrace marker=new XYTrace(new double[] {rt, rt}, new double[] {0, maxTIC}, GraphType.dashedline, "marker");
+					rawSplit.setTopComponent(Charter.getChart("Retention Time", "Precursor TIC", false, chromatogram, marker));
+				} else {
+					rawSplit.setBottomComponent(Charter.getChart(SpectrumUtils.mergeSpectra(entries, parameters.getFragmentTolerance())));
+					
+					float minRT=Float.MAX_VALUE;
+					float maxRT=-Float.MAX_VALUE;
+					for (Spectrum spectrum : entries) {
+						float rt=spectrum.getScanStartTime()/60f;
+						if (rt>maxRT) maxRT=rt;
+						if (rt<minRT) minRT=rt;
+					}
+					XYTrace marker=new XYTrace(new double[] {maxRT, minRT}, new double[] {0, maxTIC}, GraphType.dashedline, "marker");
+					rawSplit.setTopComponent(Charter.getChart("Retention Time", "Precursor TIC", false, chromatogram, marker));
+				}
+		}
+		rawSplit.setDividerLocation(locationRaw);
+		split.setDividerLocation(location);
+	}
+	
+	
 }

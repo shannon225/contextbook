@@ -45,6 +45,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.gui.dia.PeptideExtractingBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.DIABrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.FeatureGrapher;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
@@ -70,6 +71,7 @@ public class SearchPanel extends JPanel {
 	private static final ImageIcon skylineIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/skyline_icon.png"));
 	private static final ImageIcon openDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/filedb.png"));
 	private static final ImageIcon convertDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/convertdb.png"));
+	private static final ImageIcon libraryBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_small_icon.png"));
 	private static final ImageIcon diaBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/orbi_icon.png"));
 	private static final ImageIcon peptideBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/peptide_icon.png"));
 	private static final ImageIcon featureBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/feature_icon.png"));
@@ -242,7 +244,7 @@ public class SearchPanel extends JPanel {
 		viewMenu.setMnemonic(KeyEvent.VK_V);
 		bar.add(viewMenu);
 
-		JMenuItem launchBrowser=new JMenuItem("Launch ELIB Browser", diaBrowserIcon);
+		JMenuItem launchBrowser=new JMenuItem("Launch ELIB Browser", libraryBrowserIcon);
 		launchBrowser.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -251,6 +253,15 @@ public class SearchPanel extends JPanel {
 		});
 		launchBrowser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		viewMenu.add(launchBrowser);
+
+		JMenuItem launchDIABrowser=new JMenuItem("Launch MZML Browser", diaBrowserIcon);
+		launchDIABrowser.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				launchDIABrowser();
+			}
+		});
+		viewMenu.add(launchDIABrowser);
 
 		JMenuItem launchPeptideBrowser=new JMenuItem("Launch Peptide Browser", peptideBrowserIcon);
 		launchPeptideBrowser.addActionListener(new ActionListener() {
@@ -326,7 +337,7 @@ public class SearchPanel extends JPanel {
 	public void launchPeptideBrowser() {
 		final JFrame dialog=new JFrame("Peptide/DIA Detection Browser");
 
-		dialog.getContentPane().add(new DIABrowserPanel(getVisibleTab().getParameters()), BorderLayout.CENTER);
+		dialog.getContentPane().add(new PeptideExtractingBrowserPanel(getVisibleTab().getParameters()), BorderLayout.CENTER);
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.pack(); 
 		dialog.setSize(1900, 1030);
@@ -351,6 +362,34 @@ public class SearchPanel extends JPanel {
 		});
 		openElib.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		fileMenu.add(openElib);
+		
+		JMenuItem rawBrowser=new JMenuItem("Open MZML...", diaBrowserIcon);
+		rawBrowser.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				browser.askForRaw();
+			}
+		});
+		rawBrowser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		fileMenu.add(rawBrowser);
+		dialog.setJMenuBar(bar);
+		
+		dialog.getContentPane().add(browser, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(1900, 1030);
+		dialog.setVisible(true);
+	}
+	
+	public void launchDIABrowser() {
+		final JFrame dialog=new JFrame("MZML Browser");
+
+		JMenuBar bar=new JMenuBar();
+		JMenu fileMenu=new JMenu("File");
+		fileMenu.setMnemonic(KeyEvent.VK_F);
+		bar.add(fileMenu);
+		
+		final DIABrowserPanel browser=new DIABrowserPanel(getVisibleTab().getParameters());
 		
 		JMenuItem rawBrowser=new JMenuItem("Open MZML...", diaBrowserIcon);
 		rawBrowser.addActionListener(new ActionListener() {

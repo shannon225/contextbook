@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 import java.util.Arrays;
 import java.util.Optional;
 
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 
 //@Immutable
@@ -54,6 +55,8 @@ public class MassTolerance {
 	}
 
 	public Optional<Integer> getIndex(double[] peaks, double target) {
+		if (peaks.length==0) return Optional.empty();
+		
 		int value=Arrays.binarySearch(peaks, target);
 		// exact match (not likely)
 		if (value>=0) return Optional.of(value);
