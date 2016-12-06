@@ -39,6 +39,33 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class PeptideQuantExtractor {
+	private final ProgressIndicator progress;
+	private final StripeFileInterface stripefile;
+	private final PhosphoLocalizer localizer;
+	private final SearchParameters parameters;
+	
+	public PeptideQuantExtractor(ProgressIndicator progress, LibraryInterface searchedLibrary, StripeFileInterface stripefile, SearchParameters parameters) {
+		this.progress=progress;
+		this.stripefile=stripefile;
+		this.parameters=parameters;
+		
+		PhosphoLocalizer localizer;
+		if (parameters.isRunPhosphoLocalization()&&searchedLibrary!=null) {
+			try {
+				localizer=new PhosphoLocalizer(stripefile, searchedLibrary, parameters);
+			} catch (DataFormatException dfe) {
+				localizer=null;
+			} catch (IOException ioe) {
+				localizer=null;
+			} catch (SQLException sqle) {
+				localizer=null;
+			}
+		} else {
+			localizer=null;
+		}
+		this.localizer=localizer;
+	}
+
 	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, final SearchJobData job, boolean limitToQuantifiable, ArrayList<PercolatorPeptide> globalPassingPSMIDs, ArrayList<PercolatorPeptide> localPassingPSMIDs, final Optional<PeakLocationInferrer> inferrer, StripeFileInterface stripeFile, LibraryInterface searchedLibrary, final SearchParameters parameters) {
 		HashSet<String> passingPeptideSequences=new HashSet<String>();
 		final TObjectFloatHashMap<String> savedPeptides=new TObjectFloatHashMap<String>();
@@ -177,7 +204,8 @@ public class PeptideQuantExtractor {
 				}
 			}
 			
-			return extractPeptides(progress, searchedLibrary, stripeFile, uniquedData.values(), limitToQuantifiable, parameters);
+			PeptideQuantExtractor extractor=new PeptideQuantExtractor(progress, searchedLibrary, stripeFile, parameters);
+			return extractor.extractPeptides(uniquedData.values(), limitToQuantifiable);
 		} catch (IOException ioe) {
 			Logger.errorLine("Error processing "+stripeFile.getFile().getName());
 			throw new EncyclopediaException("Error parsing Stripe file", ioe);
@@ -193,16 +221,12 @@ public class PeptideQuantExtractor {
 		}
 	}
 	
-	public static ArrayList<IntegratedLibraryEntry> extractPeptides(ProgressIndicator progress, LibraryInterface searchedLibrary, StripeFileInterface stripefile, Collection<PSMData> data, boolean limitToQuantifiable, SearchParameters parameters) throws IOException, SQLException, DataFormatException, InterruptedException {
+	public ArrayList<IntegratedLibraryEntry> extractPeptides(Collection<PSMData> data, boolean limitToQuantifiable) throws IOException, SQLException, DataFormatException, InterruptedException {
 		ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries=new ConcurrentLinkedQueue<IntegratedLibraryEntry>();
 		int cores=parameters.getNumberOfThreadsUsed();
 		Logger.logLine("Extracting "+data.size()+" peptides...");
 		
 		String filename=stripefile.getOriginalFileName();
-		PhosphoLocalizer localizer=null;
-		if (parameters.isRunPhosphoLocalization()&&searchedLibrary!=null) {
-			localizer=new PhosphoLocalizer(stripefile, searchedLibrary, parameters);
-		}
 		
 		// get targeted ranges
 		ArrayList<Range> ranges=new ArrayList<Range>();

@@ -61,6 +61,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 
 public class PeptideExtractingBrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -186,10 +187,11 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 					FragmentationScoringResult peptideResult=(FragmentationScoringResult)resultEntry.getValue();
 
 					for (XYTrace trace : peptideResult.getFragmentationTraces()) {
-						traces.add(trace);
+						XYTrace sgSmoothed=SkylineSGFilter.paddedSavitzkyGolaySmooth(trace);
+						traces.add(sgSmoothed);
 					}
 				}
-				ChartPanel chart=Charter.getChart("RT ("+entry.getPrecursorMZ()+" M/Z)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
+				ChartPanel chart=Charter.getChart("Retention Time (min)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
 				split.setTopComponent(chart);
 				
 
@@ -204,7 +206,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 				double[] newx=General.multiply(trace.x, 1.0f/60.0f); // scale to minutes
 				XYTraceInterface ionCounttrace=new XYTrace(newx, trace.y, xytrace.getType(), xytrace.getName(), xytrace.getColor(), xytrace.getThickness());
 				
-				ChartPanel ionCountchart=Charter.getChart("RT ("+entry.getPrecursorMZ()+" M/Z)", "RawScore", false, ionCounttrace);
+				ChartPanel ionCountchart=Charter.getChart("Retention Time (min)", "RawScore", false, ionCounttrace);
 
 				split.setBottomComponent(ionCountchart);
 				

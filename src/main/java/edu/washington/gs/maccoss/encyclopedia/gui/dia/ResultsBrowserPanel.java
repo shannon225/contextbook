@@ -85,6 +85,8 @@ public class ResultsBrowserPanel extends JPanel {
 	
 	private LibraryInterface library=null;
 	private StripeFileInterface dia=null;
+	private Optional<PhosphoLocalizer> nullableLocalizer=Optional.ofNullable(null);
+
 
 	public ResultsBrowserPanel(SearchParameters parameters) {
 		super(new BorderLayout());
@@ -207,6 +209,12 @@ public class ResultsBrowserPanel extends JPanel {
 				if (source.isPresent()) {
 					dia=source.get();
 				}
+
+				if (dia!=null&&library!=null&&parameters.isRunPhosphoLocalization()) {
+					PhosphoLocalizer localizer=new PhosphoLocalizer(dia, library, parameters);
+					nullableLocalizer=Optional.ofNullable(localizer);
+				}
+				
 				return entries;
 			}
 			@Override
@@ -222,6 +230,12 @@ public class ResultsBrowserPanel extends JPanel {
 			@Override
 			protected Nothing doInBackgroundForReal() throws Exception {
 				dia=MzmlToDIAConverter.getFile(f, parameters);
+
+				if (dia!=null&&library!=null&&parameters.isRunPhosphoLocalization()) {
+					PhosphoLocalizer localizer=new PhosphoLocalizer(dia, library, parameters);
+					nullableLocalizer=Optional.ofNullable(localizer);
+				}
+
 				Logger.logLine("Read "+dia.getOriginalFileName()+", ("+dia.getRanges().size()+" total windows)");
 				return Nothing.NOTHING;
 			}
@@ -291,10 +305,9 @@ public class ResultsBrowserPanel extends JPanel {
 				primaryTabs.add("Fragments", fragmentChart);
 				primaryTabs.add("Precursors", precursorChart);
 				rawSplit.setTopComponent(primaryTabs);
-
-				PhosphoLocalizer localizer=new PhosphoLocalizer(dia, library, parameters);
+				
 				PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), targetRT, entry.getScore(), 1.0f-entry.getScore(), 2*rtRange);
-				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(dia.getOriginalFileName(), psmdata, Optional.ofNullable(localizer), stripes, parameters, false);
+				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(dia.getOriginalFileName(), psmdata, nullableLocalizer, stripes, parameters, false);
 				TransitionRefinementData data=quantTask.extractSpectrum(unit, rtRange, false);
 				if (data!=null) {
 					HashMap<String, ChartPanel> panels=TransitionRefiner.getChartPanels(data);
@@ -393,6 +406,18 @@ public class ResultsBrowserPanel extends JPanel {
 						
 					}
 					tabs.add("Quantification", peakPickingSplit);
+					if (!maybePhosphoData.isPresent()) {
+						Spectrum bestStripe=ChromatogramExtractor.getTargetStripeByRT(downcastedSpectra, targetRT);
+						AnnotatedLibraryEntry annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(entry.getPeptideModSeq(), entry.getPrecursorCharge()), bestStripe, parameters);
+
+						JSplitPane specFragPane=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+						ChartPanel spectrumPane=Charter.getChart(annotatedEntry);
+						FragmentationTable fragTable=new FragmentationTable(entry, entry.getPeptideModSeq(), parameters);
+						specFragPane.add(spectrumPane, JSplitPane.TOP);
+						specFragPane.add(fragTable, JSplitPane.BOTTOM);
+
+						tabs.add("Detection", specFragPane);
+					}
 					
 					rawSplit.setBottomComponent(tabs);
 					peakPickingSplit.setDividerLocation(locationPP);
