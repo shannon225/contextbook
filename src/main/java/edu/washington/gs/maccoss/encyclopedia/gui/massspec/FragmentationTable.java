@@ -21,7 +21,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 
 public class FragmentationTable extends JPanel {
 	private static final long serialVersionUID=1L;
-	private static final DecimalFormat MASS_FORMAT = new DecimalFormat(".#");
+	private static final DecimalFormat MASS_FORMAT = new DecimalFormat(".####");
 	
 	public FragmentationTable(LibraryEntry spec, String peptideModSeq, SearchParameters params) {
 		super(new BorderLayout());
