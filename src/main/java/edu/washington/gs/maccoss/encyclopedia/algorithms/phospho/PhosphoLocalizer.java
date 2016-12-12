@@ -275,13 +275,19 @@ public class PhosphoLocalizer {
 				// make sure there are at least 3 "identification" peaks
 				int numIdentificationPeaks=0;
 				float[] correlations=quantData.getCorrelationArray();
+				FragmentIon[] consideredIons=quantData.getFragmentMassArray();
+				ArrayList<FragmentIon> wellShapedIons=new ArrayList<FragmentIon>();
 				for (int i=0; i<correlations.length; i++) {
 					if (correlations[i]>=TransitionRefiner.quantitativeCorrelationThreshold) {
 						numIdentificationPeaks++;
+						wellShapedIons.add(consideredIons[i]);
 					}
 				}
-				// if there's not enough, check for other non-localizing peaks for confirmation
-				if (numIdentificationPeaks<3) {
+				if (numIdentificationPeaks==0) {
+					// if there's not any localization evidence for a well formed peak then give up
+					continue;
+				} else if (numIdentificationPeaks<3) {
+					// if there's not enough, check for other non-localizing peaks for confirmation
 					float[] medianChromatogram=quantData.getMedianChromatogram();
 					TransitionRefinementData allQuantData=quantifyPeptide(targetPeptideSequence, precursorCharge, allIonsTypes, bestRT, localStripes, Optional.of(medianChromatogram));
 					if (allQuantData==null) continue;
@@ -304,7 +310,7 @@ public class PhosphoLocalizer {
 					bestRT=quantData.getApexRT();
 					formsRT.add(bestRT);
 
-					ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideAnnotation, bestRT, maxRawScore, numberOfMods, isLocalized);
+					ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideAnnotation, bestRT, maxRawScore, numberOfMods, isLocalized, wellShapedIons.toArray(new FragmentIon[wellShapedIons.size()]));
 
 					quantData.setModificationLocalizationData(Optional.of(modData));
 					

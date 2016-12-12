@@ -257,7 +257,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		Connection c=getConnection();
 		try {
 			PreparedStatement peptidePrep=c.prepareStatement(
-					"INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, NumberOfMods, IsSiteSpecific, RTInSecondsCenter, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray,IdentifiedTICRatio) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+					"INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, LocalizationIons, NumberOfMods, IsSiteSpecific, RTInSecondsCenter, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray,IdentifiedTICRatio) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 			PreparedStatement fragmentPrep=c.prepareStatement(
 					"INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, IonType, IonIndex, FragmentMass, Correlation, Background, DeltaMassPPM, Intensity) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
 			try {
@@ -371,31 +371,33 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			ModificationLocalizationData modData=data.getLocalizationData().get();
 			peptidePrep.setString(5, modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
 			peptidePrep.setFloat(6, modData.getLocalizationScore());
-			peptidePrep.setInt(7, modData.getNumberOfMods());
-			peptidePrep.setBoolean(8, modData.isSiteSpecific());
-			peptidePrep.setFloat(9,  modData.getRetentionTimeApexInSeconds());
+			peptidePrep.setString(7, FragmentIon.toArchiveString(modData.getLocalizingIons()));
+			peptidePrep.setInt(8, modData.getNumberOfMods());
+			peptidePrep.setBoolean(9, modData.isSiteSpecific());
+			peptidePrep.setFloat(10,  modData.getRetentionTimeApexInSeconds());
 			
 		} else {
 			peptidePrep.setNull(5, Types.VARCHAR);
 			peptidePrep.setNull(6, Types.FLOAT);
-			peptidePrep.setNull(7, Types.INTEGER);
-			peptidePrep.setNull(8, Types.BOOLEAN);
-			peptidePrep.setFloat(9,  data.getApexRT());
+			peptidePrep.setNull(7, Types.VARCHAR);
+			peptidePrep.setNull(8, Types.INTEGER);
+			peptidePrep.setNull(9, Types.BOOLEAN);
+			peptidePrep.setFloat(10,  data.getApexRT());
 		}
 		
-		peptidePrep.setFloat(10, data.getRange().getStart());
-		peptidePrep.setFloat(11, data.getRange().getStop());
-		peptidePrep.setFloat(12, topN.x);
-		peptidePrep.setInt(13, topN.y);
-		peptidePrep.setFloat(14, bestCorrelation);
-		peptidePrep.setFloat(15, bestDeltaMass);
+		peptidePrep.setFloat(11, data.getRange().getStart());
+		peptidePrep.setFloat(12, data.getRange().getStop());
+		peptidePrep.setFloat(13, topN.x);
+		peptidePrep.setInt(14, topN.y);
+		peptidePrep.setFloat(15, bestCorrelation);
+		peptidePrep.setFloat(16, bestDeltaMass);
 		byte[] intensityByteArray=ByteConverter.toByteArray(data.getMedianChromatogram());
-		peptidePrep.setInt(16, intensityByteArray.length);
-		peptidePrep.setBytes(17, CompressionUtils.compress(intensityByteArray));
+		peptidePrep.setInt(17, intensityByteArray.length);
+		peptidePrep.setBytes(18, CompressionUtils.compress(intensityByteArray));
 		if (data.getIdentifiedTICRatio().isPresent()) {
-			peptidePrep.setFloat(18, data.getIdentifiedTICRatio().get());
+			peptidePrep.setFloat(19, data.getIdentifiedTICRatio().get());
 		} else {
-			peptidePrep.setFloat(18, 0.0f);
+			peptidePrep.setFloat(19, 0.0f);
 		}
 		peptidePrep.addBatch();
 
@@ -807,6 +809,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					}
 
 					if (new Version(0, 1, 7).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
+						s.execute("ALTER TABLE peptidequants ADD COLUMN LocalizationIons string");
 						s.execute("ALTER TABLE fragmentquants ADD COLUMN IonIndex int");
 					}
 				} catch (SQLException sqle) {
@@ -823,7 +826,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				s.execute("CREATE TABLE IF NOT EXISTS proteins ( "+"PeptideSeq string not null, ProteinAccessions string not null, "+"PRIMARY KEY (PeptideSeq) "+")");
 
 				s.execute("CREATE TABLE IF NOT EXISTS peptidequants ( "
-						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, NumberOfMods int, IsSiteSpecific boolean, RTInSecondsCenter double not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null, IdentifiedTICRatio double not null,"
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, LocalizationIons string, NumberOfMods int, IsSiteSpecific boolean, RTInSecondsCenter double not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null, IdentifiedTICRatio double not null,"
 						+"PRIMARY KEY (PrecursorCharge, PeptideModSeq, SourceFile), "
 						+"FOREIGN KEY (PrecursorCharge, PeptideModSeq, SourceFile) REFERENCES entries (PrecursorCharge, PeptideModSeq, SourceFile) "+")");
 
