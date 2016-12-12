@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
@@ -17,7 +16,7 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class TransitionRefinementData implements PeptidePrecursor {
-	private final double[] fragmentMassArray; // every considered ion
+	private final FragmentIon[] fragmentMassArray; // every considered ion
 	private final ArrayList<float[]> chromatograms; // every considered ion
 	private final float[] correlationArray; // every considered ion
 	private final float[] integrationArray; // every considered ion
@@ -42,7 +41,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	private Optional<ModificationLocalizationData> localizationData;
 	private Optional<HashMap<String, TransitionRefinementData>> modificationQuantData;
 	
-	public TransitionRefinementData(String peptideModSeq, byte precursorCharge, double[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range) {
+	public TransitionRefinementData(String peptideModSeq, byte precursorCharge, FragmentIon[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range) {
 		this(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, null, null, null, null, null, null, null);
 	}
 
@@ -55,7 +54,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	 * @param massArray CAN BE NULL
 	 * @param intensityArray CAN BE NULL
 	 */
-	TransitionRefinementData(String peptideModSeq, byte precursorCharge, double[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range, float[] deltaMassArray, double[] massArray, float[] intensityArray, float[] rtArray, ModificationLocalizationData localizationData, HashMap<String, TransitionRefinementData> modificationQuantData, Float identifiedTICRatio) {
+	TransitionRefinementData(String peptideModSeq, byte precursorCharge, FragmentIon[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range, float[] deltaMassArray, double[] massArray, float[] intensityArray, float[] rtArray, ModificationLocalizationData localizationData, HashMap<String, TransitionRefinementData> modificationQuantData, Float identifiedTICRatio) {
 		this.peptideModSeq=peptideModSeq;
 		this.precursorCharge=precursorCharge;
 		this.fragmentMassArray=fragmentMassArray;
@@ -78,30 +77,23 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		TDoubleArrayList mzs=new TDoubleArrayList();
 		TFloatArrayList intens=new TFloatArrayList();
 		TFloatArrayList corrs=new TFloatArrayList();
+		ArrayList<FragmentIon> ionAnnotations=new ArrayList<FragmentIon>();
 		
 		for (int i=0; i<fragmentMassArray.length; i++) {
 			if (integrationArray[i]>0.0f) {
-				mzs.add(fragmentMassArray[i]);
+				mzs.add(fragmentMassArray[i].mass);
 				intens.add(integrationArray[i]);
 				corrs.add(correlationArray[i]);
+				ionAnnotations.add(fragmentMassArray[i]);
 			}
 		}
 		
 		double[] mzsArray=mzs.toArray();
 		float[] intensArray=intens.toArray();
 		float[] corrsArray=corrs.toArray();
-		FragmentIon[] ionAnnotations=new FragmentIon[mzsArray.length];
-
-		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
-		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge())) {
-			int[] indicies=parameters.getFragmentTolerance().getIndicies(mzsArray, fragmentIon.mass);
-			for (int i=0; i<indicies.length; i++) {
-				ionAnnotations[indicies[i]]=fragmentIon;
-			}
-		}
 		
 		return new AnnotatedLibraryEntry(entry.getSource(), entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(),
-				entry.getCopies(), getApexRT(), entry.getScore(), mzsArray, intensArray, corrsArray, ionAnnotations);
+				entry.getCopies(), getApexRT(), entry.getScore(), mzsArray, intensArray, corrsArray, ionAnnotations.toArray(new FragmentIon[ionAnnotations.size()]));
 	}
 	
 	@Override
@@ -212,7 +204,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, deltaMass, mass, intensity, rts, localizationData.isPresent()?localizationData.get():null, modificationQuantData.isPresent()?modificationQuantData.get():null, identifiedTICRatio);
 	}
 	
-	public double[] getFragmentMassArray() {
+	public FragmentIon[] getFragmentMassArray() {
 		return fragmentMassArray;
 	}
 	

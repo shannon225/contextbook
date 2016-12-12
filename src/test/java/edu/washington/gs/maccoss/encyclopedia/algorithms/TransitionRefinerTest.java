@@ -4,8 +4,9 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
-import gnu.trove.list.array.TDoubleArrayList;
 
 public class TransitionRefinerTest {
 
@@ -54,7 +55,6 @@ public class TransitionRefinerTest {
 		float[] y9=new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 168510.5625f, 393503.1875f, 368990.21875f, 611638.8125f, 419877.75f, 324253.5625f, 173974.625f, 90743.15625f,
 				0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 8127.353515625f, 5719.25244140625f, 0.0f, 0.0f,};
 		chromatograms.add(y9);
-		String[] ionNames=new String[] {"b2", "y2", "b3", "y3", "b4", "y4", "b5", "y5", "y6", "y7", "y8", "y9",};
 		float[] rts=new float[] {70.01758575439453f, 70.0562744140625f, 70.09734344482422f, 70.1347885131836f, 70.17521667480469f, 70.21282196044922f, 70.25397491455078f, 70.293701171875f,
 				70.3323974609375f, 70.37088775634766f, 70.40955352783203f, 70.44808959960938f, 70.48809051513672f, 70.52470397949219f, 70.5665054321289f, 70.60203552246094f, 70.64164733886719f,
 				70.67855072021484f, 70.71800994873047f, 70.7557373046875f, 70.79398345947266f, 70.83085632324219f, 70.87123107910156f, 70.9073257446289f, 70.94801330566406f, 70.98357391357422f,};
@@ -68,12 +68,21 @@ public class TransitionRefinerTest {
 			rts[i]=rts[i]*60.0f;
 		}
 
-		TDoubleArrayList masses=new TDoubleArrayList();
-		int count=0;
-		for (int i=0; i<chromatograms.size(); i++) {
-			masses.add(count++);
-		}
-		double[] fragmentMasses=masses.toArray();
+		String[] ionNames=new String[] {"b2", "y2", "b3", "y3", "b4", "y4", "b5", "y5", "y6", "y7", "y8", "y9",};
+		ArrayList<FragmentIon> ions=new ArrayList<FragmentIon>();
+		ions.add(new FragmentIon(2, (byte)2, IonType.b));
+		ions.add(new FragmentIon(2, (byte)2, IonType.y));
+		ions.add(new FragmentIon(3, (byte)3, IonType.b));
+		ions.add(new FragmentIon(3, (byte)3, IonType.y));
+		ions.add(new FragmentIon(4, (byte)4, IonType.b));
+		ions.add(new FragmentIon(4, (byte)4, IonType.y));
+		ions.add(new FragmentIon(5, (byte)5, IonType.b));
+		ions.add(new FragmentIon(5, (byte)5, IonType.y));
+		ions.add(new FragmentIon(6, (byte)6, IonType.y));
+		ions.add(new FragmentIon(7, (byte)7, IonType.y));
+		ions.add(new FragmentIon(8, (byte)8, IonType.y));
+		ions.add(new FragmentIon(9, (byte)9, IonType.y));
+		FragmentIon[] fragmentMasses=ions.toArray(new FragmentIon[ions.size()]);
 
 		TransitionRefinementData data=TransitionRefiner.identifyTransitions("EIGNIISDAMK", (byte)2, fragmentMasses, chromatograms, rts, Optional.ofNullable((float[])null), true);
 		float[] correlations=data.getCorrelationArray();
@@ -114,7 +123,6 @@ public class TransitionRefinerTest {
 		float[] y8=new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 133591.40625f, 105622.3203125f, 107714.359375f, 90343.625f, 187992.90625f, 175194.765625f,
 				400795.59375f, 218788.625f, 387960.625f, 154844.1875f, 276996.125f, 0.0f, 0.0f, 0.0f};
 		chromatograms.add(y8);
-		String[] ionNames=new String[] {"y2", "b2", "y3", "b3", "y4", "y5", "y6", "y7", "y8",};
 		float[] rts=new float[] {45.98421859741211f, 46.02557373046875f, 46.06422805786133f, 46.1038818359375f, 46.142822265625f, 46.18221664428711f, 46.2204475402832f, 46.26137161254883f,
 				46.29861831665039f, 46.340152740478516f, 46.3767204284668f, 46.41716003417969f, 46.455848693847656f, 46.495277404785156f, 46.53367614746094f, 46.57311248779297f, 46.61155700683594f,
 				46.6527099609375f, 46.689884185791016f, 46.73152542114258f, 46.768741607666016f, 46.81028747558594f, 46.848995208740234f, 46.88846969604492f, 46.92737579345703f};
@@ -128,12 +136,18 @@ public class TransitionRefinerTest {
 			rts[i]=rts[i]*60.0f;
 		}
 
-		TDoubleArrayList masses=new TDoubleArrayList();
-		int count=0;
-		for (int i=0; i<chromatograms.size(); i++) {
-			masses.add(count++);
-		}
-		double[] fragmentMasses=masses.toArray();
+		String[] ionNames=new String[] {"y2", "b2", "y3", "b3", "y4", "y5", "y6", "y7", "y8",};
+		ArrayList<FragmentIon> ions=new ArrayList<FragmentIon>();
+		ions.add(new FragmentIon(2, (byte)2, IonType.y));
+		ions.add(new FragmentIon(2, (byte)2, IonType.b));
+		ions.add(new FragmentIon(3, (byte)3, IonType.y));
+		ions.add(new FragmentIon(3, (byte)3, IonType.b));
+		ions.add(new FragmentIon(4, (byte)4, IonType.y));
+		ions.add(new FragmentIon(5, (byte)5, IonType.y));
+		ions.add(new FragmentIon(6, (byte)6, IonType.y));
+		ions.add(new FragmentIon(7, (byte)7, IonType.y));
+		ions.add(new FragmentIon(8, (byte)8, IonType.y));
+		FragmentIon[] fragmentMasses=ions.toArray(new FragmentIon[ions.size()]);
 
 		TransitionRefinementData data=TransitionRefiner.identifyTransitions("ASVAAQQQEEAR", (byte)2, fragmentMasses, chromatograms, rts, Optional.ofNullable((float[])null), true);
 		float[] correlations=data.getCorrelationArray();

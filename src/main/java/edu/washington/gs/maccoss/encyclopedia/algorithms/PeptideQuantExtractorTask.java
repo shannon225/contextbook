@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -18,6 +19,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
@@ -111,7 +113,8 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 				}
 			}
 					
-			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(filename, psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), data.getFragmentMassArray(), data.getIntegrationArray(), data);
+			double[] fragmentMassArray=FragmentIon.getMasses(data.getFragmentMassArray());
+			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(filename, psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), fragmentMassArray, data.getIntegrationArray(), data);
 			if (limitToQuantifiable) {
 				if (entry.getIonCount()<4||entry.getTIC()<1.0f) {
 					return Nothing.NOTHING;
@@ -134,17 +137,17 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 
 	private Optional<TransitionRefinementData> extractSpectrum(HashSet<String> accessions, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable) {
 		FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-		LibraryEntry unitEntry=model.getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params);
+		AnnotatedLibraryEntry unitEntry=model.getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params);
 		
 		return Optional.ofNullable(extractSpectrum(unitEntry, duration, limitToQuantifiable));
 	}
 
-	public TransitionRefinementData extractSpectrum(LibraryEntry unitEntry, float duration, boolean limitToQuantifiable) {
+	public TransitionRefinementData extractSpectrum(AnnotatedLibraryEntry unitEntry, float duration, boolean limitToQuantifiable) {
 		ArrayList<Stripe> stripes=getScanSubset(unitEntry.getRetentionTime()-duration, unitEntry.getRetentionTime()+duration);
 		return quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes);
 	}
 
-	public static TransitionRefinementData quantifyPeptide(PSMScorer scorer, LibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<Stripe> stripes) {
+	public static TransitionRefinementData quantifyPeptide(PSMScorer scorer, AnnotatedLibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<Stripe> stripes) {
 		// find the center
 		float bestDelta=Float.MAX_VALUE;
 		PeakScores[] bestScores=null;
@@ -197,7 +200,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		ArrayList<PeakScores> bestKeptPeaks=new ArrayList<PeakScores>();
 		ArrayList<float[]> chromatograms=new ArrayList<float[]>();
 		ArrayList<ArrayList<XYZPoint>> chromatogramDeltaMassesByRT=new ArrayList<ArrayList<XYZPoint>>();
-		TDoubleArrayList fragmentMasses=new TDoubleArrayList();
+		ArrayList<FragmentIon> fragmentMasses=new ArrayList<FragmentIon>();
 		for (int i=0; i<bestScores.length; i++) {
 			if (bestScores[i]!=null&&bestScores[i].getScore()>0) {
 				float[] chromatogram=traces[i].toArray();
@@ -205,12 +208,12 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 				chromatograms.add(chromatogram);
 				chromatogramDeltaMassesByRT.add(deltaMassesByRT[i]);
 				bestKeptPeaks.add(bestScores[i]);
-				fragmentMasses.add(bestScores[i].getTargetMass());
+				fragmentMasses.add(bestScores[i].getTarget());
 			}
 		}
 		
 		// identify transitions
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions(unitEntry.getPeptideModSeq(), unitEntry.getPrecursorCharge(), fragmentMasses.toArray(), chromatograms, retentionTimes.toArray());
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions(unitEntry.getPeptideModSeq(), unitEntry.getPrecursorCharge(), fragmentMasses.toArray(new FragmentIon[fragmentMasses.size()]), chromatograms, retentionTimes.toArray());
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		Range rtRange=data.getRange();

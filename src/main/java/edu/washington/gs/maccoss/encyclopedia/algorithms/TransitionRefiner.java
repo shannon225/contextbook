@@ -14,13 +14,14 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.FloatPair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
-import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class TransitionRefiner {
@@ -32,7 +33,6 @@ public class TransitionRefiner {
 	
 	public static void main(String[] args) {
 		ArrayList<float[]> chromatograms=new ArrayList<float[]>();
-		String[] ionNames=new String[] {"y2", "b3", "b4", "y3", "b5", "y4", "b6", "y5", "y6", "y7", "y8", "y9"};
 		float[] y2=new float[] { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 7182.16455078125f, 18434.455078125f, 21684.3671875f, 3613.233642578125f, 8689.09765625f, 12955.7373046875f, 28795.33203125f,
 				3359.6435546875f, 7611.09130859375f, 11048.0908203125f, 9528.0302734375f, 12914.23828125f, 8072.17626953125f, 3192.732666015625f, 2322.4375f, 2494.99609375f, 3846.780029296875f,
 				3825.619140625f, 2689.070556640625f };
@@ -86,12 +86,21 @@ public class TransitionRefiner {
 			rts[i]=rts[i]*60.0f;
 		}
 
-		TDoubleArrayList masses=new TDoubleArrayList();
-		int count=0;
-		for (int i=0; i<chromatograms.size(); i++) {
-			masses.add(count++);
-		}
-		double[] fragmentMasses=masses.toArray();
+		String[] ionNames=new String[] {"y2", "b3", "b4", "y3", "b5", "y4", "b6", "y5", "y6", "y7", "y8", "y9"};
+		ArrayList<FragmentIon> ions=new ArrayList<FragmentIon>();
+		ions.add(new FragmentIon(2, (byte)2, IonType.y));
+		ions.add(new FragmentIon(3, (byte)3, IonType.b));
+		ions.add(new FragmentIon(4, (byte)4, IonType.b));
+		ions.add(new FragmentIon(3, (byte)3, IonType.y));
+		ions.add(new FragmentIon(5, (byte)5, IonType.b));
+		ions.add(new FragmentIon(4, (byte)4, IonType.y));
+		ions.add(new FragmentIon(6, (byte)6, IonType.b));
+		ions.add(new FragmentIon(5, (byte)5, IonType.y));
+		ions.add(new FragmentIon(6, (byte)6, IonType.y));
+		ions.add(new FragmentIon(7, (byte)7, IonType.y));
+		ions.add(new FragmentIon(8, (byte)8, IonType.y));
+		ions.add(new FragmentIon(9, (byte)9, IonType.y));
+		FragmentIon[] fragmentMasses=ions.toArray(new FragmentIon[ions.size()]);
 		
 		TransitionRefinementData data=identifyTransitions("ASVAAQQQEEAR", (byte)2, fragmentMasses, chromatograms, rts, Optional.ofNullable((float[])null), true);
 		float[] correlations=data.getCorrelationArray();
@@ -102,15 +111,15 @@ public class TransitionRefiner {
 		Charter.launchCharts("TITLE", getChartPanels(data));
 	}
 
-	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, double[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes) {
+	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes) {
 		return identifyTransitions(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, retentionTimes, Optional.ofNullable((float[])null), false);
 	}
 
-	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, double[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> medianChromatogram) {
+	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> medianChromatogram) {
 		return identifyTransitions(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, retentionTimes, medianChromatogram, false);
 	}
-	static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, double[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean plot) {
-		if (chromatograms.size()==0) return new TransitionRefinementData(peptideModSeq, precursorCharge, new double[0], chromatograms, new float[0], new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]));
+	static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean plot) {
+		if (chromatograms.size()==0) return new TransitionRefinementData(peptideModSeq, precursorCharge, new FragmentIon[0], chromatograms, new float[0], new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]));
 		
 		ArrayList<float[]> normalizedChromatograms;
 		int maxIndex;

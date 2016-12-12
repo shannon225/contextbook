@@ -1,5 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
+import java.util.ArrayList;
+
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -31,48 +34,64 @@ public class DotProduct implements PSMScorer {
 
 	@Override
 	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize) {
-		return getIndividualPeakScores(entry, spectrum, normalize, null);
+		if (entry instanceof AnnotatedLibraryEntry) {
+			return getIndividualPeakScores(entry, spectrum, normalize, ((AnnotatedLibraryEntry)entry).getIonAnnotations());
+		} else {
+			throw new EncyclopediaException("DotProduct doesn't currently handle ion selection. Please report this bug!");
+		}
 	}
 	
 	@Override
 	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize, FragmentIon[] ions) {
-		if (ions!=null) {
-			throw new EncyclopediaException("DotProduct doesn't currently handle ion selection. Please report this bug!");
-		}
+		MassTolerance acquiredTolerance=tolerance;
+		MassTolerance libraryTolerance=tolerance;
 		
-		double[] libraryMasses=entry.getMassArray();
-		float[] libraryIntensities=entry.getIntensityArray();
+		double[] predictedMasses=entry.getMassArray();
+		float[] predictedIntensities=entry.getIntensityArray();
+		float[] correlation=entry.getCorrelationArray();
 		
-		double[] spectrumMasses=spectrum.getMassArray();
-		float[] spectrumIntensities=spectrum.getIntensityArray();
+		double[] acquiredMasses=spectrum.getMassArray();
+		float[] acquiredIntensities=spectrum.getIntensityArray();
 		
-		if (libraryMasses.length==0||spectrumMasses.length==0) return new PeakScores[0];
 		
-		PeakScores[] peakscores=new PeakScores[libraryIntensities.length];
-		int libraryIndex=0;
-		int spectrumIndex=0;
-		while (true) {
-			double targetMass=libraryMasses[libraryIndex];
-			int compare=tolerance.compareTo(targetMass, spectrumMasses[spectrumIndex]);
-			if (compare==0) {
-				float score=libraryIntensities[libraryIndex]*spectrumIntensities[spectrumIndex];
-				float deltaMass=(float)(targetMass-spectrumMasses[spectrumIndex]);
-				if (peakscores[libraryIndex]!=null) {
-					score+=peakscores[libraryIndex].getScore();
+		ArrayList<PeakScores> scoredPeaks=new ArrayList<PeakScores>();
+		for (FragmentIon targetIon : ions) {
+			double target=targetIon.mass;
+			
+			int[] predictedIndicies=libraryTolerance.getIndicies(predictedMasses, target);
+			float predictedIntensity=0.0f;
+			float maxCorrelation=0.01f;
+			for (int i=0; i<predictedIndicies.length; i++) {
+				if (predictedIntensity<predictedIntensities[predictedIndicies[i]]) {
+					predictedIntensity=predictedIntensities[predictedIndicies[i]];
 				}
-				peakscores[libraryIndex]=new PeakScores(score, new FragmentIon(targetMass, (byte)0, IonType.y), deltaMass); // FIXME target is a hack!
-				//libraryIndex++; // could match multiple acquired peaks to the same library peak
-				spectrumIndex++;
-			} else if (compare>0) {
-				spectrumIndex++;
-			} else {
-				libraryIndex++;
+				if (maxCorrelation<correlation[predictedIndicies[i]]) {
+					maxCorrelation=correlation[predictedIndicies[i]];
+				}
 			}
-			if (libraryIndex>=libraryMasses.length) break;
-			if (spectrumIndex>=spectrumMasses.length) break;
+			
+			if (predictedIntensity>0) {
+				int[] indicies=acquiredTolerance.getIndicies(acquiredMasses, target);
+				float intensity=0.0f;
+				float bestPeakIntensity=0.0f;
+				float deltaMass=0.0f;
+				for (int j=0; j<indicies.length; j++) {
+					intensity+=acquiredIntensities[indicies[j]];
+					
+					if (acquiredIntensities[indicies[j]]>bestPeakIntensity) {
+						bestPeakIntensity=acquiredIntensities[indicies[j]];
+						deltaMass=(float)((target-acquiredMasses[indicies[j]])*1000000.0/target);
+					}
+				}
+				float peakScore=predictedIntensity*intensity*maxCorrelation;
+				if (intensity>0.0f) {
+					scoredPeaks.add(new PeakScores(peakScore, targetIon, deltaMass));
+				} else {
+					scoredPeaks.add(null);
+				}
+			}
 		}
-		
-		return peakscores;
+		return scoredPeaks.toArray(new PeakScores[scoredPeaks.size()]);
 	}
 	
 	@Override

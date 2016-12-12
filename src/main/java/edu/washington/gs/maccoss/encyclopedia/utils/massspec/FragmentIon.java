@@ -1,6 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
+import java.util.StringTokenizer;
+
 public class FragmentIon implements Comparable<FragmentIon> {
+	private static final String ARCHIVE_DELIMINATOR=";";
 	private static final MassTolerance tolerance=new MassTolerance(0.1f); 
 	public final double mass;
 	public final byte index;
@@ -31,6 +34,17 @@ public class FragmentIon implements Comparable<FragmentIon> {
 	@Override
 	public String toString() {
 		return IonType.toString(type, index);
+	}
+	
+	public String toArchiveString() {
+		return IonType.toString(type)+ARCHIVE_DELIMINATOR+index;
+	}
+	
+	public FragmentIon fromArchiveString(String s, double mass) {
+		StringTokenizer st=new StringTokenizer(s, ARCHIVE_DELIMINATOR);
+		IonType type=IonType.fromString(st.nextToken());
+		byte index=Byte.parseByte(st.nextToken());
+		return new FragmentIon(mass, index, type);
 	}
 	
 	@Override

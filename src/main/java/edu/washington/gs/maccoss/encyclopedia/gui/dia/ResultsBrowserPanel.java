@@ -285,7 +285,7 @@ public class ResultsBrowserPanel extends JPanel {
 			FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 			ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
 			float targetRT=entry.getRetentionTime();
-			LibraryEntry unit=model.getUnitSpectrum(dia.getOriginalFileName(), entry.getAccessions(), (byte)entry.getPrecursorCharge(), targetRT, parameters, 200.0);
+			AnnotatedLibraryEntry unit=model.getUnitSpectrum(dia.getOriginalFileName(), entry.getAccessions(), (byte)entry.getPrecursorCharge(), targetRT, parameters, 200.0);
 			entries.add(unit);
 			
 			try {

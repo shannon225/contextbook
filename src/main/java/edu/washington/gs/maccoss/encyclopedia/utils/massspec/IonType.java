@@ -62,6 +62,40 @@ public enum IonType {
 		return "unknown";
 	}
 	
+	public static IonType fromString(String s) {
+		if("a".equals(s)) return a;
+		if("b".equals(s)) return a;
+		if("c".equals(s)) return c;
+		if("x".equals(s)) return x;
+		if("y".equals(s)) return y;
+		if("z".equals(s)) return z;
+		if("z+1".equals(s)) return z1;
+		if("a-NL".equals(s)) return aNL;
+		if("b-NL".equals(s)) return bNL;
+		if("c-NL".equals(s)) return cNL;
+		if("x-NL".equals(s)) return xNL;
+		if("y-NL".equals(s)) return yNL;
+		if("z-NL".equals(s)) return zNL;
+		if("z+1-NL".equals(s)) return z1NL;
+
+		if("a+2H".equals(s)) return ap2;
+		if("b+2H".equals(s)) return bp2;
+		if("c+2H".equals(s)) return cp2;
+		if("x+2H".equals(s)) return xp2;
+		if("y+2H".equals(s)) return yp2;
+		if("z+2H".equals(s)) return zp2;
+		if("z+1+2H".equals(s)) return z1p2;
+		if("a+2H-NL".equals(s)) return ap2NL;
+		if("b+2H-NL".equals(s)) return bp2NL;
+		if("c+2H-NL".equals(s)) return cp2NL;
+		if("x+2H-NL".equals(s)) return xp2NL;
+		if("y+2H-NL".equals(s)) return yp2NL;
+		if("z+2H-NL".equals(s)) return zp2NL;
+		if("z+1+2H-NL".equals(s)) return z1p2NL;
+
+		throw new EncyclopediaException("Can't get ion class for type: "+s);
+	}
+	
 	public static String toString(IonType t, byte index) {
 		switch (t) {
 		case a: return "a"+index;
