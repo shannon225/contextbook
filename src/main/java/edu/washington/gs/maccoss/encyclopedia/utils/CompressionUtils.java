@@ -8,12 +8,14 @@ import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 
-public class CompressionUtils {
-	public static byte[] compress(byte[] data) throws IOException {
-		Deflater deflater=new Deflater();
-		deflater.setInput(data);
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
-		ByteArrayOutputStream outputStream=new ByteArrayOutputStream(data.length);
+public class CompressionUtils {
+	public static byte[] compress(byte[] decompressedData) throws IOException {
+		Deflater deflater=new Deflater();
+		deflater.setInput(decompressedData);
+
+		ByteArrayOutputStream outputStream=new ByteArrayOutputStream(decompressedData.length);
 
 		deflater.finish();
 		byte[] buffer=new byte[1024];
@@ -22,20 +24,39 @@ public class CompressionUtils {
 			outputStream.write(buffer, 0, count);
 		}
 		outputStream.close();
-		byte[] output=outputStream.toByteArray();
+		byte[] compressedData=outputStream.toByteArray();
 
 		deflater.end();
 
-		return output;
+		return compressedData;
 	}
 
-	public static byte[] decompress(byte[] data, int uncompressedLength) throws IOException, DataFormatException {
+	public static byte[] decompress(byte[] compressedData) throws IOException {
+		Inflater decompressor=new Inflater();
+		decompressor.setInput(compressedData);
+		// Create expandable byte array
+		ByteArrayOutputStream outputStream=new ByteArrayOutputStream(compressedData.length);
+		byte[] buf=new byte[1024];
+		while (!decompressor.finished()) {
+			try {
+				int count=decompressor.inflate(buf);
+				outputStream.write(buf, 0, count);
+			} catch (DataFormatException e) {
+				throw new IllegalStateException("Formatting error when decompressing data["+General.toString(compressedData)+"]!", e);
+			}
+		}
+		outputStream.close();
+
+		return outputStream.toByteArray();
+	}
+
+	public static byte[] decompress(byte[] compressedData, int uncompressedLength) throws IOException, DataFormatException {
 		Inflater decompresser=new Inflater();
-		decompresser.setInput(data);
-		byte[] result=new byte[uncompressedLength];
-		decompresser.inflate(result);
+		decompresser.setInput(compressedData);
+		byte[] decompressedData=new byte[uncompressedLength];
+		decompresser.inflate(decompressedData);
 		decompresser.end();
-		return result;
+		return decompressedData;
 	}
 
 	public static byte[] decompressGzip(byte[] data, int uncompressedLength) throws IOException {

@@ -90,6 +90,8 @@ public class General {
 	}
 	
 	public static String toString(@SuppressWarnings("rawtypes") Set i) {
+		if (i==null) return null;
+		
 		StringBuilder sb=new StringBuilder();
 		for (Object g : i) {
 			if (sb.length()>0) {
@@ -101,6 +103,8 @@ public class General {
 	}
 	
 	public static String toString(int[] i) {
+		if (i==null) return null;
+		
 		StringBuilder sb=new StringBuilder();
 		for (int g : i) {
 			if (sb.length()>0) {
@@ -112,6 +116,8 @@ public class General {
 	}
 	
 	public static String toString(byte[] i) {
+		if (i==null) return null;
+		
 		StringBuilder sb=new StringBuilder();
 		for (int g : i) {
 			if (sb.length()>0) {
@@ -123,8 +129,23 @@ public class General {
 	}
 	
 	public static String toString(float[] f) {
+		if (f==null) return null;
+		
 		StringBuilder sb=new StringBuilder();
 		for (float g : f) {
+			if (sb.length()>0) {
+				sb.append(',');
+			}
+			sb.append(g);
+		}
+		return sb.toString();
+	}
+	
+	public static String toString(double[] i) {
+		if (i==null) return null;
+		
+		StringBuilder sb=new StringBuilder();
+		for (Object g : i) {
 			if (sb.length()>0) {
 				sb.append(',');
 			}

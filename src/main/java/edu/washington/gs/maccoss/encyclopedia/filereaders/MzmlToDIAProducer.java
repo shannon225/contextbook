@@ -41,6 +41,7 @@ public class MzmlToDIAProducer implements Runnable {
 
 	@Override
 	public void run() {
+		try {
 		int spectrumCount=unmarshaller.getObjectCountForXpath("/run/spectrumList/spectrum");
 		Logger.logLine("Number of spectrum elements: "+spectrumCount);
 
@@ -161,6 +162,10 @@ public class MzmlToDIAProducer implements Runnable {
 		} catch (InterruptedException ie) {
 			Logger.errorLine("Mzml reading interrupted!");
 			Logger.errorException(ie);
+		}
+		} catch (Exception e) {
+			Logger.errorLine("Mzml reading failed!");
+			Logger.errorException(e);
 		}
 	}
 
