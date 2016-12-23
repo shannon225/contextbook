@@ -30,6 +30,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakFrequencyCalculator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
@@ -57,7 +58,7 @@ public class PeakLocationInferrer {
 	
 	public Pair<Float, Integer> getTopNIntensity(TransitionRefinementData data) {
 		double[] topN=bestIons.get(data.getPeptideModSeq());
-		double[] masses=data.getFragmentMassArray();
+		double[] masses=FragmentIon.getMasses(data.getFragmentMassArray());
 		float[] intensities=data.getIntegrationArray();
 		
 		if (topN==null||topN.length==0) {

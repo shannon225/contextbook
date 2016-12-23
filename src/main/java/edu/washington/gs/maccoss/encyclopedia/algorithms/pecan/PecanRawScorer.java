@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -42,7 +43,11 @@ public class PecanRawScorer implements PSMScorer {
 
 	@Override
 	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize) {
-		return getIndividualPeakScores(entry, spectrum, normalize, null);
+		//if (entry instanceof AnnotatedLibraryEntry) {
+		//	return getIndividualPeakScores(entry, spectrum, normalize, ((AnnotatedLibraryEntry) entry).getIonAnnotations());
+		//} else {
+			return getIndividualPeakScores(entry, spectrum, normalize, null);
+		//}
 	}
 	
 	@Override

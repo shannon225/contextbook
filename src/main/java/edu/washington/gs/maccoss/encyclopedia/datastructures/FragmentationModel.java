@@ -36,7 +36,7 @@ public class FragmentationModel {
 		return (mass+MassConstants.protonMass*charge)/charge;
 	}
 	
-	public LibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params) {
+	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params) {
 		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, 0.0);
 	}
 

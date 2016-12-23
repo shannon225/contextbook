@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import java.util.ArrayList;
+
 import junit.framework.TestCase;
 
 public class RangeTest extends TestCase {
@@ -23,4 +25,15 @@ public class RangeTest extends TestCase {
 		assertEquals(40f, r.mapBackToRange(50f, 40f, 50f));
 	}
 
+	public void testWidestRange() {
+		ArrayList<Range> ranges=new ArrayList<Range>();
+		ranges.add(new Range(10f, 20f));
+		ranges.add(new Range(30f, 40f));
+		ranges.add(new Range(-10f, 20f));
+		ranges.add(new Range(10f, 20f));
+		
+		Range widest=Range.getWidestRange(ranges);
+		assertEquals(-10f, widest.getStart());
+		assertEquals(40f, widest.getStop());
+	}
 }

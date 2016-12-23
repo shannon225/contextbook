@@ -121,4 +121,18 @@ public class Range implements Comparable<Range> {
 		if (interp>getStop()) return getStop();
 		return interp;
 	}
+	
+	public static Range getWidestRange(ArrayList<Range> ranges) {
+		float min=Float.MAX_VALUE;
+		float max=-Float.MAX_VALUE;
+		for (Range range : ranges) {
+			if (range.getStart()<min) {
+				min=range.getStart();
+			}
+			if (range.getStop()>max) {
+				max=range.getStop();
+			}
+		}
+		return new Range(min, max);
+	}
 }

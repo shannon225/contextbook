@@ -269,21 +269,27 @@ public class PhosphoLocalizer {
 				boolean isLocalized=maxRawScore>=MINIMUM_SCORE&&AmbiguousPeptideModSeq.isLocalized(targetPeptideAnnotation);
 				
 				ArrayList<Spectrum> localStripes=getScanSubset(bestRT-params.getExpectedPeakWidth(), bestRT+params.getExpectedPeakWidth(), allScansInStripe);
-				TransitionRefinementData quantData=quantifyPeptide(targetPeptideSequence, precursorCharge, ions, bestRT, localStripes, Optional.ofNullable((float[])null));
+				TransitionRefinementData quantData=quantifyPeptide(targetPeptideSequence, precursorCharge, targets, bestRT, localStripes, Optional.ofNullable((float[])null));
 				if (quantData==null) continue;
 				
 				// make sure there are at least 3 "identification" peaks
 				int numIdentificationPeaks=0;
 				float[] correlations=quantData.getCorrelationArray();
+				FragmentIon[] consideredIons=quantData.getFragmentMassArray();
+				ArrayList<FragmentIon> wellShapedIons=new ArrayList<FragmentIon>();
 				for (int i=0; i<correlations.length; i++) {
 					if (correlations[i]>=TransitionRefiner.quantitativeCorrelationThreshold) {
 						numIdentificationPeaks++;
+						wellShapedIons.add(consideredIons[i]);
 					}
 				}
-				// if there's not enough, check for other non-localizing peaks for confirmation
-				if (numIdentificationPeaks<3) {
+				if (numIdentificationPeaks==0) {
+					// if there's not any localization evidence for a well formed peak then give up
+					continue;
+				} else if (numIdentificationPeaks<3) {
+					// if there's not enough, check for other non-localizing peaks for confirmation
 					float[] medianChromatogram=quantData.getMedianChromatogram();
-					TransitionRefinementData allQuantData=quantifyPeptide(targetPeptideSequence, precursorCharge, allIons, bestRT, localStripes, Optional.of(medianChromatogram));
+					TransitionRefinementData allQuantData=quantifyPeptide(targetPeptideSequence, precursorCharge, allIonsTypes, bestRT, localStripes, Optional.of(medianChromatogram));
 					if (allQuantData==null) continue;
 					
 					numIdentificationPeaks=0;
@@ -304,7 +310,7 @@ public class PhosphoLocalizer {
 					bestRT=quantData.getApexRT();
 					formsRT.add(bestRT);
 
-					ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideAnnotation, bestRT, maxRawScore, numberOfMods, isLocalized);
+					ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideAnnotation, bestRT, maxRawScore, numberOfMods, isLocalized, wellShapedIons.toArray(new FragmentIon[wellShapedIons.size()]));
 
 					quantData.setModificationLocalizationData(Optional.of(modData));
 					
@@ -336,7 +342,7 @@ public class PhosphoLocalizer {
 		return new PhosphoLocalizationData(allVsUniqueList, uniqueFragmentIons, otherFragmentIons, uniqueTargetFragments, uniqueIdentifiedTargetFragments, localizationScores, passingForms);
 	}
 	
-	TransitionRefinementData quantifyPeptide(String peptideModSeq, byte precursorCharge, double[] targetMasses, float targetRT, ArrayList<Spectrum> stripes, Optional<float[]> medianChromatogram) {
+	TransitionRefinementData quantifyPeptide(String peptideModSeq, byte precursorCharge, FragmentIon[] targetMasses, float targetRT, ArrayList<Spectrum> stripes, Optional<float[]> medianChromatogram) {
 		float bestDelta=Float.MAX_VALUE;
 		float[] bestIntensities=null;
 		ArrayList<float[]> intensityList=new ArrayList<float[]>();
@@ -347,7 +353,7 @@ public class PhosphoLocalizer {
 			Spectrum spectrum=stripes.get(k);
 			retentionTimes.add(spectrum.getScanStartTime());
 			float delta=Math.abs(spectrum.getScanStartTime()-targetRT);
-			float[] integratedIntensities=params.getFragmentTolerance().getIntegratedIntensities(spectrum.getMassArray(), spectrum.getIntensityArray(), targetMasses);
+			float[] integratedIntensities=params.getFragmentTolerance().getIntegratedIntensities(spectrum.getMassArray(), spectrum.getIntensityArray(), FragmentIon.getMasses(targetMasses));
 			intensityList.add(integratedIntensities);
 			if (delta<bestDelta) {
 				bestDelta=delta;
@@ -383,7 +389,7 @@ public class PhosphoLocalizer {
 		ArrayList<float[]> chromatograms=new ArrayList<float[]>();
 		ArrayList<ArrayList<XYZPoint>> chromatogramDeltaMassesByRT=new ArrayList<ArrayList<XYZPoint>>();
 		TFloatArrayList keptIntensities=new TFloatArrayList();
-		TDoubleArrayList keptMasses=new TDoubleArrayList();
+		ArrayList<FragmentIon> keptMasses=new ArrayList<FragmentIon>();
 		for (int i=0; i<bestIntensities.length; i++) {
 			if (bestIntensities[i]>0.0f) {
 				float[] chromatogram=traces[i].toArray();
@@ -396,7 +402,7 @@ public class PhosphoLocalizer {
 		}
 
 		// identify transitions
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions(peptideModSeq, precursorCharge, keptMasses.toArray(), chromatograms, retentionTimes.toArray(), medianChromatogram);
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions(peptideModSeq, precursorCharge, keptMasses.toArray(new FragmentIon[keptMasses.size()]), chromatograms, retentionTimes.toArray(), medianChromatogram);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		Range rtRange=data.getRange();
@@ -428,7 +434,7 @@ public class PhosphoLocalizer {
 			if (correlations[i]>=correlationThreshold) {
 				// grab mz
 				if (keptIntensities.get(i)>0) {
-					mzs.add(keptMasses.get(i));
+					mzs.add(keptMasses.get(i).mass);
 					intens.add(integrations[i]);
 				}
 			}

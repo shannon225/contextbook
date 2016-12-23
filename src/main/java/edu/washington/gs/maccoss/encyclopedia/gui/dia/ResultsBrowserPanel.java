@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.io.File;
 import java.util.ArrayList;
@@ -172,11 +173,11 @@ public class ResultsBrowserPanel extends JPanel {
 		
 		JPanel left=new JPanel(new BorderLayout());
 		left.add(options, BorderLayout.NORTH);
-		left.add(new JScrollPane(table), BorderLayout.CENTER);
+		left.add(new JScrollPane(table, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED), BorderLayout.CENTER);
 
 		setLayout(new BorderLayout());
 		left.add(searchPanel, BorderLayout.SOUTH);
-
+		left.setMinimumSize(new Dimension(100, 100));
         
 		split.setLeftComponent(left);
 		split.setRightComponent(new JLabel("Select a peptide!"));
@@ -284,7 +285,7 @@ public class ResultsBrowserPanel extends JPanel {
 			FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 			ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
 			float targetRT=entry.getRetentionTime();
-			LibraryEntry unit=model.getUnitSpectrum(dia.getOriginalFileName(), entry.getAccessions(), (byte)entry.getPrecursorCharge(), targetRT, parameters, 200.0);
+			AnnotatedLibraryEntry unit=model.getUnitSpectrum(dia.getOriginalFileName(), entry.getAccessions(), (byte)entry.getPrecursorCharge(), targetRT, parameters, 200.0);
 			entries.add(unit);
 			
 			try {

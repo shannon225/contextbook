@@ -1,6 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
+import java.util.ArrayList;
+import java.util.StringTokenizer;
+
 public class FragmentIon implements Comparable<FragmentIon> {
+	private static final String INDEX_DELIMINATOR=";";
+	private static final String ARCHIVE_DELIMINATOR="|";
 	private static final MassTolerance tolerance=new MassTolerance(0.1f); 
 	public final double mass;
 	public final byte index;
@@ -31,6 +36,34 @@ public class FragmentIon implements Comparable<FragmentIon> {
 	@Override
 	public String toString() {
 		return IonType.toString(type, index);
+	}
+	
+	public static String toArchiveString(FragmentIon[] ions) {
+		StringBuilder sb=new StringBuilder();
+		for (FragmentIon ion : ions) {
+			if (sb.length()>0) {
+				sb.append(ARCHIVE_DELIMINATOR);
+			}
+			sb.append(IonType.toString(ion.type));
+			sb.append(INDEX_DELIMINATOR);
+			sb.append(ion.index);
+			sb.append(INDEX_DELIMINATOR);
+			sb.append(ion.mass);
+		}
+		return sb.toString();
+	}
+	
+	public static FragmentIon[] fromArchiveString(String s) {
+		StringTokenizer st=new StringTokenizer(s, ARCHIVE_DELIMINATOR);
+		ArrayList<FragmentIon> ions=new ArrayList<FragmentIon>();
+		while (st.hasMoreTokens()) {
+			StringTokenizer st2=new StringTokenizer(st.nextToken(), INDEX_DELIMINATOR);
+			IonType type=IonType.fromString(st2.nextToken());
+			byte index=Byte.parseByte(st2.nextToken());
+			double mass=Double.parseDouble(st2.nextToken());
+			ions.add(new FragmentIon(mass, index, type));
+		}
+		return ions.toArray(new FragmentIon[ions.size()]);
 	}
 	
 	@Override

@@ -3,7 +3,6 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 import java.util.Arrays;
 import java.util.Optional;
 
-import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 
 //@Immutable
