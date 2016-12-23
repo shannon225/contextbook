@@ -61,13 +61,18 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 	}
 	
 	@Override
+	public boolean accept(File dir, String name) {
+		return name.toLowerCase().endsWith(MzmlToDIAConverter.MZML_EXTENSION);
+	}
+	
+	@Override
 	public boolean canTryToReadFile(File f) {
 		if (!f.exists()||!f.isFile()||!f.canRead()) return false; 
 		return f.getName().toLowerCase().endsWith(MzmlToDIAConverter.MZML_EXTENSION);
 	}
 	
 	@Override
-	public StripeFileInterface createStripeFile(File f, SearchParameters parameters) {
+	public StripeFileInterface readStripeFile(File f, SearchParameters parameters) {
 		if (canTryToReadFile(f)) {
 			String absolutePath=f.getAbsolutePath();
 			File diaFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+StripeFile.DIA_EXTENSION);

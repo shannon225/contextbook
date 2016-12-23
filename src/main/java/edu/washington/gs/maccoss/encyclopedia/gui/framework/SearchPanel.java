@@ -45,6 +45,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.PeptideExtractingBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.DIABrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.FeatureGrapher;
@@ -210,14 +211,14 @@ public class SearchPanel extends JPanel {
 		loadTarget.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		fileMenu.add(loadTarget);
 
-		JMenuItem openMZML=new JMenuItem("Open MZML", openIcon);
+		JMenuItem openMZML=new JMenuItem("Open RAW File", openIcon);
 		openMZML.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				addMZML();
 			}
 		});
-		openMZML.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		openMZML.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		fileMenu.add(openMZML);
 
 		JMenuItem saveELIB=new JMenuItem("Save Library", openDBIcon);
@@ -254,7 +255,7 @@ public class SearchPanel extends JPanel {
 		launchBrowser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		viewMenu.add(launchBrowser);
 
-		JMenuItem launchDIABrowser=new JMenuItem("Launch MZML Browser", diaBrowserIcon);
+		JMenuItem launchDIABrowser=new JMenuItem("Launch RAW File Browser", diaBrowserIcon);
 		launchDIABrowser.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -363,7 +364,7 @@ public class SearchPanel extends JPanel {
 		openElib.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		fileMenu.add(openElib);
 		
-		JMenuItem rawBrowser=new JMenuItem("Open MZML...", diaBrowserIcon);
+		JMenuItem rawBrowser=new JMenuItem("Open RAW File...", diaBrowserIcon);
 		rawBrowser.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -382,7 +383,7 @@ public class SearchPanel extends JPanel {
 	}
 	
 	public void launchDIABrowser() {
-		final JFrame dialog=new JFrame("MZML Browser");
+		final JFrame dialog=new JFrame("RAW File Browser");
 
 		JMenuBar bar=new JMenuBar();
 		JMenu fileMenu=new JMenu("File");
@@ -391,7 +392,7 @@ public class SearchPanel extends JPanel {
 		
 		final DIABrowserPanel browser=new DIABrowserPanel(getVisibleTab().getParameters());
 		
-		JMenuItem rawBrowser=new JMenuItem("Open MZML...", diaBrowserIcon);
+		JMenuItem rawBrowser=new JMenuItem("Open RAW File...", diaBrowserIcon);
 		rawBrowser.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -551,7 +552,7 @@ public class SearchPanel extends JPanel {
 		if (maybeError.isPresent()) {
 			JOptionPane.showMessageDialog(frame, maybeError.get());
 		} else if (processorTableModel.getRowCount()==0) {
-			JOptionPane.showMessageDialog(frame, "Please queue some MZMLs first!");
+			JOptionPane.showMessageDialog(frame, "Please queue some RAW files first!");
 			
 		} else {
 			FileDialog dialog=new FileDialog(frame, "Save a BLIB file", FileDialog.SAVE);
@@ -584,7 +585,7 @@ public class SearchPanel extends JPanel {
 		if (maybeError.isPresent()) {
 			JOptionPane.showMessageDialog(frame, maybeError.get());
 		} else if (processorTableModel.getRowCount()==0) {
-			JOptionPane.showMessageDialog(frame, "Please queue some MZMLs first!");
+			JOptionPane.showMessageDialog(frame, "Please queue some RAW files first!");
 			
 		} else {
 			FileDialog dialog=new FileDialog(frame, "Save a ELIB file", FileDialog.SAVE);
@@ -621,9 +622,9 @@ public class SearchPanel extends JPanel {
 		if (maybeError.isPresent()) {
 			JOptionPane.showMessageDialog(frame, maybeError.get());
 		} else {
-			FileDialog dialog=new FileDialog(frame, "Select a MZML file", FileDialog.LOAD);
+			FileDialog dialog=new FileDialog(frame, "Select a RAW file", FileDialog.LOAD);
 			dialog.setMultipleMode(true);
-			dialog.setFilenameFilter(new SimpleFilenameFilter(".mzml", ".dia"));
+			dialog.setFilenameFilter(StripeFileGenerator.getFilenameFilter());
 			dialog.setVisible(true);
 			if (dialog.getFiles()!=null) {
 				for (File file : dialog.getFiles()) {

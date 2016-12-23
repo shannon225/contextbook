@@ -121,7 +121,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 		this.parameters=parameters; 
 		scorer=new PecanRawScorer(parameters.getFragmentTolerance(), new ExpectedFragmentationScorer(parameters, 3));
 
-		diaFile=new FileChooserPanel(null, "DIA File", new SimpleFilenameFilter(".dia", ".mzml"), true) {
+		diaFile=new FileChooserPanel(null, "RAW File", StripeFileGenerator.getFilenameFilter(), true) {
 			private static final long serialVersionUID=1L;
 
 			@Override

@@ -121,7 +121,7 @@ public class DIABrowserPanel extends JPanel {
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(new LabeledComponent("<p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Parameters", new JLabel()));
 		
-		rawFileChooser=new FileChooserPanel(null, "Raw", new SimpleFilenameFilter(".dia", ".mzML"), true) {
+		rawFileChooser=new FileChooserPanel(null, "RAW File", StripeFileGenerator.getFilenameFilter(), true) {
 			private static final long serialVersionUID=1L;
 
 			@Override

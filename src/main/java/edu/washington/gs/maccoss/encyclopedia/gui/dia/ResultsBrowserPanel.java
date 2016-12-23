@@ -109,7 +109,7 @@ public class ResultsBrowserPanel extends JPanel {
 		};
 		options.add(elibFileChooser);
 		
-		rawFileChooser=new FileChooserPanel(null, "Raw", new SimpleFilenameFilter(".dia", ".mzML"), true) {
+		rawFileChooser=new FileChooserPanel(null, "Raw", StripeFileGenerator.getFilenameFilter(), true) {
 			private static final long serialVersionUID=1L;
 
 			@Override

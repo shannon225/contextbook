@@ -27,14 +27,11 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryReportExtractor;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
@@ -91,12 +88,9 @@ public class SearchToBLIB {
 				
 				ArrayList<SearchJobData> pecanJobs=new ArrayList<SearchJobData>();
 				if (diaFile.isDirectory()) {
-					File[] files=diaFile.listFiles(new SimpleFilenameFilter(MzmlToDIAConverter.MZML_EXTENSION));
+					File[] files=diaFile.listFiles(StripeFileGenerator.getFilenameFilter());
 					if (files.length==0) {
-						files=diaFile.listFiles(new SimpleFilenameFilter(StripeFile.DIA_EXTENSION));
-					}
-					if (files.length==0) {
-						Logger.errorLine("Your specified input (-i) directory didn't contain any .mzML or .DIA files!");
+						Logger.errorLine("Your specified input (-i) directory didn't contain any .RAW files!");
 						System.exit(1);
 					}
 					for (File file : files) {
