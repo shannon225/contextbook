@@ -62,10 +62,6 @@ public class CachedStripeFile implements StripeFileInterface {
 	@Override
 	public void openFile(File userFile) throws IOException, SQLException {
 	}
-
-	@Override
-	public void openFile() throws IOException, SQLException {
-	}
 	
 	@Override
 	public String getOriginalFileName() {

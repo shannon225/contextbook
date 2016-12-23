@@ -171,10 +171,6 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface#openFile()
-	 */
-	@Override
 	public void openFile() throws IOException, SQLException {
 		if (userFile!=null) {
 			Files.copy(userFile.toPath(), tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);

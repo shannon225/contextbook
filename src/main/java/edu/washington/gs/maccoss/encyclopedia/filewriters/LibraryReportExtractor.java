@@ -20,6 +20,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupQuantif
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class LibraryReportExtractor {
@@ -54,7 +55,7 @@ public class LibraryReportExtractor {
 				}
 				
 				peptideWriter=new PrintWriter(peptideReportFile, "UTF-8");
-				peptideWriter.print("Peptide");
+				peptideWriter.print("Peptide\tnumFragments");
 				
 				proteinWriter=new PrintWriter(proteinReportFile, "UTF-8");
 				proteinWriter.print("Protein\tnumEquivalentAccessions");
@@ -76,8 +77,9 @@ public class LibraryReportExtractor {
 				proteinWriter.println();
 				Logger.logLine("Found "+sourceFiles.size()+" data files");
 				
+				HashMap<String, int[]> numFragmentsByPeptideModSeq=new HashMap<String, int[]>();
 				HashMap<String, float[]> intensitiesByPeptideModSeq=new HashMap<String, float[]>();
-				rs=s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.SourceFile, pep.TotalIntensity, pro.ProteinAccessions from peptidequants pep, proteins pro where pep.PeptideSeq = pro.PeptideSeq");
+				rs=s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.SourceFile, pep.TotalIntensity, pep.NumberOfQuantIons, pro.ProteinAccessions from peptidequants pep, proteins pro where pep.PeptideSeq = pro.PeptideSeq");
 				int count=0;
 				int totalAdded=0;
 				while (rs.next()) {
@@ -89,7 +91,8 @@ public class LibraryReportExtractor {
 					String peptideModSeq=rs.getString(2);
 					String sourceFile=rs.getString(3);
 					float totalIntensity=rs.getFloat(4);
-					String proteinToken=rs.getString(5);
+					int numberOfQuantIons=rs.getInt(5);
+					String proteinToken=rs.getString(6);
 					HashSet<String> accessions=PSMData.stringToAccessions(proteinToken);
 					
 					int index=Collections.binarySearch(sourceFiles, sourceFile);
@@ -108,17 +111,33 @@ public class LibraryReportExtractor {
 						totalAdded++;
 					}
 					
-					float[] array=intensitiesByPeptideModSeq.get(peptideModSeq);
-					if (array==null) {
-						array=new float[sourceFiles.size()];
-						intensitiesByPeptideModSeq.put(peptideModSeq, array);
+					float[] intensitiesArray=intensitiesByPeptideModSeq.get(peptideModSeq);
+					int[] numFragmentsArray=numFragmentsByPeptideModSeq.get(peptideModSeq);
+					if (intensitiesArray==null) {
+						intensitiesArray=new float[sourceFiles.size()];
+						intensitiesByPeptideModSeq.put(peptideModSeq, intensitiesArray);
+						numFragmentsArray=new int[sourceFiles.size()];
+						numFragmentsByPeptideModSeq.put(peptideModSeq, numFragmentsArray);
 					}
-					array[index]+=normalizedIntensity; // sums charge states together
+					intensitiesArray[index]+=normalizedIntensity; // sums charge states together
+					numFragmentsArray[index]=numberOfQuantIons;
 				}
 				Logger.logLine("Finished processing "+count+" records, found "+totalAdded+" quantitative unique peptides. Writing reports...");
 				
+				int numberInconsistentFragments=0;
 				for (Entry<String, float[]> entry : intensitiesByPeptideModSeq.entrySet()) {
-					peptideWriter.print(entry.getKey());
+					String peptideModSeq=entry.getKey();
+					peptideWriter.print(peptideModSeq);
+					int[] numFragments=numFragmentsByPeptideModSeq.get(peptideModSeq);
+					
+					int maxNumFragments=General.max(numFragments);
+					int minNumFragments=General.min(numFragments);
+					if (minNumFragments!=maxNumFragments) {
+						numberInconsistentFragments++;
+					}
+					peptideWriter.print("\t");
+					peptideWriter.print(maxNumFragments);
+					
 					float[] array=entry.getValue();
 					
 					/*if (array.length>1) {
@@ -134,9 +153,13 @@ public class LibraryReportExtractor {
 					}*/
 					
 					for (float f : array) {
-						peptideWriter.print("\t"+f);
+						peptideWriter.print("\t");
+						peptideWriter.print(f);
 					}
 					peptideWriter.println();
+				}
+				if (numberInconsistentFragments>0) {
+					Logger.errorLine("Inconsistent number of fragments in "+numberInconsistentFragments+" of "+intensitiesByPeptideModSeq.size()+" peptides");
 				}
 				Logger.logLine("Finished writing peptide report!");
 				
