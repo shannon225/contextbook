@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 
@@ -18,7 +18,7 @@ public class PrecursorIntegrator {
 		for (File file : files) {
 			if (file.getName().endsWith("mzML")) {
 				float tic=0.0f;
-				StripeFileInterface stripefile=MzmlToDIAConverter.getFile(file, parameters);
+				StripeFileInterface stripefile=StripeFileGenerator.getFile(file, parameters);
 				ArrayList<PrecursorScan> scans=stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
 				for (PrecursorScan scan : scans) {
 					float[] intensities=scan.getIntensityArray();

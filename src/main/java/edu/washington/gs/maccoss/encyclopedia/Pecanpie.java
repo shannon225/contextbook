@@ -45,7 +45,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
@@ -168,7 +168,7 @@ public class Pecanpie {
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);
 		
-		StripeFileInterface stripefile=MzmlToDIAConverter.getFile(diaFile, parameters);
+		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 
 		Logger.logLine("Processing precursors scans...");
 		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
@@ -221,7 +221,11 @@ public class Pecanpie {
 
 		for (Range range : ranges) {
 			int index=Arrays.binarySearch(binBoundaries, range.getMiddle());
-			index=(-(index+1))-1;
+			if (index>=0) {
+				Logger.errorLine("Warning, found window middles that fall on bin boundaries. This implies that the file wasn't demultiplexed correctly!");
+			} else {
+				index=(-(index+1))-1;
+			}
 			useBin[index]=true;
 		}
 		
@@ -244,7 +248,11 @@ public class Pecanpie {
 			float baseProgress=(1.0f+rangesFinished)/numberOfTasks;
 			progress.update(baseMessage, baseProgress);
 			int index=Arrays.binarySearch(binBoundaries, range.getMiddle());
-			index=(-(index+1))-1;
+			if (index>=0) {
+				Logger.errorLine("Warning, found window middles that fall on bin boundaries. This implies that the file wasn't demultiplexed correctly!");
+			} else {
+				index=(-(index+1))-1;
+			}
 			TDoubleIntHashMap map=binCounters[index];
 			double[] keys=map.keys();
 			Arrays.sort(keys);

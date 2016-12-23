@@ -203,7 +203,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			ArrayList<File> files=getSourceFiles();
 			if (files.size()==0||files.size()>1) return Optional.empty();
 
-			StripeFileInterface file=MzmlToDIAConverter.getFile(files.get(0), parameters);
+			StripeFileInterface file=StripeFileGenerator.getFile(files.get(0), parameters);
 			return Optional.ofNullable(file);
 		} catch (Exception e) {
 			return Optional.empty();

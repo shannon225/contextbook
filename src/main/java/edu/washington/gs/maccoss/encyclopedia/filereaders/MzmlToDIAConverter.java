@@ -20,7 +20,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
 import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 
-public class MzmlToDIAConverter {
+public class MzmlToDIAConverter implements StripeFileReaderInterface {
 	public static final String MZML_EXTENSION=".mzml";
 
 	public static void main(String[] args) throws IOException {
@@ -59,45 +59,21 @@ public class MzmlToDIAConverter {
 			System.out.println("Total time: "+(System.currentTimeMillis()-time)/1000f+" seconds");
 		}
 	}
-
-	public static StripeFileInterface getFile(File f, SearchParameters parameters) {
-		if (!f.exists()||!f.canRead()) {
-			throw new EncyclopediaException("Can't read file "+f.getAbsolutePath());
-		}
-		
-		// first try to read if .DIA
-		if (f.getName().toLowerCase().endsWith(StripeFile.DIA_EXTENSION)) {
-			return openDIAFile(f);
-		}
-		
-		// then try to change name to .DIA and read
-		String absolutePath=f.getAbsolutePath();
-		File diaFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+StripeFile.DIA_EXTENSION);
-		if (diaFile.exists()&&diaFile.canRead()) {
-			return openDIAFile(diaFile);
-		}
-		
-		// otherwise check for MZML and convert
-		if (f.getName().toLowerCase().endsWith(MZML_EXTENSION)) {
-			return convertSAX(f, diaFile, parameters);
+	
+	@Override
+	public boolean canTryToReadFile(File f) {
+		if (!f.exists()||!f.isFile()||!f.canRead()) return false; 
+		return f.getName().toLowerCase().endsWith(MzmlToDIAConverter.MZML_EXTENSION);
+	}
+	
+	@Override
+	public StripeFileInterface createStripeFile(File f, SearchParameters parameters) {
+		if (canTryToReadFile(f)) {
+			String absolutePath=f.getAbsolutePath();
+			File diaFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+StripeFile.DIA_EXTENSION);
+			return MzmlToDIAConverter.convertSAX(f, diaFile, parameters);
 		} else {
 			throw new EncyclopediaException("Can't read file type "+f.getAbsolutePath());
-		}
-	}
-
-	public static StripeFileInterface openDIAFile(File f) {
-		try {
-			StripeFileInterface stripefile=new StripeFile();
-			stripefile.openFile(f);
-			return stripefile;
-		} catch (IOException ioe) {
-			Logger.errorLine("Unexpected exception reading DIA file: "+f.getName());
-			Logger.errorException(ioe);
-			throw new EncyclopediaException("Error reading DIA file!", ioe);
-		} catch (SQLException sqle) {
-			Logger.errorLine("Unexpected exception reading DIA file: "+f.getName());
-			Logger.logException(sqle);
-			throw new EncyclopediaException("Error reading DIA file!", sqle);
 		}
 	}
 

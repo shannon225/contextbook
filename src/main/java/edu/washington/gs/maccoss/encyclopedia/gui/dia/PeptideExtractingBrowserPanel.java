@@ -46,7 +46,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
@@ -131,7 +131,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 					try {
 						Logger.logLine("Reading file...");
 
-						dia=MzmlToDIAConverter.getFile(filename[0], PeptideExtractingBrowserPanel.this.parameters);
+						dia=StripeFileGenerator.getFile(filename[0], PeptideExtractingBrowserPanel.this.parameters);
 						Logger.logLine("Finished reading file.");
 						resetPeptide(peptide.getText(), (Integer) charge.getValue());
 					} catch (Exception e) {

@@ -9,7 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -28,7 +28,7 @@ public class BackgroundFrequencyCalculatorTest {
 		LibraryFile library=new LibraryFile();
 		library.openFile(libraryFile);
 		
-		StripeFileInterface stripefile=MzmlToDIAConverter.getFile(diaFile, parameters);
+		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 		
 		BackgroundFrequencyCalculator calculator=BackgroundFrequencyCalculator.generateBackground(stripefile, library);
 		Pair<double[], float[]> counterPair=calculator.getRoundedMassCounters(600.0, parameters.getFragmentTolerance());

@@ -15,7 +15,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
@@ -48,7 +48,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		LibraryFile library=new LibraryFile();
 		library.openFile(libraryFile);
 		
-		StripeFileInterface stripefile=MzmlToDIAConverter.getFile(diaFile, parameters);
+		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 		
 		PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, library, parameters);
 

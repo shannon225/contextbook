@@ -47,7 +47,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SimplePeptidePrecur
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
@@ -230,7 +230,7 @@ public class ResultsBrowserPanel extends JPanel {
 		SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Raw File") {
 			@Override
 			protected Nothing doInBackgroundForReal() throws Exception {
-				dia=MzmlToDIAConverter.getFile(f, parameters);
+				dia=StripeFileGenerator.getFile(f, parameters);
 
 				if (dia!=null&&library!=null&&parameters.isRunPhosphoLocalization()) {
 					PhosphoLocalizer localizer=new PhosphoLocalizer(dia, library, parameters);
