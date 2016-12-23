@@ -7,19 +7,32 @@ import gnu.trove.list.array.TIntArrayList;
 
 //@Immutable
 public class MassTolerance {
+	private static final double UNUSED_TOLERANCE=-1.0;
+	private final double amuTolerance;
 	private final double ppmTolerance;
 	private final double percent;
 
 	public MassTolerance(double ppmTolerance) {
-		this.ppmTolerance = ppmTolerance;
-		this.percent=ppmTolerance/1000000.0;
+		this(ppmTolerance, true);
+	}
+
+	public MassTolerance(double tolerance, boolean isPPMTolerance) {
+		if (isPPMTolerance) {
+			this.amuTolerance=UNUSED_TOLERANCE;
+			this.ppmTolerance=tolerance;
+			this.percent=ppmTolerance/1000000.0;
+		} else {
+			this.amuTolerance=tolerance;
+			this.ppmTolerance=UNUSED_TOLERANCE;
+			this.percent=ppmTolerance/1000000.0;
+		}
 	}
 	
 	public double getPpmTolerance() {
 		return ppmTolerance;
 	}
 	public double getTolerance(double m) {
-		return ppmTolerance/1000000.0*m;
+		return amuTolerance>0?amuTolerance:percent*m;
 	}
 	
 	public boolean equals(double m1, double m2) {
@@ -33,9 +46,9 @@ public class MassTolerance {
 	 * @return
 	 */
 	public int compareTo(double m1, double m2) {
-		double amuTolerance=Math.max(m1, m2)*percent;
-		if (m1+amuTolerance<m2) return -1;
-		if (m1-amuTolerance>m2) return 1;
+		double tolerance=amuTolerance>0?amuTolerance:Math.max(m1, m2)*percent;
+		if (m1+tolerance<m2) return -1;
+		if (m1-tolerance>m2) return 1;
 		return 0;
 	}
 	

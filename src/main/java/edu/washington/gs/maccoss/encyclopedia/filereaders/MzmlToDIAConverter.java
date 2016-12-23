@@ -32,7 +32,7 @@ public class MzmlToDIAConverter {
 		SearchParameters parameters=PecanParameterParser.parseParameters(paramMap);
 		System.out.println(parameters);
 		
-		File dir=new File("/Volumes/BriansSSD/overlapping/prism/");
+		File dir=new File("/Volumes/BriansSSD/bruker/");
 		
 		File[] files=dir.listFiles(new SimpleFilenameFilter(MZML_EXTENSION));
 		for (int i=0; i<files.length; i++) {

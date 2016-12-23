@@ -50,14 +50,14 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	public void run() {
 		try {
 			final ProgressInputStream stream=new ProgressInputStream(new FileInputStream(mzMLFile));
-			final long length=(int)mzMLFile.length();
+			final long length=mzMLFile.length();
 
 			stream.addChangeListener(new ChangeListener() {
 				int lastUpdate=0;
 
 				@Override
 				public void stateChanged(ChangeEvent e) {
-					int floor=(int)(stream.getProgress()*100L/length);
+					int floor=(int)((stream.getProgress()*100L)/length);
 					if (floor>lastUpdate) {
 						Logger.logLine("Parsed "+floor+"%");
 						lastUpdate=floor;
@@ -83,6 +83,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	private String mzML_ID=null;
 	private String spectrumName=null;
 	private Integer spectrumIndex=null;
+	private Integer msLevel=null;
 	private String spectrumRef=null;
 
 	private Float scanStartTime=null;
@@ -101,7 +102,12 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
 		dataSB.setLength(0);
 		if (tagList.size()>0&&"cvParam".equalsIgnoreCase(qName)) {
-			if ("scan".equalsIgnoreCase(tagList.get(tagList.size()-1))) {
+			if ("spectrum".equalsIgnoreCase(tagList.get(tagList.size()-1))) {
+				if ("ms level".equalsIgnoreCase(attributes.getValue("name"))) {
+					msLevel=Integer.parseInt(attributes.getValue("value"));
+				}
+				
+			} else if ("scan".equalsIgnoreCase(tagList.get(tagList.size()-1))) {
 				if ("scan start time".equalsIgnoreCase(attributes.getValue("name"))) {
 					float multiplier;
 					String unit=attributes.getValue("unitName");
@@ -165,7 +171,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	@Override
 	public void endElement(String uri, String localName, String qName) throws SAXException {
 		if ("spectrum".equalsIgnoreCase(qName)) {
-			if (spectrumRef==null) {
+			if (spectrumRef==null&&msLevel<=1) {
 				if (parameters.getPrecursorOffsetPPM()!=0.0) {
 					double[] deltaArray=General.multiply(massArray, parameters.getPrecursorOffsetPPM()/1000000.0);
 					massArray=General.subtract(massArray, deltaArray);
@@ -173,6 +179,8 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray));
 
 			} else {
+				if (spectrumRef==null) spectrumRef="Unknown";
+				
 				if (parameters.getFragmentOffsetPPM()!=0.0) {
 					double[] deltaArray=General.multiply(massArray, parameters.getFragmentOffsetPPM()/1000000.0);
 					massArray=General.subtract(massArray, deltaArray);
@@ -187,6 +195,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 					retentionTimesByStripe.put(range, stripeRTs);
 				}
 				stripeRTs.add(scanStartTime);
+				
 			}
 
 			try {
