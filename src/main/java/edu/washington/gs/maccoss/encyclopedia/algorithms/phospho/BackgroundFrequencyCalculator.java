@@ -4,12 +4,16 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import gnu.trove.map.hash.TDoubleIntHashMap;
@@ -66,6 +70,49 @@ public class BackgroundFrequencyCalculator {
 			}
 		});
 		return new Pair<double[], float[]>(bestMass, getFrequencies(bestMass, precursorMz, tolerance));
+	}
+	
+	public static BackgroundFrequencyCalculator generateBackground(StripeFileInterface diafile) throws DataFormatException, SQLException, IOException {
+		TDoubleHashSet boundaries=new TDoubleHashSet();
+		ArrayList<Range> ranges=new ArrayList<Range>(diafile.getRanges().keySet());
+		Collections.sort(ranges);
+		
+		for (Range range : ranges) {
+			boundaries.add(range.getStart());
+			boundaries.add(range.getStop());
+		}
+		double[] binBoundaries=boundaries.toArray();
+		Arrays.sort(binBoundaries);
+		
+		TDoubleIntHashMap[] binCounters=new TDoubleIntHashMap[binBoundaries.length-1];
+		int[] numberOfSpectra=new int[binBoundaries.length-1];
+		for (int i=0; i<binCounters.length; i++) {
+			binCounters[i]=new TDoubleIntHashMap();
+			numberOfSpectra[i]=1; // add pseudocount
+		}
+
+		Logger.logLine("Creating background frequency calculator from "+diafile.getOriginalFileName()+"...");
+		for (Range range : ranges) {
+			double targetMz=range.getMiddle();
+			Logger.logLine("Processing "+range.toString()+" m/z");
+			int index=Arrays.binarySearch(binBoundaries, targetMz);
+			if (index<0) {
+				index=(-(index+1))-1;
+			}
+			if (index<0||index>=binCounters.length) continue;
+			
+			ArrayList<Stripe> stripes=diafile.getStripes(targetMz, -Float.MAX_VALUE, Float.MAX_VALUE, false);
+			for (Stripe stripe : stripes) {
+				double[] ions=stripe.getMassArray();
+				
+				numberOfSpectra[index]++;
+				for (double ion : ions) {
+					binCounters[index].adjustOrPutValue(ion, 1, 1);
+				}
+			}
+		}
+
+		return new BackgroundFrequencyCalculator(binBoundaries, binCounters, numberOfSpectra);
 	}
 	
 	public static BackgroundFrequencyCalculator generateBackground(StripeFileInterface diafile, LibraryInterface library) throws DataFormatException, SQLException, IOException {

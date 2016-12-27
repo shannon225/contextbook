@@ -412,8 +412,8 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 						@Override
 						public void run() {
 							try {
-								addStripe(stripes, sqrt, spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massEncodedLength, massBytes,
-										intensityEncodedLength, intensityBytes);
+								stripes.add(getStripe(sqrt, spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massEncodedLength, massBytes,
+										intensityEncodedLength, intensityBytes));
 							} catch (DataFormatException dfe) {
 								throw new EncyclopediaException(dfe);
 							} catch (IOException ioe) {
@@ -472,8 +472,8 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 						@Override
 						public void run() {
 							try {
-								addStripe(stripes, sqrt, spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massEncodedLength, massBytes,
-										intensityEncodedLength, intensityBytes);
+								stripes.add(getStripe(sqrt, spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massEncodedLength, massBytes,
+										intensityEncodedLength, intensityBytes));
 							} catch (DataFormatException dfe) {
 								throw new EncyclopediaException(dfe);
 							} catch (IOException ioe) {
@@ -498,14 +498,14 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		}
 	}
 
-	private void addStripe(Vector<Stripe> stripes, boolean sqrt, String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, float isolationWindowLower,
+	private Stripe getStripe(boolean sqrt, String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, float isolationWindowLower,
 			float isolationWindowUpper, int massEncodedLength, byte[] massBytes, int intensityEncodedLength, byte[] intensityBytes) throws IOException, DataFormatException {
 		double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(massBytes, massEncodedLength));
 		float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(intensityBytes, intensityEncodedLength));
 		if (sqrt) {
 			intensityArray=General.protectedSqrt(intensityArray);
 		}
-		stripes.add(new Stripe(spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray));
+		return new Stripe(spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray);
 	}
 
 	private void createNewTables() throws IOException, SQLException {

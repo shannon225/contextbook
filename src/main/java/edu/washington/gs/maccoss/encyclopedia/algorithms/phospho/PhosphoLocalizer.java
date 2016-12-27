@@ -48,7 +48,7 @@ public class PhosphoLocalizer {
 	public PhosphoLocalizer(StripeFileInterface diaFile, LibraryInterface searchedLibrary, SearchParameters params) throws IOException,DataFormatException,SQLException {
 		this.diaFile=diaFile;
 		this.params=params;
-		background=BackgroundFrequencyCalculator.generateBackground(diaFile, searchedLibrary);
+		background=BackgroundFrequencyCalculator.generateBackground(diaFile);
 		gradientLength=diaFile.getGradientLength();
 	}
 

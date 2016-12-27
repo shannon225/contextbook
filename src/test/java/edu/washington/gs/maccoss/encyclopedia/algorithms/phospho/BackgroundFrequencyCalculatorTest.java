@@ -21,8 +21,8 @@ public class BackgroundFrequencyCalculatorTest {
 	public static void main(String[] args) throws Exception {
 		//File libraryFile=new File("/Users/searleb/Documents/projects/phosphopedia/VillenJ_Exactive_HumanPhosphoproteome.elib");
 		//File diaFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/dec2015_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
-		File libraryFile=new File("/Users/searleb/Documents/school/projects/may_asms/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
-		File diaFile=new File("/Users/searleb/Documents/school/projects/may_asms/hela_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
+		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
+		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		
 		LibraryFile library=new LibraryFile();
@@ -30,7 +30,9 @@ public class BackgroundFrequencyCalculatorTest {
 		
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 		
-		BackgroundFrequencyCalculator calculator=BackgroundFrequencyCalculator.generateBackground(stripefile, library);
+		//BackgroundFrequencyCalculator calculator=BackgroundFrequencyCalculator.generateBackground(stripefile, library);
+		BackgroundFrequencyCalculator calculator=BackgroundFrequencyCalculator.generateBackground(stripefile);
+		
 		Pair<double[], float[]> counterPair=calculator.getRoundedMassCounters(600.0, parameters.getFragmentTolerance());
 		double[] masses=counterPair.x;
 		float[] counters=counterPair.y;
