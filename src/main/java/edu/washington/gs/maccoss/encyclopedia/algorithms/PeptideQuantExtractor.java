@@ -247,7 +247,7 @@ public class PeptideQuantExtractor {
 
 			Logger.logLine("Processing "+range);
 
-			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, false);
 			Collections.sort(stripes);
 
 			// prepare executor for background
