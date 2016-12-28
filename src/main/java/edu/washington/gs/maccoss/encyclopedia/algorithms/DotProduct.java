@@ -5,18 +5,19 @@ import java.util.ArrayList;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 
 //@Immutable
 public class DotProduct implements PSMScorer {
-	private final MassTolerance tolerance;
+	private final SearchParameters parameters;
 
-	public DotProduct(MassTolerance tolerance) {
-		this.tolerance = tolerance;
+	public DotProduct(SearchParameters parameters) {
+		this.parameters=parameters;
 	}
 
 	/* (non-Javadoc)
@@ -36,14 +37,20 @@ public class DotProduct implements PSMScorer {
 		if (entry instanceof AnnotatedLibraryEntry) {
 			return getIndividualPeakScores(entry, spectrum, normalize, ((AnnotatedLibraryEntry)entry).getIonAnnotations());
 		} else {
-			throw new EncyclopediaException("DotProduct doesn't currently handle ion selection. Please report this bug!");
+			double[] mzs=entry.getMassArray();
+			FragmentIon[] ions=new FragmentIon[mzs.length];
+			for (byte i=0; i<ions.length; i++) {
+				ions[i]=new FragmentIon(mzs[i], (byte)(i+1), IonType.unknown);
+			}
+			
+			return getIndividualPeakScores(entry, spectrum, normalize, ions);
 		}
 	}
 	
 	@Override
 	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize, FragmentIon[] ions) {
-		MassTolerance acquiredTolerance=tolerance;
-		MassTolerance libraryTolerance=tolerance;
+		MassTolerance acquiredTolerance=parameters.getFragmentTolerance();
+		MassTolerance libraryTolerance=parameters.getLibraryFragmentTolerance();
 		
 		double[] predictedMasses=entry.getMassArray();
 		float[] predictedIntensities=entry.getIntensityArray();

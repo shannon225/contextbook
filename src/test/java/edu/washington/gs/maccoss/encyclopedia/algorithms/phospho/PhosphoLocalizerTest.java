@@ -172,7 +172,7 @@ public class PhosphoLocalizerTest extends TestCase {
 			System.out.println(targetPeptideName.getPeptideAnnotation()+": "+General.toString(targets));
 			System.out.println(targetPeptideName);
 			System.out.println();
-			assertTrue(targets.length<10);
+			assertTrue(targets.length<=16);
 		}
 
 		System.out.println("LEFT TO RIGHT");
@@ -193,7 +193,7 @@ public class PhosphoLocalizerTest extends TestCase {
 			System.out.println(targetPeptideName.getPeptideAnnotation()+": "+General.toString(targets));
 			System.out.println(targetPeptideName);
 			System.out.println();
-			assertTrue(targets.length<10);
+			assertTrue(targets.length<=16);
 		}
 	}
 	

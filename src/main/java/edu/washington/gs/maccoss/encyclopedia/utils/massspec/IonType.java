@@ -13,7 +13,8 @@ public enum IonType {
 	c,cNL,cp2,cp2NL,
 	x,xNL,xp2,xp2NL,
 	y,yNL,yp2,yp2NL,
-	z,zNL,z1,z1NL,zp2,zp2NL,z1p2,z1p2NL;
+	z,zNL,z1,z1NL,zp2,zp2NL,z1p2,z1p2NL,
+	unknown;
 	
 	
 	public static final Color oddColor=new Color(26, 148, 49);
@@ -58,6 +59,7 @@ public enum IonType {
 		case yp2NL: return "y+2H-NL";
 		case zp2NL: return "z+2H-NL";
 		case z1p2NL: return "z+1+2H-NL";
+		case unknown: return "unknown";
 		}
 		return "unknown";
 	}
@@ -93,7 +95,7 @@ public enum IonType {
 		if("z+2H-NL".equals(s)) return zp2NL;
 		if("z+1+2H-NL".equals(s)) return z1p2NL;
 
-		throw new EncyclopediaException("Can't get ion class for type: "+s);
+		return unknown;
 	}
 	
 	public static String toString(IonType t, byte index) {
@@ -127,6 +129,7 @@ public enum IonType {
 		case yp2NL: return "y"+index+"+2H-NL";
 		case zp2NL: return "z"+index+"+2H-NL";
 		case z1p2NL: return "z"+index+"+1+2H-NL";
+		case unknown: return "unknown";
 		}
 		return "unknown";
 	}
@@ -162,6 +165,7 @@ public enum IonType {
 		case yp2NL: return yzColor;
 		case zp2NL: return yzColor;
 		case z1p2NL: return yzColor;
+		case unknown: return missingColor;
 		}
 		return missingColor;
 	}
@@ -197,6 +201,7 @@ public enum IonType {
 		case yp2NL: return secondaryStroke;
 		case zp2NL: return secondaryStroke;
 		case z1p2NL: return secondaryStroke;
+		case unknown: return missingStroke;
 		}
 		return missingStroke;
 	}
@@ -232,6 +237,7 @@ public enum IonType {
 		case yp2NL: return secondaryAnnotationFont;
 		case zp2NL: return secondaryAnnotationFont;
 		case z1p2NL: return secondaryAnnotationFont;
+		case unknown: return missingAnnotationFont;
 		}
 		return missingAnnotationFont;
 	}
@@ -267,8 +273,9 @@ public enum IonType {
 		case yp2NL: return y;
 		case zp2NL: return z;
 		case z1p2NL: return z;
+		case unknown: return unknown;
 		}
-		throw new EncyclopediaException("Can't get ion class for type: "+toString(t));
+		return unknown;
 	}
 	
 	@SuppressWarnings("incomplete-switch")

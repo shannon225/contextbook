@@ -44,7 +44,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		this.localizer=localizer;
 		this.stripes=stripes;
 
-		scorer=new DotProduct(parameters.getFragmentTolerance());
+		scorer=new DotProduct(parameters);
 		params=parameters;
 		this.savedEntries=null;
 		
@@ -57,7 +57,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		this.localizer=localizer;
 		this.stripes=stripes;
 
-		scorer=new DotProduct(parameters.getFragmentTolerance());
+		scorer=new DotProduct(parameters);
 		params=parameters;
 		this.savedEntries=savedEntries;
 		

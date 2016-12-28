@@ -1,10 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import junit.framework.TestCase;
 
 public class DotProductTest extends TestCase {
@@ -12,14 +13,27 @@ public class DotProductTest extends TestCase {
 	public void testEmptyDotProduct() {
 		LibraryEntry entry=getEntry(new double[] {}, new float[] {});
 		Stripe spectrum=getStripe(new double[] {}, new float[] {});
-		assertEquals(0.0f, new DotProduct(new MassTolerance(100.0f)).score(entry, spectrum, new float[] {}, null));
+		HashMap<String, String> map=SearchParameterParser.getDefaultParameters();
+		map.put("-ftol", "100");
+		map.put("-lftol", "100");
+		assertEquals(0.0f, new DotProduct(SearchParameterParser.parseParameters(map)).score(entry, spectrum, new float[] {}, null));
 	}
 	public void testDotProduct() {
 		LibraryEntry entry=getEntry(new double[] {1.0, 29.0, 300.01, 1000.0, 1200.0}, new float[] {7, 7, 2, 3, 7});
 		Stripe spectrum=getStripe(new double[] {30.0, 300.0, 1001.0, 1300.0}, new float[] {7, 10, 4, 7});
-		assertEquals(32.0f, new DotProduct(new MassTolerance(1000.0f)).score(entry, spectrum, new float[] {}, null));
-		assertEquals(20.0f, new DotProduct(new MassTolerance(100.0f)).score(entry, spectrum, new float[] {}, null));
-		assertEquals(0.0f, new DotProduct(new MassTolerance(10.0f)).score(entry, spectrum, new float[] {}, null));
+		
+		HashMap<String, String> map=SearchParameterParser.getDefaultParameters();
+		map.put("-ftol", "1000");
+		map.put("-lftol", "1000");
+		assertEquals(32.0f, new DotProduct(SearchParameterParser.parseParameters(map)).score(entry, spectrum, new float[] {}, null));
+
+		map.put("-ftol", "100");
+		map.put("-lftol", "100");
+		assertEquals(20.0f, new DotProduct(SearchParameterParser.parseParameters(map)).score(entry, spectrum, new float[] {}, null));
+
+		map.put("-ftol", "10");
+		map.put("-lftol", "10");
+		assertEquals(0.0f, new DotProduct(SearchParameterParser.parseParameters(map)).score(entry, spectrum, new float[] {}, null));
 	}
 	
 	public LibraryEntry getEntry(double[] masses, float[] intensities) {
