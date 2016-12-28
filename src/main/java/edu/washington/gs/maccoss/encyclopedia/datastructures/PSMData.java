@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.StringTokenizer;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
+
 public class PSMData implements PeptidePrecursor {
 	private final int spectrumIndex;
 	private final double precursorMZ;
@@ -25,6 +27,16 @@ public class PSMData implements PeptidePrecursor {
 		this.score=score;
 		this.sortingScore=sortingScore;
 		this.duration=duration;
+	}
+	
+	public double getAlteratelyChargedMass(byte charge) {
+		if (charge==getPrecursorCharge()) return getPrecursorMZ();
+		
+		return (getUnchargedMass()+MassConstants.protonMass*charge)/charge;
+	}
+	
+	public double getUnchargedMass() {
+		return getPrecursorMZ()*getPrecursorCharge()-MassConstants.protonMass*getPrecursorCharge();
 	}
 	
 	@Override

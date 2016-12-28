@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Vector;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -25,12 +26,14 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPe
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMDataMassComparator;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.WeakReferenceStripeCache;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
@@ -236,7 +239,7 @@ public class PeptideQuantExtractor {
 			}
 		}
 		Collections.sort(ranges);
-
+		
 		// get stripes
 		int rangesFinished=0;
 		float numberOfTasks=2.0f+ranges.size();
@@ -251,7 +254,7 @@ public class PeptideQuantExtractor {
 			Collections.sort(stripes);
 
 			// prepare executor for background
-			ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("SWATH_"+range.getStart()+"to"+range.getStop()+"-%d").setDaemon(true).build();
+			ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("STRIPE_"+range.getStart()+"to"+range.getStop()+"-%d").setDaemon(true).build();
 			LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
@@ -268,6 +271,58 @@ public class PeptideQuantExtractor {
 			rangesFinished++;
 		}
 
+		ArrayList<IntegratedLibraryEntry> entryList=new ArrayList<IntegratedLibraryEntry>();
+		for (IntegratedLibraryEntry entry : savedEntries) {
+			entryList.add(entry);
+		}
+
+		return entryList;
+	}
+	
+	public ArrayList<IntegratedLibraryEntry> extractAllChargePeptides(Collection<PSMData> data, boolean limitToQuantifiable) throws IOException, SQLException, DataFormatException, InterruptedException {
+		WeakReferenceStripeCache cache=new WeakReferenceStripeCache(stripefile, parameters);
+		
+		ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries=new ConcurrentLinkedQueue<IntegratedLibraryEntry>();
+		int cores=parameters.getNumberOfThreadsUsed();
+		Logger.logLine("Extracting "+data.size()+" peptides...");
+		String filename=stripefile.getOriginalFileName();
+		
+		// get targeted ranges
+		ArrayList<Range> ranges=new ArrayList<Range>();
+		for (Range range : stripefile.getRanges().keySet()) {
+			if (!parameters.useTargetWindowCenter()||range.contains(parameters.getTargetWindowCenter())) {
+				ranges.add(range);
+			}
+		}
+		Collections.sort(ranges);
+		
+		ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("STRIPE-%d").setDaemon(true).build();
+		ArrayBlockingQueue<Runnable> workQueue=new ArrayBlockingQueue<Runnable>(1024); // to limit memory footprint
+		ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
+
+		ArrayList<PSMData> psms=new ArrayList<PSMData>(data);
+		Collections.sort(psms, new PSMDataMassComparator());
+		byte[] consideredChargeStates=new byte[] {2,3,4,5};
+		for (PSMData psm : psms) {
+			// FIXME think about sorting peptide masses rather than ranges to allow for extracting multiple charge states
+			consideredChargeStates=new byte[] {psm.getPrecursorCharge()}; 
+			
+			for (byte charge : consideredChargeStates) {
+				double mz=psm.getAlteratelyChargedMass(charge);
+				for (Range range : ranges) {
+					if (range.contains(mz)) {
+						ArrayList<Stripe> stripes=cache.getStripes(range.getMiddle());
+						Collections.sort(stripes);
+						
+						// FIXME move down after tests
+						executor.submit(new PeptideQuantExtractorTask(filename, psm, Optional.ofNullable(localizer), stripes, parameters, savedEntries, limitToQuantifiable));
+					}
+				}
+			}
+		}
+		executor.shutdown();
+		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		
 		ArrayList<IntegratedLibraryEntry> entryList=new ArrayList<IntegratedLibraryEntry>();
 		for (IntegratedLibraryEntry entry : savedEntries) {
 			entryList.add(entry);

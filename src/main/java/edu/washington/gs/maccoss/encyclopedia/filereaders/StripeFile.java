@@ -393,7 +393,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 				final Vector<Stripe> stripes=new Vector<Stripe>();
 				
 				int cores=Runtime.getRuntime().availableProcessors();
-				ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("SWATH_"+targetMz+"-%d").setDaemon(true).build();
+				ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("STRIPE_"+targetMz+"-%d").setDaemon(true).build();
 				LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 				ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
@@ -453,7 +453,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 				final Vector<Stripe> stripes=new Vector<Stripe>();
 				
 				int cores=Runtime.getRuntime().availableProcessors();
-				ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("SWATH_"+targetMzRange.getStart()+"_"+targetMzRange.getStop()+"-%d").setDaemon(true).build();
+				ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("STRIPE_"+targetMzRange.getStart()+"_"+targetMzRange.getStop()+"-%d").setDaemon(true).build();
 				LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 				ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 

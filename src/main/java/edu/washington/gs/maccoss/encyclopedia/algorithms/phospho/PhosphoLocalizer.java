@@ -181,7 +181,7 @@ public class PhosphoLocalizer {
 			
 			// fix ambiguity based on previously identified peptides
 			Optional<AmbiguousPeptideModSeq> ambiguityRemoved=targetPeptideAnnotation.removeAmbiguity(previouslyIdentified);
-			System.out.println(targetPeptideAnnotation.getPeptideAnnotation()+", "+!ambiguityRemoved.isPresent()); //FIXME
+			//System.out.println(targetPeptideAnnotation.getPeptideAnnotation()+", "+!ambiguityRemoved.isPresent()); //FIXME
 			if (!ambiguityRemoved.isPresent()) {
 				continue;
 			}
@@ -201,7 +201,7 @@ public class PhosphoLocalizer {
 			ArrayList<FragmentIon> allTargets=new ArrayList<FragmentIon>(Arrays.asList(targets));
 			allTargets.removeAll(alreadyTaken);
 
-			System.out.println(targetPeptideAnnotation.getPeptideAnnotation()+" --> "+allTargets.size()); //FIXME
+			//System.out.println(targetPeptideAnnotation.getPeptideAnnotation()+" --> "+allTargets.size()); //FIXME
 			if (allTargets.size()==0) {
 				//System.out.println(targetPeptideName+" is degenerate");
 				continue;
@@ -239,7 +239,7 @@ public class PhosphoLocalizer {
 			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
 			float bestRT=uniqueCalculator.getMaxRT()*60f;
 			float maxRawScore=uniqueCalculator.getMaxRawScore();
-			System.out.println(targetPeptideAnnotation.getPeptideAnnotation()+" --> "+maxRawScore+" ("+bestRT/60f+")"); //FIXME
+			//System.out.println(targetPeptideAnnotation.getPeptideAnnotation()+" --> "+maxRawScore+" ("+bestRT/60f+")"); //FIXME
 
 			ArrayList<FragmentIon> identifiedTargets=new ArrayList<FragmentIon>();
 			Spectrum bestStripe=ChromatogramExtractor.getTargetStripeByRT(stripes, bestRT);
@@ -300,7 +300,7 @@ public class PhosphoLocalizer {
 						}
 					}
 				}
-				System.out.println(targetPeptideAnnotation.getPeptideAnnotation()+" --> "+numIdentificationPeaks+" identification peaks"); //FIXME
+				//System.out.println(targetPeptideAnnotation.getPeptideAnnotation()+" --> "+numIdentificationPeaks+" identification peaks"); //FIXME
 				
 				// only trust this ID if there are enough peaks!
 				if (numIdentificationPeaks>=3&&quantData.getMedianChromatogram().length>0) {

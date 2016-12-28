@@ -49,6 +49,13 @@ public class Range implements Comparable<Range> {
 		return stop-start;
 	}
 	
+	public boolean contains(double value) {
+		if (value>=start&&value<=stop) {
+			return true;
+		}
+		return false;
+	}
+	
 	public boolean contains(float value) {
 		if (value>=start&&value<=stop) {
 			return true;
