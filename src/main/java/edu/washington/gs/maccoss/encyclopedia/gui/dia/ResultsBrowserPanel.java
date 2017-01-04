@@ -344,8 +344,10 @@ public class ResultsBrowserPanel extends JPanel {
 							phosphoTraces.add(new XYTrace(pair.y, GraphType.line, sequenceKey, color, 2.0f));
 
 							XYPoint point=localizationScores.get(sequenceKey);
-							complementaryIonsTraces.add(new XYTrace(new double[] {point.x/60f}, new double[] {0}, GraphType.point, "center", color, 2.0f));
-							phosphoTraces.add(new XYTrace(new double[] {point.x/60f}, new double[] {point.y}, GraphType.point, "center", color, 2.0f));
+							if (point!=null) {
+								complementaryIonsTraces.add(new XYTrace(new double[] {point.x/60f}, new double[] {0}, GraphType.point, "center", color, 2.0f));
+								phosphoTraces.add(new XYTrace(new double[] {point.x/60f}, new double[] {point.y}, GraphType.point, "center", color, 2.0f));
+							}
 							i++;
 							
 							HashMap<FragmentIon, XYTrace> uniqueFragments=uniqueFragmentIons.get(sequenceKey);
