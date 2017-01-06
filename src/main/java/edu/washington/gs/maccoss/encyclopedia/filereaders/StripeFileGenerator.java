@@ -23,7 +23,11 @@ public class StripeFileGenerator {
 		String absolutePath=f.getAbsolutePath();
 		File diaFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+StripeFile.DIA_EXTENSION);
 		if (diaFile.exists()&&diaFile.canRead()) {
-			return DIA_FILE_READER.readStripeFile(f, parameters);
+			try {
+				return DIA_FILE_READER.readStripeFile(diaFile, parameters);
+			} catch (EncyclopediaException ee) {
+				// continue on
+			}
 		}
 		
 		// otherwise try readers in order

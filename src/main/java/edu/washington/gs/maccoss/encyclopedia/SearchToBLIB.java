@@ -299,6 +299,8 @@ public class SearchToBLIB {
 				Logger.logLine(job.getDiaFile().getName()+": Number of global peptides: "+globalPassingPeptides.size()+" vs local peptides: "+localPassingPeptides.size());
 				
 				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides, inferrer, elib);
+				
+				subProgress.update("Wrote "+globalPassingPeptides.size()+" peptides ("+proteins.size()+" proteins) identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 			}
 			
 			elib.addMetadata(parameters.toParameterMap());
