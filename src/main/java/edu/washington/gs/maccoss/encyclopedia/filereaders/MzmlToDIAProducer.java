@@ -92,7 +92,15 @@ public class MzmlToDIAProducer implements Runnable {
 			
 			float scanStartTime=multiplier*Float.parseFloat(scanStartTimeCVParams.getValue());
 			BinaryDataArrayList bdal=spectrum.getBinaryDataArrayList();
-			if (bdal==null||bdal.getBinaryDataArray()==null||bdal.getBinaryDataArray().get(0)==null||bdal.getBinaryDataArray().get(1)==null) {
+			if (bdal==null ||
+				bdal.getBinaryDataArray()==null ||
+				bdal.getBinaryDataArray().get(0)==null ||
+				bdal.getBinaryDataArray().get(1)==null ||
+				bdal.getBinaryDataArray().get(0).getEncodedLength() == null ||
+				bdal.getBinaryDataArray().get(0).getEncodedLength() == 0 ||
+				bdal.getBinaryDataArray().get(1).getEncodedLength() == null ||
+				bdal.getBinaryDataArray().get(1).getEncodedLength() == 0
+				) {
 				Logger.errorLine("Skipping unexpected empty binary data for spectrum"+" ("+spectrumIndex+"): "+spectrumName);
 				continue;
 			}
