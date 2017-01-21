@@ -16,7 +16,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 
 public class PecanOneScoringFactory implements PecanScoringFactory {
-	public static final String version="0.2.1";
+	public static final String version="0.3.3";
 	private final PecanSearchParameters parameters;
 	private final File outputFile;
 
