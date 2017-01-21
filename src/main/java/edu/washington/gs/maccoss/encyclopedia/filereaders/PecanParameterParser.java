@@ -147,7 +147,7 @@ public class PecanParameterParser {
 		
 		value=parameters.get("-ptol");
 		if (value==null) {
-			precursorTolerance=new MassTolerance(10);
+			precursorTolerance=new MassTolerance(10, MassErrorUnitType.PPM);
 		} else {
 			try {
 				precursorTolerance=new MassTolerance(Double.parseDouble(value), precursorToleranceType);
@@ -158,7 +158,7 @@ public class PecanParameterParser {
 		
 		value=parameters.get("-ftol");
 		if (value==null) {
-			fragmentTolerance=new MassTolerance(10);
+			fragmentTolerance=new MassTolerance(10, MassErrorUnitType.PPM);
 		} else {
 			try {
 				fragmentTolerance=new MassTolerance(Double.parseDouble(value), fragmentToleranceType);

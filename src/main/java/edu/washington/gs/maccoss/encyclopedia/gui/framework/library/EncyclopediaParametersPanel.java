@@ -39,6 +39,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassErrorUnitType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
@@ -180,7 +181,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		float numberOfExtraDecoyLibrariesValue=NUMBER_OF_EXTRA_DECOY_VALUES[((Integer)numberOfExtraDecoyLibraries.getSelectedIndex())];
 		float targetWindowCenter=-1f;
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
-		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), 0.0, new MassTolerance(fragmentPPMValue), 0.0, new MassTolerance(libraryFragmentPPMValue), digestionEnzyme, 0.01f, null, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, isPhospho, numberOfExtraDecoyLibrariesValue);
+		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue, MassErrorUnitType.PPM), 0.0, new MassTolerance(fragmentPPMValue, MassErrorUnitType.PPM), 0.0, new MassTolerance(libraryFragmentPPMValue, MassErrorUnitType.PPM), digestionEnzyme, 0.01f, null, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, isPhospho, numberOfExtraDecoyLibrariesValue);
 		return parameters;
 	}
 	

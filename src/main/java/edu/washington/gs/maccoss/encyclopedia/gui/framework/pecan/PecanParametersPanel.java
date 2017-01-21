@@ -42,6 +42,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassErrorUnitType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 public class PecanParametersPanel extends JPanel implements ParametersPanelInterface {
@@ -194,7 +195,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		float numberOfExtraDecoyLibrariesValue=NUMBER_OF_EXTRA_DECOY_VALUES[((Integer)numberOfExtraDecoyLibraries.getSelectedIndex())];
-		PecanSearchParameters parameters=new PecanSearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue), new MassTolerance(fragmentPPMValue), digestionEnzyme,
+		PecanSearchParameters parameters=new PecanSearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue, MassErrorUnitType.PPM), new MassTolerance(fragmentPPMValue, MassErrorUnitType.PPM), digestionEnzyme,
 				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, numberOfExtraDecoyLibrariesValue);
 		return parameters;
 	}

@@ -127,7 +127,7 @@ public class SearchParameterParser {
 		
 		value=parameters.get("-ptol");
 		if (value==null) {
-			precursorTolerance=new MassTolerance(10);
+			precursorTolerance=new MassTolerance(10, MassErrorUnitType.PPM);
 		} else {
 			try {
 				precursorTolerance=new MassTolerance(Double.parseDouble(value), precursorToleranceType);
@@ -138,7 +138,7 @@ public class SearchParameterParser {
 		
 		value=parameters.get("-ftol");
 		if (value==null) {
-			fragmentTolerance=new MassTolerance(10);
+			fragmentTolerance=new MassTolerance(10, MassErrorUnitType.PPM);
 		} else {
 			try {
 				fragmentTolerance=new MassTolerance(Double.parseDouble(value), fragmentToleranceType);
@@ -149,7 +149,7 @@ public class SearchParameterParser {
 		
 		value=parameters.get("-lftol");
 		if (value==null) {
-			libraryFragmentTolerance=new MassTolerance(10);
+			libraryFragmentTolerance=new MassTolerance(10, MassErrorUnitType.PPM);
 		} else {
 			try {
 				libraryFragmentTolerance=new MassTolerance(Double.parseDouble(value), libraryFragmentToleranceType);
