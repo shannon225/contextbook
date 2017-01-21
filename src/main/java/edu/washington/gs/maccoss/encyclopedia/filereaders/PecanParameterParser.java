@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassErrorUnitType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
@@ -22,6 +23,8 @@ public class PecanParameterParser {
 		map.put("-frag", "YONLY");
 		map.put("-ptol", "10");
 		map.put("-ftol", "10");
+		map.put("-ptolunits", "ppm");
+		map.put("-ftolunits", "ppm");
 		map.put("-poffset", "0");
 		map.put("-foffset", "0");
 		map.put("-enzyme", "trypsin");
@@ -58,6 +61,8 @@ public class PecanParameterParser {
 	public static PecanSearchParameters parseParameters(HashMap<String, String> parameters) {
 		final AminoAcidConstants aaConstants;
 		final FragmentationType fragType;
+		final MassErrorUnitType precursorToleranceType;
+		final MassErrorUnitType fragmentToleranceType;
 		final MassTolerance precursorTolerance;
 		final MassTolerance fragmentTolerance;
 		final double precursorOffsetPPM;
@@ -120,12 +125,32 @@ public class PecanParameterParser {
 			throw new EncyclopediaException("Error parsing acquisition type from ["+value+"]");
 		}
 		
+		value=parameters.get("-ptolunits");
+		if (value==null) {
+			precursorToleranceType=MassErrorUnitType.PPM;
+		} else {
+			precursorToleranceType=MassErrorUnitType.getUnitType(value);
+		}
+		if (precursorToleranceType==null) {
+			throw new EncyclopediaException("Error parsing precursor mass error unit type from ["+value+"]");
+		}
+		
+		value=parameters.get("-ftolunits");
+		if (value==null) {
+			fragmentToleranceType=MassErrorUnitType.PPM;
+		} else {
+			fragmentToleranceType=MassErrorUnitType.getUnitType(value);
+		}
+		if (fragmentToleranceType==null) {
+			throw new EncyclopediaException("Error parsing fragment mass error unit type from ["+value+"]");
+		}
+		
 		value=parameters.get("-ptol");
 		if (value==null) {
 			precursorTolerance=new MassTolerance(10);
 		} else {
 			try {
-				precursorTolerance=new MassTolerance(Double.parseDouble(value));
+				precursorTolerance=new MassTolerance(Double.parseDouble(value), precursorToleranceType);
 			} catch (NumberFormatException nfe) {
 				throw new EncyclopediaException("Error parsing precursor tolerance from ["+value+"]", nfe);
 			}
@@ -136,7 +161,7 @@ public class PecanParameterParser {
 			fragmentTolerance=new MassTolerance(10);
 		} else {
 			try {
-				fragmentTolerance=new MassTolerance(Double.parseDouble(value));
+				fragmentTolerance=new MassTolerance(Double.parseDouble(value), fragmentToleranceType);
 			} catch (NumberFormatException nfe) {
 				throw new EncyclopediaException("Error parsing fragment tolerance from ["+value+"]", nfe);
 			}

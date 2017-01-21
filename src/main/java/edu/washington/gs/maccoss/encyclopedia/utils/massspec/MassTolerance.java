@@ -13,11 +13,11 @@ public class MassTolerance {
 	private final double percent;
 
 	public MassTolerance(double ppmTolerance) {
-		this(ppmTolerance, true);
+		this(ppmTolerance, MassErrorUnitType.PPM);
 	}
 
-	public MassTolerance(double tolerance, boolean isPPMTolerance) {
-		if (isPPMTolerance) {
+	public MassTolerance(double tolerance, MassErrorUnitType type) {
+		if (MassErrorUnitType.PPM==type) {
 			this.amuTolerance=UNUSED_TOLERANCE;
 			this.ppmTolerance=tolerance;
 			this.percent=ppmTolerance/1000000.0;
@@ -32,7 +32,7 @@ public class MassTolerance {
 		return ppmTolerance;
 	}
 	public double getTolerance(double m) {
-		return amuTolerance>0?amuTolerance:percent*m;
+		return amuTolerance!=UNUSED_TOLERANCE?amuTolerance:percent*m;
 	}
 	
 	public boolean equals(double m1, double m2) {
@@ -46,7 +46,7 @@ public class MassTolerance {
 	 * @return
 	 */
 	public int compareTo(double m1, double m2) {
-		double tolerance=amuTolerance>0?amuTolerance:Math.max(m1, m2)*percent;
+		double tolerance=amuTolerance!=UNUSED_TOLERANCE?amuTolerance:Math.max(m1, m2)*percent;
 		if (m1+tolerance<m2) return -1;
 		if (m1-tolerance>m2) return 1;
 		return 0;
