@@ -129,6 +129,7 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 						 * 18) bgSubScore
 						 * 19) zScore
 						 * 20) rank
+						 * 21) rawScore
 						 * 
 						 * peakAvgIdotp	peakMaxIdotp	peakScore	peakWScore	peakIons	peakMassErrMean	peakMassErrVar	precursorMassErrMean	
 						 * precursorMassErrVar	peakSimilarity	duration	midTime
@@ -138,13 +139,13 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 						writer.print("\t"+(peptide.isDecoy()?-1:1));
 						writer.print("\t"+stripe.getSpectrumIndex());
 						writer.print("\t"+rank);
-						writer.print("\t"+auxScores[20]);
-						writer.print("\t"+auxScores[19]);
-						writer.print("\t"+auxScores[18]);
-						writer.print("\t"+deltaCn);
+						writer.print("\t"+auxScores[20]); // rank
+						writer.print("\t"+auxScores[19]); // peakZScore
+						writer.print("\t"+auxScores[18]); // peakCalibratedScore
+						writer.print("\t"+deltaCn); // deltaSn
 						writer.print("\t"+auxScores[11]); //peakIsotopeDotProduct
 						writer.print("\t"+auxScores[16]); //tpeakMidIdotp
-						writer.print("\t"+auxScores[3]);  //peakRawScore
+						writer.print("\t"+auxScores[21]);  //peakRawScore
 						writer.print("\t"+auxScores[6]);  //peakWeightedRawScore
 						writer.print("\t"+auxScores[0]);  //traceNumAboveThresholdIons
 						writer.print("\t"+auxScores[12]); //fragmentDeltaMassAverage
