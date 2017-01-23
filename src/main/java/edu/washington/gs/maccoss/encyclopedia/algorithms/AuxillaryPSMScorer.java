@@ -14,7 +14,7 @@ public abstract class AuxillaryPSMScorer {
 
 	public AuxillaryPSMScorer(SearchParameters parameters) {
 		this.parameters=parameters;
-		maxPPMError=(float)parameters.getPrecursorTolerance().getPpmTolerance();
+		maxPPMError=(float)parameters.getPrecursorTolerance().getWorstDeltaScore();
 	}
 
 	/* (non-Javadoc)
@@ -45,8 +45,7 @@ public abstract class AuxillaryPSMScorer {
 			double predicted=entry.getPrecursorMZ()+(isotope*MassConstants.neutronMass/charge);
 			
 			if (intensities[i]>0) {
-				double delta=predicted-masses[i];
-				float ppm=(float)((delta/entry.getPrecursorMZ())*1000000.0);
+				float ppm=(float)parameters.getPrecursorTolerance().getDeltaScore(predicted, masses[i]);
 				averagePPM+=ppm;
 				averageAbsPPM+=Math.abs(ppm);
 				peaksUsed++;

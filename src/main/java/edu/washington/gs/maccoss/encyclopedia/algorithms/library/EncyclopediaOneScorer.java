@@ -106,7 +106,8 @@ public class EncyclopediaOneScorer implements PSMScorer {
 					
 					if (acquiredIntensities[indicies[j]]>bestPeakIntensity) {
 						bestPeakIntensity=acquiredIntensities[indicies[j]];
-						deltaMass=(float)((target-acquiredMasses[indicies[j]])*1000000.0/target);
+
+						deltaMass=(float)acquiredTolerance.getDeltaScore(target, acquiredMasses[indicies[j]]);
 					}
 				}
 				float peakScore=predictedIntensity*intensity*maxCorrelation;

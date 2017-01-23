@@ -1,10 +1,12 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassErrorUnitType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import junit.framework.TestCase;
 
 public class MassToleranceTest extends TestCase {
 	public static final MassTolerance TOLERANCE=new MassTolerance(10.0);
+	public static final MassTolerance AMU_TOLERANCE=new MassTolerance(0.5, MassErrorUnitType.AMU);
 	
 	public void testMassTolerance() {
 		assertEquals(0, TOLERANCE.compareTo(1000.0, 1000.0));
@@ -16,6 +18,16 @@ public class MassToleranceTest extends TestCase {
 		assertEquals(1, TOLERANCE.compareTo(1000.0, 999.9));
 		assertEquals(0, TOLERANCE.compareTo(1000.0, 999.99));
 		assertEquals(0, TOLERANCE.compareTo(1000.0, 999.999));
+
+		assertEquals(0, TOLERANCE.compareTo(100.0, 100.0));
+		assertEquals(-1, TOLERANCE.compareTo(100.0, 101.0));
+		assertEquals(-1, TOLERANCE.compareTo(100.0, 100.1));
+		assertEquals(-1, TOLERANCE.compareTo(100.0, 100.01));
+		assertEquals(0, TOLERANCE.compareTo(100.0, 100.001));
+		assertEquals(1, TOLERANCE.compareTo(100.0, 99.0));
+		assertEquals(1, TOLERANCE.compareTo(100.0, 99.9));
+		assertEquals(1, TOLERANCE.compareTo(100.0, 99.99));
+		assertEquals(0, TOLERANCE.compareTo(100.0, 99.999));
 
 		assertEquals(true, TOLERANCE.equals(1000.0, 1000.0));
 		assertEquals(false, TOLERANCE.equals(1000.0, 1001.0));
@@ -41,5 +53,19 @@ public class MassToleranceTest extends TestCase {
 		for (int i=0; i<matches.length; i++) {
 			assertEquals(expected[i], matches[i]);
 		}
+	}
+	
+	public void testAMUMassTolerance() {
+		assertEquals(0, AMU_TOLERANCE.compareTo(1000.0, 1000.0));
+		assertEquals(-1, AMU_TOLERANCE.compareTo(1000.0, 1001.8));
+		assertEquals(1, AMU_TOLERANCE.compareTo(1000.0, 999.2));
+		assertEquals(0, AMU_TOLERANCE.compareTo(1000.0, 1000.1));
+		assertEquals(0, AMU_TOLERANCE.compareTo(1000.0, 999.9));
+
+		assertEquals(0, AMU_TOLERANCE.compareTo(100.0, 100.0));
+		assertEquals(-1, AMU_TOLERANCE.compareTo(100.0, 101.8));
+		assertEquals(1, AMU_TOLERANCE.compareTo(100.0, 99.2));
+		assertEquals(0, AMU_TOLERANCE.compareTo(100.0, 100.1));
+		assertEquals(0, AMU_TOLERANCE.compareTo(100.0, 99.9));
 	}
 }

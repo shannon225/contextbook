@@ -76,7 +76,8 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 					
 					if (acquiredIntensities[indicies[j]]>bestPeakIntensity) {
 						bestPeakIntensity=acquiredIntensities[indicies[j]];
-						deltaMass=(float)((target-acquiredMasses[indicies[j]])*1000000.0/target);
+
+						deltaMass=(float)acquiredTolerance.getDeltaScore(target, acquiredMasses[indicies[j]]);
 					}
 				}
 				if (intensity>0) {
@@ -96,8 +97,8 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		
 		float averageFragmentDeltaMasses=0.0f, averageAbsFragDeltaMass=0.0f;
 		if (fragmentDeltaMasses.size()==0) {
-			averageAbsFragDeltaMass=(float)acquiredTolerance.getPpmTolerance();
-			averageFragmentDeltaMasses=(float)acquiredTolerance.getPpmTolerance();
+			averageAbsFragDeltaMass=(float)acquiredTolerance.getWorstDeltaScore();
+			averageFragmentDeltaMasses=(float)acquiredTolerance.getWorstDeltaScore();
 		} else {
 			Collections.sort(fragmentDeltaMasses);
 			Collections.reverse(fragmentDeltaMasses);
@@ -110,7 +111,7 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 				if (count>numPeaksUsedInAverage) break;
 			}
 			for (int i=count; i<numPeaksUsedInAverage; i++) {
-				averageAbsFragDeltaMass+=(float)acquiredTolerance.getPpmTolerance();
+				averageAbsFragDeltaMass+=(float)acquiredTolerance.getWorstDeltaScore();
 			}
 			averageFragmentDeltaMasses=averageFragmentDeltaMasses/count;
 			averageAbsFragDeltaMass=averageAbsFragDeltaMass/numPeaksUsedInAverage;
@@ -166,8 +167,8 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 	
 	@Override
 	public float[] getMissingDataScores(LibraryEntry entry) {
-		float maxFragPPMError=(float)parameters.getFragmentTolerance().getPpmTolerance();
-		float maxPrePPMError=(float)parameters.getPrecursorTolerance().getPpmTolerance();
+		float maxFragPPMError=(float)parameters.getFragmentTolerance().getWorstDeltaScore();
+		float maxPrePPMError=(float)parameters.getPrecursorTolerance().getWorstDeltaScore();
 	
 		return new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, maxFragPPMError, maxFragPPMError, 0.0f, maxPrePPMError, maxPrePPMError};
 	}

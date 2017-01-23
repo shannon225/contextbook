@@ -82,7 +82,8 @@ public class PecanRawScorer implements PSMScorer {
 				
 				if (spectrumIntensities[indicies[j]]>bestPeakIntensity) {
 					bestPeakIntensity=spectrumIntensities[indicies[j]];
-					deltaMass=(float)((targetMass-spectrumMasses[indicies[j]])*1000000.0/targetMass);
+
+					deltaMass=(float)fragmentTolerance.getDeltaScore(targetMass, spectrumMasses[indicies[j]]);
 				}
 			}
 			float peakScore=libraryIntensities[i]*intensity;

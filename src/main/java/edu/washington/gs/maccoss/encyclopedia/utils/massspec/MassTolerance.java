@@ -28,11 +28,33 @@ public class MassTolerance {
 		}
 	}
 	
+	@Override
+	public String toString() {
+		if (amuTolerance==UNUSED_TOLERANCE) {
+			return ppmTolerance+" "+MassErrorUnitType.toString(MassErrorUnitType.PPM);
+		} else {
+			return amuTolerance+" "+MassErrorUnitType.toString(MassErrorUnitType.AMU);
+		}
+	}
+	
 	public double getPpmTolerance() {
 		return ppmTolerance;
 	}
-	public double getTolerance(double m) {
-		return amuTolerance!=UNUSED_TOLERANCE?amuTolerance:percent*m;
+	
+	public double getWorstDeltaScore() {
+		if (amuTolerance==UNUSED_TOLERANCE) {
+			return ppmTolerance;
+		} else {
+			return amuTolerance;
+		}
+	}
+	
+	public double getDeltaScore(double expected, double acquired) {
+		if (amuTolerance==UNUSED_TOLERANCE) {
+			return (expected-acquired)*1000000.0/expected;
+		} else {
+			return expected-acquired;
+		}
 	}
 	
 	public boolean equals(double m1, double m2) {
