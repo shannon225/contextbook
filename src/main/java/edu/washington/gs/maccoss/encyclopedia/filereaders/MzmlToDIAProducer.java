@@ -19,6 +19,7 @@ import uk.ac.ebi.jmzml.model.mzml.BinaryDataArrayList;
 import uk.ac.ebi.jmzml.model.mzml.CVParam;
 import uk.ac.ebi.jmzml.model.mzml.Precursor;
 import uk.ac.ebi.jmzml.model.mzml.PrecursorList;
+import uk.ac.ebi.jmzml.model.mzml.SelectedIonList;
 import uk.ac.ebi.jmzml.model.mzml.Spectrum;
 import uk.ac.ebi.jmzml.xml.io.MzMLObjectIterator;
 import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
@@ -115,21 +116,41 @@ public class MzmlToDIAProducer implements Runnable {
 				}
 				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray));
 			} else {
-				HashMap<String, CVParam> isolationCVParams=asCVMap(p.getIsolationWindow().getCvParam());
-				float isolationWindowTarget=Float.parseFloat(isolationCVParams.get("MS:1000827").getValue());
-				CVParam lowerParam=isolationCVParams.get("MS:1000828");
-				CVParam upperParam=isolationCVParams.get("MS:1000829");
+				
+				float isolationWindowTarget;
 				float isolationWindowLowerOffset;
 				float isolationWindowUpperOffset;
-				if (lowerParam==null||upperParam==null) {
-					if (defaultOffset<=0) {
-						throw new EncyclopediaException("Error reading mzML! Precursor window offsets not specified and no default window size specified!");
-					}
-					isolationWindowLowerOffset=defaultOffset;
-					isolationWindowUpperOffset=defaultOffset;
+				
+				/**
+				 * Issue 3: if no isolation window is provided, use the first selected ion as window center
+				 * and command line argument -precursorWindowSize to determine window boundaries.
+				 */
+				if (p.getIsolationWindow() == null){
+					SelectedIonList selectedIonList = p.getSelectedIonList();
+					
+					HashMap<String, CVParam> precursorCVParams=asCVMap(selectedIonList.getSelectedIon().get(0).getCvParam());
+					
+					isolationWindowTarget = Float.parseFloat(precursorCVParams.get("MS:1000744").getValue());
+					isolationWindowLowerOffset = defaultOffset;
+					isolationWindowUpperOffset = defaultOffset;
+					
 				} else {
-					isolationWindowLowerOffset=Float.parseFloat(lowerParam.getValue());
-					isolationWindowUpperOffset=Float.parseFloat(upperParam.getValue());
+					HashMap<String, CVParam> isolationCVParams=asCVMap(p.getIsolationWindow().getCvParam());
+					isolationWindowTarget=Float.parseFloat(isolationCVParams.get("MS:1000827").getValue());
+					CVParam lowerParam=isolationCVParams.get("MS:1000828");
+					CVParam upperParam=isolationCVParams.get("MS:1000829");
+					
+
+					if (lowerParam==null||upperParam==null) {
+						if (defaultOffset<=0) {
+							throw new EncyclopediaException("Error reading mzML! Precursor window offsets not specified and no default window size specified!");
+						}
+						isolationWindowLowerOffset=defaultOffset;
+						isolationWindowUpperOffset=defaultOffset;
+					} else {
+						isolationWindowLowerOffset=Float.parseFloat(lowerParam.getValue());
+						isolationWindowUpperOffset=Float.parseFloat(upperParam.getValue());
+					}
 				}
 
 				if (parameters.getFragmentOffsetPPM()!=0.0) {
