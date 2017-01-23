@@ -97,6 +97,8 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	private double[] massArray=null;
 	private float[] intensityArray=null;
 	private final StringBuilder dataSB=new StringBuilder();
+	
+	private Float selectedIon=null;
 
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
@@ -155,6 +157,9 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 						}
 					}
 				}
+				
+			} else if ("selectedIon".equalsIgnoreCase(tagList.get(tagList.size()-1))){
+				selectedIon=Float.parseFloat(attributes.getValue("value"));
 			}
 		} else if ("precursor".equalsIgnoreCase(qName)) {
 			spectrumRef=attributes.getValue("spectrumRef");
@@ -185,6 +190,18 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 					double[] deltaArray=General.multiply(massArray, parameters.getFragmentOffsetPPM()/1000000.0);
 					massArray=General.subtract(massArray, deltaArray);
 				}
+				
+				//Issue 3
+				if (isolationWindowTarget == null || isolationWindowLowerOffset == null || isolationWindowUpperOffset == null){
+					if (parameters.getPrecursorWindowSize() > 0f && selectedIon != null){
+						isolationWindowTarget = selectedIon;
+						isolationWindowLowerOffset = parameters.getPrecursorWindowSize()/2.0f;
+						isolationWindowUpperOffset = parameters.getPrecursorWindowSize()/2.0f;
+					} else {
+						Logger.errorLine("Isolation window information missing without precursor window size supplied!");
+					}
+				}
+				
 				Stripe stripe=new Stripe(spectrumName, spectrumRef, spectrumIndex, scanStartTime, isolationWindowTarget-isolationWindowLowerOffset, isolationWindowTarget+isolationWindowUpperOffset,
 						massArray, intensityArray);
 				stripes.add(stripe);
@@ -224,6 +241,8 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 			dataSB.setLength(0);
 			massArray=null;
 			intensityArray=null;
+			
+			selectedIon=null;
 		}
 
 		if (tagList.size()>3&&"binary".equals(tagList.get(tagList.size()-1))) {
