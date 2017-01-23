@@ -162,7 +162,7 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 	}
 
 	public static String[] getScoreNames() {
-		return new String[] {"xTandem", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "averageAbsFragDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsPPM", "averagePPM", "eValue"};
+		return new String[] {"xTandem", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "eValue"};
 	}
 	
 	@Override
