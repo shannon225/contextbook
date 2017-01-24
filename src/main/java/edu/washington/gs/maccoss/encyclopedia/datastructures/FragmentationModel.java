@@ -67,6 +67,13 @@ public class FragmentationModel {
 	public String[] getAas() {
 		return aas;
 	}
+	public String toString() {
+		StringBuilder sb=new StringBuilder();
+		for (String aa : aas) {
+			sb.append(aa);
+		}
+		return sb.toString();
+	}
 	
 	public static Pair<Character, Double> parseAA(String aa) {
 		char c=aa.charAt(0);
@@ -172,7 +179,7 @@ public class FragmentationModel {
 	public FragmentIon[] getCIons() {
 		FragmentIon[] bs=getBIons();
 		for (int i=0; i<bs.length; i++) {
-			bs[i]=new FragmentIon(bs[i].mass+17.02654911, bs[i].index, IonType.c);
+			bs[i]=new FragmentIon(bs[i].mass+MassConstants.nh3, bs[i].index, IonType.c);
 		}
 		return bs;
 	}
@@ -180,7 +187,7 @@ public class FragmentationModel {
 	public FragmentIon[] getZIons() {
 		FragmentIon[] ys=getYIons();
 		for (int i=0; i<ys.length; i++) {
-			ys[i]=new FragmentIon(ys[i].mass-17.02654911, ys[i].index, IonType.z);
+			ys[i]=new FragmentIon(ys[i].mass-MassConstants.nh3, ys[i].index, IonType.z);
 		}
 		return ys;
 	}
@@ -188,7 +195,7 @@ public class FragmentationModel {
 	public FragmentIon[] getZp1Ions() {
 		FragmentIon[] ys=getYIons();
 		for (int i=0; i<ys.length; i++) {
-			ys[i]=new FragmentIon(ys[i].mass-16.01872407, ys[i].index, IonType.z1);
+			ys[i]=new FragmentIon(ys[i].mass-MassConstants.nh3+MassConstants.hydrogenMass, ys[i].index, IonType.z1);
 		}
 		return ys;
 	}
@@ -197,7 +204,7 @@ public class FragmentationModel {
 		ArrayList<FragmentIon> ions=new ArrayList<FragmentIon>();
 		
 		ArrayList<FragmentIon> rolling=new ArrayList<FragmentIon>(); // seeds
-		rolling.add(new FragmentIon(1.007276467, (byte)0, IonType.b));
+		rolling.add(new FragmentIon(MassConstants.protonMass, (byte)0, IonType.b));
 		for (byte i = 0; i < masses.length; i++) {
 			int index=i;
 			ArrayList<FragmentIon> neutrals=new ArrayList<FragmentIon>();
@@ -223,7 +230,7 @@ public class FragmentationModel {
 		ArrayList<FragmentIon> ions=new ArrayList<FragmentIon>();
 		
 		ArrayList<FragmentIon> rolling=new ArrayList<FragmentIon>();
-		rolling.add(new FragmentIon(19.01784117, (byte)0, IonType.y));
+		rolling.add(new FragmentIon(MassConstants.oh2+MassConstants.protonMass, (byte)0, IonType.y));
 		for (int i = 0; i < masses.length; i++) {
 			int index=masses.length-1-i;
 			ArrayList<FragmentIon> neutrals=new ArrayList<FragmentIon>();
