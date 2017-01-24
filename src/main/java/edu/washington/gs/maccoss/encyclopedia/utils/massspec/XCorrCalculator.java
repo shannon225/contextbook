@@ -22,12 +22,26 @@ public class XCorrCalculator {
 	// remove 10-u window around precursor, see pp 979 mid left
 	private static double precursorRemovalMargin=5.0;
 	
+	// from the Comet code
+	public float[] getBinnedIntensityArray(Spectrum s, float fragmentBinSize) {
+		if (fragmentBinSize<0.01f) fragmentBinSize=0.01f; 
+		float inverseBinWidth=1.0f/fragmentBinSize;
+		
+		double[] masses=s.getMassArray();
+		float[] intensities=s.getIntensityArray();
+		int arraySize=(int)((masses[masses.length-1]+fragmentBinSize+2.0)*inverseBinWidth);
+		
+		float[] binnedIntensityArray=new float[arraySize];
+		// FIXME migrate down to spectrum building
+		
+		return binnedIntensityArray;
+	}
+	
 	public static Spectrum getTheoreticalSpectrum(String modifiedSequence, byte charge, SearchParameters params) {
 		FragmentationType type=params.getFragType();
 		AminoAcidConstants aaConstants=params.getAAConstants();
 		FragmentationModel model=new FragmentationModel(modifiedSequence, aaConstants);
 		
-		// enforces uniqueness
 		ArrayList<Peak> allPeaks=new ArrayList<Peak>();
 		switch (type) {
 			case YONLY:
