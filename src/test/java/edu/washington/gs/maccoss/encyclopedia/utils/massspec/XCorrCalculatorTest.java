@@ -17,6 +17,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.MedianInterpolatorTest;
+import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TFloatArrayList;
 import junit.framework.TestCase;
 
 public class XCorrCalculatorTest extends TestCase {
@@ -24,9 +26,13 @@ public class XCorrCalculatorTest extends TestCase {
 	
 	public static void main(String[] args) {
 		final byte charge=2;
+		final double chargedMz=(1329.6335+(charge-1)*MassConstants.protonMass)/charge;
+		
 		Spectrum s=getSDFHLFGPPGKK();
-		s=XCorrCalculator.normalize(s, s.getPrecursorMZ());
-		s=XCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", charge, PARAMETERS);
+		float[] f=XCorrCalculator.normalize(s, s.getPrecursorMZ(), charge, false, PARAMETERS);
+		f=XCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
+		
+		s=getNormalizedSpectrum(s, chargedMz, charge, f, PARAMETERS);
 		Charter.launchChart(s);
 	}
 	
@@ -42,7 +48,7 @@ public class XCorrCalculatorTest extends TestCase {
 		InputStream is=MedianInterpolatorTest.class.getResourceAsStream("/040203_XXX_X1_1_OT_5seq.02.00085.2.dta.txt");
 		ArrayList<Peak> peaks=getData(is);
 		Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
-		return XCorrCalculator.getNormalizedSpectrum(peakArrays.x, peakArrays.y, General.sum(peakArrays.y), 0.0f, "SDFHLFGPPGKK", chargedMz); 
+		return getSpectrum(peakArrays.x, peakArrays.y, General.sum(peakArrays.y), 0.0f, "SDFHLFGPPGKK", chargedMz); 
 	}
 
 	public static ArrayList<Peak> getData(InputStream is) {
@@ -75,5 +81,61 @@ public class XCorrCalculatorTest extends TestCase {
 		}
 
 		return rts;
+	}
+	
+	static Spectrum getNormalizedSpectrum(final Spectrum s, final double precursorMz, final byte charge, final float[] intensityBins, final SearchParameters params) {
+		double massPlusOne=precursorMz*charge-(charge-1)*MassConstants.protonMass;
+		
+		float fragmentBinSize=2.0f*(float)params.getFragmentTolerance().getTolerance(massPlusOne);
+		
+		float tic=s.getTIC();
+		float scanStartTime=s.getScanStartTime();
+		double mz=s.getPrecursorMZ();
+		String name=s.getSpectrumName();
+		
+		TDoubleArrayList masses=new TDoubleArrayList();
+		TFloatArrayList intensities=new TFloatArrayList();
+		for (int i=0; i<intensityBins.length; i++) {
+			if (intensityBins[i]>0.0f) {
+				double mass=i*fragmentBinSize;
+				masses.add(mass);
+				intensities.add(intensityBins[i]);
+			}
+		}
+		return getSpectrum(masses.toArray(), intensities.toArray(), tic, scanStartTime, name, mz);
+	}
+
+	static Spectrum getSpectrum(final double[] masses, final float[] intensities, final float tic, final float scanStartTime, final String name, final double mz) {
+		return new Spectrum() {
+			@Override
+			public float getTIC() {
+				return tic;
+			}
+
+			@Override
+			public String getSpectrumName() {
+				return name;
+			}
+
+			@Override
+			public float getScanStartTime() {
+				return scanStartTime;
+			}
+
+			@Override
+			public double getPrecursorMZ() {
+				return mz;
+			}
+
+			@Override
+			public double[] getMassArray() {
+				return masses;
+			}
+
+			@Override
+			public float[] getIntensityArray() {
+				return intensities;
+			}
+		};
 	}
 }

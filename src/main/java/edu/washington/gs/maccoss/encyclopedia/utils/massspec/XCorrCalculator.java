@@ -7,14 +7,13 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TFloatArrayList;
 
 public class XCorrCalculator {
-	 // set 50 to be the maximum value, see pp 982 bottom right
-	private static float maxIntensity=50f;
+
+	// set 50 to be the maximum value, see pp 982 bottom right
+	private static float primaryIonIntensity=50.0f;
+	 private static final float neutralLossIntensity=10.0f;
 	
 	// divide spectrum into 10 equal regions, see pp 982 bottom right
 	private static int groups=10; 
@@ -22,149 +21,25 @@ public class XCorrCalculator {
 	// remove 10-u window around precursor, see pp 979 mid left
 	private static double precursorRemovalMargin=5.0;
 	
-	// from the Comet code
-	public float[] getBinnedIntensityArray(Spectrum s, float fragmentBinSize) {
-		if (fragmentBinSize<0.01f) fragmentBinSize=0.01f; 
-		float inverseBinWidth=1.0f/fragmentBinSize;
-		
-		double[] masses=s.getMassArray();
-		float[] intensities=s.getIntensityArray();
-		int arraySize=(int)((masses[masses.length-1]+fragmentBinSize+2.0)*inverseBinWidth);
-		
-		float[] binnedIntensityArray=new float[arraySize];
-		// FIXME migrate down to spectrum building
-		
-		return binnedIntensityArray;
-	}
-	
-	public static Spectrum getTheoreticalSpectrum(String modifiedSequence, byte charge, SearchParameters params) {
-		FragmentationType type=params.getFragType();
-		AminoAcidConstants aaConstants=params.getAAConstants();
-		FragmentationModel model=new FragmentationModel(modifiedSequence, aaConstants);
-		
-		ArrayList<Peak> allPeaks=new ArrayList<Peak>();
-		switch (type) {
-			case YONLY:
-				FragmentIon[] yIons=model.getYIons();
-				allPeaks.addAll(getPeaks(yIons, 0.0, 50.0f));
-				allPeaks.addAll(getPeaks(yIons, MassConstants.neutronMass, 25.0f));
-				allPeaks.addAll(getPeaks(yIons, -MassConstants.neutronMass, 25.0f));
-				allPeaks.addAll(getPeaks(yIons, -MassConstants.nh3, 10.0f));
-				allPeaks.addAll(getPeaks(yIons, -MassConstants.oh2, 10.0f));
-				allPeaks.addAll(getPeaks(yIons, -MassConstants.co, 10.0f));
-				allPeaks.addAll(getPeaks(yIons, -MassConstants.nh3+MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(yIons, -MassConstants.oh2+MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(yIons, -MassConstants.co+MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(yIons, -MassConstants.nh3-MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(yIons, -MassConstants.oh2-MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(yIons, -MassConstants.co-MassConstants.neutronMass, 10.0f));
-				break;
-				
-			case CID:
-				FragmentIon[] yIonsCID=model.getYIons();
-				allPeaks.addAll(getPeaks(yIonsCID, 0.0, 50.0f));
-				allPeaks.addAll(getPeaks(yIonsCID, MassConstants.neutronMass, 25.0f));
-				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.neutronMass, 25.0f));
-				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.nh3, 10.0f));
-				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.oh2, 10.0f));
-				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.co, 10.0f));
-				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.nh3+MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.oh2+MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.co+MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.nh3-MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.oh2-MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.co-MassConstants.neutronMass, 10.0f));
-				
-				FragmentIon[] bIonsCID=model.getBIons();
-				allPeaks.addAll(getPeaks(bIonsCID, 0.0, 50.0f));
-				allPeaks.addAll(getPeaks(bIonsCID, MassConstants.neutronMass, 25.0f));
-				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.neutronMass, 25.0f));
-				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.nh3, 10.0f));
-				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.oh2, 10.0f));
-				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.co, 10.0f));
-				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.nh3+MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.oh2+MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.co+MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.nh3-MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.oh2-MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.co-MassConstants.neutronMass, 10.0f));
-				break;
-				
-			case ETD:
-				FragmentIon[] cIonsCID=model.getCIons();
-				allPeaks.addAll(getPeaks(cIonsCID, 0.0, 50.0f));
-				allPeaks.addAll(getPeaks(cIonsCID, MassConstants.neutronMass, 25.0f));
-				allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.neutronMass, 25.0f));
-				allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.nh3, 10.0f));
-				allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.oh2, 10.0f));
-				allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.nh3+MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.oh2+MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.nh3-MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.oh2-MassConstants.neutronMass, 10.0f));
-				
-				FragmentIon[] zIonsCID=model.getCIons();
-				allPeaks.addAll(getPeaks(zIonsCID, 0.0, 50.0f));
-				allPeaks.addAll(getPeaks(zIonsCID, MassConstants.neutronMass, 50.0f)); // z+1
-				allPeaks.addAll(getPeaks(zIonsCID, 2*MassConstants.neutronMass, 25.0f));
-				allPeaks.addAll(getPeaks(zIonsCID, -MassConstants.neutronMass, 25.0f));
-				allPeaks.addAll(getPeaks(zIonsCID, -MassConstants.nh3, 10.0f));
-				allPeaks.addAll(getPeaks(zIonsCID, -MassConstants.oh2, 10.0f));
-				allPeaks.addAll(getPeaks(zIonsCID, -MassConstants.nh3+MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(zIonsCID, -MassConstants.oh2+MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(zIonsCID, -MassConstants.nh3-MassConstants.neutronMass, 10.0f));
-				allPeaks.addAll(getPeaks(zIonsCID, -MassConstants.oh2-MassConstants.neutronMass, 10.0f));
-				break;
-				
-			default:
-				throw new EncyclopediaException("Unknown fragmentation type ["+type+"]");
-		}
-		
-		// enforces exact mass uniqueness (but not nearby mass uniqueness)
-		Collections.sort(allPeaks);
-		int index=1;
-		while (index<allPeaks.size()) {
-			Peak current=allPeaks.get(index-1);
-			Peak nextPeak=allPeaks.get(index);
-			if (current.mass==nextPeak.mass) {
-				if (nextPeak.intensity>current.intensity) {
-					allPeaks.remove(index-1);
-				} else {
-					allPeaks.remove(index);
-				}
-			} else {
-				index++;
-			}
-		}
-		Pair<double[], float[]> peakArrays=Peak.toArrays(allPeaks);
-		
-		return getNormalizedSpectrum(model, charge, peakArrays.x, peakArrays.y);
-	}
-	
-	public static ArrayList<Peak> getPeaks(FragmentIon[] ions, double delta, float intensity) {
-		ArrayList<Peak> peaks=new ArrayList<Peak>();
-		for (int i=0; i<ions.length; i++) {
-			peaks.add(new Peak(ions[i].mass+delta, intensity));
-		}
-		return peaks;
-	}
-	
-	
 	/**
 	 * see Eng et al, JASMS 1994
 	 * @param s
 	 * @param precursorMz
 	 * @return
 	 */
-	public static Spectrum normalize(Spectrum s, double precursorMz) {
+	public static float[] normalize(Spectrum s, double precursorMz, byte charge, boolean addIntensityToNeighboringBins, SearchParameters params) {
+		double massPlusOne=precursorMz*charge-(charge-1)*MassConstants.protonMass;
+		
 		double[] masses=s.getMassArray();
 		float[] intensities=s.getIntensityArray();
+		ArrayList<Peak> allPeaks=new ArrayList<Peak>();
 		if (masses.length==0)
-			return s;
+			return getIntensityArray(params, allPeaks, massPlusOne, addIntensityToNeighboringBins);
 		if (masses.length==1) {
-			return getNormalizedSpectrum(s, masses, new float[] {maxIntensity});
+			allPeaks.add(new Peak(masses[0], primaryIonIntensity));
+			return getIntensityArray(params, allPeaks, massPlusOne, addIntensityToNeighboringBins);
 		}
 
-		
 		double minimumPrecursorRemoved=precursorMz-precursorRemovalMargin;
 		double maximumPrecursorRemoved=precursorMz+precursorRemovalMargin;
 
@@ -194,10 +69,7 @@ public class XCorrCalculator {
 			}
 		}
 		
-		TDoubleArrayList normalizedMasses=new TDoubleArrayList();
-		TFloatArrayList normalizedIntensities=new TFloatArrayList();
-		
-		General.divide(binMaxIntensity, maxIntensity);
+		General.divide(binMaxIntensity, primaryIonIntensity);
 		
 		currentIndex=0;
 		for (int i=0; i<intensities.length; i++) {
@@ -209,60 +81,98 @@ public class XCorrCalculator {
 				currentIndex++;
 			}
 			
-			normalizedMasses.add(masses[i]);
-			normalizedIntensities.add(intensities[i]/binMaxIntensity[currentIndex]);
+			allPeaks.add(new Peak(masses[i], intensities[i]/binMaxIntensity[currentIndex]));
 		}
 		
-		return getNormalizedSpectrum(s, normalizedMasses.toArray(), normalizedIntensities.toArray());
-	}
-
-	public static Spectrum getNormalizedSpectrum(FragmentationModel model, byte precursorCharge, final double[] masses, final float[] intensities) {
-		final float tic=General.sum(intensities);
-		final String peptideModSeq=model.toString();
-		final double mz=model.getChargedMass(precursorCharge);
-		
-		return getNormalizedSpectrum(masses, intensities, tic, 0.0f, peptideModSeq, mz);
+		return getIntensityArray(params, allPeaks, massPlusOne, addIntensityToNeighboringBins);
 	}
 	
-	public static Spectrum getNormalizedSpectrum(final Spectrum s, final double[] masses, final float[] intensities) {
-		float tic=s.getTIC();
-		float scanStartTime=s.getScanStartTime();
-		double mz=s.getPrecursorMZ();
-		String name=s.getSpectrumName();
-		return getNormalizedSpectrum(masses, intensities, tic, scanStartTime, name, mz);
+	public static float[] getTheoreticalSpectrum(String modifiedSequence, double precursorMz, byte charge, SearchParameters params) {
+		double massPlusOne=precursorMz*charge-(charge-1)*MassConstants.protonMass;
+		
+		FragmentationType type=params.getFragType();
+		AminoAcidConstants aaConstants=params.getAAConstants();
+		FragmentationModel model=new FragmentationModel(modifiedSequence, aaConstants);
+		
+		ArrayList<Peak> allPeaks=new ArrayList<Peak>();
+		switch (type) {
+			case YONLY:
+				FragmentIon[] yIons=model.getYIons();
+				allPeaks.addAll(getPeaks(yIons, 0.0, primaryIonIntensity));
+				allPeaks.addAll(getPeaks(yIons, -MassConstants.nh3, neutralLossIntensity));
+				allPeaks.addAll(getPeaks(yIons, -MassConstants.oh2, neutralLossIntensity));
+				break;
+				
+			case CID:
+				FragmentIon[] yIonsCID=model.getYIons();
+				allPeaks.addAll(getPeaks(yIonsCID, 0.0, primaryIonIntensity));
+				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.nh3, neutralLossIntensity));
+				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.oh2, neutralLossIntensity));
+				
+				FragmentIon[] bIonsCID=model.getBIons();
+				allPeaks.addAll(getPeaks(bIonsCID, 0.0, primaryIonIntensity));
+				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.nh3, neutralLossIntensity));
+				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.oh2, neutralLossIntensity));
+				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.co, neutralLossIntensity));
+				break;
+				
+			case ETD:
+				FragmentIon[] cIonsCID=model.getCIons();
+				allPeaks.addAll(getPeaks(cIonsCID, 0.0, primaryIonIntensity));
+				allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.nh3, neutralLossIntensity));
+				allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.oh2, neutralLossIntensity));
+				
+				FragmentIon[] zIonsCID=model.getCIons();
+				allPeaks.addAll(getPeaks(zIonsCID, 0.0, primaryIonIntensity));
+				allPeaks.addAll(getPeaks(zIonsCID, MassConstants.neutronMass, primaryIonIntensity)); // z+1
+				allPeaks.addAll(getPeaks(zIonsCID, -MassConstants.nh3, neutralLossIntensity));
+				allPeaks.addAll(getPeaks(zIonsCID, -MassConstants.oh2, neutralLossIntensity));
+				break;
+				
+			default:
+				throw new EncyclopediaException("Unknown fragmentation type ["+type+"]");
+		}
+		
+		return getIntensityArray(params, allPeaks, massPlusOne, true);
+	}
+	
+	private static ArrayList<Peak> getPeaks(FragmentIon[] ions, double delta, float intensity) {
+		ArrayList<Peak> peaks=new ArrayList<Peak>();
+		for (int i=0; i<ions.length; i++) {
+			peaks.add(new Peak(ions[i].mass+delta, intensity));
+		}
+		return peaks;
 	}
 
-	static Spectrum getNormalizedSpectrum(final double[] masses, final float[] intensities, final float tic, final float scanStartTime, final String name, final double mz) {
-		return new Spectrum() {
-			@Override
-			public float getTIC() {
-				return tic;
+	private static float[] getIntensityArray(SearchParameters params, ArrayList<Peak> allPeaks, double massPlusOne, boolean addIntensityToNeighboringBins) {
+		Collections.sort(allPeaks);
+		
+		// set tolerance to 2x the fragment tolerance of the highest fragment
+		float fragmentBinSize=2.0f*(float)params.getFragmentTolerance().getTolerance(massPlusOne);
+		if (fragmentBinSize<0.01f) fragmentBinSize=0.01f; 
+		float inverseBinWidth=1.0f/fragmentBinSize;
+		int arraySize=(int)((massPlusOne+fragmentBinSize+2.0)*inverseBinWidth);
+		
+		float[] binnedIntensityArray=new float[arraySize];
+		int arraySizeMinusOne=arraySize-1;
+		for (Peak peak : allPeaks) {
+			int massIndex=(int)(peak.mass*inverseBinWidth);
+			if (massIndex>=arraySize) massIndex=arraySize-1;
+			if (binnedIntensityArray[massIndex]<peak.intensity) {
+				binnedIntensityArray[massIndex]=peak.intensity;
 			}
-
-			@Override
-			public String getSpectrumName() {
-				return name;
+			
+			if (addIntensityToNeighboringBins) {
+				// neighboring intensities are 25 for b/y or 10 (the same) for neutral losses
+				float neighboringIntensity=peak.intensity>neutralLossIntensity?peak.intensity/2.0f:peak.intensity;
+				if (massIndex>0) {
+					binnedIntensityArray[massIndex-1]=neighboringIntensity;
+				}
+				if (massIndex<arraySizeMinusOne) {
+					binnedIntensityArray[massIndex+1]=neighboringIntensity;
+				}
 			}
-
-			@Override
-			public float getScanStartTime() {
-				return scanStartTime;
-			}
-
-			@Override
-			public double getPrecursorMZ() {
-				return mz;
-			}
-
-			@Override
-			public double[] getMassArray() {
-				return masses;
-			}
-
-			@Override
-			public float[] getIntensityArray() {
-				return intensities;
-			}
-		};
+		}
+		return binnedIntensityArray;
 	}
 }

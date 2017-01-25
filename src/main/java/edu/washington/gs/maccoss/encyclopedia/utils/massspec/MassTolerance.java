@@ -41,6 +41,14 @@ public class MassTolerance {
 		return ppmTolerance;
 	}
 	
+	public double getTolerance(double mass) {
+		if (amuTolerance==UNUSED_TOLERANCE) {
+			return percent*mass;
+		} else {
+			return amuTolerance;
+		}
+	}
+	
 	public double getWorstDeltaScore() {
 		if (amuTolerance==UNUSED_TOLERANCE) {
 			return ppmTolerance;
