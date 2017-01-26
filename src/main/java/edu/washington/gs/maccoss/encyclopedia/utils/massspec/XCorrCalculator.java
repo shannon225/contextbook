@@ -30,6 +30,13 @@ public class XCorrCalculator {
 	private final double precursorMz;
 	private final float[] preprocessedSpectrum;
 	
+	/**
+	 * 
+	 * @param s assumes sqrted intensities!
+	 * @param precursorMz
+	 * @param charge
+	 * @param params
+	 */
 	public XCorrCalculator(Spectrum s, double precursorMz, byte charge, SearchParameters params) {
 		this.precursorMz=precursorMz;
 		this.charge=charge;
@@ -44,6 +51,11 @@ public class XCorrCalculator {
 		preprocessedSpectrum=preprocessSpectrum(getTheoreticalSpectrum(modifiedSequence, precursorMz, charge, params));
 	}
 	
+	/**
+	 * 
+	 * @param s assumes sqrted intensities!
+	 * @return
+	 */
 	public float score(Spectrum s) {
 		float[] intensityBins=normalize(s, precursorMz, charge, false, params);
 		return score(intensityBins);
@@ -54,8 +66,13 @@ public class XCorrCalculator {
 		return score(intensityBins);
 	}
 	
+	/**
+	 * divide by 1e4 (personal communication with J Eng)
+	 * @param spectrum
+	 * @return
+	 */
 	float score(float[] spectrum) {
-		return dotProduct(preprocessedSpectrum, spectrum);
+		return dotProduct(preprocessedSpectrum, spectrum)/1.0e4f;
 	}
 
 	static float dotProduct(float[] preprocessedSpectrum, float[] spectrum) {
@@ -229,7 +246,7 @@ public class XCorrCalculator {
 		// set tolerance to 2x the fragment tolerance of the highest fragment
 		float fragmentBinSize=2.0f*(float)params.getFragmentTolerance().getTolerance(massPlusOne);
 		if (fragmentBinSize<0.01f) fragmentBinSize=0.01f;
-		if (fragmentBinSize>=1.0f) fragmentBinSize=1.0005079f;
+		if (fragmentBinSize>0.99f) fragmentBinSize=1.0005079f;
 		float inverseBinWidth=1.0f/fragmentBinSize;
 		int arraySize=(int)((massPlusOne+fragmentBinSize+2.0)*inverseBinWidth);
 		

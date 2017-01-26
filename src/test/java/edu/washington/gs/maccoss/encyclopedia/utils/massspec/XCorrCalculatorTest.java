@@ -9,7 +9,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
@@ -24,7 +23,7 @@ import junit.framework.TestCase;
 public class XCorrCalculatorTest extends TestCase {
 	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(0.5, MassErrorUnitType.AMU), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
 	
-	public static void main(String[] args) {
+	public void testXCorr() {
 		final byte charge=2;
 		final double chargedMz=(1329.6335+(charge-1)*MassConstants.protonMass)/charge;
 		
@@ -34,7 +33,8 @@ public class XCorrCalculatorTest extends TestCase {
 		System.out.println("xcorr: "+preprocessedSpectrum.score("SDFHLFGPPGKK"));
 		
 		XCorrCalculator preprocessedmodel=new XCorrCalculator("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
-		System.out.println("xcorr: "+preprocessedmodel.score(s));
+		float score=preprocessedmodel.score(s);
+		System.out.println("xcorr: "+score);
 		
 		
 		float[] f=XCorrCalculator.normalize(s, s.getPrecursorMZ(), charge, false, PARAMETERS);
@@ -53,19 +53,21 @@ public class XCorrCalculatorTest extends TestCase {
 		System.out.println(" 4: "+XCorrCalculator.dotProduct(f, t, 4));
 		System.out.println(" 5: "+XCorrCalculator.dotProduct(f, t, 5));
 		
-		float center=XCorrCalculator.dotProduct(f, t, 0);
+		float center=XCorrCalculator.dotProduct(t, f, 0);
 		float avg=0.0f;
 		for (int i=-75; i<75; i++) {
 			if (i!=0) {
-				avg+=XCorrCalculator.dotProduct(f, t, i);
+				avg+=XCorrCalculator.dotProduct(t, f, i);
 			}
 		}
 		avg=avg/150.0f;
 		
-		System.out.println(center+"\t"+avg+"\t"+(center-avg));
+		float originalCalculation=(center-avg)/1e4f;
+		assertEquals(originalCalculation, score, 0.01f);
+		System.out.println(center+"\t"+avg+"\t"+originalCalculation);
 		
-		s=getNormalizedSpectrum(s, chargedMz, charge, f, PARAMETERS);
-		Charter.launchChart(s);
+		//s=getNormalizedSpectrum(s, chargedMz, charge, f, PARAMETERS);
+		//Charter.launchChart(s);
 	}
 	
 	public void testModel() {
