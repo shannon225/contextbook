@@ -39,7 +39,7 @@ public class BackgroundGeneratorTest extends TestCase {
 				22813, 20105, 21768, 23571, 21514, 20512, 21399, 22106, 20500, 19480, 23036, 20754, 22494, 21547, 19864, 19827, 20495, 19250, 20312, 20563, 17937, 21411, 19921, 20206, 20786 };
 		assertEquals(expectedSizes.length, binCounters.length);
 		for (int i=0; i<binCounters.length; i++) {
-			assertEquals(expectedSizes[i], binCounters[i].size());
+			assertEquals(expectedSizes[i], binCounters[i].size(), 200);
 		}
 
 		String peptide="ILQEGVDPK";

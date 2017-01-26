@@ -22,15 +22,47 @@ import gnu.trove.list.array.TFloatArrayList;
 import junit.framework.TestCase;
 
 public class XCorrCalculatorTest extends TestCase {
-	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"));
+	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(0.5, MassErrorUnitType.AMU), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
 	
 	public static void main(String[] args) {
 		final byte charge=2;
 		final double chargedMz=(1329.6335+(charge-1)*MassConstants.protonMass)/charge;
 		
 		Spectrum s=getSDFHLFGPPGKK();
+		
+		XCorrCalculator preprocessedSpectrum=new XCorrCalculator(s, chargedMz, charge, PARAMETERS);
+		System.out.println("xcorr: "+preprocessedSpectrum.score("SDFHLFGPPGKK"));
+		
+		XCorrCalculator preprocessedmodel=new XCorrCalculator("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
+		System.out.println("xcorr: "+preprocessedmodel.score(s));
+		
+		
 		float[] f=XCorrCalculator.normalize(s, s.getPrecursorMZ(), charge, false, PARAMETERS);
-		f=XCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
+		float[] t=XCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
+		//f=XCorrCalculator.preprocessSpectrum(f);
+
+		System.out.println("-5: "+XCorrCalculator.dotProduct(f, t, -5));
+		System.out.println("-4: "+XCorrCalculator.dotProduct(f, t, -4));
+		System.out.println("-3: "+XCorrCalculator.dotProduct(f, t, -3));
+		System.out.println("-2: "+XCorrCalculator.dotProduct(f, t, -2));
+		System.out.println("-1: "+XCorrCalculator.dotProduct(f, t, -1));
+		System.out.println(" 0: "+XCorrCalculator.dotProduct(f, t, 0));
+		System.out.println(" 1: "+XCorrCalculator.dotProduct(f, t, 1));
+		System.out.println(" 2: "+XCorrCalculator.dotProduct(f, t, 2));
+		System.out.println(" 3: "+XCorrCalculator.dotProduct(f, t, 3));
+		System.out.println(" 4: "+XCorrCalculator.dotProduct(f, t, 4));
+		System.out.println(" 5: "+XCorrCalculator.dotProduct(f, t, 5));
+		
+		float center=XCorrCalculator.dotProduct(f, t, 0);
+		float avg=0.0f;
+		for (int i=-75; i<75; i++) {
+			if (i!=0) {
+				avg+=XCorrCalculator.dotProduct(f, t, i);
+			}
+		}
+		avg=avg/150.0f;
+		
+		System.out.println(center+"\t"+avg+"\t"+(center-avg));
 		
 		s=getNormalizedSpectrum(s, chargedMz, charge, f, PARAMETERS);
 		Charter.launchChart(s);
@@ -48,7 +80,7 @@ public class XCorrCalculatorTest extends TestCase {
 		InputStream is=MedianInterpolatorTest.class.getResourceAsStream("/040203_XXX_X1_1_OT_5seq.02.00085.2.dta.txt");
 		ArrayList<Peak> peaks=getData(is);
 		Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
-		return getSpectrum(peakArrays.x, peakArrays.y, General.sum(peakArrays.y), 0.0f, "SDFHLFGPPGKK", chargedMz); 
+		return getSpectrum(peakArrays.x, General.protectedSqrt(peakArrays.y), General.sum(peakArrays.y), 0.0f, "SDFHLFGPPGKK", chargedMz); 
 	}
 
 	public static ArrayList<Peak> getData(InputStream is) {
@@ -96,7 +128,7 @@ public class XCorrCalculatorTest extends TestCase {
 		TDoubleArrayList masses=new TDoubleArrayList();
 		TFloatArrayList intensities=new TFloatArrayList();
 		for (int i=0; i<intensityBins.length; i++) {
-			if (intensityBins[i]>0.0f) {
+			if (intensityBins[i]!=0.0f) {
 				double mass=i*fragmentBinSize;
 				masses.add(mass);
 				intensities.add(intensityBins[i]);

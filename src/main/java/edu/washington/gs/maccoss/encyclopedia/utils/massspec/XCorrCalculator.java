@@ -13,13 +13,93 @@ public class XCorrCalculator {
 
 	// set 50 to be the maximum value, see pp 982 bottom right
 	private static float primaryIonIntensity=50.0f;
-	 private static final float neutralLossIntensity=10.0f;
-	
+	private static final float neutralLossIntensity=primaryIonIntensity/5;
+
+	// offset defined figure legend on pp 980
+	private static final int upperOffset=75;
+	private static final int lowerOffset=-upperOffset;
+
 	// divide spectrum into 10 equal regions, see pp 982 bottom right
 	private static int groups=10; 
 	
 	// remove 10-u window around precursor, see pp 979 mid left
 	private static double precursorRemovalMargin=5.0;
+	
+	private final SearchParameters params;
+	private final byte charge;
+	private final double precursorMz;
+	private final float[] preprocessedSpectrum;
+	
+	public XCorrCalculator(Spectrum s, double precursorMz, byte charge, SearchParameters params) {
+		this.precursorMz=precursorMz;
+		this.charge=charge;
+		this.params=params;
+		preprocessedSpectrum=preprocessSpectrum(normalize(s, precursorMz, charge, true, params));
+	}
+	
+	public XCorrCalculator(String modifiedSequence, double precursorMz, byte charge, SearchParameters params) {
+		this.precursorMz=precursorMz;
+		this.charge=charge;
+		this.params=params;
+		preprocessedSpectrum=preprocessSpectrum(getTheoreticalSpectrum(modifiedSequence, precursorMz, charge, params));
+	}
+	
+	public float score(Spectrum s) {
+		float[] intensityBins=normalize(s, precursorMz, charge, false, params);
+		return score(intensityBins);
+	}
+	
+	public float score(String modifiedSequence) {
+		float[] intensityBins=getTheoreticalSpectrum(modifiedSequence, precursorMz, charge, params);
+		return score(intensityBins);
+	}
+	
+	float score(float[] spectrum) {
+		return dotProduct(preprocessedSpectrum, spectrum);
+	}
+
+	static float dotProduct(float[] preprocessedSpectrum, float[] spectrum) {
+		float sum=0.0f;
+		for (int i=0; i<spectrum.length; i++) {
+			if (i>=preprocessedSpectrum.length) break;
+			sum+=spectrum[i]*preprocessedSpectrum[i];
+		}
+		return sum;
+	}
+
+	static float dotProduct(float[] preprocessedSpectrum, float[] spectrum, int offset) {
+		float sum=0.0f;
+		for (int i=0; i<spectrum.length; i++) {
+			int index=i+offset;
+			if (index<0||index>=preprocessedSpectrum.length) continue;
+			sum+=spectrum[i]*preprocessedSpectrum[index];
+		}
+		return sum;
+	}
+
+	static float[] preprocessSpectrum(float[] spectrum) {
+		float[] preprocessedSpectrum=new float[spectrum.length];
+		
+		for (int offset=lowerOffset; offset<upperOffset; offset++) {
+			if (offset==0) continue;
+			for (int i=0; i<spectrum.length; i++) {
+				int index=i+offset;
+				if (index>=0&&index<preprocessedSpectrum.length) {
+					preprocessedSpectrum[i]-=spectrum[index];
+				}
+			}
+		}
+
+		int denominator=upperOffset-lowerOffset;
+		for (int i=0; i<preprocessedSpectrum.length; i++) {
+			preprocessedSpectrum[i]=preprocessedSpectrum[i]/denominator;
+		}
+		
+		for (int i=0; i<spectrum.length; i++) {
+			preprocessedSpectrum[i]+=spectrum[i];
+		}
+		return preprocessedSpectrum;
+	}
 	
 	/**
 	 * see Eng et al, JASMS 1994
@@ -27,7 +107,7 @@ public class XCorrCalculator {
 	 * @param precursorMz
 	 * @return
 	 */
-	public static float[] normalize(Spectrum s, double precursorMz, byte charge, boolean addIntensityToNeighboringBins, SearchParameters params) {
+	static float[] normalize(Spectrum s, double precursorMz, byte charge, boolean addIntensityToNeighboringBins, SearchParameters params) {
 		double massPlusOne=precursorMz*charge-(charge-1)*MassConstants.protonMass;
 		
 		double[] masses=s.getMassArray();
@@ -69,7 +149,7 @@ public class XCorrCalculator {
 			}
 		}
 		
-		General.divide(binMaxIntensity, primaryIonIntensity);
+		binMaxIntensity=General.divide(binMaxIntensity, primaryIonIntensity);
 		
 		currentIndex=0;
 		for (int i=0; i<intensities.length; i++) {
@@ -80,14 +160,13 @@ public class XCorrCalculator {
 			while (masses[i]>binMaxMass[currentIndex]) {
 				currentIndex++;
 			}
-			
 			allPeaks.add(new Peak(masses[i], intensities[i]/binMaxIntensity[currentIndex]));
 		}
 		
 		return getIntensityArray(params, allPeaks, massPlusOne, addIntensityToNeighboringBins);
 	}
 	
-	public static float[] getTheoreticalSpectrum(String modifiedSequence, double precursorMz, byte charge, SearchParameters params) {
+	static float[] getTheoreticalSpectrum(String modifiedSequence, double precursorMz, byte charge, SearchParameters params) {
 		double massPlusOne=precursorMz*charge-(charge-1)*MassConstants.protonMass;
 		
 		FragmentationType type=params.getFragType();
@@ -149,7 +228,8 @@ public class XCorrCalculator {
 		
 		// set tolerance to 2x the fragment tolerance of the highest fragment
 		float fragmentBinSize=2.0f*(float)params.getFragmentTolerance().getTolerance(massPlusOne);
-		if (fragmentBinSize<0.01f) fragmentBinSize=0.01f; 
+		if (fragmentBinSize<0.01f) fragmentBinSize=0.01f;
+		if (fragmentBinSize>=1.0f) fragmentBinSize=1.0005079f;
 		float inverseBinWidth=1.0f/fragmentBinSize;
 		int arraySize=(int)((massPlusOne+fragmentBinSize+2.0)*inverseBinWidth);
 		
