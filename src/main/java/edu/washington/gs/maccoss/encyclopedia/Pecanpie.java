@@ -260,7 +260,9 @@ public class Pecanpie {
 			HashSet<String> backgroundProteomeSet=new HashSet<String>(backgroundProteomeArray);
 			
 			float dutyCycle=stripefile.getRanges().get(range);
-			int scanAveragingMargin=(int)((parameters.getMinEluteTime())/dutyCycle)+1; // floor
+			int scanAveragingMargin=Math.round(parameters.getMinEluteTime()/dutyCycle);
+			if (scanAveragingMargin==0) scanAveragingMargin=1;
+			
 			float maxFragmentationMz=(float)Math.ceil(range.getMiddle()/10.0f)*20.0f+50.0f;
 			Range fragmentationRange=new Range(maxFragmentationMz/15f, maxFragmentationMz);
 			
@@ -311,6 +313,8 @@ public class Pecanpie {
 			for (Future<HashMap<LibraryEntry, PeptideScoringResult>> future : results) {
 				HashMap<LibraryEntry, PeptideScoringResult> result=future.get();
 				for (Entry<LibraryEntry, PeptideScoringResult> resultEntry : result.entrySet()) {
+					byte precursorCharge=resultEntry.getKey().getPrecursorCharge(); // FIXME BUILD NEW BACKGROUND SCORE MAPS FOR EACH CHARGE STATE 
+					
 					Pair<double[], double[]> arrays=resultEntry.getValue().getTrace().toArrays();
 					double[] x=arrays.x;
 					double[] y=arrays.y;

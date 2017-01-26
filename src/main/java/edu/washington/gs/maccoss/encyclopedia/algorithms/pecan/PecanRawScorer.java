@@ -78,11 +78,16 @@ public class PecanRawScorer implements PSMScorer {
 			float bestPeakIntensity=0.0f;
 			float deltaMass=0.0f;
 			for (int j=0; j<indicies.length; j++) {
+				// NOTE, this is the sum of square rooted intensities, as done by python-pecan
 				intensity+=spectrumIntensities[indicies[j]];
 				
 				if (spectrumIntensities[indicies[j]]>bestPeakIntensity) {
 					bestPeakIntensity=spectrumIntensities[indicies[j]];
 
+					// NOTE, the error is derived from the apex, which is NOT
+					// done by python-pecan. Python-pecan currently takes the
+					// minimum delta mass of all peaks in the window, which
+					// Sonia agrees isn't correct.
 					deltaMass=(float)fragmentTolerance.getDeltaScore(targetMass, spectrumMasses[indicies[j]]);
 				}
 			}

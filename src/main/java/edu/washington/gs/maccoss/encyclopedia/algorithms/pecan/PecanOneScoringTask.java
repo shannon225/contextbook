@@ -24,7 +24,7 @@ import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 
 public class PecanOneScoringTask extends AbstractPecanScoringTask {
-	
+
 	public PecanOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint> background, PrecursorScanMap precursors,
 			int scanAveragingWindow, BlockingQueue<PeptideScoringResult> resultsQueue, PecanSearchParameters parameters) {
 		super(scorer, entries, stripes, background, precursors, scanAveragingWindow, resultsQueue, parameters);
@@ -34,11 +34,11 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 	protected Nothing process() {
 		for (LibraryEntry entry : super.entries) {
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
-			
-			int requiredNumAboveThreshold=(int)(getPecanSearchParameters().getBeta()*entry.getPeptideSeq().length());
-			
+
+			int requiredNumAboveThreshold=(int)(getPecanSearchParameters().getBeta()*entry.getMassArray().length);
+
 			int scanAveragingHalfWindow=scanAveragingWindow/2;
-			
+
 			float[] rawRTs=new float[super.stripes.size()];
 			float[] rawScores=new float[super.stripes.size()];
 			float[] bgsubScores=new float[super.stripes.size()];
@@ -46,16 +46,16 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 			float[] zScores=new float[super.stripes.size()];
 			float[][] fragmentTraces=new float[entry.getMassArray().length][];
 			float[][] fragmentDeltaMasses=new float[entry.getMassArray().length][];
-			
+
 			for (int i=0; i<fragmentTraces.length; i++) {
 				fragmentTraces[i]=new float[super.stripes.size()];
 				fragmentDeltaMasses[i]=new float[super.stripes.size()];
 			}
-			
+
 			for (int i=0; i<super.stripes.size(); i++) {
 				Stripe stripe=super.stripes.get(i);
 				rawRTs[i]=stripe.getScanStartTime();
-				
+
 				PeakScores[] scores=scorer.getIndividualPeakScores(entry, stripe, true);
 				for (int j=0; j<scores.length; j++) {
 					if (scores[j]!=null) {
@@ -66,10 +66,11 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 						fragmentDeltaMasses[j][i]=0.0f;
 					}
 				}
-				rawScores[i]+=scorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
-				
+				rawScores[i]+=PeakScores.sumScores(scores); // dot product
+
 				float rt=stripe.getScanStartTime();
 				if (background!=null) {
+					// FIXME retrieve background scores based on charge state!
 					XYPoint meanStdev=background.get((double)rt);
 					if (meanStdev!=null) {
 						backgroundScores[i]=(float)meanStdev.x;
@@ -102,12 +103,13 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 
 			ArrayList<ScoredIndex> goodStripes=new ArrayList<ScoredIndex>();
 			int[] numAboveThresholdMatches=new int[sumRawScores.length];
-			int[] numMatches=new int[sumRawScores.length];
-			float[] fragmentDeltaMassAverage=new float[sumRawScores.length];
-			float[] fragmentDeltaMassVariance=new float[sumRawScores.length];
+			int[] numMatches=new int[sumRawScores.length]; // calculated but not reported
+			float[] fragmentDeltaMassAverage=new float[sumRawScores.length]; // FIXME for each fragment ion this needs to be weighted by sqrt fragment intensity at that time (it's not a moving average, it's a weighted average)
+			float[] fragmentDeltaMassVariance=new float[sumRawScores.length]; // FIXME think about migrating this down to when we calculate peak scores, since it's a peak score, not a true trace
+			
+			float scoreThresholdHyperParameter=(float)Math.pow(entry.getMassArray().length, getPecanSearchParameters().getAlpha());
 			for (int i=0; i<numAboveThresholdMatches.length; i++) {
-				//float threshold=Math.max(Float.MIN_VALUE, sumRawScores[i]/entry.getMassArray().length);
-				float threshold=Math.max(Float.MIN_VALUE, sumRawScores[i]/(float)Math.pow(entry.getMassArray().length, getPecanSearchParameters().getAlpha()));
+				float threshold=Math.max(Float.MIN_VALUE, sumRawScores[i]/scoreThresholdHyperParameter);
 				for (int j=0; j<sumFragmentTraces.length; j++) {
 					if (sumFragmentTraces[j][i]>=threshold) {
 						numAboveThresholdMatches[i]++;
@@ -117,7 +119,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 						numMatches[i]++;
 					}
 				}
-				
+
 				if (numAboveThresholdMatches[i]>0) {
 					fragmentDeltaMassAverage[i]=fragmentDeltaMassAverage[i]/numAboveThresholdMatches[i];
 					for (int j=0; j<sumFragmentDeltaMasses.length; j++) {
@@ -128,13 +130,13 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 					}
 					fragmentDeltaMassVariance[i]=fragmentDeltaMassVariance[i]/(numAboveThresholdMatches[i]-1);
 				}
-				
+
 				if (numAboveThresholdMatches[i]>requiredNumAboveThreshold) {
 					goodStripes.add(new ScoredIndex(sumBgsubScores[i], i));
 				}
 			}
 			Collections.sort(goodStripes);
-			
+
 			float[] sortedBGScores=sumBgsubScores.clone();
 			Arrays.sort(sortedBGScores);
 
@@ -145,77 +147,96 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 				int index=goodStripes.get(i).y;
 				if (takenScans.contains(index)) {
 					continue;
-					
+
 				} else {
-					float duration=stripes.get(index+scanAveragingWindow-1).getScanStartTime()-stripes.get(index).getScanStartTime();
-					
+					float endScanTime=stripes.get(index+scanAveragingWindow-1).getScanStartTime();
+					float startScanTime=stripes.get(index).getScanStartTime();
+					float duration=endScanTime-startScanTime;
+
 					float[][] auxScores=new float[scanAveragingWindow][];
 					for (int j=0; j<scanAveragingWindow; j++) {
 						Stripe stripe=stripes.get(index+j);
 						auxScores[j]=scorer.auxScore(entry, stripe, predictedIsotopeDistribution, precursors);
 					}
-					
+
 					float[] averageAuxScores=new float[auxScores[0].length];
 					for (int auxIndex=0; auxIndex<averageAuxScores.length; auxIndex++) {
 						for (int scanIndex=0; scanIndex<auxScores.length; scanIndex++) {
 							averageAuxScores[auxIndex]+=auxScores[scanIndex][auxIndex];
 						}
 					}
-					
+
 					for (int j=0; j<averageAuxScores.length; j++) {
 						averageAuxScores[j]=averageAuxScores[j]/scanAveragingWindow;
 					}
 
-					// TODO indexing these is hokey, and should be more firmly rooted in the scoring system
-					//float averageIDP=averageAuxScores[averageAuxScores.length-1];
+					// TODO indexing these is hokey, and should be more firmly
+					// rooted in the scoring system
+					// float
+					// averageIDP=averageAuxScores[averageAuxScores.length-1];
 
 					float maxIDP=0.0f; // IDP is the last score of the PecanAuxillaryScorer
 					int midIndex=auxScores.length/2;
 					float midIDP=auxScores[midIndex][auxScores[midIndex].length-1];
-					float precursorPPMVariance=0.0f; // PPM is the second to last score of PecanAuxillaryScorer
+					float precursorPPMVariance=0.0f; // PPM is the second to
+														// last score of
+														// PecanAuxillaryScorer
 					for (int scanIndex=0; scanIndex<auxScores.length; scanIndex++) {
-						// TODO indexing these is hokey, and should be more firmly rooted in the scoring system
+						// TODO indexing these is hokey, and should be more
+						// firmly rooted in the scoring system
 						int idpIndex=auxScores[scanIndex].length-1;
 						int ppmIndex=auxScores[scanIndex].length-2;
-						
+
 						if (auxScores[scanIndex][idpIndex]>maxIDP) {
 							maxIDP=auxScores[scanIndex][idpIndex];
 						}
 
+						// FIXME VARIANCE NEEDS TO BE CALCULATED ACROSS +0, +1, +2, NOT ACROSS TIME! TIME IS CONSIDERED VIA INTENSITY WEIGHTING
 						float delta=auxScores[scanIndex][ppmIndex]-averageAuxScores[ppmIndex];
 						precursorPPMVariance+=delta*delta;
 					}
 					precursorPPMVariance=precursorPPMVariance/(auxScores.length-1);
-					
+
 					// rank in sortedBGScores
 					int indexInSortedBGScores=Arrays.binarySearch(sortedBGScores, goodStripes.get(i).x);
 					if (indexInSortedBGScores<0) {
 						indexInSortedBGScores=-(indexInSortedBGScores+1);
 					}
 					int rank=sortedBGScores.length-indexInSortedBGScores;
-					
-					// averaging forward, so current scan is actually the median for half a window back
+
+					// averaging forward, so current scan is actually the median
+					// for half a window back
 					int medianIndex=index+scanAveragingHalfWindow;
 					Stripe medianStripe=stripes.get(medianIndex);
-					float[] completeAuxArray=General.concatenate(new float[] {numAboveThresholdMatches[index], numMatches[index], midTime[index]}, averageAuxScores, 
-							new float[] {fragmentDeltaMassAverage[index], fragmentDeltaMassVariance[index], duration, maxIDP, midIDP, precursorPPMVariance, bgsubScores[index], sumZScores[index]/scanAveragingWindow, rank, rawScores[index]});
+					float[] completeAuxArray=General.concatenate(new float[] {numAboveThresholdMatches[index], numMatches[index], midTime[index]}, averageAuxScores,
+							new float[] {fragmentDeltaMassAverage[index], fragmentDeltaMassVariance[index], duration, maxIDP, midIDP, precursorPPMVariance, bgsubScores[index],
+									sumZScores[index]/scanAveragingWindow, rank, rawScores[index]});
 					result.addStripe(goodStripes.get(i).x/scanAveragingWindow, completeAuxArray, medianStripe);
-					
+
 					if (identifiedPeaks>getPecanSearchParameters().getNumberOfReportedPeaks()) {
 						// keep N+1 peaks
 						break;
 					}
 					identifiedPeaks++;
 
-					// add to takenScans to make sure we don't get a shoulder of this peak
-					int lowerWindow=index-2*scanAveragingWindow; // can't pick anything in twice the peak width
-					int upperWindow=index+3*scanAveragingWindow; // +1 to account for the window boundary
+					// add to takenScans to make sure we don't get a shoulder of
+					// this peak
+					int lowerWindow=medianIndex-2*scanAveragingWindow; // can't pick
+																	// anything
+																	// in twice
+																	// the peak
+																	// width
+					int upperWindow=medianIndex+2*scanAveragingWindow; // +1 to
+																	// account
+																	// for the
+																	// window
+																	// boundary
 					for (int j=lowerWindow; j<upperWindow; j++) {
 						takenScans.add(j);
 					}
 				}
 			}
-			
+
 			TFloatFloatHashMap scoreMap=new TFloatFloatHashMap();
 			for (int i=0; i<sumBgsubScores.length; i++) {
 				if (numAboveThresholdMatches[i]>=requiredNumAboveThreshold) {
@@ -224,9 +245,9 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 					scoreMap.put(midTime[i], 0.0f);
 				}
 			}
-			
+
 			result.setTrace(new XYTrace(scoreMap, GraphType.line, entry.getPeptideModSeq()));
-			
+
 			if (result.size()>0&&resultsQueue!=null) {
 				try {
 					resultsQueue.put(result);

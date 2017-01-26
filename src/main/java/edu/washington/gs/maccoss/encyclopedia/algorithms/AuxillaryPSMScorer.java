@@ -45,6 +45,7 @@ public abstract class AuxillaryPSMScorer {
 			double predicted=entry.getPrecursorMZ()+(isotope*MassConstants.neutronMass/charge);
 			
 			if (intensities[i]>0) {
+				// FIXME THIS SHOULD BE WEIGHTED BY INTENSITY!
 				float ppm=(float)parameters.getPrecursorTolerance().getDeltaScore(predicted, masses[i]);
 				averagePPM+=ppm;
 				averageAbsPPM+=Math.abs(ppm);
