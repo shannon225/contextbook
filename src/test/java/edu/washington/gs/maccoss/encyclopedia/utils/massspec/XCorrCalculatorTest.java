@@ -30,28 +30,28 @@ public class XCorrCalculatorTest extends TestCase {
 		Spectrum s=getSDFHLFGPPGKK();
 		
 		XCorrCalculator preprocessedSpectrum=new XCorrCalculator(s, chargedMz, charge, PARAMETERS);
-		System.out.println("xcorr: "+preprocessedSpectrum.score("SDFHLFGPPGKK"));
+		float spectrumFirst=preprocessedSpectrum.score("SDFHLFGPPGKK");
+		System.out.println("spectrumFirst xcorr: "+spectrumFirst);
 		
 		XCorrCalculator preprocessedmodel=new XCorrCalculator("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
-		float score=preprocessedmodel.score(s);
-		System.out.println("xcorr: "+score);
+		float modelFirst=preprocessedmodel.score(s);
+		System.out.println("modelFirst xcorr: "+modelFirst);
 		
 		
 		float[] f=XCorrCalculator.normalize(s, s.getPrecursorMZ(), charge, false, PARAMETERS);
 		float[] t=XCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
-		//f=XCorrCalculator.preprocessSpectrum(f);
 
-		System.out.println("-5: "+XCorrCalculator.dotProduct(f, t, -5));
-		System.out.println("-4: "+XCorrCalculator.dotProduct(f, t, -4));
-		System.out.println("-3: "+XCorrCalculator.dotProduct(f, t, -3));
-		System.out.println("-2: "+XCorrCalculator.dotProduct(f, t, -2));
-		System.out.println("-1: "+XCorrCalculator.dotProduct(f, t, -1));
-		System.out.println(" 0: "+XCorrCalculator.dotProduct(f, t, 0));
-		System.out.println(" 1: "+XCorrCalculator.dotProduct(f, t, 1));
-		System.out.println(" 2: "+XCorrCalculator.dotProduct(f, t, 2));
-		System.out.println(" 3: "+XCorrCalculator.dotProduct(f, t, 3));
-		System.out.println(" 4: "+XCorrCalculator.dotProduct(f, t, 4));
-		System.out.println(" 5: "+XCorrCalculator.dotProduct(f, t, 5));
+		System.out.println("-5: "+XCorrCalculator.dotProduct(t, f, -5));
+		System.out.println("-4: "+XCorrCalculator.dotProduct(t, f, -4));
+		System.out.println("-3: "+XCorrCalculator.dotProduct(t, f, -3));
+		System.out.println("-2: "+XCorrCalculator.dotProduct(t, f, -2));
+		System.out.println("-1: "+XCorrCalculator.dotProduct(t, f, -1));
+		System.out.println(" 0: "+XCorrCalculator.dotProduct(t, f, 0));
+		System.out.println(" 1: "+XCorrCalculator.dotProduct(t, f, 1));
+		System.out.println(" 2: "+XCorrCalculator.dotProduct(t, f, 2));
+		System.out.println(" 3: "+XCorrCalculator.dotProduct(t, f, 3));
+		System.out.println(" 4: "+XCorrCalculator.dotProduct(t, f, 4));
+		System.out.println(" 5: "+XCorrCalculator.dotProduct(t, f, 5));
 		
 		float center=XCorrCalculator.dotProduct(t, f, 0);
 		float avg=0.0f;
@@ -63,11 +63,25 @@ public class XCorrCalculatorTest extends TestCase {
 		avg=avg/150.0f;
 		
 		float originalCalculation=(center-avg)/1e4f;
-		assertEquals(originalCalculation, score, 0.01f);
+		
+
+		float center2=XCorrCalculator.dotProduct(f, t, 0);
+		float avg2=0.0f;
+		for (int i=-75; i<75; i++) {
+			if (i!=0) {
+				avg2+=XCorrCalculator.dotProduct(f, t, i);
+			}
+		}
+		avg2=avg2/150.0f;
+		
+		float originalCalculation2=(center2-avg2)/1e4f;
+		assertEquals(originalCalculation, originalCalculation2, 0.05f);
+		assertEquals(originalCalculation, modelFirst, 0.05f);
+		assertEquals(originalCalculation, spectrumFirst, 0.05f);
 		System.out.println(center+"\t"+avg+"\t"+originalCalculation);
 		
 		//s=getNormalizedSpectrum(s, chargedMz, charge, f, PARAMETERS);
-		//Charter.launchChart(s);
+		//Charter.launchChart(s, "model orig:"+originalCalculation2+" spec orig:"+originalCalculation+" model:"+modelFirst+" spec:"+spectrumFirst);
 	}
 	
 	public void testModel() {

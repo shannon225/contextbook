@@ -41,7 +41,7 @@ public class XCorrCalculator {
 		this.precursorMz=precursorMz;
 		this.charge=charge;
 		this.params=params;
-		preprocessedSpectrum=preprocessSpectrum(normalize(s, precursorMz, charge, true, params));
+		preprocessedSpectrum=preprocessSpectrum(normalize(s, precursorMz, charge, false, params));
 	}
 	
 	public XCorrCalculator(String modifiedSequence, double precursorMz, byte charge, SearchParameters params) {
