@@ -34,6 +34,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
@@ -444,17 +445,17 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					prep.setInt(10, intensityByteArray.length);
 					prep.setBytes(11, CompressionUtils.compress(intensityByteArray));
 
-					if (entry.getMassArray().length!=entry.getIntensityArray().length)
-						Logger.errorLine("MASS/INTENSITY EQUATION WRITE ERROR! "+entry.getMassArray().length+" != "+entry.getIntensityArray().length+" FOR "+entry.getPeptideModSeq()); // FIXME
-					assert (entry.getMassArray().length==entry.getIntensityArray().length);
+					if (entry.getMassArray().length!=entry.getIntensityArray().length) {
+						throw new EncyclopediaException("Mass/Intensity array length mismatch! "+entry.getMassArray().length+" != "+entry.getIntensityArray().length+" FOR "+entry.getPeptideModSeq());
+					}
 
 					if (entry instanceof Chromatogram) {
 						Chromatogram cast=(Chromatogram)entry;
 
 						byte[] correlationByteArray=ByteConverter.toByteArray(cast.getCorrelationArray());
-						if (entry.getMassArray().length!=cast.getCorrelationArray().length)
-							Logger.errorLine("MASS/CORRELATION EQUATION WRITE ERROR! "+entry.getMassArray().length+" != "+cast.getCorrelationArray().length+" FOR "+entry.getPeptideModSeq()); // FIXME
-						assert (entry.getMassArray().length==cast.getCorrelationArray().length);
+						if (entry.getMassArray().length!=entry.getIntensityArray().length) {
+							throw new EncyclopediaException("Mass/Correlation array length mismatch! "+entry.getMassArray().length+" != "+entry.getIntensityArray().length+" FOR "+entry.getPeptideModSeq());
+						}
 
 						prep.setInt(12, correlationByteArray.length);
 						prep.setBytes(13, CompressionUtils.compress(correlationByteArray));
@@ -570,8 +571,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				intensityArray=General.protectedSqrt(intensityArray);
 			}
 
-			if (massArray.length!=intensityArray.length) Logger.errorLine("MASS/INTENSITY EQUATION READ ERROR "+massArray.length+" != "+intensityArray.length+" FOR "+peptideModSeq); // FIXME
-			assert (massArray.length==intensityArray.length);
+			if (massArray.length!=intensityArray.length) {
+				throw new EncyclopediaException("Mass/Intensity array length mismatch! "+massArray.length+" != "+intensityArray.length+" FOR "+peptideModSeq);
+			}
 
 			float[] correlationArray;
 			float rtInSecondsStart;
@@ -587,8 +589,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				medianChromatogramArray=null;
 			} else {
 				correlationArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(12), correlationEncodedLength));
-				if (massArray.length!=correlationArray.length) Logger.errorLine("MASS/CORRELATION EQUATION READ ERROR! "+massArray.length+" != "+correlationArray.length+" FOR "+peptideModSeq); // FIXME
-				assert (massArray.length==correlationArray.length);
+				if (massArray.length!=correlationArray.length) {
+					throw new EncyclopediaException("Mass/Correlation array length mismatch! "+massArray.length+" != "+correlationArray.length+" FOR "+peptideModSeq);
+				}
 
 				rtInSecondsStart=rs.getFloat(13);
 				rtInSecondsStop=rs.getFloat(14);

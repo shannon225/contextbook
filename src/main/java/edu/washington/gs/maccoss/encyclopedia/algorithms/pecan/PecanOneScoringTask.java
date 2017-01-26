@@ -170,11 +170,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 						averageAuxScores[j]=averageAuxScores[j]/scanAveragingWindow;
 					}
 
-					// TODO indexing these is hokey, and should be more firmly
-					// rooted in the scoring system
-					// float
-					// averageIDP=averageAuxScores[averageAuxScores.length-1];
-
+					// TODO indexing these is hokey, and should be more firmly rooted in the scoring system
 					float maxIDP=0.0f; // IDP is the last score of the PecanAuxillaryScorer
 					int midIndex=auxScores.length/2;
 					float midIDP=auxScores[midIndex][auxScores[midIndex].length-1];
