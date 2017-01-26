@@ -25,6 +25,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEn
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideTrie;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -61,7 +62,7 @@ public class BlibFile extends SQLFile {
 	}
 	
 	@SuppressWarnings("resource") // this is properly closed, Eclipse just can't follow the if/else logic
-	public void getCopyEntriesToLibrary(LibraryFile library, Optional<TObjectFloatHashMap<String>> irtMap, File fastaFile) throws IOException, SQLException, DataFormatException {
+	public void getCopyEntriesToLibrary(LibraryFile library, Optional<TObjectFloatHashMap<String>> irtMap, File fastaFile, SearchParameters params) throws IOException, SQLException, DataFormatException {
 		Logger.logLine("Reading BLIB file");
 		
 		ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
@@ -95,6 +96,12 @@ public class BlibFile extends SQLFile {
 					double precursorMZ=rs.getDouble(2);
 					byte precursorCharge=(byte)rs.getInt(3);
 					String peptideModSeq=rs.getString(4);
+					if (precursorMZ<=0.0&&precursorCharge>0) {
+						// precursors not set? This is a bug in Skyline exporting
+						FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+						precursorMZ=model.getChargedMass(precursorCharge);
+					}
+					
 					int copies=rs.getInt(5);
 					int numPeaks=rs.getInt(6);
 					double[] massArray=decompressDouble(rs.getBytes(7), numPeaks);

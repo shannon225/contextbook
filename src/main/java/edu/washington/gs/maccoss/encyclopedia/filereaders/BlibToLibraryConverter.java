@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
@@ -54,13 +55,13 @@ public class BlibToLibraryConverter {
 		}
 	}
 
-	public static LibraryInterface convert(File blibFile, Optional<File> irtFile, File fastaFile) {
+	public static LibraryInterface convert(File blibFile, Optional<File> irtFile, File fastaFile, SearchParameters params) {
 		String absolutePath=blibFile.getAbsolutePath();
 		File elibFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.ELIB);
-		return convert(blibFile, elibFile, irtFile, fastaFile);
+		return convert(blibFile, elibFile, irtFile, fastaFile, params);
 	}
 	
-	static LibraryInterface convert(File blibFile, File elibFile, Optional<File> irtFile, File fastaFile) {
+	static LibraryInterface convert(File blibFile, File elibFile, Optional<File> irtFile, File fastaFile, SearchParameters params) {
 		TObjectFloatHashMap<String> irtMap=null;
 		try {
 			Logger.logLine("Indexing "+blibFile.getName()+" ...");
@@ -73,7 +74,7 @@ public class BlibToLibraryConverter {
 				IRTdbFile irt=new IRTdbFile(irtFile.get());
 				irtMap=irt.getIRTs();
 			}
-			blib.getCopyEntriesToLibrary(elib, Optional.ofNullable(irtMap), fastaFile);	
+			blib.getCopyEntriesToLibrary(elib, Optional.ofNullable(irtMap), fastaFile, params);	
 			elib.saveAsFile(elibFile);
 			return elib;
 			

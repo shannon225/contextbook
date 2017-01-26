@@ -441,7 +441,7 @@ public class SearchPanel extends JPanel {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(SearchPanel.this), "Please wait...", "Reading BLIB File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							BlibToLibraryConverter.convert(blibFile, Optional.ofNullable(irtFile), fastaFile);
+							BlibToLibraryConverter.convert(blibFile, Optional.ofNullable(irtFile), fastaFile, getVisibleTab().getParameters());
 							Logger.logLine("Finished reading "+blibFile.getName());
 							return Nothing.NOTHING;
 						}
