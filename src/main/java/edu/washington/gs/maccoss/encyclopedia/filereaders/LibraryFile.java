@@ -785,7 +785,14 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			try {
 				try {
 					Version version=getVersion();
+					if (userFile!=null) {
+						Logger.logLine("Opening library "+userFile.getName()+" (version: "+version+")");
+					}
+					
 					if (new Version(0, 1, 2).amIAbove(version)&&version.amIAbove(new Version(0, 0, 9))) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 2));
+						}
 						s.execute("ALTER TABLE entries ADD COLUMN CorrelationEncodedLength int");
 						s.execute("ALTER TABLE entries ADD COLUMN CorrelationArray blob");
 						s.execute("ALTER TABLE entries ADD COLUMN RTInSecondsStart double");
@@ -794,12 +801,18 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						s.execute("ALTER TABLE entries ADD COLUMN MedianChromatogramArray blob");
 					}
 					if (new Version(0, 1, 4).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 4));
+						}
 						s.execute("ALTER TABLE fragmentquants ADD COLUMN Background double");
 						s.execute("ALTER TABLE fragmentquants ADD COLUMN PeptideSeq string");
 						s.execute("ALTER TABLE peptidequants ADD COLUMN PeptideSeq string");
 					}
 
 					if (new Version(0, 1, 5).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 5));
+						}
 						s.execute("ALTER TABLE peptidequants ADD COLUMN LocalizationPeptideModSeq string");
 						s.execute("ALTER TABLE peptidequants ADD COLUMN LocalizationScore double");
 						s.execute("ALTER TABLE peptidequants ADD COLUMN NumberOfMods int");
@@ -808,10 +821,16 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					}
 
 					if (new Version(0, 1, 6).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 6));
+						}
 						s.execute("ALTER TABLE peptidequants ADD COLUMN IdentifiedTICRatio double");
 					}
 
 					if (new Version(0, 1, 7).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 7));
+						}
 						s.execute("ALTER TABLE peptidequants ADD COLUMN LocalizationIons string");
 						s.execute("ALTER TABLE fragmentquants ADD COLUMN IonIndex int");
 					}

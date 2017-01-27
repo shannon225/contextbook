@@ -17,7 +17,7 @@ public abstract class AbstractPecanScoringTask extends AbstractLibraryScoringTas
 	 * must be immutable!
 	 */
 	protected final int scanAveragingWindow;
-	protected final TDoubleObjectHashMap<XYPoint> background; // if not null, then score using zscore (otherwise use raw score)
+	protected final TDoubleObjectHashMap<XYPoint>[] background; // if not null, then score using zscore (otherwise use raw score)
 
 	/**
 	 * scorer must be a 
@@ -28,7 +28,7 @@ public abstract class AbstractPecanScoringTask extends AbstractLibraryScoringTas
 	 * @param precursors
 	 * @param scanAveragingMargin
 	 */
-	public AbstractPecanScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint> background, PrecursorScanMap precursors, int scanAveragingWindow, BlockingQueue<PeptideScoringResult> resultsQueue, PecanSearchParameters parameters) {
+	public AbstractPecanScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint>[] background, PrecursorScanMap precursors, int scanAveragingWindow, BlockingQueue<PeptideScoringResult> resultsQueue, PecanSearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.background=background;
 		this.scanAveragingWindow=scanAveragingWindow;

@@ -93,7 +93,7 @@ public class PecanRawScorer implements PSMScorer {
 			}
 			float peakScore=libraryIntensities[i]*intensity;
 			if (intensity>0.0f) {
-				individualPeakScores[i]=new PeakScores(peakScore, new FragmentIon(targetMass, (byte)0, IonType.y), deltaMass);// FIXME target is a hack!
+				individualPeakScores[i]=new PeakScores(peakScore, new FragmentIon(targetMass, (byte)0, IonType.y), deltaMass);// TODO target ion index is a hack!
 			}
 		}
 		

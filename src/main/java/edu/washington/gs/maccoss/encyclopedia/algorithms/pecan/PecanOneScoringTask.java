@@ -25,7 +25,7 @@ import gnu.trove.set.hash.TIntHashSet;
 
 public class PecanOneScoringTask extends AbstractPecanScoringTask {
 
-	public PecanOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint> background, PrecursorScanMap precursors,
+	public PecanOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint>[] background, PrecursorScanMap precursors,
 			int scanAveragingWindow, BlockingQueue<PeptideScoringResult> resultsQueue, PecanSearchParameters parameters) {
 		super(scorer, entries, stripes, background, precursors, scanAveragingWindow, resultsQueue, parameters);
 	}
@@ -51,6 +51,13 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 				fragmentTraces[i]=new float[super.stripes.size()];
 				fragmentDeltaMasses[i]=new float[super.stripes.size()];
 			}
+			
+			TDoubleObjectHashMap<XYPoint> chargeStateBackground;
+			if (background!=null&&background.length>entry.getPrecursorCharge()) {
+				chargeStateBackground=background[entry.getPrecursorCharge()-1];
+			} else {
+				chargeStateBackground=null;
+			}
 
 			for (int i=0; i<super.stripes.size(); i++) {
 				Stripe stripe=super.stripes.get(i);
@@ -69,9 +76,8 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 				rawScores[i]+=PeakScores.sumScores(scores); // dot product
 
 				float rt=stripe.getScanStartTime();
-				if (background!=null) {
-					// FIXME retrieve background scores based on charge state!
-					XYPoint meanStdev=background.get((double)rt);
+				if (chargeStateBackground!=null) {
+					XYPoint meanStdev=chargeStateBackground.get((double)rt);
 					if (meanStdev!=null) {
 						backgroundScores[i]=(float)meanStdev.x;
 						bgsubScores[i]=(float)(rawScores[i]-meanStdev.x);
@@ -104,8 +110,6 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 			ArrayList<ScoredIndex> goodStripes=new ArrayList<ScoredIndex>();
 			int[] numAboveThresholdMatches=new int[sumRawScores.length];
 			int[] numMatches=new int[sumRawScores.length]; // calculated but not reported
-			float[] fragmentDeltaMassAverage=new float[sumRawScores.length]; // FIXME for each fragment ion this needs to be weighted by sqrt fragment intensity at that time (it's not a moving average, it's a weighted average)
-			float[] fragmentDeltaMassVariance=new float[sumRawScores.length]; // FIXME think about migrating this down to when we calculate peak scores, since it's a peak score, not a true trace
 			
 			float scoreThresholdHyperParameter=(float)Math.pow(entry.getMassArray().length, getPecanSearchParameters().getAlpha());
 			for (int i=0; i<numAboveThresholdMatches.length; i++) {
@@ -113,22 +117,10 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 				for (int j=0; j<sumFragmentTraces.length; j++) {
 					if (sumFragmentTraces[j][i]>=threshold) {
 						numAboveThresholdMatches[i]++;
-						fragmentDeltaMassAverage[i]+=sumFragmentDeltaMasses[j][i];
 					}
 					if (sumFragmentTraces[j][i]>0.0f) {
 						numMatches[i]++;
 					}
-				}
-
-				if (numAboveThresholdMatches[i]>0) {
-					fragmentDeltaMassAverage[i]=fragmentDeltaMassAverage[i]/numAboveThresholdMatches[i];
-					for (int j=0; j<sumFragmentDeltaMasses.length; j++) {
-						if (sumFragmentTraces[j][i]>threshold) {
-							float delta=fragmentDeltaMassAverage[i]-sumFragmentDeltaMasses[j][i];
-							fragmentDeltaMassVariance[i]+=delta*delta;
-						}
-					}
-					fragmentDeltaMassVariance[i]=fragmentDeltaMassVariance[i]/(numAboveThresholdMatches[i]-1);
 				}
 
 				if (numAboveThresholdMatches[i]>requiredNumAboveThreshold) {
@@ -152,6 +144,22 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 					float endScanTime=stripes.get(index+scanAveragingWindow-1).getScanStartTime();
 					float startScanTime=stripes.get(index).getScanStartTime();
 					float duration=endScanTime-startScanTime;
+
+					// one delta mass per fragment ion
+					float[] weightedFragmentDeltaMass=new float[sumFragmentDeltaMasses.length];
+					for (int d=0; d<sumFragmentDeltaMasses.length; d++) {
+						float totalSumRawScore=0.0f;
+						for (int j=0; j<scanAveragingWindow; j++) {
+							int scanIndex=index+j;
+							totalSumRawScore+=sumRawScores[scanIndex];
+							weightedFragmentDeltaMass[d]+=sumRawScores[scanIndex]*fragmentDeltaMasses[d][scanIndex];
+						}
+						if (totalSumRawScore>0) {
+							weightedFragmentDeltaMass[d]=weightedFragmentDeltaMass[d]/totalSumRawScore;
+						}
+					}
+					float fragmentDeltaMassAverage=General.mean(weightedFragmentDeltaMass);
+					float fragmentDeltaMassVariance=General.variance(weightedFragmentDeltaMass);
 
 					float[][] auxScores=new float[scanAveragingWindow][];
 					for (int j=0; j<scanAveragingWindow; j++) {
@@ -178,8 +186,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 														// last score of
 														// PecanAuxillaryScorer
 					for (int scanIndex=0; scanIndex<auxScores.length; scanIndex++) {
-						// TODO indexing these is hokey, and should be more
-						// firmly rooted in the scoring system
+						// TODO indexing these is hokey, and should be more firmly rooted in the scoring system
 						int idpIndex=auxScores[scanIndex].length-1;
 						int ppmIndex=auxScores[scanIndex].length-2;
 
@@ -205,7 +212,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 					int medianIndex=index+scanAveragingHalfWindow;
 					Stripe medianStripe=stripes.get(medianIndex);
 					float[] completeAuxArray=General.concatenate(new float[] {numAboveThresholdMatches[index], numMatches[index], midTime[index]}, averageAuxScores,
-							new float[] {fragmentDeltaMassAverage[index], fragmentDeltaMassVariance[index], duration, maxIDP, midIDP, precursorPPMVariance, bgsubScores[index],
+							new float[] {fragmentDeltaMassAverage, fragmentDeltaMassVariance, duration, maxIDP, midIDP, precursorPPMVariance, bgsubScores[index],
 									sumZScores[index]/scanAveragingWindow, rank, rawScores[index]});
 					result.addStripe(goodStripes.get(i).x/scanAveragingWindow, completeAuxArray, medianStripe);
 

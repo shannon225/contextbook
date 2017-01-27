@@ -246,7 +246,7 @@ public class XCorrCalculator {
 		// set tolerance to 2x the fragment tolerance of the highest fragment
 		float fragmentBinSize=2.0f*(float)params.getFragmentTolerance().getTolerance(massPlusOne);
 		if (fragmentBinSize<0.01f) fragmentBinSize=0.01f;
-		if (fragmentBinSize>0.99f) fragmentBinSize=1.0005079f;
+		if (fragmentBinSize>0.5f) fragmentBinSize=1.0005079f; // if tolerance is >0.25 Da, then jump to 1 Da to make use of the average amino acid mass defect
 		float inverseBinWidth=1.0f/fragmentBinSize;
 		int arraySize=(int)((massPlusOne+fragmentBinSize+2.0)*inverseBinWidth);
 		

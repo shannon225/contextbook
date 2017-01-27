@@ -279,7 +279,7 @@ public class General {
 		return sum;
 	}
 	
-	public static float stdev(float[] v) {
+	public static float variance(float[] v) {
 		if (v.length==0) return 0.0f;
 		
 		float m=mean(v);
@@ -289,7 +289,13 @@ public class General {
 			sumSquares+=diff*diff;
 		}
 		
-		return (float)Math.sqrt(sumSquares/v.length);
+		return sumSquares/v.length;
+	}
+	
+	public static float stdev(float[] v) {
+		if (v.length==0) return 0.0f;
+		
+		return (float)Math.sqrt(variance(v));
 	}
 	
 	public static double mean(double[] v) {

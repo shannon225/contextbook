@@ -309,20 +309,27 @@ public class Pecanpie {
 			// prepare executor for peptides
 			executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 			
-			TDoubleObjectHashMap<TDoubleArrayList> backgroundScoreMap=new TDoubleObjectHashMap<TDoubleArrayList>();
+			
+			@SuppressWarnings("unchecked")
+			TDoubleObjectHashMap<TDoubleArrayList>[] backgroundScoreMap=new TDoubleObjectHashMap[parameters.getMaxCharge()];
+			// background separated out by charge state, TODO assumes positive charge! 
+			for (int i=0; i<backgroundScoreMap.length; i++) {
+				backgroundScoreMap[i]=new TDoubleObjectHashMap<TDoubleArrayList>();
+			}
+			
 			for (Future<HashMap<LibraryEntry, PeptideScoringResult>> future : results) {
 				HashMap<LibraryEntry, PeptideScoringResult> result=future.get();
 				for (Entry<LibraryEntry, PeptideScoringResult> resultEntry : result.entrySet()) {
-					byte precursorCharge=resultEntry.getKey().getPrecursorCharge(); // FIXME BUILD NEW BACKGROUND SCORE MAPS FOR EACH CHARGE STATE 
+					byte precursorCharge=resultEntry.getKey().getPrecursorCharge();
 					
 					Pair<double[], double[]> arrays=resultEntry.getValue().getTrace().toArrays();
 					double[] x=arrays.x;
 					double[] y=arrays.y;
 					for (int i=0; i<x.length; i++) {
-						TDoubleArrayList list=backgroundScoreMap.get(x[i]);
+						TDoubleArrayList list=backgroundScoreMap[precursorCharge-1].get(x[i]);
 						if (list==null) {
 							list=new TDoubleArrayList();
-							backgroundScoreMap.put(x[i], list);
+							backgroundScoreMap[precursorCharge-1].put(x[i], list);
 						}
 						list.add(y[i]);
 					}
@@ -331,17 +338,28 @@ public class Pecanpie {
 			results.clear();
 			
 			final ArrayList<XYPoint> means=new ArrayList<XYPoint>();
-			final TDoubleObjectHashMap<XYPoint> backgroundScores=new TDoubleObjectHashMap<XYPoint>();
-			backgroundScoreMap.forEachEntry(new TDoubleObjectProcedure<TDoubleArrayList>() {
-				public boolean execute(double arg0, TDoubleArrayList arg1) {
-					double[] values=arg1.toArray();
-					double m=General.mean(values);
-					double s=General.stdev(values);
-					backgroundScores.put(arg0, new XYPoint(m, s));
-					means.add(new XYPoint(arg0, m));
-					return true;
-				};
-			});
+
+			@SuppressWarnings("unchecked")
+			final TDoubleObjectHashMap<XYPoint>[] backgroundScores=new TDoubleObjectHashMap[parameters.getMaxCharge()];
+			// background separated out by charge state, TODO assumes positive charge!
+			for (int i=0; i<backgroundScores.length; i++) {
+				backgroundScores[i]=new TDoubleObjectHashMap<XYPoint>();
+			}
+			for (int i=0; i<backgroundScores.length; i++) {
+				final int chargeIndex=i;
+				if (backgroundScoreMap[i].size()>0) {
+					backgroundScoreMap[i].forEachEntry(new TDoubleObjectProcedure<TDoubleArrayList>() {
+						public boolean execute(double arg0, TDoubleArrayList arg1) {
+							double[] values=arg1.toArray();
+							double m=General.mean(values);
+							double s=General.stdev(values);
+							backgroundScores[chargeIndex].put(arg0, new XYPoint(m, s));
+							means.add(new XYPoint(arg0, m));
+							return true;
+						};
+					});
+				}
+			}
 			//Charter.launchChart("RT ("+range+" M/Z)", "Fragment Intensity", true, new XYTrace(means, GraphType.line, "Background"));
 
 			count=0;
