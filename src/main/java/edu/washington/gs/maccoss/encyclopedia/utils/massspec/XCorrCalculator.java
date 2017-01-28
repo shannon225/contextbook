@@ -10,7 +10,10 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class XCorrCalculator {
-
+	// values from personal communication with J. Egertson
+	static final float lowResFragmentBinSize=1.00045475f;
+	static final float lowResFragmentBinOffset=0.4f;
+	
 	// set 50 to be the maximum value, see pp 982 bottom right
 	private static float primaryIonIntensity=50.0f;
 	private static final float neutralLossIntensity=primaryIonIntensity/5;
@@ -245,21 +248,34 @@ public class XCorrCalculator {
 		
 		// set tolerance to 2x the fragment tolerance of the highest fragment
 		float fragmentBinSize=2.0f*(float)params.getFragmentTolerance().getTolerance(massPlusOne);
-		if (fragmentBinSize<0.01f) fragmentBinSize=0.01f;
-		if (fragmentBinSize>0.5f) fragmentBinSize=1.0005079f; // if tolerance is >0.25 Da, then jump to 1 Da to make use of the average amino acid mass defect
+		double offset;
+		
+		if (fragmentBinSize>0.5f) {
+			fragmentBinSize=lowResFragmentBinSize; // if tolerance is >0.25 Da, then jump to 1 Da to make use of the average amino acid mass defect
+			offset=lowResFragmentBinOffset;
+		} else if (fragmentBinSize<0.01f) {
+			fragmentBinSize=0.01f;
+			offset=0.0;
+		} else {
+			offset=0.0;
+		}
+
 		float inverseBinWidth=1.0f/fragmentBinSize;
 		int arraySize=(int)((massPlusOne+fragmentBinSize+2.0)*inverseBinWidth);
 		
 		float[] binnedIntensityArray=new float[arraySize];
 		int arraySizeMinusOne=arraySize-1;
 		for (Peak peak : allPeaks) {
-			int massIndex=(int)(peak.mass*inverseBinWidth);
+			int massIndex=(int)((peak.mass-offset)*inverseBinWidth);
+			
+			if (massIndex<0) massIndex=0;
 			if (massIndex>=arraySize) massIndex=arraySize-1;
 			if (binnedIntensityArray[massIndex]<peak.intensity) {
 				binnedIntensityArray[massIndex]=peak.intensity;
 			}
 			
-			if (addIntensityToNeighboringBins) {
+			// don't do this for low res fragment ions bin boundaries aren't an issue with the 0.4 offset
+			if (fragmentBinSize<=0.5f&&addIntensityToNeighboringBins) {
 				// neighboring intensities are 25 for b/y or 10 (the same) for neutral losses
 				float neighboringIntensity=peak.intensity>neutralLossIntensity?peak.intensity/2.0f:peak.intensity;
 				if (massIndex>0) {

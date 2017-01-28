@@ -9,6 +9,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
@@ -22,6 +23,17 @@ import junit.framework.TestCase;
 
 public class XCorrCalculatorTest extends TestCase {
 	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(0.5, MassErrorUnitType.AMU), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
+
+	public static void main(String[] args) {
+		final byte charge=2;
+		final double chargedMz=(1329.6335+(charge-1)*MassConstants.protonMass)/charge;
+		
+		Spectrum s=getSDFHLFGPPGKK();
+
+		float[] f=XCorrCalculator.normalize(s, s.getPrecursorMZ(), charge, false, PARAMETERS);
+		s=getNormalizedSpectrum(s, chargedMz, charge, f, PARAMETERS);
+		Charter.launchChart(s);
+	}
 	
 	public void testXCorr() {
 		final byte charge=2;
@@ -83,9 +95,6 @@ public class XCorrCalculatorTest extends TestCase {
 		//s=getNormalizedSpectrum(s, chargedMz, charge, f, PARAMETERS);
 		//Charter.launchChart(s, "model orig:"+originalCalculation2+" spec orig:"+originalCalculation+" model:"+modelFirst+" spec:"+spectrumFirst);
 	}
-	
-	public void testModel() {
-	}
 
 	public static Spectrum getSDFHLFGPPGKK() { 
 		// from TRFE_CHICK
@@ -133,8 +142,18 @@ public class XCorrCalculatorTest extends TestCase {
 	
 	static Spectrum getNormalizedSpectrum(final Spectrum s, final double precursorMz, final byte charge, final float[] intensityBins, final SearchParameters params) {
 		double massPlusOne=precursorMz*charge-(charge-1)*MassConstants.protonMass;
-		
-		float fragmentBinSize=2.0f*(float)params.getFragmentTolerance().getTolerance(massPlusOne);
+		// set tolerance to 2x the fragment tolerance of the highest fragment
+		float fragmentBinSize=2.0f*(float) params.getFragmentTolerance().getTolerance(massPlusOne);
+		double offset;
+		if (fragmentBinSize>0.5f) {
+			fragmentBinSize=XCorrCalculator.lowResFragmentBinSize; 
+			offset=XCorrCalculator.lowResFragmentBinOffset;
+		} else if (fragmentBinSize<0.01f) {
+			fragmentBinSize=0.01f;
+			offset=0.0;
+		} else {
+			offset=0.0;
+		}
 		
 		float tic=s.getTIC();
 		float scanStartTime=s.getScanStartTime();
@@ -145,7 +164,7 @@ public class XCorrCalculatorTest extends TestCase {
 		TFloatArrayList intensities=new TFloatArrayList();
 		for (int i=0; i<intensityBins.length; i++) {
 			if (intensityBins[i]!=0.0f) {
-				double mass=i*fragmentBinSize;
+				double mass=(i*fragmentBinSize)+offset;
 				masses.add(mass);
 				intensities.add(intensityBins[i]);
 			}
