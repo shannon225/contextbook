@@ -1,21 +1,33 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.SSRCalc;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SparseXCorrCalculator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SparseXCorrSpectrum;
 
-public class XCorrLibraryEntry extends PecanLibraryEntry {
+public class XCorrLibraryEntry extends LibraryEntry {
+	private final boolean isDecoy;
 	private final SparseXCorrCalculator xcorrSpectrum;
 
-	public XCorrLibraryEntry(FastaPeptideEntry entry, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray,
-			float[] intensityArray, boolean isDecoy, SearchParameters params) {
-		super(entry, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, isDecoy, 0.0f);
-		this.xcorrSpectrum=new SparseXCorrCalculator(peptideModSeq, params);
+	public XCorrLibraryEntry(boolean isDecoy, String source, HashSet<String> accessions, byte precursorCharge, String peptideModSeq,
+			SparseXCorrSpectrum spectrum, SearchParameters params) {
+		super(source, accessions, spectrum.getPrecursorMz(), precursorCharge, peptideModSeq, 1, (float)SSRCalc.getHydrophobicity(peptideModSeq), 0.0f, spectrum.getMassArray(), spectrum.getIntensityArray());
+		this.isDecoy=isDecoy;
+		this.xcorrSpectrum=new SparseXCorrCalculator(spectrum, params);
+	}
+	
+	public static XCorrLibraryEntry generateEntry(boolean isDecoy, String source, HashSet<String> accessions, byte precursorCharge, String peptideModSeq, SearchParameters params) {
+		SparseXCorrSpectrum spectrum=SparseXCorrCalculator.getTheoreticalSpectrum(peptideModSeq, precursorCharge, params);
+		return new XCorrLibraryEntry(isDecoy, source, accessions, precursorCharge, peptideModSeq, spectrum, params);
+	}
+	
+	@Override
+	public boolean isDecoy() {
+		return isDecoy;
 	}
 
 	public float score(SparseXCorrSpectrum spectrum) {

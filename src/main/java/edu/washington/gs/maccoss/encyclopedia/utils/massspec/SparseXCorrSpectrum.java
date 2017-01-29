@@ -3,42 +3,62 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import gnu.trove.map.hash.TIntFloatHashMap;
-import gnu.trove.procedure.TIntFloatProcedure;
+import edu.washington.gs.maccoss.encyclopedia.utils.SparseIndexMap;
+import gnu.trove.procedure.TIntObjectProcedure;
 
 public class SparseXCorrSpectrum {
+	private final float fragmentBinSize;
 	private final int[] indices;
+	private final double[] masses;
 	private final float[] intensities;
 	private final int length;
+	private final double precursorMz;
 	
-	SparseXCorrSpectrum(TIntFloatHashMap map, int length) {
+	SparseXCorrSpectrum(SparseIndexMap map, double precursorMz, float fragmentBinSize, int length) {
+		this.precursorMz=precursorMz;
+		this.fragmentBinSize=fragmentBinSize;
 		this.length=length;
 		
 		final ArrayList<SortablePeak> peaks=new ArrayList<SparseXCorrSpectrum.SortablePeak>();
-		map.forEachEntry(new TIntFloatProcedure() {	
+		map.forEachEntry(new TIntObjectProcedure() {
 			@Override
-			public boolean execute(int a, float b) {
-				peaks.add(new SortablePeak(a, b));
+			public boolean execute(int a, Object b) {
+				Peak peak=(Peak)b;
+				peaks.add(new SortablePeak(a, peak.mass, peak.intensity));
 				return true;
 			}
 		});
 		Collections.sort(peaks);
 		
 		indices=new int[peaks.size()];
+		masses=new double[peaks.size()];
 		intensities=new float[peaks.size()];
 		for (int i=0; i<indices.length; i++) {
 			SortablePeak peak=peaks.get(i);
 			indices[i]=peak.index;
+			masses[i]=peak.mass;
 			intensities[i]=peak.intensity;
 		}
+	}
+	
+	public double getPrecursorMz() {
+		return precursorMz;
+	}
+	
+	public float getFragmentBinSize() {
+		return fragmentBinSize;
 	}
 	
 	public int[] getIndices() {
 		return indices;
 	}
 	
-	public float[] getIntensities() {
+	public float[] getIntensityArray() {
 		return intensities;
+	}
+	
+	public double[] getMassArray() {
+		return masses;
 	}
 	
 	public int length() {
@@ -55,9 +75,11 @@ public class SparseXCorrSpectrum {
 	
 	class SortablePeak implements Comparable<SortablePeak> {
 		private final int index;
+		private final double mass;
 		private final float intensity;
-		public SortablePeak(int index, float intensity) {
+		public SortablePeak(int index, double mass, float intensity) {
 			this.index=index;
+			this.mass=mass;
 			this.intensity=intensity;
 		}
 		

@@ -32,7 +32,7 @@ public class XCorrCalculatorTest extends TestCase {
 		
 		Spectrum s=getSDFHLFGPPGKK();
 
-		SparseXCorrCalculator preprocessedmodel=new SparseXCorrCalculator("SDFHLFGPPGKK", PARAMETERS);
+		SparseXCorrCalculator preprocessedmodel=new SparseXCorrCalculator("SDFHLFGPPGKK", charge, PARAMETERS);
 		SparseXCorrSpectrum sparse=preprocessedmodel.normalize(s, new Range(chargedMz-10f, chargedMz+10f));
 
 		long time=System.currentTimeMillis();
@@ -71,16 +71,16 @@ public class XCorrCalculatorTest extends TestCase {
 		Spectrum s=getSDFHLFGPPGKK();
 		
 		SparseXCorrCalculator preprocessedSpectrum=new SparseXCorrCalculator(s, new Range(chargedMz-10.0f, chargedMz+10.0f), PARAMETERS);
-		float spectrumFirst=preprocessedSpectrum.score("SDFHLFGPPGKK");
+		float spectrumFirst=preprocessedSpectrum.score("SDFHLFGPPGKK", charge);
 		System.out.println("spectrumFirst xcorr: "+spectrumFirst);
 		
-		SparseXCorrCalculator preprocessedmodel=new SparseXCorrCalculator("SDFHLFGPPGKK", PARAMETERS);
+		SparseXCorrCalculator preprocessedmodel=new SparseXCorrCalculator("SDFHLFGPPGKK", charge, PARAMETERS);
 		float modelFirst=preprocessedmodel.score(s, new Range(chargedMz-10.0f, chargedMz+10.0f));
 		System.out.println("modelFirst xcorr: "+modelFirst);
 		
 		
 		SparseXCorrSpectrum f=SparseXCorrCalculator.normalize(s, new Range(chargedMz-10.0f, chargedMz+10.0f), false, PARAMETERS);
-		SparseXCorrSpectrum t=SparseXCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", PARAMETERS);
+		SparseXCorrSpectrum t=SparseXCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", charge, PARAMETERS);
 
 		System.out.println("-5: "+t.dotProduct(f, -5));
 		System.out.println("-4: "+t.dotProduct(f, -4));
@@ -202,7 +202,7 @@ public class XCorrCalculatorTest extends TestCase {
 		TDoubleArrayList masses=new TDoubleArrayList();
 		TFloatArrayList intensities=new TFloatArrayList();
 		int[] indices=intensityBins.getIndices();
-		float[] indexedIntensities=intensityBins.getIntensities();
+		float[] indexedIntensities=intensityBins.getIntensityArray();
 		for (int i=0; i<indices.length; i++) {
 			double mass=(indices[i]*fragmentBinSize)+offset;
 			masses.add(mass);

@@ -515,7 +515,14 @@ public class SSRCalc {
 		double tsum3=0.0;
 		int i;
 		int sze;
-
+		
+		StringBuilder sb=new StringBuilder();
+		for (int j=0; j<peptide.length(); j++) {
+			if (Character.isAlphabetic(peptide.charAt(j))) {
+				sb.append(peptide.charAt(j));
+			}
+		}
+		peptide=sb.toString();
 		// Core summation
 
 		sze=peptide.length();
@@ -1310,7 +1317,7 @@ public class SSRCalc {
 				"VYLAGIGKPGYIR", "SHPAGALGARLLNK", "TTIMNFRHLLEQHQLAR" };
 		try {
 			long time=System.currentTimeMillis();
-			for (int i=0; i<5000; i++) { // 100000 calculations
+			for (int i=0; i<500; i++) { // 100000 calculations
 				for (String string : pep) {
 					getHydrophobicity(string);
 				}

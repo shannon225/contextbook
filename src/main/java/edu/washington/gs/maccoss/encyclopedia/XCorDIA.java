@@ -14,7 +14,6 @@ import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -23,13 +22,8 @@ import java.util.zip.DataFormatException;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.BackgroundGenerator;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
@@ -37,6 +31,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPe
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorrLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -46,25 +41,17 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.map.hash.TDoubleIntHashMap;
-import gnu.trove.map.hash.TDoubleObjectHashMap;
-import gnu.trove.procedure.TDoubleObjectProcedure;
 import gnu.trove.set.hash.TDoubleHashSet;
 
 public class XCorDIA {
@@ -251,13 +238,15 @@ public class XCorDIA {
 			}
 			
 			float dutyCycle=stripefile.getRanges().get(range);
-			int scanAveragingMargin=Math.round(parameters.getMinEluteTime()/dutyCycle);
-			if (scanAveragingMargin==0) scanAveragingMargin=1;
-			
-			Logger.logLine("Processing "+range+" ("+scanAveragingMargin+")");
+			Logger.logLine("Processing "+range+" ("+dutyCycle+")");
 			
 			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 			Collections.sort(stripes);
+			
+			// prepare executor
+			ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("STRIPE_"+range.getStart()+"to"+range.getStop()+"-%d").setDaemon(true).build();
+			LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
+			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
 			int count=0;
 			for (FastaPeptideEntry peptide : targets) {
@@ -268,15 +257,13 @@ public class XCorDIA {
 						count++;
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						
-						AbstractPecanFragmentationModel model=taskFactory.getFragmentationModel(peptide, parameters.getAAConstants());
-						PecanLibraryEntry pecanEntry=model.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, false);
-						tasks.add(pecanEntry);
+						XCorrLibraryEntry entry=XCorrLibraryEntry.generateEntry(false, peptide.getFilename(), peptide.getAccessions(), charge, peptide.getSequence(), parameters);
+						tasks.add(entry);
 						
 						if (!parameters.isDontRunDecoys()) {
-							String smartDecoy=PeptideUtils.getSmartDecoy(sequence, charge, backgroundProteomeSet, parameters);
+							String smartDecoy=PeptideUtils.reverse(sequence, parameters);
 							FastaPeptideEntry decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), LibraryEntry.DECOY_STRING+peptide.getAccession(), smartDecoy);
-							AbstractPecanFragmentationModel revmodel=taskFactory.getFragmentationModel(decoyPeptide, parameters.getAAConstants());
-							PecanLibraryEntry reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
+							XCorrLibraryEntry reventry=XCorrLibraryEntry.generateEntry(true, decoyPeptide.getFilename(), decoyPeptide.getAccessions(), charge, decoyPeptide.getSequence(), parameters);
 							tasks.add(reventry);
 
 							float extraDecoys=parameters.getNumberOfExtraDecoyLibrariesSearched();
@@ -292,19 +279,17 @@ public class XCorDIA {
 
 								String shuffledSequence=PeptideUtils.shuffle(sequence, Float.hashCode(extraDecoys), parameters);
 								FastaPeptideEntry shuffledPeptide=new FastaPeptideEntry(peptide.getFilename(), LibraryEntry.SHUFFLE_STRING+peptide.getAccession(), shuffledSequence);
-								revmodel=taskFactory.getFragmentationModel(shuffledPeptide, parameters.getAAConstants());
-								reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, false);
+								reventry=XCorrLibraryEntry.generateEntry(true, shuffledPeptide.getFilename(), shuffledPeptide.getAccessions(), charge, shuffledPeptide.getSequence(), parameters);
 								tasks.add(reventry);
 								
-								smartDecoy=PeptideUtils.getSmartDecoy(shuffledSequence, charge, backgroundProteomeSet, parameters);
+								smartDecoy=PeptideUtils.reverse(shuffledSequence, parameters);
 								decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), LibraryEntry.DECOY_STRING+LibraryEntry.SHUFFLE_STRING+peptide.getAccession(), smartDecoy);
-								revmodel=taskFactory.getFragmentationModel(decoyPeptide, parameters.getAAConstants());
-								reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
+								reventry=XCorrLibraryEntry.generateEntry(true, decoyPeptide.getFilename(), decoyPeptide.getAccessions(), charge, decoyPeptide.getSequence(), parameters);
 								tasks.add(reventry);
 							}
 						}
 
-						executor.submit(taskFactory.getScoringTask(xcordiaScorer, tasks, stripes, backgroundScores, precursors, scanAveragingMargin, resultsQueue));
+						executor.submit(taskFactory.getScoringTask(xcordiaScorer, tasks, stripes, dutyCycle, precursors, resultsQueue));
 					}
 				}
 			}
@@ -334,6 +319,7 @@ public class XCorDIA {
 		progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 	}
 
+	
 	public static boolean arePeptidesInRange(PeptideDatabase targets, Range range, PecanSearchParameters parameters) {
 		// first check to see if we need to process this stripe
 		boolean hasPeptides=false;

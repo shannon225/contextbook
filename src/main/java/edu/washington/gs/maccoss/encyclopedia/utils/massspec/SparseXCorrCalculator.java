@@ -25,13 +25,16 @@ public class SparseXCorrCalculator {
 	 * @param params
 	 */
 	public SparseXCorrCalculator(Spectrum s, Range precursorMz, SearchParameters params) {
-		this.params=params;
-		preprocessedSpectrum=preprocessSpectrum(normalize(s, precursorMz, false, params));
+		this(normalize(s, precursorMz, false, params), params);
 	}
 	
-	public SparseXCorrCalculator(String modifiedSequence, SearchParameters params) {
+	public SparseXCorrCalculator(String modifiedSequence, byte precursorCharge, SearchParameters params) {
+		this(getTheoreticalSpectrum(modifiedSequence, precursorCharge, params), params);
+	}
+	
+	public SparseXCorrCalculator(SparseXCorrSpectrum spectrum, SearchParameters params) {
 		this.params=params;
-		preprocessedSpectrum=preprocessSpectrum(getTheoreticalSpectrum(modifiedSequence, params));
+		preprocessedSpectrum=preprocessSpectrum(spectrum);
 	}
 	
 	/**
@@ -48,8 +51,8 @@ public class SparseXCorrCalculator {
 		return normalize(s, precursorMz, false, params);
 	}
 	
-	public float score(String modifiedSequence) {
-		SparseXCorrSpectrum intensityBins=getTheoreticalSpectrum(modifiedSequence, params);
+	public float score(String modifiedSequence, byte precursorCharge) {
+		SparseXCorrSpectrum intensityBins=getTheoreticalSpectrum(modifiedSequence, precursorCharge, params);
 		return score(intensityBins);
 	}
 	
@@ -82,7 +85,8 @@ public class SparseXCorrCalculator {
 		
 		int length=spectrum.length();
 		int[] indicies=spectrum.getIndices();
-		float[] intensities=spectrum.getIntensities();
+		double[] masses=spectrum.getMassArray();
+		float[] intensities=spectrum.getIntensityArray();
 		float[] negativeIntensities=new float[intensities.length];
 		for (int i=0; i<negativeIntensities.length; i++) {
 			negativeIntensities[i]=-intensities[i];
@@ -94,7 +98,7 @@ public class SparseXCorrCalculator {
 				int index=indicies[i]+offset;
 
 				if (index>=0&&index<length) {
-					preprocessedSpectrum.adjustOrPutValue(index, negativeIntensities[i], negativeIntensities[i]);
+					preprocessedSpectrum.adjustOrPutValue(index, masses[i]+offset*spectrum.getFragmentBinSize(), negativeIntensities[i]);
 				}
 			}
 		}
@@ -103,10 +107,10 @@ public class SparseXCorrCalculator {
 		preprocessedSpectrum.multiplyAllValues(1.0f/denominator);
 		
 		for (int i=0; i<indicies.length; i++) {
-			preprocessedSpectrum.adjustOrPutValue(indicies[i], intensities[i], intensities[i]);
+			preprocessedSpectrum.adjustOrPutValue(indicies[i], masses[i], intensities[i]);
 		}
 		
-		return new SparseXCorrSpectrum(preprocessedSpectrum, length);
+		return new SparseXCorrSpectrum(preprocessedSpectrum, spectrum.getPrecursorMz(), spectrum.getFragmentBinSize(), length);
 	}
 	
 	/**
@@ -121,10 +125,10 @@ public class SparseXCorrCalculator {
 		float[] intensities=s.getIntensityArray();
 		ArrayList<Peak> allPeaks=new ArrayList<Peak>();
 		if (masses.length==0)
-			return getIntensityArray(params, allPeaks, addIntensityToNeighboringBins);
+			return getIntensityArray(params, allPeaks, s.getPrecursorMZ(), addIntensityToNeighboringBins);
 		if (masses.length==1) {
 			allPeaks.add(new Peak(masses[0], ArrayXCorrCalculator.primaryIonIntensity));
-			return getIntensityArray(params, allPeaks, addIntensityToNeighboringBins);
+			return getIntensityArray(params, allPeaks, s.getPrecursorMZ(), addIntensityToNeighboringBins);
 		}
 
 		double minimumPrecursorRemoved=precursorMz.getStart();
@@ -170,10 +174,10 @@ public class SparseXCorrCalculator {
 			allPeaks.add(new Peak(masses[i], intensities[i]/binMaxIntensity[currentIndex]));
 		}
 		
-		return getIntensityArray(params, allPeaks, addIntensityToNeighboringBins);
+		return getIntensityArray(params, allPeaks, s.getPrecursorMZ(), addIntensityToNeighboringBins);
 	}
 	
-	static SparseXCorrSpectrum getTheoreticalSpectrum(String modifiedSequence, SearchParameters params) {
+	public static SparseXCorrSpectrum getTheoreticalSpectrum(String modifiedSequence, byte precursorCharge, SearchParameters params) {
 		
 		FragmentationType type=params.getFragType();
 		AminoAcidConstants aaConstants=params.getAAConstants();
@@ -218,7 +222,7 @@ public class SparseXCorrCalculator {
 				throw new EncyclopediaException("Unknown fragmentation type ["+type+"]");
 		}
 		
-		return getIntensityArray(params, allPeaks, true);
+		return getIntensityArray(params, allPeaks, model.getChargedMass(precursorCharge), true);
 	}
 	
 	private static ArrayList<Peak> getPeaks(FragmentIon[] ions, double delta, float intensity) {
@@ -229,7 +233,7 @@ public class SparseXCorrCalculator {
 		return peaks;
 	}
 
-	private static SparseXCorrSpectrum getIntensityArray(SearchParameters params, ArrayList<Peak> allPeaks, boolean addIntensityToNeighboringBins) {
+	private static SparseXCorrSpectrum getIntensityArray(SearchParameters params, ArrayList<Peak> allPeaks, double precursorMz, boolean addIntensityToNeighboringBins) {
 		Collections.sort(allPeaks);
 		
 		// set tolerance to 2x the fragment tolerance of the highest fragment
@@ -257,20 +261,20 @@ public class SparseXCorrCalculator {
 			if (massIndex<0) massIndex=0;
 			if (massIndex>=arraySize) massIndex=arraySize-1;
 			
-			binnedIntensityArray.putIfGreater(massIndex, peak.intensity);
+			binnedIntensityArray.putIfGreater(massIndex, peak.mass, peak.intensity);
 			
 			// don't do this for low res fragment ions bin boundaries aren't an issue with the 0.4 offset
 			if (fragmentBinSize<=0.5f&&addIntensityToNeighboringBins) {
 				// neighboring intensities are 25 for b/y or 10 (the same) for neutral losses
 				float neighboringIntensity=peak.intensity>ArrayXCorrCalculator.neutralLossIntensity?peak.intensity/2.0f:peak.intensity;
 				if (massIndex>0) {
-					binnedIntensityArray.putIfGreater(massIndex-1, neighboringIntensity);
+					binnedIntensityArray.putIfGreater(massIndex-1, peak.mass-fragmentBinSize, neighboringIntensity);
 				}
 				if (massIndex<arraySizeMinusOne) {
-					binnedIntensityArray.putIfGreater(massIndex+1, neighboringIntensity);
+					binnedIntensityArray.putIfGreater(massIndex+1, peak.mass+fragmentBinSize, neighboringIntensity);
 				}
 			}
 		}
-		return new SparseXCorrSpectrum(binnedIntensityArray, arraySize);
+		return new SparseXCorrSpectrum(binnedIntensityArray, precursorMz, fragmentBinSize, arraySize);
 	}
 }
