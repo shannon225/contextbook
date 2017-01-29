@@ -108,7 +108,7 @@ public class Stripe implements Comparable<Stripe>, Spectrum {
 		return intensityArray;
 	}
 	
-	public static ArrayList<Spectrum> downcast(ArrayList<Stripe> stripes) {
+	public static ArrayList<Spectrum> downcastStripeToSpectrum(ArrayList<Stripe> stripes) {
 		ArrayList<Spectrum> spectra=new ArrayList<Spectrum>();
 		for (Spectrum spectrum : stripes) {
 			spectra.add(spectrum);

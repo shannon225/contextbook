@@ -294,7 +294,7 @@ public class ResultsBrowserPanel extends JPanel {
 				ArrayList<Stripe> stripes=dia.getStripes(entry.getPrecursorMZ(), targetRT-rtRange, targetRT+rtRange, false);
 
 				Float targetRTFloat=targetRT;
-				ArrayList<Spectrum> downcastedSpectra=Stripe.downcast(stripes);
+				ArrayList<Spectrum> downcastedSpectra=Stripe.downcastStripeToSpectrum(stripes);
 				HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge()), downcastedSpectra, targetRTFloat, GraphType.line);
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>(fragmentTraceMap.values());
 

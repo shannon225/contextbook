@@ -32,6 +32,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorrLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorrStripe;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -73,7 +74,7 @@ public class XCorDIA {
 			Logger.logLine("\t-f\tbackground FASTA file");
 			Logger.logLine("Other Parameters: ");
 			Logger.logLine("\t-t\ttarget FASTA file (default: background FASTA file)");
-			Logger.logLine("\t-o\toutput report file (default: [input file].pecan.txt)");
+			Logger.logLine("\t-o\toutput report file (default: [input file].xcordia.txt)");
 			
 			TreeMap<String, String> defaults=new TreeMap<String, String>(PecanParameterParser.getDefaultParameters());
 			for (Entry<String, String> entry : defaults.entrySet()) {
@@ -98,14 +99,14 @@ public class XCorDIA {
 			if (arguments.containsKey(OUTPUT_RESULT_TAG)) {
 				outputFile=new File(arguments.get(OUTPUT_RESULT_TAG));
 			} else {
-				outputFile=new File(diaFile.getAbsolutePath()+".pecan.txt");
+				outputFile=new File(diaFile.getAbsolutePath()+".xcordia.txt");
 			}
 
 			File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
 
 			PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 			XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(parameters);
-			Logger.logLine("Pecanpie version "+factory.getVersion());
+			Logger.logLine("XCorDIA version "+factory.getVersion());
 
 			ArrayList<FastaPeptideEntry> targets;
 			if (arguments.containsKey(TARGET_FASTA_TAG)) {
@@ -162,7 +163,7 @@ public class XCorDIA {
 		PeptideDatabase targets=new PeptideDatabase();
 		HashSet<String> backgroundProteome=new HashSet<String>();
 
-		// pecan generates backgrounds using unique fasta peptides, target/decoy sequences, and 2000 random decoys for each window
+		// xcordia generates backgrounds using unique fasta peptides, target/decoy sequences, and 2000 random decoys for each window
 		// add targets to proteome
 		if (targetList.isPresent()) {
 			for (FastaPeptideEntry target : targetList.get()) {
@@ -240,7 +241,15 @@ public class XCorDIA {
 			float dutyCycle=stripefile.getRanges().get(range);
 			Logger.logLine("Processing "+range+" ("+dutyCycle+")");
 			
+			// set up xcorr
+			// FIXME THIS WILL HAVE TO BE THREADED!
 			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+			ArrayList<Stripe> xcorrStripes=new ArrayList<Stripe>();
+			for (Stripe stripe : stripes) {
+				xcorrStripes.add(new XCorrStripe(stripe, parameters));
+			}
+			stripes.clear();
+			stripes=xcorrStripes;
 			Collections.sort(stripes);
 			
 			// prepare executor

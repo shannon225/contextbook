@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import gnu.trove.map.hash.TIntObjectHashMap;
 
+@SuppressWarnings("rawtypes")
 public class SparseIndexMap extends TIntObjectHashMap {
 
 	public SparseIndexMap() {

@@ -79,6 +79,9 @@ public class Encyclopedia {
 		} else if (arguments.containsKey("-pecan")) {
 			Pecanpie.main(args);
 			
+		} else if (arguments.containsKey("-xcordia")) {
+			XCorDIA.main(args);
+			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("EncyclopeDIA Help");
 			Logger.logLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");

@@ -14,6 +14,7 @@ public class SparseXCorrSpectrum {
 	private final int length;
 	private final double precursorMz;
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	SparseXCorrSpectrum(SparseIndexMap map, double precursorMz, float fragmentBinSize, int length) {
 		this.precursorMz=precursorMz;
 		this.fragmentBinSize=fragmentBinSize;

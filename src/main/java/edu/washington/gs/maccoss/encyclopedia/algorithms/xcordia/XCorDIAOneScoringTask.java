@@ -23,7 +23,7 @@ public class XCorDIAOneScoringTask extends AbstractLibraryScoringTask {
 	
 	public XCorDIAOneScoringTask(XCorDIAOneScorer scorer, ArrayList<XCorrLibraryEntry> entries, ArrayList<XCorrStripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
 			SearchParameters parameters) {
-		super(scorer, XCorrLibraryEntry.downcast(entries), XCorrStripe.downcast(stripes), precursors, resultsQueue, parameters);
+		super(scorer, XCorrLibraryEntry.downcast(entries), XCorrStripe.downcastXCorrToStripe(stripes), precursors, resultsQueue, parameters);
 		this.dutyCycle=dutyCycle;
 	}
 	
