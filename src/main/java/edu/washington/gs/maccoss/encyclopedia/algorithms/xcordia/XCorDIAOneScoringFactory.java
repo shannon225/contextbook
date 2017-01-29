@@ -1,31 +1,36 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
+package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneAuxillaryPSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVConsumer;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 
-public class EncyclopediaOneScoringFactory implements LibraryScoringFactory {
-	public static final String version="0.3.4";
-	private final SearchParameters parameters;
+public class XCorDIAOneScoringFactory implements LibraryScoringFactory {
+	public static final String version="0.0.1";
+	private final PecanSearchParameters parameters;
 
-	public EncyclopediaOneScoringFactory(SearchParameters parameters) {
+	public XCorDIAOneScoringFactory(PecanSearchParameters parameters) {
 		this.parameters=parameters;
 	}
 
 	@Override
-	public PSMPeakScorer getLibraryScorer(LibraryBackground background) {
-		return new EncyclopediaOneScorer(parameters, background); 
+	public PSMScorer getLibraryScorer(LibraryBackground background) {
+		return new XCorDIAOneScorer(parameters, background); 
 	}
 
 	@Override
@@ -40,7 +45,7 @@ public class EncyclopediaOneScoringFactory implements LibraryScoringFactory {
 	
 	@Override
 	public AbstractLibraryScoringTask getDDAScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
-		return new EncyclopediaDDAScoringTask(scorer, entries, stripes, precursors, resultsQueue, parameters);
+		throw new EncyclopediaException("Sorry, DDA scoring for XCorDIA is not implemented!");
 	}
 
 	@Override

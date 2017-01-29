@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -25,7 +25,7 @@ import gnu.trove.set.hash.TIntHashSet;
 
 public class PecanOneScoringTask extends AbstractPecanScoringTask {
 
-	public PecanOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint>[] background, PrecursorScanMap precursors,
+	public PecanOneScoringTask(PSMPeakScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint>[] background, PrecursorScanMap precursors,
 			int scanAveragingWindow, BlockingQueue<PeptideScoringResult> resultsQueue, PecanSearchParameters parameters) {
 		super(scorer, entries, stripes, background, precursors, scanAveragingWindow, resultsQueue, parameters);
 	}
@@ -63,7 +63,8 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 				Stripe stripe=super.stripes.get(i);
 				rawRTs[i]=stripe.getScanStartTime();
 
-				PeakScores[] scores=scorer.getIndividualPeakScores(entry, stripe, true);
+				// known to be PSMPeakScorer because of constructor
+				PeakScores[] scores=((PSMPeakScorer)scorer).getIndividualPeakScores(entry, stripe, true);
 				for (int j=0; j<scores.length; j++) {
 					if (scores[j]!=null) {
 						fragmentTraces[j][i]=scores[j].getScore();

@@ -6,9 +6,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEnt
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class LibraryPredictedFragmentationScorer extends AuxillaryPSMScorer {
@@ -18,7 +18,7 @@ public class LibraryPredictedFragmentationScorer extends AuxillaryPSMScorer {
 	}
 
 	@Override
-	public float[] score(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
+	public float[] score(LibraryEntry entry, Spectrum spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		MassTolerance tolerance=parameters.getFragmentTolerance();
 		double[] masses=spectrum.getMassArray();
 		float[] intensities=spectrum.getIntensityArray();

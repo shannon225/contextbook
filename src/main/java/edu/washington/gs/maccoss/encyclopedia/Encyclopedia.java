@@ -43,9 +43,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.SaveResultsConsumer;
@@ -80,7 +80,7 @@ public class Encyclopedia {
 			Pecanpie.main(args);
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
-			Logger.logLine("Encyclopedia Help");
+			Logger.logLine("EncyclopeDIA Help");
 			Logger.logLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.logLine("Required Parameters: ");
 			Logger.logLine("\t-i\tinput .DIA or .MZML file");
@@ -98,7 +98,7 @@ public class Encyclopedia {
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("Encyclopedia version "+PecanOneScoringFactory.version);
+			Logger.logLine("EncyclopeDIA version "+PecanOneScoringFactory.version);
 			System.exit(1);
 			
 		} else {
@@ -119,7 +119,7 @@ public class Encyclopedia {
 
 			SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 			LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
-			Logger.logLine("Encyclopedia version "+factory.getVersion());
+			Logger.logLine("EncyclopeDIA version "+factory.getVersion());
 
 			Logger.logLine("Parameters:");
 			Logger.logLine(" "+INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());

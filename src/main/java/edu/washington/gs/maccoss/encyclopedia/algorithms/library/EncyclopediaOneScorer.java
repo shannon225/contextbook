@@ -2,18 +2,18 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
 import java.util.ArrayList;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 
-public class EncyclopediaOneScorer implements PSMScorer {
+public class EncyclopediaOneScorer implements PSMPeakScorer {
 	private final SearchParameters parameters;
 	private final EncyclopediaOneAuxillaryPSMScorer auxScorer;
 
@@ -23,7 +23,7 @@ public class EncyclopediaOneScorer implements PSMScorer {
 	}
 	
 	@Override
-	public float[] auxScore(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
+	public float[] auxScore(LibraryEntry entry, Spectrum spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		return auxScorer.score(entry, spectrum, predictedIsotopeDistribution, precursors);
 	}
 	@Override
@@ -32,16 +32,16 @@ public class EncyclopediaOneScorer implements PSMScorer {
 	}
 
 	@Override
-	public float score(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
+	public float score(LibraryEntry entry, Spectrum spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		return score(entry, spectrum);
 	}
 
-	public float score(LibraryEntry entry, Stripe spectrum) {
+	public float score(LibraryEntry entry, Spectrum spectrum) {
 		PeakScores[] individualPeakScores=getIndividualPeakScores(entry, spectrum, true);
 		return scoreIons(individualPeakScores);
 	}
 
-	public float score(LibraryEntry entry, Stripe spectrum, FragmentIon[] ions) {
+	public float score(LibraryEntry entry, Spectrum spectrum, FragmentIon[] ions) {
 		PeakScores[] individualPeakScores=getIndividualPeakScores(entry, spectrum, true, ions);
 		return scoreIons(individualPeakScores);
 	}
@@ -60,7 +60,7 @@ public class EncyclopediaOneScorer implements PSMScorer {
 	}
 
 	@Override
-	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize) {
+	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Spectrum spectrum, boolean normalize) {
 		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge());
 		
@@ -68,7 +68,7 @@ public class EncyclopediaOneScorer implements PSMScorer {
 	}
 
 	@Override
-	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize, FragmentIon[] ions) {
+	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Spectrum spectrum, boolean normalize, FragmentIon[] ions) {
 		MassTolerance acquiredTolerance=parameters.getFragmentTolerance();
 		MassTolerance libraryTolerance=parameters.getLibraryFragmentTolerance();
 		

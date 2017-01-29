@@ -5,6 +5,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import gnu.trove.list.array.TFloatArrayList;
 
 //@Immutable
@@ -15,7 +16,7 @@ public class PecanAuxillaryScorer extends AuxillaryPSMScorer {
 	}
 
 	@Override
-	public float[] score(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
+	public float[] score(LibraryEntry entry, Spectrum spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		// precursor scoring
 		float[] precursorScores=getPrecursorScores(entry, spectrum.getScanStartTime(), predictedIsotopeDistribution, precursors);
 		float averageAbsPPM=precursorScores[0]; // FINAL SCORE
@@ -68,7 +69,17 @@ public class PecanAuxillaryScorer extends AuxillaryPSMScorer {
 		} else {
 			weightedRawScore=weightedRawScore/sumLibraryMasses;
 		}
-		float spectrumMagnitude=spectrum.getIntensityMagnitude();
+		float spectrumMagnitude;
+		if (spectrum instanceof Stripe) {
+			spectrumMagnitude=((Stripe)spectrum).getIntensityMagnitude();
+		} else {
+			float magnitude=0.0f;
+			for (float f : spectrum.getIntensityArray()) {
+				magnitude+=f*f;
+			}
+			spectrumMagnitude=(float)Math.sqrt(magnitude);
+		}
+		
 		float peakSimilarity=spectrumMagnitude<=0?0.0f:rawScore/spectrumMagnitude; // FINAL SCORE
 		
 		float individualIonThreshold=rawScore/(entry.getPeptideSeq().length()+1);

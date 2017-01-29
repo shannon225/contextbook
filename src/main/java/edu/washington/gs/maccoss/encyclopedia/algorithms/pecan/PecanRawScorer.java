@@ -1,18 +1,18 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 
 //@Immutable
-public class PecanRawScorer implements PSMScorer {
+public class PecanRawScorer implements PSMPeakScorer {
 	private final MassTolerance fragmentTolerance;
 	private final AuxillaryPSMScorer auxScorer;
 
@@ -22,16 +22,16 @@ public class PecanRawScorer implements PSMScorer {
 	}
 
 	@Override
-	public float score(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
+	public float score(LibraryEntry entry, Spectrum spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		return score(entry, spectrum);
 	}
 
-	public float score(LibraryEntry entry, Stripe spectrum) {
+	public float score(LibraryEntry entry, Spectrum spectrum) {
 		return PeakScores.sumScores(getIndividualPeakScores(entry, spectrum, true)); // dot product
 	}
 
 	@Override
-	public float[] auxScore(LibraryEntry entry, Stripe spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
+	public float[] auxScore(LibraryEntry entry, Spectrum spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		return auxScorer.score(entry, spectrum, predictedIsotopeDistribution, precursors);
 	}
 	
@@ -41,7 +41,7 @@ public class PecanRawScorer implements PSMScorer {
 	}
 
 	@Override
-	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize) {
+	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Spectrum spectrum, boolean normalize) {
 		//if (entry instanceof AnnotatedLibraryEntry) {
 		//	return getIndividualPeakScores(entry, spectrum, normalize, ((AnnotatedLibraryEntry) entry).getIonAnnotations());
 		//} else {
@@ -50,7 +50,7 @@ public class PecanRawScorer implements PSMScorer {
 	}
 	
 	@Override
-	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Stripe spectrum, boolean normalize, FragmentIon[] ions) {
+	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Spectrum spectrum, boolean normalize, FragmentIon[] ions) {
 		if (ions!=null) {
 			throw new EncyclopediaException("PecanRawScorer doesn't currently handle ion selection. Please report this bug!");
 		}

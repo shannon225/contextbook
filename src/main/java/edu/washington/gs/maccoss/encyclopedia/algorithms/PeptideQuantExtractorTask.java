@@ -32,7 +32,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	private final ArrayList<Stripe> stripes;
 	private final boolean limitToQuantifiable;
 
-	private final PSMScorer scorer;
+	private final PSMPeakScorer scorer;
 	private final SearchParameters params;
 
 	private final PSMData psmdata;
@@ -148,7 +148,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		return quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes);
 	}
 
-	public static TransitionRefinementData quantifyPeptide(PSMScorer scorer, AnnotatedLibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<Stripe> stripes) {
+	public static TransitionRefinementData quantifyPeptide(PSMPeakScorer scorer, AnnotatedLibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<Stripe> stripes) {
 		// find the center
 		float bestDelta=Float.MAX_VALUE;
 		PeakScores[] bestScores=null;

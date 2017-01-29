@@ -67,7 +67,7 @@ import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.procedure.TDoubleObjectProcedure;
 import gnu.trove.set.hash.TDoubleHashSet;
 
-public class Pecanpie {
+public class XCorDIA {
 	public static final String TARGET_FASTA_TAG="-t";
 	public static final String OUTPUT_RESULT_TAG="-o";
 	public static final String INPUT_DIA_TAG="-i";
@@ -79,7 +79,7 @@ public class Pecanpie {
 			SearchGUIMain.runGUI(true);
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
-			Logger.logLine("Pecanpie Help");
+			Logger.logLine("XCorDIA Help");
 			Logger.logLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.logLine("Required Parameters: ");
 			Logger.logLine("\t-i\tinput .DIA or .MZML file");

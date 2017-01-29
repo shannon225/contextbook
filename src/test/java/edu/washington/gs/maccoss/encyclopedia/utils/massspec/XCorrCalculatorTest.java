@@ -24,7 +24,6 @@ import junit.framework.TestCase;
 public class XCorrCalculatorTest extends TestCase {
 	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(0.05, MassErrorUnitType.AMU), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
 
-	
 	public static void main(String[] args) {
 		// timing test
 		final byte charge=2;
