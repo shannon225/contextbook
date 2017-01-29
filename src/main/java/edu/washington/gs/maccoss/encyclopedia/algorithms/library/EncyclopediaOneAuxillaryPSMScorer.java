@@ -10,8 +10,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ArrayXCorrCalculator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.XCorrCalculator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -154,7 +154,7 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 			xTandem=((float)Log.protectedLog10(dotProduct))+Log.logFactorial(numberOfMatchingPeaks); // really log10(X!Tandem score)
 		}
 		
-		XCorrCalculator xcorr=new XCorrCalculator(spectrum, entry.getPrecursorMZ(), entry.getPrecursorCharge(), parameters);
+		ArrayXCorrCalculator xcorr=new ArrayXCorrCalculator(spectrum, entry.getPrecursorMZ(), entry.getPrecursorCharge(), parameters);
 		float xCorrLib=xcorr.score(entry);
 		float xCorrModel=xcorr.score(entry.getPeptideModSeq());
 		

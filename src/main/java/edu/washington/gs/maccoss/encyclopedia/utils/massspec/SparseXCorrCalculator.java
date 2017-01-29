@@ -7,31 +7,15 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.SparseIndexMap;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
-public class XCorrCalculator {
-	// values from personal communication with J. Egertson
-	static final float lowResFragmentBinSize=1.00045475f;
-	static final float lowResFragmentBinOffset=0.4f;
-	
-	// set 50 to be the maximum value, see pp 982 bottom right
-	private static float primaryIonIntensity=50.0f;
-	private static final float neutralLossIntensity=primaryIonIntensity/5;
-
-	// offset defined figure legend on pp 980
-	private static final int upperOffset=75;
-	private static final int lowerOffset=-upperOffset;
-
-	// divide spectrum into 10 equal regions, see pp 982 bottom right
-	private static int groups=10; 
-	
-	// remove 10-u window around precursor, see pp 979 mid left
-	private static double precursorRemovalMargin=5.0;
+public class SparseXCorrCalculator {
 	
 	private final SearchParameters params;
 	private final byte charge;
 	private final double precursorMz;
-	private final float[] preprocessedSpectrum;
+	private final SparseXCorrSpectrum preprocessedSpectrum;
 	
 	/**
 	 * 
@@ -40,14 +24,14 @@ public class XCorrCalculator {
 	 * @param charge
 	 * @param params
 	 */
-	public XCorrCalculator(Spectrum s, double precursorMz, byte charge, SearchParameters params) {
+	public SparseXCorrCalculator(Spectrum s, double precursorMz, byte charge, SearchParameters params) {
 		this.precursorMz=precursorMz;
 		this.charge=charge;
 		this.params=params;
 		preprocessedSpectrum=preprocessSpectrum(normalize(s, precursorMz, charge, false, params));
 	}
 	
-	public XCorrCalculator(String modifiedSequence, double precursorMz, byte charge, SearchParameters params) {
+	public SparseXCorrCalculator(String modifiedSequence, double precursorMz, byte charge, SearchParameters params) {
 		this.precursorMz=precursorMz;
 		this.charge=charge;
 		this.params=params;
@@ -60,22 +44,22 @@ public class XCorrCalculator {
 	 * @return
 	 */
 	public float score(Spectrum s) {
-		float[] intensityBins=normalize(s, precursorMz, charge, false, params);
+		SparseXCorrSpectrum intensityBins=normalize(s);
 		return score(intensityBins);
+	}
+
+	public SparseXCorrSpectrum normalize(Spectrum s) {
+		return normalize(s, precursorMz, charge, false, params);
 	}
 	
 	public float score(String modifiedSequence) {
-		float[] intensityBins=getTheoreticalSpectrum(modifiedSequence, precursorMz, charge, params);
+		SparseXCorrSpectrum intensityBins=getTheoreticalSpectrum(modifiedSequence, precursorMz, charge, params);
 		return score(intensityBins);
 	}
 	
-	/**
-	 * divide by 1e4 (personal communication with J Eng)
-	 * @param spectrum
-	 * @return
-	 */
-	float score(float[] spectrum) {
-		return dotProduct(preprocessedSpectrum, spectrum)/1.0e4f;
+	public float score(SparseXCorrSpectrum spectrum) {
+		// divide by 1e4 (personal communication with J Eng)
+		return preprocessedSpectrum.dotProduct(spectrum)/1.0e4f;
 	}
 
 	static float dotProduct(float[] preprocessedSpectrum, float[] spectrum) {
@@ -97,28 +81,36 @@ public class XCorrCalculator {
 		return sum;
 	}
 
-	static float[] preprocessSpectrum(float[] spectrum) {
-		float[] preprocessedSpectrum=new float[spectrum.length];
+	static SparseXCorrSpectrum preprocessSpectrum(SparseXCorrSpectrum spectrum) {
+		SparseIndexMap preprocessedSpectrum=new SparseIndexMap();
 		
-		for (int offset=lowerOffset; offset<upperOffset; offset++) {
+		int length=spectrum.length();
+		int[] indicies=spectrum.getIndices();
+		float[] intensities=spectrum.getIntensities();
+		float[] negativeIntensities=new float[intensities.length];
+		for (int i=0; i<negativeIntensities.length; i++) {
+			negativeIntensities[i]=-intensities[i];
+		}
+		
+		for (int offset=ArrayXCorrCalculator.lowerOffset; offset<ArrayXCorrCalculator.upperOffset; offset++) {
 			if (offset==0) continue;
-			for (int i=0; i<spectrum.length; i++) {
-				int index=i+offset;
-				if (index>=0&&index<preprocessedSpectrum.length) {
-					preprocessedSpectrum[i]-=spectrum[index];
+			for (int i=0; i<indicies.length; i++) {
+				int index=indicies[i]+offset;
+
+				if (index>=0&&index<length) {
+					preprocessedSpectrum.adjustOrPutValue(index, negativeIntensities[i], negativeIntensities[i]);
 				}
 			}
 		}
 
-		int denominator=upperOffset-lowerOffset;
-		for (int i=0; i<preprocessedSpectrum.length; i++) {
-			preprocessedSpectrum[i]=preprocessedSpectrum[i]/denominator;
+		final int denominator=ArrayXCorrCalculator.upperOffset-ArrayXCorrCalculator.lowerOffset;
+		preprocessedSpectrum.multiplyAllValues(1.0f/denominator);
+		
+		for (int i=0; i<indicies.length; i++) {
+			preprocessedSpectrum.adjustOrPutValue(indicies[i], intensities[i], intensities[i]);
 		}
 		
-		for (int i=0; i<spectrum.length; i++) {
-			preprocessedSpectrum[i]+=spectrum[i];
-		}
-		return preprocessedSpectrum;
+		return new SparseXCorrSpectrum(preprocessedSpectrum, length);
 	}
 	
 	/**
@@ -127,7 +119,7 @@ public class XCorrCalculator {
 	 * @param precursorMz
 	 * @return
 	 */
-	static float[] normalize(Spectrum s, double precursorMz, byte charge, boolean addIntensityToNeighboringBins, SearchParameters params) {
+	static SparseXCorrSpectrum normalize(Spectrum s, double precursorMz, byte charge, boolean addIntensityToNeighboringBins, SearchParameters params) {
 		double massPlusOne=precursorMz*charge-(charge-1)*MassConstants.protonMass;
 		
 		double[] masses=s.getMassArray();
@@ -136,24 +128,24 @@ public class XCorrCalculator {
 		if (masses.length==0)
 			return getIntensityArray(params, allPeaks, massPlusOne, addIntensityToNeighboringBins);
 		if (masses.length==1) {
-			allPeaks.add(new Peak(masses[0], primaryIonIntensity));
+			allPeaks.add(new Peak(masses[0], ArrayXCorrCalculator.primaryIonIntensity));
 			return getIntensityArray(params, allPeaks, massPlusOne, addIntensityToNeighboringBins);
 		}
 
-		double minimumPrecursorRemoved=precursorMz-precursorRemovalMargin;
-		double maximumPrecursorRemoved=precursorMz+precursorRemovalMargin;
+		double minimumPrecursorRemoved=precursorMz-ArrayXCorrCalculator.precursorRemovalMargin;
+		double maximumPrecursorRemoved=precursorMz+ArrayXCorrCalculator.precursorRemovalMargin;
 
 		double firstMass=masses[0];
 		double lastMass=masses[masses.length-1];
 
-		double increment=(lastMass-firstMass)/groups;
-		double[] binMaxMass=new double[groups]; 
-		for (int i=0; i<groups-1; i++) {
+		double increment=(lastMass-firstMass)/ArrayXCorrCalculator.groups;
+		double[] binMaxMass=new double[ArrayXCorrCalculator.groups]; 
+		for (int i=0; i<ArrayXCorrCalculator.groups-1; i++) {
 			binMaxMass[i]=increment*(i+1);
 		}
-		binMaxMass[groups-1]=Double.MAX_VALUE;
+		binMaxMass[ArrayXCorrCalculator.groups-1]=Double.MAX_VALUE;
 		
-		float[] binMaxIntensity=new float[groups];
+		float[] binMaxIntensity=new float[ArrayXCorrCalculator.groups];
 		int currentIndex=0;
 		for (int i=0; i<intensities.length; i++) {
 			if (masses[i]>minimumPrecursorRemoved&&masses[i]<maximumPrecursorRemoved) {
@@ -169,7 +161,7 @@ public class XCorrCalculator {
 			}
 		}
 		
-		binMaxIntensity=General.divide(binMaxIntensity, primaryIonIntensity);
+		binMaxIntensity=General.divide(binMaxIntensity, ArrayXCorrCalculator.primaryIonIntensity);
 		
 		currentIndex=0;
 		for (int i=0; i<intensities.length; i++) {
@@ -186,7 +178,7 @@ public class XCorrCalculator {
 		return getIntensityArray(params, allPeaks, massPlusOne, addIntensityToNeighboringBins);
 	}
 	
-	static float[] getTheoreticalSpectrum(String modifiedSequence, double precursorMz, byte charge, SearchParameters params) {
+	static SparseXCorrSpectrum getTheoreticalSpectrum(String modifiedSequence, double precursorMz, byte charge, SearchParameters params) {
 		double massPlusOne=precursorMz*charge-(charge-1)*MassConstants.protonMass;
 		
 		FragmentationType type=params.getFragType();
@@ -197,35 +189,35 @@ public class XCorrCalculator {
 		switch (type) {
 			case YONLY:
 				FragmentIon[] yIons=model.getYIons();
-				allPeaks.addAll(getPeaks(yIons, 0.0, primaryIonIntensity));
-				allPeaks.addAll(getPeaks(yIons, -MassConstants.nh3, neutralLossIntensity));
-				allPeaks.addAll(getPeaks(yIons, -MassConstants.oh2, neutralLossIntensity));
+				allPeaks.addAll(getPeaks(yIons, 0.0, ArrayXCorrCalculator.primaryIonIntensity));
+				allPeaks.addAll(getPeaks(yIons, -MassConstants.nh3, ArrayXCorrCalculator.neutralLossIntensity));
+				allPeaks.addAll(getPeaks(yIons, -MassConstants.oh2, ArrayXCorrCalculator.neutralLossIntensity));
 				break;
 				
 			case CID:
 				FragmentIon[] yIonsCID=model.getYIons();
-				allPeaks.addAll(getPeaks(yIonsCID, 0.0, primaryIonIntensity));
-				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.nh3, neutralLossIntensity));
-				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.oh2, neutralLossIntensity));
+				allPeaks.addAll(getPeaks(yIonsCID, 0.0, ArrayXCorrCalculator.primaryIonIntensity));
+				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.nh3, ArrayXCorrCalculator.neutralLossIntensity));
+				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.oh2, ArrayXCorrCalculator.neutralLossIntensity));
 				
 				FragmentIon[] bIonsCID=model.getBIons();
-				allPeaks.addAll(getPeaks(bIonsCID, 0.0, primaryIonIntensity));
-				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.nh3, neutralLossIntensity));
-				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.oh2, neutralLossIntensity));
-				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.co, neutralLossIntensity));
+				allPeaks.addAll(getPeaks(bIonsCID, 0.0, ArrayXCorrCalculator.primaryIonIntensity));
+				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.nh3, ArrayXCorrCalculator.neutralLossIntensity));
+				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.oh2, ArrayXCorrCalculator.neutralLossIntensity));
+				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.co, ArrayXCorrCalculator.neutralLossIntensity));
 				break;
 				
 			case ETD:
 				FragmentIon[] cIonsCID=model.getCIons();
-				allPeaks.addAll(getPeaks(cIonsCID, 0.0, primaryIonIntensity));
-				allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.nh3, neutralLossIntensity));
-				allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.oh2, neutralLossIntensity));
+				allPeaks.addAll(getPeaks(cIonsCID, 0.0, ArrayXCorrCalculator.primaryIonIntensity));
+				allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.nh3, ArrayXCorrCalculator.neutralLossIntensity));
+				allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.oh2, ArrayXCorrCalculator.neutralLossIntensity));
 				
 				FragmentIon[] zIonsCID=model.getCIons();
-				allPeaks.addAll(getPeaks(zIonsCID, 0.0, primaryIonIntensity));
-				allPeaks.addAll(getPeaks(zIonsCID, MassConstants.neutronMass, primaryIonIntensity)); // z+1
-				allPeaks.addAll(getPeaks(zIonsCID, -MassConstants.nh3, neutralLossIntensity));
-				allPeaks.addAll(getPeaks(zIonsCID, -MassConstants.oh2, neutralLossIntensity));
+				allPeaks.addAll(getPeaks(zIonsCID, 0.0, ArrayXCorrCalculator.primaryIonIntensity));
+				allPeaks.addAll(getPeaks(zIonsCID, MassConstants.neutronMass, ArrayXCorrCalculator.primaryIonIntensity)); // z+1
+				allPeaks.addAll(getPeaks(zIonsCID, -MassConstants.nh3, ArrayXCorrCalculator.neutralLossIntensity));
+				allPeaks.addAll(getPeaks(zIonsCID, -MassConstants.oh2, ArrayXCorrCalculator.neutralLossIntensity));
 				break;
 				
 			default:
@@ -243,7 +235,7 @@ public class XCorrCalculator {
 		return peaks;
 	}
 
-	private static float[] getIntensityArray(SearchParameters params, ArrayList<Peak> allPeaks, double massPlusOne, boolean addIntensityToNeighboringBins) {
+	private static SparseXCorrSpectrum getIntensityArray(SearchParameters params, ArrayList<Peak> allPeaks, double massPlusOne, boolean addIntensityToNeighboringBins) {
 		Collections.sort(allPeaks);
 		
 		// set tolerance to 2x the fragment tolerance of the highest fragment
@@ -251,8 +243,8 @@ public class XCorrCalculator {
 		double offset;
 		
 		if (fragmentBinSize>0.5f) {
-			fragmentBinSize=lowResFragmentBinSize; // if tolerance is >0.25 Da, then jump to 1 Da to make use of the average amino acid mass defect
-			offset=lowResFragmentBinOffset;
+			fragmentBinSize=ArrayXCorrCalculator.lowResFragmentBinSize; // if tolerance is >0.25 Da, then jump to 1 Da to make use of the average amino acid mass defect
+			offset=ArrayXCorrCalculator.lowResFragmentBinOffset;
 		} else if (fragmentBinSize<0.01f) {
 			fragmentBinSize=0.01f;
 			offset=0.0;
@@ -263,29 +255,28 @@ public class XCorrCalculator {
 		float inverseBinWidth=1.0f/fragmentBinSize;
 		int arraySize=(int)((massPlusOne+fragmentBinSize+2.0)*inverseBinWidth);
 		
-		float[] binnedIntensityArray=new float[arraySize];
+		SparseIndexMap binnedIntensityArray=new SparseIndexMap(allPeaks.size());
 		int arraySizeMinusOne=arraySize-1;
 		for (Peak peak : allPeaks) {
 			int massIndex=(int)((peak.mass-offset)*inverseBinWidth);
 			
 			if (massIndex<0) massIndex=0;
 			if (massIndex>=arraySize) massIndex=arraySize-1;
-			if (binnedIntensityArray[massIndex]<peak.intensity) {
-				binnedIntensityArray[massIndex]=peak.intensity;
-			}
+			
+			binnedIntensityArray.putIfGreater(massIndex, peak.intensity);
 			
 			// don't do this for low res fragment ions bin boundaries aren't an issue with the 0.4 offset
 			if (fragmentBinSize<=0.5f&&addIntensityToNeighboringBins) {
 				// neighboring intensities are 25 for b/y or 10 (the same) for neutral losses
-				float neighboringIntensity=peak.intensity>neutralLossIntensity?peak.intensity/2.0f:peak.intensity;
+				float neighboringIntensity=peak.intensity>ArrayXCorrCalculator.neutralLossIntensity?peak.intensity/2.0f:peak.intensity;
 				if (massIndex>0) {
-					binnedIntensityArray[massIndex-1]=neighboringIntensity;
+					binnedIntensityArray.putIfGreater(massIndex-1, neighboringIntensity);
 				}
 				if (massIndex<arraySizeMinusOne) {
-					binnedIntensityArray[massIndex+1]=neighboringIntensity;
+					binnedIntensityArray.putIfGreater(massIndex+1, neighboringIntensity);
 				}
 			}
 		}
-		return binnedIntensityArray;
+		return new SparseXCorrSpectrum(binnedIntensityArray, arraySize);
 	}
 }

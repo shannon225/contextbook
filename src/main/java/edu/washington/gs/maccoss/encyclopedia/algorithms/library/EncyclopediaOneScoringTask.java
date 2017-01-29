@@ -53,7 +53,6 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 			}
 			Collections.sort(goodStripes);
 
-			
 			EValueCalculator calculator=new EValueCalculator(map);
 
 			TIntHashSet takenScans=new TIntHashSet();

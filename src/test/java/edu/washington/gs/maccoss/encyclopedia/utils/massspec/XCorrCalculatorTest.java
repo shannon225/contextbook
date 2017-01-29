@@ -22,16 +22,45 @@ import gnu.trove.list.array.TFloatArrayList;
 import junit.framework.TestCase;
 
 public class XCorrCalculatorTest extends TestCase {
-	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(0.5, MassErrorUnitType.AMU), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
+	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(0.05, MassErrorUnitType.AMU), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
 
+	
 	public static void main(String[] args) {
+		// timing test
 		final byte charge=2;
 		final double chargedMz=(1329.6335+(charge-1)*MassConstants.protonMass)/charge;
 		
 		Spectrum s=getSDFHLFGPPGKK();
 
-		float[] f=XCorrCalculator.normalize(s, s.getPrecursorMZ(), charge, false, PARAMETERS);
-		s=getNormalizedSpectrum(s, chargedMz, charge, f, PARAMETERS);
+		SparseXCorrCalculator preprocessedmodel=new SparseXCorrCalculator("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
+		SparseXCorrSpectrum sparse=preprocessedmodel.normalize(s);
+
+		long time=System.currentTimeMillis();
+		for (int i=0; i<100000; i++) {
+			preprocessedmodel.score(sparse);	
+		}
+		System.out.println("Sparse: "+(System.currentTimeMillis()-time));
+
+		ArrayXCorrCalculator arraypreprocessedmodel=new ArrayXCorrCalculator("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
+		float[] normalized=arraypreprocessedmodel.normalize(s);
+		
+		time=System.currentTimeMillis();
+		for (int i=0; i<100000; i++) {
+			arraypreprocessedmodel.score(normalized);
+		}
+		System.out.println("Array: "+(System.currentTimeMillis()-time));
+	}
+	
+	public static void main2(String[] args) {
+		final byte charge=2;
+		final double precursorMz=(1329.6335+(charge-1)*MassConstants.protonMass)/charge;
+		
+		Spectrum s=getSDFHLFGPPGKK();
+
+		SparseXCorrSpectrum f=SparseXCorrCalculator.normalize(s, s.getPrecursorMZ(), charge, false, PARAMETERS);
+		f=SparseXCorrCalculator.preprocessSpectrum(f);
+		//SparseXCorrSpectrum t=XCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", precursorMz, charge, PARAMETERS);
+		s=getNormalizedSpectrum(s, precursorMz, charge, f, PARAMETERS);
 		Charter.launchChart(s);
 	}
 	
@@ -41,35 +70,35 @@ public class XCorrCalculatorTest extends TestCase {
 		
 		Spectrum s=getSDFHLFGPPGKK();
 		
-		XCorrCalculator preprocessedSpectrum=new XCorrCalculator(s, chargedMz, charge, PARAMETERS);
+		SparseXCorrCalculator preprocessedSpectrum=new SparseXCorrCalculator(s, chargedMz, charge, PARAMETERS);
 		float spectrumFirst=preprocessedSpectrum.score("SDFHLFGPPGKK");
 		System.out.println("spectrumFirst xcorr: "+spectrumFirst);
 		
-		XCorrCalculator preprocessedmodel=new XCorrCalculator("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
+		SparseXCorrCalculator preprocessedmodel=new SparseXCorrCalculator("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
 		float modelFirst=preprocessedmodel.score(s);
 		System.out.println("modelFirst xcorr: "+modelFirst);
 		
 		
-		float[] f=XCorrCalculator.normalize(s, s.getPrecursorMZ(), charge, false, PARAMETERS);
-		float[] t=XCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
+		SparseXCorrSpectrum f=SparseXCorrCalculator.normalize(s, s.getPrecursorMZ(), charge, false, PARAMETERS);
+		SparseXCorrSpectrum t=SparseXCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
 
-		System.out.println("-5: "+XCorrCalculator.dotProduct(t, f, -5));
-		System.out.println("-4: "+XCorrCalculator.dotProduct(t, f, -4));
-		System.out.println("-3: "+XCorrCalculator.dotProduct(t, f, -3));
-		System.out.println("-2: "+XCorrCalculator.dotProduct(t, f, -2));
-		System.out.println("-1: "+XCorrCalculator.dotProduct(t, f, -1));
-		System.out.println(" 0: "+XCorrCalculator.dotProduct(t, f, 0));
-		System.out.println(" 1: "+XCorrCalculator.dotProduct(t, f, 1));
-		System.out.println(" 2: "+XCorrCalculator.dotProduct(t, f, 2));
-		System.out.println(" 3: "+XCorrCalculator.dotProduct(t, f, 3));
-		System.out.println(" 4: "+XCorrCalculator.dotProduct(t, f, 4));
-		System.out.println(" 5: "+XCorrCalculator.dotProduct(t, f, 5));
+		System.out.println("-5: "+t.dotProduct(f, -5));
+		System.out.println("-4: "+t.dotProduct(f, -4));
+		System.out.println("-3: "+t.dotProduct(f, -3));
+		System.out.println("-2: "+t.dotProduct(f, -2));
+		System.out.println("-1: "+t.dotProduct(f, -1));
+		System.out.println(" 0: "+t.dotProduct(f, 0));
+		System.out.println(" 1: "+t.dotProduct(f, 1));
+		System.out.println(" 2: "+t.dotProduct(f, 2));
+		System.out.println(" 3: "+t.dotProduct(f, 3));
+		System.out.println(" 4: "+t.dotProduct(f, 4));
+		System.out.println(" 5: "+t.dotProduct(f, 5));
 		
-		float center=XCorrCalculator.dotProduct(t, f, 0);
+		float center=t.dotProduct(f, 0);
 		float avg=0.0f;
 		for (int i=-75; i<75; i++) {
 			if (i!=0) {
-				avg+=XCorrCalculator.dotProduct(t, f, i);
+				avg+=t.dotProduct(f, i);
 			}
 		}
 		avg=avg/150.0f;
@@ -77,11 +106,11 @@ public class XCorrCalculatorTest extends TestCase {
 		float originalCalculation=(center-avg)/1e4f;
 		
 
-		float center2=XCorrCalculator.dotProduct(f, t, 0);
+		float center2=f.dotProduct(t, 0);
 		float avg2=0.0f;
 		for (int i=-75; i<75; i++) {
 			if (i!=0) {
-				avg2+=XCorrCalculator.dotProduct(f, t, i);
+				avg2+=f.dotProduct(t, i);
 			}
 		}
 		avg2=avg2/150.0f;
@@ -91,6 +120,16 @@ public class XCorrCalculatorTest extends TestCase {
 		assertEquals(originalCalculation, modelFirst, 0.05f);
 		assertEquals(originalCalculation, spectrumFirst, 0.05f);
 		System.out.println(center+"\t"+avg+"\t"+originalCalculation);
+
+		ArrayXCorrCalculator arrayPreprocessedSpectrum=new ArrayXCorrCalculator(s, chargedMz, charge, PARAMETERS);
+		float arraySpectrumFirst=arrayPreprocessedSpectrum.score("SDFHLFGPPGKK");
+		System.out.println("array spectrumFirst xcorr: "+spectrumFirst);
+		
+		ArrayXCorrCalculator arrayPreprocessedmodel=new ArrayXCorrCalculator("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
+		float arrayModelFirst=arrayPreprocessedmodel.score(s);
+		System.out.println("array modelFirst xcorr: "+modelFirst);
+		assertEquals(originalCalculation, arraySpectrumFirst, 0.05f);
+		assertEquals(originalCalculation, arrayModelFirst, 0.05f);
 		
 		//s=getNormalizedSpectrum(s, chargedMz, charge, f, PARAMETERS);
 		//Charter.launchChart(s, "model orig:"+originalCalculation2+" spec orig:"+originalCalculation+" model:"+modelFirst+" spec:"+spectrumFirst);
@@ -140,14 +179,14 @@ public class XCorrCalculatorTest extends TestCase {
 		return rts;
 	}
 	
-	static Spectrum getNormalizedSpectrum(final Spectrum s, final double precursorMz, final byte charge, final float[] intensityBins, final SearchParameters params) {
+	static Spectrum getNormalizedSpectrum(final Spectrum s, final double precursorMz, final byte charge, final SparseXCorrSpectrum intensityBins, final SearchParameters params) {
 		double massPlusOne=precursorMz*charge-(charge-1)*MassConstants.protonMass;
 		// set tolerance to 2x the fragment tolerance of the highest fragment
 		float fragmentBinSize=2.0f*(float) params.getFragmentTolerance().getTolerance(massPlusOne);
 		double offset;
 		if (fragmentBinSize>0.5f) {
-			fragmentBinSize=XCorrCalculator.lowResFragmentBinSize; 
-			offset=XCorrCalculator.lowResFragmentBinOffset;
+			fragmentBinSize=ArrayXCorrCalculator.lowResFragmentBinSize; 
+			offset=ArrayXCorrCalculator.lowResFragmentBinOffset;
 		} else if (fragmentBinSize<0.01f) {
 			fragmentBinSize=0.01f;
 			offset=0.0;
@@ -162,12 +201,12 @@ public class XCorrCalculatorTest extends TestCase {
 		
 		TDoubleArrayList masses=new TDoubleArrayList();
 		TFloatArrayList intensities=new TFloatArrayList();
-		for (int i=0; i<intensityBins.length; i++) {
-			if (intensityBins[i]!=0.0f) {
-				double mass=(i*fragmentBinSize)+offset;
-				masses.add(mass);
-				intensities.add(intensityBins[i]);
-			}
+		int[] indices=intensityBins.getIndices();
+		float[] indexedIntensities=intensityBins.getIntensities();
+		for (int i=0; i<indices.length; i++) {
+			double mass=(indices[i]*fragmentBinSize)+offset;
+			masses.add(mass);
+			intensities.add(indexedIntensities[i]);
 		}
 		return getSpectrum(masses.toArray(), intensities.toArray(), tic, scanStartTime, name, mz);
 	}
