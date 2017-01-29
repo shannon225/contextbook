@@ -29,14 +29,14 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.AbstractPecanFragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -95,7 +95,7 @@ public class XCorDIA {
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("Pecanpie version "+PecanOneScoringFactory.version);
+			Logger.logLine("XCorDIA version "+XCorDIAOneScoringFactory.version);
 			System.exit(1);
 			
 		} else {
@@ -117,7 +117,7 @@ public class XCorDIA {
 			File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
 
 			PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
-			PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
+			XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(parameters);
 			Logger.logLine("Pecanpie version "+factory.getVersion());
 
 			ArrayList<FastaPeptideEntry> targets;
@@ -142,7 +142,7 @@ public class XCorDIA {
 			}
 		}
 	}
-	public static void runPie(ProgressIndicator progress, PecanJobData jobData) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+	public static void runPie(ProgressIndicator progress, XCorDIAJobData jobData) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		File outputFile=jobData.getOutputFile();
 		if (outputFile.exists()&&outputFile.canRead()) {
 			try {
@@ -158,11 +158,9 @@ public class XCorDIA {
 		runPie(progress, jobData.getTargetList(), jobData.getDiaFile(), jobData.getFastaFile(), jobData.getFeatureFile(), jobData.getOutputFile(), jobData.getTaskFactory());
 	}
 		
-	static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, File featureFile, File outputFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+	static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, File featureFile, File outputFile, XCorDIAOneScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		long startTime=System.currentTimeMillis();
-		PSMScorer backgroundScorer=taskFactory.getBackgroundScorer();
-		PSMPeakScorer pecanScorer=taskFactory.getPecanScorer();
-		PecanSearchParameters parameters=taskFactory.getParameters();
+		PecanSearchParameters parameters=taskFactory.getPecanParameters();
 		
 		int cores=parameters.getNumberOfThreadsUsed();
 
@@ -185,6 +183,8 @@ public class XCorDIA {
 				backgroundProteome.add(target.getSequence());
 			}
 		}
+		LibraryBackground background=new LibraryBackground(backgroundProteome, parameters);
+		XCorDIAOneScorer xcordiaScorer=(XCorDIAOneScorer)taskFactory.getLibraryScorer(background);
 
 		Logger.logLine("Reading FASTA peptides...");
 		// add database to proteome
@@ -230,13 +230,8 @@ public class XCorDIA {
 			useBin[index]=true;
 		}
 		
-		Triplet<TDoubleIntHashMap[], ArrayList<String>[], HashSet<String>[]> background=BackgroundGenerator.generateBackground(binBoundaries, useBin, targets, backgroundProteome, parameters);
-		TDoubleIntHashMap[] binCounters=background.x;
-		ArrayList<String>[] backgroundProteomes=background.y;
-		HashSet<String>[] backgroundDecoys=background.z;
-		
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
-		PeptideScoringResultsConsumer resultsConsumer=taskFactory.getResultsConsumer(resultsQueue, diaFile);
+		PeptideScoringResultsConsumer resultsConsumer=taskFactory.getResultsConsumer(outputFile, resultsQueue, diaFile);
 		Thread consumerThread=new Thread(resultsConsumer);
 		consumerThread.start();
 		
@@ -254,116 +249,17 @@ public class XCorDIA {
 			} else {
 				index=(-(index+1))-1;
 			}
-			TDoubleIntHashMap map=binCounters[index];
-			double[] keys=map.keys();
-			Arrays.sort(keys);
-			ArrayList<String> backgroundProteomeArray=backgroundProteomes[index];
-			HashSet<String> backgroundProteomeSet=new HashSet<String>(backgroundProteomeArray);
 			
 			float dutyCycle=stripefile.getRanges().get(range);
 			int scanAveragingMargin=Math.round(parameters.getMinEluteTime()/dutyCycle);
 			if (scanAveragingMargin==0) scanAveragingMargin=1;
-			
-			float maxFragmentationMz=(float)Math.ceil(range.getMiddle()/10.0f)*20.0f+50.0f;
-			Range fragmentationRange=new Range(maxFragmentationMz/15f, maxFragmentationMz);
 			
 			Logger.logLine("Processing "+range+" ("+scanAveragingMargin+")");
 			
 			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 			Collections.sort(stripes);
 
-			// prepare executor for background
-			ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("STRIPE_"+range.getStart()+"to"+range.getStop()+"-%d").setDaemon(true).build();
-			LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
-			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
-
-			ArrayList<Future<HashMap<LibraryEntry, PeptideScoringResult>>> results=new ArrayList<Future<HashMap<LibraryEntry, PeptideScoringResult>>>();
-
 			int count=0;
-			for (String peptide : backgroundDecoys[index]) {
-				for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
-					double mz=parameters.getAAConstants().getChargedMass(peptide, charge);
-
-					if (range.contains((float)mz)) {
-						count++;
-						String random=PeptideUtils.getDecoy(peptide, backgroundProteomeSet, parameters);
-						AbstractPecanFragmentationModel randmodel=taskFactory.getFragmentationModel(new FastaPeptideEntry(random), parameters.getAAConstants());
-						PecanLibraryEntry randentry=randmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
-
-						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
-						tasks.add(randentry);
-
-						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new PeptideScoringTask(backgroundScorer, tasks, stripes, precursors, parameters.getAAConstants()));
-						results.add(value);
-					}
-				}
-			}
-			executor.shutdown();
-			while (!executor.isTerminated()) {
-				Logger.logLine(workQueue.size()+" background peptides remaining for "+range+"...");
-				float finishedFraction=(count-workQueue.size())/(float)count;
-				progress.update(baseMessage, baseProgress+baseIncrement*finishedFraction*0.2f);
-				Thread.sleep(500);
-			}
-			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-
-			// prepare executor for peptides
-			executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
-			
-			
-			@SuppressWarnings("unchecked")
-			TDoubleObjectHashMap<TDoubleArrayList>[] backgroundScoreMap=new TDoubleObjectHashMap[parameters.getMaxCharge()];
-			// background separated out by charge state, TODO assumes positive charge! 
-			for (int i=0; i<backgroundScoreMap.length; i++) {
-				backgroundScoreMap[i]=new TDoubleObjectHashMap<TDoubleArrayList>();
-			}
-			
-			for (Future<HashMap<LibraryEntry, PeptideScoringResult>> future : results) {
-				HashMap<LibraryEntry, PeptideScoringResult> result=future.get();
-				for (Entry<LibraryEntry, PeptideScoringResult> resultEntry : result.entrySet()) {
-					byte precursorCharge=resultEntry.getKey().getPrecursorCharge();
-					
-					Pair<double[], double[]> arrays=resultEntry.getValue().getTrace().toArrays();
-					double[] x=arrays.x;
-					double[] y=arrays.y;
-					for (int i=0; i<x.length; i++) {
-						TDoubleArrayList list=backgroundScoreMap[precursorCharge-1].get(x[i]);
-						if (list==null) {
-							list=new TDoubleArrayList();
-							backgroundScoreMap[precursorCharge-1].put(x[i], list);
-						}
-						list.add(y[i]);
-					}
-				}
-			}
-			results.clear();
-			
-			final ArrayList<XYPoint> means=new ArrayList<XYPoint>();
-
-			@SuppressWarnings("unchecked")
-			final TDoubleObjectHashMap<XYPoint>[] backgroundScores=new TDoubleObjectHashMap[parameters.getMaxCharge()];
-			// background separated out by charge state, TODO assumes positive charge!
-			for (int i=0; i<backgroundScores.length; i++) {
-				backgroundScores[i]=new TDoubleObjectHashMap<XYPoint>();
-			}
-			for (int i=0; i<backgroundScores.length; i++) {
-				final int chargeIndex=i;
-				if (backgroundScoreMap[i].size()>0) {
-					backgroundScoreMap[i].forEachEntry(new TDoubleObjectProcedure<TDoubleArrayList>() {
-						public boolean execute(double arg0, TDoubleArrayList arg1) {
-							double[] values=arg1.toArray();
-							double m=General.mean(values);
-							double s=General.stdev(values);
-							backgroundScores[chargeIndex].put(arg0, new XYPoint(m, s));
-							means.add(new XYPoint(arg0, m));
-							return true;
-						};
-					});
-				}
-			}
-			//Charter.launchChart("RT ("+range+" M/Z)", "Fragment Intensity", true, new XYTrace(means, GraphType.line, "Background"));
-
-			count=0;
 			for (FastaPeptideEntry peptide : targets) {
 				String sequence=peptide.getSequence();
 				for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
@@ -408,7 +304,7 @@ public class XCorDIA {
 							}
 						}
 
-						executor.submit(taskFactory.getScoringTask(pecanScorer, tasks, stripes, backgroundScores, precursors, scanAveragingMargin, resultsQueue));
+						executor.submit(taskFactory.getScoringTask(xcordiaScorer, tasks, stripes, backgroundScores, precursors, scanAveragingMargin, resultsQueue));
 					}
 				}
 			}

@@ -52,6 +52,10 @@ public class XCorDIAOneScoringFactory implements LibraryScoringFactory {
 	public SearchParameters getParameters() {
 		return parameters;
 	}
+	
+	public PecanSearchParameters getPecanParameters() {
+		return parameters;
+	}
 
 	@Override
 	public String getVersion() {

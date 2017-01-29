@@ -3,7 +3,10 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -21,6 +24,27 @@ public class LibraryBackground {
 		for (int i=0; i<background.background.length; i++) {
 			System.out.println(i+"\t"+background.getFraction(i+0.1)); // to avoid rounding errors
 		}
+	}
+
+	public LibraryBackground(Collection<String> peptides, PecanSearchParameters params) {
+		Arrays.fill(background, 1); // add a pseudocount
+		for (String sequence : peptides) {
+			for (byte charge=params.getMinCharge(); charge<=params.getMaxCharge(); charge++) {
+				FragmentationModel model=new FragmentationModel(sequence, params.getAAConstants());
+				double[] ions=model.getPrimaryIons(params.getFragType(), charge);
+				for (double ion : ions) {
+					int index=(int)ion; // truncate
+					if (index<background.length) {
+						background[index]++;
+					}
+				}
+			}
+		}
+		int t=0;
+		for (int i=0; i<background.length; i++) {
+			t+=background[i];
+		}
+		this.total=t;
 	}
 
 	public LibraryBackground(ArrayList<LibraryEntry> entries) {

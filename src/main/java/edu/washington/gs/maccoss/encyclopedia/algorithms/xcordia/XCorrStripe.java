@@ -1,49 +1,32 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia;
 
+import java.util.ArrayList;
+
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SparseXCorrCalculator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SparseXCorrSpectrum;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 
-public class XCorrStripe implements Spectrum {
+public class XCorrStripe extends Stripe {
 	private final SparseXCorrSpectrum xcorrSpectrum;
-	private final Stripe wrapper;
 
-	public XCorrStripe(SparseXCorrSpectrum xcorrSpectrum, Stripe wrapper) {
-		this.xcorrSpectrum=xcorrSpectrum;
-		this.wrapper=wrapper;
-	}
 
-	@Override
-	public String getSpectrumName() {
-		return wrapper.getSpectrumName();
-	}
-
-	@Override
-	public float getScanStartTime() {
-		return wrapper.getScanStartTime();
-	}
-
-	@Override
-	public double getPrecursorMZ() {
-		return wrapper.getPrecursorMZ();
-	}
-
-	@Override
-	public double[] getMassArray() {
-		return wrapper.getMassArray();
-	}
-
-	@Override
-	public float[] getIntensityArray() {
-		return wrapper.getIntensityArray();
-	}
-
-	@Override
-	public float getTIC() {
-		return wrapper.getTIC();
+	public XCorrStripe(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, float isolationWindowLower, float isolationWindowUpper, double[] massArray,
+			float[] intensityArray, SearchParameters params) {
+		super(spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray);
+		xcorrSpectrum=SparseXCorrCalculator.normalize(this, new Range(isolationWindowLower, isolationWindowUpper), false, params);
 	}
 
 	public SparseXCorrSpectrum getXcorrSpectrum() {
 		return xcorrSpectrum;
+	}
+	
+	public static ArrayList<Stripe> downcast(ArrayList<XCorrStripe> stripes) {
+		ArrayList<Stripe> downcast=new ArrayList<Stripe>();
+		for (Stripe stripe : stripes) {
+			downcast.add(stripe);
+		}
+		return downcast;
 	}
 }

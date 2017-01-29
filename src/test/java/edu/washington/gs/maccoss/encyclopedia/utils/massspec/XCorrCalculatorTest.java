@@ -8,6 +8,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -27,12 +28,12 @@ public class XCorrCalculatorTest extends TestCase {
 	public static void main(String[] args) {
 		// timing test
 		final byte charge=2;
-		final double chargedMz=(1329.6335+(charge-1)*MassConstants.protonMass)/charge;
+		final float chargedMz=(float)((1329.6335+(charge-1)*MassConstants.protonMass)/charge);
 		
 		Spectrum s=getSDFHLFGPPGKK();
 
-		SparseXCorrCalculator preprocessedmodel=new SparseXCorrCalculator("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
-		SparseXCorrSpectrum sparse=preprocessedmodel.normalize(s);
+		SparseXCorrCalculator preprocessedmodel=new SparseXCorrCalculator("SDFHLFGPPGKK", PARAMETERS);
+		SparseXCorrSpectrum sparse=preprocessedmodel.normalize(s, new Range(chargedMz-10f, chargedMz+10f));
 
 		long time=System.currentTimeMillis();
 		for (int i=0; i<100000; i++) {
@@ -52,34 +53,34 @@ public class XCorrCalculatorTest extends TestCase {
 	
 	public static void main2(String[] args) {
 		final byte charge=2;
-		final double precursorMz=(1329.6335+(charge-1)*MassConstants.protonMass)/charge;
+		final float chargedMz=(float)((1329.6335+(charge-1)*MassConstants.protonMass)/charge);
 		
 		Spectrum s=getSDFHLFGPPGKK();
 
-		SparseXCorrSpectrum f=SparseXCorrCalculator.normalize(s, s.getPrecursorMZ(), charge, false, PARAMETERS);
+		SparseXCorrSpectrum f=SparseXCorrCalculator.normalize(s, new Range(chargedMz-10.0f, chargedMz+10.0f), false, PARAMETERS);
 		f=SparseXCorrCalculator.preprocessSpectrum(f);
 		//SparseXCorrSpectrum t=XCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", precursorMz, charge, PARAMETERS);
-		s=getNormalizedSpectrum(s, precursorMz, charge, f, PARAMETERS);
+		s=getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, f, PARAMETERS);
 		Charter.launchChart(s);
 	}
 	
 	public void testXCorr() {
 		final byte charge=2;
-		final double chargedMz=(1329.6335+(charge-1)*MassConstants.protonMass)/charge;
+		final float chargedMz=(float)((1329.6335+(charge-1)*MassConstants.protonMass)/charge);
 		
 		Spectrum s=getSDFHLFGPPGKK();
 		
-		SparseXCorrCalculator preprocessedSpectrum=new SparseXCorrCalculator(s, chargedMz, charge, PARAMETERS);
+		SparseXCorrCalculator preprocessedSpectrum=new SparseXCorrCalculator(s, new Range(chargedMz-10.0f, chargedMz+10.0f), PARAMETERS);
 		float spectrumFirst=preprocessedSpectrum.score("SDFHLFGPPGKK");
 		System.out.println("spectrumFirst xcorr: "+spectrumFirst);
 		
-		SparseXCorrCalculator preprocessedmodel=new SparseXCorrCalculator("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
-		float modelFirst=preprocessedmodel.score(s);
+		SparseXCorrCalculator preprocessedmodel=new SparseXCorrCalculator("SDFHLFGPPGKK", PARAMETERS);
+		float modelFirst=preprocessedmodel.score(s, new Range(chargedMz-10.0f, chargedMz+10.0f));
 		System.out.println("modelFirst xcorr: "+modelFirst);
 		
 		
-		SparseXCorrSpectrum f=SparseXCorrCalculator.normalize(s, s.getPrecursorMZ(), charge, false, PARAMETERS);
-		SparseXCorrSpectrum t=SparseXCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
+		SparseXCorrSpectrum f=SparseXCorrCalculator.normalize(s, new Range(chargedMz-10.0f, chargedMz+10.0f), false, PARAMETERS);
+		SparseXCorrSpectrum t=SparseXCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", PARAMETERS);
 
 		System.out.println("-5: "+t.dotProduct(f, -5));
 		System.out.println("-4: "+t.dotProduct(f, -4));

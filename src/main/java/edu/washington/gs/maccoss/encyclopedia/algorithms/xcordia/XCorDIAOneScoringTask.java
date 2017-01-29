@@ -7,7 +7,6 @@ import java.util.concurrent.BlockingQueue;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -22,9 +21,9 @@ import gnu.trove.set.hash.TIntHashSet;
 public class XCorDIAOneScoringTask extends AbstractLibraryScoringTask {
 	private final float dutyCycle;
 	
-	public XCorDIAOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
+	public XCorDIAOneScoringTask(XCorDIAOneScorer scorer, ArrayList<XCorrLibraryEntry> entries, ArrayList<XCorrStripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
 			SearchParameters parameters) {
-		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
+		super(scorer, XCorrLibraryEntry.downcast(entries), XCorrStripe.downcast(stripes), precursors, resultsQueue, parameters);
 		this.dutyCycle=dutyCycle;
 	}
 	
@@ -40,7 +39,7 @@ public class XCorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			float[] primary=new float[super.stripes.size()];
 			for (int i=0; i<super.stripes.size(); i++) {
 				Stripe stripe=super.stripes.get(i);
-				primary[i]=scorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
+				primary[i]=scorer.score((XCorrLibraryEntry)entry, (XCorrStripe)stripe, predictedIsotopeDistribution, precursors);
 			}
 			
 			float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
