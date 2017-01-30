@@ -57,4 +57,10 @@ public class Logger {
 			recorder.errorException(e);
 		}
 	}
+	
+	public static void close() {
+		for (LogRecorder recorder : recorders) {
+			recorder.close();
+		}
+	}
 }

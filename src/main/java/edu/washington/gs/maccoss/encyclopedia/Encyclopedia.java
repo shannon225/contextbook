@@ -52,6 +52,7 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.SaveResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.TeeResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.FileLogRecorder;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -128,23 +129,28 @@ public class Encyclopedia {
 				outputFile=new File(diaFile.getAbsolutePath()+EncyclopediaJobData.OUTPUT_FILE_SUFFIX);
 			}
 
-			SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
-			LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
-			Logger.logLine("EncyclopeDIA version "+factory.getVersion());
-
-			Logger.logLine("Parameters:");
-			Logger.logLine(" "+INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());
-			Logger.logLine(" "+TARGET_LIBRARY_TAG+" "+libraryFile.getAbsolutePath());
-			Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
-			Logger.logLine(parameters.toString());
-
 			try {
+				FileLogRecorder logRecorder=new FileLogRecorder(new File(diaFile.getAbsolutePath()+EncyclopediaJobData.LOG_FILE_SUFFIX));
+				Logger.addRecorder(logRecorder);
+	
+				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
+				LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
+				Logger.logLine("EncyclopeDIA version "+factory.getVersion());
+	
+				Logger.logLine("Parameters:");
+				Logger.logLine(" "+INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());
+				Logger.logLine(" "+TARGET_LIBRARY_TAG+" "+libraryFile.getAbsolutePath());
+				Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
+				Logger.logLine(parameters.toString());
+
 				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
 				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, outputFile, factory);
 				runSearch(new EmptyProgressIndicator(), job);
 			} catch (Exception e) {
-				System.err.println("Encountered Fatal Error!");
-				e.printStackTrace();
+				Logger.errorLine("Encountered Fatal Error!");
+				Logger.errorException(e);
+			} finally {
+				Logger.close();
 			}
 		}
 	}

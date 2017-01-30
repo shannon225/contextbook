@@ -36,6 +36,10 @@ public class LogConsole extends JScrollPane implements LogRecorder {
 		StyleConstants.setBold(error, true);
 		StyleConstants.setForeground(error, Color.red);
 	}
+	
+	@Override
+	public void close() {
+	}
 
 	@Override
 	public void log(String s) {

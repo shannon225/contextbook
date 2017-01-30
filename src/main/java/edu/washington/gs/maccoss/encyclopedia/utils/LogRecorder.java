@@ -12,4 +12,6 @@ public interface LogRecorder {
 	public void logException(Throwable e);
 
 	public void errorException(Throwable e);
+
+	public void close();
 }

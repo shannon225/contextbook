@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
@@ -49,6 +50,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.FileLogRecorder;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
@@ -113,29 +115,34 @@ public class XCorDIA {
 
 			File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
 
-			PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
-			XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(parameters);
-			Logger.logLine("XCorDIA version "+factory.getVersion());
-
-			ArrayList<FastaPeptideEntry> targets;
-			if (arguments.containsKey(TARGET_FASTA_TAG)) {
-				targets=FastaReader.readPeptideFasta(new File(arguments.get(TARGET_FASTA_TAG)));
-			} else {
-				targets=null;
-			}
-
-			Logger.logLine("Parameters:");
-			Logger.logLine(" "+INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());
-			Logger.logLine(" "+BACKGROUND_FASTA_TAG+" "+fastaFile.getAbsolutePath());
-			Logger.logLine(" "+TARGET_FASTA_TAG+" "+arguments.get(TARGET_FASTA_TAG));
-			Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
-			Logger.logLine(parameters.toString());
-
 			try {
+				FileLogRecorder logRecorder=new FileLogRecorder(new File(diaFile.getAbsolutePath()+EncyclopediaJobData.LOG_FILE_SUFFIX));
+				Logger.addRecorder(logRecorder);
+				
+				PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
+				XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(parameters);
+				Logger.logLine("XCorDIA version "+factory.getVersion());
+	
+				ArrayList<FastaPeptideEntry> targets;
+				if (arguments.containsKey(TARGET_FASTA_TAG)) {
+					targets=FastaReader.readPeptideFasta(new File(arguments.get(TARGET_FASTA_TAG)));
+				} else {
+					targets=null;
+				}
+	
+				Logger.logLine("Parameters:");
+				Logger.logLine(" "+INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());
+				Logger.logLine(" "+BACKGROUND_FASTA_TAG+" "+fastaFile.getAbsolutePath());
+				Logger.logLine(" "+TARGET_FASTA_TAG+" "+arguments.get(TARGET_FASTA_TAG));
+				Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
+				Logger.logLine(parameters.toString());
+
 				runPie(new EmptyProgressIndicator(), Optional.ofNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
 			} catch (Exception e) {
-				System.err.println("Encountered Fatal Error!");
-				e.printStackTrace();
+				Logger.errorLine("Encountered Fatal Error!");
+				Logger.errorException(e);
+			} finally {
+				Logger.close();
 			}
 		}
 	}
