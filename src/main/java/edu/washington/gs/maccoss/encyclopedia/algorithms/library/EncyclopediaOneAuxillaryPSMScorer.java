@@ -46,7 +46,9 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		
 		double[] acquiredMasses=spectrum.getMassArray();
 		float[] acquiredIntensities=spectrum.getIntensityArray();
-		
+
+		float intensityThreshold=spectrum.getTIC()/(1+predictedMasses.length*predictedMasses.length);
+		int numberOfMatchingPeaksAboveThreshold=0;
 		int numberOfMatchingPeaks=0;
 		double dotProduct=0.0;
 		double weightedDotProduct=0.0;
@@ -83,6 +85,9 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 				}
 				if (intensity>0) {
 					numberOfMatchingPeaks++;
+					if (intensity>intensityThreshold) {
+						numberOfMatchingPeaksAboveThreshold++;
+					}
 				}
 				float peakScore=predictedIntensity*intensity*maxCorrelation;
 				dotProduct+=peakScore;
@@ -159,7 +164,7 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		float xCorrModel=xcorr.score(entry.getPeptideModSeq());
 		
 		
-		return new float[] {xTandem, xCorrLib, xCorrModel, (float)Log.protectedLog10(dotProduct), (float)Log.protectedLog10(weightedDotProduct), sumOfSquaredErrors, weightedSumOfSquaredErrors, numberOfMatchingPeaks, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
+		return new float[] {xTandem, xCorrLib, xCorrModel, (float)Log.protectedLog10(dotProduct), (float)Log.protectedLog10(weightedDotProduct), sumOfSquaredErrors, weightedSumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
 	}
 
 	@Override
@@ -168,14 +173,15 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 	}
 
 	public static String[] getScoreNames() {
-		return new String[] {"primary", "xCorrLib", "xCorrModel", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "eValue"};
+		return new String[] {"primary", "xCorrLib", "xCorrModel", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "eValue"};
 	}
 	
 	@Override
 	public float[] getMissingDataScores(LibraryEntry entry) {
 		float maxFragPPMError=(float)parameters.getFragmentTolerance().getWorstDeltaScore();
 		float maxPrePPMError=(float)parameters.getPrecursorTolerance().getWorstDeltaScore();
-	
-		return new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, maxFragPPMError, maxFragPPMError, 0.0f, maxPrePPMError, maxPrePPMError};
+
+		return new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 
+				maxFragPPMError, maxFragPPMError, 0.0f, maxPrePPMError, maxPrePPMError, 100.0f};
 	}
 }
