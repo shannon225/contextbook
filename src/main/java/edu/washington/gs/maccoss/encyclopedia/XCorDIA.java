@@ -71,6 +71,7 @@ public class XCorDIA {
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("XCorDIA Help");
+			Logger.logLine("XCorDIA is a FASTA database search engine for DIA data.");
 			Logger.logLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.logLine("Required Parameters: ");
 			Logger.logLine("\t-i\tinput .DIA or .MZML file");

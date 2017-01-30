@@ -84,12 +84,14 @@ public class Encyclopedia {
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("EncyclopeDIA Help");
+			Logger.logLine("EncyclopeDIA is a library search engine for DIA data.");
 			Logger.logLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.logLine("Required Parameters: ");
 			Logger.logLine("\t-i\tinput .DIA or .MZML file");
 			Logger.logLine("\t-l\tlibrary .ELIB file");
 			Logger.logLine("Other Parameters: ");
 			Logger.logLine("\t-pecan\trun Pecanpie (use -pecan -h for Pecan help)");
+			Logger.logLine("\t-xcordia\trun XCorDIA (use -xcordia -h for XCorDIA help)");
 			Logger.logLine("\t-browser\trun ELIB Browser (use -browser -h for ELIB Browser help)");
 			Logger.logLine("\t-libexport\trun Library Export (use -libexport -h for Library Export help)");
 			Logger.logLine("\t-o\toutput report file (default: [input file]"+EncyclopediaJobData.OUTPUT_FILE_SUFFIX+")");
