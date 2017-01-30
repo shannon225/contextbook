@@ -130,7 +130,7 @@ public class Encyclopedia {
 			}
 
 			try {
-				FileLogRecorder logRecorder=new FileLogRecorder(new File(diaFile.getAbsolutePath()+EncyclopediaJobData.LOG_FILE_SUFFIX));
+				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+EncyclopediaJobData.LOG_FILE_SUFFIX));
 				Logger.addRecorder(logRecorder);
 	
 				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);

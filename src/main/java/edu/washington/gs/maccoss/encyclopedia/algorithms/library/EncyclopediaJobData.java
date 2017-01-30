@@ -6,7 +6,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 
 public class EncyclopediaJobData extends SearchJobData {
-	public static final String LOG_FILE_SUFFIX=".log.txt";
+	public static final String LOG_FILE_SUFFIX=".log";
 	public static final String OUTPUT_FILE_SUFFIX=".encyclopedia.txt";
 	public static final String FEATURE_FILE_SUFFIX=".features.txt";
 	private final LibraryInterface library;
