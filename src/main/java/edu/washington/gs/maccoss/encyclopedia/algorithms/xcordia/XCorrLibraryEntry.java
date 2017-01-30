@@ -11,18 +11,25 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SparseXCorrSpectrum
 
 public class XCorrLibraryEntry extends LibraryEntry {
 	private final boolean isDecoy;
-	private final SparseXCorrCalculator xcorrSpectrum;
+	private final SearchParameters params;
+	private final SparseXCorrSpectrum spectrum;
+	private SparseXCorrCalculator xcorrSpectrum=null;
 
 	public XCorrLibraryEntry(boolean isDecoy, String source, HashSet<String> accessions, byte precursorCharge, String peptideModSeq,
 			SparseXCorrSpectrum spectrum, SearchParameters params) {
 		super(source, accessions, spectrum.getPrecursorMz(), precursorCharge, peptideModSeq, 1, (float)SSRCalc.getHydrophobicity(peptideModSeq), 0.0f, spectrum.getMassArray(), spectrum.getIntensityArray());
 		this.isDecoy=isDecoy;
-		this.xcorrSpectrum=new SparseXCorrCalculator(spectrum, params);
+		this.spectrum=spectrum;
+		this.params=params;
 	}
 	
 	public static XCorrLibraryEntry generateEntry(boolean isDecoy, String source, HashSet<String> accessions, byte precursorCharge, String peptideModSeq, SearchParameters params) {
 		SparseXCorrSpectrum spectrum=SparseXCorrCalculator.getTheoreticalSpectrum(peptideModSeq, precursorCharge, params);
 		return new XCorrLibraryEntry(isDecoy, source, accessions, precursorCharge, peptideModSeq, spectrum, params);
+	}
+	
+	public void init() {
+		this.xcorrSpectrum=new SparseXCorrCalculator(spectrum, params);
 	}
 	
 	@Override
@@ -31,6 +38,8 @@ public class XCorrLibraryEntry extends LibraryEntry {
 	}
 
 	public float score(SparseXCorrSpectrum spectrum) {
+		if (xcorrSpectrum==null) init();
+		
 		return xcorrSpectrum.score(spectrum);
 	}
 	

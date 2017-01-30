@@ -33,13 +33,16 @@ public class XCorDIAOneScoringTask extends AbstractLibraryScoringTask {
 	protected Nothing process() {
 		int movingAverageLength=Math.round(parameters.getExpectedPeakWidth()/dutyCycle);
 		for (LibraryEntry entry : super.entries) {
+			XCorrLibraryEntry xcordiaEntry=(XCorrLibraryEntry)entry;
+			xcordiaEntry.init();
+			
 			PeptideScoringResult result=new PeptideScoringResult(entry);
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
 			
 			float[] primary=new float[super.stripes.size()];
 			for (int i=0; i<super.stripes.size(); i++) {
 				Stripe stripe=super.stripes.get(i);
-				primary[i]=scorer.score((XCorrLibraryEntry)entry, (XCorrStripe)stripe, predictedIsotopeDistribution, precursors);
+				primary[i]=scorer.score(xcordiaEntry, (XCorrStripe)stripe, predictedIsotopeDistribution, precursors);
 			}
 			
 			float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);

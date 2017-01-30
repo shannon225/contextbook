@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.Vector;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -49,10 +50,12 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ThreadableTask;
 import gnu.trove.set.hash.TDoubleHashSet;
 
 public class XCorDIA {
@@ -148,7 +151,7 @@ public class XCorDIA {
 		
 	static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, File featureFile, File outputFile, XCorDIAOneScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		long startTime=System.currentTimeMillis();
-		PecanSearchParameters parameters=taskFactory.getPecanParameters();
+		final PecanSearchParameters parameters=taskFactory.getPecanParameters();
 		
 		int cores=parameters.getNumberOfThreadsUsed();
 
@@ -240,23 +243,47 @@ public class XCorDIA {
 			
 			float dutyCycle=stripefile.getRanges().get(range);
 			Logger.logLine("Processing "+range+" ("+dutyCycle+")");
-			
-			// set up xcorr
-			// FIXME THIS WILL HAVE TO BE THREADED!
-			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
-			ArrayList<Stripe> xcorrStripes=new ArrayList<Stripe>();
-			for (Stripe stripe : stripes) {
-				xcorrStripes.add(new XCorrStripe(stripe, parameters));
-			}
-			stripes.clear();
-			stripes=xcorrStripes;
-			Collections.sort(stripes);
-			
+
 			// prepare executor
 			ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("STRIPE_"+range.getStart()+"to"+range.getStop()+"-%d").setDaemon(true).build();
 			LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
+			// set up xcorr
+			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+
+			Logger.logLine("Starting XCorr calculations for "+stripes.size()+" spectra between "+range+"...");
+			final Vector<Stripe> tempStripes=new Vector<Stripe>();
+			for (final Stripe stripe : stripes) {
+				executor.submit(new ThreadableTask<Nothing>() {
+					@Override
+					public String getTaskName() {
+						return "XCorr background calculation";
+					}
+					@Override
+					protected Nothing process() {
+						tempStripes.add(new XCorrStripe(stripe, parameters));
+						return Nothing.NOTHING;
+					}
+				});
+			}
+			executor.shutdown();
+			while (!executor.isTerminated()) {
+				Logger.logLine("Processing XCorr background for "+workQueue.size()+" peptides between "+range+"...");
+				float finishedFraction=(stripes.size()-workQueue.size())/(float)stripes.size();
+				progress.update(baseMessage, baseProgress+baseIncrement*(finishedFraction*0.2f));
+				Thread.sleep(500);
+			}
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+			
+			stripes.clear();
+			stripes.addAll(tempStripes);
+			Collections.sort(stripes);
+			tempStripes.clear();
+			Logger.logLine("Finished XCorr background analysis for "+range+", starting queueing peptides...");
+			
+			executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
+			
 			int count=0;
 			for (FastaPeptideEntry peptide : targets) {
 				String sequence=peptide.getSequence();

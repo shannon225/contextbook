@@ -34,4 +34,8 @@ public class PeptideDatabase implements Iterable<FastaPeptideEntry> {
 	public Iterator<FastaPeptideEntry> iterator() {
 		return peptidesBySequence.values().iterator();
 	}
+	
+	public int size() {
+		return peptidesBySequence.size();
+	}
 }
