@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.TreeMap;
+import java.util.Map.Entry;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
@@ -36,6 +38,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
@@ -54,7 +57,16 @@ public class SearchToBLIB {
 			Logger.logLine("\t-l\toriginal library .ELIB file");
 			Logger.logLine("\t-o\toutput library .ELIB file");
 			Logger.logLine("\t-a\talign between files (default=true)");
-			
+
+			Logger.timelessLogLine("Other Parameters: ");
+			TreeMap<String, String> defaults=new TreeMap<String, String>(SearchParameterParser.getExportParameters());
+			int maxWidth=0;
+			for (String key : defaults.keySet()) {
+				if (key.length()>maxWidth) maxWidth=key.length();
+			}
+			for (Entry<String, String> entry : defaults.entrySet()) {
+				Logger.timelessLogLine("\t"+General.formatCellToWidth(entry.getKey(), maxWidth)+" (default: "+entry.getValue()+")");
+			}
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {

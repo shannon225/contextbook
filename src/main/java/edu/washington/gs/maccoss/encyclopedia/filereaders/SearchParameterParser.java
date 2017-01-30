@@ -42,6 +42,24 @@ public class SearchParameterParser {
 		return map;
 	}
 	
+	/**
+	 * parameters that can affect file exports
+	 * @return
+	 */
+	public static HashMap<String,String> getExportParameters() {
+		HashMap<String, String> map=new HashMap<String, String>();
+		map.put("-fixed", "C=57.0214635");
+		map.put("-ftol", "10");
+		map.put("-ftolunits", "ppm");
+		map.put("-foffset", "0");
+		map.put("-percolatorThreshold", "0.01");
+		map.put("-percolatorLocation", "internal");
+		map.put("-runPhosphoLocalization", "false");
+		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
+		map.put("-numberOfQuantitativePeaks", "5");
+		return map;
+	}
+	
 	public static SearchParameters getDefaultParametersObject() {
 		return parseParameters(getDefaultParameters());
 	}

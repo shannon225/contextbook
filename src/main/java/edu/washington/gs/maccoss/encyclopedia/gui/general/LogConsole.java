@@ -47,6 +47,11 @@ public class LogConsole extends JScrollPane implements LogRecorder {
 		log(s+"\n", output);
 	}
 
+	@Override
+	public void timelessLogLine(String s) {
+		log(s+"\n", output);
+	}
+
 	public void error(String s) {
 		log(s, error);
 	}

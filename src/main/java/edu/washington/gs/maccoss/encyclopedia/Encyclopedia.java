@@ -55,6 +55,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
@@ -84,21 +85,26 @@ public class Encyclopedia {
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("EncyclopeDIA Help");
-			Logger.logLine("EncyclopeDIA is a library search engine for DIA data.");
-			Logger.logLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
-			Logger.logLine("Required Parameters: ");
-			Logger.logLine("\t-i\tinput .DIA or .MZML file");
-			Logger.logLine("\t-l\tlibrary .ELIB file");
-			Logger.logLine("Other Parameters: ");
-			Logger.logLine("\t-pecan\trun Pecanpie (use -pecan -h for Pecan help)");
-			Logger.logLine("\t-xcordia\trun XCorDIA (use -xcordia -h for XCorDIA help)");
-			Logger.logLine("\t-browser\trun ELIB Browser (use -browser -h for ELIB Browser help)");
-			Logger.logLine("\t-libexport\trun Library Export (use -libexport -h for Library Export help)");
-			Logger.logLine("\t-o\toutput report file (default: [input file]"+EncyclopediaJobData.OUTPUT_FILE_SUFFIX+")");
+			Logger.timelessLogLine("EncyclopeDIA is a library search engine for DIA data.");
+			Logger.timelessLogLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
+			Logger.timelessLogLine("Required Parameters: ");
+			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file");
+			Logger.timelessLogLine("\t-l\tlibrary .ELIB file");
+			Logger.timelessLogLine("Other Programs: ");
+			Logger.timelessLogLine("\t-pecan\trun Pecanpie (use -pecan -h for Pecan help)");
+			Logger.timelessLogLine("\t-xcordia\trun XCorDIA (use -xcordia -h for XCorDIA help)");
+			Logger.timelessLogLine("\t-browser\trun ELIB Browser (use -browser -h for ELIB Browser help)");
+			Logger.timelessLogLine("\t-libexport\trun Library Export (use -libexport -h for Library Export help)");
+			Logger.timelessLogLine("Other Parameters: ");
+			Logger.timelessLogLine("\t-o\toutput report file (default: [input file]"+EncyclopediaJobData.OUTPUT_FILE_SUFFIX+")");
 			
 			TreeMap<String, String> defaults=new TreeMap<String, String>(SearchParameterParser.getDefaultParameters());
+			int maxWidth=0;
+			for (String key : defaults.keySet()) {
+				if (key.length()>maxWidth) maxWidth=key.length();
+			}
 			for (Entry<String, String> entry : defaults.entrySet()) {
-				Logger.logLine("\t"+entry.getKey()+"\t(default: "+entry.getValue()+")");
+				Logger.timelessLogLine("\t"+General.formatCellToWidth(entry.getKey(), maxWidth)+" (default: "+entry.getValue()+")");
 			}
 			System.exit(1);
 			

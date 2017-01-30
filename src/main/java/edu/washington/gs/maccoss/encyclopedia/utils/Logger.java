@@ -24,6 +24,12 @@ public class Logger {
 			recorder.logLine(s);
 		}
 	}
+	public static void timelessLogLine(String s) {
+		System.out.println(s);
+		for (LogRecorder recorder : recorders) {
+			recorder.timelessLogLine(s);
+		}
+	}
 
 	public static void errorLine(String s) {
 		System.err.println(format.format(new Date())+s);

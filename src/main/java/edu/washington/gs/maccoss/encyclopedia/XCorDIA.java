@@ -52,6 +52,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
@@ -71,18 +72,22 @@ public class XCorDIA {
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("XCorDIA Help");
-			Logger.logLine("XCorDIA is a FASTA database search engine for DIA data.");
-			Logger.logLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
-			Logger.logLine("Required Parameters: ");
-			Logger.logLine("\t-i\tinput .DIA or .MZML file");
-			Logger.logLine("\t-f\tbackground FASTA file");
-			Logger.logLine("Other Parameters: ");
-			Logger.logLine("\t-t\ttarget FASTA file (default: background FASTA file)");
-			Logger.logLine("\t-o\toutput report file (default: [input file].xcordia.txt)");
+			Logger.timelessLogLine("XCorDIA is a FASTA database search engine for DIA data.");
+			Logger.timelessLogLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
+			Logger.timelessLogLine("Required Parameters: ");
+			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file");
+			Logger.timelessLogLine("\t-f\tbackground FASTA file");
+			Logger.timelessLogLine("Other Parameters: ");
+			Logger.timelessLogLine("\t-t\ttarget FASTA file (default: background FASTA file)");
+			Logger.timelessLogLine("\t-o\toutput report file (default: [input file].xcordia.txt)");
 			
 			TreeMap<String, String> defaults=new TreeMap<String, String>(PecanParameterParser.getDefaultParameters());
+			int maxWidth=0;
+			for (String key : defaults.keySet()) {
+				if (key.length()>maxWidth) maxWidth=key.length();
+			}
 			for (Entry<String, String> entry : defaults.entrySet()) {
-				Logger.logLine("\t"+entry.getKey()+"\t(default: "+entry.getValue()+")");
+				Logger.timelessLogLine("\t"+General.formatCellToWidth(entry.getKey(), maxWidth)+" (default: "+entry.getValue()+")");
 			}
 			System.exit(1);
 			
