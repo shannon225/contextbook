@@ -37,6 +37,7 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 		this.scoreNames=scoreNames;
 		try {
 			writer=new PrintWriter(outputFile, "UTF-8");
+			System.out.println("Constructing writer for "+outputFile.getAbsolutePath());
 		} catch (FileNotFoundException e) {
 			throw new EncyclopediaException("Error setting up output file: "+outputFile.getAbsolutePath(), e);
 		} catch (UnsupportedEncodingException e) {
@@ -66,6 +67,7 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 		try {
 			while (true) {
 				PeptideScoringResult result=resultsQueue.take();
+				
 				if (PeptideScoringResult.POISON_RESULT==result) break;
 				if (!printedHeader) {
 					writer.print("id\tTD\tScanNr\ttopN\tdeltaCN\t");
@@ -103,6 +105,7 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 					Pair<ScoredObject<Stripe>, float[]> second=result.getGoodStripes().get(1);
 					secondScore=second.x.x;
 				}
+				
 				for (Pair<ScoredObject<Stripe>, float[]> goodStripe : result.getGoodStripes()) {
 					numberProcessed++;
 					
@@ -110,10 +113,11 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 					Stripe stripe=goodStripe.x.y;
 					float[] auxScores=goodStripe.y;
 					
+					
 					if (stripe!=null&&rank<=numberOfPeaksPerPeptide) {
 						float deltaCn=firstScore<=0?0.0f:Math.min(1.0f, (primaryScore-secondScore)/firstScore); // if secondScore<0 then deltaCn can be >1, so protect against that
 						String psmID=PercolatorPeptide.getPSMID(peptide, stripe.getScanStartTime(), diaFile);
-
+						
 						writer.print(psmID);
 						writer.print("\t"+(peptide.isDecoy()?-1:1));
 						writer.print("\t"+stripe.getSpectrumIndex());

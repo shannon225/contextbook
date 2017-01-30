@@ -222,7 +222,7 @@ public class XCorDIA {
 		}
 		
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
-		PeptideScoringResultsConsumer resultsConsumer=taskFactory.getResultsConsumer(outputFile, resultsQueue, diaFile);
+		PeptideScoringResultsConsumer resultsConsumer=taskFactory.getResultsConsumer(featureFile, resultsQueue, diaFile);
 		Thread consumerThread=new Thread(resultsConsumer);
 		consumerThread.start();
 		
@@ -344,6 +344,7 @@ public class XCorDIA {
 
 		consumerThread.join();
 		resultsConsumer.close();
+		Logger.logLine("Finished generating feature file, analyzed "+resultsConsumer.getNumberProcessed()+" peptides.");
 
 		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
 		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, outputFile, parameters.getEffectivePercolatorThreshold());
