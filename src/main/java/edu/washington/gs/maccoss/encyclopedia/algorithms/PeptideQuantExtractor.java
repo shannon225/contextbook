@@ -165,7 +165,10 @@ public class PeptideQuantExtractor {
 						float score=savedPeptides.get(psmID);
 
 						float sortingScore;
-						String sortingScoreString=row.get("xTandem"); // Encyclopedia
+						String sortingScoreString=row.get("primary"); // Encyclopedia/XCordia
+						if (sortingScoreString==null) {
+							sortingScoreString=row.get("xTandem"); // old Encyclopedia
+						}
 						if (sortingScoreString==null) {
 							sortingScoreString=row.get("peakZScore"); // Pecan
 						}
