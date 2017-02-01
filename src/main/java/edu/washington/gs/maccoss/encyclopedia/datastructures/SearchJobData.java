@@ -2,7 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.io.File;
 
-public class SearchJobData {
+public abstract class SearchJobData {
 
 	private final File diaFile;
 	private final File featureFile;
@@ -42,4 +42,5 @@ public class SearchJobData {
 		return diaFile.exists()&&featureFile.exists()&&outputFile.exists();
 	}
 
+	public abstract String getSearchType();
 }

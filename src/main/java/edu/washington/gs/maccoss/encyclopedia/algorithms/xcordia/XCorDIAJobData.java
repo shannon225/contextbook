@@ -30,4 +30,9 @@ public class XCorDIAJobData extends SearchJobData {
 	public XCorDIAOneScoringFactory getTaskFactory() {
 		return taskFactory;
 	}
+	
+	@Override
+	public String getSearchType() {
+		return "XCorDIA";
+	}
 }

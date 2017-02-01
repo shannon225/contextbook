@@ -48,4 +48,9 @@ public class EncyclopediaJobData extends SearchJobData {
 		}
 		return absolutePath;
 	}
+	
+	@Override
+	public String getSearchType() {
+		return "EncyclopeDIA";
+	}
 }

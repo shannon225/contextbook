@@ -30,4 +30,9 @@ public class PecanJobData extends SearchJobData {
 	public PecanScoringFactory getTaskFactory() {
 		return taskFactory;
 	}
+	
+	@Override
+	public String getSearchType() {
+		return "Pecan";
+	}
 }

@@ -80,7 +80,12 @@ public class FreezerExperimentTest {
 	private static SearchJobData getData(SearchParameters parameters, File diaFile) {
 		File outputFile=new File(diaFile.getAbsolutePath()+".percolator.txt");
 		File featureFile=new File(diaFile.getAbsolutePath()+".features.txt");
-		SearchJobData job=new SearchJobData(diaFile, featureFile, outputFile, parameters, "1");
+		SearchJobData job=new SearchJobData(diaFile, featureFile, outputFile, parameters, "1") {
+			@Override
+			public String getSearchType() {
+				return "Dummy";
+			}
+		};
 		return job;
 	}
 }
