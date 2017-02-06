@@ -14,6 +14,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import gnu.trove.map.hash.TFloatFloatHashMap;
@@ -36,16 +38,30 @@ public class XCorDIAOneScoringTask extends AbstractLibraryScoringTask {
 	protected Nothing process() {
 		int movingAverageLength=Math.round(parameters.getExpectedPeakWidth()/dutyCycle);
 		for (LibraryEntry entry : super.entries) {
-			XCorrLibraryEntry xcordiaEntry=(XCorrLibraryEntry)entry;
+			XCorrLibraryEntry xcordiaEntry;
+			if (entry instanceof XCorrLibraryEntry) {
+				xcordiaEntry=(XCorrLibraryEntry)entry;
+			} else {
+				xcordiaEntry=XCorrLibraryEntry.generateEntry(false, entry.getSource(), entry.getAccessions(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), parameters);
+				
+			}
 			xcordiaEntry.init();
 			
 			PeptideScoringResult result=new PeptideScoringResult(entry);
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
 			
 			float[] primary=new float[super.stripes.size()];
+			float[] rts=new float[super.stripes.size()];
 			for (int i=0; i<super.stripes.size(); i++) {
 				Stripe stripe=super.stripes.get(i);
-				primary[i]=scorer.score(xcordiaEntry, (XCorrStripe)stripe, predictedIsotopeDistribution, precursors);
+				XCorrStripe xcordiaStripe;
+				if (stripe instanceof XCorrStripe) {
+					xcordiaStripe=(XCorrStripe)stripe;
+				} else {
+					xcordiaStripe=new XCorrStripe(stripe, parameters);
+				}
+				primary[i]=scorer.score(xcordiaEntry, xcordiaStripe, predictedIsotopeDistribution, precursors);
+				rts[i]=xcordiaStripe.getScanStartTime();
 			}
 			
 			float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
@@ -91,7 +107,9 @@ public class XCorDIAOneScoringTask extends AbstractLibraryScoringTask {
 					identifiedPeaks++;
 				}
 			}
-			
+
+			XYTrace trace=new XYTrace(rts, primary, GraphType.line, "XCorr");
+			result.setTrace(trace);
 			resultsQueue.add(result);
 		}
 		return Nothing.NOTHING;

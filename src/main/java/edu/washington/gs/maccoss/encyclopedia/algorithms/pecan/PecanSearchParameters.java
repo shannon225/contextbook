@@ -32,8 +32,10 @@ public class PecanSearchParameters extends SearchParameters {
 		final StringBuilder sb=new StringBuilder();
 		sb.append(" -fixed "+aaConstants.getFixedModString()+"\n");
 		sb.append(" -frag "+FragmentationType.toString(fragType)+"\n");
-		sb.append(" -ptol "+precursorTolerance.getPpmTolerance()+"\n");
-		sb.append(" -ftol "+fragmentTolerance.getPpmTolerance()+"\n");
+		sb.append(" -ptol "+precursorTolerance.getToleranceThreshold()+"\n");
+		sb.append(" -ftol "+fragmentTolerance.getToleranceThreshold()+"\n");
+		sb.append(" -ptolunits"+precursorTolerance.getUnits()+"\n");
+		sb.append(" -ftolunits"+fragmentTolerance.getUnits()+"\n");
 		sb.append(" -poffset "+precursorOffsetPPM+"\n");
 		sb.append(" -foffset "+fragmentOffsetPPM+"\n");
 		sb.append(" -enzyme "+enzyme.getName()+"\n");
@@ -61,8 +63,10 @@ public class PecanSearchParameters extends SearchParameters {
 		HashMap<String, String> map=new HashMap<String, String>();
 		map.put("-fixed", aaConstants.getFixedModString());
 		map.put("-frag", FragmentationType.toString(fragType));
-		map.put("-ptol", precursorTolerance.getPpmTolerance()+"");
-		map.put("-ftol", fragmentTolerance.getPpmTolerance()+"");
+		map.put("-ptol", precursorTolerance.getToleranceThreshold()+"");
+		map.put("-ftol", fragmentTolerance.getToleranceThreshold()+"");
+		map.put("-ptolunits", precursorTolerance.getUnits());
+		map.put("-ftolunits", fragmentTolerance.getUnits());
 		map.put("-poffset", precursorOffsetPPM+"");
 		map.put("-foffset", fragmentOffsetPPM+"");
 		map.put("-enzyme", enzyme.getName());
@@ -92,7 +96,7 @@ public class PecanSearchParameters extends SearchParameters {
 		if (backgroundFastaFile!=null) map.put(Pecanpie.BACKGROUND_FASTA_TAG, backgroundFastaFile.getAbsolutePath());
 		if (targetFastaFile!=null) map.put(Pecanpie.TARGET_FASTA_TAG, targetFastaFile.getAbsolutePath());
 		for (Entry<String, String> entry : map.entrySet()) {
-			//System.out.println("Writing Pecan preference "+entry.getKey()+" = "+entry.getValue());
+			System.out.println("Writing Pecan preference "+entry.getKey()+" = "+entry.getValue());
 			prefs.put(entry.getKey(), entry.getValue());
 		}
 		prefs.flush();
@@ -103,7 +107,7 @@ public class PecanSearchParameters extends SearchParameters {
 		HashMap<String, String> map=new HashMap<String, String>();
 		for (String key : prefs.keys()) {
 			String value=prefs.get(key, "");
-			//System.out.println("Reading Pecan preference "+key+" = "+value);
+			System.out.println("Reading Pecan preference "+key+" = "+value);
 			map.put(key, value);
 		}
 		return map;

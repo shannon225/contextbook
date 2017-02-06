@@ -91,8 +91,8 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 				}
 				float peakScore=predictedIntensity*intensity*maxCorrelation;
 				dotProduct+=peakScore;
-				float fraction=background.getFraction(target);
-				weightedDotProduct+=peakScore*fraction;
+				float weight=background==null?1.0f:background.getFraction(target);
+				weightedDotProduct+=peakScore*weight;
 				predictedTargets.add(target);
 				predictedTargetIntensities.add(predictedIntensity);
 				actualTargetIntensities.add(intensity);
@@ -103,8 +103,8 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		
 		float averageFragmentDeltaMasses=0.0f, averageAbsFragDeltaMass=0.0f;
 		if (fragmentDeltaMasses.size()==0) {
-			averageAbsFragDeltaMass=(float)acquiredTolerance.getWorstDeltaScore();
-			averageFragmentDeltaMasses=(float)acquiredTolerance.getWorstDeltaScore();
+			averageAbsFragDeltaMass=(float)acquiredTolerance.getToleranceThreshold();
+			averageFragmentDeltaMasses=(float)acquiredTolerance.getToleranceThreshold();
 		} else {
 			Collections.sort(fragmentDeltaMasses);
 			Collections.reverse(fragmentDeltaMasses);
@@ -117,7 +117,7 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 				if (count>numPeaksUsedInAverage) break;
 			}
 			for (int i=count; i<numPeaksUsedInAverage; i++) {
-				averageAbsFragDeltaMass+=(float)acquiredTolerance.getWorstDeltaScore();
+				averageAbsFragDeltaMass+=(float)acquiredTolerance.getToleranceThreshold();
 			}
 			averageFragmentDeltaMasses=averageFragmentDeltaMasses/count;
 			averageAbsFragDeltaMass=averageAbsFragDeltaMass/numPeaksUsedInAverage;
@@ -149,7 +149,8 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 			float deltaSquared=delta*delta;
 			double target=predictedTargets.get(i);
 			sumOfSquaredErrors+=deltaSquared;
-			weightedSumOfSquaredErrors+=deltaSquared*background.getFraction(target);
+			float weight=background==null?1.0f:background.getFraction(target);
+			weightedSumOfSquaredErrors+=deltaSquared*weight;
 		}
 
 		float xTandem;
@@ -178,8 +179,8 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 	
 	@Override
 	public float[] getMissingDataScores(LibraryEntry entry) {
-		float maxFragPPMError=(float)parameters.getFragmentTolerance().getWorstDeltaScore();
-		float maxPrePPMError=(float)parameters.getPrecursorTolerance().getWorstDeltaScore();
+		float maxFragPPMError=(float)parameters.getFragmentTolerance().getToleranceThreshold();
+		float maxPrePPMError=(float)parameters.getPrecursorTolerance().getToleranceThreshold();
 
 		return new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 
 				maxFragPPMError, maxFragPPMError, 0.0f, maxPrePPMError, maxPrePPMError, 100.0f};

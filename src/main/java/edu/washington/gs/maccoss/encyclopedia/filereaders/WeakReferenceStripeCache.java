@@ -33,7 +33,8 @@ public class WeakReferenceStripeCache {
 	private final LinkedList<Pair<Range, WeakReference<ArrayList<Stripe>>>> softCache=new LinkedList<Pair<Range, WeakReference<ArrayList<Stripe>>>>();
 
 	private final ArrayList<Range> allRanges=new ArrayList<Range>();
-	private final StripeFileInterface stripeFile;
+	protected final StripeFileInterface stripeFile;
+	protected final SearchParameters parameters;
 
 	public WeakReferenceStripeCache(StripeFileInterface stripeFile, SearchParameters parameters) {
 		this(6, stripeFile, parameters);
@@ -42,6 +43,7 @@ public class WeakReferenceStripeCache {
 	public WeakReferenceStripeCache(int hardCacheSize, StripeFileInterface stripeFile, SearchParameters parameters) {
 		this.hardCacheSize=hardCacheSize;
 		this.stripeFile=stripeFile;
+		this.parameters=parameters;
 		for (Range range : stripeFile.getRanges().keySet()) {
 			if (!parameters.useTargetWindowCenter()||range.contains(parameters.getTargetWindowCenter())) {
 				allRanges.add(range);
@@ -110,7 +112,7 @@ public class WeakReferenceStripeCache {
 		return foundPreviouslySoftStripes;
 	}
 	
-	private ArrayList<Stripe> getStripesFromFile(float mz) {
+	protected ArrayList<Stripe> getStripesFromFile(float mz) {
 		try {
 			ArrayList<Stripe> stripes=stripeFile.getStripes(mz, -Float.MAX_VALUE, Float.MAX_VALUE, false);
 			Collections.sort(stripes);

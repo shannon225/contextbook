@@ -99,7 +99,7 @@ public class PecanAuxillaryScorer extends AuxillaryPSMScorer {
 
 	@Override
 	public float[] getMissingDataScores(LibraryEntry entry) {
-		float maxPrePPMError=(float)parameters.getPrecursorTolerance().getWorstDeltaScore();
+		float maxPrePPMError=(float)parameters.getPrecursorTolerance().getToleranceThreshold();
 		return new float[] {0, 0, 0, 0, 0, maxPrePPMError, maxPrePPMError, 0};
 	}
 }

@@ -40,6 +40,7 @@ import javax.swing.table.TableColumn;
 import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.Pecanpie;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCordiaSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
@@ -54,6 +55,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.Encyclopedia
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.LindsaysSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.MoMosSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.pecan.PecanParametersPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.xcordia.XCorDIAParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LogConsole;
@@ -92,6 +94,7 @@ public class SearchPanel extends JPanel {
 
 		optionsTabs=new JTabbedPane();
 		EncyclopediaParametersPanel encyclopedia;
+		XCorDIAParametersPanel xcordia=new XCorDIAParametersPanel();
 		switch (Networking.isOffendingAddress()) {
 			case 1:
 				encyclopedia=new LindsaysSpecialEncyclopediaPanel();
@@ -106,6 +109,7 @@ public class SearchPanel extends JPanel {
 		
 		if (!pecanpie) {
 			optionsTabs.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
+			
 			try {
 				HashMap<String, String> map=SearchParameters.readPreferences();
 				encyclopedia.setParameters(SearchParameterParser.parseParameters(map), map.get(Encyclopedia.TARGET_LIBRARY_TAG));
@@ -117,11 +121,20 @@ public class SearchPanel extends JPanel {
 		PecanParametersPanel pecan=new PecanParametersPanel();
 		try {
 			HashMap<String, String> map=PecanSearchParameters.readPreferences();
-			pecan.setParameters(PecanParameterParser.parseParameters(map), map.get(Pecanpie.BACKGROUND_FASTA_TAG), map.get(Pecanpie.TARGET_FASTA_TAG));
+			PecanSearchParameters parseParameters=PecanParameterParser.parseParameters(map);
+			pecan.setParameters(parseParameters, map.get(Pecanpie.BACKGROUND_FASTA_TAG), map.get(Pecanpie.TARGET_FASTA_TAG));
+			optionsTabs.addTab("Pecan", PecanParametersPanel.smallimage, pecan, "Pecan Peptide Search");
+			
+			if (!pecanpie) {
+				map=XCordiaSearchParameters.readPreferences();
+				XCordiaSearchParameters xcordiaParameters=XCordiaSearchParameters.convertFromPecan(PecanParameterParser.parseParameters(map));
+				xcordia.setParameters(xcordiaParameters, map.get(Pecanpie.BACKGROUND_FASTA_TAG), map.get(Pecanpie.TARGET_FASTA_TAG));
+				optionsTabs.addTab(xcordia.getProgramName(), xcordia.getSmallImage(), xcordia, xcordia.getProgramShortDescription());
+			}
 		} catch (Exception e) {
 			Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
+			e.printStackTrace();
 		}
-		optionsTabs.addTab("Pecan", PecanParametersPanel.smallimage, pecan, "Pecan Peptide Search");
 
 		LogConsole console=new LogConsole();
 		console.errorLine("Console:");

@@ -29,7 +29,9 @@ public class XCorrLibraryEntry extends LibraryEntry {
 	}
 	
 	public void init() {
-		this.xcorrSpectrum=new SparseXCorrCalculator(spectrum, params);
+		if (xcorrSpectrum==null) {
+			this.xcorrSpectrum=new SparseXCorrCalculator(spectrum, params);
+		}
 	}
 	
 	@Override

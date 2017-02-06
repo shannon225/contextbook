@@ -33,11 +33,12 @@ import org.jfree.chart.ChartPanel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ExpectedFragmentationScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.FragmentationScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.FragmentationTraceTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.IonCountingScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
@@ -195,7 +196,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 				
 
 				
-				BlockingQueue<PeptideScoringResult> ionCountResultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
+				/*BlockingQueue<PeptideScoringResult> ionCountResultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
 				IonCountingScoringTask ionCount=new IonCountingScoringTask(scorer, entries, stripes, 2.5f, new PrecursorScanMap(new ArrayList<PrecursorScan>()), ionCountResultsQueue, parameters);
 				ionCount.call();
 				
@@ -205,7 +206,18 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 				double[] newx=General.multiply(trace.x, 1.0f/60.0f); // scale to minutes
 				XYTraceInterface ionCounttrace=new XYTrace(newx, trace.y, xytrace.getType(), xytrace.getName(), xytrace.getColor(), xytrace.getThickness());
 				
-				ChartPanel ionCountchart=Charter.getChart("Retention Time (min)", "RawScore", false, ionCounttrace);
+				ChartPanel ionCountchart=Charter.getChart("Retention Time (min)", "RawScore", false, ionCounttrace);*/
+				BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
+				XCorDIAOneScoringTask xcorrTask=new XCorDIAOneScoringTask(new XCorDIAOneScorer(parameters, null), entries, stripes, 2.5f, new PrecursorScanMap(new ArrayList<PrecursorScan>()), resultsQueue, parameters);
+				xcorrTask.call();
+				
+				PeptideScoringResult ionCountResult=resultsQueue.take();
+				XYTraceInterface xytrace=ionCountResult.getTrace();
+				Pair<double[], double[]> trace=xytrace.toArrays();
+				double[] newx=General.multiply(trace.x, 1.0f/60.0f); // scale to minutes
+				XYTraceInterface ionCounttrace=new XYTrace(newx, trace.y, xytrace.getType(), xytrace.getName(), xytrace.getColor(), xytrace.getThickness());
+				
+				ChartPanel ionCountchart=Charter.getChart("Retention Time (min)", "XCorr", false, ionCounttrace);
 
 				split.setBottomComponent(ionCountchart);
 				

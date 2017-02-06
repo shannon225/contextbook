@@ -6,7 +6,7 @@ import java.util.Optional;
 import gnu.trove.list.array.TIntArrayList;
 
 //@Immutable
-public class MassTolerance {
+public class MassTolerance implements Comparable<MassTolerance> {
 	private static final double UNUSED_TOLERANCE=-1.0;
 	private final double amuTolerance;
 	private final double ppmTolerance;
@@ -29,6 +29,27 @@ public class MassTolerance {
 	}
 	
 	@Override
+	public int compareTo(MassTolerance o) {
+		if (o==null) return 1;
+		int c=Double.compare(ppmTolerance, o.ppmTolerance);
+		if (c!=0) return c;
+		return Double.compare(amuTolerance, o.amuTolerance);
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj==null||!(obj instanceof MassTolerance)) {
+			return false;
+		}
+		return compareTo((MassTolerance)obj)==0;
+	}
+	
+	@Override
+	public int hashCode() {
+		return Double.hashCode(amuTolerance)*16807*Double.hashCode(ppmTolerance);
+	}
+	
+	@Override
 	public String toString() {
 		if (amuTolerance==UNUSED_TOLERANCE) {
 			return ppmTolerance+" "+MassErrorUnitType.toString(MassErrorUnitType.PPM);
@@ -41,6 +62,14 @@ public class MassTolerance {
 		return ppmTolerance;
 	}
 	
+	public String getUnits() {
+		if (amuTolerance==UNUSED_TOLERANCE) {
+			return MassErrorUnitType.toString(MassErrorUnitType.PPM);
+		} else {
+			return MassErrorUnitType.toString(MassErrorUnitType.AMU);
+		}
+	}
+	
 	public double getTolerance(double mass) {
 		if (amuTolerance==UNUSED_TOLERANCE) {
 			return percent*mass;
@@ -49,7 +78,7 @@ public class MassTolerance {
 		}
 	}
 	
-	public double getWorstDeltaScore() {
+	public double getToleranceThreshold() {
 		if (amuTolerance==UNUSED_TOLERANCE) {
 			return ppmTolerance;
 		} else {

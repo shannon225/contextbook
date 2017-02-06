@@ -14,7 +14,7 @@ public abstract class AuxillaryPSMScorer {
 
 	public AuxillaryPSMScorer(SearchParameters parameters) {
 		this.parameters=parameters;
-		maxPPMError=(float)parameters.getPrecursorTolerance().getWorstDeltaScore();
+		maxPPMError=(float)parameters.getPrecursorTolerance().getToleranceThreshold();
 	}
 
 	/* (non-Javadoc)
