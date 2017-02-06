@@ -55,6 +55,25 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 
 	private static final String[] NUMBER_OF_EXTRA_DECOY_ITEMS=new String[] {"Normal Target/Decoy", "+10% Extra Decoys", "+20% Extra Decoys", "+50% Extra Decoys", "+100% Extra Decoys (2x Time)"};
 	private static final float[] NUMBER_OF_EXTRA_DECOY_VALUES=new float[] {0.0f, 0.1f, 0.2f, 0.5f, 1.0f};
+
+	private static final MassTolerance[] TOLERANCE_VALUES=new MassTolerance[] {
+			new MassTolerance(5.0, MassErrorUnitType.PPM),  //0
+			new MassTolerance(10.0, MassErrorUnitType.PPM), //1
+			new MassTolerance(25.0, MassErrorUnitType.PPM), //2
+			new MassTolerance(50.0, MassErrorUnitType.PPM), //3
+			new MassTolerance(100.0, MassErrorUnitType.PPM),//4
+			new MassTolerance(0.4, MassErrorUnitType.AMU),  //5
+			new MassTolerance(1.0, MassErrorUnitType.AMU)   //6
+	};
+	private static final String[] TOLERANCE_NAMES=new String[] {
+			TOLERANCE_VALUES[0].toString(), //0
+			TOLERANCE_VALUES[1].toString(), //1
+			TOLERANCE_VALUES[2].toString(), //2
+			TOLERANCE_VALUES[3].toString(), //3
+			TOLERANCE_VALUES[4].toString(), //4
+			TOLERANCE_VALUES[5].toString(), //5
+			TOLERANCE_VALUES[6].toString() //6
+	};
 	
 	private final FileChooserPanel backgroundFasta;
 	private final FileChooserPanel targetFasta;
@@ -65,8 +84,9 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance());
 
-	private final SpinnerModel precursorPPM=new SpinnerNumberModel(10, 1, 1000, 1);
-	private final SpinnerModel fragmentPPM=new SpinnerNumberModel(10, 1, 1000, 1);
+	private final JComboBox<String> precursorTolerance=new JComboBox<String>(TOLERANCE_NAMES);
+	private final JComboBox<String> fragmentTolerance=new JComboBox<String>(TOLERANCE_NAMES);
+
 	private final SpinnerModel minCharge=new SpinnerNumberModel(2, 1, 2, 1);
 	private final SpinnerModel maxCharge=new SpinnerNumberModel(3, 2, 4, 1);
 	private final SpinnerModel maxMissedCleavage=new SpinnerNumberModel(1, 0, 3, 1);
@@ -111,8 +131,8 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		options.add(new LabeledComponent("Enzyme", enzyme));
 		options.add(new LabeledComponent("Fixed", fixed));
 		options.add(new LabeledComponent("Fragmentation", fragType));
-		options.add(new LabeledComponent("Precursor (PPM)", new JSpinner(precursorPPM)));
-		options.add(new LabeledComponent("Fragment (PPM)", new JSpinner(fragmentPPM)));
+		options.add(new LabeledComponent("Precursor Mass Tolerance", precursorTolerance));
+		options.add(new LabeledComponent("Fragment Mass Tolerance", fragmentTolerance));
 		options.add(new LabeledComponent("Maximum Missed Cleavage", new JSpinner(maxMissedCleavage)));
 		options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
 		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
@@ -185,8 +205,8 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
-		float precursorPPMValue=((Number)precursorPPM.getValue()).floatValue();
-		float fragmentPPMValue=((Number)fragmentPPM.getValue()).floatValue();
+		MassTolerance precursorPPMValue=TOLERANCE_VALUES[precursorTolerance.getSelectedIndex()];
+		MassTolerance fragmentPPMValue=TOLERANCE_VALUES[fragmentTolerance.getSelectedIndex()];
 		byte minChargeValue=((Number)minCharge.getValue()).byteValue();
 		byte maxChargeValue=((Number)maxCharge.getValue()).byteValue();
 		byte maxMissedCleavageValue=((Number)maxMissedCleavage.getValue()).byteValue();
@@ -195,7 +215,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		float numberOfExtraDecoyLibrariesValue=NUMBER_OF_EXTRA_DECOY_VALUES[((Integer)numberOfExtraDecoyLibraries.getSelectedIndex())];
-		PecanSearchParameters parameters=new PecanSearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue, MassErrorUnitType.PPM), new MassTolerance(fragmentPPMValue, MassErrorUnitType.PPM), digestionEnzyme,
+		PecanSearchParameters parameters=new PecanSearchParameters(aaConstants, fragmentation, precursorPPMValue, fragmentPPMValue, digestionEnzyme,
 				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, numberOfExtraDecoyLibrariesValue);
 		return parameters;
 	}
@@ -214,8 +234,29 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		enzyme.setSelectedItem(params.getEnzyme().getName());
 		fixed.setSelectedItem(AminoAcidConstants.toName(params.getAAConstants()));
 		fragType.setSelectedItem(FragmentationType.toName(params.getFragType()));
-		precursorPPM.setValue((int)params.getPrecursorTolerance().getPpmTolerance());
-		fragmentPPM.setValue((int)params.getFragmentTolerance().getPpmTolerance());
+		
+		boolean gotIt=false;
+		MassTolerance pre=params.getPrecursorTolerance();
+		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
+			if (TOLERANCE_VALUES[i].equals(pre)) {
+				precursorTolerance.setSelectedIndex(i);
+				gotIt=true;
+				break;
+			}
+		}
+		if (!gotIt) precursorTolerance.setSelectedIndex(1);
+		
+		gotIt=false;
+		MassTolerance frag=params.getFragmentTolerance();
+		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
+			if (TOLERANCE_VALUES[i].equals(frag)) {
+				fragmentTolerance.setSelectedIndex(i);
+				gotIt=true;
+				break;
+			}
+		}
+		if (!gotIt) fragmentTolerance.setSelectedIndex(1);
+		
 		minCharge.setValue(params.getMinCharge());
 		maxCharge.setValue(params.getMaxCharge());
 		maxMissedCleavage.setValue(params.getMaxMissedCleavages());

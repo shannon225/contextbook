@@ -132,8 +132,8 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		options.add(new LabeledComponent("Enzyme", enzyme));
 		options.add(new LabeledComponent("Fixed", fixed));
 		options.add(new LabeledComponent("Fragmentation", fragType));
-		options.add(new LabeledComponent("Precursor (PPM)", precursorTolerance));
-		options.add(new LabeledComponent("Fragment (PPM)", fragmentTolerance));
+		options.add(new LabeledComponent("Precursor Mass Tolerance", precursorTolerance));
+		options.add(new LabeledComponent("Fragment Mass Tolerance", fragmentTolerance));
 				
 		options.add(new LabeledComponent("Maximum Missed Cleavage", new JSpinner(maxMissedCleavage)));
 		options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
@@ -252,8 +252,9 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		enzyme.setSelectedItem(params.getEnzyme().getName());
 		fixed.setSelectedItem(AminoAcidConstants.toName(params.getAAConstants()));
 		fragType.setSelectedItem(FragmentationType.toName(params.getFragType()));
-		MassTolerance pre=params.getPrecursorTolerance();
+		
 		boolean gotIt=false;
+		MassTolerance pre=params.getPrecursorTolerance();
 		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
 			if (TOLERANCE_VALUES[i].equals(pre)) {
 				precursorTolerance.setSelectedIndex(i);
@@ -261,10 +262,9 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 				break;
 			}
 		}
-		if (!gotIt) precursorTolerance.setSelectedIndex(0);
+		if (!gotIt) precursorTolerance.setSelectedIndex(1);
 		
 		gotIt=false;
-		fragmentTolerance.setSelectedIndex(0);
 		MassTolerance frag=params.getFragmentTolerance();
 		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
 			if (TOLERANCE_VALUES[i].equals(frag)) {
@@ -273,7 +273,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 				break;
 			}
 		}
-		if (!gotIt) fragmentTolerance.setSelectedIndex(0);
+		if (!gotIt) fragmentTolerance.setSelectedIndex(1);
 		
 		minCharge.setValue(params.getMinCharge());
 		maxCharge.setValue(params.getMaxCharge());

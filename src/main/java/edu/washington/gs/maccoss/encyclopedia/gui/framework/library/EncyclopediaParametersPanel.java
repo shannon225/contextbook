@@ -51,6 +51,25 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	private static final String[] NUMBER_OF_EXTRA_DECOY_ITEMS=new String[] {"Normal Target/Decoy", "+10% Extra Decoys", "+20% Extra Decoys", "+50% Extra Decoys", "+100% Extra Decoys (2x Time)"};
 	private static final float[] NUMBER_OF_EXTRA_DECOY_VALUES=new float[] {0.0f, 0.1f, 0.2f, 0.5f, 1.0f};
 	
+	private static final MassTolerance[] TOLERANCE_VALUES=new MassTolerance[] {
+			new MassTolerance(5.0, MassErrorUnitType.PPM),  //0
+			new MassTolerance(10.0, MassErrorUnitType.PPM), //1
+			new MassTolerance(25.0, MassErrorUnitType.PPM), //2
+			new MassTolerance(50.0, MassErrorUnitType.PPM), //3
+			new MassTolerance(100.0, MassErrorUnitType.PPM),//4
+			new MassTolerance(0.4, MassErrorUnitType.AMU),  //5
+			new MassTolerance(1.0, MassErrorUnitType.AMU)   //6
+	};
+	private static final String[] TOLERANCE_NAMES=new String[] {
+			TOLERANCE_VALUES[0].toString(), //0
+			TOLERANCE_VALUES[1].toString(), //1
+			TOLERANCE_VALUES[2].toString(), //2
+			TOLERANCE_VALUES[3].toString(), //3
+			TOLERANCE_VALUES[4].toString(), //4
+			TOLERANCE_VALUES[5].toString(), //5
+			TOLERANCE_VALUES[6].toString() //6
+	};
+	
 	private static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_small_icon.png"));
 	private static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_icon.png"));
 	private static final String programName="EncyclopeDIA";
@@ -66,9 +85,9 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance()); // not displayed anymore
 
-	private final SpinnerModel precursorPPM=new SpinnerNumberModel(10, 1, 1000, 1);
-	private final SpinnerModel fragmentPPM=new SpinnerNumberModel(10, 1, 1000, 1);
-	private final SpinnerModel libraryFragmentPPM=new SpinnerNumberModel(10, 1, 1000, 1);
+	private final JComboBox<String> precursorTolerance=new JComboBox<String>(TOLERANCE_NAMES);
+	private final JComboBox<String> fragmentTolerance=new JComboBox<String>(TOLERANCE_NAMES);
+	private final JComboBox<String> libraryTolerance=new JComboBox<String>(TOLERANCE_NAMES);
 	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
@@ -95,9 +114,9 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		options.add(new LabeledComponent("Enzyme", enzyme));
 		options.add(new LabeledComponent("Fragmentation", fragType));
 		options.add(new LabeledComponent("Proteome Type", proteomeType));
-		options.add(new LabeledComponent("Precursor (PPM)", new JSpinner(precursorPPM)));
-		options.add(new LabeledComponent("Fragment (PPM)", new JSpinner(fragmentPPM)));
-		options.add(new LabeledComponent("Library Fragment (PPM)", new JSpinner(libraryFragmentPPM)));
+		options.add(new LabeledComponent("Precursor Mass Tolerance", precursorTolerance));
+		options.add(new LabeledComponent("Fragment Mass Tolerance", fragmentTolerance));
+		options.add(new LabeledComponent("Fragment Mass Tolerance", libraryTolerance));
 		options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
 		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
 
@@ -171,9 +190,9 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
-		float precursorPPMValue=((Number)precursorPPM.getValue()).floatValue();
-		float fragmentPPMValue=((Number)fragmentPPM.getValue()).floatValue();
-		float libraryFragmentPPMValue=((Number)libraryFragmentPPM.getValue()).floatValue();
+		MassTolerance precursorValue=TOLERANCE_VALUES[precursorTolerance.getSelectedIndex()];
+		MassTolerance fragmentValue=TOLERANCE_VALUES[fragmentTolerance.getSelectedIndex()];
+		MassTolerance libraryFragmentValue=TOLERANCE_VALUES[libraryTolerance.getSelectedIndex()];
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		Number value=(Number)precursorWindowWidth.getValue();
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
@@ -181,7 +200,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		float numberOfExtraDecoyLibrariesValue=NUMBER_OF_EXTRA_DECOY_VALUES[((Integer)numberOfExtraDecoyLibraries.getSelectedIndex())];
 		float targetWindowCenter=-1f;
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
-		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, new MassTolerance(precursorPPMValue, MassErrorUnitType.PPM), 0.0, new MassTolerance(fragmentPPMValue, MassErrorUnitType.PPM), 0.0, new MassTolerance(libraryFragmentPPMValue, MassErrorUnitType.PPM), digestionEnzyme, 0.01f, null, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, isPhospho, numberOfExtraDecoyLibrariesValue);
+		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, precursorValue, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, 0.01f, null, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, isPhospho, numberOfExtraDecoyLibrariesValue);
 		return parameters;
 	}
 	
@@ -194,9 +213,40 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		acquisition.setSelectedItem(DataAcquisitionType.toName(params.getDataAcquisitionType()));
 		enzyme.setSelectedItem(params.getEnzyme().getName());
 		fragType.setSelectedItem(FragmentationType.toName(params.getFragType()));
-		precursorPPM.setValue((int)params.getPrecursorTolerance().getPpmTolerance());
-		fragmentPPM.setValue((int)params.getFragmentTolerance().getPpmTolerance());
-		libraryFragmentPPM.setValue((int)params.getLibraryFragmentTolerance().getPpmTolerance());
+		
+		boolean gotIt=false;
+		MassTolerance pre=params.getPrecursorTolerance();
+		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
+			if (TOLERANCE_VALUES[i].equals(pre)) {
+				precursorTolerance.setSelectedIndex(i);
+				gotIt=true;
+				break;
+			}
+		}
+		if (!gotIt) precursorTolerance.setSelectedIndex(1);
+		
+		gotIt=false;
+		MassTolerance frag=params.getFragmentTolerance();
+		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
+			if (TOLERANCE_VALUES[i].equals(frag)) {
+				fragmentTolerance.setSelectedIndex(i);
+				gotIt=true;
+				break;
+			}
+		}
+		if (!gotIt) fragmentTolerance.setSelectedIndex(1);
+		
+		gotIt=false;
+		MassTolerance lib=params.getLibraryFragmentTolerance();
+		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
+			if (TOLERANCE_VALUES[i].equals(lib)) {
+				libraryTolerance.setSelectedIndex(i);
+				gotIt=true;
+				break;
+			}
+		}
+		if (!gotIt) libraryTolerance.setSelectedIndex(1);
+		
 		numberOfJobs.setValue(params.getNumberOfThreadsUsed());
 		if (params.getPrecursorWindowSize()>0) {
 			precursorWindowWidth.setValue(params.getPrecursorWindowSize());
