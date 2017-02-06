@@ -23,7 +23,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 		if (backgroundFastaFile!=null) map.put(Pecanpie.BACKGROUND_FASTA_TAG, backgroundFastaFile.getAbsolutePath());
 		if (targetFastaFile!=null) map.put(Pecanpie.TARGET_FASTA_TAG, targetFastaFile.getAbsolutePath());
 		for (Entry<String, String> entry : map.entrySet()) {
-			System.out.println("Writing XCorDIA preference "+entry.getKey()+" = "+entry.getValue());
+			//System.out.println("Writing XCorDIA preference "+entry.getKey()+" = "+entry.getValue());
 			prefs.put(entry.getKey(), entry.getValue());
 		}
 		prefs.flush();
@@ -34,7 +34,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 		HashMap<String, String> map=new HashMap<String, String>();
 		for (String key : prefs.keys()) {
 			String value=prefs.get(key, "");
-			System.out.println("Reading XCorDIA preference "+key+" = "+value);
+			//System.out.println("Reading XCorDIA preference "+key+" = "+value);
 			map.put(key, value);
 		}
 		return map;

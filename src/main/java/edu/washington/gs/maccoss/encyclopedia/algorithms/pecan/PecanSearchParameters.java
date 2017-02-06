@@ -96,7 +96,7 @@ public class PecanSearchParameters extends SearchParameters {
 		if (backgroundFastaFile!=null) map.put(Pecanpie.BACKGROUND_FASTA_TAG, backgroundFastaFile.getAbsolutePath());
 		if (targetFastaFile!=null) map.put(Pecanpie.TARGET_FASTA_TAG, targetFastaFile.getAbsolutePath());
 		for (Entry<String, String> entry : map.entrySet()) {
-			System.out.println("Writing Pecan preference "+entry.getKey()+" = "+entry.getValue());
+			//System.out.println("Writing Pecan preference "+entry.getKey()+" = "+entry.getValue());
 			prefs.put(entry.getKey(), entry.getValue());
 		}
 		prefs.flush();
@@ -107,7 +107,7 @@ public class PecanSearchParameters extends SearchParameters {
 		HashMap<String, String> map=new HashMap<String, String>();
 		for (String key : prefs.keys()) {
 			String value=prefs.get(key, "");
-			System.out.println("Reading Pecan preference "+key+" = "+value);
+			//System.out.println("Reading Pecan preference "+key+" = "+value);
 			map.put(key, value);
 		}
 		return map;

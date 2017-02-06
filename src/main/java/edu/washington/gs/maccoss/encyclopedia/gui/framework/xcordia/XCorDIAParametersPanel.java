@@ -268,7 +268,6 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		MassTolerance frag=params.getFragmentTolerance();
 		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
 			if (TOLERANCE_VALUES[i].equals(frag)) {
-				System.out.println("GOT: "+TOLERANCE_VALUES[i]);
 				fragmentTolerance.setSelectedIndex(i);
 				gotIt=true;
 				break;

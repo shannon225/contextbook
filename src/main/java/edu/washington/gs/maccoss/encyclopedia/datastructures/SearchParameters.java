@@ -66,8 +66,6 @@ public class SearchParameters {
 			prefs.put(entry.getKey(), entry.getValue());
 		}
 		prefs.flush();
-		//OutputStream stream=new FileOutputStream("encyclopedia.prefs");
-		//prefs.exportNode(stream);
 	}
 	
 	public static HashMap<String, String> readPreferences() throws IOException,BackingStoreException {
