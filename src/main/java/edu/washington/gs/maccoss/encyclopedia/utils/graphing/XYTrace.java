@@ -109,6 +109,10 @@ public class XYTrace implements XYTraceInterface {
 		this(General.toDoubleArray(x), General.toDoubleArray(y), type, name, Optional.ofNullable((Color)null), Optional.ofNullable((Float)null));
 	}
 	
+	public XYTrace(float[] x, float[] y, GraphType type, String name, Color color, Float thickness) {
+		this(General.toDoubleArray(x), General.toDoubleArray(y), type, name, color, thickness);
+	}
+	
 	public XYTrace(TFloatFloatHashMap map, GraphType type, String name, Color color, Float thickness) {
 		this.color=Optional.ofNullable(color);
 		this.thickness=Optional.ofNullable(thickness);

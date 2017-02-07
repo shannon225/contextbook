@@ -57,7 +57,8 @@ public class PeakLocationInferrer {
 	}
 	
 	public Pair<Float, Integer> getTopNIntensity(TransitionRefinementData data) {
-		double[] topN=bestIons.get(data.getPeptideModSeq());
+		String peptideModSeq=data.getPeptideModSeq();
+		double[] topN=getTopNBestIons(peptideModSeq);
 		double[] masses=FragmentIon.getMasses(data.getFragmentMassArray());
 		float[] intensities=data.getIntegrationArray();
 		
@@ -68,14 +69,18 @@ public class PeakLocationInferrer {
 		float sum=0.0f;
 		int added=0;
 		for (int i=0; i<topN.length; i++) {
-			Optional<Integer> optionalIndex=params.getFragmentTolerance().getIndex(masses, topN[i]);
-			if (optionalIndex.isPresent()) {
-				int index=optionalIndex.get();
+			int[] optionalIndex=params.getFragmentTolerance().getIndicies(masses, topN[i]);
+			for (int index : optionalIndex) {
 				sum+=intensities[index];
 				added++;
 			}
 		}
 		return new Pair<Float, Integer>(sum, added);
+	}
+
+	// FIXME ADD TO EXPORT
+	public double[] getTopNBestIons(String peptideModSeq) {
+		return bestIons.get(peptideModSeq);
 	}
 	
 	public float getPreciseRTInSec(SearchJobData job, String peptideModSeq, float detectedRTInSec) {

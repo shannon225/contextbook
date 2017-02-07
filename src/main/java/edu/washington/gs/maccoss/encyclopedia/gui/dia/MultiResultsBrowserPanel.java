@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridLayout;
@@ -232,6 +233,9 @@ public class MultiResultsBrowserPanel extends JPanel {
 
 		try {
 		Range[] ranges=entry.getRTRanges();
+		
+		double globalMaxY=0.0;
+		ArrayList<ChartPanel> allPanels=new ArrayList<ChartPanel>();
 		for (int i=0; i<ranges.length; i++) {
 			StripeFileInterface file=files.get(i);
 			ArrayList<Stripe> stripes=file.getStripes(precursorMz, ranges[i].getStart()-RT_EXTRACTION_MARGIN_IN_SEC, ranges[i].getStop()+RT_EXTRACTION_MARGIN_IN_SEC, false);
@@ -240,9 +244,24 @@ public class MultiResultsBrowserPanel extends JPanel {
 			HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), 
 					model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge()), downcastedSpectra, ranges[i].getMiddle(), GraphType.line);
 			ArrayList<XYTrace> traces=new ArrayList<XYTrace>(fragmentTraceMap.values());
+			double maxY=0.0;
+			for (XYTrace trace : traces) {
+				maxY=Math.max(maxY, trace.getMaxY());
+			}
+			globalMaxY=Math.max(globalMaxY, maxY);
+			
+			traces.add(new XYTrace(new double[] {ranges[i].getStart()/60.0, ranges[i].getStop()/60.0}, 
+					new double[] {maxY, maxY}, GraphType.area, "Boundaries", new Color(102, 204, 255, 50), 4.0f));
+			
 			ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
 			fragmentChart.getChart().setTitle(file.getOriginalFileName());
+			allPanels.add(fragmentChart);
 			right.add(fragmentChart);
+		}
+		globalMaxY=globalMaxY*1.05;
+		
+		for (ChartPanel chartPanel : allPanels) {
+			chartPanel.getChart().getXYPlot().getRangeAxis().setUpperBound(globalMaxY);
 		}
 
 		split.setRightComponent(right);
