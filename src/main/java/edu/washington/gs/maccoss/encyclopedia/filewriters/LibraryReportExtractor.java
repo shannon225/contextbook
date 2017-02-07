@@ -12,15 +12,20 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupQuantifier;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class LibraryReportExtractor {
@@ -181,6 +186,127 @@ public class LibraryReportExtractor {
 				s.close();
 				if (peptideWriter!=null) peptideWriter.close();
 				if (proteinWriter!=null) proteinWriter.close();
+			}
+		} finally {
+			c.close();
+		}
+	}
+	
+	public static class PeptideReportData {
+		private final String peptideModSeq;
+		private final byte precursorCharge;
+		private final String accessions;
+		private final Range[] rtRanges;
+		private final float avgRT;
+		public PeptideReportData(String peptideModSeq, byte precursorCharge, String accessions, Range[] rtRanges) {
+			this.peptideModSeq=peptideModSeq;
+			this.precursorCharge=precursorCharge;
+			this.accessions=accessions;
+			this.rtRanges=rtRanges;
+			TFloatArrayList rtCenters=new TFloatArrayList();
+			for (int i=0; i<rtRanges.length; i++) {
+				rtCenters.add(rtRanges[i].getMiddle());
+			}
+			avgRT=General.mean(rtCenters.toArray());
+		}
+		public String getPeptideModSeq() {
+			return peptideModSeq;
+		}
+		public byte getPrecursorCharge() {
+			return precursorCharge;
+		}
+		public String getAccessions() {
+			return accessions;
+		}
+		public Range[] getRTRanges() {
+			return rtRanges;
+		}
+		public float getAverageRetentionTime() {
+			return avgRT;
+		}
+	}
+
+	public static Pair<ArrayList<String>, ArrayList<PeptideReportData>> extractMatrix(LibraryFile library) throws IOException, SQLException, DataFormatException {
+		File stubFile=library.getFile();
+		if (stubFile==null) {
+			throw new EncyclopediaException("Please save .ELIB before trying to read matrix data from it!");
+		}
+		
+		Connection c=library.getConnection();
+		try {
+			Statement s=c.createStatement();
+			try {
+				ArrayList<String> sourceFiles=new ArrayList<String>();
+				
+				Logger.logLine("Getting source files...");
+				ResultSet rs=s.executeQuery("select distinct SourceFile from peptidequants");
+				while (rs.next()) {
+					sourceFiles.add(rs.getString(1));
+				}
+				rs.close();
+				
+				Collections.sort(sourceFiles);
+				
+				float averageTIC=0.0f;
+				TObjectFloatHashMap<String> ticBySourceFileMap=new TObjectFloatHashMap<String>();
+				for (String sourceFile : sourceFiles) {
+					float tic=library.getTIC(sourceFile);
+					ticBySourceFileMap.put(sourceFile, tic);
+					averageTIC+=tic;
+				}
+				averageTIC=averageTIC/sourceFiles.size();
+				
+				Logger.logLine("Found "+sourceFiles.size()+" data files");
+				
+				TreeMap<String, Triplet<String, Byte, Range[]>> intensitiesByPeptideModSeq=new TreeMap<String, Triplet<String, Byte, Range[]>>();
+				
+				rs=s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.SourceFile, pep.RTInSecondsStart, pep.RTInSecondsStop, pro.ProteinAccessions from peptidequants pep, proteins pro where pep.PeptideSeq = pro.PeptideSeq");
+				int count=0;
+				int totalAdded=0;
+				while (rs.next()) {
+					count++;
+					if (count%10000==0) {
+						Logger.logLine(count+" records processed...");
+					}
+					byte precursorCharge=rs.getByte(1);
+					String peptideModSeq=rs.getString(2);
+					String sourceFile=rs.getString(3);
+					float rtStart=rs.getFloat(4);
+					float rtStop=rs.getFloat(5);
+					String accessions=rs.getString(6);
+					
+					int index=Collections.binarySearch(sourceFiles, sourceFile);
+					if (index<0) throw new EncyclopediaException("Unexpected sample: "+sourceFile);
+
+					Triplet<String, Byte, Range[]> triplet=intensitiesByPeptideModSeq.get(peptideModSeq);
+					Range[] rtArray;
+					if (triplet==null) {
+						rtArray=new Range[sourceFiles.size()];
+						intensitiesByPeptideModSeq.put(peptideModSeq, new Triplet<String, Byte, Range[]>(accessions, precursorCharge, rtArray));
+					} else {
+						rtArray=triplet.z;
+					}
+					rtArray[index]=new Range(rtStart, rtStop);
+				}
+				Logger.logLine("Finished processing "+count+" records, found "+totalAdded+" quantitative unique peptides. Writing reports...");
+				
+				ArrayList<PeptideReportData> reportData=new ArrayList<LibraryReportExtractor.PeptideReportData>();
+				for (Entry<String, Triplet<String, Byte, Range[]>> entry : intensitiesByPeptideModSeq.entrySet()) {
+					String peptideModSeq=entry.getKey();
+					Triplet<String, Byte, Range[]> triplet=entry.getValue();
+					String accessions=triplet.x;
+					byte precursorCharge=triplet.y.byteValue();
+					Range[] rtRange=triplet.z;
+					reportData.add(new PeptideReportData(peptideModSeq, precursorCharge, accessions, rtRange));
+					
+				}
+				Logger.logLine("Finished extracting peptide report!");
+				
+				rs.close();
+
+				return new Pair<ArrayList<String>, ArrayList<PeptideReportData>>(sourceFiles, reportData);
+			} finally {
+				s.close();
 			}
 		} finally {
 			c.close();

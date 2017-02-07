@@ -50,6 +50,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.PeptideExtractingBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.DIABrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.FeatureGrapher;
+import edu.washington.gs.maccoss.encyclopedia.gui.dia.MultiResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.LindsaysSpecialEncyclopediaPanel;
@@ -268,6 +269,16 @@ public class SearchPanel extends JPanel {
 		launchBrowser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		viewMenu.add(launchBrowser);
 
+		JMenuItem launchMultiBrowser=new JMenuItem("Launch Multi-ELIB Browser", libraryBrowserIcon);
+		launchMultiBrowser.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				launchMultiElibBrowser();
+			}
+		});
+		launchMultiBrowser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		viewMenu.add(launchMultiBrowser);
+
 		JMenuItem launchDIABrowser=new JMenuItem("Launch RAW File Browser", diaBrowserIcon);
 		launchDIABrowser.addActionListener(new ActionListener() {
 			@Override
@@ -386,6 +397,34 @@ public class SearchPanel extends JPanel {
 		});
 		rawBrowser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		fileMenu.add(rawBrowser);
+		dialog.setJMenuBar(bar);
+		
+		dialog.getContentPane().add(browser, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(1900, 1030);
+		dialog.setVisible(true);
+	}
+	
+	public void launchMultiElibBrowser() {
+		final JFrame dialog=new JFrame("Multi ELIB/DIA Detection Browser");
+
+		JMenuBar bar=new JMenuBar();
+		JMenu fileMenu=new JMenu("File");
+		fileMenu.setMnemonic(KeyEvent.VK_F);
+		bar.add(fileMenu);
+		
+		final MultiResultsBrowserPanel browser=new MultiResultsBrowserPanel(getVisibleTab().getParameters());
+		JMenuItem openElib=new JMenuItem("Open Multi ELIB...", diaBrowserIcon);
+		openElib.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				browser.askForLibrary();
+			}
+		});
+		openElib.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		fileMenu.add(openElib);
+		
 		dialog.setJMenuBar(bar);
 		
 		dialog.getContentPane().add(browser, BorderLayout.CENTER);

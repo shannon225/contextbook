@@ -15,11 +15,7 @@ public class StripeFileGenerator {
 	};
 
 	public static StripeFileInterface getFile(File f, SearchParameters parameters) {
-		if (!f.exists()||!f.canRead()) {
-			throw new EncyclopediaException("Can't read file "+f.getAbsolutePath());
-		}
-		
-		// then try to change name to .DIA and read
+		// try to change name to .DIA and read
 		String absolutePath=f.getAbsolutePath();
 		File diaFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+StripeFile.DIA_EXTENSION);
 		if (diaFile.exists()&&diaFile.canRead()) {
@@ -28,6 +24,10 @@ public class StripeFileGenerator {
 			} catch (EncyclopediaException ee) {
 				// continue on
 			}
+		}
+		
+		if (!f.exists()||!f.canRead()) {
+			throw new EncyclopediaException("Can't read file "+f.getAbsolutePath());
 		}
 		
 		// otherwise try readers in order
