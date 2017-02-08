@@ -40,7 +40,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.list.array.TDoubleArrayList;
 
 public class LibraryFile extends SQLFile implements LibraryInterface {
 	private static final String SOURCEFILE_TIC_PREFIX="TIC_";
@@ -48,8 +50,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	private static final String SOURCE_FILE_SPLIT="|";
 	public static final String ELIB=".elib";
 	public static final String VERSION_STRING="version";
-	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] {new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4), new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7)};
-	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 7);
+	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] {new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4), new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8)};
+	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 8);
 
 	private File userFile=null;
 	private final File tempFile;
@@ -258,7 +260,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		Connection c=getConnection();
 		try {
 			PreparedStatement peptidePrep=c.prepareStatement(
-					"INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, LocalizationIons, NumberOfMods, IsSiteSpecific, RTInSecondsCenter, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray,IdentifiedTICRatio) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+					"INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, LocalizationIons, NumberOfMods, IsSiteSpecific, RTInSecondsCenter, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, QuantIonMassLength, QuantIonMassArray, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray,IdentifiedTICRatio) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 			PreparedStatement fragmentPrep=c.prepareStatement(
 					"INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, IonType, IonIndex, FragmentMass, Correlation, Background, DeltaMassPPM, Intensity) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
 			try {
@@ -357,10 +359,20 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 
 		Pair<Float, Integer> topN;
+		double[] topNMasses;
 		if (inferrer.isPresent()) {
 			topN=inferrer.get().getTopNIntensity(data);
+			topNMasses=inferrer.get().getTopNBestIons(data.getPeptideModSeq());
 		} else {
-			topN=data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
+			ArrayList<Peak> peaks=data.getTopNPeaks(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
+			float total=0.0f;
+			TDoubleArrayList masses=new TDoubleArrayList();
+			for (Peak peak : peaks) {
+				total+=peak.intensity;
+				masses.add(peak.mass);
+			}
+			topNMasses=masses.toArray();
+			topN=new Pair<Float, Integer>(total, peaks.size());
 		}
 
 		peptidePrep.setInt(1, data.getPrecursorCharge());
@@ -390,15 +402,18 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		peptidePrep.setFloat(12, data.getRange().getStop());
 		peptidePrep.setFloat(13, topN.x);
 		peptidePrep.setInt(14, topN.y);
-		peptidePrep.setFloat(15, bestCorrelation);
-		peptidePrep.setFloat(16, bestDeltaMass);
+		byte[] topNMassesByteArray=ByteConverter.toByteArray(topNMasses);
+		peptidePrep.setInt(15, topNMassesByteArray.length);
+		peptidePrep.setBytes(16, CompressionUtils.compress(topNMassesByteArray));
+		peptidePrep.setFloat(17, bestCorrelation);
+		peptidePrep.setFloat(18, bestDeltaMass);
 		byte[] intensityByteArray=ByteConverter.toByteArray(data.getMedianChromatogram());
-		peptidePrep.setInt(17, intensityByteArray.length);
-		peptidePrep.setBytes(18, CompressionUtils.compress(intensityByteArray));
+		peptidePrep.setInt(19, intensityByteArray.length);
+		peptidePrep.setBytes(20, CompressionUtils.compress(intensityByteArray));
 		if (data.getIdentifiedTICRatio().isPresent()) {
-			peptidePrep.setFloat(19, data.getIdentifiedTICRatio().get());
+			peptidePrep.setFloat(21, data.getIdentifiedTICRatio().get());
 		} else {
-			peptidePrep.setFloat(19, 0.0f);
+			peptidePrep.setFloat(21, 0.0f);
 		}
 		peptidePrep.addBatch();
 
@@ -834,6 +849,14 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						s.execute("ALTER TABLE peptidequants ADD COLUMN LocalizationIons string");
 						s.execute("ALTER TABLE fragmentquants ADD COLUMN IonIndex int");
 					}
+
+					if (new Version(0, 1, 8).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 8));
+						}
+						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonMassLength int");
+						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonMassArray blob");
+					}
 				} catch (SQLException sqle) {
 					// the metadata table is missing, so do nothing and create
 					// it in the next line
@@ -848,7 +871,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				s.execute("CREATE TABLE IF NOT EXISTS proteins ( "+"PeptideSeq string not null, ProteinAccessions string not null, "+"PRIMARY KEY (PeptideSeq) "+")");
 
 				s.execute("CREATE TABLE IF NOT EXISTS peptidequants ( "
-						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, LocalizationIons string, NumberOfMods int, IsSiteSpecific boolean, RTInSecondsCenter double not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null, IdentifiedTICRatio double not null,"
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, LocalizationIons string, NumberOfMods int, IsSiteSpecific boolean, RTInSecondsCenter double not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, QuantIonMassLength int not null, QuantIonMassArray blob not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null, IdentifiedTICRatio double not null,"
 						+"PRIMARY KEY (PrecursorCharge, PeptideModSeq, SourceFile), "
 						+"FOREIGN KEY (PrecursorCharge, PeptideModSeq, SourceFile) REFERENCES entries (PrecursorCharge, PeptideModSeq, SourceFile) "+")");
 

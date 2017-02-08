@@ -20,6 +20,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupQuantifier;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
+import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -60,7 +62,7 @@ public class LibraryReportExtractor {
 				}
 				
 				peptideWriter=new PrintWriter(peptideReportFile, "UTF-8");
-				peptideWriter.print("Peptide\tnumFragments");
+				peptideWriter.print("Peptide\tProtein\tnumFragments");
 				
 				proteinWriter=new PrintWriter(proteinReportFile, "UTF-8");
 				proteinWriter.print("Protein\tnumEquivalentAccessions");
@@ -83,7 +85,7 @@ public class LibraryReportExtractor {
 				Logger.logLine("Found "+sourceFiles.size()+" data files");
 				
 				HashMap<String, int[]> numFragmentsByPeptideModSeq=new HashMap<String, int[]>();
-				HashMap<String, float[]> intensitiesByPeptideModSeq=new HashMap<String, float[]>();
+				TreeMap<String, Pair<String, float[]>> intensitiesByPeptideModSeq=new TreeMap<String, Pair<String, float[]>>();
 				rs=s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.SourceFile, pep.TotalIntensity, pep.NumberOfQuantIons, pro.ProteinAccessions from peptidequants pep, proteins pro where pep.PeptideSeq = pro.PeptideSeq");
 				int count=0;
 				int totalAdded=0;
@@ -116,13 +118,16 @@ public class LibraryReportExtractor {
 						totalAdded++;
 					}
 					
-					float[] intensitiesArray=intensitiesByPeptideModSeq.get(peptideModSeq);
+					Pair<String, float[]> pair=intensitiesByPeptideModSeq.get(peptideModSeq);
 					int[] numFragmentsArray=numFragmentsByPeptideModSeq.get(peptideModSeq);
-					if (intensitiesArray==null) {
+					float[] intensitiesArray;
+					if (pair==null) {
 						intensitiesArray=new float[sourceFiles.size()];
-						intensitiesByPeptideModSeq.put(peptideModSeq, intensitiesArray);
+						intensitiesByPeptideModSeq.put(peptideModSeq, new Pair<String, float[]>(proteinToken, intensitiesArray));
 						numFragmentsArray=new int[sourceFiles.size()];
 						numFragmentsByPeptideModSeq.put(peptideModSeq, numFragmentsArray);
+					} else {
+						intensitiesArray=pair.y;
 					}
 					intensitiesArray[index]+=normalizedIntensity; // sums charge states together
 					numFragmentsArray[index]=numberOfQuantIons;
@@ -130,9 +135,12 @@ public class LibraryReportExtractor {
 				Logger.logLine("Finished processing "+count+" records, found "+totalAdded+" quantitative unique peptides. Writing reports...");
 				
 				int numberInconsistentFragments=0;
-				for (Entry<String, float[]> entry : intensitiesByPeptideModSeq.entrySet()) {
+				for (Entry<String, Pair<String, float[]>> entry : intensitiesByPeptideModSeq.entrySet()) {
 					String peptideModSeq=entry.getKey();
+					Pair<String, float[]> pair=entry.getValue();
 					peptideWriter.print(peptideModSeq);
+					peptideWriter.print("\t");
+					peptideWriter.print(pair.x);
 					int[] numFragments=numFragmentsByPeptideModSeq.get(peptideModSeq);
 					
 					int maxNumFragments=General.max(numFragments);
@@ -143,7 +151,7 @@ public class LibraryReportExtractor {
 					peptideWriter.print("\t");
 					peptideWriter.print(maxNumFragments);
 					
-					float[] array=entry.getValue();
+					float[] array=pair.y;
 					
 					/*if (array.length>1) {
 						float mean=General.mean(array);
@@ -260,7 +268,8 @@ public class LibraryReportExtractor {
 				
 				TreeMap<String, Triplet<String, Byte, Range[]>> intensitiesByPeptideModSeq=new TreeMap<String, Triplet<String, Byte, Range[]>>();
 				
-				rs=s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.SourceFile, pep.RTInSecondsStart, pep.RTInSecondsStop, pro.ProteinAccessions from peptidequants pep, proteins pro where pep.PeptideSeq = pro.PeptideSeq");
+				rs=s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.SourceFile, pep.RTInSecondsStart, pep.RTInSecondsStop, pro.ProteinAccessions, pep.QuantIonMassLength, pep.QuantIonMassArray from peptidequants pep, proteins pro where pep.PeptideSeq = pro.PeptideSeq");
+				
 				int count=0;
 				int totalAdded=0;
 				while (rs.next()) {
@@ -281,6 +290,9 @@ public class LibraryReportExtractor {
 					Triplet<String, Byte, Range[]> triplet=intensitiesByPeptideModSeq.get(peptideModSeq);
 					Range[] rtArray;
 					if (triplet==null) {
+						int quantIonMassesLength=rs.getInt(7);
+						double[] quantIonMasses=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), quantIonMassesLength));
+						// FIXME convert Triplet into object that can store quantIonMasses 
 						rtArray=new Range[sourceFiles.size()];
 						intensitiesByPeptideModSeq.put(peptideModSeq, new Triplet<String, Byte, Range[]>(accessions, precursorCharge, rtArray));
 					} else {
@@ -312,4 +324,5 @@ public class LibraryReportExtractor {
 			c.close();
 		}
 	}
+	
 }

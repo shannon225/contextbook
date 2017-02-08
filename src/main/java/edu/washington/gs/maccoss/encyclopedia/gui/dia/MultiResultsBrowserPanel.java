@@ -253,7 +253,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 			traces.add(new XYTrace(new double[] {ranges[i].getStart()/60.0, ranges[i].getStop()/60.0}, 
 					new double[] {maxY, maxY}, GraphType.area, "Boundaries", new Color(102, 204, 255, 50), 4.0f));
 			
-			ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
+			ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", false, traces.toArray(new XYTrace[traces.size()]));
 			fragmentChart.getChart().setTitle(file.getOriginalFileName());
 			allPanels.add(fragmentChart);
 			right.add(fragmentChart);

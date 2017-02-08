@@ -6,6 +6,7 @@ import java.awt.Font;
 import java.awt.Stroke;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 
 public enum IonType {
 	a,aNL,ap2,ap2NL,
@@ -16,6 +17,13 @@ public enum IonType {
 	z,zNL,z1,z1NL,zp2,zp2NL,z1p2,z1p2NL,
 	unknown;
 	
+	private static final String _1="+1";
+	private static final String NL="-NL";
+	private static final String _1_NL="+1-NL";
+	private static final String _2H="+2H";
+	private static final String _1_2H="+1+2H";
+	private static final String _2H_NL="+2H-NL";
+	private static final String _1_2H_NL="+1+2H-NL";
 	
 	public static final Color oddColor=new Color(26, 148, 49);
 	public static final Color bcColor=new Color(226, 75, 59);
@@ -106,32 +114,132 @@ public enum IonType {
 		case x: return "x"+index;
 		case y: return "y"+index;
 		case z: return "z"+index;
-		case z1: return "z"+index+"+1";
-		case aNL: return "a"+index+"-NL";
-		case bNL: return "b"+index+"-NL";
-		case cNL: return "c"+index+"-NL";
-		case xNL: return "x"+index+"-NL";
-		case yNL: return "y"+index+"-NL";
-		case zNL: return "z"+index+"-NL";
-		case z1NL: return "z"+index+"+1-NL";
+		case z1: return "z"+index+_1;
+		case aNL: return "a"+index+NL;
+		case bNL: return "b"+index+NL;
+		case cNL: return "c"+index+NL;
+		case xNL: return "x"+index+NL;
+		case yNL: return "y"+index+NL;
+		case zNL: return "z"+index+NL;
+		case z1NL: return "z"+index+_1_NL;
 
-		case ap2: return "a"+index+"+2H";
-		case bp2: return "b"+index+"+2H";
-		case cp2: return "c"+index+"+2H";
-		case xp2: return "x"+index+"+2H";
-		case yp2: return "y"+index+"+2H";
-		case zp2: return "z"+index+"+2H";
-		case z1p2: return "z"+index+"+1+2H";
-		case ap2NL: return "a"+index+"+2H-NL";
-		case bp2NL: return "b"+index+"+2H-NL";
-		case cp2NL: return "c"+index+"+2H-NL";
-		case xp2NL: return "x"+index+"+2H-NL";
-		case yp2NL: return "y"+index+"+2H-NL";
-		case zp2NL: return "z"+index+"+2H-NL";
-		case z1p2NL: return "z"+index+"+1+2H-NL";
+		case ap2: return "a"+index+_2H;
+		case bp2: return "b"+index+_2H;
+		case cp2: return "c"+index+_2H;
+		case xp2: return "x"+index+_2H;
+		case yp2: return "y"+index+_2H;
+		case zp2: return "z"+index+_2H;
+		case z1p2: return "z"+index+_1_2H;
+		case ap2NL: return "a"+index+_2H_NL;
+		case bp2NL: return "b"+index+_2H_NL;
+		case cp2NL: return "c"+index+_2H_NL;
+		case xp2NL: return "x"+index+_2H_NL;
+		case yp2NL: return "y"+index+_2H_NL;
+		case zp2NL: return "z"+index+_2H_NL;
+		case z1p2NL: return "z"+index+_1_2H_NL;
 		case unknown: return "unknown";
 		}
 		return "unknown";
+	}
+	
+	public static Pair<IonType, Byte> fromIndexedString(String s) {
+		byte type;
+		byte index;
+		if (s.endsWith(_1_2H_NL)) {
+			type=7;
+			index=Byte.parseByte(s.substring(1, s.length()-_1_2H_NL.length()));
+		} else if (s.endsWith(_2H_NL)) {
+			type=6;
+			index=Byte.parseByte(s.substring(1, s.length()-_2H_NL.length()));
+		} else if (s.endsWith(_1_2H)) {
+			type=5;
+			index=Byte.parseByte(s.substring(1, s.length()-_1_2H.length()));
+		} else if (s.endsWith(_2H)) {
+			type=4;
+			index=Byte.parseByte(s.substring(1, s.length()-_2H.length()));
+		} else if (s.endsWith(_1_NL)) {
+			type=3;
+			index=Byte.parseByte(s.substring(1, s.length()-_1_NL.length()));
+		} else if (s.endsWith(NL)) {
+			type=2;
+			index=Byte.parseByte(s.substring(1, s.length()-NL.length()));
+		} else if (s.endsWith(_1)) {
+			type=1;
+			index=Byte.parseByte(s.substring(1, s.length()-_1.length()));
+		} else {
+			type=0;
+			index=Byte.parseByte(s.substring(1));
+		}
+		
+		if(s.charAt(0)=='a') {
+			switch (type) {
+				case 0: return new Pair<IonType, Byte>(a, index); // normal
+				case 1: throw new EncyclopediaException("Can't process ion type: "+s); // +1 
+				case 2: return new Pair<IonType, Byte>(aNL, index); // neutral loss
+				case 3: throw new EncyclopediaException("Can't process ion type: "+s); // +1 neutral loss 
+				case 4: return new Pair<IonType, Byte>(ap2, index); // +2H
+				case 5: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H
+				case 6: return new Pair<IonType, Byte>(ap2NL, index); // +2H neutral loss
+				case 7: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H neutral loss
+			}
+		} else if(s.charAt(0)=='b') {
+			switch (type) {
+				case 0: return new Pair<IonType, Byte>(b, index); // normal
+				case 1: throw new EncyclopediaException("Can't process ion type: "+s); // +1 
+				case 2: return new Pair<IonType, Byte>(bNL, index); // neutral loss
+				case 3: throw new EncyclopediaException("Can't process ion type: "+s); // +1 neutral loss 
+				case 4: return new Pair<IonType, Byte>(bp2, index); // +2H
+				case 5: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H
+				case 6: return new Pair<IonType, Byte>(bp2NL, index); // +2H neutral loss
+				case 7: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H neutral loss
+			}
+		} else if(s.charAt(0)=='c') {
+			switch (type) {
+				case 0: return new Pair<IonType, Byte>(c, index); // normal
+				case 1: throw new EncyclopediaException("Can't process ion type: "+s); // +1 
+				case 2: return new Pair<IonType, Byte>(cNL, index); // neutral loss
+				case 3: throw new EncyclopediaException("Can't process ion type: "+s); // +1 neutral loss 
+				case 4: return new Pair<IonType, Byte>(cp2, index); // +2H
+				case 5: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H
+				case 6: return new Pair<IonType, Byte>(cp2NL, index); // +2H neutral loss
+				case 7: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H neutral loss
+			}
+		} else if(s.charAt(0)=='x') {
+			switch (type) {
+				case 0: return new Pair<IonType, Byte>(x, index); // normal
+				case 1: throw new EncyclopediaException("Can't process ion type: "+s); // +1 
+				case 2: return new Pair<IonType, Byte>(xNL, index); // neutral loss
+				case 3: throw new EncyclopediaException("Can't process ion type: "+s); // +1 neutral loss 
+				case 4: return new Pair<IonType, Byte>(xp2, index); // +2H
+				case 5: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H
+				case 6: return new Pair<IonType, Byte>(xp2NL, index); // +2H neutral loss
+				case 7: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H neutral loss
+			}
+		} else if(s.charAt(0)=='y') {
+			switch (type) {
+				case 0: return new Pair<IonType, Byte>(y, index); // normal
+				case 1: throw new EncyclopediaException("Can't process ion type: "+s); // +1 
+				case 2: return new Pair<IonType, Byte>(yNL, index); // neutral loss
+				case 3: throw new EncyclopediaException("Can't process ion type: "+s); // +1 neutral loss 
+				case 4: return new Pair<IonType, Byte>(yp2, index); // +2H
+				case 5: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H
+				case 6: return new Pair<IonType, Byte>(yp2NL, index); // +2H neutral loss
+				case 7: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H neutral loss
+			}
+		} else if(s.charAt(0)=='z') {
+			switch (type) {
+				case 0: return new Pair<IonType, Byte>(z, index); // normal
+				case 1: return new Pair<IonType, Byte>(z1, index); // +1 
+				case 2: return new Pair<IonType, Byte>(zNL, index); // neutral loss
+				case 3: return new Pair<IonType, Byte>(z1NL, index); // +1 neutral loss 
+				case 4: return new Pair<IonType, Byte>(zp2, index); // +2H
+				case 5: return new Pair<IonType, Byte>(z1p2, index); // +1+2H
+				case 6: return new Pair<IonType, Byte>(zp2NL, index); // +2H neutral loss
+				case 7: return new Pair<IonType, Byte>(z1p2NL, index); // +1+2H neutral loss
+			}
+		}
+		
+		throw new EncyclopediaException("Can't process ion type: "+s);
 	}
 	
 	public static Color getColor(IonType t) {

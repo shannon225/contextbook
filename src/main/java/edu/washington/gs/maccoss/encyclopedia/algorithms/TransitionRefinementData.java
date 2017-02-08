@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -12,6 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -136,22 +138,32 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	}
 	
 	public Pair<Float, Integer> getTopNIntensity(float minimumCorrelation, int n) {
-		TFloatArrayList intensities=new TFloatArrayList();
-		for (int i=0; i<correlationArray.length; i++) {
-			if (correlationArray[i]>=minimumCorrelation) {
-				intensities.add(integrationArray[i]);
-			}
-		}
-		intensities.sort();
+		ArrayList<Peak> topN=getTopNPeaks(minimumCorrelation, n);
 		
 		float total=0.0f;
+		for (Peak peak : topN) {
+			total+=peak.intensity;
+		}
+		return new Pair<Float, Integer>(total, topN.size());
+	}
+
+	public ArrayList<Peak> getTopNPeaks(float minimumCorrelation, int n) {
+		ArrayList<Peak> intensities=new ArrayList<Peak>();
+		for (int i=0; i<correlationArray.length; i++) {
+			if (correlationArray[i]>=minimumCorrelation) {
+				intensities.add(new Peak(fragmentMassArray[i].mass, integrationArray[i]));
+			}
+		}
+		Collections.sort(intensities);
+		
 		int count=1;
+		ArrayList<Peak> topN=new ArrayList<Peak>();
 		for (int i=intensities.size()-1; i>=0; i--) {
-			total+=intensities.get(i);
+			topN.add(intensities.get(i));
 			if (count>=n) break;
 			count++;
 		}
-		return new Pair<Float, Integer>(total, count);
+		return topN;
 	}
 	
 	public float getApexRT() {

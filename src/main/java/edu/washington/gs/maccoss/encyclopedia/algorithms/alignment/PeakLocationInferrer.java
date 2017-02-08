@@ -272,7 +272,6 @@ public class PeakLocationInferrer {
 							bestIonsMap=new PeakFrequencyCalculator(fragmentTolerance);
 							ionCounter.put(peptideModSeq, bestIonsMap);
 						}
-						
 						double[] masses=chrom.getMassArray();
 						float[] intensity=chrom.getIntensityArray();
 						float[] correlation=chrom.getCorrelationArray();
