@@ -174,7 +174,8 @@ public class XYTrace implements XYTraceInterface {
 	
 	public String toString() {
 		Pair<double[], double[]> pair=toArrays(points);
-		StringBuilder sb=new StringBuilder("float[] x=new float[] {");
+		StringBuilder sb=new StringBuilder("// "+getName()+"\n");
+		sb.append("float[] x=new float[] {");
 		boolean first=true;
 		for (double d : pair.x) {
 			if (first) {

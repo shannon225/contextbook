@@ -23,8 +23,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -78,7 +78,6 @@ public class PeakLocationInferrer {
 		return new Pair<Float, Integer>(sum, added);
 	}
 
-	// FIXME ADD TO EXPORT
 	public double[] getTopNBestIons(String peptideModSeq) {
 		return bestIons.get(peptideModSeq);
 	}
@@ -286,7 +285,23 @@ public class PeakLocationInferrer {
 					if (missingPeptides.size()>0) {
 						Logger.logLine("Found "+bestEntries.size()+" archetypal peptides from individual Percolator reports, extracting "+missingPeptides.size()+" additional archetypal peptides from "+job.getDiaFile().getName()+"...");
 						ArrayList<ChromatogramLibraryEntry> extracted=extractFromDIA(subProgress, job, missingPeptides, passingPeptides);
-						bestEntries.addAll(extracted);
+						for (ChromatogramLibraryEntry chrom : extracted) {
+							String peptideModSeq=chrom.getPeptideModSeq();
+							PeakFrequencyCalculator bestIonsMap=ionCounter.get(peptideModSeq);
+							if (bestIonsMap==null) {
+								bestIonsMap=new PeakFrequencyCalculator(fragmentTolerance);
+								ionCounter.put(peptideModSeq, bestIonsMap);
+							}
+							double[] masses=chrom.getMassArray();
+							float[] intensity=chrom.getIntensityArray();
+							float[] correlation=chrom.getCorrelationArray();
+							for (int i=0; i<correlation.length; i++) {
+								if (correlation[i]>=TransitionRefiner.quantitativeCorrelationThreshold) {
+									bestIonsMap.increment(masses[i], intensity[i]);
+								}
+							}
+							bestEntries.add(chrom);
+						}
 					}
 					
 					Logger.logLine(resultLibrary.getName()+"produced Parsed:"+targetPeptides.size()+", BEST:"+bestEntries.size());
