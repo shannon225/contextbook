@@ -248,7 +248,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 		FragmentIon[] targetIonArray=targetIonObjects.toArray(new FragmentIon[targetIonObjects.size()]);
 		FragmentIon[] offTargetIonArray=offtargetIonObjects.toArray(new FragmentIon[offtargetIonObjects.size()]);
 		
-		double globalMaxY=0.1;
+		double globalMaxY=0.0;
 		ArrayList<ChartPanel> allPanels=new ArrayList<ChartPanel>();
 		for (int i=0; i<ranges.length; i++) {
 			StripeFileInterface file=files.get(i);
@@ -262,26 +262,31 @@ public class MultiResultsBrowserPanel extends JPanel {
 					offTargetIonArray, downcastedSpectra, ranges[i].getMiddle(), GraphType.dashedline);
 			
 			ArrayList<XYTrace> traces=new ArrayList<XYTrace>(targetFragmentTraceMap.values());
-			double maxY=0.1;
+			double maxY=0.0;
 			for (XYTrace trace : traces) {
 				maxY=Math.max(maxY, trace.getMaxY());
 			}
 			globalMaxY=Math.max(globalMaxY, maxY);
 			traces.addAll(offTargetFragmentTraceMap.values());
 			
-			// extra 0 point in case there is no data shown
-			traces.add(new XYTrace(new double[] {ranges[i].getStart()/60.0-Float.MIN_VALUE, ranges[i].getStart()/60.0, ranges[i].getStop()/60.0}, 
-					new double[] {0.0, maxY, maxY}, GraphType.area, "Boundaries", new Color(102, 204, 255, 50), 4.0f));
+			if (traces.size()>0) {
+				// extra 0 point in case there is no data shown (or all 0s)
+				traces.add(new XYTrace(new double[] {ranges[i].getStart()/60.0-Float.MIN_VALUE, ranges[i].getStart()/60.0, ranges[i].getStop()/60.0}, 
+						new double[] {0.0, maxY, maxY}, GraphType.area, "Boundaries", new Color(102, 204, 255, 50), 4.0f));
+			}
 			
 			ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", false, traces.toArray(new XYTrace[traces.size()]));
 			fragmentChart.getChart().setTitle(file.getOriginalFileName());
 			allPanels.add(fragmentChart);
 			right.add(fragmentChart);
 		}
-		globalMaxY=globalMaxY*1.05;
-		
-		for (ChartPanel chartPanel : allPanels) {
-			chartPanel.getChart().getXYPlot().getRangeAxis().setUpperBound(globalMaxY);
+
+		if (globalMaxY>0.0) {
+			globalMaxY=globalMaxY*1.05;
+
+			for (ChartPanel chartPanel : allPanels) {
+				chartPanel.getChart().getXYPlot().getRangeAxis().setUpperBound(globalMaxY);
+			}
 		}
 
 		split.setRightComponent(right);

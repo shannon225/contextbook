@@ -230,7 +230,7 @@ public class LibraryReportExtractor {
 			return rtRanges;
 		}
 		public float getAverageRetentionTime() {
-			if (avgRT>0) {
+			if (avgRT<0) {
 				TFloatArrayList rtCenters=new TFloatArrayList();
 				for (int i=0; i<rtRanges.length; i++) {
 					rtCenters.add(rtRanges[i].getMiddle());
