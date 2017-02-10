@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -44,6 +45,18 @@ public class XYTrace implements XYTraceInterface {
 			double newMax=xyTrace.getMaxY();
 			if (newMax>max) {
 				max=newMax;
+			}
+		}
+		return max;
+	}
+	
+	public double getMaxYInRange(Range xrange) {
+		double max=-Double.MAX_VALUE;
+		for (XYPoint xy : points) {
+			if (xrange.contains(xy.getX())) {
+				if (xy.y>max) {
+					max=xy.y;
+				}
 			}
 		}
 		return max;

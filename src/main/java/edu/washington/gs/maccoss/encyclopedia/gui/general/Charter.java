@@ -21,16 +21,26 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
+import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.annotations.XYTextAnnotation;
+import org.jfree.chart.axis.CategoryAxis;
+import org.jfree.chart.axis.CategoryLabelPositions;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.Plot;
+import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.PaintScale;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.chart.renderer.category.StandardBarPainter;
 import org.jfree.chart.renderer.xy.AbstractXYItemRenderer;
 import org.jfree.chart.renderer.xy.XYAreaRenderer;
 import org.jfree.chart.renderer.xy.XYBlockRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.data.category.CategoryDataset;
+import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.ui.TextAnchor;
@@ -242,6 +252,65 @@ public class Charter {
 		return getChart("Value", "Probability", false, new XYTrace(points, GraphType.line, dist.getName()));
 	}
 	private static final DecimalFormat MASS_FORMAT = new DecimalFormat(".#");
+	
+	{
+		BarRenderer.setDefaultBarPainter(new StandardBarPainter());
+		BarRenderer.setDefaultShadowsVisible(false);
+	}
+	public static ChartPanel getBarChart(String title, String xAxis, String yAxis, String[] categories, float[] values) {
+		assert (categories.length==values.length);
+		boolean displayLegend=false;
+
+		DefaultCategoryDataset dataset=new DefaultCategoryDataset();
+		for (int i=0; i<values.length; i++) {
+			dataset.addValue(values[i], xAxis, categories[i]);
+		}
+		JFreeChart barChart=ChartFactory.createBarChart(title, xAxis, yAxis, dataset, PlotOrientation.VERTICAL, false, true, false);
+
+		CategoryPlot plot=barChart.getCategoryPlot();
+	    ((BarRenderer)plot.getRenderer()).setBarPainter(new StandardBarPainter());
+
+		plot.setBackgroundPaint(Color.white);
+		plot.setDomainGridlinePaint(Color.white);//gray);
+		plot.setDomainGridlinesVisible(false);
+		plot.setRangeGridlinePaint(Color.white);//gray);
+		plot.setRangeGridlinesVisible(false);
+		JFreeChart chart=new JFreeChart(plot);
+		chart.setBackgroundPaint(Color.white);
+
+		NumberAxis rangeAxis=(NumberAxis) ((CategoryPlot) plot).getRangeAxis();
+
+		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
+		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
+		Font font3=new Font("News Gothic MT", Font.PLAIN, 18);
+		font=new Font("News Gothic MT", Font.PLAIN, 12);
+		font2=new Font("News Gothic MT", Font.PLAIN, 16);
+		font3=new Font("News Gothic MT", Font.PLAIN, 16);
+		rangeAxis.setLabelFont(font2);
+		rangeAxis.setTickLabelFont(font);
+
+		CategoryAxis domainAxis=(CategoryAxis)((CategoryPlot)plot).getDomainAxis();
+		domainAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_90);
+	    domainAxis.setMaximumCategoryLabelLines(1);
+	    domainAxis.setMaximumCategoryLabelWidthRatio(2f);
+		if (domainAxis!=null) {
+			domainAxis.setLabelFont(font);
+			domainAxis.setTickLabelFont(font);
+		}
+
+		ChartPanel chartPanel=new ChartPanel(chart, false);
+		if (!displayLegend) {
+			chartPanel.getChart().removeLegend();
+		} else {
+			chartPanel.getChart().getLegend().setItemFont(font3);
+		}
+
+		chartPanel.setMinimumDrawWidth(0);
+		chartPanel.setMinimumDrawHeight(0);
+		chartPanel.setMaximumDrawWidth(Integer.MAX_VALUE);
+		chartPanel.setMaximumDrawHeight(Integer.MAX_VALUE);
+		return chartPanel;
+	}
 
 	public static ChartPanel getChart(String xAxis, String yAxis, boolean displayLegend, XYTraceInterface... traces) {
 		NumberAxis numberaxis=new NumberAxis(xAxis);
