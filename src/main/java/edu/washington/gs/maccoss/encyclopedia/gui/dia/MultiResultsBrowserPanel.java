@@ -279,9 +279,9 @@ public class MultiResultsBrowserPanel extends JPanel {
 				ArrayList<Spectrum> downcastedSpectra=Stripe.downcastStripeToSpectrum(stripes);
 				
 				HashMap<FragmentIon, XYTrace> targetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), 
-						targetIonArray, downcastedSpectra, ranges[i].getMiddle(), GraphType.line);
+						targetIonArray, downcastedSpectra, null, GraphType.line);
 				HashMap<FragmentIon, XYTrace> offTargetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), 
-						offTargetIonArray, downcastedSpectra, ranges[i].getMiddle(), GraphType.dashedline);
+						offTargetIonArray, downcastedSpectra, null, GraphType.dashedline);
 				
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>(targetFragmentTraceMap.values());
 				double maxY=0.0;
