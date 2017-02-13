@@ -11,11 +11,26 @@ public class MultiPeptideResultsTableModel extends AbstractTableModel {
 	
 	private final String[] columns=new String[] {"#", "Peptide", "Protein", "Average RT"};
 
+	ArrayList<PeptideReportData> allEntries=new ArrayList<PeptideReportData>();
 	ArrayList<PeptideReportData> entries=new ArrayList<PeptideReportData>();
+	private int minimumNumberOfTransitions=1;
 	
 	public void updateEntries(ArrayList<PeptideReportData> newEntries) {
+		allEntries.clear();
+		allEntries.addAll(newEntries);
+		
+		filterTable(minimumNumberOfTransitions);
+	}
+	
+	public void filterTable(int minimumNumberOfTransitions) {
 		entries.clear();
-		entries.addAll(newEntries);
+		this.minimumNumberOfTransitions=minimumNumberOfTransitions;
+		for (PeptideReportData entry : allEntries) {
+			if (minimumNumberOfTransitions<=entry.getTargetFragmentMzs().length) {
+				entries.add(entry);
+			}
+		}
+		
 		fireTableDataChanged();
 	}
 	

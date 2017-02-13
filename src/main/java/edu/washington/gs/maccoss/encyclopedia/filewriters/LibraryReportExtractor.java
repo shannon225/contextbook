@@ -305,8 +305,13 @@ public class LibraryReportExtractor {
 					float[] totalIntensities;
 					if (data==null) {
 						int quantIonMassesLength=rs.getInt(8);
-						double[] quantIonMasses=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(9), quantIonMassesLength));
-						Arrays.sort(quantIonMasses);
+						double[] quantIonMasses;
+						if (quantIonMassesLength>0) {
+							quantIonMasses=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(9), quantIonMassesLength));
+							Arrays.sort(quantIonMasses);
+						} else {
+							quantIonMasses=new double[] {};
+						}
 						rtRange=new Range[sourceFiles.size()];
 						totalIntensities=new float[sourceFiles.size()];
 						intensitiesByPeptideModSeq.put(peptideModSeq, new PeptideReportData(peptideModSeq, precursorCharge, accessions, quantIonMasses, rtRange, totalIntensities));

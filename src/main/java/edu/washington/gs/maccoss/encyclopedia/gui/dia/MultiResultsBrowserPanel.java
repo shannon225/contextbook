@@ -2,15 +2,18 @@ package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import javax.swing.BoxLayout;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -41,6 +44,7 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryReportExtractor
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryReportExtractor.PeptideReportData;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -70,6 +74,8 @@ public class MultiResultsBrowserPanel extends JPanel {
 	private final MultiPeptideResultsTableModel peptideModel;
 	private final SearchParameters parameters;
 	private final ChartPanel barChart;
+	private final JComboBox<Integer> minimumNumberOfFragments=new JComboBox<Integer>(new Integer[] {0, 1, 2, 3, 4, 5});
+	private final int defaultMinimumNumberOfFragmentsIndex=3;
 	
 	public MultiResultsBrowserPanel(SearchParameters parameters) {
 		super(new BorderLayout());
@@ -139,7 +145,6 @@ public class MultiResultsBrowserPanel extends JPanel {
 			}
 		});
 
-		JPanel options=new JPanel(new BorderLayout());
 		elibFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".elib"), true) {
 			private static final long serialVersionUID=1L;
 
@@ -151,24 +156,40 @@ public class MultiResultsBrowserPanel extends JPanel {
 				}
 			}
 		};
-		options.add(elibFileChooser, BorderLayout.NORTH);
-		options.add(new JScrollPane(sampleTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED), BorderLayout.CENTER);
+
+		minimumNumberOfFragments.setSelectedIndex(defaultMinimumNumberOfFragmentsIndex);
+		Integer minimumNumberOfTransitions=(Integer)minimumNumberOfFragments.getSelectedItem();
+		peptideModel.filterTable(minimumNumberOfTransitions);
 		
-		JPanel left=new JPanel(new BorderLayout());
-		left.add(options, BorderLayout.NORTH);
+		minimumNumberOfFragments.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Integer minimumNumberOfTransitions=(Integer)minimumNumberOfFragments.getSelectedItem();
+				peptideModel.filterTable(minimumNumberOfTransitions);
+			}
+		});
+
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(elibFileChooser);
+		options.add(new LabeledComponent("Minimum # Fragments", minimumNumberOfFragments));
 		
-		JPanel peptideTablePanel=new JPanel(new BorderLayout());
-		peptideTablePanel.add(new JScrollPane(peptideTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED), BorderLayout.CENTER);
+		JPanel tablePanel=new JPanel(new GridLayout(0, 1));
+		tablePanel.add(new JScrollPane(sampleTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED));
+		tablePanel.add(new JScrollPane(peptideTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED));
+		barChart=getBarChart(new String[] {}, new float[] {});
+		tablePanel.add(barChart, BorderLayout.SOUTH);
 
 		JPanel searchPanel=new JPanel(new BorderLayout());
 		searchPanel.add(new JLabel("Search:"), BorderLayout.WEST);
 		searchPanel.add(jtfFilter, BorderLayout.CENTER);
-		peptideTablePanel.add(searchPanel, BorderLayout.SOUTH);
-		peptideTablePanel.setMinimumSize(new Dimension(100, 100));
-		left.add(peptideTablePanel, BorderLayout.CENTER);
+
+		JPanel left=new JPanel(new BorderLayout());
+		left.add(options, BorderLayout.NORTH);
+		left.add(tablePanel, BorderLayout.CENTER);
+		left.add(searchPanel, BorderLayout.SOUTH);
 		
-		barChart=getBarChart(new String[] {}, new float[] {});
-		left.add(barChart, BorderLayout.SOUTH);
+		
 		
 		split.setLeftComponent(left);
 		split.setRightComponent(new JLabel("Select a peptide!"));
@@ -217,7 +238,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 		};
 		worker.execute();
 	}
-
+	
 	public void updateToSelectedPeptide() {
 		int[] selection=peptideTable.getSelectedRows();
 		if (selection.length<=0) return;
