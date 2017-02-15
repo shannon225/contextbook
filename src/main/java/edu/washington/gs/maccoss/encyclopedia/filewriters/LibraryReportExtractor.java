@@ -238,7 +238,9 @@ public class LibraryReportExtractor {
 			if (avgRT<0) {
 				TFloatArrayList rtCenters=new TFloatArrayList();
 				for (int i=0; i<rtRanges.length; i++) {
-					rtCenters.add(rtRanges[i].getMiddle());
+					if (rtRanges[i]!=null) {
+						rtCenters.add(rtRanges[i].getMiddle());
+					}
 				}
 				avgRT=General.mean(rtCenters.toArray());
 			}
@@ -322,7 +324,7 @@ public class LibraryReportExtractor {
 					rtRange[index]=new Range(rtStart, rtStop);
 					totalIntensities[index]=totalIntensity;
 				}
-				Logger.logLine("Finished processing "+count+" records, found "+totalAdded+" quantitative unique peptides. Writing reports...");
+				Logger.logLine("Finished processing "+count+" records, found "+intensitiesByPeptideModSeq.size()+" quantitative unique peptides. Writing reports...");
 				
 				ArrayList<PeptideReportData> reportData=new ArrayList<LibraryReportExtractor.PeptideReportData>(intensitiesByPeptideModSeq.values());
 				

@@ -143,7 +143,21 @@ public class AminoAcidConstants {
 	
 	public double getMass(String sequence) {
 		double total=0.0;
-		for (char c : sequence.toCharArray()) {
+		for (int i=0; i<sequence.length(); i++) {
+			char c=sequence.charAt(i);
+			if (c=='[') {
+				StringBuilder sb=new StringBuilder();
+				while (true) {
+					i++;
+					c=sequence.charAt(i);
+					if (c==']') {
+						break; 
+					} else {
+						sb.append(c);
+					}
+				}
+				total+=Double.parseDouble(sb.toString());
+			}
 			total+=getMass(c);
 		}
 		return total;

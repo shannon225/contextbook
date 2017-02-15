@@ -249,12 +249,10 @@ public class MultiResultsBrowserPanel extends JPanel {
 	
 	public void resetPeptide(PeptideReportData entry, ArrayList<StripeFileInterface> files) {
 		int location=split.getDividerLocation();
-		//System.out.println("location:"+location);
 		if (location<=5) {
 			location=200;
 		}
 		
-		Logger.logLine("Graphing "+entry.getPeptideModSeq()+"...");
 		String[] sampleNames=new String[files.size()];
 		for (int i=0; i<sampleNames.length; i++) {
 			sampleNames[i]=files.get(i).getOriginalFileName();
@@ -273,7 +271,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 		JPanel right=new JPanel(new GridLayout(0, cols));
 		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		double precursorMz=parameters.getAAConstants().getChargedMass(entry.getPeptideModSeq(), entry.getPrecursorCharge());
-
+		
 		try {
 			Range[] ranges=entry.getRTRanges();
 			double[] targets=entry.getTargetFragmentMzs(); // presorted
@@ -289,35 +287,38 @@ public class MultiResultsBrowserPanel extends JPanel {
 			}
 			FragmentIon[] targetIonArray=targetIonObjects.toArray(new FragmentIon[targetIonObjects.size()]);
 			FragmentIon[] offTargetIonArray=offtargetIonObjects.toArray(new FragmentIon[offtargetIonObjects.size()]);
+			Logger.logLine("Graphing "+entry.getPeptideModSeq()+" ("+targetIonArray.length+"/"+offTargetIonArray.length+")"+"...");
 			
 			double globalMaxY=0.0;
 			ArrayList<ChartPanel> allPanels=new ArrayList<ChartPanel>();
 			for (int i=0; i<ranges.length; i++) {
-				StripeFileInterface file=files.get(i);
-				Range rangeInMins=new Range(ranges[i].getStart()/60f, ranges[i].getStop()/60f);
-				ArrayList<Stripe> stripes=file.getStripes(precursorMz, ranges[i].getStart()-RT_EXTRACTION_MARGIN_IN_SEC, ranges[i].getStop()+RT_EXTRACTION_MARGIN_IN_SEC, false);
-				
-				ArrayList<Spectrum> downcastedSpectra=Stripe.downcastStripeToSpectrum(stripes);
-				
-				HashMap<FragmentIon, XYTrace> targetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), 
-						targetIonArray, downcastedSpectra, null, GraphType.line);
-				HashMap<FragmentIon, XYTrace> offTargetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), 
-						offTargetIonArray, downcastedSpectra, null, GraphType.dashedline);
-				
-				ArrayList<XYTrace> traces=new ArrayList<XYTrace>(targetFragmentTraceMap.values());
-				double maxY=0.0;
-				for (XYTrace trace : traces) {
-					maxY=Math.max(maxY, trace.getMaxYInRange(rangeInMins));
+				ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
+				if (ranges[i]!=null) {
+					StripeFileInterface file=files.get(i);
+					Range rangeInMins=new Range(ranges[i].getStart()/60f, ranges[i].getStop()/60f);
+					ArrayList<Stripe> stripes=file.getStripes(precursorMz, ranges[i].getStart()-RT_EXTRACTION_MARGIN_IN_SEC, ranges[i].getStop()+RT_EXTRACTION_MARGIN_IN_SEC, false);
+					
+					ArrayList<Spectrum> downcastedSpectra=Stripe.downcastStripeToSpectrum(stripes);
+
+					HashMap<FragmentIon, XYTrace> targetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), targetIonArray, downcastedSpectra, null,
+							GraphType.line);
+					HashMap<FragmentIon, XYTrace> offTargetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), offTargetIonArray, downcastedSpectra,
+							null, GraphType.dashedline);
+
+					traces.addAll(targetFragmentTraceMap.values());
+					double maxY=0.0;
+					for (XYTrace trace : traces) {
+						maxY=Math.max(maxY, trace.getMaxYInRange(rangeInMins));
+					}
+					globalMaxY=Math.max(globalMaxY, maxY);
+					traces.addAll(offTargetFragmentTraceMap.values());
+					
+					if (traces.size()>0) {
+						// extra 0 point in case there is no data shown (or all 0s)
+						traces.add(new XYTrace(new double[] {ranges[i].getStart()/60.0-Float.MIN_VALUE, ranges[i].getStart()/60.0, ranges[i].getStop()/60.0}, new double[] {0.0, maxY, maxY},
+								GraphType.area, "Boundaries", new Color(102, 204, 255, 50), 4.0f));
+					}
 				}
-				globalMaxY=Math.max(globalMaxY, maxY);
-				traces.addAll(offTargetFragmentTraceMap.values());
-				
-				if (traces.size()>0) {
-					// extra 0 point in case there is no data shown (or all 0s)
-					traces.add(new XYTrace(new double[] {ranges[i].getStart()/60.0-Float.MIN_VALUE, ranges[i].getStart()/60.0, ranges[i].getStop()/60.0}, 
-							new double[] {0.0, maxY, maxY}, GraphType.area, "Boundaries", new Color(102, 204, 255, 50), 4.0f));
-				}
-				
 				ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", false, traces.toArray(new XYTrace[traces.size()]));
 				fragmentChart.getChart().setTitle(sampleNames[i]);
 				allPanels.add(fragmentChart);

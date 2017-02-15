@@ -9,7 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryReportExtractor
 public class MultiPeptideResultsTableModel extends AbstractTableModel {
 	private static final long serialVersionUID=1L;
 	
-	private final String[] columns=new String[] {"#", "Peptide", "Protein", "Average RT"};
+	private final String[] columns=new String[] {"#", "Peptide", "Protein", "Quant Ions", "Average RT"};
 
 	ArrayList<PeptideReportData> allEntries=new ArrayList<PeptideReportData>();
 	ArrayList<PeptideReportData> entries=new ArrayList<PeptideReportData>();
@@ -59,7 +59,8 @@ public class MultiPeptideResultsTableModel extends AbstractTableModel {
 			case 0: return Integer.class;
 			case 1: return String.class;
 			case 2: return String.class;
-			case 3: return Float.class;
+			case 3: return Integer.class;
+			case 4: return Float.class;
 		}
 		return Object.class;
 	}
@@ -72,7 +73,8 @@ public class MultiPeptideResultsTableModel extends AbstractTableModel {
 			case 0: return rowIndex;
 			case 1: return entry.getPeptideModSeq();
 			case 2: return entry.getAccessions();
-			case 3: return entry.getAverageRetentionTime()/60f;
+			case 3: return entry.getTargetFragmentMzs().length;
+			case 4: return entry.getAverageRetentionTime()/60f;
 		}
 		return null;
 	}

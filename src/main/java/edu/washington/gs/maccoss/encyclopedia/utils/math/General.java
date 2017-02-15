@@ -237,11 +237,15 @@ public class General {
 	}
 	
 	public static float mean(int[] v) {
+		if (v.length==0) return 0.0f;
+		
 		float sum=sum(v);
 		return sum/(float)v.length;
 	}
 	
 	public static float mean(float[] v) {
+		if (v.length==0) return 0.0f;
+		
 		float sum=sum(v);
 		return sum/v.length;
 	}
@@ -253,6 +257,7 @@ public class General {
 			sum+=v[i];
 			count++;
 		}
+		if (count==0) return 0.0f;
 		return sum/count;
 	}
 
