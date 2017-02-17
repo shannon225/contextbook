@@ -123,26 +123,29 @@ public class FragmentationModel {
 	}
 
 	public FragmentIon[] getPrimaryIonObjects(FragmentationType type, byte precursorCharge) {
+		return getPrimaryIonObjects(type, precursorCharge, true);
+	}
+	public FragmentIon[] getPrimaryIonObjects(FragmentationType type, byte precursorCharge, boolean useNeutralLosses) {
 		switch (type) {
 			case YONLY:
-				FragmentIon[] yIons=getYIons();
+				FragmentIon[] yIons=getYIons(useNeutralLosses);
 				if (precursorCharge>2) {
 					return concatAndSort(yIons, getPlus2s(yIons));
 				} else {
 					return yIons;
 				}
 			case CID:
-				FragmentIon[] yIonsCID=getYIons();
-				FragmentIon[] bIonsCID=getBIons();
+				FragmentIon[] yIonsCID=getYIons(useNeutralLosses);
+				FragmentIon[] bIonsCID=getBIons(useNeutralLosses);
 				if (precursorCharge>2) {
 					return concatAndSort(yIonsCID, getPlus2s(yIonsCID), bIonsCID, getPlus2s(bIonsCID));
 				} else {
 					return concatAndSort(bIonsCID, yIonsCID);
 				}
 			case ETD:
-				FragmentIon[] cIonsCID=getCIons();
-				FragmentIon[] zIonsCID=getZIons();
-				FragmentIon[] zp1IonsCID=getZp1Ions();
+				FragmentIon[] cIonsCID=getCIons(useNeutralLosses);
+				FragmentIon[] zIonsCID=getZIons(useNeutralLosses);
+				FragmentIon[] zp1IonsCID=getZp1Ions(useNeutralLosses);
 				if (precursorCharge>3) { // one charge gets quenched in fragmentation
 					return concatAndSort(cIonsCID, getPlus2s(cIonsCID), zIonsCID, getPlus2s(zIonsCID), zp1IonsCID, getPlus2s(zp1IonsCID));
 				} else {
@@ -177,7 +180,11 @@ public class FragmentationModel {
 	}
 
 	public FragmentIon[] getCIons() {
-		FragmentIon[] bs=getBIons();
+		return getCIons(true);
+	}
+
+	public FragmentIon[] getCIons(boolean useNeutralLosses) {
+		FragmentIon[] bs=getBIons(useNeutralLosses);
 		for (int i=0; i<bs.length; i++) {
 			bs[i]=new FragmentIon(bs[i].mass+MassConstants.nh3, bs[i].index, IonType.c);
 		}
@@ -185,7 +192,11 @@ public class FragmentationModel {
 	}
 	
 	public FragmentIon[] getZIons() {
-		FragmentIon[] ys=getYIons();
+		return getZIons(true);
+	}
+
+	public FragmentIon[] getZIons(boolean useNeutralLosses) {
+		FragmentIon[] ys=getYIons(useNeutralLosses);
 		for (int i=0; i<ys.length; i++) {
 			ys[i]=new FragmentIon(ys[i].mass-MassConstants.nh3, ys[i].index, IonType.z);
 		}
@@ -193,7 +204,11 @@ public class FragmentationModel {
 	}
 	
 	public FragmentIon[] getZp1Ions() {
-		FragmentIon[] ys=getYIons();
+		return getZp1Ions(true);
+	}
+
+	public FragmentIon[] getZp1Ions(boolean useNeutralLosses) {
+		FragmentIon[] ys=getYIons(useNeutralLosses);
 		for (int i=0; i<ys.length; i++) {
 			ys[i]=new FragmentIon(ys[i].mass-MassConstants.nh3+MassConstants.hydrogenMass, ys[i].index, IonType.z1);
 		}
@@ -201,6 +216,10 @@ public class FragmentationModel {
 	}
 
 	public FragmentIon[] getBIons() {
+		return getBIons(true);
+	}
+
+	public FragmentIon[] getBIons(boolean useNeutralLosses) {
 		ArrayList<FragmentIon> ions=new ArrayList<FragmentIon>();
 		
 		ArrayList<FragmentIon> rolling=new ArrayList<FragmentIon>(); // seeds
@@ -211,7 +230,7 @@ public class FragmentationModel {
 			for (int j = 0; j < rolling.size(); j++) {
 				rolling.set(j, rolling.get(j).increment(masses[index]));
 				ions.add(rolling.get(j));
-				if (neutralLosses[index]>0.0) {
+				if (useNeutralLosses&&neutralLosses[index]>0.0) {
 					FragmentIon nl=rolling.get(j).neutralLoss(neutralLosses[index]);
 					neutrals.add(nl);
 					ions.add(nl);
@@ -227,6 +246,10 @@ public class FragmentationModel {
 	}
 	
 	public FragmentIon[] getYIons() {
+		return getYIons(true);
+	}
+
+	public FragmentIon[] getYIons(boolean useNeutralLosses) {
 		ArrayList<FragmentIon> ions=new ArrayList<FragmentIon>();
 		
 		ArrayList<FragmentIon> rolling=new ArrayList<FragmentIon>();
@@ -237,7 +260,7 @@ public class FragmentationModel {
 			for (int j = 0; j < rolling.size(); j++) {
 				rolling.set(j, rolling.get(j).increment(masses[index]));
 				ions.add(rolling.get(j));
-				if (neutralLosses[index]>0.0) {
+				if (useNeutralLosses&&neutralLosses[index]>0.0) {
 					FragmentIon nl=rolling.get(j).neutralLoss(neutralLosses[index]);
 					neutrals.add(nl);
 					ions.add(nl);

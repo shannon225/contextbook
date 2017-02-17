@@ -348,7 +348,7 @@ public class Charter {
 
 			case point:
 				renderer=new XYLineAndShapeRenderer();
-				renderer.setSeriesShape(0, new Ellipse2D.Double(0, 0, 5, 5));
+				renderer.setSeriesShape(0, new Ellipse2D.Double(0, 0, 3, 3));
 				((XYLineAndShapeRenderer) renderer).setBaseLinesVisible(false);
 
 				break;

@@ -334,12 +334,14 @@ public class ResultsBrowserPanel extends JPanel {
 
 						JTabbedPane tabPanel=new JTabbedPane();
 						HashMap<String, String> keyVsName=new HashMap<String, String>();
-						int i=0;
+						int colorIndex=0;
 						for (Entry<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> phosphoentry : ionsVsUniqueList.entrySet()) {
 							String sequenceKey=phosphoentry.getKey();
 							String peptideModSeq=sequenceKey.replaceAll("\\(", "").replaceAll("\\)", "");
 							Pair<TFloatFloatHashMap, TFloatFloatHashMap> pair=phosphoentry.getValue();
-							Color color=i>=colors.length?colors[i-colors.length].brighter():colors[i];
+							Color color=colorIndex>=colors.length?colors[colorIndex-colors.length].brighter():colors[colorIndex];
+							colorIndex++;
+							
 							complementaryIonsTraces.add(new XYTrace(pair.x, GraphType.line, sequenceKey, color, 2.0f));
 							phosphoTraces.add(new XYTrace(pair.y, GraphType.line, sequenceKey, color, 2.0f));
 
@@ -347,8 +349,9 @@ public class ResultsBrowserPanel extends JPanel {
 							if (point!=null) {
 								complementaryIonsTraces.add(new XYTrace(new double[] {point.x/60f}, new double[] {0}, GraphType.point, "center", color, 2.0f));
 								phosphoTraces.add(new XYTrace(new double[] {point.x/60f}, new double[] {point.y}, GraphType.point, "center", color, 2.0f));
+							} else {
+								continue;
 							}
-							i++;
 							
 							HashMap<FragmentIon, XYTrace> uniqueFragments=uniqueFragmentIons.get(sequenceKey);
 							HashMap<FragmentIon, XYTrace> otherFragments=otherFragmentIons.get(sequenceKey);
@@ -358,6 +361,7 @@ public class ResultsBrowserPanel extends JPanel {
 							
 							ArrayList<XYTrace> uniqueFragmentsList=new ArrayList<XYTrace>(allFragments.values());
 							double maxPoint=XYTrace.getMaxY(uniqueFragmentsList);
+							
 							uniqueFragmentsList.add(new XYTrace(new double[] {point.x/60f, point.x/60f}, new double[] {0.0, maxPoint}, GraphType.dashedline, "center", Color.BLACK, 2.0f));
 							XYTraceInterface[] fragmentTraces=uniqueFragmentsList.toArray(new XYTrace[uniqueFragmentsList.size()]);
 							

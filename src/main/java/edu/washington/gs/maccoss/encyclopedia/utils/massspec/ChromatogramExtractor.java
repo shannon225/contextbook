@@ -91,6 +91,9 @@ public class ChromatogramExtractor {
 			String name=key.toString();
 			XYTrace trace=null;
 			switch (type) {
+			case boldline:
+				trace=new XYTrace(traceData.getValue(), GraphType.line, name, RandomGenerator.randomColor(name.hashCode()), 3.0f);
+				break;
 			case line:
 				trace=new XYTrace(traceData.getValue(), GraphType.line, name, RandomGenerator.randomColor(name.hashCode()), 2.0f);
 				break;

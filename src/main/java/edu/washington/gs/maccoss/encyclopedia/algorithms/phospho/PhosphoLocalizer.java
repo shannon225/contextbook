@@ -253,7 +253,7 @@ public class PhosphoLocalizer {
 			}
 
 			HashMap<FragmentIon, XYTrace> otherTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), allIonsTypes, stripes, bestRT, GraphType.dashedline);
-			HashMap<FragmentIon, XYTrace> uniqueTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes, null, GraphType.line);
+			HashMap<FragmentIon, XYTrace> uniqueTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes, null, GraphType.boldline);
 			
 			for (FragmentIon ion : uniqueTraces.keySet()) {
 				otherTraces.remove(ion);
@@ -278,11 +278,12 @@ public class PhosphoLocalizer {
 				FragmentIon[] consideredIons=quantData.getFragmentMassArray();
 				ArrayList<FragmentIon> wellShapedIons=new ArrayList<FragmentIon>();
 				for (int i=0; i<correlations.length; i++) {
-					if (correlations[i]>=TransitionRefiner.quantitativeCorrelationThreshold) {
+					if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
 						numIdentificationPeaks++;
 						wellShapedIons.add(consideredIons[i]);
 					}
 				}
+
 				if (numIdentificationPeaks==0) {
 					// if there's not any localization evidence for a well formed peak then give up
 					continue;
@@ -295,7 +296,7 @@ public class PhosphoLocalizer {
 					numIdentificationPeaks=0;
 					correlations=allQuantData.getCorrelationArray();
 					for (int i=0; i<correlations.length; i++) {
-						if (correlations[i]>=TransitionRefiner.quantitativeCorrelationThreshold) {
+						if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
 							numIdentificationPeaks++;
 						}
 					}
@@ -492,13 +493,13 @@ public class PhosphoLocalizer {
 
 	public static FragmentIon[] getUniqueFragmentIons(String peptideModSeq, byte precursorCharge, HashMap<String, FragmentationModel> availableModels, SearchParameters params) {
 		FragmentationModel unitEntry=availableModels.get(peptideModSeq);
-		HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(unitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge)));
+		HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(unitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false)));
 
 		for (Entry<String, FragmentationModel> otherEntry : availableModels.entrySet()) {
 			String otherPeptideModSeq=otherEntry.getKey();
 			if (!peptideModSeq.equals(otherPeptideModSeq)) {
 				FragmentationModel otherUnitEntry=otherEntry.getValue();
-				ions.removeAll(Arrays.asList(otherUnitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge)));
+				ions.removeAll(Arrays.asList(otherUnitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false)));
 			}
 		}
 
@@ -512,14 +513,14 @@ public class PhosphoLocalizer {
 		for (Entry<String, FragmentationModel> entry : entryMap.entrySet()) {
 			String peptideModSeq=entry.getKey();
 			FragmentationModel unitEntry=entry.getValue();
-			HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(unitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge)));
+			HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(unitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false)));
 
 			for (Entry<String, FragmentationModel> otherEntry : entryMap.entrySet()) {
 				String otherPeptideModSeq=otherEntry.getKey();
 				if (peptideModSeq!=otherPeptideModSeq) {
 					// actual != is ok here because we're dealing with the same objects
 					FragmentationModel otherUnitEntry=otherEntry.getValue();
-					ions.removeAll(Arrays.asList(otherUnitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge)));
+					ions.removeAll(Arrays.asList(otherUnitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false)));
 				}
 			}
 			
