@@ -12,6 +12,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
@@ -67,9 +68,14 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 				Map<String, String> metadata=getMetadata();
 				String fname=metadata.get(FILENAME_ATTRIBUTE);
 				if (fname!=null) {
-					originalFileName=fname;
+					Optional<String> optional=StripeFileGenerator.getBuggyFileName(fname);
+					if (optional.isPresent()) {
+						originalFileName=optional.get();
+					} else {
+						originalFileName=fname;
+					}
 				}
-				return fname;
+				return originalFileName;
 			} catch (IOException ioe) {
 				return null;
 			} catch (SQLException sqle) {

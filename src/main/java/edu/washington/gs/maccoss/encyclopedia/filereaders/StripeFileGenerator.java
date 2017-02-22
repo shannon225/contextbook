@@ -2,10 +2,14 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.CompoundFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class StripeFileGenerator {
 	private static final DIAFileReader DIA_FILE_READER=new DIAFileReader();
@@ -26,6 +30,17 @@ public class StripeFileGenerator {
 			}
 		}
 		
+		Optional<String> potentialName=getBuggyFileName(absolutePath);
+		if (potentialName.isPresent()) {
+			try {
+				String alternateName=potentialName.get();
+				Logger.logLine("Found alternative raw file name, considering: "+alternateName);
+				return getFile(new File(alternateName), parameters);
+			} catch (EncyclopediaException ee) {
+				// ignore in case this isn't actually a buggy file name
+			}
+		}
+		
 		if (!f.exists()||!f.canRead()) {
 			throw new EncyclopediaException("Can't read file "+f.getAbsolutePath());
 		}
@@ -38,6 +53,17 @@ public class StripeFileGenerator {
 		}
 		
 		throw new EncyclopediaException("Can't read file type "+f.getAbsolutePath());
+	}
+	
+	static Optional<String> getBuggyFileName(String f) {
+		Pattern p=Pattern.compile("^(.*\\.[mM][zZ][mM][lL])[0-9]*\\.mzml$");
+
+		Matcher m=p.matcher(f);
+		if (m.find()) {
+			return Optional.of(m.group(1));
+		} else {
+			return Optional.empty();
+		}
 	}
 	
 	public static FilenameFilter getFilenameFilter() {

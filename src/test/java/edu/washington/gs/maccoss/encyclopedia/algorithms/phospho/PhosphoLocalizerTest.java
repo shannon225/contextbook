@@ -251,7 +251,7 @@ public class PhosphoLocalizerTest extends TestCase {
 
 		HashMap<String, FragmentIon[]> uniqueIons=PhosphoLocalizer.getUniqueFragmentIons(charge, entryMap, params);
 		
-		assertEquals("b1-NL,b1,y3", General.toString(uniqueIons.get("S[+79.96633]SSR")));
-		assertEquals("b2,y2-NL,y2", General.toString(uniqueIons.get("SSS[+79.96633]R")));
+		assertEquals("b1,y3", General.toString(uniqueIons.get("S[+79.96633]SSR")));
+		assertEquals("b2,y2", General.toString(uniqueIons.get("SSS[+79.96633]R")));
 	}
 }
