@@ -4,7 +4,7 @@
   <groupId>maccoss</groupId>
   <artifactId>encyclopedia</artifactId>
   <name>encyclopedia</name>
-  <version>0.3.9</version>
+  <version>0.3.10</version>
   <url>http://maven.apache.org</url>
   <build>
     <plugins>

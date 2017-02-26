@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.io.File;
 import java.text.NumberFormat;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Optional;
 
 import javax.swing.BorderFactory;
@@ -175,10 +176,15 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		return job;
 	}
 
+	private static HashMap<File, LibraryInterface> libraries=new HashMap<File, LibraryInterface>();
 	static SearchJob getJob(File diaFile, File libraryFile, JobProcessor processor, SearchParameters parameters) {
 		File outputFile=new File(diaFile.getAbsolutePath()+EncyclopediaJobData.OUTPUT_FILE_SUFFIX);
 		
-		LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
+		LibraryInterface library=libraries.get(libraryFile);
+		if (library==null) {
+			library=BlibToLibraryConverter.getFile(libraryFile);
+			libraries.put(libraryFile, library);
+		}
 		
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
 		EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, outputFile, factory);

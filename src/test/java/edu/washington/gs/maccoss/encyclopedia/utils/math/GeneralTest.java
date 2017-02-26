@@ -25,6 +25,15 @@ public class GeneralTest extends TestCase {
 			assertEquals(expected[i], r[i]);
 		}
 	}
+	
+	public void testArrayIncrement() {
+		int[] indices=new int[2];
+		for (int i=0; i<1000; i++) {
+			indices[0]++;
+			indices[1]++;
+		}
+		assertEquals("1000,1000", General.toString(indices));
+	}
 
 	public static void main(String[] args) {
 	//public void testNormalize() {

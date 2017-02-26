@@ -259,74 +259,104 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		// then add integrated areas
 		Connection c=getConnection();
 		try {
-			PreparedStatement peptidePrep=c.prepareStatement(
-					"INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, LocalizationIons, NumberOfMods, IsSiteSpecific, RTInSecondsCenter, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, QuantIonMassLength, QuantIonMassArray, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray,IdentifiedTICRatio) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-			PreparedStatement fragmentPrep=c.prepareStatement(
-					"INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, IonType, IonIndex, FragmentMass, Correlation, Background, DeltaMassPPM, Intensity) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
-			try {
-				for (LibraryEntry recast : uniqueEntries) {
-					IntegratedLibraryEntry entry=(IntegratedLibraryEntry)recast;
-					String sourceFile=entry.getSource();
-					TransitionRefinementData data=entry.getRefinementData();
-					
-					HashMap<String, TransitionRefinementData> uniqueDataMap=new HashMap<String, TransitionRefinementData>();
+			ArrayList<Pair<TransitionRefinementData, String>> dataAndSouceList=new ArrayList<Pair<TransitionRefinementData,String>>();
+			for (LibraryEntry recast : uniqueEntries) {
+				IntegratedLibraryEntry entry=(IntegratedLibraryEntry)recast;
+				String sourceFile=entry.getSource();
+				TransitionRefinementData data=entry.getRefinementData();
+				
+				HashMap<String, TransitionRefinementData> uniqueDataMap=new HashMap<String, TransitionRefinementData>();
 
-					if (data.getModificationQuantData().isPresent()) {
-						HashMap<String, TransitionRefinementData> forms=data.getModificationQuantData().get();
-						// preserve only the least ambiguous forms
-						for (Entry<String, TransitionRefinementData> mapEntry : forms.entrySet()) {
-							TransitionRefinementData value=mapEntry.getValue();
-							
-							if (uniqueDataMap.containsKey(value.getPeptideModSeq())) {
-								Optional<ModificationLocalizationData> prevLocalizationData=uniqueDataMap.get(value.getPeptideModSeq()).getLocalizationData();
-								int prevAmbiguityScore=prevLocalizationData.isPresent()?prevLocalizationData.get().getLocalizationPeptideModSeq().numAmbigousResidues():0;
-								int newAmbiguityScore=value.getLocalizationData().isPresent()?value.getLocalizationData().get().getLocalizationPeptideModSeq().numAmbigousResidues():0;
-								if (newAmbiguityScore<prevAmbiguityScore) {
-									// new is less ambiguous
-									uniqueDataMap.put(value.getPeptideModSeq(), value);
-								}
-							} else {
+				if (data.getModificationQuantData().isPresent()) {
+					HashMap<String, TransitionRefinementData> forms=data.getModificationQuantData().get();
+					// preserve only the least ambiguous forms
+					for (Entry<String, TransitionRefinementData> mapEntry : forms.entrySet()) {
+						TransitionRefinementData value=mapEntry.getValue();
+						
+						if (uniqueDataMap.containsKey(value.getPeptideModSeq())) {
+							Optional<ModificationLocalizationData> prevLocalizationData=uniqueDataMap.get(value.getPeptideModSeq()).getLocalizationData();
+							int prevAmbiguityScore=prevLocalizationData.isPresent()?prevLocalizationData.get().getLocalizationPeptideModSeq().numAmbigousResidues():0;
+							int newAmbiguityScore=value.getLocalizationData().isPresent()?value.getLocalizationData().get().getLocalizationPeptideModSeq().numAmbigousResidues():0;
+							if (newAmbiguityScore<prevAmbiguityScore) {
+								// new is less ambiguous
 								uniqueDataMap.put(value.getPeptideModSeq(), value);
 							}
+						} else {
+							uniqueDataMap.put(value.getPeptideModSeq(), value);
 						}
-						if (forms.size()==0) {
-							// always replace with perfect forms
-							uniqueDataMap.put(data.getPeptideModSeq(), data);
-						}
-					} else {
+					}
+					if (forms.size()==0) {
 						// always replace with perfect forms
 						uniqueDataMap.put(data.getPeptideModSeq(), data);
 					}
-
-					for (Entry<String, TransitionRefinementData> mapEntry : uniqueDataMap.entrySet()) {
-						TransitionRefinementData uniqueData=mapEntry.getValue();
-						
-						String key=uniqueData.getPeptideModSeq()+"+"+uniqueData.getPrecursorCharge()+","+sourceFile;
-						if (ptmRepeatsCatcher.containsKey(key)) {
-							System.err.println("FOUND EXTERNAL COLLISION, SKIPPING! "+uniqueData.getPeptideModSeq()+" (from:"+mapEntry.getKey()+")");
-							System.err.println("PREV: "+ptmRepeatsCatcher.get(key));
-							if (uniqueData.getLocalizationData().isPresent()) {
-								ModificationLocalizationData modData=uniqueData.getLocalizationData().get();
-								System.err.println("NEW:  "+modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
-							} else {
-								System.err.println("NEW:  NO LOC: "+uniqueData.getPeptideModSeq());
-							}
-							continue;
-
-						} else {
-							if (uniqueData.getLocalizationData().isPresent()) {
-								ModificationLocalizationData modData=uniqueData.getLocalizationData().get();
-								ptmRepeatsCatcher.put(key, modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
-							} else {
-								ptmRepeatsCatcher.put(key, "NO LOC: "+uniqueData.getPeptideModSeq());
-							}
-						}
-						prepareQuantData(uniqueData, sourceFile, inferrer, peptidePrep, fragmentPrep);
-					}
-
+				} else {
+					// always replace with perfect forms
+					uniqueDataMap.put(data.getPeptideModSeq(), data);
 				}
-				peptidePrep.executeBatch();
-				fragmentPrep.executeBatch();
+
+				for (Entry<String, TransitionRefinementData> mapEntry : uniqueDataMap.entrySet()) {
+					TransitionRefinementData uniqueData=mapEntry.getValue();
+					
+					String key=uniqueData.getPeptideModSeq()+"+"+uniqueData.getPrecursorCharge()+","+sourceFile;
+					if (ptmRepeatsCatcher.containsKey(key)) {
+						System.err.println("FOUND EXTERNAL COLLISION, SKIPPING! "+uniqueData.getPeptideModSeq()+" (from:"+mapEntry.getKey()+")");
+						System.err.println("PREV: "+ptmRepeatsCatcher.get(key));
+						if (uniqueData.getLocalizationData().isPresent()) {
+							ModificationLocalizationData modData=uniqueData.getLocalizationData().get();
+							System.err.println("NEW:  "+modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
+						} else {
+							System.err.println("NEW:  NO LOC: "+uniqueData.getPeptideModSeq());
+						}
+						continue;
+
+					} else {
+						if (uniqueData.getLocalizationData().isPresent()) {
+							ModificationLocalizationData modData=uniqueData.getLocalizationData().get();
+							ptmRepeatsCatcher.put(key, modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
+						} else {
+							ptmRepeatsCatcher.put(key, "NO LOC: "+uniqueData.getPeptideModSeq());
+						}
+					}
+					dataAndSouceList.add(new Pair<TransitionRefinementData, String>(uniqueData, sourceFile));
+				}
+
+			}
+			
+			StringBuilder peptidePrepString=new StringBuilder("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, LocalizationIons, NumberOfMods, IsSiteSpecific, RTInSecondsCenter, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, QuantIonMassLength, QuantIonMassArray, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray,IdentifiedTICRatio)");
+			peptidePrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+			for (int i=1; i<dataAndSouceList.size(); i++) {
+				peptidePrepString.append(", (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+			}
+			
+			StringBuilder fragmentPrepString=new StringBuilder("INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, IonType, IonIndex, FragmentMass, Correlation, Background, DeltaMassPPM, Intensity)");
+			fragmentPrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+			boolean first=true;
+			for (Pair<TransitionRefinementData, String> pair : dataAndSouceList) {
+				float[] correlationArray=pair.x.getCorrelationArray();
+				for (int i=0; i<correlationArray.length; i++) {
+					if (correlationArray[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+						if (first) {
+							first=false;
+						} else {
+							fragmentPrepString.append(", (?,?,?,?,?,?,?,?,?,?,?)");
+						}
+					}
+				}
+			}
+			
+			PreparedStatement peptidePrep=c.prepareStatement(peptidePrepString.toString());
+			PreparedStatement fragmentPrep=c.prepareStatement(fragmentPrepString.toString());
+
+			try {
+				int[] indicies=new int[2];
+				indicies[0]=1;
+				indicies[1]=1;
+				
+				for (Pair<TransitionRefinementData, String> pair : dataAndSouceList) {
+					prepareQuantData(pair.x, pair.y, inferrer, peptidePrep, fragmentPrep, indicies);
+				}
+				peptidePrep.execute();
+				fragmentPrep.execute();
 
 				c.commit();
 			} finally {
@@ -338,7 +368,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
-	public void prepareQuantData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrer> inferrer, PreparedStatement peptidePrep, PreparedStatement fragmentPrep)
+	public void prepareQuantData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrer> inferrer, PreparedStatement peptidePrep, PreparedStatement fragmentPrep, int[] indicies)
 			throws SQLException, IOException {
 		float[] correlationArray=data.getCorrelationArray();
 		float[] integrationArray=data.getIntegrationArray();
@@ -375,62 +405,60 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			topN=new Pair<Float, Integer>(total, peaks.size());
 		}
 
-		peptidePrep.setInt(1, data.getPrecursorCharge());
-		peptidePrep.setString(2, data.getPeptideModSeq());
-		peptidePrep.setString(3, data.getPeptideSeq());
-		peptidePrep.setString(4, sourceFile);
+		peptidePrep.setInt(indicies[0]++, data.getPrecursorCharge());
+		peptidePrep.setString(indicies[0]++, data.getPeptideModSeq());
+		peptidePrep.setString(indicies[0]++, data.getPeptideSeq());
+		peptidePrep.setString(indicies[0]++, sourceFile);
 		
 		if (data.getLocalizationData().isPresent()) {
 			ModificationLocalizationData modData=data.getLocalizationData().get();
-			peptidePrep.setString(5, modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
-			peptidePrep.setFloat(6, modData.getLocalizationScore());
-			peptidePrep.setString(7, FragmentIon.toArchiveString(modData.getLocalizingIons()));
-			peptidePrep.setInt(8, modData.getNumberOfMods());
-			peptidePrep.setBoolean(9, modData.isSiteSpecific());
-			peptidePrep.setFloat(10,  modData.getRetentionTimeApexInSeconds());
+			peptidePrep.setString(indicies[0]++, modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
+			peptidePrep.setFloat(indicies[0]++, modData.getLocalizationScore());
+			peptidePrep.setString(indicies[0]++, FragmentIon.toArchiveString(modData.getLocalizingIons()));
+			peptidePrep.setInt(indicies[0]++, modData.getNumberOfMods());
+			peptidePrep.setBoolean(indicies[0]++, modData.isSiteSpecific());
+			peptidePrep.setFloat(indicies[0]++,  modData.getRetentionTimeApexInSeconds());
 			
 		} else {
-			peptidePrep.setNull(5, Types.VARCHAR);
-			peptidePrep.setNull(6, Types.FLOAT);
-			peptidePrep.setNull(7, Types.VARCHAR);
-			peptidePrep.setNull(8, Types.INTEGER);
-			peptidePrep.setNull(9, Types.BOOLEAN);
-			peptidePrep.setFloat(10,  data.getApexRT());
+			peptidePrep.setNull(indicies[0]++, Types.VARCHAR);
+			peptidePrep.setNull(indicies[0]++, Types.FLOAT);
+			peptidePrep.setNull(indicies[0]++, Types.VARCHAR);
+			peptidePrep.setNull(indicies[0]++, Types.INTEGER);
+			peptidePrep.setNull(indicies[0]++, Types.BOOLEAN);
+			peptidePrep.setFloat(indicies[0]++,  data.getApexRT());
 		}
 		
-		peptidePrep.setFloat(11, data.getRange().getStart());
-		peptidePrep.setFloat(12, data.getRange().getStop());
-		peptidePrep.setFloat(13, topN.x);
-		peptidePrep.setInt(14, topN.y);
+		peptidePrep.setFloat(indicies[0]++, data.getRange().getStart());
+		peptidePrep.setFloat(indicies[0]++, data.getRange().getStop());
+		peptidePrep.setFloat(indicies[0]++, topN.x);
+		peptidePrep.setInt(indicies[0]++, topN.y);
 		byte[] topNMassesByteArray=ByteConverter.toByteArray(topNMasses);
-		peptidePrep.setInt(15, topNMassesByteArray.length);
-		peptidePrep.setBytes(16, CompressionUtils.compress(topNMassesByteArray));
-		peptidePrep.setFloat(17, bestCorrelation);
-		peptidePrep.setFloat(18, bestDeltaMass);
+		peptidePrep.setInt(indicies[0]++, topNMassesByteArray.length);
+		peptidePrep.setBytes(indicies[0]++, CompressionUtils.compress(topNMassesByteArray));
+		peptidePrep.setFloat(indicies[0]++, bestCorrelation);
+		peptidePrep.setFloat(indicies[0]++, bestDeltaMass);
 		byte[] intensityByteArray=ByteConverter.toByteArray(data.getMedianChromatogram());
-		peptidePrep.setInt(19, intensityByteArray.length);
-		peptidePrep.setBytes(20, CompressionUtils.compress(intensityByteArray));
+		peptidePrep.setInt(indicies[0]++, intensityByteArray.length);
+		peptidePrep.setBytes(indicies[0]++, CompressionUtils.compress(intensityByteArray));
 		if (data.getIdentifiedTICRatio().isPresent()) {
-			peptidePrep.setFloat(21, data.getIdentifiedTICRatio().get());
+			peptidePrep.setFloat(indicies[0]++, data.getIdentifiedTICRatio().get());
 		} else {
-			peptidePrep.setFloat(21, 0.0f);
+			peptidePrep.setFloat(indicies[0]++, 0.0f);
 		}
-		peptidePrep.addBatch();
 
 		for (int i=0; i<correlationArray.length; i++) {
 			if (correlationArray[i]>=TransitionRefiner.identificationCorrelationThreshold) {
-				fragmentPrep.setInt(1, data.getPrecursorCharge());
-				fragmentPrep.setString(2, data.getPeptideModSeq());
-				fragmentPrep.setString(3, data.getPeptideSeq());
-				fragmentPrep.setString(4, sourceFile);
-				fragmentPrep.setString(5, IonType.toString(fragmentMassArray[i].getType()));
-				fragmentPrep.setInt(6, fragmentMassArray[i].index);
-				fragmentPrep.setDouble(7, fragmentMassArray[i].mass);
-				fragmentPrep.setFloat(8, correlationArray[i]);
-				fragmentPrep.setFloat(9, backgroundArray[i]);
-				fragmentPrep.setFloat(10, ppmArray[i]);
-				fragmentPrep.setFloat(11, integrationArray[i]);
-				fragmentPrep.addBatch();
+				fragmentPrep.setInt(indicies[1]++, data.getPrecursorCharge());
+				fragmentPrep.setString(indicies[1]++, data.getPeptideModSeq());
+				fragmentPrep.setString(indicies[1]++, data.getPeptideSeq());
+				fragmentPrep.setString(indicies[1]++, sourceFile);
+				fragmentPrep.setString(indicies[1]++, IonType.toString(fragmentMassArray[i].getType()));
+				fragmentPrep.setInt(indicies[1]++, fragmentMassArray[i].index);
+				fragmentPrep.setDouble(indicies[1]++, fragmentMassArray[i].mass);
+				fragmentPrep.setFloat(indicies[1]++, correlationArray[i]);
+				fragmentPrep.setFloat(indicies[1]++, backgroundArray[i]);
+				fragmentPrep.setFloat(indicies[1]++, ppmArray[i]);
+				fragmentPrep.setFloat(indicies[1]++, integrationArray[i]);
 			}
 		}
 	}
