@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Map.Entry;
@@ -350,40 +351,56 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		}
 	}
 
+	private static final int NUMBER_OF_STRIPES_AT_ONCE=10;
 	public void addStripe(ArrayList<Stripe> stripes) throws IOException, SQLException {
 		Connection c=getConnection(tempFile);
 		try {
-			StringBuilder sb=new StringBuilder("insert into spectra (SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowCenter, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray)");
-			sb.append("VALUES (?,?,?,?,?,?,?,?,?,?,?)");
-			for (int i=1; i<stripes.size(); i++) {
-				sb.append(", (?,?,?,?,?,?,?,?,?,?,?)");
+			int start=0;
+			int stop=NUMBER_OF_STRIPES_AT_ONCE;
+			while (stop<stripes.size()) {
+				internalAddStripeToConnection(stripes.subList(start, stop), c);
+				start=stop;
+				stop=stop+NUMBER_OF_STRIPES_AT_ONCE;
 			}
-			PreparedStatement prep=c.prepareStatement(sb.toString());
-			try {
-				int index=0;
-				for (Stripe stripe : stripes) {
-					prep.setString(index++, stripe.getSpectrumName());
-					prep.setString(index++, stripe.getPrecursorName());
-					prep.setInt(index++, stripe.getSpectrumIndex());
-					prep.setFloat(index++, stripe.getScanStartTime());
-					prep.setFloat(index++, stripe.getIsolationWindowLower());
-					prep.setFloat(index++, stripe.getIsolationWindowCenter());
-					prep.setFloat(index++, stripe.getIsolationWindowUpper());
-					byte[] massByteArray=ByteConverter.toByteArray(stripe.getMassArray());
-					prep.setInt(index++, massByteArray.length);
-					prep.setBytes(index++, CompressionUtils.compress(massByteArray));
-					byte[] intensityByteArray=ByteConverter.toByteArray(stripe.getIntensityArray());
-					prep.setInt(index++, intensityByteArray.length);
-					prep.setBytes(index++, CompressionUtils.compress(intensityByteArray));
-				}
-				prep.execute();
-				prep.close();
-				c.commit();
-			} finally {
-				prep.close();
+			if (start<stripes.size()) {
+				internalAddStripeToConnection(stripes.subList(start, stripes.size()), c);
 			}
+
+			c.commit();
+			
 		} finally {
 			c.close();
+		}
+	}
+
+	private void internalAddStripeToConnection(List<Stripe> stripes, Connection c) throws SQLException, IOException {
+		StringBuilder sb=new StringBuilder("insert into spectra (SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowCenter, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray)");
+		sb.append("VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+		for (int i=1; i<stripes.size(); i++) {
+			sb.append(", (?,?,?,?,?,?,?,?,?,?,?)");
+		}
+		PreparedStatement prep=c.prepareStatement(sb.toString());
+		try {
+			int index=0;
+			for (Stripe stripe : stripes) {
+				prep.setString(index++, stripe.getSpectrumName());
+				prep.setString(index++, stripe.getPrecursorName());
+				prep.setInt(index++, stripe.getSpectrumIndex());
+				prep.setFloat(index++, stripe.getScanStartTime());
+				prep.setFloat(index++, stripe.getIsolationWindowLower());
+				prep.setFloat(index++, stripe.getIsolationWindowCenter());
+				prep.setFloat(index++, stripe.getIsolationWindowUpper());
+				byte[] massByteArray=ByteConverter.toByteArray(stripe.getMassArray());
+				prep.setInt(index++, massByteArray.length);
+				prep.setBytes(index++, CompressionUtils.compress(massByteArray));
+				byte[] intensityByteArray=ByteConverter.toByteArray(stripe.getIntensityArray());
+				prep.setInt(index++, intensityByteArray.length);
+				prep.setBytes(index++, CompressionUtils.compress(intensityByteArray));
+			}
+			prep.execute();
+			prep.close();
+		} finally {
+			prep.close();
 		}
 	}
 

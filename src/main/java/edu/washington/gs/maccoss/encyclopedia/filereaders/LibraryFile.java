@@ -13,6 +13,7 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -321,50 +322,65 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				}
 
 			}
-			
-			StringBuilder peptidePrepString=new StringBuilder("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, LocalizationIons, NumberOfMods, IsSiteSpecific, RTInSecondsCenter, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, QuantIonMassLength, QuantIonMassArray, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray,IdentifiedTICRatio)");
-			peptidePrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-			for (int i=1; i<dataAndSouceList.size(); i++) {
-				peptidePrepString.append(", (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+
+			int start=0;
+			int stop=NUMBER_OF_ENTRIES_AT_ONCE;
+			while (stop<dataAndSouceList.size()) {
+				internalWriteQuantitativeLibraryEntriesToConnection(c, inferrer, dataAndSouceList.subList(start, stop));
+				start=stop;
+				stop=stop+NUMBER_OF_ENTRIES_AT_ONCE;
 			}
-			
-			StringBuilder fragmentPrepString=new StringBuilder("INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, IonType, IonIndex, FragmentMass, Correlation, Background, DeltaMassPPM, Intensity)");
-			fragmentPrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?)");
-			boolean first=true;
-			for (Pair<TransitionRefinementData, String> pair : dataAndSouceList) {
-				float[] correlationArray=pair.x.getCorrelationArray();
-				for (int i=0; i<correlationArray.length; i++) {
-					if (correlationArray[i]>=TransitionRefiner.identificationCorrelationThreshold) {
-						if (first) {
-							first=false;
-						} else {
-							fragmentPrepString.append(", (?,?,?,?,?,?,?,?,?,?,?)");
-						}
+			if (start<dataAndSouceList.size()) {
+				internalWriteQuantitativeLibraryEntriesToConnection(c, inferrer, dataAndSouceList.subList(start, dataAndSouceList.size()));
+			}
+
+			c.commit();
+		} finally {
+			c.close();
+		}
+	}
+	private static final int NUMBER_OF_ENTRIES_AT_ONCE=100;
+
+	private void internalWriteQuantitativeLibraryEntriesToConnection(Connection c, Optional<PeakLocationInferrer> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList)
+			throws SQLException, IOException {
+		StringBuilder peptidePrepString=new StringBuilder("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, LocalizationIons, NumberOfMods, IsSiteSpecific, RTInSecondsCenter, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, QuantIonMassLength, QuantIonMassArray, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray,IdentifiedTICRatio)");
+		peptidePrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+		for (int i=1; i<dataAndSouceList.size(); i++) {
+			peptidePrepString.append(", (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+		}
+		
+		StringBuilder fragmentPrepString=new StringBuilder("INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, IonType, IonIndex, FragmentMass, Correlation, Background, DeltaMassPPM, Intensity)");
+		fragmentPrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+		boolean first=true;
+		for (Pair<TransitionRefinementData, String> pair : dataAndSouceList) {
+			float[] correlationArray=pair.x.getCorrelationArray();
+			for (int i=0; i<correlationArray.length; i++) {
+				if (correlationArray[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+					if (first) {
+						first=false;
+					} else {
+						fragmentPrepString.append(", (?,?,?,?,?,?,?,?,?,?,?)");
 					}
 				}
 			}
+		}
+		
+		PreparedStatement peptidePrep=c.prepareStatement(peptidePrepString.toString());
+		PreparedStatement fragmentPrep=c.prepareStatement(fragmentPrepString.toString());
+
+		try {
+			int[] indicies=new int[2];
+			indicies[0]=1;
+			indicies[1]=1;
 			
-			PreparedStatement peptidePrep=c.prepareStatement(peptidePrepString.toString());
-			PreparedStatement fragmentPrep=c.prepareStatement(fragmentPrepString.toString());
-
-			try {
-				int[] indicies=new int[2];
-				indicies[0]=1;
-				indicies[1]=1;
-				
-				for (Pair<TransitionRefinementData, String> pair : dataAndSouceList) {
-					prepareQuantData(pair.x, pair.y, inferrer, peptidePrep, fragmentPrep, indicies);
-				}
-				peptidePrep.execute();
-				fragmentPrep.execute();
-
-				c.commit();
-			} finally {
-				peptidePrep.close();
-				fragmentPrep.close();
+			for (Pair<TransitionRefinementData, String> pair : dataAndSouceList) {
+				prepareQuantData(pair.x, pair.y, inferrer, peptidePrep, fragmentPrep, indicies);
 			}
+			peptidePrep.execute();
+			fragmentPrep.execute();
 		} finally {
-			c.close();
+			peptidePrep.close();
+			fragmentPrep.close();
 		}
 	}
 
