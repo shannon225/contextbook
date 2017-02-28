@@ -160,7 +160,7 @@ public class Encyclopedia {
 		if (outputFile.exists()&&outputFile.canRead()) {
 			try {
 				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(outputFile, job.getParameters().getEffectivePercolatorThreshold());
-				ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptidesFromTSV);
+				//ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptidesFromTSV);
 				
 				File elibFile=job.getResultLibrary();
 				if (!elibFile.exists()) {
@@ -170,7 +170,7 @@ public class Encyclopedia {
 					jobs.add(job);
 					SearchToBLIB.convert(progress, jobs, elibFile, false, true);
 				}
-				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides ("+proteins.size()+" proteins) identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 
 				return;
 			} catch (Exception e) {

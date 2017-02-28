@@ -375,13 +375,13 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 
 	private void internalAddStripeToConnection(List<Stripe> stripes, Connection c) throws SQLException, IOException {
 		StringBuilder sb=new StringBuilder("insert into spectra (SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowCenter, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray)");
-		sb.append("VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+		sb.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?)");
 		for (int i=1; i<stripes.size(); i++) {
 			sb.append(", (?,?,?,?,?,?,?,?,?,?,?)");
 		}
 		PreparedStatement prep=c.prepareStatement(sb.toString());
 		try {
-			int index=0;
+			int index=1;
 			for (Stripe stripe : stripes) {
 				prep.setString(index++, stripe.getSpectrumName());
 				prep.setString(index++, stripe.getPrecursorName());

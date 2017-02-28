@@ -324,24 +324,37 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			}
 
 			int start=0;
-			int stop=NUMBER_OF_ENTRIES_AT_ONCE;
+			int stop=NUMBER_OF_PEPTIDE_ENTRIES_AT_ONCE;
 			while (stop<dataAndSouceList.size()) {
-				internalWriteQuantitativeLibraryEntriesToConnection(c, inferrer, dataAndSouceList.subList(start, stop));
+				internalWritePeptideQuantLibraryEntriesToConnection(c, inferrer, dataAndSouceList.subList(start, stop));
 				start=stop;
-				stop=stop+NUMBER_OF_ENTRIES_AT_ONCE;
+				stop=stop+NUMBER_OF_PEPTIDE_ENTRIES_AT_ONCE;
 			}
 			if (start<dataAndSouceList.size()) {
-				internalWriteQuantitativeLibraryEntriesToConnection(c, inferrer, dataAndSouceList.subList(start, dataAndSouceList.size()));
+				internalWritePeptideQuantLibraryEntriesToConnection(c, inferrer, dataAndSouceList.subList(start, dataAndSouceList.size()));
 			}
+
+			// FIXME THINK ABOUT WHETHER WE REALLY NEED FRAGMENT LEVEL DATA! PERHAPS WE CAN GET AWAY WITHOUT IT
+//			start=0;
+//			stop=NUMBER_OF_FRAGMENT_ENTRIES_AT_ONCE;
+//			while (stop<dataAndSouceList.size()) {
+//				internalWriteFragmentQuantLibraryEntriesToConnection(c, inferrer, dataAndSouceList.subList(start, stop));
+//				start=stop;
+//				stop=stop+NUMBER_OF_FRAGMENT_ENTRIES_AT_ONCE;
+//			}
+//			if (start<dataAndSouceList.size()) {
+//				internalWriteFragmentQuantLibraryEntriesToConnection(c, inferrer, dataAndSouceList.subList(start, dataAndSouceList.size()));
+//			}
 
 			c.commit();
 		} finally {
 			c.close();
 		}
 	}
-	private static final int NUMBER_OF_ENTRIES_AT_ONCE=100;
+	private static final int NUMBER_OF_PEPTIDE_ENTRIES_AT_ONCE=20;
+	private static final int NUMBER_OF_FRAGMENT_ENTRIES_AT_ONCE=4;
 
-	private void internalWriteQuantitativeLibraryEntriesToConnection(Connection c, Optional<PeakLocationInferrer> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList)
+	private void internalWritePeptideQuantLibraryEntriesToConnection(Connection c, Optional<PeakLocationInferrer> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList)
 			throws SQLException, IOException {
 		StringBuilder peptidePrepString=new StringBuilder("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, LocalizationIons, NumberOfMods, IsSiteSpecific, RTInSecondsCenter, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, QuantIonMassLength, QuantIonMassArray, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray,IdentifiedTICRatio)");
 		peptidePrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
@@ -349,6 +362,22 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			peptidePrepString.append(", (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 		}
 		
+		PreparedStatement peptidePrep=c.prepareStatement(peptidePrepString.toString());
+
+		try {
+			int pepIndex=1;
+			
+			for (Pair<TransitionRefinementData, String> pair : dataAndSouceList) {
+				pepIndex=prepareQuantData(pair.x, pair.y, inferrer, peptidePrep, pepIndex);
+			}
+			peptidePrep.execute();
+		} finally {
+			peptidePrep.close();
+		}
+	}
+
+	private void internalWriteFragmentQuantLibraryEntriesToConnection(Connection c, Optional<PeakLocationInferrer> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList)
+			throws SQLException, IOException {
 		StringBuilder fragmentPrepString=new StringBuilder("INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, IonType, IonIndex, FragmentMass, Correlation, Background, DeltaMassPPM, Intensity)");
 		fragmentPrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?)");
 		boolean first=true;
@@ -365,30 +394,23 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			}
 		}
 		
-		PreparedStatement peptidePrep=c.prepareStatement(peptidePrepString.toString());
 		PreparedStatement fragmentPrep=c.prepareStatement(fragmentPrepString.toString());
 
 		try {
-			int[] indicies=new int[2];
-			indicies[0]=1;
-			indicies[1]=1;
+			int fragIndex=1;
 			
 			for (Pair<TransitionRefinementData, String> pair : dataAndSouceList) {
-				prepareQuantData(pair.x, pair.y, inferrer, peptidePrep, fragmentPrep, indicies);
+				fragIndex=prepareFragmentQuantData(pair.x, pair.y, inferrer, fragmentPrep, fragIndex);
 			}
-			peptidePrep.execute();
 			fragmentPrep.execute();
 		} finally {
-			peptidePrep.close();
 			fragmentPrep.close();
 		}
 	}
 
-	public void prepareQuantData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrer> inferrer, PreparedStatement peptidePrep, PreparedStatement fragmentPrep, int[] indicies)
+	public int prepareQuantData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrer> inferrer, PreparedStatement peptidePrep, int index)
 			throws SQLException, IOException {
 		float[] correlationArray=data.getCorrelationArray();
-		float[] integrationArray=data.getIntegrationArray();
-		float[] backgroundArray=data.getBackgroundArray();
 
 		FragmentIon[] fragmentMassArray=data.getFragmentMassArray();
 		float[] deltaMassArray=data.getDeltaMassArray().get();
@@ -421,62 +443,83 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			topN=new Pair<Float, Integer>(total, peaks.size());
 		}
 
-		peptidePrep.setInt(indicies[0]++, data.getPrecursorCharge());
-		peptidePrep.setString(indicies[0]++, data.getPeptideModSeq());
-		peptidePrep.setString(indicies[0]++, data.getPeptideSeq());
-		peptidePrep.setString(indicies[0]++, sourceFile);
+		peptidePrep.setInt(index++, data.getPrecursorCharge());
+		peptidePrep.setString(index++, data.getPeptideModSeq());
+		peptidePrep.setString(index++, data.getPeptideSeq());
+		peptidePrep.setString(index++, sourceFile);
 		
 		if (data.getLocalizationData().isPresent()) {
 			ModificationLocalizationData modData=data.getLocalizationData().get();
-			peptidePrep.setString(indicies[0]++, modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
-			peptidePrep.setFloat(indicies[0]++, modData.getLocalizationScore());
-			peptidePrep.setString(indicies[0]++, FragmentIon.toArchiveString(modData.getLocalizingIons()));
-			peptidePrep.setInt(indicies[0]++, modData.getNumberOfMods());
-			peptidePrep.setBoolean(indicies[0]++, modData.isSiteSpecific());
-			peptidePrep.setFloat(indicies[0]++,  modData.getRetentionTimeApexInSeconds());
+			peptidePrep.setString(index++, modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
+			peptidePrep.setFloat(index++, modData.getLocalizationScore());
+			peptidePrep.setString(index++, FragmentIon.toArchiveString(modData.getLocalizingIons()));
+			peptidePrep.setInt(index++, modData.getNumberOfMods());
+			peptidePrep.setBoolean(index++, modData.isSiteSpecific());
+			peptidePrep.setFloat(index++,  modData.getRetentionTimeApexInSeconds());
 			
 		} else {
-			peptidePrep.setNull(indicies[0]++, Types.VARCHAR);
-			peptidePrep.setNull(indicies[0]++, Types.FLOAT);
-			peptidePrep.setNull(indicies[0]++, Types.VARCHAR);
-			peptidePrep.setNull(indicies[0]++, Types.INTEGER);
-			peptidePrep.setNull(indicies[0]++, Types.BOOLEAN);
-			peptidePrep.setFloat(indicies[0]++,  data.getApexRT());
+			peptidePrep.setNull(index++, Types.VARCHAR);
+			peptidePrep.setNull(index++, Types.FLOAT);
+			peptidePrep.setNull(index++, Types.VARCHAR);
+			peptidePrep.setNull(index++, Types.INTEGER);
+			peptidePrep.setNull(index++, Types.BOOLEAN);
+			peptidePrep.setFloat(index++,  data.getApexRT());
 		}
 		
-		peptidePrep.setFloat(indicies[0]++, data.getRange().getStart());
-		peptidePrep.setFloat(indicies[0]++, data.getRange().getStop());
-		peptidePrep.setFloat(indicies[0]++, topN.x);
-		peptidePrep.setInt(indicies[0]++, topN.y);
+		peptidePrep.setFloat(index++, data.getRange().getStart());
+		peptidePrep.setFloat(index++, data.getRange().getStop());
+		peptidePrep.setFloat(index++, topN.x);
+		peptidePrep.setInt(index++, topN.y);
 		byte[] topNMassesByteArray=ByteConverter.toByteArray(topNMasses);
-		peptidePrep.setInt(indicies[0]++, topNMassesByteArray.length);
-		peptidePrep.setBytes(indicies[0]++, CompressionUtils.compress(topNMassesByteArray));
-		peptidePrep.setFloat(indicies[0]++, bestCorrelation);
-		peptidePrep.setFloat(indicies[0]++, bestDeltaMass);
+		peptidePrep.setInt(index++, topNMassesByteArray.length);
+		peptidePrep.setBytes(index++, CompressionUtils.compress(topNMassesByteArray));
+		peptidePrep.setFloat(index++, bestCorrelation);
+		peptidePrep.setFloat(index++, bestDeltaMass);
 		byte[] intensityByteArray=ByteConverter.toByteArray(data.getMedianChromatogram());
-		peptidePrep.setInt(indicies[0]++, intensityByteArray.length);
-		peptidePrep.setBytes(indicies[0]++, CompressionUtils.compress(intensityByteArray));
+		peptidePrep.setInt(index++, intensityByteArray.length);
+		peptidePrep.setBytes(index++, CompressionUtils.compress(intensityByteArray));
 		if (data.getIdentifiedTICRatio().isPresent()) {
-			peptidePrep.setFloat(indicies[0]++, data.getIdentifiedTICRatio().get());
+			peptidePrep.setFloat(index++, data.getIdentifiedTICRatio().get());
 		} else {
-			peptidePrep.setFloat(indicies[0]++, 0.0f);
+			peptidePrep.setFloat(index++, 0.0f);
 		}
+		return index;
+	}
 
-		for (int i=0; i<correlationArray.length; i++) {
-			if (correlationArray[i]>=TransitionRefiner.identificationCorrelationThreshold) {
-				fragmentPrep.setInt(indicies[1]++, data.getPrecursorCharge());
-				fragmentPrep.setString(indicies[1]++, data.getPeptideModSeq());
-				fragmentPrep.setString(indicies[1]++, data.getPeptideSeq());
-				fragmentPrep.setString(indicies[1]++, sourceFile);
-				fragmentPrep.setString(indicies[1]++, IonType.toString(fragmentMassArray[i].getType()));
-				fragmentPrep.setInt(indicies[1]++, fragmentMassArray[i].index);
-				fragmentPrep.setDouble(indicies[1]++, fragmentMassArray[i].mass);
-				fragmentPrep.setFloat(indicies[1]++, correlationArray[i]);
-				fragmentPrep.setFloat(indicies[1]++, backgroundArray[i]);
-				fragmentPrep.setFloat(indicies[1]++, ppmArray[i]);
-				fragmentPrep.setFloat(indicies[1]++, integrationArray[i]);
+	public int prepareFragmentQuantData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrer> inferrer, PreparedStatement fragmentPrep, int index)
+			throws SQLException, IOException {
+		float[] correlationArray=data.getCorrelationArray();
+		float[] integrationArray=data.getIntegrationArray();
+		float[] backgroundArray=data.getBackgroundArray();
+
+		FragmentIon[] fragmentMassArray=data.getFragmentMassArray();
+		float[] deltaMassArray=data.getDeltaMassArray().get();
+		float[] ppmArray=new float[deltaMassArray.length];
+
+		float bestCorrelation=-1.0f;
+		for (int i=0; i<deltaMassArray.length; i++) {
+			ppmArray[i]=deltaMassArray[i]*1000000.0f/(float)fragmentMassArray[i].mass;
+			if (correlationArray[i]>bestCorrelation) {
+				bestCorrelation=correlationArray[i];
 			}
 		}
+		
+		for (int i=0; i<correlationArray.length; i++) {
+			if (correlationArray[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+				fragmentPrep.setInt(index++, data.getPrecursorCharge());
+				fragmentPrep.setString(index++, data.getPeptideModSeq());
+				fragmentPrep.setString(index++, data.getPeptideSeq());
+				fragmentPrep.setString(index++, sourceFile);
+				fragmentPrep.setString(index++, IonType.toString(fragmentMassArray[i].getType()));
+				fragmentPrep.setInt(index++, fragmentMassArray[i].index);
+				fragmentPrep.setDouble(index++, fragmentMassArray[i].mass);
+				fragmentPrep.setFloat(index++, correlationArray[i]);
+				fragmentPrep.setFloat(index++, backgroundArray[i]);
+				fragmentPrep.setFloat(index++, ppmArray[i]);
+				fragmentPrep.setFloat(index++, integrationArray[i]);
+			}
+		}
+		return index;
 	}
 
 	public void addEntries(ArrayList<LibraryEntry> entries) throws IOException, SQLException {
