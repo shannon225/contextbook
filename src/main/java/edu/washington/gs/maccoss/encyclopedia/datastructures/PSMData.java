@@ -1,6 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.StringTokenizer;
 
@@ -86,7 +88,9 @@ public class PSMData implements PeptidePrecursor {
 	public static final String ACCESSION_TOKEN=";";
 	public static String accessionsToString(Collection<String> accessions) {
 		StringBuilder sb=new StringBuilder();
-		for (String string : accessions) {
+		ArrayList<String> accessionList=new ArrayList<String>(accessions);
+		Collections.sort(accessionList);
+		for (String string : accessionList) {
 			if (sb.length()>0) sb.append(ACCESSION_TOKEN);
 			sb.append(string);
 		}

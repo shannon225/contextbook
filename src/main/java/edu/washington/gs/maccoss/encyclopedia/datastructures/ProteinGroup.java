@@ -7,15 +7,17 @@ public class ProteinGroup implements Comparable<ProteinGroup> {
 	private final float nspScore;
 	private final ArrayList<String> equivalentAccessions;
 	private final int hash;
+	private final ArrayList<String> sequences;
 
 	/**
 	 * 
 	 * @param nspScore
 	 * @param equivalentAccessions note, destructively sorts this array!
 	 */
-	public ProteinGroup(float nspScore, ArrayList<String> equivalentAccessions) {
+	public ProteinGroup(float nspScore, ArrayList<String> equivalentAccessions, ArrayList<String> sequences) {
 		this.nspScore=nspScore;
 		this.equivalentAccessions=equivalentAccessions;
+		this.sequences=sequences;
 		Collections.sort(equivalentAccessions);
 		
 		hash=getAccessionString(equivalentAccessions).hashCode();
@@ -40,6 +42,10 @@ public class ProteinGroup implements Comparable<ProteinGroup> {
 	@Override
 	public String toString() {
 		return getAccessionString(equivalentAccessions);
+	}
+	
+	public ArrayList<String> getSequences() {
+		return sequences;
 	}
 	
 	@Override

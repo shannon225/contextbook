@@ -85,7 +85,11 @@ public class ParsimonyProteinGrouper {
 			for (Protein protein : equivalentProteins) {
 				equivalentAccessions.add(protein.accession);
 			}
-			keptProteins.add(new ProteinGroup(nspScore, new ArrayList<String>(equivalentAccessions)));
+			ArrayList<String> sequences=new ArrayList<String>();
+			for (Peptide peptide : highestRankedProtein.peptides) {
+				sequences.add(peptide.sequence);
+			}
+			keptProteins.add(new ProteinGroup(nspScore, new ArrayList<String>(equivalentAccessions), sequences));
 		}
 		
 		Logger.logLine(keptProteins.size()+" parsimonious proteins from "+peptides.size()+" peptides");
