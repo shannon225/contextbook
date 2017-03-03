@@ -7,7 +7,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
 import junit.framework.TestCase;
 
-public class PercolatorPeptideTest extends TestCase {
+public class PercolatorPeptideTest {
 	public static void main(String[] args) {
 		ArrayList<PercolatorPeptide> peptides=getPeptides();
 		ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(peptides);
