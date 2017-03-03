@@ -50,6 +50,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
@@ -89,6 +90,7 @@ public class Pecanpie {
 			Logger.timelessLogLine("\t-f\tbackground FASTA file");
 			Logger.timelessLogLine("Other Parameters: ");
 			Logger.timelessLogLine("\t-t\ttarget FASTA file (default: background FASTA file)");
+			Logger.timelessLogLine("\t-tp\ttrue/false target FASTA file contains peptides (default: false)"); 
 			Logger.timelessLogLine("\t-o\toutput report file (default: [input file].pecan.txt)");
 			
 			TreeMap<String, String> defaults=new TreeMap<String, String>(PecanParameterParser.getDefaultParameters());
@@ -133,7 +135,20 @@ public class Pecanpie {
 	
 				ArrayList<FastaPeptideEntry> targets;
 				if (arguments.containsKey(TARGET_FASTA_TAG)) {
-					targets=FastaReader.readPeptideFasta(new File(arguments.get(TARGET_FASTA_TAG)));
+					File targetsFile=new File(arguments.get(TARGET_FASTA_TAG));
+					if (SearchParameterParser.getBoolean("-tp", arguments, false)) {
+						targets=FastaReader.readPeptideFasta(targetsFile);
+					} else {
+						targets=new ArrayList<FastaPeptideEntry>();
+						ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(targetsFile);
+						for (FastaEntryInterface entry : entries) {
+							ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages());
+							for (String peptide : peptides) {
+								FastaPeptideEntry pe=entry.getSubEntry(peptide);
+								targets.add(pe);
+							}
+						}
+					}
 				} else {
 					targets=null;
 				}
