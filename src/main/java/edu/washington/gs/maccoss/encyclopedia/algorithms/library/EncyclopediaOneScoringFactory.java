@@ -30,7 +30,7 @@ public class EncyclopediaOneScoringFactory implements LibraryScoringFactory {
 
 	@Override
 	public PeptideScoringResultsConsumer getResultsConsumer(File outputFile, BlockingQueue<PeptideScoringResult> resultsQueue, File diaFile) {
-		return new ScoringResultsToTSVConsumer(outputFile, diaFile, EncyclopediaOneAuxillaryPSMScorer.getScoreNames(), resultsQueue, 1);
+		return new ScoringResultsToTSVConsumer(outputFile, diaFile, EncyclopediaOneAuxillaryPSMScorer.getScoreNames(true), resultsQueue, 1);
 	}
 
 	@Override

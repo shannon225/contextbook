@@ -23,6 +23,7 @@ import gnu.trove.list.array.TFloatArrayList;
 import junit.framework.TestCase;
 
 public class XCorrCalculatorTest extends TestCase {
+	private static final SearchParameters MAIN_PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10, MassErrorUnitType.PPM), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
 	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(0.05, MassErrorUnitType.AMU), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
 
 	public static void main(String[] args) {
@@ -32,20 +33,37 @@ public class XCorrCalculatorTest extends TestCase {
 		
 		Spectrum s=getSDFHLFGPPGKK();
 
-		SparseXCorrCalculator preprocessedmodel=new SparseXCorrCalculator("SDFHLFGPPGKK", charge, PARAMETERS);
+		SparseXCorrCalculator preprocessedmodel=new SparseXCorrCalculator("SDFHLFGPPGKK", charge, MAIN_PARAMETERS);
 		SparseXCorrSpectrum sparse=preprocessedmodel.normalize(s, new Range(chargedMz-10f, chargedMz+10f));
 
 		long time=System.currentTimeMillis();
 		for (int i=0; i<100000; i++) {
 			preprocessedmodel.score(sparse);	
 		}
-		System.out.println("Sparse: "+(System.currentTimeMillis()-time));
+		System.out.println("100000 Cached Sparse: "+(System.currentTimeMillis()-time));
 
-		ArrayXCorrCalculator arraypreprocessedmodel=new ArrayXCorrCalculator("SDFHLFGPPGKK", chargedMz, charge, PARAMETERS);
+		ArrayXCorrCalculator arraypreprocessedmodel=new ArrayXCorrCalculator("SDFHLFGPPGKK", chargedMz, charge, MAIN_PARAMETERS);
 		float[] normalized=arraypreprocessedmodel.normalize(s);
 		
 		time=System.currentTimeMillis();
 		for (int i=0; i<100000; i++) {
+			arraypreprocessedmodel.score(normalized);
+		}
+		System.out.println("100000 Cached Array: "+(System.currentTimeMillis()-time));
+		
+		time=System.currentTimeMillis();
+		for (int i=0; i<1000; i++) {
+			preprocessedmodel=new SparseXCorrCalculator("SDFHLFGPPGKK", charge, MAIN_PARAMETERS);
+			sparse=preprocessedmodel.normalize(s, new Range(chargedMz-10f, chargedMz+10f));
+			preprocessedmodel.score(sparse);	
+		}
+		System.out.println("Sparse: "+(System.currentTimeMillis()-time));
+
+		
+		time=System.currentTimeMillis();
+		for (int i=0; i<1000; i++) {
+			arraypreprocessedmodel=new ArrayXCorrCalculator("SDFHLFGPPGKK", chargedMz, charge, MAIN_PARAMETERS);
+			normalized=arraypreprocessedmodel.normalize(s);
 			arraypreprocessedmodel.score(normalized);
 		}
 		System.out.println("Array: "+(System.currentTimeMillis()-time));

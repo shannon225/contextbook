@@ -10,6 +10,15 @@ import junit.framework.TestCase;
 public class PeptideUtilsTest extends TestCase {
 	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"));
 	
+	public void testGetExpectedChargeState() {
+		assertEquals(1, PeptideUtils.getExpectedChargeState("LACDEFQFEDCAI"));
+		assertEquals(2, PeptideUtils.getExpectedChargeState("LACDEFQFEDCAIR"));
+		assertEquals(3, PeptideUtils.getExpectedChargeState("LACDEFQKEDCAIR"));
+		assertEquals(3, PeptideUtils.getExpectedChargeState("LACHEFQFEDCAIR"));
+		assertEquals(4, PeptideUtils.getExpectedChargeState("LACHEFQFEDRAIR"));
+		assertEquals(5, PeptideUtils.getExpectedChargeState("LRCHEFQFEDRAIR"));
+	}
+	
 	public void testDecoys() {
 		HashSet<String> backgroundProteome=new HashSet<String>();
 		String seq="LACDEFQFEDCAIR";

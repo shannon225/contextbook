@@ -285,7 +285,6 @@ public class LibraryReportExtractor {
 				rs=s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.SourceFile, pep.RTInSecondsStart, pep.RTInSecondsStop, pep.TotalIntensity, pro.ProteinAccessions, pep.QuantIonMassLength, pep.QuantIonMassArray from peptidequants pep, proteins pro where pep.PeptideSeq = pro.PeptideSeq");
 				
 				int count=0;
-				int totalAdded=0;
 				while (rs.next()) {
 					count++;
 					if (count%10000==0) {

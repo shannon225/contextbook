@@ -34,7 +34,7 @@ public class XCorDIAOneScoringFactory implements LibraryScoringFactory {
 
 	@Override
 	public PeptideScoringResultsConsumer getResultsConsumer(File outputFile, BlockingQueue<PeptideScoringResult> resultsQueue, File diaFile) {
-		return new ScoringResultsToTSVConsumer(outputFile, diaFile, EncyclopediaOneAuxillaryPSMScorer.getScoreNames(), resultsQueue, 1);
+		return new ScoringResultsToTSVConsumer(outputFile, diaFile, EncyclopediaOneAuxillaryPSMScorer.getScoreNames(false), resultsQueue, 1);
 	}
 
 	@Override

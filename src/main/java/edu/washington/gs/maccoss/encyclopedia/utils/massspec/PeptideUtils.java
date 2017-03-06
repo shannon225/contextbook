@@ -14,6 +14,20 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class PeptideUtils {
+	public static byte getExpectedChargeState(String peptide) {
+		byte charge=1;
+		for (int i=0; i<peptide.length(); i++) {
+			switch (peptide.charAt(i)) {
+				case 'K':
+				case 'R':
+				case 'H':
+					charge++;
+					break;
+			}
+		}
+		return charge;
+	}
+	
 	public static String getSmartDecoy(String peptide, byte charge, HashSet<String> backgroundProteome, SearchParameters parameters) {
 		FragmentationModel model=new FragmentationModel(peptide, parameters.getAAConstants());
 		double[] primaryIons=model.getPrimaryIons(parameters.getFragType(), charge);

@@ -38,6 +38,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorrStripe;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
@@ -205,6 +206,18 @@ public class XCorDIA {
 		LibraryBackground background=new LibraryBackground(backgroundProteome, parameters);
 		XCorDIAOneScorer xcordiaScorer=(XCorDIAOneScorer)taskFactory.getLibraryScorer(background);
 
+		float minMzRange=Float.MAX_VALUE;
+		float maxMzRange=-Float.MAX_VALUE;
+		for (Range range : stripefile.getRanges().keySet()) {
+			if (minMzRange>range.getStart()) {
+				minMzRange=range.getStart();
+			}
+			if (maxMzRange<range.getStop()) {
+				maxMzRange=range.getStop();
+			}
+		}
+		Range entireRange=new Range(minMzRange, maxMzRange);
+
 		Logger.logLine("Reading FASTA peptides...");
 		// add database to proteome
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(fastaFile);
@@ -213,10 +226,31 @@ public class XCorDIA {
 			backgroundProteome.addAll(peptides);
 
 			if (!targetList.isPresent()) {
-				// search all peptides in database
-				for (String peptide : peptides) {
-					FastaPeptideEntry pe=entry.getSubEntry(peptide);
-					targets.add(pe);
+				if (false) { // FIXME
+//					ArrayList<ScoredObject<String>> scoredPeptides=new ArrayList<ScoredObject<String>>();
+//					for (String peptide : peptides) {
+//						byte expectedCharge=PeptideUtils.getExpectedChargeState(peptide);
+//						double mz=parameters.getAAConstants().getChargedMass(peptide, expectedCharge);
+//						if (entireRange.contains(mz)) {
+//							double score=Prego.getNetwork().getScore(peptide);
+//							scoredPeptides.add(new ScoredObject<String>((float)score, peptide));
+//						}
+//					}
+//
+//					Collections.sort(scoredPeptides);
+//					int count=0;
+//					for (int i=scoredPeptides.size()-1; i>=0; i--) {
+//						count++;
+//						FastaPeptideEntry pe=entry.getSubEntry(scoredPeptides.get(i).y);
+//						targets.add(pe);
+//						if (count>=10) break;
+//					}
+				} else {
+					// search all peptides in database
+					for (String peptide : peptides) {
+						FastaPeptideEntry pe=entry.getSubEntry(peptide);
+						targets.add(pe);
+					}
 				}
 			}
 		}
@@ -280,7 +314,7 @@ public class XCorDIA {
 			// set up xcorr
 			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 
-			Logger.logLine("Starting XCorr calculations for "+stripes.size()+" spectra between "+range+"...");
+			Logger.logLine("Starting XCorr background calculations for "+stripes.size()+" spectra between "+range+"...");
 			final Vector<Stripe> tempStripes=new Vector<Stripe>();
 			for (final Stripe stripe : stripes) {
 				executor.submit(new ThreadableTask<Nothing>() {
@@ -297,7 +331,7 @@ public class XCorDIA {
 			}
 			executor.shutdown();
 			while (!executor.isTerminated()) {
-				Logger.logLine("Processing XCorr background for "+workQueue.size()+" peptides between "+range+"...");
+				Logger.logLine("Processing XCorr background calculations for "+workQueue.size()+" remaining spectra between "+range+"...");
 				float finishedFraction=(stripes.size()-workQueue.size())/(float)stripes.size();
 				progress.update(baseMessage, baseProgress+baseIncrement*(finishedFraction*0.2f));
 				Thread.sleep(500);
@@ -315,7 +349,18 @@ public class XCorDIA {
 			int count=0;
 			for (FastaPeptideEntry peptide : targets) {
 				String sequence=peptide.getSequence();
-				for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
+
+				byte minCharge=parameters.getMinCharge();
+				byte maxCharge=parameters.getMaxCharge();
+				byte expectedCharge=PeptideUtils.getExpectedChargeState(sequence);
+				if (false&&!targetList.isPresent()) { //FIXME
+					minCharge=expectedCharge;
+					maxCharge=expectedCharge;
+				} else {
+					minCharge=(byte)Math.max(parameters.getMinCharge(), expectedCharge-1);
+					maxCharge=(byte)Math.min(parameters.getMaxCharge(), expectedCharge+1);
+				}
+				for (byte charge=minCharge; charge<=maxCharge; charge++) {
 					double mz=parameters.getAAConstants().getChargedMass(sequence, charge);
 					if (range.contains((float)mz)) {
 						count++;
@@ -376,12 +421,33 @@ public class XCorDIA {
 
 		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
 		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, outputFile, parameters.getEffectivePercolatorThreshold());
-		ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides);
 		stripefile.close();
 		
-		Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
-		Logger.logLine(""); 
-		progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+		if (false&&!targetList.isPresent()) { //FIXME
+			HashSet<String> accessions=new HashSet<String>();
+			for (PercolatorPeptide peptide : passingPeptides) {
+				accessions.addAll(PSMData.stringToAccessions(peptide.getProteinIDs()));
+			}
+			
+			ArrayList<FastaPeptideEntry> newTargets=new ArrayList<FastaPeptideEntry>();
+			for (FastaEntryInterface entry : entries) {
+				if (accessions.contains(entry.getAccession())) {
+					ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages());
+					for (String peptide : peptides) {
+						FastaPeptideEntry pe=entry.getSubEntry(peptide);
+						newTargets.add(pe);
+					}
+				}
+			}
+			
+			runPie(progress, Optional.of(newTargets), diaFile, fastaFile, featureFile, outputFile, taskFactory);
+			
+		} else {
+			ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides);
+			Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
+			Logger.logLine(""); 
+			progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+		}
 	}
 
 	

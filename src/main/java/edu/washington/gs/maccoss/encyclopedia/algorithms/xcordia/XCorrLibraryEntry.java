@@ -3,7 +3,6 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.SSRCalc;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SparseXCorrCalculator;
@@ -17,7 +16,8 @@ public class XCorrLibraryEntry extends LibraryEntry {
 
 	public XCorrLibraryEntry(boolean isDecoy, String source, HashSet<String> accessions, byte precursorCharge, String peptideModSeq,
 			SparseXCorrSpectrum spectrum, SearchParameters params) {
-		super(source, accessions, spectrum.getPrecursorMz(), precursorCharge, peptideModSeq, 1, (float)SSRCalc.getHydrophobicity(peptideModSeq), 0.0f, spectrum.getMassArray(), spectrum.getIntensityArray());
+		super(source, accessions, spectrum.getPrecursorMz(), precursorCharge, peptideModSeq, 1, 0.0f, // (float)SSRCalc.getHydrophobicity(peptideModSeq)
+				0.0f, spectrum.getMassArray(), spectrum.getIntensityArray());
 		this.isDecoy=isDecoy;
 		this.spectrum=spectrum;
 		this.params=params;

@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.SSRCalc;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
@@ -74,7 +73,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 			this.retentionTime=retentionTime;
 		} else {
 			// ignores mods! This would be a problem if everything is modified (IMac prep)
-			this.retentionTime=(float)SSRCalc.getHydrophobicity(peptideModSeq);
+			this.retentionTime=0.0f; //(float)SSRCalc.getHydrophobicity(peptideModSeq);
 		}
 		this.score=score;
 		this.massArray=massArray;

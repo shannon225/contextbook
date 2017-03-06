@@ -147,7 +147,7 @@ public class SparseXCorrCalculator {
 		float[] binMaxIntensity=new float[ArrayXCorrCalculator.groups];
 		int currentIndex=0;
 		for (int i=0; i<intensities.length; i++) {
-			if (masses[i]>minimumPrecursorRemoved&&masses[i]<maximumPrecursorRemoved) {
+			if (intensities[i]<=0.0f||masses[i]>minimumPrecursorRemoved&&masses[i]<maximumPrecursorRemoved) {
 				continue;
 			}
 			
@@ -164,7 +164,7 @@ public class SparseXCorrCalculator {
 		
 		currentIndex=0;
 		for (int i=0; i<intensities.length; i++) {
-			if (masses[i]>minimumPrecursorRemoved&&masses[i]<maximumPrecursorRemoved) {
+			if (intensities[i]<=0.0f||(masses[i]>minimumPrecursorRemoved&&masses[i]<maximumPrecursorRemoved)) {
 				continue;
 			}
 			

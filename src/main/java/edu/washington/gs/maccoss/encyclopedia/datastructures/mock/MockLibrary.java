@@ -14,7 +14,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
-import jdk.nashorn.internal.ir.annotations.Immutable;
 
 /**
  * use for testing, does not SQRT!
@@ -22,7 +21,6 @@ import jdk.nashorn.internal.ir.annotations.Immutable;
  *
  */
 public class MockLibrary implements LibraryInterface {
-	@Immutable
 	private final LibraryEntry[] entries;
 		
 	public MockLibrary(LibraryEntry[] entries) {

@@ -13,7 +13,7 @@ public class XCorDIAOneScorer implements PSMScorer {
 	private final EncyclopediaOneAuxillaryPSMScorer auxScorer;
 
 	public XCorDIAOneScorer(SearchParameters parameters, LibraryBackground background) {
-		auxScorer=new EncyclopediaOneAuxillaryPSMScorer(parameters, background);
+		auxScorer=new EncyclopediaOneAuxillaryPSMScorer(parameters, background, false);
 	}
 	
 	@Override

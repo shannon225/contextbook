@@ -56,4 +56,25 @@ public class SpectrumUtils {
 		
 		return value;
 	}
+	
+	public static String toDTAString(Spectrum s) {
+		StringBuilder sb=new StringBuilder();
+		sb.append(s.getSpectrumName());
+		sb.append('\n');
+		
+		sb.append(s.getPrecursorMZ());
+		sb.append('\t');
+		sb.append(s.getScanStartTime());
+		sb.append('\t');
+		sb.append(s.getTIC());
+		sb.append('\n');
+		
+		for (int i=0; i<s.getMassArray().length; i++) {
+			sb.append(s.getMassArray()[i]);
+			sb.append('\t');
+			sb.append(s.getIntensityArray()[i]);
+			sb.append('\n');
+		}
+		return sb.toString();
+	}
 }

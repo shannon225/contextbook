@@ -7,10 +7,12 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ArrayXCorrCalculator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SparseXCorrCalculator;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SparseXCorrSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
@@ -20,11 +22,13 @@ import gnu.trove.list.array.TFloatArrayList;
 public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 	private static final int numPeaksUsedInAverage=3;
 	
+	private final boolean runXCorr;
 	private final LibraryBackground background;
 
-	public EncyclopediaOneAuxillaryPSMScorer(SearchParameters parameters, LibraryBackground background) {
+	public EncyclopediaOneAuxillaryPSMScorer(SearchParameters parameters, LibraryBackground background, boolean runXCorr) {
 		super(parameters);
 		this.background=background;
+		this.runXCorr=runXCorr;
 	}
 	
 	@Override
@@ -160,21 +164,31 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 			xTandem=((float)Log.protectedLog10(dotProduct))+Log.logFactorial(numberOfMatchingPeaks); // really log10(X!Tandem score)
 		}
 		
-		ArrayXCorrCalculator xcorr=new ArrayXCorrCalculator(spectrum, entry.getPrecursorMZ(), entry.getPrecursorCharge(), parameters);
-		float xCorrLib=xcorr.score(entry);
-		float xCorrModel=xcorr.score(entry.getPeptideModSeq());
-		
-		
-		return new float[] {xTandem, xCorrLib, xCorrModel, (float)Log.protectedLog10(dotProduct), (float)Log.protectedLog10(weightedDotProduct), sumOfSquaredErrors, weightedSumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
+		if (runXCorr) {
+			SparseXCorrSpectrum sparseScan=SparseXCorrCalculator.normalize(spectrum, new Range((float)entry.getPrecursorMZ()-10f, (float)entry.getPrecursorMZ()+10f), false, parameters);
+			
+			SparseXCorrCalculator librarySparse=new SparseXCorrCalculator(entry, new Range((float)entry.getPrecursorMZ()-10f, (float)entry.getPrecursorMZ()+10f), parameters);
+			float xCorrLib=librarySparse.score(sparseScan);
+			SparseXCorrCalculator sparseModel=new SparseXCorrCalculator(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters);
+			float xCorrModel=sparseModel.score(sparseScan);
+			
+			return new float[] {xTandem, xCorrLib, xCorrModel, (float)Log.protectedLog10(dotProduct), (float)Log.protectedLog10(weightedDotProduct), sumOfSquaredErrors, weightedSumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
+		} else {
+			return new float[] {xTandem, (float)Log.protectedLog10(dotProduct), (float)Log.protectedLog10(weightedDotProduct), sumOfSquaredErrors, weightedSumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
+		}
 	}
 
 	@Override
 	public String[] getScoreNames(LibraryEntry entry) {
-		return getScoreNames();
+		return getScoreNames(runXCorr);
 	}
 
-	public static String[] getScoreNames() {
-		return new String[] {"primary", "xCorrLib", "xCorrModel", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "eValue"};
+	public static String[] getScoreNames(boolean runXCorr) {
+		if (runXCorr) {
+			return new String[] {"primary", "xCorrLib", "xCorrModel", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "eValue"};
+		} else {
+			return new String[] {"primary", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "xCorrModel", "eValue"};
+		}
 	}
 	
 	@Override

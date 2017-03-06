@@ -352,7 +352,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 	private static final int NUMBER_OF_PEPTIDE_ENTRIES_AT_ONCE=20;
-	private static final int NUMBER_OF_FRAGMENT_ENTRIES_AT_ONCE=4;
+	//private static final int NUMBER_OF_FRAGMENT_ENTRIES_AT_ONCE=4;
 
 	private void internalWritePeptideQuantLibraryEntriesToConnection(Connection c, Optional<PeakLocationInferrer> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList)
 			throws SQLException, IOException {
@@ -407,7 +407,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			fragmentPrep.close();
 		}
 	}
-
+	
 	public int prepareQuantData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrer> inferrer, PreparedStatement peptidePrep, int index)
 			throws SQLException, IOException {
 		float[] correlationArray=data.getCorrelationArray();

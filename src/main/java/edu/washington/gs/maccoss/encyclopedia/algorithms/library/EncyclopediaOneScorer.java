@@ -19,7 +19,7 @@ public class EncyclopediaOneScorer implements PSMPeakScorer {
 
 	public EncyclopediaOneScorer(SearchParameters parameters, LibraryBackground background) {
 		this.parameters=parameters;
-		auxScorer=new EncyclopediaOneAuxillaryPSMScorer(parameters, background);
+		auxScorer=new EncyclopediaOneAuxillaryPSMScorer(parameters, background, true);
 	}
 	
 	@Override
