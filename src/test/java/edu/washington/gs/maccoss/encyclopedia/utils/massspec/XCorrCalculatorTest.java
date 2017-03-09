@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
+import java.awt.Dimension;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Map;
@@ -24,9 +25,11 @@ import junit.framework.TestCase;
 
 public class XCorrCalculatorTest extends TestCase {
 	private static final SearchParameters MAIN_PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10, MassErrorUnitType.PPM), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
-	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(0.05, MassErrorUnitType.AMU), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
-
-	public static void main(String[] args) {
+	//private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(0.05, MassErrorUnitType.AMU), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
+	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(1, MassErrorUnitType.AMU), new MassTolerance(1, MassErrorUnitType.AMU), DigestionEnzyme.getEnzyme("trypsin"));
+	//private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10, MassErrorUnitType.PPM), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
+	
+	public static void main3(String[] args) {
 		// timing test
 		final byte charge=2;
 		final float chargedMz=(float)((1329.6335+(charge-1)*MassConstants.protonMass)/charge);
@@ -69,17 +72,20 @@ public class XCorrCalculatorTest extends TestCase {
 		System.out.println("Array: "+(System.currentTimeMillis()-time));
 	}
 	
-	public static void main2(String[] args) {
+	public static void main(String[] args) {
 		final byte charge=2;
 		final float chargedMz=(float)((1329.6335+(charge-1)*MassConstants.protonMass)/charge);
 		
 		Spectrum s=getSDFHLFGPPGKK();
 
 		SparseXCorrSpectrum f=SparseXCorrCalculator.normalize(s, new Range(chargedMz-10.0f, chargedMz+10.0f), false, PARAMETERS);
+		SparseXCorrSpectrum t=SparseXCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", charge, PARAMETERS);
+		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, f, PARAMETERS), "Spectrum", new Dimension(300, 200));
+		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, t, PARAMETERS), "Model", new Dimension(300, 200));
 		f=SparseXCorrCalculator.preprocessSpectrum(f);
-		//SparseXCorrSpectrum t=XCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", precursorMz, charge, PARAMETERS);
-		s=getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, f, PARAMETERS);
-		Charter.launchChart(s);
+		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, f, PARAMETERS), "PP Spectrum", new Dimension(300, 200));
+		t=SparseXCorrCalculator.preprocessSpectrum(t);
+		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, t, PARAMETERS), "PP Model", new Dimension(300, 200));
 	}
 	
 	public void testXCorr() {
@@ -100,17 +106,9 @@ public class XCorrCalculatorTest extends TestCase {
 		SparseXCorrSpectrum f=SparseXCorrCalculator.normalize(s, new Range(chargedMz-10.0f, chargedMz+10.0f), false, PARAMETERS);
 		SparseXCorrSpectrum t=SparseXCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", charge, PARAMETERS);
 
-		System.out.println("-5: "+t.dotProduct(f, -5));
-		System.out.println("-4: "+t.dotProduct(f, -4));
-		System.out.println("-3: "+t.dotProduct(f, -3));
-		System.out.println("-2: "+t.dotProduct(f, -2));
-		System.out.println("-1: "+t.dotProduct(f, -1));
-		System.out.println(" 0: "+t.dotProduct(f, 0));
-		System.out.println(" 1: "+t.dotProduct(f, 1));
-		System.out.println(" 2: "+t.dotProduct(f, 2));
-		System.out.println(" 3: "+t.dotProduct(f, 3));
-		System.out.println(" 4: "+t.dotProduct(f, 4));
-		System.out.println(" 5: "+t.dotProduct(f, 5));
+		for (int i=-75; i<=75; i++) {
+			System.out.println(i+"\t"+t.dotProduct(f, i));
+		}
 		
 		float center=t.dotProduct(f, 0);
 		float avg=0.0f;
@@ -226,7 +224,9 @@ public class XCorrCalculatorTest extends TestCase {
 			masses.add(mass);
 			intensities.add(indexedIntensities[i]);
 		}
-		return getSpectrum(masses.toArray(), intensities.toArray(), tic, scanStartTime, name, mz);
+		
+		float[] intensityArray=intensities.toArray();
+		return getSpectrum(masses.toArray(), intensityArray, tic, scanStartTime, name, mz);
 	}
 
 	static Spectrum getSpectrum(final double[] masses, final float[] intensities, final float tic, final float scanStartTime, final String name, final double mz) {

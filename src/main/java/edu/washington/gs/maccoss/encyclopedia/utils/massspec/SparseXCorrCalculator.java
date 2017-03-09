@@ -110,7 +110,7 @@ public class SparseXCorrCalculator {
 			preprocessedSpectrum.adjustOrPutValue(indicies[i], masses[i], intensities[i]);
 		}
 		
-		return new SparseXCorrSpectrum(preprocessedSpectrum, spectrum.getPrecursorMz(), spectrum.getFragmentBinSize(), length);
+		return new SparseXCorrSpectrum(preprocessedSpectrum, spectrum.getPrecursorMZ(), spectrum.getFragmentBinSize(), length);
 	}
 	
 	/**

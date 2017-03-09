@@ -128,7 +128,11 @@ public class Charter {
 	}
 
 	public static void launchChart(Spectrum trace, String title) {
-		launchComponent(getChart(trace), title, new Dimension(1000, 500));
+		launchChart(trace, title, new Dimension(1000, 500));
+	}
+
+	public static void launchChart(Spectrum trace, String title, Dimension dim) {
+		launchComponent(getChart(trace, title), title, dim);
 	}
 
 	public static void launchCharts(String title, Map<String, ChartPanel> panelMap) {
@@ -238,6 +242,12 @@ public class Charter {
 	public static ChartPanel getChart(Spectrum trace) {
 		ChartPanel chart=getChart("M/Z", "Intensity", false, new XYTrace(trace));
 		chart.getChart().setTitle(trace.getSpectrumName());
+		return chart;
+	}
+
+	public static ChartPanel getChart(Spectrum trace, String title) {
+		ChartPanel chart=getChart("M/Z", "Intensity", false, new XYTrace(trace));
+		chart.getChart().setTitle(title);
 		return chart;
 	}
 
@@ -412,7 +422,7 @@ public class Charter {
 								xytextannotation.setPaint(IonType.getColor(annotations[i].type));
 						        xytextannotation.setFont(IonType.getFont(annotations[i].type));
 						        xytextannotation.setTextAnchor(TextAnchor.BOTTOM_CENTER);
-						        plot.addAnnotation(xytextannotation);
+						        //plot.addAnnotation(xytextannotation);
 							} else {
 								renderer.setSeriesStroke(i, IonType.missingStroke);
 								renderer.setSeriesPaint(i, IonType.missingColor);
@@ -422,7 +432,7 @@ public class Charter {
 									xytextannotation.setPaint(IonType.missingColor);
 							        xytextannotation.setFont(IonType.missingAnnotationFont);
 							        xytextannotation.setTextAnchor(TextAnchor.BOTTOM_CENTER);
-							        plot.addAnnotation(xytextannotation);
+							        //plot.addAnnotation(xytextannotation);
 								}
 							}
 						}
@@ -442,7 +452,7 @@ public class Charter {
 								xytextannotation.setPaint(IonType.missingColor);
 						        xytextannotation.setFont(IonType.missingAnnotationFont);
 						        xytextannotation.setTextAnchor(TextAnchor.BOTTOM_CENTER);
-						        plot.addAnnotation(xytextannotation);
+						        //plot.addAnnotation(xytextannotation);
 							}
 						}
 					}

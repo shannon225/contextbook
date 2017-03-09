@@ -4,9 +4,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.SparseIndexMap;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.procedure.TIntObjectProcedure;
 
-public class SparseXCorrSpectrum {
+public class SparseXCorrSpectrum implements Spectrum {
 	private final float fragmentBinSize;
 	private final int[] indices;
 	private final double[] masses;
@@ -41,8 +42,20 @@ public class SparseXCorrSpectrum {
 			intensities[i]=peak.intensity;
 		}
 	}
+	@Override
+	public float getScanStartTime() {
+		return 0;
+	}
+	@Override
+	public String getSpectrumName() {
+		return "Precursor MZ: "+precursorMz;
+	}
+	@Override
+	public float getTIC() {
+		return General.sum(intensities);
+	}
 	
-	public double getPrecursorMz() {
+	public double getPrecursorMZ() {
 		return precursorMz;
 	}
 	
