@@ -2,7 +2,6 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
 import java.util.ArrayList;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -13,13 +12,19 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 
-public class EncyclopediaOneScorer implements PSMPeakScorer {
+public class EncyclopediaOneScorer implements EncyclopediaScorer {
 	private final SearchParameters parameters;
 	private final EncyclopediaOneAuxillaryPSMScorer auxScorer;
 
 	public EncyclopediaOneScorer(SearchParameters parameters, LibraryBackground background) {
 		this.parameters=parameters;
 		auxScorer=new EncyclopediaOneAuxillaryPSMScorer(parameters, background, true);
+	}
+	
+
+	@Override
+	public EncyclopediaOneAuxillaryPSMScorer getAuxScorer() {
+		return auxScorer;
 	}
 	
 	@Override
@@ -36,11 +41,14 @@ public class EncyclopediaOneScorer implements PSMPeakScorer {
 		return score(entry, spectrum);
 	}
 
+	@Override
 	public float score(LibraryEntry entry, Spectrum spectrum) {
 		PeakScores[] individualPeakScores=getIndividualPeakScores(entry, spectrum, true);
 		return scoreIons(individualPeakScores);
 	}
 
+
+	@Override
 	public float score(LibraryEntry entry, Spectrum spectrum, FragmentIon[] ions) {
 		PeakScores[] individualPeakScores=getIndividualPeakScores(entry, spectrum, true, ions);
 		return scoreIons(individualPeakScores);
@@ -78,7 +86,6 @@ public class EncyclopediaOneScorer implements PSMPeakScorer {
 		
 		double[] acquiredMasses=spectrum.getMassArray();
 		float[] acquiredIntensities=spectrum.getIntensityArray();
-		
 		
 		ArrayList<PeakScores> scoredPeaks=new ArrayList<PeakScores>();
 		for (FragmentIon targetIon : ions) {

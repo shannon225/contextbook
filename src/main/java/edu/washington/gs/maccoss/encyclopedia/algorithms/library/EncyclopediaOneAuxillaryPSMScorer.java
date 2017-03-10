@@ -24,11 +24,33 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 	
 	private final boolean runXCorr;
 	private final LibraryBackground background;
+	private final SparseXCorrCalculator librarySparseCalculator;
+	private final SparseXCorrCalculator sparseModelCalculator;
 
 	public EncyclopediaOneAuxillaryPSMScorer(SearchParameters parameters, LibraryBackground background, boolean runXCorr) {
 		super(parameters);
 		this.background=background;
 		this.runXCorr=runXCorr;
+		this.librarySparseCalculator=null;
+		this.sparseModelCalculator=null;
+	}
+	
+	
+	
+	private EncyclopediaOneAuxillaryPSMScorer(SearchParameters parameters, LibraryBackground background, boolean runXCorr, SparseXCorrCalculator librarySparseCalculator, SparseXCorrCalculator sparseModelCalculator) {
+		super(parameters);
+		this.runXCorr=runXCorr;
+		this.background=background;
+		this.librarySparseCalculator=librarySparseCalculator;
+		this.sparseModelCalculator=sparseModelCalculator;
+	}
+
+
+
+	public EncyclopediaOneAuxillaryPSMScorer getEntryOptimizedScorer(LibraryEntry entry) {
+		SparseXCorrCalculator librarySparse=new SparseXCorrCalculator(entry, new Range((float)entry.getPrecursorMZ()-10f, (float)entry.getPrecursorMZ()+10f), parameters);
+		SparseXCorrCalculator sparseModel=new SparseXCorrCalculator(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters);
+		return new EncyclopediaOneAuxillaryPSMScorer(parameters, background, runXCorr, librarySparse, sparseModel);
 	}
 	
 	@Override
@@ -167,9 +189,9 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		if (runXCorr) {
 			SparseXCorrSpectrum sparseScan=SparseXCorrCalculator.normalize(spectrum, new Range((float)entry.getPrecursorMZ()-10f, (float)entry.getPrecursorMZ()+10f), false, parameters);
 			
-			SparseXCorrCalculator librarySparse=new SparseXCorrCalculator(entry, new Range((float)entry.getPrecursorMZ()-10f, (float)entry.getPrecursorMZ()+10f), parameters);
+			SparseXCorrCalculator librarySparse=librarySparseCalculator!=null?librarySparseCalculator:new SparseXCorrCalculator(entry, new Range((float)entry.getPrecursorMZ()-10f, (float)entry.getPrecursorMZ()+10f), parameters);
 			float xCorrLib=librarySparse.score(sparseScan);
-			SparseXCorrCalculator sparseModel=new SparseXCorrCalculator(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters);
+			SparseXCorrCalculator sparseModel=sparseModelCalculator!=null?sparseModelCalculator:new SparseXCorrCalculator(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters);
 			float xCorrModel=sparseModel.score(sparseScan);
 			
 			return new float[] {xTandem, xCorrLib, xCorrModel, (float)Log.protectedLog10(dotProduct), (float)Log.protectedLog10(weightedDotProduct), sumOfSquaredErrors, weightedSumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};

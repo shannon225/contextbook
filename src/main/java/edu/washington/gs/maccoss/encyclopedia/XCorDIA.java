@@ -216,7 +216,7 @@ public class XCorDIA {
 				maxMzRange=range.getStop();
 			}
 		}
-		Range entireRange=new Range(minMzRange, maxMzRange);
+//		Range entireRange=new Range(minMzRange, maxMzRange);
 
 		Logger.logLine("Reading FASTA peptides...");
 		// add database to proteome
@@ -226,7 +226,7 @@ public class XCorDIA {
 			backgroundProteome.addAll(peptides);
 
 			if (!targetList.isPresent()) {
-				if (false) { // FIXME
+//				if (false) { // FIXME
 //					ArrayList<ScoredObject<String>> scoredPeptides=new ArrayList<ScoredObject<String>>();
 //					for (String peptide : peptides) {
 //						byte expectedCharge=PeptideUtils.getExpectedChargeState(peptide);
@@ -245,13 +245,13 @@ public class XCorDIA {
 //						targets.add(pe);
 //						if (count>=10) break;
 //					}
-				} else {
+//				} else {
 					// search all peptides in database
 					for (String peptide : peptides) {
 						FastaPeptideEntry pe=entry.getSubEntry(peptide);
 						targets.add(pe);
 					}
-				}
+//				}
 			}
 		}
 		

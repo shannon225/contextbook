@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
@@ -34,8 +35,10 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 
 	@Override
 	protected Nothing process() {
+		EncyclopediaScorer eScorer=(EncyclopediaScorer)scorer;
 		int movingAverageLength=Math.round(parameters.getExpectedPeakWidth()/dutyCycle);
 		for (LibraryEntry entry : super.entries) {
+			AuxillaryPSMScorer auxScorer=eScorer.getAuxScorer().getEntryOptimizedScorer(entry);
 			FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 			FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge());
 			
@@ -45,7 +48,7 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 			float[] primary=new float[super.stripes.size()];
 			for (int i=0; i<super.stripes.size(); i++) {
 				Stripe stripe=super.stripes.get(i);
-				primary[i]=scorer.score(entry, stripe, ions);
+				primary[i]=eScorer.score(entry, stripe, ions);
 			}
 			
 			float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
@@ -70,7 +73,7 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 					
 				} else {
 					Stripe stripe=super.stripes.get(index);
-					float[] auxScoreArray=scorer.auxScore(entry, stripe, predictedIsotopeDistribution, precursors);
+					float[] auxScoreArray=auxScorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
 					float evalue=calculator.getNegLog10EValue(score);
 					if (Float.isNaN(evalue)) {
 						evalue=-1.0f;
