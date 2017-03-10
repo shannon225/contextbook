@@ -117,7 +117,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		options.add(new LabeledComponent("Proteome Type", proteomeType));
 		options.add(new LabeledComponent("Precursor Mass Tolerance", precursorTolerance));
 		options.add(new LabeledComponent("Fragment Mass Tolerance", fragmentTolerance));
-		options.add(new LabeledComponent("Fragment Mass Tolerance", libraryTolerance));
+		options.add(new LabeledComponent("Library Mass Tolerance", libraryTolerance));
 		options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
 		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
 

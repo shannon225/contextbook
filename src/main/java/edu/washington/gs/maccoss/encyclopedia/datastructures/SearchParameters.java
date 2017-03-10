@@ -33,6 +33,7 @@ public class SearchParameters {
 	protected final int numberOfQuantitativePeaks;
 	protected final double precursorOffsetPPM;
 	protected final double fragmentOffsetPPM;
+	protected final boolean useNLsForXCorr=false;
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, File percolatorLocation, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
@@ -214,5 +215,8 @@ public class SearchParameters {
 	}
 	public int getNumberOfQuantitativePeaks() {
 		return numberOfQuantitativePeaks;
+	}
+	public boolean isUseNLsForXCorr() {
+		return useNLsForXCorr;
 	}
 }

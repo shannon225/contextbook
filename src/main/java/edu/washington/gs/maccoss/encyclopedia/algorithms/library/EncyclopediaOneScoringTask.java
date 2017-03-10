@@ -9,11 +9,13 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import gnu.trove.map.hash.TFloatFloatHashMap;
@@ -34,13 +36,16 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 	protected Nothing process() {
 		int movingAverageLength=Math.round(parameters.getExpectedPeakWidth()/dutyCycle);
 		for (LibraryEntry entry : super.entries) {
+			FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+			FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge());
+			
 			PeptideScoringResult result=new PeptideScoringResult(entry);
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
 			
 			float[] primary=new float[super.stripes.size()];
 			for (int i=0; i<super.stripes.size(); i++) {
 				Stripe stripe=super.stripes.get(i);
-				primary[i]=scorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
+				primary[i]=scorer.score(entry, stripe, ions);
 			}
 			
 			float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);

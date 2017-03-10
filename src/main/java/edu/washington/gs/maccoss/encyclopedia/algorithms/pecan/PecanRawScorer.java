@@ -29,6 +29,10 @@ public class PecanRawScorer implements PSMPeakScorer {
 	public float score(LibraryEntry entry, Spectrum spectrum) {
 		return PeakScores.sumScores(getIndividualPeakScores(entry, spectrum, true)); // dot product
 	}
+	@Override
+	public float score(LibraryEntry entry, Spectrum spectrum, FragmentIon[] ions) {
+		return PeakScores.sumScores(getIndividualPeakScores(entry, spectrum, true)); // dot product
+	}
 
 	@Override
 	public float[] auxScore(LibraryEntry entry, Spectrum spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {

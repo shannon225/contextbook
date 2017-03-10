@@ -7,6 +7,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 
 public class XCorDIAOneScorer implements PSMScorer {
@@ -20,6 +21,12 @@ public class XCorDIAOneScorer implements PSMScorer {
 	public float[] auxScore(LibraryEntry entry, Spectrum spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		return auxScorer.score(entry, spectrum, predictedIsotopeDistribution, precursors);
 	}
+	
+	@Override
+	public float score(LibraryEntry entry, Spectrum spectrum, FragmentIon[] ions) {
+		return score(entry, spectrum);
+	}
+
 	@Override
 	public String[] getAuxScoreNames(LibraryEntry entry) {
 		return auxScorer.getScoreNames(entry);

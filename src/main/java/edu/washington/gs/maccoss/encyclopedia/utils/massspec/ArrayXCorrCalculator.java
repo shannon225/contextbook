@@ -202,34 +202,44 @@ public class ArrayXCorrCalculator {
 			case YONLY:
 				FragmentIon[] yIons=model.getYIons();
 				allPeaks.addAll(getPeaks(yIons, 0.0, primaryIonIntensity));
-				allPeaks.addAll(getPeaks(yIons, -MassConstants.nh3, neutralLossIntensity));
-				allPeaks.addAll(getPeaks(yIons, -MassConstants.oh2, neutralLossIntensity));
+				if (params.isUseNLsForXCorr()) {
+					allPeaks.addAll(getPeaks(yIons, -MassConstants.nh3, neutralLossIntensity));
+					allPeaks.addAll(getPeaks(yIons, -MassConstants.oh2, neutralLossIntensity));
+				}
 				break;
-				
+
 			case CID:
 				FragmentIon[] yIonsCID=model.getYIons();
 				allPeaks.addAll(getPeaks(yIonsCID, 0.0, primaryIonIntensity));
-				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.nh3, neutralLossIntensity));
-				allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.oh2, neutralLossIntensity));
-				
+				if (params.isUseNLsForXCorr()) {
+					allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.nh3, neutralLossIntensity));
+					allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.oh2, neutralLossIntensity));
+				}
+
 				FragmentIon[] bIonsCID=model.getBIons();
 				allPeaks.addAll(getPeaks(bIonsCID, 0.0, primaryIonIntensity));
-				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.nh3, neutralLossIntensity));
-				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.oh2, neutralLossIntensity));
-				allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.co, neutralLossIntensity));
+				if (params.isUseNLsForXCorr()) {
+					allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.nh3, neutralLossIntensity));
+					allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.oh2, neutralLossIntensity));
+					allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.co, neutralLossIntensity));
+				}
 				break;
-				
+
 			case ETD:
 				FragmentIon[] cIonsCID=model.getCIons();
 				allPeaks.addAll(getPeaks(cIonsCID, 0.0, primaryIonIntensity));
-				allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.nh3, neutralLossIntensity));
-				allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.oh2, neutralLossIntensity));
-				
+				if (params.isUseNLsForXCorr()) {
+					allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.nh3, neutralLossIntensity));
+					allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.oh2, neutralLossIntensity));
+				}
+
 				FragmentIon[] zIonsCID=model.getCIons();
 				allPeaks.addAll(getPeaks(zIonsCID, 0.0, primaryIonIntensity));
 				allPeaks.addAll(getPeaks(zIonsCID, MassConstants.neutronMass, primaryIonIntensity)); // z+1
-				allPeaks.addAll(getPeaks(zIonsCID, -MassConstants.nh3, neutralLossIntensity));
-				allPeaks.addAll(getPeaks(zIonsCID, -MassConstants.oh2, neutralLossIntensity));
+				if (params.isUseNLsForXCorr()) {
+					allPeaks.addAll(getPeaks(zIonsCID, -MassConstants.nh3, neutralLossIntensity));
+					allPeaks.addAll(getPeaks(zIonsCID, -MassConstants.oh2, neutralLossIntensity));
+				}
 				break;
 				
 			default:
