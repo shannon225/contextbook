@@ -30,14 +30,14 @@ public class SparseIndexMap extends TIntObjectHashMap {
 	public Peak adjustOrPutValue(int key, double mass, float intensity) {
 		int index=insertKey(key);
 		final boolean isNewMapping;
-		final Peak newValue;
+		final Peak oldValue;
 		if (index<0) {
 			index=-index-1;
-			newValue=(Peak)_values[index];
-			_values[index]=new Peak(newValue.mass, newValue.intensity+intensity);
+			oldValue=(Peak)_values[index];
+			_values[index]=new Peak(oldValue.mass, oldValue.intensity+intensity);
 			isNewMapping=false;
 		} else {
-			newValue=(Peak)_values[index];
+			oldValue=(Peak)_values[index];
 			_values[index]=new Peak(mass, intensity);
 			isNewMapping=true;
 		}
@@ -46,7 +46,7 @@ public class SparseIndexMap extends TIntObjectHashMap {
 			postInsertHook(consumeFreeSlot);
 		}
 
-		return newValue;
+		return oldValue;
 	}
 
 	public Peak putIfGreater(int key, double mass, float intensity) {
