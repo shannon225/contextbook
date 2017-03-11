@@ -105,6 +105,7 @@ public class LibraryReportExtractor {
 					int index=Collections.binarySearch(sourceFiles, sourceFile);
 					if (index<0) throw new EncyclopediaException("Unexpected sample: "+sourceFile);
 
+					// FIXME NEED TO NORMALIZE BY TIC
 					float tic=ticBySourceFileMap.get(sourceFile);
 					float normalizedIntensity;
 					if (tic>0.0f) {
@@ -269,6 +270,7 @@ public class LibraryReportExtractor {
 				
 				Collections.sort(sourceFiles);
 				
+				// FIXME need to add TIC normalization in
 				float averageTIC=0.0f;
 				TObjectFloatHashMap<String> ticBySourceFileMap=new TObjectFloatHashMap<String>();
 				for (String sourceFile : sourceFiles) {

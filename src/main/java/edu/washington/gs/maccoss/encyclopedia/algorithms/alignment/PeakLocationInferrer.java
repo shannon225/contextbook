@@ -304,7 +304,7 @@ public class PeakLocationInferrer {
 						}
 					}
 					
-					Logger.logLine(resultLibrary.getName()+"produced Parsed:"+targetPeptides.size()+", BEST:"+bestEntries.size());
+					Logger.logLine(resultLibrary.getName()+" produced Parsed:"+targetPeptides.size()+", BEST:"+bestEntries.size());
 					
 					archetypalPeptides.put(job, bestEntries);
 					
