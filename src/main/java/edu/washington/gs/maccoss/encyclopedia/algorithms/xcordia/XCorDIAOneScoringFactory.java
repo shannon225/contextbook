@@ -20,7 +20,7 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVCon
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 
 public class XCorDIAOneScoringFactory implements LibraryScoringFactory {
-	public static final String version="0.3.6";
+	public static final String version="0.4.0";
 	private final PecanSearchParameters parameters;
 
 	public XCorDIAOneScoringFactory(PecanSearchParameters parameters) {
