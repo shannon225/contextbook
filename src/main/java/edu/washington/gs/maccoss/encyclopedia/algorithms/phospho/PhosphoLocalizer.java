@@ -42,13 +42,13 @@ public class PhosphoLocalizer {
 	public static final float MINIMUM_SCORE=-Log.log10(0.05f);
 	private final StripeFileInterface diaFile;
 	private final SearchParameters params;
-	private final BackgroundFrequencyCalculator background;
+	private final BackgroundFrequencyInterface background;
 	private final float gradientLength;
 
 	public PhosphoLocalizer(StripeFileInterface diaFile, LibraryInterface searchedLibrary, SearchParameters params) throws IOException,DataFormatException,SQLException {
 		this.diaFile=diaFile;
 		this.params=params;
-		background=BackgroundFrequencyCalculator.generateBackground(diaFile);
+		background=BinnedBackgroundFrequencyCalculator.generateBackground(diaFile);
 		gradientLength=diaFile.getGradientLength();
 	}
 

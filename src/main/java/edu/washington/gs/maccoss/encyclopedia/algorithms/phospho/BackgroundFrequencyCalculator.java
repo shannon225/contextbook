@@ -24,7 +24,7 @@ import gnu.trove.set.hash.TDoubleHashSet;
  * @author searleb
  *
  */
-public class BackgroundFrequencyCalculator {
+public class BackgroundFrequencyCalculator implements BackgroundFrequencyInterface {
 	private static final int MASS_COUNTER_BIN_COUNT=1000;
 	private final double[] binBoundaries;
 	private final TDoubleIntHashMap[] binCounters;
@@ -42,11 +42,10 @@ public class BackgroundFrequencyCalculator {
 		this.numberOfSpectra=numberOfSpectra;
 	}
 	
-	/**
-	 * for display only
-	 * @param precursorMz
-	 * @return
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequencyInterface#getRoundedMassCounters(double, edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance)
 	 */
+	@Override
 	public Pair<double[], float[]> getRoundedMassCounters(double precursorMz, MassTolerance tolerance) {
 		final double[] bestMass=new double[MASS_COUNTER_BIN_COUNT];
 		int binIndex=getBinIndex(precursorMz);
@@ -71,7 +70,7 @@ public class BackgroundFrequencyCalculator {
 		return new Pair<double[], float[]>(bestMass, getFrequencies(bestMass, precursorMz, tolerance));
 	}
 	
-	public static BackgroundFrequencyCalculator generateBackground(StripeFileInterface diafile) throws DataFormatException, SQLException, IOException {
+	public static BackgroundFrequencyInterface generateBackground(StripeFileInterface diafile) throws DataFormatException, SQLException, IOException {
 		TDoubleHashSet boundaries=new TDoubleHashSet();
 		ArrayList<Range> ranges=new ArrayList<Range>(diafile.getRanges().keySet());
 		Collections.sort(ranges);
@@ -114,7 +113,7 @@ public class BackgroundFrequencyCalculator {
 		return new BackgroundFrequencyCalculator(binBoundaries, binCounters, numberOfSpectra);
 	}
 	
-	public static BackgroundFrequencyCalculator generateBackground(StripeFileInterface diafile, LibraryInterface library) throws DataFormatException, SQLException, IOException {
+	public static BackgroundFrequencyInterface generateBackground(StripeFileInterface diafile, LibraryInterface library) throws DataFormatException, SQLException, IOException {
 		TDoubleHashSet boundaries=new TDoubleHashSet();
 		for (Range range : diafile.getRanges().keySet()) {
 			boundaries.add(range.getStart());
@@ -149,6 +148,10 @@ public class BackgroundFrequencyCalculator {
 		return new BackgroundFrequencyCalculator(binBoundaries, binCounters, numberOfSpectra);
 	}
 	
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequencyInterface#getFrequencies(double[], double, edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance)
+	 */
+	@Override
 	public float[] getFrequencies(double[] ions, double precursorMz, MassTolerance tolerance) {
 		int[] counters=new int[ions.length];
 		Arrays.fill(counters, 1); // add pseudocount
@@ -172,7 +175,7 @@ public class BackgroundFrequencyCalculator {
 		return getFrequencies(counters, numberOfLibraryEntries);
 	}
 
-	public int getBinIndex(double precursorMz) {
+	private int getBinIndex(double precursorMz) {
 		int index=Arrays.binarySearch(binBoundaries, precursorMz);
 		if (index<0) {
 			index=(-(index+1))-1;

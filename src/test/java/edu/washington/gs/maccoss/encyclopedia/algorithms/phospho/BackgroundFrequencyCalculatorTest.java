@@ -31,7 +31,7 @@ public class BackgroundFrequencyCalculatorTest {
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 		
 		//BackgroundFrequencyCalculator calculator=BackgroundFrequencyCalculator.generateBackground(stripefile, library);
-		BackgroundFrequencyCalculator calculator=BackgroundFrequencyCalculator.generateBackground(stripefile);
+		BackgroundFrequencyInterface calculator=BackgroundFrequencyCalculator.generateBackground(stripefile);
 		
 		Pair<double[], float[]> counterPair=calculator.getRoundedMassCounters(600.0, parameters.getFragmentTolerance());
 		double[] masses=counterPair.x;
