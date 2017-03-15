@@ -38,7 +38,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorrStripe;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
@@ -350,16 +349,16 @@ public class XCorDIA {
 			for (FastaPeptideEntry peptide : targets) {
 				String sequence=peptide.getSequence();
 
-				byte minCharge=parameters.getMinCharge();
-				byte maxCharge=parameters.getMaxCharge();
+				byte minCharge;
+				byte maxCharge;
 				byte expectedCharge=PeptideUtils.getExpectedChargeState(sequence);
-				if (false&&!targetList.isPresent()) { //FIXME
-					minCharge=expectedCharge;
-					maxCharge=expectedCharge;
-				} else {
+				//if (false&&!targetList.isPresent()) { //FIXME
+				//	minCharge=expectedCharge;
+				//	maxCharge=expectedCharge;
+				//} else {
 					minCharge=(byte)Math.max(parameters.getMinCharge(), expectedCharge-1);
 					maxCharge=(byte)Math.min(parameters.getMaxCharge(), expectedCharge+1);
-				}
+				//}
 				for (byte charge=minCharge; charge<=maxCharge; charge++) {
 					double mz=parameters.getAAConstants().getChargedMass(sequence, charge);
 					if (range.contains((float)mz)) {
@@ -423,7 +422,7 @@ public class XCorDIA {
 		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), featureFile, outputFile, parameters.getEffectivePercolatorThreshold());
 		stripefile.close();
 		
-		if (false&&!targetList.isPresent()) { //FIXME
+		/*if (false&&!targetList.isPresent()) { //FIXME
 			HashSet<String> accessions=new HashSet<String>();
 			for (PercolatorPeptide peptide : passingPeptides) {
 				accessions.addAll(PSMData.stringToAccessions(peptide.getProteinIDs()));
@@ -442,12 +441,12 @@ public class XCorDIA {
 			
 			runPie(progress, Optional.of(newTargets), diaFile, fastaFile, featureFile, outputFile, taskFactory);
 			
-		} else {
+		} else {*/
 			ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides);
 			Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 			Logger.logLine(""); 
 			progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
-		}
+		//}
 	}
 
 	

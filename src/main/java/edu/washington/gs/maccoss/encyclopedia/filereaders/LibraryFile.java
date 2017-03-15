@@ -431,6 +431,11 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		if (inferrer.isPresent()) {
 			topN=inferrer.get().getTopNIntensity(data);
 			topNMasses=inferrer.get().getTopNBestIons(data.getPeptideModSeq());
+			if (topNMasses==null) {
+				Logger.errorLine("Sorry, couldn't retention time align "+data.getPeptideModSeq()+" from source file. Are you trying to RT align samples too disparate?");
+				return index;
+			}
+			
 		} else {
 			ArrayList<Peak> peaks=data.getTopNPeaks(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
 			float total=0.0f;
