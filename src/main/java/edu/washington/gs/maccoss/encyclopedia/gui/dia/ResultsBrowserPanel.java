@@ -299,7 +299,7 @@ public class ResultsBrowserPanel extends JPanel {
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>(fragmentTraceMap.values());
 
 				ArrayList<Spectrum> precursors=PrecursorScan.downcast(dia.getPrecursors(targetRT-rtRange, targetRT+rtRange));
-				ChartPanel precursorChart=Charter.getChart("Retention Time", "Intensity", true, ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), precursors));
+				ChartPanel precursorChart=Charter.getChart("Retention Time (min)", "Intensity", true, ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), precursors));
 				
 				ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
 				JTabbedPane primaryTabs=new JTabbedPane();
@@ -311,17 +311,30 @@ public class ResultsBrowserPanel extends JPanel {
 				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(dia.getOriginalFileName(), psmdata, nullableLocalizer, stripes, parameters, false);
 				TransitionRefinementData data=quantTask.extractSpectrum(unit, rtRange, false);
 				if (data!=null) {
-					HashMap<String, ChartPanel> panels=TransitionRefiner.getChartPanels(data);
-					peakPickingSplit.setLeftComponent(panels.get("median"));
-					peakPickingSplit.setRightComponent(panels.get("unnormalized"));
-					
 					JTabbedPane tabs=new JTabbedPane();
 					
 					Optional<PhosphoLocalizationData> maybePhosphoData=Optional.empty();
 					if (parameters.isRunPhosphoLocalization()) {
 						maybePhosphoData=quantTask.runLocalization();
 					}
-					if (maybePhosphoData.isPresent()) {
+
+					if (!maybePhosphoData.isPresent()) {
+						HashMap<String, ChartPanel> panels=TransitionRefiner.getChartPanels(data);
+						peakPickingSplit.setLeftComponent(panels.get("median"));
+						peakPickingSplit.setRightComponent(panels.get("unnormalized"));
+						tabs.add("Quantification", peakPickingSplit);
+						
+						Spectrum bestStripe=ChromatogramExtractor.getTargetStripeByRT(downcastedSpectra, targetRT);
+						AnnotatedLibraryEntry annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(entry.getPeptideModSeq(), entry.getPrecursorCharge()), bestStripe, parameters);
+
+						JSplitPane specFragPane=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+						ChartPanel spectrumPane=Charter.getChart(annotatedEntry);
+						FragmentationTable fragTable=new FragmentationTable(entry, entry.getPeptideModSeq(), parameters);
+						specFragPane.add(spectrumPane, JSplitPane.TOP);
+						specFragPane.add(fragTable, JSplitPane.BOTTOM);
+
+						tabs.add("Detection", specFragPane);
+					} else {
 						PhosphoLocalizationData actuallyPhosphoData=maybePhosphoData.get();
 						HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> ionsVsUniqueList=actuallyPhosphoData.getScoreTraces();
 						HashMap<String, HashMap<FragmentIon, XYTrace>> uniqueFragmentIons=actuallyPhosphoData.getUniqueFragmentIons();
@@ -403,27 +416,14 @@ public class ResultsBrowserPanel extends JPanel {
 						axis.setRange(new org.jfree.data.Range(0.0f, Math.max(2.0f, range.getUpperBound())));
 						tabs.add("Phospho Localization", phosphoPane);
 						
-						ChartPanel coelutingPane=Charter.getChart("Retention Time (min)", "Coeluting Ions", true, complementaryIonsTraces.toArray(new XYTrace[complementaryIonsTraces.size()]));
+						/*ChartPanel coelutingPane=Charter.getChart("Retention Time (min)", "Coeluting Ions", true, complementaryIonsTraces.toArray(new XYTrace[complementaryIonsTraces.size()]));
 						axis=coelutingPane.getChart().getXYPlot().getRangeAxis();
 						range=axis.getRange();
 						axis.setRange(new org.jfree.data.Range(0.0f, Math.max(2.0f, range.getUpperBound())));
-						tabs.add("Coeluting Ions", coelutingPane);
+						tabs.add("Coeluting Ions", coelutingPane);*/
 						
 						tabs.add("Unique Fragment Ions", tabPanel);
 						
-					}
-					tabs.add("Quantification", peakPickingSplit);
-					if (!maybePhosphoData.isPresent()) {
-						Spectrum bestStripe=ChromatogramExtractor.getTargetStripeByRT(downcastedSpectra, targetRT);
-						AnnotatedLibraryEntry annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(entry.getPeptideModSeq(), entry.getPrecursorCharge()), bestStripe, parameters);
-
-						JSplitPane specFragPane=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-						ChartPanel spectrumPane=Charter.getChart(annotatedEntry);
-						FragmentationTable fragTable=new FragmentationTable(entry, entry.getPeptideModSeq(), parameters);
-						specFragPane.add(spectrumPane, JSplitPane.TOP);
-						specFragPane.add(fragTable, JSplitPane.BOTTOM);
-
-						tabs.add("Detection", specFragPane);
 					}
 					
 					rawSplit.setBottomComponent(tabs);

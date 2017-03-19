@@ -42,7 +42,7 @@ public class SearchGUIMain {
 		} else if (isOffending==1) {
 			shortName="PoopeDIA";
 			name="Lindsay's PoopeDIA: Peptide Searching for DIA";
-			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mike_icon.png"));
+			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mazie_icon.png"));
 		} else if (isOffending==2) {
 			shortName="ChocopeDIA";
 			name="MoMo's ChocopeDIA: Peptide Searching for DIA";

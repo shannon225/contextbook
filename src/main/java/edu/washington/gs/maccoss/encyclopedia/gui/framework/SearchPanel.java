@@ -378,7 +378,7 @@ public class SearchPanel extends JPanel {
 		bar.add(fileMenu);
 		
 		final ResultsBrowserPanel browser=new ResultsBrowserPanel(getVisibleTab().getParameters());
-		JMenuItem openElib=new JMenuItem("Open ELIB...", diaBrowserIcon);
+		JMenuItem openElib=new JMenuItem("Open ELIB...", libraryBrowserIcon);
 		openElib.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -415,7 +415,7 @@ public class SearchPanel extends JPanel {
 		bar.add(fileMenu);
 		
 		final MultiResultsBrowserPanel browser=new MultiResultsBrowserPanel(getVisibleTab().getParameters());
-		JMenuItem openElib=new JMenuItem("Open Multi ELIB...", diaBrowserIcon);
+		JMenuItem openElib=new JMenuItem("Open Multi ELIB...", libraryBrowserIcon);
 		openElib.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
