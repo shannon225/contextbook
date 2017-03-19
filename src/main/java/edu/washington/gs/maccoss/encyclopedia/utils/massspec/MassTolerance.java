@@ -8,6 +8,7 @@ import gnu.trove.list.array.TIntArrayList;
 //@Immutable
 public class MassTolerance implements Comparable<MassTolerance> {
 	private static final double UNUSED_TOLERANCE=-1.0;
+	private final MassErrorUnitType type; // here we treat Resolution as a cosmetic version of PPM
 	private final double amuTolerance;
 	private final double ppmTolerance;
 	private final double percent;
@@ -17,9 +18,15 @@ public class MassTolerance implements Comparable<MassTolerance> {
 	}
 
 	public MassTolerance(double tolerance, MassErrorUnitType type) {
+		this.type=type;
+		
 		if (MassErrorUnitType.PPM==type) {
 			this.amuTolerance=UNUSED_TOLERANCE;
 			this.ppmTolerance=tolerance;
+			this.percent=ppmTolerance/1000000.0;
+		} else if (MassErrorUnitType.RESOLUTION==type) {
+			this.amuTolerance=UNUSED_TOLERANCE;
+			this.ppmTolerance=1000000/tolerance;
 			this.percent=ppmTolerance/1000000.0;
 		} else {
 			this.amuTolerance=tolerance;
@@ -51,10 +58,12 @@ public class MassTolerance implements Comparable<MassTolerance> {
 	
 	@Override
 	public String toString() {
-		if (amuTolerance==UNUSED_TOLERANCE) {
-			return ppmTolerance+" "+MassErrorUnitType.toString(MassErrorUnitType.PPM);
+		if (MassErrorUnitType.PPM==type) {
+			return ppmTolerance+" "+MassErrorUnitType.toString(type);
+		} else if (MassErrorUnitType.RESOLUTION==type) {
+			return Math.round(1000000/ppmTolerance)+" "+MassErrorUnitType.toString(type);
 		} else {
-			return amuTolerance+" "+MassErrorUnitType.toString(MassErrorUnitType.AMU);
+			return amuTolerance+" "+MassErrorUnitType.toString(type);
 		}
 	}
 	

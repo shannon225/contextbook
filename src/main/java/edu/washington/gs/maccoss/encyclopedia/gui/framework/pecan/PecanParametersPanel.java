@@ -63,7 +63,10 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 			new MassTolerance(50.0, MassErrorUnitType.PPM), //3
 			new MassTolerance(100.0, MassErrorUnitType.PPM),//4
 			new MassTolerance(0.4, MassErrorUnitType.AMU),  //5
-			new MassTolerance(1.0, MassErrorUnitType.AMU)   //6
+			new MassTolerance(1.0, MassErrorUnitType.AMU),   //6
+			new MassTolerance(15000.0, MassErrorUnitType.RESOLUTION),//7
+			new MassTolerance(17500.0, MassErrorUnitType.RESOLUTION), //8
+			new MassTolerance(30000.0, MassErrorUnitType.RESOLUTION),//9
 	};
 	private static final String[] TOLERANCE_NAMES=new String[] {
 			TOLERANCE_VALUES[0].toString(), //0
@@ -72,7 +75,10 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 			TOLERANCE_VALUES[3].toString(), //3
 			TOLERANCE_VALUES[4].toString(), //4
 			TOLERANCE_VALUES[5].toString(), //5
-			TOLERANCE_VALUES[6].toString() //6
+			TOLERANCE_VALUES[6].toString(), //6
+			TOLERANCE_VALUES[7].toString(), //7
+			TOLERANCE_VALUES[8].toString(), //8
+			TOLERANCE_VALUES[9].toString(), //9
 	};
 	
 	private final FileChooserPanel backgroundFasta;

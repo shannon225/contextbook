@@ -90,8 +90,7 @@ public class PhosphoLocalizer {
 		}
 		
 		float duration=gradientLength/20.0f;
-		//float duration=6f*60f; // search for 6 minutes
-
+		
 		ArrayList<Spectrum> stripes=getScanSubset(retentionTime-duration, retentionTime+duration, allScansInStripe);
 		
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
@@ -178,6 +177,7 @@ public class PhosphoLocalizer {
 			// if we know we've seen: (S[+80])SSSSK
 			// and we're considering: (S[+80]S)SSSK
 			// then it's ok if we use matching ions from to (S[+80])SSSSK to identify S(S[+80])SSSK
+			// FIXME BUT WE NEED TO REMOVE THE (S[+80])SSSSK RT AS A POSSIBILITY!
 			
 			// fix ambiguity based on previously identified peptides
 			Optional<AmbiguousPeptideModSeq> ambiguityRemoved=targetPeptideAnnotation.removeAmbiguity(previouslyIdentified);
