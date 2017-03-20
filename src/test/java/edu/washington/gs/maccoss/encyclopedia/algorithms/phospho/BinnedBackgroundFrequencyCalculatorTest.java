@@ -12,7 +12,7 @@ import junit.framework.TestCase;
 public class BinnedBackgroundFrequencyCalculatorTest extends TestCase {
 	public static void main(String[] args) throws Exception {
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
-		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/elibs/mcf7/22jun2016_mcf7_phospho_1a.dia");
+		File diaFile=new File("/Users/searleb/Documents/phospho_localization/data/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);

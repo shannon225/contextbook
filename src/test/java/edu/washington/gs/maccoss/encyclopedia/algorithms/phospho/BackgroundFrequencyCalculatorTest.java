@@ -1,28 +1,22 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map.Entry;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
-import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class BackgroundFrequencyCalculatorTest {
 	public static void main(String[] args) throws Exception {
 		//File libraryFile=new File("/Users/searleb/Documents/projects/phosphopedia/VillenJ_Exactive_HumanPhosphoproteome.elib");
 		//File diaFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/dec2015_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
-		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
-		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
+		//File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
+		File diaFile=new File("/Users/searleb/Documents/phospho_localization/data/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
+		File libraryFile=new File("/Users/searleb/Documents/phospho_localization/data/VillenJ_Exactive_HumanPhosphoproteome.elib");
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		
 		LibraryFile library=new LibraryFile();
@@ -39,57 +33,5 @@ public class BackgroundFrequencyCalculatorTest {
 		for (int i=0; i<counters.length; i++) {
 			System.out.println(masses[i]+"\t"+counters[i]);
 		}
-		if (true) return;
-		
-		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
-
-		ArrayList<String> permutations=PhosphoPermuter.getPermutations("MQS[+80.0]LSLNK", parameters.getAAConstants());
-		for (String peptideModSeq : permutations) {
-			FragmentationModel model=new FragmentationModel(peptideModSeq, parameters.getAAConstants());
-			entryMap.put(peptideModSeq, model);
-		}
-		
-		HashMap<String, FragmentIon[]> uniqueIons=PhosphoLocalizer.getUniqueFragmentIons((byte)2, entryMap, parameters);
-
-		ArrayList<Stripe> stripes=stripefile.getStripes(500.730213, 19.97f*60f-600f, 19.98f*60f+600f, false);
-		
-		for (Entry<String, FragmentationModel> entry : entryMap.entrySet()) {
-			String peptideModSeq=entry.getKey();
-			FragmentIon[] targets=uniqueIons.get(peptideModSeq);
-			targets=entry.getValue().getYIons();
-			double[] ions=FragmentIon.getMasses(targets);
-
-			float[] frequencies=calculator.getFrequencies(ions, 500.730213, parameters.getFragmentTolerance());
-			TFloatFloatHashMap uniqueRtScoreMap=new TFloatFloatHashMap();
-			System.out.println(peptideModSeq);
-			for (int i=0; i<frequencies.length; i++) {
-				System.out.println(targets[i].toString()+"\t"+ions[i]+"\t"+frequencies[i]);
-			}
-			System.out.println();
-
-			for (Stripe stripe : stripes) {
-				float negLogProb=process(parameters, ions, frequencies, stripe);
-				//System.out.println(peptideModSeq+"\t"+stripe.getScanStartTime()/60f+"\t"+negLogProb);
-				uniqueRtScoreMap.put(stripe.getScanStartTime(), negLogProb);
-			}
-
-			//EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
-			//System.out.println("FINAL: "+peptideModSeq+" --> rt:"+uniqueCalculator.getMaxRT()/60.0f+", s:"+uniqueCalculator.getMaxRawScore()+", e:"+uniqueCalculator.getNegLog10EValue());
-		}
-
-		stripes=stripefile.getStripes(500.730213, 19.43f*60f, 19.44f*60f, false);
-	}
-
-	private static float process(SearchParameters parameters, double[] ions, float[] frequencies, Stripe stripe) {
-		double[] massArray=stripe.getMassArray();
-		float logProb=0.0f;
-		for (int i=0; i<frequencies.length; i++) {
-			float hitProb=frequencies[i]*massArray.length;
-			boolean match=parameters.getFragmentTolerance().getIndex(massArray, ions[i]).isPresent();
-			if (match) {
-				logProb+=Log.log10(hitProb);
-			}
-		}
-		return -logProb;
 	}
 }
