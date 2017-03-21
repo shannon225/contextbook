@@ -52,7 +52,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	private static final String[] NUMBER_OF_EXTRA_DECOY_ITEMS=new String[] {"Normal Target/Decoy", "+10% Extra Decoys", "+20% Extra Decoys", "+50% Extra Decoys", "+100% Extra Decoys (2x Time)"};
 	private static final float[] NUMBER_OF_EXTRA_DECOY_VALUES=new float[] {0.0f, 0.1f, 0.2f, 0.5f, 1.0f};
 	
-	private static final MassTolerance[] TOLERANCE_VALUES=new MassTolerance[] {
+	public static final MassTolerance[] TOLERANCE_VALUES=new MassTolerance[] {
 			new MassTolerance(5.0, MassErrorUnitType.PPM),  //0
 			new MassTolerance(10.0, MassErrorUnitType.PPM), //1
 			new MassTolerance(25.0, MassErrorUnitType.PPM), //2
@@ -63,8 +63,10 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 			new MassTolerance(15000.0, MassErrorUnitType.RESOLUTION),//7
 			new MassTolerance(17500.0, MassErrorUnitType.RESOLUTION), //8
 			new MassTolerance(30000.0, MassErrorUnitType.RESOLUTION),//9
+			new MassTolerance(35000.0, MassErrorUnitType.RESOLUTION), //10
+			new MassTolerance(60000.0, MassErrorUnitType.RESOLUTION),//11
 	};
-	private static final String[] TOLERANCE_NAMES=new String[] {
+	public static final String[] TOLERANCE_NAMES=new String[] {
 			TOLERANCE_VALUES[0].toString(), //0
 			TOLERANCE_VALUES[1].toString(), //1
 			TOLERANCE_VALUES[2].toString(), //2
@@ -75,6 +77,8 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 			TOLERANCE_VALUES[7].toString(), //7
 			TOLERANCE_VALUES[8].toString(), //8
 			TOLERANCE_VALUES[9].toString(), //9
+			TOLERANCE_VALUES[10].toString(), //10
+			TOLERANCE_VALUES[11].toString(), //11
 	};
 	
 	private static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_small_icon.png"));

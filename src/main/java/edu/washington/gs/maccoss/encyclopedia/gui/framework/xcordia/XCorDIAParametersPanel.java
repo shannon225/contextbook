@@ -33,6 +33,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
@@ -42,7 +43,6 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassErrorUnitType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInterface {
@@ -58,39 +58,14 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	private static final String[] NUMBER_OF_EXTRA_DECOY_ITEMS=new String[] {"Normal Target/Decoy", "+10% Extra Decoys", "+20% Extra Decoys", "+50% Extra Decoys", "+100% Extra Decoys (2x Time)"};
 	private static final float[] NUMBER_OF_EXTRA_DECOY_VALUES=new float[] {0.0f, 0.1f, 0.2f, 0.5f, 1.0f};
 	
-	private static final MassTolerance[] TOLERANCE_VALUES=new MassTolerance[] {
-			new MassTolerance(5.0, MassErrorUnitType.PPM),  //0
-			new MassTolerance(10.0, MassErrorUnitType.PPM), //1
-			new MassTolerance(25.0, MassErrorUnitType.PPM), //2
-			new MassTolerance(50.0, MassErrorUnitType.PPM), //3
-			new MassTolerance(100.0, MassErrorUnitType.PPM),//4
-			new MassTolerance(0.4, MassErrorUnitType.AMU),  //5
-			new MassTolerance(1.0, MassErrorUnitType.AMU),   //6
-			new MassTolerance(15000.0, MassErrorUnitType.RESOLUTION),//7
-			new MassTolerance(17500.0, MassErrorUnitType.RESOLUTION), //8
-			new MassTolerance(30000.0, MassErrorUnitType.RESOLUTION),//9
-	};
-	private static final String[] TOLERANCE_NAMES=new String[] {
-			TOLERANCE_VALUES[0].toString(), //0
-			TOLERANCE_VALUES[1].toString(), //1
-			TOLERANCE_VALUES[2].toString(), //2
-			TOLERANCE_VALUES[3].toString(), //3
-			TOLERANCE_VALUES[4].toString(), //4
-			TOLERANCE_VALUES[5].toString(), //5
-			TOLERANCE_VALUES[6].toString(), //6
-			TOLERANCE_VALUES[7].toString(), //7
-			TOLERANCE_VALUES[8].toString(), //8
-			TOLERANCE_VALUES[9].toString(), //9
-	};
-	
 	private final FileChooserPanel backgroundFasta;
 	private final FileChooserPanel targetFasta;
 	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {DataAcquisitionType.toName(DataAcquisitionType.OVERLAPPING_DIA), DataAcquisitionType.toName(DataAcquisitionType.DIA)});
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "PepsinA", "No Enzyme"});
 	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "None"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.YONLY), FragmentationType.toName(FragmentationType.ETD)});
-	private final JComboBox<String> precursorTolerance=new JComboBox<String>(TOLERANCE_NAMES);
-	private final JComboBox<String> fragmentTolerance=new JComboBox<String>(TOLERANCE_NAMES);
+	private final JComboBox<String> precursorTolerance=new JComboBox<String>(EncyclopediaParametersPanel.TOLERANCE_NAMES);
+	private final JComboBox<String> fragmentTolerance=new JComboBox<String>(EncyclopediaParametersPanel.TOLERANCE_NAMES);
 
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance());
 
@@ -230,8 +205,8 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
-		MassTolerance precursorPPMValue=TOLERANCE_VALUES[precursorTolerance.getSelectedIndex()];
-		MassTolerance fragmentPPMValue=TOLERANCE_VALUES[fragmentTolerance.getSelectedIndex()];
+		MassTolerance precursorPPMValue=EncyclopediaParametersPanel.TOLERANCE_VALUES[precursorTolerance.getSelectedIndex()];
+		MassTolerance fragmentPPMValue=EncyclopediaParametersPanel.TOLERANCE_VALUES[fragmentTolerance.getSelectedIndex()];
 		byte minChargeValue=((Number)minCharge.getValue()).byteValue();
 		byte maxChargeValue=((Number)maxCharge.getValue()).byteValue();
 		byte maxMissedCleavageValue=((Number)maxMissedCleavage.getValue()).byteValue();
@@ -261,8 +236,8 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		
 		boolean gotIt=false;
 		MassTolerance pre=params.getPrecursorTolerance();
-		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
-			if (TOLERANCE_VALUES[i].equals(pre)) {
+		for (int i=0; i<EncyclopediaParametersPanel.TOLERANCE_VALUES.length; i++) {
+			if (EncyclopediaParametersPanel.TOLERANCE_VALUES[i].equals(pre)) {
 				precursorTolerance.setSelectedIndex(i);
 				gotIt=true;
 				break;
@@ -272,8 +247,8 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		
 		gotIt=false;
 		MassTolerance frag=params.getFragmentTolerance();
-		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
-			if (TOLERANCE_VALUES[i].equals(frag)) {
+		for (int i=0; i<EncyclopediaParametersPanel.TOLERANCE_VALUES.length; i++) {
+			if (EncyclopediaParametersPanel.TOLERANCE_VALUES[i].equals(frag)) {
 				fragmentTolerance.setSelectedIndex(i);
 				gotIt=true;
 				break;
