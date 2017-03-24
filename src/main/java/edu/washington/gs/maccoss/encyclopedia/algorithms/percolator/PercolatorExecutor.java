@@ -24,6 +24,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 
 public class PercolatorExecutor extends ExternalExecutor {
+	private static final byte VERSION_NUMBER=2;
+	@SuppressWarnings("unused")
+	private static final String PERCOLATOR_VERSION=VERSION_NUMBER==2?"v2-10":"v3-01";
 
 	PercolatorExecutor(File tsv, File outputFile, boolean useXML) {
 		super(generateCommand(tsv, outputFile, Optional.ofNullable((File)null), useXML));
@@ -114,14 +117,23 @@ public class PercolatorExecutor extends ExternalExecutor {
 		return peptideString.substring(peptideString.indexOf('.')+1, peptideString.lastIndexOf('.'));
 	}
 	
+	@SuppressWarnings("unused")
 	static String[] generateCommand(File tsv, File outputFile, Optional<File> percolatorLocation, boolean useXML) {
 		File percolator=getPercolator(percolatorLocation);
 
-		if (useXML) {
-			return new String[] {percolator.getAbsolutePath(), "-y", "--no-terminate", "-N", "200000", "-X", outputFile.getAbsolutePath(), "--decoy-xml-output", tsv.getAbsolutePath()};
+		if (VERSION_NUMBER==2) {
+			if (useXML) {
+				return new String[] {percolator.getAbsolutePath(), "-y", "-X", outputFile.getAbsolutePath(), "--decoy-xml-output", tsv.getAbsolutePath()};
+			} else {
+				return new String[] {percolator.getAbsolutePath(), "-y", tsv.getAbsolutePath()};
+			}	
 		} else {
-			return new String[] {percolator.getAbsolutePath(), "-y", "--no-terminate", "-N", "200000", tsv.getAbsolutePath()};
-		}	
+			if (useXML) {
+				return new String[] {percolator.getAbsolutePath(), "-y", "--no-terminate", "-N", "200000", "-X", outputFile.getAbsolutePath(), "--decoy-xml-output", tsv.getAbsolutePath()};
+			} else {
+				return new String[] {percolator.getAbsolutePath(), "-y", "--no-terminate", "-N", "200000", tsv.getAbsolutePath()};
+			}	
+		}
 	}
 	
 	static File getPercolator(Optional<File> percolatorLocation) {
@@ -134,7 +146,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 			OS os=OSDetector.getOS();
 			switch (os) {
 				case WINDOWS: {
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-v3-01.exe");
+					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+PERCOLATOR_VERSION+".exe");
 					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
 					percolator.setExecutable(true);
 					
@@ -146,13 +158,13 @@ public class PercolatorExecutor extends ExternalExecutor {
 					return percolator;
 				}
 				case MAC: {
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-v3-01.mac");
+					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+PERCOLATOR_VERSION+".mac");
 					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
 					percolator.setExecutable(true);
 					return percolator;
 				}
 				case LINUX:
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-v3-01.lin");
+					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+PERCOLATOR_VERSION+".lin");
 					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
 					percolator.setExecutable(true);
 					return percolator;

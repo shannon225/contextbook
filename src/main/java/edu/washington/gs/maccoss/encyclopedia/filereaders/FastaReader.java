@@ -25,13 +25,16 @@ public class FastaReader {
 		}
 		return peptides;
 	}
-	
+
 	public static ArrayList<FastaEntryInterface> readFasta(File f) {
+		return readFasta(f, null);
+	}
+	public static ArrayList<FastaEntryInterface> readFasta(File f, String keyword) {
 		BufferedReader in=null;
 		ArrayList<FastaEntryInterface> entryList=new ArrayList<FastaEntryInterface>();
 		try {
 			in=new BufferedReader(new FileReader(f));
-			return readFasta(in, f.getName());
+			return readFasta(in, f.getName(), keyword);
 
 		} catch (IOException ioe) {
 			Logger.errorLine("I/O Error found reading FASTA ["+f.getAbsolutePath()+"]");
@@ -49,14 +52,17 @@ public class FastaReader {
 	}
 	
 	public static ArrayList<FastaEntryInterface> readFasta(String s, String fileName) {
-		return readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)))), fileName);
+		return readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)))), fileName, null);
 	}
 	
 	public static ArrayList<FastaEntryInterface> readFasta(InputStream s, String fileName) {
-		return readFasta(new BufferedReader(new InputStreamReader(s)), fileName);
+		return readFasta(new BufferedReader(new InputStreamReader(s)), fileName, null);
 	}
 	
-	public static ArrayList<FastaEntryInterface> readFasta(BufferedReader in, String fileName) {
+	public static ArrayList<FastaEntryInterface> readFasta(BufferedReader in, String fileName, String keyword) {
+		if (keyword!=null) {
+			keyword=keyword.toLowerCase();
+		}
 		ArrayList<FastaEntryInterface> entryList=new ArrayList<FastaEntryInterface>();
 		try {
 			String eachline;
@@ -68,7 +74,9 @@ public class FastaReader {
 				}
 				if (eachline.startsWith(">")) {
 					if (annotation!=null) {
-						entryList.add(new FastaEntry(fileName, annotation, sequence.toString()));
+						if (keyword==null||annotation.toLowerCase().indexOf(keyword)>=0) {
+							entryList.add(new FastaEntry(fileName, annotation, sequence.toString()));
+						}
 					}
 					annotation=eachline;
 					sequence.setLength(0);
@@ -77,7 +85,9 @@ public class FastaReader {
 				}
 			}
 			if (annotation!=null) {
-				entryList.add(new FastaEntry(fileName, annotation, sequence.toString()));
+				if (keyword==null||annotation.toLowerCase().indexOf(keyword)>=0) {
+					entryList.add(new FastaEntry(fileName, annotation, sequence.toString()));
+				}
 			}
 			return entryList;
 

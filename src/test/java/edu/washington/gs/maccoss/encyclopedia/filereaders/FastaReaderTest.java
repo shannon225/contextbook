@@ -1,14 +1,24 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import junit.framework.TestCase;
 
 public class FastaReaderTest extends TestCase {
 	//private static final SearchParameters PARAMETERS=new SearchParameters(FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"));
+	
+	public static void main(String[] args) {
+		File f=new File("/Users/searleb/Downloads/uniprot_trembl.fasta");
+		File n=new File("/Users/searleb/Downloads/uniprot_human_trembl.fasta");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, "human");
+
+		FastaWriter.writeFasta(n, entries);
+	}
 	
 	public void testFastaParsing() {
 		String bsa=">ALBU_HUMAN Serum albumin OS=Homo sapiens GN=ALB PE=1 SV=2\n"+"MKWVTFISLLFLFSSAYSRGVFRRDAHKSEVAHRFKDLGEENFKALVLIAFAQYLQQCPF\n"
@@ -31,11 +41,25 @@ public class FastaReaderTest extends TestCase {
 		assertTrue(peptides.contains("GIKDVSFDR"));
 	}
 
-	public void testFastaReader() {
+	public void testFastaReader() throws Exception {
 		InputStream is=getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(is, "ecoli-190209-contam_correctNL.fasta");
 
 		assertEquals(4178, entries.size());
+		
+		File temp=File.createTempFile("ecoli_", ".fasta"); // test write
+		temp.deleteOnExit();
+		FastaWriter.writeFasta(temp, entries);
+		ArrayList<FastaEntryInterface> writtenEntries=FastaReader.readFasta(temp);
+
+		assertEquals(4178, writtenEntries.size());
+		for (int i=0; i<writtenEntries.size(); i++) {
+			assertEquals(entries.get(i).getAccession(), writtenEntries.get(i).getAccession());
+			assertEquals(entries.get(i).getSequence(), writtenEntries.get(i).getSequence());
+		}
+		
+		entries=FastaReader.readFasta(temp, "NP_"); // test filter
+		assertEquals(3934, entries.size());
 
 		/*
 		TIntObjectHashMap<TFloatArrayList> peptideDefects=new TIntObjectHashMap<TFloatArrayList>();
