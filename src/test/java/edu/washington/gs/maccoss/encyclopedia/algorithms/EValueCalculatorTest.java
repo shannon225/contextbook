@@ -1,15 +1,42 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import junit.framework.TestCase;
 
 public class EValueCalculatorTest extends TestCase {
 	public static void main(String[] args) {
-		TFloatFloatHashMap map=generateData();
+		TFloatFloatHashMap map=generateRandomData();
 		EValueCalculator calculator=new EValueCalculator(map);
-		Charter.launchChart("score", "count", false, calculator.toTraces());
+		XYTraceInterface[] traces=calculator.toUnloggedTraces();
+		Charter.launchChart("score", "count", false, traces);
+		
+		for (int i=0; i<traces.length; i++) {
+			Pair<double[], double[]> xy=traces[i].toArrays();
+			for (int j=0; j<xy.x.length; j++) {
+				System.out.println(xy.x[j]+"\t"+xy.y[j]);
+			}
+			System.out.println();
+		}
 	}
+	public static TFloatFloatHashMap generateRandomData() {
+		TFloatFloatHashMap map=new TFloatFloatHashMap();
+		for (int i=0; i<10000; i++) {
+			float max=0.0f;
+			for (int r=0; r<1000; r++) {
+				float rand=5f;
+				for (int j=0; j<10; j++) {
+					rand=rand*(float) Math.random();
+				}
+				if (rand>max) max=rand;
+			}
+			map.put(i, max);
+		}
+		return map;
+	}
+	
 	public void testEValue() {
 		TFloatFloatHashMap map=generateData();
 		EValueCalculator calculator=new EValueCalculator(map);

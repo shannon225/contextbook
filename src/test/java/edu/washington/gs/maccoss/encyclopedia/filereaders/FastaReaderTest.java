@@ -4,20 +4,67 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 
+import org.apache.commons.math3.util.CombinatoricsUtils;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import junit.framework.TestCase;
 
 public class FastaReaderTest extends TestCase {
-	//private static final SearchParameters PARAMETERS=new SearchParameters(FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"));
 	
 	public static void main(String[] args) {
-		File f=new File("/Users/searleb/Downloads/uniprot_trembl.fasta");
-		File n=new File("/Users/searleb/Downloads/uniprot_human_trembl.fasta");
-		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, "human");
+		File f=new File("/Users/searleb/Downloads/Saccharomyces_cerevisiae_sprot_032417.fasta");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f);
 
-		FastaWriter.writeFasta(n, entries);
+		int countBase=0;
+		int countNTermProtein=0;
+		int countNTermPyroGlu=0;
+		int countTryp=0;
+		int countMet=0;
+		int countSTY=0;
+		int countQN=0;
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+		for (FastaEntryInterface entry : entries) {
+			countNTermProtein++;
+			ArrayList<String> peptides=enzyme.digestProtein(entry.getSequence(), 8, 40, 2);
+			for (String sequence : peptides) {
+				countBase++;
+				countNTermProtein++;
+				if (sequence.charAt(0)=='Q'||sequence.charAt(0)=='C') {
+					countNTermPyroGlu+=2;
+				} else {
+					countNTermPyroGlu++;
+				}
+				
+				countTryp+=getCombinatorial(sequence, 'W');
+				countMet+=getCombinatorial(sequence, 'M');
+				countSTY+=getCombinatorial(sequence, 'S', 'T', 'Y');
+				countQN+=getCombinatorial(sequence, 'Q', 'N');
+			}
+		}
+		System.out.println(countBase+"\tcountBase");
+		System.out.println(countNTermProtein+"\tcountNTermProtein");
+		System.out.println(countNTermPyroGlu+"\tcountNTermPyroGlu");
+		System.out.println(countTryp+"\tcountTryp");
+		System.out.println(countMet+"\tcountMet");
+		System.out.println(countQN+"\tcountQN");
+		System.out.println(countSTY+"\tcountSTY");
+	}
+	
+	static int getCombinatorial(String sequence, char... target) {
+		int num=0;
+		for (char c : sequence.toCharArray()) {
+			for (int i=0; i<target.length; i++) {
+				if (c==target[i]) {
+					num++;
+				}
+			}
+		}
+		if (num==0) return 1;
+		if (num==1) return 2;
+		if (num==2) return 4;
+		return (int)(1+num+CombinatoricsUtils.binomialCoefficient(num, 2)+CombinatoricsUtils.binomialCoefficient(num, 3));
 	}
 	
 	public void testFastaParsing() {

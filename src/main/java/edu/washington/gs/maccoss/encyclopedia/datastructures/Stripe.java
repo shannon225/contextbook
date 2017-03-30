@@ -17,8 +17,13 @@ public class Stripe implements Comparable<Stripe>, Spectrum {
 	private final float[] intensityArray;
 	private final float intensityMagnitude;
 	private final float tic;
+	private final byte charge;
 
 	public Stripe(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, float isolationWindowLower, float isolationWindowUpper, double[] massArray, float[] intensityArray) {
+		this(spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray, (byte)0);
+	}
+
+	public Stripe(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, float isolationWindowLower, float isolationWindowUpper, double[] massArray, float[] intensityArray, byte charge) {
 		this.spectrumName=spectrumName;
 		this.precursorName=precursorName;
 		this.spectrumIndex=spectrumIndex;
@@ -27,6 +32,7 @@ public class Stripe implements Comparable<Stripe>, Spectrum {
 		this.isolationWindowUpper=isolationWindowUpper;
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
+		this.charge=charge;
 		
 		float thisTic=0.0f;
 		float magnitude=0.0f;
@@ -39,7 +45,15 @@ public class Stripe implements Comparable<Stripe>, Spectrum {
 	}
 	
 	public Stripe sqrt() {
-		return new Stripe(spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massArray, General.protectedSqrt(intensityArray));
+		return new Stripe(spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massArray, General.protectedSqrt(intensityArray), charge);
+	}
+	
+	/**
+	 * can return 0 (if charge state is unknown)
+	 * @return
+	 */
+	public byte getCharge() {
+		return charge;
 	}
 	
 	@Override

@@ -99,6 +99,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	private final StringBuilder dataSB=new StringBuilder();
 	
 	private Float selectedIon=null;
+	private Byte selectedCharge=null;
 
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
@@ -158,8 +159,12 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 					}
 				}
 				
-			} else if ("selectedIon".equalsIgnoreCase(tagList.get(tagList.size()-1))){
-				selectedIon=Float.parseFloat(attributes.getValue("value"));
+			} else if ("selectedIon".equalsIgnoreCase(tagList.get(tagList.size()-1))) {
+				if ("selected ion m/z".equalsIgnoreCase(attributes.getValue("name"))) {
+					selectedIon=Float.parseFloat(attributes.getValue("value"));
+				} else if ("charge state".equalsIgnoreCase(attributes.getValue("name"))) {
+					selectedCharge=Byte.parseByte(attributes.getValue("value"));
+				}
 			}
 		} else if ("precursor".equalsIgnoreCase(qName)) {
 			spectrumRef=attributes.getValue("spectrumRef");
@@ -192,18 +197,23 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 				}
 				
 				//Issue 3
-				if (isolationWindowTarget == null || isolationWindowLowerOffset == null || isolationWindowUpperOffset == null){
-					if (parameters.getPrecursorWindowSize() > 0f && selectedIon != null){
-						isolationWindowTarget = selectedIon;
-						isolationWindowLowerOffset = parameters.getPrecursorWindowSize()/2.0f;
-						isolationWindowUpperOffset = parameters.getPrecursorWindowSize()/2.0f;
+				if (isolationWindowTarget==null||isolationWindowLowerOffset==null||isolationWindowUpperOffset==null) {
+					if (parameters.getPrecursorWindowSize()>0f&&selectedIon!=null) {
+						isolationWindowTarget=selectedIon;
+						isolationWindowLowerOffset=parameters.getPrecursorWindowSize()/2.0f;
+						isolationWindowUpperOffset=parameters.getPrecursorWindowSize()/2.0f;
 					} else {
 						Logger.errorLine("Isolation window information missing without precursor window size supplied!");
 					}
 				}
 				
+				byte charge=0;
+				if (selectedCharge!=null) {
+					charge=selectedCharge;
+				}
+				
 				Stripe stripe=new Stripe(spectrumName, spectrumRef, spectrumIndex, scanStartTime, isolationWindowTarget-isolationWindowLowerOffset, isolationWindowTarget+isolationWindowUpperOffset,
-						massArray, intensityArray);
+						massArray, intensityArray, charge);
 				stripes.add(stripe);
 				Range range=stripe.getRange();
 				TFloatArrayList stripeRTs=retentionTimesByStripe.get(range);

@@ -117,4 +117,15 @@ public class EValueCalculator {
 		}
 		return new XYTraceInterface[] {new XYTrace(points1, GraphType.area, "histogram"), new XYTrace(points2, GraphType.line, "fit")};
 	}
+	
+	public XYTraceInterface[] toUnloggedTraces() {
+		ArrayList<XYPoint> points1=new ArrayList<XYPoint>();
+		ArrayList<XYPoint> points2=new ArrayList<XYPoint>();
+		for (int i=0; i<counts.length; i++) {
+			float intensity=(i/(float)counts.length)*maxScore;
+			points1.add(new XYPoint(intensity, counts[i]));
+			points2.add(new XYPoint(intensity, (intensity*m+b)));
+		}
+		return new XYTraceInterface[] {new XYTrace(points1, GraphType.area, "histogram"), new XYTrace(points2, GraphType.line, "fit")};
+	}
 }

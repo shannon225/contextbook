@@ -1,0 +1,116 @@
+package edu.washington.gs.maccoss.encyclopedia.filewriters;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlBlock;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIASAXProducer;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
+
+public class MzmlToMGFConsumer implements Runnable {
+	private final BlockingQueue<MzmlBlock> mzmlBlockQueue;
+	private final File f;
+
+	public MzmlToMGFConsumer(BlockingQueue<MzmlBlock> mzmlBlockQueue, File f) {
+		this.mzmlBlockQueue=mzmlBlockQueue;
+		this.f=f;
+	}
+
+	@Override
+	public void run() {
+		PrintWriter writer=null;
+		try {
+			writer=new PrintWriter(f, "UTF-8");
+			while (true) {
+				MzmlBlock block=mzmlBlockQueue.take();
+				if (MzmlBlock.POISON_BLOCK==block) break;
+				
+				for (Stripe stripe : block.getStripes()) {
+					byte charge=stripe.getCharge();
+					if (charge==0) continue;
+					
+					writer.println("BEGIN IONS");
+					if (charge>0) {
+						writer.print("PEPMASS=");
+						writer.println(MassConstants.getPeptideMass(stripe.getPrecursorMZ(), charge));
+						
+						writer.print("CHARGE=");
+						writer.print(charge);
+						writer.println("+");
+					}
+					writer.print("TITLE=");
+					writer.println(stripe.getSpectrumName());
+					
+					double[] masses=stripe.getMassArray();
+					float[] intensities=stripe.getIntensityArray();
+					for (int i=0; i<masses.length; i++) {
+						writer.print(masses[i]);
+						writer.print('\t');
+						writer.println(intensities[i]);
+					}
+
+					writer.println("END IONS");
+				}
+			}
+			
+
+		} catch (InterruptedException e) {
+			Logger.logException(e);
+		} catch (FileNotFoundException e) {
+			Logger.logException(e);
+		} catch (UnsupportedEncodingException e) {
+			Logger.logException(e);
+		} finally {
+			if (writer!=null) {
+				writer.close();
+			}
+		}
+	}
+	
+	public static void main(String[] args) {
+		File mzMLFile=new File("/Users/searleb/Documents/data/tandem-osx-15-12-15-2/bin/110315_bcs_hela_starved_DDA.mzML");
+		File mgfFile=new File("/Users/searleb/Documents/data/tandem-osx-15-12-15-2/bin/110315_bcs_hela_starved_DDA.mgf");
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		convertSAX(mzMLFile, mgfFile, parameters);
+	}
+
+	static void convertSAX(File mzMLFile, File mgfFile, SearchParameters parameters) {
+		Logger.logLine("Indexing "+mzMLFile.getName()+" ...");
+
+		BlockingQueue<MzmlBlock> mzmlBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);
+		MzmlToDIASAXProducer producer=new MzmlToDIASAXProducer(mzMLFile, mzmlBlockQueue, parameters);
+
+		Thread[] threads;
+		MzmlToMGFConsumer consumer=new MzmlToMGFConsumer(mzmlBlockQueue, mgfFile);
+
+		Logger.logLine("Converting "+mzMLFile.getName()+" ...");
+		Thread producerThread=new Thread(producer);
+		Thread consumerThread=new Thread(consumer);
+
+		threads=new Thread[] { producerThread, consumerThread };
+
+		for (int i=0; i<threads.length; i++) {
+			threads[i].start();
+		}
+
+		try {
+			for (int i=0; i<threads.length; i++) {
+				threads[i].join();
+			}
+			Logger.logLine("Finished writing "+mgfFile.getName()+"!");
+
+		} catch (InterruptedException ie) {
+			Logger.errorLine("DIA writing interrupted!");
+			Logger.errorException(ie);
+		}
+
+	}
+}

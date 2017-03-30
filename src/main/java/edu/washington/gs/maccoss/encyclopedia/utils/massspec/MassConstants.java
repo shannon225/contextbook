@@ -37,4 +37,8 @@ public class MassConstants {
 		}
 		return false;
 	}
+	
+	public static double getPeptideMass(double chargedMass, byte charge) {
+		return chargedMass*charge-protonMass*charge;
+	}
 }
