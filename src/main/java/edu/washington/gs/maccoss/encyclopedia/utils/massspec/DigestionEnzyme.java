@@ -22,7 +22,7 @@ public class DigestionEnzyme {
 		enzymes.add(getEnzyme("Arg-C"));
 		enzymes.add(getEnzyme("CNBr"));
 		enzymes.add(getEnzyme("Chymotrypsin"));
-		enzymes.add(getEnzyme("PepsinA"));
+		enzymes.add(getEnzyme("Pepsin A"));
 		enzymes.add(getEnzyme("Elastase"));
 		enzymes.add(getEnzyme("Thermolysin"));
 		enzymes.add(getEnzyme("No Enzyme"));
@@ -111,12 +111,12 @@ public class DigestionEnzyme {
 			
 			return new DigestionEnzyme("Thermolysin", n, c);
 			
-		} else if ("PepsinA".equalsIgnoreCase(enzymeName)) {
+		} else if ("Pepsin A".equalsIgnoreCase(enzymeName)) {
 			n.add('F');
 			n.add('L');
 			c.addAll(AAs);
 			
-			return new DigestionEnzyme("PepsinA", n, c);
+			return new DigestionEnzyme("Pepsin A", n, c);
 		}
 		
 		throw new EncyclopediaException("Unknown digestion enzyme ["+enzymeName+"]");
