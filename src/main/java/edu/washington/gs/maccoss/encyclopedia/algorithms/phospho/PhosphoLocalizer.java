@@ -96,6 +96,7 @@ public class PhosphoLocalizer {
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : peptideModSeqs) {
 			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+			System.out.println(peptideModSeq);
 			entryMap.put(peptideModSeq, model);
 		}
 		

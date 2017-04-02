@@ -26,7 +26,7 @@ public class MassTolerance implements Comparable<MassTolerance> {
 			this.percent=ppmTolerance/1000000.0;
 		} else if (MassErrorUnitType.RESOLUTION==type) {
 			this.amuTolerance=UNUSED_TOLERANCE;
-			this.ppmTolerance=1000000/tolerance;
+			this.ppmTolerance=0.5*1000000/tolerance;
 			this.percent=ppmTolerance/1000000.0;
 		} else {
 			this.amuTolerance=tolerance;
@@ -61,7 +61,7 @@ public class MassTolerance implements Comparable<MassTolerance> {
 		if (MassErrorUnitType.PPM==type) {
 			return ppmTolerance+" "+MassErrorUnitType.toString(type);
 		} else if (MassErrorUnitType.RESOLUTION==type) {
-			return Math.round(1000000/ppmTolerance)+" "+MassErrorUnitType.toString(type);
+			return Math.round(0.5*1000000/ppmTolerance)+" "+MassErrorUnitType.toString(type);
 		} else {
 			return amuTolerance+" "+MassErrorUnitType.toString(type);
 		}

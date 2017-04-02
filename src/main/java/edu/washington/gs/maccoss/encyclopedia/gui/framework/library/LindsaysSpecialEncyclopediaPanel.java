@@ -9,10 +9,10 @@ public class LindsaysSpecialEncyclopediaPanel extends EncyclopediaParametersPane
 	
 	private static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mazie_small_icon.png"));
 	private static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mazie_icon.png"));
-	private static final String programName="PoopeDIA";
-	private static final String programShortDescription="Lindsay's PoopeDIA Library Search";
-	private static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">Lindsay's PoopeDIA: Now powered by chilly pup!<br></p></b>"
-			+"<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">PoopeDIA extracts peptide fragmentation chromatograms from MZML files, matches them to spectra in libraries, and calculates various scoring features. These features are interpreted by Percolator to identify peptides.";
+	private static final String programName="MaziepeDIA";
+	private static final String programShortDescription="Lindsay's MaziepeDIA Library Search";
+	private static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">Lindsay's MaziepeDIA: Now powered by chilly pup!<br></p></b>"
+			+"<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">MaziepeDIA extracts peptide fragmentation chromatograms from MZML files, matches them to spectra in libraries, and calculates various scoring features. These features are interpreted by Percolator to identify peptides.";
 
 	
 	public String getProgramName() {
