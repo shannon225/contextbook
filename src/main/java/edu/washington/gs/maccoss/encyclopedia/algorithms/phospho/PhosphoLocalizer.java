@@ -253,7 +253,7 @@ public class PhosphoLocalizer {
 				}
 			}
 
-			HashMap<FragmentIon, XYTrace> otherTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), allIonsTypes, stripes, bestRT, GraphType.dashedline);
+			HashMap<FragmentIon, XYTrace> otherTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), allIonsTypes, stripes, null, GraphType.dashedline);
 			HashMap<FragmentIon, XYTrace> uniqueTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes, null, GraphType.boldline);
 			
 			for (FragmentIon ion : uniqueTraces.keySet()) {

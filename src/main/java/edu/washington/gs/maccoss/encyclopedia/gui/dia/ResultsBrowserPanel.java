@@ -343,11 +343,8 @@ public class ResultsBrowserPanel extends JPanel {
 							colorIndex++;
 							
 							complementaryIonsTraces.add(new XYTrace(pair.x, GraphType.line, sequenceKey, color, 2.0f));
-							if (!peptideModSeq.startsWith("KTAPT[")) { // FIXME
-								phosphoTraces.add(new XYTrace(pair.y, GraphType.line, sequenceKey, color, 2.0f));
-							}
+							phosphoTraces.add(new XYTrace(pair.y, GraphType.line, sequenceKey, color, 2.0f));
 							
-
 							XYPoint point=localizationScores.get(sequenceKey);
 							if (point!=null) {
 								//complementaryIonsTraces.add(new XYTrace(new double[] {point.x/60f}, new double[] {0}, GraphType.point, "center", color, 2.0f)); //FIXME
