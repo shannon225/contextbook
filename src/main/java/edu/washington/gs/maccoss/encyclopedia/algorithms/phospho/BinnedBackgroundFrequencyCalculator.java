@@ -16,7 +16,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import gnu.trove.set.hash.TDoubleHashSet;
 
 public class BinnedBackgroundFrequencyCalculator implements BackgroundFrequencyInterface {
-	private static final int FRACTIONAL_INCREMENT=2000; // 5 ppm at 100
+	private static final int FRACTIONAL_INCREMENT=1; // 5 ppm at 100
 	private static final int LARGEST_MASS=1600;
 	private static final int BIN_LENGTH=LARGEST_MASS*FRACTIONAL_INCREMENT;
 	private final double[] binBoundaries;

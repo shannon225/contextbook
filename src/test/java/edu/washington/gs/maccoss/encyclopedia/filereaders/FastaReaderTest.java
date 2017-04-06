@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.TreeSet;
 
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
@@ -12,8 +13,27 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import junit.framework.TestCase;
 
 public class FastaReaderTest extends TestCase {
-	
 	public static void main(String[] args) {
+		File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f);
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+		TreeSet<String> eightOrLess=new TreeSet<String>();
+		for (FastaEntryInterface entry : entries) {
+			ArrayList<String> peptides=enzyme.digestProtein(entry.getSequence(), 6, 8, 0);
+			for (String peptide : peptides) {
+				if (peptide.length()<=8) {
+					eightOrLess.add(peptide);
+				}
+			}
+		}
+		System.out.println(eightOrLess.size());
+		
+		for (String peptide : eightOrLess) {
+			System.out.println(peptide);
+		}
+	}
+	
+	/*public static void main(String[] args) {
 		File f=new File("/Users/searleb/Downloads/Saccharomyces_cerevisiae_sprot_032417.fasta");
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f);
 
@@ -50,7 +70,7 @@ public class FastaReaderTest extends TestCase {
 		System.out.println(countMet+"\tcountMet");
 		System.out.println(countQN+"\tcountQN");
 		System.out.println(countSTY+"\tcountSTY");
-	}
+	}*/
 	
 	static int getCombinatorial(String sequence, char... target) {
 		int num=0;

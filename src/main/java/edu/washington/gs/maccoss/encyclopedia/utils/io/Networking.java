@@ -26,7 +26,7 @@ public class Networking {
 			byte[] mac=getMacAddress();
 			String address=bytesToHex(mac);
 			for (int i=0; i<poopAddresses.length; i++) {
-				if (poopAddresses[i].equals(address)) return (i+1);
+				if (poopAddresses[i].equals(address)||true) return (i+1);
 			}
 			return 0;
 		} catch (Exception e) {
