@@ -105,8 +105,8 @@ public class ChromatogramExtractor {
 				break;
 			}
 			XYTrace sgSmoothed=SkylineSGFilter.paddedSavitzkyGolaySmooth(trace);
-			//kept.put(key, sgSmoothed);
-			kept.put(key, trace);
+			kept.put(key, sgSmoothed);
+			//kept.put(key, trace);
 		}
 		
 		return kept;
