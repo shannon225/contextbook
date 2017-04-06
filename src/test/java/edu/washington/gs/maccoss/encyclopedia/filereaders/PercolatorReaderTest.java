@@ -15,8 +15,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import junit.framework.TestCase;
 
 public class PercolatorReaderTest extends TestCase {
-	private static final String REVERSE_PSMID="110415_bcs_hela_starved_DDA.mzML:11.096461:decoyEDIT[+80.0]PEPR+2";
-	private static final String FORWARD_PSMID="110415_bcs_hela_starved_DDA.mzML:11.096461:PEPT[+80]IDER+2";
+	private static final String REVERSE_PSMID="110415_bcs_hela_starved_DDA.mzML:11.096461:decoyEDIT[+79.966331]PEPR+2";
+	private static final String FORWARD_PSMID="110415_bcs_hela_starved_DDA.mzML:11.096461:PEPT[+79.966331]IDER+2";
 	
 	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
 	
@@ -44,7 +44,7 @@ public class PercolatorReaderTest extends TestCase {
 				7f, 8f, 9f, 10f, 11f, 12f, 13f, 14f, 15f, 16f, 17f, 18f, 19f,
 				20f, 21f, 22f, 23f, 24f, 25f };
 		
-		LibraryEntry entry=new LibraryEntry("", new HashSet<String>(), 518.73841, (byte)2, "PEPT[+80]IDER", 1, 0.0f, 0.0f, massArray, intensityArray);
+		LibraryEntry entry=new LibraryEntry("", new HashSet<String>(), 518.73841, (byte)2, "PEPT[+79.966331]IDER", 1, 0.0f, 0.0f, massArray, intensityArray);
 		LibraryEntry reverse=entry.getDecoy(PARAMETERS);
 
 		File diaFile=new File("/Users/searleb/Documents/freezer_experiment/110815_hela_experiment/data/hela_experiment/110415_bcs_hela_starved_DDA.mzML"); // FIXME unit test is not platform independent (will fail on windows machines)
@@ -63,8 +63,8 @@ public class PercolatorReaderTest extends TestCase {
 	}
 
 	public void testGetPeptideSequence() {
-		assertEquals("PEPT[+80]IDER", PercolatorPeptide.getPeptideSequence(FORWARD_PSMID));
-		assertEquals("EDIT[+80.0]PEPR", PercolatorPeptide.getPeptideSequence(REVERSE_PSMID));
+		assertEquals("PEPT[+79.966331]IDER", PercolatorPeptide.getPeptideSequence(FORWARD_PSMID));
+		assertEquals("EDIT[+79.966331]PEPR", PercolatorPeptide.getPeptideSequence(REVERSE_PSMID));
 	}
 	
 	public void testGetCharge() {

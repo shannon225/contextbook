@@ -23,14 +23,14 @@ public class LibraryEntryTest extends TestCase {
 		LibraryEntry entry=new LibraryEntry("", new HashSet<String>(), 518.73841, (byte)2, "PEPT[+80]IDER", 1, 0.0f, 0.0f, massArray, intensityArray);
 		LibraryEntry reverse=entry.getDecoy(PARAMETERS);
 		System.out.println(reverse.getPeptideModSeq());;
-		assertEquals("EDIT[+80.0]PEPR", reverse.getPeptideModSeq());
+		assertEquals("EDIT[+79.966331]PEPR", reverse.getPeptideModSeq());
 		
 		double[] reverseMasses=reverse.getMassArray();
-		double[] expectedReversedMasses=new double[] { 130.05045900000002, 175.11955, 245.07740900000002, 272.172311, 333.0, 358.161469, 401.21490099999994, 444.0, 498.267661, 538.2850169999999,
-				555.0, 636.2619090000001, 650.407259, 666.0, 694.422509, 764.3803670000001, 777.0, 779.449849, 792.399411, 862.3572700000001, 876.502609, 888.0, 938.492048, 1018.4583800000003,
+		double[] expectedReversedMasses=new double[] { 130.05045900000002, 175.11955, 245.07740900000002, 272.172311, 333.0, 358.161469, 401.21490099999994, 444.0, 498.267661, 505.20367,
+				555.0, 618.28773, 650.407259, 666.0, 713.32082, 733.31467, 777.0, 779.449849, 810.37359, 862.3572700000001, 876.502609, 888.0, 939.41618, 1018.4583800000003,
 				1036.4689399999997 };
 		for (int i = 0; i < reverseMasses.length; i++) {
-			assertEquals(expectedReversedMasses[i], reverseMasses[i], 0.001);
+			assertEquals(expectedReversedMasses[i], reverseMasses[i], 0.1);
 		}
 	}
 }

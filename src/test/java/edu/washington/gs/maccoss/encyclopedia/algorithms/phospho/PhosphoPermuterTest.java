@@ -39,7 +39,7 @@ public class PhosphoPermuterTest extends TestCase {
 		
 		// doesn't affect modifications
 		permutations=PhosphoPermuter.getPermutations("C[+57]SS[+80]VTGVQR", parameters.getAAConstants());
-		expected=new String[] { "C[+57.0]S[+79.96633]SVTGVQR", "C[+57.0]SS[+79.96633]VTGVQR", "C[+57.0]SSVT[+79.96633]GVQR" };
+		expected=new String[] { "C[+57.0214635]S[+79.96633]SVTGVQR", "C[+57.0214635]SS[+79.96633]VTGVQR", "C[+57.0214635]SSVT[+79.96633]GVQR" };
 		assertEquals(expected.length, permutations.size());
 		for (int i=0; i<permutations.size(); i++) {
 			assertEquals(expected[i], permutations.get(i));
