@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -33,7 +34,7 @@ public class SearchParameterParser {
 		map.put("-foffset", "0");
 		map.put("-enzyme", "trypsin");
 		map.put("-percolatorThreshold", "0.01");
-		map.put("-percolatorLocation", "internal");
+		map.put("-percolatorVersionNumber", Byte.toString(PercolatorExecutor.DEFAULT_VERSION_NUMBER));
 		map.put("-expectedPeakWidth", "25");
 		map.put("-acquisition", "overlappingDIA");
 		map.put("-runPhosphoLocalization", "false");
@@ -92,6 +93,7 @@ public class SearchParameterParser {
 		final int numberOfQuantitativePeaks;
 		final boolean runPhosphoLocalization;
 		final float numberOfExtraDecoyLibrariesSearched;
+		final int percolatorVersionNumber;
 		
 		String value=parameters.get("-frag");
 		if (value==null) {
@@ -212,6 +214,7 @@ public class SearchParameterParser {
 		expectedPeakWidth=SearchParameterParser.getFloat("-expectedPeakWidth", parameters, 25f);
 		runPhosphoLocalization=getBoolean("-runPhosphoLocalization", parameters, false);
 		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 5);
+		percolatorVersionNumber=SearchParameterParser.getInteger("-percolatorVersionNumber", parameters, 3);
 		
 		float tempNumberOfExtraDecoyLibrariesSearched=SearchParameterParser.getFloat("-numberOfExtraDecoyLibrariesSearched", parameters, 0.0f);
 		if (tempNumberOfExtraDecoyLibrariesSearched<0.0f) {
@@ -221,19 +224,7 @@ public class SearchParameterParser {
 			numberOfExtraDecoyLibrariesSearched=tempNumberOfExtraDecoyLibrariesSearched;
 		}
 		
-		value=parameters.get("-percolatorLocation");
-		File percolator=null;
-		if (value==null||"internal".equalsIgnoreCase(value)) {
-			percolator=null;
-		} else if (!"null".equalsIgnoreCase(value)) {
-			percolator=new File(value);
-			if (!percolator.exists()||!percolator.canExecute()) {
-				Logger.errorLine("Could not execute external Percolator from ["+value+"]. Falling back to internal Percolator");
-				percolator=null;
-			}
-		}
-		
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolator, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
+		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
 				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, runPhosphoLocalization, numberOfExtraDecoyLibrariesSearched);
 	}
 

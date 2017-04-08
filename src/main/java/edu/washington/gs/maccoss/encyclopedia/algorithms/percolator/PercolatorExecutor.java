@@ -24,19 +24,19 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 
 public class PercolatorExecutor extends ExternalExecutor {
-	private static final byte VERSION_NUMBER=2;
-	@SuppressWarnings("unused")
-	private static final String PERCOLATOR_VERSION=VERSION_NUMBER==2?"v2-10":"v3-01";
+	private static final String V3_01="v3-01";
+	private static final String V2_10="v2-10";
+	public static final byte DEFAULT_VERSION_NUMBER=3;
 
 	PercolatorExecutor(File tsv, File outputFile, boolean useXML) {
-		super(generateCommand(tsv, outputFile, Optional.ofNullable((File)null), useXML));
+		super(generateCommand(tsv, outputFile, DEFAULT_VERSION_NUMBER, useXML));
 	}
-	PercolatorExecutor(File tsv, File outputFile, Optional<File> percolatorLocation, boolean useXML) {
-		super(generateCommand(tsv, outputFile, percolatorLocation, useXML));
+	PercolatorExecutor(File tsv, File outputFile, int percolatorVersionNumber, boolean useXML) {
+		super(generateCommand(tsv, outputFile, percolatorVersionNumber, useXML));
 	}
 	
-	public static ArrayList<ScoredObject<String>> executePercolatorXML(Optional<File> percolatorLocation, File featureFile, File percolatorResultFile, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
-		PercolatorExecutor e=new PercolatorExecutor(featureFile, percolatorResultFile, percolatorLocation, true);
+	public static ArrayList<ScoredObject<String>> executePercolatorXML(int percolatorVersionNumber, File featureFile, File percolatorResultFile, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+		PercolatorExecutor e=new PercolatorExecutor(featureFile, percolatorResultFile, percolatorVersionNumber, true);
 		BlockingQueue<OutputMessage> result=e.start();
 		
 		while (!e.isFinished()||!result.isEmpty()) {
@@ -55,8 +55,8 @@ public class PercolatorExecutor extends ExternalExecutor {
 		return passingPeptides;
 	}
 	
-	public static ArrayList<PercolatorPeptide> executePercolatorTSV(Optional<File> percolatorLocation, File featureFile, File outputFile, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
-		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, percolatorLocation, false);
+	public static ArrayList<PercolatorPeptide> executePercolatorTSV(int percolatorVersionNumber, File featureFile, File outputFile, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, percolatorVersionNumber, false);
 		BlockingQueue<OutputMessage> result=e.start();
 		
 		String errorMessage=null;
@@ -118,10 +118,10 @@ public class PercolatorExecutor extends ExternalExecutor {
 	}
 	
 	@SuppressWarnings("unused")
-	static String[] generateCommand(File tsv, File outputFile, Optional<File> percolatorLocation, boolean useXML) {
-		File percolator=getPercolator(percolatorLocation);
+	static String[] generateCommand(File tsv, File outputFile, int percolatorVersionNumber, boolean useXML) {
+		File percolator=getPercolator(percolatorVersionNumber);
 
-		if (VERSION_NUMBER==2) {
+		if (percolatorVersionNumber==2) {
 			if (useXML) {
 				return new String[] {percolator.getAbsolutePath(), "-y", "-X", outputFile.getAbsolutePath(), "--decoy-xml-output", tsv.getAbsolutePath()};
 			} else {
@@ -136,8 +136,13 @@ public class PercolatorExecutor extends ExternalExecutor {
 		}
 	}
 	
-	static File getPercolator(Optional<File> percolatorLocation) {
-		if (percolatorLocation.isPresent()) return percolatorLocation.get();
+	static File getPercolator(int percolatorVersionNumber) {
+		String percolatorVersion;
+		if (percolatorVersionNumber==2) {
+			percolatorVersion=V2_10;
+		} else {
+			percolatorVersion=V3_01;
+		}
 		
 		try {
 			File percolator=File.createTempFile("Percolator", ".exe");
@@ -146,7 +151,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 			OS os=OSDetector.getOS();
 			switch (os) {
 				case WINDOWS: {
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+PERCOLATOR_VERSION+".exe");
+					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+percolatorVersion+".exe");
 					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
 					percolator.setExecutable(true);
 					
@@ -158,13 +163,13 @@ public class PercolatorExecutor extends ExternalExecutor {
 					return percolator;
 				}
 				case MAC: {
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+PERCOLATOR_VERSION+".mac");
+					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+percolatorVersion+".mac");
 					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
 					percolator.setExecutable(true);
 					return percolator;
 				}
 				case LINUX:
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+PERCOLATOR_VERSION+".lin");
+					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+percolatorVersion+".lin");
 					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
 					percolator.setExecutable(true);
 					return percolator;

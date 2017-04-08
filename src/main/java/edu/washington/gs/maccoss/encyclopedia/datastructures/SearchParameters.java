@@ -4,11 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -22,7 +22,7 @@ public class SearchParameters {
 	protected final MassTolerance libraryFragmentTolerance;
 	protected final DigestionEnzyme enzyme;
 	protected final float percolatorThreshold;
-	protected final File percolatorLocation;
+	protected final int percolatorVersionNumber;
 	protected final DataAcquisitionType dataAcquisitionType;
 	protected final int numberOfThreadsUsed;	
 	protected final float targetWindowCenter;
@@ -36,7 +36,7 @@ public class SearchParameters {
 	protected final boolean useNLsForXCorr=false;
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
-			float percolatorThreshold, File percolatorLocation, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
+			float percolatorThreshold, Integer percolatorVersionNumber, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
 			int numberOfQuantitativePeaks, boolean runPhosphoLocalization, float getNumberOfExtraDecoyLibrariesSearched) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
@@ -47,7 +47,7 @@ public class SearchParameters {
 		this.libraryFragmentTolerance=libraryFragmentTolerance;
 		this.enzyme=enzyme;
 		this.percolatorThreshold=percolatorThreshold;
-		this.percolatorLocation=percolatorLocation;
+		this.percolatorVersionNumber=percolatorVersionNumber==null?PercolatorExecutor.DEFAULT_VERSION_NUMBER:percolatorVersionNumber;
 		this.dataAcquisitionType=dataAcquisitionType;
 		this.numberOfThreadsUsed=numberOfThreadsUsed;
 		this.expectedPeakWidth=expectedPeakWidth;
@@ -91,7 +91,7 @@ public class SearchParameters {
 		sb.append(" -foffset "+fragmentOffsetPPM+"\n");
 		sb.append(" -enzyme "+enzyme.getName()+"\n");
 		sb.append(" -percolatorThreshold "+percolatorThreshold+"\n");
-		sb.append(" -percolatorLocation "+percolatorLocation+"\n");
+		sb.append(" -percolatorVersionNumber "+percolatorVersionNumber+"\n");
 		sb.append(" -acquisition "+DataAcquisitionType.toString(dataAcquisitionType)+"\n");
 		sb.append(" -numberOfThreadsUsed "+numberOfThreadsUsed+"\n");
 		sb.append(" -expectedPeakWidth "+expectedPeakWidth+"\n");
@@ -116,7 +116,7 @@ public class SearchParameters {
 		map.put("-foffset", fragmentOffsetPPM+"");
 		map.put("-enzyme", enzyme.getName());
 		map.put("-percolatorThreshold", percolatorThreshold+"");
-		map.put("-percolatorLocation", percolatorLocation+"");
+		map.put("-percolatorVersionNumber", percolatorVersionNumber+"");
 		map.put("-acquisition", DataAcquisitionType.toString(dataAcquisitionType));
 		map.put("-numberOfThreadsUsed", numberOfThreadsUsed+"");
 		map.put("-expectedPeakWidth", expectedPeakWidth+"");
@@ -176,9 +176,9 @@ public class SearchParameters {
 		float numberOfDecoyLibrariesSearched=numberOfExtraDecoyLibrariesSearched+1.0f; // always search 1x decoy minimum
 		return percolatorThreshold*(numberOfDecoyLibrariesSearched*(1-((numberOfDecoyLibrariesSearched-1)*percolatorThreshold)));
 	}
-
-	public Optional<File> getPercolatorLocation() {
-		return Optional.ofNullable(percolatorLocation);
+	
+	public int getPercolatorVersionNumber() {
+		return percolatorVersionNumber;
 	}
 
 	public boolean isDeconvoluteOverlappingWindows() {

@@ -5,11 +5,11 @@ import java.util.HashMap;
 import java.util.StringTokenizer;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassErrorUnitType;
@@ -40,7 +40,7 @@ public class PecanParameterParser {
 		map.put("-percolatorThreshold", "0.01");
 		map.put("-alpha", "1.8");
 		map.put("-beta", "0.4");
-		map.put("-percolatorLocation", "internal");
+		map.put("-percolatorVersionNumber", Byte.toString(PercolatorExecutor.DEFAULT_VERSION_NUMBER));
 		map.put("-acquisition", "overlapping dia");
 		map.put("-precursorWindowSize", "-1");
 		map.put("-numberOfThreadsUsed", Integer.toString(Runtime.getRuntime().availableProcessors()));
@@ -85,6 +85,7 @@ public class PecanParameterParser {
 		final float targetWindowCenter;
 		final float precursorWindowSize;
 		final int numberOfQuantitativePeaks;
+		final int percolatorVersionNumber;
 
 		TCharDoubleHashMap fixedMods=new TCharDoubleHashMap();
 		String value=parameters.get("-fixed");
@@ -212,19 +213,8 @@ public class PecanParameterParser {
 		targetWindowCenter=SearchParameterParser.getFloat("-targetWindowCenter", parameters, -1f);
 		precursorWindowSize=SearchParameterParser.getFloat("-precursorWindowSize", parameters, -1f);
 		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 5);
-
-		value=parameters.get("-percolatorLocation");
-		File percolator=null;
-		if (value==null||"internal".equalsIgnoreCase(value)) {
-			percolator=null;
-		} else if (!"null".equalsIgnoreCase(value)) {
-			percolator=new File(value);
-			if (!percolator.exists()||!percolator.canExecute()) {
-				Logger.errorLine("Could not execute external Percolator from ["+value+"]. Falling back to internal Percolator");
-				percolator=null;
-			}
-		}
+		percolatorVersionNumber=SearchParameterParser.getInteger("-percolatorVersionNumber", parameters, 3);
 		
-		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, fragmentTolerance, fragmentOffsetPPM, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolator, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks);
+		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, fragmentTolerance, fragmentOffsetPPM, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks);
 	}
 }

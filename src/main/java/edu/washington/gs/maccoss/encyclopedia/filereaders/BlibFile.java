@@ -24,6 +24,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideTrie;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
@@ -208,7 +209,7 @@ public class BlibFile extends SQLFile {
 			
 			PreparedStatement prep=c.prepareStatement("insert into RefSpectra (id, peptideSeq, precursorMZ, precursorCharge, peptideModSeq, prevAA, nextAA, copies, numPeaks, retentionTime, fileID, SpecIDinFile, score, scoreType) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 			PreparedStatement prepPeaks=c.prepareStatement("insert into RefSpectraPeaks (RefSpectraID, peakMZ, peakIntensity) VALUES (?,?,?)");
-			PreparedStatement prepRTs=c.prepareStatement("insert into RetentionTimes (RefSpectraID, RedundantRefSpectraID, SpectrumSourceID, retentionTime, bestSpectrum) VALUES (?,?,?,?,?)");
+			PreparedStatement prepRTs=c.prepareStatement("insert into RetentionTimes (RefSpectraID, RedundantRefSpectraID, SpectrumSourceID, retentionTime, startTime, endTime, bestSpectrum) VALUES (?,?,?,?,?,?,?)");
 			PreparedStatement prepMods=c.prepareStatement("insert into Modifications (id, RefSpectraID, position, mass) VALUES (?,?,?,?)");
 			
 			try {
@@ -217,8 +218,10 @@ public class BlibFile extends SQLFile {
 					
 					double[] massArray;
 					float[] intensityArray;
+					Range rtRange;
 					if (entry instanceof IntegratedLibraryEntry) {
 						TransitionRefinementData data=((IntegratedLibraryEntry) entry).getRefinementData();
+						rtRange=((IntegratedLibraryEntry)entry).getRtRange();
 						Optional<double[]> masses=data.getMassArray();
 						if (masses.isPresent()) {
 							massArray=masses.get();
@@ -228,6 +231,7 @@ public class BlibFile extends SQLFile {
 							intensityArray=entry.getIntensityArray();
 						}
 					} else {
+						rtRange=new Range(entry.getRetentionTime()-60, entry.getRetentionTime()+60);
 						massArray=entry.getMassArray();
 						intensityArray=entry.getIntensityArray();
 					}
@@ -241,7 +245,6 @@ public class BlibFile extends SQLFile {
 					prep.setString(6, "-"); // prevAA
 					prep.setString(7, "-"); // nextAA
 					prep.setInt(8, 1); // copies
-					
 					prep.setInt(9, massArray.length); // numPeaks
 					prep.setDouble(10, entry.getRetentionTime()/60f); // retentionTime
 					prep.setInt(11, jobCounter); // fileID
@@ -259,7 +262,9 @@ public class BlibFile extends SQLFile {
 					prepRTs.setInt(2,  0);
 					prepRTs.setInt(3,  jobCounter);
 					prepRTs.setDouble(4,  entry.getRetentionTime()/60f); // convert to minutes
-					prepRTs.setInt(5,  1);
+					prepRTs.setDouble(5, rtRange.getStart()/60f);
+					prepRTs.setDouble(6, rtRange.getStop()/60f);
+					prepRTs.setInt(7,  1);
 					prepRTs.addBatch();
 					
 					FragmentationModel model=new FragmentationModel(peptideModSeq, aaConstants);
@@ -356,7 +361,7 @@ public class BlibFile extends SQLFile {
 				s.execute("CREATE TABLE if not exists Modifications (id INTEGER primary key autoincrement not null,RefSpectraID INTEGER, position INTEGER, mass REAL)");
 				s.execute("CREATE TABLE if not exists RefSpectra (id INTEGER primary key autoincrement not null, peptideSeq VARCHAR(150), precursorMZ REAL, precursorCharge INTEGER, peptideModSeq VARCHAR(200), prevAA CHAR(1), nextAA CHAR(1), copies INTEGER, numPeaks INTEGER, ionMobilityValue REAL, ionMobilityType INTEGER, retentionTime REAL, fileID INTEGER, SpecIDinFile VARCHAR(256), score REAL, scoreType TINYINT)");
 				s.execute("CREATE TABLE if not exists RefSpectraPeaks(RefSpectraID INTEGER, peakMZ BLOB, peakIntensity BLOB)");
-				s.execute("CREATE TABLE if not exists RetentionTimes (RefSpectraID INTEGER, RedundantRefSpectraID INTEGER, SpectrumSourceID INTEGER, ionMobilityValue REAL, ionMobilityType INTEGER, retentionTime REAL, bestSpectrum INTEGER, FOREIGN KEY(RefSpectraID) REFERENCES RefSpectra(id)) ");
+				s.execute("CREATE TABLE if not exists RetentionTimes (RefSpectraID INTEGER, RedundantRefSpectraID INTEGER, SpectrumSourceID INTEGER, ionMobilityValue REAL, ionMobilityType INTEGER, retentionTime REAL, startTime REAL, endTime REAL, bestSpectrum INTEGER, FOREIGN KEY(RefSpectraID) REFERENCES RefSpectra(id)) ");
 				s.execute("CREATE TABLE if not exists ScoreTypes (id INTEGER PRIMARY KEY, scoreType VARCHAR(128)) ");
 				s.execute("CREATE TABLE if not exists SpectrumSourceFiles (id INTEGER PRIMARY KEY autoincrement not null,fileName VARCHAR(512)) ");
 				c.commit();

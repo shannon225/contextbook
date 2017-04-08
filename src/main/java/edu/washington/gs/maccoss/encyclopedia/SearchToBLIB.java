@@ -310,7 +310,7 @@ public class SearchToBLIB {
 				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(bigPercolatorFile, threshold);
 			} else {
 				TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
-				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorLocation(), bigFeatureFile, bigPercolatorFile, threshold);
+				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), bigFeatureFile, bigPercolatorFile, threshold);
 			}
 			
 			ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides);
