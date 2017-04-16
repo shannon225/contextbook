@@ -135,7 +135,7 @@ public class SearchParameterParser {
 			throw new EncyclopediaException("Error parsing fragment mass error unit type from ["+value+"]");
 		}
 		
-		value=parameters.get("-ltolunits");
+		value=parameters.get("-lftolunits");
 		if (value==null) {
 			libraryFragmentToleranceType=MassErrorUnitType.PPM;
 		} else {
