@@ -46,14 +46,25 @@ public class PeakLocationInferrer {
 	// alignedRTs are as if they were in the seed (x) file
 	private final HashMap<String, Float> alignedRTInMinBySequenceMap;
 	
+	private final HashMap<SearchJobData, ArrayList<ChromatogramLibraryEntry>> archetypalPeptides;
+	
 	private final HashMap<String, double[]> bestIons;
 	private final SearchParameters params;
 
-	PeakLocationInferrer(HashMap<SearchJobData, RetentionTimeFilter> alignmentMap, HashMap<String, Float> alignedRTInMinBySequenceMap, HashMap<String, double[]> bestIons, SearchParameters params) {
+	PeakLocationInferrer(HashMap<SearchJobData, RetentionTimeFilter> alignmentMap, HashMap<String, Float> alignedRTInMinBySequenceMap, HashMap<String, double[]> bestIons, HashMap<SearchJobData, ArrayList<ChromatogramLibraryEntry>> archetypalPeptides, SearchParameters params) {
 		this.alignmentMap=alignmentMap;
 		this.alignedRTInMinBySequenceMap=alignedRTInMinBySequenceMap;
 		this.bestIons=bestIons;
+		this.archetypalPeptides=archetypalPeptides;
 		this.params=params;
+	}
+	
+	public ArrayList<ChromatogramLibraryEntry> getArchetypalPeptides() {
+		ArrayList<ChromatogramLibraryEntry> peptides=new ArrayList<>();
+		for (ArrayList<ChromatogramLibraryEntry> entries : archetypalPeptides.values()) {
+			peptides.addAll(entries);
+		}
+		return peptides;
 	}
 	
 	public Pair<Float, Integer> getTopNIntensity(TransitionRefinementData data) {
@@ -191,7 +202,7 @@ public class PeakLocationInferrer {
 			}
 		}
 
-		return new PeakLocationInferrer(alignmentMap, alignedRTInMinBySequenceMap, bestIons, params);
+		return new PeakLocationInferrer(alignmentMap, alignedRTInMinBySequenceMap, bestIons, archetypalPeptides, params);
 	}
 
 	/**

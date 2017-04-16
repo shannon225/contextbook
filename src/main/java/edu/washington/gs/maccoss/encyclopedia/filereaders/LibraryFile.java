@@ -484,7 +484,12 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		peptidePrep.setInt(index++, intensityByteArray.length);
 		peptidePrep.setBytes(index++, CompressionUtils.compress(intensityByteArray));
 		if (data.getIdentifiedTICRatio().isPresent()) {
-			peptidePrep.setFloat(index++, data.getIdentifiedTICRatio().get());
+			Float x=data.getIdentifiedTICRatio().get();
+			if (x!=null) {
+				peptidePrep.setFloat(index++, x);
+			} else {
+				peptidePrep.setFloat(index++, 0.0f);
+			}
 		} else {
 			peptidePrep.setFloat(index++, 0.0f);
 		}
