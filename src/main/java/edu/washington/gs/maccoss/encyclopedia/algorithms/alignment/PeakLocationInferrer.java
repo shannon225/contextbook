@@ -259,7 +259,7 @@ public class PeakLocationInferrer {
 					ArrayList<PercolatorPeptide> missingPeptides=new ArrayList<PercolatorPeptide>();
 					for (PercolatorPeptide peptide : targetPeptides) {
 						LibraryEntry libEntry=fastLookupPeptides.get(peptide);
-						if (libEntry==null) {
+						if (!(libEntry instanceof ChromatogramLibraryEntry)) {
 							missingPeptides.add(peptide);
 							continue;
 						}
