@@ -68,17 +68,11 @@
 				</executions>
 				<configuration>
 					<finalName>${targetName}</finalName>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
+					<transformers>
+						<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 							<mainClass>${buildTarget}</mainClass>
-						</manifest>
-					</archive>
+						</transformer>
+					</transformers>
 				</configuration>
 			</plugin>
 		</plugins>
