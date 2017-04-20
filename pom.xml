@@ -76,8 +76,6 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<addClasspath>true</addClasspath>
-							<classpathPrefix>lib/</classpathPrefix>
 							<mainClass>${buildTarget}</mainClass>
 						</manifest>
 					</archive>
