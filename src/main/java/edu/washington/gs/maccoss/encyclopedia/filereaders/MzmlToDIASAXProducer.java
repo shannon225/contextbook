@@ -101,6 +101,10 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	private Float selectedIon=null;
 	private Byte selectedCharge=null;
 
+	private boolean isSkipSpectrumWithBadEncoding = false;
+	private int numSkippedWithBadEncoding = 0;
+	private static final int MAX_BAD_ENCODING_SKIPPED = 1000;
+	
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
 		dataSB.setLength(0);
@@ -181,6 +185,37 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	@Override
 	public void endElement(String uri, String localName, String qName) throws SAXException {
 		if ("spectrum".equalsIgnoreCase(qName)) {
+			
+			if (isSkipSpectrumWithBadEncoding){
+				
+				Logger.errorLine("Skipping spectrum #" + spectrumIndex + ", '" + spectrumName + "': bad binary data encoding.");
+				
+				//reset variable fields
+				spectrumName=null;
+				spectrumIndex=null;
+				spectrumRef=null;
+
+				scanStartTime=null;
+				isolationWindowTarget=null;
+				isolationWindowLowerOffset=null;
+				isolationWindowUpperOffset=null;
+
+				compress=false;
+				encoding=null;
+				isMZ=null;
+				dataSB.setLength(0);
+				massArray=null;
+				intensityArray=null;
+				
+				selectedIon=null;
+				
+				//reset skipping flag and increment counter
+				isSkipSpectrumWithBadEncoding = false;
+				numSkippedWithBadEncoding++;
+				
+				return;
+			}
+			
 			if (spectrumRef==null&&msLevel<=1) {
 				if (parameters.getPrecursorOffsetPPM()!=0.0) {
 					double[] deltaArray=General.multiply(massArray, parameters.getPrecursorOffsetPPM()/1000000.0);
@@ -299,6 +334,11 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 		try {
 			mzmlBlockQueue.put(new MzmlBlock(precursors, stripes));
 			mzmlBlockQueue.put(MzmlBlock.POISON_BLOCK);
+			if (numSkippedWithBadEncoding > MAX_BAD_ENCODING_SKIPPED) {
+				throw new EncyclopediaException("Skipped too many spectra as a result of bad binary data encoding! File is invalid.");
+			} else if (numSkippedWithBadEncoding > 0){
+				Logger.errorLine("Skipped " + numSkippedWithBadEncoding + " spectra because of bad binary data encoding.");
+			}
 		} catch (InterruptedException ie) {
 			Logger.errorLine("Mzml reading interrupted!");
 			Logger.errorException(ie);
@@ -308,7 +348,16 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	public Number[] getBinaryDataAsNumberArray(String binaryString, boolean decompress, Precision precision) throws IOException {
 		if (binaryString==null||binaryString.length()==0) return new Number[0];
 		
-		byte[] binArray=Base64.getDecoder().decode(binaryString);
+		byte[] binArray = null;
+		try {
+			binArray=Base64.getDecoder().decode(binaryString);
+		} catch (IllegalArgumentException e) {
+			isSkipSpectrumWithBadEncoding = true;
+			//System.out.println(binaryString);
+			//throw new IllegalArgumentException(e);
+			return new Number[0];	//dummy output
+		}
+		
 		ByteBuffer bbuf=ByteBuffer.allocate(binArray.length);
 		bbuf.put(binArray);
 		binArray=bbuf.order(ByteOrder.LITTLE_ENDIAN).array();
@@ -318,7 +367,9 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 			try {
 				data=CompressionUtils.decompress(binArray);
 			} catch (IllegalStateException e) {
-				throw new EncyclopediaException("Error parsing binary data from "+binaryString, e);
+				//throw new EncyclopediaException("Error parsing binary data from "+binaryString, e);
+				isSkipSpectrumWithBadEncoding = true;
+				return new Number[0];	//dummy output
 			}
 		} else {
 			data=binArray;
