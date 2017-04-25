@@ -9,14 +9,33 @@
 
 	<name>encyclopedia</name>
 	<url>http://maven.apache.org</url>
-	
+
 	<properties>
-		<targetName>encyclopedia-${version}</targetName>
+		<!--
+		The name of the produced executable JAR.
+
+		If this is set to ${build.finalName} (which defaults
+		to ${artifactId}-${version}), then the executable
+		JAR will replace the one produced by the maven-jar-plugin
+		and will be deployed as the result of this build.
+
+		Otherwise, the executable jar is created at target/${targetName}
+		and is not attached as a maven artifact (the current behavior).
+
+		To attach both JARs to the build, you must reconfigure maven-shade-plugin
+		to attach the executable JAR using <shadedArtifactAttached> and <shadedClassifierName>
+		in its configuration below.
+		-->
+		<targetName>${artifactId}-${version}-executable</targetName>
+
+		<!-- The main class that will be run by the executable JAR. -->
 		<buildTarget>edu.washington.gs.maccoss.encyclopedia.Encyclopedia</buildTarget>
-<!--		<targetName>pecanpie-${version}</<targetName> 
+
+<!--		<targetName>pecanpie-${version}-executable</<targetName>
 		<buildTarget>edu.washington.gs.maccoss.encyclopedia.Pecanpie</buildTarget> -->
-<!--		<targetName>CAPSiL-${version}</<targetName> 
+<!--		<targetName>CAPSiL-${version}-executable</<targetName>
 		<buildTarget>edu.washington.gs.maccoss.encyclopedia.PhosphoSiteLocalizer</buildTarget> -->
+
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
@@ -55,6 +74,14 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
+
+			<!--
+			shade-plugin is used to create an executable jar
+			that contains all this project's dependencies
+			and a manifest entry that allows it to be executed
+
+			${targetName} (see above) determines what happens to this JAR
+			-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
@@ -68,19 +95,11 @@
 				</executions>
 				<configuration>
 					<finalName>${targetName}</finalName>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<addClasspath>true</addClasspath>
-							<classpathPrefix>lib/</classpathPrefix>
+					<transformers>
+						<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 							<mainClass>${buildTarget}</mainClass>
-						</manifest>
-					</archive>
+						</transformer>
+					</transformers>
 				</configuration>
 			</plugin>
 		</plugins>
