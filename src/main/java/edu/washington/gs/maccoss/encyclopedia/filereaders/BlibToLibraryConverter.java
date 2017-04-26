@@ -32,6 +32,19 @@ public class BlibToLibraryConverter {
 			Optional<LibraryInterface> optional=openLibraryFile(libraryFile);
 			if (optional.isPresent()) return optional.get();
 		}
+		
+		// first try to read if .DLIB
+		if (f.getName().toLowerCase().endsWith(LibraryFile.DLIB)) {
+			Optional<LibraryInterface> optional=openLibraryFile(f);
+			if (optional.isPresent()) return optional.get();
+		}
+		
+		// then try to change name to .DLIB and read
+		libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
+		if (libraryFile.exists()&&libraryFile.canRead()) {
+			Optional<LibraryInterface> optional=openLibraryFile(libraryFile);
+			if (optional.isPresent()) return optional.get();
+		}
 
 		throw new EncyclopediaException("Can't read file type "+f.getAbsolutePath());
 	}
@@ -57,7 +70,7 @@ public class BlibToLibraryConverter {
 
 	public static LibraryInterface convert(File blibFile, Optional<File> irtFile, File fastaFile, SearchParameters params) {
 		String absolutePath=blibFile.getAbsolutePath();
-		File elibFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.ELIB);
+		File elibFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
 		return convert(blibFile, elibFile, irtFile, fastaFile, params);
 	}
 	

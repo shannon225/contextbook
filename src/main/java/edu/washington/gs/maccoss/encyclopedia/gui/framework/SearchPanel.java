@@ -43,6 +43,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParame
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCordiaSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -641,13 +642,13 @@ public class SearchPanel extends JPanel {
 			
 		} else {
 			FileDialog dialog=new FileDialog(frame, "Save a ELIB file", FileDialog.SAVE);
-			dialog.setFilenameFilter(new SimpleFilenameFilter(".elib"));
+			dialog.setFilenameFilter(new SimpleFilenameFilter(LibraryFile.ELIB));
 			dialog.setVisible(true);
 			if (dialog.getFiles()!=null&&dialog.getFiles().length>0) {
 				File elibFile=dialog.getFiles()[0];
 				String fileName=elibFile.getName();
-				if (!fileName.toLowerCase().endsWith(".elib")) {
-					elibFile=new File(elibFile.getParentFile(), fileName+".elib");
+				if (!fileName.toLowerCase().endsWith(LibraryFile.ELIB)) {
+					elibFile=new File(elibFile.getParentFile(), fileName+LibraryFile.ELIB);
 
 					if (elibFile.exists()) {
 						// TODO ask if you want to overwrite this
