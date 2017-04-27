@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.BlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
 import junit.framework.TestCase;
 
@@ -59,14 +60,17 @@ public class PercolatorExecutorTest extends TestCase {
 				OutputMessage data=result.take();
 				if (data.isStdOutput()) {
 					outputlines++;
+					Logger.logLine("[percolator:stdout]" + data.getMessage());
+				} else {
+					Logger.logLine("[percolator:stderr]" + data.getMessage());
 				}
 			} else {
 				Thread.sleep(10);
 			}
 		}
 
-		assertEquals(0, e.getResultCode());
+		assertEquals("Wrong number of spectra above 1% FDR!", 712, outputlines-1); // number of spectra above 1% FDR (-1 for header)
 
-		assertEquals(712, outputlines-1); // number of spectra above 1% FDR (-1 for header)
+		assertEquals("Non-zero exit code!", 0, e.getResultCode());
 	}
 }
