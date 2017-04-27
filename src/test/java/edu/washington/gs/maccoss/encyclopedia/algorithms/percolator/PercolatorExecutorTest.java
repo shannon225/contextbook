@@ -10,7 +10,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
 import junit.framework.TestCase;
 
 public class PercolatorExecutorTest extends TestCase {
-	
 	public static void main(String[] args) throws Exception {
 		File featureFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML.pecan.txt.features.txt");
 		File outputFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML.pecan.txt.txt");
@@ -33,7 +32,7 @@ public class PercolatorExecutorTest extends TestCase {
 		}
 		System.out.println("total processed: "+outputlines);
 	}
-	
+
 	public void testParsePeptideSequence() {
 		String peptideString="-.FNNFINDSLLEGAIDALKR.-";
 		String parsed=PercolatorExecutor.parsePeptideSequence(peptideString);
