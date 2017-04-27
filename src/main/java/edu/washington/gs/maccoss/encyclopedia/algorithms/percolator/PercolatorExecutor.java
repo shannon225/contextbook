@@ -25,11 +25,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 public class PercolatorExecutor extends ExternalExecutor {
 	private static final String V3_01="v3-01";
 	private static final String V2_10="v2-10";
-	public static final byte DEFAULT_VERSION_NUMBER=3;
 
-	PercolatorExecutor(File tsv, File outputFile, boolean useXML) {
-		this(tsv, outputFile, DEFAULT_VERSION_NUMBER, useXML);
-	}
+	public static final byte DEFAULT_VERSION_NUMBER=3;
 
 	PercolatorExecutor(File tsv, File outputFile, int percolatorVersionNumber, boolean useXML) {
 		super(generateCommand(tsv, outputFile, percolatorVersionNumber, useXML));
@@ -157,7 +154,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 		}
 		
 		try {
-			File percolator=File.createTempFile("Percolator", ".exe");
+			File percolator=File.createTempFile("Percolator-" + percolatorVersion + "-", ".exe");
 			percolator.deleteOnExit();
 			
 			OS os=OSDetector.getOS();

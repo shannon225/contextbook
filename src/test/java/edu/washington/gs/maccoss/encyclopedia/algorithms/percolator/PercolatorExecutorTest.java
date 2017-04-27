@@ -7,6 +7,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
 import junit.framework.TestCase;
 
@@ -14,7 +15,7 @@ public class PercolatorExecutorTest extends TestCase {
 	public static void main(String[] args) throws Exception {
 		File featureFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML.pecan.txt.features.txt");
 		File outputFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML.pecan.txt.txt");
-		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, false);
+		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, getDefaultPercolaterVersion(), false);
 		BlockingQueue<OutputMessage> result=e.start();
 
 		int outputlines=0;
@@ -50,7 +51,7 @@ public class PercolatorExecutorTest extends TestCase {
 
 		Files.copy(is, featureFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, true);
+		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, getDefaultPercolaterVersion(), true);
 		BlockingQueue<OutputMessage> result=e.start();
 
 		int outputlines=0;
@@ -72,5 +73,14 @@ public class PercolatorExecutorTest extends TestCase {
 		assertEquals("Non-zero exit code!", 0, e.getResultCode());
 
 		assertEquals("Wrong number of spectra above 1% FDR!", 712, outputlines-1); // number of spectra above 1% FDR (-1 for header)
+	}
+
+	private static byte getDefaultPercolaterVersion() {
+		switch (OSDetector.getOS()) {
+			case WINDOWS:
+				return 2;
+			default:
+				return PercolatorExecutor.DEFAULT_VERSION_NUMBER;
+		}
 	}
 }
