@@ -6,17 +6,18 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.BlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
 import junit.framework.TestCase;
 
 public class PercolatorExecutorTest extends TestCase {
-	
 	public static void main(String[] args) throws Exception {
 		File featureFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML.pecan.txt.features.txt");
 		File outputFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML.pecan.txt.txt");
-		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, false);
+		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, getDefaultPercolaterVersion(), false);
 		BlockingQueue<OutputMessage> result=e.start();
-		
+
 		int outputlines=0;
 
 		while (!e.isFinished()||!result.isEmpty()) {
@@ -33,7 +34,7 @@ public class PercolatorExecutorTest extends TestCase {
 		}
 		System.out.println("total processed: "+outputlines);
 	}
-	
+
 	public void testParsePeptideSequence() {
 		String peptideString="-.FNNFINDSLLEGAIDALKR.-";
 		String parsed=PercolatorExecutor.parsePeptideSequence(peptideString);
@@ -47,12 +48,12 @@ public class PercolatorExecutorTest extends TestCase {
 
 		File outputFile=File.createTempFile("percolator", ".xml");
 		featureFile.deleteOnExit();
-		
+
 		Files.copy(is, featureFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-		
-		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, true);
+
+		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, getDefaultPercolaterVersion(), true);
 		BlockingQueue<OutputMessage> result=e.start();
-		
+
 		int outputlines=0;
 
 		while (!e.isFinished()||!result.isEmpty()) {
@@ -60,11 +61,28 @@ public class PercolatorExecutorTest extends TestCase {
 				OutputMessage data=result.take();
 				if (data.isStdOutput()) {
 					outputlines++;
+//					Logger.logLine("[percolator:stdout]" + data.getMessage());
+				} else {
+					// ensure that any error messages are written to the console for debugging
+					Logger.logLine("[percolator:stderr]" + data.getMessage());
 				}
 			} else {
 				Thread.sleep(10);
 			}
 		}
-		assertEquals(712, outputlines-1); // number of spectra above 1% FDR (-1 for header)
+
+		assertEquals("Non-zero exit code!", 0, e.getResultCode());
+
+		assertEquals("Wrong number of spectra above 1% FDR!", 712, outputlines-1); // number of spectra above 1% FDR (-1 for header)
+	}
+
+	//TODO: issue #23: Percolator v3 fails silently with exit code 255 on some Windows machines
+	private static byte getDefaultPercolaterVersion() {
+		switch (OSDetector.getOS()) {
+			case WINDOWS:
+				return 2;
+			default:
+				return PercolatorExecutor.DEFAULT_VERSION_NUMBER;
+		}
 	}
 }

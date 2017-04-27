@@ -9,7 +9,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.concurrent.BlockingQueue;
 
@@ -26,15 +25,13 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 public class PercolatorExecutor extends ExternalExecutor {
 	private static final String V3_01="v3-01";
 	private static final String V2_10="v2-10";
+
 	public static final byte DEFAULT_VERSION_NUMBER=3;
 
-	PercolatorExecutor(File tsv, File outputFile, boolean useXML) {
-		super(generateCommand(tsv, outputFile, DEFAULT_VERSION_NUMBER, useXML));
-	}
 	PercolatorExecutor(File tsv, File outputFile, int percolatorVersionNumber, boolean useXML) {
 		super(generateCommand(tsv, outputFile, percolatorVersionNumber, useXML));
 	}
-	
+
 	public static ArrayList<ScoredObject<String>> executePercolatorXML(int percolatorVersionNumber, File featureFile, File percolatorResultFile, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		PercolatorExecutor e=new PercolatorExecutor(featureFile, percolatorResultFile, percolatorVersionNumber, true);
 		BlockingQueue<OutputMessage> result=e.start();
@@ -49,6 +46,8 @@ public class PercolatorExecutor extends ExternalExecutor {
 				Thread.sleep(10);
 			}
 		}
+
+		checkResult(e);
 
 		ArrayList<ScoredObject<String>> passingPeptides=PercolatorReader.getPassingPeptidesFromXML(percolatorResultFile, threshold);
 		
@@ -107,16 +106,26 @@ public class PercolatorExecutor extends ExternalExecutor {
 		}
 		writer.flush();
 		writer.close();
+
 		if (errorMessage!=null) {
 			throw new EncyclopediaException(errorMessage);
 		}
+
+		checkResult(e);
+
 		return passingPeptides;
+	}
+
+	private static void checkResult(PercolatorExecutor e) throws EncyclopediaException {
+		if (0 != e.getResultCode()) {
+			throw new EncyclopediaException("Percolator exited with non-zero status: " + e.getResultCode());
+		}
 	}
 
 	static String parsePeptideSequence(String peptideString) {
 		return peptideString.substring(peptideString.indexOf('.')+1, peptideString.lastIndexOf('.'));
 	}
-	
+
 	@SuppressWarnings("unused")
 	static String[] generateCommand(File tsv, File outputFile, int percolatorVersionNumber, boolean useXML) {
 		File percolator=getPercolator(percolatorVersionNumber);
@@ -126,16 +135,16 @@ public class PercolatorExecutor extends ExternalExecutor {
 				return new String[] {percolator.getAbsolutePath(), "-y", "-X", outputFile.getAbsolutePath(), "--decoy-xml-output", tsv.getAbsolutePath()};
 			} else {
 				return new String[] {percolator.getAbsolutePath(), "-y", tsv.getAbsolutePath()};
-			}	
+			}
 		} else {
 			if (useXML) {
 				return new String[] {percolator.getAbsolutePath(), "-y", "--no-terminate", "-N", "200000", "-X", outputFile.getAbsolutePath(), "--decoy-xml-output", tsv.getAbsolutePath()};
 			} else {
 				return new String[] {percolator.getAbsolutePath(), "-y", "--no-terminate", "-N", "200000", tsv.getAbsolutePath()};
-			}	
+			}
 		}
 	}
-	
+
 	static File getPercolator(int percolatorVersionNumber) {
 		String percolatorVersion;
 		if (percolatorVersionNumber==2) {
@@ -145,7 +154,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 		}
 		
 		try {
-			File percolator=File.createTempFile("Percolator", ".exe");
+			File percolator=File.createTempFile("Percolator-" + percolatorVersion + "-", ".exe");
 			percolator.deleteOnExit();
 			
 			OS os=OSDetector.getOS();
