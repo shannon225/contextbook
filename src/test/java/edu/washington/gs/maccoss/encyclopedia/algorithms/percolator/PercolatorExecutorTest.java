@@ -69,8 +69,8 @@ public class PercolatorExecutorTest extends TestCase {
 			}
 		}
 
-		assertEquals("Wrong number of spectra above 1% FDR!", 712, outputlines-1); // number of spectra above 1% FDR (-1 for header)
-
 		assertEquals("Non-zero exit code!", 0, e.getResultCode());
+
+		assertEquals("Wrong number of spectra above 1% FDR!", 712, outputlines-1); // number of spectra above 1% FDR (-1 for header)
 	}
 }
