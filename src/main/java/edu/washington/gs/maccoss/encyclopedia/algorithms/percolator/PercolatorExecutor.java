@@ -9,7 +9,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.concurrent.BlockingQueue;
 
@@ -24,8 +23,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 
 public class PercolatorExecutor extends ExternalExecutor {
-	private static final String V3_01="v3-01";
-	private static final String V2_10="v2-10";
+	public static final String V3_01="v3-01";
+	public static final String V2_10="v2-10";
 	public static final byte DEFAULT_VERSION_NUMBER=3;
 
 	PercolatorExecutor(File tsv, File outputFile, boolean useXML) {
