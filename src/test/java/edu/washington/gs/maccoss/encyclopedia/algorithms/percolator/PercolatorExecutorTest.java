@@ -61,8 +61,9 @@ public class PercolatorExecutorTest extends TestCase {
 				OutputMessage data=result.take();
 				if (data.isStdOutput()) {
 					outputlines++;
-					Logger.logLine("[percolator:stdout]" + data.getMessage());
+//					Logger.logLine("[percolator:stdout]" + data.getMessage());
 				} else {
+					// ensure that any error messages are written to the console for debugging
 					Logger.logLine("[percolator:stderr]" + data.getMessage());
 				}
 			} else {
@@ -75,6 +76,7 @@ public class PercolatorExecutorTest extends TestCase {
 		assertEquals("Wrong number of spectra above 1% FDR!", 712, outputlines-1); // number of spectra above 1% FDR (-1 for header)
 	}
 
+	//TODO: issue #23: Percolator v3 fails silently with exit code 255 on some Windows machines
 	private static byte getDefaultPercolaterVersion() {
 		switch (OSDetector.getOS()) {
 			case WINDOWS:
