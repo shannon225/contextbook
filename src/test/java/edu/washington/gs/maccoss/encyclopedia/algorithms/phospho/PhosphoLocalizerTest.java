@@ -159,7 +159,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		// go right to left, drop the first
 		for (int i=peptideModSeqs.size()-1; i>=1; i--) {
 			String targetPeptide=peptideModSeqs.get(i);
-			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getRightAmbiguity(targetPeptide, params.getAAConstants());
+			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getRightAmbiguity(targetPeptide, AmbiguousPeptideModSeq.modifiableAAs, params.getAAConstants());
 			
 			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
 			// shrink the number of unique ions subtractors to the pool of remaining sequences to the right
@@ -179,7 +179,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		// go left to right, drop the last
 		for (int i=0; i<peptideModSeqs.size()-1; i++) {
 			String targetPeptide=peptideModSeqs.get(i);
-			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getLeftAmbiguity(targetPeptide, params.getAAConstants());
+			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getLeftAmbiguity(targetPeptide, AmbiguousPeptideModSeq.modifiableAAs, params.getAAConstants());
 
 			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
 			// shrink the number of unique ions subtractors to the pool of

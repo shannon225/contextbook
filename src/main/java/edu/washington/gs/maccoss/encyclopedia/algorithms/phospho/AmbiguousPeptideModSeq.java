@@ -11,6 +11,7 @@ import gnu.trove.set.hash.TIntHashSet;
 
 public class AmbiguousPeptideModSeq {
 	public static final int NOMINAL_MASS=80;
+	public static final char[] modifiableAAs=new char[] {'S', 'T', 'Y'};
 	private static final int NO_GROUP=0;
 	
 	private final String[] aas;
@@ -215,7 +216,7 @@ public class AmbiguousPeptideModSeq {
 		return sb.toString();
 	}
 	
-	public static AmbiguousPeptideModSeq getFullyAmbiguous(String targetPeptide, AminoAcidConstants aaConstants) {
+	public static AmbiguousPeptideModSeq getFullyAmbiguous(String targetPeptide, char[] modifiableAAs, AminoAcidConstants aaConstants) {
 		String[] aas=PeptideUtils.getMasses(targetPeptide, aaConstants).z;
 		boolean[] modifiable=new boolean[aas.length];
 		boolean[] isModified=new boolean[aas.length];
@@ -223,7 +224,7 @@ public class AmbiguousPeptideModSeq {
 		
 		for (int i=0; i<aas.length; i++) {
 			char c=aas[i].charAt(0);
-			if (c=='S'||c=='T'||c=='Y') {
+			if (contains(modifiableAAs, c)) {
 				modifiable[i]=true;
 				modificationGroup[i]=1;
 			}
@@ -237,7 +238,7 @@ public class AmbiguousPeptideModSeq {
 		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup, (byte)0);
 	}
 	
-	public static AmbiguousPeptideModSeq getUnambigous(String targetPeptide, AminoAcidConstants aaConstants) {
+	public static AmbiguousPeptideModSeq getUnambigous(String targetPeptide, char[] modifiableAAs, AminoAcidConstants aaConstants) {
 		String[] aas=PeptideUtils.getMasses(targetPeptide, aaConstants).z;
 		boolean[] modifiable=new boolean[aas.length];
 		boolean[] isModified=new boolean[aas.length];
@@ -246,7 +247,7 @@ public class AmbiguousPeptideModSeq {
 		int currentGroup=0;
 		for (int i=0; i<aas.length; i++) {
 			char c=aas[i].charAt(0);
-			if (c=='S'||c=='T'||c=='Y') {
+			if (contains(modifiableAAs, c)) {
 				modifiable[i]=true;
 			}
 			if (modifiable[i]) {
@@ -261,7 +262,7 @@ public class AmbiguousPeptideModSeq {
 		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup, (byte)0);
 	}
 	
-	public static AmbiguousPeptideModSeq getLeftAmbiguity(String targetPeptide, AminoAcidConstants aaConstants) {
+	public static AmbiguousPeptideModSeq getLeftAmbiguity(String targetPeptide, char[] modifiableAAs, AminoAcidConstants aaConstants) {
 		String[] aas=PeptideUtils.getMasses(targetPeptide, aaConstants).z;
 		boolean[] modifiable=new boolean[aas.length];
 		boolean[] isModified=new boolean[aas.length];
@@ -269,7 +270,7 @@ public class AmbiguousPeptideModSeq {
 		
 		for (int i=0; i<aas.length; i++) {
 			char c=aas[i].charAt(0);
-			if (c=='S'||c=='T'||c=='Y') {
+			if (contains(modifiableAAs, c)) {
 				modifiable[i]=true;
 			}
 			if (modifiable[i]) {
@@ -302,7 +303,7 @@ public class AmbiguousPeptideModSeq {
 		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup, (byte)-1);
 	}
 	
-	public static AmbiguousPeptideModSeq getRightAmbiguity(String targetPeptide, AminoAcidConstants aaConstants) {
+	public static AmbiguousPeptideModSeq getRightAmbiguity(String targetPeptide, char[] modifiableAAs, AminoAcidConstants aaConstants) {
 		String[] aas=PeptideUtils.getMasses(targetPeptide, aaConstants).z;
 		boolean[] modifiable=new boolean[aas.length];
 		boolean[] isModified=new boolean[aas.length];
@@ -310,7 +311,7 @@ public class AmbiguousPeptideModSeq {
 		
 		for (int i=aas.length-1; i>=0; i--) {
 			char c=aas[i].charAt(0);
-			if (c=='S'||c=='T'||c=='Y') {
+			if (contains(modifiableAAs, c)) {
 				modifiable[i]=true;
 			}
 			if (modifiable[i]) {
@@ -343,10 +344,69 @@ public class AmbiguousPeptideModSeq {
 		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup, (byte)1);
 	}
 
-	public static boolean isLocalized(AmbiguousPeptideModSeq targetPeptideName) {
-		return isLocalized(targetPeptideName.getPeptideAnnotation());
+	public static boolean isLocalized(AmbiguousPeptideModSeq targetPeptideName, char[] modifiableAAs) {
+		return isLocalized(targetPeptideName.getPeptideAnnotation(), modifiableAAs);
 	}
-	public static boolean isLocalized(String targetPeptideName) {
+
+	public static boolean isLocalizedAtEnd(AmbiguousPeptideModSeq targetPeptideName, char[] modifiableAAs) {
+		return isLocalizedAtEnd(targetPeptideName.getPeptideAnnotation(), modifiableAAs);
+	}
+	
+	public static boolean isLocalizedAtEnd(String targetPeptideName, char[] modifiableAAs) {
+		if (!isLocalized(targetPeptideName, modifiableAAs)) {
+			return false;
+		}
+
+		char[] ca=targetPeptideName.toCharArray();
+		
+		int direction=0;
+		for (int i = 0; i < ca.length; i++) {
+			if (ca[i]=='<') {
+				direction=-1;
+				break;
+			} else if (ca[i]=='>') {
+				direction=1;
+				break;
+			}
+		}
+		
+		int modsToFind=PeptideUtils.getNumberOfMods(targetPeptideName, NOMINAL_MASS);
+		if (direction==-1) {
+			for (int i = 0; i < ca.length; i++) {
+				if (contains(modifiableAAs, ca[i])) {
+					return false;
+				}
+				if (ca[i]=='<') {
+					modsToFind--;
+					while (i<ca.length&&ca[i]!=')') {
+						i++;
+					}
+				}
+				if (modsToFind==0) return true;
+			}
+			return true;
+		}
+		if (direction==1) {
+			for (int i = ca.length-1; i >=0; i--) {
+				if (contains(modifiableAAs, ca[i])) {
+					return false;
+				}
+				if (ca[i]=='>') {
+					modsToFind--;
+					while (i>=0&&ca[i]!='(') {
+						i--;
+					}
+				}
+				if (modsToFind==0) return true;
+			}
+			return true;
+		}
+		
+		// can't determine direction!
+		return false;
+	}
+	
+	public static boolean isLocalized(String targetPeptideName, char[] modifiableAAs) {
 		char[] ca=targetPeptideName.toCharArray();
 
 		for (int i = 0; i < ca.length; i++) {
@@ -359,22 +419,28 @@ public class AmbiguousPeptideModSeq {
 				}
 				String massText = sb.toString();
 				int mods=PeptideUtils.getNumberOfMods(massText, NOMINAL_MASS);
-				int modables=getNumberOfSTYs(massText);
+				int modables=getNumberOfSTYs(massText, modifiableAAs);
 				if (modables>mods) return false;
 			}
 		}
 		return true;
 	}
 	
-	private static int getNumberOfSTYs(String sequence) {
+	private static int getNumberOfSTYs(String sequence, char[] modifiableAAs) {
 		int total=0;
 		for (int i=0; i<sequence.length(); i++) {
 			char c=sequence.charAt(i);
-			if (c=='S'||c=='T'||c=='Y') {
+			if (contains(modifiableAAs, c)) {
 				total++;
 			}
 		}
 		return total;
 	}
 
+	private static boolean contains(char[] aas, char aa) {
+		for (int i=0; i<aas.length; i++) {
+			if (aas[i]==aa) return true;
+		}
+		return false;
+	}
 }
