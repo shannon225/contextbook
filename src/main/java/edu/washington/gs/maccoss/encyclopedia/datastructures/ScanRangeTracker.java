@@ -22,19 +22,33 @@ public class ScanRangeTracker {
 		return dutyCycleMap;
 	}
 	
+	public HashMap<Range, TFloatArrayList> getStripeRTsInSecs() {
+		return stripeRTsInSecs;
+	}
+	
+	public HashMap<Range, TFloatArrayList> getPrecursorRTsInSecs() {
+		return precursorRTsInSecs;
+	}
+	
 	/**
 	 * NOT THREAD SAFE!
 	 * @param range
 	 * @param rtInSecs
+	 * @return returns if should continue
 	 */
-	public void addRange(Range range, float rtInSecs) {
+	public boolean addRange(Range range, float rtInSecs) {
 		TFloatArrayList data=stripeRTsInSecs.get(range);
 		if (data==null) {
 			data=new TFloatArrayList();
 			stripeRTsInSecs.put(range, data);
 		}
 		
+		if (data.size()>1) {
+			// already got enough data
+			return false;
+		}
 		data.add(rtInSecs);
+		return true;
 	}
 	
 	/**

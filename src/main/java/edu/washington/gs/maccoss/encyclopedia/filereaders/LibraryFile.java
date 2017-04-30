@@ -49,6 +49,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	private static final String SOURCEFILE_TIC_PREFIX="TIC_";
 	private static final String SOURCEFILE_STRING="sourcefile";
 	private static final String SOURCE_FILE_SPLIT="|";
+	public static final String DLIB=".dlib";
 	public static final String ELIB=".elib";
 	public static final String VERSION_STRING="version";
 	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] {new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4), new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8)};

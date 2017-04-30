@@ -18,6 +18,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.RowFilter;
@@ -29,6 +30,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+
+import org.jfree.chart.ChartPanel;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -57,6 +60,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumComparator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumUtils;
 
 public class DIABrowserPanel extends JPanel {
+	private static final String STRUCTURE_TITLE="Structure";
 	private static final long serialVersionUID=1L;
 	public static final Color[] colors=new Color[] {Color.red, Color.blue, Color.green, Color.cyan, Color.magenta, Color.orange, Color.yellow, Color.pink, Color.gray, 
 			Color.red.darker(), Color.blue.darker(), Color.green.darker(), Color.cyan.darker(), Color.magenta.darker(), Color.orange.darker(), Color.yellow.darker(), Color.pink.darker(), Color.gray.darker()};
@@ -69,6 +73,8 @@ public class DIABrowserPanel extends JPanel {
 	private final JTextField jtfFilter;
 	private final DIAScanTableModel model;
 	private final SearchParameters parameters;
+	private final JTabbedPane primaryTabs=new JTabbedPane();
+	
 	
 	private StripeFileInterface dia=null;
 
@@ -189,9 +195,10 @@ public class DIABrowserPanel extends JPanel {
 		setLayout(new BorderLayout());
 		left.add(searchPanel, BorderLayout.SOUTH);
 
+		primaryTabs.addTab("Scans", rawSplit);
         
 		split.setLeftComponent(left);
-		split.setRightComponent(rawSplit);
+		split.setRightComponent(primaryTabs);
 		
 		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override
@@ -213,6 +220,18 @@ public class DIABrowserPanel extends JPanel {
 		SwingWorkerProgress<ArrayList<Spectrum>> worker=new SwingWorkerProgress<ArrayList<Spectrum>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Raw File") {
 			@Override
 			protected ArrayList<Spectrum> doInBackgroundForReal() throws Exception {
+				for (int i=0; i<primaryTabs.getTabCount(); i++) {
+					if (STRUCTURE_TITLE.equals(primaryTabs.getTitleAt(i))) {
+						primaryTabs.removeTabAt(i);
+						break;
+					}
+				}
+				if (f.getName().toLowerCase().endsWith("mzml")) {
+					ChartPanel structureChart=MzmlStructureCharter.getStructureChart(f);
+					primaryTabs.addTab(STRUCTURE_TITLE, structureChart);
+					primaryTabs.setSelectedIndex(primaryTabs.getTabCount()-1);
+				}
+				
 				dia=StripeFileGenerator.getFile(f, parameters);
 				Logger.logLine("Read "+dia.getOriginalFileName()+", ("+dia.getRanges().size()+" total windows)");
 				ArrayList<Spectrum> scans=new ArrayList<Spectrum>();
@@ -263,6 +282,8 @@ public class DIABrowserPanel extends JPanel {
 			entries.add(entry);
 		}
 		resetScan(entries);
+
+		primaryTabs.setSelectedIndex(0);
 	}
 
 	public void resetScan(ArrayList<Spectrum> entries) {

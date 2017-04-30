@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 import java.io.File;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 
 public class EncyclopediaJobData extends SearchJobData {
@@ -39,7 +40,7 @@ public class EncyclopediaJobData extends SearchJobData {
 	
 	public File getResultLibrary() {
 		String absolutePath=getOutputAbsolutePathPrefix(getOutputFile().getAbsolutePath());
-		return new File(absolutePath+".elib");
+		return new File(absolutePath+LibraryFile.ELIB);
 	}
 
 	public static String getOutputAbsolutePathPrefix(String absolutePath) {

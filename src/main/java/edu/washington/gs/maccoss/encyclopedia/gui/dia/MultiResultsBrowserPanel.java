@@ -145,7 +145,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 			}
 		});
 
-		elibFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".elib"), true) {
+		elibFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), true) {
 			private static final long serialVersionUID=1L;
 
 			@Override

@@ -33,7 +33,7 @@ public class MSPReader {
 	}
 	public static void convertMSP(File mspFile, File fastaFile) throws IOException, SQLException {
 		String absolutePath=mspFile.getAbsolutePath();
-		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.ELIB);
+		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
 		convertMSP(mspFile, fastaFile, libraryFile);
 	}
 
