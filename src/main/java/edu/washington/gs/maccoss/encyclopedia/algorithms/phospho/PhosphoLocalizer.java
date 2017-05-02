@@ -39,6 +39,7 @@ import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class PhosphoLocalizer {
+	private static final float MINIMUM_RT_IN_SEC_TO_SEPARATE_PEAKS=3.0f; // 2 scans worth, need to generalize!
 	public static final float MINIMUM_SCORE=-Log.log10(0.05f);
 	private final StripeFileInterface diaFile;
 	private final SearchParameters params;
@@ -114,7 +115,7 @@ public class PhosphoLocalizer {
 		// go left to right, drop the last
 		for (int i=0; i<peptideModSeqs.size()-1; i++) {
 			String targetPeptide=peptideModSeqs.get(i);
-			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getLeftAmbiguity(targetPeptide, params.getAAConstants());
+			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getLeftAmbiguity(targetPeptide, AmbiguousPeptideModSeq.modifiableAAs, params.getAAConstants());
 
 			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
 			// shrink the number of unique ions subtractors to the pool of
@@ -130,7 +131,7 @@ public class PhosphoLocalizer {
 		// go right to left, drop the first
 		for (int i=peptideModSeqs.size()-1; i>=1; i--) {
 			String targetPeptide=peptideModSeqs.get(i);
-			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getRightAmbiguity(targetPeptide, params.getAAConstants());
+			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getRightAmbiguity(targetPeptide, AmbiguousPeptideModSeq.modifiableAAs, params.getAAConstants());
 			
 			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
 			// shrink the number of unique ions subtractors to the pool of remaining sequences to the left
@@ -164,6 +165,7 @@ public class PhosphoLocalizer {
 		TFloatArrayList scores=new TFloatArrayList(); 
 		
 		ArrayList<AmbiguousPeptideModSeq> previouslyIdentified=new ArrayList<AmbiguousPeptideModSeq>();
+		TFloatArrayList previouslyIdentifiedRTsInSec=new TFloatArrayList(); // can't repeat an RT in sec if an "internal" localization
 		
 		AmbiguousPeptideModSeq bestPeptideAnnotation=null;
 		TransitionRefinementData bestPassingForm=null;
@@ -266,7 +268,20 @@ public class PhosphoLocalizer {
 
 			if (maxRawScore>=MINIMUM_SCORE||maxRawScore>bestScore) {
 				bestScore=maxRawScore;
-				boolean isLocalized=maxRawScore>=MINIMUM_SCORE&&AmbiguousPeptideModSeq.isLocalized(targetPeptideAnnotation);
+				boolean isLocalized=maxRawScore>=MINIMUM_SCORE&&AmbiguousPeptideModSeq.isLocalized(targetPeptideAnnotation, AmbiguousPeptideModSeq.modifiableAAs);
+				
+				if (!AmbiguousPeptideModSeq.isLocalizedAtEnd(targetPeptideAnnotation, AmbiguousPeptideModSeq.modifiableAAs)) {
+					// need to check RTs
+					boolean skip=false;
+					for (int i=0; i<previouslyIdentifiedRTsInSec.size(); i++) {
+						if (bestRT+MINIMUM_RT_IN_SEC_TO_SEPARATE_PEAKS>previouslyIdentifiedRTsInSec.get(i)&&bestRT-3.0f<previouslyIdentifiedRTsInSec.get(i)) {
+							// collision!
+							skip=true;
+							break;
+						}
+					}
+					if (skip) continue;
+				}
 				
 				ArrayList<Spectrum> localStripes=getScanSubset(bestRT-params.getExpectedPeakWidth(), bestRT+params.getExpectedPeakWidth(), allScansInStripe);
 				TransitionRefinementData quantData=quantifyPeptide(targetPeptideSequence, precursorCharge, targets, bestRT, localStripes, Optional.ofNullable((float[])null));
@@ -322,6 +337,7 @@ public class PhosphoLocalizer {
 						alreadyTaken.addAll(Arrays.asList(targets));
 						passingForms.put(peptideAnnotation, quantData);
 						previouslyIdentified.add(targetPeptideAnnotation);
+						previouslyIdentifiedRTsInSec.add(bestRT);
 					}
 				}
 			}
