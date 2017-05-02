@@ -16,11 +16,12 @@ public class StringUtils {
 		}
 		
 		if (pre==standard.length()-1) return names;
+		
 		int post;
-		POSTFIX: for (post=standard.length()-1; post>=0; post--) {
-			char c=standard.charAt(post);
+		POSTFIX: for (post=0; post<standard.length(); post++) {
+			char c=standard.charAt(standard.length()-1-post);
 			for (int i=0; i<names.length; i++) {
-				if (names[i].charAt(post)!=c) {
+				if (names[i].charAt(names[i].length()-1-post)!=c) {
 					break POSTFIX;
 				}
 			}
@@ -28,7 +29,7 @@ public class StringUtils {
 
 		String[] newNames=new String[names.length];
 		for (int i=0; i<newNames.length; i++) {
-			newNames[i]=names[i].substring(pre, post+1);
+			newNames[i]=names[i].substring(pre, names[i].length()-post);
 		}
 		return newNames;
 	}
