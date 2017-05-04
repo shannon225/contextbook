@@ -210,6 +210,14 @@ public class General {
 		return normalize(v, new IntRange(0, v.length-1));
 	}
 	
+	public static double[] divide(double[] v, double d) {
+		double[] f=new double[v.length];
+		for (int i=0; i<v.length; i++) {
+			f[i]=v[i]/d;
+		}
+		return f;
+	}
+	
 	public static float[] divide(float[] v, float d) {
 		float[] f=new float[v.length];
 		for (int i=0; i<v.length; i++) {

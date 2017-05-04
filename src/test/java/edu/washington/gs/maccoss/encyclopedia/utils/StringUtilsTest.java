@@ -23,14 +23,13 @@ public class StringUtilsTest extends TestCase {
 			assertEquals(truncated[i], doubleTruncated[i]);
 		}
 	}
+
 	public void testTruncationVariable() {
-		String[] names=new String[] {"bcs_20161109_yeast_1_to_0_3mz_rep10.mzML", "bcs_20161109_yeast_1_to_0_3mz_rep2.mzML", "bcs_20161109_yeast_1_to_0_3mz_rep3.mzML",
-				"bcs_20161109_yeast_1_to_1_3mz_rep10.mzML", "bcs_20161109_yeast_1_to_1_3mz_rep2.mzML", "bcs_20161109_yeast_1_to_1_3mz_rep3.mzML", "bcs_20161109_yeast_1_to_4_3mz_rep1.mzML",
-				"bcs_20161109_yeast_1_to_4_3mz_rep20.mzML", "bcs_20161109_yeast_1_to_4_3mz_rep3.mzML", "bcs_20161109_yeast_1_to_9_3mz_rep1.mzML", "bcs_20161109_yeast_1_to_9_3mz_rep2.mzML",
-				"bcs_20161109_yeast_1_to_9_3mz_rep30.mzML"};
+		String[] names=new String[] {"20170426_HZP2N1_01.mzML", "20170426_HZP2N1_02.mzML", "20170426_HZP2N1_03.mzML", "20170426_HZP3N_01.mzML", "20170426_HZP3N_02.mzML", "20170426_HZP3N_03.mzML",
+				"20170426_MZP2N1_01.mzML", "20170426_MZP2N1_02.mzML", "20170426_MZP2N1_03.mzML", "20170426_MZP3N_01.mzML", "20170426_MZP3N_02.mzML", "20170426_MZP3N_03.mzML"};
 		
-		String[] expected=new String[] {"0_3mz_rep10", "0_3mz_rep2", "0_3mz_rep3", "1_3mz_rep10", "1_3mz_rep2", "1_3mz_rep3", "4_3mz_rep1", "4_3mz_rep20", "4_3mz_rep3", "9_3mz_rep1", "9_3mz_rep2",
-				"9_3mz_rep30"};
+		String[] expected=new String[] {"HZP2N1_01", "HZP2N1_02", "HZP2N1_03", "HZP3N_01", "HZP3N_02", "HZP3N_03", "MZP2N1_01", "MZP2N1_02", "MZP2N1_03", "MZP3N_01", "MZP3N_02",
+				"MZP3N_03"};
 		
 		String[] truncated=StringUtils.getUniquePortion(names);
 		for (int i=0; i<truncated.length; i++) {

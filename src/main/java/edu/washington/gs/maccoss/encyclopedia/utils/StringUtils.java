@@ -8,7 +8,7 @@ public class StringUtils {
 		int pre;
 		PREFIX: for (pre=0; pre<standard.length(); pre++) {
 			char c=standard.charAt(pre);
-			for (int i=0; i<names.length; i++) {
+			for (int i=1; i<names.length; i++) {
 				if (names[i].charAt(pre)!=c) {
 					break PREFIX;
 				}
@@ -20,7 +20,7 @@ public class StringUtils {
 		int post;
 		POSTFIX: for (post=0; post<standard.length(); post++) {
 			char c=standard.charAt(standard.length()-1-post);
-			for (int i=0; i<names.length; i++) {
+			for (int i=1; i<names.length; i++) {
 				if (names[i].charAt(names[i].length()-1-post)!=c) {
 					break POSTFIX;
 				}

@@ -39,6 +39,18 @@ public class XYTrace implements XYTraceInterface {
 		Collections.sort(points);
 	}
 	
+	public static double getMaxY(XYTraceInterface[] traces) {
+		double max=-Double.MAX_VALUE;
+		for (XYTraceInterface xyTrace : traces) {
+			for (double y : xyTrace.toArrays().y) {
+				if (y>max) {
+					max=y;
+				}
+			}
+		}
+		return max;
+	}
+	
 	public static double getMaxY(Collection<XYTrace> traces) {
 		double max=-Double.MAX_VALUE;
 		for (XYTrace xyTrace : traces) {

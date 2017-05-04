@@ -171,7 +171,9 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 					float[] averageAuxScores=new float[auxScores[0].length];
 					for (int auxIndex=0; auxIndex<averageAuxScores.length; auxIndex++) {
 						for (int scanIndex=0; scanIndex<auxScores.length; scanIndex++) {
-							averageAuxScores[auxIndex]+=auxScores[scanIndex][auxIndex];
+							if (auxScores[scanIndex].length>auxIndex) {
+								averageAuxScores[auxIndex]+=auxScores[scanIndex][auxIndex];
+							}
 						}
 					}
 

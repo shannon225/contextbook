@@ -8,12 +8,15 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.font.TextAttribute;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.text.AttributedString;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -49,6 +52,7 @@ import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfTemplate;
 import com.itextpdf.text.pdf.PdfWriter;
+import com.sun.xml.xsom.impl.parser.DelayedRef.Attribute;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -322,12 +326,62 @@ public class Charter {
 	}
 
 	public static ChartPanel getChart(String xAxis, String yAxis, boolean displayLegend, XYTraceInterface... traces) {
-		NumberAxis numberaxis=new NumberAxis(xAxis);
-		numberaxis.setAutoRangeIncludesZero(false);
-		NumberAxis numberaxis1=new NumberAxis(yAxis);
-		numberaxis1.setAutoRangeIncludesZero(false);
+
+		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
+		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
+		Font font3=new Font("News Gothic MT", Font.PLAIN, 18);
+		font=new Font("News Gothic MT", Font.PLAIN, 16);
+		font2=new Font("News Gothic MT", Font.PLAIN, 16);
+		font3=new Font("News Gothic MT", Font.PLAIN, 16);
+		HashMap<TextAttribute, Object> m=new HashMap<TextAttribute, Object>(font2.getAttributes());
+		m.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUPER);
+		Font font2super=new Font(m);
+
+		double maxY=XYTrace.getMaxY(traces);
+		double divider;
+		AttributedString yAxisLabel;
+		if (maxY>1e15) {
+			divider=1e15;
+			yAxisLabel=new AttributedString(yAxis+" (1015)");
+			yAxisLabel.addAttribute(TextAttribute.FONT, font2);
+			yAxisLabel.addAttribute(TextAttribute.FONT, font2super, yAxis.length()+4, yAxis.length()+6);
+		} else if (maxY>1e12) {
+			divider=1e12;
+			yAxisLabel=new AttributedString(yAxis+" (1012)");
+			yAxisLabel.addAttribute(TextAttribute.FONT, font2);
+			yAxisLabel.addAttribute(TextAttribute.FONT, font2super, yAxis.length()+4, yAxis.length()+6);
+		} else if (maxY>1e9) {
+			divider=1e9;
+			yAxisLabel=new AttributedString(yAxis+" (109)");
+			yAxisLabel.addAttribute(TextAttribute.FONT, font2);
+			yAxisLabel.addAttribute(TextAttribute.FONT, font2super, yAxis.length()+4, yAxis.length()+5);
+		} else if (maxY>1e6) {
+			divider=1e6;
+			yAxisLabel=new AttributedString(yAxis+" (106)");
+			yAxisLabel.addAttribute(TextAttribute.FONT, font2);
+			yAxisLabel.addAttribute(TextAttribute.FONT, font2super, yAxis.length()+4, yAxis.length()+5);
+		} else if (maxY>1e3) {
+			divider=1e3;
+			yAxisLabel=new AttributedString(yAxis+" (103)");
+			yAxisLabel.addAttribute(TextAttribute.FONT, font2);
+			yAxisLabel.addAttribute(TextAttribute.FONT, font2super, yAxis.length()+4, yAxis.length()+5);
+		} else {
+			divider=1;
+			yAxisLabel=new AttributedString(yAxis);
+			yAxisLabel.addAttribute(TextAttribute.FONT, font2);
+		}
 
 		XYPlot plot=new XYPlot();
+		NumberAxis numberaxis=new NumberAxis(xAxis);
+		numberaxis.setAutoRangeIncludesZero(false);
+		NumberAxis numberaxis1;
+		if (divider==1) {
+			numberaxis1=new NumberAxis(yAxis);
+		} else {
+			numberaxis1=new NumberAxis();
+			numberaxis1.setAttributedLabel(yAxisLabel);
+		}
+		numberaxis1.setAutoRangeIncludesZero(false);
 		plot.setDomainAxis(numberaxis);
 		plot.setRangeAxis(numberaxis1);
 
@@ -396,7 +450,7 @@ public class Charter {
 
 			Pair<double[], double[]> values=trace.toArrays();
 			double[] x=values.x;
-			double[] y=values.y;
+			double[] y=General.divide(values.y, divider);
 			XYSeriesCollection dataset=new XYSeriesCollection();
 			switch (trace.getType()) {
 			case area:
@@ -496,13 +550,6 @@ public class Charter {
 		chart.setBackgroundPaint(Color.white);
 
 		NumberAxis rangeAxis=(NumberAxis) ((XYPlot) plot).getRangeAxis();
-
-		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
-		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
-		Font font3=new Font("News Gothic MT", Font.PLAIN, 18);
-		font=new Font("News Gothic MT", Font.PLAIN, 16);
-		font2=new Font("News Gothic MT", Font.PLAIN, 16);
-		font3=new Font("News Gothic MT", Font.PLAIN, 16);
 		rangeAxis.setLabelFont(font2);
 		rangeAxis.setTickLabelFont(font);
 
