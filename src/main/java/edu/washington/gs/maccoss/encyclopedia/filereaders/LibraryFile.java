@@ -20,6 +20,8 @@ import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.zip.DataFormatException;
 
+import com.google.common.collect.Lists;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
@@ -261,7 +263,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		// then add integrated areas
 		Connection c=getConnection();
 		try {
-			ArrayList<Pair<TransitionRefinementData, String>> dataAndSouceList=new ArrayList<Pair<TransitionRefinementData,String>>();
+			ArrayList<Pair<TransitionRefinementData, String>> dataAndSourceList=new ArrayList<Pair<TransitionRefinementData,String>>();
 			for (LibraryEntry recast : uniqueEntries) {
 				IntegratedLibraryEntry entry=(IntegratedLibraryEntry)recast;
 				String sourceFile=entry.getSource();
@@ -319,20 +321,46 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 							ptmRepeatsCatcher.put(key, "NO LOC: "+uniqueData.getPeptideModSeq());
 						}
 					}
-					dataAndSouceList.add(new Pair<TransitionRefinementData, String>(uniqueData, sourceFile));
+					dataAndSourceList.add(new Pair<TransitionRefinementData, String>(uniqueData, sourceFile));
 				}
 
 			}
 
+			//Issue 25 - skip entries that the RT inferrer could not process.
+			//TODO: should this throw if too many entries are skipped?
+			//TODO: instead of skipping these entries, should something else be done?
+			int numFilteredEntries = 0;
+			if (inferrer.isPresent()){
+				
+				ArrayList<Pair<TransitionRefinementData, String>> filteredDataAndSourceList = Lists.newArrayList();
+				
+				for (Pair<TransitionRefinementData, String> pair : dataAndSourceList){
+					
+					if (inferrer.get().getTopNBestIons(pair.x.getPeptideModSeq()) != null){
+						filteredDataAndSourceList.add(pair);
+					} else {
+						numFilteredEntries++;
+					}
+					
+				}
+
+				dataAndSourceList = new ArrayList<Pair<TransitionRefinementData, String>>(filteredDataAndSourceList);
+
+				if (numFilteredEntries > 0){
+					Logger.errorLine("Skipped " + numFilteredEntries + " integrated library entries because the RT inferrer could not find any fragment ions.");
+				}
+			}
+			
+			
 			int start=0;
 			int stop=NUMBER_OF_PEPTIDE_ENTRIES_AT_ONCE;
-			while (stop<dataAndSouceList.size()) {
-				internalWritePeptideQuantLibraryEntriesToConnection(c, inferrer, dataAndSouceList.subList(start, stop));
+			while (stop<dataAndSourceList.size()) {
+				internalWritePeptideQuantLibraryEntriesToConnection(c, inferrer, dataAndSourceList.subList(start, stop));
 				start=stop;
 				stop=stop+NUMBER_OF_PEPTIDE_ENTRIES_AT_ONCE;
 			}
-			if (start<dataAndSouceList.size()) {
-				internalWritePeptideQuantLibraryEntriesToConnection(c, inferrer, dataAndSouceList.subList(start, dataAndSouceList.size()));
+			if (start<dataAndSourceList.size()) {
+				internalWritePeptideQuantLibraryEntriesToConnection(c, inferrer, dataAndSourceList.subList(start, dataAndSourceList.size()));
 			}
 
 			// FIXME THINK ABOUT WHETHER WE REALLY NEED FRAGMENT LEVEL DATA! PERHAPS WE CAN GET AWAY WITHOUT IT
@@ -433,8 +461,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			topN=inferrer.get().getTopNIntensity(data);
 			topNMasses=inferrer.get().getTopNBestIons(data.getPeptideModSeq());
 			if (topNMasses==null) {
-				Logger.errorLine("Sorry, couldn't retention time align "+data.getPeptideModSeq()+" from source file. Are you trying to RT align samples too disparate?");
-				return index;
+				throw new IllegalStateException("Could not retention time align " + data.getPeptideModSeq() + " from source file.  Unable to proceed.");
 			}
 			
 		} else {
