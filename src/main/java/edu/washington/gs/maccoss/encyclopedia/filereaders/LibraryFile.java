@@ -334,7 +334,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				
 				ArrayList<Pair<TransitionRefinementData, String>> filteredDataAndSourceList = Lists.newArrayList();
 				
-				for (Pair<TransitionRefinementData, String> pair : filteredDataAndSourceList){
+				for (Pair<TransitionRefinementData, String> pair : dataAndSourceList){
 					
 					if (inferrer.get().getTopNBestIons(pair.x.getPeptideModSeq()) != null){
 						filteredDataAndSourceList.add(pair);
@@ -343,8 +343,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					}
 					
 				}
-				
-				dataAndSourceList = filteredDataAndSourceList;
+
+				dataAndSourceList = new ArrayList<Pair<TransitionRefinementData, String>>(filteredDataAndSourceList);
+
 				if (numFilteredEntries > 0){
 					Logger.errorLine("Skipped " + numFilteredEntries + " integrated library entries because the RT inferrer could not find any fragment ions.");
 				}
