@@ -20,8 +20,6 @@ import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.zip.DataFormatException;
 
-import com.google.common.collect.Lists;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
@@ -329,25 +327,23 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			//Issue 25 - skip entries that the RT inferrer could not process.
 			//TODO: should this throw if too many entries are skipped?
 			//TODO: instead of skipping these entries, should something else be done?
-			int numFilteredEntries = 0;
-			if (inferrer.isPresent()){
-				
-				ArrayList<Pair<TransitionRefinementData, String>> filteredDataAndSourceList = Lists.newArrayList();
-				
-				for (Pair<TransitionRefinementData, String> pair : dataAndSourceList){
-					
-					if (inferrer.get().getTopNBestIons(pair.x.getPeptideModSeq()) != null){
+			int numFilteredEntries=0;
+			if (inferrer.isPresent()) {
+				ArrayList<Pair<TransitionRefinementData, String>> filteredDataAndSourceList=new ArrayList<Pair<TransitionRefinementData, String>>();
+
+				for (Pair<TransitionRefinementData, String> pair : dataAndSourceList) {
+					if (inferrer.get().getTopNBestIons(pair.x.getPeptideModSeq())!=null) {
 						filteredDataAndSourceList.add(pair);
 					} else {
 						numFilteredEntries++;
 					}
-					
+
 				}
 
-				dataAndSourceList = new ArrayList<Pair<TransitionRefinementData, String>>(filteredDataAndSourceList);
+				dataAndSourceList=filteredDataAndSourceList;
 
-				if (numFilteredEntries > 0){
-					Logger.errorLine("Skipped " + numFilteredEntries + " integrated library entries because the RT inferrer could not find any fragment ions.");
+				if (numFilteredEntries>0) {
+					Logger.errorLine("Skipped "+numFilteredEntries+" integrated library entries because the RT inferrer could not find any fragment ions.");
 				}
 			}
 			

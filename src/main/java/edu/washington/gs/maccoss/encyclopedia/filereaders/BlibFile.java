@@ -80,14 +80,31 @@ public class BlibFile extends SQLFile {
 				}
 
 				boolean hasScore=doesColumnExist(tempFile, "RefSpectra", "score");
-				if (hasScore) {
-					rs=s.executeQuery(
-							"select RefSpectra.id, RefSpectra.precursorMZ, RefSpectra.precursorCharge, RefSpectra.peptideModSeq, RefSpectra.copies, RefSpectra.numPeaks, RefSpectraPeaks.peakMZ, RefSpectraPeaks.peakIntensity, RefSpectra.score, SpectrumSourceFiles.fileName from RefSpectra, RefSpectraPeaks, SpectrumSourceFiles "
-									+"where RefSpectra.id == RefSpectraPeaks.RefSpectraID and SpectrumSourceFiles.id == RefSpectra.fileID");
+				boolean hasFileID=doesColumnExist(tempFile, "RefSpectra", "fileID");
+				if (hasFileID) {
+					if (hasScore) {
+						rs=s.executeQuery(
+								"select RefSpectra.id, RefSpectra.precursorMZ, RefSpectra.precursorCharge, RefSpectra.peptideModSeq, RefSpectra.copies, RefSpectra.numPeaks, RefSpectraPeaks.peakMZ, RefSpectraPeaks.peakIntensity, RefSpectra.score, SpectrumSourceFiles.fileName "
+										+"from RefSpectra, RefSpectraPeaks, SpectrumSourceFiles "
+										+"where RefSpectra.id == RefSpectraPeaks.RefSpectraID and SpectrumSourceFiles.id == RefSpectra.fileID");
+					} else {
+						rs=s.executeQuery(
+								"select RefSpectra.id, RefSpectra.precursorMZ, RefSpectra.precursorCharge, RefSpectra.peptideModSeq, RefSpectra.copies, RefSpectra.numPeaks, RefSpectraPeaks.peakMZ, RefSpectraPeaks.peakIntensity, SpectrumSourceFiles.fileName "
+										+"from RefSpectra, RefSpectraPeaks, SpectrumSourceFiles "
+										+"where RefSpectra.id == RefSpectraPeaks.RefSpectraID and SpectrumSourceFiles.id == RefSpectra.fileID");
+					}
 				} else {
-					rs=s.executeQuery(
-							"select RefSpectra.id, RefSpectra.precursorMZ, RefSpectra.precursorCharge, RefSpectra.peptideModSeq, RefSpectra.copies, RefSpectra.numPeaks, RefSpectraPeaks.peakMZ, RefSpectraPeaks.peakIntensity, SpectrumSourceFiles.fileName from RefSpectra, RefSpectraPeaks, SpectrumSourceFiles "
-									+"where RefSpectra.id == RefSpectraPeaks.RefSpectraID and SpectrumSourceFiles.id == RefSpectra.fileID");
+					if (hasScore) {
+						rs=s.executeQuery(
+								"select RefSpectra.id, RefSpectra.precursorMZ, RefSpectra.precursorCharge, RefSpectra.peptideModSeq, RefSpectra.copies, RefSpectra.numPeaks, RefSpectraPeaks.peakMZ, RefSpectraPeaks.peakIntensity, RefSpectra.score "
+										+"from RefSpectra, RefSpectraPeaks "
+										+"where RefSpectra.id == RefSpectraPeaks.RefSpectraID");
+					} else {
+						rs=s.executeQuery(
+								"select RefSpectra.id, RefSpectra.precursorMZ, RefSpectra.precursorCharge, RefSpectra.peptideModSeq, RefSpectra.copies, RefSpectra.numPeaks, RefSpectraPeaks.peakMZ, RefSpectraPeaks.peakIntensity "
+										+"from RefSpectra, RefSpectraPeaks, SpectrumSourceFiles "
+										+"where RefSpectra.id == RefSpectraPeaks.RefSpectraID");
+					}
 				}
 
 				int missing=0;
@@ -107,11 +124,25 @@ public class BlibFile extends SQLFile {
 					int numPeaks=rs.getInt(6);
 					double[] massArray=decompressDouble(rs.getBytes(7), numPeaks);
 					float[] intensityArray=decompressFloat(rs.getBytes(8), numPeaks);
-					float score=0.0f;
-					if (hasScore) {
-						score=(float)rs.getDouble(9);
+					float score;
+					String sourceFile;
+					if (hasFileID) {
+						if (hasScore) {
+							score=(float)rs.getDouble(9);
+							sourceFile=rs.getString(10);
+						} else {
+							score=0.0f;
+							sourceFile=rs.getString(9);
+						}
+					} else {
+						if (hasScore) {
+							score=(float)rs.getDouble(9);
+							sourceFile="unknown";
+						} else {
+							score=0.0f;
+							sourceFile="unknown";
+						}
 					}
-					String sourceFile=rs.getString(10);
 					
 					float retentionTime=rtMap.get(refSpectraID);
 					if (irtMap.isPresent()) {
