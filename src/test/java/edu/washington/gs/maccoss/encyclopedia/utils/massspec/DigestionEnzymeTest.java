@@ -4,10 +4,58 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import junit.framework.TestCase;
 
 public class DigestionEnzymeTest extends TestCase {
+	public void testModifications() {
+		String bsa=">ALBU_HUMAN Serum albumin OS=Homo sapiens GN=ALB PE=1 SV=2\n"+"MWVTFISLLFLFSSAYSRGVFRRDAHKSEVAHRFKDLGEENFKALVLIAFAQYLQQCPF\n"
+				+"EDHVKLVNEVTEFAKTCVADESAENCDKSLHTLFGDKLCTVATLRETYGEMADCCAKQEPENECFLQH\n";
+
+		FastaEntryInterface entry=FastaReader.readFasta(bsa, "").get(0);
+		String sequence=entry.getSequence();
+		
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+		HashSet<String> expected=new HashSet<String>();
+		expected.add("MWVTFISLLFLFSSAYSR");
+		expected.add("DLGEENFK");
+		expected.add("ALVLIAFAQYLQQCPFEDHVK");
+		expected.add("LVNEVTEFAK");
+		expected.add("TCVADESAENCDK");
+		expected.add("SLHTLFGDK");
+		expected.add("LCTVATLR");
+		expected.add("ETYGEMADCCAK");
+		expected.add("MWVTFISLLFLFSSAYSR");
+		expected.add("MW[15.994915]VTFISLLFLFSSAYSR");
+		expected.add("[42.010565]MWVTFISLLFLFSSAYSR");
+		expected.add("DLGEENFK");
+		expected.add("DLGEENFK[8.014199]");
+		expected.add("ALVLIAFAQYLQQCPFEDHVK");
+		expected.add("ALVLIAFAQYLQQCPFEDHVK[8.014199]");
+		expected.add("LVNEVTEFAK");
+		expected.add("LVNEVTEFAK[8.014199]");
+		expected.add("TCVADESAENCDK");
+		expected.add("TCVADESAENCDK[8.014199]");
+		expected.add("SLHTLFGDK");
+		expected.add("SLHTLFGDK[8.014199]");
+		expected.add("LCTVATLR");
+		expected.add("ETYGEMADCCAK");
+		expected.add("[-18.026549]ETYGEMADCCAK");
+		expected.add("ETYGEMADCCAK[8.014199]");
+		expected.add("QEPENECFLQH");
+		expected.add("[-17.026549]QEPENECFLQH");
+		expected.add("QEPENECFLQH[14.0]");
+		
+		ModificationMassMap map=new ModificationMassMap("K=8.014199,W=15.994915,nE=-18.026549,nQ=-17.026549,nC=-17.026549,a=42.010565,z=14.0");
+		
+		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 40, 0, map);
+		assertEquals(expected.size(), sequences.size());
+		for (String peptide : sequences) {
+			assertTrue(expected.contains(peptide));
+		}
+	}
+	
 	public void testXanderCleavages() {
 		System.out.println("BOLA2T:");
 		String sequence="MELSAEYLREKLQRDLEAEHVEVEDTTLNRCSCSFRVLVVSAKFEGKPLLQRHRFCTE";

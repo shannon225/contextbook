@@ -8,6 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParame
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
@@ -20,6 +21,7 @@ public class PecanParameterParser {
 	public static HashMap<String,String> getDefaultParameters() {
 		HashMap<String, String> map=new HashMap<String, String>();
 		map.put("-fixed", "C=57.0214635");
+		map.put("-variable", "-");
 		map.put("-frag", "YONLY");
 		map.put("-ptol", "10");
 		map.put("-ftol", "10");
@@ -87,6 +89,8 @@ public class PecanParameterParser {
 		final int numberOfQuantitativePeaks;
 		final int percolatorVersionNumber;
 
+		ModificationMassMap variableMods=new ModificationMassMap(parameters.get("-variable"));
+
 		TCharDoubleHashMap fixedMods=new TCharDoubleHashMap();
 		String value=parameters.get("-fixed");
 		if (value!=null) {
@@ -104,7 +108,7 @@ public class PecanParameterParser {
 		} else {
 			fixedMods.put('C', 57.0214635);
 		}
-		aaConstants=new AminoAcidConstants(fixedMods);
+		aaConstants=new AminoAcidConstants(fixedMods, variableMods);
 
 		value=parameters.get("-frag");
 		if (value==null) {

@@ -10,23 +10,26 @@ public class AminoAcidConstants {
 	
 	// ordered by H C O N S
 	private final TCharDoubleHashMap fixedMods;
+	private final ModificationMassMap variableMods;
 	private final TCharObjectHashMap<int[]> atomicComposition=new TCharObjectHashMap<int[]>();
 	final private TCharDoubleHashMap massesByAA=new TCharDoubleHashMap();
 	final private TIntCharHashMap aasByNominal=new TIntCharHashMap();
 	
 	public static AminoAcidConstants getConstants(String name) {
+		TCharDoubleHashMap fixedMods;
 		if ("C+57 (Carbamidomethyl)".equalsIgnoreCase(name)) {
-			return new AminoAcidConstants(new TCharDoubleHashMap(new char[] {'C'}, new double[] {57.0214635}));
+			fixedMods=new TCharDoubleHashMap(new char[] {'C'}, new double[] {57.0214635});
 			
 		} else if ("C+58 (Carboxymethyl)".equalsIgnoreCase(name)) {
-			return new AminoAcidConstants(new TCharDoubleHashMap(new char[] {'C'}, new double[] {58.005479}));
+			fixedMods=new TCharDoubleHashMap(new char[] {'C'}, new double[] {58.005479});
 			
 		}else if ("C+46 (MMTS)".equalsIgnoreCase(name)) {
-			return new AminoAcidConstants(new TCharDoubleHashMap(new char[] {'C'}, new double[] {45.987721}));
+			fixedMods=new TCharDoubleHashMap(new char[] {'C'}, new double[] {45.987721});
 			
 		} else {
-			return new AminoAcidConstants(new TCharDoubleHashMap());
+			fixedMods=new TCharDoubleHashMap();
 		}
+		return new AminoAcidConstants(fixedMods, new ModificationMassMap());
 	}
 	
 	public static String toName(AminoAcidConstants constants) {
@@ -44,10 +47,11 @@ public class AminoAcidConstants {
 	 * assumes +57 C-alkylation
 	 */
 	public AminoAcidConstants() {
-		this(new TCharDoubleHashMap(new char[] {'C'}, new double[] {57.0214635}));
+		this(new TCharDoubleHashMap(new char[] {'C'}, new double[] {57.0214635}), new ModificationMassMap());
 	}
-	public AminoAcidConstants(TCharDoubleHashMap fixedMods) {
+	public AminoAcidConstants(TCharDoubleHashMap fixedMods, ModificationMassMap variableMods) {
 		this.fixedMods=fixedMods;
+		this.variableMods=variableMods;
 		
 		atomicComposition.put('A', new int[] {5, 3, 1, 1, 0});
 		if (fixedMods.contains('C')&&Math.round(fixedMods.get('C'))==57) {
@@ -120,6 +124,10 @@ public class AminoAcidConstants {
 		return fixedMods;
 	}
 	
+	public ModificationMassMap getVariableMods() {
+		return variableMods;
+	}
+	
 	public String getFixedModString() {
 		final StringBuilder sb=new StringBuilder();
 		fixedMods.forEachEntry(new TCharDoubleProcedure() {
@@ -135,6 +143,10 @@ public class AminoAcidConstants {
 			}
 		});
 		return sb.toString();
+	}
+	
+	public String getVariableModString() {
+		return variableMods.toString();
 	}
 	
 	public double getMass(char aa) {

@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TCharHashSet;
@@ -164,8 +165,12 @@ public class DigestionEnzyme {
 		}
 		return false;
 	}
-	
+
 	public ArrayList<String> digestProtein(String sequence, int minLength, int maxLength, int maxMissedCleavages) {
+		return digestProtein(sequence, minLength, maxLength, maxMissedCleavages, null);
+	}
+	
+	public ArrayList<String> digestProtein(String sequence, int minLength, int maxLength, int maxMissedCleavages, ModificationMassMap variableMods) {
 		int totalAllowedStarts=maxMissedCleavages+1;
 		
 		ArrayList<String> peptides=new ArrayList<String>();
@@ -183,7 +188,20 @@ public class DigestionEnzyme {
 				int start=starts.get(i);
 				peptide=sequence.substring(start, stop+1);
 				if ((peptide.length()>=minLength)&&(peptide.length()<=maxLength)) {
-					peptides.add(peptide);
+					peptides.addAll(getModifiedForms(peptide, variableMods));
+					
+					if (start==0&&(variableMods!=null&&!variableMods.isEmpty()&&peptide.length()!=0)) {
+						double mass=variableMods.getProteinNTermMod(peptide.charAt(0));
+						if (mass!=ModificationMassMap.MISSING) {
+							peptides.add("["+mass+"]"+peptide);
+						}
+					}
+					if (stop==sequence.length()-1&&(variableMods!=null&&!variableMods.isEmpty()&&peptide.length()!=0)) {
+						double mass=variableMods.getProteinCTermMod(peptide.charAt(peptide.length()-1));
+						if (mass!=ModificationMassMap.MISSING) {
+							peptides.add(peptide+"["+mass+"]");
+						}
+					}
 				}
 			}
 			starts.insert(0, stop+1);
@@ -191,6 +209,32 @@ public class DigestionEnzyme {
 				starts.removeAt(starts.size()-1);
 			}
 		}
+		return peptides;
+	}
+	
+	public ArrayList<String> getModifiedForms(String peptide, ModificationMassMap variableMods) {
+		
+		ArrayList<String> peptides=new ArrayList<String>();
+		peptides.add(peptide);
+		
+		if (variableMods==null|| variableMods.isEmpty()||peptide.length()==0) return peptides;
+
+		double mass=variableMods.getNTermMod(peptide.charAt(0));
+		if (mass!=ModificationMassMap.MISSING) {
+			peptides.add("["+mass+"]"+peptide);
+		}
+		mass=variableMods.getCTermMod(peptide.charAt(peptide.length()-1));
+		if (mass!=ModificationMassMap.MISSING) {
+			peptides.add(peptide+"["+mass+"]");
+		}
+		
+		for (int i=0; i<peptide.length(); i++) {
+			mass=variableMods.getVariableMod(peptide.charAt(i));
+			if (mass!=ModificationMassMap.MISSING) {
+				peptides.add(peptide.substring(0, i+1)+"["+mass+"]"+peptide.substring(i+1));
+			}
+		}
+		
 		return peptides;
 	}
 

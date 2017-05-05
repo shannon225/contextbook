@@ -9,6 +9,7 @@ import java.util.HashMap;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -72,7 +73,7 @@ public class SearchParameterParser {
 	}
 	
 	public static SearchParameters parseParameters(HashMap<String, String> parameters) {
-		final AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap());
+		final AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		final FragmentationType fragType;
 		
 		final MassErrorUnitType precursorToleranceType;

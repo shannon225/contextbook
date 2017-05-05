@@ -26,6 +26,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringF
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -208,7 +209,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	public SearchParameters getParameters() {
 		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.getAcquisitionType((String)acquisition.getSelectedItem());
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
-		AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap());
+		AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
 		MassTolerance precursorValue=TOLERANCE_VALUES[precursorTolerance.getSelectedIndex()];
 		MassTolerance fragmentValue=TOLERANCE_VALUES[fragmentTolerance.getSelectedIndex()];

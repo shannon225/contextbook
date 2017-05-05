@@ -134,7 +134,7 @@ public class XCorDIA {
 						targets=new ArrayList<FastaPeptideEntry>();
 						ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(targetsFile);
 						for (FastaEntryInterface entry : entries) {
-							ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages());
+							ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants().getVariableMods());
 							for (String peptide : peptides) {
 								FastaPeptideEntry pe=entry.getSubEntry(peptide);
 								targets.add(pe);
@@ -221,7 +221,7 @@ public class XCorDIA {
 		// add database to proteome
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(fastaFile);
 		for (FastaEntryInterface entry : entries) {
-			ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages());
+			ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants().getVariableMods());
 			backgroundProteome.addAll(peptides);
 
 			if (!targetList.isPresent()) {
