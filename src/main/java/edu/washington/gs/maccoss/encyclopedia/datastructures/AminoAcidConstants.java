@@ -15,7 +15,12 @@ public class AminoAcidConstants {
 	final private TCharDoubleHashMap massesByAA=new TCharDoubleHashMap();
 	final private TIntCharHashMap aasByNominal=new TIntCharHashMap();
 	
-	public static AminoAcidConstants getConstants(String name) {
+	public static AminoAcidConstants getConstants(String fixedAAName, ModificationMassMap variableMods) {
+		TCharDoubleHashMap fixedMods=getFixedModsMap(fixedAAName);
+		return new AminoAcidConstants(fixedMods, variableMods);
+	}
+
+	public static TCharDoubleHashMap getFixedModsMap(String name) {
 		TCharDoubleHashMap fixedMods;
 		if ("C+57 (Carbamidomethyl)".equalsIgnoreCase(name)) {
 			fixedMods=new TCharDoubleHashMap(new char[] {'C'}, new double[] {57.0214635});
@@ -29,7 +34,7 @@ public class AminoAcidConstants {
 		} else {
 			fixedMods=new TCharDoubleHashMap();
 		}
-		return new AminoAcidConstants(fixedMods, new ModificationMassMap());
+		return fixedMods;
 	}
 	
 	public static String toName(AminoAcidConstants constants) {

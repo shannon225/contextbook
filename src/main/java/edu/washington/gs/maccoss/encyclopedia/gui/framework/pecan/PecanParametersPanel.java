@@ -29,6 +29,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
@@ -184,7 +185,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 	public PecanSearchParameters getParameters() {
 		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.getAcquisitionType((String)acquisition.getSelectedItem());
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
-		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem());
+		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem(), new ModificationMassMap());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
 		MassTolerance precursorPPMValue=EncyclopediaParametersPanel.TOLERANCE_VALUES[precursorTolerance.getSelectedIndex()];
 		MassTolerance fragmentPPMValue=EncyclopediaParametersPanel.TOLERANCE_VALUES[fragmentTolerance.getSelectedIndex()];

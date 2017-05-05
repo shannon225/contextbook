@@ -33,4 +33,11 @@ public class StringUtils {
 		}
 		return newNames;
 	}
+	
+	public static int getIndexOf(String[] strings, String target) {
+		for (int i=0; i<strings.length; i++) {
+			if (target.equals(strings[i])) return i;
+		}
+		return -1;
+	}
 }

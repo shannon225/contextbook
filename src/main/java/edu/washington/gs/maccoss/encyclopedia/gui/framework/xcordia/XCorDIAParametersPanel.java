@@ -29,6 +29,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
@@ -41,6 +42,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -57,12 +59,15 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 
 	private static final String[] NUMBER_OF_EXTRA_DECOY_ITEMS=new String[] {"Normal Target/Decoy", "+10% Extra Decoys", "+20% Extra Decoys", "+50% Extra Decoys", "+100% Extra Decoys (2x Time)"};
 	private static final float[] NUMBER_OF_EXTRA_DECOY_VALUES=new float[] {0.0f, 0.1f, 0.2f, 0.5f, 1.0f};
+	private static final String[] VARIABLE_MODIFICATION_ITEMS=new String[] {"None", "STY+80 (Phosphorylation)", "M+16 (Oxidation)"};
+	private static final String[] VARIABLE_MODIFICATION_VALUES=new String[] {"-", "S=79.966331,T=79.966331,Y=79.966331", "M=15.994915"};
 	
 	private final FileChooserPanel backgroundFasta;
 	private final FileChooserPanel targetFasta;
 	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {DataAcquisitionType.toName(DataAcquisitionType.OVERLAPPING_DIA), DataAcquisitionType.toName(DataAcquisitionType.DIA)});
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
 	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "None"});
+	private final JComboBox<String> variable=new JComboBox<String>(VARIABLE_MODIFICATION_ITEMS);
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.YONLY), FragmentationType.toName(FragmentationType.ETD)});
 	private final JComboBox<String> precursorTolerance=new JComboBox<String>(EncyclopediaParametersPanel.TOLERANCE_NAMES);
 	private final JComboBox<String> fragmentTolerance=new JComboBox<String>(EncyclopediaParametersPanel.TOLERANCE_NAMES);
@@ -112,6 +117,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		options.add(new LabeledComponent("Precursor Window Width (blank=extract from file)", precursorWindowWidth));
 		options.add(new LabeledComponent("Enzyme", enzyme));
 		options.add(new LabeledComponent("Fixed", fixed));
+		options.add(new LabeledComponent("Variable", variable));
 		options.add(new LabeledComponent("Fragmentation", fragType));
 		options.add(new LabeledComponent("Precursor Mass Tolerance", precursorTolerance));
 		options.add(new LabeledComponent("Fragment Mass Tolerance", fragmentTolerance));
@@ -203,7 +209,6 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	public XCordiaSearchParameters getParameters() {
 		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.getAcquisitionType((String)acquisition.getSelectedItem());
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
-		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
 		MassTolerance precursorPPMValue=EncyclopediaParametersPanel.TOLERANCE_VALUES[precursorTolerance.getSelectedIndex()];
 		MassTolerance fragmentPPMValue=EncyclopediaParametersPanel.TOLERANCE_VALUES[fragmentTolerance.getSelectedIndex()];
@@ -215,6 +220,9 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		float numberOfExtraDecoyLibrariesValue=NUMBER_OF_EXTRA_DECOY_VALUES[((Integer)numberOfExtraDecoyLibraries.getSelectedIndex())];
+		ModificationMassMap variableMods=new ModificationMassMap(VARIABLE_MODIFICATION_VALUES[((Integer)variable.getSelectedIndex())]);
+		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem(), variableMods);
+		
 		XCordiaSearchParameters parameters=new XCordiaSearchParameters(aaConstants, fragmentation, precursorPPMValue, fragmentPPMValue, digestionEnzyme,
 				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, numberOfExtraDecoyLibrariesValue);
 		return parameters;
@@ -268,6 +276,10 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		int index=Arrays.binarySearch(NUMBER_OF_EXTRA_DECOY_VALUES, params.getNumberOfExtraDecoyLibrariesSearched());
 		if (index>=0) {
 			numberOfExtraDecoyLibraries.setSelectedIndex(index);
+		}
+		index=StringUtils.getIndexOf(VARIABLE_MODIFICATION_VALUES, params.getAAConstants().getVariableMods().toString());
+		if (index>=0) {
+			variable.setSelectedIndex(index);
 		}
 		numberOfQuantitativeIons.setValue(params.getNumberOfQuantitativePeaks());
 	}
