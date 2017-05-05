@@ -264,6 +264,7 @@ public class SearchToBLIB {
 	}
 	
 	public static void convert(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File libFile, boolean writeBlib, boolean alignBetweenFiles) {
+		ArrayList<SearchJobData> processedJobs=new ArrayList<SearchJobData>();
 		ArrayList<File> featureFiles=new ArrayList<File>();
 		SearchJobData representativeJob=null;
 		for (int i=0; i<pecanJobs.size(); i++) {
@@ -271,12 +272,15 @@ public class SearchToBLIB {
 			if (!job.hasBeenRun()) {
 				Logger.logLine("Can't find a "+job.getSearchType()+" analysis of "+job.getDiaFile().getName()+", skipping extraction on that file.");
 				continue;
+			} else {
+				processedJobs.add(job);
 			}
 			if (representativeJob==null) {
 				representativeJob=job;
 			}
 			featureFiles.add(job.getFeatureFile());
 		}
+		pecanJobs=processedJobs;
 
 		if (representativeJob==null) {
 			Logger.errorLine("Can't find any representative jobs! Failing...");
