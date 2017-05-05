@@ -162,7 +162,7 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 						writer.print("\t"+(peptide.getPrecursorCharge()==3?1:0));
 						writer.print("\t"+peptide.getPrecursorMZ());
 
-						String sequence="-."+peptide.getPeptideSeq()+".-";
+						String sequence="-."+peptide.getPeptideModSeq()+".-";
 						writer.print("\t"+sequence);
 						
 						HashSet<String> accessions=peptide.getAccessions();

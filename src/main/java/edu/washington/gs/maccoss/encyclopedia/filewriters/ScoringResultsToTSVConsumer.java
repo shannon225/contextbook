@@ -140,7 +140,7 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 						writer.print("\t"+peptide.getPrecursorMZ());
 						writer.print("\t"+stripe.getScanStartTime()/60f);
 
-						String sequence="-."+peptide.getPeptideSeq()+".-";
+						String sequence="-."+peptide.getPeptideModSeq()+".-";
 						writer.print("\t"+sequence);
 
 						HashSet<String> accessions=peptide.getAccessions();
