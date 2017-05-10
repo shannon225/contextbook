@@ -5,6 +5,8 @@ import gnu.trove.map.hash.TIntIntHashMap;
 public interface FastaEntryInterface extends Comparable<FastaEntryInterface> {
 
 	String getAccession();
+	
+	String getAnnotation();
 
 	String getFilename();
 

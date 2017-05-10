@@ -73,6 +73,10 @@ public class FastaPeptideEntry implements FastaEntryInterface {
 		}
 		return sb.toString();
 	}
+	
+	public String getAnnotation() {
+		return getAccession();
+	}
 
 	@Override
 	public String getFilename() {

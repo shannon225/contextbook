@@ -9,26 +9,33 @@ import java.util.ArrayList;
 import org.apache.commons.lang3.text.WordUtils;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 
 public class FastaWriter {
-	public static void writeFasta(File f, ArrayList<FastaEntryInterface> list) {
-		PrintWriter writer=null;
+	private final PrintWriter writer;
+	public FastaWriter(File f) {
 		try {
 			writer=new PrintWriter(f, "UTF-8");
-			for (FastaEntryInterface entry : list) {
-				writer.print('>');
-				writer.println(entry.getAccession());
-				writer.println(WordUtils.wrap(entry.getSequence(), 80));
-			}
-		} catch (FileNotFoundException e) {
-			Logger.logException(e);
-		} catch (UnsupportedEncodingException e) {
-			Logger.logException(e);
-		} finally {
-			if (writer!=null) {
-				writer.close();
-			}
+		} catch (FileNotFoundException|UnsupportedEncodingException e) {
+			throw new EncyclopediaException("Error writing FASTA!", e);
 		}
+	}
+	
+	public void write(FastaEntryInterface entry) {
+		writer.print('>');
+		writer.println(entry.getAnnotation());
+		writer.println(WordUtils.wrap(entry.getSequence(), 80));
+	}
+	
+	public void close() {
+		writer.close();
+	}
+	
+	public static void writeFasta(File f, ArrayList<FastaEntryInterface> list) {
+		FastaWriter writer=new FastaWriter(f);
+		for (FastaEntryInterface entry : list) {
+			writer.write(entry);
+		}
+		writer.close();
 	}
 }

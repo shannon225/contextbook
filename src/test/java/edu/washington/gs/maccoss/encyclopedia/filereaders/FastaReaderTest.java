@@ -1,19 +1,82 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.TreeSet;
 
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import junit.framework.TestCase;
 
 public class FastaReaderTest extends TestCase {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException, FileNotFoundException {
+		File f=new File("/Users/searleb/Downloads/hg38_6FT.fasta");
+		File out=new File("/Users/searleb/Downloads/hg38_coding.fasta");
+		BufferedReader in=new BufferedReader(new FileReader(f));
+		FastaWriter writer=new FastaWriter(out);
+
+		boolean inAnnotation=false;
+		StringBuilder annotation=new StringBuilder();
+		StringBuilder sequence=new StringBuilder();
+		char[] buffer=new char[1024*1024];
+		int length;
+		int counter=0;
+		int index=0;
+		int startIndex=0;
+		while ((length=in.read(buffer))>=0) {
+			counter++;
+			if (counter%100==0) {
+				System.out.println(" "+counter+" MB");
+			} else if (counter%10==0) {
+				System.out.print(". ");
+			} else {
+				System.out.print('.');
+			}
+			
+			for (int i=0; i<length; i++) {
+				index++;
+				if (buffer[i]=='>') {
+					inAnnotation=true;
+					annotation.setLength(0);
+				} else if (buffer[i]=='\n') {
+					if (sequence.length()>=8) {
+						writer.write(new FastaEntry(f.getName(), annotation.toString()+"."+(startIndex+1)+"."+(index-1), sequence.toString()));
+					}
+					sequence.setLength(0);
+					
+					inAnnotation=false;
+					index=0;
+					startIndex=index;
+				} else {
+					if (inAnnotation) {
+						annotation.append(buffer[i]);
+					} else {
+						if (buffer[i]=='*'||buffer[i]=='X') {
+							if (sequence.length()>=8) {
+								writer.write(new FastaEntry(f.getName(), annotation.toString()+"."+(startIndex+1)+"."+(index-1), sequence.toString()));
+							}
+							sequence.setLength(0);
+							startIndex=index;
+						} else {
+							sequence.append(buffer[i]);
+						}
+					}
+				}
+			}
+		}
+		in.close();
+		writer.close();
+	}
+	
+	/*public static void main(String[] args) {
 		File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f);
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
@@ -31,7 +94,7 @@ public class FastaReaderTest extends TestCase {
 		for (String peptide : eightOrLess) {
 			System.out.println(peptide);
 		}
-	}
+	}*/
 	
 	/*public static void main(String[] args) {
 		File f=new File("/Users/searleb/Downloads/Saccharomyces_cerevisiae_sprot_032417.fasta");

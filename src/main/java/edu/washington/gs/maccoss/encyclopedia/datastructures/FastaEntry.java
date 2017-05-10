@@ -28,6 +28,11 @@ public class FastaEntry implements FastaEntryInterface {
 		}
 		return annotation.substring(start, stop);
 	}
+	
+	public String getAnnotation() {
+		int start=annotation.charAt(0)=='>'?1:0;
+		return annotation.substring(start);
+	}
 
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.FastaEntryInterface#getFilename()
