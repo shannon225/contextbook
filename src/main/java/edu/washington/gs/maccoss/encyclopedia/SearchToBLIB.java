@@ -68,6 +68,7 @@ public class SearchToBLIB {
 			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file or directory");
 			Logger.timelessLogLine("\t-o\toutput library .ELIB file");
 			Logger.timelessLogLine("\t-a\talign between files (default=true)");
+			Logger.timelessLogLine("\t-blib\twrite .BLIB instead of .ELIB (default=false)");
 			Logger.timelessLogLine("Potentially Required Parameters: ");
 			Logger.timelessLogLine("\t-l\toriginal library .ELIB file (required by EncyclopeDIA Export)");
 			Logger.timelessLogLine("\t-f\toriginal fasta file (required by Pecan/XCorDIA Export)");
@@ -109,6 +110,7 @@ public class SearchToBLIB {
 		File fastaFile=new File(arguments.get("-f"));
 		File outputFile=new File(arguments.get("-o"));
 		boolean alignBetweenFiles=SearchParameterParser.getBoolean("-a", arguments, true);
+		boolean writeBlib=SearchParameterParser.getBoolean("-blib", arguments, false);
 		
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 		XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(parameters);
@@ -119,6 +121,7 @@ public class SearchToBLIB {
 		Logger.timelessLogLine(" -f "+fastaFile.getAbsolutePath());
 		Logger.timelessLogLine(" -o "+outputFile.getAbsolutePath());
 		Logger.timelessLogLine(" -a "+alignBetweenFiles);
+		Logger.timelessLogLine(" -blib "+writeBlib);
 		Logger.timelessLogLine(parameters.toString());
 
 		try {
@@ -150,7 +153,7 @@ public class SearchToBLIB {
 				pecanJobs.add(job);
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, false, alignBetweenFiles);
+			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
@@ -167,6 +170,7 @@ public class SearchToBLIB {
 		File fastaFile=new File(arguments.get("-f"));
 		File outputFile=new File(arguments.get("-o"));
 		boolean alignBetweenFiles=SearchParameterParser.getBoolean("-a", arguments, true);
+		boolean writeBlib=SearchParameterParser.getBoolean("-blib", arguments, false);
 		
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, outputFile);
@@ -177,6 +181,7 @@ public class SearchToBLIB {
 		Logger.timelessLogLine(" -f "+fastaFile.getAbsolutePath());
 		Logger.timelessLogLine(" -o "+outputFile.getAbsolutePath());
 		Logger.timelessLogLine(" -a "+alignBetweenFiles);
+		Logger.timelessLogLine(" -blib "+writeBlib);
 		Logger.timelessLogLine(parameters.toString());
 
 		try {
@@ -208,7 +213,7 @@ public class SearchToBLIB {
 				pecanJobs.add(job);
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, false, alignBetweenFiles);
+			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
@@ -225,6 +230,7 @@ public class SearchToBLIB {
 		File libraryFile=new File(arguments.get("-l"));
 		File outputFile=new File(arguments.get("-o"));
 		boolean alignBetweenFiles=SearchParameterParser.getBoolean("-a", arguments, true);
+		boolean writeBlib=SearchParameterParser.getBoolean("-blib", arguments, false);
 		
 		SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
@@ -235,6 +241,7 @@ public class SearchToBLIB {
 		Logger.timelessLogLine(" -l "+libraryFile.getAbsolutePath());
 		Logger.timelessLogLine(" -o "+outputFile.getAbsolutePath());
 		Logger.timelessLogLine(" -a "+alignBetweenFiles);
+		Logger.timelessLogLine(" -blib "+writeBlib);
 		Logger.timelessLogLine(parameters.toString());
 
 		try {
@@ -256,7 +263,7 @@ public class SearchToBLIB {
 				pecanJobs.add(job);
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, false, alignBetweenFiles);
+			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
