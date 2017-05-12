@@ -82,6 +82,20 @@ public class PhosphoLocalizer {
 	 * @return
 	 */
 	PhosphoLocalizationData extractPhosphoForms(String originalPeptideModSeq, double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<Spectrum> allScansInStripe) {
+		float duration=gradientLength/20.0f;
+		ArrayList<Spectrum> stripes=getScanSubset(retentionTime-duration, retentionTime+duration, allScansInStripe);
+		
+		return extractPhosphoFormsFromLimitedScans(precursorMZ, precursorCharge, peptideModSeqs, stripes);
+	}
+
+	PhosphoLocalizationData extractPhosphoFormsFromStripes(String originalPeptideModSeq, double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<Stripe> allScansInStripe) {
+		float duration=gradientLength/20.0f;
+		ArrayList<Spectrum> stripes=getScanSubsetFromStripes(retentionTime-duration, retentionTime+duration, allScansInStripe);
+		
+		return extractPhosphoFormsFromLimitedScans(precursorMZ, precursorCharge, peptideModSeqs, stripes);
+	}
+
+	public PhosphoLocalizationData extractPhosphoFormsFromLimitedScans(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, ArrayList<Spectrum> stripes) {
 		float dutyCycle=1.0f;
 		for (Entry<Range, Float> entry : diaFile.getRanges().entrySet()) {
 			if (entry.getKey().contains((float)precursorMZ)) {
@@ -89,10 +103,6 @@ public class PhosphoLocalizer {
 				break;
 			}
 		}
-		
-		float duration=gradientLength/20.0f;
-		
-		ArrayList<Spectrum> stripes=getScanSubset(retentionTime-duration, retentionTime+duration, allScansInStripe);
 		
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : peptideModSeqs) {
@@ -283,7 +293,7 @@ public class PhosphoLocalizer {
 					if (skip) continue;
 				}
 				
-				ArrayList<Spectrum> localStripes=getScanSubset(bestRT-params.getExpectedPeakWidth(), bestRT+params.getExpectedPeakWidth(), allScansInStripe);
+				ArrayList<Spectrum> localStripes=getScanSubset(bestRT-params.getExpectedPeakWidth(), bestRT+params.getExpectedPeakWidth(), stripes);
 				TransitionRefinementData quantData=quantifyPeptide(targetPeptideSequence, precursorCharge, targets, bestRT, localStripes, Optional.ofNullable((float[])null));
 				if (quantData==null) continue;
 				
@@ -547,6 +557,16 @@ public class PhosphoLocalizer {
 			}
 		}
 		return uniqueIons;
+	}
+	
+	public ArrayList<Spectrum> getScanSubsetFromStripes(float minRT, float maxRT, ArrayList<Stripe> allScansInStripe) {
+		ArrayList<Spectrum> subset=new ArrayList<Spectrum>();
+		for (Spectrum scan : allScansInStripe) {
+			if (scan.getScanStartTime()>=minRT&&scan.getScanStartTime()<=maxRT) {
+				subset.add(scan);
+			}
+		}
+		return subset;
 	}
 	
 	public ArrayList<Spectrum> getScanSubset(float minRT, float maxRT, ArrayList<Spectrum> allScansInStripe) {
