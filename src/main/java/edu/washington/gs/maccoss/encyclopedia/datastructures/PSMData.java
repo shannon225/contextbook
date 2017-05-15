@@ -53,6 +53,17 @@ public class PSMData implements PeptidePrecursor {
 		return accessions;
 	}
 
+	public String getAccession() {
+		ArrayList<String> list=new ArrayList<String>(accessions);
+		Collections.sort(list);
+		StringBuilder sb=new StringBuilder();
+		for (String string : list) {
+			if (sb.length()>0) sb.append(PSMData.ACCESSION_TOKEN);
+			sb.append(string);
+		}
+		return sb.toString();
+	}
+
 	public int getSpectrumIndex() {
 		return spectrumIndex;
 	}

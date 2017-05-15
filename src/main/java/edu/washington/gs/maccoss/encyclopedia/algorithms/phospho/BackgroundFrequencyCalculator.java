@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.zip.DataFormatException;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -174,7 +175,17 @@ public class BackgroundFrequencyCalculator implements BackgroundFrequencyInterfa
 		}
 		return getFrequencies(counters, numberOfLibraryEntries);
 	}
-
+	
+	@Override
+	public LibraryBackgroundInterface getLibraryBackground(final double precursorMz, final MassTolerance tolerance) {
+		return new LibraryBackgroundInterface() {
+			@Override
+			public float getFraction(double mass) {
+				return getFrequencies(new double[] {mass}, precursorMz, tolerance)[0];
+			}
+		};
+	}
+	
 	private int getBinIndex(double precursorMz) {
 		int index=Arrays.binarySearch(binBoundaries, precursorMz);
 		if (index<0) {

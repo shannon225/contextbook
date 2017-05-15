@@ -19,6 +19,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -75,7 +76,7 @@ public class EncyclopediaDDA {
 			
 			ArrayList<Stripe> stripes=stripefile.getStripes(range, -Float.MAX_VALUE, Float.MAX_VALUE, true);
 			ArrayList<LibraryEntry> entries=library.getEntries(range, true);
-			LibraryBackground background=new LibraryBackground(entries);
+			LibraryBackgroundInterface background=new LibraryBackground(entries);
 			PSMScorer scorer=taskFactory.getLibraryScorer(background);
 			ArrayList<LibraryEntry> reverses=new ArrayList<LibraryEntry>();
 			for (LibraryEntry entry : entries) {

@@ -52,6 +52,10 @@ public class PhosphoLocalizer {
 		background=BackgroundFrequencyCalculator.generateBackground(diaFile);
 		gradientLength=diaFile.getGradientLength();
 	}
+	
+	public BackgroundFrequencyInterface getBackground() {
+		return background;
+	}
 
 	public Optional<PhosphoLocalizationData> runDIAPhosphoLocalization(PSMData psmdata, ArrayList<Stripe> stripes) {
 		ArrayList<Spectrum> spectra=new ArrayList<Spectrum>();

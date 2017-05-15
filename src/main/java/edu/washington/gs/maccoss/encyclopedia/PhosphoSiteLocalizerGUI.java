@@ -48,7 +48,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
  * @author searleb
  *
  */
-public class PhosphoSiteLocalizer {
+public class PhosphoSiteLocalizerGUI {
 	private static final String shortName="CAPSiL";
 	private static final String name="CAPSiL: Chromatogram Aligned Phospho Site Localizer";
 	private static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mazie_icon.png"));

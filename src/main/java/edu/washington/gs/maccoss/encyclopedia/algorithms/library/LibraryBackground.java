@@ -11,7 +11,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 
-public class LibraryBackground {
+public class LibraryBackground implements LibraryBackgroundInterface {
 	private final int[] background=new int[4000];
 	private final int total;
 	
@@ -65,6 +65,10 @@ public class LibraryBackground {
 		this.total=t;
 	}
 	
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface#getFraction(double)
+	 */
+	@Override
 	public float getFraction(double mass) {
 		int index=(int)mass; // truncate
 		int count=index>=background.length?1:background[index];

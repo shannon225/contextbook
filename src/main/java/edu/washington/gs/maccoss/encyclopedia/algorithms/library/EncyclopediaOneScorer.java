@@ -16,7 +16,7 @@ public class EncyclopediaOneScorer implements EncyclopediaScorer {
 	private final SearchParameters parameters;
 	private final EncyclopediaOneAuxillaryPSMScorer auxScorer;
 
-	public EncyclopediaOneScorer(SearchParameters parameters, LibraryBackground background) {
+	public EncyclopediaOneScorer(SearchParameters parameters, LibraryBackgroundInterface background) {
 		this.parameters=parameters;
 		auxScorer=new EncyclopediaOneAuxillaryPSMScorer(parameters, background, true);
 	}

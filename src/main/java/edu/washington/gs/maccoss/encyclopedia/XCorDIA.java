@@ -27,6 +27,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
@@ -202,7 +203,7 @@ public class XCorDIA {
 				backgroundProteome.add(target.getSequence());
 			}
 		}
-		LibraryBackground background=new LibraryBackground(backgroundProteome, parameters);
+		LibraryBackgroundInterface background=new LibraryBackground(backgroundProteome, parameters);
 		XCorDIAOneScorer xcordiaScorer=(XCorDIAOneScorer)taskFactory.getLibraryScorer(background);
 
 		float minMzRange=Float.MAX_VALUE;

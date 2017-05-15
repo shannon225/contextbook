@@ -23,11 +23,11 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 	private static final int numPeaksUsedInAverage=3;
 	
 	private final boolean runXCorr;
-	private final LibraryBackground background;
+	private final LibraryBackgroundInterface background;
 	private final SparseXCorrCalculator librarySparseCalculator;
 	private final SparseXCorrCalculator sparseModelCalculator;
 
-	public EncyclopediaOneAuxillaryPSMScorer(SearchParameters parameters, LibraryBackground background, boolean runXCorr) {
+	public EncyclopediaOneAuxillaryPSMScorer(SearchParameters parameters, LibraryBackgroundInterface background, boolean runXCorr) {
 		super(parameters);
 		this.background=background;
 		this.runXCorr=runXCorr;
@@ -37,7 +37,7 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 	
 	
 	
-	private EncyclopediaOneAuxillaryPSMScorer(SearchParameters parameters, LibraryBackground background, boolean runXCorr, SparseXCorrCalculator librarySparseCalculator, SparseXCorrCalculator sparseModelCalculator) {
+	private EncyclopediaOneAuxillaryPSMScorer(SearchParameters parameters, LibraryBackgroundInterface background, boolean runXCorr, SparseXCorrCalculator librarySparseCalculator, SparseXCorrCalculator sparseModelCalculator) {
 		super(parameters);
 		this.runXCorr=runXCorr;
 		this.background=background;

@@ -30,6 +30,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTime
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
@@ -251,7 +252,7 @@ public class Encyclopedia {
 
 			int count=0;
 			ArrayList<LibraryEntry> entries=library.getEntries(range, true);
-			LibraryBackground background=new LibraryBackground(entries);
+			LibraryBackgroundInterface background=new LibraryBackground(entries);
 			PSMScorer scorer=taskFactory.getLibraryScorer(background);
 			
 			for (LibraryEntry entry : entries) {

@@ -27,6 +27,11 @@ public class FragmentationModel {
 		neutralLosses=tuple.y;
 		aas=tuple.z;
 	}
+	
+	public static AnnotatedLibraryEntry generateEntry(String peptideModSeq, String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params) {
+		FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+		return model.getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params);
+	}
 
 	public double getChargedMass(byte charge) {
 		double mass=MassConstants.oh2;

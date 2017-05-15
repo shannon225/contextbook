@@ -8,7 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringT
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneAuxillaryPSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -28,7 +28,7 @@ public class XCorDIAOneScoringFactory implements LibraryScoringFactory {
 	}
 
 	@Override
-	public PSMScorer getLibraryScorer(LibraryBackground background) {
+	public PSMScorer getLibraryScorer(LibraryBackgroundInterface background) {
 		return new XCorDIAOneScorer(parameters, background); 
 	}
 

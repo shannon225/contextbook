@@ -2,7 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneAuxillaryPSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -13,7 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 public class XCorDIAOneScorer implements PSMScorer {
 	private final EncyclopediaOneAuxillaryPSMScorer auxScorer;
 
-	public XCorDIAOneScorer(SearchParameters parameters, LibraryBackground background) {
+	public XCorDIAOneScorer(SearchParameters parameters, LibraryBackgroundInterface background) {
 		auxScorer=new EncyclopediaOneAuxillaryPSMScorer(parameters, background, false);
 	}
 	
