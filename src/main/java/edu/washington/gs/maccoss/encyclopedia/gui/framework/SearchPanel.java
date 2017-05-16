@@ -246,6 +246,16 @@ public class SearchPanel extends JPanel {
 		saveELIB.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		fileMenu.add(saveELIB);
 
+		JMenuItem saveLocalization=new JMenuItem("Save Phospho Localization", openDBIcon);
+		saveLocalization.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				saveLocalizationELIB();
+			}
+		});
+		saveLocalization.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		fileMenu.add(saveLocalization);
+
 		JMenuItem saveBLIB=new JMenuItem("Save BLIB", skylineIcon);
 		saveBLIB.addActionListener(new ActionListener() {
 			@Override
@@ -657,6 +667,39 @@ public class SearchPanel extends JPanel {
 				}
 
 				SearchToELIBJob job=new SearchToELIBJob(elibFile, alignBetweenFiles.isSelected(), processorTableModel);
+				if (job!=null) {
+					processorTableModel.addJob(job);
+				}
+			}
+		}
+	}
+
+	public void saveLocalizationELIB() {
+		JFrame frame = (JFrame)SwingUtilities.getRoot(SearchPanel.this);
+
+		Optional<String> maybeError=getVisibleTab().canLoadData();
+		if (maybeError.isPresent()) {
+			JOptionPane.showMessageDialog(frame, maybeError.get());
+		} else if (processorTableModel.getRowCount()==0) {
+			JOptionPane.showMessageDialog(frame, "Please queue some RAW files first!");
+			
+		} else {
+			FileDialog dialog=new FileDialog(frame, "Save a Localization ELIB file", FileDialog.SAVE);
+			dialog.setFilenameFilter(new SimpleFilenameFilter(LibraryFile.ELIB));
+			dialog.setVisible(true);
+			if (dialog.getFiles()!=null&&dialog.getFiles().length>0) {
+				File elibFile=dialog.getFiles()[0];
+				String fileName=elibFile.getName();
+				if (!fileName.toLowerCase().endsWith(LibraryFile.ELIB)) {
+					elibFile=new File(elibFile.getParentFile(), fileName+LibraryFile.ELIB);
+
+					if (elibFile.exists()) {
+						// TODO ask if you want to overwrite this
+						// updated file location!
+					}
+				}
+
+				SearchToLocalizationELIBJob job=new SearchToLocalizationELIBJob(elibFile, alignBetweenFiles.isSelected(), getVisibleTab().getParameters(), processorTableModel);
 				if (job!=null) {
 					processorTableModel.addJob(job);
 				}

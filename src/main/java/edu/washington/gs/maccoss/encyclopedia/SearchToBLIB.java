@@ -62,8 +62,9 @@ public class SearchToBLIB {
 			Logger.logLine("SearchToLIB Help");
 			Logger.timelessLogLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.timelessLogLine("Other Programs: ");
-			Logger.timelessLogLine("\t-pecan\trun Pecanpie (use -pecan -h for Pecan help)");
-			Logger.timelessLogLine("\t-xcordia\trun XCorDIA (use -xcordia -h for XCorDIA help)");
+			Logger.timelessLogLine("\t-pecan\trun Pecanpie export (use -pecan -h for Pecan help)");
+			Logger.timelessLogLine("\t-xcordia\trun XCorDIA export (use -xcordia -h for XCorDIA help)");
+			Logger.timelessLogLine("\t-phospho\trun phospho localization export (use -phospho -h for localization help)");
 			Logger.timelessLogLine("Required Parameters: ");
 			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file or directory");
 			Logger.timelessLogLine("\t-o\toutput library .ELIB file");
@@ -94,6 +95,8 @@ public class SearchToBLIB {
 				convertPecan(arguments);
 			} else if (arguments.containsKey("-xcordia")) {
 				convertXCorDIA(arguments);
+			} else if (arguments.containsKey("-phospho")) {
+				ChromatogramAlignedPhosphoSiteLocalizer.convert(arguments);
 			} else {
 				convertEncyclopedia(arguments);
 			}

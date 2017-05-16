@@ -33,7 +33,6 @@ public class PhosphoLocalizationScoringTask extends AbstractLibraryScoringTask {
 	protected Nothing process() {
 		EncyclopediaScorer eScorer=(EncyclopediaScorer)scorer;
 		for (LibraryEntry entry : super.entries) {
-			PeptideScoringResult result=new PeptideScoringResult(entry);
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
 			AuxillaryPSMScorer auxScorer=eScorer.getAuxScorer().getEntryOptimizedScorer(entry);
 			
@@ -63,7 +62,7 @@ public class PhosphoLocalizationScoringTask extends AbstractLibraryScoringTask {
 				float score=(float)point.y;
 				
 				FragmentationModel model=new FragmentationModel(peptideModSeq, parameters.getAAConstants());
-				AnnotatedLibraryEntry unitEntry=model.getUnitSpectrum(entry.getSource(), entry.getAccessions(), entry.getPrecursorCharge(), rt, parameters);
+				AnnotatedLibraryEntry unitEntry=model.getUnitSpectrum(entry.getSource(), entry.getAccessions(), entry.getPrecursorCharge(), rt, parameters, entry.isDecoy());
 
 				Stripe bestStripe=null;
 				float bestDeltaRT=Float.MAX_VALUE;
@@ -78,10 +77,11 @@ public class PhosphoLocalizationScoringTask extends AbstractLibraryScoringTask {
 				
 				float[] auxScoreArray=auxScorer.score(unitEntry, bestStripe, predictedIsotopeDistribution, precursors);
 				float evalue=-1f;
+				
+				PeptideScoringResult result=new PeptideScoringResult(unitEntry);
 				result.addStripe(score, General.concatenate(auxScoreArray, evalue), bestStripe);
+				resultsQueue.add(result);
 			}
-			
-			resultsQueue.add(result);
 		}
 		return Nothing.NOTHING;
 	}

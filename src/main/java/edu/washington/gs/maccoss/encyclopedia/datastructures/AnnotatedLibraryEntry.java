@@ -7,11 +7,20 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 
 public class AnnotatedLibraryEntry extends LibraryEntry {
 	private final FragmentIon[] ionAnnotations;
+	private final boolean isDecoy;
+
+	public AnnotatedLibraryEntry(String sourceFile, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime,
+			float score, double[] massArray, float[] intensityArray, float[] correlationArray, FragmentIon[] ionAnnotations, boolean isDecoy) {
+		super(sourceFile, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray);
+		this.ionAnnotations=ionAnnotations;
+		this.isDecoy=isDecoy;
+	}
 
 	public AnnotatedLibraryEntry(String sourceFile, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime,
 			float score, double[] massArray, float[] intensityArray, float[] correlationArray, FragmentIon[] ionAnnotations) {
 		super(sourceFile, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray);
 		this.ionAnnotations=ionAnnotations;
+		this.isDecoy=false;
 	}
 
 	public AnnotatedLibraryEntry(LibraryEntry entry, SearchParameters parameters) {
@@ -20,6 +29,7 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 
 		double[] massArray=entry.getMassArray();
 		this.ionAnnotations=new FragmentIon[massArray.length];
+		this.isDecoy=false;
 
 		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge())) {
@@ -36,6 +46,7 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 
 		double[] massArray=spectrum.getMassArray();
 		this.ionAnnotations=new FragmentIon[massArray.length];
+		this.isDecoy=false;
 
 		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge())) {
@@ -46,7 +57,10 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 		}
 	}
 	
-
+	@Override
+	public boolean isDecoy() {
+		return isDecoy;
+	}
 	/**
 	 * 
 	 * @return null entries are expected for unannotated peaks!
