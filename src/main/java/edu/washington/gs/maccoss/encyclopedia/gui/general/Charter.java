@@ -325,6 +325,14 @@ public class Charter {
 	}
 
 	public static ChartPanel getChart(String xAxis, String yAxis, boolean displayLegend, XYTraceInterface... traces) {
+		return getChart(xAxis, yAxis, displayLegend, 0.0, traces);
+	}
+	public static ChartPanel getChart(String xAxis, String yAxis, boolean displayLegend, double maxY, XYTraceInterface... traces) {
+		boolean scaleToMax=true;
+		if (maxY==0.0) {
+			scaleToMax=false;
+			maxY=XYTrace.getMaxY(traces);
+		}
 
 		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
 		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
@@ -336,7 +344,6 @@ public class Charter {
 		m.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUPER);
 		Font font2super=new Font(m);
 
-		double maxY=XYTrace.getMaxY(traces);
 		double divider;
 		AttributedString yAxisLabel;
 		if (maxY>1e15) {
@@ -573,7 +580,8 @@ public class Charter {
 		chartPanel.setMinimumDrawHeight(0);
 		chartPanel.setMaximumDrawWidth(Integer.MAX_VALUE);
 		chartPanel.setMaximumDrawHeight(Integer.MAX_VALUE);
-		
+
+		numberaxis1.setUpperBound(maxY/divider);
 		return chartPanel;
 	}
 
