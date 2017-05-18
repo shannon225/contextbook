@@ -180,11 +180,15 @@ public class AminoAcidConstants {
 		return total;
 	}
 	
-	public double getChargedMass(String sequence, byte charge) {
-		double mass=getMass(sequence)+MassConstants.oh2;
+	public double getChargedMass(String modSeq, byte charge) {
+		double mass=getMass(modSeq)+MassConstants.oh2;
 		return (mass+MassConstants.protonMass*charge)/charge;
 	}
-	
+
+	public double getChargedIsotopeMass(String modSeq, byte charge, byte isotope) {
+		return MassConstants.getChargedIsotopeMass(getChargedMass(modSeq, charge), charge, isotope);
+	}
+
 	public int[] getAminoAcidProportions(char c) {
 		return atomicComposition.get(c);
 	}

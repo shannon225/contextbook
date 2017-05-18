@@ -19,7 +19,7 @@ public class ChromatogramExtractor {
 	public static XYTraceInterface[] extractPrecursorChromatograms(MassTolerance tolerance, double precursorMz, byte charge, ArrayList<Spectrum> precursors) {
 		double[] targetMasses=new double[isotopes.length];
 		for (int i=0; i<targetMasses.length; i++) {
-			targetMasses[i]=precursorMz+(isotopes[i]*MassConstants.neutronMass/charge);
+			targetMasses[i] = MassConstants.getChargedIsotopeMass(precursorMz, charge, isotopes[i]);
 		}
 		@SuppressWarnings("unchecked")
 		ArrayList<XYPoint>[] traces=new ArrayList[targetMasses.length];

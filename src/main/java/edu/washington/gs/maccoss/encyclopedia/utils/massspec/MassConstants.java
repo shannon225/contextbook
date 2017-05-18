@@ -85,4 +85,8 @@ public class MassConstants {
 	public static double getPeptideMass(double chargedMass, byte charge) {
 		return chargedMass*charge-protonMass*charge;
 	}
+
+	public static double getChargedIsotopeMass(double precursorMz, byte charge, byte isotope) {
+		return precursorMz + (isotope * neutronMass / charge);
+	}
 }
