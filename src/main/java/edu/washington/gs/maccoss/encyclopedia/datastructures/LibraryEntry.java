@@ -258,9 +258,21 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		} else {
 			reverseSequence=PeptideUtils.reverse(peptideModSeq, parameters);
 		}
+		HashSet<String> revAcc=new HashSet<String>();
+		for (String accession : accessions) {
+			if (shuffle) {
+				revAcc.add(DECOY_STRING+accession);
+			} else {
+				revAcc.add(SHUFFLE_STRING+accession);
+			}
+		}
 		
+		return getEntryFromNewSequence(reverseSequence, revAcc, markAsDecoy, parameters);
+	}
+
+	public LibraryEntry getEntryFromNewSequence(String newSequence, HashSet<String> accessions, boolean markAsDecoy, SearchParameters parameters) {
 		FragmentationModel forwardModel=new FragmentationModel(peptideModSeq, parameters.getAAConstants());
-		FragmentationModel reverseModel=new FragmentationModel(reverseSequence, parameters.getAAConstants());
+		FragmentationModel reverseModel=new FragmentationModel(newSequence, parameters.getAAConstants());
 		
 		ArrayList<FragmentIon> forwardIons=new ArrayList<FragmentIon>();
 		ArrayList<FragmentIon> reverseIons=new ArrayList<FragmentIon>();
@@ -300,7 +312,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 			try {
 				points.add(new XYPoint(forwardIons.get(i).mass, reverseIons.get(i).mass));
 			} catch (Exception e) {
-				System.out.println("WTF: "+peptideModSeq+"+"+precursorCharge+" vs "+reverseSequence+"+"+precursorCharge+", "+forwardIons.size()+" = "+forwardModel.getBIons().length+" + "+forwardModel.getYIons().length+"\t"+reverseIons.size()+" = "+reverseModel.getBIons().length+" + "+reverseModel.getYIons().length);
+				System.out.println("WTF: "+peptideModSeq+"+"+precursorCharge+" vs "+newSequence+"+"+precursorCharge+", "+forwardIons.size()+" = "+forwardModel.getBIons().length+" + "+forwardModel.getYIons().length+"\t"+reverseIons.size()+" = "+reverseModel.getBIons().length+" + "+reverseModel.getYIons().length);
 			
 				throw new RuntimeException(e);
 			}
@@ -334,18 +346,10 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		Collections.sort(reversedPeaks);
 		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(reversedPeaks);
 		
-		HashSet<String> revAcc=new HashSet<String>();
-		for (String accession : accessions) {
-			if (shuffle) {
-				revAcc.add(DECOY_STRING+accession);
-			} else {
-				revAcc.add(SHUFFLE_STRING+accession);
-			}
-		}
 		if (markAsDecoy) {
-			return new ReverseLibraryEntry(source, revAcc, precursorMZ, precursorCharge, reverseSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z);	
+			return new ReverseLibraryEntry(source, accessions, precursorMZ, precursorCharge, newSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z);	
 		} else {
-			return new LibraryEntry(source, revAcc, precursorMZ, precursorCharge, reverseSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z);	
+			return new LibraryEntry(source, accessions, precursorMZ, precursorCharge, newSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z);	
 		}
 	}
 }
