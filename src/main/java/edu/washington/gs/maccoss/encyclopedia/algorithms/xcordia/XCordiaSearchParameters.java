@@ -40,10 +40,10 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 		return map;
 	}
 
-	public XCordiaSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme,
+	public XCordiaSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme, int percolatorVersionNumber,
 			int maxMissedCleavages, byte minCharge, byte maxCharge, DataAcquisitionType dataAcquisitionType, float precursorWindowSize, int numberOfJobs, int numberOfQuantitativePeaks,
 			float numberOfExtraDecoyLibrariesSearched) {
-		super(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, maxMissedCleavages, minCharge, maxCharge, dataAcquisitionType, precursorWindowSize, numberOfJobs, numberOfQuantitativePeaks,
+		super(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorVersionNumber, maxMissedCleavages, minCharge, maxCharge, dataAcquisitionType, precursorWindowSize, numberOfJobs, numberOfQuantitativePeaks,
 				numberOfExtraDecoyLibrariesSearched);
 	}
 
@@ -57,7 +57,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 	}
 	
 	public static XCordiaSearchParameters convertFromPecan(PecanSearchParameters params) {
-		return new XCordiaSearchParameters(params.getAAConstants(), params.getFragType(), params.getPrecursorTolerance(), params.getFragmentTolerance(), params.getEnzyme(),
+		return new XCordiaSearchParameters(params.getAAConstants(), params.getFragType(), params.getPrecursorTolerance(), params.getFragmentTolerance(), params.getEnzyme(), params.getPercolatorVersionNumber(),
 				params.getMaxMissedCleavages(), params.getMinCharge(), params.getMaxCharge(), params.getDataAcquisitionType(), params.getPrecursorWindowSize(), 
 				params.getNumberOfThreadsUsed(), params.getNumberOfQuantitativePeaks(), params.getNumberOfExtraDecoyLibrariesSearched());
 	}

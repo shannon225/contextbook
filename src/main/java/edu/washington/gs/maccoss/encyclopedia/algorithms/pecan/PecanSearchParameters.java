@@ -131,9 +131,9 @@ public class PecanSearchParameters extends SearchParameters {
 		this.beta=beta;
 	}
 	
-	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme,
+	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme, int percolatorVersionNumber,
 			int maxMissedCleavages, byte minCharge, byte maxCharge, DataAcquisitionType dataAcquisitionType, float precursorWindowSize, int numberOfJobs, int numberOfQuantitativePeaks, float numberOfExtraDecoyLibrariesSearched) {
-		super(aaConstants, fragType, precursorTolerance, 0.0, fragmentTolerance, 0.0, fragmentTolerance, enzyme, 0.01f, 3, dataAcquisitionType, numberOfJobs, 24f, -1f, precursorWindowSize, numberOfQuantitativePeaks, false, numberOfExtraDecoyLibrariesSearched);
+		super(aaConstants, fragType, precursorTolerance, 0.0, fragmentTolerance, 0.0, fragmentTolerance, enzyme, 0.01f, percolatorVersionNumber, dataAcquisitionType, numberOfJobs, 24f, -1f, precursorWindowSize, numberOfQuantitativePeaks, false, numberOfExtraDecoyLibrariesSearched);
 		minPeptideLength=5;
 		maxPeptideLength=100;
 		this.maxMissedCleavages=maxMissedCleavages;

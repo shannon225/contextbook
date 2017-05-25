@@ -61,8 +61,10 @@ public class PhosphoLocalizationScoringTask extends AbstractLibraryScoringTask {
 				float rt=(float)point.x;
 				float score=(float)point.y;
 				
-				FragmentationModel model=new FragmentationModel(peptideModSeq, parameters.getAAConstants());
-				AnnotatedLibraryEntry unitEntry=model.getUnitSpectrum(entry.getSource(), entry.getAccessions(), entry.getPrecursorCharge(), rt, parameters, entry.isDecoy());
+				LibraryEntry unitEntry=entry.getEntryFromNewSequence(peptideModSeq, entry.getAccessions(), entry.isDecoy(), parameters);
+				
+				//FragmentationModel model=new FragmentationModel(peptideModSeq, parameters.getAAConstants());
+				//AnnotatedLibraryEntry unitEntry=model.getUnitSpectrum(entry.getSource(), entry.getAccessions(), entry.getPrecursorCharge(), rt, parameters, entry.isDecoy());
 
 				Stripe bestStripe=null;
 				float bestDeltaRT=Float.MAX_VALUE;

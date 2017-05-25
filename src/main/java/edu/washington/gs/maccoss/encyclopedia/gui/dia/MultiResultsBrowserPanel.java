@@ -291,6 +291,8 @@ public class MultiResultsBrowserPanel extends JPanel {
 			
 			double globalMaxY=0.0;
 			ArrayList<ChartPanel> allPanels=new ArrayList<ChartPanel>();
+			
+			ArrayList<ArrayList<XYTrace>> allTraces=new ArrayList<ArrayList<XYTrace>>();
 			for (int i=0; i<ranges.length; i++) {
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
 				if (ranges[i]!=null) {
@@ -319,18 +321,19 @@ public class MultiResultsBrowserPanel extends JPanel {
 								GraphType.area, "Boundaries", new Color(102, 204, 255, 50), 4.0f));
 					}
 				}
-				ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", false, traces.toArray(new XYTrace[traces.size()]));
-				fragmentChart.getChart().setTitle(sampleNames[i]);
-				allPanels.add(fragmentChart);
-				right.add(fragmentChart);
+				allTraces.add(traces);
 			}
 	
 			if (globalMaxY>0.0) {
 				globalMaxY=globalMaxY*1.05;
-	
-				for (ChartPanel chartPanel : allPanels) {
-					chartPanel.getChart().getXYPlot().getRangeAxis().setUpperBound(globalMaxY);
-				}
+			}
+
+			for (int i=0; i<ranges.length; i++) {
+				ArrayList<XYTrace> traces=allTraces.get(i);
+				ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", false, globalMaxY, traces.toArray(new XYTrace[traces.size()]));
+				fragmentChart.getChart().setTitle(sampleNames[i]);
+				allPanels.add(fragmentChart);
+				right.add(fragmentChart);
 			}
 	
 			split.setRightComponent(right);
