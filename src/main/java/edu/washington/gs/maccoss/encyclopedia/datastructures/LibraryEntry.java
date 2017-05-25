@@ -254,7 +254,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	private LibraryEntry getDecoy(SearchParameters parameters, int shuffleSeed, boolean shuffle, boolean markAsDecoy) {
 		String reverseSequence;
 		if (shuffle) {
-			reverseSequence=PeptideUtils.shuffle(peptideModSeq, parameters);
+			reverseSequence=PeptideUtils.shuffle(peptideModSeq, shuffleSeed, parameters);
 		} else {
 			reverseSequence=PeptideUtils.reverse(peptideModSeq, parameters);
 		}
