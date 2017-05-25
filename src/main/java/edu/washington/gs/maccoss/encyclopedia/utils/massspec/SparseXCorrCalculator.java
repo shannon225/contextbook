@@ -8,6 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.SparseIndexMap;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
@@ -178,6 +179,10 @@ public class SparseXCorrCalculator {
 	}
 	
 	public static SparseXCorrSpectrum getTheoreticalSpectrum(String modifiedSequence, byte precursorCharge, SearchParameters params) {
+		return getTheoreticalSpectrumPair(modifiedSequence, precursorCharge, params).y;
+	}
+
+	public static Pair<FragmentationModel, SparseXCorrSpectrum> getTheoreticalSpectrumPair(String modifiedSequence, byte precursorCharge, SearchParameters params) {
 		
 		FragmentationType type=params.getFragType();
 		AminoAcidConstants aaConstants=params.getAAConstants();
@@ -232,7 +237,7 @@ public class SparseXCorrCalculator {
 				throw new EncyclopediaException("Unknown fragmentation type ["+type+"]");
 		}
 		
-		return getIntensityArray(params, allPeaks, model.getChargedMass(precursorCharge), true);
+		return new Pair<>(model, getIntensityArray(params, allPeaks, model.getChargedMass(precursorCharge), true));
 	}
 	
 	private static ArrayList<Peak> getPeaks(FragmentIon[] ions, double delta, float intensity) {

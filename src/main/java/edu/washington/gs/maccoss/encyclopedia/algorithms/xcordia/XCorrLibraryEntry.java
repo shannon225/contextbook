@@ -3,8 +3,10 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SparseXCorrCalculator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SparseXCorrSpectrum;
 
@@ -24,8 +26,10 @@ public class XCorrLibraryEntry extends LibraryEntry {
 	}
 	
 	public static XCorrLibraryEntry generateEntry(boolean isDecoy, String source, HashSet<String> accessions, byte precursorCharge, String peptideModSeq, SearchParameters params) {
-		SparseXCorrSpectrum spectrum=SparseXCorrCalculator.getTheoreticalSpectrum(peptideModSeq, precursorCharge, params);
-		return new XCorrLibraryEntry(isDecoy, source, accessions, precursorCharge, peptideModSeq, spectrum, params);
+		Pair<FragmentationModel, SparseXCorrSpectrum> theoreticalSpectrumPair=SparseXCorrCalculator.getTheoreticalSpectrumPair(peptideModSeq, precursorCharge, params);
+		FragmentationModel model=theoreticalSpectrumPair.x;
+		SparseXCorrSpectrum spectrum=theoreticalSpectrumPair.y;
+		return new XCorrLibraryEntry(isDecoy, source, accessions, precursorCharge, model.getModifiedSequence(params.getAAConstants()), spectrum, params);
 	}
 	
 	public void init() {
