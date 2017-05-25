@@ -190,7 +190,8 @@ public class AminoAcidConstants {
 	}
 
 	public int[] getAminoAcidProportions(char c) {
-		return atomicComposition.get(c);
+		int[] is=atomicComposition.get(c);
+		return is;
 	}
 	
 	public Character getNearestAA(double mass) {
