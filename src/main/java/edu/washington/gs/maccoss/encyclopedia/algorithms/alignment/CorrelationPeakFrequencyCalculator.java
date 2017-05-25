@@ -28,10 +28,6 @@ public class CorrelationPeakFrequencyCalculator {
 		ArrayList<Count> clone=new ArrayList<CorrelationPeakFrequencyCalculator.Count>(peaks);
 		Collections.sort(clone);
 		
-		for (Count count : clone) {
-			System.out.println(count.count+"\t"+count.mass+"\t"+count.maxIntensity);
-		}
-		
 		TDoubleArrayList masses=new TDoubleArrayList();
 		int count=0;
 		for (int i=clone.size()-1; i>=0; i--) {

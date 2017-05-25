@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.AlternatePeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneAuxillaryPSMScorer;
@@ -192,7 +193,7 @@ public class ChromatogramAlignedPhosphoSiteLocalizer {
 			if (alignBetweenFiles) {
 				if (processedJobs.size()>1) {
 					Logger.logLine("Inferring peak boundaries across files...");
-					inferrer=Optional.of(PeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), processedJobs, passingPeptides, parameters));
+					inferrer=Optional.of(AlternatePeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), processedJobs, passingPeptides, parameters));
 					Logger.logLine("...Finished peak inference.");
 				} else {
 					Logger.logLine("Only processing one file so no peak inference is necessary.");

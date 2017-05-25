@@ -5,91 +5,86 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.Map.Entry;
 import java.util.zip.DataFormatException;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakFrequencyCalculator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 import gnu.trove.map.hash.TObjectFloatHashMap;
+import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class AlternatePeakLocationInferrer {
 	public static PeakLocationInferrer getAlignmentData(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
 		ProgressIndicator subProgress1=new SubProgressIndicator(progress, 0.5f);
-		Pair<HashMap<SearchJobData,ArrayList<ChromatogramLibraryEntry>>, HashMap<String,double[]>> pair=getArchetypalPeptides(subProgress1, pecanJobs, passingPeptides, params);
-		HashMap<SearchJobData, ArrayList<ChromatogramLibraryEntry>> archetypalPeptides=pair.x;
+		Pair<HashMap<SearchJobData,TObjectFloatHashMap<String>>, HashMap<String,double[]>> pair=getArchetypals(subProgress1, pecanJobs, passingPeptides, params);
+		HashMap<SearchJobData, TObjectFloatHashMap<String>> peptideMappings=pair.x;
 		HashMap<String, double[]> bestIons=pair.y;
 
 		// get best job
 		SearchJobData bestJob=null;
 		int max=-1;
-		for (Entry<SearchJobData, ArrayList<ChromatogramLibraryEntry>> entry : archetypalPeptides.entrySet()) {
+		for (Entry<SearchJobData, TObjectFloatHashMap<String>> entry : peptideMappings.entrySet()) {
 			int length=entry.getValue().size();
 			if (length>max) {
 				max=length;
 				bestJob=entry.getKey();
 			}
 		}
-
-		Logger.logLine("Seed experiment: "+bestJob.getDiaFile().getName()+" ("+max+" archetypal peptides)");
-		Logger.logLine("Seed Percolator file: "+bestJob.getOutputFile().getAbsolutePath());
-		ArrayList<PercolatorPeptide> alignmentSeed=PercolatorReader.getPassingPeptidesFromTSV(bestJob.getOutputFile(), bestJob.getParameters().getEffectivePercolatorThreshold());
-		TObjectFloatHashMap<String> rtsBySequence=new TObjectFloatHashMap<String>();
-		for (PercolatorPeptide peptide : alignmentSeed) {
-			rtsBySequence.put(peptide.getPeptideModSeq(), peptide.getRT());
-		}
-		Logger.logLine("Number of anchors in seed file: "+alignmentSeed.size());
-
-		ProgressIndicator subProgress2=new SubProgressIndicator(progress, 0.5f);
+		TObjectFloatHashMap<String> bestRTInSec=peptideMappings.get(bestJob);
 
 		// construct alignments
 		HashMap<SearchJobData, RetentionTimeFilter> alignmentMap=new HashMap<SearchJobData, RetentionTimeFilter>();
 		HashMap<String, Float> alignedRTInMinBySequenceMap=new HashMap<String, Float>();
 		// add all bestJob archetypals
-		ArrayList<ChromatogramLibraryEntry> archetypals=archetypalPeptides.get(bestJob);
-		for (ChromatogramLibraryEntry entry : archetypals) {
-			float alignedRT=entry.getRetentionTime()/60f; // no alignment necessary
-			alignedRTInMinBySequenceMap.put(entry.getPeptideModSeq(), alignedRT);
-		}
+		TObjectFloatHashMap<String> archetypals=peptideMappings.get(bestJob);
+		archetypals.forEachEntry(new TObjectFloatProcedure<String>() {
+			@Override
+			public boolean execute(String a, float b) {
+				alignedRTInMinBySequenceMap.put(a, b/60.0f);
+				return true;
+			}
+		});
 		
+		ProgressIndicator subProgress2=new SubProgressIndicator(progress, 0.5f);
 		int count=0;
 		for (SearchJobData job : pecanJobs) {
 			if (job!=bestJob) {
 				subProgress2.update(job.getDiaFile().getName()+": RT aligning to seed", count/(float) pecanJobs.size());
 				count++;
 
+				TObjectFloatHashMap<String> rtInSec=peptideMappings.get(job);
 				ArrayList<XYPoint> points=new ArrayList<XYPoint>();
-				ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), job.getParameters().getEffectivePercolatorThreshold());
-				for (PercolatorPeptide peptide : peptides) {
-					String seq=peptide.getPeptideModSeq();
-					if (rtsBySequence.containsKey(seq)) {
-						points.add(new XYPoint(rtsBySequence.get(seq)/60f, peptide.getRT()/60f));
+				
+				bestRTInSec.forEachEntry(new TObjectFloatProcedure<String>() {
+					@Override
+					public boolean execute(String a, float b) {
+						float alt=rtInSec.get(a);
+						if (rtInSec.getNoEntryValue()!=alt) {
+							points.add(new XYPoint(b/60f, alt));
+						}
+						return true;
 					}
-				}
+				});
+				
 				if (points.size()<10) {
-					Logger.errorLine("Not enough points ("+points.size()+" out of align:"+peptides.size()+" and best:"+rtsBySequence.size()+") to compute regression between samples, still trying anyways.");
+					Logger.errorLine("Not enough points ("+points.size()+" out of align:"+rtInSec.size()+" and best:"+bestRTInSec.size()+") to compute regression between samples, still trying anyways.");
 				}
 				
 				RetentionTimeFilter alignment=new RetentionTimeFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
@@ -101,11 +96,17 @@ public class AlternatePeakLocationInferrer {
 				}
 
 				// align local archetypals to the seed
-				archetypals=archetypalPeptides.get(job);
-				for (ChromatogramLibraryEntry entry : archetypals) {
-					float alignedRT=alignment.getXValue(entry.getRetentionTime()/60f);
-					alignedRTInMinBySequenceMap.put(entry.getPeptideModSeq(), alignedRT);
-				}
+				rtInSec.forEachEntry(new TObjectFloatProcedure<String>() {
+					@Override
+					public boolean execute(String a, float b) {
+						float alt=rtInSec.get(a);
+						if (bestRTInSec.getNoEntryValue()!=alt) {
+							float alignedRT=alignment.getXValue(alt/60f);
+							alignedRTInMinBySequenceMap.put(a, alignedRT);
+						}
+						return true;
+					}
+				});
 			}
 		}
 
@@ -116,10 +117,14 @@ public class AlternatePeakLocationInferrer {
 		int numberOfQuantitativePeaks=params.getNumberOfQuantitativePeaks();
 		MassTolerance fragmentTolerance=params.getFragmentTolerance();
 
+		HashMap<SearchJobData, TObjectFloatHashMap<String>> retentionTimeMappingsInSeconds=new HashMap<>();
 		HashMap<String, CorrelationPeakFrequencyCalculator> ionCounter=new HashMap<String, CorrelationPeakFrequencyCalculator>();
+		HashMap<String, CorrelationPeakFrequencyCalculator> weakIonCounter=new HashMap<String, CorrelationPeakFrequencyCalculator>();
 		
 		for (SearchJobData job : jobs) {
 			if (job instanceof EncyclopediaJobData) {
+				TObjectFloatHashMap<String> rtMapping=new TObjectFloatHashMap<>();
+				retentionTimeMappingsInSeconds.put(job, rtMapping);
 				// try reading encyclopedia data directly from results library
 				File resultLibrary=((EncyclopediaJobData) job).getResultLibrary();
 				try {
@@ -134,18 +139,24 @@ public class AlternatePeakLocationInferrer {
 					ArrayList<PercolatorPeptide> missingPeptides=new ArrayList<PercolatorPeptide>();
 					for (PercolatorPeptide peptide : passingPeptides) {
 						LibraryEntry libEntry=fastLookupPeptides.get(peptide);
-						if (!(libEntry instanceof ChromatogramLibraryEntry)) {
+						if (libEntry==null||!(libEntry instanceof ChromatogramLibraryEntry)) {
 							missingPeptides.add(peptide);
 							continue;
 						}
 						// all results files are saved as chromatogram libraries
 						ChromatogramLibraryEntry chrom=(ChromatogramLibraryEntry)libEntry;
+						rtMapping.put(peptide.getPeptideModSeq(), chrom.getRetentionTime());
 						
 						String peptideModSeq=libEntry.getPeptideModSeq();
 						CorrelationPeakFrequencyCalculator bestIonsMap=ionCounter.get(peptideModSeq);
 						if (bestIonsMap==null) {
 							bestIonsMap=new CorrelationPeakFrequencyCalculator(fragmentTolerance);
 							ionCounter.put(peptideModSeq, bestIonsMap);
+						}
+						CorrelationPeakFrequencyCalculator bestWeakIonsMap=weakIonCounter.get(peptideModSeq);
+						if (bestWeakIonsMap==null) {
+							bestWeakIonsMap=new CorrelationPeakFrequencyCalculator(fragmentTolerance);
+							weakIonCounter.put(peptideModSeq, bestWeakIonsMap);
 						}
 						double[] masses=chrom.getMassArray();
 						float[] intensity=chrom.getIntensityArray();
@@ -154,6 +165,9 @@ public class AlternatePeakLocationInferrer {
 							if (correlation[i]>=TransitionRefiner.quantitativeCorrelationThreshold) {
 								bestIonsMap.increment(masses[i], intensity[i], correlation[i]);
 							}
+							if (correlation[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+								bestWeakIonsMap.increment(masses[i], intensity[i], correlation[i]);
+							}
 						}
 					}
 				} catch (EncyclopediaException e) {
@@ -166,171 +180,20 @@ public class AlternatePeakLocationInferrer {
 				} catch (DataFormatException e) {
 					throw new EncyclopediaException("Error parsing results library", e);
 				}
-			}
-			return null;
-		}
-
-	}
-	/**
-	 * divvy up all the globally passing peptides by the individual search that
-	 * best identified them
-	 * 
-	 * @param progress
-	 * @param pecanJobs
-	 * @param passingPeptides
-	 * @return
-	 */
-	static Pair<HashMap<SearchJobData, ArrayList<ChromatogramLibraryEntry>>, HashMap<String, double[]>> getArchetypalPeptides(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs,
-			ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
-		int numberOfQuantitativePeaks=params.getNumberOfQuantitativePeaks();
-		MassTolerance fragmentTolerance=params.getFragmentTolerance();
-		
-		// set up data structures
-		HashMap<String, SearchJobData> jobsByFile=new HashMap<String, SearchJobData>();
-		HashMap<String, ArrayList<PercolatorPeptide>> peptidesByFile=new HashMap<String, ArrayList<PercolatorPeptide>>();
-		for (SearchJobData job : pecanJobs) {
-			String name=job.getDiaFile().getName();
-			name=name.substring(0, name.lastIndexOf('.'));
-			jobsByFile.put(name, job);
-			peptidesByFile.put(name, new ArrayList<PercolatorPeptide>());
-		}
-
-		// the best individual search is imbedded in the psmID
-		for (PercolatorPeptide psm : passingPeptides) {
-			String name=psm.getFile();
-			name=name.substring(0, name.lastIndexOf('.'));
-			ArrayList<PercolatorPeptide> list=peptidesByFile.get(name);
-			if (list==null) {
-				Logger.errorLine("Unexpected file ["+name+"] when parsing Percolator result! Ignoring peptide.");
-			} else {
-				list.add(psm);
-			}
-		}
-
-		HashMap<String, PeakFrequencyCalculator> ionCounter=new HashMap<String, PeakFrequencyCalculator>();
-		
-		// extract out chromatogram library entries
-		HashMap<SearchJobData, ArrayList<ChromatogramLibraryEntry>> archetypalPeptides=new HashMap<SearchJobData, ArrayList<ChromatogramLibraryEntry>>();
-		float increment=1.0f/pecanJobs.size();
-		for (Entry<String, ArrayList<PercolatorPeptide>> entry : peptidesByFile.entrySet()) {
-			ProgressIndicator subProgress=new SubProgressIndicator(progress, increment);
-
-			SearchJobData job=jobsByFile.get(entry.getKey());
-			
-			ArrayList<PercolatorPeptide> targetPeptides=entry.getValue();
-
-			boolean readFromLibraryResult=false;
-			if (job instanceof EncyclopediaJobData) {
-				// try reading encyclopedia data directly from results library
-				File resultLibrary=((EncyclopediaJobData) job).getResultLibrary();
-				try {
-					LibraryInterface results=BlibToLibraryConverter.getFile(resultLibrary);
-					ArrayList<LibraryEntry> entries=results.getAllEntries(false);
-					ArrayList<ChromatogramLibraryEntry> bestEntries=new ArrayList<ChromatogramLibraryEntry>();
-					
-					TreeMap<PeptidePrecursor, LibraryEntry> fastLookupPeptides=new TreeMap<PeptidePrecursor, LibraryEntry>();
-					for (LibraryEntry libraryEntry : entries) {
-						fastLookupPeptides.put(libraryEntry, libraryEntry);
-					}
-					
-					ArrayList<PercolatorPeptide> missingPeptides=new ArrayList<PercolatorPeptide>();
-					for (PercolatorPeptide peptide : targetPeptides) {
-						LibraryEntry libEntry=fastLookupPeptides.get(peptide);
-						if (!(libEntry instanceof ChromatogramLibraryEntry)) {
-							missingPeptides.add(peptide);
-							continue;
-						}
-						// all results files are saved as chromatogram libraries
-						ChromatogramLibraryEntry chrom=(ChromatogramLibraryEntry)libEntry;
-						String peptideModSeq=libEntry.getPeptideModSeq();
-						PeakFrequencyCalculator bestIonsMap=ionCounter.get(peptideModSeq);
-						if (bestIonsMap==null) {
-							bestIonsMap=new PeakFrequencyCalculator(fragmentTolerance);
-							ionCounter.put(peptideModSeq, bestIonsMap);
-						}
-						double[] masses=chrom.getMassArray();
-						float[] intensity=chrom.getIntensityArray();
-						float[] correlation=chrom.getCorrelationArray();
-						for (int i=0; i<correlation.length; i++) {
-							if (correlation[i]>=TransitionRefiner.quantitativeCorrelationThreshold) {
-								bestIonsMap.increment(masses[i], intensity[i]);
-							}
-						}
-						bestEntries.add(chrom);
-					}
-					
-					if (missingPeptides.size()>0) {
-						Logger.logLine("Found "+bestEntries.size()+" archetypal peptides from individual Percolator reports, extracting "+missingPeptides.size()+" additional archetypal peptides from "+job.getDiaFile().getName()+"...");
-						ArrayList<ChromatogramLibraryEntry> extracted=extractFromDIA(subProgress, job, missingPeptides, passingPeptides);
-						for (ChromatogramLibraryEntry chrom : extracted) {
-							String peptideModSeq=chrom.getPeptideModSeq();
-							PeakFrequencyCalculator bestIonsMap=ionCounter.get(peptideModSeq);
-							if (bestIonsMap==null) {
-								bestIonsMap=new PeakFrequencyCalculator(fragmentTolerance);
-								ionCounter.put(peptideModSeq, bestIonsMap);
-							}
-							double[] masses=chrom.getMassArray();
-							float[] intensity=chrom.getIntensityArray();
-							float[] correlation=chrom.getCorrelationArray();
-							for (int i=0; i<correlation.length; i++) {
-								if (correlation[i]>=TransitionRefiner.quantitativeCorrelationThreshold) {
-									bestIonsMap.increment(masses[i], intensity[i]);
-								}
-							}
-							bestEntries.add(chrom);
-						}
-					}
-					
-					Logger.logLine(resultLibrary.getName()+" produced Parsed:"+targetPeptides.size()+", BEST:"+bestEntries.size());
-					
-					archetypalPeptides.put(job, bestEntries);
-					
-					readFromLibraryResult=true;
-				} catch (EncyclopediaException e) {
-					Logger.errorLine("Parsing error indicates "+job.getOutputFile().getName()+" isn't from Encyclopedia:");
-					Logger.errorException(e);
-					readFromLibraryResult=false;
-				} catch (IOException e) {
-					throw new EncyclopediaException("Error parsing results library", e);
-				} catch (SQLException e) {
-					throw new EncyclopediaException("Error parsing results library", e);
-				} catch (DataFormatException e) {
-					throw new EncyclopediaException("Error parsing results library", e);
-				}
-			}
-			
-			// if we can't read data from a library result file (e.g. Pecan), then read directly from the DIA file
-			if (!readFromLibraryResult) {
-				Logger.logLine("Extracting "+targetPeptides.size()+" Archetypal Peptides from "+job.getDiaFile().getName()+"...");
-				subProgress.update(job.getDiaFile().getName()+": Extracting "+targetPeptides.size()+" Archetypal Peptides", 0.00001f);
-				ArrayList<ChromatogramLibraryEntry> extracted=extractFromDIA(subProgress, job, targetPeptides, passingPeptides);
-				archetypalPeptides.put(job, extracted);
 			}
 		}
 		HashMap<String,double[]> bestIons=new HashMap<String, double[]>();
-		for (Entry<String, PeakFrequencyCalculator> entry : ionCounter.entrySet()) {
+		for (Entry<String, CorrelationPeakFrequencyCalculator> entry : ionCounter.entrySet()) {
 			String peptideModSeq=entry.getKey();
 			double[] ions=entry.getValue().getTopNMasses(numberOfQuantitativePeaks);
-			bestIons.put(peptideModSeq, ions);
+			if (ions==null||ions.length==0) {
+				double[] altIons=weakIonCounter.get(peptideModSeq).getTopNMasses(numberOfQuantitativePeaks);
+				bestIons.put(peptideModSeq, altIons);
+			} else {
+				bestIons.put(peptideModSeq, ions);
+			}
 		}
-		return null;
-	}
 
-	private static ArrayList<ChromatogramLibraryEntry> extractFromDIA(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> targetPeptides,
-			ArrayList<PercolatorPeptide> passingPeptides) {
-		StripeFileInterface stripeFile=StripeFileGenerator.getFile(job.getDiaFile(), job.getParameters());
-
-		LibraryInterface library=null;
-		if (job instanceof EncyclopediaJobData) {
-			library=((EncyclopediaJobData) job).getLibrary();
-		}
-		ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job, false, passingPeptides, targetPeptides, Optional.ofNullable((PeakLocationInferrer)null), stripeFile, library,
-				job.getParameters());
-		ArrayList<ChromatogramLibraryEntry> recast=new ArrayList<ChromatogramLibraryEntry>();
-		for (IntegratedLibraryEntry e : libraryEntries) {
-			recast.add(e);
-		}
-		stripeFile.close();
-		return recast;
+		return new Pair<HashMap<SearchJobData,TObjectFloatHashMap<String>>, HashMap<String,double[]>>(retentionTimeMappingsInSeconds, bestIons);
 	}
 }

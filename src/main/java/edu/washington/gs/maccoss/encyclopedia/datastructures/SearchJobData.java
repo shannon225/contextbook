@@ -2,6 +2,8 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.io.File;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+
 public abstract class SearchJobData {
 
 	private final File diaFile;
@@ -39,6 +41,9 @@ public abstract class SearchJobData {
 	}
 
 	public boolean hasBeenRun() {
+		if (!diaFile.exists()) Logger.errorLine("Missing .DIA file: "+diaFile.getName());
+		if (!featureFile.exists()) Logger.errorLine("Missing feature file: "+featureFile.getName());
+		if (!outputFile.exists()) Logger.errorLine("Missing output file: "+outputFile.getName());
 		return diaFile.exists()&&featureFile.exists()&&outputFile.exists();
 	}
 
