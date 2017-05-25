@@ -52,8 +52,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	public static final String DLIB=".dlib";
 	public static final String ELIB=".elib";
 	public static final String VERSION_STRING="version";
-	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] {new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4), new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8)};
-	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 8);
+	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] {new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4), new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8), new Version(0, 1, 9)};
+	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 9);
 
 	private File userFile=null;
 	private final File tempFile;
@@ -983,22 +983,23 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					// it in the next line
 				}
 
-				s.execute("CREATE TABLE IF NOT EXISTS metadata ( "+"Key string not null, Value string not null, "+"PRIMARY KEY (Key) "+")");
+				// UNIQUE constraints cost as much as an index and can't add/drop them, so we have to live without the constraint and deal with it in code
+				s.execute("CREATE TABLE IF NOT EXISTS metadata ( "+"Key string not null, Value string not null, "
+						+")"); // +"UNIQUE (Key) )");
 
 				s.execute("CREATE TABLE IF NOT EXISTS entries ( "
 						+"PrecursorMz double not null, PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, Copies int not null, RTInSeconds double not null, Score double not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, CorrelationEncodedLength int, CorrelationArray blob, RTInSecondsStart double, RTInSecondsStop double, MedianChromatogramEncodedLength int, MedianChromatogramArray blob, SourceFile string not null, "
-						+"PRIMARY KEY (PrecursorCharge, PeptideModSeq, SourceFile), "+"FOREIGN KEY (PeptideSeq) REFERENCES proteins (PeptideSeq) "+")");
+						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq, SourceFile) )");
 
-				s.execute("CREATE TABLE IF NOT EXISTS proteins ( "+"PeptideSeq string not null, ProteinAccessions string not null, "+"PRIMARY KEY (PeptideSeq) "+")");
+				s.execute("CREATE TABLE IF NOT EXISTS proteins ( "+"PeptideSeq string not null, ProteinAccessions string not null, "
+						+")"); // +"UNIQUE (PeptideSeq) )");
 
 				s.execute("CREATE TABLE IF NOT EXISTS peptidequants ( "
 						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, LocalizationIons string, NumberOfMods int, IsSiteSpecific boolean, RTInSecondsCenter double not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, QuantIonMassLength int not null, QuantIonMassArray blob not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null, IdentifiedTICRatio double not null,"
-						+"PRIMARY KEY (PrecursorCharge, PeptideModSeq, SourceFile), "
-						+"FOREIGN KEY (PrecursorCharge, PeptideModSeq, SourceFile) REFERENCES entries (PrecursorCharge, PeptideModSeq, SourceFile) "+")");
+						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq, SourceFile) )");
 
 				s.execute("CREATE TABLE IF NOT EXISTS fragmentquants ( "
-						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, IonType string not null, IonIndex int not null, FragmentMass double not null, Correlation double not null, Background double not null, DeltaMassPPM double not null, Intensity double not null, "
-						+"FOREIGN KEY (PrecursorCharge, PeptideModSeq, SourceFile) REFERENCES entries (PrecursorCharge, PeptideModSeq, SourceFile) "+")");
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, IonType string not null, IonIndex int not null, FragmentMass double not null, Correlation double not null, Background double not null, DeltaMassPPM double not null, Intensity double not null )");
 
 				c.commit();
 			} finally {
@@ -1014,15 +1015,23 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try {
 			Statement s=c.createStatement();
 			try {
+				s.execute("drop index if exists \"Key_Metadata_index\"");
 
 				s.execute("drop index if exists \"PeptideModSeq_Entries_index\"");
+				s.execute("drop index if exists \"PeptideModSeq_PrecursorCharge_SourceFile_Entries_index\"");
 				s.execute("drop index if exists \"PeptideSeq_Entries_index\"");
 				s.execute("drop index if exists \"PrecursorMz_Entries_index\"");
-				s.execute("drop index if exists \"ProteinAccessions_Proteins_index\"");
+				
 				s.execute("drop index if exists \"PeptideModSeq_Peptides_index\"");
-				s.execute("drop index if exists \"PeptideModSeq_Fragments_index\"");
+				s.execute("drop index if exists \"PeptideModSeq_PrecursorCharge_SourceFile_Peptides_index\"");
 				s.execute("drop index if exists \"PeptideSeq_Peptides_index\"");
+				
+				s.execute("drop index if exists \"PeptideModSeq_Fragments_index\"");
+				s.execute("drop index if exists \"PeptideModSeq_PrecursorCharge_SourceFile_Fragments_index\"");
 				s.execute("drop index if exists \"PeptideSeq_Fragments_index\"");
+				
+				s.execute("drop index if exists \"ProteinAccessions_Proteins_index\"");
+				s.execute("drop index if exists \"PeptideSeq_Proteins_index\"");
 
 				c.commit();
 			} finally {
@@ -1038,15 +1047,23 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try {
 			Statement s=c.createStatement();
 			try {
+				s.execute("create index if not exists \"Key_Metadata_index\" on \"metadata\" (\"Key\" ASC)");
 
 				s.execute("create index if not exists \"PeptideModSeq_Entries_index\" on \"entries\" (\"PeptideModSeq\" ASC)");
+				s.execute("create index if not exists \"PeptideModSeq_PrecursorCharge_SourceFile_Entries_index\" on \"entries\" (\"PeptideModSeq\" ASC, \"PrecursorCharge\" ASC, \"SourceFile\" ASC)");
 				s.execute("create index if not exists \"PeptideSeq_Entries_index\" on \"entries\" (\"PeptideSeq\" ASC)");
 				s.execute("create index if not exists \"PrecursorMz_Entries_index\" on \"entries\" (\"PrecursorMz\" ASC)");
-				s.execute("create index if not exists \"ProteinAccessions_Proteins_index\" on \"proteins\" (\"ProteinAccessions\" ASC)");
+				
 				s.execute("create index if not exists \"PeptideModSeq_Peptides_index\" on \"peptidequants\" (\"PeptideModSeq\" ASC)");
-				s.execute("create index if not exists \"PeptideModSeq_Fragments_index\" on \"fragmentquants\" (\"PeptideModSeq\" ASC)");
+				s.execute("create index if not exists \"PeptideModSeq_PrecursorCharge_SourceFile_Peptides_index\" on \"peptidequants\" (\"PeptideModSeq\" ASC, \"PrecursorCharge\" ASC, \"SourceFile\" ASC)");
 				s.execute("create index if not exists \"PeptideSeq_Peptides_index\" on \"peptidequants\" (\"PeptideSeq\" ASC)");
+				
+				s.execute("create index if not exists \"PeptideModSeq_Fragments_index\" on \"fragmentquants\" (\"PeptideModSeq\" ASC)");
+				s.execute("create index if not exists \"PeptideModSeq_PrecursorCharge_SourceFile_Fragments_index\" on \"fragmentquants\" (\"PeptideModSeq\" ASC, \"PrecursorCharge\" ASC, \"SourceFile\" ASC)");
 				s.execute("create index if not exists \"PeptideSeq_Fragments_index\" on \"fragmentquants\" (\"PeptideSeq\" ASC)");
+				
+				s.execute("create index if not exists \"ProteinAccessions_Proteins_index\" on \"proteins\" (\"ProteinAccessions\" ASC)");
+				s.execute("create index if not exists \"PeptideSeq_Proteins_index\" on \"proteins\" (\"PeptideSeq\" ASC)");
 
 				c.commit();
 			} finally {
