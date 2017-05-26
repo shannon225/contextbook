@@ -43,6 +43,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
@@ -84,7 +85,7 @@ public class XCorDIA {
 			Logger.timelessLogLine("Other Parameters: ");
 			Logger.timelessLogLine("\t-t\ttarget FASTA file (default: background FASTA file)");
 			Logger.timelessLogLine("\t-tp\ttrue/false target FASTA file contains peptides (default: false)"); 
-			Logger.timelessLogLine("\t-o\toutput report file (default: [input file].xcordia.txt)");
+			Logger.timelessLogLine("\t-o\toutput report file (default: [input file]"+XCorDIAJobData.OUTPUT_FILE_SUFFIX+")");
 			
 			TreeMap<String, String> defaults=new TreeMap<String, String>(PecanParameterParser.getDefaultParameters());
 			int maxWidth=0;
@@ -113,7 +114,7 @@ public class XCorDIA {
 			if (arguments.containsKey(OUTPUT_RESULT_TAG)) {
 				outputFile=new File(arguments.get(OUTPUT_RESULT_TAG));
 			} else {
-				outputFile=new File(diaFile.getAbsolutePath()+".xcordia.txt");
+				outputFile=new File(diaFile.getAbsolutePath()+XCorDIAJobData.OUTPUT_FILE_SUFFIX);
 			}
 
 			File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
@@ -152,8 +153,10 @@ public class XCorDIA {
 				Logger.logLine(" "+TARGET_FASTA_TAG+" "+arguments.get(TARGET_FASTA_TAG));
 				Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
 				Logger.logLine(parameters.toString());
+				
+				XCorDIAJobData jobData=new XCorDIAJobData(Optional.ofNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
 
-				runPie(new EmptyProgressIndicator(), Optional.ofNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
+				runPie(new EmptyProgressIndicator(), jobData);
 			} catch (Exception e) {
 				Logger.errorLine("Encountered Fatal Error!");
 				Logger.errorException(e);
@@ -174,20 +177,16 @@ public class XCorDIA {
 				// problem! so just continue on and overwrite old result
 			}
 		}
-		
-		runPie(progress, jobData.getTargetList(), jobData.getDiaFile(), jobData.getFastaFile(), jobData.getFeatureFile(), jobData.getOutputFile(), jobData.getTaskFactory());
-	}
-		
-	static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, File featureFile, File outputFile, XCorDIAOneScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+
 		long startTime=System.currentTimeMillis();
-		final PecanSearchParameters parameters=taskFactory.getPecanParameters();
+		final PecanSearchParameters parameters=jobData.getTaskFactory().getPecanParameters();
 		
 		int cores=parameters.getNumberOfThreadsUsed();
 
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);
 		
-		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
+		StripeFileInterface stripefile=StripeFileGenerator.getFile(jobData.getDiaFile(), parameters);
 
 		Logger.logLine("Processing precursors scans...");
 		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
@@ -197,14 +196,14 @@ public class XCorDIA {
 
 		// xcordia generates backgrounds using unique fasta peptides, target/decoy sequences, and 2000 random decoys for each window
 		// add targets to proteome
-		if (targetList.isPresent()) {
-			for (FastaPeptideEntry target : targetList.get()) {
+		if (jobData.getTargetList().isPresent()) {
+			for (FastaPeptideEntry target : jobData.getTargetList().get()) {
 				targets.add(target);
 				backgroundProteome.add(target.getSequence());
 			}
 		}
 		LibraryBackgroundInterface background=new LibraryBackground(backgroundProteome, parameters);
-		XCorDIAOneScorer xcordiaScorer=(XCorDIAOneScorer)taskFactory.getLibraryScorer(background);
+		XCorDIAOneScorer xcordiaScorer=(XCorDIAOneScorer)jobData.getTaskFactory().getLibraryScorer(background);
 
 		float minMzRange=Float.MAX_VALUE;
 		float maxMzRange=-Float.MAX_VALUE;
@@ -220,12 +219,12 @@ public class XCorDIA {
 
 		Logger.logLine("Reading FASTA peptides...");
 		// add database to proteome
-		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(fastaFile);
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(jobData.getFastaFile());
 		for (FastaEntryInterface entry : entries) {
 			ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants().getVariableMods());
 			backgroundProteome.addAll(peptides);
 
-			if (!targetList.isPresent()) {
+			if (!jobData.getTargetList().isPresent()) {
 //				if (false) { // FIXME
 //					ArrayList<ScoredObject<String>> scoredPeptides=new ArrayList<ScoredObject<String>>();
 //					for (String peptide : peptides) {
@@ -284,7 +283,7 @@ public class XCorDIA {
 		}
 		
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
-		PeptideScoringResultsConsumer resultsConsumer=taskFactory.getResultsConsumer(featureFile, resultsQueue, diaFile);
+		PeptideScoringResultsConsumer resultsConsumer=jobData.getTaskFactory().getResultsConsumer(jobData.getFeatureFile(), resultsQueue, jobData.getDiaFile());
 		Thread consumerThread=new Thread(resultsConsumer);
 		consumerThread.start();
 		
@@ -398,7 +397,7 @@ public class XCorDIA {
 							}
 						}
 
-						executor.submit(taskFactory.getScoringTask(xcordiaScorer, tasks, stripes, dutyCycle, precursors, resultsQueue));
+						executor.submit(jobData.getTaskFactory().getScoringTask(xcordiaScorer, tasks, stripes, dutyCycle, precursors, resultsQueue));
 					}
 				}
 			}
@@ -420,8 +419,13 @@ public class XCorDIA {
 		Logger.logLine("Finished generating feature file, analyzed "+resultsConsumer.getNumberProcessed()+" peptides.");
 
 		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
-		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), featureFile, outputFile, parameters.getEffectivePercolatorThreshold());
+		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), jobData.getFeatureFile(), outputFile, parameters.getEffectivePercolatorThreshold());
 		stripefile.close();
+		
+		Logger.logLine("Writing elib result library...");
+		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
+		jobs.add(jobData);
+		SearchToBLIB.convert(progress, jobs, jobData.getResultLibrary(), false, true);
 		
 		/*if (false&&!targetList.isPresent()) { //FIXME
 			HashSet<String> accessions=new HashSet<String>();

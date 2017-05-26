@@ -46,15 +46,6 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 		super(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorVersionNumber, maxMissedCleavages, minCharge, maxCharge, dataAcquisitionType, precursorWindowSize, numberOfJobs, numberOfQuantitativePeaks,
 				numberOfExtraDecoyLibrariesSearched);
 	}
-
-	XCordiaSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, MassTolerance fragmentTolerance,
-			double fragmentOffsetPPM, DigestionEnzyme enzyme, int minPeptideLength, int maxPeptideLength, int maxMissedCleavages, byte minCharge, byte maxCharge, int minEluteTime,
-			int numberOfReportedPeaks, boolean addDecoysToBackgound, boolean dontRunDecoys, float percolatorThreshold, float alpha, float beta, int percolatorVersionNumber,
-			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float targetWindowCenter, float precursorWindowSize, int numberOfQuantitativePeaks) {
-		super(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, fragmentTolerance, fragmentOffsetPPM, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge,
-				minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter,
-				precursorWindowSize, numberOfQuantitativePeaks);
-	}
 	
 	public static XCordiaSearchParameters convertFromPecan(PecanSearchParameters params) {
 		return new XCordiaSearchParameters(params.getAAConstants(), params.getFragType(), params.getPrecursorTolerance(), params.getFragmentTolerance(), params.getEnzyme(), params.getPercolatorVersionNumber(),

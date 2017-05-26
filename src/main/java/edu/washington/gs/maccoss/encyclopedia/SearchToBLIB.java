@@ -145,14 +145,14 @@ public class SearchToBLIB {
 				}
 				
 				for (File file : files) {
-					File resultFile=new File(file.getAbsolutePath()+".xcordia.txt");
-					File featureFile=new File(resultFile.getAbsolutePath()+".features.txt");
+					File resultFile=new File(file.getAbsolutePath()+XCorDIAJobData.OUTPUT_FILE_SUFFIX);
+					File featureFile=new File(resultFile.getAbsolutePath()+XCorDIAJobData.FEATURE_FILE_SUFFIX);
 					XCorDIAJobData job=new XCorDIAJobData(Optional.ofNullable(targets), file, fastaFile, featureFile, resultFile, factory);
 					pecanJobs.add(job);
 				}
 			} else {
-				File resultFile=new File(diaFile.getAbsolutePath()+".xcordia.txt");
-				File featureFile=new File(resultFile.getAbsolutePath()+".features.txt");
+				File resultFile=new File(diaFile.getAbsolutePath()+XCorDIAJobData.OUTPUT_FILE_SUFFIX);
+				File featureFile=new File(resultFile.getAbsolutePath()+XCorDIAJobData.FEATURE_FILE_SUFFIX);
 				XCorDIAJobData job=new XCorDIAJobData(Optional.ofNullable(targets), diaFile, fastaFile, featureFile, resultFile, factory);
 				pecanJobs.add(job);
 			}

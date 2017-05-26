@@ -5,9 +5,13 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 
-public class XCorDIAJobData extends SearchJobData {
+public class XCorDIAJobData extends QuantitativeSearchJobData {
+	public static final String OUTPUT_FILE_SUFFIX=".xcordia.txt";
+	public static final String FEATURE_FILE_SUFFIX=".features.txt";
+	
 	private final Optional<ArrayList<FastaPeptideEntry>> targetList;
 	private final File fastaFile;
 	private final XCorDIAOneScoringFactory taskFactory;
@@ -31,8 +35,20 @@ public class XCorDIAJobData extends SearchJobData {
 		return taskFactory;
 	}
 	
+	public File getResultLibrary() {
+		String absolutePath=getOutputAbsolutePathPrefix(getOutputFile().getAbsolutePath());
+		return new File(absolutePath+LibraryFile.ELIB);
+	}
+	
 	@Override
 	public String getSearchType() {
 		return "XCorDIA";
+	}
+
+	public static String getOutputAbsolutePathPrefix(String absolutePath) {
+		if (absolutePath.endsWith(OUTPUT_FILE_SUFFIX)) {
+			absolutePath=absolutePath.substring(0, absolutePath.length()-OUTPUT_FILE_SUFFIX.length());
+		}
+		return absolutePath;
 	}
 }

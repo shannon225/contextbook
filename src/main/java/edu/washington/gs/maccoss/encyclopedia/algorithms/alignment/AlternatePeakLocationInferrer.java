@@ -16,6 +16,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPe
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
@@ -122,11 +123,11 @@ public class AlternatePeakLocationInferrer {
 		HashMap<String, CorrelationPeakFrequencyCalculator> weakIonCounter=new HashMap<String, CorrelationPeakFrequencyCalculator>();
 		
 		for (SearchJobData job : jobs) {
-			if (job instanceof EncyclopediaJobData) {
+			if (job instanceof QuantitativeSearchJobData) {
 				TObjectFloatHashMap<String> rtMapping=new TObjectFloatHashMap<>();
 				retentionTimeMappingsInSeconds.put(job, rtMapping);
 				// try reading encyclopedia data directly from results library
-				File resultLibrary=((EncyclopediaJobData) job).getResultLibrary();
+				File resultLibrary=((QuantitativeSearchJobData) job).getResultLibrary();
 				try {
 					LibraryInterface results=BlibToLibraryConverter.getFile(resultLibrary);
 					ArrayList<LibraryEntry> entries=results.getAllEntries(false);
@@ -170,8 +171,9 @@ public class AlternatePeakLocationInferrer {
 							}
 						}
 					}
+					
 				} catch (EncyclopediaException e) {
-					Logger.errorLine("Parsing error indicates "+job.getOutputFile().getName()+" isn't from Encyclopedia:");
+					Logger.errorLine("Parsing error indicates "+job.getOutputFile().getName()+" isn't from a quantitative search (EncyclopeDIA or XCorDIA):");
 					Logger.errorException(e);
 				} catch (IOException e) {
 					throw new EncyclopediaException("Error parsing results library", e);
