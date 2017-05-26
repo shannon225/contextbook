@@ -984,22 +984,23 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				}
 
 				// UNIQUE constraints cost as much as an index and can't add/drop them, so we have to live without the constraint and deal with it in code
-				s.execute("CREATE TABLE IF NOT EXISTS metadata ( "+"Key string not null, Value string not null, "
+				s.execute("CREATE TABLE IF NOT EXISTS metadata ( "+"Key string not null, Value string not null "
 						+")"); // +"UNIQUE (Key) )");
 
 				s.execute("CREATE TABLE IF NOT EXISTS entries ( "
-						+"PrecursorMz double not null, PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, Copies int not null, RTInSeconds double not null, Score double not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, CorrelationEncodedLength int, CorrelationArray blob, RTInSecondsStart double, RTInSecondsStop double, MedianChromatogramEncodedLength int, MedianChromatogramArray blob, SourceFile string not null, "
+						+"PrecursorMz double not null, PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, Copies int not null, RTInSeconds double not null, Score double not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, CorrelationEncodedLength int, CorrelationArray blob, RTInSecondsStart double, RTInSecondsStop double, MedianChromatogramEncodedLength int, MedianChromatogramArray blob, SourceFile string not null "
 						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq, SourceFile) )");
 
-				s.execute("CREATE TABLE IF NOT EXISTS proteins ( "+"PeptideSeq string not null, ProteinAccessions string not null, "
+				s.execute("CREATE TABLE IF NOT EXISTS proteins ( "+"PeptideSeq string not null, ProteinAccessions string not null "
 						+")"); // +"UNIQUE (PeptideSeq) )");
 
 				s.execute("CREATE TABLE IF NOT EXISTS peptidequants ( "
-						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, LocalizationIons string, NumberOfMods int, IsSiteSpecific boolean, RTInSecondsCenter double not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, QuantIonMassLength int not null, QuantIonMassArray blob not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null, IdentifiedTICRatio double not null,"
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, LocalizationIons string, NumberOfMods int, IsSiteSpecific boolean, RTInSecondsCenter double not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, QuantIonMassLength int not null, QuantIonMassArray blob not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null, IdentifiedTICRatio double not null "
 						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq, SourceFile) )");
 
 				s.execute("CREATE TABLE IF NOT EXISTS fragmentquants ( "
-						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, IonType string not null, IonIndex int not null, FragmentMass double not null, Correlation double not null, Background double not null, DeltaMassPPM double not null, Intensity double not null )");
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, IonType string not null, IonIndex int not null, FragmentMass double not null, Correlation double not null, Background double not null, DeltaMassPPM double not null, Intensity double not null "
+						+ ")");
 
 				c.commit();
 			} finally {
