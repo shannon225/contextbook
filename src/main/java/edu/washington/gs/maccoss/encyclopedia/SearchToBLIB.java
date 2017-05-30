@@ -335,7 +335,8 @@ public class SearchToBLIB {
 			if (alignBetweenFiles) {
 			if (pecanJobs.size()>1) {
 				Logger.logLine("Inferring peak boundaries across files...");
-				inferrer=Optional.of(AlternatePeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides, parameters));
+				inferrer=Optional.of(PeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides, parameters));
+				//inferrer=Optional.of(AlternatePeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides, parameters));
 				Logger.logLine("...Finished peak inference.");
 			} else {
 				Logger.logLine("Only processing one file so no peak inference is necessary.");

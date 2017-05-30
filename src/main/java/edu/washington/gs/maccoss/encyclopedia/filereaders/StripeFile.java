@@ -47,6 +47,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	private File userFile=null;
 	private volatile String originalFileName=null;
 	private final File tempFile;
+	private boolean isOpen=false;
 	
 	private final HashMap<Range, Float> ranges=new HashMap<Range, Float>();
 
@@ -124,6 +125,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		this.userFile=userFile;
 		openFile();
 		loadRanges();
+		isOpen=true;
 	}
 	
 	public void loadRanges() throws IOException, SQLException {
@@ -567,5 +569,10 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		if (!tempFile.delete()) {
 			Logger.errorLine("Error deleting temp file!");
 		}
+		isOpen=false;
+	}
+	@Override
+	public boolean isOpen() {
+		return isOpen;
 	}
 }
