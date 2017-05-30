@@ -120,6 +120,11 @@ public class CachedStripeFile implements StripeFileInterface {
 		
 		return new ArrayList<Stripe>();
 	}
+	
+	@Override
+	public boolean isOpen() {
+		return ranges.size()>0;
+	}
 
 	@Override
 	public void close() {

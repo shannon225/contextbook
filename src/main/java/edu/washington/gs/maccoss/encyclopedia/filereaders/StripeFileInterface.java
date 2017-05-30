@@ -82,6 +82,8 @@ public interface StripeFileInterface {
 	 * closes file
 	 */
 	void close();
+	
+	boolean isOpen();
 
 	/**
 	 * returns the file object for the user file (or the temp file if no user file exists) 

@@ -35,6 +35,8 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringF
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoEncyclopediaOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
@@ -135,7 +137,15 @@ public class Encyclopedia {
 				Logger.addRecorder(logRecorder);
 	
 				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
-				LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
+				LibraryScoringFactory factory;
+				if (parameters.isRunPhosphoLocalization()) {
+					StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
+					PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, parameters);
+					stripefile.close();
+					factory=new PhosphoEncyclopediaOneScoringFactory(parameters, localizer);
+				} else {
+					factory=new EncyclopediaOneScoringFactory(parameters);
+				}
 				Logger.logLine("EncyclopeDIA version "+factory.getVersion());
 	
 				Logger.logLine("Parameters:");

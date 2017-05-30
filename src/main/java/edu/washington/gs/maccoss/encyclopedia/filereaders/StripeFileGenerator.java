@@ -2,6 +2,8 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -12,6 +14,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class StripeFileGenerator {
+	private static final HashMap<File, WeakReference<StripeFileInterface>> loadedFiles=new HashMap<>();
+	
 	private static final DIAFileReader DIA_FILE_READER=new DIAFileReader();
 	private static final StripeFileReaderInterface[] readers=new StripeFileReaderInterface[] {
 			DIA_FILE_READER,
@@ -19,6 +23,20 @@ public class StripeFileGenerator {
 	};
 
 	public static StripeFileInterface getFile(File f, SearchParameters parameters) {
+		if (loadedFiles.containsKey(f)) {
+			StripeFileInterface maybeLoaded=loadedFiles.get(f).get();
+			if (maybeLoaded==null||!maybeLoaded.isOpen()) {
+				loadedFiles.remove(f);
+			} else {
+				return maybeLoaded;
+			}
+		}
+
+		StripeFileInterface file=innerGetFile(f, parameters);
+		loadedFiles.put(f, new WeakReference<StripeFileInterface>(file));
+		return file;
+	}
+	private static StripeFileInterface innerGetFile(File f, SearchParameters parameters) {		
 		// try to change name to .DIA and read
 		String absolutePath=f.getAbsolutePath();
 		File diaFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+StripeFile.DIA_EXTENSION);
