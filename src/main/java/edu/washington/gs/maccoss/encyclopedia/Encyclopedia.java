@@ -141,7 +141,6 @@ public class Encyclopedia {
 				if (parameters.isRunPhosphoLocalization()) {
 					StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 					PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, parameters);
-					stripefile.close();
 					factory=new PhosphoEncyclopediaOneScoringFactory(parameters, localizer);
 				} else {
 					factory=new EncyclopediaOneScoringFactory(parameters);
