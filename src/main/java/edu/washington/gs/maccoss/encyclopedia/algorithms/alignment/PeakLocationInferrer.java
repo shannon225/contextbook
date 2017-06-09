@@ -60,14 +60,20 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakRTLocatorInterface#getTopNIntensity(edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData)
 	 */
 	@Override
-	public Pair<Float, Integer> getTopNIntensity(TransitionRefinementData data) {
+	public Optional<Pair<Float, Integer>> getTopNIntensity(TransitionRefinementData data) {
 		String peptideModSeq=data.getPeptideModSeq();
 		double[] topN=getTopNBestIons(peptideModSeq);
 		double[] masses=FragmentIon.getMasses(data.getFragmentMassArray());
 		float[] intensities=data.getIntegrationArray();
 		
+		if (params.getMinNumOfQuantitativePeaks()>0) {
+			if (topN==null||topN.length<params.getMinNumOfQuantitativePeaks()) {
+				return Optional.empty();
+			}
+		}
+		
 		if (topN==null||topN.length==0) {
-			return data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, params.getNumberOfQuantitativePeaks());
+			return Optional.of(data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, params.getNumberOfQuantitativePeaks()));
 		}
 		
 		float sum=0.0f;
@@ -79,7 +85,7 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 				added++;
 			}
 		}
-		return new Pair<Float, Integer>(sum, added);
+		return Optional.of(new Pair<Float, Integer>(sum, added));
 	}
 
 	/* (non-Javadoc)

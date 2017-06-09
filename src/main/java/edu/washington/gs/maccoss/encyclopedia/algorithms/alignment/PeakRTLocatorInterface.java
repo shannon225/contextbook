@@ -1,12 +1,14 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
+import java.util.Optional;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 
 public interface PeakRTLocatorInterface {
 
-	Pair<Float, Integer> getTopNIntensity(TransitionRefinementData data);
+	Optional<Pair<Float, Integer>> getTopNIntensity(TransitionRefinementData data);
 
 	double[] getTopNBestIons(String peptideModSeq);
 

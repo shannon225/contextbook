@@ -76,6 +76,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 	private final SpinnerModel maxMissedCleavage=new SpinnerNumberModel(1, 0, 3, 1);
 	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
+	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
 	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
 
 	public PecanParametersPanel() {
@@ -120,6 +121,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		options.add(new LabeledComponent("Maximum Missed Cleavage", new JSpinner(maxMissedCleavage)));
 		options.add(new LabeledComponent("Percolator Version", percolatorVersion));
 		options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
+		options.add(new LabeledComponent("Minimum Number of Quantitative Ions", new JSpinner(minNumOfQuantitativeIons)));
 		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
 
 		JPanel chargeRange=new JPanel(new FlowLayout());
@@ -199,10 +201,11 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
+		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
 		float numberOfExtraDecoyLibrariesValue=NUMBER_OF_EXTRA_DECOY_VALUES[((Integer)numberOfExtraDecoyLibraries.getSelectedIndex())];
 		boolean isPercolatorTwo=PercolatorExecutor.V2_10.equals(percolatorVersion.getSelectedItem());
 		PecanSearchParameters parameters=new PecanSearchParameters(aaConstants, fragmentation, precursorPPMValue, fragmentPPMValue, digestionEnzyme, isPercolatorTwo?2:3,
-				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, numberOfExtraDecoyLibrariesValue);
+				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, numberOfExtraDecoyLibrariesValue);
 		return parameters;
 	}
 	
@@ -257,6 +260,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 			numberOfExtraDecoyLibraries.setSelectedIndex(index);
 		}
 		numberOfQuantitativeIons.setValue(params.getNumberOfQuantitativePeaks());
+		minNumOfQuantitativeIons.setValue(params.getMinNumOfQuantitativePeaks());
 		percolatorVersion.setSelectedIndex(params.getPercolatorVersionNumber()==2?1:0);
 	}
 	

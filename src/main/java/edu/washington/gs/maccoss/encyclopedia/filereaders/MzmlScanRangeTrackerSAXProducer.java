@@ -150,6 +150,7 @@ public class MzmlScanRangeTrackerSAXProducer extends DefaultHandler implements R
 					}
 				}
 
+				// NOTE: does not consider parameters.getPrecursorIsolationMargin() to keep margins intact for reporting
 				Range range=new Range(isolationWindowTarget-isolationWindowLowerOffset, isolationWindowTarget+isolationWindowUpperOffset);
 				boolean keepGoing=retentionTimesByStripe.addRange(range, scanStartTime);
 				if (!keepGoing) {

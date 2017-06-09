@@ -31,17 +31,20 @@ public class SearchParameters {
 	protected final float precursorWindowSize;
 	protected final float numberOfExtraDecoyLibrariesSearched;
 	protected final int numberOfQuantitativePeaks;
+	protected final int minNumOfQuantitativePeaks;
 	protected final double precursorOffsetPPM;
 	protected final double fragmentOffsetPPM;
+	protected final double precursorIsolationMargin;
 	protected final boolean useNLsForXCorr=false;
 
-	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
+	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, Integer percolatorVersionNumber, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
-			int numberOfQuantitativePeaks, boolean runPhosphoLocalization, float getNumberOfExtraDecoyLibrariesSearched) {
+			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, boolean runPhosphoLocalization, float getNumberOfExtraDecoyLibrariesSearched) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
 		this.precursorOffsetPPM=precursorOffsetPPM;
+		this.precursorIsolationMargin=precursorIsolationMargin;
 		this.fragmentTolerance=fragmentTolerance;
 		this.fragmentOffsetPPM=fragmentOffsetPPM;
 		this.libraryFragmentTolerance=libraryFragmentTolerance;
@@ -54,6 +57,7 @@ public class SearchParameters {
 		this.targetWindowCenter=targetWindowCenter;
 		this.precursorWindowSize=precursorWindowSize;
 		this.numberOfQuantitativePeaks=numberOfQuantitativePeaks;
+		this.minNumOfQuantitativePeaks=minNumOfQuantitativePeaks;
 		this.runPhosphoLocalization=runPhosphoLocalization;
 		this.numberOfExtraDecoyLibrariesSearched=getNumberOfExtraDecoyLibrariesSearched;
 	}
@@ -216,7 +220,13 @@ public class SearchParameters {
 	public int getNumberOfQuantitativePeaks() {
 		return numberOfQuantitativePeaks;
 	}
+	public int getMinNumOfQuantitativePeaks() {
+		return minNumOfQuantitativePeaks;
+	}
 	public boolean isUseNLsForXCorr() {
 		return useNLsForXCorr;
+	}
+	public double getPrecursorIsolationMargin() {
+		return precursorIsolationMargin;
 	}
 }

@@ -247,7 +247,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 					charge=selectedCharge;
 				}
 				
-				Stripe stripe=new Stripe(spectrumName, spectrumRef, spectrumIndex, scanStartTime, isolationWindowTarget-isolationWindowLowerOffset, isolationWindowTarget+isolationWindowUpperOffset,
+				Stripe stripe=new Stripe(spectrumName, spectrumRef, spectrumIndex, scanStartTime, isolationWindowTarget-isolationWindowLowerOffset+(float)parameters.getPrecursorIsolationMargin(), isolationWindowTarget+isolationWindowUpperOffset-(float)parameters.getPrecursorIsolationMargin(),
 						massArray, intensityArray, charge);
 				stripes.add(stripe);
 				Range range=stripe.getRange();

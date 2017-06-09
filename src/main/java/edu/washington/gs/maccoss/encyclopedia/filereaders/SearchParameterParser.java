@@ -33,6 +33,7 @@ public class SearchParameterParser {
 		map.put("-lftolunits", "ppm");
 		map.put("-poffset", "0");
 		map.put("-foffset", "0");
+		map.put("-precursorIsolationMargin", "0");
 		map.put("-enzyme", "trypsin");
 		map.put("-percolatorThreshold", "0.01");
 		map.put("-percolatorVersionNumber", Byte.toString(PercolatorExecutor.DEFAULT_VERSION_NUMBER));
@@ -41,6 +42,7 @@ public class SearchParameterParser {
 		map.put("-runPhosphoLocalization", "false");
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
 		map.put("-numberOfQuantitativePeaks", "5");
+		map.put("-minNumOfQuantitativePeaks", "0");
 		return map;
 	}
 	
@@ -84,6 +86,7 @@ public class SearchParameterParser {
 		final MassTolerance libraryFragmentTolerance;
 		final double precursorOffsetPPM;
 		final double fragmentOffsetPPM;
+		final double precursorIsolationMargin;
 		final DigestionEnzyme enzyme;
 		final float percolatorThreshold;
 		final DataAcquisitionType dataAcquisitionType;
@@ -92,6 +95,7 @@ public class SearchParameterParser {
 		final float expectedPeakWidth;
 		final float precursorWindowSize;
 		final int numberOfQuantitativePeaks;
+		final int minNumOfQuantitativePeaks;
 		final boolean runPhosphoLocalization;
 		final float numberOfExtraDecoyLibrariesSearched;
 		final int percolatorVersionNumber;
@@ -201,6 +205,17 @@ public class SearchParameterParser {
 			}
 		}
 		
+		value=parameters.get("-precursorIsolationMargin");
+		if (value==null) {
+			precursorIsolationMargin=0.0;
+		} else {
+			try {
+				precursorIsolationMargin=Double.parseDouble(value);
+			} catch (NumberFormatException nfe) {
+				throw new EncyclopediaException("Error parsing precursor isolation margin from ["+value+"]", nfe);
+			}
+		}
+		
 		value=parameters.get("-enzyme");
 		if (value==null) {
 			enzyme=DigestionEnzyme.getEnzyme("trypsin");
@@ -215,6 +230,7 @@ public class SearchParameterParser {
 		expectedPeakWidth=SearchParameterParser.getFloat("-expectedPeakWidth", parameters, 25f);
 		runPhosphoLocalization=getBoolean("-runPhosphoLocalization", parameters, false);
 		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 5);
+		minNumOfQuantitativePeaks=SearchParameterParser.getInteger("-minNumOfQuantitativePeaks", parameters, 0);
 		percolatorVersionNumber=SearchParameterParser.getInteger("-percolatorVersionNumber", parameters, 3);
 		
 		float tempNumberOfExtraDecoyLibrariesSearched=SearchParameterParser.getFloat("-numberOfExtraDecoyLibrariesSearched", parameters, 0.0f);
@@ -225,8 +241,8 @@ public class SearchParameterParser {
 			numberOfExtraDecoyLibrariesSearched=tempNumberOfExtraDecoyLibrariesSearched;
 		}
 		
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
-				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, runPhosphoLocalization, numberOfExtraDecoyLibrariesSearched);
+		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
+				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, runPhosphoLocalization, numberOfExtraDecoyLibrariesSearched);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

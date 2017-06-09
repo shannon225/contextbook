@@ -29,6 +29,7 @@ public class PecanParameterParser {
 		map.put("-ftolunits", "ppm");
 		map.put("-poffset", "0");
 		map.put("-foffset", "0");
+		map.put("-precursorIsolationMargin", "0");
 		map.put("-enzyme", "trypsin");
 		map.put("-minLength", "5");
 		map.put("-maxLength", "100");
@@ -47,6 +48,7 @@ public class PecanParameterParser {
 		map.put("-precursorWindowSize", "-1");
 		map.put("-numberOfThreadsUsed", Integer.toString(Runtime.getRuntime().availableProcessors()));
 		map.put("-numberOfQuantitativePeaks", "5");
+		map.put("-minNumOfQuantitativePeaks", "0");
 		return map;
 	}
 	
@@ -69,6 +71,7 @@ public class PecanParameterParser {
 		final MassTolerance fragmentTolerance;
 		final double precursorOffsetPPM;
 		final double fragmentOffsetPPM;
+		final double precursorIsolationMargin;
 		final DigestionEnzyme enzyme;
 		final int minPeptideLength;
 		final int maxPeptideLength;
@@ -87,6 +90,7 @@ public class PecanParameterParser {
 		final float targetWindowCenter;
 		final float precursorWindowSize;
 		final int numberOfQuantitativePeaks;
+		final int minNumOfQuantitativePeaks;
 		final int percolatorVersionNumber;
 
 		ModificationMassMap variableMods=new ModificationMassMap(parameters.get("-variable"));
@@ -194,6 +198,17 @@ public class PecanParameterParser {
 			}
 		}
 		
+		value=parameters.get("-precursorIsolationMargin");
+		if (value==null) {
+			precursorIsolationMargin=0.0;
+		} else {
+			try {
+				precursorIsolationMargin=Double.parseDouble(value);
+			} catch (NumberFormatException nfe) {
+				throw new EncyclopediaException("Error parsing precursor isolation margin from ["+value+"]", nfe);
+			}
+		}
+		
 		value=parameters.get("-enzyme");
 		if (value==null) {
 			enzyme=DigestionEnzyme.getEnzyme("trypsin");
@@ -217,8 +232,9 @@ public class PecanParameterParser {
 		targetWindowCenter=SearchParameterParser.getFloat("-targetWindowCenter", parameters, -1f);
 		precursorWindowSize=SearchParameterParser.getFloat("-precursorWindowSize", parameters, -1f);
 		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 5);
+		minNumOfQuantitativePeaks=SearchParameterParser.getInteger("-minNumOfQuantitativePeaks", parameters, 0);
 		percolatorVersionNumber=SearchParameterParser.getInteger("-percolatorVersionNumber", parameters, 3);
 		
-		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, fragmentTolerance, fragmentOffsetPPM, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks);
+		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks);
 	}
 }

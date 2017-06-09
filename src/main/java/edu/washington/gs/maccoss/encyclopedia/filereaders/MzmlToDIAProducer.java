@@ -157,7 +157,7 @@ public class MzmlToDIAProducer implements Runnable {
 					double[] deltaArray=General.multiply(massArray, parameters.getFragmentOffsetPPM()/1000000.0);
 					massArray=General.subtract(massArray, deltaArray);
 				}
-				Stripe stripe=new Stripe(spectrumName, p.getSpectrumRef(), spectrumIndex, scanStartTime, isolationWindowTarget-isolationWindowLowerOffset, isolationWindowTarget+isolationWindowUpperOffset, massArray, intensityArray);
+				Stripe stripe=new Stripe(spectrumName, p.getSpectrumRef(), spectrumIndex, scanStartTime, isolationWindowTarget-isolationWindowLowerOffset+(float)parameters.getPrecursorIsolationMargin(), isolationWindowTarget+isolationWindowUpperOffset-(float)parameters.getPrecursorIsolationMargin(), massArray, intensityArray);
 				stripes.add(stripe);
 				Range range=stripe.getRange();
 				TFloatArrayList stripeRTs=retentionTimesByStripe.get(range);

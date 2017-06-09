@@ -454,7 +454,12 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		Pair<Float, Integer> topN;
 		double[] topNMasses;
 		if (inferrer.isPresent()) {
-			topN=inferrer.get().getTopNIntensity(data);
+			Optional<Pair<Float, Integer>> topNIntensity=inferrer.get().getTopNIntensity(data);
+			if (!topNIntensity.isPresent()) {
+				// not enough ions to quantify peptide
+				return index;
+			}
+			topN=topNIntensity.get();
 			topNMasses=inferrer.get().getTopNBestIons(data.getPeptideModSeq());
 			if (topNMasses==null) {
 				throw new IllegalStateException("Could not retention time align " + data.getPeptideModSeq() + " from source file.  Unable to proceed.");
