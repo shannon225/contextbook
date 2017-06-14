@@ -79,7 +79,7 @@ public class Pecanpie {
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
 		if (arguments.size()==0) {
-			SearchGUIMain.runGUI(true);
+			SearchGUIMain.runGUI(ProgramType.PecanPie);
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("Pecanpie Help");

@@ -84,7 +84,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		Optional<TransitionRefinementData> spectrum=extractSpectrum(psmdata.getAccessions(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable);
 		Optional<HashMap<String, TransitionRefinementData>> phosphoData=Optional.empty();
 		if (canRunLocalization()) {
-			Optional<PhosphoLocalizationData> localizationData=runLocalization();
+			Optional<PhosphoLocalizationData> localizationData=runLocalization(false);
 			if (localizationData.isPresent()) {
 				phosphoData=Optional.ofNullable(localizationData.get().getPassingForms());
 			}
@@ -132,8 +132,8 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		return params.isRunPhosphoLocalization()&&localizer.isPresent();
 	}
 
-	public Optional<PhosphoLocalizationData> runLocalization() {
-		return localizer.get().runDIAPhosphoLocalization(psmdata, stripes);
+	public Optional<PhosphoLocalizationData> runLocalization(boolean tryAllPermutations) {
+		return localizer.get().runDIAPhosphoLocalization(psmdata, stripes, tryAllPermutations);
 	}
 
 	private Optional<TransitionRefinementData> extractSpectrum(HashSet<String> accessions, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable) {

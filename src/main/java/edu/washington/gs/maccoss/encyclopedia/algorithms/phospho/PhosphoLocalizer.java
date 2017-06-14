@@ -64,16 +64,22 @@ public class PhosphoLocalizer {
 		return background;
 	}
 
-	public Optional<PhosphoLocalizationData> runDIAPhosphoLocalization(PSMData psmdata, ArrayList<Stripe> stripes) {
+	public Optional<PhosphoLocalizationData> runDIAPhosphoLocalization(PSMData psmdata, ArrayList<Stripe> stripes, boolean tryAllPermutations) {
 		ArrayList<Spectrum> spectra=new ArrayList<Spectrum>();
 		for (Stripe stripe : stripes) {
 			spectra.add(stripe);
 		}
-		return runPhosphoLocalization(psmdata, spectra);
+		return runPhosphoLocalization(psmdata, spectra, tryAllPermutations);
 	}
 
-	public Optional<PhosphoLocalizationData> runPhosphoLocalization(PSMData psmdata, ArrayList<Spectrum> stripes) {
-		ArrayList<String> permutations=PhosphoPermuter.getPermutations(psmdata.getPeptideModSeq(), params.getAAConstants());
+	public Optional<PhosphoLocalizationData> runPhosphoLocalization(PSMData psmdata, ArrayList<Spectrum> stripes, boolean tryAllPermutations) {
+		ArrayList<String> permutations;
+		if (tryAllPermutations) {
+			permutations=PhosphoPermuter.getPermutations(psmdata.getPeptideModSeq(), params.getAAConstants());
+		} else {
+			permutations=new ArrayList<String>();
+			permutations.add(psmdata.getPeptideModSeq());
+		}
 		if (permutations.size()==1) {
 			//System.out.println("single\t"+psmdata.getPeptideModSeq()+"\t1\t1\t0\t1000");
 			return Optional.empty();

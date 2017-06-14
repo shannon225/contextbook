@@ -4,7 +4,7 @@
 
 	<groupId>maccoss</groupId>
 	<artifactId>encyclopedia</artifactId>
-	<version>0.4.13-SNAPSHOT</version>
+	<version>0.4.13</version>
 	<packaging>jar</packaging>
 
 	<name>encyclopedia</name>
@@ -27,9 +27,13 @@
 		in its configuration below.
 		-->
 		<targetName>${artifactId}-${version}-executable</targetName>
-
-		<!-- The main class that will be run by the executable JAR. -->
 		<buildTarget>edu.washington.gs.maccoss.encyclopedia.Encyclopedia</buildTarget>
+		
+		<targetName>${artifactId}-${version}-global</targetName>
+		<buildTarget>edu.washington.gs.maccoss.encyclopedia.Main</buildTarget>
+
+		<phosphoTargetName>CAPSiL-${version}-executable</phosphoTargetName>
+		<phosphoBuildTarget>edu.washington.gs.maccoss.encyclopedia.CAPSiL</phosphoBuildTarget>
 
 <!--		<targetName>pecanpie-${version}-executable</<targetName>
 		<buildTarget>edu.washington.gs.maccoss.encyclopedia.Pecanpie</buildTarget> -->
@@ -87,6 +91,51 @@
 				<artifactId>maven-shade-plugin</artifactId>
 				<executions>
 					<execution>
+						<id>shade-global</id>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<finalName>${targetName}</finalName>
+							<transformers>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass>${buildTarget}</mainClass>
+								</transformer>
+							</transformers>
+						</configuration>
+					</execution>
+					<execution>
+						<id>shade-phospho</id>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<finalName>${phosphoTargetName}</finalName>
+							<transformers>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass>${phosphoBuildTarget}</mainClass>
+								</transformer>
+							</transformers>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<!--
+			shade-plugin is used to create an executable jar
+			that contains all this project's dependencies
+			and a manifest entry that allows it to be executed
+
+			${targetName} (see above) determines what happens to this JAR
+			-->
+			<!-- 
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<executions>
+					<execution>
 						<phase>package</phase>
 						<goals>
 							<goal>shade</goal>
@@ -94,14 +143,15 @@
 					</execution>
 				</executions>
 				<configuration>
-					<finalName>${targetName}</finalName>
+					<finalName>${phosphoTargetName}</finalName>
 					<transformers>
 						<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-							<mainClass>${buildTarget}</mainClass>
+							<mainClass>${phosphoBuildTarget}</mainClass>
 						</transformer>
 					</transformers>
 				</configuration>
 			</plugin>
+			-->
 		</plugins>
 	</build>
 

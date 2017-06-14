@@ -17,13 +17,14 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
+import jogamp.graph.font.typecast.ot.table.Program;
 
 public class SearchGUIMain {
 	public static void main(String[] args) {
-		runGUI(false);
+		runGUI(ProgramType.Global);
 	}
 
-	public static void runGUI(boolean pecanpie) {
+	public static void runGUI(ProgramType program) {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {
@@ -35,22 +36,32 @@ public class SearchGUIMain {
 		String shortName;
 		String name;
 		ImageIcon image;
-		if (pecanpie) {
+		if (ProgramType.PecanPie==program) {
 			shortName="PecanPie";
 			name="Pecan: Peptide Centric Analysis";
 			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/pecan_icon.png"));
-		} else if (isOffending==1) {
-			shortName="PoopeDIA";
-			name="Lindsay's PoopeDIA: Peptide Searching for DIA";
-			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mazie_icon.png"));
-		} else if (isOffending==2) {
-			shortName="ChocopeDIA";
-			name="MoMo's ChocopeDIA: Peptide Searching for DIA";
-			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/chocolate2.png"));
+		} else if (ProgramType.CAPSiL==program) {
+			shortName="CAPSiL";
+			name="CAPSiL: Chromatogram Aligned Site Localization";
+			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/capsil_icon.png"));
+		} else if (ProgramType.XCorDIA==program) {
+			shortName="XCorDIA";
+			name="XCorDIA: Peptide Searching with Cross Correlation";
+			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mike_rotate_icon.png"));
 		} else {
-			shortName="EncyclopeDIA";
-			name="EncyclopeDIA: Peptide Searching for DIA";
-			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_icon.png"));
+			if (isOffending==1) {
+				shortName="PoopeDIA";
+				name="Lindsay's PoopeDIA: Peptide Searching for DIA";
+				image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mazie_icon.png"));
+			} else if (isOffending==2) {
+				shortName="ChocopeDIA";
+				name="MoMo's ChocopeDIA: Peptide Searching for DIA";
+				image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/chocolate2.png"));
+			} else {
+				shortName="EncyclopeDIA";
+				name="EncyclopeDIA: Peptide Searching for DIA";
+				image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_icon.png"));
+			}
 		}
 
 		OS os=OSDetector.getOS();
@@ -73,7 +84,7 @@ public class SearchGUIMain {
 			}
 		});
 
-		final SearchPanel panel=new SearchPanel(pecanpie);
+		final SearchPanel panel=new SearchPanel(program);
 		f.getContentPane().add(panel, BorderLayout.CENTER);
 		f.setJMenuBar(panel.createMenus());
 

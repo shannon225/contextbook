@@ -45,6 +45,28 @@ public class General {
 		return f;
 	}
 	
+	public static String[] concatenate(String[] a, String... s) {
+		String[] r=new String[a.length+s.length];
+		System.arraycopy(a, 0, r, 0, a.length);
+		System.arraycopy(s, 0, r, a.length, s.length);
+		return r;
+	}
+
+	public static String[] concatenate(String[]... a) {
+		int length=0;
+		for (int i=0; i<a.length; i++) {
+			length+=a[i].length;
+		}
+		String[] r=new String[length];
+		
+		int lastIndex=0;
+		for (int i=0; i<a.length; i++) {
+			System.arraycopy(a[i], 0, r, lastIndex, a[i].length);
+			lastIndex+=a[i].length;
+		}
+		return r;
+	}
+	
 	public static float[] concatenate(float[] a, float... f) {
 		float[] r=new float[a.length+f.length];
 		System.arraycopy(a, 0, r, 0, a.length);

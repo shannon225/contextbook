@@ -73,19 +73,13 @@ public class Encyclopedia {
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
 		if (arguments.size()==0) {
-			SearchGUIMain.runGUI(false);
+			SearchGUIMain.runGUI(ProgramType.Global);
 			
 		} else if (arguments.containsKey("-browser")) {
 			DIABrowser.main(args);
 		
 		} else if (arguments.containsKey("-libexport")) {
 			SearchToBLIB.main(args);
-			
-		} else if (arguments.containsKey("-pecan")) {
-			Pecanpie.main(args);
-			
-		} else if (arguments.containsKey("-xcordia")) {
-			XCorDIA.main(args);
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("EncyclopeDIA Help");
@@ -95,8 +89,6 @@ public class Encyclopedia {
 			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file");
 			Logger.timelessLogLine("\t-l\tlibrary .ELIB file");
 			Logger.timelessLogLine("Other Programs: ");
-			Logger.timelessLogLine("\t-pecan\trun Pecanpie (use -pecan -h for Pecan help)");
-			Logger.timelessLogLine("\t-xcordia\trun XCorDIA (use -xcordia -h for XCorDIA help)");
 			Logger.timelessLogLine("\t-browser\trun ELIB Browser (use -browser -h for ELIB Browser help)");
 			Logger.timelessLogLine("\t-libexport\trun Library Export (use -libexport -h for Library Export help)");
 			Logger.timelessLogLine("Other Parameters: ");
@@ -139,6 +131,8 @@ public class Encyclopedia {
 				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 				LibraryScoringFactory factory;
 				if (parameters.isRunPhosphoLocalization()) {
+					Logger.logLine("Setting up localization engne...");
+				
 					StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 					PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, parameters);
 					factory=new PhosphoEncyclopediaOneScoringFactory(parameters, localizer);

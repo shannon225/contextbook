@@ -320,7 +320,7 @@ public class ResultsBrowserPanel extends JPanel {
 					
 					Optional<PhosphoLocalizationData> maybePhosphoData=Optional.empty();
 					if (parameters.isRunPhosphoLocalization()) {
-						maybePhosphoData=quantTask.runLocalization();
+						maybePhosphoData=quantTask.runLocalization(true);
 					}
 					if (maybePhosphoData.isPresent()) {
 						PhosphoLocalizationData actuallyPhosphoData=maybePhosphoData.get();

@@ -267,10 +267,10 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 			}
 		}
 		
-		return getEntryFromNewSequence(reverseSequence, revAcc, markAsDecoy, parameters);
+		return getEntryFromNewSequence(reverseSequence, revAcc, markAsDecoy, parameters).y;
 	}
 
-	public LibraryEntry getEntryFromNewSequence(String newSequence, HashSet<String> accessions, boolean markAsDecoy, SearchParameters parameters) {
+	public Pair<FragmentationModel, LibraryEntry> getEntryFromNewSequence(String newSequence, HashSet<String> accessions, boolean markAsDecoy, SearchParameters parameters) {
 		FragmentationModel forwardModel=new FragmentationModel(peptideModSeq, parameters.getAAConstants());
 		FragmentationModel reverseModel=new FragmentationModel(newSequence, parameters.getAAConstants());
 		
@@ -347,9 +347,9 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(reversedPeaks);
 		
 		if (markAsDecoy) {
-			return new ReverseLibraryEntry(source, accessions, precursorMZ, precursorCharge, newSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z);	
+			return new Pair<FragmentationModel, LibraryEntry>(reverseModel, new ReverseLibraryEntry(source, accessions, precursorMZ, precursorCharge, newSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z));	
 		} else {
-			return new LibraryEntry(source, accessions, precursorMZ, precursorCharge, newSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z);	
+			return new Pair<FragmentationModel, LibraryEntry>(reverseModel, new LibraryEntry(source, accessions, precursorMZ, precursorCharge, newSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z));	
 		}
 	}
 }

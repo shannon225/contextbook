@@ -39,6 +39,7 @@ import javax.swing.table.TableColumn;
 
 import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.Pecanpie;
+import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCordiaSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -53,6 +54,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.dia.FeatureGrapher;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.MultiResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.PeptideExtractingBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.CAPSiLParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.LindsaysSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.MoMosSpecialEncyclopediaPanel;
@@ -68,6 +70,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
+import jogamp.graph.font.typecast.ot.table.Program;
 
 public class SearchPanel extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -86,7 +89,7 @@ public class SearchPanel extends JPanel {
 	private final JTabbedPane optionsTabs;
 	private final JCheckBox alignBetweenFiles;
 	
-	public SearchPanel(boolean pecanpie) {
+	public SearchPanel(ProgramType program) {
 		super(new BorderLayout());
 	    
 		setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -95,47 +98,61 @@ public class SearchPanel extends JPanel {
 		JSplitPane split=new JSplitPane();
 
 		optionsTabs=new JTabbedPane();
-		EncyclopediaParametersPanel encyclopedia;
-		XCorDIAParametersPanel xcordia=new XCorDIAParametersPanel();
-		switch (Networking.isOffendingAddress()) {
-			case 1:
-				encyclopedia=new LindsaysSpecialEncyclopediaPanel();
-				break;
-			case 2:
-				encyclopedia=new MoMosSpecialEncyclopediaPanel();
-				break;
-			default:
-				encyclopedia=new EncyclopediaParametersPanel();
-				break;
-		}
 		
-		if (!pecanpie) {
-			optionsTabs.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
-			
+		if (ProgramType.Global==program||ProgramType.EncyclopeDIA==program) {
 			try {
+				EncyclopediaParametersPanel encyclopedia;
+				switch (Networking.isOffendingAddress()) {
+					case 1:
+						encyclopedia=new LindsaysSpecialEncyclopediaPanel();
+						break;
+					case 2:
+						encyclopedia=new MoMosSpecialEncyclopediaPanel();
+						break;
+					default:
+						encyclopedia=new EncyclopediaParametersPanel();
+						break;
+				}
 				HashMap<String, String> map=SearchParameters.readPreferences();
 				encyclopedia.setParameters(SearchParameterParser.parseParameters(map), map.get(Encyclopedia.TARGET_LIBRARY_TAG));
+				optionsTabs.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
 			}
 		}
-		
-		PecanParametersPanel pecan=new PecanParametersPanel();
-		try {
-			HashMap<String, String> map=PecanSearchParameters.readPreferences();
-			PecanSearchParameters parseParameters=PecanParameterParser.parseParameters(map);
-			pecan.setParameters(parseParameters, map.get(Pecanpie.BACKGROUND_FASTA_TAG), map.get(Pecanpie.TARGET_FASTA_TAG));
-			optionsTabs.addTab("Pecan", PecanParametersPanel.smallimage, pecan, "Pecan Peptide Search");
-			
-			if (!pecanpie) {
-				map=XCordiaSearchParameters.readPreferences();
+		if (ProgramType.Global==program||ProgramType.CAPSiL==program) {
+			try {
+				CAPSiLParametersPanel encyclopedia=new CAPSiLParametersPanel();
+				HashMap<String, String> map=SearchParameters.readPreferences();
+				encyclopedia.setParameters(SearchParameterParser.parseParameters(map), map.get(Encyclopedia.TARGET_LIBRARY_TAG));
+				optionsTabs.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
+			} catch (Exception e) {
+				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
+			}
+		}
+		if (ProgramType.Global==program||ProgramType.PecanPie==program) {
+			try {
+				PecanParametersPanel pecan=new PecanParametersPanel();
+				HashMap<String, String> map=PecanSearchParameters.readPreferences();
+				PecanSearchParameters parseParameters=PecanParameterParser.parseParameters(map);
+				pecan.setParameters(parseParameters, map.get(Pecanpie.BACKGROUND_FASTA_TAG), map.get(Pecanpie.TARGET_FASTA_TAG));
+				optionsTabs.addTab("Pecan", PecanParametersPanel.smallimage, pecan, "Pecan Peptide Search");
+				
+			} catch (Exception e) {
+				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
+			}
+		}
+		if (ProgramType.Global==program||ProgramType.XCorDIA==program) {
+			try {
+				XCorDIAParametersPanel xcordia=new XCorDIAParametersPanel();
+				HashMap<String, String> map=XCordiaSearchParameters.readPreferences();
 				XCordiaSearchParameters xcordiaParameters=XCordiaSearchParameters.convertFromPecan(PecanParameterParser.parseParameters(map));
 				xcordia.setParameters(xcordiaParameters, map.get(Pecanpie.BACKGROUND_FASTA_TAG), map.get(Pecanpie.TARGET_FASTA_TAG));
 				optionsTabs.addTab(xcordia.getProgramName(), xcordia.getSmallImage(), xcordia, xcordia.getProgramShortDescription());
+				
+			} catch (Exception e) {
+				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
 			}
-		} catch (Exception e) {
-			Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
-			e.printStackTrace();
 		}
 
 		LogConsole console=new LogConsole();
@@ -245,16 +262,6 @@ public class SearchPanel extends JPanel {
 		});
 		saveELIB.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		fileMenu.add(saveELIB);
-
-		JMenuItem saveLocalization=new JMenuItem("Save Phospho Localization", openDBIcon);
-		saveLocalization.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				saveLocalizationELIB();
-			}
-		});
-		saveLocalization.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		fileMenu.add(saveLocalization);
 
 		JMenuItem saveBLIB=new JMenuItem("Save BLIB", skylineIcon);
 		saveBLIB.addActionListener(new ActionListener() {
@@ -667,39 +674,6 @@ public class SearchPanel extends JPanel {
 				}
 
 				SearchToELIBJob job=new SearchToELIBJob(elibFile, alignBetweenFiles.isSelected(), processorTableModel);
-				if (job!=null) {
-					processorTableModel.addJob(job);
-				}
-			}
-		}
-	}
-
-	public void saveLocalizationELIB() {
-		JFrame frame = (JFrame)SwingUtilities.getRoot(SearchPanel.this);
-
-		Optional<String> maybeError=getVisibleTab().canLoadData();
-		if (maybeError.isPresent()) {
-			JOptionPane.showMessageDialog(frame, maybeError.get());
-		} else if (processorTableModel.getRowCount()==0) {
-			JOptionPane.showMessageDialog(frame, "Please queue some RAW files first!");
-			
-		} else {
-			FileDialog dialog=new FileDialog(frame, "Save a Localization ELIB file", FileDialog.SAVE);
-			dialog.setFilenameFilter(new SimpleFilenameFilter(LibraryFile.ELIB));
-			dialog.setVisible(true);
-			if (dialog.getFiles()!=null&&dialog.getFiles().length>0) {
-				File elibFile=dialog.getFiles()[0];
-				String fileName=elibFile.getName();
-				if (!fileName.toLowerCase().endsWith(LibraryFile.ELIB)) {
-					elibFile=new File(elibFile.getParentFile(), fileName+LibraryFile.ELIB);
-
-					if (elibFile.exists()) {
-						// TODO ask if you want to overwrite this
-						// updated file location!
-					}
-				}
-
-				SearchToLocalizationELIBJob job=new SearchToLocalizationELIBJob(elibFile, alignBetweenFiles.isSelected(), getVisibleTab().getParameters(), processorTableModel);
 				if (job!=null) {
 					processorTableModel.addJob(job);
 				}

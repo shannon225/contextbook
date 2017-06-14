@@ -18,6 +18,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -71,7 +72,6 @@ public class PhosphoEncyclopediaOneScoringTask extends AbstractLibraryScoringTas
 			TIntHashSet takenScans=new TIntHashSet();
 			int identifiedPeaks=0;
 			for (int i=goodStripes.size()-1; i>=0; i--) {
-				float score=goodStripes.get(i).x;
 				int index=goodStripes.get(i).y;
 				if (takenScans.contains(index)) {
 					continue;
@@ -79,7 +79,7 @@ public class PhosphoEncyclopediaOneScoringTask extends AbstractLibraryScoringTas
 				} else {
 					Stripe stripe=super.stripes.get(index);
 					
-					considerLocalizations(entry, stripe.getScanStartTime(), scoreByRTMap, predictedIsotopeDistribution, auxScorer, calculator);
+					considerLocalizations(entry, stripe.getScanStartTime(), eScorer, predictedIsotopeDistribution, auxScorer, calculator);
 					
 					// block out a 40 scan window
 					int lowerWindow=index-2*movingAverageLength;
@@ -102,7 +102,7 @@ public class PhosphoEncyclopediaOneScoringTask extends AbstractLibraryScoringTas
 	}
 
 
-	private void considerLocalizations(LibraryEntry entry, float retentionTime, TFloatFloatHashMap scoreByRTMap, 
+	private void considerLocalizations(LibraryEntry entry, float retentionTime, EncyclopediaScorer eScorer, 
 			float[] predictedIsotopeDistribution, AuxillaryPSMScorer auxScorer, EValueCalculator calculator) {
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(entry.getPeptideModSeq(), parameters.getAAConstants());
 		PhosphoLocalizationData phosphoData=localizer.extractPhosphoFormsFromStripes(entry.getPeptideModSeq(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), permutations, retentionTime, super.stripes);
@@ -129,7 +129,10 @@ public class PhosphoEncyclopediaOneScoringTask extends AbstractLibraryScoringTas
 			float rt=(float)point.x;
 			float localizationScore=(float)point.y;
 			
-			LibraryEntry unitEntry=entry.getEntryFromNewSequence(peptideModSeq, entry.getAccessions(), entry.isDecoy(), parameters);
+			Pair<FragmentationModel, LibraryEntry> localizedForm=entry.getEntryFromNewSequence(peptideModSeq, entry.getAccessions(), entry.isDecoy(), parameters);
+			FragmentationModel localizedModel=localizedForm.x;
+			LibraryEntry localizedEntry=localizedForm.y;
+			FragmentIon[] ions=localizedModel.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge());
 			
 			//FragmentationModel model=new FragmentationModel(peptideModSeq, parameters.getAAConstants());
 			//AnnotatedLibraryEntry unitEntry=model.getUnitSpectrum(entry.getSource(), entry.getAccessions(), entry.getPrecursorCharge(), rt, parameters, entry.isDecoy());
@@ -145,16 +148,16 @@ public class PhosphoEncyclopediaOneScoringTask extends AbstractLibraryScoringTas
 				}
 			}
 
-			float[] auxScoreArray=auxScorer.score(unitEntry, bestStripe, predictedIsotopeDistribution, precursors);
+			float[] auxScoreArray=auxScorer.score(localizedEntry, bestStripe, predictedIsotopeDistribution, precursors);
 
-			float score=scoreByRTMap.get(rt);
+			float score=eScorer.score(localizedEntry, bestStripe, ions);
 			float evalue=calculator.getNegLog10EValue(score);
 			if (Float.isNaN(evalue)) {
 				evalue=-1.0f;
 			}
 			
-			PeptideScoringResult result=new PeptideScoringResult(unitEntry);
-			result.addStripe(score, General.concatenate(auxScoreArray, evalue), bestStripe);
+			PeptideScoringResult result=new PeptideScoringResult(localizedEntry);
+			result.addStripe(score, General.concatenate(auxScoreArray, evalue, localizationScore), bestStripe);
 			resultsQueue.add(result);
 		}
 	}

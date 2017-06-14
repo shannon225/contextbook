@@ -19,6 +19,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class PhosphoEncyclopediaOneScoringFactory implements LibraryScoringFactory {
 	public static final String version="0.4.10";
@@ -37,7 +38,7 @@ public class PhosphoEncyclopediaOneScoringFactory implements LibraryScoringFacto
 
 	@Override
 	public PeptideScoringResultsConsumer getResultsConsumer(File outputFile, BlockingQueue<PeptideScoringResult> resultsQueue, File diaFile) {
-		return new ScoringResultsToTSVConsumer(outputFile, diaFile, EncyclopediaOneAuxillaryPSMScorer.getScoreNames(true), resultsQueue, 1);
+		return new ScoringResultsToTSVConsumer(outputFile, diaFile, General.concatenate(EncyclopediaOneAuxillaryPSMScorer.getScoreNames(true), "localizationScore"), resultsQueue, 1);
 	}
 
 	@Override

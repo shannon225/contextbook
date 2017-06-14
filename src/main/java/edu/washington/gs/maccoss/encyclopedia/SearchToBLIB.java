@@ -14,7 +14,6 @@ import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractor;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.AlternatePeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
@@ -57,7 +56,7 @@ public class SearchToBLIB {
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
 		if (arguments.size()==0) {
-			SearchGUIMain.runGUI(false);
+			SearchGUIMain.runGUI(ProgramType.EncyclopeDIA);
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("SearchToLIB Help");
@@ -96,8 +95,6 @@ public class SearchToBLIB {
 				convertPecan(arguments);
 			} else if (arguments.containsKey("-xcordia")) {
 				convertXCorDIA(arguments);
-			} else if (arguments.containsKey("-phospho")) {
-				ChromatogramAlignedPhosphoSiteLocalizer.convert(arguments);
 			} else {
 				convertEncyclopedia(arguments);
 			}
