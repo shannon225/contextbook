@@ -15,4 +15,5 @@ syntax: regexp
 ^logs$
 \.iml$
 
+pom.xml.versionsBackup
 dependency-reduced-pom.xml

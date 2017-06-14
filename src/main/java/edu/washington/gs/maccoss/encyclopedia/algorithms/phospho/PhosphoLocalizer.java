@@ -315,6 +315,8 @@ public class PhosphoLocalizer {
 				if (quantData==null) continue;
 				
 				// make sure there are at least 3 "identification" peaks
+				int targetNumPeaks=Math.max(params.getMinNumOfQuantitativePeaks(), 3);
+				
 				int numIdentificationPeaks=0;
 				float[] correlations=quantData.getCorrelationArray();
 				FragmentIon[] consideredIons=quantData.getFragmentMassArray();
@@ -329,7 +331,7 @@ public class PhosphoLocalizer {
 				if (numIdentificationPeaks==0) {
 					// if there's not any localization evidence for a well formed peak then give up
 					continue;
-				} else if (numIdentificationPeaks<3) {
+				} else if (numIdentificationPeaks<targetNumPeaks) {
 					// if there's not enough, check for other non-localizing peaks for confirmation
 					float[] medianChromatogram=quantData.getMedianChromatogram();
 					TransitionRefinementData allQuantData=quantifyPeptide(targetPeptideSequence, precursorCharge, allIonsTypes, bestRT, localStripes, Optional.of(medianChromatogram));
@@ -346,7 +348,7 @@ public class PhosphoLocalizer {
 				//System.out.println(targetPeptideAnnotation.getPeptideAnnotation()+" --> "+numIdentificationPeaks+" identification peaks"); //FIXME
 				
 				// only trust this ID if there are enough peaks!
-				if (numIdentificationPeaks>=3&&quantData.getMedianChromatogram().length>0) {
+				if (numIdentificationPeaks>=targetNumPeaks&&quantData.getMedianChromatogram().length>0) {
 					
 					int numberOfMods=PeptideUtils.getNumberOfMods(targetPeptideSequence, AmbiguousPeptideModSeq.NOMINAL_MASS);
 
