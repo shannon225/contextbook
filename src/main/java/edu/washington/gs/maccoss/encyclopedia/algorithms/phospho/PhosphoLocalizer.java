@@ -64,15 +64,15 @@ public class PhosphoLocalizer {
 		return background;
 	}
 
-	public Optional<PhosphoLocalizationData> runDIAPhosphoLocalization(PSMData psmdata, ArrayList<Stripe> stripes, boolean tryAllPermutations) {
+	public Optional<PhosphoLocalizationData> runDIAPhosphoLocalization(PSMData psmdata, ArrayList<Stripe> stripes, boolean tryAllPermutations, boolean buildOutGUIData) {
 		ArrayList<Spectrum> spectra=new ArrayList<Spectrum>();
 		for (Stripe stripe : stripes) {
 			spectra.add(stripe);
 		}
-		return runPhosphoLocalization(psmdata, spectra, tryAllPermutations);
+		return runPhosphoLocalization(psmdata, spectra, tryAllPermutations, buildOutGUIData);
 	}
 
-	public Optional<PhosphoLocalizationData> runPhosphoLocalization(PSMData psmdata, ArrayList<Spectrum> stripes, boolean tryAllPermutations) {
+	public Optional<PhosphoLocalizationData> runPhosphoLocalization(PSMData psmdata, ArrayList<Spectrum> stripes, boolean tryAllPermutations, boolean buildOutGUIData) {
 		ArrayList<String> permutations;
 		if (tryAllPermutations) {
 			permutations=PhosphoPermuter.getPermutations(psmdata.getPeptideModSeq(), params.getAAConstants());
@@ -84,7 +84,7 @@ public class PhosphoLocalizer {
 			//System.out.println("single\t"+psmdata.getPeptideModSeq()+"\t1\t1\t0\t1000");
 			return Optional.empty();
 		} else {
-			PhosphoLocalizationData multiple=extractPhosphoForms(psmdata.getPeptideModSeq(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes);
+			PhosphoLocalizationData multiple=extractPhosphoForms(psmdata.getPeptideModSeq(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes, buildOutGUIData);
 			return Optional.of(multiple);
 		}
 	}
@@ -98,21 +98,21 @@ public class PhosphoLocalizer {
 	 * @param allScansInStripe
 	 * @return
 	 */
-	PhosphoLocalizationData extractPhosphoForms(String originalPeptideModSeq, double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<Spectrum> allScansInStripe) {
+	PhosphoLocalizationData extractPhosphoForms(String originalPeptideModSeq, double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<Spectrum> allScansInStripe, boolean buildOutGUIData) {
 		float duration=gradientLength/20.0f;
 		ArrayList<Spectrum> stripes=getScanSubset(retentionTime-duration, retentionTime+duration, allScansInStripe);
 		
-		return extractPhosphoFormsFromLimitedScans(precursorMZ, precursorCharge, peptideModSeqs, stripes);
+		return extractPhosphoFormsFromLimitedScans(precursorMZ, precursorCharge, peptideModSeqs, stripes, buildOutGUIData);
 	}
 
-	PhosphoLocalizationData extractPhosphoFormsFromStripes(String originalPeptideModSeq, double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<Stripe> allScansInStripe) {
+	PhosphoLocalizationData extractPhosphoFormsFromStripes(String originalPeptideModSeq, double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<Stripe> allScansInStripe, boolean buildOutGUIData) {
 		float duration=gradientLength/20.0f;
 		ArrayList<Spectrum> stripes=getScanSubsetFromStripes(retentionTime-duration, retentionTime+duration, allScansInStripe);
 		
-		return extractPhosphoFormsFromLimitedScans(precursorMZ, precursorCharge, peptideModSeqs, stripes);
+		return extractPhosphoFormsFromLimitedScans(precursorMZ, precursorCharge, peptideModSeqs, stripes, buildOutGUIData);
 	}
 
-	public PhosphoLocalizationData extractPhosphoFormsFromLimitedScans(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, ArrayList<Spectrum> stripes) {
+	public PhosphoLocalizationData extractPhosphoFormsFromLimitedScans(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, ArrayList<Spectrum> stripes, boolean buildOutGUIData) {
 		float dutyCycle=1.0f;
 		for (Entry<Range, Float> entry : diaFile.getRanges().entrySet()) {
 			if (entry.getKey().contains((float)precursorMZ)) {
@@ -281,15 +281,17 @@ public class PhosphoLocalizer {
 				}
 			}
 
-			HashMap<FragmentIon, XYTrace> otherTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), allIonsTypes, stripes, null, GraphType.dashedline);
-			HashMap<FragmentIon, XYTrace> uniqueTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes, null, GraphType.boldline);
-			
-			for (FragmentIon ion : uniqueTraces.keySet()) {
-				otherTraces.remove(ion);
+			if (buildOutGUIData) {
+				HashMap<FragmentIon, XYTrace> otherTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), allIonsTypes, stripes, null, GraphType.dashedline);
+				HashMap<FragmentIon, XYTrace> uniqueTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes, null, GraphType.boldline);
+
+				for (FragmentIon ion : uniqueTraces.keySet()) {
+					otherTraces.remove(ion);
+				}
+
+				uniqueFragmentIons.put(peptideAnnotation, uniqueTraces);
+				otherFragmentIons.put(peptideAnnotation, otherTraces);
 			}
-			
-			uniqueFragmentIons.put(peptideAnnotation, uniqueTraces);
-			otherFragmentIons.put(peptideAnnotation, otherTraces);
 			uniqueTargetFragments.put(peptideAnnotation, targets);
 			uniqueIdentifiedTargetFragments.put(peptideAnnotation, identifiedTargets.toArray(new FragmentIon[identifiedTargets.size()]));
 

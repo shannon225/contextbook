@@ -105,7 +105,7 @@ public class PhosphoEncyclopediaOneScoringTask extends AbstractLibraryScoringTas
 	private void considerLocalizations(LibraryEntry entry, float retentionTime, EncyclopediaScorer eScorer, 
 			float[] predictedIsotopeDistribution, AuxillaryPSMScorer auxScorer, EValueCalculator calculator) {
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(entry.getPeptideModSeq(), parameters.getAAConstants());
-		PhosphoLocalizationData phosphoData=localizer.extractPhosphoFormsFromStripes(entry.getPeptideModSeq(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), permutations, retentionTime, super.stripes);
+		PhosphoLocalizationData phosphoData=localizer.extractPhosphoFormsFromStripes(entry.getPeptideModSeq(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), permutations, retentionTime, super.stripes, false);
 		
 		ArrayList<String> keys=new ArrayList<String>(phosphoData.getPassingForms().keySet());
 		if (keys.size()==0) {
