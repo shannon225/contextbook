@@ -24,6 +24,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJob
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CAPSiLSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
@@ -202,10 +203,10 @@ public class CAPSiLParametersPanel extends JPanel implements ParametersPanelInte
 		
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
 		EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, outputFile, factory);
-		return new EncyclopediaJob(processor, job);
+		return new CAPSiLJob(processor, job);
 	}
 
-	public SearchParameters getParameters() {
+	public CAPSiLSearchParameters getParameters() {
 		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.getAcquisitionType((String)acquisition.getSelectedItem());
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
@@ -222,11 +223,11 @@ public class CAPSiLParametersPanel extends JPanel implements ParametersPanelInte
 		float targetWindowCenter=-1f;
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
-		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, 0.01f, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, isPhospho, numberOfExtraDecoyLibrariesValue);
+		CAPSiLSearchParameters parameters=new CAPSiLSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, 0.01f, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, isPhospho, numberOfExtraDecoyLibrariesValue);
 		return parameters;
 	}
 	
-	public void setParameters(SearchParameters params, String libraryFileName) {
+	public void setParameters(CAPSiLSearchParameters params, String libraryFileName) {
 		if (libraryFileName!=null) {
 			File libraryFile=new File(libraryFileName);
 			if (libraryFile.exists()) libraryFileChooser.update(libraryFile);

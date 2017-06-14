@@ -17,7 +17,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
-import jogamp.graph.font.typecast.ot.table.Program;
 
 public class SearchGUIMain {
 	public static void main(String[] args) {

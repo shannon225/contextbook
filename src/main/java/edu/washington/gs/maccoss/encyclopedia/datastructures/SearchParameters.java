@@ -101,6 +101,7 @@ public class SearchParameters {
 		sb.append(" -expectedPeakWidth "+expectedPeakWidth+"\n");
 		sb.append(" -precursorWindowSize "+precursorWindowSize+"\n");
 		sb.append(" -numberOfQuantitativePeaks "+numberOfQuantitativePeaks+"\n");
+		sb.append(" -minNumOfQuantitativePeaks "+minNumOfQuantitativePeaks+"\n");
 		sb.append(" -runPhosphoLocalization "+runPhosphoLocalization+"\n");
 		sb.append(" -getNumberOfExtraDecoyLibrariesSearched "+numberOfExtraDecoyLibrariesSearched+"\n");
 		if (useTargetWindowCenter()) {
@@ -126,6 +127,7 @@ public class SearchParameters {
 		map.put("-expectedPeakWidth", expectedPeakWidth+"");
 		map.put("-precursorWindowSize", precursorWindowSize+"");
 		map.put("-numberOfQuantitativePeaks", numberOfQuantitativePeaks+"");
+		map.put("-minNumOfQuantitativePeaks", minNumOfQuantitativePeaks+"");
 		map.put("-runPhosphoLocalization", runPhosphoLocalization+"");
 		map.put("-getNumberOfExtraDecoyLibrariesSearched", numberOfExtraDecoyLibrariesSearched+"");
 		map.put("-targetWindowCenter", targetWindowCenter+"");

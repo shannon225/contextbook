@@ -41,6 +41,7 @@ import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.Pecanpie;
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CAPSiLSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCordiaSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
@@ -70,7 +71,6 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
-import jogamp.graph.font.typecast.ot.table.Program;
 
 public class SearchPanel extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -122,10 +122,11 @@ public class SearchPanel extends JPanel {
 		}
 		if (ProgramType.Global==program||ProgramType.CAPSiL==program) {
 			try {
-				CAPSiLParametersPanel encyclopedia=new CAPSiLParametersPanel();
-				HashMap<String, String> map=SearchParameters.readPreferences();
-				encyclopedia.setParameters(SearchParameterParser.parseParameters(map), map.get(Encyclopedia.TARGET_LIBRARY_TAG));
-				optionsTabs.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
+				CAPSiLParametersPanel capsil=new CAPSiLParametersPanel();
+				HashMap<String, String> map=CAPSiLSearchParameters.readPreferences();
+				CAPSiLSearchParameters xcordiaParameters=CAPSiLSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(map));
+				capsil.setParameters(xcordiaParameters, map.get(Encyclopedia.TARGET_LIBRARY_TAG));
+				optionsTabs.addTab(capsil.getProgramName(), capsil.getSmallImage(), capsil, capsil.getProgramShortDescription());
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
 			}

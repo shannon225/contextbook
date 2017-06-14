@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 import java.io.File;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 
@@ -23,6 +24,18 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData {
 		super(diaFile, new File(getOutputAbsolutePathPrefix(outputFile.getAbsolutePath())+FEATURE_FILE_SUFFIX), outputFile, taskFactory.getParameters(), taskFactory.getVersion());
 		this.library=library;
 		this.taskFactory=taskFactory;
+	}
+	
+	
+	
+	private EncyclopediaJobData(File diaFile, File featureFile, File outputFile, SearchParameters parameters, String version, LibraryInterface library, LibraryScoringFactory taskFactory) {
+		super(diaFile, featureFile, outputFile, parameters, version);
+		this.library=library;
+		this.taskFactory=taskFactory;
+	}
+
+	public EncyclopediaJobData updateTaskFactory(LibraryScoringFactory taskFactory) {
+		return new EncyclopediaJobData(getDiaFile(), getFeatureFile(), getOutputFile(), getParameters(), getVersion(), getLibrary(), taskFactory);
 	}
 	
 	public LibraryInterface getLibrary() {

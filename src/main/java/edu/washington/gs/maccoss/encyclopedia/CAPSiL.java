@@ -1,17 +1,25 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
+import java.util.zip.DataFormatException;
 import java.util.TreeMap;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoEncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
@@ -20,6 +28,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.FileLogRecorder;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
 public class CAPSiL {
 
@@ -91,7 +100,7 @@ public class CAPSiL {
 
 				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
 				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, outputFile, factory);
-				Encyclopedia.runSearch(new EmptyProgressIndicator(), job);
+				runSearch(new EmptyProgressIndicator(), job);
 			} catch (Exception e) {
 				Logger.errorLine("Encountered Fatal Error!");
 				Logger.errorException(e);
@@ -99,5 +108,54 @@ public class CAPSiL {
 				Logger.close();
 			}
 		}
+	}
+
+	public static void runSearch(ProgressIndicator progress, EncyclopediaJobData job) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+		if (!(job.getTaskFactory() instanceof PhosphoEncyclopediaOneScoringFactory)) {
+			Logger.logLine("Setting up localization engne...");
+			StripeFileInterface stripefile=StripeFileGenerator.getFile(job.getDiaFile(), job.getParameters());
+			PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, job.getParameters());
+			LibraryScoringFactory factory=new PhosphoEncyclopediaOneScoringFactory(job.getParameters(), localizer);
+			job=job.updateTaskFactory(factory);
+		}
+		
+		File outputFile=job.getOutputFile();
+		if (outputFile.exists()&&outputFile.canRead()) {
+			try {
+				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(outputFile, job.getParameters().getEffectivePercolatorThreshold());
+				
+				File elibFile=job.getResultLibrary();
+				if (!elibFile.exists()) {
+					progress.update("Writing elib result library...");
+					Logger.logLine("Writing elib result library...");
+					ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
+					jobs.add(job);
+					SearchToBLIB.convert(progress, jobs, elibFile, false, true);
+				}
+				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+				//progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides ("+ParsimonyProteinGrouper.groupProteins(passingPeptidesFromTSV).size()+" proteins) identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+
+				return;
+			} catch (Exception e) {
+				// problem! so just continue on and overwrite old result
+				Logger.logLine("Found unexpected exception trying to read old results: ");
+				Logger.logException(e);
+				Logger.logLine("Just going to go ahead and reprocess this file!");
+			}
+		}
+		
+		File diaFile=job.getDiaFile();
+		
+		Logger.logLine("Converting files...");
+		progress.update("Converting files...", Float.MIN_VALUE);
+		
+		SearchParameters parameters=job.getParameters();
+		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
+		if (parameters.isDDA()) {
+			EncyclopediaDDA.runSearch(progress, job, stripefile);
+		} else {
+			Encyclopedia.runSearch(progress, job, stripefile);
+		}
+		stripefile.close();
 	}
 }
