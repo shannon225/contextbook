@@ -53,6 +53,13 @@ public class PhosphoLocalizer {
 		gradientLength=diaFile.getGradientLength();
 	}
 
+	public PhosphoLocalizer(StripeFileInterface diaFile, BackgroundFrequencyInterface background, SearchParameters params) throws IOException,DataFormatException,SQLException {
+		this.diaFile=diaFile;
+		this.params=params;
+		this.background=background;
+		this.gradientLength=diaFile.getGradientLength();
+	}
+
 	public PhosphoLocalizer(StripeFileInterface diaFile, LibraryInterface searchedLibrary, SearchParameters params) throws IOException,DataFormatException,SQLException {
 		this.diaFile=diaFile;
 		this.params=params;
@@ -254,13 +261,20 @@ public class PhosphoLocalizer {
 			//negLogProbsAll=SkylineSGFilter.paddedSavitzkyGolaySmooth(negLogProbsAll);
 			//negLogProbsSiteSpecific=SkylineSGFilter.paddedSavitzkyGolaySmooth(negLogProbsSiteSpecific);
 
-			int[] coelutingIons=TransitionRefiner.numberOfCoelutingIons(ions, allIons, stripes, Math.round((params.getExpectedPeakWidth())/dutyCycle), params.getFragmentTolerance());
-
+			
 			TFloatFloatHashMap coelutingIonsMap=new TFloatFloatHashMap();
 			TFloatFloatHashMap uniqueRtScoreMap=new TFloatFloatHashMap();
+
+			if (buildOutGUIData) {
+				int[] coelutingIons=TransitionRefiner.numberOfCoelutingIons(ions, allIons, stripes, Math.round((params.getExpectedPeakWidth())/dutyCycle), params.getFragmentTolerance());
+				for (int k=0; k<negLogProbsSiteSpecific.length; k++) {
+					Spectrum spectrum=stripes.get(k);
+					coelutingIonsMap.put(spectrum.getScanStartTime()/60f, coelutingIons[k]);
+				}
+			}
+			
 			for (int k=0; k<negLogProbsSiteSpecific.length; k++) {
 				Spectrum spectrum=stripes.get(k);
-				coelutingIonsMap.put(spectrum.getScanStartTime()/60f, coelutingIons[k]);
 				uniqueRtScoreMap.put(spectrum.getScanStartTime()/60f, negLogProbsSiteSpecific[k]);
 			}
 			allVsUniqueList.put(peptideAnnotation, new Pair<TFloatFloatHashMap, TFloatFloatHashMap>(coelutingIonsMap, uniqueRtScoreMap));

@@ -95,8 +95,6 @@ public class PhosphoEncyclopediaOneScoringTask extends AbstractLibraryScoringTas
 					identifiedPeaks++;
 				}
 			}
-			
-			resultsQueue.add(result);
 		}
 		return Nothing.NOTHING;
 	}
@@ -122,8 +120,10 @@ public class PhosphoEncyclopediaOneScoringTask extends AbstractLibraryScoringTas
 			}
 		}
 		
+		// FIXME THINK ABOUT HOW THIS MIGHT PUSH PEPTIDES OFF THEIR DETECTION AREA
+		
 		for (String sequenceKey : keys) {
-			String peptideModSeq=sequenceKey.replaceAll("\\(", "").replaceAll("\\)", "");
+			String peptideModSeq=sequenceKey.replaceAll("\\(", "").replaceAll("\\)", "").replaceAll("<", "").replaceAll(">", "");
 			
 			XYPoint point=phosphoData.getLocalizationScores().get(sequenceKey);
 			float rt=(float)point.x;
