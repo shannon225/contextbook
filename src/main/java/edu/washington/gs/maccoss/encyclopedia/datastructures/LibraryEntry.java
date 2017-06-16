@@ -5,6 +5,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
 
@@ -16,6 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IndexedIonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakChromatogram;
@@ -305,18 +307,20 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 			Collections.addAll(reverseIons, FragmentationModel.getPlus2s(reverseIons.toArray(new FragmentIon[reverseIons.size()])));
 		}
 		
-		assert(forwardIons.size()==reverseIons.size());
+		HashMap<IndexedIonType, FragmentIon> forwardMap=new HashMap<>();
+		for (FragmentIon ion : forwardIons) {
+			forwardMap.put(new IndexedIonType(ion), ion);
+		}
+
+		// make sure ion indices line up
 		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
-		int size=Math.min(forwardIons.size(), reverseIons.size()); //FIXME !!! HOW TO DEAL WITH LINKING UP NEUTRAL LOSSES IN DECOY PEPTIDES????
-		for (int i=0; i<size; i++) {
-			try {
-				points.add(new XYPoint(forwardIons.get(i).mass, reverseIons.get(i).mass));
-			} catch (Exception e) {
-				System.out.println("WTF: "+peptideModSeq+"+"+precursorCharge+" vs "+newSequence+"+"+precursorCharge+", "+forwardIons.size()+" = "+forwardModel.getBIons().length+" + "+forwardModel.getYIons().length+"\t"+reverseIons.size()+" = "+reverseModel.getBIons().length+" + "+reverseModel.getYIons().length);
-			
-				throw new RuntimeException(e);
+		for (FragmentIon ion : reverseIons) {
+			FragmentIon alt=forwardMap.get(new IndexedIonType(ion));
+			if (alt!=null) {
+				points.add(new XYPoint(alt.mass, ion.mass));
 			}
 		}
+
 		Collections.sort(points);
 		Pair<double[], double[]> matchedMasses=XYTrace.toArrays(points);
 		double[] modelMasses=matchedMasses.x;
