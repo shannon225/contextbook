@@ -4,13 +4,17 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -24,6 +28,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class PhosphoLocalizerExample {
@@ -42,18 +47,23 @@ public class PhosphoLocalizerExample {
 		
 		PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, background, parameters);
 		
-		//String peptideModSeq="RPMEEDGEEKS[+80.0]PSK";
-		String peptideModSeq="AVT[+80.0]PVPTKTEEVSNLK";
+		/*
+		String peptideModSeq="RPMEEDGEEKS[+80.0]PSK";
+		float retentionTime=1434.3873f;
 		byte precursorCharge=3;
+		*/
+		String peptideModSeq="AVT[+80.0]PVPTKTEEVSNLK";
+		float retentionTime=3658.4482f;
+		byte precursorCharge=3;
+		
 		LibraryEntry libentry=library.getEntries(peptideModSeq, precursorCharge, false).get(0);
 		double precursorMz=parameters.getAAConstants().getChargedMass(peptideModSeq, precursorCharge);
-		//float retentionTime=1434.3873f;
-		float retentionTime=3658.4482f;
 		
 		ArrayList<Stripe> stripes=stripefile.getStripes(precursorMz, 0, Float.MAX_VALUE, false);
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptideModSeq, parameters.getAAConstants());
 		PhosphoLocalizationData phosphoData=localizer.extractPhosphoFormsFromStripes(peptideModSeq, precursorMz, precursorCharge, permutations, retentionTime, stripes, true);
 
+		System.out.println("Just off of localization ions");
 		ArrayList<String> keys=new ArrayList<String>(phosphoData.getPassingForms().keySet());
 		for (String sequenceKey : keys) {
 
@@ -87,5 +97,35 @@ public class PhosphoLocalizerExample {
 		traces.add(new XYTrace(primary, GraphType.boldline, "primary"));
 		
 		Charter.launchChart("Retention Time (All Ions)", "Score", true, new Dimension(1000, 400), traces.toArray(new XYTrace[traces.size()]));
+
+		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
+		Range range=null;
+		for (Range thisRange : stripefile.getRanges().keySet()) {
+			if (thisRange.contains(precursorMz)) {
+				range=thisRange;
+				break;
+			}
+		}
+		float dutyCycle=stripefile.getRanges().get(range);
+		ArrayList<LibraryEntry> entries=new ArrayList<>();
+		entries.add(libentry);
+		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
+		CAPSiLOneScoringTask task=new CAPSiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, parameters);
+		task.call();
+
+		System.out.println("Based on all ions");
+		int index=0;
+		while (!resultsQueue.isEmpty()) {
+			if (!resultsQueue.isEmpty()) {
+				PeptideScoringResult result=resultsQueue.take();
+				ArrayList<Pair<ScoredObject<Stripe>, float[]>> data=result.getGoodStripes();
+				index++;
+				for (Pair<ScoredObject<Stripe>, float[]> pair : data) {
+					System.out.println(index+") "+result.getEntry().getPeptideModSeq()+"\t"+pair.x.x+"\t"+pair.x.y.getScanStartTime());
+				}
+			} else {
+				Thread.sleep(10);
+			}
+		}
 	}
 }

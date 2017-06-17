@@ -404,7 +404,7 @@ public class PhosphoLocalizer {
 		return new PhosphoLocalizationData(allVsUniqueList, uniqueFragmentIons, otherFragmentIons, uniqueTargetFragments, uniqueIdentifiedTargetFragments, localizationScores, passingForms);
 	}
 	
-	TransitionRefinementData quantifyPeptide(String peptideModSeq, byte precursorCharge, FragmentIon[] targetMasses, float targetRT, ArrayList<Spectrum> stripes, Optional<float[]> medianChromatogram) {
+	public TransitionRefinementData quantifyPeptide(String peptideModSeq, byte precursorCharge, FragmentIon[] targetMasses, float targetRT, ArrayList<Spectrum> stripes, Optional<float[]> medianChromatogram) {
 		float bestDelta=Float.MAX_VALUE;
 		float[] bestIntensities=null;
 		ArrayList<float[]> intensityList=new ArrayList<float[]>();
@@ -519,7 +519,7 @@ public class PhosphoLocalizer {
 		return data.addPeakData(deltaMassArray, massArray, intensityArray, retentionTimes.toArray(), identifiedTICRatio);
 	}
 	
-	private static float score(SearchParameters parameters, double[] ions, FragmentIon[] ionTypes, float[] frequencies, Spectrum stripe, boolean report) {
+	public static float score(SearchParameters parameters, double[] ions, FragmentIon[] ionTypes, float[] frequencies, Spectrum stripe, boolean report) {
 		if (frequencies.length==0) return 0.0f;
 
 		double[] massArray=stripe.getMassArray();
@@ -594,7 +594,7 @@ public class PhosphoLocalizer {
 		return uniqueIons;
 	}
 	
-	public ArrayList<Spectrum> getScanSubsetFromStripes(float minRT, float maxRT, ArrayList<Stripe> allScansInStripe) {
+	public static ArrayList<Spectrum> getScanSubsetFromStripes(float minRT, float maxRT, ArrayList<Stripe> allScansInStripe) {
 		ArrayList<Spectrum> subset=new ArrayList<Spectrum>();
 		for (Spectrum scan : allScansInStripe) {
 			if (scan.getScanStartTime()>=minRT&&scan.getScanStartTime()<=maxRT) {
@@ -604,7 +604,7 @@ public class PhosphoLocalizer {
 		return subset;
 	}
 	
-	public ArrayList<Spectrum> getScanSubset(float minRT, float maxRT, ArrayList<Spectrum> allScansInStripe) {
+	public static ArrayList<Spectrum> getScanSubset(float minRT, float maxRT, ArrayList<Spectrum> allScansInStripe) {
 		ArrayList<Spectrum> subset=new ArrayList<Spectrum>();
 		for (Spectrum scan : allScansInStripe) {
 			if (scan.getScanStartTime()>=minRT&&scan.getScanStartTime()<=maxRT) {
