@@ -9,6 +9,7 @@ import java.util.prefs.Preferences;
 
 import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CAPSiLScoringBreadthType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -36,10 +37,11 @@ public class SearchParameters {
 	protected final double fragmentOffsetPPM;
 	protected final double precursorIsolationMargin;
 	protected final boolean useNLsForXCorr=false;
+	protected final CAPSiLScoringBreadthType capsilBreadthType;
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, Integer percolatorVersionNumber, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
-			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, boolean runPhosphoLocalization, float getNumberOfExtraDecoyLibrariesSearched) {
+			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, boolean runPhosphoLocalization, CAPSiLScoringBreadthType capsilBreadthType, float getNumberOfExtraDecoyLibrariesSearched) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -59,6 +61,7 @@ public class SearchParameters {
 		this.numberOfQuantitativePeaks=numberOfQuantitativePeaks;
 		this.minNumOfQuantitativePeaks=minNumOfQuantitativePeaks;
 		this.runPhosphoLocalization=runPhosphoLocalization;
+		this.capsilBreadthType=capsilBreadthType;
 		this.numberOfExtraDecoyLibrariesSearched=getNumberOfExtraDecoyLibrariesSearched;
 	}
 	
@@ -230,5 +233,8 @@ public class SearchParameters {
 	}
 	public double getPrecursorIsolationMargin() {
 		return precursorIsolationMargin;
+	}
+	public CAPSiLScoringBreadthType getCapsilBreadthType() {
+		return capsilBreadthType;
 	}
 }

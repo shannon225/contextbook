@@ -43,7 +43,7 @@ public class PhosphoEncyclopediaOneScoringFactory implements LibraryScoringFacto
 
 	@Override
 	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
-		return new CAPSiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, parameters);
+		return new CAPSiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, CAPSiLScoringBreadthType.RECALIBRATED_PEAK_WIDTH, resultsQueue, parameters);
 	}
 	
 	@Override

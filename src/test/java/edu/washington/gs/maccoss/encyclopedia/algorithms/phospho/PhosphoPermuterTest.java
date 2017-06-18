@@ -10,10 +10,19 @@ import junit.framework.TestCase;
 
 public class PhosphoPermuterTest extends TestCase {
 	public void testPermutations() {
-		// normal test
+		// normal test one site
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
-		ArrayList<String> permutations=PhosphoPermuter.getPermutations("SGS[+80]VSNYR", parameters.getAAConstants());
-		String[] expected=new String[] { "S[+79.96633]GSVSNYR", "SGS[+79.96633]VSNYR", "SGSVS[+79.96633]NYR", "SGSVSNY[+79.96633]R" };
+		ArrayList<String> permutations=PhosphoPermuter.getPermutations("AGS[+80]VANAR", parameters.getAAConstants());
+		String[] expected=new String[] { "AGS[+79.96633]VANAR" };
+		assertEquals(expected.length, permutations.size());
+		for (int i=0; i<permutations.size(); i++) {
+			assertEquals(expected[i], permutations.get(i));
+		}
+		
+		// normal test
+		parameters=SearchParameterParser.getDefaultParametersObject();
+		permutations=PhosphoPermuter.getPermutations("SGS[+80]VSNYR", parameters.getAAConstants());
+		expected=new String[] { "S[+79.96633]GSVSNYR", "SGS[+79.96633]VSNYR", "SGSVS[+79.96633]NYR", "SGSVSNY[+79.96633]R" };
 		assertEquals(expected.length, permutations.size());
 		for (int i=0; i<permutations.size(); i++) {
 			assertEquals(expected[i], permutations.get(i));

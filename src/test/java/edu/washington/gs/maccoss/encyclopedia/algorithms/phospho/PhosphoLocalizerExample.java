@@ -47,20 +47,24 @@ public class PhosphoLocalizerExample {
 		
 		PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, background, parameters);
 		
-		/*
 		String peptideModSeq="RPMEEDGEEKS[+80.0]PSK";
 		float retentionTime=1434.3873f;
 		byte precursorCharge=3;
-		*/
 		/*
 		String peptideModSeq="AVT[+80.0]PVPTKTEEVSNLK";
 		float retentionTime=3658.4482f;
 		byte precursorCharge=3;
 		*/
-		
+		/*
 		String peptideModSeq="IDDRDS[+80.0]DEEGASDR";
 		float retentionTime=1606f;
 		byte precursorCharge=2;
+		*/
+		/*
+		String peptideModSeq="RAGDLLEDS[+80.0]PKRPK";
+		float retentionTime=36*60f;
+		byte precursorCharge=3;
+		*/
 		
 		LibraryEntry libentry=library.getEntries(peptideModSeq, precursorCharge, false).get(0);
 		double precursorMz=parameters.getAAConstants().getChargedMass(peptideModSeq, precursorCharge);
@@ -116,7 +120,7 @@ public class PhosphoLocalizerExample {
 		ArrayList<LibraryEntry> entries=new ArrayList<>();
 		entries.add(libentry);
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
-		CAPSiLOneScoringTask task=new CAPSiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, parameters);
+		CAPSiLOneScoringTask task=new CAPSiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, CAPSiLScoringBreadthType.RECALIBRATED_PEAK_WIDTH, resultsQueue, parameters);
 		task.call();
 
 		System.out.println("Based on all ions");

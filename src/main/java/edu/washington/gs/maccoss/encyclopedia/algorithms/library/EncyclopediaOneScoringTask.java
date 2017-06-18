@@ -56,7 +56,7 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 			TFloatFloatHashMap map=new TFloatFloatHashMap();
 			ArrayList<ScoredIndex> goodStripes=new ArrayList<ScoredIndex>();
 			for (int i=0; i<averagePrimary.length; i++) {
-				goodStripes.add(new ScoredIndex(primary[i], i));
+				goodStripes.add(new ScoredIndex(averagePrimary[i], i));
 				map.put(i, primary[i]);
 			}
 			Collections.sort(goodStripes);
