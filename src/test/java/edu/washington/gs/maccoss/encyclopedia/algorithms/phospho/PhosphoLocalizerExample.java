@@ -52,9 +52,15 @@ public class PhosphoLocalizerExample {
 		float retentionTime=1434.3873f;
 		byte precursorCharge=3;
 		*/
+		/*
 		String peptideModSeq="AVT[+80.0]PVPTKTEEVSNLK";
 		float retentionTime=3658.4482f;
 		byte precursorCharge=3;
+		*/
+		
+		String peptideModSeq="IDDRDS[+80.0]DEEGASDR";
+		float retentionTime=1606f;
+		byte precursorCharge=2;
 		
 		LibraryEntry libentry=library.getEntries(peptideModSeq, precursorCharge, false).get(0);
 		double precursorMz=parameters.getAAConstants().getChargedMass(peptideModSeq, precursorCharge);

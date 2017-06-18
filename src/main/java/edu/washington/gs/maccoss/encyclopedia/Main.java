@@ -31,9 +31,8 @@ public class Main {
 			
 		} else if (arguments.containsKey("-xcordia")) {
 			XCorDIA.main(args);
-		}
-		
-		if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
+			
+		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("EncyclopeDIA Help");
 			Logger.timelessLogLine("EncyclopeDIA is a library search engine for DIA data.");
 			Logger.timelessLogLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
@@ -57,8 +56,9 @@ public class Main {
 				Logger.timelessLogLine("\t"+General.formatCellToWidth(entry.getKey(), maxWidth)+" (default: "+entry.getValue()+")");
 			}
 			System.exit(1);
+			
+		} else {
+			Encyclopedia.main(args);
 		}
-		
-		Encyclopedia.main(args);
 	}
 }
