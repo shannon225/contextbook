@@ -38,11 +38,11 @@ public class CAPSiLOneScoringTask extends AbstractLibraryScoringTask {
 	private final CAPSiLScoringBreadthType breadth;
 	
 	public CAPSiLOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, 
-			PhosphoLocalizer localizer, CAPSiLScoringBreadthType breadth, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
+			PhosphoLocalizer localizer, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.dutyCycle=dutyCycle;
 		this.localizer=localizer;
-		this.breadth=breadth;
+		this.breadth=parameters.getCapsilBreadthType();
 	}
 
 	@Override
