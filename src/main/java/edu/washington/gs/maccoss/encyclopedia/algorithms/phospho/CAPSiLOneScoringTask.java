@@ -106,25 +106,58 @@ public class CAPSiLOneScoringTask extends AbstractLibraryScoringTask {
 				entryMap.put(peptideModSeq, model);
 			}
 
+			ArrayList<AmbiguousPeptideModSeq> previouslyIdentified=new ArrayList<AmbiguousPeptideModSeq>();
 			TIntHashSet takenScans=new TIntHashSet();
-			while (peptideModSeqs.size()!=0) {
+			int leftIndex=0;
+			int rightIndex=peptideModSeqs.size()-1;
+			while (leftIndex<=rightIndex) {
+				//System.out.println("considering "+peptideModSeqs.size()+" peptideModSeqs");
 				boolean breakBatch=false;
 
 				ArrayList<Pair<AmbiguousPeptideModSeq, FragmentIon[]>> batch=new ArrayList<Pair<AmbiguousPeptideModSeq,FragmentIon[]>>();
-				AmbiguousPeptideModSeq leftAmbiguity=AmbiguousPeptideModSeq.getLeftAmbiguity(peptideModSeqs.remove(0), AmbiguousPeptideModSeq.modifiableAAs, parameters.getAAConstants());
-				FragmentIon[] leftTargets=PhosphoLocalizer.getUniqueFragmentIons(leftAmbiguity.getPeptideModSeq(), seedEntry.getPrecursorCharge(), entryMap, parameters);
+				AmbiguousPeptideModSeq leftAmbiguity=AmbiguousPeptideModSeq.getLeftAmbiguity(peptideModSeqs.get(leftIndex), AmbiguousPeptideModSeq.modifiableAAs, parameters.getAAConstants());
+
+				HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
+				// shrink the number of unique ions subtractors to the pool of
+				// remaining sequences to the right
+				for (int j=peptideModSeqs.size()-1; j>=leftIndex; j--) {
+					String seq=peptideModSeqs.get(j);
+					modelBatch.put(seq, entryMap.get(seq));
+				}
+				FragmentIon[] leftTargets=PhosphoLocalizer.getUniqueFragmentIons(leftAmbiguity.getPeptideModSeq(), seedEntry.getPrecursorCharge(), modelBatch, parameters);
 				batch.add(new Pair<AmbiguousPeptideModSeq, FragmentIon[]>(leftAmbiguity, leftTargets));
-				if (peptideModSeqs.size()>0) {
-					AmbiguousPeptideModSeq rightAmbiguity=AmbiguousPeptideModSeq.getRightAmbiguity(peptideModSeqs.remove(peptideModSeqs.size()-1), AmbiguousPeptideModSeq.modifiableAAs, parameters.getAAConstants());
-					FragmentIon[] rightTargets=PhosphoLocalizer.getUniqueFragmentIons(rightAmbiguity.getPeptideModSeq(), seedEntry.getPrecursorCharge(), entryMap, parameters);
+				leftIndex++;
+				
+				if (leftIndex<rightIndex) {
+					AmbiguousPeptideModSeq rightAmbiguity=AmbiguousPeptideModSeq.getRightAmbiguity(peptideModSeqs.get(rightIndex), AmbiguousPeptideModSeq.modifiableAAs, parameters.getAAConstants());
+					modelBatch=new HashMap<String, FragmentationModel>();
+					// shrink the number of unique ions subtractors to the pool of remaining sequences to the left
+					for (int j=0; j<=rightIndex; j++) {
+						String seq=peptideModSeqs.get(j);
+						modelBatch.put(seq, entryMap.get(seq));
+					}
+					FragmentIon[] rightTargets=PhosphoLocalizer.getUniqueFragmentIons(rightAmbiguity.getPeptideModSeq(), seedEntry.getPrecursorCharge(), modelBatch, parameters);
 					batch.add(new Pair<AmbiguousPeptideModSeq, FragmentIon[]>(rightAmbiguity, rightTargets));
+					rightIndex--;
 				}
 								
 				for (Pair<AmbiguousPeptideModSeq, FragmentIon[]> pair : batch) {
 					AmbiguousPeptideModSeq peptideModSeq=pair.x;
 					FragmentIon[] targetIons=pair.y;
+
+					// it's ok that we don't update the targetIons based on previously IDed, for example:
+					// if we know we've seen: (S[+80])SSSSK
+					// and we're considering: (S[+80]S)SSSK
+					// then it's ok if we use matching ions from to (S[+80])SSSSK to identify S(S[+80])SSSK
 					
-					entryMap.remove(peptideModSeq); // allows searching beyond this mod (only if we localize it to a RT)
+					// fix ambiguity based on previously identified peptides
+					Optional<AmbiguousPeptideModSeq> ambiguityRemoved=peptideModSeq.removeAmbiguity(previouslyIdentified);
+					//System.out.println(targetPeptideAnnotation.getPeptideAnnotation()+", "+!ambiguityRemoved.isPresent()); //FIXME
+					if (!ambiguityRemoved.isPresent()) {
+						continue;
+					}
+					peptideModSeq=ambiguityRemoved.get();
+					//System.out.println("considering: "+peptideModSeq.getPeptideAnnotation()); // FIXME
 									
 					Pair<FragmentationModel, LibraryEntry> localizedForm=seedEntry.getEntryFromNewSequence(peptideModSeq.getPeptideModSeq(), seedEntry.getAccessions(), seedEntry.isDecoy(), parameters);
 					FragmentationModel localizedModel=localizedForm.x;
@@ -169,6 +202,10 @@ public class CAPSiLOneScoringTask extends AbstractLibraryScoringTask {
 							if (!locData.wasLocalized()) {
 								breakBatch=true;
 							} else {
+								// allows searching beyond this mod (only if we localize it to a RT)
+								previouslyIdentified.add(peptideModSeq);
+								entryMap.remove(peptideModSeq); 
+								
 								float[] auxScoreArray=auxScorer.score(localizedEntry, locData.getApex(), predictedIsotopeDistribution, precursors);
 
 								float score=eScorer.score(localizedEntry, locData.getApex(), allIons);
@@ -200,6 +237,7 @@ public class CAPSiLOneScoringTask extends AbstractLibraryScoringTask {
 				}
 				if (breakBatch) {
 					// wasn't able to localize a site, so can't keep going
+					//System.out.println("BREAKING BATCH!"); //FIXME
 					break;
 				}
 			}
@@ -223,7 +261,7 @@ public class CAPSiLOneScoringTask extends AbstractLibraryScoringTask {
 				apex=(Stripe)stripeSubset.get(k);
 			}
 		}
-		//System.out.println("\t("+i+")"+peptideModSeq.getPeptideAnnotation()+" --> "+bestScore+" localization score at "+(apex.getScanStartTime()/60f)+" min"); //FIXME 
+		//System.out.println("\t"+peptideModSeq.getPeptideAnnotation()+" --> ("+targetIons.length+") "+bestLocalizationScore+" localization score at "+(apex.getScanStartTime()/60f)+" min"); //FIXME 
 
 		boolean wasLocalized=false;
 		if (bestLocalizationScore>=PhosphoLocalizer.MINIMUM_SCORE) {

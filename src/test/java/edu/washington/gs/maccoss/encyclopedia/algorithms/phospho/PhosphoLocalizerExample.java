@@ -36,7 +36,8 @@ public class PhosphoLocalizerExample {
 	@SuppressWarnings("unused")
 	public static void main(String[] args) throws Exception {
 		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
-		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/20170430_HeLa_phosp_DIA_B_01_170506220515.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/20170430_HeLa_phosp_DIA_B_01_170506220515.dia");
+		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/22jun2016_mcf7_phospho_1b.dia");
 
 		LibraryFile library=new LibraryFile();
 		library.openFile(libraryFile);
@@ -52,6 +53,22 @@ public class PhosphoLocalizerExample {
 		float retentionTime;
 		byte precursorCharge;
 		if (false) {
+			peptideModSeq="NTPSQHSHSIQHS[+80.0]PER";
+			retentionTime=1256.3296f;
+			precursorCharge=4;
+		} else if (true) {
+			peptideModSeq="KGS[+80.0]GDYMPMSPK";
+			retentionTime=2949.1633f;
+			precursorCharge=2;
+		} else if (true) {
+			peptideModSeq="KGSGDYMPMS[+80.0]PK";
+			retentionTime=2949.1633f;
+			precursorCharge=2;
+		} else if (true) {
+			peptideModSeq="NTPS[+80.0]QHSHSIQHSPER";
+			retentionTime=1256.3296f;
+			precursorCharge=3;
+		} else if (false) {
 			peptideModSeq="RPMEEDGEEKS[+80.0]PSK";
 			retentionTime=1434.3873f;
 			precursorCharge=3;
