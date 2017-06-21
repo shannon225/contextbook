@@ -20,6 +20,9 @@ public class Main {
 		} else if (arguments.containsKey("-encyclopedia")) {
 			Encyclopedia.main(args);
 			
+		} else if (arguments.containsKey("-casil")) {
+			CASiL.main(args);
+			
 		} else if (arguments.containsKey("-browser")) {
 			DIABrowser.main(args);
 		
