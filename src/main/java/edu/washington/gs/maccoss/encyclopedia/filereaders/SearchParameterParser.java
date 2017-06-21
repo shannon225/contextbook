@@ -5,8 +5,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
@@ -40,10 +42,10 @@ public class SearchParameterParser {
 		map.put("-percolatorVersionNumber", Byte.toString(PercolatorExecutor.DEFAULT_VERSION_NUMBER));
 		map.put("-expectedPeakWidth", "25");
 		map.put("-acquisition", "overlappingDIA");
-		map.put("-runPhosphoLocalization", "false");
+		map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
 		map.put("-numberOfQuantitativePeaks", "5");
-		map.put("-minNumOfQuantitativePeaks", "0");
+		map.put("-minNumOfQuantitativePeaks", "3");
 		return map;
 	}
 	
@@ -59,7 +61,7 @@ public class SearchParameterParser {
 		map.put("-foffset", "0");
 		map.put("-percolatorThreshold", "0.01");
 		map.put("-percolatorLocation", "internal");
-		map.put("-runPhosphoLocalization", "false");
+		map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
 		map.put("-numberOfQuantitativePeaks", "5");
 		return map;
@@ -97,9 +99,9 @@ public class SearchParameterParser {
 		final float precursorWindowSize;
 		final int numberOfQuantitativePeaks;
 		final int minNumOfQuantitativePeaks;
-		final boolean runPhosphoLocalization;
 		final float numberOfExtraDecoyLibrariesSearched;
 		final int percolatorVersionNumber;
+		final Optional<PeptideModification> localizationModification;
 		
 		String value=parameters.get("-frag");
 		if (value==null) {
@@ -229,10 +231,16 @@ public class SearchParameterParser {
 		targetWindowCenter=SearchParameterParser.getFloat("-targetWindowCenter", parameters, -1f);
 		precursorWindowSize=SearchParameterParser.getFloat("-precursorWindowSize", parameters, -1f);
 		expectedPeakWidth=SearchParameterParser.getFloat("-expectedPeakWidth", parameters, 25f);
-		runPhosphoLocalization=getBoolean("-runPhosphoLocalization", parameters, false);
 		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 5);
-		minNumOfQuantitativePeaks=SearchParameterParser.getInteger("-minNumOfQuantitativePeaks", parameters, 0);
+		minNumOfQuantitativePeaks=SearchParameterParser.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
 		percolatorVersionNumber=SearchParameterParser.getInteger("-percolatorVersionNumber", parameters, 3);
+		
+		value=parameters.get("-localizationModification");
+		if (value!=null) {
+			localizationModification=Optional.of(PeptideModification.getModification(value));
+		} else {
+			localizationModification=Optional.empty();
+		}
 		
 		float tempNumberOfExtraDecoyLibrariesSearched=SearchParameterParser.getFloat("-numberOfExtraDecoyLibrariesSearched", parameters, 0.0f);
 		if (tempNumberOfExtraDecoyLibrariesSearched<0.0f) {
@@ -243,7 +251,7 @@ public class SearchParameterParser {
 		}
 		
 		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
-				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, runPhosphoLocalization, ScoringBreadthType.ENTIRE_RT_WINDOW, numberOfExtraDecoyLibrariesSearched);
+				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, localizationModification, ScoringBreadthType.ENTIRE_RT_WINDOW, numberOfExtraDecoyLibrariesSearched);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

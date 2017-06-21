@@ -26,6 +26,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringF
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CAPSiLSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
@@ -113,6 +114,7 @@ public class CAPSiLParametersPanel extends JPanel implements ParametersPanelInte
 	private final JComboBox<String> libraryTolerance=new JComboBox<String>(TOLERANCE_NAMES);
 	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
 	private final JComboBox<ScoringBreadthType> searchBreadthType=new JComboBox<>(CAPSIL_SEARCH_TYPES);
+	private final JComboBox<PeptideModification> modificationType=new JComboBox<>(PeptideModification.MODIFICATIONS);
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
 	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
@@ -134,7 +136,8 @@ public class CAPSiLParametersPanel extends JPanel implements ParametersPanelInte
 		
 		libraryFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), true);
 		options.add(libraryFileChooser);
-		options.add(new LabeledComponent("Phospho Localization Strategy", searchBreadthType));
+		options.add(new LabeledComponent("Modification Type", modificationType));
+		options.add(new LabeledComponent("Localization Strategy", searchBreadthType));
 		options.add(new LabeledComponent("Target/Decoy Approach", numberOfExtraDecoyLibraries));
 		options.add(new LabeledComponent("Data Acquisition Type", acquisition));
 		options.add(new LabeledComponent("Enzyme", enzyme));
@@ -228,14 +231,14 @@ public class CAPSiLParametersPanel extends JPanel implements ParametersPanelInte
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		Number value=(Number)precursorWindowWidth.getValue();
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
-		boolean isPhospho=true;
 		boolean isPercolatorTwo=PercolatorExecutor.V2_10.equals(percolatorVersion.getSelectedItem());
 		float numberOfExtraDecoyLibrariesValue=NUMBER_OF_EXTRA_DECOY_VALUES[((Integer)numberOfExtraDecoyLibraries.getSelectedIndex())];
 		float targetWindowCenter=-1f;
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
 		ScoringBreadthType capsilSearchBreadthType=(ScoringBreadthType)searchBreadthType.getSelectedItem();
-		CAPSiLSearchParameters parameters=new CAPSiLSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, 0.01f, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, isPhospho, capsilSearchBreadthType, numberOfExtraDecoyLibrariesValue);
+		PeptideModification modification=(PeptideModification)modificationType.getSelectedItem();
+		CAPSiLSearchParameters parameters=new CAPSiLSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, 0.01f, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, modification, capsilSearchBreadthType, numberOfExtraDecoyLibrariesValue);
 		return parameters;
 	}
 	
@@ -283,6 +286,9 @@ public class CAPSiLParametersPanel extends JPanel implements ParametersPanelInte
 		if (!gotIt) libraryTolerance.setSelectedIndex(1);
 		
 		searchBreadthType.setSelectedItem(params.getScoringBreadthType());
+		if (params.getLocalizingModification().isPresent()) {
+			modificationType.setSelectedItem(params.getLocalizingModification().get());
+		}
 		
 		numberOfJobs.setValue(params.getNumberOfThreadsUsed());
 		if (params.getPrecursorWindowSize()>0) {

@@ -45,26 +45,34 @@ public class PhosphoLocalizer {
 	private final SearchParameters params;
 	private final BackgroundFrequencyInterface background;
 	private final float gradientLength;
+	private final PeptideModification modification;
 
-	public PhosphoLocalizer(StripeFileInterface diaFile, SearchParameters params) throws IOException,DataFormatException,SQLException {
+	public PhosphoLocalizer(StripeFileInterface diaFile, PeptideModification localizingModification, SearchParameters params) throws IOException,DataFormatException,SQLException {
 		this.diaFile=diaFile;
 		this.params=params;
+		this.modification=localizingModification;
 		background=BackgroundFrequencyCalculator.generateBackground(diaFile);
 		gradientLength=diaFile.getGradientLength();
 	}
 
-	public PhosphoLocalizer(StripeFileInterface diaFile, BackgroundFrequencyInterface background, SearchParameters params) throws IOException,DataFormatException,SQLException {
+	public PhosphoLocalizer(StripeFileInterface diaFile, PeptideModification localizingModification, BackgroundFrequencyInterface background, SearchParameters params) throws IOException,DataFormatException,SQLException {
 		this.diaFile=diaFile;
+		this.modification=localizingModification;
 		this.params=params;
 		this.background=background;
 		this.gradientLength=diaFile.getGradientLength();
 	}
 
-	public PhosphoLocalizer(StripeFileInterface diaFile, LibraryInterface searchedLibrary, SearchParameters params) throws IOException,DataFormatException,SQLException {
+	public PhosphoLocalizer(StripeFileInterface diaFile, PeptideModification localizingModification, LibraryInterface searchedLibrary, SearchParameters params) throws IOException,DataFormatException,SQLException {
 		this.diaFile=diaFile;
+		this.modification=localizingModification;
 		this.params=params;
 		background=BackgroundFrequencyCalculator.generateBackground(diaFile);
 		gradientLength=diaFile.getGradientLength();
+	}
+	
+	public PeptideModification getModification() {
+		return modification;
 	}
 	
 	public BackgroundFrequencyInterface getBackground() {
@@ -82,7 +90,7 @@ public class PhosphoLocalizer {
 	public Optional<PhosphoLocalizationData> runPhosphoLocalization(PSMData psmdata, ArrayList<Spectrum> stripes, boolean tryAllPermutations, boolean buildOutGUIData) {
 		ArrayList<String> permutations;
 		if (tryAllPermutations) {
-			permutations=PhosphoPermuter.getPermutations(psmdata.getPeptideModSeq(), params.getAAConstants());
+			permutations=PhosphoPermuter.getPermutations(psmdata.getPeptideModSeq(), modification, params.getAAConstants());
 		} else {
 			permutations=new ArrayList<String>();
 			permutations.add(psmdata.getPeptideModSeq());
@@ -149,7 +157,7 @@ public class PhosphoLocalizer {
 		// go left to right, drop the last
 		for (int i=0; i<peptideModSeqs.size()-1; i++) {
 			String targetPeptide=peptideModSeqs.get(i);
-			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getLeftAmbiguity(targetPeptide, AmbiguousPeptideModSeq.modifiableAAs, params.getAAConstants());
+			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getLeftAmbiguity(targetPeptide, modification, params.getAAConstants());
 
 			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
 			// shrink the number of unique ions subtractors to the pool of
@@ -165,7 +173,7 @@ public class PhosphoLocalizer {
 		// go right to left, drop the first
 		for (int i=peptideModSeqs.size()-1; i>=1; i--) {
 			String targetPeptide=peptideModSeqs.get(i);
-			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getRightAmbiguity(targetPeptide, AmbiguousPeptideModSeq.modifiableAAs, params.getAAConstants());
+			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getRightAmbiguity(targetPeptide, modification, params.getAAConstants());
 			
 			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
 			// shrink the number of unique ions subtractors to the pool of remaining sequences to the left
@@ -311,9 +319,9 @@ public class PhosphoLocalizer {
 
 			if (maxRawScore>=MINIMUM_SCORE||maxRawScore>bestScore) {
 				bestScore=maxRawScore;
-				boolean isLocalized=maxRawScore>=MINIMUM_SCORE&&AmbiguousPeptideModSeq.isLocalized(targetPeptideAnnotation, AmbiguousPeptideModSeq.modifiableAAs);
+				boolean isLocalized=maxRawScore>=MINIMUM_SCORE&&AmbiguousPeptideModSeq.isLocalized(targetPeptideAnnotation, modification);
 				
-				if (!AmbiguousPeptideModSeq.isLocalizedAtEnd(targetPeptideAnnotation, AmbiguousPeptideModSeq.modifiableAAs)) {
+				if (!AmbiguousPeptideModSeq.isLocalizedAtEnd(targetPeptideAnnotation, modification)) {
 					// need to check RTs
 					boolean skip=false;
 					for (int i=0; i<previouslyIdentifiedRTsInSec.size(); i++) {
@@ -366,7 +374,7 @@ public class PhosphoLocalizer {
 				// only trust this ID if there are enough peaks!
 				if (numIdentificationPeaks>=targetNumPeaks&&quantData.getMedianChromatogram().length>0) {
 					
-					int numberOfMods=PeptideUtils.getNumberOfMods(targetPeptideSequence, AmbiguousPeptideModSeq.NOMINAL_MASS);
+					int numberOfMods=PeptideUtils.getNumberOfMods(targetPeptideSequence, modification.getNominalMass());
 
 					bestRT=quantData.getApexRT();
 					formsRT.add(bestRT);

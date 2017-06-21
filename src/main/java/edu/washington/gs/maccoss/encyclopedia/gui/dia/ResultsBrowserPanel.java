@@ -212,8 +212,8 @@ public class ResultsBrowserPanel extends JPanel {
 					dia=source.get();
 				}
 
-				if (dia!=null&&library!=null&&parameters.isRunPhosphoLocalization()) {
-					PhosphoLocalizer localizer=new PhosphoLocalizer(dia, library, parameters);
+				if (dia!=null&&library!=null&&parameters.getLocalizingModification().isPresent()) {
+					PhosphoLocalizer localizer=new PhosphoLocalizer(dia, parameters.getLocalizingModification().get(), library, parameters);
 					nullableLocalizer=Optional.ofNullable(localizer);
 				}
 				
@@ -233,8 +233,8 @@ public class ResultsBrowserPanel extends JPanel {
 			protected Nothing doInBackgroundForReal() throws Exception {
 				dia=StripeFileGenerator.getFile(f, parameters);
 
-				if (dia!=null&&library!=null&&parameters.isRunPhosphoLocalization()) {
-					PhosphoLocalizer localizer=new PhosphoLocalizer(dia, library, parameters);
+				if (dia!=null&&library!=null&&parameters.getLocalizingModification().isPresent()) {
+					PhosphoLocalizer localizer=new PhosphoLocalizer(dia, parameters.getLocalizingModification().get(), library, parameters);
 					nullableLocalizer=Optional.ofNullable(localizer);
 				}
 
@@ -290,7 +290,7 @@ public class ResultsBrowserPanel extends JPanel {
 			entries.add(unit);
 			
 			try {
-				float rtRange=parameters.isRunPhosphoLocalization()?dia.getGradientLength()/20.0f:30f;
+				float rtRange=parameters.getLocalizingModification().isPresent()?dia.getGradientLength()/20.0f:30f;
 				
 				ArrayList<Stripe> stripes=dia.getStripes(entry.getPrecursorMZ(), targetRT-rtRange, targetRT+rtRange, false);
 
@@ -319,7 +319,7 @@ public class ResultsBrowserPanel extends JPanel {
 					JTabbedPane tabs=new JTabbedPane();
 					
 					Optional<PhosphoLocalizationData> maybePhosphoData=Optional.empty();
-					if (parameters.isRunPhosphoLocalization()) {
+					if (parameters.getLocalizingModification().isPresent()) {
 						maybePhosphoData=quantTask.runLocalization(true);
 					}
 					if (maybePhosphoData.isPresent()) {

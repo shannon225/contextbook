@@ -97,19 +97,19 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			if (canRunLocalization()) {
 				if (!phosphoData.isPresent()) {
 					// no need to localize since there's only one form, so annotate this directly on the data object
-					int numberOfMods=PeptideUtils.getNumberOfMods(psmdata.getPeptideModSeq(), AmbiguousPeptideModSeq.NOMINAL_MASS);
+					int numberOfMods=PeptideUtils.getNumberOfMods(psmdata.getPeptideModSeq(), params.getLocalizingModification().get().getNominalMass());
 					if (numberOfMods>0) {
 						FragmentIon[] localizingIons=new FragmentIon[0];
 						float localizationScore=1000.0f;
-						data.setModificationLocalizationData(Optional.of(new ModificationLocalizationData(AmbiguousPeptideModSeq.getUnambigous(psmdata.getPeptideModSeq(), AmbiguousPeptideModSeq.modifiableAAs, params.getAAConstants()), data.getApexRT(), localizationScore, numberOfMods, true, localizingIons)));
+						data.setModificationLocalizationData(Optional.of(new ModificationLocalizationData(AmbiguousPeptideModSeq.getUnambigous(psmdata.getPeptideModSeq(), params.getLocalizingModification().get(), params.getAAConstants()), data.getApexRT(), localizationScore, numberOfMods, true, localizingIons)));
 					}
 				} else if (phosphoData.get().size()==0) {
 					// no confident localizations, so annotate this directly on the data object
-					int numberOfMods=PeptideUtils.getNumberOfMods(psmdata.getPeptideModSeq(), AmbiguousPeptideModSeq.NOMINAL_MASS);
+					int numberOfMods=PeptideUtils.getNumberOfMods(psmdata.getPeptideModSeq(), params.getLocalizingModification().get().getNominalMass());
 					if (numberOfMods>0) {
 						FragmentIon[] localizingIons=new FragmentIon[0];
 						float localizationScore=0.0f;
-						data.setModificationLocalizationData(Optional.of(new ModificationLocalizationData(AmbiguousPeptideModSeq.getFullyAmbiguous(psmdata.getPeptideModSeq(), AmbiguousPeptideModSeq.modifiableAAs, params.getAAConstants()), data.getApexRT(), localizationScore, numberOfMods, false, localizingIons)));
+						data.setModificationLocalizationData(Optional.of(new ModificationLocalizationData(AmbiguousPeptideModSeq.getFullyAmbiguous(psmdata.getPeptideModSeq(), params.getLocalizingModification().get(), params.getAAConstants()), data.getApexRT(), localizationScore, numberOfMods, false, localizingIons)));
 					}
 				}
 			}
@@ -129,7 +129,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	}
 
 	private boolean canRunLocalization() {
-		return params.isRunPhosphoLocalization()&&localizer.isPresent();
+		return params.getLocalizingModification().isPresent()&&localizer.isPresent();
 	}
 
 	public Optional<PhosphoLocalizationData> runLocalization(boolean tryAllPermutations) {

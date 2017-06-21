@@ -50,9 +50,9 @@ public class PeptideQuantExtractor {
 		this.parameters=parameters;
 		
 		PhosphoLocalizer localizer;
-		if (parameters.isRunPhosphoLocalization()&&searchedLibrary!=null) {
+		if (parameters.getLocalizingModification().isPresent()&&searchedLibrary!=null) {
 			try {
-				localizer=new PhosphoLocalizer(stripefile, searchedLibrary, parameters);
+				localizer=new PhosphoLocalizer(stripefile, parameters.getLocalizingModification().get(), searchedLibrary, parameters);
 			} catch (DataFormatException dfe) {
 				localizer=null;
 			} catch (IOException ioe) {

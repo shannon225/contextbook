@@ -50,7 +50,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 		
-		PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, library, parameters);
+		PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, PeptideModification.phosphorylation, library, parameters);
 
 		PSMData psmdata=getPeptide(10);
 		//PSMData psmdata=getPeptide(0);
@@ -147,7 +147,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		String peptide="LYSGS[+80.0]PTR";
 		byte precursorCharge=2;
 		
-		ArrayList<String> peptideModSeqs=PhosphoPermuter.getPermutations(peptide, params.getAAConstants());
+		ArrayList<String> peptideModSeqs=PhosphoPermuter.getPermutations(peptide, PeptideModification.phosphorylation, params.getAAConstants());
 
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : peptideModSeqs) {
@@ -159,7 +159,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		// go right to left, drop the first
 		for (int i=peptideModSeqs.size()-1; i>=1; i--) {
 			String targetPeptide=peptideModSeqs.get(i);
-			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getRightAmbiguity(targetPeptide, AmbiguousPeptideModSeq.modifiableAAs, params.getAAConstants());
+			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getRightAmbiguity(targetPeptide, PeptideModification.phosphorylation, params.getAAConstants());
 			
 			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
 			// shrink the number of unique ions subtractors to the pool of remaining sequences to the right
@@ -179,7 +179,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		// go left to right, drop the last
 		for (int i=0; i<peptideModSeqs.size()-1; i++) {
 			String targetPeptide=peptideModSeqs.get(i);
-			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getLeftAmbiguity(targetPeptide, AmbiguousPeptideModSeq.modifiableAAs, params.getAAConstants());
+			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getLeftAmbiguity(targetPeptide, PeptideModification.phosphorylation, params.getAAConstants());
 
 			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
 			// shrink the number of unique ions subtractors to the pool of
@@ -203,7 +203,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		byte precursorCharge=1;		
 		String peptide="S[+80.0]SSSR";
 		
-		ArrayList<String> peptideModSeqs=PhosphoPermuter.getPermutations(peptide, params.getAAConstants());
+		ArrayList<String> peptideModSeqs=PhosphoPermuter.getPermutations(peptide, PeptideModification.phosphorylation, params.getAAConstants());
 
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : peptideModSeqs) {
@@ -231,7 +231,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		byte charge=1;		
 		String peptide="S[+80.0]SSR";
 		
-		ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptide, params.getAAConstants());
+		ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptide, PeptideModification.phosphorylation, params.getAAConstants());
 		assertEquals(3, permutations.size());
 		assertTrue(permutations.contains("S[+79.96633]SSR"));
 		assertTrue(permutations.contains("SS[+79.96633]SR"));

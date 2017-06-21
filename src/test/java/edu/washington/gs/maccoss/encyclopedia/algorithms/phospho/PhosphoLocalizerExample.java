@@ -47,7 +47,7 @@ public class PhosphoLocalizerExample {
 		UnitBackgroundFrequencyCalculator background=new UnitBackgroundFrequencyCalculator(0.01f);
 		float duration=stripefile.getGradientLength()/20.0f;
 		
-		PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, background, parameters);
+		PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, PeptideModification.phosphorylation, background, parameters);
 		
 		String peptideModSeq;
 		float retentionTime;
@@ -90,7 +90,7 @@ public class PhosphoLocalizerExample {
 		double precursorMz=parameters.getAAConstants().getChargedMass(peptideModSeq, precursorCharge);
 		
 		ArrayList<Stripe> stripes=stripefile.getStripes(precursorMz, 0, Float.MAX_VALUE, false);
-		ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptideModSeq, parameters.getAAConstants());
+		ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptideModSeq, PeptideModification.phosphorylation, parameters.getAAConstants());
 		PhosphoLocalizationData phosphoData=localizer.extractPhosphoFormsFromStripes(peptideModSeq, precursorMz, precursorCharge, permutations, retentionTime, stripes, true);
 
 		System.out.println("Just off of localization ions");

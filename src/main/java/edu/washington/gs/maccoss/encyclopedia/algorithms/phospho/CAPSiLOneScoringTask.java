@@ -36,6 +36,7 @@ public class CAPSiLOneScoringTask extends AbstractLibraryScoringTask {
 	private final PhosphoLocalizer localizer;
 	private final float dutyCycle;
 	private final ScoringBreadthType breadth;
+	private final PeptideModification localizingModification;
 	
 	public CAPSiLOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, 
 			PhosphoLocalizer localizer, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
@@ -43,6 +44,11 @@ public class CAPSiLOneScoringTask extends AbstractLibraryScoringTask {
 		this.dutyCycle=dutyCycle;
 		this.localizer=localizer;
 		this.breadth=parameters.getScoringBreadthType();
+		if (parameters.getLocalizingModification().isPresent()) {
+			this.localizingModification=parameters.getLocalizingModification().get();
+		} else {
+			throw new EncyclopediaException("You must specify a localizing modification before running localization!");
+		}
 	}
 
 	@Override
@@ -98,7 +104,7 @@ public class CAPSiLOneScoringTask extends AbstractLibraryScoringTask {
 			
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(seedEntry.getPeptideModSeq(), parameters.getAAConstants());
 			
-			ArrayList<String> peptideModSeqs=PhosphoPermuter.getPermutations(seedEntry.getPeptideModSeq(), parameters.getAAConstants());
+			ArrayList<String> peptideModSeqs=PhosphoPermuter.getPermutations(seedEntry.getPeptideModSeq(), localizingModification, parameters.getAAConstants());
 
 			HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 			for (String peptideModSeq : peptideModSeqs) {
@@ -115,7 +121,7 @@ public class CAPSiLOneScoringTask extends AbstractLibraryScoringTask {
 				boolean breakBatch=false;
 
 				ArrayList<Pair<AmbiguousPeptideModSeq, FragmentIon[]>> batch=new ArrayList<Pair<AmbiguousPeptideModSeq,FragmentIon[]>>();
-				AmbiguousPeptideModSeq leftAmbiguity=AmbiguousPeptideModSeq.getLeftAmbiguity(peptideModSeqs.get(leftIndex), AmbiguousPeptideModSeq.modifiableAAs, parameters.getAAConstants());
+				AmbiguousPeptideModSeq leftAmbiguity=AmbiguousPeptideModSeq.getLeftAmbiguity(peptideModSeqs.get(leftIndex), localizingModification, parameters.getAAConstants());
 
 				HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
 				// shrink the number of unique ions subtractors to the pool of
@@ -129,7 +135,7 @@ public class CAPSiLOneScoringTask extends AbstractLibraryScoringTask {
 				leftIndex++;
 				
 				if (leftIndex<rightIndex) {
-					AmbiguousPeptideModSeq rightAmbiguity=AmbiguousPeptideModSeq.getRightAmbiguity(peptideModSeqs.get(rightIndex), AmbiguousPeptideModSeq.modifiableAAs, parameters.getAAConstants());
+					AmbiguousPeptideModSeq rightAmbiguity=AmbiguousPeptideModSeq.getRightAmbiguity(peptideModSeqs.get(rightIndex), localizingModification, parameters.getAAConstants());
 					modelBatch=new HashMap<String, FragmentationModel>();
 					// shrink the number of unique ions subtractors to the pool of remaining sequences to the left
 					for (int j=0; j<=rightIndex; j++) {
@@ -282,7 +288,7 @@ public class CAPSiLOneScoringTask extends AbstractLibraryScoringTask {
 							numIdentificationPeaks++;
 						}
 					}
-					wasLocalized=numIdentificationPeaks>=targetNumFragments&&AmbiguousPeptideModSeq.isLocalized(peptideModSeq, AmbiguousPeptideModSeq.modifiableAAs);
+					wasLocalized=numIdentificationPeaks>=targetNumFragments&&AmbiguousPeptideModSeq.isLocalized(peptideModSeq, localizer.getModification());
 					//System.out.println("\tLocalized "+wasLocalized+" for "+peptideModSeq.getPeptideAnnotation()+" ("+bestLocalizationScore+" score, "+numIdentificationPeaks+"/"+correlations.length+" peaks)"); // FIXME
 				}
 			}

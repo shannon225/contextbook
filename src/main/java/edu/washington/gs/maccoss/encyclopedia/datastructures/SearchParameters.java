@@ -4,11 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
@@ -28,7 +30,6 @@ public class SearchParameters {
 	protected final int numberOfThreadsUsed;	
 	protected final float targetWindowCenter;
 	protected final float expectedPeakWidth;
-	protected final boolean runPhosphoLocalization;
 	protected final float precursorWindowSize;
 	protected final float numberOfExtraDecoyLibrariesSearched;
 	protected final int numberOfQuantitativePeaks;
@@ -38,10 +39,11 @@ public class SearchParameters {
 	protected final double precursorIsolationMargin;
 	protected final boolean useNLsForXCorr=false;
 	protected final ScoringBreadthType capsilBreadthType;
+	protected final Optional<PeptideModification> localizingModification; 
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, Integer percolatorVersionNumber, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
-			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, boolean runPhosphoLocalization, ScoringBreadthType capsilBreadthType, float getNumberOfExtraDecoyLibrariesSearched) {
+			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, Optional<PeptideModification> localizingModification, ScoringBreadthType capsilBreadthType, float getNumberOfExtraDecoyLibrariesSearched) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -60,8 +62,8 @@ public class SearchParameters {
 		this.precursorWindowSize=precursorWindowSize;
 		this.numberOfQuantitativePeaks=numberOfQuantitativePeaks;
 		this.minNumOfQuantitativePeaks=minNumOfQuantitativePeaks;
-		this.runPhosphoLocalization=runPhosphoLocalization;
 		this.capsilBreadthType=capsilBreadthType;
+		this.localizingModification=localizingModification;
 		this.numberOfExtraDecoyLibrariesSearched=getNumberOfExtraDecoyLibrariesSearched;
 	}
 	
@@ -105,7 +107,6 @@ public class SearchParameters {
 		sb.append(" -precursorWindowSize "+precursorWindowSize+"\n");
 		sb.append(" -numberOfQuantitativePeaks "+numberOfQuantitativePeaks+"\n");
 		sb.append(" -minNumOfQuantitativePeaks "+minNumOfQuantitativePeaks+"\n");
-		sb.append(" -runPhosphoLocalization "+runPhosphoLocalization+"\n");
 		sb.append(" -getNumberOfExtraDecoyLibrariesSearched "+numberOfExtraDecoyLibrariesSearched+"\n");
 		if (useTargetWindowCenter()) {
 			sb.append(" -targetWindowCenter "+targetWindowCenter+"\n");
@@ -131,7 +132,6 @@ public class SearchParameters {
 		map.put("-precursorWindowSize", precursorWindowSize+"");
 		map.put("-numberOfQuantitativePeaks", numberOfQuantitativePeaks+"");
 		map.put("-minNumOfQuantitativePeaks", minNumOfQuantitativePeaks+"");
-		map.put("-runPhosphoLocalization", runPhosphoLocalization+"");
 		map.put("-getNumberOfExtraDecoyLibrariesSearched", numberOfExtraDecoyLibrariesSearched+"");
 		map.put("-targetWindowCenter", targetWindowCenter+"");
 		return map;
@@ -216,9 +216,6 @@ public class SearchParameters {
 		return precursorWindowSize;
 	}
 	
-	public boolean isRunPhosphoLocalization() {
-		return runPhosphoLocalization;
-	}
 	public float getNumberOfExtraDecoyLibrariesSearched() {
 		return numberOfExtraDecoyLibrariesSearched;
 	}
@@ -236,6 +233,9 @@ public class SearchParameters {
 	}
 	public ScoringBreadthType getScoringBreadthType() {
 		return capsilBreadthType;
+	}
+	public Optional<PeptideModification> getLocalizingModification() {
+		return localizingModification;
 	}
 	public boolean applyRTAlignment() {
 		return ScoringBreadthType.ENTIRE_RT_WINDOW==capsilBreadthType;

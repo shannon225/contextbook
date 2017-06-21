@@ -10,10 +10,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import gnu.trove.list.array.TIntArrayList;
 
 public class PhosphoPermuter {
-	private static final String phospho = "[+79.96633]";
-	public static char[] sty=new char[] {'S', 'T', 'Y'};
 	
-	public static ArrayList<String> getPermutations(String peptideModSeq, AminoAcidConstants aaConstants) {
+	public static ArrayList<String> getPermutations(String peptideModSeq, PeptideModification modification, AminoAcidConstants aaConstants) {
+		String modificationTag=modification.toMassString();
+		char[] modifibleAAs=modification.getModifiableAAs();
+		
 		FragmentationModel model=new FragmentationModel(peptideModSeq, aaConstants);
 		String[] aas=model.getAas();
 		
@@ -25,8 +26,8 @@ public class PhosphoPermuter {
 			char aaValue=aa.x.charValue();
 			
 			boolean isSTY=false;
-			for (int j=0; j<sty.length; j++) {
-				if (sty[j]==aaValue) {
+			for (int j=0; j<modifibleAAs.length; j++) {
+				if (modifibleAAs[j]==aaValue) {
 					isSTY=true;
 				}
 			}
@@ -57,7 +58,7 @@ public class PhosphoPermuter {
 		} else if (phosphoCount==1) {
 			for (int j=0; j<styIndices.size(); j++) {
 				StringBuilder seq=new StringBuilder(sb);
-				seq.insert(styIndices.get(j)+1, phospho);
+				seq.insert(styIndices.get(j)+1, modificationTag);
 				sequences.add(seq.toString());
 			}
 
@@ -65,8 +66,8 @@ public class PhosphoPermuter {
 			for (int j=0; j<styIndices.size(); j++) {
 				for (int k=j+1; k<styIndices.size(); k++) {
 					StringBuilder seq=new StringBuilder(sb);
-					seq.insert(styIndices.get(j)+1, phospho);
-					seq.insert(styIndices.get(k)+1+phospho.length(), phospho);
+					seq.insert(styIndices.get(j)+1, modificationTag);
+					seq.insert(styIndices.get(k)+1+modificationTag.length(), modificationTag);
 					sequences.add(seq.toString());
 				}
 			}
@@ -75,9 +76,9 @@ public class PhosphoPermuter {
 				for (int k=j+1; k<styIndices.size(); k++) {
 					for (int l=k+1; l<styIndices.size(); l++) {
 						StringBuilder seq=new StringBuilder(sb);
-						seq.insert(styIndices.get(j)+1, phospho);
-						seq.insert(styIndices.get(k)+1+phospho.length(), phospho);
-						seq.insert(styIndices.get(l)+1+phospho.length()+phospho.length(), phospho);
+						seq.insert(styIndices.get(j)+1, modificationTag);
+						seq.insert(styIndices.get(k)+1+modificationTag.length(), modificationTag);
+						seq.insert(styIndices.get(l)+1+modificationTag.length()+modificationTag.length(), modificationTag);
 						sequences.add(seq.toString());
 					}
 				}
@@ -88,10 +89,10 @@ public class PhosphoPermuter {
 					for (int l=k+1; l<styIndices.size(); l++) {
 						for (int m=l+1; m<styIndices.size(); m++) {
 							StringBuilder seq=new StringBuilder(sb);
-							seq.insert(styIndices.get(j)+1, phospho);
-							seq.insert(styIndices.get(k)+1+phospho.length(), phospho);
-							seq.insert(styIndices.get(l)+1+phospho.length()+phospho.length(), phospho);
-							seq.insert(styIndices.get(m)+1+phospho.length()+phospho.length()+phospho.length(), phospho);
+							seq.insert(styIndices.get(j)+1, modificationTag);
+							seq.insert(styIndices.get(k)+1+modificationTag.length(), modificationTag);
+							seq.insert(styIndices.get(l)+1+modificationTag.length()+modificationTag.length(), modificationTag);
+							seq.insert(styIndices.get(m)+1+modificationTag.length()+modificationTag.length()+modificationTag.length(), modificationTag);
 							sequences.add(seq.toString());
 						}
 					}
@@ -104,11 +105,11 @@ public class PhosphoPermuter {
 						for (int m=l+1; m<styIndices.size(); m++) {
 							for (int n=m+1; n<styIndices.size(); n++) {
 								StringBuilder seq=new StringBuilder(sb);
-								seq.insert(styIndices.get(j)+1, phospho);
-								seq.insert(styIndices.get(k)+1+phospho.length(), phospho);
-								seq.insert(styIndices.get(l)+1+phospho.length()+phospho.length(), phospho);
-								seq.insert(styIndices.get(m)+1+phospho.length()+phospho.length()+phospho.length(), phospho);
-								seq.insert(styIndices.get(n)+1+phospho.length()+phospho.length()+phospho.length()+phospho.length(), phospho);
+								seq.insert(styIndices.get(j)+1, modificationTag);
+								seq.insert(styIndices.get(k)+1+modificationTag.length(), modificationTag);
+								seq.insert(styIndices.get(l)+1+modificationTag.length()+modificationTag.length(), modificationTag);
+								seq.insert(styIndices.get(m)+1+modificationTag.length()+modificationTag.length()+modificationTag.length(), modificationTag);
+								seq.insert(styIndices.get(n)+1+modificationTag.length()+modificationTag.length()+modificationTag.length()+modificationTag.length(), modificationTag);
 								sequences.add(seq.toString());
 							}
 						}

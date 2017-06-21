@@ -118,6 +118,7 @@ public class SearchPanel extends JPanel {
 				optionsTabs.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
+				Logger.errorException(e);
 			}
 		}
 		if (ProgramType.Global==program||ProgramType.CAPSiL==program) {
@@ -129,6 +130,7 @@ public class SearchPanel extends JPanel {
 				optionsTabs.addTab(capsil.getProgramName(), capsil.getSmallImage(), capsil, capsil.getProgramShortDescription());
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
+				Logger.errorException(e);
 			}
 		}
 		if (ProgramType.Global==program||ProgramType.PecanPie==program) {
@@ -141,6 +143,7 @@ public class SearchPanel extends JPanel {
 				
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
+				Logger.errorException(e);
 			}
 		}
 		if (ProgramType.Global==program||ProgramType.XCorDIA==program) {
@@ -153,6 +156,7 @@ public class SearchPanel extends JPanel {
 				
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
+				Logger.errorException(e);
 			}
 		}
 
