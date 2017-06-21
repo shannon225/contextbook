@@ -35,14 +35,14 @@ public class CAPSiLOneScoringTask extends AbstractLibraryScoringTask {
 	
 	private final PhosphoLocalizer localizer;
 	private final float dutyCycle;
-	private final CAPSiLScoringBreadthType breadth;
+	private final ScoringBreadthType breadth;
 	
 	public CAPSiLOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, 
 			PhosphoLocalizer localizer, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.dutyCycle=dutyCycle;
 		this.localizer=localizer;
-		this.breadth=parameters.getCapsilBreadthType();
+		this.breadth=parameters.getScoringBreadthType();
 	}
 
 	@Override
@@ -51,18 +51,18 @@ public class CAPSiLOneScoringTask extends AbstractLibraryScoringTask {
 		int movingAverageLength=Math.round(parameters.getExpectedPeakWidth()/dutyCycle);
 		for (LibraryEntry seedEntry : super.entries) {
 			ArrayList<Spectrum> stripeList=null;
-			if (breadth==CAPSiLScoringBreadthType.ENTIRE_RT_WINDOW) {
+			if (breadth==ScoringBreadthType.ENTIRE_RT_WINDOW) {
 				stripeList=PhosphoLocalizer.getScanSubsetFromStripes(-Float.MAX_VALUE, Float.MAX_VALUE, super.stripes);
 				
-			} else if (breadth==CAPSiLScoringBreadthType.UNCALIBRATED_20_PERCENT) {
+			} else if (breadth==ScoringBreadthType.UNCALIBRATED_20_PERCENT) {
 				float duration=(super.stripes.get(super.stripes.size()-1).getScanStartTime()-super.stripes.get(0).getScanStartTime())/20.0f;
 				stripeList=PhosphoLocalizer.getScanSubsetFromStripes(seedEntry.getScanStartTime()-duration, seedEntry.getScanStartTime()+duration, super.stripes);
 				
-			} else if (breadth==CAPSiLScoringBreadthType.UNCALIBRATED_PEAK_WIDTH) {
+			} else if (breadth==ScoringBreadthType.UNCALIBRATED_PEAK_WIDTH) {
 				float duration=parameters.getExpectedPeakWidth();
 				stripeList=PhosphoLocalizer.getScanSubsetFromStripes(seedEntry.getScanStartTime()-duration, seedEntry.getScanStartTime()+duration, super.stripes);
 				
-			} else if (breadth==CAPSiLScoringBreadthType.RECALIBRATED_20_PERCENT||breadth==CAPSiLScoringBreadthType.RECALIBRATED_PEAK_WIDTH) {
+			} else if (breadth==ScoringBreadthType.RECALIBRATED_20_PERCENT||breadth==ScoringBreadthType.RECALIBRATED_PEAK_WIDTH) {
 				FragmentationModel model=new FragmentationModel(seedEntry.getPeptideModSeq(), parameters.getAAConstants());
 				FragmentIon[] allIons=model.getPrimaryIonObjects(parameters.getFragType(), seedEntry.getPrecursorCharge());
 				float[] primary=new float[super.stripes.size()];
@@ -82,11 +82,11 @@ public class CAPSiLOneScoringTask extends AbstractLibraryScoringTask {
 					}
 				}
 				
-				if (breadth==CAPSiLScoringBreadthType.RECALIBRATED_20_PERCENT) {
+				if (breadth==ScoringBreadthType.RECALIBRATED_20_PERCENT) {
 					float duration=(super.stripes.get(super.stripes.size()-1).getScanStartTime()-super.stripes.get(0).getScanStartTime())/20.0f;
 					stripeList=PhosphoLocalizer.getScanSubsetFromStripes(bestStripe.getScanStartTime()-duration, bestStripe.getScanStartTime()+duration, super.stripes);
 					
-				} else if (breadth==CAPSiLScoringBreadthType.RECALIBRATED_PEAK_WIDTH) {
+				} else if (breadth==ScoringBreadthType.RECALIBRATED_PEAK_WIDTH) {
 					float duration=parameters.getExpectedPeakWidth();
 					stripeList=PhosphoLocalizer.getScanSubsetFromStripes(bestStripe.getScanStartTime()-duration, bestStripe.getScanStartTime()+duration, super.stripes);
 				}

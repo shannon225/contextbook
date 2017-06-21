@@ -24,7 +24,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJob
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CAPSiLScoringBreadthType;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CAPSiLSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
@@ -85,12 +85,12 @@ public class CAPSiLParametersPanel extends JPanel implements ParametersPanelInte
 			TOLERANCE_VALUES[11].toString(), //11
 	};
 	
-	public static final CAPSiLScoringBreadthType[] CAPSIL_SEARCH_TYPES=new CAPSiLScoringBreadthType[] {
-			CAPSiLScoringBreadthType.ENTIRE_RT_WINDOW,
-			CAPSiLScoringBreadthType.RECALIBRATED_20_PERCENT,
-			CAPSiLScoringBreadthType.RECALIBRATED_PEAK_WIDTH,
-			CAPSiLScoringBreadthType.UNCALIBRATED_20_PERCENT,
-			CAPSiLScoringBreadthType.UNCALIBRATED_PEAK_WIDTH
+	public static final ScoringBreadthType[] CAPSIL_SEARCH_TYPES=new ScoringBreadthType[] {
+			ScoringBreadthType.ENTIRE_RT_WINDOW,
+			ScoringBreadthType.RECALIBRATED_20_PERCENT,
+			ScoringBreadthType.RECALIBRATED_PEAK_WIDTH,
+			ScoringBreadthType.UNCALIBRATED_20_PERCENT,
+			ScoringBreadthType.UNCALIBRATED_PEAK_WIDTH
 	};
 	
 	private static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/capsil_small_icon.png"));
@@ -112,7 +112,7 @@ public class CAPSiLParametersPanel extends JPanel implements ParametersPanelInte
 	private final JComboBox<String> fragmentTolerance=new JComboBox<String>(TOLERANCE_NAMES);
 	private final JComboBox<String> libraryTolerance=new JComboBox<String>(TOLERANCE_NAMES);
 	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
-	private final JComboBox<CAPSiLScoringBreadthType> searchBreadthType=new JComboBox<>(CAPSIL_SEARCH_TYPES);
+	private final JComboBox<ScoringBreadthType> searchBreadthType=new JComboBox<>(CAPSIL_SEARCH_TYPES);
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
 	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
@@ -234,7 +234,7 @@ public class CAPSiLParametersPanel extends JPanel implements ParametersPanelInte
 		float targetWindowCenter=-1f;
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
-		CAPSiLScoringBreadthType capsilSearchBreadthType=(CAPSiLScoringBreadthType)searchBreadthType.getSelectedItem();
+		ScoringBreadthType capsilSearchBreadthType=(ScoringBreadthType)searchBreadthType.getSelectedItem();
 		CAPSiLSearchParameters parameters=new CAPSiLSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, 0.01f, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, isPhospho, capsilSearchBreadthType, numberOfExtraDecoyLibrariesValue);
 		return parameters;
 	}
@@ -282,7 +282,7 @@ public class CAPSiLParametersPanel extends JPanel implements ParametersPanelInte
 		}
 		if (!gotIt) libraryTolerance.setSelectedIndex(1);
 		
-		searchBreadthType.setSelectedItem(params.getCapsilBreadthType());
+		searchBreadthType.setSelectedItem(params.getScoringBreadthType());
 		
 		numberOfJobs.setValue(params.getNumberOfThreadsUsed());
 		if (params.getPrecursorWindowSize()>0) {

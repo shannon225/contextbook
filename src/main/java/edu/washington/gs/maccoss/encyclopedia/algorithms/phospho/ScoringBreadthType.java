@@ -1,6 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
-public enum CAPSiLScoringBreadthType {
+public enum ScoringBreadthType {
 	ENTIRE_RT_WINDOW, RECALIBRATED_20_PERCENT, RECALIBRATED_PEAK_WIDTH, UNCALIBRATED_20_PERCENT, UNCALIBRATED_PEAK_WIDTH;
 	
 	public String toString() {
