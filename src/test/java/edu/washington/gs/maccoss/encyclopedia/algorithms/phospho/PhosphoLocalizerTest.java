@@ -63,8 +63,8 @@ public class PhosphoLocalizerTest extends TestCase {
 		}
 		Charter.launchChart("Retention Time", "Intensity", false, new Dimension(800, 250), ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), precursors));
 		//ArrayList<String> permutations=new ArrayList<String>();
-		//permutations.add("DKRPLS[+79.96633]GPDVGTPQPAGLASGAK");
-		//permutations.add("DKRPLSGPDVGTPQPAGLAS[+79.96633]GAK");
+		//permutations.add("DKRPLS[+79.966331]GPDVGTPQPAGLASGAK");
+		//permutations.add("DKRPLSGPDVGTPQPAGLAS[+79.966331]GAK");
 		//ArrayList<Stripe> stripes=stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false);
 		//PhosphoLocalizationData multiple=localizer.extractPhosphoForms(psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes);
 		ArrayList<Stripe> stripes=stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false);
@@ -233,9 +233,9 @@ public class PhosphoLocalizerTest extends TestCase {
 		
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptide, PeptideModification.phosphorylation, params.getAAConstants());
 		assertEquals(3, permutations.size());
-		assertTrue(permutations.contains("S[+79.96633]SSR"));
-		assertTrue(permutations.contains("SS[+79.96633]SR"));
-		assertTrue(permutations.contains("SSS[+79.96633]R"));
+		assertTrue(permutations.contains("S[+79.966331]SSR"));
+		assertTrue(permutations.contains("SS[+79.966331]SR"));
+		assertTrue(permutations.contains("SSS[+79.966331]R"));
 		
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : permutations) {
@@ -251,7 +251,7 @@ public class PhosphoLocalizerTest extends TestCase {
 
 		HashMap<String, FragmentIon[]> uniqueIons=PhosphoLocalizer.getUniqueFragmentIons(charge, entryMap, params);
 		
-		assertEquals("b1,y3", General.toString(uniqueIons.get("S[+79.96633]SSR")));
-		assertEquals("b2,y2", General.toString(uniqueIons.get("SSS[+79.96633]R")));
+		assertEquals("b1,y3", General.toString(uniqueIons.get("S[+79.966331]SSR")));
+		assertEquals("b2,y2", General.toString(uniqueIons.get("SSS[+79.966331]R")));
 	}
 }
