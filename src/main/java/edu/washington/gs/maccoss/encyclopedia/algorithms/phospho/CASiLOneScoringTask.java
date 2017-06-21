@@ -30,7 +30,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 
-public class CAPSiLOneScoringTask extends AbstractLibraryScoringTask {
+public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 	private static final int peaksKept=-1; // only keep the first peak
 	
 	private final PhosphoLocalizer localizer;
@@ -38,7 +38,7 @@ public class CAPSiLOneScoringTask extends AbstractLibraryScoringTask {
 	private final ScoringBreadthType breadth;
 	private final PeptideModification localizingModification;
 	
-	public CAPSiLOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, 
+	public CASiLOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, 
 			PhosphoLocalizer localizer, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.dutyCycle=dutyCycle;
@@ -99,7 +99,7 @@ public class CAPSiLOneScoringTask extends AbstractLibraryScoringTask {
 			}
 
 			if (stripeList==null) {
-				throw new EncyclopediaException("Unexpected CAPSiL Scoring Breadth: "+breadth);
+				throw new EncyclopediaException("Unexpected CASiL Scoring Breadth: "+breadth);
 			}
 			
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(seedEntry.getPeptideModSeq(), parameters.getAAConstants());

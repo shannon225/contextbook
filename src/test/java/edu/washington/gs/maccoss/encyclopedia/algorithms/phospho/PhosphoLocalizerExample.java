@@ -140,7 +140,7 @@ public class PhosphoLocalizerExample {
 		ArrayList<LibraryEntry> entries=new ArrayList<>();
 		entries.add(libentry);
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
-		CAPSiLOneScoringTask task=new CAPSiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, parameters);
+		CASiLOneScoringTask task=new CASiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, parameters);
 		task.call();
 
 		System.out.println("Based on all ions");

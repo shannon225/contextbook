@@ -17,11 +17,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
-public class CAPSiLSearchParameters extends SearchParameters {
+public class CASiLSearchParameters extends SearchParameters {
 
 	
 	public void savePreferences(File libraryFile) throws IOException,BackingStoreException {
-		Preferences prefs=Preferences.userRoot().node("capsil");
+		Preferences prefs=Preferences.userRoot().node("CASiL");
 		HashMap<String, String> map=toParameterMap();
 		if (libraryFile!=null) map.put(Encyclopedia.TARGET_LIBRARY_TAG, libraryFile.getAbsolutePath());
 		for (Entry<String, String> entry : map.entrySet()) {
@@ -32,7 +32,7 @@ public class CAPSiLSearchParameters extends SearchParameters {
 	}
 	
 	public static HashMap<String, String> readPreferences() throws IOException,BackingStoreException {
-		Preferences prefs=Preferences.userRoot().node("capsil");
+		Preferences prefs=Preferences.userRoot().node("CASiL");
 		HashMap<String, String> map=new HashMap<String, String>();
 		for (String key : prefs.keys()) {
 			String value=prefs.get(key, "");
@@ -44,7 +44,7 @@ public class CAPSiLSearchParameters extends SearchParameters {
 	
 	
 
-	public CAPSiLSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin,
+	public CASiLSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin,
 			MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme, float percolatorThreshold, Integer percolatorVersionNumber,
 			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, int numberOfQuantitativePeaks,
 			int minNumOfQuantitativePeaks, PeptideModification modification, ScoringBreadthType searchType, float getNumberOfExtraDecoyLibrariesSearched) {
@@ -53,7 +53,7 @@ public class CAPSiLSearchParameters extends SearchParameters {
 				Optional.of(modification), searchType, getNumberOfExtraDecoyLibrariesSearched);
 	}
 
-	public static CAPSiLSearchParameters convertFromEncyclopeDIA(SearchParameters params) {
+	public static CASiLSearchParameters convertFromEncyclopeDIA(SearchParameters params) {
 		PeptideModification mod;
 		if (params.getLocalizingModification().isPresent()) {
 			mod=params.getLocalizingModification().get();
@@ -61,7 +61,7 @@ public class CAPSiLSearchParameters extends SearchParameters {
 			Logger.logLine("You should specify a localization modification if you're going to apply localization! Using phosphorylation by default.");
 			mod=PeptideModification.phosphorylation;
 		}
-		return new CAPSiLSearchParameters(params.getAAConstants(), params.getFragType(), params.getPrecursorTolerance(), params.getPrecursorOffsetPPM(), params.getPrecursorIsolationMargin(),
+		return new CASiLSearchParameters(params.getAAConstants(), params.getFragType(), params.getPrecursorTolerance(), params.getPrecursorOffsetPPM(), params.getPrecursorIsolationMargin(),
 				params.getFragmentTolerance(), params.getFragmentOffsetPPM(), params.getLibraryFragmentTolerance(), params.getEnzyme(), params.getPercolatorThreshold(),
 				params.getPercolatorVersionNumber(), params.getDataAcquisitionType(), params.getNumberOfThreadsUsed(), params.getExpectedPeakWidth(), params.getTargetWindowCenter(),
 				params.getPrecursorWindowSize(), params.getNumberOfQuantitativePeaks(), params.getMinNumOfQuantitativePeaks(), mod, params.getScoringBreadthType(),

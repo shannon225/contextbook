@@ -24,9 +24,9 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJob
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CAPSiLSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
@@ -50,7 +50,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassErrorUnitType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
-public class CAPSiLParametersPanel extends JPanel implements ParametersPanelInterface {
+public class CASiLParametersPanel extends JPanel implements ParametersPanelInterface {
 	
 	private static final long serialVersionUID=1L;
 	private static final int numberOfCores=Runtime.getRuntime().availableProcessors();
@@ -86,7 +86,7 @@ public class CAPSiLParametersPanel extends JPanel implements ParametersPanelInte
 			TOLERANCE_VALUES[11].toString(), //11
 	};
 	
-	public static final ScoringBreadthType[] CAPSIL_SEARCH_TYPES=new ScoringBreadthType[] {
+	public static final ScoringBreadthType[] CASiL_SEARCH_TYPES=new ScoringBreadthType[] {
 			ScoringBreadthType.ENTIRE_RT_WINDOW,
 			ScoringBreadthType.RECALIBRATED_20_PERCENT,
 			ScoringBreadthType.RECALIBRATED_PEAK_WIDTH,
@@ -94,12 +94,12 @@ public class CAPSiLParametersPanel extends JPanel implements ParametersPanelInte
 			ScoringBreadthType.UNCALIBRATED_PEAK_WIDTH
 	};
 	
-	private static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/capsil_small_icon.png"));
-	private static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/capsil_icon.png"));
-	private static final String programName="CAPSiL";
-	private static final String programShortDescription="Chromatogram Aligned Phospho-Site Localizing Library Search";
-	private static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">CAPSiL: Phospho-Site Localizing Library Searching Directly from Data-Independent Acquisition (DIA) MS/MS Data<br></p></b>"
-			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">CAPSiL extracts peptide fragmentation chromatograms from MZML files, matches them to spectra in libraries, and calculates various scoring features. Matches are localized and alternate positional isomers are explored. These isomers are interpreted by Percolator to identify phosphorylated peptides.";
+	private static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/CAPSiL_small_icon.png"));
+	private static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/CAPSiL_icon.png"));
+	private static final String programName="CASiL";
+	private static final String programShortDescription="Chromatogram Aligned Site Localizing Search Engine";
+	private static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">CASiL: Chromatogram Aligned Site Localizing Search Engine for Data-Independent Acquisition (DIA) MS/MS Data<br></p></b>"
+			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">CASiL extracts peptide fragmentation chromatograms from MZML files, matches them to spectra in libraries, and calculates various scoring features. Matches are localized and alternate positional isomers are explored. These isomers are interpreted by Percolator to identify site-specific peptides.";
 	
 	private final FileChooserPanel libraryFileChooser;
 	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {DataAcquisitionType.toName(DataAcquisitionType.OVERLAPPING_DIA), DataAcquisitionType.toName(DataAcquisitionType.DIA), DataAcquisitionType.toName(DataAcquisitionType.DDA)});
@@ -113,13 +113,13 @@ public class CAPSiLParametersPanel extends JPanel implements ParametersPanelInte
 	private final JComboBox<String> fragmentTolerance=new JComboBox<String>(TOLERANCE_NAMES);
 	private final JComboBox<String> libraryTolerance=new JComboBox<String>(TOLERANCE_NAMES);
 	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
-	private final JComboBox<ScoringBreadthType> searchBreadthType=new JComboBox<>(CAPSIL_SEARCH_TYPES);
+	private final JComboBox<ScoringBreadthType> searchBreadthType=new JComboBox<>(CASiL_SEARCH_TYPES);
 	private final JComboBox<PeptideModification> modificationType=new JComboBox<>(PeptideModification.MODIFICATIONS);
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
 	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
 
-	public CAPSiLParametersPanel() {
+	public CASiLParametersPanel() {
 		super(new BorderLayout());
 
 		JPanel top=new JPanel(new BorderLayout());
@@ -217,10 +217,10 @@ public class CAPSiLParametersPanel extends JPanel implements ParametersPanelInte
 		
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
 		EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, outputFile, factory);
-		return new CAPSiLJob(processor, job);
+		return new CASiLJob(processor, job);
 	}
 
-	public CAPSiLSearchParameters getParameters() {
+	public CASiLSearchParameters getParameters() {
 		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.getAcquisitionType((String)acquisition.getSelectedItem());
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
@@ -236,13 +236,13 @@ public class CAPSiLParametersPanel extends JPanel implements ParametersPanelInte
 		float targetWindowCenter=-1f;
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
-		ScoringBreadthType capsilSearchBreadthType=(ScoringBreadthType)searchBreadthType.getSelectedItem();
+		ScoringBreadthType CASiLSearchBreadthType=(ScoringBreadthType)searchBreadthType.getSelectedItem();
 		PeptideModification modification=(PeptideModification)modificationType.getSelectedItem();
-		CAPSiLSearchParameters parameters=new CAPSiLSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, 0.01f, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, modification, capsilSearchBreadthType, numberOfExtraDecoyLibrariesValue);
+		CASiLSearchParameters parameters=new CASiLSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, 0.01f, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, modification, CASiLSearchBreadthType, numberOfExtraDecoyLibrariesValue);
 		return parameters;
 	}
 	
-	public void setParameters(CAPSiLSearchParameters params, String libraryFileName) {
+	public void setParameters(CASiLSearchParameters params, String libraryFileName) {
 		if (libraryFileName!=null) {
 			File libraryFile=new File(libraryFileName);
 			if (libraryFile.exists()) libraryFileChooser.update(libraryFile);

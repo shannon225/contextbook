@@ -32,16 +32,16 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
-public class CAPSiL {
+public class CASiL {
 
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
 		if (arguments.size()==0) {
-			SearchGUIMain.runGUI(ProgramType.CAPSiL);
+			SearchGUIMain.runGUI(ProgramType.CASiL);
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
-			Logger.logLine("CAPSiL Help");
-			Logger.timelessLogLine("CAPSiL is a Chromatogram Aligned Phospho-Site Localizing search engine for DIA data.");
+			Logger.logLine("CASiL Help");
+			Logger.timelessLogLine("CASiL is a Chromatogram Aligned Site Localizing search engine for DIA data.");
 			Logger.timelessLogLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.timelessLogLine("Required Parameters: ");
 			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file");
@@ -60,7 +60,7 @@ public class CAPSiL {
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("CAPSiL version "+PhosphoEncyclopediaOneScoringFactory.version);
+			Logger.logLine("CASiL version "+PhosphoEncyclopediaOneScoringFactory.version);
 			System.exit(1);
 			
 		} else {
@@ -94,7 +94,7 @@ public class CAPSiL {
 				PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, parameters.getLocalizingModification().get(), parameters);
 				LibraryScoringFactory factory=new PhosphoEncyclopediaOneScoringFactory(parameters, localizer);
 				
-				Logger.logLine("CAPSiL version "+factory.getVersion());
+				Logger.logLine("CASiL version "+factory.getVersion());
 	
 				Logger.logLine("Parameters:");
 				Logger.logLine(" "+Encyclopedia.INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());

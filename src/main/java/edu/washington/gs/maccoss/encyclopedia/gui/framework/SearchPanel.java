@@ -41,7 +41,7 @@ import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.Pecanpie;
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CAPSiLSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCordiaSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
@@ -55,7 +55,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.dia.FeatureGrapher;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.MultiResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.PeptideExtractingBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
-import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.CAPSiLParametersPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.CASiLParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.LindsaysSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.MoMosSpecialEncyclopediaPanel;
@@ -121,13 +121,13 @@ public class SearchPanel extends JPanel {
 				Logger.errorException(e);
 			}
 		}
-		if (ProgramType.Global==program||ProgramType.CAPSiL==program) {
+		if (ProgramType.Global==program||ProgramType.CASiL==program) {
 			try {
-				CAPSiLParametersPanel capsil=new CAPSiLParametersPanel();
-				HashMap<String, String> map=CAPSiLSearchParameters.readPreferences();
-				CAPSiLSearchParameters xcordiaParameters=CAPSiLSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(map));
-				capsil.setParameters(xcordiaParameters, map.get(Encyclopedia.TARGET_LIBRARY_TAG));
-				optionsTabs.addTab(capsil.getProgramName(), capsil.getSmallImage(), capsil, capsil.getProgramShortDescription());
+				CASiLParametersPanel CASiL=new CASiLParametersPanel();
+				HashMap<String, String> map=CASiLSearchParameters.readPreferences();
+				CASiLSearchParameters xcordiaParameters=CASiLSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(map));
+				CASiL.setParameters(xcordiaParameters, map.get(Encyclopedia.TARGET_LIBRARY_TAG));
+				optionsTabs.addTab(CASiL.getProgramName(), CASiL.getSmallImage(), CASiL, CASiL.getProgramShortDescription());
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
 				Logger.errorException(e);

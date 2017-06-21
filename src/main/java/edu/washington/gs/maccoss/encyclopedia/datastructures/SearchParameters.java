@@ -38,12 +38,12 @@ public class SearchParameters {
 	protected final double fragmentOffsetPPM;
 	protected final double precursorIsolationMargin;
 	protected final boolean useNLsForXCorr=false;
-	protected final ScoringBreadthType capsilBreadthType;
+	protected final ScoringBreadthType CASiLBreadthType;
 	protected final Optional<PeptideModification> localizingModification; 
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, Integer percolatorVersionNumber, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
-			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, Optional<PeptideModification> localizingModification, ScoringBreadthType capsilBreadthType, float getNumberOfExtraDecoyLibrariesSearched) {
+			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -62,7 +62,7 @@ public class SearchParameters {
 		this.precursorWindowSize=precursorWindowSize;
 		this.numberOfQuantitativePeaks=numberOfQuantitativePeaks;
 		this.minNumOfQuantitativePeaks=minNumOfQuantitativePeaks;
-		this.capsilBreadthType=capsilBreadthType;
+		this.CASiLBreadthType=CASiLBreadthType;
 		this.localizingModification=localizingModification;
 		this.numberOfExtraDecoyLibrariesSearched=getNumberOfExtraDecoyLibrariesSearched;
 	}
@@ -232,12 +232,12 @@ public class SearchParameters {
 		return precursorIsolationMargin;
 	}
 	public ScoringBreadthType getScoringBreadthType() {
-		return capsilBreadthType;
+		return CASiLBreadthType;
 	}
 	public Optional<PeptideModification> getLocalizingModification() {
 		return localizingModification;
 	}
 	public boolean applyRTAlignment() {
-		return ScoringBreadthType.ENTIRE_RT_WINDOW==capsilBreadthType;
+		return ScoringBreadthType.ENTIRE_RT_WINDOW==CASiLBreadthType;
 	}
 }
