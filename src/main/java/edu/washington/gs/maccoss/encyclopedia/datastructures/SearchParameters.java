@@ -111,6 +111,12 @@ public class SearchParameters {
 		if (useTargetWindowCenter()) {
 			sb.append(" -targetWindowCenter "+targetWindowCenter+"\n");
 		}
+		sb.append(" -scoringBreadthType "+getScoringBreadthType().toString()+"\n");
+		if (localizingModification.isPresent()) {
+			sb.append(" -localizationModification "+localizingModification.get().getShortname()+"\n");
+		} else {
+			sb.append(" -localizationModification "+PeptideModification.NO_MODIFICATION_NAME+"\n");
+		}
 		return sb.toString();
 	}
 	
@@ -134,6 +140,12 @@ public class SearchParameters {
 		map.put("-minNumOfQuantitativePeaks", minNumOfQuantitativePeaks+"");
 		map.put("-getNumberOfExtraDecoyLibrariesSearched", numberOfExtraDecoyLibrariesSearched+"");
 		map.put("-targetWindowCenter", targetWindowCenter+"");
+		map.put("-scoringBreadthType", getScoringBreadthType().toString());
+		if (localizingModification.isPresent()) {
+			map.put("-localizationModification", localizingModification.get().getShortname());
+		} else {
+			map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
+		}
 		return map;
 	}
 	

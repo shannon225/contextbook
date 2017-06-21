@@ -57,7 +57,6 @@ public class DIABrowser {
 				});
 				
 				HashMap<String, String> map=SearchParameterParser.getDefaultParameters();
-				map.put("-runPhosphoLocalization", "true");
 				map.put("-deconvoluteOverlappingWindows", "true");
 				map.put("-fixed", "");
 				SearchParameters parameters=SearchParameterParser.parseParameters(map);

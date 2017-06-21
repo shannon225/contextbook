@@ -36,7 +36,7 @@ public class CASiLSearchParameters extends SearchParameters {
 		HashMap<String, String> map=new HashMap<String, String>();
 		for (String key : prefs.keys()) {
 			String value=prefs.get(key, "");
-			//System.out.println("Reading EncyclopeDIA preference "+key+" = "+value);
+			//System.out.println("Reading CASiL preference "+key+" = "+value);
 			map.put(key, value);
 		}
 		return map;

@@ -71,20 +71,6 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 			new MassTolerance(35000.0, MassErrorUnitType.RESOLUTION), //10
 			new MassTolerance(60000.0, MassErrorUnitType.RESOLUTION),//11
 	};
-	public static final String[] TOLERANCE_NAMES=new String[] {
-			TOLERANCE_VALUES[0].toString(), //0
-			TOLERANCE_VALUES[1].toString(), //1
-			TOLERANCE_VALUES[2].toString(), //2
-			TOLERANCE_VALUES[3].toString(), //3
-			TOLERANCE_VALUES[4].toString(), //4
-			TOLERANCE_VALUES[5].toString(), //5
-			TOLERANCE_VALUES[6].toString(), //6
-			TOLERANCE_VALUES[7].toString(), //7
-			TOLERANCE_VALUES[8].toString(), //8
-			TOLERANCE_VALUES[9].toString(), //9
-			TOLERANCE_VALUES[10].toString(), //10
-			TOLERANCE_VALUES[11].toString(), //11
-	};
 	
 	public static final ScoringBreadthType[] CASiL_SEARCH_TYPES=new ScoringBreadthType[] {
 			ScoringBreadthType.ENTIRE_RT_WINDOW,
@@ -109,9 +95,9 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance()); // not displayed anymore
 
-	private final JComboBox<String> precursorTolerance=new JComboBox<String>(TOLERANCE_NAMES);
-	private final JComboBox<String> fragmentTolerance=new JComboBox<String>(TOLERANCE_NAMES);
-	private final JComboBox<String> libraryTolerance=new JComboBox<String>(TOLERANCE_NAMES);
+	private final JComboBox<MassTolerance> precursorTolerance=new JComboBox<MassTolerance>(TOLERANCE_VALUES);
+	private final JComboBox<MassTolerance> fragmentTolerance=new JComboBox<MassTolerance>(TOLERANCE_VALUES);
+	private final JComboBox<MassTolerance> libraryTolerance=new JComboBox<MassTolerance>(TOLERANCE_VALUES);
 	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
 	private final JComboBox<ScoringBreadthType> searchBreadthType=new JComboBox<>(CASiL_SEARCH_TYPES);
 	private final JComboBox<PeptideModification> modificationType=new JComboBox<>(PeptideModification.MODIFICATIONS);
@@ -225,9 +211,9 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
-		MassTolerance precursorValue=TOLERANCE_VALUES[precursorTolerance.getSelectedIndex()];
-		MassTolerance fragmentValue=TOLERANCE_VALUES[fragmentTolerance.getSelectedIndex()];
-		MassTolerance libraryFragmentValue=TOLERANCE_VALUES[libraryTolerance.getSelectedIndex()];
+		MassTolerance precursorValue=(MassTolerance)precursorTolerance.getSelectedItem();
+		MassTolerance fragmentValue=(MassTolerance)fragmentTolerance.getSelectedItem();
+		MassTolerance libraryFragmentValue=(MassTolerance)libraryTolerance.getSelectedItem();
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		Number value=(Number)precursorWindowWidth.getValue();
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();

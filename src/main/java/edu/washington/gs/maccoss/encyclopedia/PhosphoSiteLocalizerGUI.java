@@ -205,7 +205,6 @@ public class PhosphoSiteLocalizerGUI {
 	
 	public static SearchParameters getParameters() {
 		HashMap<String, String> map=SearchParameterParser.getDefaultParameters();
-		map.put("-runPhosphoLocalization", "true");
 		map.put("-deconvoluteOverlappingWindows", "true");
 		map.put("-fixed", "");
 		map.put("-ptol", "50");

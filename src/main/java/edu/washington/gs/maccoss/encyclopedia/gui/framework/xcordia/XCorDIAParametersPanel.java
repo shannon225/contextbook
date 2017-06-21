@@ -70,9 +70,9 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "None"});
 	private final JComboBox<String> variable=new JComboBox<String>(VARIABLE_MODIFICATION_ITEMS);
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.YONLY), FragmentationType.toName(FragmentationType.ETD)});
-	private final JComboBox<String> precursorTolerance=new JComboBox<String>(EncyclopediaParametersPanel.TOLERANCE_NAMES);
-	private final JComboBox<String> fragmentTolerance=new JComboBox<String>(EncyclopediaParametersPanel.TOLERANCE_NAMES);
-	private final JComboBox<String> percolatorVersion=new JComboBox<String>(new String[] {PercolatorExecutor.V3_01, PercolatorExecutor.V2_10});
+
+	private final JComboBox<MassTolerance> precursorTolerance=new JComboBox<MassTolerance>(EncyclopediaParametersPanel.TOLERANCE_VALUES);
+	private final JComboBox<MassTolerance> fragmentTolerance=new JComboBox<MassTolerance>(EncyclopediaParametersPanel.TOLERANCE_VALUES);private final JComboBox<String> percolatorVersion=new JComboBox<String>(new String[] {PercolatorExecutor.V3_01, PercolatorExecutor.V2_10});
 
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance());
 
@@ -215,8 +215,8 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.getAcquisitionType((String)acquisition.getSelectedItem());
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
-		MassTolerance precursorPPMValue=EncyclopediaParametersPanel.TOLERANCE_VALUES[precursorTolerance.getSelectedIndex()];
-		MassTolerance fragmentPPMValue=EncyclopediaParametersPanel.TOLERANCE_VALUES[fragmentTolerance.getSelectedIndex()];
+		MassTolerance precursorPPMValue=(MassTolerance)precursorTolerance.getSelectedItem();
+		MassTolerance fragmentPPMValue=(MassTolerance)fragmentTolerance.getSelectedItem();
 		byte minChargeValue=((Number)minCharge.getValue()).byteValue();
 		byte maxChargeValue=((Number)maxCharge.getValue()).byteValue();
 		byte maxMissedCleavageValue=((Number)maxMissedCleavage.getValue()).byteValue();

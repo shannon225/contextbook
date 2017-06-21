@@ -68,8 +68,8 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance());
 
-	private final JComboBox<String> precursorTolerance=new JComboBox<String>(EncyclopediaParametersPanel.TOLERANCE_NAMES);
-	private final JComboBox<String> fragmentTolerance=new JComboBox<String>(EncyclopediaParametersPanel.TOLERANCE_NAMES);
+	private final JComboBox<MassTolerance> precursorTolerance=new JComboBox<MassTolerance>(EncyclopediaParametersPanel.TOLERANCE_VALUES);
+	private final JComboBox<MassTolerance> fragmentTolerance=new JComboBox<MassTolerance>(EncyclopediaParametersPanel.TOLERANCE_VALUES);
 
 	private final SpinnerModel minCharge=new SpinnerNumberModel(2, 1, 2, 1);
 	private final SpinnerModel maxCharge=new SpinnerNumberModel(3, 2, 4, 1);
@@ -192,8 +192,8 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem(), new ModificationMassMap());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
-		MassTolerance precursorPPMValue=EncyclopediaParametersPanel.TOLERANCE_VALUES[precursorTolerance.getSelectedIndex()];
-		MassTolerance fragmentPPMValue=EncyclopediaParametersPanel.TOLERANCE_VALUES[fragmentTolerance.getSelectedIndex()];
+		MassTolerance precursorPPMValue=(MassTolerance)precursorTolerance.getSelectedItem();
+		MassTolerance fragmentPPMValue=(MassTolerance)fragmentTolerance.getSelectedItem();
 		byte minChargeValue=((Number)minCharge.getValue()).byteValue();
 		byte maxChargeValue=((Number)maxCharge.getValue()).byteValue();
 		byte maxMissedCleavageValue=((Number)maxMissedCleavage.getValue()).byteValue();

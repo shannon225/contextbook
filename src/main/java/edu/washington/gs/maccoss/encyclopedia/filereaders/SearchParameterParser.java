@@ -43,6 +43,7 @@ public class SearchParameterParser {
 		map.put("-expectedPeakWidth", "25");
 		map.put("-acquisition", "overlappingDIA");
 		map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
+		map.put("-scoringBreadthType", ScoringBreadthType.ENTIRE_RT_WINDOW.toString());
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
 		map.put("-numberOfQuantitativePeaks", "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
@@ -237,7 +238,7 @@ public class SearchParameterParser {
 		
 		value=parameters.get("-localizationModification");
 		if (value!=null) {
-			localizationModification=Optional.of(PeptideModification.getModification(value));
+			localizationModification=Optional.ofNullable(PeptideModification.getModification(value));
 		} else {
 			localizationModification=Optional.empty();
 		}
