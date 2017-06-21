@@ -43,7 +43,7 @@ public class SearchParameterParser {
 		map.put("-expectedPeakWidth", "25");
 		map.put("-acquisition", "overlappingDIA");
 		map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
-		map.put("-scoringBreadthType", ScoringBreadthType.ENTIRE_RT_WINDOW.toString());
+		map.put("-scoringBreadthType", ScoringBreadthType.ENTIRE_RT_WINDOW.toShortname());
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
 		map.put("-numberOfQuantitativePeaks", "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
@@ -103,6 +103,7 @@ public class SearchParameterParser {
 		final float numberOfExtraDecoyLibrariesSearched;
 		final int percolatorVersionNumber;
 		final Optional<PeptideModification> localizationModification;
+		final ScoringBreadthType breadthType;
 		
 		String value=parameters.get("-frag");
 		if (value==null) {
@@ -243,6 +244,13 @@ public class SearchParameterParser {
 			localizationModification=Optional.empty();
 		}
 		
+		value=parameters.get("-scoringBreadthType");
+		if (value!=null) {
+			breadthType=ScoringBreadthType.getType(value);
+		} else {
+			breadthType=ScoringBreadthType.ENTIRE_RT_WINDOW;
+		}
+		
 		float tempNumberOfExtraDecoyLibrariesSearched=SearchParameterParser.getFloat("-numberOfExtraDecoyLibrariesSearched", parameters, 0.0f);
 		if (tempNumberOfExtraDecoyLibrariesSearched<0.0f) {
 			Logger.errorLine("-numberOfExtraDecoyLibrariesSearched cannot be less than 0%! Using 0% extra decoys.");
@@ -252,7 +260,7 @@ public class SearchParameterParser {
 		}
 		
 		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
-				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, localizationModification, ScoringBreadthType.ENTIRE_RT_WINDOW, numberOfExtraDecoyLibrariesSearched);
+				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, localizationModification, breadthType, numberOfExtraDecoyLibrariesSearched);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+
 public enum ScoringBreadthType {
 	ENTIRE_RT_WINDOW, RECALIBRATED_20_PERCENT, RECALIBRATED_PEAK_WIDTH, UNCALIBRATED_20_PERCENT, UNCALIBRATED_PEAK_WIDTH;
 	
@@ -15,6 +17,31 @@ public enum ScoringBreadthType {
 			return "Uncalibrated (20% gradient)";
 		case UNCALIBRATED_PEAK_WIDTH:
 			return "Uncalibrated (peak width only)";
+		}
+		return "Unknown";
+	};
+	
+	public static ScoringBreadthType getType(String s) {
+		for (ScoringBreadthType type : ScoringBreadthType.values()) {
+			if (type.toShortname().equalsIgnoreCase(s)) {
+				return type;
+			}
+		}
+		throw new EncyclopediaException("Unexpected scoring breadth type ["+s+"]");
+	}
+
+	public String toShortname() {
+		switch (this) {
+		case ENTIRE_RT_WINDOW:
+			return "window";
+		case RECALIBRATED_20_PERCENT:
+			return "recal20";
+		case RECALIBRATED_PEAK_WIDTH:
+			return "recal";
+		case UNCALIBRATED_20_PERCENT:
+			return "uncal20";
+		case UNCALIBRATED_PEAK_WIDTH:
+			return "uncal";
 		}
 		return "Unknown";
 	};
