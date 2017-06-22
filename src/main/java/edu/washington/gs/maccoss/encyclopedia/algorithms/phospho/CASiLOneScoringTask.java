@@ -77,13 +77,11 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 					primary[i]=eScorer.score(seedEntry, stripe, allIons);
 				}
 				
-				float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
-
 				float bestScore=-Float.MAX_VALUE;
 				Spectrum bestStripe=null;
-				for (int i=0; i<averagePrimary.length; i++) {
-					if (bestScore<averagePrimary[i]) {
-						bestScore=averagePrimary[i];
+				for (int i=0; i<primary.length; i++) {
+					if (bestScore<primary[i]) {
+						bestScore=primary[i];
 						bestStripe=super.stripes.get(i);
 					}
 				}

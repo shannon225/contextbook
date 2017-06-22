@@ -51,12 +51,12 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 				primary[i]=eScorer.score(entry, stripe, ions);
 			}
 			
-			float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
+			//float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
 
 			TFloatFloatHashMap map=new TFloatFloatHashMap();
 			ArrayList<ScoredIndex> goodStripes=new ArrayList<ScoredIndex>();
-			for (int i=0; i<averagePrimary.length; i++) {
-				goodStripes.add(new ScoredIndex(averagePrimary[i], i));
+			for (int i=0; i<primary.length; i++) {
+				goodStripes.add(new ScoredIndex(primary[i], i));
 				map.put(i, primary[i]);
 			}
 			Collections.sort(goodStripes);
