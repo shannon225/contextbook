@@ -29,6 +29,22 @@ public enum ScoringBreadthType {
 		}
 		throw new EncyclopediaException("Unexpected scoring breadth type ["+s+"]");
 	}
+	
+	public boolean runRecalibration() {
+		switch (this) {
+		case ENTIRE_RT_WINDOW:
+			return true;
+		case RECALIBRATED_20_PERCENT:
+			return true;
+		case RECALIBRATED_PEAK_WIDTH:
+			return true;
+		case UNCALIBRATED_20_PERCENT:
+			return false;
+		case UNCALIBRATED_PEAK_WIDTH:
+			return false;
+		}
+		return true;
+	}
 
 	public String toShortname() {
 		switch (this) {

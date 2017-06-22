@@ -319,6 +319,10 @@ public class Encyclopedia {
 			passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), job.getFeatureFile(), percolatorResultFile, parameters.getEffectivePercolatorThreshold());
 			Logger.logLine("First pass: "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
 			
+			if (!parameters.getScoringBreadthType().runRecalibration()) {
+				return passingPeptides;
+			}
+			
 			ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
 			RetentionTimeFilter filter=getRescoringModel(passingPeptides, data, job);
 			
