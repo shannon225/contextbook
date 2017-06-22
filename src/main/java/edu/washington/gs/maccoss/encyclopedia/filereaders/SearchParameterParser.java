@@ -246,7 +246,14 @@ public class SearchParameterParser {
 		
 		value=parameters.get("-scoringBreadthType");
 		if (value!=null) {
-			breadthType=ScoringBreadthType.getType(value);
+			ScoringBreadthType type;
+			try {
+				type=ScoringBreadthType.getType(value);
+			} catch (Exception e) {
+				Logger.errorLine("Falling back to scoring breadth type: "+ScoringBreadthType.ENTIRE_RT_WINDOW.toShortname());
+				type=ScoringBreadthType.ENTIRE_RT_WINDOW;
+			}
+			breadthType=type;
 		} else {
 			breadthType=ScoringBreadthType.ENTIRE_RT_WINDOW;
 		}
