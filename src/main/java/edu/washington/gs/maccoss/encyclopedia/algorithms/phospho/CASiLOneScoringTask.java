@@ -134,9 +134,10 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 				}
 				FragmentIon[] leftTargets=PhosphoLocalizer.getUniqueFragmentIons(leftAmbiguity.getPeptideModSeq(), seedEntry.getPrecursorCharge(), modelBatch, parameters);
 				batch.add(new Pair<AmbiguousPeptideModSeq, FragmentIon[]>(leftAmbiguity, leftTargets));
+				//System.out.println("ADDING LEFT: "+leftAmbiguity.getPeptideAnnotation()+" "+leftIndex+" - "+rightIndex); //FIXME
 				leftIndex++;
 				
-				if (leftIndex<rightIndex) {
+				if (leftIndex<=rightIndex) {
 					AmbiguousPeptideModSeq rightAmbiguity=AmbiguousPeptideModSeq.getRightAmbiguity(peptideModSeqs.get(rightIndex), localizingModification, parameters.getAAConstants());
 					modelBatch=new HashMap<String, FragmentationModel>();
 					// shrink the number of unique ions subtractors to the pool of remaining sequences to the left
@@ -146,12 +147,15 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 					}
 					FragmentIon[] rightTargets=PhosphoLocalizer.getUniqueFragmentIons(rightAmbiguity.getPeptideModSeq(), seedEntry.getPrecursorCharge(), modelBatch, parameters);
 					batch.add(new Pair<AmbiguousPeptideModSeq, FragmentIon[]>(rightAmbiguity, rightTargets));
+					//System.out.println("ADDING RIGHT: "+rightAmbiguity.getPeptideAnnotation()+" "+leftIndex+" - "+rightIndex); //FIXME
 					rightIndex--;
 				}
 								
 				for (Pair<AmbiguousPeptideModSeq, FragmentIon[]> pair : batch) {
 					AmbiguousPeptideModSeq peptideModSeq=pair.x;
 					FragmentIon[] targetIons=pair.y;
+					
+					//System.out.println(peptideModSeq.getPeptideAnnotation()+" "+leftIndex+" - "+rightIndex); //FIXME
 
 					// it's ok that we don't update the targetIons based on previously IDed, for example:
 					// if we know we've seen: (S[+80])SSSSK

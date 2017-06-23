@@ -421,7 +421,10 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					pepIndex=prepareLocalizationData(pair.x, pair.y, inferrer, peptidePrep, pepIndex);
 				}
 			}
-			peptidePrep.execute();
+			
+			if (pepIndex>1) {
+				peptidePrep.execute();
+			}
 		} finally {
 			peptidePrep.close();
 		}
@@ -1028,7 +1031,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq, SourceFile) )");
 
 				s.execute("CREATE TABLE IF NOT EXISTS peptidelocalizations ( "
-						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, LocalizationIons string, NumberOfMods int, IsSiteSpecific boolean, RTInSecondsCenter double not null, LocalizedIntensity double not null, TotalIntensity double not null "
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, LocalizationIons string, NumberOfMods int, IsSiteSpecific boolean, RTInSecondsCenter double, LocalizedIntensity double, TotalIntensity double "
 						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq, SourceFile) )");
 
 				s.execute("CREATE TABLE IF NOT EXISTS fragmentquants ( "

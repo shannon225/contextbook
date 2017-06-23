@@ -9,8 +9,11 @@ import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.jfree.chart.ChartPanel;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -27,6 +30,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
@@ -36,14 +40,19 @@ public class PhosphoLocalizerExample {
 
 	@SuppressWarnings("unused")
 	public static void main(String[] args) throws Exception {
-		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
-		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/20170430_HeLa_phosp_DIA_B_01_170506220515.dia");
-		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/22jun2016_mcf7_phospho_1b.dia");
+		//File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/22jun2016_mcf7_phospho_1b.dia");
+		
+		File libraryFile=new File("/Users/searleb/Documents/phospho_localization/data/VillenJ_Exactive_HumanPhosphoproteome.elib");
+		File diaFile=new File("/Users/searleb/Documents/phospho_localization/data/hela/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
 
 		LibraryFile library=new LibraryFile();
 		library.openFile(libraryFile);
 		
-		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		HashMap<String, String> defaults=SearchParameterParser.getDefaultParameters();
+		defaults.put("-localizationModification", "Phosphorylation");
+		
+		SearchParameters parameters=SearchParameterParser.parseParameters(defaults);
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 		UnitBackgroundFrequencyCalculator background=new UnitBackgroundFrequencyCalculator(0.01f);
 		float duration=stripefile.getGradientLength()/20.0f;
@@ -54,18 +63,26 @@ public class PhosphoLocalizerExample {
 		float retentionTime;
 		byte precursorCharge;
 		if (false) {
+			peptideModSeq="KGAGDGS[+80.0]DEEVDGKADGAEAKPAE";
+			retentionTime=2607.104f;
+			precursorCharge=4;
+		} else if (true) {
+			peptideModSeq="NGHDGDTHQEDDGEKS[+80.0]D";
+			retentionTime=1495.3553f;
+			precursorCharge=3;
+		} else if (false) {
 			peptideModSeq="NTPSQHSHSIQHS[+80.0]PER";
 			retentionTime=1256.3296f;
 			precursorCharge=4;
-		} else if (true) {
+		} else if (false) {
 			peptideModSeq="KGS[+80.0]GDYMPMSPK";
 			retentionTime=2949.1633f;
 			precursorCharge=2;
-		} else if (true) {
+		} else if (false) {
 			peptideModSeq="KGSGDYMPMS[+80.0]PK";
 			retentionTime=2949.1633f;
 			precursorCharge=2;
-		} else if (true) {
+		} else if (false) {
 			peptideModSeq="NTPS[+80.0]QHSHSIQHSPER";
 			retentionTime=1256.3296f;
 			precursorCharge=3;
@@ -81,7 +98,7 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="IDDRDS[+80.0]DEEGASDR";
 			retentionTime=1606f;
 			precursorCharge=2;
-		} else if (true) {
+		} else if (false) {
 			peptideModSeq="RAGDLLEDS[+80.0]PKRPK";
 			retentionTime=36*60f;
 			precursorCharge=3;
@@ -92,17 +109,31 @@ public class PhosphoLocalizerExample {
 		
 		ArrayList<Stripe> stripes=stripefile.getStripes(precursorMz, 0, Float.MAX_VALUE, false);
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptideModSeq, PeptideModification.phosphorylation, parameters.getAAConstants());
-		PhosphoLocalizationData phosphoData=localizer.extractPhosphoFormsFromStripes(peptideModSeq, precursorMz, precursorCharge, permutations, retentionTime, stripes, true);
+		PhosphoLocalizationData actuallyPhosphoData=localizer.extractPhosphoFormsFromStripes(peptideModSeq, precursorMz, precursorCharge, permutations, retentionTime, stripes, true);
 
 		System.out.println("Just off of localization ions");
-		ArrayList<String> keys=new ArrayList<String>(phosphoData.getPassingForms().keySet());
+		ArrayList<String> keys=new ArrayList<String>(actuallyPhosphoData.getPassingForms().keySet());
 		for (String sequenceKey : keys) {
 
-			XYPoint point=phosphoData.getLocalizationScores().get(sequenceKey);
+			XYPoint point=actuallyPhosphoData.getLocalizationScores().get(sequenceKey);
 			float rt=(float)point.x;
 			float localizationScore=(float)point.y;
 			
-			System.out.println(sequenceKey+"\t"+phosphoData.getPassingForms().get(sequenceKey).getApexRT()+"\t"+rt+"\t"+localizationScore);
+			TransitionRefinementData data=actuallyPhosphoData.getPassingForms().get(sequenceKey);
+			System.out.println(sequenceKey+"\t"+data.getApexRT()+"\t"+rt+"\t"+localizationScore);
+			
+			HashMap<String, HashMap<FragmentIon, XYTrace>> uniqueFragmentIons=actuallyPhosphoData.getUniqueFragmentIons();
+			HashMap<String, HashMap<FragmentIon, XYTrace>> otherFragmentIons=actuallyPhosphoData.getOtherFragmentIons();
+			HashMap<FragmentIon, XYTrace> uniqueFragments=uniqueFragmentIons.get(sequenceKey);
+			HashMap<FragmentIon, XYTrace> otherFragments=new HashMap<FragmentIon, XYTrace>(otherFragmentIons.get(sequenceKey));
+
+			HashMap<FragmentIon, XYTrace> allFragments=new HashMap<FragmentIon, XYTrace>();
+			allFragments.putAll(uniqueFragments);
+			allFragments.putAll(otherFragments);
+			ArrayList<XYTrace> uniqueFragmentsList=new ArrayList<XYTrace>(allFragments.values());
+			XYTraceInterface[] fragmentTraces=uniqueFragmentsList.toArray(new XYTrace[uniqueFragmentsList.size()]);
+
+			Charter.launchChart(sequenceKey+" Retention Time (min)", "Intensity", false, new Dimension(1000, 400), fragmentTraces);
 		}
 
 		EncyclopediaOneScorer scorer=new EncyclopediaOneScorer(parameters, background);
@@ -116,7 +147,7 @@ public class PhosphoLocalizerExample {
 			}
 		}
 		
-		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=phosphoData.getScoreTraces();
+		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=actuallyPhosphoData.getScoreTraces();
 		ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
 		for (Entry<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> entry : allVsUniqueList.entrySet()) {
 			String seq=entry.getKey();
@@ -138,6 +169,8 @@ public class PhosphoLocalizerExample {
 			}
 		}
 		float dutyCycle=stripefile.getRanges().get(range);
+
+		System.out.println("Based on all ions");
 		ArrayList<LibraryEntry> entries=new ArrayList<>();
 		entries.add(libentry);
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
@@ -145,7 +178,6 @@ public class PhosphoLocalizerExample {
 		CASiLOneScoringTask task=new CASiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, localizationQueue, parameters);
 		task.call();
 
-		System.out.println("Based on all ions");
 		int index=0;
 		while (!resultsQueue.isEmpty()) {
 			if (!resultsQueue.isEmpty()) {
@@ -155,6 +187,15 @@ public class PhosphoLocalizerExample {
 				for (Pair<ScoredObject<Stripe>, float[]> pair : data) {
 					System.out.println(index+") "+result.getEntry().getPeptideModSeq()+"\t"+pair.x.x+"\t"+pair.x.y.getScanStartTime());
 				}
+			} else {
+				Thread.sleep(10);
+			}
+		}
+		
+		while(!localizationQueue.isEmpty()) {
+			if (!localizationQueue.isEmpty()) {
+				ModificationLocalizationData data=localizationQueue.take();
+				System.out.println(data.getLocalizationPeptideModSeq().getPeptideAnnotation()+" --> "+data.getLocalizationScore()+"\t"+data.getLocalizingIntensity()+"\t"+data.getTotalIntensity());
 			} else {
 				Thread.sleep(10);
 			}
