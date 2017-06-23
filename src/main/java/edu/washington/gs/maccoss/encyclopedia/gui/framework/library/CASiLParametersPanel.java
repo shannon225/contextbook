@@ -24,6 +24,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJob
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
@@ -193,7 +194,7 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 
 	private static HashMap<File, LibraryInterface> libraries=new HashMap<File, LibraryInterface>();
 	static SearchJob getJob(File diaFile, File libraryFile, JobProcessor processor, SearchParameters parameters) {
-		File outputFile=new File(diaFile.getAbsolutePath()+EncyclopediaJobData.OUTPUT_FILE_SUFFIX);
+		File outputFile=new File(diaFile.getAbsolutePath()+CASiLJobData.OUTPUT_FILE_SUFFIX);
 		
 		LibraryInterface library=libraries.get(libraryFile);
 		if (library==null) {
@@ -202,7 +203,7 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 		}
 		
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
-		EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, outputFile, factory);
+		CASiLJobData job=new CASiLJobData(diaFile, library, outputFile, factory);
 		return new CASiLJob(processor, job);
 	}
 

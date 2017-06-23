@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
@@ -140,7 +141,8 @@ public class PhosphoLocalizerExample {
 		ArrayList<LibraryEntry> entries=new ArrayList<>();
 		entries.add(libentry);
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
-		CASiLOneScoringTask task=new CASiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, parameters);
+		BlockingQueue<ModificationLocalizationData> localizationQueue=new LinkedBlockingQueue<ModificationLocalizationData>();
+		CASiLOneScoringTask task=new CASiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, localizationQueue, parameters);
 		task.call();
 
 		System.out.println("Based on all ions");

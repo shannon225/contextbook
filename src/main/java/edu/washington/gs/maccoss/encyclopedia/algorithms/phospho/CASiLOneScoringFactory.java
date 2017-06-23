@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
@@ -21,14 +22,16 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVCon
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
-public class PhosphoEncyclopediaOneScoringFactory implements LibraryScoringFactory {
+public class CASiLOneScoringFactory implements LibraryScoringFactory {
 	public static final String version="0.4.10";
 	private final SearchParameters parameters;
 	private final PhosphoLocalizer localizer;
+	private final BlockingQueue<ModificationLocalizationData> localizationQueue;
 
-	public PhosphoEncyclopediaOneScoringFactory(SearchParameters parameters, PhosphoLocalizer localizer) {
+	public CASiLOneScoringFactory(SearchParameters parameters, PhosphoLocalizer localizer, BlockingQueue<ModificationLocalizationData> localizationQueue) {
 		this.parameters=parameters;
 		this.localizer=localizer;
+		this.localizationQueue=localizationQueue;
 	}
 
 	@Override
@@ -43,7 +46,7 @@ public class PhosphoEncyclopediaOneScoringFactory implements LibraryScoringFacto
 
 	@Override
 	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
-		return new CASiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, parameters);
+		return new CASiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, localizationQueue, parameters);
 	}
 	
 	@Override
@@ -59,5 +62,9 @@ public class PhosphoEncyclopediaOneScoringFactory implements LibraryScoringFacto
 	@Override
 	public String getVersion() {
 		return version;
+	}
+	
+	public BlockingQueue<ModificationLocalizationData> getLocalizationQueue() {
+		return localizationQueue;
 	}
 }

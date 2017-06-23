@@ -42,7 +42,7 @@ public class SearchGUIMain {
 		} else if (ProgramType.CASiL==program) {
 			shortName="CASiL";
 			name="CASiL: Chromatogram Aligned Site Localization";
-			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/CASiL_icon.png"));
+			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/CAPSiL_icon.png"));
 		} else if (ProgramType.XCorDIA==program) {
 			shortName="XCorDIA";
 			name="XCorDIA: Peptide Searching with Cross Correlation";

@@ -25,10 +25,8 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData {
 		this.library=library;
 		this.taskFactory=taskFactory;
 	}
-	
-	
-	
-	private EncyclopediaJobData(File diaFile, File featureFile, File outputFile, SearchParameters parameters, String version, LibraryInterface library, LibraryScoringFactory taskFactory) {
+
+	public EncyclopediaJobData(File diaFile, File featureFile, File outputFile, SearchParameters parameters, String version, LibraryInterface library, LibraryScoringFactory taskFactory) {
 		super(diaFile, featureFile, outputFile, parameters, version);
 		this.library=library;
 		this.taskFactory=taskFactory;

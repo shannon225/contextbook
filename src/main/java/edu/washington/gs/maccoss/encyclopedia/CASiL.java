@@ -4,31 +4,57 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.DataFormatException;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoEncyclopediaOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.SaveResultsConsumer;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.TeeResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.FileLogRecorder;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
@@ -60,7 +86,7 @@ public class CASiL {
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("CASiL version "+PhosphoEncyclopediaOneScoringFactory.version);
+			Logger.logLine("CASiL version "+CASiLOneScoringFactory.version);
 			System.exit(1);
 			
 		} else {
@@ -92,7 +118,7 @@ public class CASiL {
 				Logger.logLine("Setting up localization engne...");
 				StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 				PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, parameters.getLocalizingModification().get(), parameters);
-				LibraryScoringFactory factory=new PhosphoEncyclopediaOneScoringFactory(parameters, localizer);
+				LibraryScoringFactory factory=new CASiLOneScoringFactory(parameters, localizer, new LinkedBlockingQueue<ModificationLocalizationData>());
 				
 				Logger.logLine("CASiL version "+factory.getVersion());
 	
@@ -103,7 +129,7 @@ public class CASiL {
 				Logger.logLine(parameters.toString());
 
 				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
-				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, outputFile, factory);
+				CASiLJobData job=new CASiLJobData(diaFile, library, outputFile, factory);
 				runSearch(new EmptyProgressIndicator(), job);
 			} catch (Exception e) {
 				Logger.errorLine("Encountered Fatal Error!");
@@ -114,16 +140,16 @@ public class CASiL {
 		}
 	}
 
-	public static void runSearch(ProgressIndicator progress, EncyclopediaJobData job) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
-		if (!(job.getTaskFactory() instanceof PhosphoEncyclopediaOneScoringFactory)) {
+	public static void runSearch(ProgressIndicator progress, CASiLJobData job) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+		if (!(job.getTaskFactory() instanceof CASiLOneScoringFactory)) {
 			if (!job.getParameters().getLocalizingModification().isPresent()) {
 				throw new EncyclopediaException("You are required to specify one localization modification ("+PeptideModification.getShortnameList()+")");
 			}
 			
-			Logger.logLine("Setting up localization engne...");
+			Logger.logLine("Setting up localization engine...");
 			StripeFileInterface stripefile=StripeFileGenerator.getFile(job.getDiaFile(), job.getParameters());
 			PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, job.getParameters().getLocalizingModification().get(), job.getParameters());
-			LibraryScoringFactory factory=new PhosphoEncyclopediaOneScoringFactory(job.getParameters(), localizer);
+			LibraryScoringFactory factory=new CASiLOneScoringFactory(job.getParameters(), localizer, new LinkedBlockingQueue<ModificationLocalizationData>());
 			job=job.updateTaskFactory(factory);
 		}
 		
@@ -160,10 +186,141 @@ public class CASiL {
 		SearchParameters parameters=job.getParameters();
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 		if (parameters.isDDA()) {
-			EncyclopediaDDA.runSearch(progress, job, stripefile);
+			throw new EncyclopediaException("Sorry, CASiL doesn't work with DDA data!");
 		} else {
-			Encyclopedia.runSearch(progress, job, stripefile);
+			runSearch(progress, job, stripefile);
 		}
 		stripefile.close();
+	}
+	
+	public static void runSearch(ProgressIndicator progress, CASiLJobData job, StripeFileInterface stripefile) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+		long startTime=System.currentTimeMillis();
+		if (!(job.getTaskFactory() instanceof CASiLOneScoringFactory)) {
+			throw new EncyclopediaException("Sorry, CASiL requires it's own task factory!");
+		}
+		CASiLOneScoringFactory taskFactory=(CASiLOneScoringFactory)job.getTaskFactory();
+		BlockingQueue<ModificationLocalizationData> localizationQueue=taskFactory.getLocalizationQueue();
+		
+		SearchParameters parameters=taskFactory.getParameters();
+		LibraryInterface library=job.getLibrary();
+		File featureFile=job.getFeatureFile();
+		File localizationFile=new File(job.getOutputFile()+".localizations.txt");
+		
+		int cores=parameters.getNumberOfThreadsUsed();
+	
+		Logger.logLine("Processing precursors scans...");
+		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
+	
+		// get targeted ranges
+		ArrayList<Range> ranges=new ArrayList<Range>();
+		for (Range range : stripefile.getRanges().keySet()) {
+			if (!parameters.useTargetWindowCenter()||range.contains(parameters.getTargetWindowCenter())) {
+				ranges.add(range);
+			}
+		}
+		Collections.sort(ranges);
+	
+		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>(), stripefile.getFile());
+		SaveResultsConsumer saveResultsConsumer=new SaveResultsConsumer(new LinkedBlockingQueue<PeptideScoringResult>());
+		
+		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
+		TeeResultsConsumer teeConsumer=new TeeResultsConsumer(resultsQueue, writeResultsConsumer, saveResultsConsumer);
+		LocalizationDataToTSVConsumer localizationConsumer=new LocalizationDataToTSVConsumer(localizationFile, localizationQueue);
+		Thread consumer1Thread=new Thread(teeConsumer);
+		Thread consumer2Thread=new Thread(writeResultsConsumer);
+		Thread consumer3Thread=new Thread(saveResultsConsumer);
+		Thread consumer4Thread=new Thread(localizationConsumer);
+		consumer1Thread.start();
+		consumer2Thread.start();
+		consumer3Thread.start();
+		consumer4Thread.start();
+	
+		// get stripes
+		int rangesFinished=0;
+		float numberOfTasks=2.0f+ranges.size();
+		for (Range range : ranges) {
+			String baseMessage="Working on "+range+" m/z";
+			float baseIncrement=1.0f/numberOfTasks;
+			float baseProgress=(1.0f+rangesFinished)/numberOfTasks;
+			progress.update(baseMessage, baseProgress);
+			
+			float dutyCycle=stripefile.getRanges().get(range);
+			Logger.logLine("Processing "+range+" m/z, ("+dutyCycle+" second duty cycle)");
+			
+			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+			Collections.sort(stripes);
+	
+			// prepare executor for background
+			ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("STRIPE_"+range.getStart()+"to"+range.getStop()+"-%d").setDaemon(true).build();
+			LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
+			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
+	
+			int count=0;
+			ArrayList<LibraryEntry> entries=library.getEntries(range, true);
+			LibraryBackgroundInterface background=new LibraryBackground(entries);
+			PSMScorer scorer=taskFactory.getLibraryScorer(background);
+			
+			for (LibraryEntry entry : entries) {
+				count++;
+				ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
+				tasks.add(entry);
+				tasks.add(entry.getDecoy(parameters));
+				
+				float extraDecoys=parameters.getNumberOfExtraDecoyLibrariesSearched();
+				while (extraDecoys>0.0f) {
+					if (extraDecoys<1.0f) {
+						// check percentage
+						float test=RandomGenerator.random(count);
+						if (test>extraDecoys) {
+							break;
+						}
+					}
+					extraDecoys=extraDecoys-1.0f;
+					LibraryEntry shuffle=entry.getShuffle(parameters, Float.hashCode(extraDecoys), false);
+					tasks.add(shuffle);
+					tasks.add(shuffle.getDecoy(parameters));
+				}
+				
+				executor.submit(taskFactory.getScoringTask(scorer, tasks, stripes, dutyCycle, precursors, resultsQueue));
+			}
+			
+			executor.shutdown();
+			while (!executor.isTerminated()) {
+				Logger.logLine(workQueue.size()+" peptides remaining for "+range+"...");
+				float finishedFraction=(count-workQueue.size())/(float)count;
+				progress.update(baseMessage, baseProgress+baseIncrement*(0.2f+finishedFraction*0.8f));
+				Thread.sleep(500);
+			}
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+			
+			rangesFinished++;
+		}
+		resultsQueue.put(PeptideScoringResult.POISON_RESULT);
+		localizationQueue.put(ModificationLocalizationData.POISON_RESULT);
+	
+		consumer1Thread.join();
+		consumer2Thread.join();
+		consumer3Thread.join();
+		consumer4Thread.join();
+		teeConsumer.close();
+		progress.update("Organizing results", (1.0f+rangesFinished)/numberOfTasks);
+	
+		Logger.logLine("Running Percolator...");
+		ArrayList<PercolatorPeptide> passingPeptides=Encyclopedia.percolatePeptides(progress, job, stripefile, saveResultsConsumer);
+
+		localizationConsumer.close();
+		
+		Logger.logLine("Writing elib result library...");
+		File elibFile=job.getResultLibrary();
+		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
+		jobs.add(job);
+		SearchToBLIB.convert(progress, jobs, elibFile, false, true);
+	
+		Logger.logLine("Grouping proteins...");
+		ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides);
+		
+		progress.update("Found "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peptides processed, "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
+		Logger.logLine(""); 
 	}
 }
