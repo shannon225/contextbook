@@ -73,7 +73,7 @@ public class CASiL {
 			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file");
 			Logger.timelessLogLine("\t-l\tlibrary .ELIB file");
 			Logger.timelessLogLine("Other Parameters: ");
-			Logger.timelessLogLine("\t-o\toutput report file (default: [input file]"+EncyclopediaJobData.OUTPUT_FILE_SUFFIX+")");
+			Logger.timelessLogLine("\t-o\toutput report file (default: [input file]"+CASiLJobData.OUTPUT_FILE_SUFFIX+")");
 			
 			TreeMap<String, String> defaults=new TreeMap<String, String>(SearchParameterParser.getDefaultParameters());
 			int maxWidth=0;
@@ -102,11 +102,11 @@ public class CASiL {
 			if (arguments.containsKey(Encyclopedia.OUTPUT_RESULT_TAG)) {
 				outputFile=new File(arguments.get(Encyclopedia.OUTPUT_RESULT_TAG));
 			} else {
-				outputFile=new File(diaFile.getAbsolutePath()+EncyclopediaJobData.OUTPUT_FILE_SUFFIX);
+				outputFile=new File(diaFile.getAbsolutePath()+CASiLJobData.OUTPUT_FILE_SUFFIX);
 			}
 
 			try {
-				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+EncyclopediaJobData.LOG_FILE_SUFFIX));
+				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+CASiLJobData.LOG_FILE_SUFFIX));
 				Logger.addRecorder(logRecorder);
 	
 				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
