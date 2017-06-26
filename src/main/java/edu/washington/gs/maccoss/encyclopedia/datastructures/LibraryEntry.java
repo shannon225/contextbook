@@ -83,6 +83,42 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		this.correlationArray=correlationArray;
 	}
 	
+	/**
+	 * only use for testing
+	 * @param rtInSec
+	 * @return
+	 */
+	public LibraryEntry updateRetentionTime(float rtInSec) {
+		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, rtInSec, score, massArray, intensityArray, correlationArray);
+	}
+	/**
+	 * only use for testing
+	 */
+	public String toObjectCreatorString() {
+		StringBuilder sb=new StringBuilder();
+		sb.append("double[] massArray=new double[] {");
+		for (int i=0; i<massArray.length; i++) {
+			if (i>0) sb.append(", ");
+			sb.append(massArray[i]);
+		}
+		sb.append("};");
+		sb.append("float[] intensityArray=new float[] {");
+		for (int i=0; i<intensityArray.length; i++) {
+			if (i>0) sb.append(", ");
+			sb.append(intensityArray[i]+"f");
+		}
+		sb.append("};");
+		sb.append("float[] correlationArray=new float[] {");
+		for (int i=0; i<correlationArray.length; i++) {
+			if (i>0) sb.append(", ");
+			sb.append(correlationArray[i]+"f");
+		}
+		sb.append("};");
+		
+		sb.append("new LibraryEntry(\""+source+"\", new HashSet<String>(), "+spectrumIndex+", "+precursorMZ+", (byte)"+precursorCharge+", \""+peptideModSeq+"\", "+copies+", "+retentionTime+"f, "+score+"f, massArray, intensityArray, correlationArray);");
+		return sb.toString();
+	}
+	
 	@Override
 	public Optional<Color> getColor() {
 		return Optional.ofNullable((Color)null);
@@ -263,9 +299,9 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		HashSet<String> revAcc=new HashSet<String>();
 		for (String accession : accessions) {
 			if (shuffle) {
-				revAcc.add(DECOY_STRING+accession);
-			} else {
 				revAcc.add(SHUFFLE_STRING+accession);
+			} else {
+				revAcc.add(DECOY_STRING+accession);
 			}
 		}
 		
@@ -314,10 +350,10 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 
 		// make sure ion indices line up
 		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
-		for (FragmentIon ion : reverseIons) {
-			FragmentIon alt=forwardMap.get(new IndexedIonType(ion));
-			if (alt!=null) {
-				points.add(new XYPoint(alt.mass, ion.mass));
+		for (FragmentIon reverse : reverseIons) {
+			FragmentIon forward=forwardMap.get(new IndexedIonType(reverse));
+			if (forward!=null) {
+				points.add(new XYPoint(forward.mass, reverse.mass));
 			}
 		}
 

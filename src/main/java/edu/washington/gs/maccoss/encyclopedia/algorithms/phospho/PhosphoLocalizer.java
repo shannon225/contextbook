@@ -31,12 +31,14 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtract
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
+import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class PhosphoLocalizer {
 	private static final float MINIMUM_RT_IN_SEC_TO_SEPARATE_PEAKS=3.0f; // 2 scans worth, need to generalize!
@@ -252,6 +254,7 @@ public class PhosphoLocalizer {
 			}
 			targets=allTargets.toArray(new FragmentIon[allTargets.size()]);
 			double[] ions=FragmentIon.getMasses(targets);
+			//System.out.println("\t"+targetPeptideAnnotation.getPeptideAnnotation()+" --> "+General.toString(ions)); //FIXME
 			
 			float[] frequencies=background.getFrequencies(ions, precursorMZ, params.getFragmentTolerance());
 

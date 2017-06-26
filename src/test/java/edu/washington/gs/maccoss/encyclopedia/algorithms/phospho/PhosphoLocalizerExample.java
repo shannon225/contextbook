@@ -9,8 +9,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.jfree.chart.ChartPanel;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
@@ -40,17 +38,21 @@ public class PhosphoLocalizerExample {
 
 	@SuppressWarnings("unused")
 	public static void main(String[] args) throws Exception {
-		//File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
-		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/22jun2016_mcf7_phospho_1b.dia");
+		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
+		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/22jun2016_mcf7_phospho_1b.dia");
 		
-		File libraryFile=new File("/Users/searleb/Documents/phospho_localization/data/VillenJ_Exactive_HumanPhosphoproteome.elib");
-		File diaFile=new File("/Users/searleb/Documents/phospho_localization/data/hela/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
+		//File libraryFile=new File("/Users/searleb/Documents/phospho_localization/data/VillenJ_Exactive_HumanPhosphoproteome.elib");
+		//File diaFile=new File("/Users/searleb/Documents/phospho_localization/data/hela/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
 
 		LibraryFile library=new LibraryFile();
 		library.openFile(libraryFile);
 		
 		HashMap<String, String> defaults=SearchParameterParser.getDefaultParameters();
 		defaults.put("-localizationModification", "Phosphorylation");
+		defaults.put("-ptol", "16.67");
+		defaults.put("-ftol", "16.67");
+		defaults.put("-lftol", "16.67");
+		defaults.put("-scoringBreadthType", "uncal20");
 		
 		SearchParameters parameters=SearchParameterParser.parseParameters(defaults);
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
@@ -66,7 +68,7 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="KGAGDGS[+80.0]DEEVDGKADGAEAKPAE";
 			retentionTime=2607.104f;
 			precursorCharge=4;
-		} else if (true) {
+		} else if (false) {
 			peptideModSeq="NGHDGDTHQEDDGEKS[+80.0]D";
 			retentionTime=1495.3553f;
 			precursorCharge=3;
@@ -82,7 +84,11 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="KGSGDYMPMS[+80.0]PK";
 			retentionTime=2949.1633f;
 			precursorCharge=2;
-		} else if (false) {
+		} else if (true) {
+			peptideModSeq="NTPSQHSHSIQHS[+80.0]PER";
+			retentionTime=1256.3296f;
+			precursorCharge=3;
+		} else if (true) {
 			peptideModSeq="NTPS[+80.0]QHSHSIQHSPER";
 			retentionTime=1256.3296f;
 			precursorCharge=3;
@@ -98,13 +104,15 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="IDDRDS[+80.0]DEEGASDR";
 			retentionTime=1606f;
 			precursorCharge=2;
-		} else if (false) {
+		} else if (true) {
 			peptideModSeq="RAGDLLEDS[+80.0]PKRPK";
 			retentionTime=36*60f;
 			precursorCharge=3;
 		}
 
 		LibraryEntry libentry=library.getEntries(peptideModSeq, precursorCharge, false).get(0);
+		
+		libentry=libentry.updateRetentionTime(retentionTime);
 		double precursorMz=parameters.getAAConstants().getChargedMass(peptideModSeq, precursorCharge);
 		
 		ArrayList<Stripe> stripes=stripefile.getStripes(precursorMz, 0, Float.MAX_VALUE, false);
@@ -185,7 +193,7 @@ public class PhosphoLocalizerExample {
 				ArrayList<Pair<ScoredObject<Stripe>, float[]>> data=result.getGoodStripes();
 				index++;
 				for (Pair<ScoredObject<Stripe>, float[]> pair : data) {
-					System.out.println(index+") "+result.getEntry().getPeptideModSeq()+"\t"+pair.x.x+"\t"+pair.x.y.getScanStartTime());
+					System.out.println(index+") "+result.getEntry().getPeptideModSeq()+"\t"+pair.x.x+"\t("+((pair.x.y.getScanStartTime())/60f)+" minutes)");
 				}
 			} else {
 				Thread.sleep(10);
@@ -195,7 +203,7 @@ public class PhosphoLocalizerExample {
 		while(!localizationQueue.isEmpty()) {
 			if (!localizationQueue.isEmpty()) {
 				ModificationLocalizationData data=localizationQueue.take();
-				System.out.println(data.getLocalizationPeptideModSeq().getPeptideAnnotation()+" --> "+data.getLocalizationScore()+"\t"+data.getLocalizingIntensity()+"\t"+data.getTotalIntensity());
+				System.out.println(data.getLocalizationPeptideModSeq().getPeptideAnnotation()+" ("+data.isSiteSpecific()+") --> "+data.getLocalizationScore()+"\t"+data.getLocalizingIntensity()+"\t"+data.getTotalIntensity());
 			} else {
 				Thread.sleep(10);
 			}

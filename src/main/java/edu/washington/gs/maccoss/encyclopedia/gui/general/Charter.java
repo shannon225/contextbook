@@ -477,6 +477,7 @@ public class Charter {
 
 			case spectrum:
 				double yThreshold=General.max(y)*0.2;
+				
 				if (trace instanceof AnnotatedLibraryEntry) {
 					AnnotatedLibraryEntry entry=(AnnotatedLibraryEntry)(Spectrum)trace;
 					FragmentIon[] annotations=entry.getIonAnnotations();
@@ -487,7 +488,6 @@ public class Charter {
 							peakSeries.add(x[i], 0);
 							peakSeries.add(x[i], y[i]);
 							dataset.addSeries(peakSeries);
-
 							if (annotations[i]!=null) {
 								renderer.setSeriesStroke(i, IonType.getStroke(annotations[i].type));
 								renderer.setSeriesPaint(i, IonType.getColor(annotations[i].type));
