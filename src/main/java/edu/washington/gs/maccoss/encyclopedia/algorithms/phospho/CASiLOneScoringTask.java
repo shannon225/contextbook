@@ -231,7 +231,10 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 								result.addStripe(score, General.concatenate(auxScoreArray, evalue, data.getLocalizationScore()), apex);
 								resultsQueue.add(result);
 								
-								localizationQueue.add(data);
+								if (!localizedEntry.isDecoy()) {
+									// don't bother logging decoys
+									localizationQueue.add(data);
+								}
 							}
 							
 							// block out a half a peakWidth window
@@ -286,7 +289,6 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 					stripeSubset, Optional.ofNullable((float[]) null));
 			if (quantData!=null) {
 
-				int numIdentificationPeaks=0;
 				float[] intensities=quantData.getIntegrationArray();
 				float[] correlations=quantData.getCorrelationArray();
 				FragmentIon[] consideredIons=quantData.getFragmentMassArray();
@@ -294,7 +296,6 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 				float localizationIntensity=0.0f;
 				for (int i=0; i<correlations.length; i++) {
 					if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
-						numIdentificationPeaks++;
 						wellShapedIons.add(consideredIons[i]);
 						localizationIntensity+=intensities[i];
 					}
@@ -306,7 +307,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 						stripeSubset, Optional.of(medianChromatogram));
 				if (allQuantData!=null) {
 					float totalIntensity=0.0f;
-					numIdentificationPeaks=0;
+					int numIdentificationPeaks=0;
 					intensities=allQuantData.getIntegrationArray();
 					correlations=allQuantData.getCorrelationArray();
 					for (int i=0; i<correlations.length; i++) {
@@ -315,11 +316,14 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 							totalIntensity+=intensities[i];
 						}
 					}
-					wasLocalized=numIdentificationPeaks>=targetNumFragments&&AmbiguousPeptideModSeq.isLocalized(peptideModSeq, localizer.getModification());
+					wasLocalized=wellShapedIons.size()>0&&numIdentificationPeaks>=targetNumFragments&&AmbiguousPeptideModSeq.isLocalized(peptideModSeq, localizer.getModification());
 					//System.out.println("\tLocalized "+wasLocalized+" for "+peptideModSeq.getPeptideAnnotation()+" ("+bestLocalizationScore+" score, "+numIdentificationPeaks+"/"+correlations.length+" peaks)"); // FIXME
 
-					int numberOfMods=PeptideUtils.getNumberOfMods(peptideModSeq.getPeptideModSeq(), localizer.getModification().getNominalMass());
-					return Optional.of(new Pair<ModificationLocalizationData, Stripe>(new ModificationLocalizationData(peptideModSeq, apex.getScanStartTime(), bestLocalizationScore, numberOfMods, wasLocalized, wellShapedIons.toArray(new FragmentIon[wellShapedIons.size()]), localizationIntensity, totalIntensity), apex));
+					if (wasLocalized) {
+						int numberOfMods=PeptideUtils.getNumberOfMods(peptideModSeq.getPeptideModSeq(), localizer.getModification().getNominalMass());
+						ModificationLocalizationData modData=new ModificationLocalizationData(peptideModSeq, apex.getScanStartTime(), bestLocalizationScore, numberOfMods, wasLocalized, wellShapedIons.toArray(new FragmentIon[wellShapedIons.size()]), localizationIntensity, totalIntensity);
+						return Optional.of(new Pair<ModificationLocalizationData, Stripe>(modData, apex));
+					}
 				}
 			}
 		}

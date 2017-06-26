@@ -4,13 +4,24 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 
 public class LocalizationDataToTSVConsumer implements Runnable {
@@ -30,6 +41,63 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 		} catch (UnsupportedEncodingException e) {
 			throw new EncyclopediaException("Error setting up output file: "+outputFile.getAbsolutePath(), e);
 		}
+	}
+	
+	public static HashMap<String, ModificationLocalizationData> readLocalizationFile(File f, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters parameters) {
+		HashSet<String> passingPeptideModSeqs=new HashSet<>();
+		for (PercolatorPeptide peptide : passingPeptides) {
+			passingPeptideModSeqs.add(peptide.getPeptideModSeq());
+		}
+
+		final PeptideModification modification=parameters.getLocalizingModification().get();
+		final AminoAcidConstants aaConstants=parameters.getAAConstants();
+		final HashMap<String, ModificationLocalizationData> result=new HashMap<String, ModificationLocalizationData>();
+		TableParserMuscle muscle=new TableParserMuscle() {
+			@Override
+			public void processRow(Map<String, String> row) {
+				String peptideModSeq=row.get("peptideModSeq");
+				if (passingPeptideModSeqs.contains(peptideModSeq)) {
+					float localizationScore=Float.parseFloat(row.get("localizationScore"));
+					ModificationLocalizationData prev=result.get(peptideModSeq);
+					
+					if (prev==null||prev.getLocalizationScore()<localizationScore) {
+						try {
+							AmbiguousPeptideModSeq localizationPeptideModSeq=AmbiguousPeptideModSeq.getUnambigous(peptideModSeq, modification, aaConstants);
+							float retentionTimeApexInSeconds=Float.parseFloat(row.get("retentionTimeApexInSeconds"));
+							int numberOfMods=Integer.parseInt(row.get("numberOfMods"));
+							boolean isSiteSpecific=Boolean.parseBoolean(row.get("isSiteSpecific"));
+							FragmentIon[] localizingIons=FragmentIon.fromArchiveString(row.get("localizingIons"));
+							float localizingIntensity=Float.parseFloat(row.get("localizingIntensity"));
+							float totalIntensity=Float.parseFloat(row.get("totalIntensity"));
+							
+							ModificationLocalizationData data=new ModificationLocalizationData(localizationPeptideModSeq, retentionTimeApexInSeconds, localizationScore, numberOfMods, isSiteSpecific, localizingIons, localizingIntensity, totalIntensity);
+							result.put(peptideModSeq, data);
+						} catch (Exception e) {
+							Logger.errorLine("Error parsing localization data for "+peptideModSeq+", skipping this peptide!");
+							Logger.errorException(e);
+						}
+					}
+				}
+			}
+		};
+		
+		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
+		TableParserProducer producer=new TableParserProducer(blockingQueue, f, "\t", 1);
+		TableParserConsumer consumer=new TableParserConsumer(blockingQueue, muscle);
+
+		Thread producerThread=new Thread(producer);
+		Thread consumerThread=new Thread(consumer);
+		producerThread.start();
+		consumerThread.start();
+
+		try {
+			producerThread.join();
+			consumerThread.join();
+		} catch (InterruptedException ie) {
+			Logger.errorLine("Localization reading interrupted!");
+			Logger.errorException(ie);
+		}
+		return result;
 	}
 
 	public void close() {
@@ -52,16 +120,6 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 				numberProcessed++;
 				
 				if (!printedHeader) {
-					/**
-						private final AmbiguousPeptideModSeq localizationPeptideModSeq;
-						private final float retentionTimeApexInSeconds;
-						private final float localizationScore;
-						private final int numberOfMods;
-						private final boolean isSiteSpecific;
-						private final FragmentIon[] localizingIons;
-						private final float localizingIntensity;
-						private final float totalIntensity;
-					 */
 					writer.print("peptideModSeq\tlocalizationPeptideModSeq\tretentionTimeApexInSeconds\tlocalizationScore\tnumberOfMods\tisSiteSpecific\tlocalizingIons\tlocalizingIntensity\ttotalIntensity");
 					// Percolator assumes linux line endings on Mac!
 					switch (os) {

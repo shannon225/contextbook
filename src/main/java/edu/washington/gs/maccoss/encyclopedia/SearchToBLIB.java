@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.zip.DataFormatException;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
@@ -24,6 +25,8 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFacto
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
@@ -43,6 +46,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryReportExtractor;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.CASiLJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
@@ -534,8 +538,16 @@ public class SearchToBLIB {
 		
 		Logger.logLine("Writing Encyclopedia ELIB from "+diaFile.getName()+" ("+libraryEntries.size()+" entries)...");
 		subProgress.update(diaFile.getName()+": Writing Encyclopedia ELIB", 0.99999f);
+		
+		Optional<HashMap<String, ModificationLocalizationData>> localizationData;
+		if (job instanceof CASiLJobData) {
+			Logger.logLine("Reading localization data from disk...");
+			localizationData=Optional.of(LocalizationDataToTSVConsumer.readLocalizationFile(((CASiLJobData)job).getLocalizationFile(), globalPassingPeptides, job.getParameters()));
+		} else {
+			localizationData=Optional.empty();
+		}
 
-		elib.addIntegratedEntries(libraryEntries, inferrer);
+		elib.addIntegratedEntries(libraryEntries, inferrer, localizationData);
 		Logger.logLine("Finished writing to Encyclopedia ELIB at "+new Date().toString());
 		subProgress.update(diaFile.getName()+": Finished writing to Encyclopedia ELIB at "+new Date().toString(), 1.0f);
 	}

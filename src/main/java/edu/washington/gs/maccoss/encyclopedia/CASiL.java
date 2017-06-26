@@ -204,7 +204,7 @@ public class CASiL {
 		SearchParameters parameters=taskFactory.getParameters();
 		LibraryInterface library=job.getLibrary();
 		File featureFile=job.getFeatureFile();
-		File localizationFile=new File(job.getOutputFile()+".localizations.txt");
+		File localizationFile=job.getLocalizationFile();
 		
 		int cores=parameters.getNumberOfThreadsUsed();
 	

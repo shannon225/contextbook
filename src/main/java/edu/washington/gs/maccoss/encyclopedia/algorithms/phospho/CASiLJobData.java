@@ -34,6 +34,10 @@ public class CASiLJobData extends EncyclopediaJobData {
 		return getOutputFile();
 	}
 	
+	public File getLocalizationFile() {
+		return new File(getOutputFile()+".localizations.txt");
+	}
+	
 	public File getResultLibrary() {
 		String absolutePath=getOutputAbsolutePathPrefix(getOutputFile().getAbsolutePath());
 		return new File(absolutePath+LibraryFile.ELIB);
