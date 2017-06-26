@@ -40,8 +40,8 @@ public class SearchGUIMain {
 			name="Pecan: Peptide Centric Analysis";
 			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/pecan_icon.png"));
 		} else if (ProgramType.CASiL==program) {
-			shortName="CASiL";
-			name="CASiL: Chromatogram Aligned Site Localization";
+			shortName="Thesaurus";
+			name="Thesaurus: Chromatogram Aligned Site Localizing Search Engine";
 			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/CAPSiL_icon.png"));
 		} else if (ProgramType.XCorDIA==program) {
 			shortName="XCorDIA";

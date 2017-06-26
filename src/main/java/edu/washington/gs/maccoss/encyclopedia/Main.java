@@ -20,7 +20,7 @@ public class Main {
 		} else if (arguments.containsKey("-encyclopedia")) {
 			Encyclopedia.main(args);
 			
-		} else if (arguments.containsKey("-casil")) {
+		} else if (arguments.containsKey("-thesaurus")) {
 			CASiL.main(args);
 			
 		} else if (arguments.containsKey("-browser")) {
@@ -44,6 +44,7 @@ public class Main {
 			Logger.timelessLogLine("\t-l\tlibrary .ELIB file");
 			Logger.timelessLogLine("Other Programs: ");
 			Logger.timelessLogLine("\t-pecan\trun Pecanpie (use -pecan -h for Pecan help)");
+			Logger.timelessLogLine("\t-thesaurus\trun Thesaurus (use -thesaurus -h for Thesaurus help)");
 			Logger.timelessLogLine("\t-xcordia\trun XCorDIA (use -xcordia -h for XCorDIA help)");
 			Logger.timelessLogLine("\t-browser\trun ELIB Browser (use -browser -h for ELIB Browser help)");
 			Logger.timelessLogLine("\t-libexport\trun Library Export (use -libexport -h for Library Export help)");

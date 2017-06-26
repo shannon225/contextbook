@@ -65,8 +65,8 @@ public class CASiL {
 			SearchGUIMain.runGUI(ProgramType.CASiL);
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
-			Logger.logLine("CASiL Help");
-			Logger.timelessLogLine("CASiL is a Chromatogram Aligned Site Localizing search engine for DIA data.");
+			Logger.logLine("Thesaurus Help");
+			Logger.timelessLogLine("Thesaurus is a ahromatogram-aligned site localizing search engine for DIA data.");
 			Logger.timelessLogLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.timelessLogLine("Required Parameters: ");
 			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file");
@@ -85,7 +85,7 @@ public class CASiL {
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("CASiL version "+CASiLOneScoringFactory.version);
+			Logger.logLine("Thesaurus version "+CASiLOneScoringFactory.version);
 			System.exit(1);
 			
 		} else {
@@ -119,7 +119,7 @@ public class CASiL {
 				PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, parameters.getLocalizingModification().get(), parameters);
 				LibraryScoringFactory factory=new CASiLOneScoringFactory(parameters, localizer, new LinkedBlockingQueue<ModificationLocalizationData>());
 				
-				Logger.logLine("CASiL version "+factory.getVersion());
+				Logger.logLine("Thesaurus version "+factory.getVersion());
 	
 				Logger.logLine("Parameters:");
 				Logger.logLine(" "+Encyclopedia.INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());

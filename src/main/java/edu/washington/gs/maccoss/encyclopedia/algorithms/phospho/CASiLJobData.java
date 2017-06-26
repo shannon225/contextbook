@@ -10,8 +10,8 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 
 public class CASiLJobData extends EncyclopediaJobData {
 	public static final String LOG_FILE_SUFFIX=".log";
-	public static final String OUTPUT_FILE_SUFFIX=".casil.txt";
-	public static final String FEATURE_FILE_SUFFIX=".casil_features.txt";
+	public static final String OUTPUT_FILE_SUFFIX=".thesaurus.txt";
+	public static final String FEATURE_FILE_SUFFIX=".thesaurus_features.txt";
 	
 	public CASiLJobData(File diaFile, LibraryInterface library, LibraryScoringFactory taskFactory) {
 		super(diaFile, new File(diaFile.getAbsolutePath()+FEATURE_FILE_SUFFIX), new File(diaFile.getAbsolutePath()+OUTPUT_FILE_SUFFIX), taskFactory.getParameters(), taskFactory.getVersion(), library, taskFactory);
@@ -52,6 +52,6 @@ public class CASiLJobData extends EncyclopediaJobData {
 	
 	@Override
 	public String getSearchType() {
-		return "CASiL";
+		return "Thesaurus";
 	}
 }
