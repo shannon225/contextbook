@@ -237,7 +237,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 							resultsQueue.add(result);
 							
 							//System.out.println("\tlocalization:"+data.isSiteSpecific()+"\t"+data.getLocalizationPeptideModSeq().getPeptideAnnotation()+"\t"+apex.getScanStartTime()+"\t"+data.getLocalizationScore()+"\t"+FragmentIon.toArchiveString(data.getLocalizingIons()));
-							if (data.isSiteSpecific()&&!localizedEntry.isDecoy()) {
+							if (!localizedEntry.isDecoy()) {
 								// don't bother logging decoys
 								localizationQueue.add(data);
 							}

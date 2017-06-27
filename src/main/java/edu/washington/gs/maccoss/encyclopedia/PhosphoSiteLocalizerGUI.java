@@ -50,7 +50,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
  */
 public class PhosphoSiteLocalizerGUI {
 	private static final String shortName="Thesaurus";
-	private static final String name="Thesaurus: Chromatogram Aligned Phospho Site Localizer";
+	private static final String name="Thesaurus: Chromatogram Aligned Site Localizing Search Engine";
 	private static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mazie_icon.png"));
 	private static final ImageIcon libraryBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_small_icon.png"));
 	private static final ImageIcon diaBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/orbi_icon.png"));
