@@ -81,8 +81,8 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 			ScoringBreadthType.UNCALIBRATED_PEAK_WIDTH
 	};
 	
-	private static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/CAPSiL_small_icon.png"));
-	private static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/CAPSiL_icon.png"));
+	private static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/thesaurus_small_icon.png"));
+	private static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/thesaurus_icon.png"));
 	private static final String programName="Thesaurus";
 	private static final String programShortDescription="Chromatogram-Aligned Site Localizing Search Engine";
 	private static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">Thesaurus: Chromatogram-Aligned Site Localizing Search Engine for Data-Independent Acquisition (DIA) MS/MS Data<br></p></b>"
