@@ -40,7 +40,7 @@ public class CASiLJobData extends EncyclopediaJobData {
 	
 	public File getResultLibrary() {
 		String absolutePath=getOutputAbsolutePathPrefix(getOutputFile().getAbsolutePath());
-		return new File(absolutePath+LibraryFile.ELIB);
+		return new File(absolutePath+".thesaurus"+LibraryFile.ELIB);
 	}
 
 	public static String getOutputAbsolutePathPrefix(String absolutePath) {
