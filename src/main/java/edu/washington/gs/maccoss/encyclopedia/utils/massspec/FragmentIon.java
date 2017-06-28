@@ -54,7 +54,9 @@ public class FragmentIon implements Comparable<FragmentIon> {
 	}
 	
 	public static FragmentIon[] fromArchiveString(String s) {
-		if (s==null||s.length()==0) return new FragmentIon[0];
+		if (s==null||s.trim().length()==0) {
+			return new FragmentIon[0];
+		}
 		StringTokenizer st=new StringTokenizer(s, ARCHIVE_DELIMINATOR);
 		ArrayList<FragmentIon> ions=new ArrayList<FragmentIon>();
 		while (st.hasMoreTokens()) {
