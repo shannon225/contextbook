@@ -10,6 +10,7 @@ public class PeptideModification {
 	public static PeptideModification methylation=new PeptideModification("N-Methylation (KR)", "Methylation", 14.015650, new char[] {'K', 'R'});
 	public static PeptideModification ubiquitination=new PeptideModification("Ubiquitination (K)", "Ubiquitination", 114.042927, new char[] {'K'});
 	public static PeptideModification oglcnac=new PeptideModification("O-GlcNAc (ST)", "OGlcNAc", 203.079373, new char[] {'S', 'T'});
+	public static PeptideModification polymorphism=new PeptideModification("Nucleotide Polymorphism", "Polymorphism", 0.0, "ACDEFGHIKLMNPQRSTVWY".toCharArray());
 
 	public static final PeptideModification[] MODIFICATIONS=new PeptideModification[] {
 			PeptideModification.phosphorylation,

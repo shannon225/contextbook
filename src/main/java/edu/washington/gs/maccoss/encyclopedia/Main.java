@@ -21,7 +21,7 @@ public class Main {
 			Encyclopedia.main(args);
 			
 		} else if (arguments.containsKey("-thesaurus")) {
-			CASiL.main(args);
+			Thesaurus.main(args);
 			
 		} else if (arguments.containsKey("-browser")) {
 			DIABrowser.main(args);

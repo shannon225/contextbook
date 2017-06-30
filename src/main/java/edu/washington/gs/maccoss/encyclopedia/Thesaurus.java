@@ -57,7 +57,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
-public class CASiL {
+public class Thesaurus {
 
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
@@ -66,7 +66,7 @@ public class CASiL {
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("Thesaurus Help");
-			Logger.timelessLogLine("Thesaurus is a ahromatogram-aligned site localizing search engine for DIA data.");
+			Logger.timelessLogLine("Thesaurus is a chromatogram-aligned site localizing search engine for DIA data.");
 			Logger.timelessLogLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.timelessLogLine("Required Parameters: ");
 			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file");
@@ -114,7 +114,7 @@ public class CASiL {
 					System.exit(1);
 				}
 
-				Logger.logLine("Setting up localization engne...");
+				Logger.logLine("Setting up localization engine...");
 				StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 				PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, parameters.getLocalizingModification().get(), parameters);
 				LibraryScoringFactory factory=new CASiLOneScoringFactory(parameters, localizer, new LinkedBlockingQueue<ModificationLocalizationData>());
@@ -140,17 +140,6 @@ public class CASiL {
 	}
 
 	public static void runSearch(ProgressIndicator progress, CASiLJobData job) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
-		if (!(job.getTaskFactory() instanceof CASiLOneScoringFactory)) {
-			if (!job.getParameters().getLocalizingModification().isPresent()) {
-				throw new EncyclopediaException("You are required to specify one localization modification ("+PeptideModification.getShortnameList()+")");
-			}
-			
-			Logger.logLine("Setting up localization engine...");
-			StripeFileInterface stripefile=StripeFileGenerator.getFile(job.getDiaFile(), job.getParameters());
-			PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, job.getParameters().getLocalizingModification().get(), job.getParameters());
-			LibraryScoringFactory factory=new CASiLOneScoringFactory(job.getParameters(), localizer, new LinkedBlockingQueue<ModificationLocalizationData>());
-			job=job.updateTaskFactory(factory);
-		}
 		
 		File outputFile=job.getOutputFile();
 		if (outputFile.exists()&&outputFile.canRead()) {
@@ -159,6 +148,7 @@ public class CASiL {
 				
 				File elibFile=job.getResultLibrary();
 				if (!elibFile.exists()) {
+					job=checkJob(job);
 					progress.update("Writing elib result library...");
 					Logger.logLine("Writing elib result library...");
 					ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
@@ -181,6 +171,7 @@ public class CASiL {
 		
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);
+		job=checkJob(job);
 		
 		SearchParameters parameters=job.getParameters();
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
@@ -190,6 +181,21 @@ public class CASiL {
 			runSearch(progress, job, stripefile);
 		}
 		stripefile.close();
+	}
+
+	public static CASiLJobData checkJob(CASiLJobData job) throws IOException, DataFormatException, SQLException {
+		if (!(job.getTaskFactory() instanceof CASiLOneScoringFactory)) {
+			if (!job.getParameters().getLocalizingModification().isPresent()) {
+				throw new EncyclopediaException("You are required to specify one localization modification ("+PeptideModification.getShortnameList()+")");
+			}
+			
+			Logger.logLine("Setting up localization engine...");
+			StripeFileInterface stripefile=StripeFileGenerator.getFile(job.getDiaFile(), job.getParameters());
+			PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, job.getParameters().getLocalizingModification().get(), job.getParameters());
+			LibraryScoringFactory factory=new CASiLOneScoringFactory(job.getParameters(), localizer, new LinkedBlockingQueue<ModificationLocalizationData>());
+			job=job.updateTaskFactory(factory);
+		}
+		return job;
 	}
 	
 	public static void runSearch(ProgressIndicator progress, CASiLJobData job, StripeFileInterface stripefile) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {

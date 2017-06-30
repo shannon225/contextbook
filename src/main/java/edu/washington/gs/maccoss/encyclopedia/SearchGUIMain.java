@@ -42,7 +42,7 @@ public class SearchGUIMain {
 		} else if (ProgramType.CASiL==program) {
 			shortName="Thesaurus";
 			name="Thesaurus: Chromatogram Aligned Site Localizing Search Engine";
-			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/CAPSiL_icon.png"));
+			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/thesaurus_icon.png"));
 		} else if (ProgramType.XCorDIA==program) {
 			shortName="XCorDIA";
 			name="XCorDIA: Peptide Searching with Cross Correlation";
