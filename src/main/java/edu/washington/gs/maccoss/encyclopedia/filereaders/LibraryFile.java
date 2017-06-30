@@ -401,7 +401,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			for (Pair<TransitionRefinementData, String> pair : dataAndSouceList) {
 				pepIndex=prepareQuantData(pair.x, pair.y, inferrer, peptidePrep, pepIndex);
 			}
-			peptidePrep.execute();
+			if (pepIndex>1) {
+				peptidePrep.execute();
+			}
 		} finally {
 			peptidePrep.close();
 		}
