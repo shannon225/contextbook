@@ -376,11 +376,23 @@ public class BlibFile extends SQLFile {
 	}
 	
 	private byte[] compressDouble(double[] masses) throws IOException {
-		return CompressionUtils.compress(ByteConverter.toByteArray(masses, ByteOrder.LITTLE_ENDIAN));
+		byte[] uncompressed=ByteConverter.toByteArray(masses, ByteOrder.LITTLE_ENDIAN);
+		byte[] compressed=CompressionUtils.compress(uncompressed);
+		if (compressed.length<uncompressed.length) {
+			return compressed;
+		} else {
+			return uncompressed;
+		}
 	}
 	
 	private byte[] compressFloat(float[] intensities) throws IOException {
-		return CompressionUtils.compress(ByteConverter.toByteArray(intensities, ByteOrder.LITTLE_ENDIAN));
+		byte[] uncompressed=ByteConverter.toByteArray(intensities, ByteOrder.LITTLE_ENDIAN);
+		byte[] compressed=CompressionUtils.compress(uncompressed);
+		if (compressed.length<uncompressed.length) {
+			return compressed;
+		} else {
+			return uncompressed;
+		}
 	}
 	
 	private void createNewTables() throws IOException, SQLException {
