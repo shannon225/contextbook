@@ -193,6 +193,10 @@ public class PhosphoLocalizer {
 			targetPeptides.add(targetPeptidesLeft.get(i));
 			targetPeptides.add(targetPeptidesRight.get(i));
 		}
+		
+		for (Pair<AmbiguousPeptideModSeq, FragmentIon[]> pair : targetPeptides) {
+			System.out.println(pair.x.getPeptideAnnotation()+"\t"+pair.y.length);
+		}
 
 		// actual localization
 		HashSet<FragmentIon> alreadyTaken=new HashSet<FragmentIon>();
@@ -227,11 +231,10 @@ public class PhosphoLocalizer {
 			
 			// fix ambiguity based on previously identified peptides
 			Optional<AmbiguousPeptideModSeq> ambiguityRemoved=targetPeptideAnnotation.removeAmbiguity(previouslyIdentified);
-			//System.out.println(targetPeptideAnnotation.getPeptideAnnotation()+", "+!ambiguityRemoved.isPresent()); //FIXME
-			if (!ambiguityRemoved.isPresent()) {
-				continue;
+			System.out.println(targetPeptideAnnotation.getPeptideAnnotation()+", "+!ambiguityRemoved.isPresent()); //FIXME
+			if (ambiguityRemoved.isPresent()) {
+				targetPeptideAnnotation=ambiguityRemoved.get();
 			}
-			targetPeptideAnnotation=ambiguityRemoved.get();
 
 			String peptideAnnotation=targetPeptideAnnotation.getPeptideAnnotation();
 			String targetPeptideSequence=targetPeptideAnnotation.getPeptideModSeq();

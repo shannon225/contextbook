@@ -66,15 +66,20 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 							float retentionTimeApexInSeconds=Float.parseFloat(row.get("retentionTimeApexInSeconds"));
 							int numberOfMods=Integer.parseInt(row.get("numberOfMods"));
 							boolean isSiteSpecific=Boolean.parseBoolean(row.get("isSiteSpecific"));
-							FragmentIon[] localizingIons=FragmentIon.fromArchiveString(row.get("localizingIons"));
+							FragmentIon[] localizingIons;
+							try {
+								localizingIons=FragmentIon.fromArchiveString(row.get("localizingIons"));
+							} catch (Exception e) {
+								Logger.errorLine("Error parsing localization ions for "+peptideModSeq+"from ["+row.get("localizingIons")+"], skipping ions but keeping peptide.");
+								localizingIons=new FragmentIon[0];
+							}
 							float localizingIntensity=Float.parseFloat(row.get("localizingIntensity"));
 							float totalIntensity=Float.parseFloat(row.get("totalIntensity"));
 							
 							ModificationLocalizationData data=new ModificationLocalizationData(localizationPeptideModSeq, retentionTimeApexInSeconds, localizationScore, numberOfMods, isSiteSpecific, localizingIons, localizingIntensity, totalIntensity);
 							result.put(peptideModSeq, data);
 						} catch (Exception e) {
-							Logger.errorLine("Error parsing localization data for "+peptideModSeq+", skipping this peptide!");
-							Logger.errorException(e);
+							Logger.errorLine("Error parsing localization data for "+peptideModSeq+", skipping this peptide! ("+e.getMessage()+")");
 						}
 					}
 				}

@@ -20,7 +20,6 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
@@ -81,12 +80,12 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 			ScoringBreadthType.UNCALIBRATED_PEAK_WIDTH
 	};
 	
-	private static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/CAPSiL_small_icon.png"));
-	private static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/CAPSiL_icon.png"));
+	private static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/thesaurus_small_icon.png"));
+	private static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/thesaurus_icon.png"));
 	private static final String programName="Thesaurus";
 	private static final String programShortDescription="Chromatogram-Aligned Site Localizing Search Engine";
 	private static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">Thesaurus: Chromatogram-Aligned Site Localizing Search Engine for Data-Independent Acquisition (DIA) MS/MS Data<br></p></b>"
-			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">CASiL extracts peptide fragmentation chromatograms from MZML files, matches them to spectra in libraries, and calculates various scoring features. Matches are localized and alternate positional isomers are explored. These isomers are interpreted by Percolator to identify site-specific peptides at an estimated 5% FDR threshold.";
+			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">Thesaurus extracts peptide fragmentation chromatograms from MZML files, matches them to spectra in libraries, and calculates various scoring features. Matches are localized and alternate positional isomers are explored. These isomers are interpreted by Percolator to identify site-specific peptides at an estimated 5% FDR threshold.";
 	
 	private final FileChooserPanel libraryFileChooser;
 	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {DataAcquisitionType.toName(DataAcquisitionType.OVERLAPPING_DIA), DataAcquisitionType.toName(DataAcquisitionType.DIA), DataAcquisitionType.toName(DataAcquisitionType.DDA)});

@@ -68,7 +68,7 @@ public class AmbiguousPeptideModSeqTest extends TestCase {
 			String targetPeptide=peptides[i];
 			AmbiguousPeptideModSeq left=AmbiguousPeptideModSeq.getLeftAmbiguity(targetPeptide, PeptideModification.phosphorylation,PARAMETERS.getAAConstants());
 			AmbiguousPeptideModSeq right=AmbiguousPeptideModSeq.getRightAmbiguity(targetPeptide, PeptideModification.phosphorylation,PARAMETERS.getAAConstants());
-			assertEquals(diffs[i], left.numAmbigousResidues()-right.numAmbigousResidues());
+			assertEquals(diffs[i], left.getNumAmbigousResidues()-right.getNumAmbigousResidues());
 		}
 	}
 	

@@ -26,7 +26,15 @@ public class AmbiguousPeptideModSeq {
 		this.ambiguityDirection=ambiguityDirection;
 	}
 	
-	public int numAmbigousResidues() {
+	public int getNumModifiableSites() {
+		int count=0;
+		for (int i=0; i<modifiable.length; i++) {
+			if (modifiable[i]) count++;
+		}
+		return count;
+	}
+	
+	public int getNumAmbigousResidues() {
 		int currentIndex=0;
 		int currentTotal=0;
 		int currentGap=0;

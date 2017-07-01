@@ -38,8 +38,11 @@ public class PhosphoLocalizerExample {
 
 	@SuppressWarnings("unused")
 	public static void main(String[] args) throws Exception {
-		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
-		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/22jun2016_mcf7_phospho_1b.dia");
+		//File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/22jun2016_mcf7_phospho_1b.dia");
+
+		File libraryFile=new File("/Users/searleb/Documents/phospho_localization/data/VillenJ_Exactive_HumanPhosphoproteome.elib");
+		File diaFile=new File("/Volumes/BriansSSD/phospho/hela_repeats_prism/thesaurus_recalibrated_20p/20170430_HeLa_phosp_DIA_B_04.dia");
 		
 		//File libraryFile=new File("/Users/searleb/Documents/phospho_localization/data/VillenJ_Exactive_HumanPhosphoproteome.elib");
 		//File diaFile=new File("/Users/searleb/Documents/phospho_localization/data/hela/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
@@ -64,7 +67,22 @@ public class PhosphoLocalizerExample {
 		String peptideModSeq;
 		float retentionTime;
 		byte precursorCharge;
-		if (false) {
+		if (true) {
+			// repeat 4
+			peptideModSeq="ATAPQTQHVSPMR";
+			retentionTime=2250.7158203125f;
+			precursorCharge=3;
+		} else if (true) {
+			// repeat 4
+			peptideModSeq="LGIAVIHGEAQDAESDLVDGRHS[+80.0]PPMVR";
+			retentionTime=5055.13623046875f;
+			precursorCharge=4;
+		} else if (true) {
+			// repeat 4
+			peptideModSeq="GRPPAEKLS[+80.0]PNPPNLTK";
+			retentionTime=3180.820922851562f;
+			precursorCharge=3;
+		} else if (false) {
 			peptideModSeq="KGAGDGS[+80.0]DEEVDGKADGAEAKPAE";
 			retentionTime=2607.104f;
 			precursorCharge=4;
@@ -116,6 +134,7 @@ public class PhosphoLocalizerExample {
 		double precursorMz=parameters.getAAConstants().getChargedMass(peptideModSeq, precursorCharge);
 		
 		ArrayList<Stripe> stripes=stripefile.getStripes(precursorMz, 0, Float.MAX_VALUE, false);
+		System.out.println(precursorMz+", "+stripes.size());
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptideModSeq, PeptideModification.phosphorylation, parameters.getAAConstants());
 		PhosphoLocalizationData actuallyPhosphoData=localizer.extractPhosphoFormsFromStripes(peptideModSeq, precursorMz, precursorCharge, permutations, retentionTime, stripes, true);
 

@@ -277,8 +277,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						
 						if (uniqueDataMap.containsKey(value.getPeptideModSeq())) {
 							Optional<ModificationLocalizationData> prevLocalizationData=uniqueDataMap.get(value.getPeptideModSeq()).getLocalizationData();
-							int prevAmbiguityScore=prevLocalizationData.isPresent()?prevLocalizationData.get().getLocalizationPeptideModSeq().numAmbigousResidues():0;
-							int newAmbiguityScore=value.getLocalizationData().isPresent()?value.getLocalizationData().get().getLocalizationPeptideModSeq().numAmbigousResidues():0;
+							int prevAmbiguityScore=prevLocalizationData.isPresent()?prevLocalizationData.get().getLocalizationPeptideModSeq().getNumAmbigousResidues():0;
+							int newAmbiguityScore=value.getLocalizationData().isPresent()?value.getLocalizationData().get().getLocalizationPeptideModSeq().getNumAmbigousResidues():0;
 							if (newAmbiguityScore<prevAmbiguityScore) {
 								// new is less ambiguous
 								uniqueDataMap.put(value.getPeptideModSeq(), value);
@@ -417,10 +417,10 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				numStatements++;
 			}
 		}
-		StringBuilder peptidePrepString=new StringBuilder("INSERT INTO peptidelocalizations (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, LocalizationIons, NumberOfMods, IsSiteSpecific, RTInSecondsCenter, LocalizedIntensity, TotalIntensity)");
-		peptidePrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+		StringBuilder peptidePrepString=new StringBuilder("INSERT INTO peptidelocalizations (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, LocalizationIons, NumberOfMods, NumberOfModifiableResidues, IsSiteSpecific, RTInSecondsCenter, LocalizedIntensity, TotalIntensity)");
+		peptidePrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
 		for (int i=1; i<numStatements; i++) {
-			peptidePrepString.append(", (?,?,?,?,?,?,?,?,?,?,?,?)");
+			peptidePrepString.append(", (?,?,?,?,?,?,?,?,?,?,?,?,?)");
 		}		
 		
 		PreparedStatement peptidePrep=c.prepareStatement(peptidePrepString.toString());
@@ -454,6 +454,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			peptidePrep.setFloat(index++, modData.getLocalizationScore());
 			peptidePrep.setString(index++, FragmentIon.toArchiveString(modData.getLocalizingIons()));
 			peptidePrep.setInt(index++, modData.getNumberOfMods());
+			peptidePrep.setInt(index++, modData.getLocalizationPeptideModSeq().getNumModifiableSites());
 			peptidePrep.setBoolean(index++, modData.isSiteSpecific());
 			peptidePrep.setFloat(index++,  modData.getRetentionTimeApexInSeconds());
 			peptidePrep.setFloat(index++,  modData.getLocalizingIntensity());
@@ -462,6 +463,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		return index;
 	}
 
+	@SuppressWarnings("unused")
 	private void internalWriteFragmentQuantLibraryEntriesToConnection(Connection c, Optional<PeakLocationInferrer> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList)
 			throws SQLException, IOException {
 		StringBuilder fragmentPrepString=new StringBuilder("INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, IonType, IonIndex, FragmentMass, Correlation, Background, DeltaMassPPM, Intensity)");
@@ -1044,7 +1046,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq, SourceFile) )");
 
 				s.execute("CREATE TABLE IF NOT EXISTS peptidelocalizations ( "
-						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, LocalizationIons string, NumberOfMods int, IsSiteSpecific boolean, RTInSecondsCenter double, LocalizedIntensity double, TotalIntensity double "
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, LocalizationIons string, NumberOfMods int, NumberOfModifiableResidues int, IsSiteSpecific boolean, RTInSecondsCenter double, LocalizedIntensity double, TotalIntensity double "
 						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq, SourceFile) )");
 
 				s.execute("CREATE TABLE IF NOT EXISTS fragmentquants ( "

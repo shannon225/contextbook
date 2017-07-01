@@ -71,7 +71,7 @@ public class Encyclopedia {
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
 		if (arguments.size()==0) {
-			SearchGUIMain.runGUI(ProgramType.Global);
+			SearchGUIMain.runGUI(ProgramType.EncyclopeDIA);
 			
 		} else if (arguments.containsKey("-browser")) {
 			DIABrowser.main(args);
