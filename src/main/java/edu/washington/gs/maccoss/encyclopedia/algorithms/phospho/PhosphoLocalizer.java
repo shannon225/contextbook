@@ -39,7 +39,7 @@ import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class PhosphoLocalizer {
-	public static final float MINIMUM_SCORE=-Log.log10(0.01f);
+	private final float minimumScore;
 	private final StripeFileInterface diaFile;
 	private final SearchParameters params;
 	private final BackgroundFrequencyInterface background;
@@ -50,14 +50,16 @@ public class PhosphoLocalizer {
 		this.diaFile=diaFile;
 		this.params=params;
 		this.modification=localizingModification;
-		background=BackgroundFrequencyCalculator.generateBackground(diaFile);
-		gradientLength=diaFile.getGradientLength();
+		this.minimumScore=-Log.log10(params.getPercolatorThreshold());
+		this.background=BackgroundFrequencyCalculator.generateBackground(diaFile);
+		this.gradientLength=diaFile.getGradientLength();
 	}
 
 	public PhosphoLocalizer(StripeFileInterface diaFile, PeptideModification localizingModification, BackgroundFrequencyInterface background, SearchParameters params) throws IOException,DataFormatException,SQLException {
 		this.diaFile=diaFile;
 		this.modification=localizingModification;
 		this.params=params;
+		this.minimumScore=-Log.log10(params.getPercolatorThreshold());
 		this.background=background;
 		this.gradientLength=diaFile.getGradientLength();
 	}
@@ -66,8 +68,9 @@ public class PhosphoLocalizer {
 		this.diaFile=diaFile;
 		this.modification=localizingModification;
 		this.params=params;
-		background=BackgroundFrequencyCalculator.generateBackground(diaFile);
-		gradientLength=diaFile.getGradientLength();
+		this.minimumScore=-Log.log10(params.getPercolatorThreshold());
+		this.background=BackgroundFrequencyCalculator.generateBackground(diaFile);
+		this.gradientLength=diaFile.getGradientLength();
 	}
 	
 	public PeptideModification getModification() {
@@ -333,9 +336,9 @@ public class PhosphoLocalizer {
 			uniqueTargetFragments.put(peptideAnnotation, targets);
 			uniqueIdentifiedTargetFragments.put(peptideAnnotation, identifiedTargets.toArray(new FragmentIon[identifiedTargets.size()]));
 
-			if (maxRawScore>=MINIMUM_SCORE||maxRawScore>bestScore) {
+			if (maxRawScore>=minimumScore||maxRawScore>bestScore) {
 				bestScore=maxRawScore;
-				boolean isLocalized=maxRawScore>=MINIMUM_SCORE&&AmbiguousPeptideModSeq.isLocalized(targetPeptideAnnotation, modification);
+				boolean isLocalized=maxRawScore>=minimumScore&&AmbiguousPeptideModSeq.isLocalized(targetPeptideAnnotation, modification);
 				
 				if (!AmbiguousPeptideModSeq.isLocalizedAtEnd(targetPeptideAnnotation, modification)) {
 					// need to check RTs
@@ -408,7 +411,7 @@ public class PhosphoLocalizer {
 					bestPassingForm=quantData;
 					bestPeptideAnnotation=targetPeptideAnnotation;
 					
-					if (maxRawScore>MINIMUM_SCORE) {
+					if (maxRawScore>minimumScore) {
 						alreadyTaken.addAll(Arrays.asList(targets));
 						passingForms.put(peptideAnnotation, quantData);
 						previouslyIdentified.add(targetPeptideAnnotation);

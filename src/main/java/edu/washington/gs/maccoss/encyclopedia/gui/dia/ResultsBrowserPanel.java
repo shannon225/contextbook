@@ -66,6 +66,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class ResultsBrowserPanel extends JPanel {
@@ -84,6 +85,7 @@ public class ResultsBrowserPanel extends JPanel {
 	private final JTextField jtfFilter;
 	private final LibraryEntryTableModel model;
 	private final SearchParameters parameters;
+	private final float minimumScore;
 	
 	private LibraryInterface library=null;
 	private StripeFileInterface dia=null;
@@ -93,6 +95,7 @@ public class ResultsBrowserPanel extends JPanel {
 	public ResultsBrowserPanel(SearchParameters parameters) {
 		super(new BorderLayout());
 		this.parameters=parameters;
+		this.minimumScore=-Log.log10(parameters.getPercolatorThreshold());
 		
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
@@ -372,7 +375,7 @@ public class ResultsBrowserPanel extends JPanel {
 							//uniqueFragmentsList.add(new XYTrace(new double[] {point.x/60f, point.x/60f}, new double[] {0.0, maxPoint}, GraphType.dashedline, "center", Color.BLACK, 2.0f)); // FIXME
 							XYTraceInterface[] fragmentTraces=uniqueFragmentsList.toArray(new XYTrace[uniqueFragmentsList.size()]);
 							
-							if (point.y>=PhosphoLocalizer.MINIMUM_SCORE&&actuallyPhosphoData.getPassingForms().containsKey(sequenceKey)) {
+							if (point.y>=minimumScore&&actuallyPhosphoData.getPassingForms().containsKey(sequenceKey)) {
 								keyVsName.put(sequenceKey, sequenceKey+" ("+(Math.round(point.y*10.0f)/10.0f)+")");
 							} else {
 								keyVsName.put(sequenceKey, sequenceKey+" (not sig)");
