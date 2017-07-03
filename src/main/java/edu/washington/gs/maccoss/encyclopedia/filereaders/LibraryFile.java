@@ -695,7 +695,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 							"e.PeptideSeq=p.PeptideSeq " +
 							"and e.PeptideModSeq = ? " +
 							"and e.PrecursorCharge = ? " +
-							"group by p.PeptideSeq;"
+							"group by e.rowid;"
 			)) {
 				for (PeptidePrecursor precursor : entries) {
 					prep.setString(1, precursor.getPeptideModSeq());
@@ -747,7 +747,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 							"e.PeptideSeq=p.PeptideSeq " +
 							"and e.PeptideModSeq = ? " +
 							"and e.PrecursorCharge = ? " +
-							"group by p.PeptideSeq;"
+							"group by e.rowid;"
 			)) {
 				s.setString(1, peptideModSeq);
 				s.setByte(2, charge);
@@ -881,7 +881,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 							"where " +
 							"e.PeptideSeq=p.PeptideSeq " +
 							"and e.PrecursorMz between ? and ? " +
-							"group by p.PeptideSeq;"
+							"group by e.rowid;"
 			)) {
 				s.setFloat(1, precursorMz.getStart());
 				s.setFloat(2, precursorMz.getStop());
@@ -967,7 +967,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 							"peptidetoprotein p " +
 							"where " +
 							"e.PeptideSeq=p.PeptideSeq " +
-							"group by p.PeptideSeq"
+							"group by e.rowid"
 			)) {
 				ResultSet rs = s.executeQuery();
 

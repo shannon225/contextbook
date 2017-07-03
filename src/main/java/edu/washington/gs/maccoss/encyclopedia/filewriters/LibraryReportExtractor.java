@@ -89,7 +89,7 @@ public class LibraryReportExtractor {
 						"peptidetoprotein p " +
 						"where " +
 						"pep.PeptideSeq = p.PeptideSeq " +
-						"group by p.PeptideSeq;"
+						"group by pep.rowid;"
 				);
 				int count=0;
 				int totalAdded=0;
