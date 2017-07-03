@@ -38,11 +38,13 @@ public class PhosphoLocalizerExample {
 
 	@SuppressWarnings("unused")
 	public static void main(String[] args) throws Exception {
-		//File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
+		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/22jun2016_mcf7_phospho_1b.dia");
+		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/22jun2016_mcf7_phospho_1a.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
 
-		File libraryFile=new File("/Users/searleb/Documents/phospho_localization/data/VillenJ_Exactive_HumanPhosphoproteome.elib");
-		File diaFile=new File("/Volumes/BriansSSD/phospho/hela_repeats_prism/thesaurus_recalibrated_20p/20170430_HeLa_phosp_DIA_B_04.dia");
+		//File libraryFile=new File("/Users/searleb/Documents/phospho_localization/data/VillenJ_Exactive_HumanPhosphoproteome.elib");
+		//File diaFile=new File("/Volumes/BriansSSD/phospho/hela_repeats_prism/thesaurus_recalibrated_20p/20170430_HeLa_phosp_DIA_B_04.dia");
 		
 		//File libraryFile=new File("/Users/searleb/Documents/phospho_localization/data/VillenJ_Exactive_HumanPhosphoproteome.elib");
 		//File diaFile=new File("/Users/searleb/Documents/phospho_localization/data/hela/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
@@ -67,17 +69,22 @@ public class PhosphoLocalizerExample {
 		String peptideModSeq;
 		float retentionTime;
 		byte precursorCharge;
-		if (true) {
+		if (false) {
+			// from 110515_bcs_hela_phospho_starved_20mz_500_900
+			peptideModSeq="RPMEEDGEEKS[+80.0]PSK";
+			retentionTime=32*60f;
+			precursorCharge=3;
+		} else if (false) {
 			// repeat 4
 			peptideModSeq="ATAPQTQHVSPMR";
 			retentionTime=2250.7158203125f;
 			precursorCharge=3;
-		} else if (true) {
+		} else if (false) {
 			// repeat 4
 			peptideModSeq="LGIAVIHGEAQDAESDLVDGRHS[+80.0]PPMVR";
 			retentionTime=5055.13623046875f;
 			precursorCharge=4;
-		} else if (true) {
+		} else if (false) {
 			// repeat 4
 			peptideModSeq="GRPPAEKLS[+80.0]PNPPNLTK";
 			retentionTime=3180.820922851562f;
@@ -94,11 +101,13 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="NTPSQHSHSIQHS[+80.0]PER";
 			retentionTime=1256.3296f;
 			precursorCharge=4;
-		} else if (false) {
+		} else if (true) {
+			// IRS1
 			peptideModSeq="KGS[+80.0]GDYMPMSPK";
 			retentionTime=2949.1633f;
 			precursorCharge=2;
 		} else if (false) {
+			// IRS1
 			peptideModSeq="KGSGDYMPMS[+80.0]PK";
 			retentionTime=2949.1633f;
 			precursorCharge=2;
@@ -178,12 +187,14 @@ public class PhosphoLocalizerExample {
 		ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
 		for (Entry<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> entry : allVsUniqueList.entrySet()) {
 			String seq=entry.getKey();
-			Pair<TFloatFloatHashMap, TFloatFloatHashMap> pair=entry.getValue();
-			Color color=RandomGenerator.randomColor(seq.hashCode());
-			//traces.add(new XYTrace(pair.x, GraphType.line, "ALL_"+seq, color, 5.0f));
-			traces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 3.0f));
+			if (actuallyPhosphoData.getPassingForms().containsKey(seq)) {
+				Pair<TFloatFloatHashMap, TFloatFloatHashMap> pair=entry.getValue();
+				Color color=RandomGenerator.randomColor(seq.hashCode()*16807);
+				//traces.add(new XYTrace(pair.x, GraphType.line, "ALL_"+seq, color, 5.0f));
+				traces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 3.0f));
+			}
 		}
-		traces.add(new XYTrace(primary, GraphType.boldline, "primary"));
+		//traces.add(new XYTrace(primary, GraphType.boldline, "primary"));
 		
 		Charter.launchChart("Retention Time (All Ions)", "Score", true, new Dimension(1000, 400), traces.toArray(new XYTrace[traces.size()]));
 

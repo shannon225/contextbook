@@ -31,18 +31,15 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtract
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
-import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class PhosphoLocalizer {
-	private static final float MINIMUM_RT_IN_SEC_TO_SEPARATE_PEAKS=3.0f; // 2 scans worth, need to generalize!
-	public static final float MINIMUM_SCORE=-Log.log10(0.05f);
+	public static final float MINIMUM_SCORE=-Log.log10(0.01f);
 	private final StripeFileInterface diaFile;
 	private final SearchParameters params;
 	private final BackgroundFrequencyInterface background;
@@ -266,7 +263,20 @@ public class PhosphoLocalizer {
 			for (int k=0; k<stripes.size(); k++) {
 				Spectrum spectrum=stripes.get(k);
 				//negLogProbsAll[k]=score(params, allIons, allIonsTypes, frequencies, spectrum, false);
-				negLogProbsSiteSpecific[k]=score(params, ions, targets, frequencies, spectrum, true);
+
+				boolean skip=false;
+				for (int i=0; i<previouslyIdentifiedRTsInSec.size(); i++) {
+					if (spectrum.getScanStartTime()+params.getExpectedPeakWidth()>previouslyIdentifiedRTsInSec.get(i)&&spectrum.getScanStartTime()-params.getExpectedPeakWidth()<previouslyIdentifiedRTsInSec.get(i)) {
+						// collision!
+						skip=true;
+						break;
+					}
+				}
+				if (skip) {
+					negLogProbsSiteSpecific[k]=0.0f;
+				} else {
+					negLogProbsSiteSpecific[k]=score(params, ions, targets, frequencies, spectrum, true);
+				}
 			}
 			//negLogProbsAll=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, Math.round(params.getExpectedPeakWidth()/dutyCycle));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);
 			//negLogProbsAll=General.subtract(negLogProbsAll, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
@@ -331,7 +341,7 @@ public class PhosphoLocalizer {
 					// need to check RTs
 					boolean skip=false;
 					for (int i=0; i<previouslyIdentifiedRTsInSec.size(); i++) {
-						if (bestRT+MINIMUM_RT_IN_SEC_TO_SEPARATE_PEAKS>previouslyIdentifiedRTsInSec.get(i)&&bestRT-3.0f<previouslyIdentifiedRTsInSec.get(i)) {
+						if (bestRT+params.getExpectedPeakWidth()>previouslyIdentifiedRTsInSec.get(i)&&bestRT-params.getExpectedPeakWidth()<previouslyIdentifiedRTsInSec.get(i)) {
 							// collision!
 							skip=true;
 							break;

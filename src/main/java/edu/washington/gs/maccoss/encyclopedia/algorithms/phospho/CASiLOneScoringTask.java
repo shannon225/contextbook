@@ -246,8 +246,8 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 								breakBatch=true;
 							}
 							
-							// block out a half a peakWidth window
-							int removedWindow=Math.max(1, Math.round(parameters.getExpectedPeakWidth()/2.0f));
+							// block +/- a peakWidth window
+							int removedWindow=Math.max(1, Math.round(parameters.getExpectedPeakWidth()));
 							int lowerWindow=stripeRTIndex-removedWindow;
 							int upperWindow=stripeRTIndex+removedWindow;
 							for (int j=lowerWindow; j<=upperWindow; j++) {
