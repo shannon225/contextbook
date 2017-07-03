@@ -5,6 +5,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementDat
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
@@ -29,8 +30,20 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	public static final String DLIB=".dlib";
 	public static final String ELIB=".elib";
 	public static final String VERSION_STRING="version";
-	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] {new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4), new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8), new Version(0, 1, 9)};
-	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 9);
+	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] {
+			new Version(0, 1, 0),
+			new Version(0, 1, 1),
+			new Version(0, 1, 2),
+			new Version(0, 1, 3),
+			new Version(0, 1, 4),
+			new Version(0, 1, 5),
+			new Version(0, 1, 6),
+			new Version(0, 1, 7),
+			new Version(0, 1, 8),
+			new Version(0, 1, 9),
+			new Version(0, 1, 10)
+	};
+	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 10);
 
 	private File userFile=null;
 	private final File tempFile;
@@ -1023,6 +1036,33 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
+	private static void populatePeptideToProtein(Connection c) throws SQLException {
+		try (PreparedStatement s = c.prepareStatement("select * from proteins p;")) {
+			s.execute();
+			try (ResultSet rs = s.getResultSet()) {
+				try (PreparedStatement ins = c.prepareStatement("insert into peptidetoprotein (peptideseq, proteinaccession) values (?, ?);")) {
+					int i = 0;
+					while (rs.next()) {
+						ins.setString(1, rs.getString("peptideseq"));
+						for (String acc : PSMData.stringToAccessions(rs.getString("proteinaccessions"))) {
+							ins.setString(2, acc);
+							ins.addBatch();
+							i++;
+						}
+						if (i > 1024) {
+							// only execute batches outside inner loop to avoid losing the peptide sequence param
+							ins.executeBatch();
+							ins.clearBatch();
+							ins.clearParameters();
+							i = 0;
+						}
+					}
+					ins.executeBatch();
+				}
+			}
+		}
+	}
+
 	private void createNewTables() throws IOException, SQLException {
 		Connection c=getConnection();
 		try {
@@ -1082,7 +1122,20 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonMassLength int");
 						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonMassArray blob");
 					}
-					
+
+					if (new Version(0, 1, 10).amIAbove(version)) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 10));
+						}
+
+						s.execute("CREATE TABLE peptidetoprotein (" +
+								"PeptideSeq string not null," +
+								"ProteinAccession string not null" +
+								");");
+						populatePeptideToProtein(c);
+						s.execute("DROP TABLE proteins;");
+					}
+
 				} catch (SQLException sqle) {
 					// the metadata table is missing, so do nothing and create
 					// it in the next line
