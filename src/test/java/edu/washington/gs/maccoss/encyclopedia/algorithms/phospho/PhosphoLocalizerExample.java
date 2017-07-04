@@ -40,7 +40,7 @@ public class PhosphoLocalizerExample {
 	public static void main(String[] args) throws Exception {
 		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/22jun2016_mcf7_phospho_1b.dia");
-		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/22jun2016_mcf7_phospho_2a.dia");
+		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/22jun2016_mcf7_phospho_1c.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
 
 		//File libraryFile=new File("/Users/searleb/Documents/phospho_localization/data/VillenJ_Exactive_HumanPhosphoproteome.elib");
@@ -70,11 +70,6 @@ public class PhosphoLocalizerExample {
 		float retentionTime;
 		byte precursorCharge;
 		if (false) {
-			// from 110515_bcs_hela_phospho_starved_20mz_500_900
-			peptideModSeq="RPMEEDGEEKS[+80.0]PSK";
-			retentionTime=32*60f;
-			precursorCharge=3;
-		} else if (false) {
 			// repeat 4
 			peptideModSeq="ATAPQTQHVSPMR";
 			retentionTime=2250.7158203125f;
@@ -120,6 +115,7 @@ public class PhosphoLocalizerExample {
 			retentionTime=1256.3296f;
 			precursorCharge=3;
 		} else if (false) {
+			// from 110515_bcs_hela_phospho_starved_20mz_500_900
 			peptideModSeq="RPMEEDGEEKS[+80.0]PSK";
 			retentionTime=1434.3873f;
 			precursorCharge=3;

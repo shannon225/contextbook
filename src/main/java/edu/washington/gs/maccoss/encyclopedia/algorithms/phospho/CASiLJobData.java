@@ -30,7 +30,8 @@ public class CASiLJobData extends EncyclopediaJobData {
 	}
 	
 	public File getFirstPassPercolator() {
-		return new File(getOutputFile().getAbsolutePath()+".first_round.txt");
+		//return new File(getOutputFile().getAbsolutePath()+".first_round.txt");
+		return getOutputFile();
 	}
 	
 	public File getLocalizationFile() {

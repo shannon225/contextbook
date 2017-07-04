@@ -58,14 +58,14 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 				String peptideModSeq=row.get("peptideModSeq");
 				if (passingPeptideModSeqs.contains(peptideModSeq)) {
 					float localizationScore=Float.parseFloat(row.get("localizationScore"));
+					boolean isSiteSpecific=Boolean.parseBoolean(row.get("isSiteSpecific"));
 					ModificationLocalizationData prev=result.get(peptideModSeq);
 					
-					if (prev==null||prev.getLocalizationScore()<localizationScore) {
+					if (prev==null||((isSiteSpecific||!prev.isSiteSpecific())&&prev.getLocalizationScore()<localizationScore)) {
 						try {
 							AmbiguousPeptideModSeq localizationPeptideModSeq=AmbiguousPeptideModSeq.getUnambigous(peptideModSeq, modification, aaConstants);
 							float retentionTimeApexInSeconds=Float.parseFloat(row.get("retentionTimeApexInSeconds"));
 							int numberOfMods=Integer.parseInt(row.get("numberOfMods"));
-							boolean isSiteSpecific=Boolean.parseBoolean(row.get("isSiteSpecific"));
 							FragmentIon[] localizingIons;
 							try {
 								localizingIons=FragmentIon.fromArchiveString(row.get("localizingIons"));
@@ -79,7 +79,7 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 							ModificationLocalizationData data=new ModificationLocalizationData(localizationPeptideModSeq, retentionTimeApexInSeconds, localizationScore, numberOfMods, isSiteSpecific, localizingIons, localizingIntensity, totalIntensity);
 							result.put(peptideModSeq, data);
 						} catch (Exception e) {
-							Logger.errorLine("Error parsing localization data for "+peptideModSeq+", skipping this peptide! ("+e.getMessage()+")");
+							//Logger.errorLine("Error parsing localization data for "+peptideModSeq+", skipping this peptide! ("+e.getMessage()+")");
 						}
 					}
 				}

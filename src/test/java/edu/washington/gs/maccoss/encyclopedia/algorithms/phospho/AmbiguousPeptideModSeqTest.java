@@ -22,6 +22,18 @@ public class AmbiguousPeptideModSeqTest extends TestCase {
 		
 	}
 	
+	public void testRemoveMore() {
+		String peptideModSeq="KGS[+79.966331]GDYMPMSPK";
+		AmbiguousPeptideModSeq right=AmbiguousPeptideModSeq.getRightAmbiguity(peptideModSeq, PeptideModification.phosphorylation,PARAMETERS.getAAConstants());
+		assertEquals("KG(S[+79.966331]GDYMPMS>PK", right.getPeptideAnnotation());
+		
+		AmbiguousPeptideModSeq unambig=AmbiguousPeptideModSeq.getUnambigous("KGSGDYMPMS[+79.966331]PK", PeptideModification.phosphorylation,PARAMETERS.getAAConstants());
+		AmbiguousPeptideModSeq unambig2=AmbiguousPeptideModSeq.getUnambigous("KGSGDY[+79.966331]MPMSPK", PeptideModification.phosphorylation,PARAMETERS.getAAConstants());
+		
+		assertEquals("KG(S[+79.966331]GDY>MPMSPK", right.removeAmbiguity(unambig).get().getPeptideAnnotation());
+		assertEquals("KG(S[+79.966331]>GDYMPMSPK", right.removeAmbiguity(unambig, unambig2).get().getPeptideAnnotation());
+	}
+	
 	public void testAmbiguity() {;
 		assertEquals("<S[+79.96633])SSR", AmbiguousPeptideModSeq.getLeftAmbiguity("S[+79.96633]SSR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
 		assertEquals("(S[+79.96633]SS>R", AmbiguousPeptideModSeq.getRightAmbiguity("S[+79.96633]SSR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
