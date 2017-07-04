@@ -257,12 +257,12 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 							
 							// block +/- a peakWidth window
 							int removalIndex=index;
-							while (peakRange.contains(stripeList.get(removalIndex).getScanStartTime())) {
+							while (removalIndex>=0&&peakRange.contains(stripeList.get(removalIndex).getScanStartTime())) {
 								localTakenRetentionTimes.add(removalIndex);
 								removalIndex--;
 							}
 							removalIndex=index+1;
-							while (peakRange.contains(stripeList.get(removalIndex).getScanStartTime())) {
+							while (removalIndex<stripeList.size()&&peakRange.contains(stripeList.get(removalIndex).getScanStartTime())) {
 								localTakenRetentionTimes.add(removalIndex);
 								removalIndex++;
 							}
