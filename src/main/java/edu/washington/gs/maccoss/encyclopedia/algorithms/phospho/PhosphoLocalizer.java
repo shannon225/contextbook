@@ -214,6 +214,7 @@ public class PhosphoLocalizer {
 		
 		ArrayList<AmbiguousPeptideModSeq> previouslyIdentified=new ArrayList<AmbiguousPeptideModSeq>();
 		TFloatArrayList previouslyIdentifiedRTsInSec=new TFloatArrayList(); // can't repeat an RT in sec if an "internal" localization
+		FragmentIonBlacklist previouslyIdentifiedIons=new FragmentIonBlacklist(params.getFragmentTolerance());
 		
 		AmbiguousPeptideModSeq bestPeptideAnnotation=null;
 		TransitionRefinementData bestPassingForm=null;
@@ -269,14 +270,14 @@ public class PhosphoLocalizer {
 
 				boolean skip=false;
 				for (int i=0; i<previouslyIdentifiedRTsInSec.size(); i++) {
-					if (spectrum.getScanStartTime()+params.getExpectedPeakWidth()>previouslyIdentifiedRTsInSec.get(i)&&spectrum.getScanStartTime()-params.getExpectedPeakWidth()<previouslyIdentifiedRTsInSec.get(i)) {
+					if (spectrum.getScanStartTime()==previouslyIdentifiedRTsInSec.get(i)) {
 						// collision!
 						skip=true;
 						break;
 					}
 				}
 				if (skip) {
-					negLogProbsSiteSpecific[k]=0.0f;
+					negLogProbsSiteSpecific[k]=-2.0f;
 				} else {
 					negLogProbsSiteSpecific[k]=score(params, ions, targets, frequencies, spectrum, true);
 				}
@@ -344,7 +345,7 @@ public class PhosphoLocalizer {
 					// need to check RTs
 					boolean skip=false;
 					for (int i=0; i<previouslyIdentifiedRTsInSec.size(); i++) {
-						if (bestRT+params.getExpectedPeakWidth()>previouslyIdentifiedRTsInSec.get(i)&&bestRT-params.getExpectedPeakWidth()<previouslyIdentifiedRTsInSec.get(i)) {
+						if (bestRT==previouslyIdentifiedRTsInSec.get(i)) {
 							// collision!
 							skip=true;
 							break;
@@ -354,7 +355,7 @@ public class PhosphoLocalizer {
 				}
 				
 				ArrayList<Spectrum> localStripes=getScanSubset(bestRT-params.getExpectedPeakWidth(), bestRT+params.getExpectedPeakWidth(), stripes);
-				TransitionRefinementData quantData=quantifyPeptide(targetPeptideSequence, precursorCharge, targets, bestRT, localStripes, Optional.ofNullable((float[])null));
+				TransitionRefinementData quantData=quantifyPeptide(targetPeptideSequence, precursorCharge, targets, bestRT, localStripes, previouslyIdentifiedIons, Optional.ofNullable((float[])null));
 				if (quantData==null) continue;
 				
 				// make sure there are at least 3 "identification" peaks
@@ -381,7 +382,7 @@ public class PhosphoLocalizer {
 
 				// check for other non-localizing peaks for confirmation
 				float[] medianChromatogram=quantData.getMedianChromatogram();
-				TransitionRefinementData allQuantData=quantifyPeptide(targetPeptideSequence, precursorCharge, allIonsTypes, bestRT, localStripes, Optional.of(medianChromatogram));
+				TransitionRefinementData allQuantData=quantifyPeptide(targetPeptideSequence, precursorCharge, allIonsTypes, bestRT, localStripes, previouslyIdentifiedIons, Optional.of(medianChromatogram));
 				if (allQuantData==null) continue;
 
 				float totalIntensity=0.0f;
@@ -415,7 +416,17 @@ public class PhosphoLocalizer {
 						alreadyTaken.addAll(Arrays.asList(targets));
 						passingForms.put(peptideAnnotation, quantData);
 						previouslyIdentified.add(targetPeptideAnnotation);
-						previouslyIdentifiedRTsInSec.add(bestRT);
+						
+						Range boundaries=allQuantData.getRange();
+						float[] rtArray=allQuantData.getRtArray().get();
+						for (float f : rtArray) {
+							if (boundaries.contains(f)) {
+								previouslyIdentifiedRTsInSec.add(f);
+							}
+						}
+						for (FragmentIon target : allIonsTypes) {
+							previouslyIdentifiedIons.addIonToBlacklist(target.mass, boundaries);
+						}
 					}
 				}
 			}
@@ -437,7 +448,13 @@ public class PhosphoLocalizer {
 		return new PhosphoLocalizationData(allVsUniqueList, uniqueFragmentIons, otherFragmentIons, uniqueTargetFragments, uniqueIdentifiedTargetFragments, localizationScores, passingForms);
 	}
 	
-	public TransitionRefinementData quantifyPeptide(String peptideModSeq, byte precursorCharge, FragmentIon[] targetMasses, float targetRT, ArrayList<Spectrum> stripes, Optional<float[]> medianChromatogram) {
+	public TransitionRefinementData quantifyPeptide(String peptideModSeq, byte precursorCharge, FragmentIon[] targetMasses, float targetRT, ArrayList<Spectrum> stripes, FragmentIonBlacklist blacklistedIons, Optional<float[]> medianChromatogram) {
+		/*System.out.println("THINKING ABOUT BLACKLIST: "+peptideModSeq+", "+blacklistedIons.size());
+		if (blacklistedIons.size()>0) {
+			for (FragmentIon ion : targetMasses) {
+				System.out.println("   checking "+ion+" --> "+blacklistedIons.isBlacklisted(ion.mass));
+			}
+		}*/
 		float bestDelta=Float.MAX_VALUE;
 		float[] bestIntensities=null;
 		ArrayList<float[]> intensityList=new ArrayList<float[]>();
@@ -449,6 +466,13 @@ public class PhosphoLocalizer {
 			retentionTimes.add(spectrum.getScanStartTime());
 			float delta=Math.abs(spectrum.getScanStartTime()-targetRT);
 			float[] integratedIntensities=params.getFragmentTolerance().getIntegratedIntensities(spectrum.getMassArray(), spectrum.getIntensityArray(), FragmentIon.getMasses(targetMasses));
+			for (int i=0; i<integratedIntensities.length; i++) {
+				if (integratedIntensities[i]>0.0f&&blacklistedIons.isBlacklisted(targetMasses[i].mass, spectrum.getScanStartTime())) {
+						//if (blacklistedIons.size()>0) System.out.println("BLACKLISTED! "+blacklistedIons.isBlacklisted(targetMasses[i].mass, spectrum.getScanStartTime())+"\t"+targetMasses[i]+"\t"+spectrum.getScanStartTime()+"\t"+blacklistedIons.size());
+						integratedIntensities[i]=0.0f;
+				}
+			}
+			
 			intensityList.add(integratedIntensities);
 			if (delta<bestDelta) {
 				bestDelta=delta;

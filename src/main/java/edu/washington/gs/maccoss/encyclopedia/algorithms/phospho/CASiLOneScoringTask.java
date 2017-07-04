@@ -19,11 +19,13 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaSco
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
@@ -122,6 +124,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 
 			ArrayList<AmbiguousPeptideModSeq> previouslyIdentified=new ArrayList<AmbiguousPeptideModSeq>();
 			TIntHashSet takenRetentionTimes=new TIntHashSet();
+			FragmentIonBlacklist takenIdentifiedIons=new FragmentIonBlacklist(parameters.getFragmentTolerance());
 			int leftIndex=0;
 			int rightIndex=peptideModSeqs.size()-1;
 			while (leftIndex<=rightIndex) {
@@ -157,7 +160,8 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 					rightIndex--;
 				}
 				
-				TIntHashSet localTakenRetentionTimes=new TIntHashSet();				
+				TIntHashSet localTakenRetentionTimes=new TIntHashSet();		
+				FragmentIonBlacklist locallyTakenIdentifiedIons=new FragmentIonBlacklist(parameters.getFragmentTolerance());		
 				for (Pair<AmbiguousPeptideModSeq, FragmentIon[]> pair : batch) {
 					AmbiguousPeptideModSeq peptideModSeq=pair.x;
 					FragmentIon[] targetIons=pair.y;
@@ -220,10 +224,12 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 							
 						} else {
 							ArrayList<Spectrum> stripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(stripe.getScanStartTime()-parameters.getExpectedPeakWidth(), stripe.getScanStartTime()+parameters.getExpectedPeakWidth(), stripes);
-							Pair<ModificationLocalizationData, Stripe> locData=calculateLocalizationScoring(minimumScore, parameters, dutyCycle, localizer, seedEntry, peptideModSeq, targetIons, allIons, stripeSubset);
+							Triplet<ModificationLocalizationData, Stripe, Range> locData=calculateLocalizationScoring(minimumScore, parameters, dutyCycle, localizer, seedEntry, peptideModSeq, targetIons, allIons, takenIdentifiedIons, stripeSubset);
 
 							ModificationLocalizationData data=locData.x;
 							Stripe apex=locData.y;
+							Range peakRange=locData.z;
+							
 							// allows searching beyond this mod (only if we localize it to a RT)
 							previouslyIdentified.add(peptideModSeq);
 							entryMap.remove(peptideModSeq); 
@@ -250,11 +256,19 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 							}
 							
 							// block +/- a peakWidth window
-							int removedWindow=Math.max(1, Math.round(parameters.getExpectedPeakWidth()));
-							int lowerWindow=stripeRTIndex-removedWindow;
-							int upperWindow=stripeRTIndex+removedWindow;
-							for (int j=lowerWindow; j<=upperWindow; j++) {
-								localTakenRetentionTimes.add(j);
+							int removalIndex=index;
+							while (peakRange.contains(stripeList.get(removalIndex).getScanStartTime())) {
+								localTakenRetentionTimes.add(removalIndex);
+								removalIndex--;
+							}
+							removalIndex=index+1;
+							while (peakRange.contains(stripeList.get(removalIndex).getScanStartTime())) {
+								localTakenRetentionTimes.add(removalIndex);
+								removalIndex++;
+							}
+
+							for (FragmentIon target : allIons) {
+								locallyTakenIdentifiedIons.addIonToBlacklist(target.mass, peakRange);
 							}
 							
 							if (identifiedPeaks>peaksKept) {
@@ -274,6 +288,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 				} else {
 					// Note, it's ok if opposite sides (in the pairs) go head to head at the same RT, since they implicitly consider different fragment ions
 					takenRetentionTimes.addAll(localTakenRetentionTimes);
+					takenIdentifiedIons.addIonsToBlacklist(locallyTakenIdentifiedIons);
 				}
 			}
 		}
@@ -289,7 +304,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 		return (int)stripe.getScanStartTime();
 	}
 
-	public static Pair<ModificationLocalizationData, Stripe> calculateLocalizationScoring(float minimumScore, SearchParameters parameters, float dutyCycle, PhosphoLocalizer localizer, LibraryEntry seedEntry, AmbiguousPeptideModSeq peptideModSeq, FragmentIon[] targetIons, FragmentIon[] allIons, ArrayList<Spectrum> stripeSubset) {
+	public static Triplet<ModificationLocalizationData, Stripe, Range> calculateLocalizationScoring(float minimumScore, SearchParameters parameters, float dutyCycle, PhosphoLocalizer localizer, LibraryEntry seedEntry, AmbiguousPeptideModSeq peptideModSeq, FragmentIon[] targetIons, FragmentIon[] allIons, FragmentIonBlacklist takenIdentifiedIons, ArrayList<Spectrum> stripeSubset) {
 		int targetNumFragments=Math.max(parameters.getMinNumOfQuantitativePeaks(), 3);
 									
 		double[] targetIonsMasses=FragmentIon.getMasses(targetIons);
@@ -319,12 +334,13 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 		int numberOfMods=PeptideUtils.getNumberOfMods(peptideModSeq.getPeptideModSeq(), localizer.getModification().getNominalMass());
 		ArrayList<FragmentIon> wellShapedIons=new ArrayList<FragmentIon>();
 		
+		Range peakRange=new Range(apex.getScanStartTime(), apex.getScanStartTime());
 		if (bestLocalizationScore>=minimumScore) {
 			// generate quant data from localizing ions only
 			TransitionRefinementData quantData=localizer.quantifyPeptide(peptideModSeq.getPeptideModSeq(), seedEntry.getPrecursorCharge(), targetIons, apex.getScanStartTime(),
-					stripeSubset, Optional.ofNullable((float[]) null));
+					stripeSubset, takenIdentifiedIons, Optional.ofNullable((float[]) null));
 			if (quantData!=null) {
-
+				peakRange=quantData.getRange();
 				float[] intensities=quantData.getIntegrationArray();
 				float[] correlations=quantData.getCorrelationArray();
 				FragmentIon[] consideredIons=quantData.getFragmentMassArray();
@@ -336,8 +352,9 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 				// calculate quant data for all ions
 				float[] medianChromatogram=quantData.getMedianChromatogram();
 				TransitionRefinementData allQuantData=localizer.quantifyPeptide(peptideModSeq.getPeptideModSeq(), seedEntry.getPrecursorCharge(), allIons, apex.getScanStartTime(),
-						stripeSubset, Optional.of(medianChromatogram));
+						stripeSubset, takenIdentifiedIons, Optional.of(medianChromatogram));
 				if (allQuantData!=null) {
+					peakRange=allQuantData.getRange();
 					intensities=allQuantData.getIntegrationArray();
 					correlations=allQuantData.getCorrelationArray();
 					for (int i=0; i<correlations.length; i++) {
@@ -353,7 +370,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 		}
 		
 		ModificationLocalizationData modData=new ModificationLocalizationData(peptideModSeq, apex.getScanStartTime(), bestLocalizationScore, numberOfMods, wasLocalized, wellShapedIons.toArray(new FragmentIon[wellShapedIons.size()]), localizationIntensity, totalIntensity);
-		return new Pair<ModificationLocalizationData, Stripe>(modData, apex);
+		return new Triplet<ModificationLocalizationData, Stripe, Range>(modData, apex, peakRange);
 	}
 	
 }
