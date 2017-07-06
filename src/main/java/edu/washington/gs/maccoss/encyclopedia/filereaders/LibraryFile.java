@@ -46,6 +46,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
 
 public class LibraryFile extends SQLFile implements LibraryInterface {
+	public static boolean OPEN_IN_PLACE=false;
+	
 	private static final String SOURCEFILE_TIC_PREFIX="TIC_";
 	private static final String SOURCEFILE_STRING="sourcefile";
 	private static final String SOURCE_FILE_SPLIT="|";
@@ -56,7 +58,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 9);
 
 	private File userFile=null;
-	private final File tempFile;
+	private File tempFile;
 
 	public LibraryFile() throws IOException {
 		tempFile=File.createTempFile("encyclopedia_", ELIB);
@@ -82,8 +84,12 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public void openFile() throws IOException, SQLException {
-		if (userFile!=null) {
-			Files.copy(userFile.toPath(), tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		if (OPEN_IN_PLACE) {
+			tempFile=userFile;
+		} else {
+			if (userFile!=null) {
+				Files.copy(userFile.toPath(), tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			}
 		}
 		createNewTables();
 	}
