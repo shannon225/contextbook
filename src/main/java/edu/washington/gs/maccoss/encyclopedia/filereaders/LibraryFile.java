@@ -702,8 +702,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 							"group_concat(p.ProteinAccession, '" + PSMData.ACCESSION_TOKEN + "') ProteinAccessions, " +
 							"e.SourceFile " +
 							"from " +
-							"entries e, " +
-							"peptidetoprotein p " +
+							"entries e " +
+							"left join peptidetoprotein p " +
 							"where " +
 							"e.PeptideSeq=p.PeptideSeq " +
 							"and e.PeptideModSeq = ? " +
@@ -754,8 +754,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 							"group_concat(p.ProteinAccession, '" + PSMData.ACCESSION_TOKEN + "') ProteinAccessions, " +
 							"e.SourceFile " +
 							"from " +
-							"entries e, " +
-							"peptidetoprotein p " +
+							"entries e " +
+							"left join peptidetoprotein p " +
 							"where " +
 							"e.PeptideSeq=p.PeptideSeq " +
 							"and e.PeptideModSeq = ? " +
@@ -889,8 +889,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 							"group_concat(p.ProteinAccession, '" + PSMData.ACCESSION_TOKEN + "') ProteinAccessions, " +
 							"e.SourceFile " +
 							"from " +
-							"entries e, " +
-							"peptidetoprotein p " +
+							"entries e " +
+							"left join peptidetoprotein p " +
 							"where " +
 							"e.PeptideSeq=p.PeptideSeq " +
 							"and e.PrecursorMz between ? and ? " +
@@ -976,8 +976,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 							"group_concat(p.ProteinAccession, '" + PSMData.ACCESSION_TOKEN + "') ProteinAccessions, " +
 							"e.SourceFile " +
 							"from " +
-							"entries e, " +
-							"peptidetoprotein p " +
+							"entries e " +
+							"left join peptidetoprotein p " +
 							"where " +
 							"e.PeptideSeq=p.PeptideSeq " +
 							"group by e.rowid"

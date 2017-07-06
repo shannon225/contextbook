@@ -85,8 +85,8 @@ public class LibraryReportExtractor {
 						"pep.NumberOfQuantIons, " +
 						"group_concat(p.ProteinAccession, '" + PSMData.ACCESSION_TOKEN + "') as ProteinAccessions " +
 						"from " +
-						"peptidequants pep, " +
-						"peptidetoprotein p " +
+						"peptidequants pep " +
+						"left join peptidetoprotein p " +
 						"where " +
 						"pep.PeptideSeq = p.PeptideSeq " +
 						"group by pep.rowid;"
