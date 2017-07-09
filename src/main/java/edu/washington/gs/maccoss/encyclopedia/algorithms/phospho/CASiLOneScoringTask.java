@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 
@@ -27,6 +28,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -59,67 +61,109 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 			throw new EncyclopediaException("You must specify a localizing modification before running localization!");
 		}
 	}
+	
+	class LocalizedForm {
+		private final FragmentationModel localizedModel;
+		private final LibraryEntry localizedEntry;
+		private final ArrayList<Spectrum> scansToConsider;
+		public LocalizedForm(FragmentationModel localizedModel, LibraryEntry localizedEntry, ArrayList<Spectrum> scansToConsider) {
+			this.localizedModel=localizedModel;
+			this.localizedEntry=localizedEntry;
+			this.scansToConsider=scansToConsider;
+		}
+	}
+	
+	public LocalizedForm getLocalizedForm(AmbiguousPeptideModSeq targetPeptide, byte charge, HashMap<String, FragmentationModel> modelMap, HashMap<String, double[]> ionsByPeptide, HashMap<LibraryEntry, ArrayList<Spectrum>> scansByEntry, SearchParameters parameters) {
+		String targetPeptideModSeq=targetPeptide.getPeptideModSeq();
+		FragmentationModel targetModel=modelMap.get(targetPeptideModSeq);
+
+		// first check if we have real data to cover this form
+		for (Entry<LibraryEntry, ArrayList<Spectrum>> realDataEntry : scansByEntry.entrySet()) {
+			LibraryEntry realEntry=realDataEntry.getKey();
+			if (targetPeptideModSeq.equals(realEntry.getPeptideModSeq())) {
+				return new LocalizedForm(targetModel, realEntry, realDataEntry.getValue());
+			}
+		}
+
+		int bestNumMatching=-1;
+		LibraryEntry bestRealEntry=null;
+		ArrayList<Spectrum> bestScans=null;
+		
+		double[] targetIons=ionsByPeptide.get(targetPeptideModSeq);
+		for (Entry<LibraryEntry, ArrayList<Spectrum>> realDataEntry : scansByEntry.entrySet()) {
+			LibraryEntry realEntry=realDataEntry.getKey();
+			FragmentationModel realModel=modelMap.get(realEntry.getPeptideModSeq());
+			if (realModel==null) continue;
+			
+			double[] realIons=ionsByPeptide.get(realEntry.getPeptideModSeq());
+			int numMatching=getNumberOfMatchingIons(targetIons, realIons, parameters.getFragmentTolerance());
+			
+			if (numMatching>bestNumMatching) {
+				bestNumMatching=numMatching;
+				bestRealEntry=realEntry;
+				bestScans=realDataEntry.getValue();
+			}
+		}
+
+		Pair<FragmentationModel, LibraryEntry> localizedForm=bestRealEntry.getEntryFromNewSequence(targetPeptideModSeq, bestRealEntry.getAccessions(), bestRealEntry.isDecoy(), parameters);
+		return new LocalizedForm(localizedForm.x, localizedForm.y, bestScans);
+	}
+	
+	private int getNumberOfMatchingIons(double[] a, double[] b, MassTolerance tolerance) {
+		double[] x,y;
+		if (a.length>b.length) {
+			y=a;
+			x=b;
+		} else {
+			y=b;
+			x=a;
+		}
+		int matches=0;
+		for (int i=0; i<x.length; i++) {
+			if (tolerance.getIndex(y, x[i]).isPresent()) {
+				matches++;
+			}
+		}
+		return matches;
+	}
+	
 
 	@Override
 	protected Nothing process() {
 		EncyclopediaScorer eScorer=(EncyclopediaScorer)scorer;
 		int movingAverageLength=Math.round(parameters.getExpectedPeakWidth()/dutyCycle);
-		for (LibraryEntry seedEntry : super.entries) {
-			ArrayList<Spectrum> stripeList=null;
-			if (breadth==ScoringBreadthType.ENTIRE_RT_WINDOW) {
-				stripeList=PhosphoLocalizer.getScanSubsetFromStripes(-Float.MAX_VALUE, Float.MAX_VALUE, super.stripes);
-				
-			} else if (breadth==ScoringBreadthType.UNCALIBRATED_20_PERCENT) {
-				float duration=(super.stripes.get(super.stripes.size()-1).getScanStartTime()-super.stripes.get(0).getScanStartTime())/20.0f;
-				//System.out.println(seedEntry.getScanStartTime()+" +/- "+duration); //FIXME
-				stripeList=PhosphoLocalizer.getScanSubsetFromStripes(seedEntry.getScanStartTime()-duration, seedEntry.getScanStartTime()+duration, super.stripes);
-				
-			} else if (breadth==ScoringBreadthType.UNCALIBRATED_PEAK_WIDTH) {
-				float duration=parameters.getExpectedPeakWidth();
-				stripeList=PhosphoLocalizer.getScanSubsetFromStripes(seedEntry.getScanStartTime()-duration, seedEntry.getScanStartTime()+duration, super.stripes);
-				
-			} else if (breadth==ScoringBreadthType.RECALIBRATED_20_PERCENT||breadth==ScoringBreadthType.RECALIBRATED_PEAK_WIDTH) {
-				FragmentationModel model=new FragmentationModel(seedEntry.getPeptideModSeq(), parameters.getAAConstants());
-				FragmentIon[] allIons=model.getPrimaryIonObjects(parameters.getFragType(), seedEntry.getPrecursorCharge());
-				float[] primary=new float[super.stripes.size()];
-				for (int i=0; i<super.stripes.size(); i++) {
-					Spectrum stripe=super.stripes.get(i);
-					primary[i]=eScorer.score(seedEntry, stripe, allIons);
-				}
-				
-				float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
-
-				float bestScore=-Float.MAX_VALUE;
-				Spectrum bestStripe=null;
-				for (int i=0; i<averagePrimary.length; i++) {
-					if (bestScore<averagePrimary[i]) {
-						bestScore=averagePrimary[i];
-						bestStripe=super.stripes.get(i);
-					}
-				}
-				
-				if (breadth==ScoringBreadthType.RECALIBRATED_20_PERCENT) {
-					float duration=(super.stripes.get(super.stripes.size()-1).getScanStartTime()-super.stripes.get(0).getScanStartTime())/20.0f;
-					stripeList=PhosphoLocalizer.getScanSubsetFromStripes(bestStripe.getScanStartTime()-duration, bestStripe.getScanStartTime()+duration, super.stripes);
-					
-				} else if (breadth==ScoringBreadthType.RECALIBRATED_PEAK_WIDTH) {
-					float duration=parameters.getExpectedPeakWidth();
-					stripeList=PhosphoLocalizer.getScanSubsetFromStripes(bestStripe.getScanStartTime()-duration, bestStripe.getScanStartTime()+duration, super.stripes);
-				}
+		HashMap<String, ArrayList<LibraryEntry>> entriesBySequence=new HashMap<>();
+		for (LibraryEntry entry : super.entries) {
+			String seq=entry.getPeptideSeq();
+			ArrayList<LibraryEntry> list=entriesBySequence.get(seq);
+			if (list==null) {
+				list=new ArrayList<>();
+				entriesBySequence.put(seq, list);
 			}
-
-			if (stripeList==null) {
-				throw new EncyclopediaException("Unexpected CASiL Scoring Breadth: "+breadth);
+			list.add(entry);
+		}// FIXME FLESH OUT REPEATED ENTRIES FOR LOCALIZATION
+		
+		for (ArrayList<LibraryEntry> seedEntries : entriesBySequence.values()) {
+			LibraryEntry firstEntry=seedEntries.get(0);
+			HashMap<LibraryEntry, ArrayList<Spectrum>> scansByEntry=new HashMap<>();
+			for (LibraryEntry libraryEntry : seedEntries) {
+				scansByEntry.put(libraryEntry, getSpectra(eScorer, movingAverageLength, libraryEntry));
 			}
 			
-			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(seedEntry.getPeptideModSeq(), parameters.getAAConstants());
-			
-			ArrayList<String> peptideModSeqs=PhosphoPermuter.getPermutations(seedEntry.getPeptideModSeq(), localizingModification, parameters.getAAConstants());
+			byte precursorCharge=firstEntry.getPrecursorCharge();
+			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(firstEntry.getPeptideModSeq(), parameters.getAAConstants());
+			ArrayList<String> peptideModSeqs=PhosphoPermuter.getPermutations(firstEntry.getPeptideModSeq(), localizingModification, parameters.getAAConstants());
 
 			HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 			for (String peptideModSeq : peptideModSeqs) {
 				FragmentationModel model=new FragmentationModel(peptideModSeq, parameters.getAAConstants());
 				entryMap.put(peptideModSeq, model);
+			}
+
+			// generate an ion map for all forms
+			HashMap<String, double[]> ionsByPeptide=new HashMap<>();
+			for (Entry<String, FragmentationModel> modelEntry : entryMap.entrySet()) {
+				ionsByPeptide.put(modelEntry.getKey(), modelEntry.getValue().getPrimaryIons(parameters.getFragType(), firstEntry.getPrecursorCharge()));
 			}
 
 			ArrayList<AmbiguousPeptideModSeq> previouslyIdentified=new ArrayList<AmbiguousPeptideModSeq>();
@@ -142,7 +186,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 						String seq=peptideModSeqs.get(j);
 						modelBatch.put(seq, entryMap.get(seq));
 					}
-					FragmentIon[] leftTargets=PhosphoLocalizer.getUniqueFragmentIons(leftAmbiguity.getPeptideModSeq(), seedEntry.getPrecursorCharge(), modelBatch, parameters);
+					FragmentIon[] leftTargets=PhosphoLocalizer.getUniqueFragmentIons(leftAmbiguity.getPeptideModSeq(), precursorCharge, modelBatch, parameters);
 					leftPeptide=new Pair<AmbiguousPeptideModSeq, FragmentIon[]>(leftAmbiguity, leftTargets);
 					batch.add(leftPeptide);
 					//System.out.println("ADDING LEFT: "+leftAmbiguity.getPeptideAnnotation()+" "+leftIndex+" - "+rightIndex); //FIXME
@@ -160,7 +204,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 						String seq=peptideModSeqs.get(j);
 						modelBatch.put(seq, entryMap.get(seq));
 					}
-					FragmentIon[] rightTargets=PhosphoLocalizer.getUniqueFragmentIons(rightAmbiguity.getPeptideModSeq(), seedEntry.getPrecursorCharge(), modelBatch, parameters);
+					FragmentIon[] rightTargets=PhosphoLocalizer.getUniqueFragmentIons(rightAmbiguity.getPeptideModSeq(), precursorCharge, modelBatch, parameters);
 					rightPeptide=new Pair<AmbiguousPeptideModSeq, FragmentIon[]>(rightAmbiguity, rightTargets);
 					batch.add(rightPeptide);
 					//System.out.println("ADDING RIGHT: "+rightAmbiguity.getPeptideAnnotation()+" "+leftIndex+" - "+rightIndex); //FIXME
@@ -191,9 +235,10 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 					peptideModSeq=ambiguityRemoved.get();
 					//System.out.println("considering: "+peptideModSeq.getPeptideAnnotation()); // FIXME
 									
-					Pair<FragmentationModel, LibraryEntry> localizedForm=seedEntry.getEntryFromNewSequence(peptideModSeq.getPeptideModSeq(), seedEntry.getAccessions(), seedEntry.isDecoy(), parameters);
-					FragmentationModel localizedModel=localizedForm.x;
-					LibraryEntry localizedEntry=localizedForm.y;
+					LocalizedForm localizedForm=getLocalizedForm(peptideModSeq, firstEntry.getPrecursorCharge(), entryMap, ionsByPeptide, scansByEntry, parameters);
+					FragmentationModel localizedModel=localizedForm.localizedModel;
+					LibraryEntry localizedEntry=localizedForm.localizedEntry;
+					ArrayList<Spectrum> stripeList=localizedForm.scansToConsider;
 
 					AuxillaryPSMScorer auxScorer=eScorer.getAuxScorer().getEntryOptimizedScorer(localizedEntry);
 					FragmentIon[] allIons=localizedModel.getPrimaryIonObjects(parameters.getFragType(), localizedEntry.getPrecursorCharge());
@@ -234,7 +279,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 							
 						} else {
 							ArrayList<Spectrum> stripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(stripe.getScanStartTime()-parameters.getExpectedPeakWidth(), stripe.getScanStartTime()+parameters.getExpectedPeakWidth(), stripes);
-							Triplet<ModificationLocalizationData, Stripe, Range> locData=calculateLocalizationScoring(minimumScore, parameters, dutyCycle, localizer, seedEntry, peptideModSeq, targetIons, allIons, takenIdentifiedIons, stripeSubset);
+							Triplet<ModificationLocalizationData, Stripe, Range> locData=calculateLocalizationScoring(minimumScore, parameters, dutyCycle, localizer, localizedEntry, peptideModSeq, targetIons, allIons, takenIdentifiedIons, stripeSubset);
 
 							ModificationLocalizationData data=locData.x;
 							Stripe apex=locData.y;
@@ -309,6 +354,56 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 		return Nothing.NOTHING;
 	}
 
+	private ArrayList<Spectrum> getSpectra(EncyclopediaScorer eScorer, int movingAverageLength, LibraryEntry seedEntry) {
+		ArrayList<Spectrum> stripeList=null;
+		if (breadth==ScoringBreadthType.ENTIRE_RT_WINDOW) {
+			stripeList=PhosphoLocalizer.getScanSubsetFromStripes(-Float.MAX_VALUE, Float.MAX_VALUE, super.stripes);
+			
+		} else if (breadth==ScoringBreadthType.UNCALIBRATED_20_PERCENT) {
+			float duration=(super.stripes.get(super.stripes.size()-1).getScanStartTime()-super.stripes.get(0).getScanStartTime())/20.0f;
+			//System.out.println(seedEntry.getScanStartTime()+" +/- "+duration); //FIXME
+			stripeList=PhosphoLocalizer.getScanSubsetFromStripes(seedEntry.getScanStartTime()-duration, seedEntry.getScanStartTime()+duration, super.stripes);
+			
+		} else if (breadth==ScoringBreadthType.UNCALIBRATED_PEAK_WIDTH) {
+			float duration=parameters.getExpectedPeakWidth();
+			stripeList=PhosphoLocalizer.getScanSubsetFromStripes(seedEntry.getScanStartTime()-duration, seedEntry.getScanStartTime()+duration, super.stripes);
+			
+		} else if (breadth==ScoringBreadthType.RECALIBRATED_20_PERCENT||breadth==ScoringBreadthType.RECALIBRATED_PEAK_WIDTH) {
+			FragmentationModel model=new FragmentationModel(seedEntry.getPeptideModSeq(), parameters.getAAConstants());
+			FragmentIon[] allIons=model.getPrimaryIonObjects(parameters.getFragType(), seedEntry.getPrecursorCharge());
+			float[] primary=new float[super.stripes.size()];
+			for (int i=0; i<super.stripes.size(); i++) {
+				Spectrum stripe=super.stripes.get(i);
+				primary[i]=eScorer.score(seedEntry, stripe, allIons);
+			}
+			
+			float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
+
+			float bestScore=-Float.MAX_VALUE;
+			Spectrum bestStripe=null;
+			for (int i=0; i<averagePrimary.length; i++) {
+				if (bestScore<averagePrimary[i]) {
+					bestScore=averagePrimary[i];
+					bestStripe=super.stripes.get(i);
+				}
+			}
+			
+			if (breadth==ScoringBreadthType.RECALIBRATED_20_PERCENT) {
+				float duration=(super.stripes.get(super.stripes.size()-1).getScanStartTime()-super.stripes.get(0).getScanStartTime())/20.0f;
+				stripeList=PhosphoLocalizer.getScanSubsetFromStripes(bestStripe.getScanStartTime()-duration, bestStripe.getScanStartTime()+duration, super.stripes);
+				
+			} else if (breadth==ScoringBreadthType.RECALIBRATED_PEAK_WIDTH) {
+				float duration=parameters.getExpectedPeakWidth();
+				stripeList=PhosphoLocalizer.getScanSubsetFromStripes(bestStripe.getScanStartTime()-duration, bestStripe.getScanStartTime()+duration, super.stripes);
+			}
+		}
+
+		if (stripeList==null) {
+			throw new EncyclopediaException("Unexpected CASiL Scoring Breadth: "+breadth);
+		}
+		return stripeList;
+	}
+
 	/**
 	 * straight truncate, NOTE, this means we don't have peak resolution less than 1 second
 	 * @param stripe
@@ -318,11 +413,11 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 		return (int)stripe.getScanStartTime();
 	}
 
-	public static Triplet<ModificationLocalizationData, Stripe, Range> calculateLocalizationScoring(float minimumScore, SearchParameters parameters, float dutyCycle, PhosphoLocalizer localizer, LibraryEntry seedEntry, AmbiguousPeptideModSeq peptideModSeq, FragmentIon[] targetIons, FragmentIon[] allIons, FragmentIonBlacklist takenIdentifiedIons, ArrayList<Spectrum> stripeSubset) {
+	public static Triplet<ModificationLocalizationData, Stripe, Range> calculateLocalizationScoring(float minimumScore, SearchParameters parameters, float dutyCycle, PhosphoLocalizer localizer, LibraryEntry localizedEntry, AmbiguousPeptideModSeq peptideModSeq, FragmentIon[] targetIons, FragmentIon[] allIons, FragmentIonBlacklist takenIdentifiedIons, ArrayList<Spectrum> stripeSubset) {
 		int targetNumFragments=Math.max(parameters.getMinNumOfQuantitativePeaks(), 3);
 									
 		double[] targetIonsMasses=FragmentIon.getMasses(targetIons);
-		float[] frequencies=localizer.getBackground().getFrequencies(targetIonsMasses, seedEntry.getPrecursorMZ(), parameters.getFragmentTolerance());
+		float[] frequencies=localizer.getBackground().getFrequencies(targetIonsMasses, localizedEntry.getPrecursorMZ(), parameters.getFragmentTolerance());
 		
 		//System.out.println("\t"+peptideModSeq.getPeptideAnnotation()+" --> "+General.toString(targetIonsMasses));
 		
@@ -351,7 +446,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 		Range peakRange=new Range(apex.getScanStartTime(), apex.getScanStartTime());
 		if (bestLocalizationScore>=minimumScore) {
 			// generate quant data from localizing ions only
-			TransitionRefinementData quantData=localizer.quantifyPeptide(peptideModSeq.getPeptideModSeq(), seedEntry.getPrecursorCharge(), targetIons, apex.getScanStartTime(),
+			TransitionRefinementData quantData=localizer.quantifyPeptide(peptideModSeq.getPeptideModSeq(), localizedEntry.getPrecursorCharge(), targetIons, apex.getScanStartTime(),
 					stripeSubset, takenIdentifiedIons, Optional.ofNullable((float[]) null));
 			if (quantData!=null) {
 				peakRange=quantData.getRange();
@@ -365,7 +460,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 
 				// calculate quant data for all ions
 				float[] medianChromatogram=quantData.getMedianChromatogram();
-				TransitionRefinementData allQuantData=localizer.quantifyPeptide(peptideModSeq.getPeptideModSeq(), seedEntry.getPrecursorCharge(), allIons, apex.getScanStartTime(),
+				TransitionRefinementData allQuantData=localizer.quantifyPeptide(peptideModSeq.getPeptideModSeq(), localizedEntry.getPrecursorCharge(), allIons, apex.getScanStartTime(),
 						stripeSubset, takenIdentifiedIons, Optional.of(medianChromatogram));
 				if (allQuantData!=null) {
 					peakRange=allQuantData.getRange();
