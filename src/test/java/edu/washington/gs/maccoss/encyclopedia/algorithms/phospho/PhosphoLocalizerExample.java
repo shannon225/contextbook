@@ -46,9 +46,9 @@ public class PhosphoLocalizerExample {
 		LibraryFile.OPEN_IN_PLACE=true;
 		
 		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
-		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/22jun2016_mcf7_phospho_1b.dia");
+		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/22jun2016_mcf7_phospho_1b.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/22jun2016_mcf7_phospho_1c.dia");
-		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_04.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_04.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_03_170507071858.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_01_170506220515.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_02_170507024206.dia");
@@ -85,8 +85,8 @@ public class PhosphoLocalizerExample {
 		String peptideModSeq;
 		float retentionTime;
 		byte precursorCharge;
-		if (true) {
-			// repeat 2
+		if (false) {
+			// repeat 2 sp|P83731|RL24_HUMAN
 			peptideModSeq="AITGAS[+80.0]LADIMAK";
 			retentionTime=5680.037109375f;
 			precursorCharge=2;
@@ -95,7 +95,7 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="LSGGLGAGS[+80.0]C[+57.0]R";
 			retentionTime=2360.37475585937f;
 			precursorCharge=2;
-		} else if (true) {
+		} else if (false) {
 			// hela starved (1 min apart)
 			peptideModSeq="FGTFGGLGS[+80.0]K";
 			retentionTime=88*60f;
@@ -132,7 +132,7 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="NTPSQHSHSIQHS[+80.0]PER";
 			retentionTime=1256.3296f;
 			precursorCharge=4;
-		} else if (false) {
+		} else if (true) {
 			// IRS1
 			peptideModSeq="KGS[+80.0]GDYMPMSPK";
 			retentionTime=2949.1633f;
@@ -201,7 +201,7 @@ public class PhosphoLocalizerExample {
 			ArrayList<XYTrace> uniqueFragmentsList=new ArrayList<XYTrace>(allFragments.values());
 			XYTraceInterface[] fragmentTraces=uniqueFragmentsList.toArray(new XYTrace[uniqueFragmentsList.size()]);
 
-			Charter.launchChart(sequenceKey+" Retention Time (min)", "Intensity", true, new Dimension(500, 300), fragmentTraces);
+			Charter.launchChart(sequenceKey+" Retention Time (min)", "Intensity", false, new Dimension(500, 300), fragmentTraces);
 		}
 
 		EncyclopediaOneScorer scorer=new EncyclopediaOneScorer(parameters, unitbackground);
