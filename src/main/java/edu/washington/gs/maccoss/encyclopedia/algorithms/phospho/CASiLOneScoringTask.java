@@ -61,72 +61,6 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 			throw new EncyclopediaException("You must specify a localizing modification before running localization!");
 		}
 	}
-	
-	class LocalizedForm {
-		private final FragmentationModel localizedModel;
-		private final LibraryEntry localizedEntry;
-		private final ArrayList<Spectrum> scansToConsider;
-		public LocalizedForm(FragmentationModel localizedModel, LibraryEntry localizedEntry, ArrayList<Spectrum> scansToConsider) {
-			this.localizedModel=localizedModel;
-			this.localizedEntry=localizedEntry;
-			this.scansToConsider=scansToConsider;
-		}
-	}
-	
-	public LocalizedForm getLocalizedForm(AmbiguousPeptideModSeq targetPeptide, byte charge, HashMap<String, FragmentationModel> modelMap, HashMap<String, double[]> ionsByPeptide, HashMap<LibraryEntry, ArrayList<Spectrum>> scansByEntry, SearchParameters parameters) {
-		String targetPeptideModSeq=targetPeptide.getPeptideModSeq();
-		FragmentationModel targetModel=modelMap.get(targetPeptideModSeq);
-
-		// first check if we have real data to cover this form
-		for (Entry<LibraryEntry, ArrayList<Spectrum>> realDataEntry : scansByEntry.entrySet()) {
-			LibraryEntry realEntry=realDataEntry.getKey();
-			if (targetPeptideModSeq.equals(realEntry.getPeptideModSeq())) {
-				return new LocalizedForm(targetModel, realEntry, realDataEntry.getValue());
-			}
-		}
-
-		int bestNumMatching=-1;
-		LibraryEntry bestRealEntry=null;
-		ArrayList<Spectrum> bestScans=null;
-		
-		double[] targetIons=ionsByPeptide.get(targetPeptideModSeq);
-		for (Entry<LibraryEntry, ArrayList<Spectrum>> realDataEntry : scansByEntry.entrySet()) {
-			LibraryEntry realEntry=realDataEntry.getKey();
-			FragmentationModel realModel=modelMap.get(realEntry.getPeptideModSeq());
-			if (realModel==null) continue;
-			
-			double[] realIons=ionsByPeptide.get(realEntry.getPeptideModSeq());
-			int numMatching=getNumberOfMatchingIons(targetIons, realIons, parameters.getFragmentTolerance());
-			
-			if (numMatching>bestNumMatching) {
-				bestNumMatching=numMatching;
-				bestRealEntry=realEntry;
-				bestScans=realDataEntry.getValue();
-			}
-		}
-
-		Pair<FragmentationModel, LibraryEntry> localizedForm=bestRealEntry.getEntryFromNewSequence(targetPeptideModSeq, bestRealEntry.getAccessions(), bestRealEntry.isDecoy(), parameters);
-		return new LocalizedForm(localizedForm.x, localizedForm.y, bestScans);
-	}
-	
-	private int getNumberOfMatchingIons(double[] a, double[] b, MassTolerance tolerance) {
-		double[] x,y;
-		if (a.length>b.length) {
-			y=a;
-			x=b;
-		} else {
-			y=b;
-			x=a;
-		}
-		int matches=0;
-		for (int i=0; i<x.length; i++) {
-			if (tolerance.getIndex(y, x[i]).isPresent()) {
-				matches++;
-			}
-		}
-		return matches;
-	}
-	
 
 	@Override
 	protected Nothing process() {
@@ -352,6 +286,73 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 			}
 		}
 		return Nothing.NOTHING;
+	}
+	
+	class LocalizedForm {
+		private final FragmentationModel localizedModel;
+		private final LibraryEntry localizedEntry;
+		private final ArrayList<Spectrum> scansToConsider;
+		public LocalizedForm(FragmentationModel localizedModel, LibraryEntry localizedEntry, ArrayList<Spectrum> scansToConsider) {
+			this.localizedModel=localizedModel;
+			this.localizedEntry=localizedEntry;
+			this.scansToConsider=scansToConsider;
+		}
+	}
+	
+	public LocalizedForm getLocalizedForm(AmbiguousPeptideModSeq targetPeptide, byte charge, HashMap<String, FragmentationModel> modelMap, HashMap<String, double[]> ionsByPeptide, HashMap<LibraryEntry, ArrayList<Spectrum>> scansByEntry, SearchParameters parameters) {
+		String targetPeptideModSeq=targetPeptide.getPeptideModSeq();
+		FragmentationModel targetModel=modelMap.get(targetPeptideModSeq);
+
+		// first check if we have real data to cover this form
+		for (Entry<LibraryEntry, ArrayList<Spectrum>> realDataEntry : scansByEntry.entrySet()) {
+			LibraryEntry realEntry=realDataEntry.getKey();
+			if (targetPeptideModSeq.equals(realEntry.getAccuratePeptideModSeq(parameters.getAAConstants()))) {
+				return new LocalizedForm(targetModel, realEntry, realDataEntry.getValue());
+			}
+		}
+
+		int bestNumMatching=-1;
+		LibraryEntry bestRealEntry=null;
+		ArrayList<Spectrum> bestScans=null;
+		
+		double[] targetIons=ionsByPeptide.get(targetPeptideModSeq);
+		for (Entry<LibraryEntry, ArrayList<Spectrum>> realDataEntry : scansByEntry.entrySet()) {
+			LibraryEntry realEntry=realDataEntry.getKey();
+			FragmentationModel realModel=modelMap.get(realEntry.getAccuratePeptideModSeq(parameters.getAAConstants()));
+			if (realModel==null) {
+				continue;
+			}
+			
+			double[] realIons=ionsByPeptide.get(realEntry.getAccuratePeptideModSeq(parameters.getAAConstants()));
+			int numMatching=getNumberOfMatchingIons(targetIons, realIons, parameters.getFragmentTolerance());
+			
+			if (numMatching>bestNumMatching) {
+				bestNumMatching=numMatching;
+				bestRealEntry=realEntry;
+				bestScans=realDataEntry.getValue();
+			}
+		}
+
+		Pair<FragmentationModel, LibraryEntry> localizedForm=bestRealEntry.getEntryFromNewSequence(targetPeptideModSeq, bestRealEntry.getAccessions(), bestRealEntry.isDecoy(), parameters);
+		return new LocalizedForm(localizedForm.x, localizedForm.y, bestScans);
+	}
+	
+	private int getNumberOfMatchingIons(double[] a, double[] b, MassTolerance tolerance) {
+		double[] x,y;
+		if (a.length>b.length) {
+			y=a;
+			x=b;
+		} else {
+			y=b;
+			x=a;
+		}
+		int matches=0;
+		for (int i=0; i<x.length; i++) {
+			if (tolerance.getIndex(y, x[i]).isPresent()) {
+				matches++;
+			}
+		}
+		return matches;
 	}
 
 	private ArrayList<Spectrum> getSpectra(EncyclopediaScorer eScorer, int movingAverageLength, LibraryEntry seedEntry) {
