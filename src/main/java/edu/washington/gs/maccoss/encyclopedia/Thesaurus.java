@@ -147,7 +147,7 @@ public class Thesaurus {
 				
 				File elibFile=job.getResultLibrary();
 				if (!elibFile.exists()) {
-					job=checkJob(job);
+					//job=checkJob(job);
 					progress.update("Writing elib result library...");
 					Logger.logLine("Writing elib result library...");
 					ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
@@ -322,7 +322,13 @@ public class Thesaurus {
 		File elibFile=job.getResultLibrary();
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		jobs.add(job);
-		SearchToBLIB.convert(progress, jobs, elibFile, false, true);
+		try {
+			SearchToBLIB.convert(progress, jobs, elibFile, false, true);
+		} catch (Exception e) {
+			Logger.errorLine("Encountered error creating elib report...");
+			Logger.errorException(e);
+			throw new EncyclopediaException("Error creating elib report", e);
+		}
 	
 		Logger.logLine("Grouping proteins...");
 		ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides);

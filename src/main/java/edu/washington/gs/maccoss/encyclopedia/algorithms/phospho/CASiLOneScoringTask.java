@@ -24,6 +24,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
@@ -170,6 +171,10 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 					//System.out.println("considering: "+peptideModSeq.getPeptideAnnotation()); // FIXME
 									
 					LocalizedForm localizedForm=getLocalizedForm(peptideModSeq, firstEntry.getPrecursorCharge(), entryMap, ionsByPeptide, scansByEntry, parameters);
+					if (localizedForm==null) {
+						continue;
+					}
+					
 					FragmentationModel localizedModel=localizedForm.localizedModel;
 					LibraryEntry localizedEntry=localizedForm.localizedEntry;
 					ArrayList<Spectrum> stripeList=localizedForm.scansToConsider;
@@ -316,14 +321,23 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 		ArrayList<Spectrum> bestScans=null;
 		
 		double[] targetIons=ionsByPeptide.get(targetPeptideModSeq);
+		if (targetIons==null) {
+			Logger.errorLine("Missing target ions for: "+targetPeptideModSeq+", Found ions for: "+General.toString(ionsByPeptide.keySet())+", skipping form");
+			return null;
+		}
 		for (Entry<LibraryEntry, ArrayList<Spectrum>> realDataEntry : scansByEntry.entrySet()) {
 			LibraryEntry realEntry=realDataEntry.getKey();
 			FragmentationModel realModel=modelMap.get(realEntry.getAccuratePeptideModSeq(parameters.getAAConstants()));
 			if (realModel==null) {
+				// these will be associated with oxidation or other peptides within the same window (and shouldn't be used to model fragmentation)
 				continue;
 			}
 			
 			double[] realIons=ionsByPeptide.get(realEntry.getAccuratePeptideModSeq(parameters.getAAConstants()));
+			if (realIons==null) {
+				Logger.errorLine("Missing real ions for: "+realEntry.getAccuratePeptideModSeq(parameters.getAAConstants())+", Found ions for: "+General.toString(ionsByPeptide.keySet()));
+				continue;				
+			}
 			int numMatching=getNumberOfMatchingIons(targetIons, realIons, parameters.getFragmentTolerance());
 			
 			if (numMatching>bestNumMatching) {
@@ -338,6 +352,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 	}
 	
 	private int getNumberOfMatchingIons(double[] a, double[] b, MassTolerance tolerance) {
+		if (a==null||b==null) return 0;
 		double[] x,y;
 		if (a.length>b.length) {
 			y=a;
