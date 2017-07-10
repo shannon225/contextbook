@@ -6,7 +6,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import gnu.trove.list.array.TIntArrayList;
 
 public class PhosphoPermuter {
@@ -34,7 +33,7 @@ public class PhosphoPermuter {
 			
 			if (isSTY) {
 				if (aa.y!=null) {
-					if (MassConstants.isPhosphoMass(aa.y)) {
+					if (modification.isModificationMass(aaValue, aa.y)) {
 						phosphoCount++;
 					} else {
 						// STY with a non-phospho mod, so add as if it were another amino acid and continue

@@ -18,7 +18,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.MedianInterpolatorTest;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import junit.framework.TestCase;
@@ -157,7 +156,7 @@ public class XCorrCalculatorTest extends TestCase {
 		final byte charge=2;
 		final double chargedMz=(1329.6335+(charge-1)*MassConstants.protonMass)/charge;
 		
-		InputStream is=MedianInterpolatorTest.class.getResourceAsStream("/040203_XXX_X1_1_OT_5seq.02.00085.2.dta.txt");
+		InputStream is=XCorrCalculatorTest.class.getResourceAsStream("/040203_XXX_X1_1_OT_5seq.02.00085.2.dta.txt");
 		ArrayList<Peak> peaks=getData(is);
 		Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
 		return getSpectrum(peakArrays.x, General.protectedSqrt(peakArrays.y), General.sum(peakArrays.y), 0.0f, "SDFHLFGPPGKK", chargedMz); 

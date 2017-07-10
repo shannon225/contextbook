@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -194,7 +195,7 @@ public class PeptideUtils {
 				modificationMass=MassConstants.getAccurateModificationMass(aaChar, modificationMass);
 
 				masses.set(masses.size()-1, masses.get(masses.size()-1)+modificationMass);
-				neutralLosses.set(masses.size()-1, MassConstants.getNeutralLoss(aaChar, modificationMass));
+				neutralLosses.set(masses.size()-1, PeptideModification.getNeutralLoss(aaChar, modificationMass));
 				aas.set(masses.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
 			} else {
 				masses.add(aaConstants.getMass(ca[i]));
