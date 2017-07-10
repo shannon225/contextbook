@@ -12,8 +12,15 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 
 public class LocalizationDataToTSVConsumerExample {
 	public static void main(String[] args) {
-		File f=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/22jun2016_mcf7_phospho_1a.dia.thesaurus.txt.localizations.txt");
-		File p=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/22jun2016_mcf7_phospho_1a.dia.thesaurus.txt");
+		//File f=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/22jun2016_mcf7_phospho_1a.dia.thesaurus.txt.localizations.txt");
+		//File p=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/22jun2016_mcf7_phospho_1a.dia.thesaurus.txt");
+
+		//File f=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/01_error/20170430_HeLa_phosp_DIA_B_01_170506220515.mzML.thesaurus.txt.localizations.txt");
+		//File p=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/01_error/20170430_HeLa_phosp_DIA_B_01_170506220515.mzML.thesaurus.txt");
+		
+		File f=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/thesaurus/phospho_repeats_localization_txts/20170430_HeLa_phosp_DIA_B_01_170506220515.dia.thesaurus.txt.localizations.txt");
+		File p=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/thesaurus/phospho_repeats_localization_txts/20170430_HeLa_phosp_DIA_B_01_170506220515.dia.thesaurus.txt");
+		
 		ArrayList<PercolatorPeptide> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(p, 0.05f);
 		System.out.println("Found "+passingPeptides.size()+" total peptides...");
 
@@ -27,7 +34,13 @@ public class LocalizationDataToTSVConsumerExample {
 		SearchParameters parameters=SearchParameterParser.parseParameters(defaults);
 		
 		HashMap<String, ModificationLocalizationData> localizationData=LocalizationDataToTSVConsumer.readLocalizationFile(f, passingPeptides, parameters);
-		System.out.println("Found "+localizationData.size()+" localized peptides...");
+		System.out.println("Found "+localizationData.size()+" peptides in localization file...");
+		
+		int count=0;
+		for (ModificationLocalizationData data : localizationData.values()) {
+			if (data.isSiteSpecific()) count++;
+		}
+		System.out.println("Found "+count+" site localized peptides...");
 	}
 
 }
