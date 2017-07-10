@@ -1,8 +1,12 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.StringTokenizer;
 
 public final class FragmentIon implements Comparable<FragmentIon> {
@@ -56,6 +60,31 @@ public final class FragmentIon implements Comparable<FragmentIon> {
 			masses[i] = ions[i].mass;
 		}
 		return masses;
+	}
+
+	//TODO: write test cases for this functionality
+	public static FragmentIon[] getUniqueFragments(FragmentIon[] fragments, MassTolerance tolerance) {
+		final List<FragmentIon> work = Lists.newArrayList();
+
+		Arrays.stream(fragments)
+				.sorted(Ordering.natural().onResultOf(FragmentIon::getType)) // sort by declaration order of fragment types -- this is roughly by priority
+				.forEach(ion -> {
+					boolean exists = false;
+					for (FragmentIon existing : work) {
+						if (tolerance.equals(ion.mass, existing.mass)) {
+							exists = true;
+							break;
+						}
+					}
+
+					if (!exists) {
+						work.add(ion);
+					}
+				});
+
+		return work.stream()
+				.sorted() // sort by natural ordering of ions
+				.toArray(FragmentIon[]::new);
 	}
 
 	public FragmentIon increment(double deltaMass) {

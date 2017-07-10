@@ -1,14 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Ordering;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
@@ -16,8 +11,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class EncyclopediaOneScorer implements EncyclopediaScorer {
 	private final SearchParameters parameters;
@@ -146,31 +139,7 @@ public class EncyclopediaOneScorer implements EncyclopediaScorer {
 		double[] acquiredMasses=spectrum.getMassArray();
 		float[] acquiredIntensities=spectrum.getIntensityArray();
 
-		final List<FragmentIon> uniqueFragments;
-		{
-			final List<FragmentIon> work = Lists.newArrayList();
-
-			Arrays.stream(ions)
-					.sorted(Ordering.natural().onResultOf(FragmentIon::getType)) // sort by declaration order of fragment types -- this is roughly by priority
-					.forEach(ion -> {
-						boolean exists = false;
-						for (FragmentIon existing : work) {
-							if (acquiredTolerance.equals(ion.mass, existing.mass)) {
-								Logger.logLine("Skipping fragment " + ion.toString() + " in favor of " + existing.toString() + " from " + entry.getPeptideModSeq() + "+" + entry.getPrecursorCharge());
-								exists = true;
-								break;
-							}
-						}
-
-						if (!exists) {
-							work.add(ion);
-						}
-					});
-
-			uniqueFragments = ImmutableList.copyOf(work);
-		}
-		ions = uniqueFragments.toArray(new FragmentIon[uniqueFragments.size()]); // slightly naughty to overwrite parameter, but this is fine
-		Arrays.sort(ions); // sort by natural ordering of ions
+		ions = FragmentIon.getUniqueFragments(ions, acquiredTolerance); // ensure that all ions are unique within tolerance
 
 		ArrayList<PeakScores> scoredPeaks=new ArrayList<PeakScores>();
 		
