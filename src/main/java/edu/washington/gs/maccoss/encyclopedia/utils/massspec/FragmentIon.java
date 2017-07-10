@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 public final class FragmentIon implements Comparable<FragmentIon> {
-	private static final String INDEX_DELIMINATOR = ";";
-	private static final String ARCHIVE_DELIMINATOR = "|";
+	private static final String INDEX_DELIMITER = ";";
+	private static final String ARCHIVE_DELIMITER = "|";
 
 	public final double mass;
 	public final byte index;
@@ -23,12 +23,12 @@ public final class FragmentIon implements Comparable<FragmentIon> {
 		StringBuilder sb = new StringBuilder();
 		for (FragmentIon ion : ions) {
 			if (sb.length() > 0) {
-				sb.append(ARCHIVE_DELIMINATOR);
+				sb.append(ARCHIVE_DELIMITER);
 			}
 			sb.append(IonType.toString(ion.type));
-			sb.append(INDEX_DELIMINATOR);
+			sb.append(INDEX_DELIMITER);
 			sb.append(ion.index);
-			sb.append(INDEX_DELIMINATOR);
+			sb.append(INDEX_DELIMITER);
 			sb.append(ion.mass);
 		}
 		return sb.toString();
@@ -38,10 +38,10 @@ public final class FragmentIon implements Comparable<FragmentIon> {
 		if (s == null || s.trim().length() == 0 || !s.equalsIgnoreCase("null")) {
 			return new FragmentIon[0];
 		}
-		StringTokenizer st = new StringTokenizer(s, ARCHIVE_DELIMINATOR);
-		ArrayList<FragmentIon> ions = new ArrayList<FragmentIon>();
+		StringTokenizer st = new StringTokenizer(s, ARCHIVE_DELIMITER);
+		ArrayList<FragmentIon> ions = new ArrayList<>();
 		while (st.hasMoreTokens()) {
-			StringTokenizer st2 = new StringTokenizer(st.nextToken(), INDEX_DELIMINATOR);
+			StringTokenizer st2 = new StringTokenizer(st.nextToken(), INDEX_DELIMITER);
 			IonType type = IonType.fromString(st2.nextToken());
 			byte index = Byte.parseByte(st2.nextToken());
 			double mass = Double.parseDouble(st2.nextToken());
