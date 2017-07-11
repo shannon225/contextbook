@@ -1,4 +1,5 @@
 ![thesaurus_graphic.png](https://bitbucket.org/repo/oL57XBK/images/2998531315-thesaurus_graphic.png)
+
 The human phosphorylation regulatory network represents a complex signaling cascade where proteins can be phosphorylated at multiple sites resulting in different functional states. Here we present Thesaurus, a hybrid search engine that detects and localizes novel positional isomers using site-specific fragment ions directly from data independent acquisition mass spectrometry experiments.
 
 ### Contribution guidelines ###
