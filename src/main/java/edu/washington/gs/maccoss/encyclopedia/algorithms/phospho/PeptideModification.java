@@ -121,6 +121,7 @@ public class PeptideModification {
 	}
 	
 	public static double getNeutralLoss(char aa, double modificationMass) {
+		//if (true) return 0.0;
 		PeptideModification mod=getModification(aa, modificationMass);
 		if (mod==null) return 0.0;
 		return mod.getNeutralLoss(aa);

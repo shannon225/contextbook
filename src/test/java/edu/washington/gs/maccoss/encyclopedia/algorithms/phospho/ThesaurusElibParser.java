@@ -50,6 +50,8 @@ public class ThesaurusElibParser {
 			"TSSFAEPGGGGGGGGGGPGGSASGPGGTGGGK", "TSSNASTISGRLSPIMTEQDDLGEGDVHSMVYPPSAAK", "TSSVSNPQDSVGSPCSRVGEEEHVYSFPNK", "TTSFAESCKPVQQPSAFGSMK", "VDYVVVDQQK", "VGEEEHVYSFPNK", "VGEEEHVYSFPNKQK",
 			"VIEDNEYTAR", "VIEDNEYTAREGAK", "VVLGDGVQLPPGDYSTTPGGTLFSTTPGGTR", "VYENVTGLVK", "WPGSPTSR", "YFDDEFTAQSITITPPDR", "YFDDEFTAQSITITPPDRYDSLGLLELDQR", "YGQFSGLNPGGRPITPPR",
 			"YGQFSGLNPGGRPITPPRNSAK", "YMEDSTYYK", "YMEDSTYYKASK", "YPRPASVPPSPSLSR", "YVDSEGHLYTVPIR", "YVDSEGHLYTVPIREQGNIYKPNNK" };
+	
+	public static String[] KGSGDYMPMSPK=new String[] {"KGSGDYMPMSPK"};
 
 	public static void loadMap() {
 		Arrays.sort(targetProteins);
@@ -97,8 +99,9 @@ public class ThesaurusElibParser {
 		LibraryFile.OPEN_IN_PLACE=true;
 		Logger.PRINT_TO_SCREEN=false;
 		loadMap();
-		
-		File[] f=new File("/Users/searleb/Documents/school/localization_manuscript/elibs/mcf7").listFiles();
+
+		String[] targets=null;//KGSGDYMPMSPK;//targetPeptides;
+		File[] f=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs").listFiles();
 		
 		HashMap<String, QuantitationLog> quantLog=new HashMap<>();
 		for (File file : f) {
@@ -110,22 +113,27 @@ public class ThesaurusElibParser {
 
 				Connection c=library.getConnection();
 				Statement s=c.createStatement();
-				ResultSet rs=s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.PeptideSeq, pep.SourceFile, pep.TotalIntensity, pep.IsSiteSpecific, pro.ProteinAccessions from peptidelocalizations pep, proteins pro where pep.PeptideSeq = pro.PeptideSeq");
+				ResultSet rs=s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.PeptideSeq, pep.SourceFile, pep.LocalizedIntensity, pep.TotalIntensity, pep.IsSiteSpecific, pro.ProteinAccessions from peptidelocalizations pep, proteins pro where pep.PeptideSeq = pro.PeptideSeq");
 
 				while (rs.next()) {
 					//byte precursorCharge=(byte)rs.getInt(1);
 					String peptideModSeq=rs.getString(2);
 					String peptideSeq=rs.getString(3);
 					String sourceFile=rs.getString(4);
-					float totalIntensity=rs.getFloat(5);
-					boolean isSiteSpecific=rs.getBoolean(6);
-					String proteinToken=rs.getString(7);
+					float localizedIntensity=rs.getFloat(5);
+					float totalIntensity=rs.getFloat(6);
+					boolean isSiteSpecific=rs.getBoolean(7);
+					String proteinToken=rs.getString(8);
 					//HashSet<String> accessions=PSMData.stringToAccessions(proteinToken);
 					boolean keeper=false;
-					for (int i=0; i<targetPeptides.length; i++) {
-						if (peptideSeq.indexOf(targetPeptides[i])>=0) {
-							keeper=true;
-							break;
+					if (targets==null) {
+						keeper=true;
+					} else {
+						for (int i=0; i<targets.length; i++) {
+							if (peptideSeq.indexOf(targets[i])>=0) {
+								keeper=true;
+								break;
+							}
 						}
 					}
 					
@@ -142,6 +150,7 @@ public class ThesaurusElibParser {
 							quantLog.put(peptideModSeq, log);
 						}
 						log.addIntensity(coord, totalIntensity, isSiteSpecific);
+						//log.addIntensity(coord, localizedIntensity, isSiteSpecific);
 					}
 				}
 				rs.close();
