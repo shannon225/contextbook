@@ -113,18 +113,19 @@ public class ThesaurusElibParser {
 
 				Connection c=library.getConnection();
 				Statement s=c.createStatement();
-				ResultSet rs=s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.PeptideSeq, pep.SourceFile, pep.LocalizedIntensity, pep.TotalIntensity, pep.IsSiteSpecific, pro.ProteinAccessions from peptidelocalizations pep, proteins pro where pep.PeptideSeq = pro.PeptideSeq");
+				ResultSet rs=s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.PeptideSeq, pep.SourceFile, max(pep.LocalizedIntensity), max(pep.TotalIntensity), pep.IsSiteSpecific, pro.ProteinAccessions from peptidelocalizations pep, proteins pro where pep.PeptideSeq = pro.PeptideSeq group by pep.PeptideModSeq,pep.SourceFile");
 
 				while (rs.next()) {
 					//byte precursorCharge=(byte)rs.getInt(1);
 					String peptideModSeq=rs.getString(2);
 					String peptideSeq=rs.getString(3);
 					String sourceFile=rs.getString(4);
-					float localizedIntensity=rs.getFloat(5);
+					//float localizedIntensity=rs.getFloat(5);
 					float totalIntensity=rs.getFloat(6);
 					boolean isSiteSpecific=rs.getBoolean(7);
 					String proteinToken=rs.getString(8);
 					//HashSet<String> accessions=PSMData.stringToAccessions(proteinToken);
+					
 					boolean keeper=false;
 					if (targets==null) {
 						keeper=true;
@@ -151,6 +152,7 @@ public class ThesaurusElibParser {
 						}
 						log.addIntensity(coord, totalIntensity, isSiteSpecific);
 						//log.addIntensity(coord, localizedIntensity, isSiteSpecific);
+						
 					}
 				}
 				rs.close();
@@ -216,25 +218,38 @@ public class ThesaurusElibParser {
 		}
 
 		System.out.println();
-		System.out.print("Peptide\tProtein");
+		System.out.print("Peptide\tProtein\tp-value\tFDR");
 		for (int i=0; i<6; i++) {
 			System.out.print('\t');
 			System.out.print(getSampleName(i+1));
 		}
 		System.out.println();
 		
+		ArrayList<String> flagged=new ArrayList<>();
 		for (int pep=0; pep<adjustedPValues.length; pep++) {
 			if (adjustedPValues[pep]<0.05) {
 				String peptide=peptides.get(pep);
 				QuantitationLog log=quantLog.get(peptide);
 
 				float[][] data=log.getNormalizedData();
-				System.out.print(log.peptide+"\t"+log.protein);
+				double pValue=getPValue(data);
+				System.out.print(log.peptide+"\t"+log.protein+"\t"+pValue+"\t"+adjustedPValues[pep]);
 				for (int i=0; i<data.length; i++) {
 					System.out.print('\t');
 					System.out.print(QuickMedian.median(data[i].clone()));
 				}
 				System.out.println();
+				
+				if (adjustedPValues[pep]<pValue) {
+					flagged.add(peptide);
+				}
+			}
+		}
+		
+		if (flagged.size()>0) {
+			System.out.println("FLAGGED!");
+			for (String string : flagged) {
+				System.out.println("\t"+string);
 			}
 		}
 	}

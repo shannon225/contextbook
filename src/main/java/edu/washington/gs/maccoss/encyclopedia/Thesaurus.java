@@ -66,7 +66,7 @@ public class Thesaurus {
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("Thesaurus Help");
-			Logger.timelessLogLine("Thesaurus is a chromatogram-aligned site localizing search engine for DIA data.");
+			Logger.timelessLogLine("Thesaurus is software for detecting positional phosphopeptide isomers from DIA data.");
 			Logger.timelessLogLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.timelessLogLine("Required Parameters: ");
 			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file");
