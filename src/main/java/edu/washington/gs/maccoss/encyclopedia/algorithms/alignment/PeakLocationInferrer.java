@@ -19,6 +19,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibrary
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
@@ -198,9 +199,9 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 				
 				RetentionTimeFilter alignment=new RetentionTimeFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
 				alignmentMap.put(job, alignment);
-				if (job instanceof EncyclopediaJobData) {
+				if (job instanceof QuantitativeSearchJobData) {
 					// try reading encyclopedia data directly from results library
-					File resultLibrary=((EncyclopediaJobData) job).getResultLibrary();
+					File resultLibrary=((QuantitativeSearchJobData) job).getResultLibrary();
 					alignment.plot(points, Optional.ofNullable(resultLibrary));
 				}
 
@@ -265,14 +266,14 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 			ArrayList<PercolatorPeptide> targetPeptides=entry.getValue();
 
 			boolean readFromLibraryResult=false;
-			if (job instanceof EncyclopediaJobData) {
+			if (job instanceof QuantitativeSearchJobData) {
 				// try reading encyclopedia data directly from results library
-				File resultLibrary=((EncyclopediaJobData) job).getResultLibrary();
+				File resultLibrary=((QuantitativeSearchJobData) job).getResultLibrary();
 				try {
 					LibraryInterface results=BlibToLibraryConverter.getFile(resultLibrary);
 					ArrayList<LibraryEntry> entries=results.getAllEntries(false);
 					ArrayList<ChromatogramLibraryEntry> bestEntries=new ArrayList<ChromatogramLibraryEntry>();
-					
+
 					TreeMap<PeptidePrecursor, LibraryEntry> fastLookupPeptides=new TreeMap<PeptidePrecursor, LibraryEntry>();
 					for (LibraryEntry libraryEntry : entries) {
 						fastLookupPeptides.put(libraryEntry, libraryEntry);
