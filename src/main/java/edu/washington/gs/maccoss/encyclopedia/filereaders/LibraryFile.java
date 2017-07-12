@@ -1,49 +1,26 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.StringTokenizer;
-import java.util.zip.DataFormatException;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Chromatogram;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
-import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
+import edu.washington.gs.maccoss.encyclopedia.utils.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.sql.*;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.zip.DataFormatException;
 
 public class LibraryFile extends SQLFile implements LibraryInterface {
 	public static boolean OPEN_IN_PLACE=false;
@@ -533,7 +510,6 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			if (topNMasses==null) {
 				throw new IllegalStateException("Could not retention time align " + data.getPeptideModSeq() + " from source file.  Unable to proceed.");
 			}
-			
 		} else {
 			ArrayList<Peak> peaks=data.getTopNPeaks(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
 			float total=0.0f;
