@@ -23,6 +23,20 @@ import gnu.trove.procedure.TObjectFloatProcedure;
 public class ThesaurusElibParser {
 	public static HashMap<String, Coordinate> sampleKey=new HashMap<>();
 	
+	private static final int numberOfSampleTypes=6;
+	private static final int numberOfReplicates=6;
+	private static String getSampleName(int i) {
+		switch (i) {
+		case 1: return "Cont";
+		case 2: return "Ins";
+		case 3: return "IGF1";
+		case 4: return "MK-Cont";
+		case 5: return "MK-Ins";
+		case 6: return "MK-IGF1";
+		default: return i > 0 && i < 27 ? String.valueOf((char)(i + 64)) : null;
+		}
+	}
+	
 	public static String[] targetProteins=new String[] { "O43521", "O43524", "O60343", "O60825", "O75581", "P02545", "P04049", "P04637", "P06239", "P06730", "P07948", "P08069", "P10415", "P11274",
 			"P12931", "P13807", "P22681", "P23443", "P27361", "P29474", "P31749", "P31751", "P35568", "P42345", "P43403", "P45983", "P45984", "P49023", "P49815", "P49840", "P49841", "P51812",
 			"P53396", "P54646", "P62136", "P62753", "P98177", "Q00987", "Q02750", "Q03135", "Q05397", "Q12778", "Q13131", "Q13164", "Q13322", "Q13480", "Q13541", "Q15418", "Q6R327", "Q96B36",
@@ -262,18 +276,6 @@ public class ThesaurusElibParser {
 		return TestUtils.oneWayAnovaPValue(classes);
 	}
 	
-	private static String getSampleName(int i) {
-		switch (i) {
-		case 1: return "Cont";
-		case 2: return "Ins";
-		case 3: return "IGF1";
-		case 4: return "MK-Cont";
-		case 5: return "MK-Ins";
-		case 6: return "MK-IGF1";
-		default: return i > 0 && i < 27 ? String.valueOf((char)(i + 64)) : null;
-		}
-	}
-	
 	public static class QuantitationLog {
 		boolean isSiteSpecific=false;
 		final String protein;
@@ -296,17 +298,9 @@ public class ThesaurusElibParser {
 			}
 		}
 		public float[][] getData() {
-			Coordinate[] coords=intensities.keys(new Coordinate[intensities.size()]);
-			int maxReplicate=0;
-			int maxSample=0;
-			for (Coordinate c : coords) {
-				if (c.replicate>maxReplicate) maxReplicate=c.replicate;
-				if (c.sample>maxSample) maxSample=c.sample;
-			}
-			
-			float[][] results=new float[maxSample][];
+			float[][] results=new float[numberOfSampleTypes][];
 			for (int i=0; i<results.length; i++) {
-				results[i]=new float[maxReplicate];
+				results[i]=new float[numberOfReplicates];
 			}
 			intensities.forEachEntry(new TObjectFloatProcedure<Coordinate>() {
 				@Override
