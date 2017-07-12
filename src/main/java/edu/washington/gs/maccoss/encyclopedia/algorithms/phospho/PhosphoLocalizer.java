@@ -278,6 +278,7 @@ public class PhosphoLocalizer {
 						break;
 					}
 				}
+				skip=false;
 				if (skip) {
 					negLogProbsSiteSpecific[k]=-2.0f;
 				} else {
@@ -379,7 +380,7 @@ public class PhosphoLocalizer {
 						localizationIntensity+=intensities[i];
 					}
 				}
-
+				
 				if (numIdentificationPeaks==0) {
 					// if there's not any localization evidence for a well formed peak then give up
 					continue;
@@ -401,6 +402,7 @@ public class PhosphoLocalizer {
 					}
 				}
 				//System.out.println(targetPeptideAnnotation.getPeptideAnnotation()+" --> "+numIdentificationPeaks+" identification peaks"); //FIXME
+				System.out.println("TARGET: "+targetPeptideAnnotation.getPeptideAnnotation()+"\t"+maxRawScore+"\t"+numIdentificationPeaks+"\t"+quantData.getMedianChromatogram().length);
 				
 				// only trust this ID if there are enough peaks!
 				if (numIdentificationPeaks>=targetNumPeaks&&quantData.getMedianChromatogram().length>0) {

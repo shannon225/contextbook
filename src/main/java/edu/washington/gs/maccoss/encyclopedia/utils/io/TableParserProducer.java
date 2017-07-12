@@ -6,11 +6,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.StringTokenizer;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -64,11 +64,7 @@ public class TableParserProducer implements Runnable {
 			String eachline=in.readLine(); // header
 			
 			if (eachline!=null) {
-				StringTokenizer st=new StringTokenizer(eachline, delim);
-				ArrayList<String> headers=new ArrayList<String>();
-				while (st.hasMoreTokens()) {
-					headers.add(st.nextToken());
-				}
+				List<String> headers=Arrays.asList(eachline.split(delim, -1));
 
 				while ((eachline=in.readLine())!=null) {
 					if (eachline.trim().length()==0) {
@@ -77,16 +73,14 @@ public class TableParserProducer implements Runnable {
 
 					HashMap<String, String> row=new HashMap<String, String>();
 
-					st=new StringTokenizer(eachline, delim);
+					List<String> data=Arrays.asList(eachline.split(delim, -1));
 					int count=0;
-					while (st.hasMoreTokens()) {
-						String entry=st.nextToken();
+					for (String entry : data) {
 						if (count>=headers.size()) {
 							break;
 						}
 						row.put(headers.get(count), entry);
 						count++;
-
 					}
 
 					blockingQueue.add(row);

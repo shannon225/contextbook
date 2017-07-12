@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import junit.framework.TestCase;
@@ -14,12 +15,12 @@ public class MassConstantsTest extends TestCase {
 	}
 	
 	public void testGetNeutralLoss() {
-		assertTrue(MassConstants.getNeutralLoss('S', 80.0)>0.0);
-		assertTrue(MassConstants.getNeutralLoss('S', 80.1)==0.0);
-		assertTrue(MassConstants.getNeutralLoss('S', 79.966331)>0.0);
-		assertTrue(MassConstants.getNeutralLoss('S', 79.966331+0.00001)>0.0);
-		assertTrue(MassConstants.getNeutralLoss('S', 79.966331+0.0001)==0.0);
-		assertTrue(MassConstants.getNeutralLoss('S', 79.966331-0.00001)>0.0);
-		assertTrue(MassConstants.getNeutralLoss('S', 79.966331-0.0001)==0.0);
+		assertTrue(PeptideModification.getNeutralLoss('S', 80.0)>0.0);
+		assertTrue(PeptideModification.getNeutralLoss('S', 80.1)==0.0);
+		assertTrue(PeptideModification.getNeutralLoss('S', 79.966331)>0.0);
+		assertTrue(PeptideModification.getNeutralLoss('S', 79.966331+0.00001)>0.0);
+		assertTrue(PeptideModification.getNeutralLoss('S', 79.966331+0.0001)==0.0);
+		assertTrue(PeptideModification.getNeutralLoss('S', 79.966331-0.00001)>0.0);
+		assertTrue(PeptideModification.getNeutralLoss('S', 79.966331-0.0001)==0.0);
 	}
 }

@@ -15,12 +15,14 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementDat
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
@@ -29,7 +31,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import gnu.trove.map.hash.TFloatFloatHashMap;
@@ -38,9 +42,16 @@ public class PhosphoLocalizerExample {
 
 	@SuppressWarnings("unused")
 	public static void main(String[] args) throws Exception {
+		StripeFile.OPEN_IN_PLACE=true;
+		LibraryFile.OPEN_IN_PLACE=true;
+		
 		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/22jun2016_mcf7_phospho_1b.dia");
-		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/22jun2016_mcf7_phospho_1c.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/22jun2016_mcf7_phospho_1c.dia");
+		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_04.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_03_170507071858.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_01_170506220515.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_02_170507024206.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
 
 		//File libraryFile=new File("/Users/searleb/Documents/phospho_localization/data/VillenJ_Exactive_HumanPhosphoproteome.elib");
@@ -57,11 +68,16 @@ public class PhosphoLocalizerExample {
 		defaults.put("-ptol", "16.67");
 		defaults.put("-ftol", "16.67");
 		defaults.put("-lftol", "16.67");
+		//defaults.put("-frag", "yonly");
 		defaults.put("-scoringBreadthType", "uncal20");
 		
 		SearchParameters parameters=SearchParameterParser.parseParameters(defaults);
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
-		UnitBackgroundFrequencyCalculator background=new UnitBackgroundFrequencyCalculator(0.01f);
+		
+		UnitBackgroundFrequencyCalculator unitbackground=new UnitBackgroundFrequencyCalculator(0.01f);
+		BackgroundFrequencyInterface background=unitbackground;
+		//background=BackgroundFrequencyCalculator.generateBackground(stripefile);
+		
 		float duration=stripefile.getGradientLength()/20.0f;
 		
 		PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, PeptideModification.phosphorylation, background, parameters);
@@ -69,7 +85,27 @@ public class PhosphoLocalizerExample {
 		String peptideModSeq;
 		float retentionTime;
 		byte precursorCharge;
-		if (false) {
+		if (true) {
+			// repeat 2 sp|P83731|RL24_HUMAN
+			peptideModSeq="AITGAS[+80.0]LADIMAK";
+			retentionTime=5680.037109375f;
+			precursorCharge=2;
+		} else if (false) {
+			// repeat 1 (2 mins apart)
+			peptideModSeq="LSGGLGAGS[+80.0]C[+57.0]R";
+			retentionTime=2360.37475585937f;
+			precursorCharge=2;
+		} else if (false) {
+			// hela starved (1 min apart)
+			peptideModSeq="FGTFGGLGS[+80.0]K";
+			retentionTime=88*60f;
+			precursorCharge=2;
+		} else if (false) {
+			// hela starved (1 min apart)
+			peptideModSeq="FGTFGGLGS[+80.0]K";
+			retentionTime=88*60f;
+			precursorCharge=2;
+		} else if (false) {
 			// repeat 4
 			peptideModSeq="ATAPQTQHVSPMR";
 			retentionTime=2250.7158203125f;
@@ -101,7 +137,7 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="KGS[+80.0]GDYMPMSPK";
 			retentionTime=2949.1633f;
 			precursorCharge=2;
-		} else if (false) {
+		} else if (true) {
 			// IRS1
 			peptideModSeq="KGSGDYMPMS[+80.0]PK";
 			retentionTime=2949.1633f;
@@ -165,10 +201,10 @@ public class PhosphoLocalizerExample {
 			ArrayList<XYTrace> uniqueFragmentsList=new ArrayList<XYTrace>(allFragments.values());
 			XYTraceInterface[] fragmentTraces=uniqueFragmentsList.toArray(new XYTrace[uniqueFragmentsList.size()]);
 
-			Charter.launchChart(sequenceKey+" Retention Time (min)", "Intensity", false, new Dimension(1000, 400), fragmentTraces);
+			Charter.launchChart(sequenceKey+" Retention Time (min)", "Intensity", false, new Dimension(500, 300), fragmentTraces);
 		}
 
-		EncyclopediaOneScorer scorer=new EncyclopediaOneScorer(parameters, background);
+		EncyclopediaOneScorer scorer=new EncyclopediaOneScorer(parameters, unitbackground);
 		FragmentationModel model=new FragmentationModel(libentry.getPeptideModSeq(), parameters.getAAConstants());
 		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), libentry.getPrecursorCharge());
 		TFloatFloatHashMap primary=new TFloatFloatHashMap();
@@ -178,6 +214,12 @@ public class PhosphoLocalizerExample {
 				primary.put(stripe.getScanStartTime()/60f, scorer.score(libentry, stripe, ions));
 			}
 		}
+
+		ArrayList<Spectrum> limitedPrecursors=new ArrayList<>();
+		for (PrecursorScan stripe : stripefile.getPrecursors(libentry.getRetentionTime()-duration, libentry.getRetentionTime()+duration)) {
+			limitedPrecursors.add(stripe);
+		}
+		Charter.launchChart("Retention Time (min)", "Intensity", false, new Dimension(500, 300), ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), libentry.getPrecursorMZ(), libentry.getPrecursorCharge(), limitedPrecursors));
 		
 		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=actuallyPhosphoData.getScoreTraces();
 		ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
@@ -192,7 +234,7 @@ public class PhosphoLocalizerExample {
 		}
 		//traces.add(new XYTrace(primary, GraphType.boldline, "primary"));
 		
-		Charter.launchChart("Retention Time (All Ions)", "Score", true, new Dimension(1000, 400), traces.toArray(new XYTrace[traces.size()]));
+		Charter.launchChart("Retention Time (min)", "Localization Score", false, new Dimension(500, 300), traces.toArray(new XYTrace[traces.size()]));
 
 		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
 		Range range=null;
@@ -229,7 +271,7 @@ public class PhosphoLocalizerExample {
 		while(!localizationQueue.isEmpty()) {
 			if (!localizationQueue.isEmpty()) {
 				ModificationLocalizationData data=localizationQueue.take();
-				System.out.println(data.getLocalizationPeptideModSeq().getPeptideAnnotation()+" ("+data.isSiteSpecific()+") --> "+data.getLocalizationScore()+"\t"+data.getLocalizingIntensity()+"\t"+data.getTotalIntensity());
+				System.out.println(data.getLocalizationPeptideModSeq().getPeptideAnnotation()+" ("+data.isSiteSpecific()+") --> "+data.getLocalizationScore()+"\t"+data.getLocalizingIntensity()+"\t"+data.getTotalIntensity()+"\t"+FragmentIon.toArchiveString(data.getLocalizingIons()));
 			} else {
 				Thread.sleep(10);
 			}

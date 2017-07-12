@@ -35,6 +35,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class StripeFile extends SQLFile implements StripeFileInterface {
+	public static boolean OPEN_IN_PLACE=false;
+	
 	private static final String UNKNOWN_VALUE="unknown";
 	public static final String FILELOCATION_ATTRIBUTE="filelocation";
 	public static final String SOURCENAME_ATTRIBUTE="sourcename";
@@ -46,7 +48,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	
 	private File userFile=null;
 	private volatile String originalFileName=null;
-	private final File tempFile;
+	private File tempFile;
 	private boolean isOpen=false;
 	
 	private final HashMap<Range, Float> ranges=new HashMap<Range, Float>();
@@ -181,8 +183,12 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 
 	public void openFile() throws IOException, SQLException {
-		if (userFile!=null) {
-			Files.copy(userFile.toPath(), tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		if (OPEN_IN_PLACE) {
+			tempFile=userFile;
+		} else {
+			if (userFile!=null) {
+				Files.copy(userFile.toPath(), tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			}
 		}
 		createNewTables();
 	}
