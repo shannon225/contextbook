@@ -4,6 +4,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizatio
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
@@ -587,6 +588,12 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			}
 		}
 		return index;
+	}
+	
+	public void addTargetDecoyData(ArrayList<PercolatorPeptide> targets, ArrayList<PercolatorPeptide> decoys) {
+		for (PercolatorPeptide peptide : targets) {
+			
+		}
 	}
 
 	public void addEntries(ArrayList<LibraryEntry> entries) throws IOException, SQLException {

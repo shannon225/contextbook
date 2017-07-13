@@ -548,6 +548,14 @@ public class SearchToBLIB {
 		}
 
 		elib.addIntegratedEntries(libraryEntries, inferrer, localizationData);
+
+		if (job.getOutputFile().exists()&&job.getOutputDecoyFile().exists()) {
+			ArrayList<PercolatorPeptide> targets=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), job.getParameters().getEffectivePercolatorThreshold());
+			ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputDecoyFile(), job.getParameters().getEffectivePercolatorThreshold());
+			Logger.logLine("Reading target/decoy peptides: "+targets.size()+"/"+decoys.size());
+			elib.addTargetDecoyData(targets, decoys);
+		}
+		
 		Logger.logLine("Finished writing to Encyclopedia ELIB at "+new Date().toString());
 		subProgress.update(diaFile.getName()+": Finished writing to Encyclopedia ELIB at "+new Date().toString(), 1.0f);
 	}
