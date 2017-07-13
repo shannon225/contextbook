@@ -625,9 +625,29 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		return index;
 	}
 	
-	public void addTargetDecoyData(ArrayList<PercolatorPeptide> targets, ArrayList<PercolatorPeptide> decoys) {
-		for (PercolatorPeptide peptide : targets) {
-			
+	public void addTargetDecoyData(ArrayList<PercolatorPeptide> targets, ArrayList<PercolatorPeptide> decoys) throws IOException, SQLException {
+		Connection c=getConnection();
+		try {
+			PreparedStatement prep=c
+					.prepareStatement("INSERT INTO peptidescores (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, QValue, PosteriorErrorProbability, IsDecoy) VALUES (?,?,?,?,?,?,?)");
+			try {
+				for (PercolatorPeptide peptide : targets) {
+					prep.setInt(1, peptide.getPrecursorCharge());
+					prep.setString(2, peptide.getPeptideModSeq());
+					prep.setString(3, peptide.getPeptideSeq());
+					prep.setString(4, peptide.getFile());
+					prep.setFloat(5, peptide.getQValue());
+					prep.setFloat(6, peptide.getPosteriorErrorProb());
+					prep.setBoolean(7, peptide.isPSMIDDecoy());
+				}
+				prep.executeBatch();
+
+				c.commit();
+			} finally {
+				prep.close();
+			}
+		} finally {
+			c.close();
 		}
 	}
 
@@ -1199,6 +1219,11 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				s.execute("CREATE TABLE IF NOT EXISTS fragmentquants ( "
 						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, IonType string not null, IonIndex int not null, FragmentMass double not null, Correlation double not null, Background double not null, DeltaMassPPM double not null, Intensity double not null "
 						+ ")");
+				
+				s.execute("CREATE TABLE IF NOT EXISTS peptidescores ( "
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, QValue double not null, PosteriorErrorProbability double not null, IsDecoy boolean not null "
+						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq, SourceFile) )");
+
 
 				c.commit();
 			} finally {
@@ -1229,6 +1254,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				s.execute("drop index if exists 'PeptideModSeq_PrecursorCharge_SourceFile_Fragments_index'");
 				s.execute("drop index if exists 'PeptideSeq_Fragments_index'");
 				
+				s.execute("drop index if exists 'PeptideModSeq_PrecursorCharge_SourceFile_Scores_index'");
+				s.execute("drop index if exists 'PeptideSeq_Scores_index'");
+				
 				s.execute("drop index if exists 'ProteinAccession_PeptideToProtein_index'");
 				s.execute("drop index if exists 'PeptideSeq_PeptideToProtein_index'");
 
@@ -1257,6 +1285,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				
 				s.execute("create index if not exists 'PeptideModSeq_PrecursorCharge_SourceFile_Localizations_index' on 'peptidelocalizations' ('PeptideModSeq' ASC, 'PrecursorCharge' ASC, 'SourceFile' ASC)");
 				s.execute("create index if not exists 'PeptideSeq_Localizations_index' on 'peptidelocalizations' ('PeptideSeq' ASC)");
+				
+				s.execute("create index if not exists 'PeptideModSeq_PrecursorCharge_SourceFile_Scores_index' on 'peptidescores' ('PeptideModSeq' ASC, 'PrecursorCharge' ASC, 'SourceFile' ASC)");
+				s.execute("create index if not exists 'PeptideSeq_Scores_index' on 'peptidescores' ('PeptideSeq' ASC)");
 				
 				s.execute("create index if not exists 'PeptideModSeq_PrecursorCharge_SourceFile_Fragments_index' on 'fragmentquants' ('PeptideModSeq' ASC, 'PrecursorCharge' ASC, 'SourceFile' ASC)");
 				s.execute("create index if not exists 'PeptideSeq_Fragments_index' on 'fragmentquants' ('PeptideSeq' ASC)");

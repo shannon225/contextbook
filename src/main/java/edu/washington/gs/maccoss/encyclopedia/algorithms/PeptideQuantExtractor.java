@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
