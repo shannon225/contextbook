@@ -75,7 +75,7 @@ public class PeptideQuantExtractor {
 			if (!isDecoy) {
 				String peptideModSeq=PercolatorPeptide.getPeptideSequence(psmID);
 				passingPeptideSequences.add(peptideModSeq);
-				savedPeptides.put(peptideModSeq, psm.getQValue());
+				savedPeptides.put(peptideModSeq, psm.getPosteriorErrorProb());
 			}
 		}
 		Logger.logLine("Number of global peptides: "+savedPeptides.size()+" vs local peptides: "+localPassingPSMIDs.size());
