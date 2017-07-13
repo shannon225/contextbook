@@ -314,9 +314,8 @@ public class Encyclopedia {
 		ArrayList<PercolatorPeptide> passingPeptides;
 		try {
 			progress.update("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)");
-			File percolatorResultFile=job.getFirstPassPercolator();
 			
-			passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), job.getFeatureFile(), percolatorResultFile, parameters.getEffectivePercolatorThreshold());
+			passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), job.getFeatureFile(), job.getFirstPassPercolator(), job.getFirstPassPercolatorDecoy(), parameters.getEffectivePercolatorThreshold());
 			Logger.logLine("First pass: "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
 			
 			if (!parameters.getScoringBreadthType().runRecalibration()) {
@@ -339,7 +338,7 @@ public class Encyclopedia {
 			rescoredResultsConsumer.close();
 	
 			progress.update("Re-running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)");
-			passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), job.getFeatureFile(), job.getOutputFile(), parameters.getEffectivePercolatorThreshold());
+			passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), job.getFeatureFile(), job.getOutputFile(), job.getOutputDecoyFile(), parameters.getEffectivePercolatorThreshold());
 			
 			progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 			return passingPeptides;

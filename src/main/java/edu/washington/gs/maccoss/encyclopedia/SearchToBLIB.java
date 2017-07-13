@@ -205,14 +205,14 @@ public class SearchToBLIB {
 				}
 				
 				for (File file : files) {
-					File resultFile=new File(file.getAbsolutePath()+".pecan.txt");
-					File featureFile=new File(resultFile.getAbsolutePath()+".features.txt");
+					File resultFile=new File(file.getAbsolutePath()+PecanJobData.OUTPUT_FILE_SUFFIX);
+					File featureFile=new File(resultFile.getAbsolutePath()+PecanJobData.FEATURE_FILE_SUFFIX);
 					PecanJobData job=new PecanJobData(Optional.ofNullable(targets), file, fastaFile, featureFile, resultFile, factory);
 					pecanJobs.add(job);
 				}
 			} else {
-				File resultFile=new File(diaFile.getAbsolutePath()+".pecan.txt");
-				File featureFile=new File(resultFile.getAbsolutePath()+".features.txt");
+				File resultFile=new File(diaFile.getAbsolutePath()+PecanJobData.OUTPUT_FILE_SUFFIX);
+				File featureFile=new File(resultFile.getAbsolutePath()+PecanJobData.FEATURE_FILE_SUFFIX);
 				PecanJobData job=new PecanJobData(Optional.ofNullable(targets), diaFile, fastaFile, featureFile, resultFile, factory);
 				pecanJobs.add(job);
 			}
@@ -312,6 +312,7 @@ public class SearchToBLIB {
 		}
 		File bigFeatureFile=new File(representativeJob.getFeatureFile().getParentFile(), filename+"_concatenated_features.txt");
 		File bigPercolatorFile=new File(representativeJob.getFeatureFile().getParentFile(), filename+"_concatenated_results.txt");
+		File bigPercolatorDecoyFile=new File(representativeJob.getFeatureFile().getParentFile(), filename+"_concatenated_decoy.txt");
 		
 		SearchParameters parameters=representativeJob.getParameters();
 		float threshold=parameters.getEffectivePercolatorThreshold();
@@ -325,7 +326,7 @@ public class SearchToBLIB {
 				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(bigPercolatorFile, threshold);
 			} else {
 				TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
-				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), bigFeatureFile, bigPercolatorFile, threshold);
+				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), bigFeatureFile, bigPercolatorFile, bigPercolatorDecoyFile, threshold);
 			}
 			
 			ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides);

@@ -21,6 +21,7 @@ public class PecanpieTest {
 		File fastaFile=new File("/Users/searleb/Documents/school/projects/pecandata/UP000005640_9606.fasta");
 		File featureFile=new File("/Users/searleb/Documents/school/projects/pecandata/encyc_report.feature.txt");
 		File outputFile=new File("/Users/searleb/Documents/school/projects/pecandata/encyc_report.percolator.txt");
+		File decoyFile=new File("/Users/searleb/Documents/school/projects/pecandata/encyc_report.percolator.decoy.txt");
 		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
 		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
 		
@@ -29,7 +30,7 @@ public class PecanpieTest {
 		targets=null;
 		
 		try {
-			Pecanpie.runPie(new EmptyProgressIndicator(), Optional.ofNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
+			Pecanpie.runPie(new EmptyProgressIndicator(), Optional.ofNullable(targets), diaFile, fastaFile, featureFile, outputFile, decoyFile, factory);
 		} catch (Exception e) {
 			System.err.println("Encountered Fatal Error!");
 			e.printStackTrace();

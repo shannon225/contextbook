@@ -9,10 +9,11 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 public class PhosphoLocalizationJobData extends SearchJobData {
 	public static final String LOG_FILE_SUFFIX=".log";
 	public static final String OUTPUT_FILE_SUFFIX=".localization.txt";
+	public static final String DECOY_FILE_SUFFIX=".localization.decoy.txt";
 	public static final String FEATURE_FILE_SUFFIX=".loc_features.txt";
 	
 	public PhosphoLocalizationJobData(File diaFile, SearchParameters parameters) {
-		super(diaFile, new File(diaFile.getAbsolutePath()+FEATURE_FILE_SUFFIX), new File(diaFile.getAbsolutePath()+OUTPUT_FILE_SUFFIX), parameters, getJobVersion());
+		super(diaFile, new File(diaFile.getAbsolutePath()+FEATURE_FILE_SUFFIX), new File(diaFile.getAbsolutePath()+OUTPUT_FILE_SUFFIX), new File(diaFile.getAbsolutePath()+DECOY_FILE_SUFFIX), parameters, getJobVersion());
 	}
 	
 	public File getResultLibrary() {
