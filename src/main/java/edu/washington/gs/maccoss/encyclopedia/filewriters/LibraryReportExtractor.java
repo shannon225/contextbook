@@ -1,5 +1,15 @@
 package edu.washington.gs.maccoss.encyclopedia.filewriters;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupQuantifier;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.utils.*;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TObjectFloatHashMap;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -7,28 +17,9 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 import java.util.zip.DataFormatException;
-
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupQuantifier;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
-import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import gnu.trove.list.array.TFloatArrayList;
-import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class LibraryReportExtractor {
 	public static void extractMatrix(LibraryFile library, ArrayList<ProteinGroup> proteins) throws IOException, SQLException, DataFormatException {
@@ -86,7 +77,20 @@ public class LibraryReportExtractor {
 				
 				HashMap<String, int[]> numFragmentsByPeptideModSeq=new HashMap<String, int[]>();
 				TreeMap<String, Pair<String, float[]>> intensitiesByPeptideModSeq=new TreeMap<String, Pair<String, float[]>>();
-				rs=s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.SourceFile, pep.TotalIntensity, pep.NumberOfQuantIons, pro.ProteinAccessions from peptidequants pep, proteins pro where pep.PeptideSeq = pro.PeptideSeq");
+				rs = s.executeQuery("select " +
+						"pep.PrecursorCharge, " +
+						"pep.PeptideModSeq, " +
+						"pep.SourceFile, " +
+						"pep.TotalIntensity, " +
+						"pep.NumberOfQuantIons, " +
+						"group_concat(p.ProteinAccession, '" + PSMData.ACCESSION_TOKEN + "') as ProteinAccessions " +
+						"from " +
+						"peptidequants pep " +
+						"left join peptidetoprotein p " +
+						"where " +
+						"pep.PeptideSeq = p.PeptideSeq " +
+						"group by pep.rowid;"
+				);
 				int count=0;
 				int totalAdded=0;
 				while (rs.next()) {

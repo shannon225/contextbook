@@ -8,12 +8,14 @@ public class BenjaminiHochberg {
 	public static double[] calculateAdjustedPValues(double[] pValues) {
 		double[] copy=pValues.clone();
 		double[] adjusted=new double[copy.length];
+		Arrays.fill(adjusted, 1.0);
 		Arrays.sort(copy);
 		
 		TDoubleDoubleHashMap adjustedByP=new TDoubleDoubleHashMap();
 		for (int i=copy.length-1; i>=0; i--) {
 			if (i==copy.length-1) {
 				adjusted[i]=copy[i];
+				adjustedByP.put(copy[i], adjusted[i]);
 			} else {
 				double originalP=copy[i];
 				double left=adjusted[i+1];

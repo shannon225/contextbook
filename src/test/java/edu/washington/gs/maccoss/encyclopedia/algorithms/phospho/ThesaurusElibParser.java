@@ -23,6 +23,20 @@ import gnu.trove.procedure.TObjectFloatProcedure;
 public class ThesaurusElibParser {
 	public static HashMap<String, Coordinate> sampleKey=new HashMap<>();
 	
+	private static final int numberOfSampleTypes=6;
+	private static final int numberOfReplicates=6;
+	private static String getSampleName(int i) {
+		switch (i) {
+		case 1: return "Cont";
+		case 2: return "Ins";
+		case 3: return "IGF1";
+		case 4: return "MK-Cont";
+		case 5: return "MK-Ins";
+		case 6: return "MK-IGF1";
+		default: return i > 0 && i < 27 ? String.valueOf((char)(i + 64)) : null;
+		}
+	}
+	
 	public static String[] targetProteins=new String[] { "O43521", "O43524", "O60343", "O60825", "O75581", "P02545", "P04049", "P04637", "P06239", "P06730", "P07948", "P08069", "P10415", "P11274",
 			"P12931", "P13807", "P22681", "P23443", "P27361", "P29474", "P31749", "P31751", "P35568", "P42345", "P43403", "P45983", "P45984", "P49023", "P49815", "P49840", "P49841", "P51812",
 			"P53396", "P54646", "P62136", "P62753", "P98177", "Q00987", "Q02750", "Q03135", "Q05397", "Q12778", "Q13131", "Q13164", "Q13322", "Q13480", "Q13541", "Q15418", "Q6R327", "Q96B36",
@@ -113,18 +127,19 @@ public class ThesaurusElibParser {
 
 				Connection c=library.getConnection();
 				Statement s=c.createStatement();
-				ResultSet rs=s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.PeptideSeq, pep.SourceFile, pep.LocalizedIntensity, pep.TotalIntensity, pep.IsSiteSpecific, pro.ProteinAccessions from peptidelocalizations pep, proteins pro where pep.PeptideSeq = pro.PeptideSeq");
+				ResultSet rs=s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.PeptideSeq, pep.SourceFile, max(pep.LocalizedIntensity), max(pep.TotalIntensity), pep.IsSiteSpecific, pro.ProteinAccessions from peptidelocalizations pep, proteins pro where pep.PeptideSeq = pro.PeptideSeq group by pep.PeptideModSeq,pep.SourceFile");
 
 				while (rs.next()) {
 					//byte precursorCharge=(byte)rs.getInt(1);
 					String peptideModSeq=rs.getString(2);
 					String peptideSeq=rs.getString(3);
 					String sourceFile=rs.getString(4);
-					float localizedIntensity=rs.getFloat(5);
+					//float localizedIntensity=rs.getFloat(5);
 					float totalIntensity=rs.getFloat(6);
 					boolean isSiteSpecific=rs.getBoolean(7);
 					String proteinToken=rs.getString(8);
 					//HashSet<String> accessions=PSMData.stringToAccessions(proteinToken);
+					
 					boolean keeper=false;
 					if (targets==null) {
 						keeper=true;
@@ -151,6 +166,7 @@ public class ThesaurusElibParser {
 						}
 						log.addIntensity(coord, totalIntensity, isSiteSpecific);
 						//log.addIntensity(coord, localizedIntensity, isSiteSpecific);
+						
 					}
 				}
 				rs.close();
@@ -216,25 +232,38 @@ public class ThesaurusElibParser {
 		}
 
 		System.out.println();
-		System.out.print("Peptide\tProtein");
+		System.out.print("Peptide\tProtein\tp-value\tFDR");
 		for (int i=0; i<6; i++) {
 			System.out.print('\t');
 			System.out.print(getSampleName(i+1));
 		}
 		System.out.println();
 		
+		ArrayList<String> flagged=new ArrayList<>();
 		for (int pep=0; pep<adjustedPValues.length; pep++) {
 			if (adjustedPValues[pep]<0.05) {
 				String peptide=peptides.get(pep);
 				QuantitationLog log=quantLog.get(peptide);
 
 				float[][] data=log.getNormalizedData();
-				System.out.print(log.peptide+"\t"+log.protein);
+				double pValue=getPValue(data);
+				System.out.print(log.peptide+"\t"+log.protein+"\t"+pValue+"\t"+adjustedPValues[pep]);
 				for (int i=0; i<data.length; i++) {
 					System.out.print('\t');
 					System.out.print(QuickMedian.median(data[i].clone()));
 				}
 				System.out.println();
+				
+				if (adjustedPValues[pep]<pValue) {
+					flagged.add(peptide);
+				}
+			}
+		}
+		
+		if (flagged.size()>0) {
+			System.out.println("FLAGGED!");
+			for (String string : flagged) {
+				System.out.println("\t"+string);
 			}
 		}
 	}
@@ -245,18 +274,6 @@ public class ThesaurusElibParser {
 			classes.add(General.toDoubleArray(data[i]));
 		}
 		return TestUtils.oneWayAnovaPValue(classes);
-	}
-	
-	private static String getSampleName(int i) {
-		switch (i) {
-		case 1: return "Cont";
-		case 2: return "Ins";
-		case 3: return "IGF1";
-		case 4: return "MK-Cont";
-		case 5: return "MK-Ins";
-		case 6: return "MK-IGF1";
-		default: return i > 0 && i < 27 ? String.valueOf((char)(i + 64)) : null;
-		}
 	}
 	
 	public static class QuantitationLog {
@@ -281,17 +298,9 @@ public class ThesaurusElibParser {
 			}
 		}
 		public float[][] getData() {
-			Coordinate[] coords=intensities.keys(new Coordinate[intensities.size()]);
-			int maxReplicate=0;
-			int maxSample=0;
-			for (Coordinate c : coords) {
-				if (c.replicate>maxReplicate) maxReplicate=c.replicate;
-				if (c.sample>maxSample) maxSample=c.sample;
-			}
-			
-			float[][] results=new float[maxSample][];
+			float[][] results=new float[numberOfSampleTypes][];
 			for (int i=0; i<results.length; i++) {
-				results[i]=new float[maxReplicate];
+				results[i]=new float[numberOfReplicates];
 			}
 			intensities.forEachEntry(new TObjectFloatProcedure<Coordinate>() {
 				@Override

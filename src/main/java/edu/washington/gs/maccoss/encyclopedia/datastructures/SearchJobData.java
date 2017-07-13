@@ -9,13 +9,15 @@ public abstract class SearchJobData {
 	private final File diaFile;
 	private final File featureFile;
 	private final File outputFile;
+	private final File decoyFile;
 	private final SearchParameters parameters;
 	private final String version;
 	
-	public SearchJobData(File diaFile, File featureFile, File outputFile, SearchParameters parameters, String version) {
+	public SearchJobData(File diaFile, File featureFile, File outputFile, File decoyFile, SearchParameters parameters, String version) {
 		this.diaFile=diaFile;
 		this.featureFile=featureFile;
 		this.outputFile=outputFile;
+		this.decoyFile=decoyFile;
 		this.parameters=parameters;
 		this.version=version;
 	}
@@ -30,6 +32,10 @@ public abstract class SearchJobData {
 
 	public File getOutputFile() {
 		return outputFile;
+	}
+
+	public File getOutputDecoyFile() {
+		return decoyFile;
 	}
 
 	public SearchParameters getParameters() {

@@ -91,7 +91,7 @@ public class Pecanpie {
 			Logger.timelessLogLine("Other Parameters: ");
 			Logger.timelessLogLine("\t-t\ttarget FASTA file (default: background FASTA file)");
 			Logger.timelessLogLine("\t-tp\ttrue/false target FASTA file contains peptides (default: false)"); 
-			Logger.timelessLogLine("\t-o\toutput report file (default: [input file].pecan.txt)");
+			Logger.timelessLogLine("\t-o\toutput report file (default: [input file]"+PecanJobData.OUTPUT_FILE_SUFFIX+")");
 			
 			TreeMap<String, String> defaults=new TreeMap<String, String>(PecanParameterParser.getDefaultParameters());
 			int maxWidth=0;
@@ -120,10 +120,11 @@ public class Pecanpie {
 			if (arguments.containsKey(OUTPUT_RESULT_TAG)) {
 				outputFile=new File(arguments.get(OUTPUT_RESULT_TAG));
 			} else {
-				outputFile=new File(diaFile.getAbsolutePath()+".pecan.txt");
+				outputFile=new File(diaFile.getAbsolutePath()+PecanJobData.OUTPUT_FILE_SUFFIX);
 			}
 
-			File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
+			File decoyFile=new File(PecanJobData.getOutputAbsolutePathPrefix(outputFile.getAbsolutePath())+PecanJobData.DECOY_FILE_SUFFIX);
+			File featureFile=new File(PecanJobData.getOutputAbsolutePathPrefix(outputFile.getAbsolutePath())+PecanJobData.FEATURE_FILE_SUFFIX);
 
 			try {
 				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+EncyclopediaJobData.LOG_FILE_SUFFIX));
@@ -160,7 +161,7 @@ public class Pecanpie {
 				Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
 				Logger.logLine(parameters.toString());
 
-				runPie(new EmptyProgressIndicator(), Optional.ofNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
+				runPie(new EmptyProgressIndicator(), Optional.ofNullable(targets), diaFile, fastaFile, featureFile, outputFile, decoyFile, factory);
 			} catch (Exception e) {
 				Logger.errorLine("Encountered Fatal Error!");
 				Logger.errorException(e);
@@ -182,10 +183,10 @@ public class Pecanpie {
 			}
 		}
 		
-		runPie(progress, jobData.getTargetList(), jobData.getDiaFile(), jobData.getFastaFile(), jobData.getFeatureFile(), jobData.getOutputFile(), jobData.getTaskFactory());
+		runPie(progress, jobData.getTargetList(), jobData.getDiaFile(), jobData.getFastaFile(), jobData.getFeatureFile(), jobData.getOutputFile(), jobData.getOutputDecoyFile(), jobData.getTaskFactory());
 	}
 		
-	static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, File featureFile, File outputFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+	static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, File featureFile, File outputFile, File decoyFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		long startTime=System.currentTimeMillis();
 		PSMScorer backgroundScorer=taskFactory.getBackgroundScorer();
 		PSMPeakScorer pecanScorer=taskFactory.getPecanScorer();
@@ -456,7 +457,7 @@ public class Pecanpie {
 		resultsConsumer.close();
 
 		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
-		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), featureFile, outputFile, parameters.getEffectivePercolatorThreshold());
+		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), featureFile, outputFile, decoyFile, parameters.getEffectivePercolatorThreshold());
 		ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides);
 		stripefile.close();
 		

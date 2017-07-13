@@ -1,7 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
-import java.util.ArrayList;
-
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -11,6 +9,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+
+import java.util.ArrayList;
 
 public class EncyclopediaOneScorer implements EncyclopediaScorer {
 	private final SearchParameters parameters;
@@ -138,7 +138,9 @@ public class EncyclopediaOneScorer implements EncyclopediaScorer {
 		
 		double[] acquiredMasses=spectrum.getMassArray();
 		float[] acquiredIntensities=spectrum.getIntensityArray();
-		
+
+		ions = FragmentIon.getUniqueFragments(ions, acquiredTolerance); // ensure that all ions are unique within tolerance
+
 		ArrayList<PeakScores> scoredPeaks=new ArrayList<PeakScores>();
 		
 		int predictedIndex=0;
