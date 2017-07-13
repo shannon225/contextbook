@@ -182,6 +182,8 @@ public class MzmlScanRangeTrackerSAXProducer extends DefaultHandler implements R
 	}
 	
 	public class SAXTerminatorException extends EncyclopediaException {
+		private static final long serialVersionUID=1L;
+
 		public SAXTerminatorException() {
 			super("Terminate Early");
 		}

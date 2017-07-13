@@ -96,7 +96,6 @@ public class PercolatorExecutor extends ExternalExecutor {
 		return peptideString.substring(peptideString.indexOf('.')+1, peptideString.lastIndexOf('.'));
 	}
 
-	@SuppressWarnings("unused")
 	static String[] generateCommand(File tsv, File outputFile, File decoyFile, int percolatorVersionNumber, boolean useXML) {
 		File percolator=getPercolator(percolatorVersionNumber);
 
