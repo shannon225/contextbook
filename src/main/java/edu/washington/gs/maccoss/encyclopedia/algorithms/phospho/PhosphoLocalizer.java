@@ -13,7 +13,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtract
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
@@ -273,7 +275,10 @@ public class PhosphoLocalizer {
 			}
 			//negLogProbsAll=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, Math.round(params.getExpectedPeakWidth()/dutyCycle));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);
 			//negLogProbsAll=General.subtract(negLogProbsAll, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
-			negLogProbsSiteSpecific=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, Math.round(params.getExpectedPeakWidth()/dutyCycle));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
+			negLogProbsSiteSpecific=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, Math.round(params.getExpectedPeakWidth()/(dutyCycle)));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
+			
+			negLogProbsSiteSpecific=General.subtract(negLogProbsSiteSpecific, QuickMedian.median(negLogProbsSiteSpecific.clone()));
+			
 			//negLogProbsSiteSpecific=General.subtract(negLogProbsSiteSpecific, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
 			//negLogProbsAll=SkylineSGFilter.paddedSavitzkyGolaySmooth(negLogProbsAll);
 			//negLogProbsSiteSpecific=SkylineSGFilter.paddedSavitzkyGolaySmooth(negLogProbsSiteSpecific);
