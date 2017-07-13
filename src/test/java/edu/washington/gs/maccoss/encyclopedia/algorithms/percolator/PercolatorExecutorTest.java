@@ -36,9 +36,9 @@ public class PercolatorExecutorTest extends TestCase {
 			}
 		}
 		System.out.println("total processed: "+outputlines);
-		ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(outputFile, 0.01f);
+		ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(outputFile, 0.01f, false);
 		System.out.println("Peptides: "+peptides.size());
-		ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(decoyFile, 0.01f);
+		ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(decoyFile, 0.01f, true);
 		System.out.println("Decoys: "+decoys.size());
 		
 	}

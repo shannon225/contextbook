@@ -29,7 +29,7 @@ public class LocalizationDataToTSVConsumerExample {
 
 				File f=new File(p.getAbsolutePath()+".localizations.txt");
 				
-				ArrayList<PercolatorPeptide> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(p, 0.05f);
+				ArrayList<PercolatorPeptide> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(p, 0.05f, false);
 				HashSet<String> peptides=new HashSet<>();
 				for (PercolatorPeptide peptide : passingPeptides) {
 					int numMods=StringUtils.countMatches(peptide.getPeptideModSeq(), "[");

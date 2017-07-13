@@ -639,6 +639,17 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					prep.setFloat(5, peptide.getQValue());
 					prep.setFloat(6, peptide.getPosteriorErrorProb());
 					prep.setBoolean(7, peptide.isPSMIDDecoy());
+					prep.addBatch();
+				}
+				for (PercolatorPeptide peptide : decoys) {
+					prep.setInt(1, peptide.getPrecursorCharge());
+					prep.setString(2, peptide.getPeptideModSeq());
+					prep.setString(3, peptide.getPeptideSeq());
+					prep.setString(4, peptide.getFile());
+					prep.setFloat(5, peptide.getQValue());
+					prep.setFloat(6, peptide.getPosteriorErrorProb());
+					prep.setBoolean(7, peptide.isPSMIDDecoy());
+					prep.addBatch();
 				}
 				prep.executeBatch();
 

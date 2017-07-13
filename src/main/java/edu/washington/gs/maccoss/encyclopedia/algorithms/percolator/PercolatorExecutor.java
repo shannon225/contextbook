@@ -81,7 +81,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 
 		checkResult(e);
 
-		ArrayList<PercolatorPeptide> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(percolatorResultFile, threshold);
+		ArrayList<PercolatorPeptide> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(percolatorResultFile, threshold, false);
 		
 		return passingPeptides;
 	}
