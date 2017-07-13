@@ -139,8 +139,6 @@ public class EncyclopediaOneScorer implements EncyclopediaScorer {
 		double[] acquiredMasses=spectrum.getMassArray();
 		float[] acquiredIntensities=spectrum.getIntensityArray();
 
-		ions = FragmentIon.getUniqueFragments(ions, acquiredTolerance); // ensure that all ions are unique within tolerance
-
 		ArrayList<PeakScores> scoredPeaks=new ArrayList<PeakScores>();
 		
 		int predictedIndex=0;

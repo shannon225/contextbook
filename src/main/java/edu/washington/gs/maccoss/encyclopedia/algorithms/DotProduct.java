@@ -61,8 +61,6 @@ public class DotProduct implements PSMPeakScorer {
 		double[] acquiredMasses=spectrum.getMassArray();
 		float[] acquiredIntensities=spectrum.getIntensityArray();
 
-		ions = FragmentIon.getUniqueFragments(ions, acquiredTolerance); // ensure that all ions are unique within tolerance
-
 		ArrayList<PeakScores> scoredPeaks=new ArrayList<PeakScores>();
 		for (FragmentIon targetIon : ions) {
 			double target=targetIon.mass;
