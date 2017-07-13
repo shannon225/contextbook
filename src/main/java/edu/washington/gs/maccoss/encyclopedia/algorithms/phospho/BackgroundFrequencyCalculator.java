@@ -13,6 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -72,6 +73,7 @@ public class BackgroundFrequencyCalculator implements BackgroundFrequencyInterfa
 	}
 	
 	public static BackgroundFrequencyInterface generateBackground(StripeFileInterface diafile) throws DataFormatException, SQLException, IOException {
+		Logger.logException(new EncyclopediaException("WTF"));
 		TDoubleHashSet boundaries=new TDoubleHashSet();
 		ArrayList<Range> ranges=new ArrayList<Range>(diafile.getRanges().keySet());
 		Collections.sort(ranges);

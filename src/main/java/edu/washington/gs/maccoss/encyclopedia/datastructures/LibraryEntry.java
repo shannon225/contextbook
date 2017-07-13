@@ -231,6 +231,22 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		return peptideModSeq;
 	}
 	
+	volatile String accuratePeptideModSeq=null;
+	/**
+	 * safe in that it will always return not null but it may recalculate accuratePeptideModSeq if there is thread competition
+	 * @param aaConstants
+	 * @return
+	 */
+	public String getAccuratePeptideModSeq(AminoAcidConstants aaConstants) {
+		String sequence=accuratePeptideModSeq;
+		if (sequence==null) {
+			sequence=PeptideUtils.getSequence(PeptideUtils.getMasses(peptideModSeq, aaConstants).z);
+			accuratePeptideModSeq=sequence;
+			return sequence;
+		} 
+		return sequence;
+	}
+	
 	public String getPeptideSeq() {
 		StringBuilder sb=new StringBuilder();
 		for (char c : peptideModSeq.toCharArray()) {
