@@ -63,7 +63,7 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 	@Override
 	public Optional<Pair<Float, Integer>> getTopNIntensity(TransitionRefinementData data) {
 		String peptideModSeq=data.getPeptideModSeq();
-		double[] topN=getTopNBestIons(peptideModSeq);
+		double[] topN=getTopNBestIons(peptideModSeq, data.getPrecursorCharge());
 		double[] masses=FragmentIon.getMasses(data.getFragmentMassArray());
 		float[] intensities=data.getIntegrationArray();
 		
@@ -93,8 +93,8 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakRTLocatorInterface#getTopNBestIons(java.lang.String)
 	 */
 	@Override
-	public double[] getTopNBestIons(String peptideModSeq) {
-		return bestIons.get(peptideModSeq);
+	public double[] getTopNBestIons(String peptideModSeq, byte precursorCharge) {
+		return bestIons.get(peptideModSeq+"+"+precursorCharge);
 	}
 	
 	/* (non-Javadoc)
@@ -288,11 +288,11 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 						}
 						// all results files are saved as chromatogram libraries
 						ChromatogramLibraryEntry chrom=(ChromatogramLibraryEntry)libEntry;
-						String peptideModSeq=libEntry.getPeptideModSeq();
-						PeakFrequencyCalculator bestIonsMap=ionCounter.get(peptideModSeq);
+						String peptideKey=libEntry.getPeptideModSeq()+"+"+libEntry.getPrecursorCharge();
+						PeakFrequencyCalculator bestIonsMap=ionCounter.get(peptideKey);
 						if (bestIonsMap==null) {
 							bestIonsMap=new PeakFrequencyCalculator(fragmentTolerance);
-							ionCounter.put(peptideModSeq, bestIonsMap);
+							ionCounter.put(peptideKey, bestIonsMap);
 						}
 						double[] masses=chrom.getMassArray();
 						float[] intensity=chrom.getIntensityArray();
@@ -309,11 +309,11 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 						Logger.logLine("Found "+bestEntries.size()+" archetypal peptides from individual Percolator reports, extracting "+missingPeptides.size()+" additional archetypal peptides from "+job.getDiaFile().getName()+"...");
 						ArrayList<ChromatogramLibraryEntry> extracted=extractFromDIA(subProgress, job, missingPeptides, passingPeptides);
 						for (ChromatogramLibraryEntry chrom : extracted) {
-							String peptideModSeq=chrom.getPeptideModSeq();
-							PeakFrequencyCalculator bestIonsMap=ionCounter.get(peptideModSeq);
+							String peptideKey=chrom.getPeptideModSeq()+"+"+chrom.getPrecursorCharge();
+							PeakFrequencyCalculator bestIonsMap=ionCounter.get(peptideKey);
 							if (bestIonsMap==null) {
 								bestIonsMap=new PeakFrequencyCalculator(fragmentTolerance);
-								ionCounter.put(peptideModSeq, bestIonsMap);
+								ionCounter.put(peptideKey, bestIonsMap);
 							}
 							double[] masses=chrom.getMassArray();
 							float[] intensity=chrom.getIntensityArray();
