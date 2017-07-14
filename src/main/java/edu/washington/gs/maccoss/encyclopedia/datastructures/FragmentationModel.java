@@ -53,6 +53,8 @@ public class FragmentationModel {
 	} 
 	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass, boolean isDecoy) {
 		FragmentIon[] ions=getPrimaryIonObjects(params.getFragType(), precursorCharge);
+		ions = FragmentIon.getUniqueFragments(ions, params.getFragmentTolerance());
+
 		TDoubleArrayList ionsList=new TDoubleArrayList();
 		ArrayList<FragmentIon> annotationList=new ArrayList<FragmentIon>();
 		for (int i=0; i<ions.length; i++) {
