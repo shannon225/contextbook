@@ -22,7 +22,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 
 public class PercolatorReader {
-	public static ArrayList<PercolatorPeptide> getPassingPeptidesFromTSV(File f, final float qValueThreshold) {
+	public static ArrayList<PercolatorPeptide> getPassingPeptidesFromTSV(File f, final float qValueThreshold, final boolean keepDecoys) {
 		final ArrayList<PercolatorPeptide> data=new ArrayList<PercolatorPeptide>();
 		
 		TableParserMuscle muscle=new TableParserMuscle() {
@@ -33,7 +33,7 @@ public class PercolatorReader {
 					float posteriorErrorProb=Float.parseFloat(row.get("posterior_error_prob"));
 					String psmID=row.get("PSMId");
 					String proteinIds=row.get("proteinIds");
-					if (!proteinIds.startsWith(LibraryEntry.DECOY_STRING)) {
+					if (keepDecoys||!proteinIds.startsWith(LibraryEntry.DECOY_STRING)) {
 						data.add(new PercolatorPeptide(psmID, proteinIds, qvalue, posteriorErrorProb));
 					}
 				}

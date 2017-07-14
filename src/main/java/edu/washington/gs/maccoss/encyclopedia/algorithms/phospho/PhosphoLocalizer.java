@@ -1,25 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.zip.DataFormatException;
-
-import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.*;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -31,12 +13,20 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtract
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.zip.DataFormatException;
 
 public class PhosphoLocalizer {
 	private final float minimumScore;
@@ -285,7 +275,10 @@ public class PhosphoLocalizer {
 			}
 			//negLogProbsAll=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, Math.round(params.getExpectedPeakWidth()/dutyCycle));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);
 			//negLogProbsAll=General.subtract(negLogProbsAll, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
-			negLogProbsSiteSpecific=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, Math.round(params.getExpectedPeakWidth()/dutyCycle));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
+			negLogProbsSiteSpecific=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, Math.round(params.getExpectedPeakWidth()/(dutyCycle)));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
+			
+			negLogProbsSiteSpecific=General.subtract(negLogProbsSiteSpecific, QuickMedian.median(negLogProbsSiteSpecific.clone()));
+			
 			//negLogProbsSiteSpecific=General.subtract(negLogProbsSiteSpecific, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
 			//negLogProbsAll=SkylineSGFilter.paddedSavitzkyGolaySmooth(negLogProbsAll);
 			//negLogProbsSiteSpecific=SkylineSGFilter.paddedSavitzkyGolaySmooth(negLogProbsSiteSpecific);
@@ -640,7 +633,18 @@ public class PhosphoLocalizer {
 				if (peptideModSeq!=otherPeptideModSeq) {
 					// actual != is ok here because we're dealing with the same objects
 					FragmentationModel otherUnitEntry=otherEntry.getValue();
-					ions.removeAll(Arrays.asList(otherUnitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false)));
+
+					//TODO: memoize this call, as it gets called a quadratic number of times
+					final FragmentIon[] otherUnitIons = otherUnitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false);
+
+					// this commented line relies on FragmentIon#equals, which previously used a 0.1 Da tolerance (hard-coded)
+//					ions.removeAll(Arrays.asList(otherUnitIons));
+
+					// this says that an ion i should be removed if any ion from otherUnitEntry is within tolerance of it
+					ions.removeIf(thisUnitIon ->
+							Arrays.stream(otherUnitIons)
+									.anyMatch(otherUnitIon -> params.getFragmentTolerance().equals(thisUnitIon.mass, otherUnitIon.mass))
+					);
 				}
 			}
 			

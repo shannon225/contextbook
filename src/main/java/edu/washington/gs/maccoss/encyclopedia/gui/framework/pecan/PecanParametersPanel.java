@@ -165,8 +165,8 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 	}
 
 	static SearchJob getJob(File diaFile, File fastaFile, File targetFile, JobProcessor processor, PecanSearchParameters parameters) {
-		File outputFile=new File(diaFile.getAbsolutePath()+".pecan.txt");
-		File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
+		File outputFile=new File(diaFile.getAbsolutePath()+PecanJobData.OUTPUT_FILE_SUFFIX);
+		File featureFile=new File(outputFile.getAbsolutePath()+PecanJobData.FEATURE_FILE_SUFFIX);
 		
 		ArrayList<FastaPeptideEntry> targets=null;
 		if (targetFile!=null&&!targetFile.equals(fastaFile)) {

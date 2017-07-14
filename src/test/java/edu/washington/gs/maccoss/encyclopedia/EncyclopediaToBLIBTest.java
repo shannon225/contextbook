@@ -52,8 +52,9 @@ public class EncyclopediaToBLIBTest {
 	private static SearchJobData getData(SearchParameters parameters, String dia) {
 		File diaFile=new File(dia);
 		File outputFile=new File(diaFile.getAbsolutePath()+".percolator.txt");
+		File decoyFile=new File(diaFile.getAbsolutePath()+".percolator.decoy.txt");
 		File featureFile=new File(diaFile.getAbsolutePath()+".features.txt");
-		SearchJobData job=new SearchJobData(diaFile, featureFile, outputFile, parameters, "1") {
+		SearchJobData job=new SearchJobData(diaFile, featureFile, outputFile, decoyFile, parameters, "1") {
 			@Override
 			public String getSearchType() {
 				return "Dummy";

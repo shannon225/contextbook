@@ -13,12 +13,12 @@ import junit.framework.TestCase;
 public class AmbiguousPeptideModSeqTest extends TestCase {
 	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"));
 	public static void main(String[] args) {
-		System.out.println(AmbiguousPeptideModSeq.getLeftAmbiguity("S[+79.96633]SSR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()));
-		System.out.println(AmbiguousPeptideModSeq.getRightAmbiguity("S[+79.96633]SSR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()));
-		System.out.println(AmbiguousPeptideModSeq.getLeftAmbiguity("SS[+79.96633]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()));
-		System.out.println(AmbiguousPeptideModSeq.getRightAmbiguity("SS[+79.96633]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()));
-		System.out.println(AmbiguousPeptideModSeq.getLeftAmbiguity("SSS[+79.96633]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()));
-		System.out.println(AmbiguousPeptideModSeq.getRightAmbiguity("SSS[+79.96633]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()));
+		System.out.println(AmbiguousPeptideModSeq.getLeftAmbiguity("S[+79.966331]SSR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()));
+		System.out.println(AmbiguousPeptideModSeq.getRightAmbiguity("S[+79.966331]SSR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()));
+		System.out.println(AmbiguousPeptideModSeq.getLeftAmbiguity("SS[+79.966331]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()));
+		System.out.println(AmbiguousPeptideModSeq.getRightAmbiguity("SS[+79.966331]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()));
+		System.out.println(AmbiguousPeptideModSeq.getLeftAmbiguity("SSS[+79.966331]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()));
+		System.out.println(AmbiguousPeptideModSeq.getRightAmbiguity("SSS[+79.966331]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()));
 		
 	}
 	
@@ -35,43 +35,43 @@ public class AmbiguousPeptideModSeqTest extends TestCase {
 	}
 	
 	public void testAmbiguity() {;
-		assertEquals("<S[+79.96633])SSR", AmbiguousPeptideModSeq.getLeftAmbiguity("S[+79.96633]SSR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("(S[+79.96633]SS>R", AmbiguousPeptideModSeq.getRightAmbiguity("S[+79.96633]SSR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("<SS[+79.96633])SR", AmbiguousPeptideModSeq.getLeftAmbiguity("SS[+79.96633]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("S(S[+79.96633]S>R", AmbiguousPeptideModSeq.getRightAmbiguity("SS[+79.96633]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("<SSS[+79.96633])R", AmbiguousPeptideModSeq.getLeftAmbiguity("SSS[+79.96633]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("SS(S[+79.96633]>R", AmbiguousPeptideModSeq.getRightAmbiguity("SSS[+79.96633]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("<S[+79.966331])SSR", AmbiguousPeptideModSeq.getLeftAmbiguity("S[+79.966331]SSR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("(S[+79.966331]SS>R", AmbiguousPeptideModSeq.getRightAmbiguity("S[+79.966331]SSR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("<SS[+79.966331])SR", AmbiguousPeptideModSeq.getLeftAmbiguity("SS[+79.966331]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("S(S[+79.966331]S>R", AmbiguousPeptideModSeq.getRightAmbiguity("SS[+79.966331]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("<SSS[+79.966331])R", AmbiguousPeptideModSeq.getLeftAmbiguity("SSS[+79.966331]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("SS(S[+79.966331]>R", AmbiguousPeptideModSeq.getRightAmbiguity("SSS[+79.966331]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
 		
 
-		assertEquals("<S[+79.96633])<S[+79.96633])SR", AmbiguousPeptideModSeq.getLeftAmbiguity("S[+79.96633]S[+79.96633]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("(S[+79.96633]>(S[+79.96633]S>R", AmbiguousPeptideModSeq.getRightAmbiguity("S[+79.96633]S[+79.96633]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("<SS[+79.96633])<S[+79.96633])R", AmbiguousPeptideModSeq.getLeftAmbiguity("SS[+79.96633]S[+79.96633]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("S(S[+79.96633]>(S[+79.96633]>R", AmbiguousPeptideModSeq.getRightAmbiguity("SS[+79.96633]S[+79.96633]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("<S[+79.96633])<SS[+79.96633])R", AmbiguousPeptideModSeq.getLeftAmbiguity("S[+79.96633]SS[+79.96633]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("(S[+79.96633]S>(S[+79.96633]>R", AmbiguousPeptideModSeq.getRightAmbiguity("S[+79.96633]SS[+79.96633]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("<S[+79.966331])<S[+79.966331])SR", AmbiguousPeptideModSeq.getLeftAmbiguity("S[+79.966331]S[+79.966331]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("(S[+79.966331]>(S[+79.966331]S>R", AmbiguousPeptideModSeq.getRightAmbiguity("S[+79.966331]S[+79.966331]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("<SS[+79.966331])<S[+79.966331])R", AmbiguousPeptideModSeq.getLeftAmbiguity("SS[+79.966331]S[+79.966331]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("S(S[+79.966331]>(S[+79.966331]>R", AmbiguousPeptideModSeq.getRightAmbiguity("SS[+79.966331]S[+79.966331]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("<S[+79.966331])<SS[+79.966331])R", AmbiguousPeptideModSeq.getLeftAmbiguity("S[+79.966331]SS[+79.966331]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("(S[+79.966331]S>(S[+79.966331]>R", AmbiguousPeptideModSeq.getRightAmbiguity("S[+79.966331]SS[+79.966331]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
 
-		assertEquals("(S[+79.96633])SSR", AmbiguousPeptideModSeq.getUnambigous("S[+79.96633]SSR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("S(S[+79.96633])SR", AmbiguousPeptideModSeq.getUnambigous("SS[+79.96633]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("SS(S[+79.96633])R", AmbiguousPeptideModSeq.getUnambigous("SSS[+79.96633]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("(S[+79.96633])(S[+79.96633])SR", AmbiguousPeptideModSeq.getUnambigous("S[+79.96633]S[+79.96633]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("S(S[+79.96633])(S[+79.96633])R", AmbiguousPeptideModSeq.getUnambigous("SS[+79.96633]S[+79.96633]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("(S[+79.96633])S(S[+79.96633])R", AmbiguousPeptideModSeq.getUnambigous("S[+79.96633]SS[+79.96633]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("(S[+79.966331])SSR", AmbiguousPeptideModSeq.getUnambigous("S[+79.966331]SSR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("S(S[+79.966331])SR", AmbiguousPeptideModSeq.getUnambigous("SS[+79.966331]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("SS(S[+79.966331])R", AmbiguousPeptideModSeq.getUnambigous("SSS[+79.966331]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("(S[+79.966331])(S[+79.966331])SR", AmbiguousPeptideModSeq.getUnambigous("S[+79.966331]S[+79.966331]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("S(S[+79.966331])(S[+79.966331])R", AmbiguousPeptideModSeq.getUnambigous("SS[+79.966331]S[+79.966331]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("(S[+79.966331])S(S[+79.966331])R", AmbiguousPeptideModSeq.getUnambigous("S[+79.966331]SS[+79.966331]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
 
-		assertEquals("(S[+79.96633]SS)R", AmbiguousPeptideModSeq.getFullyAmbiguous("S[+79.96633]SSR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("(SS[+79.96633]S)R", AmbiguousPeptideModSeq.getFullyAmbiguous("SS[+79.96633]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("(SSS[+79.96633])R", AmbiguousPeptideModSeq.getFullyAmbiguous("SSS[+79.96633]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("(S[+79.96633]S[+79.96633]S)R", AmbiguousPeptideModSeq.getFullyAmbiguous("S[+79.96633]S[+79.96633]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("(SS[+79.96633]S[+79.96633])R", AmbiguousPeptideModSeq.getFullyAmbiguous("SS[+79.96633]S[+79.96633]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
-		assertEquals("(S[+79.96633]SS[+79.96633])R", AmbiguousPeptideModSeq.getFullyAmbiguous("S[+79.96633]SS[+79.96633]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("(S[+79.966331]SS)R", AmbiguousPeptideModSeq.getFullyAmbiguous("S[+79.966331]SSR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("(SS[+79.966331]S)R", AmbiguousPeptideModSeq.getFullyAmbiguous("SS[+79.966331]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("(SSS[+79.966331])R", AmbiguousPeptideModSeq.getFullyAmbiguous("SSS[+79.966331]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("(S[+79.966331]S[+79.966331]S)R", AmbiguousPeptideModSeq.getFullyAmbiguous("S[+79.966331]S[+79.966331]SR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("(SS[+79.966331]S[+79.966331])R", AmbiguousPeptideModSeq.getFullyAmbiguous("SS[+79.966331]S[+79.966331]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
+		assertEquals("(S[+79.966331]SS[+79.966331])R", AmbiguousPeptideModSeq.getFullyAmbiguous("S[+79.966331]SS[+79.966331]R", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()).getPeptideAnnotation());
 	}
 	
 	public void testAmbiguousSorting() {
 		String[] peptides=new String[] {
-				"SS[+79.96633]SR",
-				"S[+79.96633]S[+79.96633]SR",
-				"S[+79.96633]S[+79.96633]S[+79.96633]R",
-				"S[+79.96633]QWEITS[+79.96633]GLKDSS[+79.96633]R",
-				"SQWEIT[+79.96633]SGLKDS[+79.96633]S[+79.96633]R"
+				"SS[+79.966331]SR",
+				"S[+79.966331]S[+79.966331]SR",
+				"S[+79.966331]S[+79.966331]S[+79.966331]R",
+				"S[+79.966331]QWEITS[+79.966331]GLKDSS[+79.966331]R",
+				"SQWEIT[+79.966331]SGLKDS[+79.966331]S[+79.966331]R"
 		};
 		int[] diffs=new int[] {
 				0, -1, 0, -8, 9
@@ -85,17 +85,17 @@ public class AmbiguousPeptideModSeqTest extends TestCase {
 	}
 	
 	public void testRemove() {
-		String targetPeptide="S[+79.96633]SSR";
+		String targetPeptide="S[+79.966331]SSR";
 
 		String[] unambiguousPeptides=new String[] {
-				"S[+79.96633]SSR",
-				"SS[+79.96633]SR",
-				"SSS[+79.96633]R"
+				"S[+79.966331]SSR",
+				"SS[+79.966331]SR",
+				"SSS[+79.966331]R"
 		};
 		String[] expectedResult=new String[] {
-				"S(S[+79.96633]S)R", // moved!
-				"(S[+79.96633]SS)R",
-				"(S[+79.96633]S)SR"
+				"S(S[+79.966331]S)R", // moved!
+				"(S[+79.966331]SS)R",
+				"(S[+79.966331]S)SR"
 		};
 		for (int i=0; i<unambiguousPeptides.length; i++) {
 			AmbiguousPeptideModSeq s=AmbiguousPeptideModSeq.getFullyAmbiguous(targetPeptide, PeptideModification.phosphorylation, PARAMETERS.getAAConstants());
@@ -107,10 +107,10 @@ public class AmbiguousPeptideModSeqTest extends TestCase {
 	
 	public void testSets() {
 		String[] peptides=new String[] {
-				"SS[+79.96633]SR",
-				"S[+79.96633]S[+79.96633]SR",
-				"S[+79.96633]S[+79.96633]S[+79.96633]R",
-				"S[+79.96633]QWEITS[+79.96633]GLKDSS[+79.96633]R"
+				"SS[+79.966331]SR",
+				"S[+79.966331]S[+79.966331]SR",
+				"S[+79.966331]S[+79.966331]S[+79.966331]R",
+				"S[+79.966331]QWEITS[+79.966331]GLKDSS[+79.966331]R"
 		};
 		for (String targetPeptide : peptides) {
 			AmbiguousPeptideModSeq s=AmbiguousPeptideModSeq.getRightAmbiguity(targetPeptide, PeptideModification.phosphorylation,PARAMETERS.getAAConstants());

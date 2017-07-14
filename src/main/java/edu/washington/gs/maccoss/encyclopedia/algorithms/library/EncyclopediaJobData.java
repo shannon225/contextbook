@@ -9,25 +9,26 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 
 public class EncyclopediaJobData extends QuantitativeSearchJobData {
 	public static final String LOG_FILE_SUFFIX=".log";
+	public static final String DECOY_FILE_SUFFIX=".encyclopedia.decoy.txt";
 	public static final String OUTPUT_FILE_SUFFIX=".encyclopedia.txt";
 	public static final String FEATURE_FILE_SUFFIX=".features.txt";
 	private final LibraryInterface library;
 	private final LibraryScoringFactory taskFactory;
 	
 	public EncyclopediaJobData(File diaFile, LibraryInterface library, LibraryScoringFactory taskFactory) {
-		super(diaFile, new File(diaFile.getAbsolutePath()+FEATURE_FILE_SUFFIX), new File(diaFile.getAbsolutePath()+OUTPUT_FILE_SUFFIX), taskFactory.getParameters(), taskFactory.getVersion());
+		super(diaFile, new File(diaFile.getAbsolutePath()+FEATURE_FILE_SUFFIX), new File(diaFile.getAbsolutePath()+OUTPUT_FILE_SUFFIX), new File(diaFile.getAbsolutePath()+DECOY_FILE_SUFFIX), taskFactory.getParameters(), taskFactory.getVersion());
 		this.library=library;
 		this.taskFactory=taskFactory;
 	}
 
 	public EncyclopediaJobData(File diaFile, LibraryInterface library, File outputFile, LibraryScoringFactory taskFactory) {
-		super(diaFile, new File(getOutputAbsolutePathPrefix(outputFile.getAbsolutePath())+FEATURE_FILE_SUFFIX), outputFile, taskFactory.getParameters(), taskFactory.getVersion());
+		super(diaFile, new File(getOutputAbsolutePathPrefix(outputFile.getAbsolutePath())+FEATURE_FILE_SUFFIX), outputFile, new File(getOutputAbsolutePathPrefix(outputFile.getAbsolutePath())+DECOY_FILE_SUFFIX), taskFactory.getParameters(), taskFactory.getVersion());
 		this.library=library;
 		this.taskFactory=taskFactory;
 	}
 
 	public EncyclopediaJobData(File diaFile, File featureFile, File outputFile, SearchParameters parameters, String version, LibraryInterface library, LibraryScoringFactory taskFactory) {
-		super(diaFile, featureFile, outputFile, parameters, version);
+		super(diaFile, featureFile, outputFile, new File(getOutputAbsolutePathPrefix(outputFile.getAbsolutePath())+DECOY_FILE_SUFFIX), parameters, version);
 		this.library=library;
 		this.taskFactory=taskFactory;
 	}
@@ -47,6 +48,11 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData {
 	public File getFirstPassPercolator() {
 		String absolutePath=getOutputAbsolutePathPrefix(getOutputFile().getAbsolutePath());
 		return new File(absolutePath+".first_round.txt");
+	}
+	
+	public File getFirstPassPercolatorDecoy() {
+		String absolutePath=getOutputAbsolutePathPrefix(getOutputFile().getAbsolutePath());
+		return new File(absolutePath+".first_round.decoy.txt");
 	}
 	
 	public File getResultLibrary() {

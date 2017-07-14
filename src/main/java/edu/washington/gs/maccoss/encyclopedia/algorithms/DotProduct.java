@@ -1,16 +1,12 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
-import java.util.ArrayList;
-
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.*;
+
+import java.util.ArrayList;
 
 //@Immutable
 public class DotProduct implements PSMPeakScorer {
@@ -64,8 +60,7 @@ public class DotProduct implements PSMPeakScorer {
 		
 		double[] acquiredMasses=spectrum.getMassArray();
 		float[] acquiredIntensities=spectrum.getIntensityArray();
-		
-		
+
 		ArrayList<PeakScores> scoredPeaks=new ArrayList<PeakScores>();
 		for (FragmentIon targetIon : ions) {
 			double target=targetIon.mass;

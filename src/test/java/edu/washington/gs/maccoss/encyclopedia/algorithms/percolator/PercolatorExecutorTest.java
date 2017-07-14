@@ -4,8 +4,10 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
@@ -13,9 +15,10 @@ import junit.framework.TestCase;
 
 public class PercolatorExecutorTest extends TestCase {
 	public static void main(String[] args) throws Exception {
-		File featureFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML.pecan.txt.features.txt");
-		File outputFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzML.pecan.txt.txt");
-		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, getDefaultPercolaterVersion(), false);
+		File featureFile=new File("/Users/searleb/Documents/school/projects/test/02may2016_yeast_deep_dia_01.mzML.encyclopedia.txt.features.txt");
+		File outputFile=new File("/Users/searleb/Documents/school/projects/test/02may2016_yeast_deep_dia_01.mzML.encyclopedia.txt.output.txt");
+		File decoyFile=new File("/Users/searleb/Documents/school/projects/test/02may2016_yeast_deep_dia_01.mzML.encyclopedia.txt.decoy.txt");
+		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, decoyFile, getDefaultPercolaterVersion(), false);
 		BlockingQueue<OutputMessage> result=e.start();
 
 		int outputlines=0;
@@ -33,6 +36,11 @@ public class PercolatorExecutorTest extends TestCase {
 			}
 		}
 		System.out.println("total processed: "+outputlines);
+		ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(outputFile, 0.01f, false);
+		System.out.println("Peptides: "+peptides.size());
+		ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(decoyFile, 0.01f, true);
+		System.out.println("Decoys: "+decoys.size());
+		
 	}
 
 	public void testParsePeptideSequence() {
@@ -47,11 +55,14 @@ public class PercolatorExecutorTest extends TestCase {
 		featureFile.deleteOnExit();
 
 		File outputFile=File.createTempFile("percolator", ".xml");
-		featureFile.deleteOnExit();
+		outputFile.deleteOnExit();
+
+		File decoyFile=File.createTempFile("percolator", ".decoy.xml");
+		decoyFile.deleteOnExit();
 
 		Files.copy(is, featureFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, getDefaultPercolaterVersion(), true);
+		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, decoyFile, getDefaultPercolaterVersion(), true);
 		BlockingQueue<OutputMessage> result=e.start();
 
 		int outputlines=0;

@@ -18,6 +18,16 @@ public class PercolatorPeptide implements PeptidePrecursor {
 		this.posteriorErrorProb=posteriorErrorProb;
 	}
 	
+	public String getPeptideSeq() {
+		StringBuilder sb=new StringBuilder();
+		for (char c : getPeptideModSeq().toCharArray()) {
+			if (Character.isLetter(c)) {
+				sb.append(c);
+			}
+		}
+		return sb.toString();
+	}
+	
 	@Override
 	public int hashCode() {
 		return getPeptideModSeq().hashCode()+16807*getPrecursorCharge();

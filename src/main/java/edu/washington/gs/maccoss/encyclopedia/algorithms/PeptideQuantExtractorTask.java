@@ -1,21 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
@@ -25,6 +13,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ThreadableTask;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	private final Optional<PhosphoLocalizer> localizer;

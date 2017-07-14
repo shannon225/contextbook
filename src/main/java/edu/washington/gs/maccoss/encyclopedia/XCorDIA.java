@@ -169,7 +169,7 @@ public class XCorDIA {
 		File outputFile=jobData.getOutputFile();
 		if (outputFile.exists()&&outputFile.canRead()) {
 			try {
-				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(outputFile, jobData.getParameters().getEffectivePercolatorThreshold());
+				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(outputFile, jobData.getParameters().getEffectivePercolatorThreshold(), false);
 				ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptidesFromTSV);
 				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides ("+proteins.size()+" proteins) identified at "+(jobData.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 				return;
@@ -419,7 +419,7 @@ public class XCorDIA {
 		Logger.logLine("Finished generating feature file, analyzed "+resultsConsumer.getNumberProcessed()+" peptides.");
 
 		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
-		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), jobData.getFeatureFile(), outputFile, parameters.getEffectivePercolatorThreshold());
+		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), jobData.getFeatureFile(), outputFile, jobData.getOutputDecoyFile(), parameters.getEffectivePercolatorThreshold());
 		stripefile.close();
 		
 		Logger.logLine("Writing elib result library...");

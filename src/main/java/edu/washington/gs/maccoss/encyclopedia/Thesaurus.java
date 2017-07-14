@@ -27,10 +27,10 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgrou
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -53,7 +53,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.FileLogRecorder;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
@@ -66,7 +65,7 @@ public class Thesaurus {
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("Thesaurus Help");
-			Logger.timelessLogLine("Thesaurus is a chromatogram-aligned site localizing search engine for DIA data.");
+			Logger.timelessLogLine("Thesaurus is software for detecting positional phosphopeptide isomers from DIA data.");
 			Logger.timelessLogLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.timelessLogLine("Required Parameters: ");
 			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file");
@@ -144,11 +143,11 @@ public class Thesaurus {
 		File outputFile=job.getOutputFile();
 		if (outputFile.exists()&&outputFile.canRead()) {
 			try {
-				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(outputFile, job.getParameters().getEffectivePercolatorThreshold());
+				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(outputFile, job.getParameters().getEffectivePercolatorThreshold(), false);
 				
 				File elibFile=job.getResultLibrary();
 				if (!elibFile.exists()) {
-					job=checkJob(job);
+					//job=checkJob(job);
 					progress.update("Writing elib result library...");
 					Logger.logLine("Writing elib result library...");
 					ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
@@ -203,10 +202,16 @@ public class Thesaurus {
 		if (!(job.getTaskFactory() instanceof CASiLOneScoringFactory)) {
 			throw new EncyclopediaException("Sorry, CASiL requires it's own task factory!");
 		}
+		
 		CASiLOneScoringFactory taskFactory=(CASiLOneScoringFactory)job.getTaskFactory();
 		BlockingQueue<ModificationLocalizationData> localizationQueue=taskFactory.getLocalizationQueue();
 		
 		SearchParameters parameters=taskFactory.getParameters();
+
+		if (parameters.getNumberOfExtraDecoyLibrariesSearched()>0) {
+			Logger.errorLine("Thesaurus does not respect adding extra decoys! Parameter ignored.");
+		}
+		
 		LibraryInterface library=job.getLibrary();
 		File featureFile=job.getFeatureFile();
 		File localizationFile=job.getLocalizationFile();
@@ -260,39 +265,37 @@ public class Thesaurus {
 			LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 	
-			int count=0;
 			ArrayList<LibraryEntry> entries=library.getEntries(range, true);
 			LibraryBackgroundInterface background=new LibraryBackground(entries);
 			PSMScorer scorer=taskFactory.getLibraryScorer(background);
 			
+			// keep all entries belonging to the same sequence together
+			HashMap<String, ArrayList<LibraryEntry>> entriesBySequence=new HashMap<>();
 			for (LibraryEntry entry : entries) {
-				count++;
-				ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
-				tasks.add(entry);
-				tasks.add(entry.getDecoy(parameters));
-				
-				float extraDecoys=parameters.getNumberOfExtraDecoyLibrariesSearched();
-				while (extraDecoys>0.0f) {
-					if (extraDecoys<1.0f) {
-						// check percentage
-						float test=RandomGenerator.random(count);
-						if (test>extraDecoys) {
-							break;
-						}
-					}
-					extraDecoys=extraDecoys-1.0f;
-					LibraryEntry shuffle=entry.getShuffle(parameters, Float.hashCode(extraDecoys), false);
-					tasks.add(shuffle);
-					tasks.add(shuffle.getDecoy(parameters));
+				String seq=entry.getPeptideSeq();
+				ArrayList<LibraryEntry> list=entriesBySequence.get(seq);
+				if (list==null) {
+					list=new ArrayList<>();
+					entriesBySequence.put(seq, list);
 				}
+				list.add(entry);
+			}
+			int queueSize=0;
+			for (ArrayList<LibraryEntry> entryList : entriesBySequence.values()) {
+				queueSize++;
 				
+				ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
+				for (LibraryEntry entry : entryList) {
+					tasks.add(entry);
+					tasks.add(entry.getDecoy(parameters));
+				}
 				executor.submit(taskFactory.getScoringTask(scorer, tasks, stripes, dutyCycle, precursors, resultsQueue));
 			}
 			
 			executor.shutdown();
 			while (!executor.isTerminated()) {
 				Logger.logLine(workQueue.size()+" peptides remaining for "+range+"...");
-				float finishedFraction=(count-workQueue.size())/(float)count;
+				float finishedFraction=(queueSize-workQueue.size())/(float)queueSize;
 				progress.update(baseMessage, baseProgress+baseIncrement*(0.2f+finishedFraction*0.8f));
 				Thread.sleep(500);
 			}
@@ -319,7 +322,13 @@ public class Thesaurus {
 		File elibFile=job.getResultLibrary();
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		jobs.add(job);
-		SearchToBLIB.convert(progress, jobs, elibFile, false, true);
+		try {
+			SearchToBLIB.convert(progress, jobs, elibFile, false, true);
+		} catch (Exception e) {
+			Logger.errorLine("Encountered error creating elib report...");
+			Logger.errorException(e);
+			throw new EncyclopediaException("Error creating elib report", e);
+		}
 	
 		Logger.logLine("Grouping proteins...");
 		ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides);

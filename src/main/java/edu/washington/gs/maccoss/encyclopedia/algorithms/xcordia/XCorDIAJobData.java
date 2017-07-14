@@ -10,6 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 
 public class XCorDIAJobData extends QuantitativeSearchJobData {
 	public static final String OUTPUT_FILE_SUFFIX=".xcordia.txt";
+	public static final String DECOY_FILE_SUFFIX=".xcordia.decoy.txt";
 	public static final String FEATURE_FILE_SUFFIX=".features.txt";
 	
 	private final Optional<ArrayList<FastaPeptideEntry>> targetList;
@@ -17,7 +18,7 @@ public class XCorDIAJobData extends QuantitativeSearchJobData {
 	private final XCorDIAOneScoringFactory taskFactory;
 
 	public XCorDIAJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, File featureFile, File outputFile, XCorDIAOneScoringFactory taskFactory) {
-		super(diaFile, featureFile, outputFile, taskFactory.getParameters(), taskFactory.getVersion());
+		super(diaFile, featureFile, outputFile, new File(getOutputAbsolutePathPrefix(outputFile.getAbsolutePath())+DECOY_FILE_SUFFIX), taskFactory.getParameters(), taskFactory.getVersion());
 		this.targetList=targetList;
 		this.fastaFile=fastaFile;
 		this.taskFactory=taskFactory;

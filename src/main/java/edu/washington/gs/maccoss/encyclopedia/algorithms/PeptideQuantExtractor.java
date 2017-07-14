@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
@@ -41,7 +40,7 @@ import gnu.trove.map.hash.TObjectFloatHashMap;
 public class PeptideQuantExtractor {
 	private final ProgressIndicator progress;
 	private final StripeFileInterface stripefile;
-	private final PhosphoLocalizer localizer;
+	//private final PhosphoLocalizer localizer;
 	private final SearchParameters parameters;
 	
 	public PeptideQuantExtractor(ProgressIndicator progress, LibraryInterface searchedLibrary, StripeFileInterface stripefile, SearchParameters parameters) {
@@ -49,7 +48,7 @@ public class PeptideQuantExtractor {
 		this.stripefile=stripefile;
 		this.parameters=parameters;
 		
-		PhosphoLocalizer localizer;
+		/*PhosphoLocalizer localizer;
 		if (parameters.getLocalizingModification().isPresent()&&searchedLibrary!=null) {
 			try {
 				localizer=new PhosphoLocalizer(stripefile, parameters.getLocalizingModification().get(), searchedLibrary, parameters);
@@ -63,7 +62,7 @@ public class PeptideQuantExtractor {
 		} else {
 			localizer=null;
 		}
-		this.localizer=localizer;
+		this.localizer=localizer;*/
 	}
 
 	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, final SearchJobData job, boolean limitToQuantifiable, ArrayList<PercolatorPeptide> globalPassingPSMIDs, ArrayList<PercolatorPeptide> localPassingPSMIDs, final Optional<PeakLocationInferrer> inferrer, StripeFileInterface stripeFile, LibraryInterface searchedLibrary, final SearchParameters parameters) {
@@ -76,7 +75,7 @@ public class PeptideQuantExtractor {
 			if (!isDecoy) {
 				String peptideModSeq=PercolatorPeptide.getPeptideSequence(psmID);
 				passingPeptideSequences.add(peptideModSeq);
-				savedPeptides.put(peptideModSeq, psm.getQValue());
+				savedPeptides.put(peptideModSeq, psm.getPosteriorErrorProb());
 			}
 		}
 		Logger.logLine("Number of global peptides: "+savedPeptides.size()+" vs local peptides: "+localPassingPSMIDs.size());
@@ -261,7 +260,7 @@ public class PeptideQuantExtractor {
 
 			for (PSMData psm : data) {
 				if (range.contains((float)psm.getPrecursorMZ())) {
-					executor.submit(new PeptideQuantExtractorTask(filename, psm, Optional.ofNullable(localizer), stripes, parameters, savedEntries, limitToQuantifiable));
+					executor.submit(new PeptideQuantExtractorTask(filename, psm, Optional.ofNullable(null), stripes, parameters, savedEntries, limitToQuantifiable));
 				}
 			}
 

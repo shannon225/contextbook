@@ -205,6 +205,17 @@ public class PeptideUtils {
 		}
 		return new Triplet<double[], double[], String[]>(masses.toArray(), neutralLosses.toArray(), aas.toArray(new String[aas.size()]));
 	}
+
+	
+	public static String getPeptideSeq(String peptideModSeq) {
+		StringBuilder sb=new StringBuilder();
+		for (char c : peptideModSeq.toCharArray()) {
+			if (Character.isLetter(c)) {
+				sb.append(c);
+			}
+		}
+		return sb.toString();
+	}
 	
 	public static int getNumberOfMods(String sequence, int nominalMass) {
 		char[] ca=sequence.toCharArray();

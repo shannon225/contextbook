@@ -160,7 +160,7 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 
 		Logger.logLine("Seed experiment: "+bestJob.getDiaFile().getName()+" ("+max+" archetypal peptides)");
 		Logger.logLine("Seed Percolator file: "+bestJob.getOutputFile().getAbsolutePath());
-		ArrayList<PercolatorPeptide> alignmentSeed=PercolatorReader.getPassingPeptidesFromTSV(bestJob.getOutputFile(), bestJob.getParameters().getEffectivePercolatorThreshold());
+		ArrayList<PercolatorPeptide> alignmentSeed=PercolatorReader.getPassingPeptidesFromTSV(bestJob.getOutputFile(), bestJob.getParameters().getEffectivePercolatorThreshold(), false);
 		TObjectFloatHashMap<String> rtsBySequence=new TObjectFloatHashMap<String>();
 		for (PercolatorPeptide peptide : alignmentSeed) {
 			rtsBySequence.put(peptide.getPeptideModSeq(), peptide.getRT());
@@ -186,7 +186,7 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 				count++;
 
 				ArrayList<XYPoint> points=new ArrayList<XYPoint>();
-				ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), job.getParameters().getEffectivePercolatorThreshold());
+				ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), job.getParameters().getEffectivePercolatorThreshold(), false);
 				for (PercolatorPeptide peptide : peptides) {
 					String seq=peptide.getPeptideModSeq();
 					if (rtsBySequence.containsKey(seq)) {

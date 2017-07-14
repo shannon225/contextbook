@@ -46,9 +46,9 @@ public class PhosphoLocalizerExample {
 		LibraryFile.OPEN_IN_PLACE=true;
 		
 		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/VillenJ_Exactive_HumanPhosphoproteome.elib");
-		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/22jun2016_mcf7_phospho_1b.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/22jun2016_mcf7_phospho_1b.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/22jun2016_mcf7_phospho_1c.dia");
-		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_04.dia");
+		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_04.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_03_170507071858.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_01_170506220515.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_02_170507024206.dia");
@@ -85,7 +85,7 @@ public class PhosphoLocalizerExample {
 		String peptideModSeq;
 		float retentionTime;
 		byte precursorCharge;
-		if (false) {
+		if (true) {
 			// repeat 2 sp|P83731|RL24_HUMAN
 			peptideModSeq="AITGAS[+80.0]LADIMAK";
 			retentionTime=5680.037109375f;

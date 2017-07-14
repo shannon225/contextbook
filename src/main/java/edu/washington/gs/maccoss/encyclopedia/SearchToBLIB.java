@@ -205,14 +205,14 @@ public class SearchToBLIB {
 				}
 				
 				for (File file : files) {
-					File resultFile=new File(file.getAbsolutePath()+".pecan.txt");
-					File featureFile=new File(resultFile.getAbsolutePath()+".features.txt");
+					File resultFile=new File(file.getAbsolutePath()+PecanJobData.OUTPUT_FILE_SUFFIX);
+					File featureFile=new File(resultFile.getAbsolutePath()+PecanJobData.FEATURE_FILE_SUFFIX);
 					PecanJobData job=new PecanJobData(Optional.ofNullable(targets), file, fastaFile, featureFile, resultFile, factory);
 					pecanJobs.add(job);
 				}
 			} else {
-				File resultFile=new File(diaFile.getAbsolutePath()+".pecan.txt");
-				File featureFile=new File(resultFile.getAbsolutePath()+".features.txt");
+				File resultFile=new File(diaFile.getAbsolutePath()+PecanJobData.OUTPUT_FILE_SUFFIX);
+				File featureFile=new File(resultFile.getAbsolutePath()+PecanJobData.FEATURE_FILE_SUFFIX);
 				PecanJobData job=new PecanJobData(Optional.ofNullable(targets), diaFile, fastaFile, featureFile, resultFile, factory);
 				pecanJobs.add(job);
 			}
@@ -312,6 +312,7 @@ public class SearchToBLIB {
 		}
 		File bigFeatureFile=new File(representativeJob.getFeatureFile().getParentFile(), filename+"_concatenated_features.txt");
 		File bigPercolatorFile=new File(representativeJob.getFeatureFile().getParentFile(), filename+"_concatenated_results.txt");
+		File bigPercolatorDecoyFile=new File(representativeJob.getFeatureFile().getParentFile(), filename+"_concatenated_decoy.txt");
 		
 		SearchParameters parameters=representativeJob.getParameters();
 		float threshold=parameters.getEffectivePercolatorThreshold();
@@ -319,13 +320,13 @@ public class SearchToBLIB {
 			ArrayList<PercolatorPeptide> passingPeptides;
 			if (featureFiles.size()==1) {
 				// if there's only one file then don't need to re-run percolator
-				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(representativeJob.getOutputFile(), threshold);
+				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(representativeJob.getOutputFile(), threshold, false);
 			} else if (bigPercolatorFile.exists()&&bigPercolatorFile.canRead()) {
 				// if we've already run percolator then don't need to re-run percolator
-				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(bigPercolatorFile, threshold);
+				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(bigPercolatorFile, threshold, false);
 			} else {
 				TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
-				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), bigFeatureFile, bigPercolatorFile, threshold);
+				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), bigFeatureFile, bigPercolatorFile, bigPercolatorDecoyFile, threshold);
 			}
 			
 			ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides);
@@ -379,7 +380,7 @@ public class SearchToBLIB {
 				ProgressIndicator subProgress=new SubProgressIndicator(progress, increment);
 				
 				ArrayList<PercolatorPeptide> globalPassingPeptides;
-				ArrayList<PercolatorPeptide> localPassingPeptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), pecanJobs.get(i).getParameters().getEffectivePercolatorThreshold());
+				ArrayList<PercolatorPeptide> localPassingPeptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), pecanJobs.get(i).getParameters().getEffectivePercolatorThreshold(), false);
 				if (passingPeptides.isPresent()) {
 					globalPassingPeptides=passingPeptides.get();
 				} else {
@@ -470,7 +471,7 @@ public class SearchToBLIB {
 				ProgressIndicator subProgress=new SubProgressIndicator(progress, increment);
 				
 				ArrayList<PercolatorPeptide> globalPassingPeptides;
-				ArrayList<PercolatorPeptide> localPassingPeptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), pecanJobs.get(i).getParameters().getEffectivePercolatorThreshold());
+				ArrayList<PercolatorPeptide> localPassingPeptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), pecanJobs.get(i).getParameters().getEffectivePercolatorThreshold(), false);
 				if (passingPeptides.isPresent()) {
 					globalPassingPeptides=passingPeptides.get();
 				} else {
@@ -547,6 +548,14 @@ public class SearchToBLIB {
 		}
 
 		elib.addIntegratedEntries(libraryEntries, inferrer, localizationData);
+
+		if (job.getOutputFile().exists()&&job.getOutputDecoyFile().exists()) {
+			ArrayList<PercolatorPeptide> targets=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), job.getParameters().getEffectivePercolatorThreshold(), true);
+			ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputDecoyFile(), job.getParameters().getEffectivePercolatorThreshold(), true);
+			Logger.logLine("Reading target/decoy peptides: "+targets.size()+"/"+decoys.size());
+			elib.addTargetDecoyData(targets, decoys);
+		}
+		
 		Logger.logLine("Finished writing to Encyclopedia ELIB at "+new Date().toString());
 		subProgress.update(diaFile.getName()+": Finished writing to Encyclopedia ELIB at "+new Date().toString(), 1.0f);
 	}

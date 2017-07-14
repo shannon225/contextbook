@@ -41,7 +41,7 @@ public class SearchGUIMain {
 			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/pecan_icon.png"));
 		} else if (ProgramType.CASiL==program) {
 			shortName="Thesaurus";
-			name="Thesaurus: Chromatogram Aligned Site Localizing Search Engine";
+			name="Thesaurus: Phosphopeptide Positional Isomer Search Engine";
 			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/thesaurus_icon.png"));
 		} else if (ProgramType.XCorDIA==program) {
 			shortName="XCorDIA";
