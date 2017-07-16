@@ -457,6 +457,16 @@ public class General {
 		return max;
 	}
 	
+	public static double min(double[] v) {
+		double min=Double.MAX_VALUE;
+		for (int i=0; i<v.length; i++) {
+			if (v[i]<min) {
+				min=v[i];
+			}
+		}
+		return min;
+	}
+	
 	public static float min(float[] v) {
 		float min=Float.MAX_VALUE;
 		for (int i=0; i<v.length; i++) {

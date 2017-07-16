@@ -5,15 +5,15 @@ import java.util.Collection;
 
 import gnu.trove.map.hash.TCharObjectHashMap;
 
-public class PeptideTrie {
+public abstract class PeptideTrie <T extends PeptidePrecursor> {
 	TrieNode head=new TrieNode('$');
 	
 	/**
 	 * peptide trie stored backwards (so K/R comes first)
 	 * @param entries
 	 */
-	public PeptideTrie(Collection<LibraryEntry> entries) {
-		for (LibraryEntry entry : entries) {
+	public PeptideTrie(Collection<T> entries) {
+		for (T entry : entries) {
 			char[] sequence=entry.getPeptideSeq().toCharArray();
 			
 			TrieNode node=head;
@@ -24,8 +24,13 @@ public class PeptideTrie {
 		}
 	}
 	
+	public void addFasta(ArrayList<FastaEntryInterface> fasta) {
+		for (FastaEntryInterface f : fasta) {
+			addFasta(f);
+		}
+	}
+	
 	public void addFasta(FastaEntryInterface fasta) {
-		String accession=fasta.getAccession();
 		char[] sequence=fasta.getSequence().toCharArray();
 		for (int i=sequence.length-1; i>=0; i--) {
 			// move trie along sequence
@@ -38,18 +43,20 @@ public class PeptideTrie {
 				if (node==null) break;
 				
 				if (node.entries.size()>0) {
-					for (LibraryEntry entry : node.entries) {
-						entry.getAccessions().add(accession);
+					for (T entry : node.entries) {
+						processMatch(fasta, entry, j);
 					}
 				}
 			}
 		}
 	}
 
+	protected abstract void processMatch(FastaEntryInterface fasta, T entry, int start);
+
 	private class TrieNode {
 		private final char aa;
-		private final TCharObjectHashMap<TrieNode> children=new TCharObjectHashMap<PeptideTrie.TrieNode>();
-		private final ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
+		private final TCharObjectHashMap<TrieNode> children=new TCharObjectHashMap<TrieNode>();
+		private final ArrayList<T> entries=new ArrayList<T>();
 
 		public TrieNode(char aa) {
 			this.aa=aa;
@@ -75,7 +82,7 @@ public class PeptideTrie {
 			return node;
 		}
 		
-		public void addEntry(LibraryEntry entry) {
+		public void addEntry(T entry) {
 			entries.add(entry);
 		}
 	}

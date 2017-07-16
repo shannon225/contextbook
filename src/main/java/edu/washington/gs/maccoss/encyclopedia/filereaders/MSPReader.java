@@ -16,7 +16,7 @@ import java.util.StringTokenizer;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideTrie;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -45,10 +45,9 @@ public class MSPReader {
 		ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile);
 
 		Logger.logLine("Constructing trie from library peptides");
-		PeptideTrie trie=new PeptideTrie(entries);
-		for (FastaEntryInterface fastaEntryInterface : proteins) {
-			trie.addFasta(fastaEntryInterface);
-		}
+		PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(entries);
+		trie.addFasta(proteins);
+		
 		int[] counts=new int[21];
 		for (LibraryEntry entry : entries) {
 			int size=Math.min(counts.length-1, entry.getAccessions().size());

@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.StringTokenizer;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 
 public class PSMData implements PeptidePrecursor {
 	private final int spectrumIndex;
@@ -78,6 +79,10 @@ public class PSMData implements PeptidePrecursor {
 
 	public String getPeptideModSeq() {
 		return peptideModSeq;
+	}
+	
+	public String getPeptideSeq() {
+		return PeptideUtils.getPeptideSeq(peptideModSeq);
 	}
 
 	public float getRetentionTime() {

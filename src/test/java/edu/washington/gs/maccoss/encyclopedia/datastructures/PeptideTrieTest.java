@@ -11,7 +11,13 @@ public class PeptideTrieTest extends TestCase {
 	public void testTrie() {
 		InputStream is=getClass().getResourceAsStream("/truncated.msp");
 		ArrayList<LibraryEntry> entries=MSPReader.readMSP(is, "truncated.msp", true);
-		PeptideTrie trie=new PeptideTrie(entries);
+		PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(entries) {
+			@Override
+			protected void processMatch(FastaEntryInterface fasta, LibraryEntry entry, int start) {
+				super.processMatch(fasta, entry, start);
+				PeptideTrieTest.assertEquals(entry.getPeptideSeq(), fasta.getSequence().substring(start, start+entry.getPeptideSeq().length()));
+			}
+		};
 		
 		FastaEntry fasta=new FastaEntry("File", "gi|155030192", 
 				"MADNLSDTLKKLKITAVDKTEDSLEGCLDCLLQALAQNNTETSEKIQASGILQLFASLLTPQSSCKAKVA"+

@@ -23,7 +23,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideTrie;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -167,10 +167,9 @@ public class BlibFile extends SQLFile {
 				ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile);
 				
 				Logger.logLine("Constructing trie from library peptides");
-				PeptideTrie trie=new PeptideTrie(entries);
-				for (FastaEntryInterface fastaEntryInterface : proteins) {
-					trie.addFasta(fastaEntryInterface);
-				}
+				PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(entries);
+				trie.addFasta(proteins);
+
 				int[] counts=new int[21];
 				for (LibraryEntry entry : entries) {
 					int size=Math.min(counts.length-1, entry.getAccessions().size());

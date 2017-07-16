@@ -73,7 +73,6 @@ public class BackgroundFrequencyCalculator implements BackgroundFrequencyInterfa
 	}
 	
 	public static BackgroundFrequencyInterface generateBackground(StripeFileInterface diafile) throws DataFormatException, SQLException, IOException {
-		Logger.logException(new EncyclopediaException("WTF"));
 		TDoubleHashSet boundaries=new TDoubleHashSet();
 		ArrayList<Range> ranges=new ArrayList<Range>(diafile.getRanges().keySet());
 		Collections.sort(ranges);

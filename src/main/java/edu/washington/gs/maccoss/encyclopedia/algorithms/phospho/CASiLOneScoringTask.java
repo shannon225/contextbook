@@ -23,17 +23,21 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.set.hash.TIntHashSet;
@@ -185,16 +189,23 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 					for (int i=0; i<Math.min(localizedEntry.getMassArray().length, allIons.length); i++) {
 						//System.out.println(i+") "+localizedEntry.getMassArray()[i]+"\t"+allIons[i].mass+"\t"+allIons[i].toString());
 					}
+					
 
 					float[] primary=new float[stripeList.size()];
 					for (int i=0; i<stripeList.size(); i++) {
 						Spectrum stripe=stripeList.get(i);
-						primary[i]=eScorer.score(localizedEntry, stripe, allIons);
+
+						int stripeRTIndex=getStripeRTIndex(stripe);
+						if (takenRetentionTimes.contains(stripeRTIndex)) {
+							primary[i]=-1.0f;
+						} else {
+							primary[i]=eScorer.score(localizedEntry, stripe, allIons);
+						}
 					}
 					
-					
 					float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
-
+					averagePrimary=General.subtract(averagePrimary, QuickMedian.median(averagePrimary.clone()));
+					
 					TFloatFloatHashMap scoreByRTMap=new TFloatFloatHashMap();
 					ArrayList<ScoredIndex> goodStripes=new ArrayList<ScoredIndex>();
 					for (int i=0; i<averagePrimary.length; i++) {
@@ -255,12 +266,12 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 								// block +/- a peakWidth window
 								int removalIndex=index;
 								while (removalIndex>=0&&peakRange.contains(stripeList.get(removalIndex).getScanStartTime())) {
-									localTakenRetentionTimes.add(removalIndex);
+									localTakenRetentionTimes.add(getStripeRTIndex(stripeList.get(removalIndex)));
 									removalIndex--;
 								}
 								removalIndex=index+1;
 								while (removalIndex<stripeList.size()&&peakRange.contains(stripeList.get(removalIndex).getScanStartTime())) {
-									localTakenRetentionTimes.add(removalIndex);
+									localTakenRetentionTimes.add(getStripeRTIndex(stripeList.get(removalIndex)));
 									removalIndex++;
 								}
 	
@@ -421,12 +432,12 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 	}
 
 	/**
-	 * straight truncate, NOTE, this means we don't have peak resolution less than 1 second
+	 * straight truncate, NOTE, this means we don't have peak resolution less than 0.1 second
 	 * @param stripe
 	 * @return
 	 */
 	private int getStripeRTIndex(Spectrum stripe) {
-		return (int)stripe.getScanStartTime();
+		return (int)(stripe.getScanStartTime()*10);
 	}
 
 	public static Triplet<ModificationLocalizationData, Stripe, Range> calculateLocalizationScoring(float minimumScore, SearchParameters parameters, float dutyCycle, PhosphoLocalizer localizer, LibraryEntry localizedEntry, AmbiguousPeptideModSeq peptideModSeq, FragmentIon[] targetIons, FragmentIon[] allIons, FragmentIonBlacklist takenIdentifiedIons, ArrayList<Spectrum> stripeSubset) {

@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+
 public class SimplePeptidePrecursor implements PeptidePrecursor {
 	private final byte precursorCharge;
 	private final String peptideModSeq;
@@ -15,6 +17,10 @@ public class SimplePeptidePrecursor implements PeptidePrecursor {
 
 	public String getPeptideModSeq() {
 		return peptideModSeq;
+	}
+	
+	public String getPeptideSeq() {
+		return PeptideUtils.getPeptideSeq(peptideModSeq);
 	}
 
 	@Override

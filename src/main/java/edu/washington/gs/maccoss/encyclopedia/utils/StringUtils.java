@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils;
 
+import java.util.Arrays;
+
 public class StringUtils {
 	public static String[] getUniquePortion(String[] names) {
 		if (names==null||names.length<=1) return names;
@@ -39,5 +41,11 @@ public class StringUtils {
 			if (target.equals(strings[i])) return i;
 		}
 		return -1;
+	}
+	
+	public static String getPad(int padLength, char c) {
+		char[] ca=new char[padLength];
+		Arrays.fill(ca, c);
+		return new String(ca);
 	}
 }

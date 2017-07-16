@@ -4,6 +4,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.*;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -178,14 +179,14 @@ public class PhosphoLocalizer {
 		}
 		
 		// interlay the peptides so we look at the most localizing first
-		ArrayList<Pair<AmbiguousPeptideModSeq, FragmentIon[]>> targetPeptides=new ArrayList<Pair<AmbiguousPeptideModSeq,FragmentIon[]>>();
+		ArrayList<Pair<Pair<AmbiguousPeptideModSeq, FragmentIon[]>, Integer>> targetPeptides=new ArrayList<Pair<Pair<AmbiguousPeptideModSeq,FragmentIon[]>, Integer>>();
 		for (int i=0; i<targetPeptidesLeft.size(); i++) {
-			targetPeptides.add(targetPeptidesLeft.get(i));
-			targetPeptides.add(targetPeptidesRight.get(i));
+			targetPeptides.add(new Pair<Pair<AmbiguousPeptideModSeq,FragmentIon[]>, Integer>(targetPeptidesLeft.get(i), i));
+			targetPeptides.add(new Pair<Pair<AmbiguousPeptideModSeq,FragmentIon[]>, Integer>(targetPeptidesRight.get(i), i));
 		}
 		
-		for (Pair<AmbiguousPeptideModSeq, FragmentIon[]> pair : targetPeptides) {
-			System.out.println(pair.x.getPeptideAnnotation()+"\t"+pair.y.length);
+		for (Pair<Pair<AmbiguousPeptideModSeq,FragmentIon[]>, Integer> pair : targetPeptides) {
+			System.out.println(pair.x.x.getPeptideAnnotation()+"\t"+pair.x.y.length);
 		}
 
 		// actual localization
@@ -206,11 +207,29 @@ public class PhosphoLocalizer {
 		TFloatArrayList previouslyIdentifiedRTsInSec=new TFloatArrayList(); // can't repeat an RT in sec if an "internal" localization
 		FragmentIonBlacklist previouslyIdentifiedIons=new FragmentIonBlacklist(params.getFragmentTolerance());
 		
+		ArrayList<AmbiguousPeptideModSeq> localPreviouslyIdentified=new ArrayList<AmbiguousPeptideModSeq>();
+		TFloatArrayList localPreviouslyIdentifiedRTsInSec=new TFloatArrayList(); // can't repeat an RT in sec if an "internal" localization
+		FragmentIonBlacklist localPreviouslyIdentifiedIons=new FragmentIonBlacklist(params.getFragmentTolerance());
+		
 		AmbiguousPeptideModSeq bestPeptideAnnotation=null;
 		TransitionRefinementData bestPassingForm=null;
 		float bestScore=-Float.MAX_VALUE;
-		
-		for (Pair<AmbiguousPeptideModSeq, FragmentIon[]> pair : targetPeptides) {
+
+		int round=0;
+		for (Pair<Pair<AmbiguousPeptideModSeq,FragmentIon[]>, Integer> doublePair : targetPeptides) {
+			int thisRound=doublePair.y;
+			if (thisRound!=round) {
+				round=thisRound;
+				previouslyIdentified.addAll(localPreviouslyIdentified);
+				previouslyIdentifiedRTsInSec.addAll(localPreviouslyIdentifiedRTsInSec);
+				previouslyIdentifiedIons.addIonsToBlacklist(localPreviouslyIdentifiedIons);
+				
+				localPreviouslyIdentified.clear();
+				localPreviouslyIdentifiedRTsInSec.clear();
+				localPreviouslyIdentifiedIons=new FragmentIonBlacklist(params.getFragmentTolerance());
+			}
+			
+			Pair<AmbiguousPeptideModSeq,FragmentIon[]> pair=doublePair.x;
 			AmbiguousPeptideModSeq targetPeptideAnnotation=pair.x;
 			FragmentIon[] targets=pair.y;
 			
@@ -222,10 +241,14 @@ public class PhosphoLocalizer {
 			
 			// fix ambiguity based on previously identified peptides
 			Optional<AmbiguousPeptideModSeq> ambiguityRemoved=targetPeptideAnnotation.removeAmbiguity(previouslyIdentified);
-			System.out.println(targetPeptideAnnotation.getPeptideAnnotation()+", "+!ambiguityRemoved.isPresent()); //FIXME
+			System.out.println("AMBIGUITY: "+targetPeptideAnnotation.getPeptideAnnotation()+", "+!ambiguityRemoved.isPresent()); //FIXME
+			for (AmbiguousPeptideModSeq prev : previouslyIdentified) {
+				System.out.println("\tPREVIOUS ID:"+prev.getPeptideAnnotation());
+			}
 			if (ambiguityRemoved.isPresent()) {
 				targetPeptideAnnotation=ambiguityRemoved.get();
 			}
+			System.out.println("\tREMAINING: "+targetPeptideAnnotation.getPeptideAnnotation()); //FIXME
 
 			String peptideAnnotation=targetPeptideAnnotation.getPeptideAnnotation();
 			String targetPeptideSequence=targetPeptideAnnotation.getPeptideModSeq();
@@ -266,9 +289,9 @@ public class PhosphoLocalizer {
 						break;
 					}
 				}
-				skip=false;
+
 				if (skip) {
-					negLogProbsSiteSpecific[k]=-2.0f;
+					negLogProbsSiteSpecific[k]=-1.0f;
 				} else {
 					negLogProbsSiteSpecific[k]=score(params, ions, targets, frequencies, spectrum, true);
 				}
@@ -300,7 +323,7 @@ public class PhosphoLocalizer {
 				uniqueRtScoreMap.put(spectrum.getScanStartTime()/60f, negLogProbsSiteSpecific[k]);
 			}
 			allVsUniqueList.put(peptideAnnotation, new Pair<TFloatFloatHashMap, TFloatFloatHashMap>(coelutingIonsMap, uniqueRtScoreMap));
-
+			
 			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
 			float bestRT=uniqueCalculator.getMaxRT()*60f;
 			float maxRawScore=uniqueCalculator.getMaxRawScore();
@@ -332,8 +355,11 @@ public class PhosphoLocalizer {
 			uniqueIdentifiedTargetFragments.put(peptideAnnotation, identifiedTargets.toArray(new FragmentIon[identifiedTargets.size()]));
 
 			if (maxRawScore>=minimumScore||maxRawScore>bestScore) {
-				bestScore=maxRawScore;
+				if (bestScore<maxRawScore) {
+					bestScore=maxRawScore;
+				}
 				boolean isLocalized=maxRawScore>=minimumScore&&AmbiguousPeptideModSeq.isLocalized(targetPeptideAnnotation, modification);
+				System.out.println("A) "+targetPeptideAnnotation.getPeptideAnnotation()+" --> "+maxRawScore+"\t"+isLocalized+"\t"+bestRT);
 				
 				if (!AmbiguousPeptideModSeq.isLocalizedAtEnd(targetPeptideAnnotation, modification)) {
 					// need to check RTs
@@ -347,9 +373,11 @@ public class PhosphoLocalizer {
 					}
 					if (skip) continue;
 				}
+				System.out.println("B) "+targetPeptideSequence+" --> "+(bestRT-params.getExpectedPeakWidth()+","+bestRT+params.getExpectedPeakWidth()));
 				
 				ArrayList<Spectrum> localStripes=getScanSubset(bestRT-params.getExpectedPeakWidth(), bestRT+params.getExpectedPeakWidth(), stripes);
 				TransitionRefinementData quantData=quantifyPeptide(targetPeptideSequence, precursorCharge, targets, bestRT, localStripes, previouslyIdentifiedIons, Optional.ofNullable((float[])null));
+				System.out.println("C) "+targetPeptideSequence+" --> "+(quantData==null));
 				if (quantData==null) continue;
 				
 				// make sure there are at least 3 "identification" peaks
@@ -368,6 +396,7 @@ public class PhosphoLocalizer {
 						localizationIntensity+=intensities[i];
 					}
 				}
+				System.out.println("D) "+targetPeptideSequence+" --> "+(numIdentificationPeaks));
 				
 				if (numIdentificationPeaks==0) {
 					// if there's not any localization evidence for a well formed peak then give up
@@ -377,6 +406,7 @@ public class PhosphoLocalizer {
 				// check for other non-localizing peaks for confirmation
 				float[] medianChromatogram=quantData.getMedianChromatogram();
 				TransitionRefinementData allQuantData=quantifyPeptide(targetPeptideSequence, precursorCharge, allIonsTypes, bestRT, localStripes, previouslyIdentifiedIons, Optional.of(medianChromatogram));
+				System.out.println("E) "+targetPeptideSequence+" --> "+(allQuantData==null));
 				if (allQuantData==null) continue;
 
 				float totalIntensity=0.0f;
@@ -410,17 +440,17 @@ public class PhosphoLocalizer {
 					if (maxRawScore>minimumScore) {
 						alreadyTaken.addAll(Arrays.asList(targets));
 						passingForms.put(peptideAnnotation, quantData);
-						previouslyIdentified.add(targetPeptideAnnotation);
+						localPreviouslyIdentified.add(targetPeptideAnnotation);
 						
 						Range boundaries=allQuantData.getRange();
 						float[] rtArray=allQuantData.getRtArray().get();
 						for (float f : rtArray) {
 							if (boundaries.contains(f)) {
-								previouslyIdentifiedRTsInSec.add(f);
+								localPreviouslyIdentifiedRTsInSec.add(f);
 							}
 						}
 						for (FragmentIon target : allIonsTypes) {
-							previouslyIdentifiedIons.addIonToBlacklist(target.mass, boundaries);
+							localPreviouslyIdentifiedIons.addIonToBlacklist(target.mass, boundaries);
 						}
 					}
 				}

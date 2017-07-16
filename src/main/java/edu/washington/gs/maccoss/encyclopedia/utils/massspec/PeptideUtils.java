@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class PeptideUtils {
@@ -217,10 +218,11 @@ public class PeptideUtils {
 		return sb.toString();
 	}
 	
-	public static int getNumberOfMods(String sequence, int nominalMass) {
+	public static int[] getModIndicies(String sequence, int nominalMass) {
 		char[] ca=sequence.toCharArray();
 
-		int total=0;
+		TIntArrayList total=new TIntArrayList();
+		int index=0;
 		for (int i = 0; i < ca.length; i++) {
 			if (ca[i]=='[') {
 				StringBuilder sb=new StringBuilder();
@@ -233,11 +235,17 @@ public class PeptideUtils {
 				double modificationMass = Double.valueOf(massText);
 				
 				if (Math.round(modificationMass)==nominalMass) {
-					total++;
+					total.add(index);
 				}
+			} else {
+				index++;
 			}
 		}
-		return total;
+		return total.toArray();
+	}
+	
+	public static int getNumberOfMods(String sequence, int nominalMass) {
+		return getModIndicies(sequence, nominalMass).length;
 	}
 
 	private static final DecimalFormat SKYLINE_DF = new DecimalFormat(".#");

@@ -19,6 +19,12 @@ public class PeptideUtilsTest extends TestCase {
 		assertEquals(5, PeptideUtils.getExpectedChargeState("LRCHEFQFEDRAIR"));
 	}
 	
+	public void testGetModIndicies() {
+		String sequence="A[+42.0]QRHS[+79.96633]DSCCSLEEK";
+		assertEquals(1, PeptideUtils.getNumberOfMods(sequence, 80));
+		assertEquals(5, PeptideUtils.getModIndicies(sequence, 80)[0]);
+	}
+	
 	public void testDecoys() {
 		HashSet<String> backgroundProteome=new HashSet<String>();
 		String seq="LACDEFQFEDCAIR";
