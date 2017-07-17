@@ -351,7 +351,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				ArrayList<Pair<TransitionRefinementData, String>> filteredDataAndSourceList=new ArrayList<Pair<TransitionRefinementData, String>>();
 
 				for (Pair<TransitionRefinementData, String> pair : dataAndSourceList) {
-					if (inferrer.get().getTopNBestIons(pair.x.getPeptideModSeq())!=null) {
+					if (inferrer.get().getTopNBestIons(pair.x.getPeptideModSeq(), pair.x.getPrecursorCharge())!=null) {
 						filteredDataAndSourceList.add(pair);
 					} else {
 						numFilteredEntries++;
@@ -542,7 +542,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				return index;
 			}
 			topN=topNIntensity.get();
-			topNMasses=inferrer.get().getTopNBestIons(data.getPeptideModSeq());
+			topNMasses=inferrer.get().getTopNBestIons(data.getPeptideModSeq(), data.getPrecursorCharge());
 			if (topNMasses==null) {
 				throw new IllegalStateException("Could not retention time align " + data.getPeptideModSeq() + " from source file.  Unable to proceed.");
 			}

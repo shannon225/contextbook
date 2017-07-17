@@ -10,7 +10,7 @@ public interface PeakRTLocatorInterface {
 
 	Optional<Pair<Float, Integer>> getTopNIntensity(TransitionRefinementData data);
 
-	double[] getTopNBestIons(String peptideModSeq);
+	double[] getTopNBestIons(String peptideModSeq, byte precursorCharge);
 
 	float getPreciseRTInSec(SearchJobData job, String peptideModSeq, float detectedRTInSec);
 
