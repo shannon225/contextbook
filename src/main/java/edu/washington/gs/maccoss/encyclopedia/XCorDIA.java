@@ -283,7 +283,7 @@ public class XCorDIA {
 		}
 		
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
-		PeptideScoringResultsConsumer resultsConsumer=jobData.getTaskFactory().getResultsConsumer(jobData.getFeatureFile(), resultsQueue, jobData.getDiaFile());
+		PeptideScoringResultsConsumer resultsConsumer=jobData.getTaskFactory().getResultsConsumer(jobData.getFeatureFile(), resultsQueue, stripefile);
 		Thread consumerThread=new Thread(resultsConsumer);
 		consumerThread.start();
 		

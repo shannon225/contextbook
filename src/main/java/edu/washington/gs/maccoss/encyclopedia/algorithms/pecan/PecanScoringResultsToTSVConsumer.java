@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPe
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -27,9 +28,9 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 	private final PrintWriter writer;
 	private volatile int numberProcessed=0;
 	private final int numberOfPeaksPerPeptide;
-	private final File diaFile;
+	private final StripeFileInterface diaFile;
 
-	public PecanScoringResultsToTSVConsumer(File outputFile, File diaFile, BlockingQueue<PeptideScoringResult> resultsQueue, int numberOfPeaksPerPeptide) {
+	public PecanScoringResultsToTSVConsumer(File outputFile, StripeFileInterface diaFile, BlockingQueue<PeptideScoringResult> resultsQueue, int numberOfPeaksPerPeptide) {
 		this.diaFile=diaFile;
 		this.resultsQueue=resultsQueue;
 		this.numberOfPeaksPerPeptide=numberOfPeaksPerPeptide;

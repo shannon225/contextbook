@@ -14,32 +14,6 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class ParsimonyProteinGrouper {
-	public static void main(String[] args) throws Exception {
-		/*File f=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.mzml.encyclopedia.txt");
-		f=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/121115_BCS_HeLa_24mz_400_1000.dia.encyclopedia.txt");
-		f=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/deep_hela/concatenated_results.txt");
-		
-		Logger.logLine("Starting reading Percolator result...");
-		ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(f, 0.01f);
-		Logger.logLine("Starting grouping proteins...");
-		groupProtein(passingPeptidesFromTSV);
-		Logger.logLine("Finished!");*/
-		
-		File libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/HumanTotalProteome/HeLa.elib");
-		libraryFile=new File("/Users/searleb/Documents/school/projects/may_asms/yeast/YeastProteome.elib");
-		libraryFile=new File("/Users/searleb/Documents/projects/phosphopedia/VillenJ_Exactive_HumanPhosphoproteome.elib");
-		LibraryFile file=new LibraryFile();
-		file.openFile(libraryFile);
-		
-		ArrayList<PercolatorPeptide> peptides=new ArrayList<PercolatorPeptide>();
-		for (LibraryEntry entry : file.getAllEntries(false)) {
-			peptides.add(entry.getPSMData());
-		}
-		Logger.logLine("Starting grouping proteins...");
-		groupProteins(peptides);
-		Logger.logLine("Finished!");
-	}
-	
 	public static ArrayList<ProteinGroup> groupProteins(ArrayList<PercolatorPeptide> passingPeptides) {
 		HashMap<String, Peptide> peptides=new HashMap<String, ParsimonyProteinGrouper.Peptide>();
 		HashMap<String, Protein> proteins=new HashMap<String, ParsimonyProteinGrouper.Protein>();

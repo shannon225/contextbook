@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
@@ -57,7 +58,7 @@ public class PecanOneScoringFactory implements PecanScoringFactory {
 	}
 
 	@Override
-	public PeptideScoringResultsConsumer getResultsConsumer(BlockingQueue<PeptideScoringResult> resultsQueue, File diaFile) {
+	public PeptideScoringResultsConsumer getResultsConsumer(BlockingQueue<PeptideScoringResult> resultsQueue, StripeFileInterface diaFile) {
 		return new PecanScoringResultsToTSVConsumer(outputFile, diaFile, resultsQueue, parameters.getNumberOfReportedPeaks());
 	}
 }
