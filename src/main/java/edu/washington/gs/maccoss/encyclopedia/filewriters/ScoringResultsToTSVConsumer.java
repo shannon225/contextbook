@@ -13,6 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPe
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
@@ -28,9 +29,9 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 	private volatile int numberProcessed=0;
 	private final int numberOfPeaksPerPeptide;
 	private final String[] scoreNames;
-	private final File diaFile;
+	private final StripeFileInterface diaFile;
 
-	public ScoringResultsToTSVConsumer(File outputFile, File diaFile, String[] scoreNames, BlockingQueue<PeptideScoringResult> resultsQueue, int numberOfPeaksPerPeptide) {
+	public ScoringResultsToTSVConsumer(File outputFile, StripeFileInterface diaFile, String[] scoreNames, BlockingQueue<PeptideScoringResult> resultsQueue, int numberOfPeaksPerPeptide) {
 		this.diaFile=diaFile;
 		this.resultsQueue=resultsQueue;
 		this.numberOfPeaksPerPeptide=numberOfPeaksPerPeptide;

@@ -1,14 +1,16 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -47,12 +49,11 @@ public class PercolatorReaderTest extends TestCase {
 		LibraryEntry entry=new LibraryEntry("", new HashSet<String>(), 518.73841, (byte)2, "PEPT[+79.966331]IDER", 1, 0.0f, 0.0f, massArray, intensityArray);
 		LibraryEntry reverse=entry.getDecoy(PARAMETERS);
 
-		File diaFile=new File("/Users/searleb/Documents/freezer_experiment/110815_hela_experiment/data/hela_experiment/110415_bcs_hela_starved_DDA.mzML"); // FIXME unit test is not platform independent (will fail on windows machines)
-		String psmid=PercolatorPeptide.getPSMID(entry, 11.096461f, diaFile);
+		String psmid=PercolatorPeptide.getPSMID(entry, 11.096461f, DUMMY_DIA_FILE);
 		System.out.println(psmid);
 		assertEquals(FORWARD_PSMID, psmid);
 
-		String revpsmid=PercolatorPeptide.getPSMID(reverse, 11.096461f, diaFile);
+		String revpsmid=PercolatorPeptide.getPSMID(reverse, 11.096461f, DUMMY_DIA_FILE);
 		System.out.println(revpsmid);
 		assertEquals(REVERSE_PSMID, revpsmid);
 	}
@@ -76,4 +77,61 @@ public class PercolatorReaderTest extends TestCase {
 		assertEquals("110415_bcs_hela_starved_DDA.mzML", PercolatorPeptide.getFile(FORWARD_PSMID));
 		assertEquals("110415_bcs_hela_starved_DDA.mzML", PercolatorPeptide.getFile(REVERSE_PSMID));
 	}
+
+	private static final StripeFileInterface DUMMY_DIA_FILE = new StripeFileInterface() {
+		@Override
+		public HashMap<Range, Float> getRanges() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void openFile(File userFile) throws IOException, SQLException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ArrayList<PrecursorScan> getPrecursors(float minRT, float maxRT) throws IOException, SQLException, DataFormatException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ArrayList<Stripe> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ArrayList<Stripe> getStripes(Range targetMzRange, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public float getTIC() throws IOException, SQLException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public float getGradientLength() throws IOException, SQLException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void close() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isOpen() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public File getFile() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public String getOriginalFileName() {
+			return "110415_bcs_hela_starved_DDA.mzML";
+		}
+	};
 }
