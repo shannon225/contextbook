@@ -211,7 +211,7 @@ public class Encyclopedia {
 		}
 		Collections.sort(ranges);
 
-		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>(), stripefile.getFile());
+		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>(), stripefile);
 		SaveResultsConsumer saveResultsConsumer=new SaveResultsConsumer(new LinkedBlockingQueue<PeptideScoringResult>());
 		
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
@@ -325,7 +325,7 @@ public class Encyclopedia {
 			ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
 			RetentionTimeFilter filter=getRescoringModel(passingPeptides, data, job);
 			
-			PeptideScoringResultsConsumer rescoredResultsConsumer=job.getTaskFactory().getResultsConsumer(job.getFeatureFile(), new LinkedBlockingQueue<PeptideScoringResult>(), stripefile.getFile());
+			PeptideScoringResultsConsumer rescoredResultsConsumer=job.getTaskFactory().getResultsConsumer(job.getFeatureFile(), new LinkedBlockingQueue<PeptideScoringResult>(), stripefile);
 			Thread finalWriteConsumerThread=new Thread(rescoredResultsConsumer);
 			finalWriteConsumerThread.start();
 			BlockingQueue<PeptideScoringResult> resultList=rescoredResultsConsumer.getResultsQueue();

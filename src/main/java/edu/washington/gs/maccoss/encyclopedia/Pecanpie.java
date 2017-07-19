@@ -264,7 +264,7 @@ public class Pecanpie {
 		HashSet<String>[] backgroundDecoys=background.z;
 		
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
-		PeptideScoringResultsConsumer resultsConsumer=taskFactory.getResultsConsumer(resultsQueue, diaFile);
+		PeptideScoringResultsConsumer resultsConsumer=taskFactory.getResultsConsumer(resultsQueue, stripefile);
 		Thread consumerThread=new Thread(resultsConsumer);
 		consumerThread.start();
 		

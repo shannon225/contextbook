@@ -4,6 +4,9 @@ import java.io.File;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 
 public class PercolatorPeptide implements PeptidePrecursor {
 	private final String psmID;
@@ -85,8 +88,8 @@ public class PercolatorPeptide implements PeptidePrecursor {
 		return getRT(psmID);
 	}
 
-	public static String getPSMID(LibraryEntry peptide, float rt, File diaFile) {
-		return getPSMID(diaFile.getName(),rt,peptide.isDecoy(),peptide.getPeptideModSeq(),peptide.getPrecursorCharge());
+	public static String getPSMID(LibraryEntry peptide, float rt, StripeFileInterface diaFile) {
+		return getPSMID(diaFile.getOriginalFileName(),rt,peptide.isDecoy(),peptide.getPeptideModSeq(),peptide.getPrecursorCharge());
 	}
 	
 	public static String getPSMID(String diaFileName, float rt, boolean isDecoy, String peptideModSeq, byte peptideCharge) {

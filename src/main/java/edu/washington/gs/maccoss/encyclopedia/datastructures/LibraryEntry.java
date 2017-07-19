@@ -139,11 +139,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	public Pair<double[], double[]> toArrays() {
 		return new Pair<double[], double[]>(massArray, General.toDoubleArray(intensityArray));
 	}
-	
-	public PercolatorPeptide getPSMData() {
-		return new PercolatorPeptide(PercolatorPeptide.getPSMID(this, getRetentionTime(), new File(source)), PSMData.accessionsToString(accessions), getScore(), getScore());
-	}
-	
+
 	public String getSource() {
 		return source;
 	}
