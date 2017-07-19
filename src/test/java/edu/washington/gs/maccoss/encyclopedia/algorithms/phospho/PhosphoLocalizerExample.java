@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -12,6 +13,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -46,13 +48,17 @@ public class PhosphoLocalizerExample {
 		LibraryFile.OPEN_IN_PLACE=true;
 		
 		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/VillenJ_Exactive_HumanPhosphoproteome.dlib");
-		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/22jun2016_mcf7_phospho_1a.dia");
-		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/22jun2016_mcf7_phospho_1b.dia");
-		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/22jun2016_mcf7_phospho_1c.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1a.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1b.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1c.dia");
+		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1f.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_2c.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_5c.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_5c.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_04.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4a_PRM.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4b_PRM.dia");
-		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4c_PRM.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4c_PRM.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_03_170507071858.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_01_170506220515.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_02_170507024206.dia");
@@ -73,8 +79,8 @@ public class PhosphoLocalizerExample {
 		defaults.put("-ftol", "16.67");
 		defaults.put("-lftol", "16.67");
 		//defaults.put("-frag", "yonly");
-		//defaults.put("-scoringBreadthType", "uncal20");
-		defaults.put("-scoringBreadthType", "window");
+		defaults.put("-scoringBreadthType", "uncal20");
+		//defaults.put("-scoringBreadthType", "window");
 		
 		SearchParameters parameters=SearchParameterParser.parseParameters(defaults);
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
@@ -90,7 +96,11 @@ public class PhosphoLocalizerExample {
 		String peptideModSeq;
 		float retentionTime;
 		byte precursorCharge;
-		if (false) {
+		if (true) {
+			peptideModSeq="GIAPAS[+80.0]PMLGNASNPNKADIPER";
+			retentionTime=4189.1591796875f;
+			precursorCharge=3;
+		} else if (false) {
 			// repeat 2 sp|P83731|RL24_HUMAN
 			peptideModSeq="AITGAS[+80.0]LADIMAK";
 			retentionTime=5680.037109375f;
@@ -174,7 +184,7 @@ public class PhosphoLocalizerExample {
 			precursorCharge=3;
 		}
 
-		System.out.println("Looking up "+peptideModSeq+", +"+precursorCharge);
+		System.out.println("Looking up "+peptideModSeq+", +"+precursorCharge+" ("+(retentionTime/60f)+")");
 		LibraryEntry libentry=library.getEntries(peptideModSeq, precursorCharge, false).get(0);
 		
 		libentry=libentry.updateRetentionTime(retentionTime);
@@ -187,14 +197,32 @@ public class PhosphoLocalizerExample {
 
 		System.out.println("Just off of localization ions");
 		ArrayList<String> keys=new ArrayList<String>(actuallyPhosphoData.getPassingForms().keySet());
+		HashMap<String, Pair<String, Float>> bestKeys=new HashMap<>();
 		for (String sequenceKey : keys) {
-
+			String pms=actuallyPhosphoData.getPassingForms().get(sequenceKey).getPeptideModSeq();
+			XYPoint point=actuallyPhosphoData.getLocalizationScores().get(sequenceKey);
+			float localizationScore=(float)point.y;
+			if (bestKeys.containsKey(pms)) {
+				Pair<String, Float> scored=bestKeys.get(pms);
+				if (scored.y<localizationScore) {
+					bestKeys.put(pms, new Pair<String, Float>(sequenceKey, localizationScore));
+				}
+			} else {
+				bestKeys.put(pms, new Pair<String, Float>(sequenceKey, localizationScore));
+			}
+		}
+		for (Pair<String, Float> pair : bestKeys.values()) {
+			String sequenceKey=pair.x;
 			XYPoint point=actuallyPhosphoData.getLocalizationScores().get(sequenceKey);
 			float rt=(float)point.x;
 			float localizationScore=(float)point.y;
 			
 			TransitionRefinementData data=actuallyPhosphoData.getPassingForms().get(sequenceKey);
+			
 			System.out.println(sequenceKey+"\t"+data.getApexRT()+"\t"+rt+"\t"+localizationScore);
+			FragmentIon[] ions=data.getFragmentMassArray();
+			float[] correlations=data.getCorrelationArray();
+			
 			
 			HashMap<String, HashMap<FragmentIon, XYTrace>> uniqueFragmentIons=actuallyPhosphoData.getUniqueFragmentIons();
 			HashMap<String, HashMap<FragmentIon, XYTrace>> otherFragmentIons=actuallyPhosphoData.getOtherFragmentIons();
@@ -202,8 +230,17 @@ public class PhosphoLocalizerExample {
 			HashMap<FragmentIon, XYTrace> otherFragments=new HashMap<FragmentIon, XYTrace>(otherFragmentIons.get(sequenceKey));
 
 			HashMap<FragmentIon, XYTrace> allFragments=new HashMap<FragmentIon, XYTrace>();
-			allFragments.putAll(uniqueFragments);
-			allFragments.putAll(otherFragments);
+			for (int i=0; i<correlations.length; i++) {
+				
+				if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+					XYTrace unique=uniqueFragments.get(ions[i]);
+					if (unique!=null) allFragments.put(ions[i], unique);
+					XYTrace other=otherFragments.get(ions[i]);
+					if (other!=null) allFragments.put(ions[i], other);
+				}
+			}
+			//allFragments.putAll(uniqueFragments);
+			//allFragments.putAll(otherFragments);
 			ArrayList<XYTrace> uniqueFragmentsList=new ArrayList<XYTrace>(allFragments.values());
 			XYTraceInterface[] fragmentTraces=uniqueFragmentsList.toArray(new XYTrace[uniqueFragmentsList.size()]);
 
@@ -229,18 +266,22 @@ public class PhosphoLocalizerExample {
 		
 		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=actuallyPhosphoData.getScoreTraces();
 		ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
-		for (Entry<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> entry : allVsUniqueList.entrySet()) {
-			String seq=entry.getKey();
-			if (actuallyPhosphoData.getPassingForms().containsKey(seq)) {
-				Pair<TFloatFloatHashMap, TFloatFloatHashMap> pair=entry.getValue();
+
+		for (String seq : allVsUniqueList.keySet()) {
+		//for (Pair<String, Float> pp : bestKeys.values()) {
+		//	String seq=pp.x;
+			System.out.println("HERE: "+seq);
+			
+			//if (actuallyPhosphoData.getPassingForms().containsKey(seq)) {
+				Pair<TFloatFloatHashMap, TFloatFloatHashMap> pair=allVsUniqueList.get(seq);
 				Color color=RandomGenerator.randomColor(seq.hashCode()*16807);
 				//traces.add(new XYTrace(pair.x, GraphType.line, "ALL_"+seq, color, 5.0f));
 				traces.add(new XYTrace(pair.y, GraphType.line, "UNI_"+seq, color, 3.0f));
-			}
+			//}
 		}
 		//traces.add(new XYTrace(primary, GraphType.boldline, "primary"));
 		
-		Charter.launchChart("Retention Time (min)", "Localization Score", true, new Dimension(500, 300), traces.toArray(new XYTrace[traces.size()]));
+		Charter.launchChart("Retention Time (min)", "Localization Score", true, new Dimension(700, 300), traces.toArray(new XYTrace[traces.size()]));
 
 		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
 		Range range=null;

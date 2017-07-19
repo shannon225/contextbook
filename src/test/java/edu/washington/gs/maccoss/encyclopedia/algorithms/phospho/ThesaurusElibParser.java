@@ -10,8 +10,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.TreeSet;
 import java.util.Map.Entry;
+import java.util.TreeSet;
 
 import org.apache.commons.math3.stat.inference.TestUtils;
 
@@ -23,6 +23,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.BenjaminiHochberg;
@@ -31,9 +32,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
-import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.procedure.TObjectFloatProcedure;
-import gnu.trove.procedure.TObjectIntProcedure;
 
 public class ThesaurusElibParser {
 	public static HashMap<String, Coordinate> sampleKey=new HashMap<>();
@@ -50,6 +49,19 @@ public class ThesaurusElibParser {
 		case 6: return "MK-IGF1";
 		default: return i > 0 && i < 27 ? String.valueOf((char)(i + 64)) : null;
 		}
+	}
+	
+	private static final int[] getTrend(float[][] data) {
+		int[] r=new int[5];
+		for (int i=0; i<r.length; i++) {
+			testChange(data, r, i+1);	
+		}
+		return r;
+	}
+
+	private static void testChange(float[][] data, int[] r, int test) {
+		double p=TestUtils.pairedTTest(General.toDoubleArray(data[0]), General.toDoubleArray(data[test]));
+		if (p<0.001) r[test-1]=((General.mean(data[0])>General.mean(data[test]))?-1:1);
 	}
 	
 	private static final byte INS_VS_CONTROL=1;
@@ -163,11 +175,13 @@ public class ThesaurusElibParser {
 		sampleKey.put("22jun2016_mcf7_phospho_6e.mzML", new Coordinate(6, 5));
 		sampleKey.put("22jun2016_mcf7_phospho_6f.mzML", new Coordinate(6, 6));
 	}
+	public static final boolean TOTAL_ANALYSIS=false;
 	
 	public static final boolean MOTIF_ANALYSIS=false;
 	public static final boolean ANOVA_ANALYSIS=true;
 	public static final boolean HEATMAP_ANALYSIS=false;
 	public static final boolean MULTIPLE_FORM_ANALYSIS=false;
+	public static final boolean SITE_SPECIFIC_VS_TOTAL_ANALYSIS=false;
 	
 	public static void main(String[] args) throws Exception {
 		StripeFile.OPEN_IN_PLACE=true;
@@ -180,19 +194,45 @@ public class ThesaurusElibParser {
 		File[] f=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs").listFiles();
 		//f=new File[] {new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1a.dia.thesaurus.elib")};
 		
-		HashMap<String, QuantitationLog> quantLog=getQuantData(targets, f);
+		Pair<HashMap<String,QuantitationLog>, HashMap<String,QuantitationLog>> quantLogPair=getQuantData(targets, f);
+		HashMap<String, QuantitationLog> totalQuantLog=quantLogPair.x;
+		HashMap<String, QuantitationLog> siteSpecificQuantLog=quantLogPair.y;
 		
-		PeptideMotifTrie motifTrie=new PeptideMotifTrie(quantLog.values(), mod);
+		HashMap<String, QuantitationLog> primaryQuantLog=TOTAL_ANALYSIS?totalQuantLog:siteSpecificQuantLog;
+		
+		PeptideMotifTrie motifTrie=new PeptideMotifTrie(primaryQuantLog.values(), mod);
 
 		System.out.println("Reading FASTA...");
 		ArrayList<FastaEntryInterface> fasta=FastaReader.readFasta(new File("/Users/searleb/Documents/school/projects/pecandata/UP000005640_9606.fasta"));
 		motifTrie.addFasta(fasta);
 		
+		ArrayList<String> siteSpecificPeptides=new ArrayList<>();
+		TDoubleArrayList siteSpecificPValues=new TDoubleArrayList();
+		for (String peptide : siteSpecificQuantLog.keySet()) {
+			QuantitationLog log=siteSpecificQuantLog.get(peptide);
+			if (log.getNumMeasurements()<18) continue;
+			if (!log.isAtLeastOneCaseFull()) continue;
+			
+			float[][] data=log.getNormalizedData();
+			double pValue;
+			
+			pValue=getANOVAPValue(data);
+			//pValue=General.max(new double[] {getPairedTTest(data, INS_VS_CONTROL), getPairedTTest(data, IGF_VS_CONTROL), getPairedTTest(data, INS_IGF_VS_MK2206)}); // MK2206 changes!
+			//pValue=General.max(new double[] {General.min(new double[] {getPairedTTest(data, INS_VS_CONTROL), getPairedTTest(data, IGF_VS_CONTROL)})}); // INS and IGF
+			
+			if (Double.isNaN(pValue)) continue;
+			if (Double.isInfinite(pValue)) continue;
+			if (pValue<0) continue;
+			siteSpecificPeptides.add(peptide);
+			siteSpecificPValues.add(pValue);
+		}
+		double[] siteSpecificAdjustedPValues=BenjaminiHochberg.calculateAdjustedPValues(siteSpecificPValues.toArray());
+
 		ArrayList<String> peptides=new ArrayList<>();
 		TDoubleArrayList pValues=new TDoubleArrayList();
-		for (String peptide : quantLog.keySet()) {
-			QuantitationLog log=quantLog.get(peptide);
-			if (log.getNumMeasurements()<16) continue;
+		for (String peptide : totalQuantLog.keySet()) {
+			QuantitationLog log=totalQuantLog.get(peptide);
+			if (log.getNumMeasurements()<18) continue;
 			if (!log.isAtLeastOneCaseFull()) continue;
 			
 			float[][] data=log.getNormalizedData();
@@ -208,7 +248,6 @@ public class ThesaurusElibParser {
 			peptides.add(peptide);
 			pValues.add(pValue);
 		}
-		
 		double[] adjustedPValues=BenjaminiHochberg.calculateAdjustedPValues(pValues.toArray());
 		
 		if (MOTIF_ANALYSIS) {
@@ -217,7 +256,7 @@ public class ThesaurusElibParser {
 			for (int pep=0; pep<adjustedPValues.length; pep++) {
 				if (adjustedPValues[pep]<0.05) {
 					String peptide=peptides.get(pep);
-					QuantitationLog log=quantLog.get(peptide);
+					QuantitationLog log=primaryQuantLog.get(peptide);
 					if (log.motif!=null) {
 						motifs.add(log.motif);
 					}
@@ -231,7 +270,7 @@ public class ThesaurusElibParser {
 		if (ANOVA_ANALYSIS) {
 			for (int pep=0; pep<adjustedPValues.length; pep++) {
 				String peptide=peptides.get(pep);
-				QuantitationLog log=quantLog.get(peptide);
+				QuantitationLog log=primaryQuantLog.get(peptide);
 
 				// if
 				// (log.motif!=null&&log.motif.matches("R.R..[ST].....")&&adjustedPValues[pep]<0.05)
@@ -241,7 +280,7 @@ public class ThesaurusElibParser {
 					float[][] data=log.getNormalizedData();
 					double pValue=getANOVAPValue(data);
 
-					System.out.println(log.peptideModSeq+" motif:"+log.motif+" localized:"+log.isSiteSpecific+" ("+log.protein+") p="+pValue+", FDR="+adjustedPValues[pep]);
+					System.out.println(log.peptideModSeq+"+"+log.charge+" rt:"+General.mean(log.rtInSecondsList.toArray())+" motif:"+log.motif+" localized:"+log.isSiteSpecific+" ("+log.protein+") p="+pValue+", FDR="+adjustedPValues[pep]);
 
 					boolean first=true;
 					for (int samp=data.length-1; samp>=0; samp--) {
@@ -287,7 +326,7 @@ public class ThesaurusElibParser {
 			for (int pep=0; pep<adjustedPValues.length; pep++) {
 				if (adjustedPValues[pep]<0.05) {
 					String peptide=peptides.get(pep);
-					QuantitationLog log=quantLog.get(peptide);
+					QuantitationLog log=primaryQuantLog.get(peptide);
 
 					float[][] data=log.getNormalizedData();
 					double pValue=getANOVAPValue(data);
@@ -318,36 +357,88 @@ public class ThesaurusElibParser {
 		
 		if (MULTIPLE_FORM_ANALYSIS) {
 			HashMap<String, TDoubleArrayList> pvalueMap=new HashMap<>();
+			HashMap<String, TFloatArrayList> rtMap=new HashMap<>();
 			for (int pep=0; pep<adjustedPValues.length; pep++) {
 				String peptide=peptides.get(pep);
-				QuantitationLog log=quantLog.get(peptide);
+				QuantitationLog log=totalQuantLog.get(peptide);
 				String key=PeptideUtils.getPeptideSeq(peptide);
 				
 				TDoubleArrayList list=pvalueMap.get(key);
+				TFloatArrayList rtList=rtMap.get(key);
 				if (list==null) {
 					list=new TDoubleArrayList();
 					pvalueMap.put(key, list);
+					rtList=new TFloatArrayList();
+					rtMap.put(key, rtList);
 				}
 				list.add(adjustedPValues[pep]);
+				rtList.add(General.mean(log.rtInSecondsList.toArray()));
 			}
 			
 			for (Entry<String, TDoubleArrayList> entry : pvalueMap.entrySet()) {
 				if (entry.getValue().size()>1) {
 					double minPValue=Double.MAX_VALUE;
 					double maxPValue=-Double.MAX_VALUE;
-					for (double d : entry.getValue().toArray()) {
-						if (d>maxPValue) maxPValue=d;
-						if (d<minPValue) minPValue=d;
+					double minRT=0;
+					double maxRT=0;
+					double[] pvalues=entry.getValue().toArray();
+					float[] rts=rtMap.get(entry.getKey()).toArray();
+					for (int j=0; j<pvalues.length; j++) {
+						if (pvalues[j]>maxPValue) {
+							maxPValue=pvalues[j];
+							maxRT=rts[j];
+						}
+						if (pvalues[j]<minPValue) {
+							minPValue=pvalues[j];
+							minRT=rts[j];
+						}
 					}
-					System.out.println(entry.getKey()+"\t"+entry.getValue().size()+"\t"+minPValue+"\t"+maxPValue);
+					System.out.println(entry.getKey()+"\t"+entry.getValue().size()+"\t"+minPValue+"\t"+maxPValue+"\t"+(maxRT-minRT));
 				}
 			}
 			System.out.println(pvalueMap.size()+" Total forms");
 		}
+		
+		if (SITE_SPECIFIC_VS_TOTAL_ANALYSIS) {
+			HashMap<String, double[]> pvalueMap=new HashMap<>();
+			for (int pep=0; pep<adjustedPValues.length; pep++) {
+				String peptide=peptides.get(pep);
+				double[] list=pvalueMap.get(peptide);
+				if (list==null) {
+					list=new double[2];
+					Arrays.fill(list, -1);
+					pvalueMap.put(peptide, list);
+				}
+				list[0]=adjustedPValues[pep];
+			}
+
+			for (int pep=0; pep<siteSpecificAdjustedPValues.length; pep++) {
+				String peptide=siteSpecificPeptides.get(pep);
+				double[] list=pvalueMap.get(peptide);
+				if (list==null) {
+					list=new double[2];
+					Arrays.fill(list, -1);
+					pvalueMap.put(peptide, list);
+				}
+				list[1]=siteSpecificAdjustedPValues[pep];
+			}
+			
+			int count=0;
+			for (Entry<String, double[]> entry : pvalueMap.entrySet()) {
+				double[] pair=entry.getValue();
+				if (pair[0]>=0.25&&pair[1]>=0&&pair[1]<0.01) {
+					count++;
+					QuantitationLog log=siteSpecificQuantLog.get(entry.getKey());
+					System.out.println(entry.getKey()+"\t"+log.charge+"\t"+General.mean(log.rtInSecondsList.toArray())+"\t"+General.max(log.localizationScores.toArray())+"\t"+General.min(log.localizationScores.toArray())+"\t"+pair[0]+"\t"+pair[1]);
+				}
+			}
+			System.out.println(count+" Total forms");
+		}
 	}
 
-	private static HashMap<String, QuantitationLog> getQuantData(String[] targets, File[] f) throws IOException, SQLException {
+	private static Pair<HashMap<String, QuantitationLog>, HashMap<String, QuantitationLog>> getQuantData(String[] targets, File[] f) throws IOException, SQLException {
 		HashMap<String, QuantitationLog> quantLog=new HashMap<>();
+		HashMap<String, QuantitationLog> siteSpecificQuantLog=new HashMap<>();
 		for (File file : f) {
 			if (file.getName().endsWith(LibraryFile.ELIB)) {
 				System.out.println("Parsing "+file.getName()+"...");
@@ -357,7 +448,7 @@ public class ThesaurusElibParser {
 
 				Connection c=library.getConnection();
 				Statement s=c.createStatement();
-				ResultSet rs = s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.PeptideSeq, pep.SourceFile, max(pep.LocalizedIntensity), max(pep.TotalIntensity), pep.IsSiteSpecific,"+
+				ResultSet rs = s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.PeptideSeq, pep.SourceFile, max(pep.LocalizedIntensity), max(pep.TotalIntensity), pep.IsSiteSpecific, pep.RTInSecondsCenter,pep.localizationScore,"+
 						"group_concat(p.ProteinAccession, '" + PSMData.ACCESSION_TOKEN + "') as ProteinAccessions " +
 						"from " +
 						"peptidelocalizations pep " +
@@ -371,10 +462,12 @@ public class ThesaurusElibParser {
 					String peptideModSeq=rs.getString(2);
 					String peptideSeq=rs.getString(3);
 					String sourceFile=rs.getString(4);
-					//float localizedIntensity=rs.getFloat(5);
+					float localizedIntensity=rs.getFloat(5);
 					float totalIntensity=rs.getFloat(6);
 					boolean isSiteSpecific=rs.getBoolean(7);
-					String proteinToken=rs.getString(8);
+					float rtInSeconds=rs.getFloat(8);
+					float localizationScore=rs.getFloat(9);
+					String proteinToken=rs.getString(10);
 					//HashSet<String> accessions=PSMData.stringToAccessions(proteinToken);
 					
 					boolean keeper=false;
@@ -397,12 +490,15 @@ public class ThesaurusElibParser {
 						}
 
 						QuantitationLog log=quantLog.get(peptideModSeq);
+						QuantitationLog siteLog=siteSpecificQuantLog.get(peptideModSeq);
 						if (log==null) {
 							log=new QuantitationLog(proteinToken, peptideModSeq, precursorCharge);
 							quantLog.put(peptideModSeq, log);
+							siteLog=new QuantitationLog(proteinToken, peptideModSeq, precursorCharge);
+							siteSpecificQuantLog.put(peptideModSeq, siteLog);
 						}
-						log.addIntensity(coord, totalIntensity, isSiteSpecific);
-						//log.addIntensity(coord, localizedIntensity, isSiteSpecific);
+						log.addIntensity(coord, totalIntensity, rtInSeconds, localizationScore, isSiteSpecific);
+						siteLog.addIntensity(coord, localizedIntensity, rtInSeconds, localizationScore, isSiteSpecific);
 						
 					}
 				}
@@ -411,7 +507,7 @@ public class ThesaurusElibParser {
 				c.close();
 			}
 		}
-		return quantLog;
+		return new Pair<HashMap<String,QuantitationLog>, HashMap<String,QuantitationLog>>(quantLog, siteSpecificQuantLog);
 	}
 	
 	private static double getANOVAPValue(float[][] data) {
@@ -445,15 +541,19 @@ public class ThesaurusElibParser {
 	
 	public static class QuantitationLog extends SimplePeptidePrecursor {
 		boolean isSiteSpecific=false;
+		final byte charge;
 		String motif=null;
 		final String protein;
 		final String peptideModSeq;
 		final TObjectFloatHashMap<Coordinate> intensities=new TObjectFloatHashMap<>();
+		final TFloatArrayList rtInSecondsList=new TFloatArrayList();
+		final TFloatArrayList localizationScores=new TFloatArrayList();
 		
 		public QuantitationLog(String protein, String peptideModSeq, byte charge) {
 			super(peptideModSeq, charge);
 			this.protein=protein;
 			this.peptideModSeq=peptideModSeq;
+			this.charge=charge;
 		}
 		
 		public int getNumMeasurements() {
@@ -475,11 +575,13 @@ public class ThesaurusElibParser {
 			return false;
 		}
 		
-		public void addIntensity(Coordinate c, float intensity, boolean isSiteSpecific) {
+		public void addIntensity(Coordinate c, float intensity, float rtInSeconds, float localizationScore, boolean isSiteSpecific) {
 			intensities.adjustOrPutValue(c, intensity, intensity);
 			if (isSiteSpecific) {
 				this.isSiteSpecific=true;
 			}
+			this.rtInSecondsList.add(rtInSeconds);
+			this.localizationScores.add(localizationScore);
 		}
 		public float[][] getData() {
 			float[][] results=new float[numberOfSampleTypes][];

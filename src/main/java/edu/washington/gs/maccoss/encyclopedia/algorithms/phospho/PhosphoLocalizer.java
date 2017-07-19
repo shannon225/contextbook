@@ -434,12 +434,12 @@ public class PhosphoLocalizer {
 
 					quantData.setModificationLocalizationData(Optional.of(modData));
 					
-					bestPassingForm=quantData;
+					bestPassingForm=allQuantData;
 					bestPeptideAnnotation=targetPeptideAnnotation;
 					
 					if (maxRawScore>minimumScore) {
 						alreadyTaken.addAll(Arrays.asList(targets));
-						passingForms.put(peptideAnnotation, quantData);
+						passingForms.put(peptideAnnotation, allQuantData);
 						localPreviouslyIdentified.add(targetPeptideAnnotation);
 						
 						Range boundaries=allQuantData.getRange();
