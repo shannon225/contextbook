@@ -355,6 +355,8 @@ public class BlibFile extends SQLFile {
 	}
 
 	private double[] decompressDouble(byte[] bytes, int numPeaks) throws IOException, DataFormatException {
+		if (bytes==null) return new double[0];
+		
 		byte[] decompressed;
 		if (bytes.length==numPeaks*8) {
 			decompressed=bytes;
@@ -365,6 +367,8 @@ public class BlibFile extends SQLFile {
 	}
 
 	private float[] decompressFloat(byte[] bytes, int numPeaks) throws IOException, DataFormatException {
+		if (bytes==null) return new float[0];
+		
 		byte[] decompressed;
 		if (bytes.length==numPeaks*4) {
 			decompressed=bytes;

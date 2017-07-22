@@ -177,12 +177,12 @@ public class PeptideQuantExtractor {
 						}
 						sortingScore=Float.parseFloat(sortingScoreString);
 
-						String samplingTimeString=row.get("sampledTimes");
-						float duration=samplingTimeString==null?(parameters.getExpectedPeakWidth()):Float.parseFloat(samplingTimeString);
+						//String samplingTimeString=row.get("sampledTimes");
+						//float duration=samplingTimeString==null?(parameters.getExpectedPeakWidth()):Float.parseFloat(samplingTimeString);
 
 						String proteinString=row.get("protein");
 						HashSet<String> accessions=PSMData.stringToAccessions(proteinString);
-						data.add(new PSMData(accessions, scanID, precursorMZ, precursorCharge, peptideModSeq, retentionTime, score, sortingScore, duration));
+						data.add(new PSMData(accessions, scanID, precursorMZ, precursorCharge, peptideModSeq, retentionTime, score, sortingScore, parameters.getExpectedPeakWidth()));
 					}
 				}
 			}

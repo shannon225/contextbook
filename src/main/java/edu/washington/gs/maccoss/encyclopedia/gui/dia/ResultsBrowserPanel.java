@@ -48,6 +48,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
@@ -207,7 +208,10 @@ public class ResultsBrowserPanel extends JPanel {
 		SwingWorkerProgress<ArrayList<LibraryEntry>> worker=new SwingWorkerProgress<ArrayList<LibraryEntry>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Library") {
 			@Override
 			protected ArrayList<LibraryEntry> doInBackgroundForReal() throws Exception {
+				LibraryFile.OPEN_IN_PLACE=true;
 				library=BlibToLibraryConverter.getFile(f);
+				LibraryFile.OPEN_IN_PLACE=false;
+				
 				ArrayList<LibraryEntry> entries=library.getEntries(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), false);
 				
 				Optional<StripeFileInterface> source=library.getSource(parameters);
@@ -234,7 +238,9 @@ public class ResultsBrowserPanel extends JPanel {
 		SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Raw File") {
 			@Override
 			protected Nothing doInBackgroundForReal() throws Exception {
+				StripeFile.OPEN_IN_PLACE=true;
 				dia=StripeFileGenerator.getFile(f, parameters);
+				StripeFile.OPEN_IN_PLACE=false;
 
 				if (dia!=null&&library!=null&&parameters.getLocalizingModification().isPresent()) {
 					PhosphoLocalizer localizer=new PhosphoLocalizer(dia, parameters.getLocalizingModification().get(), library, parameters);
@@ -289,11 +295,11 @@ public class ResultsBrowserPanel extends JPanel {
 			FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 			ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
 			float targetRT=entry.getRetentionTime();
-			AnnotatedLibraryEntry unit=model.getUnitSpectrum(dia.getOriginalFileName(), entry.getAccessions(), (byte)entry.getPrecursorCharge(), targetRT, parameters, 200.0);
+			AnnotatedLibraryEntry unit=model.getUnitSpectrum(dia.getOriginalFileName(), entry.getAccessions(), (byte)entry.getPrecursorCharge(), targetRT, parameters, 00.0);
 			entries.add(unit);
 			
 			try {
-				float rtRange=parameters.getLocalizingModification().isPresent()?dia.getGradientLength()/20.0f:30f;
+				float rtRange=parameters.getLocalizingModification().isPresent()?dia.getGradientLength()/20.0f:parameters.getExpectedPeakWidth();
 				
 				ArrayList<Stripe> stripes=dia.getStripes(entry.getPrecursorMZ(), targetRT-rtRange, targetRT+rtRange, false);
 

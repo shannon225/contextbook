@@ -38,6 +38,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryReportExtractor;
@@ -211,7 +212,9 @@ public class MultiResultsBrowserPanel extends JPanel {
 		SwingWorkerProgress<Pair<ArrayList<StripeFileInterface>, ArrayList<PeptideReportData>>> worker=new SwingWorkerProgress<Pair<ArrayList<StripeFileInterface>, ArrayList<PeptideReportData>>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Library") {
 			@Override
 			protected Pair<ArrayList<StripeFileInterface>, ArrayList<PeptideReportData>> doInBackgroundForReal() throws Exception {
+				LibraryFile.OPEN_IN_PLACE=true;
 				LibraryInterface ilib=BlibToLibraryConverter.getFile(f);
+				LibraryFile.OPEN_IN_PLACE=false;
 				if (!(ilib instanceof LibraryFile)) {
 					throw new EncyclopediaException("Sorry, can't load this type of library file "+ilib.getClass().getName());
 				}
@@ -221,11 +224,13 @@ public class MultiResultsBrowserPanel extends JPanel {
 				
 				ArrayList<String> sampleNames=pair.x;
 				ArrayList<StripeFileInterface> stripeFiles=new ArrayList<StripeFileInterface>();
+				StripeFile.OPEN_IN_PLACE=true;
 				for (String sampleName : sampleNames) {
 					Logger.logLine("Trying to load "+sampleName);
 					StripeFileInterface file=StripeFileGenerator.getFile(new File(f.getParentFile(), sampleName), parameters);
 					stripeFiles.add(file);
 				}
+				StripeFile.OPEN_IN_PLACE=false;
 				
 				return new Pair<ArrayList<StripeFileInterface>, ArrayList<PeptideReportData>>(stripeFiles, pair.y);
 			}
