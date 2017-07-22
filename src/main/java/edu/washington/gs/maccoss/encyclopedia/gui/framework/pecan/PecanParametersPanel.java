@@ -52,8 +52,8 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 	private static final int numberOfCores=Runtime.getRuntime().availableProcessors();
 	public static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/pecan_small_icon.png"));
 	public static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/pecan_icon.png"));
-	public static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">PECAN: Peptide Detection Directly from Data-Independent Acquisition (DIA) MS/MS Data<br></p></b>"
-			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">PECAN extracts peptide fragmentation chromatograms from MZML files, assigns peaks, and calculates various peak features. These features are interpreted by Percolator to identify peptides.";
+	public static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">Walnut: PECAN-based Peptide Detection Directly from Data-Independent Acquisition (DIA) MS/MS Data<br></p></b>"
+			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">Walnut uses PECAN-style scoring to extract peptide fragmentation chromatograms from MZML files, assign peaks, and calculate various peak features. These features are interpreted by Percolator to identify peptides.";
 
 	private static final String[] NUMBER_OF_EXTRA_DECOY_ITEMS=new String[] {"Normal Target/Decoy", "+10% Extra Decoys", "+20% Extra Decoys", "+50% Extra Decoys", "+100% Extra Decoys (2x Time)"};
 	private static final float[] NUMBER_OF_EXTRA_DECOY_VALUES=new float[] {0.0f, 0.1f, 0.2f, 0.5f, 1.0f};

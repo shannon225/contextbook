@@ -139,7 +139,7 @@ public class SearchPanel extends JPanel {
 				HashMap<String, String> map=PecanSearchParameters.readPreferences();
 				PecanSearchParameters parseParameters=PecanParameterParser.parseParameters(map);
 				pecan.setParameters(parseParameters, map.get(Pecanpie.BACKGROUND_FASTA_TAG), map.get(Pecanpie.TARGET_FASTA_TAG));
-				optionsTabs.addTab("Pecan", PecanParametersPanel.smallimage, pecan, "Pecan Peptide Search");
+				optionsTabs.addTab("Walnut", PecanParametersPanel.smallimage, pecan, "Walnut Peptide Search");
 				
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
@@ -207,10 +207,15 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		
+		
 		JPanel buttonPanel=new JPanel(new FlowLayout());
 		buttonPanel.add(chooseFile);
 		buttonPanel.add(alignBetweenFiles);
-		buttonPanel.add(saveElib);
+
+		if (ProgramType.PecanPie!=program) {
+			buttonPanel.add(saveElib);
+		}
+		
 		buttonPanel.add(saveBlib);
 		
 		files.add(new JLabel("<html><p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Jobs: "), BorderLayout.WEST);
@@ -232,7 +237,7 @@ public class SearchPanel extends JPanel {
 		this.add(split, BorderLayout.CENTER);
 	}
 	
-	public JMenuBar createMenus() {
+	public JMenuBar createMenus(ProgramType program) {
 		JMenuBar bar=new JMenuBar();
 		JMenu fileMenu=new JMenu("File");
 		fileMenu.setMnemonic(KeyEvent.VK_F);
@@ -266,7 +271,10 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		saveELIB.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		fileMenu.add(saveELIB);
+
+		if (ProgramType.PecanPie!=program) {
+			fileMenu.add(saveELIB);
+		}
 
 		JMenuItem saveBLIB=new JMenuItem("Save BLIB", skylineIcon);
 		saveBLIB.addActionListener(new ActionListener() {
@@ -280,7 +288,10 @@ public class SearchPanel extends JPanel {
 
 		JMenu viewMenu=new JMenu("View");
 		viewMenu.setMnemonic(KeyEvent.VK_V);
-		bar.add(viewMenu);
+
+		if (ProgramType.PecanPie!=program) {
+			bar.add(viewMenu);
+		}
 
 		JMenuItem launchBrowser=new JMenuItem("Launch ELIB Browser", libraryBrowserIcon);
 		launchBrowser.addActionListener(new ActionListener() {
@@ -331,7 +342,10 @@ public class SearchPanel extends JPanel {
 
 		JMenu convertMenu=new JMenu("Convert");
 		convertMenu.setMnemonic(KeyEvent.VK_C);
-		bar.add(convertMenu);
+
+		if (ProgramType.PecanPie!=program) {
+			bar.add(convertMenu);
+		}
 
 		JMenuItem convertBLIB=new JMenuItem("Convert BLIB to Library", convertDBIcon);
 		convertBLIB.addActionListener(new ActionListener() {

@@ -32,6 +32,9 @@ public class Main {
 		} else if (arguments.containsKey("-pecan")) {
 			Pecanpie.main(args);
 			
+		} else if (arguments.containsKey("-walnut")) {
+			Pecanpie.main(args);
+			
 		} else if (arguments.containsKey("-xcordia")) {
 			XCorDIA.main(args);
 			
@@ -43,7 +46,7 @@ public class Main {
 			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file");
 			Logger.timelessLogLine("\t-l\tlibrary .ELIB file");
 			Logger.timelessLogLine("Other Programs: ");
-			Logger.timelessLogLine("\t-pecan\trun Pecanpie (use -pecan -h for Pecan help)");
+			Logger.timelessLogLine("\t-walnut\trun Walnut (use -walnut -h for Walnut help)");
 			Logger.timelessLogLine("\t-thesaurus\trun Thesaurus (use -thesaurus -h for Thesaurus help)");
 			Logger.timelessLogLine("\t-xcordia\trun XCorDIA (use -xcordia -h for XCorDIA help)");
 			Logger.timelessLogLine("\t-browser\trun ELIB Browser (use -browser -h for ELIB Browser help)");

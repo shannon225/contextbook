@@ -82,8 +82,8 @@ public class Pecanpie {
 			SearchGUIMain.runGUI(ProgramType.PecanPie);
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
-			Logger.logLine("Pecanpie Help");
-			Logger.timelessLogLine("Pecanpie is a FASTA database search engine for DIA data.");
+			Logger.logLine("Walnut Help");
+			Logger.timelessLogLine("Walnut is a FASTA database search engine for DIA data that uses PECAN-style scoring.");
 			Logger.timelessLogLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.timelessLogLine("Required Parameters: ");
 			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file");
@@ -104,7 +104,7 @@ public class Pecanpie {
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("Pecanpie version "+PecanOneScoringFactory.version);
+			Logger.logLine("Walnut version "+PecanOneScoringFactory.version);
 			System.exit(1);
 			
 		} else {
@@ -132,7 +132,7 @@ public class Pecanpie {
 				
 				PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 				PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
-				Logger.logLine("Pecanpie version "+factory.getVersion());
+				Logger.logLine("Walnut version "+factory.getVersion());
 	
 				ArrayList<FastaPeptideEntry> targets;
 				if (arguments.containsKey(TARGET_FASTA_TAG)) {

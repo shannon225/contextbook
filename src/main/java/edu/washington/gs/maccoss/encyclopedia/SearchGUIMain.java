@@ -23,6 +23,7 @@ public class SearchGUIMain {
 		runGUI(ProgramType.Global);
 	}
 
+	@SuppressWarnings("restriction")
 	public static void runGUI(ProgramType program) {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -36,8 +37,8 @@ public class SearchGUIMain {
 		String name;
 		ImageIcon image;
 		if (ProgramType.PecanPie==program) {
-			shortName="PecanPie";
-			name="Pecan: Peptide Centric Analysis";
+			shortName="Walnut";
+			name="Walnut: PECAN-based Peptide Centric Analysis";
 			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/pecan_icon.png"));
 		} else if (ProgramType.CASiL==program) {
 			shortName="Thesaurus";
@@ -68,6 +69,9 @@ public class SearchGUIMain {
 			case MAC:
 				System.setProperty("com.apple.mrj.application.apple.menu.about.name", shortName);
 				System.setProperty("apple.laf.useScreenMenuBar", "true");
+
+				com.apple.eawt.Application app=com.apple.eawt.Application.getApplication();
+				app.setDockIconImage(image.getImage());
 				break;
 
 			default:
@@ -85,7 +89,7 @@ public class SearchGUIMain {
 
 		final SearchPanel panel=new SearchPanel(program);
 		f.getContentPane().add(panel, BorderLayout.CENTER);
-		f.setJMenuBar(panel.createMenus());
+		f.setJMenuBar(panel.createMenus(program));
 
 		f.pack();
 		f.setSize(new Dimension(1250, 750));

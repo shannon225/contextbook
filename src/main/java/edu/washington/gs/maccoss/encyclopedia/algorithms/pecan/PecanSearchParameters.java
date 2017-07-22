@@ -56,6 +56,7 @@ public class PecanSearchParameters extends SearchParameters {
 		sb.append(" -acquisition "+DataAcquisitionType.toString(dataAcquisitionType)+"\n");
 		sb.append(" -numberOfThreadsUsed "+numberOfThreadsUsed+"\n");
 		sb.append(" -numberOfQuantitativePeaks "+numberOfQuantitativePeaks+"\n");
+		sb.append(" -minNumOfQuantitativePeaks "+minNumOfQuantitativePeaks+"\n");
 		sb.append(" -alpha "+alpha+"\n");
 		sb.append(" -beta "+beta+"\n");
 		
@@ -88,6 +89,7 @@ public class PecanSearchParameters extends SearchParameters {
 		map.put("-numberOfThreadsUsed", numberOfThreadsUsed+"");
 		map.put("-precursorWindowSize", precursorWindowSize+"");
 		map.put("-numberOfQuantitativePeaks", numberOfQuantitativePeaks+"");
+		map.put("-minNumOfQuantitativePeaks", minNumOfQuantitativePeaks+"");
 		map.put("-alpha", alpha+"");
 		map.put("-beta", beta+"");
 		return map;
