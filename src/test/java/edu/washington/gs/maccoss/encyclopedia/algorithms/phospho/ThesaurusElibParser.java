@@ -175,7 +175,7 @@ public class ThesaurusElibParser {
 		sampleKey.put("22jun2016_mcf7_phospho_6e.mzML", new Coordinate(6, 5));
 		sampleKey.put("22jun2016_mcf7_phospho_6f.mzML", new Coordinate(6, 6));
 	}
-	public static final boolean TOTAL_ANALYSIS=false;
+	public static final boolean TOTAL_ANALYSIS=true;
 	
 	public static final boolean MOTIF_ANALYSIS=false;
 	public static final boolean ANOVA_ANALYSIS=true;

@@ -46,10 +46,14 @@ public class PhosphoLocalizerExample {
 	public static void main(String[] args) throws Exception {
 		StripeFile.OPEN_IN_PLACE=true;
 		LibraryFile.OPEN_IN_PLACE=true;
+		
+		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/VillenJ_Exactive_HumanPhosphoproteome.dlib");
+		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1a.dia");
 
 		//File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/VillenJ_Exactive_HumanPhosphoproteome.dlib");
-		File libraryFile=new File("/Users/searleb/Documents/projects/phosphopedia/VillenJ_Exactive_HumanPhosphoproteome.dlib");
+		//File libraryFile=new File("/Users/searleb/Documents/projects/phosphopedia/VillenJ_Exactive_HumanPhosphoproteome.dlib");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1a.dia");
+
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1b.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1c.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1f.dia");
@@ -61,7 +65,7 @@ public class PhosphoLocalizerExample {
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4b_PRM.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4c_PRM.dia");
 
-		File diaFile=new File("/Volumes/WorkingDisk/20161123_phospho_MCF7_PRM/20160718_FU_bcs_6a_PRM.dia");
+		//File diaFile=new File("/Volumes/WorkingDisk/20161123_phospho_MCF7_PRM/20160718_FU_bcs_6a_PRM.dia");
 		//File diaFile=new File("/Volumes/WorkingDisk/20161123_phospho_MCF7_PRM/20160718_FU_bcs_6b_PRM.dia");
 		//File diaFile=new File("/Volumes/WorkingDisk/20161123_phospho_MCF7_PRM/20160718_FU_bcs_6c_PRM.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_03_170507071858.dia");
