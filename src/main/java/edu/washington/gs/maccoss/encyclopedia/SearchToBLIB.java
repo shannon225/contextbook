@@ -550,8 +550,8 @@ public class SearchToBLIB {
 		elib.addIntegratedEntries(libraryEntries, inferrer, localizationData);
 
 		if (job.getOutputFile().exists()&&job.getOutputDecoyFile().exists()) {
-			ArrayList<PercolatorPeptide> targets=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), job.getParameters().getEffectivePercolatorThreshold(), true);
-			ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputDecoyFile(), job.getParameters().getEffectivePercolatorThreshold(), true);
+			ArrayList<PercolatorPeptide> targets=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), Float.MAX_VALUE, true);
+			ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputDecoyFile(), Float.MAX_VALUE, true);
 			Logger.logLine("Reading target/decoy peptides: "+targets.size()+"/"+decoys.size());
 			elib.addTargetDecoyData(targets, decoys);
 		}
