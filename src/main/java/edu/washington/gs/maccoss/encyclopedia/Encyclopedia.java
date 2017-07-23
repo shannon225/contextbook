@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -320,6 +322,10 @@ public class Encyclopedia {
 			Logger.logLine("First pass: "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
 			
 			if (!parameters.getScoringBreadthType().runRecalibration()) {
+				if (!job.getFirstPassPercolator().getAbsolutePath().equals(job.getOutputFile().getAbsolutePath())) {
+					Files.copy(job.getFirstPassPercolator().toPath(), job.getOutputFile().toPath(), StandardCopyOption.REPLACE_EXISTING);
+					Files.copy(job.getFirstPassPercolatorDecoy().toPath(), job.getOutputDecoyFile().toPath(), StandardCopyOption.REPLACE_EXISTING);
+				}
 				return passingPeptides;
 			}
 			
