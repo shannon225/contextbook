@@ -48,6 +48,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -321,7 +322,7 @@ public class SearchToBLIB {
 			if (featureFiles.size()==1) {
 				// if there's only one file then don't need to re-run percolator
 				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(representativeJob.getOutputFile(), threshold, false);
-			} else if (bigPercolatorFile.exists()&&bigPercolatorFile.canRead()) {
+			} else if (bigPercolatorFile.exists()&&bigPercolatorFile.canRead()&&bigPercolatorDecoyFile.exists()&&bigPercolatorDecoyFile.canRead()) {
 				// if we've already run percolator then don't need to re-run percolator
 				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(bigPercolatorFile, threshold, false);
 			} else {
@@ -351,7 +352,7 @@ public class SearchToBLIB {
 			if (writeBlib) {
 				convertBlib(progress, pecanJobs, libFile, Optional.of(passingPeptides), inferrer);
 			} else {
-				convertElib(progress, pecanJobs, libFile, Optional.of(passingPeptides), inferrer, proteins, parameters);
+				convertElib(progress, pecanJobs, libFile, Optional.of(passingPeptides), Optional.of(featureFiles.size()==1?null:new Pair<File, File>(bigPercolatorFile, bigPercolatorDecoyFile)), inferrer, proteins, parameters);
 			}
 			progress.update(passingPeptides.size()+" peptides identified at "+(threshold*100.0f)+"% FDR", 1.0f);
 		} catch (IOException ioe) {
@@ -370,6 +371,10 @@ public class SearchToBLIB {
 			blib.setUserFile(blibFile);
 			blib.dropIndices();
 			int[] counterTotals=new int[] {0,0,0};
+			
+			File integrationFile=new File(blibFile.getAbsolutePath()+".integration.txt");
+			PrintWriter integrationFileWriter=new PrintWriter(integrationFile, "UTF-8");
+			integrationFileWriter.println("File Name\tPeptide Modified Sequence\tMin Start Time\tMax End Time\tPrecursor Charge\tPrecursorIsDecoy\tIon Count\tRetention Time Center\tTIC");
 
 			float increment=1.0f/pecanJobs.size();
 			for (int i=0; i<pecanJobs.size(); i++) {
@@ -387,8 +392,10 @@ public class SearchToBLIB {
 					globalPassingPeptides=localPassingPeptides;
 				}
 				
-				counterTotals=convertFileBlib(subProgress, job, globalPassingPeptides, localPassingPeptides, counterTotals, inferrer, blib);
+				counterTotals=convertFileBlib(subProgress, job, globalPassingPeptides, localPassingPeptides, counterTotals, inferrer, integrationFileWriter, blib);
 			}
+			integrationFileWriter.flush();
+			integrationFileWriter.close();
 
 			blib.createIndices();
 			blib.saveFile();
@@ -414,7 +421,7 @@ public class SearchToBLIB {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	static int[] convertFileBlib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, int[] counterTotals, Optional<PeakLocationInferrer> inferrer, BlibFile blib) throws IOException, SQLException {
+	static int[] convertFileBlib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, int[] counterTotals, Optional<PeakLocationInferrer> inferrer, PrintWriter integrationFileWriter, BlibFile blib) throws IOException, SQLException {
 		File diaFile=job.getDiaFile();
 		Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Reading Percolator Results", 0.0f);
@@ -431,17 +438,11 @@ public class SearchToBLIB {
 		ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job, true, globalPassingPeptides, localPassingPeptides, inferrer, stripeFile, library, job.getParameters());
 		stripeFile.close();
 		
-		File integrationFile=new File(diaFile.getAbsolutePath()+".integration.txt");
-
-		PrintWriter writer=new PrintWriter(integrationFile, "UTF-8");
-		writer.println("File Name\tPeptide Modified Sequence\tMin Start Time\tMax End Time\tPrecursor Charge\tPrecursorIsDecoy\tIon Count\tRetention Time Center\tTIC");
-		
 		for (IntegratedLibraryEntry entry : libraryEntries) {
 			String peptideModSeq=PeptideUtils.formatForSkylinePeakBoundaries(entry.getPeptideModSeq(), job.getParameters().getAAConstants());
-			writer.println(diaFile.getName()+"\t"+peptideModSeq+"\t"+entry.getRtRange().getStart()/60f+"\t"+entry.getRtRange().getStop()/60f+"\t"+entry.getPrecursorCharge()+"\tFALSE\t"+entry.getIonCount()+"\t"+entry.getRetentionTime()/60f+"\t"+entry.getTIC());
+			integrationFileWriter.println(diaFile.getName()+"\t"+peptideModSeq+"\t"+entry.getRtRange().getStart()/60f+"\t"+entry.getRtRange().getStop()/60f+"\t"+entry.getPrecursorCharge()+"\tFALSE\t"+entry.getIonCount()+"\t"+entry.getRetentionTime()/60f+"\t"+entry.getTIC());
 		}
-		writer.flush();
-		writer.close();
+		integrationFileWriter.flush();
 		
 		ArrayList<LibraryEntry> recasted=new ArrayList<LibraryEntry>();
 		for (IntegratedLibraryEntry entry : libraryEntries) {
@@ -456,7 +457,7 @@ public class SearchToBLIB {
 		return counterTotals;
 	}
 	
-	static void convertElib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File elibFile, Optional<ArrayList<PercolatorPeptide>> passingPeptides, Optional<PeakLocationInferrer> inferrer, ArrayList<ProteinGroup> proteins, SearchParameters parameters) {
+	static void convertElib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File elibFile, Optional<ArrayList<PercolatorPeptide>> passingPeptides, Optional<Pair<File, File>> globalPercolatorFiles, Optional<PeakLocationInferrer> inferrer, ArrayList<ProteinGroup> proteins, SearchParameters parameters) {
 		try {
 			LibraryFile elib=new LibraryFile();
 			elib.openFile();
@@ -481,8 +482,22 @@ public class SearchToBLIB {
 				Logger.logLine(job.getDiaFile().getName()+": Number of global peptides: "+globalPassingPeptides.size()+" vs local peptides: "+localPassingPeptides.size());
 				
 				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides, inferrer, elib);
+
+				if ((!globalPercolatorFiles.isPresent())&&job.getOutputFile().exists()&&job.getOutputDecoyFile().exists()) {
+					ArrayList<PercolatorPeptide> targets=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), Float.MAX_VALUE, true);
+					ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputDecoyFile(), Float.MAX_VALUE, true);
+					Logger.logLine("Writing local target/decoy peptides: "+targets.size()+"/"+decoys.size());
+					elib.addTargetDecoyData(targets, decoys);
+				}
 				
 				subProgress.update("Wrote "+globalPassingPeptides.size()+" peptides ("+proteins.size()+" proteins) identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+			}
+			
+			if (globalPercolatorFiles.isPresent()) {
+				ArrayList<PercolatorPeptide> targets=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorFiles.get().x, Float.MAX_VALUE, true);
+				ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorFiles.get().y, Float.MAX_VALUE, true);
+				Logger.logLine("Writing global target/decoy peptides: "+targets.size()+"/"+decoys.size());
+				elib.addTargetDecoyData(targets, decoys);
 			}
 			
 			elib.addMetadata(parameters.toParameterMap());
@@ -548,13 +563,6 @@ public class SearchToBLIB {
 		}
 
 		elib.addIntegratedEntries(libraryEntries, inferrer, localizationData);
-
-		if (job.getOutputFile().exists()&&job.getOutputDecoyFile().exists()) {
-			ArrayList<PercolatorPeptide> targets=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), Float.MAX_VALUE, true);
-			ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputDecoyFile(), Float.MAX_VALUE, true);
-			Logger.logLine("Reading target/decoy peptides: "+targets.size()+"/"+decoys.size());
-			elib.addTargetDecoyData(targets, decoys);
-		}
 		
 		Logger.logLine("Finished writing to Encyclopedia ELIB at "+new Date().toString());
 		subProgress.update(diaFile.getName()+": Finished writing to Encyclopedia ELIB at "+new Date().toString(), 1.0f);
