@@ -45,7 +45,7 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 			TwoDimensionalKDE twoDimKDE=new TwoDimensionalKDE(rts);
 			rtWarper=twoDimKDE.trace();
 		} else {
-			if (rts.size()==0) {
+			if (rts.size()<=1) {
 				rtWarper=new LinearRegression(new float[] {0, 1}, new float[] {0, 1});
 			} else {
 				rtWarper=new LinearRegression(rts);
