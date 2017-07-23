@@ -42,7 +42,7 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 	private static float RT_OUTLIER_REJECTION_PROBABILITY=0.001f;
 	
 	// alignments are seed (x) to sample (y), in minutes
-	private final HashMap<SearchJobData, RetentionTimeFilter> alignmentMap;
+	private final HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap;
 
 	// alignedRTs are as if they were in the seed (x) file
 	private final HashMap<String, Float> alignedRTInMinBySequenceMap;
@@ -50,7 +50,7 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 	private final HashMap<String, double[]> bestIons;
 	private final SearchParameters params;
 
-	PeakLocationInferrer(HashMap<SearchJobData, RetentionTimeFilter> alignmentMap, HashMap<String, Float> alignedRTInMinBySequenceMap, HashMap<String, double[]> bestIons, SearchParameters params) {
+	PeakLocationInferrer(HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap, HashMap<String, Float> alignedRTInMinBySequenceMap, HashMap<String, double[]> bestIons, SearchParameters params) {
 		this.alignmentMap=alignmentMap;
 		this.alignedRTInMinBySequenceMap=alignedRTInMinBySequenceMap;
 		this.bestIons=bestIons;
@@ -102,7 +102,7 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 	 */
 	@Override
 	public float getPreciseRTInSec(SearchJobData job, String peptideModSeq, float detectedRTInSec) {
-		RetentionTimeFilter f=alignmentMap.get(job);
+		RetentionTimeAlignmentInterface f=alignmentMap.get(job);
 		Float alignedRTInMin=alignedRTInMinBySequenceMap.get(peptideModSeq);
 		if (alignedRTInMin==null) {
 			return detectedRTInSec;
@@ -126,7 +126,7 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 	 */
 	@Override
 	public float getWarpedRTInSec(SearchJobData job, String peptideModSeq) {
-		RetentionTimeFilter f=alignmentMap.get(job);
+		RetentionTimeAlignmentInterface f=alignmentMap.get(job);
 		Float alignedRTInMin=alignedRTInMinBySequenceMap.get(peptideModSeq);
 		if (alignedRTInMin==null) {
 			Logger.errorLine("Couldn't find retention time for peptide ("+peptideModSeq+").");
@@ -170,7 +170,7 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 		ProgressIndicator subProgress2=new SubProgressIndicator(progress, 0.5f);
 
 		// construct alignments
-		HashMap<SearchJobData, RetentionTimeFilter> alignmentMap=new HashMap<SearchJobData, RetentionTimeFilter>();
+		HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap=new HashMap<SearchJobData, RetentionTimeAlignmentInterface>();
 		HashMap<String, Float> alignedRTInMinBySequenceMap=new HashMap<String, Float>();
 		// add all bestJob archetypals
 		ArrayList<ChromatogramLibraryEntry> archetypals=archetypalPeptides.get(bestJob);
@@ -197,7 +197,7 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 					Logger.errorLine("Not enough points ("+points.size()+" out of align:"+peptides.size()+" and best:"+rtsBySequence.size()+") to compute regression between samples, still trying anyways.");
 				}
 				
-				RetentionTimeFilter alignment=new RetentionTimeFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
+				RetentionTimeAlignmentInterface alignment=new RetentionTimeFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
 				alignmentMap.put(job, alignment);
 				if (job instanceof QuantitativeSearchJobData) {
 					// try reading encyclopedia data directly from results library

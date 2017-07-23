@@ -5,9 +5,11 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -26,8 +28,8 @@ public class MedianInterpolatorTest extends TestCase {
 		//rts=getSyntheticData();
 		rts=getPhosphoData();
 		//rts=getCleanData();
-		RetentionTimeFilter filter=new RetentionTimeFilter(rts);
-		filter.plot(rts);
+		RetentionTimeAlignmentInterface filter=new RetentionTimeFilter(rts);
+		filter.plot(rts, Optional.ofNullable(null));
 	}
 	
 	public void testInterpolation() throws Exception {

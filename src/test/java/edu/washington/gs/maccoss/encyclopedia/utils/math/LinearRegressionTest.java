@@ -14,4 +14,10 @@ public class LinearRegressionTest extends TestCase {
 		assertEquals(0.5842f, equation.x, 0.0001f);
 		assertEquals(1.6842f, equation.y, 0.0001f);
 	}
+	
+	public void testBoundary() {
+		LinearRegression r=new LinearRegression(new float[] {0, 1}, new float[] {0, 1});
+		assertEquals(0.0f, r.b);
+		assertEquals(1.0f, r.m);
+	}
 }

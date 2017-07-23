@@ -15,6 +15,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearRegression;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ProphetMixtureModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
@@ -22,7 +23,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Gaussian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.UnitDistribution;
 import gnu.trove.list.array.TFloatArrayList;
 
-public class RetentionTimeFilter {
+public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 	//private static final String RT_STRING="iRT from DDA Library";
 	//private static final String DELTA_RETENTION_TIME_STRING="Delta RT from DDA Library (min)";
 	//private static final String RT_STRING="RT from Chromatogram Library (min)";
@@ -40,22 +41,25 @@ public class RetentionTimeFilter {
 	}
 	
 	public RetentionTimeFilter(ArrayList<XYPoint> rts, String xAxis, String yAxis) {
-		TwoDimensionalKDE twoDimKDE=new TwoDimensionalKDE(rts);
-		rtWarper=twoDimKDE.trace();
+		if (rts.size()>20) {
+			TwoDimensionalKDE twoDimKDE=new TwoDimensionalKDE(rts);
+			rtWarper=twoDimKDE.trace();
+		} else {
+			if (rts.size()==0) {
+				rtWarper=new LinearRegression(new float[] {0, 1}, new float[] {0, 1});
+			} else {
+				rtWarper=new LinearRegression(rts);
+			}
+		}
 		model=generateMixtureModel(rts, rtWarper);
 		this.xAxis=xAxis;
 		this.yAxis=yAxis;
 	}
 	
-	public Function getRtWarper() {
-		return rtWarper;
-	}
-	
-	public void plot(ArrayList<XYPoint> rts) {
-		File seed=null;
-		plot(rts, Optional.ofNullable(seed));
-	}
-	
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface#plot(java.util.ArrayList, java.util.Optional)
+	 */
+	@Override
 	public void plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed) {
 		TFloatArrayList deltas=new TFloatArrayList();
 		ArrayList<XYPoint> removedRTs=new ArrayList<XYPoint>();
@@ -159,13 +163,25 @@ public class RetentionTimeFilter {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface#getYValue(float)
+	 */
+	@Override
 	public float getYValue(float xrt) {
 		return rtWarper.getYValue(xrt);
 	}
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface#getXValue(float)
+	 */
+	@Override
 	public float getXValue(float yrt) {
 		return rtWarper.getXValue(yrt);
 	}
 	
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface#getProbabilityFitsModel(float, float)
+	 */
+	@Override
 	public float getProbabilityFitsModel(float actualRT, float modelRT) {
 		float delta=getDelta(actualRT, modelRT);
 		
@@ -182,6 +198,10 @@ public class RetentionTimeFilter {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface#getProbabilityFitsModel(float)
+	 */
+	@Override
 	public float getProbabilityFitsModel(float delta) {
 		float probability=model.getProbability(delta);
 		return probability;

@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.util.ArrayList;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -21,7 +22,7 @@ public class PeptideScoringResult {
 		this.entry=entry;
 	}
 	
-	public PeptideScoringResult rescore(RetentionTimeFilter filter) {
+	public PeptideScoringResult rescore(RetentionTimeAlignmentInterface filter) {
 		PeptideScoringResult newResult=new RescoredPeptideScoringResult(entry);
 		newResult.setTrace(trace);
 		

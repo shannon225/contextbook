@@ -24,7 +24,7 @@ public class TwoDimensionalKDETest {
 		//f=new File("/Users/searleb/Documents/school/projects/freezer/zeroDay/122715_bcs_hela_24mz_400_1000_dda.dia.encyclopedia.txt.rt_fit.txt");
 		//rts=MedianInterpolatorTest.getData(f);
 		
-		RetentionTimeFilter filter=new RetentionTimeFilter(rts);
+		RetentionTimeAlignmentInterface filter=new RetentionTimeFilter(rts);
 		TwoDimensionalKDE kde=new TwoDimensionalKDE(rts);
 		
 		Charter3d.plot(kde, kde.getXRange(), kde.getYRange(), kde.getResolution()/5);

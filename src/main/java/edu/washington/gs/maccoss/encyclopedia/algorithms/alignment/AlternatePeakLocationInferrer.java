@@ -51,7 +51,7 @@ public class AlternatePeakLocationInferrer {
 		TObjectFloatHashMap<String> bestRTInSec=peptideMappings.get(bestJob);
 
 		// construct alignments
-		HashMap<SearchJobData, RetentionTimeFilter> alignmentMap=new HashMap<SearchJobData, RetentionTimeFilter>();
+		HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap=new HashMap<SearchJobData, RetentionTimeAlignmentInterface>();
 		HashMap<String, Float> alignedRTInMinBySequenceMap=new HashMap<String, Float>();
 		// add all bestJob archetypals
 		TObjectFloatHashMap<String> archetypals=peptideMappings.get(bestJob);
@@ -88,7 +88,7 @@ public class AlternatePeakLocationInferrer {
 					Logger.errorLine("Not enough points ("+points.size()+" out of align:"+rtInSec.size()+" and best:"+bestRTInSec.size()+") to compute regression between samples, still trying anyways.");
 				}
 				
-				RetentionTimeFilter alignment=new RetentionTimeFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
+				RetentionTimeAlignmentInterface alignment=new RetentionTimeFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
 				alignmentMap.put(job, alignment);
 				if (job instanceof EncyclopediaJobData) {
 					// try reading encyclopedia data directly from results library

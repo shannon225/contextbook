@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -101,7 +101,7 @@ public class PercolatorData {
 	}
 
 	
-	public static PercolatorData filterData(PercolatorData perc, ArrayList<PeptideScoringResult> data, RetentionTimeFilter filter, SearchParameters parameters) {
+	public static PercolatorData filterData(PercolatorData perc, ArrayList<PeptideScoringResult> data, RetentionTimeAlignmentInterface filter, SearchParameters parameters) {
 		ArrayList<PercolatorPSM> psms=perc.getPsms(); //already reverse sorted
 
 		HashSet<String> passingPSMIDs=new HashSet<String>();

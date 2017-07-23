@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
@@ -323,7 +324,7 @@ public class Encyclopedia {
 			}
 			
 			ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
-			RetentionTimeFilter filter=getRescoringModel(passingPeptides, data, job);
+			RetentionTimeAlignmentInterface filter=getRescoringModel(passingPeptides, data, job);
 			
 			PeptideScoringResultsConsumer rescoredResultsConsumer=job.getTaskFactory().getResultsConsumer(job.getFeatureFile(), new LinkedBlockingQueue<PeptideScoringResult>(), stripefile);
 			Thread finalWriteConsumerThread=new Thread(rescoredResultsConsumer);
@@ -351,7 +352,7 @@ public class Encyclopedia {
 		}
 	}
 
-	public static RetentionTimeFilter getRescoringModel(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<PeptideScoringResult> data, EncyclopediaJobData job) {
+	public static RetentionTimeAlignmentInterface getRescoringModel(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<PeptideScoringResult> data, EncyclopediaJobData job) {
 		HashSet<String> passingSeqs=new HashSet<String>();
 		for (PercolatorPeptide pass : passingPeptides) {
 			passingSeqs.add(PercolatorPeptide.getPeptideData(pass.getPsmID()));
@@ -374,7 +375,7 @@ public class Encyclopedia {
 		}
 		ArrayList<XYPoint> rts=new ArrayList<XYPoint>(rtSet);
 		Logger.logLine("Generating retention time mapping using "+rts.size()+" points...");
-		RetentionTimeFilter filter=new RetentionTimeFilter(rts);
+		RetentionTimeAlignmentInterface filter=new RetentionTimeFilter(rts);
 		
 		filter.plot(rts, Optional.ofNullable(job.getOutputFile()));
 		return filter;
