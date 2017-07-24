@@ -34,6 +34,14 @@ public class AmbiguousPeptideModSeq {
 		return count;
 	}
 	
+	public int getNumModifications() {
+		int count=0;
+		for (int i=0; i<isModified.length; i++) {
+			if (isModified[i]) count++;
+		}
+		return count;
+	}
+	
 	public int getNumAmbigousResidues() {
 		int currentIndex=0;
 		int currentTotal=0;

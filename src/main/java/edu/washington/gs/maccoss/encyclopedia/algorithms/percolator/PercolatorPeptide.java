@@ -1,11 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
-import java.io.File;
+import java.util.Comparator;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 
 public class PercolatorPeptide implements PeptidePrecursor {
@@ -13,6 +11,22 @@ public class PercolatorPeptide implements PeptidePrecursor {
 	private final String proteinIDs;
 	private final float qValue;
 	private final float posteriorErrorProb;
+	
+	public static final Comparator<PercolatorPeptide> scoreComparator=new Comparator<PercolatorPeptide>() {
+		// lower is better
+		@Override
+		public int compare(PercolatorPeptide o1, PercolatorPeptide o2) {
+			if (o1==null&&o2==null) return 0;
+			if (o1==null) return -1;
+			if (o2==null) return 1;
+			
+			int c=Float.compare(o1.qValue, o2.qValue);
+			if (c!=0) return c;
+			c=Float.compare(o1.posteriorErrorProb, o2.posteriorErrorProb);
+			if (c!=0) return c;
+			return o1.compareTo(o2);
+		}
+	};
 
 	public PercolatorPeptide(String psmID, String proteinIDs, float qValue, float posteriorErrorProb) {
 		this.psmID=psmID;

@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -23,6 +24,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class LocalizationDataToTSVConsumer implements Runnable {
 	private final OS os=OSDetector.getOS();
@@ -43,20 +46,66 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 		}
 	}
 	
-	public static HashMap<String, ModificationLocalizationData> readLocalizationFile(File f, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters parameters) {
-		HashSet<String> passingPeptideModSeqs=new HashSet<>();
-		for (PercolatorPeptide peptide : passingPeptides) {
-			passingPeptideModSeqs.add(peptide.getPeptideModSeq());
+	public static class AmbiguouslyModifiedPeptide implements Comparable<AmbiguouslyModifiedPeptide> {
+		private final String peptideSeq;
+		private final double precursorMz;
+		private final byte precursorCharge;
+		public AmbiguouslyModifiedPeptide(String peptideSeq, double precursorMz, byte precursorCharge) {
+			this.peptideSeq=peptideSeq;
+			this.precursorMz=precursorMz;
+			this.precursorCharge=precursorCharge;
 		}
-
-		final PeptideModification modification=parameters.getLocalizingModification().get();
+		public AmbiguouslyModifiedPeptide(PercolatorPeptide peptide, AminoAcidConstants aaConstants) {
+			String peptideModSeq=peptide.getPeptideModSeq();
+			peptideSeq=PeptideUtils.getPeptideSeq(peptideModSeq);
+			precursorCharge=peptide.getPrecursorCharge();
+			precursorMz=aaConstants.getChargedMass(peptideModSeq, precursorCharge);
+		}
+		@Override
+		public int compareTo(AmbiguouslyModifiedPeptide o) {
+			if (o==null) return 1;
+			int c=peptideSeq.compareTo(o.peptideSeq);
+			if (c!=0) return c;
+			c=Double.compare(precursorMz, o.precursorMz);
+			if (c!=0) return c;
+			c=Byte.compare(precursorCharge, o.precursorCharge);
+			return c;
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			return compareTo((AmbiguouslyModifiedPeptide)obj)==0;
+		}
+		@Override
+		public int hashCode() {
+			return peptideSeq.hashCode()+Double.hashCode(precursorMz)+precursorCharge;
+		}
+	}
+	
+	public static HashMap<String, ModificationLocalizationData> readLocalizationFile(File f, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters parameters) {
+		ArrayList<PercolatorPeptide> cloned=new ArrayList<PercolatorPeptide>(passingPeptides);
+		Collections.sort(cloned, PercolatorPeptide.scoreComparator);
+		
+		HashMap<String, PercolatorPeptide> passingPeptideModSeqs=new HashMap<>();
+		for (PercolatorPeptide peptide : cloned) {
+			passingPeptideModSeqs.put(peptide.getPeptideModSeq(), peptide);
+		}
 		final AminoAcidConstants aaConstants=parameters.getAAConstants();
+		final PeptideModification modification=parameters.getLocalizingModification().get();
 		final HashMap<String, ModificationLocalizationData> result=new HashMap<String, ModificationLocalizationData>();
+		final HashSet<AmbiguouslyModifiedPeptide> previouslyDetected=new HashSet<>();
+		final TObjectFloatHashMap<AmbiguouslyModifiedPeptide> notAnnotated=new TObjectFloatHashMap<>();
+
+
 		TableParserMuscle muscle=new TableParserMuscle() {
 			@Override
 			public void processRow(Map<String, String> row) {
 				String peptideModSeq=row.get("peptideModSeq");
-				if (passingPeptideModSeqs.contains(peptideModSeq)) {
+				float totalIntensity=Float.parseFloat(row.get("totalIntensity"));
+				AmbiguouslyModifiedPeptide ambigous=new AmbiguouslyModifiedPeptide(passingPeptideModSeqs.remove(peptideModSeq), aaConstants);
+				
+				if (passingPeptideModSeqs.containsKey(peptideModSeq)) {
+					previouslyDetected.add(ambigous);
 					float localizationScore=Float.parseFloat(row.get("localizationScore"));
 					boolean isSiteSpecific=Boolean.parseBoolean(row.get("isSiteSpecific"));
 					ModificationLocalizationData prev=result.get(peptideModSeq);
@@ -74,7 +123,6 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 								localizingIons=new FragmentIon[0];
 							}
 							float localizingIntensity=Float.parseFloat(row.get("localizingIntensity"));
-							float totalIntensity=Float.parseFloat(row.get("totalIntensity"));
 							
 							ModificationLocalizationData data=new ModificationLocalizationData(localizationPeptideModSeq, retentionTimeApexInSeconds, localizationScore, numberOfMods, isSiteSpecific, localizingIons, localizingIntensity, totalIntensity);
 							result.put(peptideModSeq, data);
@@ -83,6 +131,9 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 							e.printStackTrace();
 						}
 					}
+				} else {
+					// NOTE: relies on empty values being 0
+					notAnnotated.put(ambigous, Math.max(notAnnotated.get(ambigous), totalIntensity));
 				}
 			}
 		};
@@ -103,6 +154,21 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 			Logger.errorLine("Localization reading interrupted!");
 			Logger.errorException(ie);
 		}
+
+		for (PercolatorPeptide peptide : cloned) {
+			AmbiguouslyModifiedPeptide ambigPeptide=new AmbiguouslyModifiedPeptide(peptide, parameters.getAAConstants());
+			float totalIntensity=notAnnotated.get(ambigPeptide);
+
+			if (!previouslyDetected.contains(ambigPeptide)) {
+				previouslyDetected.add(ambigPeptide);
+				
+				AmbiguousPeptideModSeq localizationPeptideModSeq=AmbiguousPeptideModSeq.getFullyAmbiguous(peptide.getPeptideModSeq(), modification, aaConstants);
+				
+				ModificationLocalizationData data=new ModificationLocalizationData(localizationPeptideModSeq, peptide.getRT(), 0.0f, localizationPeptideModSeq.getNumModifications(), false, new FragmentIon[0], 0.0f, totalIntensity);
+				result.put(peptide.getPeptideModSeq(), data);
+			}
+		}
+		
 		return result;
 	}
 
