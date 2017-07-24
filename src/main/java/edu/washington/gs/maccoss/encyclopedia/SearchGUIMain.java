@@ -23,7 +23,6 @@ public class SearchGUIMain {
 		runGUI(ProgramType.Global);
 	}
 
-	@SuppressWarnings("restriction")
 	public static void runGUI(ProgramType program) {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -74,8 +73,7 @@ public class SearchGUIMain {
 				String className="com.apple.eawt.Application";
 				Class<?> cls=Class.forName(className);
 
-				// Replace: Application application =
-				// Application.getApplication();
+				// Replace: Application application=Application.getApplication();
 				Object application=cls.newInstance().getClass().getMethod("getApplication").invoke(null);
 
 				// Replace: application.setDockIconImage(image);
