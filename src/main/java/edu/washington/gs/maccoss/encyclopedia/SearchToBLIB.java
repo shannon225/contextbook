@@ -352,7 +352,7 @@ public class SearchToBLIB {
 			if (writeBlib) {
 				convertBlib(progress, pecanJobs, libFile, Optional.of(passingPeptides), inferrer);
 			} else {
-				convertElib(progress, pecanJobs, libFile, Optional.of(passingPeptides), Optional.of(featureFiles.size()==1?null:new Pair<File, File>(bigPercolatorFile, bigPercolatorDecoyFile)), inferrer, proteins, parameters);
+				convertElib(progress, pecanJobs, libFile, Optional.of(passingPeptides), Optional.ofNullable(featureFiles.size()==1?null:new Pair<File, File>(bigPercolatorFile, bigPercolatorDecoyFile)), inferrer, proteins, parameters);
 			}
 			progress.update(passingPeptides.size()+" peptides identified at "+(threshold*100.0f)+"% FDR", 1.0f);
 		} catch (IOException ioe) {
