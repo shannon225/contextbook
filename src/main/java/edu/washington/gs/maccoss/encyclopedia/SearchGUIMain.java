@@ -66,16 +66,27 @@ public class SearchGUIMain {
 
 		OS os=OSDetector.getOS();
 		switch (os) {
-			case MAC:
-				System.setProperty("com.apple.mrj.application.apple.menu.about.name", shortName);
-				System.setProperty("apple.laf.useScreenMenuBar", "true");
+		case MAC:
+			System.setProperty("com.apple.mrj.application.apple.menu.about.name", shortName);
+			System.setProperty("apple.laf.useScreenMenuBar", "true");
+			try {
+				// Replace: import com.apple.eawt.Application
+				String className="com.apple.eawt.Application";
+				Class<?> cls=Class.forName(className);
 
-				com.apple.eawt.Application app=com.apple.eawt.Application.getApplication();
-				app.setDockIconImage(image.getImage());
-				break;
+				// Replace: Application application =
+				// Application.getApplication();
+				Object application=cls.newInstance().getClass().getMethod("getApplication").invoke(null);
 
-			default:
-				break;
+				// Replace: application.setDockIconImage(image);
+				application.getClass().getMethod("setDockIconImage", java.awt.Image.class).invoke(application, image.getImage());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			break;
+
+		default:
+			break;
 		}
 
 		final JFrame f=new JFrame(name);
