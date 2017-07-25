@@ -46,6 +46,12 @@ public class BlibFile extends SQLFile {
 		tempFile.deleteOnExit();
 	}
 
+	public void close() {
+		if (!tempFile.delete()) {
+			Logger.errorLine("Error deleting temp file!");
+		}
+	}
+
 	public void openFile(File userFile) throws IOException, SQLException {
 		this.userFile=userFile;
 		openFile();

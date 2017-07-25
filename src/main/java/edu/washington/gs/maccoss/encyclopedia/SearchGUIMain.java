@@ -78,6 +78,7 @@ public class SearchGUIMain {
 
 				// Replace: application.setDockIconImage(image);
 				application.getClass().getMethod("setDockIconImage", java.awt.Image.class).invoke(application, image.getImage());
+				
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

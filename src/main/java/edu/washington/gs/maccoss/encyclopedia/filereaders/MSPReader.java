@@ -78,6 +78,7 @@ public class MSPReader {
 		}
 		library.createIndices();
 		library.saveAsFile(libraryFile);
+		library.close();
 	}
 	
 	public static ArrayList<LibraryEntry> readMSP(File f, boolean keepAccessions) {
