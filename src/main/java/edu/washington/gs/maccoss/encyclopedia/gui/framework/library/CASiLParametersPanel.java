@@ -134,8 +134,19 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 		this.add(options, BorderLayout.CENTER);
 	}
 	
+	@Override
 	public String getProgramName() {
 		return programName;
+	}
+	
+	@Override
+	public String getCitation() {
+		return "This is a <a href=https://sites.google.com/a/uw.edu/maccoss/>MacCoss Lab</a> project from the University of Washington, <a href=http://www.gs.washington.edu/>Department of Genome Sciences</a>. For more information please contact Brian Searle (searleb@uw.edu).";
+	}
+
+	@Override
+	public String getAboutMessage() {
+		return "The human phosphorylation regulatory network represents a complex signaling cascade where proteins can be phosphorylated at multiple sites resulting in different functional states. Here we present Thesaurus, a hybrid search engine that detects and localizes novel positional isomers using site-specific fragment ions directly from data independent acquisition mass spectrometry experiments.";
 	}
 	
 	public String getProgramShortDescription() {
@@ -145,7 +156,8 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 	public ImageIcon getSmallImage() {
 		return smallimage;
 	}
-	
+
+	@Override
 	public ImageIcon getImage() {
 		return image;
 	}
