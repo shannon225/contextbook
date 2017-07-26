@@ -158,7 +158,7 @@ public class PeptideQuantExtractor {
 						// FIXME need to get peptide charge from window
 						byte precursorCharge=PercolatorPeptide.getCharge(psmID);
 						
-						float score=localSavedIDs.get(psmID);
+						float score=localSavedIDs.contains(psmID)?localSavedIDs.get(psmID):1.0f;
 
 						float sortingScore;
 						String sortingScoreString=row.get("primary"); // Encyclopedia/XCordia
