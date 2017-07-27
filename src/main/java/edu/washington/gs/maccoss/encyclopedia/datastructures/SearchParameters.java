@@ -34,6 +34,7 @@ public class SearchParameters {
 	protected final float numberOfExtraDecoyLibrariesSearched;
 	protected final int numberOfQuantitativePeaks;
 	protected final int minNumOfQuantitativePeaks;
+	protected final int minQuantitativeIonNumber;
 	protected final double precursorOffsetPPM;
 	protected final double fragmentOffsetPPM;
 	protected final double precursorIsolationMargin;
@@ -43,7 +44,7 @@ public class SearchParameters {
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, Integer percolatorVersionNumber, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
-			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched) {
+			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int minQuantitativeIonNumber, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -62,6 +63,7 @@ public class SearchParameters {
 		this.precursorWindowSize=precursorWindowSize;
 		this.numberOfQuantitativePeaks=numberOfQuantitativePeaks;
 		this.minNumOfQuantitativePeaks=minNumOfQuantitativePeaks;
+		this.minQuantitativeIonNumber=minQuantitativeIonNumber;
 		this.CASiLBreadthType=CASiLBreadthType;
 		this.localizingModification=localizingModification;
 		this.numberOfExtraDecoyLibrariesSearched=getNumberOfExtraDecoyLibrariesSearched;
@@ -236,6 +238,9 @@ public class SearchParameters {
 	}
 	public int getMinNumOfQuantitativePeaks() {
 		return minNumOfQuantitativePeaks;
+	}
+	public int getMinQuantitativeIonNumber() {
+		return minQuantitativeIonNumber;
 	}
 	public boolean isUseNLsForXCorr() {
 		return useNLsForXCorr;

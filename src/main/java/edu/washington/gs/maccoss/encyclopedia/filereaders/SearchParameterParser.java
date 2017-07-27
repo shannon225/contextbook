@@ -47,6 +47,7 @@ public class SearchParameterParser {
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
 		map.put("-numberOfQuantitativePeaks", "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
+		map.put("-minQuantitativeIonNumber", "3");
 		return map;
 	}
 	
@@ -65,6 +66,8 @@ public class SearchParameterParser {
 		map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
 		map.put("-numberOfQuantitativePeaks", "5");
+		map.put("-minNumOfQuantitativePeaks", "3");
+		map.put("-minQuantitativeIonNumber", "3");
 		return map;
 	}
 	
@@ -100,6 +103,7 @@ public class SearchParameterParser {
 		final float precursorWindowSize;
 		final int numberOfQuantitativePeaks;
 		final int minNumOfQuantitativePeaks;
+		final int minQuantitativeIonNumber;
 		final float numberOfExtraDecoyLibrariesSearched;
 		final int percolatorVersionNumber;
 		final Optional<PeptideModification> localizationModification;
@@ -235,6 +239,8 @@ public class SearchParameterParser {
 		expectedPeakWidth=SearchParameterParser.getFloat("-expectedPeakWidth", parameters, 25f);
 		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 5);
 		minNumOfQuantitativePeaks=SearchParameterParser.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
+		minQuantitativeIonNumber=SearchParameterParser.getInteger("-minQuantitativeIonNumber", parameters, 3);
+		
 		percolatorVersionNumber=SearchParameterParser.getInteger("-percolatorVersionNumber", parameters, 3);
 		
 		value=parameters.get("-localizationModification");
@@ -267,7 +273,7 @@ public class SearchParameterParser {
 		}
 		
 		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
-				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, localizationModification, breadthType, numberOfExtraDecoyLibrariesSearched);
+				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minQuantitativeIonNumber, localizationModification, breadthType, numberOfExtraDecoyLibrariesSearched);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

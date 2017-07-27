@@ -80,6 +80,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
+	private final SpinnerModel minQuantitativeIonNumber=new SpinnerNumberModel(3, 0, 100, 1);
 	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
 
 	public PecanParametersPanel() {
@@ -124,7 +125,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		options.add(new LabeledComponent("Maximum Missed Cleavage", new JSpinner(maxMissedCleavage)));
 		options.add(new LabeledComponent("Percolator Version", percolatorVersion));
 		options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
-		options.add(new LabeledComponent("Minimum Number of Quantitative Ions", new JSpinner(minNumOfQuantitativeIons)));
+		//options.add(new LabeledComponent("Minimum Number of Quantitative Ions", new JSpinner(minNumOfQuantitativeIons)));
 		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
 
 		JPanel chargeRange=new JPanel(new FlowLayout());
@@ -231,10 +232,12 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
+		int minQuantitativeIonNumberValue=((Integer)minQuantitativeIonNumber.getValue());
 		float numberOfExtraDecoyLibrariesValue=NUMBER_OF_EXTRA_DECOY_VALUES[((Integer)numberOfExtraDecoyLibraries.getSelectedIndex())];
+		
 		boolean isPercolatorTwo=PercolatorExecutor.V2_10.equals(percolatorVersion.getSelectedItem());
 		PecanSearchParameters parameters=new PecanSearchParameters(aaConstants, fragmentation, precursorPPMValue, fragmentPPMValue, digestionEnzyme, isPercolatorTwo?2:3,
-				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, numberOfExtraDecoyLibrariesValue);
+				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, numberOfExtraDecoyLibrariesValue);
 		return parameters;
 	}
 	

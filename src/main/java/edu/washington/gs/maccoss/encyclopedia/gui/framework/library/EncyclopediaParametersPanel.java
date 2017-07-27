@@ -92,6 +92,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
+	private final SpinnerModel minQuantitativeIonNumber=new SpinnerNumberModel(3, 0, 100, 1);
 	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
 
 	public EncyclopediaParametersPanel() {
@@ -219,8 +220,9 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		float targetWindowCenter=-1f;
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
+		int minQuantitativeIonNumberValue=((Integer)minQuantitativeIonNumber.getValue());
 		Optional<PeptideModification> modificationType=Optional.empty();
-		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, 0.01f, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, modificationType, ScoringBreadthType.ENTIRE_RT_WINDOW, numberOfExtraDecoyLibrariesValue);
+		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, 0.01f, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, modificationType, ScoringBreadthType.ENTIRE_RT_WINDOW, numberOfExtraDecoyLibrariesValue);
 		return parameters;
 	}
 	

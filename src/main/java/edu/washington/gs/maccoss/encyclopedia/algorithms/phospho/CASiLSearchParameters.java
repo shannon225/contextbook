@@ -47,10 +47,10 @@ public class CASiLSearchParameters extends SearchParameters {
 	public CASiLSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin,
 			MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme, float percolatorThreshold, Integer percolatorVersionNumber,
 			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, int numberOfQuantitativePeaks,
-			int minNumOfQuantitativePeaks, PeptideModification modification, ScoringBreadthType searchType, float getNumberOfExtraDecoyLibrariesSearched) {
+			int minNumOfQuantitativePeaks, int minQuantitativeIonNumber, PeptideModification modification, ScoringBreadthType searchType, float getNumberOfExtraDecoyLibrariesSearched) {
 		super(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold,
 				percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks,
-				Optional.of(modification), searchType, getNumberOfExtraDecoyLibrariesSearched);
+				minQuantitativeIonNumber, Optional.of(modification), searchType, getNumberOfExtraDecoyLibrariesSearched);
 	}
 
 	public static CASiLSearchParameters convertFromEncyclopeDIA(SearchParameters params) {
@@ -64,7 +64,7 @@ public class CASiLSearchParameters extends SearchParameters {
 		return new CASiLSearchParameters(params.getAAConstants(), params.getFragType(), params.getPrecursorTolerance(), params.getPrecursorOffsetPPM(), params.getPrecursorIsolationMargin(),
 				params.getFragmentTolerance(), params.getFragmentOffsetPPM(), params.getLibraryFragmentTolerance(), params.getEnzyme(), params.getPercolatorThreshold(),
 				params.getPercolatorVersionNumber(), params.getDataAcquisitionType(), params.getNumberOfThreadsUsed(), params.getExpectedPeakWidth(), params.getTargetWindowCenter(),
-				params.getPrecursorWindowSize(), params.getNumberOfQuantitativePeaks(), params.getMinNumOfQuantitativePeaks(), mod, params.getScoringBreadthType(),
+				params.getPrecursorWindowSize(), params.getNumberOfQuantitativePeaks(), params.getMinNumOfQuantitativePeaks(), params.getMinQuantitativeIonNumber(), mod, params.getScoringBreadthType(),
 				params.getNumberOfExtraDecoyLibrariesSearched());
 	}
 

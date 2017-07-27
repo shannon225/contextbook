@@ -82,6 +82,8 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
+	private final SpinnerModel minQuantitativeIonNumber=new SpinnerNumberModel(3, 0, 100, 1);
+	
 	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
 
 	public XCorDIAParametersPanel() {
@@ -235,13 +237,14 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
+		int minQuantitativeIonNumberValue=((Integer)minQuantitativeIonNumber.getValue());
 		float numberOfExtraDecoyLibrariesValue=NUMBER_OF_EXTRA_DECOY_VALUES[((Integer)numberOfExtraDecoyLibraries.getSelectedIndex())];
 		ModificationMassMap variableMods=new ModificationMassMap(VARIABLE_MODIFICATION_VALUES[((Integer)variable.getSelectedIndex())]);
 		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem(), variableMods);
 		boolean isPercolatorTwo=PercolatorExecutor.V2_10.equals(percolatorVersion.getSelectedItem());
 		
 		XCordiaSearchParameters parameters=new XCordiaSearchParameters(aaConstants, fragmentation, precursorPPMValue, fragmentPPMValue, digestionEnzyme, isPercolatorTwo?2:3,
-				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, numberOfExtraDecoyLibrariesValue);
+				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, numberOfExtraDecoyLibrariesValue);
 		return parameters;
 	}
 	
