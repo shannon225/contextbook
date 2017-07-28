@@ -33,7 +33,7 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 	public static final float maxDeltaForHistogram=10.0f; // in minutes
 	public static final float rejectionPValue=0.05f;
 	private final Function rtWarper;
-	private final ProphetMixtureModel model;
+	private final Optional<ProphetMixtureModel> model;
 	private final String xAxis,yAxis;
 	
 	public RetentionTimeFilter(ArrayList<XYPoint> rts) {
@@ -44,14 +44,17 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 		if (rts.size()>20) {
 			TwoDimensionalKDE twoDimKDE=new TwoDimensionalKDE(rts);
 			rtWarper=twoDimKDE.trace();
+			model=Optional.of(generateMixtureModel(rts, rtWarper));
 		} else {
 			if (rts.size()<=1) {
 				rtWarper=new LinearRegression(new float[] {0, 1}, new float[] {0, 1});
+				model=Optional.empty();
 			} else {
 				rtWarper=new LinearRegression(rts);
+				model=Optional.of(generateMixtureModel(rts, rtWarper));
 			}
 		}
-		model=generateMixtureModel(rts, rtWarper);
+		
 		this.xAxis=xAxis;
 		this.yAxis=yAxis;
 	}
@@ -109,7 +112,9 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 		double range=deltaArray[max]-deltaArray[min];
 		for (int i=0; i<numPoints; i++) {
 			double x=deltaArray[min]+i*range/numPoints;
-			positivePoints.add(new XYPoint(x, model.getPositive().getProbability(x)));
+			if (model.isPresent()){
+				positivePoints.add(new XYPoint(x, model.get().getPositive().getProbability(x)));
+			}
 		}
 
 		double histSum=0.0;
@@ -203,8 +208,11 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 	 */
 	@Override
 	public float getProbabilityFitsModel(float delta) {
-		float probability=model.getProbability(delta);
-		return probability;
+		if (model.isPresent()){
+			return model.get().getProbability(delta);
+		} else {
+			return 1f;
+		}
 	}
 
 	public ProphetMixtureModel generateMixtureModel(ArrayList<XYPoint> rts, Function warper) {
