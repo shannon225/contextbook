@@ -184,7 +184,7 @@ public class ThesaurusElibParser {
 	public static final boolean SITE_SPECIFIC_VS_TOTAL_ANALYSIS=false;
 	
 	public static void main(String[] args) throws Exception {
-		StripeFile.OPEN_IN_PLACE=true;
+		
 		LibraryFile.OPEN_IN_PLACE=true;
 		Logger.PRINT_TO_SCREEN=false;
 		loadMap();

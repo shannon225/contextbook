@@ -51,7 +51,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 			File diaFile=new File(files[i].getAbsolutePath().substring(0, files[i].getAbsolutePath().lastIndexOf('.'))+StripeFile.DIA_EXTENSION);
 			System.out.println("Converting to "+diaFile.getAbsolutePath());
 			
-			convertSAX(f, diaFile, parameters);
+			convertSAX(f, diaFile, parameters, false);
 
 			if (copy) {
 				f.delete();
@@ -72,20 +72,20 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 	}
 	
 	@Override
-	public StripeFileInterface readStripeFile(File f, SearchParameters parameters) {
+	public StripeFileInterface readStripeFile(File f, SearchParameters parameters, boolean isOpenFileInPlace) {
 		if (canTryToReadFile(f)) {
 			String absolutePath=f.getAbsolutePath();
 			File diaFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+StripeFile.DIA_EXTENSION);
-			return MzmlToDIAConverter.convertSAX(f, diaFile, parameters);
+			return MzmlToDIAConverter.convertSAX(f, diaFile, parameters, isOpenFileInPlace);
 		} else {
 			throw new EncyclopediaException("Can't read file type "+f.getAbsolutePath());
 		}
 	}
 
-	static StripeFileInterface convertSAX(File mzMLFile, File diaFile, SearchParameters parameters) {
+	static StripeFileInterface convertSAX(File mzMLFile, File diaFile, SearchParameters parameters, boolean isOpenFileInPlace) {
 		try {
 			Logger.logLine("Indexing "+mzMLFile.getName()+" ...");
-			StripeFile stripeFile=new StripeFile();
+			StripeFile stripeFile=new StripeFile(isOpenFileInPlace);
 			stripeFile.openFile();
 
 			BlockingQueue<MzmlBlock> mzmlBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);

@@ -44,7 +44,7 @@ public class PhosphoLocalizerExample {
 
 	@SuppressWarnings("unused")
 	public static void main(String[] args) throws Exception {
-		StripeFile.OPEN_IN_PLACE=true;
+
 		LibraryFile.OPEN_IN_PLACE=true;
 		
 		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/VillenJ_Exactive_HumanPhosphoproteome.dlib");
@@ -92,7 +92,7 @@ public class PhosphoLocalizerExample {
 		defaults.put("-scoringBreadthType", "window");
 		
 		SearchParameters parameters=SearchParameterParser.parseParameters(defaults);
-		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
+		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters, true);
 		
 		UnitBackgroundFrequencyCalculator unitbackground=new UnitBackgroundFrequencyCalculator(0.01f);
 		BackgroundFrequencyInterface background=unitbackground;

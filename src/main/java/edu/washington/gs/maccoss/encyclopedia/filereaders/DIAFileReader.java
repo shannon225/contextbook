@@ -22,17 +22,17 @@ public class DIAFileReader implements StripeFileReaderInterface {
 	}
 
 	@Override
-	public StripeFileInterface readStripeFile(File f, SearchParameters parameters) {
+	public StripeFileInterface readStripeFile(File f, SearchParameters parameters, boolean isOpenFileInPlace) {
 		if (canTryToReadFile(f)) {
-			return openDIAFile(f);
+			return openDIAFile(f, isOpenFileInPlace);
 		} else {
 			throw new EncyclopediaException("Can't read file type "+f.getAbsolutePath());
 		}
 	}
 
-	public static StripeFileInterface openDIAFile(File f) {
+	public static StripeFileInterface openDIAFile(File f, boolean isOpenFileInPlace) {
 		try {
-			StripeFileInterface stripefile=new StripeFile();
+			StripeFileInterface stripefile=new StripeFile(isOpenFileInPlace);
 			stripefile.openFile(f);
 			return stripefile;
 		} catch (IOException ioe) {
