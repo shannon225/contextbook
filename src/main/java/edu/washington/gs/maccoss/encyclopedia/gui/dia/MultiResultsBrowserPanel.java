@@ -227,7 +227,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 
 				for (String sampleName : sampleNames) {
 					Logger.logLine("Trying to load "+sampleName);
-					StripeFileInterface file=StripeFileGenerator.getFile(new File(f.getParentFile(), sampleName), parameters);
+					StripeFileInterface file=StripeFileGenerator.getFile(new File(f.getParentFile(), sampleName), parameters, true);
 					stripeFiles.add(file);
 				}
 				
