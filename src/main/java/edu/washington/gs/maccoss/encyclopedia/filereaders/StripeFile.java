@@ -342,7 +342,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		if (isOpenFileInPlace && !userFile.exists()){
 			throw new IllegalStateException("No file to obtain a connection to!");
 		}
-		return isOpenFileInPlace ? getConnection(tempFile) : getConnection(userFile);
+		return isOpenFileInPlace ? getConnection(userFile): getConnection(tempFile);
 	}
 	
 	/* (non-Javadoc)
