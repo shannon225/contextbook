@@ -71,7 +71,7 @@ public class StripeFileGenerator {
 		// otherwise try readers in order
 		for (StripeFileReaderInterface reader : readers) {
 			if (reader.canTryToReadFile(f)) {
-				return reader.readStripeFile(f, parameters);
+				return reader.readStripeFile(f, parameters, isOpenFileInPlace);
 			}
 		}
 		
