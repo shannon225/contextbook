@@ -89,6 +89,7 @@ public class BlibToLibraryConverter {
 			}
 			blib.getCopyEntriesToLibrary(elib, Optional.ofNullable(irtMap), fastaFile, params);	
 			elib.saveAsFile(elibFile);
+			elib.close();
 			return elib;
 			
 		} catch (DataFormatException dfe) {
