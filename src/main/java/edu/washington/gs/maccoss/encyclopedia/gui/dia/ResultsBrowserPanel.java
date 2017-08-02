@@ -238,9 +238,8 @@ public class ResultsBrowserPanel extends JPanel {
 		SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Raw File") {
 			@Override
 			protected Nothing doInBackgroundForReal() throws Exception {
-				StripeFile.OPEN_IN_PLACE=true;
-				dia=StripeFileGenerator.getFile(f, parameters);
-				StripeFile.OPEN_IN_PLACE=false;
+				
+				dia=StripeFileGenerator.getFile(f, parameters, true);
 
 				if (dia!=null&&library!=null&&parameters.getLocalizingModification().isPresent()) {
 					PhosphoLocalizer localizer=new PhosphoLocalizer(dia, parameters.getLocalizingModification().get(), library, parameters);
