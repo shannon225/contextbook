@@ -362,9 +362,20 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 		return new Pair<HashMap<SearchJobData, ArrayList<ChromatogramLibraryEntry>>, HashMap<String, double[]>>(archetypalPeptides, bestIons);
 	}
 
+	/**
+	 * Issue 54
+	 * This step involves only reading data out of a .dia file (not writing), so we
+	 * can operate on the .dia file in place.
+	 * 
+	 * @param subProgress
+	 * @param job
+	 * @param targetPeptides
+	 * @param passingPeptides
+	 * @return
+	 */
 	private static ArrayList<ChromatogramLibraryEntry> extractFromDIA(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> targetPeptides,
 			ArrayList<PercolatorPeptide> passingPeptides) {
-		StripeFileInterface stripeFile=StripeFileGenerator.getFile(job.getDiaFile(), job.getParameters());
+		StripeFileInterface stripeFile=StripeFileGenerator.getFile(job.getDiaFile(), job.getParameters(), true);
 
 		LibraryInterface library=null;
 		if (job instanceof EncyclopediaJobData) {

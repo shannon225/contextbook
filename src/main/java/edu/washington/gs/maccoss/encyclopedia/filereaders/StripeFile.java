@@ -35,7 +35,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class StripeFile extends SQLFile implements StripeFileInterface {
-	public static boolean OPEN_IN_PLACE=false;
 	
 	private static final String UNKNOWN_VALUE="unknown";
 	public static final String FILELOCATION_ATTRIBUTE="filelocation";
@@ -53,9 +52,18 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	
 	private final HashMap<Range, Float> ranges=new HashMap<Range, Float>();
 
+	private final boolean isOpenFileInPlace;
+	
 	public StripeFile() throws IOException {
-		tempFile=File.createTempFile("encyclopedia_", DIA_EXTENSION);
-		tempFile.deleteOnExit();
+		this(false);
+	}
+	
+	public StripeFile(boolean isOpenFileInPlace) throws IOException {
+		if (!isOpenFileInPlace){
+			tempFile=File.createTempFile("encyclopedia_", DIA_EXTENSION);
+			tempFile.deleteOnExit();
+		}
+		this.isOpenFileInPlace = isOpenFileInPlace;
 	}
 	
 	/**
@@ -131,7 +139,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 	
 	public void loadRanges() throws IOException, SQLException {
-		Connection c=getConnection(tempFile);
+		Connection c = getConnection();
 		try {
 			Statement s=c.createStatement();
 			try {
@@ -152,7 +160,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 	
 	public void writeRanges() throws IOException, SQLException {
-		Connection c=getConnection(tempFile);
+		Connection c = getConnection();
 		try {
 			PreparedStatement prep=c.prepareStatement("insert into ranges (Start, Stop, DutyCycle) VALUES (?,?,?)");
 			try {
@@ -183,7 +191,11 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 
 	public void openFile() throws IOException, SQLException {
-		if (OPEN_IN_PLACE) {
+		openFile(isOpenFileInPlace);
+	}
+	
+	public void openFile(boolean isOpenInPlace) throws IOException, SQLException {
+		if (isOpenInPlace) {
 			tempFile=userFile;
 		} else {
 			if (userFile!=null) {
@@ -201,7 +213,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	public void saveFile() throws IOException, SQLException {
 		writeRanges();
 		
-		if (userFile!=null) {
+		if (userFile!=null && !isOpenFileInPlace) {
 			Files.copy(tempFile.toPath(), userFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
 	}
@@ -221,7 +233,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 	
 	public HashMap<String, String> getMetadata() throws IOException, SQLException {
-		Connection c=getConnection(tempFile);
+		Connection c = getConnection();
 		try {
 			Statement s=c.createStatement();
 			try {
@@ -253,7 +265,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		String value=getMetadata().get(StripeFile.GRADIENT_LENGTH_ATTRIBUTE);
 		if (value==null) {
 			float rt=0.0f;
-			Connection c=getConnection(tempFile);
+			Connection c = getConnection();
 			try {
 				Statement s=c.createStatement();
 				try {
@@ -278,7 +290,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 
 	public void addMetadata(Map<String, String> data) throws IOException, SQLException {
-		Connection c=getConnection(tempFile);
+		Connection c = getConnection();
 		try {
 			PreparedStatement prep=c.prepareStatement("insert into metadata (Key, Value) VALUES (?,?)");
 			try {
@@ -299,7 +311,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 
 	public void addPrecursor(ArrayList<PrecursorScan> precursors) throws IOException, SQLException {
-		Connection c=getConnection(tempFile);
+		Connection c = getConnection();
 		try {
 			PreparedStatement prep=c.prepareStatement("insert into precursor (SpectrumName, SpectrumIndex, ScanStartTime, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray) VALUES (?,?,?,?,?,?,?)");
 			try {
@@ -326,12 +338,19 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		}
 	}
 
+	private Connection getConnection() throws IOException, SQLException {
+		if (isOpenFileInPlace && !userFile.exists()){
+			throw new IllegalStateException("No file to obtain a connection to!");
+		}
+		return isOpenFileInPlace ? getConnection(tempFile) : getConnection(userFile);
+	}
+	
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface#getPrecursors(float, float)
 	 */
 	@Override
 	public ArrayList<PrecursorScan> getPrecursors(float minRT, float maxRT) throws IOException, SQLException,DataFormatException {
-		Connection c=getConnection(tempFile);
+		Connection c = getConnection();
 		try {
 			Statement s=c.createStatement();
 			try {
@@ -361,7 +380,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 
 	private static final int NUMBER_OF_STRIPES_AT_ONCE=10;
 	public void addStripe(ArrayList<Stripe> stripes) throws IOException, SQLException {
-		Connection c=getConnection(tempFile);
+		Connection c = getConnection();
 		try {
 			int start=0;
 			int stop=NUMBER_OF_STRIPES_AT_ONCE;
@@ -417,7 +436,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	 */
 	@Override
 	public ArrayList<Stripe> getStripes(double targetMz, float minRT, float maxRT, final boolean sqrt) throws IOException, SQLException {
-		Connection c=getConnection(tempFile);
+		Connection c = getConnection();
 		try {
 			Statement s=c.createStatement();
 			try {
@@ -477,7 +496,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	 */
 	@Override
 	public ArrayList<Stripe> getStripes(Range targetMzRange, float minRT, float maxRT, final boolean sqrt) throws IOException, SQLException {
-		Connection c=getConnection(tempFile);
+		Connection c = getConnection();
 		try {
 			Statement s=c.createStatement();
 			try {
@@ -543,7 +562,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 
 	private void createNewTables() throws IOException, SQLException {
-		Connection c=getConnection(tempFile);
+		Connection c = getConnection();
 		try {
 			Statement s=c.createStatement();
 			try {
@@ -572,7 +591,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	 */
 	@Override
 	public void close() {
-		if (!tempFile.delete()) {
+		if (!isOpenFileInPlace && !tempFile.delete()) {
 			Logger.errorLine("Error deleting temp file!");
 		}
 		isOpen=false;

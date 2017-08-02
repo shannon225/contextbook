@@ -7,5 +7,5 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 
 public interface StripeFileReaderInterface extends FilenameFilter {
 	boolean canTryToReadFile(File file);
-    StripeFileInterface readStripeFile(File file, SearchParameters parameters);
+    StripeFileInterface readStripeFile(File file, SearchParameters parameters, boolean isOpenFileInPlace);
 }
