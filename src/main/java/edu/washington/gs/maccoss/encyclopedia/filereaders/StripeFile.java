@@ -191,11 +191,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 
 	public void openFile() throws IOException, SQLException {
-		openFile(isOpenFileInPlace);
-	}
-	
-	public void openFile(boolean isOpenInPlace) throws IOException, SQLException {
-		if (isOpenInPlace) {
+		if (isOpenFileInPlace) {
 			tempFile=userFile;
 		} else {
 			if (userFile!=null) {
