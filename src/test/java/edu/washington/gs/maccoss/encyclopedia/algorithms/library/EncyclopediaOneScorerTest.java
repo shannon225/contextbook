@@ -16,7 +16,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 import junit.framework.TestCase;
 
 public class EncyclopediaOneScorerTest extends TestCase {
-	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(100), new MassTolerance(100), DigestionEnzyme.getEnzyme("trypsin"));
+	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"));
 
 	public void testGetIndividualPeakScores() {
 		
@@ -25,7 +25,6 @@ public class EncyclopediaOneScorerTest extends TestCase {
 		Stripe spectrum=getStripe(new double[] {1000.0, 1000.011, 1000.02, 1000.03, 1000.04, 1000.05}, new float[] {10.0f, 100.0f, 50.0f, 10.0f, 1.0f, 100f});
 		FragmentIon[] targets=new FragmentIon[] {
 				new FragmentIon(300, (byte)2, IonType.y),
-				new FragmentIon(600, (byte)3, IonType.y),
 				new FragmentIon(1000.01, (byte)4, IonType.y),
 				new FragmentIon(1200, (byte)5, IonType.y)
 		};
@@ -41,10 +40,9 @@ public class EncyclopediaOneScorerTest extends TestCase {
 		
 		assertEquals(targets.length, scores.length);
 		assertNull(scores[0]);
-		assertNull(scores[1]);
-		assertEquals(scores[2].getScore(), 1000.0, 0.1);
-		assertEquals(scores[2].getDeltaMass(), -1, 0.001);
-		assertNull(scores[3]);
+		assertEquals(scores[1].getScore(), 1600.0, 0.1);
+		assertEquals(scores[1].getDeltaMass(), -1, 0.001);
+		assertNull(scores[2]);
 	}
 	
 	public LibraryEntry getEntry(double[] masses, float[] intensities) {
