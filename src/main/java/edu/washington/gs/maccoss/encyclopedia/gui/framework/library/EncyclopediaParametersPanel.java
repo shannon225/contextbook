@@ -134,6 +134,16 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		return programShortDescription;
 	}
 	
+	@Override
+	public String getCitation() {
+		return "This is a <a href=https://sites.google.com/a/uw.edu/maccoss/>MacCoss Lab</a> project from the University of Washington, <a href=http://www.gs.washington.edu/>Department of Genome Sciences</a>. For more information please contact Brian Searle (searleb@uw.edu).";
+	}
+
+	@Override
+	public String getAboutMessage() {
+		return "<b>en·cy·clo·pe·di·a</B>: a book or set of books giving information on many subjects or on many aspects of one subject and typically arranged alphabetically.";
+	}
+	
 	public ImageIcon getSmallImage() {
 		return smallimage;
 	}

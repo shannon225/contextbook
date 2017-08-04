@@ -84,7 +84,7 @@ public class PeptideQuantExtractor {
 		for (PercolatorPeptide psm : localPassingPSMIDs) {
 			String peptideModSeq=PercolatorPeptide.getPeptideSequence(psm.getPsmID());
 			if (passingPeptideSequences.contains(peptideModSeq)) {
-				localSavedIDs.put(psm.getPsmID(), psm.getQValue());
+				localSavedIDs.put(psm.getPsmID(), psm.getPosteriorErrorProb());
 			}
 		}
 
@@ -158,7 +158,7 @@ public class PeptideQuantExtractor {
 						// FIXME need to get peptide charge from window
 						byte precursorCharge=PercolatorPeptide.getCharge(psmID);
 						
-						float score=savedPeptides.get(psmID);
+						float score=localSavedIDs.contains(psmID)?localSavedIDs.get(psmID):1.0f;
 
 						float sortingScore;
 						String sortingScoreString=row.get("primary"); // Encyclopedia/XCordia
@@ -198,7 +198,7 @@ public class PeptideQuantExtractor {
 				PSMData prev=uniquedData.get(key);
 				if (prev!=null) {
 					if (prev.getSortingScore()<psmData.getSortingScore()) {
-						// scores scores are high
+						// good scores are high
 						uniquedData.put(key, psmData);
 					}
 				} else {

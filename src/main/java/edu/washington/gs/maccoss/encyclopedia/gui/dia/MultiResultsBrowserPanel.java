@@ -224,13 +224,12 @@ public class MultiResultsBrowserPanel extends JPanel {
 				
 				ArrayList<String> sampleNames=pair.x;
 				ArrayList<StripeFileInterface> stripeFiles=new ArrayList<StripeFileInterface>();
-				StripeFile.OPEN_IN_PLACE=true;
+
 				for (String sampleName : sampleNames) {
 					Logger.logLine("Trying to load "+sampleName);
-					StripeFileInterface file=StripeFileGenerator.getFile(new File(f.getParentFile(), sampleName), parameters);
+					StripeFileInterface file=StripeFileGenerator.getFile(new File(f.getParentFile(), sampleName), parameters, true);
 					stripeFiles.add(file);
 				}
-				StripeFile.OPEN_IN_PLACE=false;
 				
 				return new Pair<ArrayList<StripeFileInterface>, ArrayList<PeptideReportData>>(stripeFiles, pair.y);
 			}

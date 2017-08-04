@@ -157,6 +157,16 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		return programShortDescription;
 	}
 	
+	@Override
+	public String getCitation() {
+		return "This is a <a href=https://sites.google.com/a/uw.edu/maccoss/>MacCoss Lab</a> project from the University of Washington, <a href=http://www.gs.washington.edu/>Department of Genome Sciences</a>. For more information please contact Brian Searle (searleb@uw.edu).";
+	}
+
+	@Override
+	public String getAboutMessage() {
+		return "XCorDIA is XCorr for DIA. Duh.";
+	}
+	
 	public ImageIcon getSmallImage() {
 		return smallimage;
 	}

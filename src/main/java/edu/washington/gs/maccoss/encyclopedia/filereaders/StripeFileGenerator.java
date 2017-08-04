@@ -23,6 +23,10 @@ public class StripeFileGenerator {
 	};
 
 	public static StripeFileInterface getFile(File f, SearchParameters parameters) {
+		return getFile(f, parameters, false);
+	}
+
+	public static StripeFileInterface getFile(File f, SearchParameters parameters, boolean isOpenFileInPlace){
 		if (loadedFiles.containsKey(f)) {
 			StripeFileInterface maybeLoaded=loadedFiles.get(f).get();
 			if (maybeLoaded==null||!maybeLoaded.isOpen()) {
@@ -32,17 +36,18 @@ public class StripeFileGenerator {
 			}
 		}
 
-		StripeFileInterface file=innerGetFile(f, parameters);
+		StripeFileInterface file=innerGetFile(f, parameters, isOpenFileInPlace);
 		loadedFiles.put(f, new WeakReference<StripeFileInterface>(file));
 		return file;
 	}
-	private static StripeFileInterface innerGetFile(File f, SearchParameters parameters) {		
+	
+	private static StripeFileInterface innerGetFile(File f, SearchParameters parameters, boolean isOpenFileInPlace) {	
 		// try to change name to .DIA and read
 		String absolutePath=f.getAbsolutePath();
 		File diaFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+StripeFile.DIA_EXTENSION);
 		if (diaFile.exists()&&diaFile.canRead()) {
 			try {
-				return DIA_FILE_READER.readStripeFile(diaFile, parameters);
+				return DIA_FILE_READER.readStripeFile(diaFile, parameters, isOpenFileInPlace);
 			} catch (EncyclopediaException ee) {
 				// continue on
 			}
@@ -66,7 +71,7 @@ public class StripeFileGenerator {
 		// otherwise try readers in order
 		for (StripeFileReaderInterface reader : readers) {
 			if (reader.canTryToReadFile(f)) {
-				return reader.readStripeFile(f, parameters);
+				return reader.readStripeFile(f, parameters, isOpenFileInPlace);
 			}
 		}
 		

@@ -52,8 +52,11 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 	private static final int numberOfCores=Runtime.getRuntime().availableProcessors();
 	public static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/pecan_small_icon.png"));
 	public static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/pecan_icon.png"));
-	public static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">Walnut: PECAN-based Peptide Detection Directly from Data-Independent Acquisition (DIA) MS/MS Data<br></p></b>"
-			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">Walnut uses PECAN-style scoring to extract peptide fragmentation chromatograms from MZML files, assign peaks, and calculate various peak features. These features are interpreted by Percolator to identify peptides.";
+	private static final String programShortDescription="Walnut: PeCAn-based Peptide Detection Directly from Data-Independent Acquisition (DIA) MS/MS Data";
+	private static final String programName="Walnut";
+
+	public static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">Walnut: PeCAn-based Peptide Detection Directly from Data-Independent Acquisition (DIA) MS/MS Data<br></p></b>"
+			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">Walnut uses PeCAn-style scoring to extract peptide fragmentation chromatograms from MZML files, assign peaks, and calculate various peak features. These features are interpreted by Percolator to identify peptides.";
 
 	private static final String[] NUMBER_OF_EXTRA_DECOY_ITEMS=new String[] {"Normal Target/Decoy", "+10% Extra Decoys", "+20% Extra Decoys", "+50% Extra Decoys", "+100% Extra Decoys (2x Time)"};
 	private static final float[] NUMBER_OF_EXTRA_DECOY_VALUES=new float[] {0.0f, 0.1f, 0.2f, 0.5f, 1.0f};
@@ -134,6 +137,32 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		
 
 		this.add(options, BorderLayout.CENTER);
+	}
+
+	public String getProgramName() {
+		return programName;
+	}
+	
+	public String getProgramShortDescription() {
+		return programShortDescription;
+	}
+	
+	@Override
+	public String getCitation() {
+		return "This is a <a href=https://sites.google.com/a/uw.edu/maccoss/>MacCoss Lab</a> project from the University of Washington, <a href=http://www.gs.washington.edu/>Department of Genome Sciences</a>. For more information please contact Brian Searle (searleb@uw.edu).";
+	}
+
+	@Override
+	public String getAboutMessage() {
+		return "<b>Walnut is like PeCAn, just with more wrinkles and slightly more bitter.";
+	}
+	
+	public ImageIcon getSmallImage() {
+		return smallimage;
+	}
+	
+	public ImageIcon getImage() {
+		return image;
 	}
 	
 	@Override

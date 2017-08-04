@@ -399,6 +399,7 @@ public class SearchToBLIB {
 
 			blib.createIndices();
 			blib.saveFile();
+			blib.close();
 		} catch (IOException ioe) {
 			Logger.errorLine("Error creating BLIB file");
 			Logger.errorException(ioe);
@@ -513,6 +514,7 @@ public class SearchToBLIB {
 					Logger.errorException(e);
 				}
 			}
+			elib.close();
 			
 		} catch (IOException ioe) {
 			Logger.errorLine("Error creating BLIB file");

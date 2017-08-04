@@ -61,6 +61,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.LindsaysSpec
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.MoMosSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.pecan.PecanParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.xcordia.XCorDIAParametersPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.AboutDialog;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LogConsole;
@@ -83,6 +84,7 @@ public class SearchPanel extends JPanel {
 	private static final ImageIcon diaBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/orbi_icon.png"));
 	private static final ImageIcon peptideBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/peptide_icon.png"));
 	private static final ImageIcon featureBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/feature_icon.png"));
+	private static final ImageIcon helpIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/help_icon.png"));
 	
 	JobProcessorTableModel processorTableModel=new JobProcessorTableModel();
 	
@@ -139,7 +141,7 @@ public class SearchPanel extends JPanel {
 				HashMap<String, String> map=PecanSearchParameters.readPreferences();
 				PecanSearchParameters parseParameters=PecanParameterParser.parseParameters(map);
 				pecan.setParameters(parseParameters, map.get(Pecanpie.BACKGROUND_FASTA_TAG), map.get(Pecanpie.TARGET_FASTA_TAG));
-				optionsTabs.addTab("Walnut", PecanParametersPanel.smallimage, pecan, "Walnut Peptide Search");
+				optionsTabs.addTab(pecan.getProgramName(), pecan.getSmallImage(), pecan, pecan.getProgramShortDescription());
 				
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
@@ -365,9 +367,27 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(convertMSP);
 		
+		JMenu helpMenu=new JMenu("Help");
+		helpMenu.setMnemonic(KeyEvent.VK_H);
+		bar.add(helpMenu);
 
+		JMenuItem aboutMenuItem=new JMenuItem("About", helpIcon);
+		aboutMenuItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				about();
+			}
+		});
+		helpMenu.add(aboutMenuItem);
+		
 		
 		return bar;
+	}
+	
+	public void about() {
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(SearchPanel.this);
+		ParametersPanelInterface panel=getVisibleTab();
+		AboutDialog.showAbout(frame, panel.getProgramName(), panel.getAboutMessage(), panel.getCitation(), panel.getImage());
 	}
 	
 	public Collection<ParametersPanelInterface> getAllTabs() {
