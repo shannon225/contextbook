@@ -78,9 +78,17 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 			this.retentionTime=0.0f; //(float)SSRCalc.getHydrophobicity(peptideModSeq);
 		}
 		this.score=score;
-		this.massArray=massArray;
-		this.intensityArray=intensityArray;
-		this.correlationArray=correlationArray;
+		
+		ArrayList<PeakChromatogram> peaks=new ArrayList<>();
+		for (int i=0; i<correlationArray.length; i++) {
+			peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], correlationArray[i]));
+		}
+		Collections.sort(peaks);
+		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
+		
+		this.massArray=arrays.x;
+		this.intensityArray=arrays.y;
+		this.correlationArray=arrays.z;
 	}
 	
 	/**
