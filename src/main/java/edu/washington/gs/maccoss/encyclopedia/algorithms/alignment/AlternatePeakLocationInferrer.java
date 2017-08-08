@@ -100,7 +100,7 @@ public class AlternatePeakLocationInferrer {
 				rtInSec.forEachEntry(new TObjectFloatProcedure<String>() {
 					@Override
 					public boolean execute(String a, float b) {
-						float alt=rtInSec.get(a);
+						float alt=bestRTInSec.get(a);
 						if (bestRTInSec.getNoEntryValue()!=alt) {
 							float alignedRT=alignment.getXValue(alt/60f);
 							alignedRTInMinBySequenceMap.put(a, alignedRT);

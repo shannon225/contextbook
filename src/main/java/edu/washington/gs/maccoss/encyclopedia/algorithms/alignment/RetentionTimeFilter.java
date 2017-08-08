@@ -42,12 +42,15 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 	
 	public RetentionTimeFilter(ArrayList<XYPoint> rts, String xAxis, String yAxis) {
 		if (rts.size()>20) {
+			Logger.logLine("Enough data points ("+rts.size()+") to perform KDE alignment.");
 			TwoDimensionalKDE twoDimKDE=new TwoDimensionalKDE(rts);
 			rtWarper=twoDimKDE.trace();
 		} else {
 			if (rts.size()<=1) {
+				Logger.errorLine("Not enough data points ("+rts.size()+") to perform KDE alignment, forced to use one-to-one mapping!");
 				rtWarper=new LinearRegression(new float[] {0, 1}, new float[] {0, 1});
 			} else {
+				Logger.errorLine("Not enough data points ("+rts.size()+") to perform KDE alignment, forced to use linear regression!");
 				rtWarper=new LinearRegression(rts);
 			}
 		}
