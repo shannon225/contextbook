@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
+import java.util.ArrayList;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -8,9 +10,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
-
-import java.util.ArrayList;
 
 public class EncyclopediaOneScorer implements EncyclopediaScorer {
 	private final SearchParameters parameters;
@@ -143,15 +144,14 @@ public class EncyclopediaOneScorer implements EncyclopediaScorer {
 		
 		int predictedIndex=0;
 		int acquiredIndex=0;
-		for (int i=0; i<ions.length; i++) {
+		for (FragmentIon targetIon : ions) {
 			float predictedIntensity=0.0f;
 			float maxCorrelation=0.01f;
 			
-			for (int j=predictedIndex; j<predictedMasses.length; j++) {
-				int compare=libraryTolerance.compareTo(ions[i].mass, predictedMasses[j]);
+			PREDICTED: for (int j=predictedIndex; j<predictedMasses.length; j++) {
+				int compare=libraryTolerance.compareTo(targetIon.mass, predictedMasses[j]);
 				if (compare<0) {
-					predictedIndex=j;
-					break;
+					break PREDICTED;
 				} else if (compare==0) {
 					if (predictedIntensity<predictedIntensities[j]) {
 						predictedIntensity=predictedIntensities[j];
@@ -159,33 +159,40 @@ public class EncyclopediaOneScorer implements EncyclopediaScorer {
 					if (maxCorrelation<correlation[j]) {
 						maxCorrelation=correlation[j];
 					}
+				} else if (compare>0) {
+					predictedIndex=j+1;
 				}
 			}
 
+			float bestAcquiredIntensity=0.0f;
 			float acquiredIntensity=0.0f;
 			float deltaMass=0.0f;
 			if (predictedIntensity>0.0f) {
-				for (int j=acquiredIndex; j<acquiredMasses.length; j++) {
-					int compare=libraryTolerance.compareTo(ions[i].mass, acquiredMasses[j]);
+				ACQUIRED: for (int j=acquiredIndex; j<acquiredMasses.length; j++) {
+					int compare=libraryTolerance.compareTo(targetIon.mass, acquiredMasses[j]);
 					if (compare<0) {
-						acquiredIndex=j;
-						break;
+						break ACQUIRED;
 					} else if (compare==0) {
-						if (acquiredIntensity<acquiredIntensities[j]) {
-							acquiredIntensity=acquiredIntensities[j];
-							deltaMass=(float)acquiredTolerance.getDeltaScore(ions[i].mass, acquiredMasses[j]);
+						acquiredIntensity+=acquiredIntensities[j];
+						
+						if (bestAcquiredIntensity<acquiredIntensities[j]) {
+							bestAcquiredIntensity=acquiredIntensities[j];
+							deltaMass=(float)acquiredTolerance.getDeltaScore(targetIon.mass, acquiredMasses[j]);
 						}
+					} else if (compare>0) {
+						acquiredIndex=j+1;
 					}
 				}
-			}
 
-			if (predictedIntensity>0.0f&&acquiredIntensity>0.0f) {
-				float peakScore=predictedIntensity*acquiredIntensity*maxCorrelation;
-				scoredPeaks.add(new PeakScores(peakScore, ions[i], deltaMass));
-			} else {
-				scoredPeaks.add(null);
+				if (acquiredIntensity>0.0f) {
+					float peakScore=predictedIntensity*acquiredIntensity*maxCorrelation;
+					scoredPeaks.add(new PeakScores(peakScore, targetIon, deltaMass));
+				} else {
+					scoredPeaks.add(null);
+				}
 			}
 		}
+		
 		return scoredPeaks.toArray(new PeakScores[scoredPeaks.size()]);
 	}
 }

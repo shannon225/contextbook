@@ -43,8 +43,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import gnu.trove.list.array.TDoubleArrayList;
 
 public class LibraryFile extends SQLFile implements LibraryInterface {
 	public static boolean OPEN_IN_PLACE=false;
@@ -66,9 +66,10 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			new Version(0, 1, 7),
 			new Version(0, 1, 8),
 			new Version(0, 1, 9),
-			new Version(0, 1, 10)
+			new Version(0, 1, 10),
+			new Version(0, 1, 11)
 	};
-	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 10);
+	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 11);
 
 	private File userFile=null;
 	private File tempFile;
@@ -406,7 +407,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 	private void internalWritePeptideQuantLibraryEntriesToConnection(Connection c, Optional<PeakLocationInferrer> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList)
 			throws SQLException, IOException {
-		StringBuilder peptidePrepString=new StringBuilder("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, RTInSecondsCenter, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, QuantIonMassLength, QuantIonMassArray, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray,IdentifiedTICRatio)");
+		StringBuilder peptidePrepString=new StringBuilder("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, RTInSecondsCenter, RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, QuantIonMassLength, QuantIonMassArray, QuantIonIntensityLength, QuantIonIntensityArray, BestFragmentCorrelation, BestFragmentDeltaMassPPM, MedianChromatogramEncodedLength, MedianChromatogramArray, MedianChromatogramRTEncodedLength, MedianChromatogramRTArray,IdentifiedTICRatio)");
 		peptidePrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 		for (int i=1; i<dataAndSouceList.size(); i++) {
 			peptidePrepString.append(", (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
@@ -533,29 +534,20 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			}
 		}
 
-		Pair<Float, Integer> topN;
-		double[] topNMasses;
+		QuantitativeDIAData topN;
 		if (inferrer.isPresent()) {
-			Optional<Pair<Float, Integer>> topNIntensity=inferrer.get().getTopNIntensity(data);
+			Optional<QuantitativeDIAData> topNIntensity=inferrer.get().getQuantitativeData(data);
 			if (!topNIntensity.isPresent()) {
 				// not enough ions to quantify peptide
 				return index;
 			}
 			topN=topNIntensity.get();
-			topNMasses=inferrer.get().getTopNBestIons(data.getPeptideModSeq(), data.getPrecursorCharge());
-			if (topNMasses==null) {
-				throw new IllegalStateException("Could not retention time align " + data.getPeptideModSeq() + " from source file.  Unable to proceed.");
-			}
 		} else {
 			ArrayList<Peak> peaks=data.getTopNPeaks(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
-			float total=0.0f;
-			TDoubleArrayList masses=new TDoubleArrayList();
-			for (Peak peak : peaks) {
-				total+=peak.intensity;
-				masses.add(peak.mass);
-			}
-			topNMasses=masses.toArray();
-			topN=new Pair<Float, Integer>(total, peaks.size());
+			Pair<double[], float[]> pair=Peak.toArrays(peaks);
+			double[] topNMasses=pair.x;
+			float[] topNIntensities=pair.y;
+			topN=new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), topNMasses, topNIntensities);
 		}
 
 		peptidePrep.setInt(index++, data.getPrecursorCharge());
@@ -566,17 +558,29 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		
 		peptidePrep.setFloat(index++, data.getRange().getStart());
 		peptidePrep.setFloat(index++, data.getRange().getStop());
-		peptidePrep.setFloat(index++, topN.x);
-		peptidePrep.setInt(index++, topN.y);
-		byte[] topNMassesByteArray=ByteConverter.toByteArray(topNMasses);
+		peptidePrep.setFloat(index++, topN.getTIC());
+		peptidePrep.setInt(index++, topN.getNumNonZeroPeaks());
+		
+		byte[] topNMassesByteArray=ByteConverter.toByteArray(topN.getMassArray());
 		peptidePrep.setInt(index++, topNMassesByteArray.length);
 		peptidePrep.setBytes(index++, CompressionUtils.compress(topNMassesByteArray));
+		
+		byte[] topNIntensitiesByteArray=ByteConverter.toByteArray(topN.getIntensityArray());
+		peptidePrep.setInt(index++, topNIntensitiesByteArray.length);
+		peptidePrep.setBytes(index++, CompressionUtils.compress(topNIntensitiesByteArray));
+		
 		peptidePrep.setFloat(index++, bestCorrelation);
 		peptidePrep.setFloat(index++, bestDeltaMass);
+		
 		byte[] intensityByteArray=ByteConverter.toByteArray(data.getMedianChromatogram());
 		peptidePrep.setInt(index++, intensityByteArray.length);
 		peptidePrep.setBytes(index++, CompressionUtils.compress(intensityByteArray));
+		
 		if (data.getIdentifiedTICRatio().isPresent()) {
+			byte[] rtByteArray=ByteConverter.toByteArray(data.getRtArray().get());
+			peptidePrep.setInt(index++, rtByteArray.length);
+			peptidePrep.setBytes(index++, CompressionUtils.compress(rtByteArray));
+			
 			Float x=data.getIdentifiedTICRatio().get();
 			if (x!=null) {
 				peptidePrep.setFloat(index++, x);
@@ -584,6 +588,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				peptidePrep.setFloat(index++, 0.0f);
 			}
 		} else {
+			peptidePrep.setInt(index++, 0);
+			peptidePrep.setBytes(index++, null);
 			peptidePrep.setFloat(index++, 0.0f);
 		}
 		return index;
@@ -1201,6 +1207,16 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						s.execute("DROP TABLE proteins;");
 					}
 
+					if (new Version(0, 1, 11).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 8));
+						}
+						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonIntensityLength int");
+						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonIntensityArray blob");
+						s.execute("ALTER TABLE peptidequants ADD COLUMN MedianChromatogramRTEncodedLength int");
+						s.execute("ALTER TABLE peptidequants ADD COLUMN MedianChromatogramRTArray blob");
+					}
+
 				} catch (SQLException sqle) {
 					// the metadata table is missing, so do nothing and create
 					// it in the next line
@@ -1220,7 +1236,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						");");
 
 				s.execute("CREATE TABLE IF NOT EXISTS peptidequants ( "
-						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, RTInSecondsCenter double not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, QuantIonMassLength int not null, QuantIonMassArray blob not null, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null, IdentifiedTICRatio double not null "
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, RTInSecondsCenter double not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, QuantIonMassLength int not null, QuantIonMassArray blob not null, QuantIonIntensityLength int, QuantIonIntensityArray blob, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null, MedianChromatogramRTEncodedLength int, MedianChromatogramRTArray blob, IdentifiedTICRatio double not null "
 						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq, SourceFile) )");
 
 				s.execute("CREATE TABLE IF NOT EXISTS peptidelocalizations ( "

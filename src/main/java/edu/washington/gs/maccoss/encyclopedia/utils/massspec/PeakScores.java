@@ -9,6 +9,9 @@ public class PeakScores {
 		this.target=target;
 		this.deltaMass = deltaMass;
 	}
+	public String toString() {
+		return target.toString()+"="+score;
+	}
 	public double getTargetMass() {
 		return target.mass;
 	}
