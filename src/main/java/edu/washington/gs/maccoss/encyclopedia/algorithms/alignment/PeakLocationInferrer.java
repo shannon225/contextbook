@@ -33,12 +33,14 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakFrequencyCalculator;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
-public class PeakLocationInferrer implements PeakRTLocatorInterface {
+public class PeakLocationInferrer {
 	private static float RT_OUTLIER_REJECTION_PROBABILITY=0.001f;
 	
 	// alignments are seed (x) to sample (y), in minutes
@@ -57,50 +59,42 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 		this.params=params;
 	}
 	
-	/* (non-Javadoc)
-	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakRTLocatorInterface#getTopNIntensity(edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData)
-	 */
-	@Override
-	public Optional<Pair<Float, Integer>> getTopNIntensity(TransitionRefinementData data) {
+	public Optional<QuantitativeDIAData> getQuantitativeData(TransitionRefinementData data) {
 		String peptideModSeq=data.getPeptideModSeq();
-		double[] topN=getTopNBestIons(peptideModSeq, data.getPrecursorCharge());
+		double[] topNMasses=getTopNBestIons(peptideModSeq, data.getPrecursorCharge());
 		double[] masses=FragmentIon.getMasses(data.getFragmentMassArray());
 		float[] intensities=data.getIntegrationArray();
 		
 		if (params.getMinNumOfQuantitativePeaks()>0) {
-			if (topN==null||topN.length<params.getMinNumOfQuantitativePeaks()) {
+			if (topNMasses==null||topNMasses.length<params.getMinNumOfQuantitativePeaks()) {
 				return Optional.empty();
 			}
 		}
 		
-		if (topN==null||topN.length==0) {
-			return Optional.of(data.getTopNIntensity(TransitionRefiner.quantitativeCorrelationThreshold, params.getNumberOfQuantitativePeaks()));
+		if (topNMasses==null||topNMasses.length==0) {
+			ArrayList<Peak> topN=data.getTopNPeaks(TransitionRefiner.quantitativeCorrelationThreshold, params.getNumberOfQuantitativePeaks());
+			Pair<double[], float[]> pair=Peak.toArrays(topN);
+			topNMasses=pair.x;
+			float[] topNIntensities=pair.y;
+			return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), topNMasses, topNIntensities));
 		}
 		
-		float sum=0.0f;
-		int added=0;
-		for (int i=0; i<topN.length; i++) {
-			int[] optionalIndex=params.getFragmentTolerance().getIndicies(masses, topN[i]);
+		float[] topNIntensities=new float[topNMasses.length];
+		for (int i=0; i<topNMasses.length; i++) {
+			float sum=0.0f;
+			int[] optionalIndex=params.getFragmentTolerance().getIndicies(masses, topNMasses[i]);
 			for (int index : optionalIndex) {
 				sum+=intensities[index];
-				added++;
 			}
+			topNIntensities[i]=sum;
 		}
-		return Optional.of(new Pair<Float, Integer>(sum, added));
+		return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), topNMasses, topNIntensities));
 	}
 
-	/* (non-Javadoc)
-	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakRTLocatorInterface#getTopNBestIons(java.lang.String)
-	 */
-	@Override
 	public double[] getTopNBestIons(String peptideModSeq, byte precursorCharge) {
 		return bestIons.get(peptideModSeq+"+"+precursorCharge);
 	}
 	
-	/* (non-Javadoc)
-	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakRTLocatorInterface#getPreciseRTInSec(edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData, java.lang.String, float)
-	 */
-	@Override
 	public float getPreciseRTInSec(SearchJobData job, String peptideModSeq, float detectedRTInSec) {
 		RetentionTimeAlignmentInterface f=alignmentMap.get(job);
 		Float alignedRTInMin=alignedRTInMinBySequenceMap.get(peptideModSeq);
@@ -121,10 +115,6 @@ public class PeakLocationInferrer implements PeakRTLocatorInterface {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakRTLocatorInterface#getWarpedRTInSec(edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData, java.lang.String)
-	 */
-	@Override
 	public float getWarpedRTInSec(SearchJobData job, String peptideModSeq) {
 		RetentionTimeAlignmentInterface f=alignmentMap.get(job);
 		Float alignedRTInMin=alignedRTInMinBySequenceMap.get(peptideModSeq);
