@@ -23,14 +23,11 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
@@ -51,6 +48,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 	private final PeptideModification localizingModification;
 	private final BlockingQueue<ModificationLocalizationData> localizationQueue;
 	private final float minimumScore;
+	//public final HashMap<AmbiguousPeptideModSeq, TFloatFloatHashMap> scoreByRTMapByPeptideAnnotation=new HashMap<>(); // FIXME
 	
 	public CASiLOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, 
 			PhosphoLocalizer localizer, BlockingQueue<PeptideScoringResult> resultsQueue, BlockingQueue<ModificationLocalizationData> localizationQueue, SearchParameters parameters) {
@@ -215,6 +213,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 					}
 					Collections.sort(goodStripes);
 
+					//scoreByRTMapByPeptideAnnotation.put(peptideModSeq, scoreByRTMap); //FIXME
 					EValueCalculator calculator=new EValueCalculator(scoreByRTMap);
 
 					PeptideScoringResult result=new PeptideScoringResult(localizedEntry);

@@ -47,12 +47,14 @@ public class PhosphoLocalizerExample {
 		StripeFile.OPEN_IN_PLACE=true;
 		LibraryFile.OPEN_IN_PLACE=true;
 		
-		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/VillenJ_Exactive_HumanPhosphoproteome.dlib");
-		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1a.dia");
-
 		//File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/VillenJ_Exactive_HumanPhosphoproteome.dlib");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1a.dia");
+
+		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/VillenJ_Exactive_HumanPhosphoproteome.dlib");
 		//File libraryFile=new File("/Users/searleb/Documents/projects/phosphopedia/VillenJ_Exactive_HumanPhosphoproteome.dlib");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1a.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_2a.dia");
+		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_2c.dia");
 
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1b.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1c.dia");
@@ -333,5 +335,10 @@ public class PhosphoLocalizerExample {
 				Thread.sleep(10);
 			}
 		}
+		
+		/*for (Entry<AmbiguousPeptideModSeq, TFloatFloatHashMap> entry : task.scoreByRTMapByPeptideAnnotation.entrySet()) {
+			XYTrace trace=new XYTrace(entry.getValue(), GraphType.line, entry.getKey().getPeptideAnnotation());
+			Charter.launchChart("Retention Time (sec)", "Thesaurus Score", true, new Dimension(700, 300), trace);
+		}*/
 	}
 }

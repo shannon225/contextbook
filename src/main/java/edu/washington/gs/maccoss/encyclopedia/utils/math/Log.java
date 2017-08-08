@@ -20,6 +20,9 @@ public class Log {
 	public static float log10(float v) {
 		return (float)(Math.log(v)/log10);
 	}
+	public static double log2(double v) {
+		return Math.log(v)/log2;
+	}
 	public static float log2(float v) {
 		return (float)(Math.log(v)/log2);
 	}

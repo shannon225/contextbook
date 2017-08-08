@@ -28,7 +28,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.BenjaminiHochberg;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedianDouble;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
@@ -68,16 +70,60 @@ public class ThesaurusElibParser {
 	private static final byte IGF_VS_CONTROL=2;
 	private static final byte INS_VS_IGF=3;
 	private static final byte INS_IGF_VS_MK2206=4;
+	
 	private static final double getPairedTTest(float[][] data, byte testType) {
+		Pair<TDoubleArrayList, TDoubleArrayList> xy=getPairedData(data, testType);	
+		return TestUtils.pairedTTest(xy.x.toArray(), xy.y.toArray());
+	}
+	
+	private static final double getFoldChange(float[][] data, byte testType) {
+		Pair<TDoubleArrayList, TDoubleArrayList> xy=getPairedData(data, testType);
+		
+		double[] x=xy.x.toArray();
+		double[] y=xy.y.toArray();
+		
+		if (true) {
+			double medianX=QuickMedianDouble.median(x);
+			double medianY=QuickMedianDouble.median(y);
+			if (medianX==0.0&&medianY==0.0) {
+				return Double.NaN;
+			} else {
+				if (medianX==0.0) {
+					return 5;
+				} else if (medianY==0.0) {
+					return -5;
+				} else {
+					return Log.log2(General.mean(y)/General.mean(x));
+				}
+			}
+		}
+		
+		TDoubleArrayList fc=new TDoubleArrayList();
+		for (int i=0; i<x.length; i++) {
+			if (x[i]!=0.0&&y[i]!=0.0) {
+				if (x[i]==0.0) {
+					fc.add(100);
+				} else if (y[i]==0.0) {
+					fc.add(-100);
+				} else {
+					fc.add(Log.log2(y[i]/x[i]));
+				}
+			}
+		}
+		return QuickMedianDouble.median(fc.toArray());
+	}
+
+	private static Pair<TDoubleArrayList, TDoubleArrayList> getPairedData(float[][] data, byte testType) {
 		TDoubleArrayList x=new TDoubleArrayList();
 		TDoubleArrayList y=new TDoubleArrayList();
+		Pair<TDoubleArrayList, TDoubleArrayList> xy=new Pair<TDoubleArrayList, TDoubleArrayList>(x, y);
 		
 		switch (testType) {
 		case INS_VS_CONTROL:
 			x.addAll(General.toDoubleArray(data[0]));
-			x.addAll(General.toDoubleArray(data[3]));
+			//x.addAll(General.toDoubleArray(data[3]));
 			y.addAll(General.toDoubleArray(data[1]));
-			y.addAll(General.toDoubleArray(data[4]));
+			//y.addAll(General.toDoubleArray(data[4]));
 			break;
 		case IGF_VS_CONTROL:
 			x.addAll(General.toDoubleArray(data[0]));
@@ -100,8 +146,7 @@ public class ThesaurusElibParser {
 		default:
 			break;
 		}
-		
-		return TestUtils.pairedTTest(x.toArray(), y.toArray());
+		return xy;
 	}
 	
 	
@@ -175,12 +220,12 @@ public class ThesaurusElibParser {
 		sampleKey.put("22jun2016_mcf7_phospho_6e.mzML", new Coordinate(6, 5));
 		sampleKey.put("22jun2016_mcf7_phospho_6f.mzML", new Coordinate(6, 6));
 	}
-	public static final boolean TOTAL_ANALYSIS=true;
+	public static final boolean TOTAL_ANALYSIS=false;
 	
 	public static final boolean MOTIF_ANALYSIS=false;
-	public static final boolean ANOVA_ANALYSIS=true;
+	public static final boolean ANOVA_ANALYSIS=false;
 	public static final boolean HEATMAP_ANALYSIS=false;
-	public static final boolean MULTIPLE_FORM_ANALYSIS=false;
+	public static final boolean MULTIPLE_FORM_ANALYSIS=true;
 	public static final boolean SITE_SPECIFIC_VS_TOTAL_ANALYSIS=false;
 	
 	public static void main(String[] args) throws Exception {
@@ -188,6 +233,7 @@ public class ThesaurusElibParser {
 		LibraryFile.OPEN_IN_PLACE=true;
 		Logger.PRINT_TO_SCREEN=false;
 		loadMap();
+		byte targetFoldChangeData=INS_VS_CONTROL;
 
 		PeptideModification mod=PeptideModification.phosphorylation;
 		String[] targets=null;//KGSGDYMPMSPK;//targetPeptides;
@@ -208,6 +254,7 @@ public class ThesaurusElibParser {
 		
 		ArrayList<String> siteSpecificPeptides=new ArrayList<>();
 		TDoubleArrayList siteSpecificPValues=new TDoubleArrayList();
+		TDoubleArrayList siteSpecificFC=new TDoubleArrayList();
 		for (String peptide : siteSpecificQuantLog.keySet()) {
 			QuantitationLog log=siteSpecificQuantLog.get(peptide);
 			if (log.getNumMeasurements()<18) continue;
@@ -225,11 +272,13 @@ public class ThesaurusElibParser {
 			if (pValue<0) continue;
 			siteSpecificPeptides.add(peptide);
 			siteSpecificPValues.add(pValue);
+			siteSpecificFC.add(getFoldChange(data, targetFoldChangeData));
 		}
 		double[] siteSpecificAdjustedPValues=BenjaminiHochberg.calculateAdjustedPValues(siteSpecificPValues.toArray());
 
 		ArrayList<String> peptides=new ArrayList<>();
 		TDoubleArrayList pValues=new TDoubleArrayList();
+		TDoubleArrayList totalFC=new TDoubleArrayList();
 		for (String peptide : totalQuantLog.keySet()) {
 			QuantitationLog log=totalQuantLog.get(peptide);
 			if (log.getNumMeasurements()<18) continue;
@@ -247,14 +296,15 @@ public class ThesaurusElibParser {
 			if (pValue<0) continue;
 			peptides.add(peptide);
 			pValues.add(pValue);
+			totalFC.add(getFoldChange(data, targetFoldChangeData));
 		}
-		double[] adjustedPValues=BenjaminiHochberg.calculateAdjustedPValues(pValues.toArray());
+		double[] totalAdjustedPValues=BenjaminiHochberg.calculateAdjustedPValues(pValues.toArray());
 		
 		if (MOTIF_ANALYSIS) {
 			TreeSet<String> motifs=new TreeSet<>();
 
-			for (int pep=0; pep<adjustedPValues.length; pep++) {
-				if (adjustedPValues[pep]<0.05) {
+			for (int pep=0; pep<totalAdjustedPValues.length; pep++) {
+				if (totalAdjustedPValues[pep]<0.05) {
 					String peptide=peptides.get(pep);
 					QuantitationLog log=primaryQuantLog.get(peptide);
 					if (log.motif!=null) {
@@ -268,19 +318,19 @@ public class ThesaurusElibParser {
 		}
 
 		if (ANOVA_ANALYSIS) {
-			for (int pep=0; pep<adjustedPValues.length; pep++) {
+			for (int pep=0; pep<totalAdjustedPValues.length; pep++) {
 				String peptide=peptides.get(pep);
 				QuantitationLog log=primaryQuantLog.get(peptide);
 
 				// if
 				// (log.motif!=null&&log.motif.matches("R.R..[ST].....")&&adjustedPValues[pep]<0.05)
 				// {
-				if (true||adjustedPValues[pep]<0.05) {
+				if (true||totalAdjustedPValues[pep]<0.05) {
 
 					float[][] data=log.getNormalizedData();
 					double pValue=getANOVAPValue(data);
 
-					System.out.println(log.peptideModSeq+"+"+log.charge+" rt:"+General.mean(log.rtInSecondsList.toArray())+" motif:"+log.motif+" localized:"+log.isSiteSpecific+" ("+log.protein+") p="+pValue+", FDR="+adjustedPValues[pep]);
+					System.out.println(log.peptideModSeq+"+"+log.charge+" rt:"+General.mean(log.rtInSecondsList.toArray())+" motif:"+log.motif+" localized:"+log.isSiteSpecific+" ("+log.protein+") p="+pValue+", FDR="+totalAdjustedPValues[pep]);
 
 					boolean first=true;
 					for (int samp=data.length-1; samp>=0; samp--) {
@@ -323,14 +373,14 @@ public class ThesaurusElibParser {
 			System.out.println();
 
 			ArrayList<String> flagged=new ArrayList<>();
-			for (int pep=0; pep<adjustedPValues.length; pep++) {
-				if (adjustedPValues[pep]<0.05) {
+			for (int pep=0; pep<totalAdjustedPValues.length; pep++) {
+				if (totalAdjustedPValues[pep]<0.05) {
 					String peptide=peptides.get(pep);
 					QuantitationLog log=primaryQuantLog.get(peptide);
 
 					float[][] data=log.getNormalizedData();
 					double pValue=getANOVAPValue(data);
-					System.out.print(log.peptideModSeq+"\t"+log.protein+"\t"+pValue+"\t"+adjustedPValues[pep]);
+					System.out.print(log.peptideModSeq+"\t"+log.protein+"\t"+pValue+"\t"+totalAdjustedPValues[pep]);
 					System.out.print("\t"+(log.motif!=null&&log.motif.matches("R.R..[ST].....")));
 					System.out.print("\t"+(log.motif!=null&&log.motif.matches("..R..[ST].....")));
 					System.out.print("\t"+(log.motif!=null&&log.motif.matches(".....[ST][FLW]....")));
@@ -341,7 +391,7 @@ public class ThesaurusElibParser {
 					}
 					System.out.println();
 
-					if (adjustedPValues[pep]<pValue) {
+					if (totalAdjustedPValues[pep]<pValue) {
 						flagged.add(peptide);
 					}
 				}
@@ -358,9 +408,12 @@ public class ThesaurusElibParser {
 		if (MULTIPLE_FORM_ANALYSIS) {
 			HashMap<String, TDoubleArrayList> pvalueMap=new HashMap<>();
 			HashMap<String, TFloatArrayList> rtMap=new HashMap<>();
-			for (int pep=0; pep<adjustedPValues.length; pep++) {
-				String peptide=peptides.get(pep);
-				QuantitationLog log=totalQuantLog.get(peptide);
+			double[] values=siteSpecificFC.toArray(); //adjustedPValues;
+			for (int pep=0; pep<values.length; pep++) {
+				if (Double.isNaN(values[pep])) continue;
+				
+				String peptide=siteSpecificPeptides.get(pep);
+				QuantitationLog log=primaryQuantLog.get(peptide);
 				String key=PeptideUtils.getPeptideSeq(peptide);
 				
 				TDoubleArrayList list=pvalueMap.get(key);
@@ -371,7 +424,7 @@ public class ThesaurusElibParser {
 					rtList=new TFloatArrayList();
 					rtMap.put(key, rtList);
 				}
-				list.add(adjustedPValues[pep]);
+				list.add(values[pep]);
 				rtList.add(General.mean(log.rtInSecondsList.toArray()));
 			}
 			
@@ -401,7 +454,7 @@ public class ThesaurusElibParser {
 		
 		if (SITE_SPECIFIC_VS_TOTAL_ANALYSIS) {
 			HashMap<String, double[]> pvalueMap=new HashMap<>();
-			for (int pep=0; pep<adjustedPValues.length; pep++) {
+			for (int pep=0; pep<totalAdjustedPValues.length; pep++) {
 				String peptide=peptides.get(pep);
 				double[] list=pvalueMap.get(peptide);
 				if (list==null) {
@@ -409,7 +462,7 @@ public class ThesaurusElibParser {
 					Arrays.fill(list, -1);
 					pvalueMap.put(peptide, list);
 				}
-				list[0]=adjustedPValues[pep];
+				list[0]=totalAdjustedPValues[pep];
 			}
 
 			for (int pep=0; pep<siteSpecificAdjustedPValues.length; pep++) {
