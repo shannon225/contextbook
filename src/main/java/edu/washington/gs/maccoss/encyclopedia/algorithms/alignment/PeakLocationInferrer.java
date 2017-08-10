@@ -98,6 +98,7 @@ public class PeakLocationInferrer {
 	public float getPreciseRTInSec(SearchJobData job, String peptideModSeq, float detectedRTInSec) {
 		RetentionTimeAlignmentInterface f=alignmentMap.get(job);
 		Float alignedRTInMin=alignedRTInMinBySequenceMap.get(peptideModSeq);
+		//System.out.println(job.getDiaFile().getName()+": "+alignedRTInMin+", "+f);
 		if (alignedRTInMin==null) {
 			return detectedRTInSec;
 		}
