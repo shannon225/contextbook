@@ -203,6 +203,7 @@ public class BlibFile extends SQLFile {
 				Logger.logLine("Writing library file "+library.getName());
 				library.dropIndices();
 				library.addEntries(entries);
+				library.addProteinsFromEntries(entries);
 				library.createIndices();
 				
 				rs.close();

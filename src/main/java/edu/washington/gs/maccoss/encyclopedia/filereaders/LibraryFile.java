@@ -667,13 +667,58 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			c.close();
 		}
 	}
+	
+	public void addProteinsFromPercolator(ArrayList<PercolatorPeptide> entries) throws IOException, SQLException {
+		Connection c=getConnection();
+		try {
+			PreparedStatement proteinPrep=c.prepareStatement("INSERT OR IGNORE INTO peptidetoprotein (PeptideSeq, ProteinAccession) VALUES (?,?)");
+			try {
+				for (PercolatorPeptide percolatorPeptide : entries) {
+					proteinPrep.setString(1, percolatorPeptide.getPeptideSeq());
+					for (String acc : PSMData.stringToAccessions(percolatorPeptide.getProteinIDs())) {
+						proteinPrep.setString(2, acc);
+						proteinPrep.addBatch();
+					}
+				}
+				proteinPrep.executeBatch();
+
+				c.commit();
+			} finally {
+				proteinPrep.close();
+			}
+		} finally {
+			c.close();
+		}
+	}
+	
+	public void addProteinsFromEntries(ArrayList<LibraryEntry> entries) throws IOException, SQLException {
+		Connection c=getConnection();
+		try {
+			PreparedStatement proteinPrep=c.prepareStatement("INSERT OR IGNORE INTO peptidetoprotein (PeptideSeq, ProteinAccession) VALUES (?,?)");
+			try {
+				for (LibraryEntry entry : entries) {
+					proteinPrep.setString(1, entry.getPeptideSeq());
+					for (String acc : entry.getAccessions()) {
+						proteinPrep.setString(2, acc);
+						proteinPrep.addBatch();
+					}
+				}
+				proteinPrep.executeBatch();
+
+				c.commit();
+			} finally {
+				proteinPrep.close();
+			}
+		} finally {
+			c.close();
+		}
+	}
 
 	public void addEntries(ArrayList<LibraryEntry> entries) throws IOException, SQLException {
 		Connection c=getConnection();
 		try {
 			PreparedStatement prep=c.prepareStatement(
 					"INSERT INTO entries (PrecursorMZ, PrecursorCharge, PeptideModSeq, PeptideSeq, Copies, RTInSeconds, Score, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, CorrelationEncodedLength, CorrelationArray, RTInSecondsStart, RTInSecondsStop, MedianChromatogramEncodedLength, MedianChromatogramArray, SourceFile) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-			PreparedStatement proteinPrep=c.prepareStatement("INSERT OR IGNORE INTO peptidetoprotein (PeptideSeq, ProteinAccession) VALUES (?,?)");
 			try {
 				for (LibraryEntry entry : entries) {
 					if (entry.getAccessions().size()==0) continue;
@@ -724,20 +769,12 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					prep.setString(18, entry.getSource());
 					prep.addBatch();
-
-					proteinPrep.setString(1, pepSeq);
-					for (String acc : entry.getAccessions()) {
-						proteinPrep.setString(2, acc);
-						proteinPrep.addBatch();
-					}
 				}
 				prep.executeBatch();
-				proteinPrep.executeBatch();
 
 				c.commit();
 			} finally {
 				prep.close();
-				proteinPrep.close();
 			}
 		} finally {
 			c.close();

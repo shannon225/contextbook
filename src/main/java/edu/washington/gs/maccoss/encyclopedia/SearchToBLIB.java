@@ -484,21 +484,31 @@ public class SearchToBLIB {
 				
 				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides, inferrer, elib);
 
-				if ((!globalPercolatorFiles.isPresent())&&job.getOutputFile().exists()&&job.getOutputDecoyFile().exists()) {
-					ArrayList<PercolatorPeptide> targets=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), Float.MAX_VALUE, true);
-					ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputDecoyFile(), Float.MAX_VALUE, true);
-					Logger.logLine("Writing local target/decoy peptides: "+targets.size()+"/"+decoys.size());
-					elib.addTargetDecoyData(targets, decoys);
+				if ((!globalPercolatorFiles.isPresent())) {
+					if (job.getOutputFile().exists()&&job.getOutputDecoyFile().exists()) {
+						ArrayList<PercolatorPeptide> targets=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), parameters.getEffectivePercolatorThreshold(), true);
+						ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputDecoyFile(), parameters.getEffectivePercolatorThreshold(), true);
+						Logger.logLine("Writing local target/decoy peptides: "+targets.size()+"/"+decoys.size());
+						elib.addTargetDecoyData(targets, decoys);
+						elib.addProteinsFromPercolator(targets);
+						elib.addProteinsFromPercolator(decoys);
+					} else if (job.getOutputFile().exists()) {
+						ArrayList<PercolatorPeptide> targets=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), parameters.getEffectivePercolatorThreshold(), true);
+						elib.addProteinsFromPercolator(targets);
+						elib.addTargetDecoyData(targets, new ArrayList<>());
+					}
 				}
 				
 				subProgress.update("Wrote "+globalPassingPeptides.size()+" peptides ("+proteins.size()+" proteins) identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 			}
 			
 			if (globalPercolatorFiles.isPresent()) {
-				ArrayList<PercolatorPeptide> targets=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorFiles.get().x, Float.MAX_VALUE, true);
-				ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorFiles.get().y, Float.MAX_VALUE, true);
+				ArrayList<PercolatorPeptide> targets=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorFiles.get().x, parameters.getEffectivePercolatorThreshold(), true);
+				ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorFiles.get().y, parameters.getEffectivePercolatorThreshold(), true);
 				Logger.logLine("Writing global target/decoy peptides: "+targets.size()+"/"+decoys.size());
 				elib.addTargetDecoyData(targets, decoys);
+				elib.addProteinsFromPercolator(targets);
+				elib.addProteinsFromPercolator(decoys);
 			}
 			
 			elib.addMetadata(parameters.toParameterMap());

@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.StringTokenizer;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.SSRCalc;
@@ -72,7 +73,9 @@ public class MSPReader {
 		int stop=batchSize;
 		while (true) {
 			if (start>=entries.size()) break;
-			library.addEntries(new ArrayList<LibraryEntry>(entries.subList(start, stop)));
+			ArrayList<LibraryEntry> sublist=new ArrayList<LibraryEntry>(entries.subList(start, stop));
+			library.addEntries(sublist);
+			library.addProteinsFromEntries(sublist);
 			start=stop;
 			stop=Math.min(entries.size(), stop+batchSize);
 			Logger.logLine((start*100/entries.size())+"%");
