@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.SSRCalc;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
@@ -79,10 +80,18 @@ public class BlibFile extends SQLFile {
 			try {
 				ResultSet rs=s.executeQuery("select RefSpectraID, retentionTime from RetentionTimes where bestSpectrum=1");
 				TIntFloatHashMap rtMap=new TIntFloatHashMap();
+				boolean hasRTs=false;
 				while (rs.next()) {
 					int refSpectraID=rs.getInt(1);
 					float rt=rs.getFloat(2);
+					if (!hasRTs&&rt>0.0f) {
+						hasRTs=true;
+					}
 					rtMap.put(refSpectraID, rt);
+				}
+				
+				if (!hasRTs&&!irtMap.isPresent()) {
+					Logger.errorLine("BLIB doesn't contain retention times! Using SSRCalc 3 hydrophobicities as fallback.");
 				}
 
 				boolean hasScore=doesColumnExist(tempFile, "RefSpectra", "score");
@@ -157,6 +166,8 @@ public class BlibFile extends SQLFile {
 						} else {
 							missing++;
 						}
+					} else if (!hasRTs) {
+						retentionTime=(float)SSRCalc.getHydrophobicity(peptideModSeq);
 					}
 					// RT are usually in minutes, but not always depending on blib version. Warping 
 					// won't be bothered by incorrect absolute values if this assumption is wrong.

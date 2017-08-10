@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.StringTokenizer;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.SSRCalc;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
@@ -204,6 +205,7 @@ public class MSPReader {
 					} else {
 						peptideModSeq=sequence;
 					}
+					retentionTime=(float)SSRCalc.getHydrophobicity(peptideModSeq);
 				}
 			}
 			if (peaks.size()>0) {
