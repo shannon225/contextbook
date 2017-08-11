@@ -91,6 +91,22 @@ public class BlibFile extends SQLFile {
 				}
 				
 				if (!hasRTs&&!irtMap.isPresent()) {
+					rtMap.clear();
+					boolean hasRTColumn=doesColumnExist(tempFile, "RefSpectra", "retentionTime");
+					if (hasRTColumn) {
+						rs=s.executeQuery("select id, retentionTime from RefSpectra");
+						while (rs.next()) {
+							int refSpectraID=rs.getInt(1);
+							float rt=rs.getFloat(2);
+							if (!hasRTs&&rt>0.0f) {
+								hasRTs=true;
+							}
+							rtMap.put(refSpectraID, rt);
+						}
+					}
+				}
+				
+				if (!hasRTs&&!irtMap.isPresent()) {
 					Logger.errorLine("BLIB doesn't contain retention times! Using SSRCalc 3 hydrophobicities as fallback.");
 				}
 
