@@ -19,9 +19,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
 
 public class SearchGUIMain {
-	public static void main(String[] args) {
-		runGUI(ProgramType.Global);
-	}
 
 	public static void runGUI(ProgramType program) {
 		try {
