@@ -221,6 +221,8 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 									peptideModSeq=rightPeptide.x;
 									targetIons=rightPeptide.y;
 									locData=calculateLocalizationScoring(minimumScore, parameters, dutyCycle, localizer, localizedEntry, peptideModSeq, targetIons, allIons, takenIdentifiedIons, stripeSubset);
+								} else {
+									break;
 								}
 							}
 							ModificationLocalizationData data=locData.x;

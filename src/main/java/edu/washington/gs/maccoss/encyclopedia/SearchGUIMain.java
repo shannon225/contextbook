@@ -82,7 +82,7 @@ public class SearchGUIMain {
 
 		final SearchPanel panel=new SearchPanel(program);
 		f.getContentPane().add(panel, BorderLayout.CENTER);
-		f.setJMenuBar(panel.createMenus());
+		f.setJMenuBar(panel.createMenus(program));
 
 		f.pack();
 		f.setSize(new Dimension(1250, 750));

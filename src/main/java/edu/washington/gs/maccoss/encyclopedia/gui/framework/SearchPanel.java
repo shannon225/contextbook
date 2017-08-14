@@ -210,8 +210,13 @@ public class SearchPanel extends JPanel {
 		
 		JPanel buttonPanel=new JPanel(new FlowLayout());
 		buttonPanel.add(chooseFile);
-		buttonPanel.add(alignBetweenFiles);
-		buttonPanel.add(saveElib);
+		
+		if (ProgramType.CASiL!=program) {
+			buttonPanel.add(alignBetweenFiles);
+		}
+		if (ProgramType.PecanPie!=program&&ProgramType.CASiL!=program) {
+			buttonPanel.add(saveElib);
+		}
 		buttonPanel.add(saveBlib);
 		
 		files.add(new JLabel("<html><p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Jobs: "), BorderLayout.WEST);
@@ -233,7 +238,7 @@ public class SearchPanel extends JPanel {
 		this.add(split, BorderLayout.CENTER);
 	}
 	
-	public JMenuBar createMenus() {
+	public JMenuBar createMenus(ProgramType program) {
 		JMenuBar bar=new JMenuBar();
 		JMenu fileMenu=new JMenu("File");
 		fileMenu.setMnemonic(KeyEvent.VK_F);
@@ -267,7 +272,10 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		saveELIB.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		fileMenu.add(saveELIB);
+
+		if (ProgramType.PecanPie!=program&&ProgramType.CASiL!=program) {
+			fileMenu.add(saveELIB);
+		}
 
 		JMenuItem saveBLIB=new JMenuItem("Save BLIB", skylineIcon);
 		saveBLIB.addActionListener(new ActionListener() {
@@ -283,7 +291,8 @@ public class SearchPanel extends JPanel {
 		viewMenu.setMnemonic(KeyEvent.VK_V);
 		bar.add(viewMenu);
 
-		JMenuItem launchBrowser=new JMenuItem("Launch ELIB Browser", libraryBrowserIcon);
+		String browserTitle = ProgramType.CASiL==program?"Launch Thesaurus Browser":"Launch ELIB Browser";
+		JMenuItem launchBrowser=new JMenuItem(browserTitle, libraryBrowserIcon);
 		launchBrowser.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -301,7 +310,10 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		launchMultiBrowser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		viewMenu.add(launchMultiBrowser);
+
+		if (ProgramType.CASiL!=program) {
+			viewMenu.add(launchMultiBrowser);
+		}
 
 		JMenuItem launchDIABrowser=new JMenuItem("Launch RAW File Browser", diaBrowserIcon);
 		launchDIABrowser.addActionListener(new ActionListener() {
@@ -310,7 +322,9 @@ public class SearchPanel extends JPanel {
 				launchDIABrowser();
 			}
 		});
-		viewMenu.add(launchDIABrowser);
+		if (ProgramType.CASiL!=program) {
+			viewMenu.add(launchDIABrowser);
+		}
 
 		JMenuItem launchPeptideBrowser=new JMenuItem("Launch Peptide Browser", peptideBrowserIcon);
 		launchPeptideBrowser.addActionListener(new ActionListener() {
@@ -319,7 +333,9 @@ public class SearchPanel extends JPanel {
 				launchPeptideBrowser();
 			}
 		});
-		viewMenu.add(launchPeptideBrowser);
+		if (ProgramType.CASiL!=program) {
+			viewMenu.add(launchPeptideBrowser);
+		}
 
 		JMenuItem launchFeatureBrowser=new JMenuItem("Launch Feature Browser", featureBrowserIcon);
 		launchFeatureBrowser.addActionListener(new ActionListener() {
@@ -328,7 +344,9 @@ public class SearchPanel extends JPanel {
 				launchFeatureBrowser();
 			}
 		});
-		viewMenu.add(launchFeatureBrowser);
+		if (ProgramType.CASiL!=program) {
+			viewMenu.add(launchFeatureBrowser);
+		}
 
 		JMenu convertMenu=new JMenu("Convert");
 		convertMenu.setMnemonic(KeyEvent.VK_C);
