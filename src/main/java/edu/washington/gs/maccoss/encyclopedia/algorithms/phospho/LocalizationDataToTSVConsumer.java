@@ -61,14 +61,15 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 					boolean isSiteSpecific=Boolean.parseBoolean(row.get("isSiteSpecific"));
 					boolean isLocalized=Boolean.parseBoolean(row.get("isLocalized"));
 					ModificationLocalizationData prev=result.get(peptideModSeq);
+					String ambiPeptideModSeq=row.get("localizationPeptideModSeq");
+					AmbiguousPeptideModSeq localizationPeptideModSeq=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq(ambiPeptideModSeq, modification);
 					
 					boolean moreSiteSpecific = prev==null||(isSiteSpecific&&!prev.isSiteSpecific());
-					boolean notLessSiteSpecific = prev!=null&&(isSiteSpecific||(!prev.isSiteSpecific()));
+					boolean notLessSiteSpecific = prev==null||localizationPeptideModSeq.getAmbiguityValue()>=prev.getLocalizationPeptideModSeq().getAmbiguityValue();
 					boolean higherScoring = prev==null||(notLessSiteSpecific&&prev.getLocalizationScore()<localizationScore);
 					
 					if (moreSiteSpecific||higherScoring) {
 						try {
-							AmbiguousPeptideModSeq localizationPeptideModSeq=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq(peptideModSeq, modification);
 							float retentionTimeApexInSeconds=Float.parseFloat(row.get("retentionTimeApexInSeconds"));
 							int numberOfMods=Integer.parseInt(row.get("numberOfMods"));
 							FragmentIon[] localizingIons;
@@ -80,7 +81,6 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 							}
 							float localizingIntensity=Float.parseFloat(row.get("localizingIntensity"));
 							float totalIntensity=Float.parseFloat(row.get("totalIntensity"));
-							
 							ModificationLocalizationData data=new ModificationLocalizationData(localizationPeptideModSeq, retentionTimeApexInSeconds, localizationScore, numberOfMods, isSiteSpecific, isLocalized, localizingIons, localizingIntensity, totalIntensity);
 							result.put(peptideModSeq, data);
 						} catch (Exception e) {

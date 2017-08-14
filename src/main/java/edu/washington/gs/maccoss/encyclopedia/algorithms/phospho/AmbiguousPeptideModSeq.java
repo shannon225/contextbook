@@ -31,6 +31,14 @@ public class AmbiguousPeptideModSeq {
 		this.ambiguityDirection=ambiguityDirection;
 	}
 	
+	public int getAmbiguityValue() {
+		int count=0;
+		for (int i=0; i<modifiable.length; i++) {
+			if (modifiable[i]&&modificationGroup[i]>0) count++;
+		}
+		return count;
+	}
+	
 	public int getNumModifiableSites() {
 		int count=0;
 		for (int i=0; i<modifiable.length; i++) {

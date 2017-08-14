@@ -205,7 +205,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 							ArrayList<Spectrum> stripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(stripe.getScanStartTime()-parameters.getExpectedPeakWidth(), stripe.getScanStartTime()+parameters.getExpectedPeakWidth(), stripes);
 							Triplet<ModificationLocalizationData, Stripe, Range> locData=calculateLocalizationScoring(minimumScore, parameters, dutyCycle, localizer, localizedEntry, peptideModSeq, targetIons, allIons, takenIdentifiedIons, stripeSubset);
 							while (!locData.x.isLocalized()) {
-								if (localizeLeftSide&&leftIndex<rightIndex) {
+								if (localizeLeftSide) {
 									leftPeptide=getLeftPeptide(precursorCharge, peptideModSeqs, entryMap, leftIndex, keepLeft);
 									if (leftPeptide==null) break;
 									//System.out.println("Couldn't localize, expanding further left ("+leftIndex+")...");
@@ -213,7 +213,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 									peptideModSeq=leftPeptide.x;
 									targetIons=leftPeptide.y;
 									locData=calculateLocalizationScoring(minimumScore, parameters, dutyCycle, localizer, localizedEntry, peptideModSeq, targetIons, allIons, takenIdentifiedIons, stripeSubset);
-								} else if (leftIndex<rightIndex) {
+								} else if (true) {
 									rightPeptide=getRightPeptide(precursorCharge, peptideModSeqs, entryMap, rightIndex, keepRight);
 									if (rightPeptide==null) break;
 									//System.out.println("Couldn't localize, expanding further right ("+rightIndex+")...");

@@ -273,7 +273,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			if (prev==null) {
 				repeatsCatcher.put(key, entry);
 			} else {
-				Logger.errorLine("Found collision writing elib: "+key+" ("+entry.getScore()+" vs"+prev.getScore()+"), keeping best scoring. Let Brian know if you see this!");
+				//Logger.errorLine("Found collision writing elib: "+key+" ("+entry.getScore()+" vs"+prev.getScore()+"), keeping best scoring. Let Brian know if you see this!");
 				if (entry.getScore()>prev.getScore()) {
 					repeatsCatcher.put(key, entry);
 				}

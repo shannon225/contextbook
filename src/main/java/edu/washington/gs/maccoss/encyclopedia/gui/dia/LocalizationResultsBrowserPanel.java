@@ -300,7 +300,8 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 					
 					ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
 					
-					tabs.add(entry.getPeptideAnnotation().getNonDirectionalPeptideAnnotation()+" ("+(Math.round(entry.getLocalizationScore()*10.0f)/10.0f)+")", fragmentChart);
+					String annotation = entry.getPeptideAnnotation().getNonDirectionalPeptideAnnotation();
+					tabs.add(annotation+" ("+(Math.round(entry.getLocalizationScore()*10.0f)/10.0f)+")", fragmentChart);
 					Logger.logLine("Finished reading peptide "+entry.getSpectrumName());
 				}
 				chartSplit.setBottomComponent(tabs);

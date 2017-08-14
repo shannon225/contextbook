@@ -122,12 +122,17 @@ public class OverlapDeconvoluter implements Runnable {
 						}
 					}
 
-					Pair<Stripe, Stripe> pair=deconvolute(earlyLow, earlyHigh, center, lateLow, lateHigh, tolerance);
-					deconvolutedStripes.add(pair.x);
-					deconvolutedStripes.add(pair.y);
-					
-					addRetentionTime(pair.x);
-					addRetentionTime(pair.y);
+					try {
+						Pair<Stripe, Stripe> pair=deconvolute(earlyLow, earlyHigh, center, lateLow, lateHigh, tolerance);
+						deconvolutedStripes.add(pair.x);
+						deconvolutedStripes.add(pair.y);
+						
+						addRetentionTime(pair.x);
+						addRetentionTime(pair.y);
+					} catch (Exception e) {
+						Logger.errorLine("Error deconvoluting sample!");
+						Logger.errorException(e);
+					}
 
 				}
 				outputQueue.put(new MzmlBlock(block.getPrecursors(), deconvolutedStripes));
