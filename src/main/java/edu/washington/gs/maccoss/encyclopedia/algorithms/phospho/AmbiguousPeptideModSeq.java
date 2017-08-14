@@ -1,12 +1,17 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
 
 public class AmbiguousPeptideModSeq {
@@ -185,15 +190,21 @@ public class AmbiguousPeptideModSeq {
 		}
 		return sb1.toString()+"\n"+sb2.toString()+"\n"+sb3.toString()+"\n"+sb4.toString();
 	}
-	
+
+	public String getNonDirectionalPeptideAnnotation() {
+		return getPeptideAnnotation((byte)0);
+	}
 	public String getPeptideAnnotation() {
+		return getPeptideAnnotation(ambiguityDirection);
+	}
+	public String getPeptideAnnotation(byte direction) {
 		StringBuilder sb=new StringBuilder();
 		
 		int lastModGroup=-1;
 		for (int i=0; i<aas.length; i++) {
 			if (modifiable[i]) {
 				if (modificationGroup[i]!=lastModGroup&&modificationGroup[i]!=0) {
-					if (ambiguityDirection==-1) {
+					if (direction==-1) {
 						sb.append("<");
 					} else {
 						sb.append("(");
@@ -208,7 +219,7 @@ public class AmbiguousPeptideModSeq {
 					}
 				}
 				if (endOfGroup) {
-					if (ambiguityDirection==1) {
+					if (direction==1) {
 						sb.append(">");
 					} else {
 						sb.append(")");
@@ -220,6 +231,88 @@ public class AmbiguousPeptideModSeq {
 		}
 
 		return sb.toString();
+	}
+	
+	public static AmbiguousPeptideModSeq getAmbiguousPeptideModSeq(String peptideAnnotation, PeptideModification mod) {
+
+		//String[] aas;
+		//byte ambiguityDirection; // left is -1, right is 1, no direction is 0
+		
+		char[] ca=peptideAnnotation.toCharArray();
+		
+		ArrayList<String> aas=new ArrayList<String>();
+		ArrayList<Boolean> isModified=new ArrayList<>();
+		ArrayList<Boolean> modifiable=new ArrayList<>();
+		TIntArrayList modificationGroup=new TIntArrayList();
+		
+		boolean inGroup=false;
+		int groupNumber=0;
+		byte ambiguityDirection=0;
+		
+		for (int i = 0; i < ca.length; i++) {
+			if (ca[i]=='<'||ca[i]=='(') {
+				// opening ambiguity
+				groupNumber++;
+				inGroup=true;
+				ambiguityDirection=(ca[i]=='<')?(byte)-1:(byte)1;
+				
+			} else if (ca[i]=='>'||ca[i]==')') {
+				// closing ambiguity
+				inGroup=false;
+				
+			} else if (ca[i]=='[') {
+				StringBuilder sb=new StringBuilder();
+				i++;
+				while (ca[i]!=']') {
+					sb.append(ca[i]);
+					i++;
+				}
+				if (aas.size()==0) {
+					// pulls first amino acid in
+					// this handling of n-termini mods assumes you can't have multiple []s in a row
+					i++;
+					aas.add(Character.toString(ca[i]));
+				}
+				String massText = sb.toString();
+				double modificationMass = Double.valueOf(massText);
+				String aaString=aas.get(aas.size()-1);
+				char aaChar=aaString.charAt(0);
+				modificationMass=MassConstants.getAccurateModificationMass(aaChar, modificationMass);
+
+				// adjust last
+				aas.set(aas.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
+				modificationGroup.removeAt(modificationGroup.size()-1);
+				isModified.remove(isModified.size()-1);
+				modifiable.remove(modifiable.size()-1);
+				
+				// add new
+				isModified.add(mod.isModificationMass(aaChar, modificationMass));
+				modifiable.add(mod.isModifiable(aaChar));
+				if (inGroup) {
+					modificationGroup.add(groupNumber);
+				} else {
+					modificationGroup.add(0);
+				}
+				
+			} else {
+				aas.add(Character.toString(ca[i]));
+				isModified.add(false);
+				modifiable.add(mod.isModifiable(ca[i]));
+				if (inGroup) {
+					modificationGroup.add(groupNumber);
+				} else {
+					modificationGroup.add(0);
+				}
+				
+			}
+		}
+		
+		String[] aaArray=aas.toArray(new String[aas.size()]);
+		boolean[] isModifiedArray=ArrayUtils.toPrimitive(isModified.toArray(new Boolean[isModified.size()]));
+		boolean[] isModifiableArray=ArrayUtils.toPrimitive(modifiable.toArray(new Boolean[modifiable.size()]));
+		int[] modificationGroupArray=modificationGroup.toArray();
+		
+		return new AmbiguousPeptideModSeq(aaArray, isModifiableArray, isModifiedArray, modificationGroupArray, ambiguityDirection);
 	}
 	
 	public static AmbiguousPeptideModSeq getFullyAmbiguous(String targetPeptide, PeptideModification modification, AminoAcidConstants aaConstants) {
@@ -350,16 +443,16 @@ public class AmbiguousPeptideModSeq {
 		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup, (byte)1);
 	}
 
-	public static boolean isLocalized(AmbiguousPeptideModSeq targetPeptideName, PeptideModification modification) {
-		return isLocalized(targetPeptideName.getPeptideAnnotation(), modification);
+	public static boolean isSiteSpecific(AmbiguousPeptideModSeq targetPeptideName, PeptideModification modification) {
+		return isSiteSpecific(targetPeptideName.getPeptideAnnotation(), modification);
 	}
 
-	public static boolean isLocalizedAtEnd(AmbiguousPeptideModSeq targetPeptideName, PeptideModification modification) {
-		return isLocalizedAtEnd(targetPeptideName.getPeptideAnnotation(), modification);
+	public static boolean isSiteSpecificAtEnd(AmbiguousPeptideModSeq targetPeptideName, PeptideModification modification) {
+		return isSiteSpecificAtEnd(targetPeptideName.getPeptideAnnotation(), modification);
 	}
 	
-	public static boolean isLocalizedAtEnd(String targetPeptideName, PeptideModification modification) {
-		if (!isLocalized(targetPeptideName, modification)) {
+	public static boolean isSiteSpecificAtEnd(String targetPeptideName, PeptideModification modification) {
+		if (!isSiteSpecific(targetPeptideName, modification)) {
 			return false;
 		}
 
@@ -411,8 +504,29 @@ public class AmbiguousPeptideModSeq {
 		// can't determine direction!
 		return false;
 	}
+
+	public static boolean isCompletelyAmbiguous(AmbiguousPeptideModSeq targetPeptideName, PeptideModification modification) {
+		return isCompletelyAmbiguous(targetPeptideName.getPeptideAnnotation(), modification);
+	}
 	
-	public static boolean isLocalized(String targetPeptideName, PeptideModification modification) {
+	public static boolean isCompletelyAmbiguous(String targetPeptideName, PeptideModification modification) {
+		char[] ca=targetPeptideName.toCharArray();
+
+		StringBuilder sb=new StringBuilder();
+		for (int i = 0; i < ca.length; i++) {
+			if (ca[i]=='('||ca[i]=='<') {
+				i++;
+				while (ca[i]!=')'&&ca[i]!='>') {
+					i++;
+				}
+			} else {
+				sb.append(ca[i]);
+			}
+		}
+		return getNumberOfSTYs(sb.toString(), modification.getModifiableAAs())==0;
+	}
+	
+	public static boolean isSiteSpecific(String targetPeptideName, PeptideModification modification) {
 		char[] ca=targetPeptideName.toCharArray();
 
 		for (int i = 0; i < ca.length; i++) {

@@ -114,7 +114,7 @@ public class MassTolerance implements Comparable<MassTolerance> {
 	 * @return
 	 */
 	public int compareTo(double m1, double m2) {
-		double tolerance=amuTolerance!=UNUSED_TOLERANCE?amuTolerance:Math.max(m1, m2)*percent;
+		double tolerance=amuTolerance!=UNUSED_TOLERANCE?amuTolerance:Math.max(Math.abs(m1), Math.abs(m2))*percent;
 		if (m1+tolerance<m2) return -1;
 		if (m1-tolerance>m2) return 1;
 		return 0;

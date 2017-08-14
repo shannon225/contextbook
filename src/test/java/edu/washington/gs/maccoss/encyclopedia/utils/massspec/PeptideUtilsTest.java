@@ -89,6 +89,18 @@ public class PeptideUtilsTest extends TestCase {
 		assertEquals("Q[-17.0]QRHS[+79.96633]DSC[+57.0]C[+57.0]SLEEK", peptideModSeq);
 	}
 	
+	public void testGetCorrectedMasses() {
+		String sequence="A[+42.0]QRHS[+79.96633]DSCCSLEEK";
+		assertEquals("A[+42.010565]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
+		sequence="A[+42.0]QRHS[+80.0]DSCCSLEEK";
+		assertEquals("A[+42.010565]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
+		sequence="Q[-17]QRHS[+80.0]DSCCSLEEK";
+		assertEquals("Q[-17.026549]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
+		sequence="Q[-17.026549]QRHS[+79.96633]DSCCSLEEK";
+		assertEquals("Q[-17.026549]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
+		
+	}
+	
 	public void testGetMasses() {
 		String sequence="PEPTIDER";
 		double[] expected=new double[] {97.0528, 129.0426, 97.0528, 101.0477, 113.0841, 115.027, 129.0426, 156.1011};

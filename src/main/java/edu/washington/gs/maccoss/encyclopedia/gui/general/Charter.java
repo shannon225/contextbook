@@ -484,7 +484,7 @@ public class Charter {
 					
 					for (int i=0; i<x.length; i++) {
 						if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
-							XYSeries peakSeries=new XYSeries(x[i]);
+							XYSeries peakSeries=new XYSeries(i);
 							peakSeries.add(x[i], 0);
 							peakSeries.add(x[i], y[i]);
 							dataset.addSeries(peakSeries);

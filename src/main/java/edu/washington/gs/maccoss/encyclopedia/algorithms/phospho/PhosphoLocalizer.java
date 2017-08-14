@@ -354,14 +354,15 @@ public class PhosphoLocalizer {
 			uniqueTargetFragments.put(peptideAnnotation, targets);
 			uniqueIdentifiedTargetFragments.put(peptideAnnotation, identifiedTargets.toArray(new FragmentIon[identifiedTargets.size()]));
 
-			if (maxRawScore>=minimumScore||maxRawScore>bestScore) {
+			boolean isLocalized = maxRawScore>=minimumScore;
+			if (isLocalized||maxRawScore>bestScore) {
 				if (bestScore<maxRawScore) {
 					bestScore=maxRawScore;
 				}
-				boolean isLocalized=maxRawScore>=minimumScore&&AmbiguousPeptideModSeq.isLocalized(targetPeptideAnnotation, modification);
-				System.out.println("A) "+targetPeptideAnnotation.getPeptideAnnotation()+" --> "+maxRawScore+"\t"+isLocalized+"\t"+bestRT);
+				boolean isSiteSpecific=isLocalized&&AmbiguousPeptideModSeq.isSiteSpecific(targetPeptideAnnotation, modification);
+				System.out.println("A) "+targetPeptideAnnotation.getPeptideAnnotation()+" --> "+maxRawScore+"\t"+isSiteSpecific+"\t"+bestRT);
 				
-				if (!AmbiguousPeptideModSeq.isLocalizedAtEnd(targetPeptideAnnotation, modification)) {
+				if (!AmbiguousPeptideModSeq.isSiteSpecificAtEnd(targetPeptideAnnotation, modification)) {
 					// need to check RTs
 					boolean skip=false;
 					for (int i=0; i<previouslyIdentifiedRTsInSec.size(); i++) {
@@ -430,7 +431,7 @@ public class PhosphoLocalizer {
 					bestRT=quantData.getApexRT();
 					formsRT.add(bestRT);
 
-					ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideAnnotation, bestRT, maxRawScore, numberOfMods, isLocalized, wellShapedIons.toArray(new FragmentIon[wellShapedIons.size()]), localizationIntensity, totalIntensity);
+					ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideAnnotation, bestRT, maxRawScore, numberOfMods, isSiteSpecific, isLocalized, wellShapedIons.toArray(new FragmentIon[wellShapedIons.size()]), localizationIntensity, totalIntensity);
 
 					quantData.setModificationLocalizationData(Optional.of(modData));
 					

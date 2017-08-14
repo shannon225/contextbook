@@ -74,7 +74,7 @@ public enum IonType {
 	
 	public static IonType fromString(String s) {
 		if("a".equals(s)) return a;
-		if("b".equals(s)) return a;
+		if("b".equals(s)) return b;
 		if("c".equals(s)) return c;
 		if("x".equals(s)) return x;
 		if("y".equals(s)) return y;

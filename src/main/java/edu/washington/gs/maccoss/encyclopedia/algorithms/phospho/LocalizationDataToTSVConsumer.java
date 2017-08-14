@@ -13,7 +13,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -23,6 +22,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 
 public class LocalizationDataToTSVConsumer implements Runnable {
 	private final OS os=OSDetector.getOS();
@@ -46,11 +46,11 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 	public static HashMap<String, ModificationLocalizationData> readLocalizationFile(File f, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters parameters) {
 		HashSet<String> passingPeptideModSeqs=new HashSet<>();
 		for (PercolatorPeptide peptide : passingPeptides) {
-			passingPeptideModSeqs.add(peptide.getPeptideModSeq());
+			String peptideModSeq = PeptideUtils.getCorrectedMasses(peptide.getPeptideModSeq());
+			passingPeptideModSeqs.add(peptideModSeq);
 		}
 
 		final PeptideModification modification=parameters.getLocalizingModification().get();
-		final AminoAcidConstants aaConstants=parameters.getAAConstants();
 		final HashMap<String, ModificationLocalizationData> result=new HashMap<String, ModificationLocalizationData>();
 		TableParserMuscle muscle=new TableParserMuscle() {
 			@Override
@@ -59,11 +59,16 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 				if (passingPeptideModSeqs.contains(peptideModSeq)) {
 					float localizationScore=Float.parseFloat(row.get("localizationScore"));
 					boolean isSiteSpecific=Boolean.parseBoolean(row.get("isSiteSpecific"));
+					boolean isLocalized=Boolean.parseBoolean(row.get("isLocalized"));
 					ModificationLocalizationData prev=result.get(peptideModSeq);
 					
-					if (prev==null||((isSiteSpecific||!prev.isSiteSpecific())&&prev.getLocalizationScore()<localizationScore)) {
+					boolean moreSiteSpecific = prev==null||(isSiteSpecific&&!prev.isSiteSpecific());
+					boolean notLessSiteSpecific = prev!=null&&(isSiteSpecific||(!prev.isSiteSpecific()));
+					boolean higherScoring = prev==null||(notLessSiteSpecific&&prev.getLocalizationScore()<localizationScore);
+					
+					if (moreSiteSpecific||higherScoring) {
 						try {
-							AmbiguousPeptideModSeq localizationPeptideModSeq=AmbiguousPeptideModSeq.getUnambigous(peptideModSeq, modification, aaConstants);
+							AmbiguousPeptideModSeq localizationPeptideModSeq=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq(peptideModSeq, modification);
 							float retentionTimeApexInSeconds=Float.parseFloat(row.get("retentionTimeApexInSeconds"));
 							int numberOfMods=Integer.parseInt(row.get("numberOfMods"));
 							FragmentIon[] localizingIons;
@@ -76,7 +81,7 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 							float localizingIntensity=Float.parseFloat(row.get("localizingIntensity"));
 							float totalIntensity=Float.parseFloat(row.get("totalIntensity"));
 							
-							ModificationLocalizationData data=new ModificationLocalizationData(localizationPeptideModSeq, retentionTimeApexInSeconds, localizationScore, numberOfMods, isSiteSpecific, localizingIons, localizingIntensity, totalIntensity);
+							ModificationLocalizationData data=new ModificationLocalizationData(localizationPeptideModSeq, retentionTimeApexInSeconds, localizationScore, numberOfMods, isSiteSpecific, isLocalized, localizingIons, localizingIntensity, totalIntensity);
 							result.put(peptideModSeq, data);
 						} catch (Exception e) {
 							Logger.errorLine("Error parsing localization data for "+peptideModSeq+", skipping this peptide! ("+e.getMessage()+")");
@@ -126,7 +131,7 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 				numberProcessed++;
 				
 				if (!printedHeader) {
-					writer.print("peptideModSeq\tlocalizationPeptideModSeq\tretentionTimeApexInSeconds\tlocalizationScore\tnumberOfMods\tisSiteSpecific\tlocalizingIons\tlocalizingIntensity\ttotalIntensity");
+					writer.print("peptideModSeq\tlocalizationPeptideModSeq\tretentionTimeApexInSeconds\tlocalizationScore\tnumberOfMods\tisSiteSpecific\tisLocalized\tlocalizingIons\tlocalizingIntensity\ttotalIntensity");
 					// Percolator assumes linux line endings on Mac!
 					switch (os) {
 						case MAC:
@@ -145,6 +150,7 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 				writer.print("\t"+result.getLocalizationScore());
 				writer.print("\t"+result.getNumberOfMods());
 				writer.print("\t"+result.isSiteSpecific());
+				writer.print("\t"+result.isLocalized());
 				writer.print("\t"+FragmentIon.toArchiveString(result.getLocalizingIons()));
 				writer.print("\t"+result.getLocalizingIntensity());
 				writer.print("\t"+result.getTotalIntensity());

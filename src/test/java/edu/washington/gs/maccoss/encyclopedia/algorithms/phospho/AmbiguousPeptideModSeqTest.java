@@ -22,6 +22,24 @@ public class AmbiguousPeptideModSeqTest extends TestCase {
 		
 	}
 	
+	public void testRetrieval() {
+		String annotationString="KG<S[+79.966331])GDYMPMSPK";
+		AmbiguousPeptideModSeq target=AmbiguousPeptideModSeq.getLeftAmbiguity("KGS[+79.966331]GDYMPMSPK", PeptideModification.phosphorylation, PARAMETERS.getAAConstants());
+		assertEquals(annotationString, target.getPeptideAnnotation());
+		
+		assertRetrieval(annotationString);
+		assertRetrieval("KG<S[+79.966331]GDY)MPMSPK");
+		assertRetrieval("KG(S[+79.966331]GDY>MPMSPK");
+		assertRetrieval("KG(SGDY[+79.966331]>MPMSPK");
+		assertRetrieval("KGSGDYMPM(S[+79.966331]>PK");
+	}
+
+	private void assertRetrieval(String annotationString) {
+		AmbiguousPeptideModSeq seq=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq(annotationString, PeptideModification.phosphorylation);
+		assertEquals(annotationString, seq.getPeptideAnnotation());
+	}
+
+	
 	public void testRemoveMore() {
 		String peptideModSeq="KGS[+79.966331]GDYMPMSPK";
 		AmbiguousPeptideModSeq right=AmbiguousPeptideModSeq.getRightAmbiguity(peptideModSeq, PeptideModification.phosphorylation,PARAMETERS.getAAConstants());
@@ -127,23 +145,38 @@ public class AmbiguousPeptideModSeqTest extends TestCase {
 	
 	public void testIsLocalized() {
 		String s="(S[+80.0])SSSR";
-		assertTrue(AmbiguousPeptideModSeq.isLocalized(s, PeptideModification.phosphorylation));
+		assertTrue(AmbiguousPeptideModSeq.isSiteSpecific(s, PeptideModification.phosphorylation));
 		s="(S[+80.0]S)SSR";
-		assertFalse(AmbiguousPeptideModSeq.isLocalized(s, PeptideModification.phosphorylation));
+		assertFalse(AmbiguousPeptideModSeq.isSiteSpecific(s, PeptideModification.phosphorylation));
 		s="(S[+80.0]S[+80.0])SSR";
-		assertTrue(AmbiguousPeptideModSeq.isLocalized(s, PeptideModification.phosphorylation));
+		assertTrue(AmbiguousPeptideModSeq.isSiteSpecific(s, PeptideModification.phosphorylation));
 		s="(S[+80.0]S[+80.0]S)SR";
-		assertFalse(AmbiguousPeptideModSeq.isLocalized(s, PeptideModification.phosphorylation));
+		assertFalse(AmbiguousPeptideModSeq.isSiteSpecific(s, PeptideModification.phosphorylation));
 		s="(S[+80.0])SS(S[+80.0])R";
-		assertTrue(AmbiguousPeptideModSeq.isLocalized(s, PeptideModification.phosphorylation));
+		assertTrue(AmbiguousPeptideModSeq.isSiteSpecific(s, PeptideModification.phosphorylation));
 		s="(S[+80.0])S(SS[+80.0])R";
-		assertFalse(AmbiguousPeptideModSeq.isLocalized(s, PeptideModification.phosphorylation));
+		assertFalse(AmbiguousPeptideModSeq.isSiteSpecific(s, PeptideModification.phosphorylation));
+	}
+	
+	public void testIsCompletelyAmbiguous() {
+		String s="(S[+80.0])SSSR";
+		assertFalse(AmbiguousPeptideModSeq.isCompletelyAmbiguous(s, PeptideModification.phosphorylation));
+		s="(S[+80.0]SSS)R";
+		assertTrue(AmbiguousPeptideModSeq.isCompletelyAmbiguous(s, PeptideModification.phosphorylation));
+		s="(S[+80.0]S[+80.0])SSR";
+		assertFalse(AmbiguousPeptideModSeq.isCompletelyAmbiguous(s, PeptideModification.phosphorylation));
+		s="(S[+80.0]S[+80.0]S)SR";
+		assertFalse(AmbiguousPeptideModSeq.isCompletelyAmbiguous(s, PeptideModification.phosphorylation));
+		s="(S[+80.0]SSS[+80.0])R";
+		assertTrue(AmbiguousPeptideModSeq.isCompletelyAmbiguous(s, PeptideModification.phosphorylation));
+		s="(S[+80.0])S(SS[+80.0])R";
+		assertFalse(AmbiguousPeptideModSeq.isCompletelyAmbiguous(s, PeptideModification.phosphorylation));
 	}
 	
 	public void testIsLocalizedAtEnd() {
-		assertTrue(AmbiguousPeptideModSeq.isLocalizedAtEnd("<S[+80.0])SSSR", PeptideModification.phosphorylation));
-		assertTrue(AmbiguousPeptideModSeq.isLocalizedAtEnd("SSS(S[+80.0]>R", PeptideModification.phosphorylation));
-		assertFalse(AmbiguousPeptideModSeq.isLocalizedAtEnd("(S[+80.0]>SSSR", PeptideModification.phosphorylation));
-		assertFalse(AmbiguousPeptideModSeq.isLocalizedAtEnd("SSS<S[+80.0])R", PeptideModification.phosphorylation));
+		assertTrue(AmbiguousPeptideModSeq.isSiteSpecificAtEnd("<S[+80.0])SSSR", PeptideModification.phosphorylation));
+		assertTrue(AmbiguousPeptideModSeq.isSiteSpecificAtEnd("SSS(S[+80.0]>R", PeptideModification.phosphorylation));
+		assertFalse(AmbiguousPeptideModSeq.isSiteSpecificAtEnd("(S[+80.0]>SSSR", PeptideModification.phosphorylation));
+		assertFalse(AmbiguousPeptideModSeq.isSiteSpecificAtEnd("SSS<S[+80.0])R", PeptideModification.phosphorylation));
 	}
 }

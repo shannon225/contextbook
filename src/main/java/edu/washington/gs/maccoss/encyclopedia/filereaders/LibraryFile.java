@@ -25,10 +25,14 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementDat
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Chromatogram;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LocalizedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
@@ -43,6 +47,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
 
@@ -436,10 +441,10 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				numStatements++;
 			}
 		}
-		StringBuilder peptidePrepString=new StringBuilder("INSERT INTO peptidelocalizations (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, LocalizationIons, NumberOfMods, NumberOfModifiableResidues, IsSiteSpecific, RTInSecondsCenter, LocalizedIntensity, TotalIntensity)");
-		peptidePrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+		StringBuilder peptidePrepString=new StringBuilder("INSERT INTO peptidelocalizations (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, LocalizationIons, NumberOfMods, NumberOfModifiableResidues, IsSiteSpecific, IsLocalized, RTInSecondsCenter, LocalizedIntensity, TotalIntensity)");
+		peptidePrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 		for (int i=1; i<numStatements; i++) {
-			peptidePrepString.append(", (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+			peptidePrepString.append(", (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 		}		
 		
 		PreparedStatement peptidePrep=c.prepareStatement(peptidePrepString.toString());
@@ -475,6 +480,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			peptidePrep.setInt(index++, modData.getNumberOfMods());
 			peptidePrep.setInt(index++, modData.getLocalizationPeptideModSeq().getNumModifiableSites());
 			peptidePrep.setBoolean(index++, modData.isSiteSpecific());
+			peptidePrep.setBoolean(index++, modData.isLocalized());
 			peptidePrep.setFloat(index++,  modData.getRetentionTimeApexInSeconds());
 			peptidePrep.setFloat(index++,  modData.getLocalizingIntensity());
 			peptidePrep.setFloat(index++,  modData.getTotalIntensity());
@@ -843,7 +849,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 			double precursorMZ=rs.getDouble(1);
 			byte precursorCharge=(byte)rs.getInt(2);
-			peptideModSeq=rs.getString(3);
+			peptideModSeq=PeptideUtils.getCorrectedMasses(rs.getString(3));
 			int copies=rs.getInt(4);
 			float retentionTime=rs.getFloat(5);
 			float score=rs.getFloat(6);
@@ -970,7 +976,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					double precursorMZ=rs.getDouble(1);
 					byte precursorCharge=(byte)rs.getInt(2);
-					String peptideModSeq=rs.getString(3);
+					String peptideModSeq=PeptideUtils.getCorrectedMasses(rs.getString(3));
 					int copies=rs.getInt(4);
 					float retentionTime=rs.getFloat(5);
 					float score=rs.getFloat(6);
@@ -1054,7 +1060,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					double precursorMZ=rs.getDouble(1);
 					byte precursorCharge=(byte)rs.getInt(2);
-					String peptideModSeq=rs.getString(3);
+					String peptideModSeq=PeptideUtils.getCorrectedMasses(rs.getString(3));
 					int copies=rs.getInt(4);
 					float retentionTime=rs.getFloat(5);
 					float score=rs.getFloat(6);
@@ -1093,6 +1099,109 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					} else {
 						entry.add(new ChromatogramLibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray,
 								correlationArray, medianChromatogramArray, new Range(rtInSecondsStart, rtInSecondsStop)));
+					}
+				}
+
+				return entry;
+			}
+		}
+	}
+
+	public ArrayList<LocalizedLibraryEntry> getAllLocalizedEntries(float minimumLocalizationScore, PeptideModification mod, boolean sqrt) throws IOException, SQLException, DataFormatException {
+		try (Connection c = getConnection()) {
+			String sql = "select " +
+					"e.PrecursorMZ, " +
+					"e.PrecursorCharge, " +
+					"e.PeptideModSeq, " +
+					"e.Copies, " +
+					"l.RTInSecondsCenter, " +
+					"e.Score, " +
+					"e.MassEncodedLength, " +
+					"e.MassArray, " +
+					"e.IntensityEncodedLength, " +
+					"e.IntensityArray, " +
+					"e.CorrelationEncodedLength, " +
+					"e.CorrelationArray blob, " +
+					"e.RTInSecondsStart, " +
+					"e.RTInSecondsStop, " +
+					"e.MedianChromatogramEncodedLength, " +
+					"e.MedianChromatogramArray, " +
+					"group_concat(p.ProteinAccession, '" + PSMData.ACCESSION_TOKEN + "') ProteinAccessions, " +
+					"e.SourceFile, " +
+					"l.LocalizationPeptideModSeq, " +
+					"l.LocalizationScore, " +
+					"l.LocalizationIons, " +
+					"l.NumberOfMods, " +
+					"l.NumberOfModifiableResidues, " +
+					"l.isSiteSpecific "+
+					"from " +
+					"peptidelocalizations l, " +
+					"entries e " +
+					"left join peptidetoprotein p " +
+					"where " +
+					"l.isLocalized=1 and "+
+					"l.LocalizationScore>="+minimumLocalizationScore+" and " +
+					"e.PeptideModSeq=l.PeptideModSeq and " +
+					"e.PrecursorCharge=l.PrecursorCharge and " +
+					"e.SourceFile=l.SourceFile and " +
+					"e.PeptideSeq=p.PeptideSeq " +
+					"group by e.rowid";
+			try (PreparedStatement s = c.prepareStatement(
+					sql
+			)) {
+				ResultSet rs = s.executeQuery();
+
+				ArrayList<LocalizedLibraryEntry> entry=new ArrayList<LocalizedLibraryEntry>();
+				while (rs.next()) {
+
+					double precursorMZ=rs.getDouble(1);
+					byte precursorCharge=(byte)rs.getInt(2);
+					String peptideModSeq=PeptideUtils.getCorrectedMasses(rs.getString(3));
+
+					int copies=rs.getInt(4);
+					float retentionTime=rs.getFloat(5);
+					float score=rs.getFloat(6);
+					int massEncodedLength=rs.getInt(7);
+					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), massEncodedLength));
+					int intensityEncodedLength=rs.getInt(9);
+					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(10), intensityEncodedLength));
+					if (sqrt) {
+						intensityArray=General.protectedSqrt(intensityArray);
+					}
+
+					float[] correlationArray;
+					float rtInSecondsStart;
+					float rtInSecondsStop;
+					float[] medianChromatogramArray;
+
+					int correlationEncodedLength=rs.getInt(11);
+					if (correlationEncodedLength==0) {
+						// 0 indicates null, which indicates missing
+						correlationArray=null;
+						rtInSecondsStart=0.0f;
+						rtInSecondsStop=0.0f;
+						medianChromatogramArray=null;
+					} else {
+						correlationArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(12), correlationEncodedLength));
+						rtInSecondsStart=rs.getFloat(13);
+						rtInSecondsStop=rs.getFloat(14);
+						int medianChromatogramEncodedLength=rs.getInt(15);
+						medianChromatogramArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(16), medianChromatogramEncodedLength));
+					}
+
+					HashSet<String> accessions=PSMData.stringToAccessions(rs.getString(17));
+					String sourceFile=rs.getString(18);
+
+					AmbiguousPeptideModSeq peptideAnnotation=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq(rs.getString(19), mod);
+					float localizationScore=rs.getFloat(20);
+					FragmentIon[] localizationIons=FragmentIon.fromArchiveString(rs.getString(21));
+					int numberOfMods=rs.getInt(22);
+					int numberOfModifiableResidues=rs.getInt(23);
+					boolean isSiteSpecific=rs.getBoolean(24);
+					
+					if (correlationEncodedLength!=0) {
+						entry.add(new LocalizedLibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray,
+								correlationArray, medianChromatogramArray, new Range(rtInSecondsStart, rtInSecondsStop), peptideAnnotation, localizationScore, localizationIons, numberOfModifiableResidues, numberOfMods, isSiteSpecific));
 					}
 				}
 
@@ -1224,7 +1333,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq, SourceFile) )");
 
 				s.execute("CREATE TABLE IF NOT EXISTS peptidelocalizations ( "
-						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, LocalizationIons string, NumberOfMods int, NumberOfModifiableResidues int, IsSiteSpecific boolean, RTInSecondsCenter double, LocalizedIntensity double, TotalIntensity double "
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, LocalizationIons string, NumberOfMods int, NumberOfModifiableResidues int, IsSiteSpecific boolean, IsLocalized boolean, RTInSecondsCenter double, LocalizedIntensity double, TotalIntensity double "
 						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq, SourceFile) )");
 
 				s.execute("CREATE TABLE IF NOT EXISTS fragmentquants ( "

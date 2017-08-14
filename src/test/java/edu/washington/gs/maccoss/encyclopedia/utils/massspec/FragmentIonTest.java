@@ -15,6 +15,7 @@ public class FragmentIonTest extends TestCase {
 		String s=FragmentIon.toArchiveString(ions);
 		
 		FragmentIon[] extracted=FragmentIon.fromArchiveString(s);
+		assertEquals(ions.length, extracted.length);
 		for (int i=0; i<extracted.length; i++) {
 			assertEquals(ions[i], extracted[i]);
 		}
