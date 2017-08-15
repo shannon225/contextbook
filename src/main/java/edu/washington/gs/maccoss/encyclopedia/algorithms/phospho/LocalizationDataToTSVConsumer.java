@@ -67,6 +67,7 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 					boolean moreSiteSpecific = prev==null||(isSiteSpecific&&!prev.isSiteSpecific());
 					boolean notLessSiteSpecific = prev==null||localizationPeptideModSeq.getAmbiguityValue()>=prev.getLocalizationPeptideModSeq().getAmbiguityValue();
 					boolean higherScoring = prev==null||(notLessSiteSpecific&&prev.getLocalizationScore()<localizationScore);
+					boolean isCompletelyAmbiguous=AmbiguousPeptideModSeq.isCompletelyAmbiguous(localizationPeptideModSeq, modification);
 					
 					if (moreSiteSpecific||higherScoring) {
 						try {
@@ -81,7 +82,7 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 							}
 							float localizingIntensity=Float.parseFloat(row.get("localizingIntensity"));
 							float totalIntensity=Float.parseFloat(row.get("totalIntensity"));
-							ModificationLocalizationData data=new ModificationLocalizationData(localizationPeptideModSeq, retentionTimeApexInSeconds, localizationScore, numberOfMods, isSiteSpecific, isLocalized, localizingIons, localizingIntensity, totalIntensity);
+							ModificationLocalizationData data=new ModificationLocalizationData(localizationPeptideModSeq, retentionTimeApexInSeconds, localizationScore, numberOfMods, isSiteSpecific, isLocalized, isCompletelyAmbiguous, localizingIons, localizingIntensity, totalIntensity);
 							result.put(peptideModSeq, data);
 						} catch (Exception e) {
 							Logger.errorLine("Error parsing localization data for "+peptideModSeq+", skipping this peptide! ("+e.getMessage()+")");

@@ -355,6 +355,7 @@ public class PhosphoLocalizer {
 			uniqueIdentifiedTargetFragments.put(peptideAnnotation, identifiedTargets.toArray(new FragmentIon[identifiedTargets.size()]));
 
 			boolean isLocalized = maxRawScore>=minimumScore;
+			
 			if (isLocalized||maxRawScore>bestScore) {
 				if (bestScore<maxRawScore) {
 					bestScore=maxRawScore;
@@ -431,7 +432,8 @@ public class PhosphoLocalizer {
 					bestRT=quantData.getApexRT();
 					formsRT.add(bestRT);
 
-					ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideAnnotation, bestRT, maxRawScore, numberOfMods, isSiteSpecific, isLocalized, wellShapedIons.toArray(new FragmentIon[wellShapedIons.size()]), localizationIntensity, totalIntensity);
+					boolean isCompletelyAmbiguous=AmbiguousPeptideModSeq.isCompletelyAmbiguous(targetPeptideAnnotation, modification);
+					ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideAnnotation, bestRT, maxRawScore, numberOfMods, isSiteSpecific, isLocalized, isCompletelyAmbiguous, wellShapedIons.toArray(new FragmentIon[wellShapedIons.size()]), localizationIntensity, totalIntensity);
 
 					quantData.setModificationLocalizationData(Optional.of(modData));
 					

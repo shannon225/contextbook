@@ -4,7 +4,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptid
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 
 public class ModificationLocalizationData {
-	public static final ModificationLocalizationData POISON_RESULT=new ModificationLocalizationData(null, 0.0f, 0.0f, 0, false, false, null, 0.0f, 0.0f);
+	public static final ModificationLocalizationData POISON_RESULT=new ModificationLocalizationData(null, 0.0f, 0.0f, 0, false, false, false, null, 0.0f, 0.0f);
 	
 	private final AmbiguousPeptideModSeq localizationPeptideModSeq;
 	private final float retentionTimeApexInSeconds;
@@ -16,14 +16,22 @@ public class ModificationLocalizationData {
 	private final float localizingIntensity;
 	private final float totalIntensity;
 
-	public ModificationLocalizationData(AmbiguousPeptideModSeq localizationPeptideModSeq, float retentionTimeApexInSeconds, float localizationScore, int numberOfMods, boolean isSiteSpecific, boolean isLocalized,
+	public ModificationLocalizationData(AmbiguousPeptideModSeq localizationPeptideModSeq, float retentionTimeApexInSeconds, float localizationScore, int numberOfMods, boolean isSiteSpecific, boolean isLocalized, boolean isCompletelyAmbiguous,
 			FragmentIon[] localizingIons, float localizingIntensity, float totalIntensity) {
 		this.localizationPeptideModSeq=localizationPeptideModSeq;
 		this.retentionTimeApexInSeconds=retentionTimeApexInSeconds;
 		this.localizationScore=localizationScore;
 		this.numberOfMods=numberOfMods;
-		this.isSiteSpecific=isSiteSpecific;
-		this.isLocalized=isLocalized;
+		if (this.localizationPeptideModSeq!=null&&this.localizationPeptideModSeq.getNumModifiableSites()==this.numberOfMods) {
+			this.isSiteSpecific=true;
+			this.isLocalized=true;
+		} else if (isCompletelyAmbiguous) {
+			this.isSiteSpecific=false;
+			this.isLocalized=false;
+		} else {
+			this.isSiteSpecific=isSiteSpecific;
+			this.isLocalized=isLocalized;
+		}
 		this.localizingIons=localizingIons;
 		this.localizingIntensity=localizingIntensity;
 		this.totalIntensity=totalIntensity;
