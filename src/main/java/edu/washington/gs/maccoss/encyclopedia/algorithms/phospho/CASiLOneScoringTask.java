@@ -500,6 +500,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 
 		boolean isLocalized=false;
 		boolean isSiteSpecific=false;
+		boolean isCompletelyAmbiguous=false;
 		float localizationIntensity=0.0f;
 		float totalIntensity=0.0f;
 		int numIdentificationPeaks=0;
@@ -538,14 +539,15 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 							totalIntensity+=intensities[i];
 						}
 					}
-					isLocalized=wellShapedIons.size()>0&&numIdentificationPeaks>=targetNumFragments&&!AmbiguousPeptideModSeq.isCompletelyAmbiguous(peptideModSeq, localizer.getModification());
+					isCompletelyAmbiguous=AmbiguousPeptideModSeq.isCompletelyAmbiguous(peptideModSeq, localizer.getModification());
+					isLocalized=wellShapedIons.size()>0&&numIdentificationPeaks>=targetNumFragments&&!isCompletelyAmbiguous;
 					isSiteSpecific=isLocalized&&AmbiguousPeptideModSeq.isSiteSpecific(peptideModSeq, localizer.getModification());
 					//System.out.println("\tLocalized "+isSiteSpecific+" for "+peptideModSeq.getPeptideAnnotation()+" ("+bestLocalizationScore+" score, "+numIdentificationPeaks+"/"+correlations.length+" peaks)"); // FIXME
 				}
 			}
 		}
 		
-		ModificationLocalizationData modData=new ModificationLocalizationData(peptideModSeq, apex.getScanStartTime(), bestLocalizationScore, numberOfMods, isSiteSpecific, isLocalized, wellShapedIons.toArray(new FragmentIon[wellShapedIons.size()]), localizationIntensity, totalIntensity);
+		ModificationLocalizationData modData=new ModificationLocalizationData(peptideModSeq, apex.getScanStartTime(), bestLocalizationScore, numberOfMods, isSiteSpecific, isLocalized, isCompletelyAmbiguous, wellShapedIons.toArray(new FragmentIon[wellShapedIons.size()]), localizationIntensity, totalIntensity);
 		return new Triplet<ModificationLocalizationData, Stripe, Range>(modData, apex, peakRange);
 	}
 	
