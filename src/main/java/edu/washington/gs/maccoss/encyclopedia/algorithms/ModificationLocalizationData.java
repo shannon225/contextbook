@@ -4,7 +4,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptid
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 
 public class ModificationLocalizationData {
-	public static final ModificationLocalizationData POISON_RESULT=new ModificationLocalizationData(null, 0.0f, 0.0f, 0, false, false, false, null, 0.0f, 0.0f);
+	public static final ModificationLocalizationData POISON_RESULT=new ModificationLocalizationData();
 	
 	private final AmbiguousPeptideModSeq localizationPeptideModSeq;
 	private final float retentionTimeApexInSeconds;
@@ -16,6 +16,18 @@ public class ModificationLocalizationData {
 	private final float localizingIntensity;
 	private final float totalIntensity;
 
+	private ModificationLocalizationData() {
+		this.localizationPeptideModSeq=null;
+		this.retentionTimeApexInSeconds=0.0f;
+		this.localizationScore=0.0f;
+		this.numberOfMods=0;
+		this.isSiteSpecific=false;
+		this.isLocalized=false;
+		this.localizingIons=null;
+		this.localizingIntensity=0.0f;
+		this.totalIntensity=0.0f;
+	}
+	
 	public ModificationLocalizationData(AmbiguousPeptideModSeq localizationPeptideModSeq, float retentionTimeApexInSeconds, float localizationScore, int numberOfMods, boolean isSiteSpecific, boolean isLocalized, boolean isCompletelyAmbiguous,
 			FragmentIon[] localizingIons, float localizingIntensity, float totalIntensity) {
 		this.localizationPeptideModSeq=localizationPeptideModSeq;
@@ -25,7 +37,7 @@ public class ModificationLocalizationData {
 		if (this.localizationPeptideModSeq!=null&&this.localizationPeptideModSeq.getNumModifiableSites()==this.numberOfMods) {
 			this.isSiteSpecific=true;
 			this.isLocalized=true;
-		} else if (isCompletelyAmbiguous) {
+		} else if (isCompletelyAmbiguous||localizingIons.length==0) {
 			this.isSiteSpecific=false;
 			this.isLocalized=false;
 		} else {
