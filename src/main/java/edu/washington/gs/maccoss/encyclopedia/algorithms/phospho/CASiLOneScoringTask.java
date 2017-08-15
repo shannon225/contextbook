@@ -213,7 +213,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 									peptideModSeq=leftPeptide.x;
 									targetIons=leftPeptide.y;
 									locData=calculateLocalizationScoring(minimumScore, parameters, dutyCycle, localizer, localizedEntry, peptideModSeq, targetIons, allIons, takenIdentifiedIons, stripeSubset);
-								} else if (true) {
+								} else {
 									rightPeptide=getRightPeptide(precursorCharge, peptideModSeqs, entryMap, rightIndex, keepRight);
 									if (rightPeptide==null) break;
 									//System.out.println("Couldn't localize, expanding further right ("+rightIndex+")...");
@@ -221,8 +221,6 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 									peptideModSeq=rightPeptide.x;
 									targetIons=rightPeptide.y;
 									locData=calculateLocalizationScoring(minimumScore, parameters, dutyCycle, localizer, localizedEntry, peptideModSeq, targetIons, allIons, takenIdentifiedIons, stripeSubset);
-								} else {
-									break;
 								}
 							}
 							ModificationLocalizationData data=locData.x;
