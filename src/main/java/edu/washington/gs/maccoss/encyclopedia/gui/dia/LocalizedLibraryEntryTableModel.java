@@ -21,13 +21,15 @@ public class LocalizedLibraryEntryTableModel extends AbstractTableModel {
 		entries.clear();
 		TreeMap<String, ArrayList<LocalizedLibraryEntry>> entryMap=new TreeMap<>();
 		for (LocalizedLibraryEntry entry : newEntries) {
-			String key = entry.getPeptideSeq()+"+"+entry.getNumberOfModifications()+"m";
-			ArrayList<LocalizedLibraryEntry> list=entryMap.get(key);
-			if (list==null) {
-				list=new ArrayList<>();
-				entryMap.put(key, list);
+			if (entry.getNumberOfModifiableResidues()==1||entry.getLocalizationIons().length>0) {
+				String key = entry.getPeptideSeq()+"+"+entry.getNumberOfModifications()+"m";
+				ArrayList<LocalizedLibraryEntry> list=entryMap.get(key);
+				if (list==null) {
+					list=new ArrayList<>();
+					entryMap.put(key, list);
+				}
+				list.add(entry);
 			}
-			list.add(entry);
 		}
 		
 		for (Entry<String, ArrayList<LocalizedLibraryEntry>> entry : entryMap.entrySet()) {

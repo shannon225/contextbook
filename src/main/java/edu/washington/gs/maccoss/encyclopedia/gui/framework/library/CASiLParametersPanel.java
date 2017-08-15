@@ -99,7 +99,8 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 	private final JComboBox<ScoringBreadthType> searchBreadthType=new JComboBox<>(CASiL_SEARCH_TYPES);
 	private final JComboBox<PeptideModification> modificationType=new JComboBox<>(PeptideModification.MODIFICATIONS);
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
-	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
+	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(0, 0, 100, 1);
+	private final SpinnerModel percolatorThreshold=new SpinnerNumberModel(0.01, 0.001, 0.1, 0.001);
 
 	public CASiLParametersPanel() {
 		super(new BorderLayout());
@@ -127,8 +128,9 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 		options.add(new LabeledComponent("Fragment Mass Tolerance", fragmentTolerance));
 		options.add(new LabeledComponent("Library Mass Tolerance", libraryTolerance));
 		options.add(new LabeledComponent("Percolator Version", percolatorVersion));
-		options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
-		options.add(new LabeledComponent("Minimum Number of Quantitative Ions", new JSpinner(minNumOfQuantitativeIons)));
+		options.add(new LabeledComponent("Percolator FDR threshold", new JSpinner(percolatorThreshold)));
+		//options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
+		options.add(new LabeledComponent("Minimum Number of Well-Shaped Ions", new JSpinner(minNumOfQuantitativeIons)));
 		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
 
 		this.add(options, BorderLayout.CENTER);
@@ -218,8 +220,8 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
 		ScoringBreadthType CASiLSearchBreadthType=(ScoringBreadthType)searchBreadthType.getSelectedItem();
 		PeptideModification modification=(PeptideModification)modificationType.getSelectedItem();
-		float percolatorThreshold=0.01f;
-		CASiLSearchParameters parameters=new CASiLSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, percolatorThreshold, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, modification, CASiLSearchBreadthType, 0.0f);
+		float percolatorThresholdValue=((Number)percolatorThreshold.getValue()).floatValue();
+		CASiLSearchParameters parameters=new CASiLSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, percolatorThresholdValue, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, modification, CASiLSearchBreadthType, 0.0f);
 		return parameters;
 	}
 	
@@ -280,6 +282,7 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 		percolatorVersion.setSelectedIndex(params.getPercolatorVersionNumber()==2?1:0);
 		numberOfQuantitativeIons.setValue(params.getNumberOfQuantitativePeaks());
 		minNumOfQuantitativeIons.setValue(params.getMinNumOfQuantitativePeaks());
+		percolatorThreshold.setValue(params.getPercolatorThreshold());
 	}
 	
 	@Override

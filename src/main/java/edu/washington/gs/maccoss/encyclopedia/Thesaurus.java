@@ -23,7 +23,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizatio
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -273,15 +272,6 @@ public class Thesaurus {
 			// keep all entries belonging to the same sequence together
 			HashMap<String, ArrayList<LibraryEntry>> entriesBySequence=new HashMap<>();
 			for (LibraryEntry entry : entries) {
-				float[] c=entry.getCorrelationArray();
-				int n=0;
-				for (int i = 0; i < c.length; i++) {
-					if (c[i]>=TransitionRefiner.quantitativeCorrelationThreshold) {
-						n++;
-					}
-				}
-				if (n<3) continue; // require at least 3 peaks to consider this peptide
-				
 				String seq=entry.getPeptideSeq();
 				ArrayList<LibraryEntry> list=entriesBySequence.get(seq);
 				if (list==null) {

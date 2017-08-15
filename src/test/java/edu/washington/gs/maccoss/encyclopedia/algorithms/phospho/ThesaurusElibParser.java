@@ -28,6 +28,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.BenjaminiHochberg;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
@@ -178,9 +179,9 @@ public class ThesaurusElibParser {
 	public static final boolean TOTAL_ANALYSIS=false;
 	
 	public static final boolean MOTIF_ANALYSIS=false;
-	public static final boolean ANOVA_ANALYSIS=true;
+	public static final boolean ANOVA_ANALYSIS=false;
 	public static final boolean HEATMAP_ANALYSIS=false;
-	public static final boolean MULTIPLE_FORM_ANALYSIS=false;
+	public static final boolean MULTIPLE_FORM_ANALYSIS=true;
 	public static final boolean SITE_SPECIFIC_VS_TOTAL_ANALYSIS=false;
 	
 	public static void main(String[] args) throws Exception {
@@ -361,7 +362,7 @@ public class ThesaurusElibParser {
 			for (int pep=0; pep<adjustedPValues.length; pep++) {
 				String peptide=peptides.get(pep);
 				QuantitationLog log=totalQuantLog.get(peptide);
-				String key=PeptideUtils.getPeptideSeq(peptide);
+				String key=peptide.replace("[+79.966331]", "");
 				
 				TDoubleArrayList list=pvalueMap.get(key);
 				TFloatArrayList rtList=rtMap.get(key);
@@ -371,8 +372,11 @@ public class ThesaurusElibParser {
 					rtList=new TFloatArrayList();
 					rtMap.put(key, rtList);
 				}
-				list.add(adjustedPValues[pep]);
+				float control = Math.max(1, QuickMedian.median(log.getData()[0].clone()));
+				float insulin = Math.max(1, QuickMedian.median(log.getData()[1].clone()));
+				list.add(Log.log2(insulin/control));
 				rtList.add(General.mean(log.rtInSecondsList.toArray()));
+				
 			}
 			
 			for (Entry<String, TDoubleArrayList> entry : pvalueMap.entrySet()) {

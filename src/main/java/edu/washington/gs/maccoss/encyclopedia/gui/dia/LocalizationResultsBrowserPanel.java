@@ -50,6 +50,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
@@ -264,7 +265,7 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 			}
 			tableDataSplit.setRightComponent(tabs);
 		} else {
-			float deltaRT=30f;
+			float deltaRT=60f;
 			float minRT=Float.MAX_VALUE;
 			float maxRT=-Float.MAX_VALUE;
 			for (LocalizedLibraryEntry entry : entries) {
@@ -278,7 +279,17 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 				ArrayList<Spectrum> precursors=PrecursorScan.downcast(dia.getPrecursors(minRT-deltaRT, maxRT+deltaRT));
 				ArrayList<Stripe> stripes=dia.getStripes(precursorMZ, minRT-deltaRT, maxRT+deltaRT, false);
 				
-				ChartPanel precursorChart=Charter.getChart("Retention Time", "Intensity", true, ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), precursorMZ, precursorCharge, precursors));
+				XYTraceInterface[] precursorTraces = ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), precursorMZ, precursorCharge, precursors);
+				double maxPrecursor=XYTrace.getMaxY(precursorTraces);
+				ArrayList<XYTraceInterface> precursorTraceList=new ArrayList<>();
+				for (XYTraceInterface trace : precursorTraces) {
+					precursorTraceList.add(trace);
+				}
+				for (LocalizedLibraryEntry entry : entries) {
+					precursorTraceList.add(new XYTrace(new double[] {entry.getRetentionTime()/60f, entry.getRetentionTime()/60f}, new double[] {0.0,  maxPrecursor}, GraphType.dashedline, entry.getPeptideModSeq(), Color.darkGray, 2.0f));
+				}
+				
+				ChartPanel precursorChart=Charter.getChart("Retention Time", "Precursor Intensity", false, precursorTraceList.toArray(new XYTraceInterface[precursorTraceList.size()]));
 	
 				tableDataSplit.setRightComponent(chartSplit);
 				chartSplit.setTopComponent(precursorChart);

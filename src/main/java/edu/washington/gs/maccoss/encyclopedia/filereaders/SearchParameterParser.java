@@ -41,7 +41,7 @@ public class SearchParameterParser {
 		map.put("-percolatorThreshold", "0.01");
 		map.put("-percolatorVersionNumber", Byte.toString(PercolatorExecutor.DEFAULT_VERSION_NUMBER));
 		map.put("-expectedPeakWidth", "25");
-		map.put("-acquisition", "overlappingDIA");
+		map.put("-acquisition", DataAcquisitionType.toName(DataAcquisitionType.DIA));
 		map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
 		map.put("-scoringBreadthType", ScoringBreadthType.ENTIRE_RT_WINDOW.toShortname());
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
@@ -117,7 +117,7 @@ public class SearchParameterParser {
 		
 		value=parameters.get("-acquisition");
 		if (value==null) {
-			dataAcquisitionType=DataAcquisitionType.OVERLAPPING_DIA;
+			dataAcquisitionType=DataAcquisitionType.DIA;
 		} else {
 			dataAcquisitionType=DataAcquisitionType.getAcquisitionType(value);
 		}
