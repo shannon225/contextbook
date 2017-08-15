@@ -98,6 +98,12 @@ public class PhosphoLocalizerExample {
 		byte precursorCharge;
 		if (true) {
 			// targeted
+			peptideModSeq="IHLGS[+80.0]SPK";
+			retentionTime=34.7f*60f;
+			precursorCharge=2;
+			
+		} else if (false) {
+			// targeted
 			peptideModSeq="MGSS[+80.0]PLEVPKPR";
 			retentionTime=56.95f*60f;
 			precursorCharge=2;
