@@ -581,7 +581,7 @@ public class Charter {
 		chartPanel.setMaximumDrawWidth(Integer.MAX_VALUE);
 		chartPanel.setMaximumDrawHeight(Integer.MAX_VALUE);
 
-		numberaxis1.setUpperBound(maxY/divider);
+		if (maxY>0&&divider>0) numberaxis1.setUpperBound(maxY/divider);
 		return chartPanel;
 	}
 

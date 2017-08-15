@@ -57,11 +57,11 @@ public class PhosphoLocalizerExample {
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_5c.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_04.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4a_PRM.dia");
-		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4b_PRM.dia");
+		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4b_PRM.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4c_PRM.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_03_170507071858.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_01_170506220515.dia");
-		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_02_170507024206.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_02_170507024206.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
 
 		//File libraryFile=new File("/Users/searleb/Documents/phospho_localization/data/VillenJ_Exactive_HumanPhosphoproteome.elib");
@@ -96,7 +96,20 @@ public class PhosphoLocalizerExample {
 		String peptideModSeq;
 		float retentionTime;
 		byte precursorCharge;
-		if (false) {
+		if (true) {
+			// targeted
+			peptideModSeq="MGSS[+80.0]PLEVPKPR";
+			retentionTime=56.95f*60f;
+			precursorCharge=2;
+			
+		} else if (false) {
+			// targeted
+			peptideModSeq="LGS[+80.0]PKPER";
+			retentionTime=1315f;
+			precursorCharge=2;
+			
+		} else if (false) {
+			// targeted
 			peptideModSeq="VDS[+80.0]PSHGLVTSSLC[+57.0]IPSPAR";
 			retentionTime=5010f;
 			precursorCharge=3;
@@ -324,6 +337,9 @@ public class PhosphoLocalizerExample {
 			if (!localizationQueue.isEmpty()) {
 				ModificationLocalizationData data=localizationQueue.take();
 				System.out.println(data.getLocalizationPeptideModSeq().getPeptideAnnotation()+" ("+data.isSiteSpecific()+","+data.isLocalized()+") --> "+data.getLocalizationScore()+"\t"+data.getLocalizingIntensity()+"\t"+data.getTotalIntensity()+"\t"+FragmentIon.toArchiveString(data.getLocalizingIons()));
+				for (FragmentIon ion : data.getLocalizingIons()) {
+					System.out.println("\t"+ion);
+				}
 			} else {
 				Thread.sleep(10);
 			}
