@@ -365,7 +365,8 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 		
 		double[] targetIons=ionsByPeptide.get(targetPeptideModSeq);
 		if (targetIons==null) {
-			Logger.errorLine("Missing target ions for: "+targetPeptideModSeq+", Found ions for: "+General.toString(ionsByPeptide.keySet())+", skipping form");
+			// This can happen when we're localizing around an n-term acetyl that's been rearranged incorrectly by reversing
+			//Logger.errorLine("Missing target ions for: "+targetPeptideModSeq+", Found ions for: "+General.toString(ionsByPeptide.keySet())+", skipping form");
 			return null;
 		}
 		for (Entry<LibraryEntry, ArrayList<Spectrum>> realDataEntry : scansByEntry.entrySet()) {
@@ -378,7 +379,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 			
 			double[] realIons=ionsByPeptide.get(realEntry.getAccuratePeptideModSeq(parameters.getAAConstants()));
 			if (realIons==null) {
-				Logger.errorLine("Missing real ions for: "+realEntry.getAccuratePeptideModSeq(parameters.getAAConstants())+", Found ions for: "+General.toString(ionsByPeptide.keySet()));
+				//Logger.errorLine("Missing real ions for: "+realEntry.getAccuratePeptideModSeq(parameters.getAAConstants())+", Found ions for: "+General.toString(ionsByPeptide.keySet()));
 				continue;				
 			}
 			int numMatching=getNumberOfMatchingIons(targetIons, realIons, parameters.getFragmentTolerance());
