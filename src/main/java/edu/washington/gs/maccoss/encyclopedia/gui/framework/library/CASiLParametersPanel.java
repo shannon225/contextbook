@@ -85,7 +85,7 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">Thesaurus extracts peptide fragmentation chromatograms from MZML files, matches them to spectra in libraries, and calculates various scoring features. Matches are localized and alternate positional isomers are explored. These isomers are interpreted by Percolator to identify site-specific peptides.";
 	
 	private final FileChooserPanel libraryFileChooser;
-	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {DataAcquisitionType.toName(DataAcquisitionType.OVERLAPPING_DIA), DataAcquisitionType.toName(DataAcquisitionType.DIA), DataAcquisitionType.toName(DataAcquisitionType.DDA)});
+	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {DataAcquisitionType.toName(DataAcquisitionType.OVERLAPPING_DIA), DataAcquisitionType.toName(DataAcquisitionType.DIA)});
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "Pepsin A"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.YONLY), FragmentationType.toName(FragmentationType.ETD)});
 	private final JComboBox<String> percolatorVersion=new JComboBox<String>(new String[] {PercolatorExecutor.V3_01, PercolatorExecutor.V2_10});
