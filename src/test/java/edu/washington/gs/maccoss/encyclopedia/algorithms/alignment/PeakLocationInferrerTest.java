@@ -13,7 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import junit.framework.TestCase;
 
-public class PeakLocationInferrerTest extends TestCase {
+public class PeakLocationInferrerTest {
 	public static void main(String[] args) throws Exception {
 		LibraryFile.OPEN_IN_PLACE=true;
 		
