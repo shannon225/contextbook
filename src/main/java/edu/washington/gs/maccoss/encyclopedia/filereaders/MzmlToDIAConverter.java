@@ -90,13 +90,15 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 
 			BlockingQueue<MzmlBlock> mzmlBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);
 			MzmlToDIASAXProducer producer=new MzmlToDIASAXProducer(mzMLFile, mzmlBlockQueue, parameters);
-			
+			Thread producerThread=new Thread(producer);
+
 			// will be populated after we join back up. Since we're not looking
 			// at it until after the join, we're safe to not have to worry about
 			// concurrency.
 			HashMap<Range, TFloatArrayList> retentionTimesByStripe=producer.getRetentionTimesByStripe();
+
 			Thread[] threads;
-			
+
 			if (parameters.isDeconvoluteOverlappingWindows()) {
 				BlockingQueue<MzmlBlock> deconvolutionBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);
 				OverlapDeconvoluter deconvoluter=new OverlapDeconvoluter(parameters.getFragmentTolerance(), mzmlBlockQueue, deconvolutionBlockQueue);
@@ -104,7 +106,6 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 				MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(deconvolutionBlockQueue, stripeFile);
 
 				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
-				Thread producerThread=new Thread(producer);
 				Thread deconvoluterThread=new Thread(deconvoluter);
 				Thread consumerThread=new Thread(consumer);
 
@@ -114,17 +115,31 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 				MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(mzmlBlockQueue, stripeFile);
 
 				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
-				Thread producerThread=new Thread(producer);
 				Thread consumerThread=new Thread(consumer);
 
 				threads=new Thread[] {producerThread, consumerThread};
 			}
-			
+
 			for (int i=0; i<threads.length; i++) {
 				threads[i].start();
 			}
 
 			try {
+				producerThread.join();
+
+				if (producer.hadError()) {
+					for (Thread thread : threads) {
+						if (thread != producerThread) {
+							// this will terminate the processing loop if the threads have not received the poison item
+							// (note that this is because the deconvoluter and consumers are written correctly to do this)
+							thread.interrupt();
+						}
+					}
+
+					throw new EncyclopediaException(producer.getError());
+				}
+
+				// note that this will join the producer a second time, but it will return instantly
 				for (int i=0; i<threads.length; i++) {
 					threads[i].join();
 				}
@@ -152,13 +167,11 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 				Logger.logLine("Finished writing "+diaFile.getName()+"!");
 
 				return stripeFile;
-
 			} catch (InterruptedException ie) {
 				Logger.errorLine("DIA writing interrupted!");
 				Logger.errorException(ie);
 				return null;
 			}
-
 		} catch (IOException ioe) {
 			throw new EncyclopediaException("DIA writing IO error!", ioe);
 		} catch (SQLException sqle) {
