@@ -5,7 +5,6 @@ import java.io.File;
 
 import org.jfree.chart.ChartPanel;
 
-import edu.washington.gs.maccoss.encyclopedia.gui.dia.MzmlStructureCharter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 
 public class MzmlStructureCharterTest {

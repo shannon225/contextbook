@@ -1,40 +1,30 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.io.File;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 
 public class LibraryFileTest {
 	public static void main(String[] args) throws Exception {
-		File f=new File("/Volumes/BriansSSD/ForBrian/CSF_Concensus_Isoform_AD_CN_Library.elib");
+		File f=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/hela/20170430_HeLa_phosp_DIA_B_01_170506220515.dia.elib");
 		LibraryFile library=(LibraryFile)BlibToLibraryConverter.getFile(f);
-		Connection c=library.getConnection();
-		try {
-			Statement s=c.createStatement();
-			try {
-				ResultSet rs=s.executeQuery("select PeptideSeq, ProteinAccessions from proteins");
 
-				while (rs.next()) {
-					String peptide=rs.getString(1);
-					String accessions=rs.getString(2);
-
-					HashSet<String> accessionSet=PSMData.stringToAccessions(accessions);
-					ArrayList<String> accessionList=new ArrayList<String>(accessionSet);
-					Collections.sort(accessionList);
-					System.out.println(peptide+"\t"+PSMData.accessionsToString(accessionList));
+		ArrayList<LibraryEntry> entries=library.getAllEntries(false);
+		int count=0;
+		for (LibraryEntry entry : entries) {
+			float[] c=entry.getCorrelationArray();
+			int n=0;
+			for (int i = 0; i < c.length; i++) {
+				if (c[i]>=TransitionRefiner.quantitativeCorrelationThreshold) {
+					n++;
 				}
-
-			} finally {
-				s.close();
 			}
-		} finally {
-			c.close();
+			if (n>=3) {
+				count++;
+			}
 		}
+		System.out.println(count+"/"+entries.size());
 	}
 }

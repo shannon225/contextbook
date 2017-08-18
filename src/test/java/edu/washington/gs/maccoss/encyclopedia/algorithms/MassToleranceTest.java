@@ -8,6 +8,10 @@ public class MassToleranceTest extends TestCase {
 	public static final MassTolerance TOLERANCE=new MassTolerance(10.0);
 	public static final MassTolerance AMU_TOLERANCE=new MassTolerance(0.5, MassErrorUnitType.AMU);
 	
+	public void testNegative() {
+		assertTrue(TOLERANCE.equals(-17.0, -17.0));
+	}
+	
 	public void testResolution() {
 		MassTolerance resolution=new MassTolerance(30000, MassErrorUnitType.RESOLUTION);
 		assertEquals(16.66666666667, resolution.getPpmTolerance(), 0.0000001);

@@ -5,8 +5,6 @@ import java.awt.Dimension;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -24,7 +22,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
@@ -44,7 +41,7 @@ public class PhosphoLocalizerExample {
 
 	@SuppressWarnings("unused")
 	public static void main(String[] args) throws Exception {
-
+		//StripeFile.OPEN_IN_PLACE=true;
 		LibraryFile.OPEN_IN_PLACE=true;
 		
 		//File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/VillenJ_Exactive_HumanPhosphoproteome.dlib");
@@ -112,7 +109,7 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="GIAPAS[+80.0]PMLGNASNPNKADIPER";
 			retentionTime=4189.1591796875f;
 			precursorCharge=3;
-		} else if (false) {
+		} else if (true) {
 			// repeat 2 sp|P83731|RL24_HUMAN
 			peptideModSeq="AITGAS[+80.0]LADIMAK";
 			retentionTime=5680.037109375f;
@@ -330,7 +327,10 @@ public class PhosphoLocalizerExample {
 		while(!localizationQueue.isEmpty()) {
 			if (!localizationQueue.isEmpty()) {
 				ModificationLocalizationData data=localizationQueue.take();
-				System.out.println(data.getLocalizationPeptideModSeq().getPeptideAnnotation()+" ("+data.isSiteSpecific()+") --> "+data.getLocalizationScore()+"\t"+data.getLocalizingIntensity()+"\t"+data.getTotalIntensity()+"\t"+FragmentIon.toArchiveString(data.getLocalizingIons()));
+				System.out.println(data.getLocalizationPeptideModSeq().getPeptideAnnotation()+" ("+data.isSiteSpecific()+","+data.isLocalized()+") --> "+data.getLocalizationScore()+"\t"+data.getLocalizingIntensity()+"\t"+data.getTotalIntensity()+"\t"+FragmentIon.toArchiveString(data.getLocalizingIons()));
+				for (FragmentIon ion : data.getLocalizingIons()) {
+					System.out.println("\t"+ion);
+				}
 			} else {
 				Thread.sleep(10);
 			}

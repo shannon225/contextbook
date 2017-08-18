@@ -10,7 +10,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 
 public class EncyclopediaOneScorer implements EncyclopediaScorer {

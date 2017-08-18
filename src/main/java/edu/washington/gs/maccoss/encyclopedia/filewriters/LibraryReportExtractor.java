@@ -1,15 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.filewriters;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupQuantifier;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.utils.*;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import gnu.trove.list.array.TFloatArrayList;
-import gnu.trove.map.hash.TObjectFloatHashMap;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -17,9 +7,28 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.zip.DataFormatException;
+
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupQuantifier;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
+import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class LibraryReportExtractor {
 	public static void extractMatrix(LibraryFile library, ArrayList<ProteinGroup> proteins) throws IOException, SQLException, DataFormatException {

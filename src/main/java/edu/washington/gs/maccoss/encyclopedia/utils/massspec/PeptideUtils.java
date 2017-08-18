@@ -156,6 +156,41 @@ public class PeptideUtils {
 		}
 	}
 	
+	public static String getCorrectedMasses(String sequence) {
+		char[] ca=sequence.toCharArray();
+		
+		ArrayList<String> aas=new ArrayList<String>();
+		for (int i = 0; i < ca.length; i++) {
+			if (ca[i]=='[') {
+				StringBuilder sb=new StringBuilder();
+				i++;
+				while (ca[i]!=']') {
+					sb.append(ca[i]);
+					i++;
+				}
+				if (aas.size()==0) {
+					// handling of n-termini mods assumes you can't have multiple []s in a row
+					i++;
+					aas.add(Character.toString(ca[i]));
+				}
+				String massText = sb.toString();
+				double modificationMass = Double.valueOf(massText);
+				String aaString=aas.get(aas.size()-1);
+				char aaChar=aaString.charAt(0);
+				modificationMass=MassConstants.getAccurateModificationMass(aaChar, modificationMass);
+
+				aas.set(aas.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
+			} else {
+				aas.add(Character.toString(ca[i]));
+			}
+		}
+		StringBuilder sb=new StringBuilder();
+		for (String aa : aas) {
+			sb.append(aa);
+		}
+		return sb.toString();
+	}
+	
 	public static String getSequence(String[] aas) {
 		StringBuilder sb=new StringBuilder();
 		for (String aa : aas) {

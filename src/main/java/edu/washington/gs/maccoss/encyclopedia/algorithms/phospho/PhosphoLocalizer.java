@@ -1,10 +1,27 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.*;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.zip.DataFormatException;
+
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -14,20 +31,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtract
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
-
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.zip.DataFormatException;
 
 public class PhosphoLocalizer {
 	private final float minimumScore;
@@ -300,7 +309,7 @@ public class PhosphoLocalizer {
 			//negLogProbsAll=General.subtract(negLogProbsAll, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
 			negLogProbsSiteSpecific=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, Math.round(params.getExpectedPeakWidth()/(dutyCycle)));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
 			
-			negLogProbsSiteSpecific=General.subtract(negLogProbsSiteSpecific, QuickMedian.median(negLogProbsSiteSpecific.clone()));
+			//negLogProbsSiteSpecific=General.subtract(negLogProbsSiteSpecific, QuickMedian.median(negLogProbsSiteSpecific.clone()));
 			
 			//negLogProbsSiteSpecific=General.subtract(negLogProbsSiteSpecific, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
 			//negLogProbsAll=SkylineSGFilter.paddedSavitzkyGolaySmooth(negLogProbsAll);
@@ -354,14 +363,16 @@ public class PhosphoLocalizer {
 			uniqueTargetFragments.put(peptideAnnotation, targets);
 			uniqueIdentifiedTargetFragments.put(peptideAnnotation, identifiedTargets.toArray(new FragmentIon[identifiedTargets.size()]));
 
-			if (maxRawScore>=minimumScore||maxRawScore>bestScore) {
+			boolean isLocalized = maxRawScore>=minimumScore;
+			
+			if (isLocalized||maxRawScore>bestScore) {
 				if (bestScore<maxRawScore) {
 					bestScore=maxRawScore;
 				}
-				boolean isLocalized=maxRawScore>=minimumScore&&AmbiguousPeptideModSeq.isLocalized(targetPeptideAnnotation, modification);
-				System.out.println("A) "+targetPeptideAnnotation.getPeptideAnnotation()+" --> "+maxRawScore+"\t"+isLocalized+"\t"+bestRT);
+				boolean isSiteSpecific=isLocalized&&AmbiguousPeptideModSeq.isSiteSpecific(targetPeptideAnnotation, modification);
+				System.out.println("A) "+targetPeptideAnnotation.getPeptideAnnotation()+" --> "+maxRawScore+"\t"+isSiteSpecific+"\t"+bestRT);
 				
-				if (!AmbiguousPeptideModSeq.isLocalizedAtEnd(targetPeptideAnnotation, modification)) {
+				if (!AmbiguousPeptideModSeq.isSiteSpecificAtEnd(targetPeptideAnnotation, modification)) {
 					// need to check RTs
 					boolean skip=false;
 					for (int i=0; i<previouslyIdentifiedRTsInSec.size(); i++) {
@@ -430,7 +441,8 @@ public class PhosphoLocalizer {
 					bestRT=quantData.getApexRT();
 					formsRT.add(bestRT);
 
-					ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideAnnotation, bestRT, maxRawScore, numberOfMods, isLocalized, wellShapedIons.toArray(new FragmentIon[wellShapedIons.size()]), localizationIntensity, totalIntensity);
+					boolean isCompletelyAmbiguous=AmbiguousPeptideModSeq.isCompletelyAmbiguous(targetPeptideAnnotation, modification);
+					ModificationLocalizationData modData=new ModificationLocalizationData(targetPeptideAnnotation, bestRT, maxRawScore, numberOfMods, isSiteSpecific, isLocalized, isCompletelyAmbiguous, wellShapedIons.toArray(new FragmentIon[wellShapedIons.size()]), localizationIntensity, totalIntensity);
 
 					quantData.setModificationLocalizationData(Optional.of(modData));
 					

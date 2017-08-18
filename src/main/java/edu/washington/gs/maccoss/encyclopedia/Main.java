@@ -1,8 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import java.util.HashMap;
-import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;

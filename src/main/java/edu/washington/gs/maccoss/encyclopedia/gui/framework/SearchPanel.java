@@ -52,6 +52,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.DIABrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.FeatureGrapher;
+import edu.washington.gs.maccoss.encyclopedia.gui.dia.LocalizationResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.MultiResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.PeptideExtractingBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
@@ -313,7 +314,10 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		launchMultiBrowser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		viewMenu.add(launchMultiBrowser);
+
+		if (ProgramType.CASiL!=program) {
+			viewMenu.add(launchMultiBrowser);
+		}
 
 		JMenuItem launchDIABrowser=new JMenuItem("Launch RAW File Browser", diaBrowserIcon);
 		launchDIABrowser.addActionListener(new ActionListener() {
@@ -322,7 +326,9 @@ public class SearchPanel extends JPanel {
 				launchDIABrowser();
 			}
 		});
-		viewMenu.add(launchDIABrowser);
+		if (ProgramType.CASiL!=program) {
+			viewMenu.add(launchDIABrowser);
+		}
 
 		JMenuItem launchPeptideBrowser=new JMenuItem("Launch Peptide Browser", peptideBrowserIcon);
 		launchPeptideBrowser.addActionListener(new ActionListener() {
@@ -331,7 +337,9 @@ public class SearchPanel extends JPanel {
 				launchPeptideBrowser();
 			}
 		});
-		viewMenu.add(launchPeptideBrowser);
+		if (ProgramType.CASiL!=program) {
+			viewMenu.add(launchPeptideBrowser);
+		}
 
 		JMenuItem launchFeatureBrowser=new JMenuItem("Launch Feature Browser", featureBrowserIcon);
 		launchFeatureBrowser.addActionListener(new ActionListener() {
@@ -340,7 +348,9 @@ public class SearchPanel extends JPanel {
 				launchFeatureBrowser();
 			}
 		});
-		viewMenu.add(launchFeatureBrowser);
+		if (ProgramType.CASiL!=program) {
+			viewMenu.add(launchFeatureBrowser);
+		}
 
 		JMenu convertMenu=new JMenu("Convert");
 		convertMenu.setMnemonic(KeyEvent.VK_C);
@@ -427,6 +437,11 @@ public class SearchPanel extends JPanel {
 	}
 	
 	public void launchElibBrowser() {
+		if (getVisibleTab() instanceof CASiLParametersPanel) {
+			launchLocalizationBrowser();
+			return;
+		}
+		
 		final JFrame dialog=new JFrame("ELIB/DIA Detection Browser");
 
 		JMenuBar bar=new JMenuBar();
@@ -435,6 +450,43 @@ public class SearchPanel extends JPanel {
 		bar.add(fileMenu);
 		
 		final ResultsBrowserPanel browser=new ResultsBrowserPanel(getVisibleTab().getParameters());
+		JMenuItem openElib=new JMenuItem("Open ELIB...", libraryBrowserIcon);
+		openElib.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				browser.askForLibrary();
+			}
+		});
+		openElib.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		fileMenu.add(openElib);
+		
+		JMenuItem rawBrowser=new JMenuItem("Open RAW File...", diaBrowserIcon);
+		rawBrowser.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				browser.askForRaw();
+			}
+		});
+		rawBrowser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		fileMenu.add(rawBrowser);
+		dialog.setJMenuBar(bar);
+		
+		dialog.getContentPane().add(browser, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(1900, 1030);
+		dialog.setVisible(true);
+	}
+	
+	public void launchLocalizationBrowser() {
+		final JFrame dialog=new JFrame("Localization Browser");
+
+		JMenuBar bar=new JMenuBar();
+		JMenu fileMenu=new JMenu("File");
+		fileMenu.setMnemonic(KeyEvent.VK_F);
+		bar.add(fileMenu);
+		
+		final LocalizationResultsBrowserPanel browser=new LocalizationResultsBrowserPanel(getVisibleTab().getParameters());
 		JMenuItem openElib=new JMenuItem("Open ELIB...", libraryBrowserIcon);
 		openElib.addActionListener(new ActionListener() {
 			@Override

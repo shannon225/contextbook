@@ -1,6 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 

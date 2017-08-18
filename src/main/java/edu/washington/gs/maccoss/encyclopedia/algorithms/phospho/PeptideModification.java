@@ -79,7 +79,15 @@ public class PeptideModification {
 	}
 	
 	private static final MassTolerance tolerance=new MassTolerance(1.0); // 1 ppm is about the accuracy of floats 
-	
+
+	public boolean isModifiable(char aa) {
+		for (int i=0; i<modifiableAAs.length; i++) {
+			if (modifiableAAs[i]==aa) {
+				return true;
+			}
+		}
+		return false;
+	}
 	public boolean isModificationMass(char aa, double modificationMass) {
 		boolean ok=false;
 		for (int i=0; i<modifiableAAs.length; i++) {

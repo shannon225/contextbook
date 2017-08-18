@@ -108,11 +108,18 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 					previouslyDetected.add(ambigous);
 					float localizationScore=Float.parseFloat(row.get("localizationScore"));
 					boolean isSiteSpecific=Boolean.parseBoolean(row.get("isSiteSpecific"));
+					boolean isLocalized=Boolean.parseBoolean(row.get("isLocalized"));
 					ModificationLocalizationData prev=result.get(peptideModSeq);
+					String ambiPeptideModSeq=row.get("localizationPeptideModSeq");
+					AmbiguousPeptideModSeq localizationPeptideModSeq=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq(ambiPeptideModSeq, modification);
 					
-					if (prev==null||((isSiteSpecific||!prev.isSiteSpecific())&&prev.getLocalizationScore()<localizationScore)) {
+					boolean moreSiteSpecific = prev==null||(isSiteSpecific&&!prev.isSiteSpecific());
+					boolean notLessSiteSpecific = prev==null||localizationPeptideModSeq.getAmbiguityValue()>=prev.getLocalizationPeptideModSeq().getAmbiguityValue();
+					boolean higherScoring = prev==null||(notLessSiteSpecific&&prev.getLocalizationScore()<localizationScore);
+					boolean isCompletelyAmbiguous=AmbiguousPeptideModSeq.isCompletelyAmbiguous(localizationPeptideModSeq, modification);
+					
+					if (moreSiteSpecific||higherScoring) {
 						try {
-							AmbiguousPeptideModSeq localizationPeptideModSeq=AmbiguousPeptideModSeq.getUnambigous(peptideModSeq, modification, aaConstants);
 							float retentionTimeApexInSeconds=Float.parseFloat(row.get("retentionTimeApexInSeconds"));
 							int numberOfMods=Integer.parseInt(row.get("numberOfMods"));
 							FragmentIon[] localizingIons;
@@ -124,7 +131,7 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 							}
 							float localizingIntensity=Float.parseFloat(row.get("localizingIntensity"));
 							
-							ModificationLocalizationData data=new ModificationLocalizationData(localizationPeptideModSeq, retentionTimeApexInSeconds, localizationScore, numberOfMods, isSiteSpecific, localizingIons, localizingIntensity, totalIntensity);
+							ModificationLocalizationData data=new ModificationLocalizationData(localizationPeptideModSeq, retentionTimeApexInSeconds, localizationScore, numberOfMods, isSiteSpecific, isLocalized, isCompletelyAmbiguous, localizingIons, localizingIntensity, totalIntensity);
 							result.put(peptideModSeq, data);
 						} catch (Exception e) {
 							Logger.errorLine("Error parsing localization data for "+peptideModSeq+", skipping this peptide! ("+e.getMessage()+")");
@@ -164,7 +171,7 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 				
 				AmbiguousPeptideModSeq localizationPeptideModSeq=AmbiguousPeptideModSeq.getFullyAmbiguous(peptide.getPeptideModSeq(), modification, aaConstants);
 				
-				ModificationLocalizationData data=new ModificationLocalizationData(localizationPeptideModSeq, peptide.getRT(), 0.0f, localizationPeptideModSeq.getNumModifications(), false, new FragmentIon[0], 0.0f, totalIntensity);
+				ModificationLocalizationData data=new ModificationLocalizationData(localizationPeptideModSeq, peptide.getRT(), 0.0f, localizationPeptideModSeq.getNumModifications(), false, false, true, new FragmentIon[0], 0.0f, totalIntensity);
 				result.put(peptide.getPeptideModSeq(), data);
 			}
 		}
@@ -192,7 +199,7 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 				numberProcessed++;
 				
 				if (!printedHeader) {
-					writer.print("peptideModSeq\tlocalizationPeptideModSeq\tretentionTimeApexInSeconds\tlocalizationScore\tnumberOfMods\tisSiteSpecific\tlocalizingIons\tlocalizingIntensity\ttotalIntensity");
+					writer.print("peptideModSeq\tlocalizationPeptideModSeq\tretentionTimeApexInSeconds\tlocalizationScore\tnumberOfMods\tisSiteSpecific\tisLocalized\tlocalizingIons\tlocalizingIntensity\ttotalIntensity");
 					// Percolator assumes linux line endings on Mac!
 					switch (os) {
 						case MAC:
@@ -211,6 +218,7 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 				writer.print("\t"+result.getLocalizationScore());
 				writer.print("\t"+result.getNumberOfMods());
 				writer.print("\t"+result.isSiteSpecific());
+				writer.print("\t"+result.isLocalized());
 				writer.print("\t"+FragmentIon.toArchiveString(result.getLocalizingIons()));
 				writer.print("\t"+result.getLocalizingIntensity());
 				writer.print("\t"+result.getTotalIntensity());

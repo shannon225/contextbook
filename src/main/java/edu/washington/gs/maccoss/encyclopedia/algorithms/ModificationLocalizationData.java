@@ -4,24 +4,46 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptid
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 
 public class ModificationLocalizationData {
-	public static final ModificationLocalizationData POISON_RESULT=new ModificationLocalizationData(null, 0.0f, 0.0f, 0, false, null, 0.0f, 0.0f);
+	public static final ModificationLocalizationData POISON_RESULT=new ModificationLocalizationData();
 	
 	private final AmbiguousPeptideModSeq localizationPeptideModSeq;
 	private final float retentionTimeApexInSeconds;
 	private final float localizationScore;
 	private final int numberOfMods;
 	private final boolean isSiteSpecific;
+	private final boolean isLocalized;
 	private final FragmentIon[] localizingIons;
 	private final float localizingIntensity;
 	private final float totalIntensity;
 
-	public ModificationLocalizationData(AmbiguousPeptideModSeq localizationPeptideModSeq, float retentionTimeApexInSeconds, float localizationScore, int numberOfMods, boolean isSiteSpecific,
+	private ModificationLocalizationData() {
+		this.localizationPeptideModSeq=null;
+		this.retentionTimeApexInSeconds=0.0f;
+		this.localizationScore=0.0f;
+		this.numberOfMods=0;
+		this.isSiteSpecific=false;
+		this.isLocalized=false;
+		this.localizingIons=null;
+		this.localizingIntensity=0.0f;
+		this.totalIntensity=0.0f;
+	}
+	
+	public ModificationLocalizationData(AmbiguousPeptideModSeq localizationPeptideModSeq, float retentionTimeApexInSeconds, float localizationScore, int numberOfMods, boolean isSiteSpecific, boolean isLocalized, boolean isCompletelyAmbiguous,
 			FragmentIon[] localizingIons, float localizingIntensity, float totalIntensity) {
 		this.localizationPeptideModSeq=localizationPeptideModSeq;
 		this.retentionTimeApexInSeconds=retentionTimeApexInSeconds;
 		this.localizationScore=localizationScore;
 		this.numberOfMods=numberOfMods;
-		this.isSiteSpecific=isSiteSpecific;
+		if (this.localizationPeptideModSeq!=null&&this.localizationPeptideModSeq.getNumModifiableSites()==this.numberOfMods) {
+			this.isSiteSpecific=true;
+			this.isLocalized=true;
+		} else if (isCompletelyAmbiguous||localizingIons.length==0) {
+			this.isSiteSpecific=false;
+			this.isLocalized=false;
+		} else {
+			this.isSiteSpecific=isSiteSpecific;
+			this.isLocalized=isLocalized;
+		}
 		this.localizingIons=localizingIons;
 		this.localizingIntensity=localizingIntensity;
 		this.totalIntensity=totalIntensity;
@@ -45,6 +67,10 @@ public class ModificationLocalizationData {
 
 	public boolean isSiteSpecific() {
 		return isSiteSpecific;
+	}
+	
+	public boolean isLocalized() {
+		return isLocalized;
 	}
 
 	public FragmentIon[] getLocalizingIons() {

@@ -21,7 +21,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideTrie;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SimplePeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
@@ -426,6 +425,7 @@ public class ThesaurusElibParser {
 				}
 				list.add(values[pep]);
 				rtList.add(General.mean(log.rtInSecondsList.toArray()));
+				
 			}
 			
 			for (Entry<String, TDoubleArrayList> entry : pvalueMap.entrySet()) {

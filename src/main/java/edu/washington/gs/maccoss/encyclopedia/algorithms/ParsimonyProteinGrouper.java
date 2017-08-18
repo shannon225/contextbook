@@ -1,16 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class ParsimonyProteinGrouper {

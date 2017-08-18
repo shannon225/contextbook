@@ -1,13 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Ordering;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
+
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 
 public final class FragmentIon implements Comparable<FragmentIon> {
 	private static final String INDEX_DELIMITER = ";";
@@ -39,14 +39,15 @@ public final class FragmentIon implements Comparable<FragmentIon> {
 	}
 
 	public static FragmentIon[] fromArchiveString(String s) {
-		if (s == null || s.trim().length() == 0 || !s.equalsIgnoreCase("null")) {
+		if (s == null || s.trim().length() == 0 || s.equalsIgnoreCase("null")) {
 			return new FragmentIon[0];
 		}
 		StringTokenizer st = new StringTokenizer(s, ARCHIVE_DELIMITER);
 		ArrayList<FragmentIon> ions = new ArrayList<>();
 		while (st.hasMoreTokens()) {
 			StringTokenizer st2 = new StringTokenizer(st.nextToken(), INDEX_DELIMITER);
-			IonType type = IonType.fromString(st2.nextToken());
+			String tag=st2.nextToken();
+			IonType type = IonType.fromString(tag);
 			byte index = Byte.parseByte(st2.nextToken());
 			double mass = Double.parseDouble(st2.nextToken());
 			ions.add(new FragmentIon(mass, index, type));
@@ -106,7 +107,7 @@ public final class FragmentIon implements Comparable<FragmentIon> {
 	@Override
 	public int hashCode() {
 		// Note that equal objects will always have identical masses (see below)
-		return Double.hashCode(mass);
+		return (int)(mass*100.0);
 	}
 
 	@Override
@@ -124,14 +125,17 @@ public final class FragmentIon implements Comparable<FragmentIon> {
 		if (o == null) {
 			return 1;
 		}
+		int c=tolerance.compareTo(mass, o.mass);
+		if (c!=0) return c;
 
 		// Comparison uses exact mass as well as type and index. Natural ordering will be by mass, with ties settled
 		// by type (ordered by declaration order), then index. This will be transitive and consistent with equals, as
 		// all comparisons are exact.
 		return ComparisonChain.start()
-				.compare(mass, o.mass)
 				.compare(type, o.type)
 				.compare(index, o.index)
 				.result();
 	}
+	
+	private static final MassTolerance tolerance=new MassTolerance(0.1); // 1 ppm is about the accuracy of floats 
 }

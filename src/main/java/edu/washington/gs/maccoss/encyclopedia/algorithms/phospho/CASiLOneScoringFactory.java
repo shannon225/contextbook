@@ -1,6 +1,14 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.concurrent.BlockingQueue;
+
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneAuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
@@ -14,10 +22,6 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsC
 import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.concurrent.BlockingQueue;
 
 public class CASiLOneScoringFactory implements LibraryScoringFactory {
 	public static final String version="0.4.10";

@@ -9,6 +9,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;

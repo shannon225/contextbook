@@ -1,7 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.awt.Color;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -9,7 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;

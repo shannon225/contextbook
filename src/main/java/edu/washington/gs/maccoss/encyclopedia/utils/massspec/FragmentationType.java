@@ -17,7 +17,7 @@ public enum FragmentationType {
 	public static String toName(FragmentationType type) {
 		switch (type) {
 			case CID:
-				return "CID (B/Y)";
+				return "CID/HCD (B/Y)";
 			case ETD:
 				return "ETD (C/Z/Z+1)";
 			case YONLY:
@@ -32,6 +32,7 @@ public enum FragmentationType {
 		if ("ETD".equalsIgnoreCase(s)) return ETD;
 		if ("YONLY".equalsIgnoreCase(s)) return YONLY;
 		if ("CID (B/Y)".equalsIgnoreCase(s)) return CID;
+		if ("CID/HCD (B/Y)".equalsIgnoreCase(s)) return CID;
 		if ("ETD (C/Z/Z+1)".equalsIgnoreCase(s)) return ETD;
 		if ("HCD (Y-Only)".equalsIgnoreCase(s)) return YONLY;
 		return null;
