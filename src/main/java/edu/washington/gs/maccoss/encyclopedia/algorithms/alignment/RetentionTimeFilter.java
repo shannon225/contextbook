@@ -86,6 +86,10 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 			}
 		}
 		float[] deltaArray=deltas.toArray();
+		if (deltaArray.length==0) {
+			Logger.errorLine("Sorry, not enough points to plot RT alignment");
+			return;
+		}
 		Arrays.sort(deltaArray);
 		int min=0; //Math.round(deltaArray.length*0.05f);
 		int max=deltaArray.length-1; //Math.round(deltaArray.length*0.95f);
