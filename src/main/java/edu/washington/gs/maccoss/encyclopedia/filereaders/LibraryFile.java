@@ -71,9 +71,10 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			new Version(0, 1, 8),
 			new Version(0, 1, 9),
 			new Version(0, 1, 10),
-			new Version(0, 1, 11)
+			new Version(0, 1, 11),
+			new Version(0, 1, 12)
 	};
-	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 11);
+	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 12);
 
 	private File userFile=null;
 	private File tempFile;
@@ -676,12 +677,13 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	public void addProteinsFromPercolator(ArrayList<PercolatorPeptide> entries) throws IOException, SQLException {
 		Connection c=getConnection();
 		try {
-			PreparedStatement proteinPrep=c.prepareStatement("INSERT OR IGNORE INTO peptidetoprotein (PeptideSeq, ProteinAccession) VALUES (?,?)");
+			PreparedStatement proteinPrep=c.prepareStatement("INSERT OR IGNORE INTO peptidetoprotein (PeptideSeq, isDecoy, ProteinAccession) VALUES (?,?,?)");
 			try {
 				for (PercolatorPeptide percolatorPeptide : entries) {
 					proteinPrep.setString(1, percolatorPeptide.getPeptideSeq());
+					proteinPrep.setBoolean(2, percolatorPeptide.isPSMIDDecoy());
 					for (String acc : PSMData.stringToAccessions(percolatorPeptide.getProteinIDs())) {
-						proteinPrep.setString(2, acc);
+						proteinPrep.setString(3, acc);
 						proteinPrep.addBatch();
 					}
 				}
@@ -699,12 +701,13 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	public void addProteinsFromEntries(ArrayList<LibraryEntry> entries) throws IOException, SQLException {
 		Connection c=getConnection();
 		try {
-			PreparedStatement proteinPrep=c.prepareStatement("INSERT OR IGNORE INTO peptidetoprotein (PeptideSeq, ProteinAccession) VALUES (?,?)");
+			PreparedStatement proteinPrep=c.prepareStatement("INSERT OR IGNORE INTO peptidetoprotein (PeptideSeq, ProteinAccession) VALUES (?,?,?)");
 			try {
 				for (LibraryEntry entry : entries) {
 					proteinPrep.setString(1, entry.getPeptideSeq());
+					proteinPrep.setBoolean(2, entry.isDecoy());
 					for (String acc : entry.getAccessions()) {
-						proteinPrep.setString(2, acc);
+						proteinPrep.setString(3, acc);
 						proteinPrep.addBatch();
 					}
 				}
@@ -1256,12 +1259,13 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try (PreparedStatement s = c.prepareStatement("select * from proteins p;")) {
 			s.execute();
 			try (ResultSet rs = s.getResultSet()) {
-				try (PreparedStatement ins = c.prepareStatement("insert into peptidetoprotein (peptideseq, proteinaccession) values (?, ?);")) {
+				try (PreparedStatement ins = c.prepareStatement("insert into peptidetoprotein (peptideseq, isDecoy, proteinaccession) values (?, ?, ?);")) {
 					int i = 0;
 					while (rs.next()) {
 						ins.setString(1, rs.getString("peptideseq"));
 						for (String acc : PSMData.stringToAccessions(rs.getString("proteinaccessions"))) {
-							ins.setString(2, acc);
+							ins.setBoolean(2, true); // everything that was originally added to proteins is not a decoy
+							ins.setString(3, acc);
 							ins.addBatch();
 							i++;
 						}
@@ -1354,12 +1358,18 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 11).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 8));
+							Logger.logLine("Updating library to "+new Version(0, 1, 11));
 						}
 						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonIntensityLength int");
 						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonIntensityArray blob");
 						s.execute("ALTER TABLE peptidequants ADD COLUMN MedianChromatogramRTEncodedLength int");
 						s.execute("ALTER TABLE peptidequants ADD COLUMN MedianChromatogramRTArray blob");
+					}
+					if (new Version(0, 1, 12).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 12));
+						}
+						s.execute("ALTER TABLE peptidetoprotein ADD COLUMN isDecoy boolean");
 					}
 
 				} catch (SQLException sqle) {
@@ -1377,6 +1387,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 				s.execute("CREATE TABLE IF NOT EXISTS peptidetoprotein (" +
 						"PeptideSeq string not null," +
+						"isDecoy boolean," +
 						"ProteinAccession string not null" +
 						");");
 
