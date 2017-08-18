@@ -297,7 +297,20 @@ public class LibraryReportExtractor {
 				
 				TreeMap<String, PeptideReportData> intensitiesByPeptideModSeq=new TreeMap<String, PeptideReportData>();
 				
-				rs=s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.SourceFile, pep.RTInSecondsStart, pep.RTInSecondsStop, pep.TotalIntensity, pro.ProteinAccessions, pep.QuantIonMassLength, pep.QuantIonMassArray from peptidequants pep, proteins pro where pep.PeptideSeq = pro.PeptideSeq");
+				rs = s.executeQuery("select " +
+						"pep.PrecursorCharge, " +
+						"pep.PeptideModSeq, " +
+						"pep.SourceFile, " +
+						"pep.RTInSecondsStart, pep.RTInSecondsStop, pep.TotalIntensity, " +
+						"group_concat(p.ProteinAccession, '" + PSMData.ACCESSION_TOKEN + "') as ProteinAccessions, " +
+						"pep.QuantIonMassLength, pep.QuantIonMassArray "+
+						"from " +
+						"peptidequants pep " +
+						"left join peptidetoprotein p " +
+						"where " +
+						"pep.PeptideSeq = p.PeptideSeq " +
+						"group by pep.rowid;"
+				);
 				
 				int count=0;
 				while (rs.next()) {
