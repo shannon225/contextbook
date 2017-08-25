@@ -36,6 +36,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import gnu.trove.map.hash.TFloatFloatHashMap;
+import gnu.trove.procedure.TFloatFloatProcedure;
 
 public class PhosphoLocalizerExample {
 
@@ -51,7 +52,8 @@ public class PhosphoLocalizerExample {
 		//File libraryFile=new File("/Users/searleb/Documents/projects/phosphopedia/VillenJ_Exactive_HumanPhosphoproteome.dlib");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1a.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_2a.dia");
-		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_2c.dia");
+		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_2b.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_2c.dia");
 
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1b.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1c.dia");
@@ -336,9 +338,26 @@ public class PhosphoLocalizerExample {
 			}
 		}
 		
-		/*for (Entry<AmbiguousPeptideModSeq, TFloatFloatHashMap> entry : task.scoreByRTMapByPeptideAnnotation.entrySet()) {
-			XYTrace trace=new XYTrace(entry.getValue(), GraphType.line, entry.getKey().getPeptideAnnotation());
-			Charter.launchChart("Retention Time (sec)", "Thesaurus Score", true, new Dimension(700, 300), trace);
-		}*/
+		/*ArrayList<XYTrace> primaryScoreTraces=new ArrayList<>();
+		for (Entry<AmbiguousPeptideModSeq, TFloatFloatHashMap> entry : task.scoreByRTMapByPeptideAnnotation.entrySet()) {
+			TFloatFloatHashMap map=entry.getValue();
+			TFloatFloatHashMap sparse=new TFloatFloatHashMap();
+			map.forEachEntry(new TFloatFloatProcedure() {
+				@Override
+				public boolean execute(float a, float b) {
+					if (b>7) {
+						sparse.put(a/60f, b);
+					} else {
+						sparse.put(a/60f, 7);
+					}
+					return true;
+				}
+			});
+			Color color=RandomGenerator.randomColor(entry.getKey().getPeptideAnnotation().hashCode()*16807);
+			XYTrace trace=new XYTrace(sparse, GraphType.line, entry.getKey().getPeptideAnnotation(), color, 3.0f);
+			Charter.launchChart("Retention Time (min)", "Thesaurus Score", false, new Dimension(700, 200), trace);
+			primaryScoreTraces.add(trace);
+		}
+		Charter.launchChart("Retention Time (min)", "Thesaurus Score", true, new Dimension(700, 300), primaryScoreTraces.toArray(new XYTrace[primaryScoreTraces.size()]));*/
 	}
 }

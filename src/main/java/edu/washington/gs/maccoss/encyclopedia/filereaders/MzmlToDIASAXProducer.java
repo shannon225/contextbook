@@ -36,6 +36,8 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	private final SearchParameters parameters;
 	private final HashMap<Range, TFloatArrayList> retentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 
+	private Throwable error;
+
 	public MzmlToDIASAXProducer(File mzMLFile, BlockingQueue<MzmlBlock> mzmlBlockQueue, SearchParameters parameters) {
 		this.mzMLFile=mzMLFile;
 		this.mzmlBlockQueue=mzmlBlockQueue;
@@ -66,10 +68,24 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 			});
 
 			SAXParserFactory.newInstance().newSAXParser().parse(stream, this);
-		} catch (Exception e) {
+
+			// Just for safety, ensure that if we get this far the consumer(s) of the queue will finish
+			// If parse() already put a block, this will never be consumed, but it can't hurt
+			mzmlBlockQueue.put(MzmlBlock.POISON_BLOCK);
+		} catch (Throwable t) {
 			Logger.errorLine("Mzml reading failed!");
-			Logger.errorException(e);
+			Logger.errorException(t);
+
+			this.error = t;
 		}
+	}
+
+	public boolean hadError() {
+		return null != error;
+	}
+
+	public Throwable getError() {
+		return error;
 	}
 
 	public String getMzMLID() {
