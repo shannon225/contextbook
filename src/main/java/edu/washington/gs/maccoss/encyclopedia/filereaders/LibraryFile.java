@@ -701,7 +701,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	public void addProteinsFromEntries(ArrayList<LibraryEntry> entries) throws IOException, SQLException {
 		Connection c=getConnection();
 		try {
-			PreparedStatement proteinPrep=c.prepareStatement("INSERT OR IGNORE INTO peptidetoprotein (PeptideSeq, ProteinAccession) VALUES (?,?,?)");
+			PreparedStatement proteinPrep=c.prepareStatement("INSERT OR IGNORE INTO peptidetoprotein (PeptideSeq, IsDecoy, ProteinAccession) VALUES (?,?,?)");
 			try {
 				for (LibraryEntry entry : entries) {
 					proteinPrep.setString(1, entry.getPeptideSeq());
