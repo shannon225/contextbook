@@ -55,9 +55,10 @@ public class PhosphoLocalizerExample {
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_2c.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_5c.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_5c.dia");
+		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_3a_160627233451.mzML");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_04.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4a_PRM.dia");
-		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4b_PRM.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4b_PRM.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4c_PRM.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_03_170507071858.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_01_170506220515.dia");
@@ -87,7 +88,7 @@ public class PhosphoLocalizerExample {
 		
 		UnitBackgroundFrequencyCalculator unitbackground=new UnitBackgroundFrequencyCalculator(0.01f);
 		BackgroundFrequencyInterface background=unitbackground;
-		//background=BackgroundFrequencyCalculator.generateBackground(stripefile);
+		background=BackgroundFrequencyCalculator.generateBackground(stripefile);
 		
 		float duration=stripefile.getGradientLength()/20.0f;
 		
@@ -97,6 +98,10 @@ public class PhosphoLocalizerExample {
 		float retentionTime;
 		byte precursorCharge;
 		if (true) {
+			peptideModSeq="S[+80.0]FSKEVEER";
+			retentionTime=2225.5823f;
+			precursorCharge=2;
+		} else if (false) {
 			// targeted
 			peptideModSeq="IHLGS[+80.0]SPK";
 			retentionTime=34.7f*60f;
@@ -124,7 +129,7 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="GIAPAS[+80.0]PMLGNASNPNKADIPER";
 			retentionTime=4189.1591796875f;
 			precursorCharge=3;
-		} else if (true) {
+		} else if (false) {
 			// repeat 2 sp|P83731|RL24_HUMAN
 			peptideModSeq="AITGAS[+80.0]LADIMAK";
 			retentionTime=5680.037109375f;
@@ -171,6 +176,11 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="NTPSQHSHSIQHS[+80.0]PER";
 			retentionTime=1256.3296f;
 			precursorCharge=4;
+		} else if (true) {
+			// IRS1
+			peptideModSeq="KGS[+80.0]GDYMPMS[+80.0]PK";
+			retentionTime=2949.1633f;
+			precursorCharge=2;
 		} else if (true) {
 			// IRS1
 			peptideModSeq="KGS[+80.0]GDYMPMSPK";

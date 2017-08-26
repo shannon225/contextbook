@@ -34,7 +34,7 @@ public class ModificationLocalizationData {
 		this.retentionTimeApexInSeconds=retentionTimeApexInSeconds;
 		this.localizationScore=localizationScore;
 		this.numberOfMods=numberOfMods;
-		if (this.localizationPeptideModSeq!=null&&this.localizationPeptideModSeq.getNumModifiableSites()==this.numberOfMods) {
+		if (this.localizationPeptideModSeq!=null&&this.localizationPeptideModSeq.getNumModifiableSites()==numberOfMods) {
 			this.isSiteSpecific=true;
 			this.isLocalized=true;
 		} else if (isCompletelyAmbiguous||localizingIons.length==0) {
