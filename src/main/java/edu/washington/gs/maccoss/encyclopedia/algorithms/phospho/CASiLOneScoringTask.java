@@ -142,7 +142,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 					// then it's ok if we use matching ions from to (S[+80])SSSSK to identify S(S[+80])SSSK
 					
 					// fix ambiguity based on previously identified peptides
-					Optional<AmbiguousPeptideModSeq> ambiguityRemoved=peptideModSeq.removeAmbiguity(previouslyIdentified);
+					Optional<AmbiguousPeptideModSeq> ambiguityRemoved=peptideModSeq.removeAmbiguity(localizingModification, previouslyIdentified);
 					if (!ambiguityRemoved.isPresent()) {
 						//System.out.println("Removed ambiguity in "+peptideModSeq.getPeptideAnnotation()); //FIXME
 						continue;
@@ -235,7 +235,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 							result.addStripe(score, General.concatenate(auxScoreArray, evalue, data.getLocalizationScore()), apex);
 							resultsQueue.add(result);
 							
-							//System.out.println("\tlocalization:"+data.isSiteSpecific()+"\t"+data.getLocalizationPeptideModSeq().getPeptideAnnotation()+"\t"+apex.getScanStartTime()+"\t"+data.getLocalizationScore()+"\t"+FragmentIon.toArchiveString(data.getLocalizingIons()));
+							//System.out.println("\tlocalization:"+data.isSiteSpecific()+"/"+data.isLocalized()+"/"+(data.getLocalizationPeptideModSeq().getNumModifiableSites()+"=="+data.getNumberOfMods())+"\t"+data.getLocalizationPeptideModSeq().getPeptideAnnotation()+"\t"+apex.getScanStartTime()+"\t"+data.getLocalizationScore()+"\t"+FragmentIon.toArchiveString(data.getLocalizingIons()));
 							if (!localizedEntry.isDecoy()) {
 								// don't bother logging decoys
 								localizationQueue.add(data);
@@ -507,7 +507,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 		
 		Range peakRange=new Range(apex.getScanStartTime(), apex.getScanStartTime());
 		//System.out.println("\t"+peptideModSeq.getPeptideAnnotation()+" ("+bestLocalizationScore+" score)\tNOT GOOD ENOUGH");
-		if (bestLocalizationScore>=minimumScore) {
+		if (bestLocalizationScore>0) {
 			// generate quant data from localizing ions only
 			TransitionRefinementData quantData=localizer.quantifyPeptide(peptideModSeq.getPeptideModSeq(), localizedEntry.getPrecursorCharge(), targetIons, apex.getScanStartTime(),
 					stripeSubset, takenIdentifiedIons, Optional.ofNullable((float[]) null));
@@ -538,9 +538,9 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 						}
 					}
 					isCompletelyAmbiguous=AmbiguousPeptideModSeq.isCompletelyAmbiguous(peptideModSeq, localizer.getModification());
-					isLocalized=wellShapedIons.size()>0&&numIdentificationPeaks>=targetNumFragments&&!isCompletelyAmbiguous;
+					isLocalized=bestLocalizationScore>=minimumScore&&wellShapedIons.size()>0&&numIdentificationPeaks>=targetNumFragments&&!isCompletelyAmbiguous;
 					isSiteSpecific=isLocalized&&AmbiguousPeptideModSeq.isSiteSpecific(peptideModSeq, localizer.getModification());
-					//System.out.println("\tLocalized "+isSiteSpecific+" for "+peptideModSeq.getPeptideAnnotation()+" ("+bestLocalizationScore+" score, "+numIdentificationPeaks+"/"+correlations.length+" peaks)"); // FIXME
+					//System.out.println("\tLocalized "+isLocalized+"/"+isSiteSpecific+" for "+peptideModSeq.getPeptideAnnotation()+" ("+bestLocalizationScore+" score vs "+minimumScore+"minimum, "+numIdentificationPeaks+"/"+correlations.length+" peaks)"); // FIXME
 				}
 			}
 		}
