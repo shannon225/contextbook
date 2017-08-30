@@ -44,7 +44,7 @@ public class AmbiguousPeptideModSeq {
 	public int getNumModifiableSites() {
 		int count=0;
 		for (int i=0; i<modifiable.length; i++) {
-			if (modifiable[i]||modification.isModifiable(aas[i].charAt(0))) count++;
+			if (modifiable[i]) count++;
 		}
 		return count;
 	}
@@ -137,7 +137,7 @@ public class AmbiguousPeptideModSeq {
 				for (int i=0; i<values.length; i++) {
 					int prevGroup=newmodificationGroup[values[i]];
 					newmodificationGroup[values[i]]=NO_GROUP;
-					//newmodifiable[values[i]]=false;
+					newmodifiable[values[i]]=false;
 					if (newisModified[values[i]]) {
 						for (int j=0; j<newmodificationGroup.length; j++) {
 							if (newmodificationGroup[j]==prevGroup) {
