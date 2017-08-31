@@ -199,8 +199,9 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 							continue;
 							
 						} else {
+							boolean wasPreviouslyObservedSite=localTakenRetentionTimes.contains(stripeRTIndex); // implicitly: ||takenRetentionTimes.contains(stripeRTIndex)
 							ArrayList<Spectrum> stripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(stripe.getScanStartTime()-parameters.getExpectedPeakWidth(), stripe.getScanStartTime()+parameters.getExpectedPeakWidth(), stripes);
-							Triplet<ModificationLocalizationData, Stripe, Range> locData=calculateLocalizationScoring(minimumScore, parameters, dutyCycle, localizer, localizedEntry, peptideModSeq, targetIons, allIons, takenIdentifiedIons, stripeSubset);
+							Triplet<ModificationLocalizationData, Stripe, Range> locData=calculateLocalizationScoring(wasPreviouslyObservedSite, minimumScore, parameters, dutyCycle, localizer, localizedEntry, peptideModSeq, targetIons, allIons, takenIdentifiedIons, stripeSubset);
 							while (!locData.x.isLocalized()) {
 								if (localizeLeftSide) {
 									leftPeptide=getLeftPeptide(precursorCharge, peptideModSeqs, entryMap, leftIndex, keepLeft);
@@ -209,7 +210,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 									leftIndex++;
 									peptideModSeq=leftPeptide.x;
 									targetIons=leftPeptide.y;
-									locData=calculateLocalizationScoring(minimumScore, parameters, dutyCycle, localizer, localizedEntry, peptideModSeq, targetIons, allIons, takenIdentifiedIons, stripeSubset);
+									locData=calculateLocalizationScoring(wasPreviouslyObservedSite, minimumScore, parameters, dutyCycle, localizer, localizedEntry, peptideModSeq, targetIons, allIons, takenIdentifiedIons, stripeSubset);
 								} else {
 									rightPeptide=getRightPeptide(precursorCharge, peptideModSeqs, entryMap, rightIndex, keepRight);
 									if (rightPeptide==null) break;
@@ -217,7 +218,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 									rightIndex--;
 									peptideModSeq=rightPeptide.x;
 									targetIons=rightPeptide.y;
-									locData=calculateLocalizationScoring(minimumScore, parameters, dutyCycle, localizer, localizedEntry, peptideModSeq, targetIons, allIons, takenIdentifiedIons, stripeSubset);
+									locData=calculateLocalizationScoring(wasPreviouslyObservedSite, minimumScore, parameters, dutyCycle, localizer, localizedEntry, peptideModSeq, targetIons, allIons, takenIdentifiedIons, stripeSubset);
 								}
 							}
 							ModificationLocalizationData data=locData.x;
@@ -473,7 +474,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 		return (int)(stripe.getScanStartTime()*10);
 	}
 
-	public static Triplet<ModificationLocalizationData, Stripe, Range> calculateLocalizationScoring(float minimumScore, SearchParameters parameters, float dutyCycle, PhosphoLocalizer localizer, LibraryEntry localizedEntry, AmbiguousPeptideModSeq peptideModSeq, FragmentIon[] targetIons, FragmentIon[] allIons, FragmentIonBlacklist takenIdentifiedIons, ArrayList<Spectrum> stripeSubset) {
+	public static Triplet<ModificationLocalizationData, Stripe, Range> calculateLocalizationScoring(boolean wasPreviouslyObservedSite, float minimumScore, SearchParameters parameters, float dutyCycle, PhosphoLocalizer localizer, LibraryEntry localizedEntry, AmbiguousPeptideModSeq peptideModSeq, FragmentIon[] targetIons, FragmentIon[] allIons, FragmentIonBlacklist takenIdentifiedIons, ArrayList<Spectrum> stripeSubset) {
 		int targetNumFragments=Math.max(parameters.getMinNumOfQuantitativePeaks(), 3);
 									
 		double[] targetIonsMasses=FragmentIon.getMasses(targetIons);
@@ -507,7 +508,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 		
 		Range peakRange=new Range(apex.getScanStartTime(), apex.getScanStartTime());
 		//System.out.println("\t"+peptideModSeq.getPeptideAnnotation()+" ("+bestLocalizationScore+" score)\tNOT GOOD ENOUGH");
-		if (bestLocalizationScore>0) {
+		if (bestLocalizationScore>=minimumScore||(bestLocalizationScore>0&&!wasPreviouslyObservedSite)) {
 			// generate quant data from localizing ions only
 			TransitionRefinementData quantData=localizer.quantifyPeptide(peptideModSeq.getPeptideModSeq(), localizedEntry.getPrecursorCharge(), targetIons, apex.getScanStartTime(),
 					stripeSubset, takenIdentifiedIons, Optional.ofNullable((float[]) null));
