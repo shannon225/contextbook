@@ -11,7 +11,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
-import junit.framework.TestCase;
 
 public class PeakLocationInferrerTest {
 	public static void main(String[] args) throws Exception {
@@ -20,8 +19,10 @@ public class PeakLocationInferrerTest {
 		HashMap<String, String> map=SearchParameterParser.getDefaultParameters();
 		SearchParameters parameters=SearchParameterParser.parseParameters(map);
 		
-		QuantitativeSearchJobData job1=getData(parameters, "/Users/searleb/Documents/projects/encyclopedia/mzml/zero_hela/121115_bcs_hela_24mz_400_1000_0D_1.dia");
-		QuantitativeSearchJobData job2=getData(parameters, "/Users/searleb/Documents/projects/encyclopedia/mzml/zero_hela/121115_bcs_hela_24mz_400_1000_0D_2.dia");
+		//QuantitativeSearchJobData job1=getData(parameters, "/Users/searleb/Documents/projects/encyclopedia/mzml/zero_hela/121115_bcs_hela_24mz_400_1000_0D_1.dia");
+		//QuantitativeSearchJobData job2=getData(parameters, "/Users/searleb/Documents/projects/encyclopedia/mzml/zero_hela/121115_bcs_hela_24mz_400_1000_0D_2.dia");
+		QuantitativeSearchJobData job1=getData(parameters, "/Users/searleb/Documents/school/projects/may_asms/hela/on_column/zero_hela/121115_bcs_hela_24mz_400_1000_0D_1.dia");
+		QuantitativeSearchJobData job2=getData(parameters, "/Users/searleb/Documents/school/projects/may_asms/hela/on_column/zero_hela/121115_bcs_hela_24mz_400_1000_0D_2.dia");
 		
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		jobs.add(job1);

@@ -248,8 +248,19 @@ public class PeptideQuantExtractor {
 			progress.update(baseMessage, baseProgress);
 
 			Logger.logLine("Processing "+range);
+			boolean used=false;
+			float minRetentionTime=Float.MAX_VALUE;
+			float maxRetentionTime=-Float.MAX_VALUE;
+			for (PSMData psm : data) {
+				if (range.contains((float)psm.getPrecursorMZ())) {
+					minRetentionTime=Math.min(minRetentionTime, psm.getRetentionTime()-psm.getDuration());
+					maxRetentionTime=Math.min(maxRetentionTime, psm.getRetentionTime()+psm.getDuration());
+					used=true;
+				}
+			}
+			if (!used) continue;
 
-			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, false);
+			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), minRetentionTime, maxRetentionTime, false);
 			Collections.sort(stripes);
 
 			// prepare executor for background
