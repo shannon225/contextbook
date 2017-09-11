@@ -2,56 +2,24 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.io.File;
 
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+/**
+ * @author Seth Just
+ * @since 2:50 PM 9/11/17
+ */
+public interface SearchJobData {
+	File getDiaFile();
 
-public abstract class SearchJobData {
+	File getFeatureFile();
 
-	private final File diaFile;
-	private final File featureFile;
-	private final File outputFile;
-	private final File decoyFile;
-	private final SearchParameters parameters;
-	private final String version;
-	
-	public SearchJobData(File diaFile, File featureFile, File outputFile, File decoyFile, SearchParameters parameters, String version) {
-		this.diaFile=diaFile;
-		this.featureFile=featureFile;
-		this.outputFile=outputFile;
-		this.decoyFile=decoyFile;
-		this.parameters=parameters;
-		this.version=version;
-	}
+	File getOutputFile();
 
-	public File getDiaFile() {
-		return diaFile;
-	}
+	File getOutputDecoyFile();
 
-	public File getFeatureFile() {
-		return featureFile;
-	}
+	SearchParameters getParameters();
 
-	public File getOutputFile() {
-		return outputFile;
-	}
+	String getVersion();
 
-	public File getOutputDecoyFile() {
-		return decoyFile;
-	}
+	boolean hasBeenRun();
 
-	public SearchParameters getParameters() {
-		return parameters;
-	}
-
-	public String getVersion() {
-		return version;
-	}
-
-	public boolean hasBeenRun() {
-		if (!diaFile.exists()) Logger.errorLine("Missing .DIA file: "+diaFile.getName());
-		if (!featureFile.exists()) Logger.errorLine("Missing feature file: "+featureFile.getName());
-		if (!outputFile.exists()) Logger.errorLine("Missing output file: "+outputFile.getName());
-		return diaFile.exists()&&featureFile.exists()&&outputFile.exists();
-	}
-
-	public abstract String getSearchType();
+	String getSearchType();
 }
