@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+
 import java.io.File;
 
 /**
@@ -8,6 +10,8 @@ import java.io.File;
  */
 public interface SearchJobData {
 	File getDiaFile();
+
+	StripeFileInterface getDiaFileReader();
 
 	File getFeatureFile();
 

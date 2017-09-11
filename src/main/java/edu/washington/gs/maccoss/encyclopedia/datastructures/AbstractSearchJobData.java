@@ -2,17 +2,18 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.io.File;
 
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public abstract class AbstractSearchJobData implements SearchJobData {
-
 	private final File diaFile;
 	private final File featureFile;
 	private final File outputFile;
 	private final File decoyFile;
 	private final SearchParameters parameters;
 	private final String version;
-	
+
 	public AbstractSearchJobData(File diaFile, File featureFile, File outputFile, File decoyFile, SearchParameters parameters, String version) {
 		this.diaFile=diaFile;
 		this.featureFile=featureFile;
@@ -25,6 +26,11 @@ public abstract class AbstractSearchJobData implements SearchJobData {
 	@Override
 	public File getDiaFile() {
 		return diaFile;
+	}
+
+	@Override
+	public StripeFileInterface getDiaFileReader() {
+		return StripeFileGenerator.getFile(getDiaFile(), getParameters());
 	}
 
 	@Override
