@@ -366,7 +366,7 @@ public class PeakLocationInferrer {
 	 */
 	private static ArrayList<ChromatogramLibraryEntry> extractFromDIA(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> targetPeptides,
 			ArrayList<PercolatorPeptide> passingPeptides) {
-		StripeFileInterface stripeFile=StripeFileGenerator.getFile(job.getDiaFile(), job.getParameters(), true);
+		final StripeFileInterface stripeFile = job.getDiaFileReader(); //TODO: figure out how to enforce reading in place
 
 		LibraryInterface library=null;
 		if (job instanceof EncyclopediaJobData) {

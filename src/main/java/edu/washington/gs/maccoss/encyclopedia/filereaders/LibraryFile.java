@@ -229,15 +229,16 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public Optional<StripeFileInterface> getSource(SearchParameters parameters) {
-		try {
-			ArrayList<File> files=getSourceFiles();
-			if (files.size()==0||files.size()>1) return Optional.empty();
-
-			StripeFileInterface file=StripeFileGenerator.getFile(files.get(0), parameters);
-			return Optional.ofNullable(file);
-		} catch (Exception e) {
-			return Optional.empty();
-		}
+		return Optional.empty(); //TODO: Issue 61: how to generate readers for files without forcing an attempt at reconversion?
+//		try {
+//			ArrayList<File> files=getSourceFiles();
+//			if (files.size()==0||files.size()>1) return Optional.empty();
+//
+//			StripeFileInterface file=StripeFileGenerator.getFile(files.get(0), parameters);
+//			return Optional.ofNullable(file);
+//		} catch (Exception e) {
+//			return Optional.empty();
+//		}
 	}
 
 	public HashMap<String, String> getMetadata() throws IOException, SQLException {

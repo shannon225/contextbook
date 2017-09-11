@@ -185,8 +185,8 @@ public class XCorDIA {
 
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);
-		
-		StripeFileInterface stripefile=StripeFileGenerator.getFile(jobData.getDiaFile(), parameters);
+
+		final StripeFileInterface stripefile = jobData.getDiaFileReader();
 
 		Logger.logLine("Processing precursors scans...");
 		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));

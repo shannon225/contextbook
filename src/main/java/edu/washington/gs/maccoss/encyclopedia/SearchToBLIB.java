@@ -423,13 +423,15 @@ public class SearchToBLIB {
 	 * @throws SQLException
 	 */
 	static int[] convertFileBlib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, int[] counterTotals, Optional<PeakLocationInferrer> inferrer, PrintWriter integrationFileWriter, BlibFile blib) throws IOException, SQLException {
-		File diaFile=job.getDiaFile();
-		Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
-		subProgress.update(diaFile.getName()+": Reading Percolator Results", 0.0f);
+		final String diaFileName = job.getDiaFile().getName();
 
-		StripeFileInterface stripeFile=StripeFileGenerator.getFile(diaFile, job.getParameters());
-		Logger.logLine("Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides from "+diaFile.getName()+"...");
-		subProgress.update(diaFile.getName()+": Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides", 0.00001f);
+		Logger.logLine("Reading Percolator Results from "+ diaFileName +"...");
+		subProgress.update(diaFileName +": Reading Percolator Results", 0.0f);
+
+		final StripeFileInterface stripeFile = job.getDiaFileReader();
+
+		Logger.logLine("Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides from "+ diaFileName +"...");
+		subProgress.update(diaFileName +": Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides", 0.00001f);
 
 		LibraryInterface library=null;
 		if (job instanceof EncyclopediaJobData) {
@@ -441,7 +443,7 @@ public class SearchToBLIB {
 		
 		for (IntegratedLibraryEntry entry : libraryEntries) {
 			String peptideModSeq=PeptideUtils.formatForSkylinePeakBoundaries(entry.getPeptideModSeq(), job.getParameters().getAAConstants());
-			integrationFileWriter.println(diaFile.getName()+"\t"+peptideModSeq+"\t"+entry.getRtRange().getStart()/60f+"\t"+entry.getRtRange().getStop()/60f+"\t"+entry.getPrecursorCharge()+"\tFALSE\t"+entry.getIonCount()+"\t"+entry.getRetentionTime()/60f+"\t"+entry.getTIC());
+			integrationFileWriter.println(diaFileName +"\t"+peptideModSeq+"\t"+entry.getRtRange().getStart()/60f+"\t"+entry.getRtRange().getStop()/60f+"\t"+entry.getPrecursorCharge()+"\tFALSE\t"+entry.getIonCount()+"\t"+entry.getRetentionTime()/60f+"\t"+entry.getTIC());
 		}
 		integrationFileWriter.flush();
 		
@@ -450,11 +452,11 @@ public class SearchToBLIB {
 			recasted.add(entry);
 		}
 
-		Logger.logLine("Writing Skyline BLIB from "+diaFile.getName()+"...");
-		subProgress.update(diaFile.getName()+": Writing Skyline BLIB", 0.99999f);
+		Logger.logLine("Writing Skyline BLIB from "+ diaFileName +"...");
+		subProgress.update(diaFileName +": Writing Skyline BLIB", 0.99999f);
 
 		counterTotals=blib.addLibrary(job, recasted, counterTotals[0], counterTotals[1], counterTotals[2]);
-		subProgress.update(diaFile.getName()+": Finished writing to Skyline BLIB at"+new Date().toString(), 1.0f);
+		subProgress.update(diaFileName +": Finished writing to Skyline BLIB at"+new Date().toString(), 1.0f);
 		return counterTotals;
 	}
 	
@@ -551,7 +553,8 @@ public class SearchToBLIB {
 		Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Reading Percolator Results", 0.0f);
 
-		StripeFileInterface stripeFile=StripeFileGenerator.getFile(diaFile, job.getParameters());
+		final StripeFileInterface stripeFile = job.getDiaFileReader();
+
 		Logger.logLine("Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides", 0.00001f);
 		elib.addTIC(stripeFile);
