@@ -77,14 +77,14 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 		return bestIons.get(peptideModSeq+"+"+precursorCharge);
 	}
 	
-	/* (non-Javadoc)
+	/**
+	 * Prefers the detectedRTInSec if it's available (and within the probability model tolerance), otherwise, uses a warped RT
 	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface#getPreciseRTInSec(edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData, java.lang.String, float)
 	 */
 	@Override
 	public float getPreciseRTInSec(SearchJobData job, String peptideModSeq, float detectedRTInSec) {
 		RetentionTimeAlignmentInterface f=alignmentMap.get(job);
 		Float alignedRTInMin=alignedRTInMinBySequenceMap.get(peptideModSeq);
-		//System.out.println(job.getDiaFile().getName()+": "+alignedRTInMin+", "+f);
 		if (alignedRTInMin==null) {
 			return detectedRTInSec;
 		}
@@ -92,17 +92,18 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 		if (f==null) {
 			return detectedRTInSec;
 		} else {
-			float warpedRTInSec=f.getYValue(alignedRTInMin);
-			float prob=f.getProbabilityFitsModel(detectedRTInSec/60f-warpedRTInSec);
+			float warpedRTInMin=f.getYValue(alignedRTInMin);
+			float prob=f.getProbabilityFitsModel(detectedRTInSec/60f-warpedRTInMin);
 			if (prob>RT_OUTLIER_REJECTION_PROBABILITY) {
 				return detectedRTInSec;
 			} else {
-				return warpedRTInSec*60f;
+				return warpedRTInMin*60f;
 			}
 		}
 	}
 
-	/* (non-Javadoc)
+	/**
+	 * Always reports the warped RT
 	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface#getWarpedRTInSec(edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData, java.lang.String)
 	 */
 	@Override
@@ -110,7 +111,7 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 		RetentionTimeAlignmentInterface f=alignmentMap.get(job);
 		Float alignedRTInMin=alignedRTInMinBySequenceMap.get(peptideModSeq);
 		if (alignedRTInMin==null) {
-			Logger.errorLine("Couldn't find retention time for peptide ("+peptideModSeq+").");
+			Logger.errorLine("Couldn't find retention time for peptide ("+peptideModSeq+") in file ("+job.getDiaFile().getName()+").");
 			return -1;
 		}
 		

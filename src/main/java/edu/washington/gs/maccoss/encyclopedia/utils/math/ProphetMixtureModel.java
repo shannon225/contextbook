@@ -59,8 +59,19 @@ public class ProphetMixtureModel {
 		float prior=General.sum(weights);
 		//float mean=weightedMean(data, weights);
 		//float stdev=weightedStdev(data, weights, mean);
-		float mean=trimmedMean(data, weights);
-		float stdev=trimmedStdev(data, weights, mean);
+		int numAbove50p=0;
+		for (int i=0; i<weights.length; i++) {
+			if (weights[i]>=0.5f) numAbove50p++;
+			if (numAbove50p>2) break;
+		}
+		float mean, stdev;
+		if (numAbove50p>2) {
+			mean=trimmedMean(data, weights, 0.5f);
+			stdev=trimmedStdev(data, weights, mean, 0.5f);
+		} else {
+			mean=weightedMean(data, weights);
+			stdev=weightedStdev(data, weights, mean);
+		}
 		
 		if (fixedMeans) {
 			return seed.clone(seed.getMean(), stdev, prior);
@@ -92,11 +103,11 @@ public class ProphetMixtureModel {
 		return (float)Math.sqrt((deltaSum)/((numNonZero-1)*weightSum/numNonZero));
 	}
 	
-	static float trimmedMean(float[] data, float[] weights) {
+	static float trimmedMean(float[] data, float[] weights, float threshold) {
 		float sum=0.0f;
 		int count=0;
 		for (int i=0; i<weights.length; i++) {
-			if (weights[i]>=0.5f) {
+			if (weights[i]>=threshold) {
 				sum+=data[i];
 				count++;
 			}
@@ -104,11 +115,12 @@ public class ProphetMixtureModel {
 		return sum/count;
 	}
 
-	static float trimmedStdev(float[] data, float[] weights, float mean) {
+	static float trimmedStdev(float[] data, float[] weights, float mean, float threshold) {
+		
 		float sum=0.0f;
 		int count=0;
 		for (int i=0; i<weights.length; i++) {
-			if (weights[i]>=0.5f) {
+			if (weights[i]>=threshold) {
 				float delta=data[i]-mean;
 				sum+=delta*delta;
 				count++;

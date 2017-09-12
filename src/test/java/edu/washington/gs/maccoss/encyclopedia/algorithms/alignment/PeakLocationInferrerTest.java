@@ -30,12 +30,12 @@ public class PeakLocationInferrerTest {
 		jobs.add(job2);
 		
 		PeakLocationInferrerInterface inferrer=AlternatePeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), jobs, getPeptides(jobs), parameters);
-		System.out.println("both j1: "+inferrer.getPreciseRTInSec(job1, "GADGMILGGPQSDSDTDAQR", 3085f)+"\t GADGMILGGPQSDSDTDAQR"); // both
-		System.out.println("both j2: "+inferrer.getPreciseRTInSec(job2, "GADGMILGGPQSDSDTDAQR", 3085f)+"\t GADGMILGGPQSDSDTDAQR"); // both
-		System.out.println("a    j1: "+inferrer.getPreciseRTInSec(job1, "GPPAPTTQAQPDLIKPLPLHK", 3517f)+"\t GPPAPTTQAQPDLIKPLPLHK"); // only in a
-		System.out.println("a    j2: "+inferrer.getPreciseRTInSec(job2, "GPPAPTTQAQPDLIKPLPLHK", 3517f)+"\t GPPAPTTQAQPDLIKPLPLHK"); // only in a
-		System.out.println("b    j1: "+inferrer.getPreciseRTInSec(job1, "NSSYVHGGVDASGKPQEAVYGQNDIHHK", 2198f)+"\t NSSYVHGGVDASGKPQEAVYGQNDIHHK"); // only in b
-		System.out.println("b    j2: "+inferrer.getPreciseRTInSec(job2, "NSSYVHGGVDASGKPQEAVYGQNDIHHK", 2198f)+"\t NSSYVHGGVDASGKPQEAVYGQNDIHHK"); // only in b	
+		System.out.println("both j1: "+inferrer.getPreciseRTInSec(job1, "GADGMILGGPQSDSDTDAQR", 3085f)+"\t"+inferrer.getWarpedRTInSec(job1, "GADGMILGGPQSDSDTDAQR")+"\t GADGMILGGPQSDSDTDAQR"); // both
+		System.out.println("both j2: "+inferrer.getPreciseRTInSec(job2, "GADGMILGGPQSDSDTDAQR", 3085f)+"\t"+inferrer.getWarpedRTInSec(job2, "GADGMILGGPQSDSDTDAQR")+"\t GADGMILGGPQSDSDTDAQR"); // both
+		System.out.println("a    j1: "+inferrer.getPreciseRTInSec(job1, "GPPAPTTQAQPDLIKPLPLHK", 3517f)+"\t"+inferrer.getWarpedRTInSec(job1, "GPPAPTTQAQPDLIKPLPLHK")+"\t GPPAPTTQAQPDLIKPLPLHK"); // only in a
+		System.out.println("a    j2: "+inferrer.getPreciseRTInSec(job2, "GPPAPTTQAQPDLIKPLPLHK", 3517f)+"\t"+inferrer.getWarpedRTInSec(job2, "GPPAPTTQAQPDLIKPLPLHK")+"\t GPPAPTTQAQPDLIKPLPLHK"); // only in a
+		System.out.println("b    j1: "+inferrer.getPreciseRTInSec(job1, "NSSYVHGGVDASGKPQEAVYGQNDIHHK", 2198f)+"\t"+inferrer.getWarpedRTInSec(job1, "NSSYVHGGVDASGKPQEAVYGQNDIHHK")+"\t NSSYVHGGVDASGKPQEAVYGQNDIHHK"); // only in b
+		System.out.println("b    j2: "+inferrer.getPreciseRTInSec(job2, "NSSYVHGGVDASGKPQEAVYGQNDIHHK", 2198f)+"\t"+inferrer.getWarpedRTInSec(job2, "NSSYVHGGVDASGKPQEAVYGQNDIHHK")+"\t NSSYVHGGVDASGKPQEAVYGQNDIHHK"); // only in b	
 	}
 
 	private static QuantitativeSearchJobData getData(SearchParameters parameters, String dia) {
