@@ -1,10 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.concurrent.BlockingQueue;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
@@ -23,10 +18,16 @@ import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+
 public class PecanOneScoringTask extends AbstractPecanScoringTask {
 
-	public PecanOneScoringTask(PSMPeakScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint>[] background, PrecursorScanMap precursors,
-			int scanAveragingWindow, BlockingQueue<PeptideScoringResult> resultsQueue, PecanSearchParameters parameters) {
+	public PecanOneScoringTask(PSMPeakScorer scorer, List<LibraryEntry> entries, List<Stripe> stripes, TDoubleObjectHashMap<XYPoint>[] background, PrecursorScanMap precursors,
+							   int scanAveragingWindow, BlockingQueue<PeptideScoringResult> resultsQueue, PecanSearchParameters parameters) {
 		super(scorer, entries, stripes, background, precursors, scanAveragingWindow, resultsQueue, parameters);
 	}
 

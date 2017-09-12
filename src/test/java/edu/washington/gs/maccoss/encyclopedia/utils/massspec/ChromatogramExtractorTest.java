@@ -1,15 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import javax.swing.JPanel;
-
-import org.jfree.chart.ChartPanel;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -20,6 +10,14 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import org.jfree.chart.ChartPanel;
+
+import javax.swing.*;
+import java.awt.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class ChromatogramExtractorTest {
 	public static void main(String args[]) throws Exception {
@@ -43,7 +41,7 @@ public class ChromatogramExtractorTest {
 		FragmentIon[] unique1=PhosphoLocalizer.getUniqueFragmentIons(peptideModSeq1, charge, availableModels, parameters);
 		FragmentIon[] unique2=PhosphoLocalizer.getUniqueFragmentIons(peptideModSeq2, charge, availableModels, parameters);
 		
-		ArrayList<Stripe> stripes=stripefile.getStripes(737.858763, 62f*60, 67f*60, false);
+		List<Stripe> stripes=stripefile.getStripes(737.858763, 62f*60, 67f*60, false);
 
 		ArrayList<Spectrum> spectra=new ArrayList<Spectrum>();
 		for (Stripe stripe : stripes) {

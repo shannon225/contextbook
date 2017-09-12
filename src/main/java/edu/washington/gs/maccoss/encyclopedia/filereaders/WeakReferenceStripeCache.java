@@ -1,18 +1,19 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * This cache keeps a fixed number of entire stripes in memory. If a request is
@@ -27,10 +28,10 @@ public class WeakReferenceStripeCache {
 	private final int hardCacheSize;
 	
 	// hardCache is bounded to hardCacheSize
-	private final LinkedList<Pair<Range, ArrayList<Stripe>>> hardCache=new LinkedList<Pair<Range, ArrayList<Stripe>>>();
+	private final LinkedList<Pair<Range, List<Stripe>>> hardCache=new LinkedList<>();
 	
 	// softCache is unbounded and only cleaned up by promotion requests. This means that there needs to be a relatively low number of Ranges in total
-	private final LinkedList<Pair<Range, WeakReference<ArrayList<Stripe>>>> softCache=new LinkedList<Pair<Range, WeakReference<ArrayList<Stripe>>>>();
+	private final LinkedList<Pair<Range, WeakReference<List<Stripe>>>> softCache=new LinkedList<>();
 
 	private final ArrayList<Range> allRanges=new ArrayList<Range>();
 	protected final StripeFileInterface stripeFile;
@@ -52,10 +53,10 @@ public class WeakReferenceStripeCache {
 		Collections.sort(allRanges);
 	}
 	
-	public ArrayList<Stripe> getStripes(float mz) {
+	public List<Stripe> getStripes(float mz) {
 		// first check hard references
-		Pair<Range, ArrayList<Stripe>> foundHardPair=null;
-		for (Pair<Range, ArrayList<Stripe>> pair : hardCache) {
+		Pair<Range, List<Stripe>> foundHardPair=null;
+		for (Pair<Range, List<Stripe>> pair : hardCache) {
 			if (pair.x.contains(mz)) {
 				foundHardPair=pair;
 				break;
@@ -69,9 +70,9 @@ public class WeakReferenceStripeCache {
 		}
 		
 		// then check soft references
-		Pair<Range, WeakReference<ArrayList<Stripe>>> foundSoftPair=null;
-		ArrayList<Stripe> foundPreviouslySoftStripes=null; // can be null even if foundSoftPair isn't!
-		for (Pair<Range, WeakReference<ArrayList<Stripe>>> pair : softCache) {
+		Pair<Range, WeakReference<List<Stripe>>> foundSoftPair=null;
+		List<Stripe> foundPreviouslySoftStripes=null; // can be null even if foundSoftPair isn't!
+		for (Pair<Range, WeakReference<List<Stripe>>> pair : softCache) {
 			if (pair.x.contains(mz)) {
 				foundPreviouslySoftStripes=pair.y.get();
 				foundSoftPair=pair;
@@ -104,17 +105,17 @@ public class WeakReferenceStripeCache {
 		}
 		
 		// insert into hard cache and return
-		hardCache.addFirst(new Pair<Range, ArrayList<Stripe>>(foundPreviouslySoftRange, foundPreviouslySoftStripes));
+		hardCache.addFirst(new Pair<>(foundPreviouslySoftRange, foundPreviouslySoftStripes));
 		while (hardCache.size()>hardCacheSize) {
-			Pair<Range, ArrayList<Stripe>> previouslyHardPair=hardCache.removeLast();
-			softCache.addFirst(new Pair<Range, WeakReference<ArrayList<Stripe>>>(previouslyHardPair.x, new WeakReference<ArrayList<Stripe>>(previouslyHardPair.y)));
+			Pair<Range, List<Stripe>> previouslyHardPair=hardCache.removeLast();
+			softCache.addFirst(new Pair<>(previouslyHardPair.x, new WeakReference<>(previouslyHardPair.y)));
 		}
 		return foundPreviouslySoftStripes;
 	}
 	
-	protected ArrayList<Stripe> getStripesFromFile(float mz) {
+	protected List<Stripe> getStripesFromFile(float mz) {
 		try {
-			ArrayList<Stripe> stripes=stripeFile.getStripes(mz, -Float.MAX_VALUE, Float.MAX_VALUE, false);
+			List<Stripe> stripes=stripeFile.getStripes(mz, -Float.MAX_VALUE, Float.MAX_VALUE, false);
 			Collections.sort(stripes);
 			return stripes;
 			

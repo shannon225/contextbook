@@ -1,15 +1,15 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.zip.DataFormatException;
-
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.DataFormatException;
 
 public interface StripeFileInterface {
 
@@ -17,7 +17,7 @@ public interface StripeFileInterface {
 	 * ranges for dia stripe boundaries
 	 * @return Range: low/high boundaries for stripes, Float value is average time in seconds between cycles 
 	 */
-	HashMap<Range, Float> getRanges();
+	Map<Range, Float> getRanges();
 
 	/**
 	 * opens specific file on disk
@@ -36,7 +36,7 @@ public interface StripeFileInterface {
 	 * @throws SQLException
 	 * @throws DataFormatException
 	 */
-	ArrayList<PrecursorScan> getPrecursors(float minRT, float maxRT) throws IOException, SQLException, DataFormatException;
+	List<PrecursorScan> getPrecursors(float minRT, float maxRT) throws IOException, SQLException, DataFormatException;
 
 	/**
 	 * returns DIA scans between RT ranges at a specific target MZ
@@ -48,7 +48,7 @@ public interface StripeFileInterface {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	ArrayList<Stripe> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException;
+	List<Stripe> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException;
 
 	/**
 	 * returns DIA scans between RT ranges within target MZ range
@@ -60,7 +60,7 @@ public interface StripeFileInterface {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	ArrayList<Stripe> getStripes(Range targetMzRange, float minRT, float maxRT, final boolean sqrt) throws IOException, SQLException;
+	List<Stripe> getStripes(Range targetMzRange, float minRT, float maxRT, final boolean sqrt) throws IOException, SQLException;
 	
 	/**
 	 * returns total precursor ion current across entire file

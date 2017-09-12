@@ -1,8 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import java.io.File;
-import java.util.ArrayList;
-
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
@@ -12,12 +9,16 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import gnu.trove.procedure.TIntFloatProcedure;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
 public class StripeFileTest {
 	public static void main(String[] args) throws Exception {
 		File diaFile=new File("/Users/searleb/Documents/school/projects/may_asms/yeast/02may2016_yeast_deep_dia_01.dia");
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, PecanParameterParser.getDefaultParametersObject());
 		
-		ArrayList<PrecursorScan> scans=stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
+		List<PrecursorScan> scans=stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
 		ArrayList<XYPoint> tic=new ArrayList<XYPoint>();
 		TIntFloatHashMap mzSum=new TIntFloatHashMap();
 		for (PrecursorScan scan : scans) {

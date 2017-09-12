@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -17,12 +18,12 @@ public class PeptideScoringTask extends ThreadableTask<HashMap<LibraryEntry, Pep
 	 * must be immutable!
 	 */
 	protected final PSMScorer scorer;
-	protected final ArrayList<LibraryEntry> entries;
-	protected final ArrayList<Stripe> stripes;
+	protected final List<LibraryEntry> entries;
+	protected final List<Stripe> stripes;
 	protected final PrecursorScanMap precursors;
 	protected final AminoAcidConstants aaConstants;
 
-	public PeptideScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, AminoAcidConstants aaConstants) {
+	public PeptideScoringTask(PSMScorer scorer, List<LibraryEntry> entries, List<Stripe> stripes, PrecursorScanMap precursors, AminoAcidConstants aaConstants) {
 		this.scorer=scorer;
 		this.entries=entries;
 		this.stripes=stripes;

@@ -1,13 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
-import java.io.File;
-import java.util.ArrayList;
-
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+
+import java.io.File;
+import java.util.List;
 
 public class PrecursorIntegrator {
 	public static void main(String[] args) throws Exception {
@@ -19,7 +19,7 @@ public class PrecursorIntegrator {
 			if (file.getName().endsWith("mzML")) {
 				float tic=0.0f;
 				StripeFileInterface stripefile=StripeFileGenerator.getFile(file, parameters);
-				ArrayList<PrecursorScan> scans=stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
+				List<PrecursorScan> scans=stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
 				for (PrecursorScan scan : scans) {
 					float[] intensities=scan.getIntensityArray();
 					for (int i=0; i<intensities.length; i++) {

@@ -1,8 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
-import java.util.ArrayList;
-import java.util.concurrent.BlockingQueue;
-
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -11,13 +8,16 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Gaussian;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ThreadableTask;
 
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+
 public abstract class AbstractLibraryScoringTask extends ThreadableTask<Nothing> {
 	/**
 	 * must be immutable!
 	 */
 	protected final PSMScorer scorer;
-	protected final ArrayList<LibraryEntry> entries;
-	protected final ArrayList<Stripe> stripes;
+	protected final List<LibraryEntry> entries;
+	protected final List<Stripe> stripes;
 	protected final PrecursorScanMap precursors;
 	protected final BlockingQueue<PeptideScoringResult> resultsQueue;
 	protected final SearchParameters parameters;
@@ -31,7 +31,7 @@ public abstract class AbstractLibraryScoringTask extends ThreadableTask<Nothing>
 	 * @param precursors
 	 * @param scanAveragingMargin
 	 */
-	public AbstractLibraryScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
+	public AbstractLibraryScoringTask(PSMScorer scorer, List<LibraryEntry> entries, List<Stripe> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
 		this.scorer=scorer;
 		this.entries=entries;
 		this.stripes=stripes;

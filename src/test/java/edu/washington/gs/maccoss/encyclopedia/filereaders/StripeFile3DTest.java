@@ -1,8 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import java.io.File;
-import java.util.ArrayList;
-
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
@@ -13,12 +10,16 @@ import gnu.trove.map.hash.TFloatObjectHashMap;
 import gnu.trove.procedure.TFloatFloatProcedure;
 import gnu.trove.procedure.TFloatObjectProcedure;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
 public class StripeFile3DTest {
 	public static void main(String[] args) throws Exception {
 		File diaFile=new File("/Users/searleb/Documents/villen_manuscript/q05498_bs_MCF7_IMAC_DIA_R1.mzML");
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, PecanParameterParser.getDefaultParametersObject());
 		
-		ArrayList<PrecursorScan> scans=stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
+		List<PrecursorScan> scans=stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
 		float rtResolution=10f;
 		float mzResolution=10f;
 		

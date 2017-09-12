@@ -1,10 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
@@ -50,8 +47,8 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 	private final float minimumScore;
 	//public final HashMap<AmbiguousPeptideModSeq, TFloatFloatHashMap> scoreByRTMapByPeptideAnnotation=new HashMap<>(); // FIXME
 	
-	public CASiLOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, 
-			PhosphoLocalizer localizer, BlockingQueue<PeptideScoringResult> resultsQueue, BlockingQueue<ModificationLocalizationData> localizationQueue, SearchParameters parameters) {
+	public CASiLOneScoringTask(PSMScorer scorer, List<LibraryEntry> entries, List<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors,
+							   PhosphoLocalizer localizer, BlockingQueue<PeptideScoringResult> resultsQueue, BlockingQueue<ModificationLocalizationData> localizationQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.dutyCycle=dutyCycle;
 		this.localizer=localizer;

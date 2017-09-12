@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
@@ -35,12 +36,12 @@ public class EncyclopediaOneScoringFactory implements LibraryScoringFactory {
 	}
 
 	@Override
-	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
+	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, List<LibraryEntry> entries, List<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
 		return new EncyclopediaOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, resultsQueue, parameters);
 	}
 	
 	@Override
-	public AbstractLibraryScoringTask getDDAScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
+	public AbstractLibraryScoringTask getDDAScoringTask(PSMScorer scorer, List<LibraryEntry> entries, List<Stripe> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
 		return new EncyclopediaDDAScoringTask(scorer, entries, stripes, precursors, resultsQueue, parameters);
 	}
 

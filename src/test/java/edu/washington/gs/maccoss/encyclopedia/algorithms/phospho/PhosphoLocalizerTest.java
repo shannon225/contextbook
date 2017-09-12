@@ -1,19 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map.Entry;
-
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
@@ -28,6 +15,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import junit.framework.TestCase;
+
+import java.awt.*;
+import java.io.File;
+import java.util.*;
+import java.util.List;
+import java.util.Map.Entry;
 
 public class PhosphoLocalizerTest extends TestCase {
 	public static final Color[] colors=new Color[] {Color.red, Color.blue, Color.green, Color.cyan, Color.magenta}; 
@@ -67,7 +60,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		//permutations.add("DKRPLSGPDVGTPQPAGLAS[+79.966331]GAK");
 		//ArrayList<Stripe> stripes=stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false);
 		//PhosphoLocalizationData multiple=localizer.extractPhosphoForms(psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes);
-		ArrayList<Stripe> stripes=stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false);
+		List<Stripe> stripes=stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false);
 		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=localizer.runDIAPhosphoLocalization(psmdata, stripes, true, true).get().getScoreTraces();
 		//HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=multiple.getTraces();
 		

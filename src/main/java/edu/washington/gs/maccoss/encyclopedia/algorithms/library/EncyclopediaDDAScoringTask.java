@@ -1,14 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.concurrent.BlockingQueue;
-
-import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.*;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -19,11 +11,16 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+
 public class EncyclopediaDDAScoringTask extends AbstractLibraryScoringTask {
 	// FIXME shouldn't be static (long term)
 	private static final HashMap<String, float[]> isotopeDistributions=new HashMap<String, float[]>();
 	
-	public EncyclopediaDDAScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
+	public EncyclopediaDDAScoringTask(PSMScorer scorer, List<LibraryEntry> entries, List<Stripe> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 	}
 

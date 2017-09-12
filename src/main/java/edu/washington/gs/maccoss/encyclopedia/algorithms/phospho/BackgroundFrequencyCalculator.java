@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
@@ -100,7 +101,7 @@ public class BackgroundFrequencyCalculator implements BackgroundFrequencyInterfa
 			}
 			if (index<0||index>=binCounters.length) continue;
 			
-			ArrayList<Stripe> stripes=diafile.getStripes(targetMz, -Float.MAX_VALUE, Float.MAX_VALUE, false);
+			List<Stripe> stripes=diafile.getStripes(targetMz, -Float.MAX_VALUE, Float.MAX_VALUE, false);
 			for (Stripe stripe : stripes) {
 				double[] ions=stripe.getMassArray();
 				

@@ -121,7 +121,13 @@ public class Stripe implements Comparable<Stripe>, Spectrum {
 	public float[] getIntensityArray() {
 		return intensityArray;
 	}
-	
+
+	/**
+	 * @deprecated Instead of using this method, refactor usages of its output to us a
+	 *             {@code List<? extends Spectrum>} instead of a {@code List<Spectrum>}
+	 *             and pass {@code stripes} to it directly.
+	 */
+	@Deprecated
 	public static ArrayList<Spectrum> downcastStripeToSpectrum(ArrayList<Stripe> stripes) {
 		ArrayList<Spectrum> spectra=new ArrayList<Spectrum>();
 		for (Spectrum spectrum : stripes) {

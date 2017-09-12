@@ -1,7 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
@@ -52,7 +52,7 @@ public class PecanOneScoringFactory implements PecanScoringFactory {
 	}
 
 	@Override
-	public AbstractPecanScoringTask getScoringTask(PSMPeakScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint>[] background, PrecursorScanMap precursors,
+	public AbstractPecanScoringTask getScoringTask(PSMPeakScorer scorer, List<LibraryEntry> entries, List<Stripe> stripes, TDoubleObjectHashMap<XYPoint>[] background, PrecursorScanMap precursors,
 			int scanAveragingMargin, BlockingQueue<PeptideScoringResult> resultsQueue) {
 		return new PecanOneScoringTask(scorer, entries, stripes, background, precursors, scanAveragingMargin, resultsQueue, parameters);
 	}

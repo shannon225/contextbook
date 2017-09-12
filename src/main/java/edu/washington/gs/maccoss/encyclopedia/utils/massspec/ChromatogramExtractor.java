@@ -1,11 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map.Entry;
-
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -13,10 +7,17 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map.Entry;
+
 public class ChromatogramExtractor {
 	public static final byte[] isotopes=new byte[] {0, 1, 2};
 	public static final Color[] isotopeColors=new Color[] {new Color(0, 0, 255), new Color(138, 43, 226), new Color(165, 42, 42)};
-	public static XYTraceInterface[] extractPrecursorChromatograms(MassTolerance tolerance, double precursorMz, byte charge, ArrayList<Spectrum> precursors) {
+	public static XYTraceInterface[] extractPrecursorChromatograms(MassTolerance tolerance, double precursorMz, byte charge, List<? extends Spectrum> precursors) {
 		double[] targetMasses=new double[isotopes.length];
 		for (int i=0; i<targetMasses.length; i++) {
 			targetMasses[i] = MassConstants.getChargedIsotopeMass(precursorMz, charge, isotopes[i]);
@@ -50,7 +51,7 @@ public class ChromatogramExtractor {
 		return kept.toArray(new XYTrace[kept.size()]);
 	}
 
-	public static HashMap<FragmentIon, XYTrace> extractFragmentChromatograms(MassTolerance tolerance, FragmentIon[] ionTypes, ArrayList<Spectrum> stripes, Float targetRTInSec, GraphType type) {
+	public static HashMap<FragmentIon, XYTrace> extractFragmentChromatograms(MassTolerance tolerance, FragmentIon[] ionTypes, List<? extends Spectrum> stripes, Float targetRTInSec, GraphType type) {
 		HashMap<FragmentIon, XYTrace> kept=new HashMap<FragmentIon, XYTrace>();
 
 		ArrayList<FragmentIon> centerIonTypes=new ArrayList<FragmentIon>();
@@ -112,7 +113,7 @@ public class ChromatogramExtractor {
 		return kept;
 	}
 
-	public static Spectrum getTargetStripeByRT(ArrayList<Spectrum> stripes, Float targetRTInSec) {
+	public static Spectrum getTargetStripeByRT(List<? extends Spectrum> stripes, Float targetRTInSec) {
 		Spectrum bestStripe=null;
 		float bestDelta=Float.MAX_VALUE;
 		for (Spectrum stripe : stripes) {

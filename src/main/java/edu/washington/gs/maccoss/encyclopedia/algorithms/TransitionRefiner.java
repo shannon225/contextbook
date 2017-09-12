@@ -1,12 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Optional;
-
-import org.jfree.chart.ChartPanel;
-
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
@@ -23,6 +16,13 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TFloatArrayList;
+import org.jfree.chart.ChartPanel;
+
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 
 public class TransitionRefiner {
 	// minimum threshold to call this peak as worth quantifying
@@ -220,7 +220,7 @@ public class TransitionRefiner {
 		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range);
 	}
 	
-	public static int[] numberOfCoelutingIons(double[] targetMasses, double[] allIons, ArrayList<Spectrum> stripes, int halfPeakWidthInScans, MassTolerance fragmentTolerance) {
+	public static int[] numberOfCoelutingIons(double[] targetMasses, double[] allIons, List<Spectrum> stripes, int halfPeakWidthInScans, MassTolerance fragmentTolerance) {
 		float[][] targetIntensityArray=new float[stripes.size()][];
 		float[][] allIntensityArray=new float[stripes.size()][];
 		for (int rtIndex=0; rtIndex<stripes.size(); rtIndex++) {

@@ -65,7 +65,13 @@ public class PrecursorScan implements Spectrum, Comparable<PrecursorScan> {
 		c=spectrumName.compareTo(o.spectrumName);
 		return c;
 	}
-	
+
+	/**
+	 * @deprecated Instead of using this method, refactor usages of its output to use a
+	 *             {@code List<? extends Spectrum>} instead of a {@code List<Spectrum>}
+	 *             and pass {@code precursors} to it directly.
+	 */
+	@Deprecated
 	public static ArrayList<Spectrum> downcast(ArrayList<PrecursorScan> precursors) {
 		ArrayList<Spectrum> spectra=new ArrayList<Spectrum>();
 		for (Spectrum spectrum : precursors) {

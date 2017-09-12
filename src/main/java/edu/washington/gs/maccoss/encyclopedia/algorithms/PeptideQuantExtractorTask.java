@@ -1,9 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
@@ -29,7 +26,7 @@ import gnu.trove.list.array.TFloatArrayList;
 public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	private final Optional<PhosphoLocalizer> localizer;
 	private final String filename;
-	private final ArrayList<Stripe> stripes;
+	private final List<Stripe> stripes;
 	private final boolean limitToQuantifiable;
 
 	private final PSMPeakScorer scorer;
@@ -38,7 +35,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	private final PSMData psmdata;
 	private final ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries; // CAN BE NULL
 
-	public PeptideQuantExtractorTask(String filename, PSMData psmdata, Optional<PhosphoLocalizer> localizer, ArrayList<Stripe> stripes, SearchParameters parameters, boolean limitToQuantifiable) {
+	public PeptideQuantExtractorTask(String filename, PSMData psmdata, Optional<PhosphoLocalizer> localizer, List<Stripe> stripes, SearchParameters parameters, boolean limitToQuantifiable) {
 		this.filename=filename;
 		this.psmdata=psmdata;
 		this.localizer=localizer;
@@ -51,7 +48,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		this.limitToQuantifiable=limitToQuantifiable; //library.isPresent();
 	}
 
-	public PeptideQuantExtractorTask(String filename, PSMData psmdata, Optional<PhosphoLocalizer> localizer, ArrayList<Stripe> stripes, SearchParameters parameters, ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries, boolean limitToQuantifiable) {
+	public PeptideQuantExtractorTask(String filename, PSMData psmdata, Optional<PhosphoLocalizer> localizer, List<Stripe> stripes, SearchParameters parameters, ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries, boolean limitToQuantifiable) {
 		this.filename=filename;
 		this.psmdata=psmdata;
 		this.localizer=localizer;

@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -14,9 +15,9 @@ public class PrecursorScanMap {
 	public static final byte[] isotopes=new byte[] {-1, 0, 1, 2};
 	
 	private final float[] rts;
-	private final ArrayList<PrecursorScan> precursors;
+	private final List<? extends PrecursorScan> precursors;
 
-	public PrecursorScanMap(ArrayList<PrecursorScan> precursors) {
+	public PrecursorScanMap(List<? extends PrecursorScan> precursors) {
 		this.precursors=precursors;
 		Collections.sort(this.precursors);
 		TFloatArrayList rts=new TFloatArrayList();

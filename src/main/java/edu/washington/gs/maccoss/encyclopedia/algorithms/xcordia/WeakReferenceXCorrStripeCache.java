@@ -1,16 +1,17 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia;
 
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.WeakReferenceStripeCache;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This cache keeps a fixed number of entire stripes in memory. If a request is
@@ -31,10 +32,10 @@ public class WeakReferenceXCorrStripeCache extends WeakReferenceStripeCache {
 		super(stripeFile, parameters);
 	}
 
-	protected ArrayList<Stripe> getStripesFromFile(float mz) {
+	protected List<Stripe> getStripesFromFile(float mz) {
 		try {
-			ArrayList<Stripe> stripes=stripeFile.getStripes(mz, -Float.MAX_VALUE, Float.MAX_VALUE, false);
-			ArrayList<Stripe> xcorrStripes=new ArrayList<Stripe>();
+			List<Stripe> stripes=stripeFile.getStripes(mz, -Float.MAX_VALUE, Float.MAX_VALUE, false);
+			List<Stripe> xcorrStripes=new ArrayList<Stripe>();
 			for (Stripe stripe : stripes) {
 				xcorrStripes.add(new XCorrStripe(stripe, parameters));
 			}
