@@ -21,6 +21,7 @@ import java.util.zip.DataFormatException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
@@ -65,7 +66,7 @@ public class PeptideQuantExtractor {
 		this.localizer=localizer;*/
 	}
 
-	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, final SearchJobData job, boolean limitToQuantifiable, ArrayList<PercolatorPeptide> globalPassingPSMIDs, ArrayList<PercolatorPeptide> localPassingPSMIDs, final Optional<PeakLocationInferrer> inferrer, StripeFileInterface stripeFile, LibraryInterface searchedLibrary, final SearchParameters parameters) {
+	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, final SearchJobData job, boolean limitToQuantifiable, ArrayList<PercolatorPeptide> globalPassingPSMIDs, ArrayList<PercolatorPeptide> localPassingPSMIDs, final Optional<PeakLocationInferrerInterface> inferrer, StripeFileInterface stripeFile, LibraryInterface searchedLibrary, final SearchParameters parameters) {
 		HashSet<String> passingPeptideSequences=new HashSet<String>();
 		final TObjectFloatHashMap<String> savedPeptides=new TObjectFloatHashMap<String>();
 		for (PercolatorPeptide psm : globalPassingPSMIDs) {

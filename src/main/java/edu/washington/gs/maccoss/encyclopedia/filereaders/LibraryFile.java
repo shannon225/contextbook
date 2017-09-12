@@ -24,6 +24,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizatio
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
@@ -255,7 +256,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
-	public void addIntegratedEntries(ArrayList<IntegratedLibraryEntry> entries, Optional<PeakLocationInferrer> inferrer, Optional<HashMap<String, ModificationLocalizationData>> localizationData)
+	public void addIntegratedEntries(ArrayList<IntegratedLibraryEntry> entries, Optional<PeakLocationInferrerInterface> inferrer, Optional<HashMap<String, ModificationLocalizationData>> localizationData)
 			throws IOException, SQLException {
 		// first add normal data
 		HashMap<String, LibraryEntry> repeatsCatcher=new HashMap<String, LibraryEntry>();
@@ -409,7 +410,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	private static final int NUMBER_OF_PEPTIDE_ENTRIES_AT_ONCE=20;
 	// private static final int NUMBER_OF_FRAGMENT_ENTRIES_AT_ONCE=4;
 
-	private void internalWritePeptideQuantLibraryEntriesToConnection(Connection c, Optional<PeakLocationInferrer> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList)
+	private void internalWritePeptideQuantLibraryEntriesToConnection(Connection c, Optional<PeakLocationInferrerInterface> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList)
 			throws SQLException, IOException {
 		int numValidEntries=0;
 		for (int i=1; i<dataAndSouceList.size(); i++) {
@@ -448,7 +449,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
-	private void internalWritePeptideLocalizationsToConnection(Connection c, Optional<PeakLocationInferrer> inferrer, HashMap<String, ModificationLocalizationData> localizationData,
+	private void internalWritePeptideLocalizationsToConnection(Connection c, Optional<PeakLocationInferrerInterface> inferrer, HashMap<String, ModificationLocalizationData> localizationData,
 			List<Pair<TransitionRefinementData, String>> dataAndSouceList) throws SQLException, IOException {
 		int numStatements=0;
 		for (Pair<TransitionRefinementData, String> pair : dataAndSouceList) {
@@ -480,7 +481,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
-	public int prepareLocalizationData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrer> inferrer, HashMap<String, ModificationLocalizationData> localizationData,
+	public int prepareLocalizationData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrerInterface> inferrer, HashMap<String, ModificationLocalizationData> localizationData,
 			PreparedStatement peptidePrep, int index) throws SQLException, IOException {
 		ModificationLocalizationData modData=localizationData.get(data.getPeptideModSeq());
 
@@ -505,7 +506,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	@SuppressWarnings("unused")
-	private void internalWriteFragmentQuantLibraryEntriesToConnection(Connection c, Optional<PeakLocationInferrer> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList)
+	private void internalWriteFragmentQuantLibraryEntriesToConnection(Connection c, Optional<PeakLocationInferrerInterface> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList)
 			throws SQLException, IOException {
 		StringBuilder fragmentPrepString=new StringBuilder(
 				"INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, IonType, IonIndex, FragmentMass, Correlation, Background, DeltaMassPPM, Intensity)");
@@ -538,7 +539,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
-	public int prepareQuantData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrer> inferrer, PreparedStatement peptidePrep, int index) throws SQLException, IOException {
+	public int prepareQuantData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrerInterface> inferrer, PreparedStatement peptidePrep, int index) throws SQLException, IOException {
 
 		QuantitativeDIAData topN;
 		if (inferrer.isPresent()) {
@@ -617,7 +618,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		return index;
 	}
 
-	public int prepareFragmentQuantData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrer> inferrer, PreparedStatement fragmentPrep, int index)
+	public int prepareFragmentQuantData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrerInterface> inferrer, PreparedStatement fragmentPrep, int index)
 			throws SQLException, IOException {
 		float[] correlationArray=data.getCorrelationArray();
 		float[] integrationArray=data.getIntegrationArray();

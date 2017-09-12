@@ -16,6 +16,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizatio
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -333,7 +334,7 @@ public class SearchToBLIB {
 			ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides);
 			Logger.logLine("Identified "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) across all files at a "+(threshold*100.0f)+"% FDR threshold.");
 
-			Optional<PeakLocationInferrer> inferrer;
+			Optional<PeakLocationInferrerInterface> inferrer;
 			if (alignBetweenFiles) {
 			if (pecanJobs.size()>1) {
 				Logger.logLine("Inferring peak boundaries across files...");
@@ -364,7 +365,7 @@ public class SearchToBLIB {
 		}
 	}
 	
-	static void convertBlib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File blibFile, Optional<ArrayList<PercolatorPeptide>> passingPeptides, Optional<PeakLocationInferrer> inferrer) {
+	static void convertBlib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File blibFile, Optional<ArrayList<PercolatorPeptide>> passingPeptides, Optional<PeakLocationInferrerInterface> inferrer) {
 		try {
 			BlibFile blib=new BlibFile();
 			blib.openFile();
@@ -422,7 +423,7 @@ public class SearchToBLIB {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	static int[] convertFileBlib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, int[] counterTotals, Optional<PeakLocationInferrer> inferrer, PrintWriter integrationFileWriter, BlibFile blib) throws IOException, SQLException {
+	static int[] convertFileBlib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, int[] counterTotals, Optional<PeakLocationInferrerInterface> inferrer, PrintWriter integrationFileWriter, BlibFile blib) throws IOException, SQLException {
 		File diaFile=job.getDiaFile();
 		Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Reading Percolator Results", 0.0f);
@@ -458,7 +459,7 @@ public class SearchToBLIB {
 		return counterTotals;
 	}
 	
-	static void convertElib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File elibFile, Optional<ArrayList<PercolatorPeptide>> passingPeptides, Optional<Pair<File, File>> globalPercolatorFiles, Optional<PeakLocationInferrer> inferrer, ArrayList<ProteinGroup> proteins, SearchParameters parameters) {
+	static void convertElib(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, File elibFile, Optional<ArrayList<PercolatorPeptide>> passingPeptides, Optional<Pair<File, File>> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, ArrayList<ProteinGroup> proteins, SearchParameters parameters) {
 		try {
 			LibraryFile elib=new LibraryFile();
 			elib.openFile();
@@ -546,7 +547,7 @@ public class SearchToBLIB {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	static void convertFileElib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, Optional<PeakLocationInferrer> inferrer, LibraryFile elib) throws IOException, SQLException {
+	static void convertFileElib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, Optional<PeakLocationInferrerInterface> inferrer, LibraryFile elib) throws IOException, SQLException {
 		File diaFile=job.getDiaFile();
 		Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Reading Percolator Results", 0.0f);

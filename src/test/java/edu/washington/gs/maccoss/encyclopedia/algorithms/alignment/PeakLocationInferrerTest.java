@@ -29,13 +29,13 @@ public class PeakLocationInferrerTest {
 		jobs.add(job1);
 		jobs.add(job2);
 		
-		PeakLocationInferrer inferrer=AlternatePeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), jobs, getPeptides(jobs), parameters);
-		System.out.println("both j1: "+inferrer.getPreciseRTInSec(job1, "GADGMILGGPQSDSDTDAQR", 3085f)); // both
-		System.out.println("both j2: "+inferrer.getPreciseRTInSec(job2, "GADGMILGGPQSDSDTDAQR", 3085f)); // both
-		System.out.println("a    j1: "+inferrer.getPreciseRTInSec(job1, "GPPAPTTQAQPDLIKPLPLHK", 3517f)); // only in a
-		System.out.println("a    j2: "+inferrer.getPreciseRTInSec(job2, "GPPAPTTQAQPDLIKPLPLHK", 3517f)); // only in a
-		System.out.println("b    j1: "+inferrer.getPreciseRTInSec(job1, "NSSYVHGGVDASGKPQEAVYGQNDIHHK", 2198f)); // only in b
-		System.out.println("b    j2: "+inferrer.getPreciseRTInSec(job2, "NSSYVHGGVDASGKPQEAVYGQNDIHHK", 2198f)); // only in b	
+		PeakLocationInferrerInterface inferrer=AlternatePeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), jobs, getPeptides(jobs), parameters);
+		System.out.println("both j1: "+inferrer.getPreciseRTInSec(job1, "GADGMILGGPQSDSDTDAQR", 3085f)+"\t GADGMILGGPQSDSDTDAQR"); // both
+		System.out.println("both j2: "+inferrer.getPreciseRTInSec(job2, "GADGMILGGPQSDSDTDAQR", 3085f)+"\t GADGMILGGPQSDSDTDAQR"); // both
+		System.out.println("a    j1: "+inferrer.getPreciseRTInSec(job1, "GPPAPTTQAQPDLIKPLPLHK", 3517f)+"\t GPPAPTTQAQPDLIKPLPLHK"); // only in a
+		System.out.println("a    j2: "+inferrer.getPreciseRTInSec(job2, "GPPAPTTQAQPDLIKPLPLHK", 3517f)+"\t GPPAPTTQAQPDLIKPLPLHK"); // only in a
+		System.out.println("b    j1: "+inferrer.getPreciseRTInSec(job1, "NSSYVHGGVDASGKPQEAVYGQNDIHHK", 2198f)+"\t NSSYVHGGVDASGKPQEAVYGQNDIHHK"); // only in b
+		System.out.println("b    j2: "+inferrer.getPreciseRTInSec(job2, "NSSYVHGGVDASGKPQEAVYGQNDIHHK", 2198f)+"\t NSSYVHGGVDASGKPQEAVYGQNDIHHK"); // only in b	
 	}
 
 	private static QuantitativeSearchJobData getData(SearchParameters parameters, String dia) {

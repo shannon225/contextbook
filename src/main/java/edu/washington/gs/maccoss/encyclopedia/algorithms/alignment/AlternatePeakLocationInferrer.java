@@ -11,7 +11,6 @@ import java.util.TreeMap;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -32,7 +31,7 @@ import gnu.trove.map.hash.TObjectFloatHashMap;
 import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class AlternatePeakLocationInferrer {
-	public static PeakLocationInferrer getAlignmentData(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
+	public static PeakLocationInferrerInterface getAlignmentData(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
 		ProgressIndicator subProgress1=new SubProgressIndicator(progress, 0.5f);
 		Pair<HashMap<SearchJobData,TObjectFloatHashMap<String>>, HashMap<String,double[]>> pair=getArchetypals(subProgress1, pecanJobs, passingPeptides, params);
 		HashMap<SearchJobData, TObjectFloatHashMap<String>> peptideMappings=pair.x;
@@ -78,7 +77,7 @@ public class AlternatePeakLocationInferrer {
 					public boolean execute(String a, float b) {
 						float alt=rtInSec.get(a);
 						if (rtInSec.getNoEntryValue()!=alt) {
-							points.add(new XYPoint(b/60f, alt));
+							points.add(new XYPoint(b/60f, alt/60f)); // both in minutes
 						}
 						return true;
 					}
@@ -107,7 +106,7 @@ public class AlternatePeakLocationInferrer {
 			}
 		}
 
-		return new PeakLocationInferrer(alignmentMap, alignedRTInMinBySequenceMap, bestIons, params);
+		return new SimplePeakLocationInferrer(alignmentMap, alignedRTInMinBySequenceMap, bestIons, params);
 	}
 
 	static Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> getArchetypals(ProgressIndicator progress, ArrayList<SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
