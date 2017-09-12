@@ -14,6 +14,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -35,6 +36,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	private final Optional<Float> identifiedTICRatio;
 	
 	private final String peptideModSeq;
+	private final String massCorrectedPeptideModSeq;
 	private final byte precursorCharge;
 	
 	// NOTE: with mods, the cannonical form points to the modificationQuantData
@@ -58,6 +60,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	 */
 	TransitionRefinementData(String peptideModSeq, byte precursorCharge, FragmentIon[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range, float[] deltaMassArray, double[] massArray, float[] intensityArray, float[] rtArray, ModificationLocalizationData localizationData, HashMap<String, TransitionRefinementData> modificationQuantData, Float identifiedTICRatio) {
 		this.peptideModSeq=peptideModSeq;
+		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq);
 		this.precursorCharge=precursorCharge;
 		this.fragmentMassArray=fragmentMassArray;
 		this.chromatograms=chromatograms;
@@ -74,7 +77,12 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		this.modificationQuantData=Optional.ofNullable(modificationQuantData);
 		this.identifiedTICRatio=Optional.ofNullable(identifiedTICRatio);
 	}
-	
+
+	@Override
+	public String getMassCorrectedPeptideModSeq() {
+		return massCorrectedPeptideModSeq;
+	}
+
 	public AnnotatedLibraryEntry getEntry(LibraryEntry entry, SearchParameters parameters) {
 		TDoubleArrayList mzs=new TDoubleArrayList();
 		TFloatArrayList intens=new TFloatArrayList();
@@ -101,7 +109,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	@Override
 	public int compareTo(PeptidePrecursor o) {
 		if (o==null) return 1;
-		int c=getPeptideModSeq().compareTo(o.getPeptideModSeq());
+		int c=getMassCorrectedPeptideModSeq().compareTo(o.getMassCorrectedPeptideModSeq());
 		if (c!=0) return c;
 		return Byte.compare(getPrecursorCharge(), o.getPrecursorCharge());
 	}

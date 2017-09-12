@@ -35,7 +35,9 @@ public class PeakLocationInferrerTest {
 		System.out.println("a    j1: "+inferrer.getPreciseRTInSec(job1, "GPPAPTTQAQPDLIKPLPLHK", 3517f)+"\t"+inferrer.getWarpedRTInSec(job1, "GPPAPTTQAQPDLIKPLPLHK")+"\t GPPAPTTQAQPDLIKPLPLHK"); // only in a
 		System.out.println("a    j2: "+inferrer.getPreciseRTInSec(job2, "GPPAPTTQAQPDLIKPLPLHK", 3517f)+"\t"+inferrer.getWarpedRTInSec(job2, "GPPAPTTQAQPDLIKPLPLHK")+"\t GPPAPTTQAQPDLIKPLPLHK"); // only in a
 		System.out.println("b    j1: "+inferrer.getPreciseRTInSec(job1, "NSSYVHGGVDASGKPQEAVYGQNDIHHK", 2198f)+"\t"+inferrer.getWarpedRTInSec(job1, "NSSYVHGGVDASGKPQEAVYGQNDIHHK")+"\t NSSYVHGGVDASGKPQEAVYGQNDIHHK"); // only in b
-		System.out.println("b    j2: "+inferrer.getPreciseRTInSec(job2, "NSSYVHGGVDASGKPQEAVYGQNDIHHK", 2198f)+"\t"+inferrer.getWarpedRTInSec(job2, "NSSYVHGGVDASGKPQEAVYGQNDIHHK")+"\t NSSYVHGGVDASGKPQEAVYGQNDIHHK"); // only in b	
+		System.out.println("b    j2: "+inferrer.getPreciseRTInSec(job2, "NSSYVHGGVDASGKPQEAVYGQNDIHHK", 2198f)+"\t"+inferrer.getWarpedRTInSec(job2, "NSSYVHGGVDASGKPQEAVYGQNDIHHK")+"\t NSSYVHGGVDASGKPQEAVYGQNDIHHK"); // only in b
+		System.out.println("b    j1: "+inferrer.getPreciseRTInSec(job1, "QKHELKM[+16.0]QK", 1689f)+"\t"+inferrer.getWarpedRTInSec(job1, "QKHELKM[+16.0]QK")+"\t QKHELKM[+16.0]QK"); // only in a
+		System.out.println("b    j2: "+inferrer.getPreciseRTInSec(job2, "QKHELKM[+16.0]QK", 1689f)+"\t"+inferrer.getWarpedRTInSec(job2, "QKHELKM[+16.0]QK")+"\t QKHELKM[+16.0]QK"); // only in a	
 	}
 
 	private static QuantitativeSearchJobData getData(SearchParameters parameters, String dia) {
@@ -81,7 +83,7 @@ public class PeakLocationInferrerTest {
 				else if ("GADGMILGGPQSDSDTDAQR".equals(pep.getPeptideModSeq())) peptides.add(pep);
 				else if ("HRGQAAQPEPSTGFTATPPAPDSPQEPLVLR".equals(pep.getPeptideModSeq())) peptides.add(pep);
 				else if ("GPPAPTTQAQPDLIKPLPLHK".equals(pep.getPeptideModSeq())) peptides.add(pep);
-				
+				else if (pep.getPeptideModSeq().startsWith("QKHELKM")) peptides.add(pep);
 				
 			}	
 		}
