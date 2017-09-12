@@ -90,11 +90,7 @@ public class AlternatePeakLocationInferrer {
 				
 				RetentionTimeAlignmentInterface alignment=new RetentionTimeFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
 				alignmentMap.put(job, alignment);
-				if (job instanceof EncyclopediaJobData) {
-					// try reading encyclopedia data directly from results library
-					File resultLibrary=((EncyclopediaJobData) job).getResultLibrary();
-					alignment.plot(points, Optional.ofNullable(resultLibrary));
-				}
+				alignment.plot(points, Optional.ofNullable(job.getDiaFile()));
 
 				// align local archetypals to the seed
 				rtInSec.forEachEntry(new TObjectFloatProcedure<String>() {

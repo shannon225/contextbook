@@ -2,35 +2,40 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
 public class PeakLocationInferrerTest {
 	public static void main(String[] args) throws Exception {
-		LibraryFile.OPEN_IN_PLACE=true;
+		//LibraryFile.OPEN_IN_PLACE=true;
 		
 		HashMap<String, String> map=SearchParameterParser.getDefaultParameters();
 		SearchParameters parameters=SearchParameterParser.parseParameters(map);
 		
 		//QuantitativeSearchJobData job1=getData(parameters, "/Users/searleb/Documents/projects/encyclopedia/mzml/zero_hela/121115_bcs_hela_24mz_400_1000_0D_1.dia");
 		//QuantitativeSearchJobData job2=getData(parameters, "/Users/searleb/Documents/projects/encyclopedia/mzml/zero_hela/121115_bcs_hela_24mz_400_1000_0D_2.dia");
-		QuantitativeSearchJobData job1=getData(parameters, "/Users/searleb/Documents/school/projects/may_asms/hela/on_column/zero_hela/121115_bcs_hela_24mz_400_1000_0D_1.dia");
-		QuantitativeSearchJobData job2=getData(parameters, "/Users/searleb/Documents/school/projects/may_asms/hela/on_column/zero_hela/121115_bcs_hela_24mz_400_1000_0D_2.dia");
-		
+		QuantitativeSearchJobData job1=getData(parameters, "/Users/searleb/Documents/school/projects/may_asms/hela/on_column/timecourse/23aug2017_hela_serum_timecourse_wide_1a.dia");
+		QuantitativeSearchJobData job2=getData(parameters, "/Users/searleb/Documents/school/projects/may_asms/hela/on_column/timecourse/23aug2017_hela_serum_timecourse_wide_1b.dia");
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		jobs.add(job1);
 		jobs.add(job2);
 		
-		PeakLocationInferrer inferrer=PeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), jobs, getPeptides(), parameters);
-		System.out.println("j1: "+inferrer.getPreciseRTInSec(job1, "NSSYVHGGVDASGKPQEAVYGQNDIHHK", 2528f));
-		System.out.println("j2: "+inferrer.getPreciseRTInSec(job2, "NSSYVHGGVDASGKPQEAVYGQNDIHHK", 2528f));
+		PeakLocationInferrer inferrer=AlternatePeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), jobs, getPeptides(jobs), parameters);
+		System.out.println("both j1: "+inferrer.getPreciseRTInSec(job1, "GADGMILGGPQSDSDTDAQR", 3085f)); // both
+		System.out.println("both j2: "+inferrer.getPreciseRTInSec(job2, "GADGMILGGPQSDSDTDAQR", 3085f)); // both
+		System.out.println("a    j1: "+inferrer.getPreciseRTInSec(job1, "GPPAPTTQAQPDLIKPLPLHK", 3517f)); // only in a
+		System.out.println("a    j2: "+inferrer.getPreciseRTInSec(job2, "GPPAPTTQAQPDLIKPLPLHK", 3517f)); // only in a
+		System.out.println("b    j1: "+inferrer.getPreciseRTInSec(job1, "NSSYVHGGVDASGKPQEAVYGQNDIHHK", 2198f)); // only in b
+		System.out.println("b    j2: "+inferrer.getPreciseRTInSec(job2, "NSSYVHGGVDASGKPQEAVYGQNDIHHK", 2198f)); // only in b	
 	}
 
 	private static QuantitativeSearchJobData getData(SearchParameters parameters, String dia) {
@@ -53,48 +58,47 @@ public class PeakLocationInferrerTest {
 		return job;
 	}
 	
-	private static ArrayList<PercolatorPeptide> getPeptides() {
+	private static ArrayList<PercolatorPeptide> getPeptides(ArrayList<SearchJobData> jobs) {
 		ArrayList<PercolatorPeptide> peptides=new ArrayList<>();
-		peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_1.dia:4922.879:KGSITSVQAIYVPADDLTDPAPATTFAHLDATTVLSR+4"));
-		//peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_2.dia:4936.5684:KGSITSVQAIYVPADDLTDPAPATTFAHLDATTVLSR+4"));
 		
-		peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_1.dia:2528.0693:NSSYVHGGVDASGKPQEAVYGQNDIHHK+3"));
-		//peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_2.dia:2557.912:NSSYVHGGVDASGKPQEAVYGQNDIHHK+3"));
-		
-		//peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_1.dia:5767.299:YYIQNGIQSFMQNYSSIDVLLHQSR+3"));
-		peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_2.dia:5776.2207:YYIQNGIQSFMQNYSSIDVLLHQSR+3"));
-		
-		//peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_1.dia:4737.8193:HAVSDPSILDSLDLNEDEREVLINNINRR+4"));
-		peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_2.dia:4750.6094:HAVSDPSILDSLDLNEDEREVLINNINRR+4"));
-		
-		peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_1.dia:4225.2847:ERVEAVNMAEGIIHDTETK+3"));
-		//peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_2.dia:4232.4346:ERVEAVNMAEGIIHDTETK+3"));
-		
-		peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_1.dia:4915.851:FLNEHPGGEEVLLEQAGVDASESFEDVGHSSDAR+4"));
-		//peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_2.dia:4922.305:FLNEHPGGEEVLLEQAGVDASESFEDVGHSSDAR+4"));
-		
-		//peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_1.dia:5556.0767:TDQVIQSLIALVNDPQPEHPLR+3"));
-		peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_2.dia:5566.2466:TDQVIQSLIALVNDPQPEHPLR+3"));
-		
-		//peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_1.dia:5013.528:TFSHELSDFGLESTAGEIPVVAIR+3"));
-		peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_2.dia:5027.694:TFSHELSDFGLESTAGEIPVVAIR+3"));
-		
-		//peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_1.dia:5782.0054:KLEDQLQGGQLEEVILQAEHELNLAR+3"));
-		peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_2.dia:5796.0913:KLEDQLQGGQLEEVILQAEHELNLAR+3"));
-		
-		peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_2.dia:2256.097:TLIENGEK+2"));
-		peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_2.dia:3308.137:GGVDVTLPR+2"));
-		
-		peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_1.dia:2157.279:TVGVEPAADGK+2"));
-		peptides.add(new DummyPercolatorPeptide("121115_bcs_hela_24mz_400_1000_0D_1.dia:3238.2861:IKGDVDVSVPEVEGK+2"));
-		
-		return peptides;
-	}
-	
-	private static class DummyPercolatorPeptide extends PercolatorPeptide {
-		public DummyPercolatorPeptide(String psmID) {
-			super(psmID, "p1", 0.001f, 0.01f);
+		for (SearchJobData job : jobs) {
+			ArrayList<PercolatorPeptide> local=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), job.getParameters().getEffectivePercolatorThreshold(), false);
+			for (PercolatorPeptide pep : local) {
+				if ("KGSITSVQAIYVPADDLTDPAPATTFAHLDATTVLSR".equals(pep.getPeptideModSeq())) peptides.add(pep);
+				else if ("NSSYVHGGVDASGKPQEAVYGQNDIHHK".equals(pep.getPeptideModSeq())) peptides.add(pep);
+				else if ("YYIQNGIQSFMQNYSSIDVLLHQSR".equals(pep.getPeptideModSeq())) peptides.add(pep);
+				else if ("HAVSDPSILDSLDLNEDEREVLINNINRR".equals(pep.getPeptideModSeq())) peptides.add(pep);
+				else if ("ERVEAVNMAEGIIHDTETK".equals(pep.getPeptideModSeq())) peptides.add(pep);
+				else if ("FLNEHPGGEEVLLEQAGVDASESFEDVGHSSDAR".equals(pep.getPeptideModSeq())) peptides.add(pep);
+				else if ("TDQVIQSLIALVNDPQPEHPLR".equals(pep.getPeptideModSeq())) peptides.add(pep);
+				else if ("TFSHELSDFGLESTAGEIPVVAIR".equals(pep.getPeptideModSeq())) peptides.add(pep);
+				else if ("KLEDQLQGGQLEEVILQAEHELNLAR".equals(pep.getPeptideModSeq())) peptides.add(pep);
+				else if ("TLIENGEK".equals(pep.getPeptideModSeq())) peptides.add(pep);
+				else if ("GGVDVTLPR".equals(pep.getPeptideModSeq())) peptides.add(pep);
+				else if ("TVGVEPAADGK".equals(pep.getPeptideModSeq())) peptides.add(pep);
+				else if ("IKGDVDVSVPEVEGK".equals(pep.getPeptideModSeq())) peptides.add(pep);
+				else if ("VTFEELR".equals(pep.getPeptideModSeq())) peptides.add(pep);
+				else if ("GADGMILGGPQSDSDTDAQR".equals(pep.getPeptideModSeq())) peptides.add(pep);
+				else if ("HRGQAAQPEPSTGFTATPPAPDSPQEPLVLR".equals(pep.getPeptideModSeq())) peptides.add(pep);
+				else if ("GPPAPTTQAQPDLIKPLPLHK".equals(pep.getPeptideModSeq())) peptides.add(pep);
+				
+				
+			}	
+		}
+		Collections.sort(peptides, new Comparator<PercolatorPeptide>() {
+			@Override
+			public int compare(PercolatorPeptide o1, PercolatorPeptide o2) {
+				if (o1==null&&o2==null) return 0;
+				if (o1==null) return -1;
+				if (o2==null) return 1;
+				
+				return o1.getPeptideModSeq().compareTo(o2.getPeptideModSeq());
+			}
+		});
+		for (PercolatorPeptide pep : peptides) {
+			System.out.println("found "+pep.getPsmID());
 		}
 		
+		return peptides;
 	}
 }

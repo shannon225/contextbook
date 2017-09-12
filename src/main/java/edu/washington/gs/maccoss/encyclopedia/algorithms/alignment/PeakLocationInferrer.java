@@ -235,7 +235,7 @@ public class PeakLocationInferrer {
 		// the best individual search is imbedded in the psmID
 		for (PercolatorPeptide psm : passingPeptides) {
 			String name=psm.getFile();
-			name=name.substring(0, name.lastIndexOf('.'));
+			name=name.substring(0, name.lastIndexOf('.')); // BRITTLE! Assumes extensions for raw files
 			ArrayList<PercolatorPeptide> list=peptidesByFile.get(name);
 			if (list==null) {
 				Logger.errorLine("Unexpected file ["+name+"] when parsing Percolator result! Ignoring peptide.");
@@ -251,7 +251,7 @@ public class PeakLocationInferrer {
 		float increment=1.0f/pecanJobs.size();
 		for (Entry<String, ArrayList<PercolatorPeptide>> entry : peptidesByFile.entrySet()) {
 			ProgressIndicator subProgress=new SubProgressIndicator(progress, increment);
-
+			
 			SearchJobData job=jobsByFile.get(entry.getKey());
 			
 			ArrayList<PercolatorPeptide> targetPeptides=entry.getValue();
