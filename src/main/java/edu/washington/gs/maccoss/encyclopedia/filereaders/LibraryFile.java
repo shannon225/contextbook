@@ -169,7 +169,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		return Float.parseFloat(value);
 	}
 
-	public void setSources(ArrayList<SearchJobData> sources) throws IOException, SQLException {
+	public void setSources(List<? extends SearchJobData> sources) throws IOException, SQLException {
 		HashMap<String, String> map=new HashMap<String, String>();
 		StringBuilder sb=new StringBuilder();
 		for (SearchJobData searchJobData : sources) {
