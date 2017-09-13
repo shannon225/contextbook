@@ -9,6 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPe
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 
 public class ParsimonyProteinGrouper {
 	public static ArrayList<ProteinGroup> groupProteins(ArrayList<PercolatorPeptide> passingPeptides) {
@@ -16,7 +17,7 @@ public class ParsimonyProteinGrouper {
 		HashMap<String, Protein> proteins=new HashMap<String, ParsimonyProteinGrouper.Protein>();
 		
 		for (PercolatorPeptide percolatorPeptide : passingPeptides) {
-			String sequence=PercolatorPeptide.getPeptideSequence(percolatorPeptide.getPsmID());
+			String sequence=PeptideUtils.getCorrectedMasses(PercolatorPeptide.getPeptideSequence(percolatorPeptide.getPsmID()));
 			HashSet<String> accessions=PSMData.stringToAccessions(percolatorPeptide.getProteinIDs());
 			
 			Peptide peptide=peptides.get(sequence);

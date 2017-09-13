@@ -423,6 +423,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				numValidEntries++;
 			}
 		}
+		
+		System.out.println("Testing for validity: "+numValidEntries+"/"+dataAndSouceList.size());
 
 		StringBuilder peptidePrepString=new StringBuilder("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, RTInSecondsCenter, "
 				+"RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, QuantIonMassLength, "

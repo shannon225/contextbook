@@ -39,7 +39,7 @@ public class PercolatorPeptide implements PeptidePrecursor {
 	}
 	
 	@Override
-	public String getMassCorrectedPeptideModSeq() {
+	public String getPeptideModSeq() {
 		return massCorrectedPeptideModSeq;
 	}
 	
@@ -69,7 +69,7 @@ public class PercolatorPeptide implements PeptidePrecursor {
 	@Override
 	public int compareTo(PeptidePrecursor o) {
 		if (o==null) return 1;
-		int c=getMassCorrectedPeptideModSeq().compareTo(o.getMassCorrectedPeptideModSeq());
+		int c=getPeptideModSeq().compareTo(o.getPeptideModSeq());
 		if (c!=0) return c;
 		return Byte.compare(getPrecursorCharge(), o.getPrecursorCharge());
 	}
@@ -94,7 +94,7 @@ public class PercolatorPeptide implements PeptidePrecursor {
 		return isPSMIDDecoy(psmID);
 	}
 
-	public String getPeptideModSeq() {
+	public String getLegacyPeptideModSeq() {
 		return getPeptideSequence(psmID);
 	}
 

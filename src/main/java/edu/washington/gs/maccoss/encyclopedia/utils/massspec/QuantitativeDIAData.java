@@ -22,14 +22,14 @@ public class QuantitativeDIAData implements PeptidePrecursor {
 	}
 
 	@Override
-	public String getMassCorrectedPeptideModSeq() {
+	public String getPeptideModSeq() {
 		return massCorrectedPeptideModSeq;
 	}
 
 	@Override
 	public int compareTo(PeptidePrecursor o) {
 		if (o==null) return 1;
-		int c=getMassCorrectedPeptideModSeq().compareTo(o.getMassCorrectedPeptideModSeq());
+		int c=getPeptideModSeq().compareTo(o.getPeptideModSeq());
 		if (c!=0) return c;
 		return Byte.compare(getPrecursorCharge(), o.getPrecursorCharge());
 	}
@@ -47,7 +47,7 @@ public class QuantitativeDIAData implements PeptidePrecursor {
 		return false;
 	}
 
-	public String getPeptideModSeq() {
+	public String getLegacyPeptideModSeq() {
 		return peptideModSeq;
 	}
 

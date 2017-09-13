@@ -14,7 +14,7 @@ public class SimplePeptidePrecursor implements PeptidePrecursor {
 	}
 
 	@Override
-	public String getMassCorrectedPeptideModSeq() {
+	public String getPeptideModSeq() {
 		return massCorrectedPeptideModSeq;
 	}
 
@@ -22,7 +22,7 @@ public class SimplePeptidePrecursor implements PeptidePrecursor {
 		return precursorCharge;
 	}
 
-	public String getPeptideModSeq() {
+	public String getLegacyPeptideModSeq() {
 		return peptideModSeq;
 	}
 	
@@ -32,7 +32,7 @@ public class SimplePeptidePrecursor implements PeptidePrecursor {
 
 	@Override
 	public int compareTo(PeptidePrecursor o) {
-		int c=getMassCorrectedPeptideModSeq().compareTo(o.getMassCorrectedPeptideModSeq());
+		int c=getPeptideModSeq().compareTo(o.getPeptideModSeq());
 		if (c!=0) return c;
 		return precursorCharge-o.getPrecursorCharge();
 	}

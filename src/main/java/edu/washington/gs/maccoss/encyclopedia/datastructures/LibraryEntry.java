@@ -93,7 +93,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	}
 	
 	@Override
-	public String getMassCorrectedPeptideModSeq() {
+	public String getPeptideModSeq() {
 		return massCorrectedPeptideModSeq;
 	}
 	
@@ -215,7 +215,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	@Override
 	public int compareTo(PeptidePrecursor o) {
 		if (o==null) return 1;
-		int c=getMassCorrectedPeptideModSeq().compareTo(o.getMassCorrectedPeptideModSeq());
+		int c=getPeptideModSeq().compareTo(o.getPeptideModSeq());
 		if (c!=0) return c;
 		c=Byte.compare(precursorCharge, o.getPrecursorCharge());
 		return c;
@@ -237,7 +237,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		return precursorCharge;
 	}
 
-	public String getPeptideModSeq() {
+	public String getLegacyPeptideModSeq() {
 		return peptideModSeq;
 	}
 	
