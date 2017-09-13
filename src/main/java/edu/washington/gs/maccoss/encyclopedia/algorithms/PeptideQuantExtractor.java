@@ -261,7 +261,7 @@ public class PeptideQuantExtractor {
 			}
 
 			float baseProgress=(1.0f+rangesFinished)/numberOfTasks;
-			String baseMessage="Extracting "+range+" m/z ("+(minRetentionTime/60f)+" to "+(maxRetentionTime/60f)+" min)";
+			String baseMessage="Extracting "+range+" m/z ("+Math.max(0.0f, minRetentionTime/60f)+" to "+Math.max(0.0f, maxRetentionTime/60f)+" min)";
 			Logger.logLine("Quant "+baseMessage);
 			progress.update(baseMessage, baseProgress);
 			if (!used) continue;
