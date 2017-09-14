@@ -14,6 +14,7 @@ public class PSMData implements PeptidePrecursor {
 	private final double precursorMZ;
 	private final byte precursorCharge;
 	private final String peptideModSeq;
+	private final String massCorrectedPeptideModSeq;
 	private final float retentionTime;
 	private final float score;
 	private final float sortingScore;
@@ -26,10 +27,16 @@ public class PSMData implements PeptidePrecursor {
 		this.precursorMZ=precursorMZ;
 		this.precursorCharge=precursorCharge;
 		this.peptideModSeq=peptideModSeq;
+		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq);
 		this.retentionTime=retentionTime;
 		this.score=score;
 		this.sortingScore=sortingScore;
 		this.duration=duration;
+	}
+
+	@Override
+	public String getPeptideModSeq() {
+		return massCorrectedPeptideModSeq;
 	}
 	
 	public double getAlteratelyChargedMass(byte charge) {
@@ -77,7 +84,7 @@ public class PSMData implements PeptidePrecursor {
 		return precursorCharge;
 	}
 
-	public String getPeptideModSeq() {
+	public String getLegacyPeptideModSeq() {
 		return peptideModSeq;
 	}
 	

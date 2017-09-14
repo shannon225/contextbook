@@ -215,7 +215,7 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 	 */
 	@Override
 	public float getProbabilityFitsModel(float delta) {
-		if (model.isPresent()){
+		if (model.isPresent()) {
 			return model.get().getProbability(delta);
 		} else {
 			return 1f;

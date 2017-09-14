@@ -35,6 +35,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	private final double precursorMZ;
 	private final byte precursorCharge;
 	private final String peptideModSeq;
+	private final String massCorrectedPeptideModSeq;
 	private final int copies;
 	private final float retentionTime;
 	private final float score;
@@ -68,6 +69,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		this.precursorMZ=precursorMZ;
 		this.precursorCharge=precursorCharge;
 		this.peptideModSeq=peptideModSeq;
+		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq);
 		this.copies=copies;
 		if (retentionTime>0.0f) { 
 			this.retentionTime=retentionTime;
@@ -78,7 +80,8 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		this.score=score;
 		
 		ArrayList<PeakChromatogram> peaks=new ArrayList<>();
-		for (int i=0; i<correlationArray.length; i++) {
+		int numPeaks=Math.min(massArray.length, correlationArray.length);
+		for (int i=0; i<numPeaks; i++) {
 			peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], correlationArray[i]));
 		}
 		Collections.sort(peaks);
@@ -87,6 +90,11 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		this.massArray=arrays.x;
 		this.intensityArray=arrays.y;
 		this.correlationArray=arrays.z;
+	}
+	
+	@Override
+	public String getPeptideModSeq() {
+		return massCorrectedPeptideModSeq;
 	}
 	
 	/**
@@ -207,7 +215,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	@Override
 	public int compareTo(PeptidePrecursor o) {
 		if (o==null) return 1;
-		int c=peptideModSeq.compareTo(o.getPeptideModSeq());
+		int c=getPeptideModSeq().compareTo(o.getPeptideModSeq());
 		if (c!=0) return c;
 		c=Byte.compare(precursorCharge, o.getPrecursorCharge());
 		return c;
@@ -229,7 +237,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		return precursorCharge;
 	}
 
-	public String getPeptideModSeq() {
+	public String getLegacyPeptideModSeq() {
 		return peptideModSeq;
 	}
 	

@@ -14,6 +14,7 @@ import java.util.zip.DataFormatException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
@@ -27,6 +28,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
@@ -58,7 +60,7 @@ public class PeptideQuantExtractor {
 		this.localizer=localizer;*/
 	}
 
-	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, final SearchJobData job, boolean limitToQuantifiable, ArrayList<PercolatorPeptide> globalPassingPSMIDs, ArrayList<PercolatorPeptide> localPassingPSMIDs, final Optional<PeakLocationInferrer> inferrer, StripeFileInterface stripeFile, LibraryInterface searchedLibrary, final SearchParameters parameters) {
+	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, final SearchJobData job, boolean limitToQuantifiable, ArrayList<PercolatorPeptide> globalPassingPSMIDs, ArrayList<PercolatorPeptide> localPassingPSMIDs, final Optional<PeakLocationInferrerInterface> inferrer, StripeFileInterface stripeFile, LibraryInterface searchedLibrary, final SearchParameters parameters) {
 		HashSet<String> passingPeptideSequences=new HashSet<String>();
 		final TObjectFloatHashMap<String> savedPeptides=new TObjectFloatHashMap<String>();
 		for (PercolatorPeptide psm : globalPassingPSMIDs) {
@@ -66,7 +68,7 @@ public class PeptideQuantExtractor {
 			boolean isDecoy=PercolatorPeptide.isPSMIDDecoy(psmID);
 			
 			if (!isDecoy) {
-				String peptideModSeq=PercolatorPeptide.getPeptideSequence(psmID);
+				String peptideModSeq=PeptideUtils.getCorrectedMasses(PercolatorPeptide.getPeptideSequence(psmID));
 				passingPeptideSequences.add(peptideModSeq);
 				savedPeptides.put(peptideModSeq, psm.getPosteriorErrorProb());
 			}
@@ -75,7 +77,7 @@ public class PeptideQuantExtractor {
 
 		final TObjectFloatHashMap<String> localSavedIDs=new TObjectFloatHashMap<String>();
 		for (PercolatorPeptide psm : localPassingPSMIDs) {
-			String peptideModSeq=PercolatorPeptide.getPeptideSequence(psm.getPsmID());
+			String peptideModSeq=PeptideUtils.getCorrectedMasses(PercolatorPeptide.getPeptideSequence(psm.getPsmID()));
 			if (passingPeptideSequences.contains(peptideModSeq)) {
 				localSavedIDs.put(psm.getPsmID(), psm.getPosteriorErrorProb());
 			}
@@ -87,7 +89,7 @@ public class PeptideQuantExtractor {
 			@Override
 			public void processRow(Map<String, String> row) {
 				String psmID=row.get("id");
-				String peptideModSeq=PercolatorPeptide.getPeptideSequence(psmID);
+				String peptideModSeq=PeptideUtils.getCorrectedMasses(PercolatorPeptide.getPeptideSequence(psmID));
 				if (savedPeptides.contains(peptideModSeq)) {
 					boolean isDecoy=PercolatorPeptide.isPSMIDDecoy(psmID);
 					if (!isDecoy) {
@@ -200,7 +202,10 @@ public class PeptideQuantExtractor {
 			}
 			
 			PeptideQuantExtractor extractor=new PeptideQuantExtractor(progress, searchedLibrary, stripeFile, parameters);
-			return extractor.extractPeptides(uniquedData.values(), limitToQuantifiable);
+			ArrayList<IntegratedLibraryEntry> extractPeptides=extractor.extractPeptides(uniquedData.values(), limitToQuantifiable);
+			
+			System.out.println("LENGTH TEST: "+data.size()+"/"+uniquedData.size()+"/"+extractPeptides.size());
+			return extractPeptides;
 		} catch (IOException ioe) {
 			Logger.errorLine("Error processing "+stripeFile.getFile().getName());
 			throw new EncyclopediaException("Error parsing Stripe file", ioe);
@@ -236,13 +241,25 @@ public class PeptideQuantExtractor {
 		int rangesFinished=0;
 		float numberOfTasks=2.0f+ranges.size();
 		for (Range range : ranges) {
-			String baseMessage="Working on "+range+" m/z";
+
+			boolean used=false;
+			float minRetentionTime=Float.MAX_VALUE;
+			float maxRetentionTime=-Float.MAX_VALUE;
+			for (PSMData psm : data) {
+				if (range.contains((float)psm.getPrecursorMZ())) {
+					minRetentionTime=Math.min(minRetentionTime, psm.getRetentionTime()-psm.getDuration());
+					maxRetentionTime=Math.max(maxRetentionTime, psm.getRetentionTime()+psm.getDuration());
+					used=true;
+				}
+			}
+
 			float baseProgress=(1.0f+rangesFinished)/numberOfTasks;
+			String baseMessage="Extracting "+range+" m/z ("+Math.max(0.0f, minRetentionTime/60f)+" to "+Math.max(0.0f, maxRetentionTime/60f)+" min)";
+			Logger.logLine("Quant "+baseMessage);
 			progress.update(baseMessage, baseProgress);
+			if (!used) continue;
 
-			Logger.logLine("Processing "+range);
-
-			List<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, false);
+			List<Stripe> stripes=stripefile.getStripes(range.getMiddle(), minRetentionTime, maxRetentionTime, false);
 			Collections.sort(stripes);
 
 			// prepare executor for background

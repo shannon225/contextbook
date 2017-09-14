@@ -6,6 +6,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 public class QuantitativeDIAData implements PeptidePrecursor {
 
 	private final String peptideModSeq;
+	private final String massCorrectedPeptideModSeq;
 	private final byte precursorCharge;
 	private final float scanStartTime;
 	private final double[] massArray;
@@ -13,10 +14,16 @@ public class QuantitativeDIAData implements PeptidePrecursor {
 
 	public QuantitativeDIAData(String peptideModSeq, byte precursorCharge, float scanStartTime, double[] massArray, float[] intensityArray) {
 		this.peptideModSeq=peptideModSeq;
+		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq);
 		this.precursorCharge=precursorCharge;
 		this.scanStartTime=scanStartTime;
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
+	}
+
+	@Override
+	public String getPeptideModSeq() {
+		return massCorrectedPeptideModSeq;
 	}
 
 	@Override
@@ -40,7 +47,7 @@ public class QuantitativeDIAData implements PeptidePrecursor {
 		return false;
 	}
 
-	public String getPeptideModSeq() {
+	public String getLegacyPeptideModSeq() {
 		return peptideModSeq;
 	}
 

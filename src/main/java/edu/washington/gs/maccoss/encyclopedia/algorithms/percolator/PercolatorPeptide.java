@@ -5,12 +5,14 @@ import java.util.Comparator;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 
 public class PercolatorPeptide implements PeptidePrecursor {
 	private final String psmID;
 	private final String proteinIDs;
 	private final float qValue;
 	private final float posteriorErrorProb;
+	private final String massCorrectedPeptideModSeq;
 	
 	public static final Comparator<PercolatorPeptide> scoreComparator=new Comparator<PercolatorPeptide>() {
 		// lower is better
@@ -33,6 +35,12 @@ public class PercolatorPeptide implements PeptidePrecursor {
 		this.proteinIDs=proteinIDs;
 		this.qValue=qValue;
 		this.posteriorErrorProb=posteriorErrorProb;
+		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(getPeptideSequence(psmID));
+	}
+	
+	@Override
+	public String getPeptideModSeq() {
+		return massCorrectedPeptideModSeq;
 	}
 	
 	public String getPeptideSeq() {
@@ -86,7 +94,7 @@ public class PercolatorPeptide implements PeptidePrecursor {
 		return isPSMIDDecoy(psmID);
 	}
 
-	public String getPeptideModSeq() {
+	public String getLegacyPeptideModSeq() {
 		return getPeptideSequence(psmID);
 	}
 

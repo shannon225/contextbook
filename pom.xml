@@ -26,7 +26,7 @@
 		to attach the executable JAR using <shadedArtifactAttached> and <shadedClassifierName>
 		in its configuration below.
 		-->
-		<encyclopediaTargetName>encylopedia-${version}-executable</encyclopediaTargetName>
+		<encyclopediaTargetName>encyclopedia-${version}-executable</encyclopediaTargetName>
 		<encyclopediaBuildTarget>edu.washington.gs.maccoss.encyclopedia.Encyclopedia</encyclopediaBuildTarget>
 
 		<phosphoTargetName>thesaurus-${version}-executable</phosphoTargetName>

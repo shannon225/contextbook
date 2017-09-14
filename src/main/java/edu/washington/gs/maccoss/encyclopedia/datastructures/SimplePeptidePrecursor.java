@@ -5,17 +5,24 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 public class SimplePeptidePrecursor implements PeptidePrecursor {
 	private final byte precursorCharge;
 	private final String peptideModSeq;
+	private final String massCorrectedPeptideModSeq;
 
 	public SimplePeptidePrecursor(String peptideModSeq, byte precursorCharge) {
 		this.peptideModSeq=peptideModSeq;
+		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq);
 		this.precursorCharge=precursorCharge;
+	}
+
+	@Override
+	public String getPeptideModSeq() {
+		return massCorrectedPeptideModSeq;
 	}
 
 	public byte getPrecursorCharge() {
 		return precursorCharge;
 	}
 
-	public String getPeptideModSeq() {
+	public String getLegacyPeptideModSeq() {
 		return peptideModSeq;
 	}
 	
@@ -25,7 +32,7 @@ public class SimplePeptidePrecursor implements PeptidePrecursor {
 
 	@Override
 	public int compareTo(PeptidePrecursor o) {
-		int c=peptideModSeq.compareTo(o.getPeptideModSeq());
+		int c=getPeptideModSeq().compareTo(o.getPeptideModSeq());
 		if (c!=0) return c;
 		return precursorCharge-o.getPrecursorCharge();
 	}

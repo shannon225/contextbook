@@ -6,7 +6,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
@@ -31,12 +30,8 @@ import java.util.Map.Entry;
 public class SNPLocalizerExample {
 
 	public static void main(String[] args) throws Exception {
-		File libraryFile=new File("/Users/searleb/Documents/phospho_localization/data/VillenJ_Exactive_HumanPhosphoproteome.elib");
 		File diaFile=new File("/Volumes/BriansSSD/20150908_6BB2_DIA_01.dia ");
 
-		LibraryFile library=new LibraryFile();
-		library.openFile(libraryFile);
-		
 		HashMap<String, String> defaults=SearchParameterParser.getDefaultParameters();
 		defaults.put("-localizationModification", "Phosphorylation");
 		defaults.put("-ptol", "16.67");

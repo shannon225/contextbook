@@ -3,15 +3,11 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.TreeMap;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -32,7 +28,7 @@ import gnu.trove.map.hash.TObjectFloatHashMap;
 import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class AlternatePeakLocationInferrer {
-	public static PeakLocationInferrer getAlignmentData(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
+	public static PeakLocationInferrerInterface getAlignmentData(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
 		ProgressIndicator subProgress1=new SubProgressIndicator(progress, 0.5f);
 		Pair<HashMap<SearchJobData,TObjectFloatHashMap<String>>, HashMap<String,double[]>> pair=getArchetypals(subProgress1, pecanJobs, passingPeptides, params);
 		HashMap<SearchJobData, TObjectFloatHashMap<String>> peptideMappings=pair.x;
@@ -48,6 +44,7 @@ public class AlternatePeakLocationInferrer {
 				bestJob=entry.getKey();
 			}
 		}
+		Logger.logLine("Setting "+bestJob.getDiaFile().getName()+" as the seed experiment.");
 		TObjectFloatHashMap<String> bestRTInSec=peptideMappings.get(bestJob);
 
 		// construct alignments
@@ -78,7 +75,7 @@ public class AlternatePeakLocationInferrer {
 					public boolean execute(String a, float b) {
 						float alt=rtInSec.get(a);
 						if (rtInSec.getNoEntryValue()!=alt) {
-							points.add(new XYPoint(b/60f, alt));
+							points.add(new XYPoint(b/60f, alt/60f)); // both in minutes
 						}
 						return true;
 					}
@@ -90,31 +87,24 @@ public class AlternatePeakLocationInferrer {
 				
 				RetentionTimeAlignmentInterface alignment=new RetentionTimeFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
 				alignmentMap.put(job, alignment);
-				if (job instanceof EncyclopediaJobData) {
-					// try reading encyclopedia data directly from results library
-					File resultLibrary=((EncyclopediaJobData) job).getResultLibrary();
-					alignment.plot(points, Optional.ofNullable(resultLibrary));
-				}
+				alignment.plot(points, Optional.ofNullable(job.getDiaFile()));
 
 				// align local archetypals to the seed
 				rtInSec.forEachEntry(new TObjectFloatProcedure<String>() {
 					@Override
 					public boolean execute(String a, float b) {
-						float alt=bestRTInSec.get(a);
-						if (bestRTInSec.getNoEntryValue()!=alt) {
-							float alignedRT=alignment.getXValue(alt/60f);
-							alignedRTInMinBySequenceMap.put(a, alignedRT);
-						}
+						float alignedRT=alignment.getXValue(b/60f);
+						alignedRTInMinBySequenceMap.put(a, alignedRT);
 						return true;
 					}
 				});
 			}
 		}
 
-		return new PeakLocationInferrer(alignmentMap, alignedRTInMinBySequenceMap, bestIons, params);
+		return new SimplePeakLocationInferrer(alignmentMap, alignedRTInMinBySequenceMap, bestIons, params);
 	}
 
-	static Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> getArchetypals(ProgressIndicator progress, ArrayList<SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
+	static Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> getArchetypals(ProgressIndicator progress, List<? extends SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
 		int numberOfQuantitativePeaks=params.getNumberOfQuantitativePeaks();
 		MassTolerance fragmentTolerance=params.getFragmentTolerance();
 
