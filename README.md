@@ -2,7 +2,7 @@
 
 The human phosphorylation regulatory network represents a complex signaling cascade where proteins can be phosphorylated at multiple sites resulting in different functional states. Here we present Thesaurus, a hybrid search engine that detects and localizes novel positional isomers using site-specific fragment ions directly from data independent acquisition mass spectrometry experiments.
 
-You can download the [latest stable version](https://bitbucket.org/searleb/thesaurus/downloads/thesaurus-0.5.7-executable.jar) or look at the [manual](https://bitbucket.org/searleb/thesaurus/downloads/Thesaurus%20manual.pdf).
+Thesaurus is open source under the Apache 2 licence, which means you can do what you like with the software, as long as you include the required notices. You can download the [latest stable version](https://bitbucket.org/searleb/thesaurus/downloads/thesaurus-0.5.7-executable.jar) or look at the [manual](https://bitbucket.org/searleb/thesaurus/downloads/Thesaurus%20manual.pdf).
 
 ### Contribution guidelines ###
 Any contribution must follow the coding style of the project, be presented with tests and stand up to code review before it will be accepted.
