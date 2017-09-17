@@ -10,7 +10,7 @@ Any contribution must follow the coding style of the project, be presented with 
 ### Who do I talk to? ###
 This is a [MacCoss Lab](https://sites.google.com/a/uw.edu/maccoss/) and [Villen Lab](http://villenlab.gs.washington.edu/) project from the University of Washington, [Department of Genome Sciences](http://www.gs.washington.edu/). For more information please contact Brian Searle (searleb at uw dot edu).
 
-### License ###
+### Licensing information ###
 Copyright 2017 Brian C. Searle
 
 Licensed under the Apache License, Version 2.0 (the "License");
