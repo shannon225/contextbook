@@ -1,7 +1,45 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Frame;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+
+import javax.swing.BoxLayout;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.RowFilter;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+
+import org.jfree.chart.ChartPanel;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
@@ -14,24 +52,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.*;
-import org.jfree.chart.ChartPanel;
-
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
-import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumComparator;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumUtils;
 
 public class DIABrowserPanel extends JPanel {
 	private static final String STRUCTURE_TITLE="Structure";
@@ -212,7 +238,7 @@ public class DIABrowserPanel extends JPanel {
 				Collection<XYPoint> tics=new ArrayList<XYPoint>();
 				maxTIC=0.0f;
 				
-				List<PrecursorScan> precursors=dia.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
+				ArrayList<PrecursorScan> precursors=dia.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
 				int increment=precursors.size()/1000;
 				int scanCount=0;
 				float tic=0.0f;

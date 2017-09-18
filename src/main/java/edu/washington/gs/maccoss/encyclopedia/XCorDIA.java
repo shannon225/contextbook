@@ -280,7 +280,7 @@ public class XCorDIA {
 			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
 			// set up xcorr
-			List<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 
 			Logger.logLine("Starting XCorr background calculations for "+stripes.size()+" spectra between "+range+"...");
 			final Vector<Stripe> tempStripes=new Vector<Stripe>();

@@ -1,7 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 
@@ -25,7 +24,7 @@ import gnu.trove.set.hash.TIntHashSet;
 public class XCorDIAOneScoringTask extends AbstractLibraryScoringTask {
 	private final float dutyCycle;
 	
-	public XCorDIAOneScoringTask(PSMScorer scorer, List<LibraryEntry> entries, List<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
+	public XCorDIAOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
 			SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.dutyCycle=dutyCycle;
@@ -69,7 +68,7 @@ public class XCorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
 
 			TFloatFloatHashMap map=new TFloatFloatHashMap();
-			List<ScoredIndex> goodStripes=new ArrayList<ScoredIndex>();
+			ArrayList<ScoredIndex> goodStripes=new ArrayList<ScoredIndex>();
 			for (int i=0; i<averagePrimary.length; i++) {
 				goodStripes.add(new ScoredIndex(primary[i], i));
 				map.put(i, primary[i]);

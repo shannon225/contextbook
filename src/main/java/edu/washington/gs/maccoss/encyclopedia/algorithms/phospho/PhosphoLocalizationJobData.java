@@ -1,10 +1,10 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
-import java.io.File;
-
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AbstractSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+
+import java.io.File;
 
 public class PhosphoLocalizationJobData extends AbstractSearchJobData {
 	public static final String LOG_FILE_SUFFIX=".log";

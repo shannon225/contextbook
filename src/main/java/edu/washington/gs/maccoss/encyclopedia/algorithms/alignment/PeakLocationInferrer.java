@@ -3,8 +3,11 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.TreeMap;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractor;
@@ -34,7 +37,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicat
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class PeakLocationInferrer {
-	public static PeakLocationInferrerInterface getAlignmentData(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
+
+	public static PeakLocationInferrerInterface getAlignmentData(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
 		ProgressIndicator subProgress1=new SubProgressIndicator(progress, 0.5f);
 		Pair<HashMap<SearchJobData,ArrayList<ChromatogramLibraryEntry>>, HashMap<String,double[]>> pair=getArchetypalPeptides(subProgress1, pecanJobs, passingPeptides, params);
 		HashMap<SearchJobData, ArrayList<ChromatogramLibraryEntry>> archetypalPeptides=pair.x;
@@ -119,7 +123,7 @@ public class PeakLocationInferrer {
 	 * @param passingPeptides
 	 * @return
 	 */
-	static Pair<HashMap<SearchJobData, ArrayList<ChromatogramLibraryEntry>>, HashMap<String, double[]>> getArchetypalPeptides(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs,
+	static Pair<HashMap<SearchJobData, ArrayList<ChromatogramLibraryEntry>>, HashMap<String, double[]>> getArchetypalPeptides(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs,
 			ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
 		int numberOfQuantitativePeaks=params.getNumberOfQuantitativePeaks();
 		MassTolerance fragmentTolerance=params.getFragmentTolerance();
@@ -268,7 +272,7 @@ public class PeakLocationInferrer {
 	 */
 	private static ArrayList<ChromatogramLibraryEntry> extractFromDIA(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> targetPeptides,
 			ArrayList<PercolatorPeptide> passingPeptides) {
-		final StripeFileInterface stripeFile = job.getDiaFileReader(); //TODO: figure out how to enforce reading in place
+		StripeFileInterface stripeFile=StripeFileGenerator.getFile(job.getDiaFile(), job.getParameters(), true);
 
 		LibraryInterface library=null;
 		if (job instanceof EncyclopediaJobData) {

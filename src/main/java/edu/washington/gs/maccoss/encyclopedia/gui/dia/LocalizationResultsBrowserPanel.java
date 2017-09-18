@@ -7,7 +7,6 @@ import java.awt.Frame;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Optional;
 
 import javax.swing.BoxLayout;
@@ -277,8 +276,8 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 			byte precursorCharge = entries.get(0).getPrecursorCharge();
 
 			try {
-				List<? extends Spectrum> precursors = dia.getPrecursors(minRT-deltaRT, maxRT+deltaRT);
-				List<Stripe> stripes=dia.getStripes(precursorMZ, minRT-deltaRT, maxRT+deltaRT, false);
+				ArrayList<Spectrum> precursors=PrecursorScan.downcast(dia.getPrecursors(minRT-deltaRT, maxRT+deltaRT));
+				ArrayList<Stripe> stripes=dia.getStripes(precursorMZ, minRT-deltaRT, maxRT+deltaRT, false);
 				
 				XYTraceInterface[] precursorTraces = ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), precursorMZ, precursorCharge, precursors);
 				double maxPrecursor=XYTrace.getMaxY(precursorTraces);

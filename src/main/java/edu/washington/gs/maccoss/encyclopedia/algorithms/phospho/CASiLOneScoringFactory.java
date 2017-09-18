@@ -1,7 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
 import java.io.File;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
@@ -46,12 +46,12 @@ public class CASiLOneScoringFactory implements LibraryScoringFactory {
 	}
 
 	@Override
-	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, List<LibraryEntry> entries, List<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
+	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
 		return new CASiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, localizationQueue, parameters);
 	}
 	
 	@Override
-	public AbstractLibraryScoringTask getDDAScoringTask(PSMScorer scorer, List<LibraryEntry> entries, List<Stripe> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
+	public AbstractLibraryScoringTask getDDAScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
 		throw new EncyclopediaException("Not implemented");
 	}
 

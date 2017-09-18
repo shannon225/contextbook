@@ -1,13 +1,52 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Frame;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import javax.swing.BoxLayout;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.RowFilter;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+
+import org.jfree.chart.ChartPanel;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.*;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryReportExtractor.PeptideReportData;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.*;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -17,24 +56,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
-import org.jfree.chart.ChartPanel;
-
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 public class MultiResultsBrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -280,10 +301,9 @@ public class MultiResultsBrowserPanel extends JPanel {
 				if (ranges[i]!=null) {
 					StripeFileInterface file=files.get(i);
 					Range rangeInMins=new Range(ranges[i].getStart()/60f, ranges[i].getStop()/60f);
-					List<Stripe> stripes=file.getStripes(precursorMz, ranges[i].getStart()-RT_EXTRACTION_MARGIN_IN_SEC, ranges[i].getStop()+RT_EXTRACTION_MARGIN_IN_SEC, false);
+					ArrayList<Stripe> stripes=file.getStripes(precursorMz, ranges[i].getStart()-RT_EXTRACTION_MARGIN_IN_SEC, ranges[i].getStop()+RT_EXTRACTION_MARGIN_IN_SEC, false);
 					
-//					ArrayList<Spectrum> downcastedSpectra=Stripe.downcastStripeToSpectrum(stripes);
-					List<? extends Spectrum> downcastedSpectra = stripes;
+					ArrayList<Spectrum> downcastedSpectra=Stripe.downcastStripeToSpectrum(stripes);
 
 					HashMap<FragmentIon, XYTrace> targetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), targetIonArray, downcastedSpectra, null,
 							GraphType.boldline);

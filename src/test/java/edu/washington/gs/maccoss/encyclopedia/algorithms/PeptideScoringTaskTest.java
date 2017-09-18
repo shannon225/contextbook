@@ -1,11 +1,37 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.zip.DataFormatException;
+
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
@@ -17,15 +43,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.set.hash.TDoubleHashSet;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.*;
-import java.util.zip.DataFormatException;
 
 public class PeptideScoringTaskTest {
 	private static byte PLOTTING_METHOD=FragmentationTraceTask.PLOT_INTENSITIES; // not final to avoid test warnings
@@ -67,7 +84,7 @@ public class PeptideScoringTaskTest {
 			
 			System.out.println("Processing "+range+" ("+scanAveragingMargin+")");
 			
-			List<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 			Collections.sort(stripes);
 			
 			int index=Arrays.binarySearch(binArray, range.getMiddle());

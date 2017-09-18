@@ -1,6 +1,24 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.zip.DataFormatException;
+
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
@@ -9,9 +27,24 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgrou
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.*;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.*;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.SaveResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.TeeResultsConsumer;
@@ -22,14 +55,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.*;
-import java.util.zip.DataFormatException;
 
 public class Thesaurus {
 
@@ -232,7 +257,7 @@ public class Thesaurus {
 			float dutyCycle=stripefile.getRanges().get(range);
 			Logger.logLine("Processing "+range+" m/z, ("+dutyCycle+" second duty cycle)");
 			
-			List<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 			Collections.sort(stripes);
 	
 			// prepare executor for background

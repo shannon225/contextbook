@@ -1,14 +1,14 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AbstractSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class EncyclopediaToBLIBTest {
 	public static void main(String[] args) throws Exception {

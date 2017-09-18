@@ -2,7 +2,14 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -259,7 +266,7 @@ public class PeptideQuantExtractor {
 			progress.update(baseMessage, baseProgress);
 			if (!used) continue;
 
-			List<Stripe> stripes=stripefile.getStripes(range.getMiddle(), minRetentionTime, maxRetentionTime, false);
+			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), minRetentionTime, maxRetentionTime, false);
 			Collections.sort(stripes);
 
 			// prepare executor for background

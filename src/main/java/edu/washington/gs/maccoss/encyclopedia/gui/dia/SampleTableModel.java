@@ -1,18 +1,20 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import javax.swing.table.AbstractTableModel;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
-
-import javax.swing.table.AbstractTableModel;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Map.Entry;
 
 public class SampleTableModel extends AbstractTableModel {
 	private static final long serialVersionUID=1L;

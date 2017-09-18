@@ -1,5 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.concurrent.BlockingQueue;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
@@ -15,10 +19,6 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-
-import java.io.File;
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
 
 public class XCorDIAOneScoringFactory implements LibraryScoringFactory {
 	public static final String version="0.4.10";
@@ -39,12 +39,12 @@ public class XCorDIAOneScoringFactory implements LibraryScoringFactory {
 	}
 
 	@Override
-	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, List<LibraryEntry> entries, List<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
+	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
 		return new XCorDIAOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, resultsQueue, parameters);
 	}
 	
 	@Override
-	public AbstractLibraryScoringTask getDDAScoringTask(PSMScorer scorer, List<LibraryEntry> entries, List<Stripe> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
+	public AbstractLibraryScoringTask getDDAScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
 		throw new EncyclopediaException("Sorry, DDA scoring for XCorDIA is not implemented!");
 	}
 

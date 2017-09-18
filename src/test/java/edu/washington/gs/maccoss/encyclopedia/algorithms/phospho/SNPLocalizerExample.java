@@ -1,5 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
+import java.awt.Color;
+import java.awt.Dimension;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map.Entry;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
@@ -18,14 +26,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import gnu.trove.map.hash.TFloatFloatHashMap;
-
-import java.awt.*;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map.Entry;
 
 public class SNPLocalizerExample {
 
@@ -60,7 +60,7 @@ public class SNPLocalizerExample {
 		libentry=libentry.updateRetentionTime(retentionTime);
 		double precursorMz=parameters.getAAConstants().getChargedMass(peptideModSeq, precursorCharge);
 		
-		List<Stripe> stripes=stripefile.getStripes(precursorMz, 0, Float.MAX_VALUE, false);
+		ArrayList<Stripe> stripes=stripefile.getStripes(precursorMz, 0, Float.MAX_VALUE, false);
 		System.out.println(precursorMz+", "+stripes.size());
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptideModSeq, PeptideModification.polymorphism, parameters.getAAConstants());
 		permutations.add("GPGGVWAAEAISDAR"); // 728.8626 M/Z SAA1

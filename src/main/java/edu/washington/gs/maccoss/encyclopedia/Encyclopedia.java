@@ -205,7 +205,7 @@ public class Encyclopedia {
 			float dutyCycle=stripefile.getRanges().get(range);
 			Logger.logLine("Processing "+range+" m/z, ("+dutyCycle+" second duty cycle)");
 			
-			List<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 			Collections.sort(stripes);
 
 			// prepare executor for background

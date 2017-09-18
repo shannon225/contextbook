@@ -1,5 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -10,10 +13,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 public class FragmentationTraceTask extends PeptideScoringTask {
 	public static final byte PLOT_INTENSITIES=0;
 	public static final byte PLOT_SCORES=1;
@@ -21,7 +20,7 @@ public class FragmentationTraceTask extends PeptideScoringTask {
 	
 	private final byte plottingMethod;
 
-	public FragmentationTraceTask(PecanRawScorer scorer, byte plottingMethod, List<LibraryEntry> entries, List<Stripe> stripes, PrecursorScanMap precursors, AminoAcidConstants aaConstants) {
+	public FragmentationTraceTask(PecanRawScorer scorer, byte plottingMethod, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, AminoAcidConstants aaConstants) {
 		super(scorer, entries, stripes, precursors, aaConstants);
 		this.plottingMethod=plottingMethod;
 	}
