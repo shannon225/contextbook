@@ -1,60 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Frame;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map.Entry;
-import java.util.Optional;
-
-import javax.swing.BoxLayout;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.RowFilter;
-import javax.swing.SwingUtilities;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
-
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.axis.ValueAxis;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractorTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SimplePeptidePrecursor;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.*;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.*;
 import edu.washington.gs.maccoss.encyclopedia.gui.massspec.FragmentationTable;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
@@ -68,6 +21,23 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.map.hash.TFloatFloatHashMap;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.axis.ValueAxis;
+
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+import java.awt.*;
+import java.io.File;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.Optional;
 
 public class ResultsBrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -210,12 +180,12 @@ public class ResultsBrowserPanel extends JPanel {
 				LibraryFile.OPEN_IN_PLACE=true;
 				library=BlibToLibraryConverter.getFile(f);
 				LibraryFile.OPEN_IN_PLACE=false;
-				
+
 				ArrayList<LibraryEntry> entries=library.getEntries(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), false);
-				
-				Optional<StripeFileInterface> source=library.getSource(parameters);
+
+				final Optional<Path> source = library.getSource(parameters);
 				if (source.isPresent()) {
-					dia=source.get();
+					dia = StripeFileGenerator.getFile(source.map(Path::toFile).get(), parameters); // assumes the .DIA file exists or should be created
 				}
 
 				if (dia!=null&&library!=null&&parameters.getLocalizingModification().isPresent()) {
