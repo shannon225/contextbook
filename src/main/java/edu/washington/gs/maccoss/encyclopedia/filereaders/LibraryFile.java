@@ -277,6 +277,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			}
 		}
 		ArrayList<LibraryEntry> uniqueEntries=new ArrayList<LibraryEntry>(repeatsCatcher.values());
+		Logger.logLine("Writing "+uniqueEntries.size()+" peptides to entries table...");
 		addEntries(uniqueEntries);
 
 		// then add integrated areas
@@ -344,6 +345,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				}
 
 			}
+			
+			Logger.logLine("Writing "+dataAndSourceList.size()+" peptides to peptidequants table...");
 
 			// Issue 25 - skip entries that the RT inferrer could not process.
 			// TODO: should this throw if too many entries are skipped?
@@ -413,7 +416,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	private void internalWritePeptideQuantLibraryEntriesToConnection(Connection c, Optional<PeakLocationInferrerInterface> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList)
 			throws SQLException, IOException {
 		int numValidEntries=0;
-		for (int i=1; i<dataAndSouceList.size(); i++) {
+		for (int i=0; i<dataAndSouceList.size(); i++) {
 			if (inferrer.isPresent()) {
 				Optional<QuantitativeDIAData> topNIntensity=inferrer.get().getQuantitativeData(dataAndSouceList.get(i).x);
 				if (topNIntensity.isPresent()) {
@@ -423,8 +426,6 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				numValidEntries++;
 			}
 		}
-		
-		System.out.println("Testing for validity: "+numValidEntries+"/"+dataAndSouceList.size());
 
 		StringBuilder peptidePrepString=new StringBuilder("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, RTInSecondsCenter, "
 				+"RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, QuantIonMassLength, "
@@ -440,8 +441,16 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try {
 			int pepIndex=1;
 
-			for (Pair<TransitionRefinementData, String> pair : dataAndSouceList) {
-				pepIndex=prepareQuantData(pair.x, pair.y, inferrer, peptidePrep, pepIndex);
+			for (int i=0; i<dataAndSouceList.size(); i++) {
+				Pair<TransitionRefinementData, String> pair=dataAndSouceList.get(i);
+				if (inferrer.isPresent()) {
+					Optional<QuantitativeDIAData> topNIntensity=inferrer.get().getQuantitativeData(dataAndSouceList.get(i).x);
+					if (topNIntensity.isPresent()) {
+						pepIndex=prepareQuantData(pair.x, pair.y, inferrer, peptidePrep, pepIndex);
+					}
+				} else {
+					pepIndex=prepareQuantData(pair.x, pair.y, inferrer, peptidePrep, pepIndex);
+				}
 			}
 			if (pepIndex>1) {
 				peptidePrep.execute();

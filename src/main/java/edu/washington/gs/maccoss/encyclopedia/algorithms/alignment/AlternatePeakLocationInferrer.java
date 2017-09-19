@@ -165,6 +165,16 @@ public class AlternatePeakLocationInferrer {
 						}
 					}
 					
+					if (missingPeptides.size()>0) {
+						int modified=0;
+						for (PercolatorPeptide p : missingPeptides) {
+							if (p.getPeptideModSeq().indexOf('[')>=0) {
+								modified++;
+							}
+						}
+						Logger.logLine("Couldn't collect global quantitative ion data from this specific sample on "+missingPeptides.size()+" of "+passingPeptides.size()+", (where "+modified+" were modified) at the specified FDR threshold");
+					}
+					
 				} catch (EncyclopediaException e) {
 					Logger.errorLine("Parsing error indicates "+job.getOutputFile().getName()+" isn't from a quantitative search (EncyclopeDIA or XCorDIA):");
 					Logger.errorException(e);
@@ -177,6 +187,8 @@ public class AlternatePeakLocationInferrer {
 				}
 			}
 		}
+		
+		int strongAboveThreshold=0;
 		HashMap<String,double[]> bestIons=new HashMap<String, double[]>();
 		for (Entry<String, CorrelationPeakFrequencyCalculator> entry : ionCounter.entrySet()) {
 			String peptideModSeq=entry.getKey();
@@ -185,9 +197,13 @@ public class AlternatePeakLocationInferrer {
 				double[] altIons=weakIonCounter.get(peptideModSeq).getTopNMasses(numberOfQuantitativePeaks);
 				bestIons.put(peptideModSeq, altIons);
 			} else {
+				if (ions.length>=params.getMinNumOfQuantitativePeaks()) {
+					strongAboveThreshold++;
+				}
 				bestIons.put(peptideModSeq, ions);
 			}
 		}
+		Logger.logLine("Found quantitative ions for "+bestIons.size()+" total peptides ("+strongAboveThreshold+" with "+params.getMinNumOfQuantitativePeaks()+" or more high quality peaks) across all runs.");
 
 		return new Pair<HashMap<SearchJobData,TObjectFloatHashMap<String>>, HashMap<String,double[]>>(retentionTimeMappingsInSeconds, bestIons);
 	}
