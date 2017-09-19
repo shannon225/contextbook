@@ -205,8 +205,7 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 				if (source.isPresent()) {
 					dia = StripeFileGenerator.getFile(source.map(Path::toFile).get(), parameters); // assumes the .DIA file exists or should be created
 				}
-
-				return entries;
+				return entries;				
 			}
 			@Override
 			protected void doneForReal(ArrayList<LocalizedLibraryEntry> t) {

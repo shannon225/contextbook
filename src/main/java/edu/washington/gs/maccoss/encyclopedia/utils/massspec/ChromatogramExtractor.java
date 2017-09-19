@@ -1,6 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;

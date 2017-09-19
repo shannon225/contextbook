@@ -18,11 +18,11 @@ public class CachedStripeFile implements StripeFileInterface {
 	private final File userFile;
 	private final Map<Range, Float> ranges;
 	private final List<PrecursorScan> precursors;
-	private final Map<Range, List<Stripe>> stripes;
+	private final Map<Range, ? extends List<Stripe>> stripes;
 	private final float tic;
 	private final float gradientLength;
 	
-	public CachedStripeFile(File userFile, Map<Range, Float> ranges, List<PrecursorScan> precursors, Map<Range, List<Stripe>> stripes) {
+	public CachedStripeFile(File userFile, Map<Range, Float> ranges, List<PrecursorScan> precursors, Map<Range, ? extends List<Stripe>> stripes) {
 		this.userFile=userFile;
 		this.ranges=ranges;
 		this.precursors=precursors;
@@ -82,7 +82,7 @@ public class CachedStripeFile implements StripeFileInterface {
 
 	@Override
 	public ArrayList<Stripe> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
-		for (Entry<Range, List<Stripe>> entry : stripes.entrySet()) {
+		for (Entry<Range, ? extends List<Stripe>> entry : stripes.entrySet()) {
 			if (entry.getKey().contains((float)targetMz)) {
 				ArrayList<Stripe> subset=new ArrayList<Stripe>();
 				for (Stripe scan : entry.getValue()) {
@@ -103,7 +103,7 @@ public class CachedStripeFile implements StripeFileInterface {
 	
 	@Override
 	public ArrayList<Stripe> getStripes(Range targetMzRange, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
-		for (Entry<Range, List<Stripe>> entry : stripes.entrySet()) {
+		for (Entry<Range, ? extends List<Stripe>> entry : stripes.entrySet()) {
 			if (targetMzRange.contains(entry.getKey().getMiddle())) {
 				ArrayList<Stripe> subset=new ArrayList<Stripe>();
 				for (Stripe scan : entry.getValue()) {
