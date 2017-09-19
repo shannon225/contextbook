@@ -74,7 +74,7 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 	 */
 	@Override
 	public double[] getTopNBestIons(String peptideModSeq, byte precursorCharge) {
-		return bestIons.get(peptideModSeq+"+"+precursorCharge);
+		return bestIons.get(peptideModSeq);
 	}
 	
 	/**
