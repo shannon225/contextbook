@@ -216,7 +216,7 @@ public class ResultsBrowserPanel extends JPanel {
 
 				final Optional<Path> source = library.getSource(parameters);
 				if (source.isPresent()) {
-					dia = StripeFileGenerator.getFile(source.map(Path::toFile).get(), parameters); // assumes the .DIA file exists or should be created
+					dia = StripeFileGenerator.getFile(source.get().toFile(), parameters); // assumes the .DIA file exists or should be created
 				}
 
 				if (dia!=null&&library!=null&&parameters.getLocalizingModification().isPresent()) {
