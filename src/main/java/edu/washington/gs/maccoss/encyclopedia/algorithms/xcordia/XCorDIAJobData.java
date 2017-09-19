@@ -78,7 +78,7 @@ public class XCorDIAJobData extends QuantitativeSearchJobData {
 
 	public File getResultLibrary() {
 		String absolutePath = getPrefixFromOutput(getOutputFile());
-		return new File(absolutePath + LibraryFile.ELIB);
+		return new File(absolutePath+LibraryFile.ELIB);
 	}
 
 	@Override

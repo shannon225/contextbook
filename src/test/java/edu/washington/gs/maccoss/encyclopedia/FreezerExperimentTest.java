@@ -1,5 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.zip.DataFormatException;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AbstractSearchJobData;
@@ -9,14 +17,6 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.zip.DataFormatException;
 
 public class FreezerExperimentTest {
 	public static void main(String[] args) throws Exception {

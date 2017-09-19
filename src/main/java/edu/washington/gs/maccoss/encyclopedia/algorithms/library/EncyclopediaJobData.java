@@ -1,18 +1,18 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
+import java.io.File;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 
-import java.io.File;
-
 public class EncyclopediaJobData extends QuantitativeSearchJobData {
-	public static final String LOG_FILE_SUFFIX = ".log";
-	public static final String DECOY_FILE_SUFFIX = ".encyclopedia.decoy.txt";
-	public static final String OUTPUT_FILE_SUFFIX = ".encyclopedia.txt";
-	public static final String FEATURE_FILE_SUFFIX = ".features.txt";
+	public static final String LOG_FILE_SUFFIX=".log";
+	public static final String DECOY_FILE_SUFFIX=".encyclopedia.decoy.txt";
+	public static final String OUTPUT_FILE_SUFFIX=".encyclopedia.txt";
+	public static final String FEATURE_FILE_SUFFIX=".features.txt";
 
 	private final LibraryInterface library;
 	private final LibraryScoringFactory taskFactory;

@@ -1,10 +1,22 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.TreeMap;
+import java.util.zip.DataFormatException;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.AlternatePeakLocationInferrer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
@@ -19,8 +31,22 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.*;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -31,14 +57,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.zip.DataFormatException;
 
 public class SearchToBLIB {
 	public static void main(String[] args) {

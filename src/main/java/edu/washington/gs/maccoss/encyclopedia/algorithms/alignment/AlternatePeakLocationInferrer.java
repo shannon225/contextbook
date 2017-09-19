@@ -3,8 +3,12 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.TreeMap;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;

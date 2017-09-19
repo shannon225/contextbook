@@ -1,19 +1,18 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.zip.DataFormatException;
+
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class CachedStripeFile implements StripeFileInterface {
 	private final File userFile;

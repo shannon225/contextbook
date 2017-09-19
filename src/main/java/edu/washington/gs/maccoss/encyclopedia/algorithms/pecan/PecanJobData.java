@@ -1,11 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AbstractSearchJobData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Optional;
+
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AbstractSearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 
 public class PecanJobData extends AbstractSearchJobData {
 	public static final String OUTPUT_FILE_SUFFIX=".pecan.txt";

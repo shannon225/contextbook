@@ -1,15 +1,64 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.TreeMap;
+import java.util.function.Supplier;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.zip.DataFormatException;
+
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.*;
+
+import edu.washington.gs.maccoss.encyclopedia.algorithms.BackgroundGenerator;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.*;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.AbstractPecanFragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.*;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
-import edu.washington.gs.maccoss.encyclopedia.utils.*;
+import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.FileLogRecorder;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -21,15 +70,6 @@ import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.procedure.TDoubleObjectProcedure;
 import gnu.trove.set.hash.TDoubleHashSet;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.*;
-import java.util.function.Supplier;
-import java.util.zip.DataFormatException;
 
 public class Pecanpie {
 	public static final String TARGET_FASTA_TAG="-t";
@@ -144,14 +184,33 @@ public class Pecanpie {
 			}
 		}
 		
-		runPie(progress, jobData.getTargetList(), jobData::getDiaFileReader, jobData.getFastaFile(), jobData.getFeatureFile(), jobData.getOutputFile(), jobData.getOutputDecoyFile(), jobData.getTaskFactory());
+		runPie(
+				progress,
+				jobData.getTargetList(),
+				new Supplier<StripeFileInterface>() {
+					@Override
+					public StripeFileInterface get() {
+						return jobData.getDiaFileReader();
+					}
+				},
+				jobData.getFastaFile(),
+				jobData.getFeatureFile(),
+				jobData.getOutputFile(),
+				jobData.getOutputDecoyFile(),
+				jobData.getTaskFactory()
+		);
 	}
 
 	static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, File featureFile, File outputFile, File decoyFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		runPie(
 				progress,
 				targetList,
-				() -> StripeFileGenerator.getFile(diaFile, taskFactory.getParameters()),
+				new Supplier<StripeFileInterface>() {
+					@Override
+					public StripeFileInterface get() {
+						return StripeFileGenerator.getFile(diaFile, taskFactory.getParameters());
+					}
+				},
 				fastaFile,
 				featureFile,
 				outputFile,

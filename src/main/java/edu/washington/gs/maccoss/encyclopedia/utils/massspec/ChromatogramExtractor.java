@@ -1,18 +1,18 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
-
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
+
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 
 public class ChromatogramExtractor {
 	public static final byte[] isotopes=new byte[] {0, 1, 2};
