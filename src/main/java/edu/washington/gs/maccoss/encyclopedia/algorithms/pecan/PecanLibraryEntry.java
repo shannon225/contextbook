@@ -16,10 +16,6 @@ public class PecanLibraryEntry extends LibraryEntry {
 		this.isDecoy=isDecoy;
 		this.euclidianDistance=euclidianDistance;
 	}
-	
-	public String getAccession() {
-		return entry.getAccession();
-	}
 
 	@Override
 	public boolean isDecoy() {

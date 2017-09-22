@@ -406,7 +406,7 @@ public class Pecanpie {
 						
 						if (!parameters.isDontRunDecoys()) {
 							String smartDecoy=PeptideUtils.getSmartDecoy(sequence, charge, backgroundProteomeSet, parameters);
-							FastaPeptideEntry decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), LibraryEntry.DECOY_STRING+peptide.getAccession(), smartDecoy);
+							FastaPeptideEntry decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.DECOY_STRING), smartDecoy);
 							AbstractPecanFragmentationModel revmodel=taskFactory.getFragmentationModel(decoyPeptide, parameters.getAAConstants());
 							PecanLibraryEntry reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
 							tasks.add(reventry);
@@ -423,13 +423,13 @@ public class Pecanpie {
 								extraDecoys=extraDecoys-1.0f;
 
 								String shuffledSequence=PeptideUtils.shuffle(sequence, Float.hashCode(extraDecoys), parameters);
-								FastaPeptideEntry shuffledPeptide=new FastaPeptideEntry(peptide.getFilename(), LibraryEntry.SHUFFLE_STRING+peptide.getAccession(), shuffledSequence);
+								FastaPeptideEntry shuffledPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.SHUFFLE_STRING), shuffledSequence);
 								revmodel=taskFactory.getFragmentationModel(shuffledPeptide, parameters.getAAConstants());
 								reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, false);
 								tasks.add(reventry);
 								
 								smartDecoy=PeptideUtils.getSmartDecoy(shuffledSequence, charge, backgroundProteomeSet, parameters);
-								decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), LibraryEntry.DECOY_STRING+LibraryEntry.SHUFFLE_STRING+peptide.getAccession(), smartDecoy);
+								decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.DECOY_STRING+LibraryEntry.SHUFFLE_STRING), smartDecoy);
 								revmodel=taskFactory.getFragmentationModel(decoyPeptide, parameters.getAAConstants());
 								reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
 								tasks.add(reventry);
@@ -469,7 +469,7 @@ public class Pecanpie {
 	public static boolean arePeptidesInRange(PeptideDatabase targets, Range range, PecanSearchParameters parameters) {
 		// first check to see if we need to process this stripe
 		boolean hasPeptides=false;
-		outer:for (FastaEntryInterface peptide : targets) {
+		outer:for (FastaPeptideEntry peptide : targets) {
 			for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
 				double mz=parameters.getAAConstants().getChargedMass(peptide.getSequence(), charge);
 				if (range.contains((float)mz)) {
