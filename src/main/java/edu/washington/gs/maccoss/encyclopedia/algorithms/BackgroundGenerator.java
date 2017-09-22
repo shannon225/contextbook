@@ -7,6 +7,7 @@ import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -56,7 +57,7 @@ public class BackgroundGenerator {
 
 		if (parameters.isAddDecoysToBackgound()) {
 			// add reverse targets to proteome
-			for (FastaEntryInterface entry : targets) {
+			for (FastaPeptideEntry entry : targets) {
 				for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
 					String decoy=PeptideUtils.getSmartDecoy(entry.getSequence(), charge, backgroundProteome, parameters);
 					backgroundProteome.add(decoy);
