@@ -3,6 +3,8 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -16,14 +18,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.zip.DataFormatException;
 
+import com.google.common.collect.ImmutableList;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
@@ -160,7 +164,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		return Float.parseFloat(value);
 	}
 
-	public void setSources(ArrayList<SearchJobData> sources) throws IOException, SQLException {
+	public void setSources(List<? extends SearchJobData> sources) throws IOException, SQLException {
 		HashMap<String, String> map=new HashMap<String, String>();
 		StringBuilder sb=new StringBuilder();
 		for (SearchJobData searchJobData : sources) {
@@ -206,28 +210,31 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		return new Version(meta.get(VERSION_STRING));
 	}
 
-	public ArrayList<File> getSourceFiles() throws IOException, SQLException {
-		HashMap<String, String> meta=getMetadata();
-		String sources=meta.get(SOURCEFILE_STRING);
-		if (sources==null)
-			return new ArrayList<File>();
+	public List<Path> getSourceFiles() throws IOException, SQLException {
+		final String sources=getMetadata().get(SOURCEFILE_STRING);
 
-		StringTokenizer st=new StringTokenizer(sources, SOURCE_FILE_SPLIT);
-		ArrayList<File> files=new ArrayList<File>();
-		while (st.hasMoreTokens()) {
-			files.add(new File(st.nextToken()));
+		if (null == sources) {
+			return Collections.emptyList();
 		}
-		return files;
+
+		final StringTokenizer st=new StringTokenizer(sources, SOURCE_FILE_SPLIT);
+
+		ImmutableList.Builder<Path> builder = ImmutableList.builder();
+		while (st.hasMoreTokens()) {
+			builder.add(Paths.get(st.nextToken()));
+		}
+		return builder.build();
 	}
 
-	public Optional<StripeFileInterface> getSource(SearchParameters parameters) {
+	public Optional<Path> getSource(SearchParameters parameters) {
 		try {
-			ArrayList<File> files=getSourceFiles();
-			if (files.size()==0||files.size()>1)
-				return Optional.empty();
+			final Collection<Path> sources=getSourceFiles();
 
-			StripeFileInterface file=StripeFileGenerator.getFile(files.get(0), parameters);
-			return Optional.ofNullable(file);
+			if (sources.size()==0||sources.size()>1) {
+				return Optional.empty();
+			}
+
+			return Optional.ofNullable(sources.iterator().next());
 		} catch (Exception e) {
 			return Optional.empty();
 		}

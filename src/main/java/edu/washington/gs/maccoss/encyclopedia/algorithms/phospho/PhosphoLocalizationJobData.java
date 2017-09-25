@@ -2,11 +2,11 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
 import java.io.File;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AbstractSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 
-public class PhosphoLocalizationJobData extends SearchJobData {
+public class PhosphoLocalizationJobData extends AbstractSearchJobData {
 	public static final String LOG_FILE_SUFFIX=".log";
 	public static final String OUTPUT_FILE_SUFFIX=".localization.txt";
 	public static final String DECOY_FILE_SUFFIX=".localization.decoy.txt";

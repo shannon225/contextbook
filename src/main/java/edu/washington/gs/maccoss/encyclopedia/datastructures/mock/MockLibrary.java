@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures.mock;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,7 +79,7 @@ public class MockLibrary implements LibraryInterface {
 		return new Range((float)min, (float)max);
 	}
 	
-	public Optional<StripeFileInterface> getSource(SearchParameters parameters) {
+	public Optional<Path> getSource(SearchParameters parameters) {
 		return Optional.empty();
 	}
 }

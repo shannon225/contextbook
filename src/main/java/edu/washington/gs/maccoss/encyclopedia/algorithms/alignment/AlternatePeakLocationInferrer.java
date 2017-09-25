@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -31,7 +32,7 @@ import gnu.trove.map.hash.TObjectFloatHashMap;
 import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class AlternatePeakLocationInferrer {
-	public static PeakLocationInferrerInterface getAlignmentData(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
+	public static PeakLocationInferrerInterface getAlignmentData(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
 		ProgressIndicator subProgress1=new SubProgressIndicator(progress, 0.5f);
 		Pair<HashMap<SearchJobData,TObjectFloatHashMap<String>>, HashMap<String,double[]>> pair=getArchetypals(subProgress1, pecanJobs, passingPeptides, params);
 		HashMap<SearchJobData, TObjectFloatHashMap<String>> peptideMappings=pair.x;
@@ -107,7 +108,7 @@ public class AlternatePeakLocationInferrer {
 		return new SimplePeakLocationInferrer(alignmentMap, alignedRTInMinBySequenceMap, bestIons, params);
 	}
 
-	static Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> getArchetypals(ProgressIndicator progress, ArrayList<SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
+	static Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> getArchetypals(ProgressIndicator progress, List<? extends SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
 		int numberOfQuantitativePeaks=params.getNumberOfQuantitativePeaks();
 		MassTolerance fragmentTolerance=params.getFragmentTolerance();
 

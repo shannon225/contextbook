@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -210,12 +211,12 @@ public class ResultsBrowserPanel extends JPanel {
 				LibraryFile.OPEN_IN_PLACE=true;
 				library=BlibToLibraryConverter.getFile(f);
 				LibraryFile.OPEN_IN_PLACE=false;
-				
+
 				ArrayList<LibraryEntry> entries=library.getEntries(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), false);
-				
-				Optional<StripeFileInterface> source=library.getSource(parameters);
+
+				final Optional<Path> source = library.getSource(parameters);
 				if (source.isPresent()) {
-					dia=source.get();
+					dia = StripeFileGenerator.getFile(source.get().toFile(), parameters); // assumes the .DIA file exists or should be created
 				}
 
 				if (dia!=null&&library!=null&&parameters.getLocalizingModification().isPresent()) {

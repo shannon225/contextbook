@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -183,10 +184,42 @@ public class Pecanpie {
 			}
 		}
 		
-		runPie(progress, jobData.getTargetList(), jobData.getDiaFile(), jobData.getFastaFile(), jobData.getFeatureFile(), jobData.getOutputFile(), jobData.getOutputDecoyFile(), jobData.getTaskFactory());
+		runPie(
+				progress,
+				jobData.getTargetList(),
+				new Supplier<StripeFileInterface>() {
+					@Override
+					public StripeFileInterface get() {
+						return jobData.getDiaFileReader();
+					}
+				},
+				jobData.getFastaFile(),
+				jobData.getFeatureFile(),
+				jobData.getOutputFile(),
+				jobData.getOutputDecoyFile(),
+				jobData.getTaskFactory()
+		);
 	}
-		
+
 	static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, File featureFile, File outputFile, File decoyFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+		runPie(
+				progress,
+				targetList,
+				new Supplier<StripeFileInterface>() {
+					@Override
+					public StripeFileInterface get() {
+						return StripeFileGenerator.getFile(diaFile, taskFactory.getParameters());
+					}
+				},
+				fastaFile,
+				featureFile,
+				outputFile,
+				decoyFile,
+				taskFactory
+		);
+	}
+
+	static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaPeptideEntry>> targetList, Supplier<StripeFileInterface> diaReaderSupplier, File fastaFile, File featureFile, File outputFile, File decoyFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		long startTime=System.currentTimeMillis();
 		PSMScorer backgroundScorer=taskFactory.getBackgroundScorer();
 		PSMPeakScorer pecanScorer=taskFactory.getPecanScorer();
@@ -196,8 +229,8 @@ public class Pecanpie {
 
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);
-		
-		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
+
+		final StripeFileInterface stripefile = diaReaderSupplier.get();
 
 		Logger.logLine("Processing precursors scans...");
 		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));

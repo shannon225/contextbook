@@ -49,7 +49,6 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.SaveResultsConsumer;
@@ -178,14 +177,12 @@ public class Encyclopedia {
 			}
 		}
 		
-		File diaFile=job.getDiaFile();
-		
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);
-		
-		SearchParameters parameters=job.getParameters();
-		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
-		if (parameters.isDDA()) {
+
+		final StripeFileInterface stripefile = job.getDiaFileReader();
+
+		if (job.getParameters().isDDA()) {
 			EncyclopediaDDA.runSearch(progress, job, stripefile);
 		} else {
 			runSearch(progress, job, stripefile);

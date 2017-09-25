@@ -4,10 +4,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AbstractSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 
-public class PecanJobData extends SearchJobData {
+public class PecanJobData extends AbstractSearchJobData {
 	public static final String OUTPUT_FILE_SUFFIX=".pecan.txt";
 	public static final String DECOY_FILE_SUFFIX=".pecan.decoy.txt";
 	public static final String FEATURE_FILE_SUFFIX=".features.txt";

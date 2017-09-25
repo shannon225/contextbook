@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
@@ -17,7 +18,7 @@ public interface StripeFileInterface {
 	 * ranges for dia stripe boundaries
 	 * @return Range: low/high boundaries for stripes, Float value is average time in seconds between cycles 
 	 */
-	HashMap<Range, Float> getRanges();
+	Map<Range, Float> getRanges();
 
 	/**
 	 * opens specific file on disk
