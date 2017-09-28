@@ -39,6 +39,10 @@ public class XYTrace implements XYTraceInterface {
 		Collections.sort(points);
 	}
 	
+	public ArrayList<XYPoint> getPoints() {
+		return points;
+	}
+	
 	public static double getMaxY(XYTraceInterface[] traces) {
 		double max=-Double.MAX_VALUE;
 		for (XYTraceInterface xyTrace : traces) {
@@ -60,6 +64,20 @@ public class XYTrace implements XYTraceInterface {
 			}
 		}
 		return max;
+	}
+	
+	public XYPoint getMaxXYInRange(Range xrange) {
+		double maxX=-Double.MAX_VALUE;
+		double maxY=-Double.MAX_VALUE;
+		for (XYPoint xy : points) {
+			if (xrange.contains(xy.getX())) {
+				if (xy.y>maxY) {
+					maxY=xy.y;
+					maxX=xy.x;
+				}
+			}
+		}
+		return new XYPoint(maxX, maxY);
 	}
 	
 	public double getMaxYInRange(Range xrange) {
@@ -132,6 +150,11 @@ public class XYTrace implements XYTraceInterface {
 	
 	public XYTrace(float[] x, float[] y, GraphType type, String name) {
 		this(General.toDoubleArray(x), General.toDoubleArray(y), type, name, Optional.ofNullable((Color)null), Optional.ofNullable((Float)null));
+	}
+	
+	// spectrum
+	public XYTrace(double[] x, float[] y, GraphType type, String name) {
+		this(x, General.toDoubleArray(y), type, name, Optional.ofNullable((Color)null), Optional.ofNullable((Float)null));
 	}
 	
 	public XYTrace(float[] x, float[] y, GraphType type, String name, Color color, Float thickness) {

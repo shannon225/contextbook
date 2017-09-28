@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import javax.swing.table.AbstractTableModel;
 
-import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryReportExtractor.PeptideReportData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideReportData;
 
 public class MultiPeptideResultsTableModel extends AbstractTableModel {
 	private static final long serialVersionUID=1L;
@@ -26,7 +26,7 @@ public class MultiPeptideResultsTableModel extends AbstractTableModel {
 		entries.clear();
 		this.minimumNumberOfTransitions=minimumNumberOfTransitions;
 		for (PeptideReportData entry : allEntries) {
-			if (minimumNumberOfTransitions<=entry.getTargetFragmentMzs().length) {
+			if (minimumNumberOfTransitions<=entry.getMaxNumOfFragments()) {
 				entries.add(entry);
 			}
 		}
@@ -73,7 +73,7 @@ public class MultiPeptideResultsTableModel extends AbstractTableModel {
 			case 0: return rowIndex;
 			case 1: return entry.getPeptideModSeq();
 			case 2: return entry.getAccessions();
-			case 3: return entry.getTargetFragmentMzs().length;
+			case 3: return entry.getMaxNumOfFragments();
 			case 4: return entry.getAverageRetentionTime()/60f;
 		}
 		return null;

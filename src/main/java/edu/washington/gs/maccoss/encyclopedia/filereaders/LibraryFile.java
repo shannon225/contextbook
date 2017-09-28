@@ -23,7 +23,6 @@ import java.util.zip.DataFormatException;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
@@ -565,7 +564,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			Pair<double[], float[]> pair=Peak.toArrays(peaks);
 			double[] topNMasses=pair.x;
 			float[] topNIntensities=pair.y;
-			topN=new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), topNMasses, topNIntensities);
+			topN=new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities);
 		}
 
 		float[] correlationArray=data.getCorrelationArray();
@@ -584,14 +583,14 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			}
 		}
 
-		peptidePrep.setInt(index++, data.getPrecursorCharge());
-		peptidePrep.setString(index++, data.getPeptideModSeq());
-		peptidePrep.setString(index++, data.getPeptideSeq());
+		peptidePrep.setInt(index++, topN.getPrecursorCharge());
+		peptidePrep.setString(index++, topN.getPeptideModSeq());
+		peptidePrep.setString(index++, topN.getPeptideSeq());
 		peptidePrep.setString(index++, sourceFile);
-		peptidePrep.setFloat(index++, data.getApexRT());
-
-		peptidePrep.setFloat(index++, data.getRange().getStart());
-		peptidePrep.setFloat(index++, data.getRange().getStop());
+		peptidePrep.setFloat(index++, topN.getApexRT());
+		
+		peptidePrep.setFloat(index++, topN.getRtScanRange().getStart());
+		peptidePrep.setFloat(index++, topN.getRtScanRange().getStop());
 		peptidePrep.setFloat(index++, topN.getTIC());
 		peptidePrep.setInt(index++, topN.getNumNonZeroPeaks());
 

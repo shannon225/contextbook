@@ -36,7 +36,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import gnu.trove.map.hash.TFloatFloatHashMap;
-import gnu.trove.procedure.TFloatFloatProcedure;
 
 public class PhosphoLocalizerExample {
 
