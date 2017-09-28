@@ -81,7 +81,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 
 	@Override
 	protected Nothing process() {
-		Optional<TransitionRefinementData> spectrum=extractSpectrum(psmdata.getAccessions(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable);
+		Optional<TransitionRefinementData> spectrum=extractSpectrum(psmdata.getAccessions(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable, psmdata.wasInferred());
 		Optional<HashMap<String, TransitionRefinementData>> phosphoData=Optional.empty();
 		if (canRunLocalization()) {
 			Optional<PhosphoLocalizationData> localizationData=runLocalization(false);
@@ -136,19 +136,19 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		return localizer.get().runDIAPhosphoLocalization(psmdata, stripes, tryAllPermutations, true);
 	}
 
-	private Optional<TransitionRefinementData> extractSpectrum(HashSet<String> accessions, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable) {
+	private Optional<TransitionRefinementData> extractSpectrum(HashSet<String> accessions, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable, boolean wasInferred) {
 		FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
 		AnnotatedLibraryEntry unitEntry=model.getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params);
 		
-		return Optional.ofNullable(extractSpectrum(unitEntry, duration, limitToQuantifiable));
+		return Optional.ofNullable(extractSpectrum(unitEntry, duration, limitToQuantifiable, wasInferred));
 	}
 
-	public TransitionRefinementData extractSpectrum(AnnotatedLibraryEntry unitEntry, float duration, boolean limitToQuantifiable) {
+	public TransitionRefinementData extractSpectrum(AnnotatedLibraryEntry unitEntry, float duration, boolean limitToQuantifiable, boolean wasInferred) {
 		ArrayList<Stripe> stripes=getScanSubset(unitEntry.getRetentionTime()-duration, unitEntry.getRetentionTime()+duration);
-		return quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes);
+		return quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes, wasInferred);
 	}
 
-	public static TransitionRefinementData quantifyPeptide(PSMPeakScorer scorer, AnnotatedLibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<Stripe> stripes) {
+	public static TransitionRefinementData quantifyPeptide(PSMPeakScorer scorer, AnnotatedLibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<Stripe> stripes, boolean wasInferred) {
 		// find the center
 		float bestDelta=Float.MAX_VALUE;
 		PeakScores[] bestScores=null;
@@ -173,6 +173,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			}
 			totalIdentifiedIonCurrent.add(sumIdentifiedIntensities);
 			totalIonCurrent.add(stripe.getTIC());
+			
 		}
 		// no signal of any kind at retention time!
 		if (bestScores==null||bestScores.length==0) return null;
@@ -214,7 +215,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		}
 
 		// identify transitions
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions(unitEntry.getPeptideModSeq(), unitEntry.getPrecursorCharge(), fragmentMasses.toArray(new FragmentIon[fragmentMasses.size()]), chromatograms, retentionTimes.toArray());
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions(unitEntry.getPeptideModSeq(), unitEntry.getPrecursorCharge(), unitEntry.getScanStartTime(), fragmentMasses.toArray(new FragmentIon[fragmentMasses.size()]), chromatograms, retentionTimes.toArray(), wasInferred);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		Range rtRange=data.getRange();

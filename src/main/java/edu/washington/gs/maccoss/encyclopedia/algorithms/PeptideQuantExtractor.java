@@ -99,6 +99,7 @@ public class PeptideQuantExtractor {
 				if (savedPeptides.contains(peptideModSeq)) {
 					boolean isDecoy=PercolatorPeptide.isPSMIDDecoy(psmID);
 					if (!isDecoy) {
+						boolean wasInferred;
 						float retentionTime;// in seconds
 						int scanID;
 						
@@ -107,9 +108,11 @@ public class PeptideQuantExtractor {
 							String rtString=row.get("midTime"); // in seconds
 							if (rtString!=null) {
 								retentionTime=Float.parseFloat(rtString);
+								wasInferred=false;
 							} else {
 								rtString=row.get("RTinMin"); // in minutes so *60
 								retentionTime=Float.parseFloat(rtString)*60f;
+								wasInferred=false;
 							}
 							scanID=Integer.parseInt(row.get("ScanNr"));
 						} else if (inferrer.isPresent()) {
@@ -117,9 +120,11 @@ public class PeptideQuantExtractor {
 								String rtString=row.get("midTime"); // in seconds
 								if (rtString!=null) {
 									retentionTime=Float.parseFloat(rtString);
+									wasInferred=false;
 								} else {
 									rtString=row.get("RTinMin"); // in minutes so *60
 									retentionTime=Float.parseFloat(rtString)*60f;
+									wasInferred=false;
 								}
 								
 								float warpedRT=inferrer.get().getPreciseRTInSec(job, peptideModSeq, retentionTime);
@@ -127,6 +132,7 @@ public class PeptideQuantExtractor {
 									Logger.errorLine("Don't trust ID for "+peptideModSeq+" (global RT:"+warpedRT+", local RT:"+retentionTime+"). Using the warped RT!");
 									// warping is better (original is way outside the warping margins)
 									retentionTime=warpedRT;
+									wasInferred=true;
 									scanID=-1; // negative scan ID for inferred IDs
 								} else {
 									// original detection is better (within the warping margins)
@@ -136,6 +142,7 @@ public class PeptideQuantExtractor {
 							} else {
 								// no detect, so use warped retention time
 								retentionTime=inferrer.get().getWarpedRTInSec(job, peptideModSeq);
+								wasInferred=true;
 								scanID=-1; // negative scan ID for inferred IDs
 							}
 						} else {
@@ -144,9 +151,11 @@ public class PeptideQuantExtractor {
 								String rtString=row.get("midTime"); // in seconds
 								if (rtString!=null) {
 									retentionTime=Float.parseFloat(rtString);
+									wasInferred=false;
 								} else {
 									rtString=row.get("RTinMin"); // in minutes so *60
 									retentionTime=Float.parseFloat(rtString)*60f;
+									wasInferred=false;
 								}
 								scanID=Integer.parseInt(row.get("ScanNr"));
 							} else {
@@ -183,7 +192,7 @@ public class PeptideQuantExtractor {
 
 						String proteinString=row.get("protein");
 						HashSet<String> accessions=PSMData.stringToAccessions(proteinString);
-						data.add(new PSMData(accessions, scanID, precursorMZ, precursorCharge, peptideModSeq, retentionTime, score, sortingScore, parameters.getExpectedPeakWidth()));
+						data.add(new PSMData(accessions, scanID, precursorMZ, precursorCharge, peptideModSeq, retentionTime, score, sortingScore, parameters.getExpectedPeakWidth(), wasInferred));
 					}
 				}
 			}

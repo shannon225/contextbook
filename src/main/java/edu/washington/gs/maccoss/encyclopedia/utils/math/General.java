@@ -97,15 +97,19 @@ public class General {
 		return r;
 	}
 	
-	public static String toString(Object[] i) {
+	public static String toString(Object[] i, String delim) {
 		StringBuilder sb=new StringBuilder();
 		for (Object g : i) {
 			if (sb.length()>0) {
-				sb.append(',');
+				sb.append(delim);
 			}
 			sb.append(g);
 		}
 		return sb.toString();
+	}
+	
+	public static String toString(Object[] i) {
+		return toString(i, ",");
 	}
 	
 	public static String toString(@SuppressWarnings("rawtypes") List i) {
@@ -158,17 +162,21 @@ public class General {
 		return sb.toString();
 	}
 	
-	public static String toString(float[] f) {
+	public static String toString(float[] f, String delim) {
 		if (f==null) return null;
 		
 		StringBuilder sb=new StringBuilder();
 		for (float g : f) {
 			if (sb.length()>0) {
-				sb.append(',');
+				sb.append(delim);
 			}
 			sb.append(g);
 		}
 		return sb.toString();
+	}
+	
+	public static String toString(float[] f) {
+		return toString(f, ",");
 	}
 	
 	public static String toString(double[] i) {

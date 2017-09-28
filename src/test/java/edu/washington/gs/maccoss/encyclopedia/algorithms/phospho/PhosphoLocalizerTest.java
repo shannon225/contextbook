@@ -138,7 +138,7 @@ public class PhosphoLocalizerTest extends TestCase {
 			retentionTime=1309.1414f;
 		}
 		
-		PSMData psmdata=new PSMData(new HashSet<String>(), 0, precursorMZ, precursorCharge, peptideModSeq, retentionTime, 0, 0, 12);
+		PSMData psmdata=new PSMData(new HashSet<String>(), 0, precursorMZ, precursorCharge, peptideModSeq, retentionTime, 0, 0, 12, false);
 		return psmdata;
 	}
 	
