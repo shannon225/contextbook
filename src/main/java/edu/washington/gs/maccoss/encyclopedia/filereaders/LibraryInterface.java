@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,5 +20,5 @@ public interface LibraryInterface {
 	ArrayList<LibraryEntry> getAllEntries(boolean sqrt) throws IOException, SQLException, DataFormatException;
 	Range getMinMaxMZ() throws IOException, SQLException;
 	String getName();
-	Optional<StripeFileInterface> getSource(SearchParameters parameters);
+	Optional<Path> getSource(SearchParameters parameters);
 }
