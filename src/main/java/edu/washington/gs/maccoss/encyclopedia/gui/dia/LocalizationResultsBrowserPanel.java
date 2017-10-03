@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
@@ -200,11 +201,10 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 					return entries;
 				}
 				
-				Optional<StripeFileInterface> source=library.getSource(parameters);
+				final Optional<Path> source = library.getSource(parameters);
 				if (source.isPresent()) {
-					dia=source.get();
+					dia = StripeFileGenerator.getFile(source.get().toFile(), parameters); // assumes the .DIA file exists or should be created
 				}
-				
 				return entries;				
 			}
 			@Override

@@ -49,7 +49,6 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
@@ -185,8 +184,8 @@ public class XCorDIA {
 
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);
-		
-		StripeFileInterface stripefile=StripeFileGenerator.getFile(jobData.getDiaFile(), parameters);
+
+		final StripeFileInterface stripefile = jobData.getDiaFileReader();
 
 		Logger.logLine("Processing precursors scans...");
 		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
@@ -370,7 +369,7 @@ public class XCorDIA {
 						
 						if (!parameters.isDontRunDecoys()) {
 							String smartDecoy=PeptideUtils.reverse(sequence, parameters);
-							FastaPeptideEntry decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), LibraryEntry.DECOY_STRING+peptide.getAccession(), smartDecoy);
+							FastaPeptideEntry decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.DECOY_STRING), smartDecoy);
 							XCorrLibraryEntry reventry=XCorrLibraryEntry.generateEntry(true, decoyPeptide.getFilename(), decoyPeptide.getAccessions(), charge, decoyPeptide.getSequence(), parameters);
 							tasks.add(reventry);
 
@@ -386,12 +385,12 @@ public class XCorDIA {
 								extraDecoys=extraDecoys-1.0f;
 
 								String shuffledSequence=PeptideUtils.shuffle(sequence, Float.hashCode(extraDecoys), parameters);
-								FastaPeptideEntry shuffledPeptide=new FastaPeptideEntry(peptide.getFilename(), LibraryEntry.SHUFFLE_STRING+peptide.getAccession(), shuffledSequence);
+								FastaPeptideEntry shuffledPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.SHUFFLE_STRING), shuffledSequence);
 								reventry=XCorrLibraryEntry.generateEntry(true, shuffledPeptide.getFilename(), shuffledPeptide.getAccessions(), charge, shuffledPeptide.getSequence(), parameters);
 								tasks.add(reventry);
 								
 								smartDecoy=PeptideUtils.reverse(shuffledSequence, parameters);
-								decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), LibraryEntry.DECOY_STRING+LibraryEntry.SHUFFLE_STRING+peptide.getAccession(), smartDecoy);
+								decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.DECOY_STRING+LibraryEntry.SHUFFLE_STRING), smartDecoy);
 								reventry=XCorrLibraryEntry.generateEntry(true, decoyPeptide.getFilename(), decoyPeptide.getAccessions(), charge, decoyPeptide.getSequence(), parameters);
 								tasks.add(reventry);
 							}
@@ -458,7 +457,7 @@ public class XCorDIA {
 	public static boolean arePeptidesInRange(PeptideDatabase targets, Range range, PecanSearchParameters parameters) {
 		// first check to see if we need to process this stripe
 		boolean hasPeptides=false;
-		outer:for (FastaEntryInterface peptide : targets) {
+		outer:for (FastaPeptideEntry peptide : targets) {
 			for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
 				double mz=parameters.getAAConstants().getChargedMass(peptide.getSequence(), charge);
 				if (range.contains((float)mz)) {

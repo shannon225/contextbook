@@ -343,9 +343,11 @@ public class Charter {
 		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
 		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
 		Font font3=new Font("News Gothic MT", Font.PLAIN, 18);
+		Font font4=new Font("News Gothic MT", Font.PLAIN, 14);
 		font=new Font("News Gothic MT", Font.PLAIN, 16);
 		font2=new Font("News Gothic MT", Font.PLAIN, 16);
 		font3=new Font("News Gothic MT", Font.PLAIN, 16);
+		font4=new Font("News Gothic MT", Font.PLAIN, 10);
 		HashMap<TextAttribute, Object> m=new HashMap<TextAttribute, Object>(font2.getAttributes());
 		m.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUPER);
 		Font font2super=new Font(m);
@@ -449,6 +451,13 @@ public class Charter {
 
 				break;
 
+			case text:
+				renderer=new XYLineAndShapeRenderer();
+				renderer.setSeriesShape(0, new Ellipse2D.Double(0, 0, 1, 1));
+				((XYLineAndShapeRenderer) renderer).setBaseLinesVisible(false);
+
+				break;
+
 			case spectrum:
 				renderer=new XYLineAndShapeRenderer();
 				((XYLineAndShapeRenderer) renderer).setBaseShapesVisible(false);
@@ -535,6 +544,16 @@ public class Charter {
 						        //plot.addAnnotation(xytextannotation);
 							}
 						}
+					}
+				}
+				break;
+				
+			case text:
+				for (int i=0; i<x.length; i++) {
+					if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
+						XYTextAnnotation annotation=new XYTextAnnotation(trace.getName(), x[i], y[i]*1.01);
+						annotation.setFont(font4);
+						plot.addAnnotation(annotation);
 					}
 				}
 				break;

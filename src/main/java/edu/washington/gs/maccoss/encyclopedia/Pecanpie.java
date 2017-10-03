@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -183,10 +184,42 @@ public class Pecanpie {
 			}
 		}
 		
-		runPie(progress, jobData.getTargetList(), jobData.getDiaFile(), jobData.getFastaFile(), jobData.getFeatureFile(), jobData.getOutputFile(), jobData.getOutputDecoyFile(), jobData.getTaskFactory());
+		runPie(
+				progress,
+				jobData.getTargetList(),
+				new Supplier<StripeFileInterface>() {
+					@Override
+					public StripeFileInterface get() {
+						return jobData.getDiaFileReader();
+					}
+				},
+				jobData.getFastaFile(),
+				jobData.getFeatureFile(),
+				jobData.getOutputFile(),
+				jobData.getOutputDecoyFile(),
+				jobData.getTaskFactory()
+		);
 	}
-		
+
 	static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, File featureFile, File outputFile, File decoyFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+		runPie(
+				progress,
+				targetList,
+				new Supplier<StripeFileInterface>() {
+					@Override
+					public StripeFileInterface get() {
+						return StripeFileGenerator.getFile(diaFile, taskFactory.getParameters());
+					}
+				},
+				fastaFile,
+				featureFile,
+				outputFile,
+				decoyFile,
+				taskFactory
+		);
+	}
+
+	static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaPeptideEntry>> targetList, Supplier<StripeFileInterface> diaReaderSupplier, File fastaFile, File featureFile, File outputFile, File decoyFile, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		long startTime=System.currentTimeMillis();
 		PSMScorer backgroundScorer=taskFactory.getBackgroundScorer();
 		PSMPeakScorer pecanScorer=taskFactory.getPecanScorer();
@@ -196,8 +229,8 @@ public class Pecanpie {
 
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);
-		
-		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
+
+		final StripeFileInterface stripefile = diaReaderSupplier.get();
 
 		Logger.logLine("Processing precursors scans...");
 		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
@@ -406,7 +439,7 @@ public class Pecanpie {
 						
 						if (!parameters.isDontRunDecoys()) {
 							String smartDecoy=PeptideUtils.getSmartDecoy(sequence, charge, backgroundProteomeSet, parameters);
-							FastaPeptideEntry decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), LibraryEntry.DECOY_STRING+peptide.getAccession(), smartDecoy);
+							FastaPeptideEntry decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.DECOY_STRING), smartDecoy);
 							AbstractPecanFragmentationModel revmodel=taskFactory.getFragmentationModel(decoyPeptide, parameters.getAAConstants());
 							PecanLibraryEntry reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
 							tasks.add(reventry);
@@ -423,13 +456,13 @@ public class Pecanpie {
 								extraDecoys=extraDecoys-1.0f;
 
 								String shuffledSequence=PeptideUtils.shuffle(sequence, Float.hashCode(extraDecoys), parameters);
-								FastaPeptideEntry shuffledPeptide=new FastaPeptideEntry(peptide.getFilename(), LibraryEntry.SHUFFLE_STRING+peptide.getAccession(), shuffledSequence);
+								FastaPeptideEntry shuffledPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.SHUFFLE_STRING), shuffledSequence);
 								revmodel=taskFactory.getFragmentationModel(shuffledPeptide, parameters.getAAConstants());
 								reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, false);
 								tasks.add(reventry);
 								
 								smartDecoy=PeptideUtils.getSmartDecoy(shuffledSequence, charge, backgroundProteomeSet, parameters);
-								decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), LibraryEntry.DECOY_STRING+LibraryEntry.SHUFFLE_STRING+peptide.getAccession(), smartDecoy);
+								decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.DECOY_STRING+LibraryEntry.SHUFFLE_STRING), smartDecoy);
 								revmodel=taskFactory.getFragmentationModel(decoyPeptide, parameters.getAAConstants());
 								reventry=revmodel.getPecanSpectrum(charge, keys, map, fragmentationRange, parameters, true);
 								tasks.add(reventry);
@@ -469,7 +502,7 @@ public class Pecanpie {
 	public static boolean arePeptidesInRange(PeptideDatabase targets, Range range, PecanSearchParameters parameters) {
 		// first check to see if we need to process this stripe
 		boolean hasPeptides=false;
-		outer:for (FastaEntryInterface peptide : targets) {
+		outer:for (FastaPeptideEntry peptide : targets) {
 			for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
 				double mz=parameters.getAAConstants().getChargedMass(peptide.getSequence(), charge);
 				if (range.contains((float)mz)) {

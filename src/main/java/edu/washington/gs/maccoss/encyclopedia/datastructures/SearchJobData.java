@@ -1,57 +1,29 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+
 import java.io.File;
 
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+/**
+ * @author Seth Just
+ * @since 2:50 PM 9/11/17
+ */
+public interface SearchJobData {
+	File getDiaFile();
 
-public abstract class SearchJobData {
+	StripeFileInterface getDiaFileReader();
 
-	private final File diaFile;
-	private final File featureFile;
-	private final File outputFile;
-	private final File decoyFile;
-	private final SearchParameters parameters;
-	private final String version;
-	
-	public SearchJobData(File diaFile, File featureFile, File outputFile, File decoyFile, SearchParameters parameters, String version) {
-		this.diaFile=diaFile;
-		this.featureFile=featureFile;
-		this.outputFile=outputFile;
-		this.decoyFile=decoyFile;
-		this.parameters=parameters;
-		this.version=version;
-	}
+	File getFeatureFile();
 
-	public File getDiaFile() {
-		return diaFile;
-	}
+	File getOutputFile();
 
-	public File getFeatureFile() {
-		return featureFile;
-	}
+	File getOutputDecoyFile();
 
-	public File getOutputFile() {
-		return outputFile;
-	}
+	SearchParameters getParameters();
 
-	public File getOutputDecoyFile() {
-		return decoyFile;
-	}
+	String getVersion();
 
-	public SearchParameters getParameters() {
-		return parameters;
-	}
+	boolean hasBeenRun();
 
-	public String getVersion() {
-		return version;
-	}
-
-	public boolean hasBeenRun() {
-		if (!diaFile.exists()) Logger.errorLine("Missing .DIA file: "+diaFile.getName());
-		if (!featureFile.exists()) Logger.errorLine("Missing feature file: "+featureFile.getName());
-		if (!outputFile.exists()) Logger.errorLine("Missing output file: "+outputFile.getName());
-		return diaFile.exists()&&featureFile.exists()&&outputFile.exists();
-	}
-
-	public abstract String getSearchType();
+	String getSearchType();
 }

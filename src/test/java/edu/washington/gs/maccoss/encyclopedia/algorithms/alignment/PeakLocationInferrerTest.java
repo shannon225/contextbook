@@ -21,10 +21,10 @@ public class PeakLocationInferrerTest {
 		HashMap<String, String> map=SearchParameterParser.getDefaultParameters();
 		SearchParameters parameters=SearchParameterParser.parseParameters(map);
 		
-		//QuantitativeSearchJobData job1=getData(parameters, "/Users/searleb/Documents/projects/encyclopedia/mzml/zero_hela/121115_bcs_hela_24mz_400_1000_0D_1.dia");
-		//QuantitativeSearchJobData job2=getData(parameters, "/Users/searleb/Documents/projects/encyclopedia/mzml/zero_hela/121115_bcs_hela_24mz_400_1000_0D_2.dia");
-		QuantitativeSearchJobData job1=getData(parameters, "/Users/searleb/Documents/school/projects/may_asms/hela/on_column/timecourse/23aug2017_hela_serum_timecourse_wide_1a.dia");
-		QuantitativeSearchJobData job2=getData(parameters, "/Users/searleb/Documents/school/projects/may_asms/hela/on_column/timecourse/23aug2017_hela_serum_timecourse_wide_1b.dia");
+		QuantitativeSearchJobData job1=getData(parameters, "/Users/searleb/Documents/projects/encyclopedia/mzml/zero_hela/121115_bcs_hela_24mz_400_1000_0D_1.dia");
+		QuantitativeSearchJobData job2=getData(parameters, "/Users/searleb/Documents/projects/encyclopedia/mzml/zero_hela/121115_bcs_hela_24mz_400_1000_0D_2.dia");
+		//QuantitativeSearchJobData job1=getData(parameters, "/Users/searleb/Documents/school/projects/may_asms/hela/on_column/timecourse/23aug2017_hela_serum_timecourse_wide_1a.dia");
+		//QuantitativeSearchJobData job2=getData(parameters, "/Users/searleb/Documents/school/projects/may_asms/hela/on_column/timecourse/23aug2017_hela_serum_timecourse_wide_1b.dia");
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		jobs.add(job1);
 		jobs.add(job2);

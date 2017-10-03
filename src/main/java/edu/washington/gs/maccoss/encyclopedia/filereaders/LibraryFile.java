@@ -3,6 +3,8 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -16,14 +18,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.zip.DataFormatException;
 
+import com.google.common.collect.ImmutableList;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
@@ -160,7 +164,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		return Float.parseFloat(value);
 	}
 
-	public void setSources(ArrayList<SearchJobData> sources) throws IOException, SQLException {
+	public void setSources(List<? extends SearchJobData> sources) throws IOException, SQLException {
 		HashMap<String, String> map=new HashMap<String, String>();
 		StringBuilder sb=new StringBuilder();
 		for (SearchJobData searchJobData : sources) {
@@ -206,28 +210,31 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		return new Version(meta.get(VERSION_STRING));
 	}
 
-	public ArrayList<File> getSourceFiles() throws IOException, SQLException {
-		HashMap<String, String> meta=getMetadata();
-		String sources=meta.get(SOURCEFILE_STRING);
-		if (sources==null)
-			return new ArrayList<File>();
+	public List<Path> getSourceFiles() throws IOException, SQLException {
+		final String sources=getMetadata().get(SOURCEFILE_STRING);
 
-		StringTokenizer st=new StringTokenizer(sources, SOURCE_FILE_SPLIT);
-		ArrayList<File> files=new ArrayList<File>();
-		while (st.hasMoreTokens()) {
-			files.add(new File(st.nextToken()));
+		if (null == sources) {
+			return Collections.emptyList();
 		}
-		return files;
+
+		final StringTokenizer st=new StringTokenizer(sources, SOURCE_FILE_SPLIT);
+
+		ImmutableList.Builder<Path> builder = ImmutableList.builder();
+		while (st.hasMoreTokens()) {
+			builder.add(Paths.get(st.nextToken()));
+		}
+		return builder.build();
 	}
 
-	public Optional<StripeFileInterface> getSource(SearchParameters parameters) {
+	public Optional<Path> getSource(SearchParameters parameters) {
 		try {
-			ArrayList<File> files=getSourceFiles();
-			if (files.size()==0||files.size()>1)
-				return Optional.empty();
+			final Collection<Path> sources=getSourceFiles();
 
-			StripeFileInterface file=StripeFileGenerator.getFile(files.get(0), parameters);
-			return Optional.ofNullable(file);
+			if (sources.size()==0||sources.size()>1) {
+				return Optional.empty();
+			}
+
+			return Optional.ofNullable(sources.iterator().next());
 		} catch (Exception e) {
 			return Optional.empty();
 		}
@@ -277,6 +284,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			}
 		}
 		ArrayList<LibraryEntry> uniqueEntries=new ArrayList<LibraryEntry>(repeatsCatcher.values());
+		Logger.logLine("Writing "+uniqueEntries.size()+" peptides to entries table...");
 		addEntries(uniqueEntries);
 
 		// then add integrated areas
@@ -344,6 +352,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				}
 
 			}
+			
+			Logger.logLine("Writing "+dataAndSourceList.size()+" peptides to peptidequants table...");
 
 			// Issue 25 - skip entries that the RT inferrer could not process.
 			// TODO: should this throw if too many entries are skipped?
@@ -413,7 +423,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	private void internalWritePeptideQuantLibraryEntriesToConnection(Connection c, Optional<PeakLocationInferrerInterface> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList)
 			throws SQLException, IOException {
 		int numValidEntries=0;
-		for (int i=1; i<dataAndSouceList.size(); i++) {
+		for (int i=0; i<dataAndSouceList.size(); i++) {
 			if (inferrer.isPresent()) {
 				Optional<QuantitativeDIAData> topNIntensity=inferrer.get().getQuantitativeData(dataAndSouceList.get(i).x);
 				if (topNIntensity.isPresent()) {
@@ -423,8 +433,6 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				numValidEntries++;
 			}
 		}
-		
-		System.out.println("Testing for validity: "+numValidEntries+"/"+dataAndSouceList.size());
 
 		StringBuilder peptidePrepString=new StringBuilder("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, RTInSecondsCenter, "
 				+"RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, QuantIonMassLength, "
@@ -440,8 +448,16 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try {
 			int pepIndex=1;
 
-			for (Pair<TransitionRefinementData, String> pair : dataAndSouceList) {
-				pepIndex=prepareQuantData(pair.x, pair.y, inferrer, peptidePrep, pepIndex);
+			for (int i=0; i<dataAndSouceList.size(); i++) {
+				Pair<TransitionRefinementData, String> pair=dataAndSouceList.get(i);
+				if (inferrer.isPresent()) {
+					Optional<QuantitativeDIAData> topNIntensity=inferrer.get().getQuantitativeData(dataAndSouceList.get(i).x);
+					if (topNIntensity.isPresent()) {
+						pepIndex=prepareQuantData(pair.x, pair.y, inferrer, peptidePrep, pepIndex);
+					}
+				} else {
+					pepIndex=prepareQuantData(pair.x, pair.y, inferrer, peptidePrep, pepIndex);
+				}
 			}
 			if (pepIndex>1) {
 				peptidePrep.execute();
@@ -556,7 +572,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			Pair<double[], float[]> pair=Peak.toArrays(peaks);
 			double[] topNMasses=pair.x;
 			float[] topNIntensities=pair.y;
-			topN=new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), topNMasses, topNIntensities);
+			topN=new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities);
 		}
 
 		float[] correlationArray=data.getCorrelationArray();
@@ -575,14 +591,14 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			}
 		}
 
-		peptidePrep.setInt(index++, data.getPrecursorCharge());
-		peptidePrep.setString(index++, data.getPeptideModSeq());
-		peptidePrep.setString(index++, data.getPeptideSeq());
+		peptidePrep.setInt(index++, topN.getPrecursorCharge());
+		peptidePrep.setString(index++, topN.getPeptideModSeq());
+		peptidePrep.setString(index++, topN.getPeptideSeq());
 		peptidePrep.setString(index++, sourceFile);
-		peptidePrep.setFloat(index++, data.getApexRT());
-
-		peptidePrep.setFloat(index++, data.getRange().getStart());
-		peptidePrep.setFloat(index++, data.getRange().getStop());
+		peptidePrep.setFloat(index++, topN.getApexRT());
+		
+		peptidePrep.setFloat(index++, topN.getRtScanRange().getStart());
+		peptidePrep.setFloat(index++, topN.getRtScanRange().getStop());
 		peptidePrep.setFloat(index++, topN.getTIC());
 		peptidePrep.setInt(index++, topN.getNumNonZeroPeaks());
 

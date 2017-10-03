@@ -17,6 +17,7 @@ import java.util.TreeMap;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideReportData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupQuantifier;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
@@ -26,8 +27,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class LibraryReportExtractor {
@@ -213,54 +214,6 @@ public class LibraryReportExtractor {
 			c.close();
 		}
 	}
-	
-	public static class PeptideReportData {
-		private final String peptideModSeq;
-		private final byte precursorCharge;
-		private final String accessions;
-		private final Range[] rtRanges;
-		private final float[] totalIntensities;
-		private final double[] targetFragmentMzs;
-		private float avgRT=-1;
-		public PeptideReportData(String peptideModSeq, byte precursorCharge, String accessions, double[] targetFragmentMzs, Range[] rtRanges, float[] totalIntensities) {
-			this.peptideModSeq=peptideModSeq;
-			this.precursorCharge=precursorCharge;
-			this.accessions=accessions;
-			this.rtRanges=rtRanges;
-			this.totalIntensities=totalIntensities;
-			this.targetFragmentMzs=targetFragmentMzs;
-		}
-		public String getPeptideModSeq() {
-			return peptideModSeq;
-		}
-		public byte getPrecursorCharge() {
-			return precursorCharge;
-		}
-		public String getAccessions() {
-			return accessions;
-		}
-		public double[] getTargetFragmentMzs() {
-			return targetFragmentMzs;
-		}
-		public Range[] getRTRanges() {
-			return rtRanges;
-		}
-		public float[] getTotalIntensities() {
-			return totalIntensities;
-		}
-		public float getAverageRetentionTime() {
-			if (avgRT<0) {
-				TFloatArrayList rtCenters=new TFloatArrayList();
-				for (int i=0; i<rtRanges.length; i++) {
-					if (rtRanges[i]!=null) {
-						rtCenters.add(rtRanges[i].getMiddle());
-					}
-				}
-				avgRT=General.mean(rtCenters.toArray());
-			}
-			return avgRT;
-		}
-	}
 
 	public static Pair<ArrayList<String>, ArrayList<PeptideReportData>> extractMatrix(LibraryFile library) throws IOException, SQLException, DataFormatException {
 		File stubFile=library.getFile();
@@ -301,9 +254,10 @@ public class LibraryReportExtractor {
 						"pep.PrecursorCharge, " +
 						"pep.PeptideModSeq, " +
 						"pep.SourceFile, " +
-						"pep.RTInSecondsStart, pep.RTInSecondsStop, pep.TotalIntensity, " +
+						"pep.RTInSecondsCenter, pep.RTInSecondsStart, pep.RTInSecondsStop, " +
 						"group_concat(p.ProteinAccession, '" + PSMData.ACCESSION_TOKEN + "') as ProteinAccessions, " +
-						"pep.QuantIonMassLength, pep.QuantIonMassArray "+
+						"pep.QuantIonMassLength, pep.QuantIonMassArray, "+
+						"pep.QuantIonIntensityLength, pep.QuantIonIntensityArray "+
 						"from " +
 						"peptidequants pep " +
 						"left join peptidetoprotein p " +
@@ -321,39 +275,41 @@ public class LibraryReportExtractor {
 					byte precursorCharge=rs.getByte(1);
 					String peptideModSeq=rs.getString(2);
 					String sourceFile=rs.getString(3);
-					float rtStart=rs.getFloat(4);
-					float rtStop=rs.getFloat(5);
-					float totalIntensity=rs.getFloat(6);
+					float scanStartTime=rs.getFloat(4);
+					float rtStart=rs.getFloat(5);
+					float rtStop=rs.getFloat(6);
 					String accessions=rs.getString(7);
 					
 					int index=Collections.binarySearch(sourceFiles, sourceFile);
 					if (index<0) throw new EncyclopediaException("Unexpected sample: "+sourceFile);
 
 					PeptideReportData data=intensitiesByPeptideModSeq.get(peptideModSeq);
-					Range[] rtRange;
-					float[] totalIntensities;
 					if (data==null) {
-						int quantIonMassesLength=rs.getInt(8);
-						double[] quantIonMasses;
-						if (quantIonMassesLength>0) {
-							quantIonMasses=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(9), quantIonMassesLength));
-							Arrays.sort(quantIonMasses);
-						} else {
-							quantIonMasses=new double[] {};
-						}
-						rtRange=new Range[sourceFiles.size()];
-						totalIntensities=new float[sourceFiles.size()];
-						intensitiesByPeptideModSeq.put(peptideModSeq, new PeptideReportData(peptideModSeq, precursorCharge, accessions, quantIonMasses, rtRange, totalIntensities));
-					} else {
-						rtRange=data.getRTRanges();
-						totalIntensities=data.getTotalIntensities();
+						data=new PeptideReportData(peptideModSeq, precursorCharge, accessions);
+						intensitiesByPeptideModSeq.put(peptideModSeq, data);
 					}
-					rtRange[index]=new Range(rtStart, rtStop);
-					totalIntensities[index]=totalIntensity;
+
+					Range rtScanRange=new Range(rtStart, rtStop);
+					int quantIonMassesLength=rs.getInt(8);
+					double[] quantIonMasses;
+					if (quantIonMassesLength>0) {
+						quantIonMasses=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(9), quantIonMassesLength));
+					} else {
+						quantIonMasses=new double[] {};
+					}
+					int quantIonIntensityLength=rs.getInt(10);
+					float[] quantIonIntensities;
+					if (quantIonIntensityLength>0) {
+						quantIonIntensities=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(11), quantIonIntensityLength));
+					} else {
+						quantIonIntensities=new float[] {};
+					}
+					QuantitativeDIAData quantData=new QuantitativeDIAData(peptideModSeq, precursorCharge, scanStartTime, rtScanRange, quantIonMasses, quantIonIntensities);
+					data.addQuantitativeDIAData(sourceFile, quantData);
 				}
 				Logger.logLine("Finished processing "+count+" records, found "+intensitiesByPeptideModSeq.size()+" quantitative unique peptides. Writing reports...");
 				
-				ArrayList<PeptideReportData> reportData=new ArrayList<LibraryReportExtractor.PeptideReportData>(intensitiesByPeptideModSeq.values());
+				ArrayList<PeptideReportData> reportData=new ArrayList<PeptideReportData>(intensitiesByPeptideModSeq.values());
 				
 				Logger.logLine("Finished extracting peptide report!");
 				

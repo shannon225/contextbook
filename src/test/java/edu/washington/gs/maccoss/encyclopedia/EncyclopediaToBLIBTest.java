@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AbstractSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -54,7 +55,7 @@ public class EncyclopediaToBLIBTest {
 		File outputFile=new File(diaFile.getAbsolutePath()+".percolator.txt");
 		File decoyFile=new File(diaFile.getAbsolutePath()+".percolator.decoy.txt");
 		File featureFile=new File(diaFile.getAbsolutePath()+".features.txt");
-		SearchJobData job=new SearchJobData(diaFile, featureFile, outputFile, decoyFile, parameters, "1") {
+		SearchJobData job=new AbstractSearchJobData(diaFile, featureFile, outputFile, decoyFile, parameters, "1") {
 			@Override
 			public String getSearchType() {
 				return "Dummy";

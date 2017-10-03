@@ -9,8 +9,13 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.Optional;
 
 import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
@@ -30,8 +35,11 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import org.jfree.chart.ChartPanel;
+import org.jfree.chart.annotations.XYTextAnnotation;
+import org.jfree.chart.labels.StandardXYItemLabelGenerator;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideReportData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -41,7 +49,6 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryReportExtractor;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryReportExtractor.PeptideReportData;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
@@ -52,10 +59,14 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
+import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class MultiResultsBrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -249,19 +260,25 @@ public class MultiResultsBrowserPanel extends JPanel {
 		PeptideReportData entry=peptideModel.getSelectedRow(peptideTable.convertRowIndexToModel(selection[0]));
 		resetPeptide(entry, sampleModel.getRows());
 	}
-	
+
+	private static final DecimalFormat formatter=new DecimalFormat("0.#E0");
 	public void resetPeptide(PeptideReportData entry, ArrayList<StripeFileInterface> files) {
 		int location=split.getDividerLocation();
 		if (location<=5) {
 			location=200;
 		}
 		
-		String[] sampleNames=new String[files.size()];
-		for (int i=0; i<sampleNames.length; i++) {
-			sampleNames[i]=files.get(i).getOriginalFileName();
+		String[] origSampleNames=new String[files.size()];
+		float[] totalTICs=new float[files.size()];
+		for (int i=0; i<origSampleNames.length; i++) {
+			origSampleNames[i]=files.get(i).getOriginalFileName();
+			QuantitativeDIAData quantitativeData=entry.getQuantitativeData(origSampleNames[i]);
+			if (quantitativeData!=null) {
+				totalTICs[i]=quantitativeData.getTIC();
+			}
 		}
-		sampleNames=StringUtils.getUniquePortion(sampleNames);
-		barChart.setChart(getBarChart(sampleNames, entry.getTotalIntensities()).getChart());
+		String[] sampleNames=StringUtils.getUniquePortion(origSampleNames);
+		barChart.setChart(getBarChart(sampleNames, totalTICs).getChart());
 		int cols;
 		if (files.size()<=2) cols=1;
 		else if (files.size()<=4) cols=2;
@@ -276,32 +293,46 @@ public class MultiResultsBrowserPanel extends JPanel {
 		double precursorMz=parameters.getAAConstants().getChargedMass(entry.getPeptideModSeq(), entry.getPrecursorCharge());
 		
 		try {
-			Range[] ranges=entry.getRTRanges();
-			double[] targets=entry.getTargetFragmentMzs(); // presorted
 			FragmentIon[] primaryIonObjects=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge());
-			ArrayList<FragmentIon> targetIonObjects=new ArrayList<FragmentIon>();
-			ArrayList<FragmentIon> offtargetIonObjects=new ArrayList<FragmentIon>();
-			for (FragmentIon ion : primaryIonObjects) {
-				if (parameters.getFragmentTolerance().getIndex(targets, ion.mass).isPresent()) {
-					targetIonObjects.add(ion);
-				} else {
-					offtargetIonObjects.add(ion);
-				}
-			}
-			FragmentIon[] targetIonArray=targetIonObjects.toArray(new FragmentIon[targetIonObjects.size()]);
-			FragmentIon[] offTargetIonArray=offtargetIonObjects.toArray(new FragmentIon[offtargetIonObjects.size()]);
-			Logger.logLine("Graphing "+entry.getPeptideModSeq()+" ("+targetIonArray.length+"/"+offTargetIonArray.length+")"+"...");
+			Logger.logLine("Graphing "+entry.getPeptideModSeq()+" ("+primaryIonObjects.length+")"+"...");
 			
 			double globalMaxY=0.0;
 			ArrayList<ChartPanel> allPanels=new ArrayList<ChartPanel>();
 			
 			ArrayList<ArrayList<XYTrace>> allTraces=new ArrayList<ArrayList<XYTrace>>();
-			for (int i=0; i<ranges.length; i++) {
+			for (int i=0; i<origSampleNames.length; i++) {
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
-				if (ranges[i]!=null) {
+				QuantitativeDIAData quantitativeData=entry.getQuantitativeData(origSampleNames[i]);
+				
+				if (quantitativeData!=null) {
+					TObjectDoubleHashMap<FragmentIon> targetIonObjects=new TObjectDoubleHashMap<FragmentIon>();
+					ArrayList<FragmentIon> offtargetIonObjects=new ArrayList<FragmentIon>();
+					
+					for (int j=0; j<quantitativeData.getMassArray().length; j++) {
+						System.out.println(quantitativeData.getMassArray()[j]+"\t"+quantitativeData.getIntensityArray()[j]);
+					}
+					System.out.println();
+					XYTrace quantitativePeaks=new XYTrace(quantitativeData.getMassArray(), quantitativeData.getIntensityArray(), GraphType.spectrum, origSampleNames[i]);
+					Collections.sort(quantitativePeaks.getPoints());
+					Pair<double[], double[]> peaksArrays=quantitativePeaks.toArrays();
+					double[] targets=peaksArrays.x;
+					double[] intensities=peaksArrays.y;
+					
+					for (FragmentIon ion : primaryIonObjects) {
+						Optional<Integer> index=parameters.getFragmentTolerance().getIndex(targets, ion.mass);
+						if (index.isPresent()) {
+							targetIonObjects.put(ion, intensities[index.get()]);
+						} else {
+							offtargetIonObjects.add(ion);
+						}
+					}
+					FragmentIon[] targetIonArray=targetIonObjects.keys(new FragmentIon[targetIonObjects.size()]);
+					FragmentIon[] offTargetIonArray=offtargetIonObjects.toArray(new FragmentIon[offtargetIonObjects.size()]);
+					
 					StripeFileInterface file=files.get(i);
-					Range rangeInMins=new Range(ranges[i].getStart()/60f, ranges[i].getStop()/60f);
-					ArrayList<Stripe> stripes=file.getStripes(precursorMz, ranges[i].getStart()-RT_EXTRACTION_MARGIN_IN_SEC, ranges[i].getStop()+RT_EXTRACTION_MARGIN_IN_SEC, false);
+					Range rangeInSec=quantitativeData.getRtScanRange();
+					Range rangeInMins=new Range(rangeInSec.getStart()/60f, rangeInSec.getStop()/60f);
+					ArrayList<Stripe> stripes=file.getStripes(precursorMz, rangeInSec.getStart()-RT_EXTRACTION_MARGIN_IN_SEC, rangeInSec.getStop()+RT_EXTRACTION_MARGIN_IN_SEC, false);
 					
 					ArrayList<Spectrum> downcastedSpectra=Stripe.downcastStripeToSpectrum(stripes);
 
@@ -312,15 +343,23 @@ public class MultiResultsBrowserPanel extends JPanel {
 
 					traces.addAll(targetFragmentTraceMap.values());
 					double maxY=0.0;
-					for (XYTrace trace : traces) {
-						maxY=Math.max(maxY, trace.getMaxYInRange(rangeInMins));
+					
+					for (Entry<FragmentIon, XYTrace> ionEntry : targetFragmentTraceMap.entrySet()) {
+						XYTrace trace=ionEntry.getValue();
+						XYPoint xy=trace.getMaxXYInRange(rangeInMins);
+						if (xy.getY()>maxY) {
+							maxY=xy.getY();
+						}
+						double intensity=targetIonObjects.get(ionEntry.getKey());
+						traces.add(new XYTrace(new double[] {xy.x}, new double[] {xy.y}, GraphType.text, trace.getName()+" ("+formatter.format(intensity).toLowerCase()+")"));
 					}
+					
 					globalMaxY=Math.max(globalMaxY, maxY);
 					traces.addAll(offTargetFragmentTraceMap.values());
 					
 					if (traces.size()>0) {
 						// extra 0 point in case there is no data shown (or all 0s)
-						traces.add(new XYTrace(new double[] {ranges[i].getStart()/60.0-Float.MIN_VALUE, ranges[i].getStart()/60.0, ranges[i].getStop()/60.0}, new double[] {0.0, maxY, maxY},
+						traces.add(new XYTrace(new double[] {rangeInMins.getStart()-Float.MIN_VALUE, rangeInMins.getStart(), rangeInMins.getStop()}, new double[] {0.0, maxY, maxY},
 								GraphType.area, "Boundaries", new Color(102, 204, 255, 50), 4.0f));
 					}
 				}
@@ -331,7 +370,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 				globalMaxY=globalMaxY*1.05;
 			}
 
-			for (int i=0; i<ranges.length; i++) {
+			for (int i=0; i<sampleNames.length; i++) {
 				ArrayList<XYTrace> traces=allTraces.get(i);
 				ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", false, globalMaxY, traces.toArray(new XYTrace[traces.size()]));
 				fragmentChart.getChart().setTitle(sampleNames[i]);

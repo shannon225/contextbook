@@ -29,8 +29,11 @@ public class QuickMedian {
 
 		int left=0;
 		int right=data.length-1;
+		
+		int seed=RandomGenerator.randomInt(data.length);
 
 		while (true) {
+			seed=RandomGenerator.randomInt(seed);
 			if (left==right) {
 				if (left < data.length - 1) {
 					// guaranteed to be locally sorted because this point will always be sandwiched between two pivot points
@@ -39,7 +42,7 @@ public class QuickMedian {
 					return data[left];
 				}
 			}
-			int pivotIndex=left+(int)Math.round((right-left)*Math.random());
+			int pivotIndex=left+(int)Math.round((right-left)*RandomGenerator.floatFromRandomInt(seed));
 			if (pivotIndex<0) {
 				pivotIndex=0;
 			}

@@ -5,7 +5,9 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -210,12 +212,12 @@ public class ResultsBrowserPanel extends JPanel {
 				LibraryFile.OPEN_IN_PLACE=true;
 				library=BlibToLibraryConverter.getFile(f);
 				LibraryFile.OPEN_IN_PLACE=false;
-				
+
 				ArrayList<LibraryEntry> entries=library.getEntries(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), false);
-				
-				Optional<StripeFileInterface> source=library.getSource(parameters);
+
+				final Optional<Path> source = library.getSource(parameters);
 				if (source.isPresent()) {
-					dia=source.get();
+					dia = StripeFileGenerator.getFile(source.get().toFile(), parameters); // assumes the .DIA file exists or should be created
 				}
 
 				if (dia!=null&&library!=null&&parameters.getLocalizingModification().isPresent()) {
@@ -300,6 +302,7 @@ public class ResultsBrowserPanel extends JPanel {
 				float rtRange=parameters.getLocalizingModification().isPresent()?dia.getGradientLength()/20.0f:parameters.getExpectedPeakWidth();
 				
 				ArrayList<Stripe> stripes=dia.getStripes(entry.getPrecursorMZ(), targetRT-rtRange, targetRT+rtRange, false);
+				Collections.sort(stripes);
 
 				Float targetRTFloat=targetRT;
 				ArrayList<Spectrum> downcastedSpectra=Stripe.downcastStripeToSpectrum(stripes);
@@ -315,9 +318,9 @@ public class ResultsBrowserPanel extends JPanel {
 				primaryTabs.add("Precursors", precursorChart);
 				rawSplit.setTopComponent(primaryTabs);
 				
-				PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), targetRT, entry.getScore(), 1.0f-entry.getScore(), 2*rtRange);
-				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(dia.getOriginalFileName(), psmdata, nullableLocalizer, stripes, parameters, false);
-				TransitionRefinementData data=quantTask.extractSpectrum(unit, rtRange, false);
+				PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), targetRT, entry.getScore(), 1.0f-entry.getScore(), 2*rtRange, false);
+				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(dia.getOriginalFileName(), psmdata, Optional.empty(), nullableLocalizer, stripes, parameters, false);
+				TransitionRefinementData data=quantTask.extractSpectrum(unit, rtRange, false, false);
 				if (data!=null) {
 					HashMap<String, ChartPanel> panels=TransitionRefiner.getChartPanels(data);
 					peakPickingSplit.setLeftComponent(panels.get("median"));

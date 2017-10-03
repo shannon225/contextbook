@@ -42,7 +42,7 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 		double[] topNMasses=getTopNBestIons(peptideModSeq, data.getPrecursorCharge());
 		double[] masses=FragmentIon.getMasses(data.getFragmentMassArray());
 		float[] intensities=data.getIntegrationArray();
-		
+
 		if (params.getMinNumOfQuantitativePeaks()>0) {
 			if (topNMasses==null||topNMasses.length<params.getMinNumOfQuantitativePeaks()) {
 				return Optional.empty();
@@ -54,7 +54,7 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 			Pair<double[], float[]> pair=Peak.toArrays(topN);
 			topNMasses=pair.x;
 			float[] topNIntensities=pair.y;
-			return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), topNMasses, topNIntensities));
+			return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities));
 		}
 		
 		float[] topNIntensities=new float[topNMasses.length];
@@ -66,7 +66,7 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 			}
 			topNIntensities[i]=sum;
 		}
-		return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), topNMasses, topNIntensities));
+		return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities));
 	}
 
 	/* (non-Javadoc)
@@ -74,7 +74,7 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 	 */
 	@Override
 	public double[] getTopNBestIons(String peptideModSeq, byte precursorCharge) {
-		return bestIons.get(peptideModSeq+"+"+precursorCharge);
+		return bestIons.get(peptideModSeq);
 	}
 	
 	/**

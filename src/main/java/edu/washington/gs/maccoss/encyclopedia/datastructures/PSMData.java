@@ -20,8 +20,9 @@ public class PSMData implements PeptidePrecursor {
 	private final float sortingScore;
 	private final float duration;
 	private final HashSet<String> accessions;
+	private final boolean inferred;
 
-	public PSMData(HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, float retentionTime, float score, float sortingScore, float duration) {
+	public PSMData(HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, float retentionTime, float score, float sortingScore, float duration, boolean inferred) {
 		this.accessions=accessions;
 		this.spectrumIndex=spectrumIndex;
 		this.precursorMZ=precursorMZ;
@@ -32,6 +33,10 @@ public class PSMData implements PeptidePrecursor {
 		this.score=score;
 		this.sortingScore=sortingScore;
 		this.duration=duration;
+		this.inferred=inferred;
+	}
+	public boolean wasInferred() {
+		return inferred;
 	}
 
 	@Override

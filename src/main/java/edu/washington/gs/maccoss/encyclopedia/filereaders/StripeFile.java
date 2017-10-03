@@ -95,15 +95,21 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 			}
 		}
 	}
-	
+
 	public CachedStripeFile cache() throws IOException, SQLException, DataFormatException {
+		return cache(this);
+	}
+
+	public static CachedStripeFile cache(StripeFileInterface stripeFile) throws IOException, SQLException, DataFormatException {
 		Logger.logLine("Caching precursors...");
-		ArrayList<PrecursorScan> precursors=getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
+		ArrayList<PrecursorScan> precursors=stripeFile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
 		HashMap<Range, ArrayList<Stripe>> stripes=new HashMap<Range, ArrayList<Stripe>>();
+		final Map<Range, Float> ranges = stripeFile.getRanges();
 		for (Range range : ranges.keySet()) {
 			Logger.logLine("Caching range "+range.toString()+"...");
-			stripes.put(range, getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, false));
+			stripes.put(range, stripeFile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, false));
 		}
+		final File userFile = stripeFile.getFile();
 		Logger.logLine("Finished caching "+userFile.getName());
 		return new CachedStripeFile(userFile, ranges, precursors, stripes);
 	}

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.swing.table.AbstractTableModel;
@@ -25,7 +26,7 @@ public class SampleTableModel extends AbstractTableModel {
 	public void updateEntries(ArrayList<StripeFileInterface> newEntries) {
 		entries.clear();
 		for (StripeFileInterface file : newEntries) {
-			HashMap<Range, Float> ranges=file.getRanges();
+			Map<Range, Float> ranges=file.getRanges();
 			
 			TFloatArrayList cycleTimes=new TFloatArrayList();
 			TFloatArrayList rangeWindows=new TFloatArrayList();

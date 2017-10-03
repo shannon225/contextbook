@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -102,7 +103,7 @@ public class TransitionRefiner {
 		ions.add(new FragmentIon(9, (byte)9, IonType.y));
 		FragmentIon[] fragmentMasses=ions.toArray(new FragmentIon[ions.size()]);
 		
-		TransitionRefinementData data=identifyTransitions("ASVAAQQQEEAR", (byte)2, fragmentMasses, chromatograms, rts, Optional.ofNullable((float[])null), true);
+		TransitionRefinementData data=identifyTransitions("ASVAAQQQEEAR", (byte)2, 30.74576187133789f, fragmentMasses, chromatograms, rts, Optional.ofNullable((float[])null), true);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		for (int i=0; i<integrations.length; i++) {
@@ -111,16 +112,15 @@ public class TransitionRefiner {
 		Charter.launchCharts("TITLE", getChartPanels(data));
 	}
 
-	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes) {
-		return identifyTransitions(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, retentionTimes, Optional.ofNullable((float[])null), false);
+	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, boolean wasInferred) {
+		return identifyTransitions(peptideModSeq, precursorCharge, retentionTimeInSec, fragmentMasses, chromatograms, retentionTimes, Optional.ofNullable((float[])null), wasInferred, false);
 	}
 
-	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> medianChromatogram) {
-		return identifyTransitions(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, retentionTimes, medianChromatogram, false);
+	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> medianChromatogram, boolean wasInferred) {
+		return identifyTransitions(peptideModSeq, precursorCharge, retentionTimeInSec, fragmentMasses, chromatograms, retentionTimes, medianChromatogram, wasInferred, false);
 	}
-	static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean plot) {
+	static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean wasInferred, boolean plot) {
 		if (chromatograms.size()==0) return new TransitionRefinementData(peptideModSeq, precursorCharge, new FragmentIon[0], chromatograms, new float[0], new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]));
-		
 		ArrayList<float[]> normalizedChromatograms;
 		int maxIndex;
 		IntRange indices;
@@ -154,12 +154,26 @@ public class TransitionRefiner {
 						list.add(0.0f);
 					}
 				}
-				medianChromatogram[i]=QuickMedian.median(list.toArray());
+				float[] array=list.toArray();
+				Arrays.sort(array);
+				medianChromatogram[i]=QuickMedian.median(array);
 				if (medianChromatogram[i]>medianChromatogram[maxIndex]) {
 					maxIndex=i;
 				}
 			}
 			IntRange initialIndices=getIndexRange(medianChromatogram, maxIndex);
+			
+			if (!wasInferred) {
+				Range testRange=new Range(retentionTimes[initialIndices.getStart()], retentionTimes[initialIndices.getStop()]);
+				if (!testRange.contains(retentionTimeInSec)) {
+						// if it wasn't inferred and our boundaries were outside the range, we need to reset the range 
+					int index=Arrays.binarySearch(retentionTimes, retentionTimeInSec);
+					if (index<0) index=-(index+1);
+					
+					initialIndices=getIndexRange(medianChromatogram, index);
+				}
+				testRange=new Range(retentionTimes[initialIndices.getStart()], retentionTimes[initialIndices.getStop()]);
+			}
 
 			// then refine on the local area
 			normalizedChromatograms=normalizeAndBackgroundSubtract(chromatograms, initialIndices);
@@ -176,7 +190,9 @@ public class TransitionRefiner {
 						list.add(0.0f);
 					}
 				}
-				medianChromatogram[i]=QuickMedian.median(list.toArray());
+				float[] array=list.toArray();
+				Arrays.sort(array);
+				medianChromatogram[i]=QuickMedian.median(array);
 				if (medianChromatogram[i]>medianChromatogram[maxIndex]) {
 					maxIndex=i;
 				}

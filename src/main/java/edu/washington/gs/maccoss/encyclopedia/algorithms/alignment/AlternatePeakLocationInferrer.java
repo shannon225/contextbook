@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -31,7 +32,7 @@ import gnu.trove.map.hash.TObjectFloatHashMap;
 import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class AlternatePeakLocationInferrer {
-	public static PeakLocationInferrerInterface getAlignmentData(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
+	public static PeakLocationInferrerInterface getAlignmentData(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
 		ProgressIndicator subProgress1=new SubProgressIndicator(progress, 0.5f);
 		Pair<HashMap<SearchJobData,TObjectFloatHashMap<String>>, HashMap<String,double[]>> pair=getArchetypals(subProgress1, pecanJobs, passingPeptides, params);
 		HashMap<SearchJobData, TObjectFloatHashMap<String>> peptideMappings=pair.x;
@@ -107,7 +108,7 @@ public class AlternatePeakLocationInferrer {
 		return new SimplePeakLocationInferrer(alignmentMap, alignedRTInMinBySequenceMap, bestIons, params);
 	}
 
-	static Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> getArchetypals(ProgressIndicator progress, ArrayList<SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
+	static Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> getArchetypals(ProgressIndicator progress, List<? extends SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
 		int numberOfQuantitativePeaks=params.getNumberOfQuantitativePeaks();
 		MassTolerance fragmentTolerance=params.getFragmentTolerance();
 
@@ -165,6 +166,16 @@ public class AlternatePeakLocationInferrer {
 						}
 					}
 					
+					if (missingPeptides.size()>0) {
+						int modified=0;
+						for (PercolatorPeptide p : missingPeptides) {
+							if (p.getPeptideModSeq().indexOf('[')>=0) {
+								modified++;
+							}
+						}
+						Logger.logLine("Couldn't collect global quantitative ion data from this specific sample on "+missingPeptides.size()+" of "+passingPeptides.size()+", (where "+modified+" were modified) at the specified FDR threshold");
+					}
+					
 				} catch (EncyclopediaException e) {
 					Logger.errorLine("Parsing error indicates "+job.getOutputFile().getName()+" isn't from a quantitative search (EncyclopeDIA or XCorDIA):");
 					Logger.errorException(e);
@@ -177,6 +188,8 @@ public class AlternatePeakLocationInferrer {
 				}
 			}
 		}
+		
+		int strongAboveThreshold=0;
 		HashMap<String,double[]> bestIons=new HashMap<String, double[]>();
 		for (Entry<String, CorrelationPeakFrequencyCalculator> entry : ionCounter.entrySet()) {
 			String peptideModSeq=entry.getKey();
@@ -185,9 +198,13 @@ public class AlternatePeakLocationInferrer {
 				double[] altIons=weakIonCounter.get(peptideModSeq).getTopNMasses(numberOfQuantitativePeaks);
 				bestIons.put(peptideModSeq, altIons);
 			} else {
+				if (ions.length>=params.getMinNumOfQuantitativePeaks()) {
+					strongAboveThreshold++;
+				}
 				bestIons.put(peptideModSeq, ions);
 			}
 		}
+		Logger.logLine("Found quantitative ions for "+bestIons.size()+" total peptides ("+strongAboveThreshold+" with "+params.getMinNumOfQuantitativePeaks()+" or more high quality peaks) across all runs.");
 
 		return new Pair<HashMap<SearchJobData,TObjectFloatHashMap<String>>, HashMap<String,double[]>>(retentionTimeMappingsInSeconds, bestIons);
 	}

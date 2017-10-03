@@ -1,23 +1,18 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import junit.framework.TestCase;
 
 public class FastaReaderTest extends TestCase {
-	public static void main(String[] args) throws IOException, FileNotFoundException {
+	/*public static void main(String[] args) throws IOException, FileNotFoundException {
 		File f=new File("/Users/searleb/Downloads/hg38_6FT.fasta");
 		File out=new File("/Users/searleb/Downloads/hg38_coding.fasta");
 		BufferedReader in=new BufferedReader(new FileReader(f));
@@ -74,7 +69,7 @@ public class FastaReaderTest extends TestCase {
 		}
 		in.close();
 		writer.close();
-	}
+	}*/
 	
 	/*public static void main(String[] args) {
 		File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
@@ -96,8 +91,8 @@ public class FastaReaderTest extends TestCase {
 		}
 	}*/
 	
-	/*public static void main(String[] args) {
-		File f=new File("/Users/searleb/Downloads/Saccharomyces_cerevisiae_sprot_032417.fasta");
+	public static void main(String[] args) {
+		File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f);
 
 		int countBase=0;
@@ -133,7 +128,7 @@ public class FastaReaderTest extends TestCase {
 		System.out.println(countMet+"\tcountMet");
 		System.out.println(countQN+"\tcountQN");
 		System.out.println(countSTY+"\tcountSTY");
-	}*/
+	}
 	
 	static int getCombinatorial(String sequence, char... target) {
 		int num=0;

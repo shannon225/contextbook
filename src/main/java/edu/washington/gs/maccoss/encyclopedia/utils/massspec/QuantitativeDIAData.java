@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class QuantitativeDIAData implements PeptidePrecursor {
@@ -9,16 +10,18 @@ public class QuantitativeDIAData implements PeptidePrecursor {
 	private final String massCorrectedPeptideModSeq;
 	private final byte precursorCharge;
 	private final float scanStartTime;
+	private final Range rtScanRange;
 	private final double[] massArray;
 	private final float[] intensityArray;
 
-	public QuantitativeDIAData(String peptideModSeq, byte precursorCharge, float scanStartTime, double[] massArray, float[] intensityArray) {
+	public QuantitativeDIAData(String peptideModSeq, byte precursorCharge, float scanStartTime, Range rtScanRange, double[] massArray, float[] intensityArray) {
 		this.peptideModSeq=peptideModSeq;
 		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq);
 		this.precursorCharge=precursorCharge;
 		this.scanStartTime=scanStartTime;
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
+		this.rtScanRange=rtScanRange;
 	}
 
 	@Override
@@ -60,12 +63,16 @@ public class QuantitativeDIAData implements PeptidePrecursor {
 		}
 		return sb.toString();
 	}
+	
+	public Range getRtScanRange() {
+		return rtScanRange;
+	}
 
 	public byte getPrecursorCharge() {
 		return precursorCharge;
 	}
 
-	public float getScanStartTime() {
+	public float getApexRT() {
 		return scanStartTime;
 	}
 
