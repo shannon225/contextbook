@@ -217,7 +217,7 @@ public class PeptideQuantExtractor {
 			}
 			
 			PeptideQuantExtractor extractor=new PeptideQuantExtractor(progress, searchedLibrary, stripeFile, parameters);
-			ArrayList<IntegratedLibraryEntry> extractPeptides=extractor.extractPeptides(uniquedData.values(), limitToQuantifiable);
+			ArrayList<IntegratedLibraryEntry> extractPeptides=extractor.extractPeptides(uniquedData.values(), inferrer, limitToQuantifiable);
 			
 			System.out.println("LENGTH TEST: "+data.size()+"/"+uniquedData.size()+"/"+extractPeptides.size());
 			return extractPeptides;
@@ -236,7 +236,7 @@ public class PeptideQuantExtractor {
 		}
 	}
 	
-	public ArrayList<IntegratedLibraryEntry> extractPeptides(Collection<PSMData> data, boolean limitToQuantifiable) throws IOException, SQLException, DataFormatException, InterruptedException {
+	public ArrayList<IntegratedLibraryEntry> extractPeptides(Collection<PSMData> data, final Optional<PeakLocationInferrerInterface> inferrer, boolean limitToQuantifiable) throws IOException, SQLException, DataFormatException, InterruptedException {
 		ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries=new ConcurrentLinkedQueue<IntegratedLibraryEntry>();
 		int cores=parameters.getNumberOfThreadsUsed();
 		Logger.logLine("Extracting "+data.size()+" peptides...");
@@ -285,7 +285,7 @@ public class PeptideQuantExtractor {
 
 			for (PSMData psm : data) {
 				if (range.contains((float)psm.getPrecursorMZ())) {
-					executor.submit(new PeptideQuantExtractorTask(filename, psm, Optional.ofNullable(null), stripes, parameters, savedEntries, limitToQuantifiable));
+					executor.submit(new PeptideQuantExtractorTask(filename, psm, inferrer, Optional.ofNullable(null), stripes, parameters, savedEntries, limitToQuantifiable));
 				}
 			}
 

@@ -11,6 +11,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
@@ -52,15 +53,28 @@ public class FragmentationModel {
 		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, minimumMass, false);
 	} 
 	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass, boolean isDecoy) {
+		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, null, minimumMass, false);
+	}
+	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double[] targetMasses, double minimumMass, boolean isDecoy) {
+		String sequence=getModifiedSequence(params.getAAConstants());
+		double precursorMZ=getChargedMass(precursorCharge);
 		FragmentIon[] ions=getPrimaryIonObjects(params.getFragType(), precursorCharge);
-		ions = FragmentIon.getUniqueFragments(ions, params.getFragmentTolerance());
+		MassTolerance fragmentTolerance=params.getFragmentTolerance();
+		ions = FragmentIon.getUniqueFragments(ions, fragmentTolerance);
+		
+		if (targetMasses!=null) {
+			targetMasses=targetMasses.clone();
+			Arrays.sort(targetMasses);
+		}
 
 		TDoubleArrayList ionsList=new TDoubleArrayList();
 		ArrayList<FragmentIon> annotationList=new ArrayList<FragmentIon>();
 		for (int i=0; i<ions.length; i++) {
 			if (ions[i].mass>=minimumMass) {
-				ionsList.add(ions[i].mass);
-				annotationList.add(ions[i]);
+				if (targetMasses==null||fragmentTolerance.getIndex(targetMasses, ions[i].mass).isPresent()) {
+					ionsList.add(ions[i].mass);
+					annotationList.add(ions[i]);
+				}
 			}
 		}
 		double[] masses=ionsList.toArray();
@@ -70,9 +84,6 @@ public class FragmentationModel {
 		
 		float[] unitCorrelation=new float[masses.length];
 		Arrays.fill(unitCorrelation, 1.0f);
-
-		String sequence=getModifiedSequence(params.getAAConstants());
-		double precursorMZ=getChargedMass(precursorCharge);
 
 		return new AnnotatedLibraryEntry(filename, accessions, 1, precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, masses, unitIntensities, unitCorrelation, annotationList.toArray(new FragmentIon[annotationList.size()]), isDecoy);
 	}

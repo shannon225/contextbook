@@ -42,7 +42,7 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 		double[] topNMasses=getTopNBestIons(peptideModSeq, data.getPrecursorCharge());
 		double[] masses=FragmentIon.getMasses(data.getFragmentMassArray());
 		float[] intensities=data.getIntegrationArray();
-		
+
 		if (params.getMinNumOfQuantitativePeaks()>0) {
 			if (topNMasses==null||topNMasses.length<params.getMinNumOfQuantitativePeaks()) {
 				return Optional.empty();
