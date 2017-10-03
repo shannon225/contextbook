@@ -5,14 +5,12 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.font.TextAttribute;
 import java.awt.geom.Ellipse2D;
-import java.awt.geom.Rectangle2D;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.text.AttributedString;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -24,6 +22,8 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
+import org.apache.batik.apps.rasterizer.DestinationType;
+import org.apache.batik.apps.rasterizer.SVGConverter;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -44,14 +44,9 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.graphics2d.svg.SVGGraphics2D;
+import org.jfree.graphics2d.svg.SVGUtils;
 import org.jfree.ui.TextAnchor;
-
-import com.itextpdf.awt.PdfGraphics2D;
-import com.itextpdf.text.Document;
-import com.itextpdf.text.Rectangle;
-import com.itextpdf.text.pdf.PdfContentByte;
-import com.itextpdf.text.pdf.PdfTemplate;
-import com.itextpdf.text.pdf.PdfWriter;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -165,26 +160,37 @@ public class Charter {
 		Dimension d=new Dimension(600, 450);
 		//Dimension d=new Dimension(400, 300);
 		
-		writeAsPDF(getChart(xAxis, yAxis, displayLegend, traces).getChart(), f, d);
+		try {
+			// write as SVG and then convert to PDF. This is super slow on complex PDFs. Thanks a lot, itextpdf :-(
+			Logger.logLine("Writing SVG chart of "+f.getName());
+			File svgFile = File.createTempFile(f.getName(), ".svg");
+			writeAsSVG(getChart(xAxis, yAxis, displayLegend, traces).getChart(), svgFile, d);
+			
+			Logger.logLine("Converting SVG chart of "+f.getName()+" to PDF");
+			SVGConverter converter = new SVGConverter();
+			converter.setDestinationType(DestinationType.PDF);
+			converter.setSources(new String[] { svgFile.toString() });
+			converter.setDst(f);
+			converter.execute();
+		} catch (Exception e) {
+			Logger.errorException(e);
+		}
 	}
 
-	public static void writeAsPDF(JFreeChart chart, File f, Dimension d) {
-		try {
-			Rectangle pagesize=new Rectangle(d.width, d.height);
-			Document document=new Document(pagesize);
-			FileOutputStream os=new FileOutputStream(f);
-			PdfWriter writer=PdfWriter.getInstance(document, os);
-			document.open();
-			PdfContentByte canvas=writer.getDirectContent();
-			PdfTemplate template=canvas.createTemplate(d.width, d.height);
-			Graphics2D g2d=new PdfGraphics2D(template, d.width, d.height);
+	public static void writeAsSVG(File f, String xAxis, String yAxis, boolean displayLegend, XYTraceInterface... traces) {
+		//Dimension d=new Dimension(792, 612);
+		Dimension d=new Dimension(600, 450);
+		//Dimension d=new Dimension(400, 300);
+		
+		writeAsSVG(getChart(xAxis, yAxis, displayLegend, traces).getChart(), f, d);
+	}
 
-			Rectangle2D r2D=new Rectangle2D.Double(0, 0, d.width, d.height);
-			chart.draw(g2d, r2D);
-			g2d.dispose();
-			canvas.addTemplate(template, 0, 0);
-			document.close();
-			os.close();
+	public static void writeAsSVG(JFreeChart chart, File f, Dimension d) {
+		try {
+			SVGGraphics2D g2 = new SVGGraphics2D(d.width, d.height); 
+	        Rectangle r = new Rectangle(0, 0, d.width, d.height); 
+	        chart.draw(g2, r); 
+	        SVGUtils.writeToSVG(f, g2.getSVGElement()); 
 		} catch (Exception e) {
 			Logger.errorException(e);
 		}
