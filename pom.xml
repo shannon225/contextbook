@@ -204,5 +204,12 @@
 			<artifactId>jzy3d-api</artifactId>
 			<version>0.9.1</version>
 		</dependency>
+		<dependency>
+			<!-- This version (and before) is LGPL. After that it's AGPL. DO NOT UPGRADE! -->
+			<groupId>com.lowagie</groupId>
+			<artifactId>itext</artifactId>
+			<version>4.2.0</version>
+		</dependency>
+		
 	</dependencies>
 </project>

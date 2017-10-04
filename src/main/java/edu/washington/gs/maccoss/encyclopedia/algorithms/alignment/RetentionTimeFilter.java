@@ -149,8 +149,8 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 		
 		if (saveFileSeed.isPresent()) {
 			String saveFilePrefix=saveFileSeed.get().getAbsolutePath();
-			Charter.writeAsSVG(new File(saveFilePrefix+".delta_rt.svg"), DELTA_RETENTION_TIME_STRING, "Number of Peptides", false, posTrace, posHistTrace, histTrace);
-			Charter.writeAsSVG(new File(saveFilePrefix+".rt_fit.svg"), xAxis, yAxis, false, median2, selectedTrace, trace);
+			Charter.writeAsPDF(new File(saveFilePrefix+".delta_rt.pdf"), DELTA_RETENTION_TIME_STRING, "Number of Peptides", false, posTrace, posHistTrace, histTrace);
+			Charter.writeAsPDF(new File(saveFilePrefix+".rt_fit.pdf"), xAxis, yAxis, false, median2, selectedTrace, trace);
 
 			try {
 				PrintWriter writer=new PrintWriter(new File(saveFilePrefix+".rt_fit.txt"), "UTF-8");
