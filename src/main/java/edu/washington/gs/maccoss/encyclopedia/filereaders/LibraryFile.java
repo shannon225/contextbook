@@ -183,6 +183,12 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		map.put(VERSION_STRING, MOST_RECENT_VERSION.toString());
 		addMetadata(map);
 	}
+	
+	public void addMetadata(String key, String value) throws IOException, SQLException {
+		HashMap<String, String> data=new HashMap<>();
+		data.put(key, value);
+		addMetadata(data);
+	}
 
 	public void addMetadata(Map<String, String> data) throws IOException, SQLException {
 		Connection c=getConnection();

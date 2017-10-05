@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
@@ -15,11 +16,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 
 public class PercolatorExecutor extends ExternalExecutor {
+	public static final String PI_0_TAG="pi_0=";
 	public static final String V3_01="v3-01";
 	public static final String V2_10="v2-10";
 	public static final byte DEFAULT_VERSION_NUMBER=3;
@@ -28,33 +30,11 @@ public class PercolatorExecutor extends ExternalExecutor {
 		super(generateCommand(tsv, outputFile, decoyFile, percolatorVersionNumber, useXML));
 	}
 
-	public static ArrayList<ScoredObject<String>> executePercolatorXML(int percolatorVersionNumber, File featureFile, File percolatorResultFile, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
-		// with XML decoys go to the result file, not to a separate XML file
-		PercolatorExecutor e=new PercolatorExecutor(featureFile, percolatorResultFile, null, percolatorVersionNumber, true);
-		BlockingQueue<OutputMessage> result=e.start();
-		
-		while (!e.isFinished()||!result.isEmpty()) {
-			if (!result.isEmpty()) {
-				OutputMessage data=result.take();
-				if (!data.isStdOutput()) {
-					Logger.logLine(data.getMessage());
-				}
-			} else {
-				Thread.sleep(10);
-			}
-		}
-
-		checkResult(e);
-
-		ArrayList<ScoredObject<String>> passingPeptides=PercolatorReader.getPassingPeptidesFromXML(percolatorResultFile, threshold);
-		
-		return passingPeptides;
-	}
-
-	public static ArrayList<PercolatorPeptide> executePercolatorTSV(int percolatorVersionNumber, File featureFile, File percolatorResultFile, File percolatorDecoyFile, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+	public static Pair<ArrayList<PercolatorPeptide>, Float> executePercolatorTSV(int percolatorVersionNumber, File featureFile, File percolatorResultFile, File percolatorDecoyFile, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		PercolatorExecutor e=new PercolatorExecutor(featureFile, percolatorResultFile, percolatorDecoyFile, percolatorVersionNumber, false);
 		BlockingQueue<OutputMessage> result=e.start();
 
+		Float pi0=null;
 		String errorMessage=null;
 		while (!e.isFinished()||!result.isEmpty()) {
 			if (!result.isEmpty()) {
@@ -68,6 +48,12 @@ public class PercolatorExecutor extends ExternalExecutor {
 						errorMessage=trim.substring(26);
 					} else if (trim.indexOf("bad allocation")>=0) {
 						errorMessage=trim;
+					} else if (trim.startsWith("Selecting pi_0=")) {
+						try {
+							pi0=Float.parseFloat(trim.substring("Selecting pi_0=".length()));
+						} catch (NumberFormatException nfe) {
+							Logger.errorLine("Error parsing pi0 from ["+trim+"]");
+						}
 					}
 				}
 			} else {
@@ -80,8 +66,14 @@ public class PercolatorExecutor extends ExternalExecutor {
 		}
 
 		checkResult(e);
+		
+		try {
+		    Files.write(percolatorResultFile.toPath(), (PI_0_TAG+pi0+System.lineSeparator()).getBytes(), StandardOpenOption.APPEND);
+		}catch (IOException ioe) {
+			throw new EncyclopediaException("Error appending to Percolator text file", ioe);
+		}
 
-		ArrayList<PercolatorPeptide> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(percolatorResultFile, threshold, false);
+		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(percolatorResultFile, threshold, false);
 		
 		return passingPeptides;
 	}

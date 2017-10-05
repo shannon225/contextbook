@@ -13,25 +13,36 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 
 public class PercolatorReader {
-	public static ArrayList<PercolatorPeptide> getPassingPeptidesFromTSV(File f, final float qValueThreshold, final boolean keepDecoys) {
+	public static Pair<ArrayList<PercolatorPeptide>, Float> getPassingPeptidesFromTSV(File f, final float qValueThreshold, final boolean keepDecoys) {
 		final ArrayList<PercolatorPeptide> data=new ArrayList<PercolatorPeptide>();
+		final float[] pi0=new float[1];
 		
 		TableParserMuscle muscle=new TableParserMuscle() {
 			@Override
 			public void processRow(Map<String, String> row) {
+				String psmID=row.get("PSMId");
+				
+				// PSMId is the first row, so any non-table data will get put into this column
+				if (psmID.startsWith(PercolatorExecutor.PI_0_TAG)) {
+					pi0[0]=Float.parseFloat(psmID.substring(PercolatorExecutor.PI_0_TAG.length()));
+					return;
+				}
+				
 				float qvalue=Float.parseFloat(row.get("q-value"));
 				if (qvalue<qValueThreshold) {
 					float posteriorErrorProb=Float.parseFloat(row.get("posterior_error_prob"));
-					String psmID=row.get("PSMId");
+					
 					String proteinIds=row.get("proteinIds");
 					if (keepDecoys||!proteinIds.startsWith(LibraryEntry.DECOY_STRING)) {
 						data.add(new PercolatorPeptide(psmID, proteinIds, qvalue, posteriorErrorProb));
@@ -57,7 +68,7 @@ public class PercolatorReader {
 			Logger.errorException(ie);
 		}
 
-		return data;
+		return new Pair<ArrayList<PercolatorPeptide>, Float>(data, pi0[0]);
 	}
 
 	public static ArrayList<ScoredObject<String>> getPassingPeptidesFromXML(File f, final float qValueThreshold) {

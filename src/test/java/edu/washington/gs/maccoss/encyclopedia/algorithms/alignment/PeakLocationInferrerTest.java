@@ -64,7 +64,7 @@ public class PeakLocationInferrerTest {
 		ArrayList<PercolatorPeptide> peptides=new ArrayList<>();
 		
 		for (SearchJobData job : jobs) {
-			ArrayList<PercolatorPeptide> local=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), job.getParameters().getEffectivePercolatorThreshold(), false);
+			ArrayList<PercolatorPeptide> local=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), job.getParameters().getEffectivePercolatorThreshold(), false).x;
 			for (PercolatorPeptide pep : local) {
 				if ("KGSITSVQAIYVPADDLTDPAPATTFAHLDATTVLSR".equals(pep.getPeptideModSeq())) peptides.add(pep);
 				else if ("NSSYVHGGVDASGKPQEAVYGQNDIHHK".equals(pep.getPeptideModSeq())) peptides.add(pep);

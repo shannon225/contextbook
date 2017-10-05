@@ -29,7 +29,7 @@ public class PercolatorReaderTest extends TestCase {
 	
 	public static void main(String[] args) {
 		File f=new File("/Volumes/BriansSSD/nick/110815_bcs_hela_6mz_600_700.mzML.encyclopedia.decoy.txt");
-		ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(f, 1.0f, true);
+		ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(f, 1.0f, true).x;
 		System.out.println(passingPeptidesFromTSV.size());
 	}
 	public void testParsing() {

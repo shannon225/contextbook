@@ -10,6 +10,7 @@ import java.util.concurrent.BlockingQueue;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
 import junit.framework.TestCase;
 
@@ -36,9 +37,9 @@ public class PercolatorExecutorTest extends TestCase {
 			}
 		}
 		System.out.println("total processed: "+outputlines);
-		ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(outputFile, 0.01f, false);
+		ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(outputFile, 0.01f, false).x;
 		System.out.println("Peptides: "+peptides.size());
-		ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(decoyFile, 0.01f, true);
+		ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(decoyFile, 0.01f, true).x;
 		System.out.println("Decoys: "+decoys.size());
 		
 	}
@@ -54,37 +55,25 @@ public class PercolatorExecutorTest extends TestCase {
 		File featureFile=File.createTempFile("pecan", ".feature");
 		featureFile.deleteOnExit();
 
-		File outputFile=File.createTempFile("percolator", ".xml");
+		File outputFile=File.createTempFile("percolator", ".txt");
 		outputFile.deleteOnExit();
 
-		File decoyFile=File.createTempFile("percolator", ".decoy.xml");
+		File decoyFile=File.createTempFile("percolator", ".decoy.txt");
 		decoyFile.deleteOnExit();
 
 		Files.copy(is, featureFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, decoyFile, getDefaultPercolaterVersion(), true);
-		BlockingQueue<OutputMessage> result=e.start();
-
-		int outputlines=0;
-
-		while (!e.isFinished()||!result.isEmpty()) {
-			if (!result.isEmpty()) {
-				OutputMessage data=result.take();
-				if (data.isStdOutput()) {
-					outputlines++;
-//					Logger.logLine("[percolator:stdout]" + data.getMessage());
-				} else {
-					// ensure that any error messages are written to the console for debugging
-					Logger.logLine("[percolator:stderr]" + data.getMessage());
-				}
-			} else {
-				Thread.sleep(10);
-			}
-		}
-
-		assertEquals("Non-zero exit code!", 0, e.getResultCode());
-
-		assertEquals("Wrong number of spectra above 1% FDR!", 712, outputlines-1); // number of spectra above 1% FDR (-1 for header)
+		Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorExecutor.executePercolatorTSV(getDefaultPercolaterVersion(), featureFile, outputFile, decoyFile, 0.01f);
+		assertEquals(405, pair.x.size());
+		assertEquals(0.348315f, pair.y, 0.001f);
+		
+		pair=PercolatorReader.getPassingPeptidesFromTSV(outputFile, 0.01f, false);
+		assertEquals(405, pair.x.size());
+		assertEquals(0.348315f, pair.y, 0.001f);
+		
+		Pair<ArrayList<PercolatorPeptide>, Float> decoyPair=PercolatorReader.getPassingPeptidesFromTSV(decoyFile, 0.01f, true);
+		assertEquals(3, decoyPair.x.size());
+		assertEquals(0.0f, decoyPair.y, 0.001f);
 	}
 
 	//TODO: issue #23: Percolator v3 fails silently with exit code 255 on some Windows machines
