@@ -57,7 +57,11 @@ public class BlibToLibraryConverter {
 			if (LibraryFile.isVersionAcceptable(version)) {
 				return Optional.of((LibraryInterface)elibFile);
 			} else {
-				Logger.errorLine(f.getName()+" is an old Library file (version:"+version+")! Please delete it!");
+				if (version.amIAbove(LibraryFile.MOST_RECENT_VERSION)) {
+					Logger.errorLine("The library file "+f.getName()+" is newer than expected (version:"+version+")! Please download a newer upgrade that supports this library!");
+				} else {
+					Logger.errorLine("The library file "+f.getName()+" is too old to be used (version:"+version+")! Please delete it!");
+				}
 			}
 			return Optional.empty();
 			

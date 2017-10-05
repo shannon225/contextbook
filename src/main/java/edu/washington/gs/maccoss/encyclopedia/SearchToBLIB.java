@@ -492,8 +492,9 @@ public class SearchToBLIB {
 					if (job.getOutputFile().exists()&&job.getOutputDecoyFile().exists()) {
 						Pair<ArrayList<PercolatorPeptide>, Float> targets=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), parameters.getEffectivePercolatorThreshold(), true);
 						Pair<ArrayList<PercolatorPeptide>, Float> decoys=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputDecoyFile(), parameters.getEffectivePercolatorThreshold(), true);
-						Logger.logLine("Writing local target/decoy peptides: "+targets.x.size()+"/"+decoys.x.size());
+						Logger.logLine("Writing local target/decoy peptides: "+targets.x.size()+"/"+decoys.x.size()+", pi0: "+targets.y);
 						elib.addTargetDecoyData(targets.x, decoys.x);
+						elib.addMetadata("pi0", Float.toString(targets.y));
 						elib.addProteinsFromPercolator(targets.x);
 						elib.addProteinsFromPercolator(decoys.x);
 					} else if (job.getOutputFile().exists()) {
@@ -509,7 +510,7 @@ public class SearchToBLIB {
 			if (globalPercolatorFiles.isPresent()) {
 				Pair<ArrayList<PercolatorPeptide>, Float> targets=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorFiles.get().x, parameters.getEffectivePercolatorThreshold(), true);
 				Pair<ArrayList<PercolatorPeptide>, Float> decoys=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorFiles.get().y, parameters.getEffectivePercolatorThreshold(), true);
-				Logger.logLine("Writing global target/decoy peptides: "+targets.x.size()+"/"+decoys.x.size());
+				Logger.logLine("Writing global target/decoy peptides: "+targets.x.size()+"/"+decoys.x.size()+", pi0: "+targets.y);
 				elib.addTargetDecoyData(targets.x, decoys.x);
 				elib.addMetadata("pi0", Float.toString(targets.y));
 				elib.addProteinsFromPercolator(targets.x);

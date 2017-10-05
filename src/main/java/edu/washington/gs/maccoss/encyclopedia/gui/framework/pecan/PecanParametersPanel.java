@@ -155,7 +155,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 
 	@Override
 	public String getAboutMessage() {
-		return "<b>Walnut is like PeCAn, just with more wrinkles and slightly more bitter.";
+		return "<b>Walnut is just like PeCAn, but with more wrinkles and slightly more bitter.";
 	}
 	
 	public ImageIcon getSmallImage() {
