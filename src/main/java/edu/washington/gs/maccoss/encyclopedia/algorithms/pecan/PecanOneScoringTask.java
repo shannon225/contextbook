@@ -201,7 +201,9 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 						float delta=auxScores[scanIndex][ppmIndex]-averageAuxScores[ppmIndex];
 						precursorPPMVariance+=delta*delta;
 					}
-					precursorPPMVariance=precursorPPMVariance/(auxScores.length-1);
+					if (auxScores.length>1) {
+						precursorPPMVariance=precursorPPMVariance/(auxScores.length-1);
+					}
 
 					// rank in sortedBGScores
 					int indexInSortedBGScores=Arrays.binarySearch(sortedBGScores, goodStripes.get(i).x);
