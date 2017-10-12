@@ -10,8 +10,49 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 
 public class ParsimonyProteinGrouper {
+	public static ArrayList<ScoredObject<ProteinGroup>> groupProteins(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<PercolatorPeptide> passingDecoys, float fdrThreshold) {
+		ArrayList<PercolatorPeptide> allPeptides=new ArrayList<>();
+		allPeptides.addAll(passingPeptides);
+		allPeptides.addAll(passingDecoys);
+		
+		ArrayList<ProteinGroup> allProteins=groupProteins(allPeptides);
+		Collections.sort(allProteins);
+
+		// calculate decoy/target FDR
+		float[] fdrs=new float[allProteins.size()];
+		int numberOfTargets=0;
+		int numberOfDecoys=0;
+		for (int i=allProteins.size()-1; i>=0; i--) {
+			if (allProteins.get(i).isDecoy()) {
+				numberOfDecoys++;
+			} else {
+				numberOfTargets++;
+			}
+			fdrs[i]=numberOfDecoys/numberOfTargets;
+		}
+		
+		// estimate q-values
+		float minFDR=fdrs[0];
+		for (int i=0; i<fdrs.length; i++) {
+			if (fdrs[i]<minFDR) {
+				minFDR=fdrs[i];
+			} else {
+				fdrs[i]=minFDR;
+			}
+		}
+		
+		ArrayList<ScoredObject<ProteinGroup>> keptProteins=new ArrayList<ScoredObject<ProteinGroup>>();
+		for (int i=allProteins.size()-1; i>=0; i--) {
+			if (fdrs[i]<=fdrThreshold&&!allProteins.get(i).isDecoy()) {
+				keptProteins.add(new ScoredObject<ProteinGroup>(fdrs[i], allProteins.get(i)));
+			}
+		}
+		return keptProteins;
+	}
+	
 	public static ArrayList<ProteinGroup> groupProteins(ArrayList<PercolatorPeptide> passingPeptides) {
 		HashMap<String, Peptide> peptides=new HashMap<String, ParsimonyProteinGrouper.Peptide>();
 		HashMap<String, Protein> proteins=new HashMap<String, ParsimonyProteinGrouper.Protein>();

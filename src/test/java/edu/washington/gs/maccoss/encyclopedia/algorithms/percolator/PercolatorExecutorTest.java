@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
@@ -16,9 +15,9 @@ import junit.framework.TestCase;
 
 public class PercolatorExecutorTest extends TestCase {
 	public static void main(String[] args) throws Exception {
-		File featureFile=new File("/Users/searleb/Documents/school/projects/test/02may2016_yeast_deep_dia_01.mzML.encyclopedia.txt.features.txt");
-		File outputFile=new File("/Users/searleb/Documents/school/projects/test/02may2016_yeast_deep_dia_01.mzML.encyclopedia.txt.output.txt");
-		File decoyFile=new File("/Users/searleb/Documents/school/projects/test/02may2016_yeast_deep_dia_01.mzML.encyclopedia.txt.decoy.txt");
+		File featureFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated_features.txt");
+		File outputFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated_new_results.txt");
+		File decoyFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated_new_decoy.txt");
 		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, decoyFile, getDefaultPercolaterVersion(), false);
 		BlockingQueue<OutputMessage> result=e.start();
 

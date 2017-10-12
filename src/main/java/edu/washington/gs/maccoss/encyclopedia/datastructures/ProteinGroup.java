@@ -66,4 +66,13 @@ public class ProteinGroup implements Comparable<ProteinGroup> {
 	public ArrayList<String> getEquivalentAccessions() {
 		return equivalentAccessions;
 	}
+	
+	public boolean isDecoy() {
+		for (String accession : equivalentAccessions) {
+			if (!accession.startsWith(LibraryEntry.DECOY_STRING)) {
+				return false;
+			}
+		}
+		return true;
+	}
 }

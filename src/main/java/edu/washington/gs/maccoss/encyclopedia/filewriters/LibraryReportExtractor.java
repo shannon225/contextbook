@@ -198,7 +198,6 @@ public class LibraryReportExtractor {
 					for (ProteinGroupQuantifier proteinQuantifier : proteinQuantifiers) {
 						float intensity=proteinQuantifier.getIntensity(protein);
 						proteinWriter.print("\t"+intensity);
-						proteinWriter.print("\t"+proteinQuantifier.getNumberOfQuantitativePeptides(protein));
 					}
 					proteinWriter.println();
 				}
