@@ -42,7 +42,7 @@ public class TransitionRefinerTest {
 
 		PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), targetRT, entry.getScore(), 1.0f-entry.getScore(), 2*rtRange, false);
 		PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(dia.getOriginalFileName(), psmdata, Optional.empty(), Optional.empty(), stripes, params, false);
-		TransitionRefinementData data=quantTask.extractSpectrum(entry, rtRange, false, false);
+		TransitionRefinementData data=quantTask.extractSpectrum(entry, rtRange, false, false, false);
 		Charter.launchCharts("TITLE", TransitionRefiner.getChartPanels(data));
 	}
 	

@@ -103,9 +103,11 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 	private final SpinnerModel percolatorThreshold=new SpinnerNumberModel(0.01, 0.001, 0.1, 0.001);
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
 	private final SpinnerModel minQuantitativeIonNumber=new SpinnerNumberModel(3, 0, 100, 1);
+	private final SearchPanel searchPanel;
 
-	public CASiLParametersPanel() {
+	public CASiLParametersPanel(SearchPanel searchPanel) {
 		super(new BorderLayout());
+		this.searchPanel=searchPanel;
 
 		JPanel top=new JPanel(new BorderLayout());
 		top.add(new JLabel(getImage()), BorderLayout.WEST);
@@ -246,7 +248,7 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 		ScoringBreadthType CASiLSearchBreadthType=(ScoringBreadthType)searchBreadthType.getSelectedItem();
 		PeptideModification modification=(PeptideModification)modificationType.getSelectedItem();
 		float percolatorThreshold=0.01f;
-		CASiLSearchParameters parameters=new CASiLSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, percolatorThreshold, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, modification, CASiLSearchBreadthType, 0.0f);
+		CASiLSearchParameters parameters=new CASiLSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, percolatorThreshold, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, modification, CASiLSearchBreadthType, 0.0f, searchPanel.isAlignedBetweenFiles());
 		return parameters;
 	}
 	

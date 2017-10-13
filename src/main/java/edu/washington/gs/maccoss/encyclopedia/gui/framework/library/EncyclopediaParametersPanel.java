@@ -96,8 +96,10 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	private final SpinnerModel minQuantitativeIonNumber=new SpinnerNumberModel(3, 0, 100, 1);
 	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
 
-	public EncyclopediaParametersPanel() {
+	private final SearchPanel searchPanel;
+	public EncyclopediaParametersPanel(SearchPanel searchPanel) {
 		super(new BorderLayout());
+		this.searchPanel=searchPanel;
 
 		JPanel top=new JPanel(new BorderLayout());
 		top.add(new JLabel(getImage()), BorderLayout.WEST);
@@ -232,7 +234,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
 		int minQuantitativeIonNumberValue=((Integer)minQuantitativeIonNumber.getValue());
 		Optional<PeptideModification> modificationType=Optional.empty();
-		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, 0.01f, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, modificationType, ScoringBreadthType.ENTIRE_RT_WINDOW, numberOfExtraDecoyLibrariesValue);
+		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, 0.01f, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, modificationType, ScoringBreadthType.ENTIRE_RT_WINDOW, numberOfExtraDecoyLibrariesValue, searchPanel.isAlignedBetweenFiles());
 		return parameters;
 	}
 	

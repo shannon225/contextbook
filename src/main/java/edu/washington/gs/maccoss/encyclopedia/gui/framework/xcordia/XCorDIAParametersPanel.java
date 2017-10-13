@@ -86,8 +86,10 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	
 	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
 
-	public XCorDIAParametersPanel() {
+	private final SearchPanel searchPanel;
+	public XCorDIAParametersPanel(SearchPanel searchPanel) {
 		super(new BorderLayout());
+		this.searchPanel=searchPanel;
 
 		JPanel top=new JPanel(new BorderLayout());
 		top.add(new JLabel(image), BorderLayout.WEST);
@@ -245,7 +247,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		boolean isPercolatorTwo=PercolatorExecutor.V2_10.equals(percolatorVersion.getSelectedItem());
 		
 		XCordiaSearchParameters parameters=new XCordiaSearchParameters(aaConstants, fragmentation, precursorPPMValue, fragmentPPMValue, digestionEnzyme, isPercolatorTwo?2:3,
-				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, numberOfExtraDecoyLibrariesValue);
+				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, numberOfExtraDecoyLibrariesValue, searchPanel.isAlignedBetweenFiles());
 		return parameters;
 	}
 	

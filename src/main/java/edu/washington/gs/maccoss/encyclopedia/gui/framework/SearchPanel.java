@@ -107,13 +107,13 @@ public class SearchPanel extends JPanel {
 				EncyclopediaParametersPanel encyclopedia;
 				switch (Networking.isOffendingAddress()) {
 					case 1:
-						encyclopedia=new LindsaysSpecialEncyclopediaPanel();
+						encyclopedia=new LindsaysSpecialEncyclopediaPanel(this);
 						break;
 					case 2:
-						encyclopedia=new MoMosSpecialEncyclopediaPanel();
+						encyclopedia=new MoMosSpecialEncyclopediaPanel(this);
 						break;
 					default:
-						encyclopedia=new EncyclopediaParametersPanel();
+						encyclopedia=new EncyclopediaParametersPanel(this);
 						break;
 				}
 				HashMap<String, String> map=SearchParameters.readPreferences();
@@ -126,7 +126,7 @@ public class SearchPanel extends JPanel {
 		}
 		if (ProgramType.Global==program||ProgramType.CASiL==program) {
 			try {
-				CASiLParametersPanel CASiL=new CASiLParametersPanel();
+				CASiLParametersPanel CASiL=new CASiLParametersPanel(this);
 				HashMap<String, String> map=CASiLSearchParameters.readPreferences();
 				CASiLSearchParameters xcordiaParameters=CASiLSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(map));
 				CASiL.setParameters(xcordiaParameters, map.get(Encyclopedia.TARGET_LIBRARY_TAG), map.get(Encyclopedia.BACKGROUND_FASTA_TAG));
@@ -138,7 +138,7 @@ public class SearchPanel extends JPanel {
 		}
 		if (ProgramType.Global==program||ProgramType.PecanPie==program) {
 			try {
-				PecanParametersPanel pecan=new PecanParametersPanel();
+				PecanParametersPanel pecan=new PecanParametersPanel(this);
 				HashMap<String, String> map=PecanSearchParameters.readPreferences();
 				PecanSearchParameters parseParameters=PecanParameterParser.parseParameters(map);
 				pecan.setParameters(parseParameters, map.get(Pecanpie.BACKGROUND_FASTA_TAG), map.get(Pecanpie.TARGET_FASTA_TAG));
@@ -151,7 +151,7 @@ public class SearchPanel extends JPanel {
 		}
 		if (ProgramType.Global==program||ProgramType.XCorDIA==program) {
 			try {
-				XCorDIAParametersPanel xcordia=new XCorDIAParametersPanel();
+				XCorDIAParametersPanel xcordia=new XCorDIAParametersPanel(this);
 				HashMap<String, String> map=XCordiaSearchParameters.readPreferences();
 				XCordiaSearchParameters xcordiaParameters=XCordiaSearchParameters.convertFromPecan(PecanParameterParser.parseParameters(map));
 				xcordia.setParameters(xcordiaParameters, map.get(Pecanpie.BACKGROUND_FASTA_TAG), map.get(Pecanpie.TARGET_FASTA_TAG));
@@ -731,12 +731,16 @@ public class SearchPanel extends JPanel {
 					}
 				}
 
-				SearchToBLIBJob job=new SearchToBLIBJob(blibFile, getVisibleTab().getBackgroundFastaFile(), alignBetweenFiles.isSelected(), processorTableModel);
+				SearchToBLIBJob job=new SearchToBLIBJob(blibFile, getVisibleTab().getBackgroundFastaFile(), isAlignedBetweenFiles(), processorTableModel);
 				if (job!=null) {
 					processorTableModel.addJob(job);
 				}
 			}
 		}
+	}
+
+	public boolean isAlignedBetweenFiles() {
+		return alignBetweenFiles.isSelected();
 	}
 
 	public void saveELIB() {
@@ -764,7 +768,7 @@ public class SearchPanel extends JPanel {
 					}
 				}
 
-				SearchToELIBJob job=new SearchToELIBJob(elibFile, getVisibleTab().getBackgroundFastaFile(), alignBetweenFiles.isSelected(), processorTableModel);
+				SearchToELIBJob job=new SearchToELIBJob(elibFile, getVisibleTab().getBackgroundFastaFile(), isAlignedBetweenFiles(), processorTableModel);
 				if (job!=null) {
 					processorTableModel.addJob(job);
 				}

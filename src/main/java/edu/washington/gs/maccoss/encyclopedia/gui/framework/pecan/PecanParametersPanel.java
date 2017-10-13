@@ -84,8 +84,10 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 	private final SpinnerModel minQuantitativeIonNumber=new SpinnerNumberModel(3, 0, 100, 1);
 	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
 
-	public PecanParametersPanel() {
+	private final SearchPanel searchPanel;
+	public PecanParametersPanel(SearchPanel searchPanel) {
 		super(new BorderLayout());
+		this.searchPanel=searchPanel;
 
 		JPanel top=new JPanel(new BorderLayout());
 		top.add(new JLabel(image), BorderLayout.WEST);
@@ -242,7 +244,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		
 		boolean isPercolatorTwo=PercolatorExecutor.V2_10.equals(percolatorVersion.getSelectedItem());
 		PecanSearchParameters parameters=new PecanSearchParameters(aaConstants, fragmentation, precursorPPMValue, fragmentPPMValue, digestionEnzyme, isPercolatorTwo?2:3,
-				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, numberOfExtraDecoyLibrariesValue);
+				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, numberOfExtraDecoyLibrariesValue, searchPanel.isAlignedBetweenFiles());
 		return parameters;
 	}
 	

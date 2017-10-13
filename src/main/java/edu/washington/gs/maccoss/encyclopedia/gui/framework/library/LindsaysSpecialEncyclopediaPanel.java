@@ -14,7 +14,10 @@ public class LindsaysSpecialEncyclopediaPanel extends EncyclopediaParametersPane
 	private static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">Lindsay's MaziepeDIA: Now powered by chilly pup!<br></p></b>"
 			+"<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">MaziepeDIA extracts peptide fragmentation chromatograms from MZML files, matches them to spectra in libraries, and calculates various scoring features. These features are interpreted by Percolator to identify peptides.";
 
-	
+	public LindsaysSpecialEncyclopediaPanel(SearchPanel searchPanel) {
+		super(searchPanel);
+	}
+
 	public String getProgramName() {
 		return programName;
 	}
