@@ -69,6 +69,7 @@ public class Thesaurus {
 			Logger.timelessLogLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.timelessLogLine("Required Parameters: ");
 			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file");
+			Logger.timelessLogLine("\t-f\tprotein .FASTA database");
 			Logger.timelessLogLine("\t-l\tlibrary .ELIB file");
 			Logger.timelessLogLine("Other Parameters: ");
 			Logger.timelessLogLine("\t-o\toutput report file (default: [input file]"+CASiLJobData.OUTPUT_FILE_SUFFIX+")");
@@ -88,13 +89,14 @@ public class Thesaurus {
 			System.exit(1);
 			
 		} else {
-			if (!arguments.containsKey(Encyclopedia.INPUT_DIA_TAG)||!arguments.containsKey(Encyclopedia.TARGET_LIBRARY_TAG)) {
-				Logger.errorLine("You are required to specify an input file ("+Encyclopedia.INPUT_DIA_TAG+") and a library file ("+Encyclopedia.TARGET_LIBRARY_TAG+")");
+			if (!arguments.containsKey(Encyclopedia.INPUT_DIA_TAG)||!arguments.containsKey(Encyclopedia.TARGET_LIBRARY_TAG)||!arguments.containsKey(Encyclopedia.BACKGROUND_FASTA_TAG)) {
+				Logger.errorLine("You are required to specify an input file ("+Encyclopedia.INPUT_DIA_TAG+"), a library file ("+Encyclopedia.TARGET_LIBRARY_TAG+"), and a fasta file ("+Encyclopedia.BACKGROUND_FASTA_TAG+")");
 				System.exit(1);
 			}
 
 			File diaFile=new File(arguments.get(Encyclopedia.INPUT_DIA_TAG));
 			File libraryFile=new File(arguments.get(Encyclopedia.TARGET_LIBRARY_TAG));
+			File fastaFile=new File(arguments.get(Encyclopedia.BACKGROUND_FASTA_TAG));
 
 			File outputFile;
 			if (arguments.containsKey(Encyclopedia.OUTPUT_RESULT_TAG)) {
@@ -127,7 +129,7 @@ public class Thesaurus {
 				Logger.logLine(parameters.toString());
 
 				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
-				CASiLJobData job=new CASiLJobData(diaFile, library, outputFile, factory);
+				CASiLJobData job=new CASiLJobData(diaFile, library, outputFile, fastaFile, factory);
 				runSearch(new EmptyProgressIndicator(), job);
 			} catch (Exception e) {
 				Logger.errorLine("Encountered Fatal Error!");
@@ -139,11 +141,10 @@ public class Thesaurus {
 	}
 
 	public static void runSearch(ProgressIndicator progress, CASiLJobData job) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
-		
-		File outputFile=job.getOutputFile();
-		if (outputFile.exists()&&outputFile.canRead()) {
+
+		if (job.getPercolatorFiles().hasDataAvailable()) {
 			try {
-				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(outputFile, job.getParameters().getEffectivePercolatorThreshold(), false).x;
+				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideOutputFile(), job.getParameters().getEffectivePercolatorThreshold(), false).x;
 				
 				File elibFile=job.getResultLibrary();
 				if (!elibFile.exists()) {
@@ -152,7 +153,7 @@ public class Thesaurus {
 					Logger.logLine("Writing elib result library...");
 					ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 					jobs.add(job);
-					SearchToBLIB.convert(progress, jobs, elibFile, false, true);
+					SearchToBLIB.convert(progress, jobs, job.getPercolatorFiles().getFastaFile(), elibFile, false, true);
 				}
 				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 				//progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides ("+ParsimonyProteinGrouper.groupProteins(passingPeptidesFromTSV).size()+" proteins) identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
@@ -174,11 +175,7 @@ public class Thesaurus {
 		
 		SearchParameters parameters=job.getParameters();
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
-		if (parameters.isDDA()) {
-			throw new EncyclopediaException("Sorry, CASiL doesn't work with DDA data!");
-		} else {
-			runSearch(progress, job, stripefile);
-		}
+		runSearch(progress, job, stripefile);
 		stripefile.close();
 	}
 
@@ -213,7 +210,7 @@ public class Thesaurus {
 		}
 		
 		LibraryInterface library=job.getLibrary();
-		File featureFile=job.getFeatureFile();
+		File featureFile=job.getPercolatorFiles().getInputTSV();
 		File localizationFile=job.getLocalizationFile();
 		
 		int cores=parameters.getNumberOfThreadsUsed();
@@ -323,7 +320,7 @@ public class Thesaurus {
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		jobs.add(job);
 		try {
-			SearchToBLIB.convert(progress, jobs, elibFile, false, true);
+			SearchToBLIB.convert(progress, jobs, job.getPercolatorFiles().getFastaFile(), elibFile, false, true);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered error creating elib report...");
 			Logger.errorException(e);

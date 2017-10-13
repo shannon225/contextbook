@@ -2,23 +2,20 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.io.File;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public abstract class AbstractSearchJobData implements SearchJobData {
 	private final File diaFile;
-	private final File featureFile;
-	private final File outputFile;
-	private final File decoyFile;
+	private final PercolatorExecutionData percolatorFiles;
 	private final SearchParameters parameters;
 	private final String version;
 
-	public AbstractSearchJobData(File diaFile, File featureFile, File outputFile, File decoyFile, SearchParameters parameters, String version) {
+	public AbstractSearchJobData(File diaFile, PercolatorExecutionData percolatorFiles, SearchParameters parameters, String version) {
 		this.diaFile=diaFile;
-		this.featureFile=featureFile;
-		this.outputFile=outputFile;
-		this.decoyFile=decoyFile;
+		this.percolatorFiles=percolatorFiles;
 		this.parameters=parameters;
 		this.version=version;
 	}
@@ -32,20 +29,11 @@ public abstract class AbstractSearchJobData implements SearchJobData {
 	public StripeFileInterface getDiaFileReader() {
 		return StripeFileGenerator.getFile(getDiaFile(), getParameters());
 	}
-
+	
 	@Override
-	public File getFeatureFile() {
-		return featureFile;
-	}
-
-	@Override
-	public File getOutputFile() {
-		return outputFile;
-	}
-
-	@Override
-	public File getOutputDecoyFile() {
-		return decoyFile;
+	public PercolatorExecutionData getPercolatorFiles() {
+		// TODO Auto-generated method stub
+		return percolatorFiles;
 	}
 
 	@Override
@@ -60,9 +48,22 @@ public abstract class AbstractSearchJobData implements SearchJobData {
 
 	@Override
 	public boolean hasBeenRun() {
-		if (!diaFile.exists()) Logger.errorLine("Missing .DIA file: "+diaFile.getName());
-		if (!featureFile.exists()) Logger.errorLine("Missing feature file: "+featureFile.getName());
-		if (!outputFile.exists()) Logger.errorLine("Missing output file: "+outputFile.getName());
-		return diaFile.exists()&&featureFile.exists()&&outputFile.exists();
+		if (!diaFile.exists()) {
+			Logger.errorLine("Missing .DIA file: "+diaFile.getName());
+			return false;
+		}
+		if (!percolatorFiles.getInputTSV().exists()) {
+			Logger.errorLine("Missing feature file: "+percolatorFiles.getInputTSV().getName());
+			return false;
+		}
+		if (!percolatorFiles.getPeptideOutputFile().exists()) {
+			Logger.errorLine("Missing output file: "+percolatorFiles.getPeptideOutputFile().getName());
+			return false;
+		}
+		if (!percolatorFiles.getProteinOutputFile().exists()) {
+			Logger.errorLine("Missing output file: "+percolatorFiles.getProteinOutputFile().getName());
+			return false;
+		}
+		return true;
 	}
 }

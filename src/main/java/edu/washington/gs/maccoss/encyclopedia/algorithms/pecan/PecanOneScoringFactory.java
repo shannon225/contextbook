@@ -20,11 +20,11 @@ import gnu.trove.map.hash.TDoubleObjectHashMap;
 public class PecanOneScoringFactory implements PecanScoringFactory {
 	public static final String version="0.3.3";
 	private final PecanSearchParameters parameters;
-	private final File outputFile;
+	private final File featureFile;
 
-	public PecanOneScoringFactory(PecanSearchParameters parameters, File outputFile) {
+	public PecanOneScoringFactory(PecanSearchParameters parameters, File featureFile) {
 		this.parameters=parameters;
-		this.outputFile=outputFile;
+		this.featureFile=featureFile;
 	}
 	
 	public String getVersion() {
@@ -59,6 +59,6 @@ public class PecanOneScoringFactory implements PecanScoringFactory {
 
 	@Override
 	public PeptideScoringResultsConsumer getResultsConsumer(BlockingQueue<PeptideScoringResult> resultsQueue, StripeFileInterface diaFile) {
-		return new PecanScoringResultsToTSVConsumer(outputFile, diaFile, resultsQueue, parameters.getNumberOfReportedPeaks());
+		return new PecanScoringResultsToTSVConsumer(featureFile, diaFile, resultsQueue, parameters.getNumberOfReportedPeaks());
 	}
 }

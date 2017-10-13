@@ -150,6 +150,10 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		backgroundFasta.askForFiles();
 	}
 
+	@Override
+	public File getBackgroundFastaFile() {
+		return backgroundFasta.getFile();
+	}
 	
 	public String getProgramName() {
 		return programName;
@@ -201,9 +205,6 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	}
 
 	static SearchJob getJob(File diaFile, File fastaFile, File targetFile, JobProcessor processor, PecanSearchParameters parameters) {
-		File outputFile=new File(diaFile.getAbsolutePath()+XCorDIAJobData.OUTPUT_FILE_SUFFIX);
-		File featureFile=new File(outputFile.getAbsolutePath()+XCorDIAJobData.FEATURE_FILE_SUFFIX);
-		
 		ArrayList<FastaPeptideEntry> targets=null;
 		if (targetFile!=null&&!targetFile.equals(fastaFile)) {
 			Logger.logLine("Reading targets from ["+targetFile.getName()+"]");
@@ -220,7 +221,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		}
 		
 		XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(parameters);
-		return new XCorDIAJob(processor, new XCorDIAJobData(Optional.ofNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory));
+		return new XCorDIAJob(processor, new XCorDIAJobData(Optional.ofNullable(targets), diaFile, fastaFile, factory));
 	}
 
 	public XCordiaSearchParameters getParameters() {

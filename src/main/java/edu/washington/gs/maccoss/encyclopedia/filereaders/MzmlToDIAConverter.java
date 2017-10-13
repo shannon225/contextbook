@@ -155,9 +155,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 					float averageDutyCycle=General.mean(deltas);
 					dutyCycleMap.put(range, averageDutyCycle);
 				}
-				if (!parameters.isDDA()) {
-					stripeFile.setRanges(dutyCycleMap);
-				}
+				stripeFile.setRanges(dutyCycleMap);
 
 				stripeFile.saveAsFile(diaFile);
 				stripeFile.close();
@@ -239,9 +237,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 					float averageDutyCycle=General.mean(deltas);
 					dutyCycleMap.put(range, averageDutyCycle);
 				}
-				if (!parameters.isDDA()) {
-					stripeFile.setRanges(dutyCycleMap);
-				}
+				stripeFile.setRanges(dutyCycleMap);
 
 				stripeFile.saveAsFile(diaFile);
 				stripeFile.close();

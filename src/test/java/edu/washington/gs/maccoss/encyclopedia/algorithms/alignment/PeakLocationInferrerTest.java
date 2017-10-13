@@ -6,10 +6,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
@@ -20,9 +23,10 @@ public class PeakLocationInferrerTest {
 		
 		HashMap<String, String> map=SearchParameterParser.getDefaultParameters();
 		SearchParameters parameters=SearchParameterParser.parseParameters(map);
+		File fastaFile=new File("");
 		
-		QuantitativeSearchJobData job1=getData(parameters, "/Users/searleb/Documents/projects/encyclopedia/mzml/zero_hela/121115_bcs_hela_24mz_400_1000_0D_1.dia");
-		QuantitativeSearchJobData job2=getData(parameters, "/Users/searleb/Documents/projects/encyclopedia/mzml/zero_hela/121115_bcs_hela_24mz_400_1000_0D_2.dia");
+		QuantitativeSearchJobData job1=getData(parameters, "/Users/searleb/Documents/projects/encyclopedia/mzml/zero_hela/121115_bcs_hela_24mz_400_1000_0D_1.dia", fastaFile);
+		QuantitativeSearchJobData job2=getData(parameters, "/Users/searleb/Documents/projects/encyclopedia/mzml/zero_hela/121115_bcs_hela_24mz_400_1000_0D_2.dia", fastaFile);
 		//QuantitativeSearchJobData job1=getData(parameters, "/Users/searleb/Documents/school/projects/may_asms/hela/on_column/timecourse/23aug2017_hela_serum_timecourse_wide_1a.dia");
 		//QuantitativeSearchJobData job2=getData(parameters, "/Users/searleb/Documents/school/projects/may_asms/hela/on_column/timecourse/23aug2017_hela_serum_timecourse_wide_1b.dia");
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
@@ -40,23 +44,12 @@ public class PeakLocationInferrerTest {
 		System.out.println("b    j2: "+inferrer.getPreciseRTInSec(job2, "QKHELKM[+16.0]QK", 1689f)+"\t"+inferrer.getWarpedRTInSec(job2, "QKHELKM[+16.0]QK")+"\t QKHELKM[+16.0]QK"); // only in a	
 	}
 
-	private static QuantitativeSearchJobData getData(SearchParameters parameters, String dia) {
+	private static QuantitativeSearchJobData getData(SearchParameters parameters, String dia, File fastaFile) throws Exception {
 		File diaFile=new File(dia);
-		File outputFile=new File(diaFile.getAbsolutePath()+".encyclopedia.txt");
-		File decoyFile=new File(diaFile.getAbsolutePath()+".encyclopedia.decoy.txt");
-		File featureFile=new File(diaFile.getAbsolutePath()+".features.txt");
-		final File libraryFile=new File(diaFile.getAbsolutePath()+".elib");
-		QuantitativeSearchJobData job=new QuantitativeSearchJobData(diaFile, featureFile, outputFile, decoyFile, parameters, "1") {
-			@Override
-			public String getSearchType() {
-				return "Dummy";
-			}
-			
-			@Override
-			public File getResultLibrary() {
-				return libraryFile;
-			}
-		};
+		LibraryFile libraryFile=new LibraryFile();
+		libraryFile.openFile(new File(diaFile.getAbsolutePath()+".elib"));
+		
+		EncyclopediaJobData job=new EncyclopediaJobData(diaFile, fastaFile, libraryFile, new EncyclopediaOneScoringFactory(parameters));
 		return job;
 	}
 	
@@ -64,7 +57,7 @@ public class PeakLocationInferrerTest {
 		ArrayList<PercolatorPeptide> peptides=new ArrayList<>();
 		
 		for (SearchJobData job : jobs) {
-			ArrayList<PercolatorPeptide> local=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), job.getParameters().getEffectivePercolatorThreshold(), false).x;
+			ArrayList<PercolatorPeptide> local=PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideOutputFile(), job.getParameters().getEffectivePercolatorThreshold(), false).x;
 			for (PercolatorPeptide pep : local) {
 				if ("KGSITSVQAIYVPADDLTDPAPATTFAHLDATTVLSR".equals(pep.getPeptideModSeq())) peptides.add(pep);
 				else if ("NSSYVHGGVDASGKPQEAVYGQNDIHHK".equals(pep.getPeptideModSeq())) peptides.add(pep);

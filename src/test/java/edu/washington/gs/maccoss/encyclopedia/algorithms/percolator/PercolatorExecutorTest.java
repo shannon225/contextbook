@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -15,10 +16,14 @@ import junit.framework.TestCase;
 
 public class PercolatorExecutorTest extends TestCase {
 	public static void main(String[] args) throws Exception {
-		File featureFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated_features.txt");
-		File outputFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated_new_results.txt");
-		File decoyFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated_new_decoy.txt");
-		PercolatorExecutor e=new PercolatorExecutor(featureFile, outputFile, decoyFile, getDefaultPercolaterVersion(), false);
+		File fastaFile=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640_plusReverse.fasta");
+		File featureFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated.features.txt");
+		File outputFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated.peptide.txt");
+		File decoyFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated.peptide_decoy.txt");
+		File outputProteinFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated.protein.txt");
+		File decoyProteinFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated.protein_decoy.txt");
+		PercolatorExecutionData percolatorFiles=new PercolatorExecutionData(featureFile, fastaFile, outputFile, decoyFile, outputProteinFile, decoyProteinFile);
+		PercolatorExecutor e=new PercolatorExecutor(getDefaultPercolaterVersion(), percolatorFiles);
 		BlockingQueue<OutputMessage> result=e.start();
 
 		int outputlines=0;
@@ -53,26 +58,40 @@ public class PercolatorExecutorTest extends TestCase {
 		InputStream is=getClass().getResourceAsStream("/pecan.feature.txt");
 		File featureFile=File.createTempFile("pecan", ".feature");
 		featureFile.deleteOnExit();
-
-		File outputFile=File.createTempFile("percolator", ".txt");
-		outputFile.deleteOnExit();
-
-		File decoyFile=File.createTempFile("percolator", ".decoy.txt");
-		decoyFile.deleteOnExit();
-
 		Files.copy(is, featureFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		
+		is=getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
+		File fastaFile=File.createTempFile("ecoli", ".fasta");
+		fastaFile.deleteOnExit();
+		Files.copy(is, fastaFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		
+		PercolatorExecutionData percolatorFiles=getPercolatorFiles(featureFile, fastaFile);
 
-		Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorExecutor.executePercolatorTSV(getDefaultPercolaterVersion(), featureFile, outputFile, decoyFile, 0.01f);
+
+		Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorExecutor.executePercolatorTSV(getDefaultPercolaterVersion(), percolatorFiles, 0.01f);
 		assertEquals(405, pair.x.size());
 		assertEquals(0.348315f, pair.y, 0.001f);
 		
-		pair=PercolatorReader.getPassingPeptidesFromTSV(outputFile, 0.01f, false);
+		pair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideOutputFile(), 0.01f, false);
 		assertEquals(405, pair.x.size());
 		assertEquals(0.348315f, pair.y, 0.001f);
 		
-		Pair<ArrayList<PercolatorPeptide>, Float> decoyPair=PercolatorReader.getPassingPeptidesFromTSV(decoyFile, 0.01f, true);
+		Pair<ArrayList<PercolatorPeptide>, Float> decoyPair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideDecoyFile(), 0.01f, true);
 		assertEquals(3, decoyPair.x.size());
 		assertEquals(0.0f, decoyPair.y, 0.001f);
+	}
+
+	public static PercolatorExecutionData getPercolatorFiles(File featureFile, File fastaFile) throws IOException {
+		File outputFile=File.createTempFile("percolator", ".txt");
+		outputFile.deleteOnExit();
+		File decoyFile=File.createTempFile("percolator", ".decoy.txt");
+		decoyFile.deleteOnExit();
+		File outputProteinFile=File.createTempFile("percolator", "protein.txt");
+		outputProteinFile.deleteOnExit();
+		File decoyProteinFile=File.createTempFile("percolator", ".protein_decoy.txt");
+		decoyProteinFile.deleteOnExit();
+		PercolatorExecutionData percolatorFiles=new PercolatorExecutionData(featureFile, fastaFile, outputFile, decoyFile, outputProteinFile, decoyProteinFile);
+		return percolatorFiles;
 	}
 
 	//TODO: issue #23: Percolator v3 fails silently with exit code 255 on some Windows machines

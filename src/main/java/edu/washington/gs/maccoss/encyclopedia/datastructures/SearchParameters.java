@@ -69,10 +69,11 @@ public class SearchParameters {
 		this.numberOfExtraDecoyLibrariesSearched=getNumberOfExtraDecoyLibrariesSearched;
 	}
 	
-	public void savePreferences(File libraryFile) throws IOException,BackingStoreException {
+	public void savePreferences(File libraryFile, File fastaFile) throws IOException,BackingStoreException {
 		Preferences prefs=Preferences.userRoot().node("encyclopedia");
 		HashMap<String, String> map=toParameterMap();
 		if (libraryFile!=null) map.put(Encyclopedia.TARGET_LIBRARY_TAG, libraryFile.getAbsolutePath());
+		if (fastaFile!=null) map.put(Encyclopedia.BACKGROUND_FASTA_TAG, fastaFile.getAbsolutePath());
 		for (Entry<String, String> entry : map.entrySet()) {
 			//System.out.println("Writing EncyclopeDIA preference "+entry.getKey()+" = "+entry.getValue());
 			prefs.put(entry.getKey(), entry.getValue());
@@ -206,10 +207,6 @@ public class SearchParameters {
 
 	public boolean isDeconvoluteOverlappingWindows() {
 		return dataAcquisitionType==DataAcquisitionType.OVERLAPPING_DIA;
-	}
-	
-	public boolean isDDA() {
-		return dataAcquisitionType==DataAcquisitionType.DDA;
 	}
 	
 	public int getNumberOfThreadsUsed() {

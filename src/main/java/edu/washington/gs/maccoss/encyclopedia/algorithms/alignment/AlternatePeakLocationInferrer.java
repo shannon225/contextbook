@@ -177,7 +177,7 @@ public class AlternatePeakLocationInferrer {
 					}
 					
 				} catch (EncyclopediaException e) {
-					Logger.errorLine("Parsing error indicates "+job.getOutputFile().getName()+" isn't from a quantitative search (EncyclopeDIA or XCorDIA):");
+					Logger.errorLine("Parsing error indicates "+job.getPercolatorFiles().getPeptideOutputFile().getName()+" isn't from a quantitative search (EncyclopeDIA or XCorDIA):");
 					Logger.errorException(e);
 				} catch (IOException e) {
 					throw new EncyclopediaException("Error parsing results library", e);

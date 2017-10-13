@@ -77,9 +77,10 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	private static final String programShortDescription="EncyclopeDIA Library Search";
 	private static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">EncyclopeDIA: Library Searching Directly from Data-Independent Acquisition (DIA) MS/MS Data<br></p></b>"
 			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">EncyclopeDIA extracts peptide fragmentation chromatograms from MZML files, matches them to spectra in libraries, and calculates various scoring features. These features are interpreted by Percolator to identify peptides.";
-	
+
+	private final FileChooserPanel backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta"), true);
 	private final FileChooserPanel libraryFileChooser;
-	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {DataAcquisitionType.toName(DataAcquisitionType.OVERLAPPING_DIA), DataAcquisitionType.toName(DataAcquisitionType.DIA), DataAcquisitionType.toName(DataAcquisitionType.DDA)});
+	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {DataAcquisitionType.toName(DataAcquisitionType.OVERLAPPING_DIA), DataAcquisitionType.toName(DataAcquisitionType.DIA)});
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "Pepsin A"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.YONLY), FragmentationType.toName(FragmentationType.ETD)});
 	private final JComboBox<String> percolatorVersion=new JComboBox<String>(new String[] {PercolatorExecutor.V3_01, PercolatorExecutor.V2_10});
@@ -109,9 +110,10 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(new LabeledComponent("<p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Parameters", new JLabel()));
-		
+
 		libraryFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), true);
 		options.add(libraryFileChooser);
+		options.add(backgroundFasta);
 		options.add(new LabeledComponent("Target/Decoy Approach", numberOfExtraDecoyLibraries));
 		options.add(new LabeledComponent("Data Acquisition Type", acquisition));
 		options.add(new LabeledComponent("Enzyme", enzyme));
@@ -161,6 +163,11 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	public void askForSetupFile() {
 		libraryFileChooser.askForFiles();
 	}
+
+	@Override
+	public File getBackgroundFastaFile() {
+		return backgroundFasta.getFile();
+	}
 	
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.gui.pecan.ParametersPanelInterface#canLoadData()
@@ -169,6 +176,9 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	public Optional<String> canLoadData() {
 		if (libraryFileChooser.getFile()==null) {
 			return Optional.of("Please load a library file first!");	
+		}
+		if (getBackgroundFastaFile()==null) {
+			return Optional.of("Please load a fasta file first!");	
 		}
 		return Optional.empty();
 	}
@@ -180,8 +190,9 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	public SwingJob getJob(File diaFile, JobProcessorTableModel model) {
 		SearchParameters parameters=getParameters();
 		File libraryFile=libraryFileChooser.getFile();
+		File fastaFile=getBackgroundFastaFile();
 		if (libraryFile==null) return null;
-		SearchJob job=getJob(diaFile, libraryFile, model, parameters);
+		SearchJob job=getJob(diaFile, fastaFile, libraryFile, model, parameters);
 
 		if (job!=null) {
 			model.addJob(job);
@@ -190,8 +201,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	}
 
 	private static HashMap<File, LibraryInterface> libraries=new HashMap<File, LibraryInterface>();
-	static SearchJob getJob(File diaFile, File libraryFile, JobProcessor processor, SearchParameters parameters) {
-		File outputFile=new File(diaFile.getAbsolutePath()+EncyclopediaJobData.OUTPUT_FILE_SUFFIX);
+	static SearchJob getJob(File diaFile, File fastaFile, File libraryFile, JobProcessor processor, SearchParameters parameters) {
 		
 		LibraryInterface library=libraries.get(libraryFile);
 		if (library==null) {
@@ -200,7 +210,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		}
 		
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
-		EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, outputFile, factory);
+		EncyclopediaJobData job=new EncyclopediaJobData(diaFile, fastaFile, library, factory);
 		return new EncyclopediaJob(processor, job);
 	}
 
@@ -226,10 +236,14 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		return parameters;
 	}
 	
-	public void setParameters(SearchParameters params, String libraryFileName) {
+	public void setParameters(SearchParameters params, String libraryFileName, String fastaFileName) {
 		if (libraryFileName!=null) {
 			File libraryFile=new File(libraryFileName);
 			if (libraryFile.exists()) libraryFileChooser.update(libraryFile);
+		}
+		if (fastaFileName!=null) {
+			File fastaFile=new File(fastaFileName);
+			if (fastaFile.exists()) backgroundFasta.update(fastaFile);
 		}
 		
 		acquisition.setSelectedItem(DataAcquisitionType.toName(params.getDataAcquisitionType()));
@@ -287,7 +301,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	@Override
 	public void savePreferences() {
 		try {
-			getParameters().savePreferences(libraryFileChooser.getFile());
+			getParameters().savePreferences(libraryFileChooser.getFile(), backgroundFasta.getFile());
 		} catch (Exception e) {
 			Logger.errorLine("Error writing parameters to disk!");
 			Logger.errorException(e);

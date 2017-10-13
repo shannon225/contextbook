@@ -26,12 +26,12 @@ public class PercolatorExecutor extends ExternalExecutor {
 	public static final String V2_10="v2-10";
 	public static final byte DEFAULT_VERSION_NUMBER=3;
 
-	PercolatorExecutor(File tsv, File outputFile, File decoyFile, int percolatorVersionNumber, boolean useXML) {
-		super(generateCommand(tsv, outputFile, decoyFile, percolatorVersionNumber, useXML));
+	PercolatorExecutor(int percolatorVersion, PercolatorExecutionData commandData) {
+		super(generateCommand(percolatorVersion, commandData));
 	}
 
-	public static Pair<ArrayList<PercolatorPeptide>, Float> executePercolatorTSV(int percolatorVersionNumber, File featureFile, File percolatorResultFile, File percolatorDecoyFile, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
-		PercolatorExecutor e=new PercolatorExecutor(featureFile, percolatorResultFile, percolatorDecoyFile, percolatorVersionNumber, false);
+	public static Pair<ArrayList<PercolatorPeptide>, Float> executePercolatorTSV(int percolatorVersion, PercolatorExecutionData commandData, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+		PercolatorExecutor e=new PercolatorExecutor(percolatorVersion, commandData);
 		BlockingQueue<OutputMessage> result=e.start();
 
 		Float pi0=null;
@@ -68,12 +68,12 @@ public class PercolatorExecutor extends ExternalExecutor {
 		checkResult(e);
 		
 		try {
-		    Files.write(percolatorResultFile.toPath(), (PI_0_TAG+pi0+System.lineSeparator()).getBytes(), StandardOpenOption.APPEND);
+		    Files.write(commandData.getPeptideOutputFile().toPath(), (PI_0_TAG+pi0+System.lineSeparator()).getBytes(), StandardOpenOption.APPEND);
 		}catch (IOException ioe) {
 			throw new EncyclopediaException("Error appending to Percolator text file", ioe);
 		}
 
-		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(percolatorResultFile, threshold, false);
+		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(commandData.getPeptideOutputFile(), threshold, false);
 		
 		return passingPeptides;
 	}
@@ -88,21 +88,13 @@ public class PercolatorExecutor extends ExternalExecutor {
 		return peptideString.substring(peptideString.indexOf('.')+1, peptideString.lastIndexOf('.'));
 	}
 
-	static String[] generateCommand(File tsv, File outputFile, File decoyFile, int percolatorVersionNumber, boolean useXML) {
-		File percolator=getPercolator(percolatorVersionNumber);
+	static String[] generateCommand(int percolatorVersion, PercolatorExecutionData commandData) {
+		File percolator=getPercolator(percolatorVersion);
 
-		if (percolatorVersionNumber==2) {
-			if (useXML) {
-				return new String[] {percolator.getAbsolutePath(), "-y", "--xmloutput", outputFile.getAbsolutePath(), "--decoy-xml-output", tsv.getAbsolutePath()};
-			} else {
-				return new String[] {percolator.getAbsolutePath(), "--results-peptides", outputFile.getAbsolutePath(), "--decoy-results-peptides", decoyFile.getAbsolutePath(), "-y", tsv.getAbsolutePath()};
-			}
+		if (percolatorVersion==2) {
+			return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(), "-y", commandData.getInputTSV().getAbsolutePath()};
 		} else {
-			if (useXML) {
-				return new String[] {percolator.getAbsolutePath(), "-y", "--no-terminate", "-N", "200000", "--xmloutput", outputFile.getAbsolutePath(), "--decoy-xml-output", tsv.getAbsolutePath()};
-			} else {
-				return new String[] {percolator.getAbsolutePath(), "--results-peptides", outputFile.getAbsolutePath(), "--decoy-results-peptides", decoyFile.getAbsolutePath(), "-y", "--no-terminate", "-N", "200000", tsv.getAbsolutePath()};
-			}
+			return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(), "-y", "--no-terminate", "-N", "200000", commandData.getInputTSV().getAbsolutePath()};	
 		}
 	}
 

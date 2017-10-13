@@ -14,7 +14,7 @@ public class SearchParametersTest extends TestCase {
 		
 		SearchParameters params=SearchParameterParser.parseParameters(map);
 		assertEquals(1000.0, params.getPrecursorOffsetPPM());
-		params.savePreferences(null);
+		params.savePreferences(null, null);
 		
 		SearchParameters readParams=SearchParameterParser.parseParameters(SearchParameters.readPreferences());
 		assertEquals(1000.0, readParams.getPrecursorOffsetPPM());
@@ -23,7 +23,7 @@ public class SearchParametersTest extends TestCase {
 		
 		params=SearchParameterParser.parseParameters(map);
 		assertEquals(-1000.0, params.getPrecursorOffsetPPM());
-		params.savePreferences(null);
+		params.savePreferences(null, null);
 		
 		readParams=SearchParameterParser.parseParameters(SearchParameters.readPreferences());
 		assertEquals(-1000.0, readParams.getPrecursorOffsetPPM());

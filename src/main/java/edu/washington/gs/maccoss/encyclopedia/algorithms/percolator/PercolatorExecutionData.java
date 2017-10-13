@@ -1,0 +1,53 @@
+package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
+
+import java.io.File;
+
+public class PercolatorExecutionData {
+	private final File inputTSV;
+	private final File fastaFile;
+	private final File peptideOutputFile;
+	private final File peptideDecoyFile;
+	private final File proteinOutputFile;
+	private final File proteinDecoyFile;
+
+	public PercolatorExecutionData(File inputTSV, File fastaFile, File peptideOutputFile, File peptideDecoyFile, File proteinOutputFile, File proteinDecoyFile) {
+		this.inputTSV=inputTSV;
+		this.fastaFile=fastaFile;
+		this.peptideOutputFile=peptideOutputFile;
+		this.peptideDecoyFile=peptideDecoyFile;
+		this.proteinOutputFile=proteinOutputFile;
+		this.proteinDecoyFile=proteinDecoyFile;
+	}
+	
+	public boolean hasDataAvailable() {
+		if (!peptideOutputFile.exists()||!peptideOutputFile.canRead()) return false;
+		if (!peptideDecoyFile.exists()||!peptideDecoyFile.canRead()) return false;
+		if (!proteinOutputFile.exists()||!proteinOutputFile.canRead()) return false;
+		if (!proteinDecoyFile.exists()||!proteinDecoyFile.canRead()) return false;
+		return true;
+	}
+	
+	public File getFastaFile() {
+		return fastaFile;
+	}
+
+	public File getInputTSV() {
+		return inputTSV;
+	}
+
+	public File getPeptideOutputFile() {
+		return peptideOutputFile;
+	}
+
+	public File getPeptideDecoyFile() {
+		return peptideDecoyFile;
+	}
+
+	public File getProteinOutputFile() {
+		return proteinOutputFile;
+	}
+
+	public File getProteinDecoyFile() {
+		return proteinDecoyFile;
+	}
+}

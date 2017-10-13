@@ -20,4 +20,5 @@ public interface ParametersPanelInterface {
 	void askForSetupFile();
 	SearchParameters getParameters();
 	void savePreferences();
+	File getBackgroundFastaFile();
 }

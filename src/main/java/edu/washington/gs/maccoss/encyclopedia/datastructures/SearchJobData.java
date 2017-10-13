@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 
 import java.io.File;
@@ -13,11 +14,7 @@ public interface SearchJobData {
 
 	StripeFileInterface getDiaFileReader();
 
-	File getFeatureFile();
-
-	File getOutputFile();
-
-	File getOutputDecoyFile();
+	PercolatorExecutionData getPercolatorFiles();
 
 	SearchParameters getParameters();
 

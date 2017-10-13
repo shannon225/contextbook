@@ -1,11 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 public enum DataAcquisitionType {
-	DIA, OVERLAPPING_DIA, DDA;
+	DIA, OVERLAPPING_DIA;
 	public static String toString(DataAcquisitionType type) {
 		switch (type) {
-			case DDA:
-				return "DDA";
 			case DIA:
 				return "DIA";
 			case OVERLAPPING_DIA:
@@ -17,8 +15,6 @@ public enum DataAcquisitionType {
 	
 	public static String toName(DataAcquisitionType type) {
 		switch (type) {
-			case DDA:
-				return "DDA";
 			case DIA:
 				return "Non-Overlapping DIA";
 			case OVERLAPPING_DIA:
@@ -29,7 +25,6 @@ public enum DataAcquisitionType {
 	}
 	
 	public static DataAcquisitionType getAcquisitionType(String s) {
-		if ("DDA".equalsIgnoreCase(s)) return DDA;
 		if ("FALSE".equalsIgnoreCase(s)) return DIA;
 		if ("DIA".equalsIgnoreCase(s)) return DIA;
 		if ("TRUE".equalsIgnoreCase(s)) return OVERLAPPING_DIA;

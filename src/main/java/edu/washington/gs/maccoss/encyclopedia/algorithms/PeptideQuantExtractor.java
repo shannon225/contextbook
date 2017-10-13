@@ -198,7 +198,7 @@ public class PeptideQuantExtractor {
 			}
 		};
 		
-		TableParser.parseTSV(job.getFeatureFile(), muscle);
+		TableParser.parseTSV(job.getPercolatorFiles().getInputTSV(), muscle);
 
 		try {
 			Logger.logLine("Parsed features and scores for "+data.size()+" peptides.");

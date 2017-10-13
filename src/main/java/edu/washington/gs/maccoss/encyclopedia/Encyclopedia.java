@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,6 +67,7 @@ public class Encyclopedia {
 	public static final String TARGET_LIBRARY_TAG="-l";
 	public static final String OUTPUT_RESULT_TAG="-o";
 	public static final String INPUT_DIA_TAG="-i";
+	public static final String BACKGROUND_FASTA_TAG="-f";
 	
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
@@ -87,6 +86,7 @@ public class Encyclopedia {
 			Logger.timelessLogLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.timelessLogLine("Required Parameters: ");
 			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file");
+			Logger.timelessLogLine("\t-f\tprotein .FASTA database");
 			Logger.timelessLogLine("\t-l\tlibrary .ELIB file");
 			Logger.timelessLogLine("Other Programs: ");
 			Logger.timelessLogLine("\t-browser\trun ELIB Browser (use -browser -h for ELIB Browser help)");
@@ -109,13 +109,14 @@ public class Encyclopedia {
 			System.exit(1);
 			
 		} else {
-			if (!arguments.containsKey(INPUT_DIA_TAG)||!arguments.containsKey(TARGET_LIBRARY_TAG)) {
-				Logger.errorLine("You are required to specify an input file ("+INPUT_DIA_TAG+") and a library file ("+TARGET_LIBRARY_TAG+")");
+			if (!arguments.containsKey(INPUT_DIA_TAG)||!arguments.containsKey(TARGET_LIBRARY_TAG)||!arguments.containsKey(BACKGROUND_FASTA_TAG)) {
+				Logger.errorLine("You are required to specify an input file ("+INPUT_DIA_TAG+"), a library file ("+TARGET_LIBRARY_TAG+"), and a fasta file ("+BACKGROUND_FASTA_TAG+")");
 				System.exit(1);
 			}
 
 			File diaFile=new File(arguments.get(INPUT_DIA_TAG));
 			File libraryFile=new File(arguments.get(TARGET_LIBRARY_TAG));
+			File fastaFile=new File(arguments.get(Encyclopedia.BACKGROUND_FASTA_TAG));
 
 			File outputFile;
 			if (arguments.containsKey(OUTPUT_RESULT_TAG)) {
@@ -140,7 +141,7 @@ public class Encyclopedia {
 				Logger.logLine(parameters.toString());
 
 				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
-				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, library, outputFile, factory);
+				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, fastaFile, library, outputFile, factory);
 				runSearch(new EmptyProgressIndicator(), job);
 			} catch (Exception e) {
 				Logger.errorLine("Encountered Fatal Error!");
@@ -152,10 +153,9 @@ public class Encyclopedia {
 	}
 
 	public static void runSearch(ProgressIndicator progress, EncyclopediaJobData job) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
-		File outputFile=job.getOutputFile();
-		if (outputFile.exists()&&outputFile.canRead()) {
+		if (job.getPercolatorFiles().hasDataAvailable()) {
 			try {
-				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(outputFile, job.getParameters().getEffectivePercolatorThreshold(), false).x;
+				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideOutputFile(), job.getParameters().getEffectivePercolatorThreshold(), false).x;
 				
 				File elibFile=job.getResultLibrary();
 				if (!elibFile.exists()) {
@@ -163,7 +163,7 @@ public class Encyclopedia {
 					Logger.logLine("Writing elib result library...");
 					ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 					jobs.add(job);
-					SearchToBLIB.convert(progress, jobs, elibFile, false, true);
+					SearchToBLIB.convert(progress, jobs, job.getPercolatorFiles().getFastaFile(), elibFile, false, true);
 				}
 				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 				//progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides ("+ParsimonyProteinGrouper.groupProteins(passingPeptidesFromTSV).size()+" proteins) identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
@@ -181,12 +181,7 @@ public class Encyclopedia {
 		progress.update("Converting files...", Float.MIN_VALUE);
 
 		final StripeFileInterface stripefile = job.getDiaFileReader();
-
-		if (job.getParameters().isDDA()) {
-			EncyclopediaDDA.runSearch(progress, job, stripefile);
-		} else {
-			runSearch(progress, job, stripefile);
-		}
+		runSearch(progress, job, stripefile);
 		stripefile.close();
 	}
 		
@@ -195,7 +190,7 @@ public class Encyclopedia {
 		LibraryScoringFactory taskFactory=job.getTaskFactory();
 		SearchParameters parameters=taskFactory.getParameters();
 		LibraryInterface library=job.getLibrary();
-		File featureFile=job.getFeatureFile();
+		File featureFile=job.getPercolatorFiles().getInputTSV();
 		
 		int cores=parameters.getNumberOfThreadsUsed();
 
@@ -298,7 +293,7 @@ public class Encyclopedia {
 		File elibFile=job.getResultLibrary();
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		jobs.add(job);
-		SearchToBLIB.convert(progress, jobs, elibFile, false, true);
+		SearchToBLIB.convert(progress, jobs, job.getPercolatorFiles().getFastaFile(), elibFile, false, true);
 
 		Logger.logLine("Grouping proteins...");
 		ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides);
@@ -315,22 +310,18 @@ public class Encyclopedia {
 		try {
 			progress.update("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)");
 			
-			Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), job.getFeatureFile(), job.getFirstPassPercolator(), job.getFirstPassPercolatorDecoy(), parameters.getEffectivePercolatorThreshold());
+			Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), job.getPercolatorFiles(), parameters.getEffectivePercolatorThreshold());
 			passingPeptides=pair.x;
 			Logger.logLine("First pass: "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
 			
 			if (!parameters.getScoringBreadthType().runRecalibration()) {
-				if (!job.getFirstPassPercolator().getAbsolutePath().equals(job.getOutputFile().getAbsolutePath())) {
-					Files.copy(job.getFirstPassPercolator().toPath(), job.getOutputFile().toPath(), StandardCopyOption.REPLACE_EXISTING);
-					Files.copy(job.getFirstPassPercolatorDecoy().toPath(), job.getOutputDecoyFile().toPath(), StandardCopyOption.REPLACE_EXISTING);
-				}
 				return passingPeptides;
 			}
 			
 			ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
 			RetentionTimeAlignmentInterface filter=getRescoringModel(passingPeptides, data, job);
 			
-			PeptideScoringResultsConsumer rescoredResultsConsumer=job.getTaskFactory().getResultsConsumer(job.getFeatureFile(), new LinkedBlockingQueue<PeptideScoringResult>(), stripefile);
+			PeptideScoringResultsConsumer rescoredResultsConsumer=job.getTaskFactory().getResultsConsumer(job.getPercolatorFiles().getInputTSV(), new LinkedBlockingQueue<PeptideScoringResult>(), stripefile);
 			Thread finalWriteConsumerThread=new Thread(rescoredResultsConsumer);
 			finalWriteConsumerThread.start();
 			BlockingQueue<PeptideScoringResult> resultList=rescoredResultsConsumer.getResultsQueue();
@@ -343,7 +334,7 @@ public class Encyclopedia {
 			rescoredResultsConsumer.close();
 	
 			progress.update("Re-running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)");
-			pair=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), job.getFeatureFile(), job.getOutputFile(), job.getOutputDecoyFile(), parameters.getEffectivePercolatorThreshold());
+			pair=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), job.getPercolatorFiles(), parameters.getEffectivePercolatorThreshold());
 			passingPeptides=pair.x;
 			
 			progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
@@ -382,7 +373,7 @@ public class Encyclopedia {
 		Logger.logLine("Generating retention time mapping using "+rts.size()+" points...");
 		RetentionTimeAlignmentInterface filter=new RetentionTimeFilter(rts);
 		
-		filter.plot(rts, Optional.ofNullable(job.getOutputFile()));
+		filter.plot(rts, Optional.ofNullable(job.getPercolatorFiles().getPeptideOutputFile()));
 		return filter;
 	}
 }

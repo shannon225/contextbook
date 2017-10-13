@@ -116,8 +116,6 @@ public class XCorDIA {
 				outputFile=new File(diaFile.getAbsolutePath()+XCorDIAJobData.OUTPUT_FILE_SUFFIX);
 			}
 
-			File featureFile=new File(outputFile.getAbsolutePath()+".features.txt");
-
 			try {
 				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+EncyclopediaJobData.LOG_FILE_SUFFIX));
 				Logger.addRecorder(logRecorder);
@@ -153,7 +151,7 @@ public class XCorDIA {
 				Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
 				Logger.logLine(parameters.toString());
 				
-				XCorDIAJobData jobData=new XCorDIAJobData(Optional.ofNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory);
+				XCorDIAJobData jobData=new XCorDIAJobData(Optional.ofNullable(targets), diaFile, fastaFile, outputFile, factory);
 
 				runPie(new EmptyProgressIndicator(), jobData);
 			} catch (Exception e) {
@@ -165,10 +163,9 @@ public class XCorDIA {
 		}
 	}
 	public static void runPie(ProgressIndicator progress, XCorDIAJobData jobData) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
-		File outputFile=jobData.getOutputFile();
-		if (outputFile.exists()&&outputFile.canRead()) {
+		if (jobData.getPercolatorFiles().hasDataAvailable()) {
 			try {
-				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(outputFile, jobData.getParameters().getEffectivePercolatorThreshold(), false).x;
+				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(jobData.getPercolatorFiles().getPeptideOutputFile(), jobData.getParameters().getEffectivePercolatorThreshold(), false).x;
 				ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptidesFromTSV);
 				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides ("+proteins.size()+" proteins) identified at "+(jobData.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 				return;
@@ -282,7 +279,7 @@ public class XCorDIA {
 		}
 		
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
-		PeptideScoringResultsConsumer resultsConsumer=jobData.getTaskFactory().getResultsConsumer(jobData.getFeatureFile(), resultsQueue, stripefile);
+		PeptideScoringResultsConsumer resultsConsumer=jobData.getTaskFactory().getResultsConsumer(jobData.getPercolatorFiles().getInputTSV(), resultsQueue, stripefile);
 		Thread consumerThread=new Thread(resultsConsumer);
 		consumerThread.start();
 		
@@ -418,13 +415,13 @@ public class XCorDIA {
 		Logger.logLine("Finished generating feature file, analyzed "+resultsConsumer.getNumberProcessed()+" peptides.");
 
 		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
-		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), jobData.getFeatureFile(), outputFile, jobData.getOutputDecoyFile(), parameters.getEffectivePercolatorThreshold()).x;
+		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), jobData.getPercolatorFiles(), parameters.getEffectivePercolatorThreshold()).x;
 		stripefile.close();
 		
 		Logger.logLine("Writing elib result library...");
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		jobs.add(jobData);
-		SearchToBLIB.convert(progress, jobs, jobData.getResultLibrary(), false, true);
+		SearchToBLIB.convert(progress, jobs, jobData.getPercolatorFiles().getFastaFile(), jobData.getResultLibrary(), false, true);
 		
 		/*if (false&&!targetList.isPresent()) { //FIXME
 			HashSet<String> accessions=new HashSet<String>();

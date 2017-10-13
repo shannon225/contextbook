@@ -56,8 +56,8 @@ public class PeakLocationInferrer {
 		}
 
 		Logger.logLine("Seed experiment: "+bestJob.getDiaFile().getName()+" ("+max+" archetypal peptides)");
-		Logger.logLine("Seed Percolator file: "+bestJob.getOutputFile().getAbsolutePath());
-		ArrayList<PercolatorPeptide> alignmentSeed=PercolatorReader.getPassingPeptidesFromTSV(bestJob.getOutputFile(), bestJob.getParameters().getEffectivePercolatorThreshold(), false).x;
+		Logger.logLine("Seed Percolator file: "+bestJob.getPercolatorFiles().getPeptideOutputFile().getAbsolutePath());
+		ArrayList<PercolatorPeptide> alignmentSeed=PercolatorReader.getPassingPeptidesFromTSV(bestJob.getPercolatorFiles().getPeptideOutputFile(), bestJob.getParameters().getEffectivePercolatorThreshold(), false).x;
 		TObjectFloatHashMap<String> rtsBySequence=new TObjectFloatHashMap<String>();
 		for (PercolatorPeptide peptide : alignmentSeed) {
 			rtsBySequence.put(peptide.getPeptideModSeq(), peptide.getRT());
@@ -83,7 +83,7 @@ public class PeakLocationInferrer {
 				count++;
 
 				ArrayList<XYPoint> points=new ArrayList<XYPoint>();
-				ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(job.getOutputFile(), job.getParameters().getEffectivePercolatorThreshold(), false).x;
+				ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideOutputFile(), job.getParameters().getEffectivePercolatorThreshold(), false).x;
 				for (PercolatorPeptide peptide : peptides) {
 					String seq=peptide.getPeptideModSeq();
 					if (rtsBySequence.containsKey(seq)) {
@@ -230,7 +230,7 @@ public class PeakLocationInferrer {
 					
 					readFromLibraryResult=true;
 				} catch (EncyclopediaException e) {
-					Logger.errorLine("Parsing error indicates "+job.getOutputFile().getName()+" isn't from Encyclopedia:");
+					Logger.errorLine("Parsing error indicates "+job.getPercolatorFiles().getPeptideOutputFile().getName()+" isn't from Encyclopedia:");
 					Logger.errorException(e);
 					readFromLibraryResult=false;
 				} catch (IOException e) {

@@ -83,9 +83,10 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 	private static final String programShortDescription="Phosphopeptide Positional Isomer Search Engine";
 	private static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">Thesaurus: Software for Detecting Positional Phosphopeptide Isomers from Data-Independent Acquisition (DIA) MS/MS Data<br></p></b>"
 			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">Thesaurus extracts peptide fragmentation chromatograms from MZML files, matches them to spectra in libraries, and calculates various scoring features. Matches are localized and alternate positional isomers are explored. These isomers are interpreted by Percolator to identify site-specific peptides at an estimated 5% FDR.";
-	
+
+	private final FileChooserPanel backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta"), true);
 	private final FileChooserPanel libraryFileChooser;
-	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {DataAcquisitionType.toName(DataAcquisitionType.OVERLAPPING_DIA), DataAcquisitionType.toName(DataAcquisitionType.DIA), DataAcquisitionType.toName(DataAcquisitionType.DDA)});
+	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {DataAcquisitionType.toName(DataAcquisitionType.OVERLAPPING_DIA), DataAcquisitionType.toName(DataAcquisitionType.DIA)});
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "Pepsin A"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.YONLY), FragmentationType.toName(FragmentationType.ETD)});
 	private final JComboBox<String> percolatorVersion=new JComboBox<String>(new String[] {PercolatorExecutor.V3_01, PercolatorExecutor.V2_10});
@@ -120,6 +121,7 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 		
 		libraryFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), true);
 		options.add(libraryFileChooser);
+		options.add(backgroundFasta);
 		options.add(new LabeledComponent("Modification Type", modificationType));
 		options.add(new LabeledComponent("Localization Strategy", searchBreadthType));
 		options.add(new LabeledComponent("Data Acquisition Type", acquisition));
@@ -173,6 +175,11 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 	public void askForSetupFile() {
 		libraryFileChooser.askForFiles();
 	}
+
+	@Override
+	public File getBackgroundFastaFile() {
+		return backgroundFasta.getFile();
+	}
 	
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.gui.pecan.ParametersPanelInterface#canLoadData()
@@ -181,6 +188,9 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 	public Optional<String> canLoadData() {
 		if (libraryFileChooser.getFile()==null) {
 			return Optional.of("Please load a library file first!");	
+		}
+		if (getBackgroundFastaFile()==null) {
+			return Optional.of("Please load a fasta file first!");	
 		}
 		return Optional.empty();
 	}
@@ -192,8 +202,9 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 	public SwingJob getJob(File diaFile, JobProcessorTableModel model) {
 		SearchParameters parameters=getParameters();
 		File libraryFile=libraryFileChooser.getFile();
+		File fastaFile=getBackgroundFastaFile();
 		if (libraryFile==null) return null;
-		SearchJob job=getJob(diaFile, libraryFile, model, parameters);
+		SearchJob job=getJob(diaFile, libraryFile, fastaFile, model, parameters);
 
 		if (job!=null) {
 			model.addJob(job);
@@ -202,7 +213,7 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 	}
 
 	private static HashMap<File, LibraryInterface> libraries=new HashMap<File, LibraryInterface>();
-	static SearchJob getJob(File diaFile, File libraryFile, JobProcessor processor, SearchParameters parameters) {
+	static SearchJob getJob(File diaFile, File libraryFile, File fastaFile, JobProcessor processor, SearchParameters parameters) {
 		File outputFile=new File(diaFile.getAbsolutePath()+CASiLJobData.OUTPUT_FILE_SUFFIX);
 		
 		LibraryInterface library=libraries.get(libraryFile);
@@ -212,7 +223,7 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 		}
 		
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
-		CASiLJobData job=new CASiLJobData(diaFile, library, outputFile, factory);
+		CASiLJobData job=new CASiLJobData(diaFile, library, outputFile, fastaFile, factory);
 		return new CASiLJob(processor, job);
 	}
 
@@ -239,10 +250,14 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 		return parameters;
 	}
 	
-	public void setParameters(CASiLSearchParameters params, String libraryFileName) {
+	public void setParameters(CASiLSearchParameters params, String libraryFileName, String fastaFileName) {
 		if (libraryFileName!=null) {
 			File libraryFile=new File(libraryFileName);
 			if (libraryFile.exists()) libraryFileChooser.update(libraryFile);
+		}
+		if (fastaFileName!=null) {
+			File fastaFile=new File(fastaFileName);
+			if (fastaFile.exists()) backgroundFasta.update(fastaFile);
 		}
 		
 		acquisition.setSelectedItem(DataAcquisitionType.toName(params.getDataAcquisitionType()));
@@ -302,7 +317,7 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 	@Override
 	public void savePreferences() {
 		try {
-			getParameters().savePreferences(libraryFileChooser.getFile());
+			getParameters().savePreferences(libraryFileChooser.getFile(), backgroundFasta.getFile());
 		} catch (Exception e) {
 			Logger.errorLine("Error writing parameters to disk!");
 			Logger.errorException(e);

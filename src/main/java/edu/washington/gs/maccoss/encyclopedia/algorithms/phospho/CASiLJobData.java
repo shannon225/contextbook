@@ -4,6 +4,7 @@ import java.io.File;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -12,42 +13,43 @@ public class CASiLJobData extends EncyclopediaJobData {
 	public static final String LOG_FILE_SUFFIX=".log";
 	public static final String OUTPUT_FILE_SUFFIX=".thesaurus.txt";
 	public static final String FEATURE_FILE_SUFFIX=".thesaurus_features.txt";
+
+	public CASiLJobData(File diaFile, LibraryInterface library, File outputFile, File fastaFile, LibraryScoringFactory taskFactory) {
+		super(diaFile, getPercolatorExecutionData(outputFile, fastaFile), taskFactory.getParameters(), taskFactory.getVersion(), library, taskFactory);
+	}
 	
-	public CASiLJobData(File diaFile, LibraryInterface library, LibraryScoringFactory taskFactory) {
-		super(diaFile, new File(diaFile.getAbsolutePath()+FEATURE_FILE_SUFFIX), new File(diaFile.getAbsolutePath()+OUTPUT_FILE_SUFFIX), taskFactory.getParameters(), taskFactory.getVersion(), library, taskFactory);
+	private CASiLJobData(File diaFile, PercolatorExecutionData percolatorFiles, SearchParameters parameters, String version, LibraryInterface library, LibraryScoringFactory taskFactory) {
+		super(diaFile, percolatorFiles, parameters, version, library, taskFactory);
 	}
 
-	public CASiLJobData(File diaFile, LibraryInterface library, File outputFile, LibraryScoringFactory taskFactory) {
-		super(diaFile, new File(getOutputAbsolutePathPrefix(outputFile.getAbsolutePath())+FEATURE_FILE_SUFFIX), outputFile, taskFactory.getParameters(), taskFactory.getVersion(), library, taskFactory);
-	}
-	
-	private CASiLJobData(File diaFile, File featureFile, File outputFile, SearchParameters parameters, String version, LibraryInterface library, LibraryScoringFactory taskFactory) {
-		super(diaFile, featureFile, outputFile, parameters, version, library, taskFactory);
+	static PercolatorExecutionData getPercolatorExecutionData(File referenceFileLocation, File fasta) {
+		return new PercolatorExecutionData(new File(getPrefixFromOutput(referenceFileLocation) + FEATURE_FILE_SUFFIX), fasta,
+				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_FILE_SUFFIX), 
+				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_PROTEIN_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_PROTEIN_FILE_SUFFIX));
 	}
 
 	public CASiLJobData updateTaskFactory(LibraryScoringFactory taskFactory) {
-		return new CASiLJobData(getDiaFile(), getFeatureFile(), getOutputFile(), getParameters(), getVersion(), getLibrary(), taskFactory);
-	}
-	
-	public File getFirstPassPercolator() {
-		//return new File(getOutputFile().getAbsolutePath()+".first_round.txt");
-		return getOutputFile();
+		return new CASiLJobData(getDiaFile(), getPercolatorFiles(), getParameters(), getVersion(), getLibrary(), taskFactory);
 	}
 	
 	public File getLocalizationFile() {
-		return new File(getOutputFile()+".localizations.txt");
-	}
-	
-	public File getResultLibrary() {
-		String absolutePath=getOutputAbsolutePathPrefix(getOutputFile().getAbsolutePath());
-		return new File(absolutePath+".thesaurus"+LibraryFile.ELIB);
+		String absolutePath = getPrefixFromOutput(getPercolatorFiles().getPeptideOutputFile());
+		return new File(absolutePath+".localizations.txt");
 	}
 
-	public static String getOutputAbsolutePathPrefix(String absolutePath) {
+	public File getResultLibrary() {
+		String absolutePath = getPrefixFromOutput(getPercolatorFiles().getPeptideOutputFile());
+		return new File(absolutePath+".thesaurus" + LibraryFile.ELIB);
+	}
+
+	static String getPrefixFromOutput(File outputFile) {
+		final String absolutePath = outputFile.getAbsolutePath();
+
 		if (absolutePath.endsWith(OUTPUT_FILE_SUFFIX)) {
-			absolutePath=absolutePath.substring(0, absolutePath.length()-OUTPUT_FILE_SUFFIX.length());
+			return absolutePath.substring(0, absolutePath.length() - OUTPUT_FILE_SUFFIX.length());
+		} else {
+			return absolutePath;
 		}
-		return absolutePath;
 	}
 	
 	@Override

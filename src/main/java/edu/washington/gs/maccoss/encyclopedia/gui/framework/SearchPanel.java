@@ -117,7 +117,7 @@ public class SearchPanel extends JPanel {
 						break;
 				}
 				HashMap<String, String> map=SearchParameters.readPreferences();
-				encyclopedia.setParameters(SearchParameterParser.parseParameters(map), map.get(Encyclopedia.TARGET_LIBRARY_TAG));
+				encyclopedia.setParameters(SearchParameterParser.parseParameters(map), map.get(Encyclopedia.TARGET_LIBRARY_TAG), map.get(Encyclopedia.BACKGROUND_FASTA_TAG));
 				optionsTabs.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
@@ -129,7 +129,7 @@ public class SearchPanel extends JPanel {
 				CASiLParametersPanel CASiL=new CASiLParametersPanel();
 				HashMap<String, String> map=CASiLSearchParameters.readPreferences();
 				CASiLSearchParameters xcordiaParameters=CASiLSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(map));
-				CASiL.setParameters(xcordiaParameters, map.get(Encyclopedia.TARGET_LIBRARY_TAG));
+				CASiL.setParameters(xcordiaParameters, map.get(Encyclopedia.TARGET_LIBRARY_TAG), map.get(Encyclopedia.BACKGROUND_FASTA_TAG));
 				optionsTabs.addTab(CASiL.getProgramName(), CASiL.getSmallImage(), CASiL, CASiL.getProgramShortDescription());
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
@@ -731,7 +731,7 @@ public class SearchPanel extends JPanel {
 					}
 				}
 
-				SearchToBLIBJob job=new SearchToBLIBJob(blibFile, alignBetweenFiles.isSelected(), processorTableModel);
+				SearchToBLIBJob job=new SearchToBLIBJob(blibFile, getVisibleTab().getBackgroundFastaFile(), alignBetweenFiles.isSelected(), processorTableModel);
 				if (job!=null) {
 					processorTableModel.addJob(job);
 				}
@@ -764,7 +764,7 @@ public class SearchPanel extends JPanel {
 					}
 				}
 
-				SearchToELIBJob job=new SearchToELIBJob(elibFile, alignBetweenFiles.isSelected(), processorTableModel);
+				SearchToELIBJob job=new SearchToELIBJob(elibFile, getVisibleTab().getBackgroundFastaFile(), alignBetweenFiles.isSelected(), processorTableModel);
 				if (job!=null) {
 					processorTableModel.addJob(job);
 				}

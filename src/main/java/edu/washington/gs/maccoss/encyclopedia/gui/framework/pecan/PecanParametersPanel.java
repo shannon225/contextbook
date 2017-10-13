@@ -25,6 +25,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
@@ -170,6 +171,11 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 	public void askForSetupFile() {
 		backgroundFasta.askForFiles();
 	}
+
+	@Override
+	public File getBackgroundFastaFile() {
+		return backgroundFasta.getFile();
+	}
 	
 	public Optional<String> canLoadData() {
 		if (backgroundFasta.getFile()==null) {
@@ -195,8 +201,6 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 	}
 
 	static SearchJob getJob(File diaFile, File fastaFile, File targetFile, JobProcessor processor, PecanSearchParameters parameters) {
-		File outputFile=new File(diaFile.getAbsolutePath()+PecanJobData.OUTPUT_FILE_SUFFIX);
-		File featureFile=new File(outputFile.getAbsolutePath()+PecanJobData.FEATURE_FILE_SUFFIX);
 		
 		ArrayList<FastaPeptideEntry> targets=null;
 		if (targetFile!=null&&!targetFile.equals(fastaFile)) {
@@ -213,8 +217,9 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 			}
 		}
 		
-		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
-		return new PecanJob(processor, new PecanJobData(Optional.ofNullable(targets), diaFile, fastaFile, featureFile, outputFile, factory));
+		PercolatorExecutionData percolatorFiles=PecanJobData.getPercolatorExecutionData(diaFile, fastaFile);
+		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, percolatorFiles.getInputTSV());
+		return new PecanJob(processor, new PecanJobData(Optional.ofNullable(targets), diaFile, fastaFile, percolatorFiles, factory));
 	}
 
 	public PecanSearchParameters getParameters() {
