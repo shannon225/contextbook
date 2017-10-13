@@ -9,7 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideReportData;
 public class MultiPeptideResultsTableModel extends AbstractTableModel {
 	private static final long serialVersionUID=1L;
 	
-	private final String[] columns=new String[] {"#", "Peptide", "Protein", "Quant Ions", "Average RT"};
+	private final String[] columns=new String[] {"#", "Peptide", "Protein", "Quant Ions", "Average RT", "Charge"};
 
 	ArrayList<PeptideReportData> allEntries=new ArrayList<PeptideReportData>();
 	ArrayList<PeptideReportData> entries=new ArrayList<PeptideReportData>();
@@ -61,6 +61,7 @@ public class MultiPeptideResultsTableModel extends AbstractTableModel {
 			case 2: return String.class;
 			case 3: return Integer.class;
 			case 4: return Float.class;
+			case 5: return Integer.class;
 		}
 		return Object.class;
 	}
@@ -75,6 +76,7 @@ public class MultiPeptideResultsTableModel extends AbstractTableModel {
 			case 2: return entry.getAccessions();
 			case 3: return entry.getMaxNumOfFragments();
 			case 4: return entry.getAverageRetentionTime()/60f;
+			case 5: return entry.getPrecursorCharge();
 		}
 		return null;
 	}

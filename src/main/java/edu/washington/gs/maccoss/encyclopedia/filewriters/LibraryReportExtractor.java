@@ -260,6 +260,7 @@ public class LibraryReportExtractor {
 						"from " +
 						"peptidequants pep " +
 						"left join peptidetoprotein p " +
+						"join peptidescores s using (peptidemodseq, precursorcharge) " +
 						"where " +
 						"pep.PeptideSeq = p.PeptideSeq " +
 						"group by pep.rowid;"
