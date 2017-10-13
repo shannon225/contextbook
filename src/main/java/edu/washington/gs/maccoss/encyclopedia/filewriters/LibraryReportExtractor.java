@@ -259,8 +259,8 @@ public class LibraryReportExtractor {
 						"pep.QuantIonIntensityLength, pep.QuantIonIntensityArray "+
 						"from " +
 						"peptidequants pep " +
-						"left join peptidetoprotein p " +
 						"join peptidescores s using (peptidemodseq, precursorcharge) " +
+						"left join peptidetoprotein p " +
 						"where " +
 						"pep.PeptideSeq = p.PeptideSeq " +
 						"group by pep.rowid;"
