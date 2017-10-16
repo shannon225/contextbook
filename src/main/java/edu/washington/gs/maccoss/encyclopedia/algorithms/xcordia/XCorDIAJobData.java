@@ -42,7 +42,7 @@ public class XCorDIAJobData extends QuantitativeSearchJobData {
 		this.taskFactory=taskFactory;
 	}
 
-	private static PercolatorExecutionData getPercolatorExecutionData(File referenceFileLocation, File fastaFile) {
+	public static PercolatorExecutionData getPercolatorExecutionData(File referenceFileLocation, File fastaFile) {
 		return new PercolatorExecutionData(new File(getPrefixFromOutput(referenceFileLocation) + FEATURE_FILE_SUFFIX), fastaFile, 
 				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_FILE_SUFFIX), 
 				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_PROTEIN_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_PROTEIN_FILE_SUFFIX));

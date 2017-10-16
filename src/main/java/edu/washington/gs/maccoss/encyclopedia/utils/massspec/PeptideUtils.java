@@ -9,6 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModifica
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -233,6 +234,7 @@ public class PeptideUtils {
 				if (aaConstants.getFixedMods().containsKey(aaChar)) {
 					final double fixedModMass = aaConstants.getFixedMods().get(aaChar);
 					if (Math.abs(modificationMass - fixedModMass) < 0.001) {
+//						Logger.errorLine("Fixed mod mass was present in modSeq! This is an error; mods must EITHER be in the modSeq OR be in the AminoAcidConstants!");
 						throw new IllegalStateException("Fixed mod mass was present in modSeq! This is an error; mods must EITHER be in the modSeq OR be in the AminoAcidConstants!");
 					}
 				}
