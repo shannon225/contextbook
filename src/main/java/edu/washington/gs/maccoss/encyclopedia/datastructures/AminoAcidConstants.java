@@ -162,8 +162,11 @@ public class AminoAcidConstants {
 		double total=0.0;
 		for (int i=0; i<sequence.length(); i++) {
 			char c=sequence.charAt(i);
+
 			if (c=='[') {
-				StringBuilder sb=new StringBuilder();
+				final int bracketIdx = i;
+
+				final StringBuilder sb=new StringBuilder();
 				while (true) {
 					i++;
 					c=sequence.charAt(i);
@@ -173,7 +176,18 @@ public class AminoAcidConstants {
 						sb.append(c);
 					}
 				}
-				total+=Double.parseDouble(sb.toString());
+				final double modMass = Double.parseDouble(sb.toString());
+
+				if (bracketIdx > 0) {
+					final char prev = sequence.charAt(bracketIdx - 1);
+					if (fixedMods.containsKey(prev)) {
+						if (Math.abs(fixedMods.get(prev) - modMass) < 0.001d) {
+							throw new IllegalStateException("Fixed mod mass was present in modSeq! This is an error; mods must EITHER be in the modSeq OR be in the AminoAcidConstants!");
+						}
+					}
+				}
+
+				total += modMass;
 			}
 			total+=getMass(c);
 		}

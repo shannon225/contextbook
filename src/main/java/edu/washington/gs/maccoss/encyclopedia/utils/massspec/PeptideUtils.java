@@ -230,6 +230,13 @@ public class PeptideUtils {
 				char aaChar=aaString.charAt(0);
 				modificationMass=MassConstants.getAccurateModificationMass(aaChar, modificationMass);
 
+				if (aaConstants.getFixedMods().containsKey(aaChar)) {
+					final double fixedModMass = aaConstants.getFixedMods().get(aaChar);
+					if (Math.abs(modificationMass - fixedModMass) < 0.001) {
+						throw new IllegalStateException("Fixed mod mass was present in modSeq! This is an error; mods must EITHER be in the modSeq OR be in the AminoAcidConstants!");
+					}
+				}
+
 				masses.set(masses.size()-1, masses.get(masses.size()-1)+modificationMass);
 				neutralLosses.set(masses.size()-1, PeptideModification.getNeutralLoss(aaChar, modificationMass));
 				aas.set(masses.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
