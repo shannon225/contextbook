@@ -68,17 +68,17 @@ public class PercolatorExecutorTest extends TestCase {
 		PercolatorExecutionData percolatorFiles=getPercolatorFiles(featureFile, fastaFile);
 
 
-		Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorExecutor.executePercolatorTSV(getDefaultPercolaterVersion(), percolatorFiles, 0.01f);
-		assertEquals(405, pair.x.size());
-		assertEquals(0.348315f, pair.y, 0.001f);
+		Pair<ArrayList<PercolatorPeptide>, Float> origpair=PercolatorExecutor.executePercolatorTSV(getDefaultPercolaterVersion(), percolatorFiles, 0.01f);
+		assertTrue(origpair.x.size()>0);
+		assertTrue(origpair.y>0);
 		
-		pair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideOutputFile(), 0.01f, false);
-		assertEquals(405, pair.x.size());
-		assertEquals(0.348315f, pair.y, 0.001f);
+		Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideOutputFile(), 0.01f, false);
+		assertEquals(origpair.x.size(), pair.x.size());
+		assertEquals(origpair.y, pair.y, 0.001f);
 		
 		Pair<ArrayList<PercolatorPeptide>, Float> decoyPair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideDecoyFile(), 0.01f, true);
-		assertEquals(3, decoyPair.x.size());
-		assertEquals(0.0f, decoyPair.y, 0.001f);
+		assertTrue(decoyPair.x.size()>0);
+		assertTrue(decoyPair.x.size()<origpair.x.size()/99f);
 	}
 
 	public static PercolatorExecutionData getPercolatorFiles(File featureFile, File fastaFile) throws IOException {
