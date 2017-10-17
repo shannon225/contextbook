@@ -3,9 +3,11 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.set.hash.TCharHashSet;
 
 public class DigestionEnzyme {
@@ -165,12 +167,10 @@ public class DigestionEnzyme {
 		}
 		return false;
 	}
-
-	public ArrayList<String> digestProtein(String sequence, int minLength, int maxLength, int maxMissedCleavages) {
-		return digestProtein(sequence, minLength, maxLength, maxMissedCleavages, null);
-	}
 	
-	public ArrayList<String> digestProtein(String sequence, int minLength, int maxLength, int maxMissedCleavages, ModificationMassMap variableMods) {
+	public ArrayList<String> digestProtein(String sequence, int minLength, int maxLength, int maxMissedCleavages, AminoAcidConstants constants) {
+		TCharDoubleHashMap fixedMods=constants.getFixedMods();
+		ModificationMassMap variableMods=constants.getVariableMods();
 		int totalAllowedStarts=maxMissedCleavages+1;
 		
 		ArrayList<String> peptides=new ArrayList<String>();
@@ -188,7 +188,7 @@ public class DigestionEnzyme {
 				int start=starts.get(i);
 				peptide=sequence.substring(start, stop+1);
 				if ((peptide.length()>=minLength)&&(peptide.length()<=maxLength)) {
-					peptides.addAll(getModifiedForms(peptide, variableMods));
+					peptides.addAll(getModifiedForms(peptide, fixedMods, variableMods));
 					
 					if (start==0&&(variableMods!=null&&!variableMods.isEmpty()&&peptide.length()!=0)) {
 						double mass=variableMods.getProteinNTermMod(peptide.charAt(0));
@@ -212,30 +212,54 @@ public class DigestionEnzyme {
 		return peptides;
 	}
 	
-	public ArrayList<String> getModifiedForms(String peptide, ModificationMassMap variableMods) {
+	public ArrayList<String> getModifiedForms(String peptide, TCharDoubleHashMap fixedMods, ModificationMassMap variableMods) {
 		
 		ArrayList<String> peptides=new ArrayList<String>();
-		peptides.add(peptide);
+		peptides.add(adjustForFixed(peptide, fixedMods));
 		
 		if (variableMods==null|| variableMods.isEmpty()||peptide.length()==0) return peptides;
 
 		double mass=variableMods.getNTermMod(peptide.charAt(0));
 		if (mass!=ModificationMassMap.MISSING) {
-			peptides.add("["+mass+"]"+peptide);
+			peptides.add(adjustForFixed("["+mass+"]"+peptide, fixedMods));
 		}
 		mass=variableMods.getCTermMod(peptide.charAt(peptide.length()-1));
 		if (mass!=ModificationMassMap.MISSING) {
-			peptides.add(peptide+"["+mass+"]");
+			peptides.add(adjustForFixed(peptide+"["+mass+"]", fixedMods));
 		}
 		
 		for (int i=0; i<peptide.length(); i++) {
 			mass=variableMods.getVariableMod(peptide.charAt(i));
 			if (mass!=ModificationMassMap.MISSING) {
-				peptides.add(peptide.substring(0, i+1)+"["+mass+"]"+peptide.substring(i+1));
+				peptides.add(adjustForFixed(peptide.substring(0, i+1)+"["+mass+"]"+peptide.substring(i+1), fixedMods));
 			}
 		}
 		
 		return peptides;
+	}
+	
+	/**
+	 * assumes if there's a mod in []s then the fixed part has already been considered
+	 * @param peptide
+	 * @param fixedMods
+	 * @return
+	 */
+	public static String adjustForFixed(String peptide, TCharDoubleHashMap fixedMods) {
+		StringBuilder sb=new StringBuilder();
+		
+		for (int i=0; i<peptide.length(); i++) {
+			char aa=peptide.charAt(i);
+			sb.append(aa);
+			if (fixedMods.contains(aa)) {
+				if (i==peptide.length()-1||peptide.charAt(i+1)!='[') {
+					double mass=fixedMods.get(aa);
+					sb.append('[');
+					sb.append(mass);
+					sb.append(']');
+				}
+			}
+		}
+		return sb.toString();
 	}
 
 }

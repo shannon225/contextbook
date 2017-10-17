@@ -109,14 +109,6 @@ public class AminoAcidConstants {
 		massesByAA.put('Y', 163.06332);
 		massesByAA.put('V', 99.068414);
 		
-		fixedMods.forEachEntry(new TCharDoubleProcedure() {
-			@Override
-			public boolean execute(char aa, double m) {
-				massesByAA.adjustOrPutValue(aa, m, m);
-				return true;
-			}
-		});
-		
 		massesByAA.forEachEntry(new TCharDoubleProcedure() {
 			public boolean execute(char arg0, double arg1) {
 				aasByNominal.put((int)Math.round(arg1), arg0);

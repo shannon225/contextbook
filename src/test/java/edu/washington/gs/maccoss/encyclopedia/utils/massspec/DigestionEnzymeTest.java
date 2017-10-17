@@ -3,12 +3,71 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import junit.framework.TestCase;
 
 public class DigestionEnzymeTest extends TestCase {
+	public void testFixedMods() {
+		String bsa=">ALBU_HUMAN Serum albumin OS=Homo sapiens GN=ALB PE=1 SV=2\n"+"MWVTFISLLFLFSSAYSRGVFRRDAHKSEVAHRFKDLGEENFKALVLIAFAQYLQQCPF\n"
+				+"EDHVKLVNEVTEFAKTCVADESAENCDKSLHTLFGDKLCTVATLRETYGEMADCCAKQEPENECFLQH\n";
+
+		FastaEntryInterface entry=FastaReader.readFasta(bsa, "").get(0);
+		String sequence=entry.getSequence();
+		
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+		HashSet<String> expected=new HashSet<String>();
+		expected.add("MWVTFISLLFLFSSAYSR");
+		expected.add("DLGEENFK");
+		expected.add("ALVLIAFAQYLQQC[57.0214635]PFEDHVK");
+		expected.add("LVNEVTEFAK");
+		expected.add("TC[57.0214635]VADESAENC[57.0214635]DK");
+		expected.add("SLHTLFGDK");
+		expected.add("LC[57.0214635]TVATLR");
+		expected.add("ETYGEMADC[57.0214635]C[57.0214635]AK");
+		expected.add("QEPENEC[57.0214635]FLQH");
+		
+		ModificationMassMap variableMods=new ModificationMassMap(); //"C=14.01565");
+		AminoAcidConstants constants=new AminoAcidConstants(AminoAcidConstants.getFixedModsMap("C+57 (Carbamidomethyl)"), variableMods);
+		
+		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 40, 0, constants);
+		assertEquals(expected.size(), sequences.size());
+		for (String peptide : sequences) {
+			assertTrue(expected.contains(peptide));
+		}
+		
+		expected=new HashSet<String>();
+		expected.add("MWVTFISLLFLFSSAYSR");
+		expected.add("DLGEENFK");
+		expected.add("ALVLIAFAQYLQQC[57.0214635]PFEDHVK");
+		expected.add("LVNEVTEFAK");
+		expected.add("TC[57.0214635]VADESAENC[57.0214635]DK");
+		expected.add("SLHTLFGDK");
+		expected.add("LC[57.0214635]TVATLR");
+		expected.add("ETYGEMADC[57.0214635]C[57.0214635]AK");
+		expected.add("QEPENEC[57.0214635]FLQH");
+		
+		expected.add("ALVLIAFAQYLQQC[14.01565]PFEDHVK");
+		expected.add("TC[57.0214635]VADESAENC[14.01565]DK");
+		expected.add("TC[14.01565]VADESAENC[57.0214635]DK");
+		expected.add("LC[14.01565]TVATLR");
+		expected.add("ETYGEMADC[57.0214635]C[14.01565]AK");
+		expected.add("ETYGEMADC[14.01565]C[57.0214635]AK");
+		expected.add("QEPENEC[14.01565]FLQH");
+		
+		variableMods=new ModificationMassMap("C=14.01565");
+		constants=new AminoAcidConstants(AminoAcidConstants.getFixedModsMap("C+57 (Carbamidomethyl)"), variableMods);
+		
+		sequences=enzyme.digestProtein(sequence, 8, 40, 0, constants);
+		assertEquals(expected.size(), sequences.size());
+		for (String peptide : sequences) {
+			assertTrue(expected.contains(peptide));
+		}
+	}
+	
 	public void testModifications() {
 		String bsa=">ALBU_HUMAN Serum albumin OS=Homo sapiens GN=ALB PE=1 SV=2\n"+"MWVTFISLLFLFSSAYSRGVFRRDAHKSEVAHRFKDLGEENFKALVLIAFAQYLQQCPF\n"
 				+"EDHVKLVNEVTEFAKTCVADESAENCDKSLHTLFGDKLCTVATLRETYGEMADCCAKQEPENECFLQH\n";
@@ -47,9 +106,10 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("[-17.026549]QEPENECFLQH");
 		expected.add("QEPENECFLQH[14.0]");
 		
-		ModificationMassMap map=new ModificationMassMap("K=8.014199,W=15.994915,nE=-18.026549,nQ=-17.026549,nC=-17.026549,a=42.010565,z=14.0");
+		ModificationMassMap variableMods=new ModificationMassMap("K=8.014199,W=15.994915,nE=-18.026549,nQ=-17.026549,nC=-17.026549,a=42.010565,z=14.0");
+		AminoAcidConstants constants=new AminoAcidConstants(new TCharDoubleHashMap(), variableMods);
 		
-		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 40, 0, map);
+		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 40, 0, constants);
 		assertEquals(expected.size(), sequences.size());
 		for (String peptide : sequences) {
 			assertTrue(expected.contains(peptide));
@@ -60,7 +120,7 @@ public class DigestionEnzymeTest extends TestCase {
 		System.out.println("BOLA2T:");
 		String sequence="MELSAEYLREKLQRDLEAEHVEVEDTTLNRCSCSFRVLVVSAKFEGKPLLQRHRFCTE";
 		for (DigestionEnzyme enzyme : DigestionEnzyme.getAvailableEnzymes()) {
-			ArrayList<String> sequences=enzyme.digestProtein(sequence, 6, 40, 0);
+			ArrayList<String> sequences=enzyme.digestProtein(sequence, 6, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 			for (String string : sequences) {
 				if (string.indexOf("RHRF")>=0) {
 					System.out.println(enzyme.getName()+": "+string);
@@ -71,7 +131,7 @@ public class DigestionEnzymeTest extends TestCase {
 		System.out.println("\nBOLA2F:");
 		sequence="MELSAEYLREKLQRDLEAEHVEVEDTTLNRCSCSFRVLVVSAKFEGKPLLQRHSLDPSMTIHCDMVITYGLDQLENCQTCGTDYIISVLNLLTLIVEQINTKLPSSFVEKLFIPSSKLLFLRYHKDKEVVAVAHAVYQAMLSLKNIPVLETAYKLILGEMTCALNNLLHSLQLPEACSEIKHEAFKNHVFNVDNAKFVVKFDLSALTTIGNAKNSSL";
 		for (DigestionEnzyme enzyme : DigestionEnzyme.getAvailableEnzymes()) {
-			ArrayList<String> sequences=enzyme.digestProtein(sequence, 6, 40, 0);
+			ArrayList<String> sequences=enzyme.digestProtein(sequence, 6, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 			for (String string : sequences) {
 				if (string.indexOf("RHSL")>=0) {
 					System.out.println(enzyme.getName()+": "+string);
@@ -92,7 +152,7 @@ public class DigestionEnzymeTest extends TestCase {
 		
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("no enzyme");
 
-		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 99999999, 1);
+		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 99999999, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 		assertEquals(1, sequences.size());
 		assertEquals(entry.getSequence(), sequences.get(0));
 	}
@@ -226,7 +286,7 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("LVAASQAALGL");
 		expected.add("KLVAASQAALGL");
 
-		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 40, 1);
+		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 40, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 		assertEquals(expected.size(), sequences.size());
 		for (String peptide : sequences) {
 			assertTrue(expected.contains(peptide));
@@ -294,7 +354,7 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("ETCFAEEGK");
 		expected.add("LVAASQAALGL");
 		
-		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 40, 0);
+		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 		assertEquals(expected.size(), sequences.size());
 		for (String peptide : sequences) {
 			assertTrue(expected.contains(peptide));
@@ -326,7 +386,7 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("VEKCCKADDKETCF");
 		expected.add("VAASQAAL");
 
-		sequences=enzyme.digestProtein(sequence, 8, 40, 0);
+		sequences=enzyme.digestProtein(sequence, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 		assertEquals(expected.size(), sequences.size());
 		for (String peptide : sequences) {
 			assertTrue(expected.contains(peptide));
@@ -369,7 +429,7 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("KLVAASQAALGL");
 
 
-		sequences=enzyme.digestProtein(sequence, 8, 40, 0);
+		sequences=enzyme.digestProtein(sequence, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 		assertEquals(expected.size(), sequences.size());
 		for (String peptide : sequences) {
 			assertTrue(expected.contains(peptide));
