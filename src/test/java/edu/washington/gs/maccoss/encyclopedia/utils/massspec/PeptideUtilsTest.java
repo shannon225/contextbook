@@ -62,7 +62,7 @@ public class PeptideUtilsTest extends TestCase {
 	}
 	
 	public void testSkylinePeptideModSeq() {
-		String sequence="A[+42.0]QRHS[+79.96633]DSCCSLEEK";
+		String sequence="A[+42.0]QRHS[+79.96633]DSC[+57.0214635]C[+57.0214635]SLEEK";
 		String peptideModSeq=PeptideUtils.formatForSkyline(sequence, PARAMETERS.getAAConstants());
 		assertEquals("A[+42.0]QRHS[+80.0]DSC[+57.0]C[+57.0]SLEEK", peptideModSeq);
 
@@ -75,7 +75,7 @@ public class PeptideUtilsTest extends TestCase {
 		peptideModSeq=PeptideUtils.formatForEncyclopeDIA("A[+42.0]QRHS[+79.96633]DSC[+57.0]C[+57.0]SLEEK", PARAMETERS.getAAConstants());
 		assertEquals("A[+42.0]QRHS[+79.96633]DSC[+57.0]C[+57.0]SLEEK", peptideModSeq);
 
-		sequence="Q[-17.0]QRHS[+79.96633]DSCCSLEEK";
+		sequence="Q[-17.0]QRHS[+79.96633]DSC[+57.0214635]C[+57.0214635]SLEEK";
 		peptideModSeq=PeptideUtils.formatForSkyline(sequence, PARAMETERS.getAAConstants());
 		assertEquals("Q[-17.0]QRHS[+80.0]DSC[+57.0]C[+57.0]SLEEK", peptideModSeq);
 

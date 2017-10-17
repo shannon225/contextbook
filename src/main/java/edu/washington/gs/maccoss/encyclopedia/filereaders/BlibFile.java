@@ -245,7 +245,6 @@ public class BlibFile extends SQLFile {
 		}
 		
 		AminoAcidConstants aaConstants=job.getParameters().getAAConstants();
-		TCharDoubleHashMap fixedMods=aaConstants.getFixedMods();
 		modCounter++;
 		
 		Connection c=getConnection(tempFile);
@@ -336,13 +335,7 @@ public class BlibFile extends SQLFile {
 					for (int i=0; i<aas.length; i++) {
 						boolean added=false;
 						Pair<Character, Double> aa=FragmentationModel.parseAA(aas[i]);
-						if (fixedMods.contains(aa.x)) {
-							prepMods.setInt(1, modCounter);
-							prepMods.setInt(2, idCounter);
-							prepMods.setInt(3, (i+1));
-							prepMods.setDouble(4, fixedMods.get(aas[i].charAt(0)));
-							added=true;
-						} else if (aa.y!=null) {
+						if (aa.y!=null) {
 							float mass=aa.y.floatValue();
 							int index;
 							if (aas[i].charAt(0)=='[') {

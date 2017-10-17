@@ -8,6 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorEx
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVConsumer;
@@ -54,11 +55,10 @@ public class XCorDIATest extends TestCase {
 	 * make it to our overridden method, and the error is written to the logs.
 	 */
 	public void testFixedModCalculations() throws Exception {
-		final List<String> seqs = Lists.newArrayList(
-				"APEPTIDEK",
-				"ACPEPTIDECK"
-				,"MORECYSPEPTIDESK"
-		);
+		PecanSearchParameters parameters=PecanParameterParser.getDefaultParametersObject();
+		System.out.println("STARTING PARAMS: "+parameters.getAAConstants().getFixedModString());
+		FastaEntry entry=new FastaEntry("APEPTIDEKACPEPTIDECKMARECYSPEPTIDESK");
+		ArrayList<String> seqs=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
 
 		final File fastaFile = File.createTempFile("test_", ".fasta");
 		fastaFile.deleteOnExit();
@@ -85,7 +85,7 @@ public class XCorDIATest extends TestCase {
 				percolatorFiles,
 				new XCorDIAOneScoringFactory(new PecanSearchParameters(
 						new AminoAcidConstants(), // includes C+57 ONLY
-						FragmentationType.CID,
+						FragmentationType.YONLY,
 						new MassTolerance(10),
 						new MassTolerance(10),
 						DigestionEnzyme.getEnzyme("trypsin"),
@@ -105,7 +105,7 @@ public class XCorDIATest extends TestCase {
 									final LibraryEntry entry = result.getEntry();
 									if (entry.getPeptideSeq().contains("C")) {
 										processedResult.set(true);
-
+										
 										assertTrue(
 												"Cysteine-containing peptide had no +57 in modSeq: " + entry.getPeptideModSeq(),
 												entry.getPeptideModSeq().contains("C[+57")
@@ -120,24 +120,25 @@ public class XCorDIATest extends TestCase {
 
 										// Get fragments based on the fixed mods in the modSeq
 										final FragmentIon[] fragmentIons = new FragmentationModel(entry.getPeptideModSeq(), NO_MODS)
-												.getPrimaryIonObjects(FragmentationType.CID, entry.getPrecursorCharge());
+												.getPrimaryIonObjects(FragmentationType.YONLY, (byte)1); // XCorr model only has +1 ions
 										final double[] fragMasses = Arrays.stream(fragmentIons)
 												.mapToDouble(ion -> ion.mass)
 												.toArray();
 
-										Arrays.stream(entry.getMassArray())
+										double[] modelMasses=entry.getMassArray();
+										Arrays.stream(fragMasses)
 												.forEach(frag -> { // for each mass in the entry's mass array...
 													assertTrue( // assert that a matching mass is in the model's fragments
 															"Fragment ion " + frag + " was not found in fragmentation model for "
 																	+ entry.getPeptideModSeq() + "+" + entry.getPrecursorCharge()
 																	+ " (model=" + Arrays.toString(fragMasses) + ")"
 															,
-															Arrays.stream(fragMasses)
-																	.anyMatch(fragMass ->
+															Arrays.stream(modelMasses)
+																	.anyMatch(modelMass ->
 																			// check within a wide tolerance
 																			new MassTolerance(100)
-																					.compareTo(frag, fragMass) == 0
-																	)
+																					.compareTo(frag, modelMass) == 0
+																	)||frag>SparseXCorrCalculator.biggestFragmentMass
 													);
 												});
 									}

@@ -53,11 +53,11 @@ public class PecanParameterParser {
 		return map;
 	}
 	
-	public static SearchParameters getDefaultParametersObject() {
+	public static PecanSearchParameters getDefaultParametersObject() {
 		return parseParameters(getDefaultParameters());
 	}
 	
-	public static SearchParameters parseParameters(File defaultParameters, HashMap<String, String> parameters) {
+	public static PecanSearchParameters parseParameters(File defaultParameters, HashMap<String, String> parameters) {
 		HashMap<String, String> map=SearchParameterParser.readFile(defaultParameters);
 		map.putAll(parameters);
 		return parseParameters(map);

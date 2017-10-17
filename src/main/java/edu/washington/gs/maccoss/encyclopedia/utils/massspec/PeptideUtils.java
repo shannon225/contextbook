@@ -9,12 +9,10 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModifica
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class PeptideUtils {
 	public static byte getExpectedChargeState(String peptide) {
@@ -231,14 +229,6 @@ public class PeptideUtils {
 				char aaChar=aaString.charAt(0);
 				modificationMass=MassConstants.getAccurateModificationMass(aaChar, modificationMass);
 
-				if (aaConstants.getFixedMods().containsKey(aaChar)) {
-					final double fixedModMass = aaConstants.getFixedMods().get(aaChar);
-					if (Math.abs(modificationMass - fixedModMass) < 0.001) {
-//						Logger.errorLine("Fixed mod mass was present in modSeq! This is an error; mods must EITHER be in the modSeq OR be in the AminoAcidConstants!");
-						throw new IllegalStateException("Fixed mod mass was present in modSeq! This is an error; mods must EITHER be in the modSeq OR be in the AminoAcidConstants!");
-					}
-				}
-
 				masses.set(masses.size()-1, masses.get(masses.size()-1)+modificationMass);
 				neutralLosses.set(masses.size()-1, PeptideModification.getNeutralLoss(aaChar, modificationMass));
 				aas.set(masses.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
@@ -309,7 +299,6 @@ public class PeptideUtils {
 	
 	public static String formatForSkyline(String sequence, AminoAcidConstants aaConstants, DecimalFormat df) {
 		char[] ca=sequence.toCharArray();
-		TCharDoubleHashMap fixedMods=aaConstants.getFixedMods();
 		
 		ArrayList<String> aas=new ArrayList<String>();
 		for (int i = 0; i < ca.length; i++) {
@@ -340,19 +329,6 @@ public class PeptideUtils {
 		StringBuilder sb=new StringBuilder();
 		for (String aa : aas) {
 			sb.append(aa);
-			if (aa.length()==1) {
-				char aaChar=aa.charAt(0);
-				if (fixedMods.contains(aaChar)) {
-					double mass=fixedMods.get(aaChar);
-					if (mass!=0.0f) {
-						String formattedMass=df==null?Double.toString(mass):df.format(mass);
-						if (formattedMass.charAt(0)!='+'&&formattedMass.charAt(0)!='-') {
-							formattedMass="+"+formattedMass;
-						}
-						sb.append("["+formattedMass+"]");
-					}
-				}
-			}
 		}
 		return sb.toString();
 	}

@@ -13,7 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.SparseIndexMap;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class SparseXCorrCalculator {
-	static final double biggestFragmentMass=2000.0;
+	public static final double biggestFragmentMass=2000.0;
 	
 	private final SearchParameters params;
 	private final SparseXCorrSpectrum preprocessedSpectrum;
