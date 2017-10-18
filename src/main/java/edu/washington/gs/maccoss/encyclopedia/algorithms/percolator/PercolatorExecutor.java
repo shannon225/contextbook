@@ -11,6 +11,9 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -94,9 +97,19 @@ public class PercolatorExecutor extends ExternalExecutor {
 		if (percolatorVersion==2) {
 			return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(), "-y", commandData.getInputTSV().getAbsolutePath()};
 		} else {
-			return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(), "-y", "--no-terminate", "-N", "200000", commandData.getInputTSV().getAbsolutePath()};	
+			return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(), 
+					"-f", commandData.getFastaFile().getAbsolutePath(), "--results-proteins", commandData.getProteinOutputFile().getAbsolutePath(), "--decoy-results-proteins", commandData.getProteinDecoyFile().getAbsolutePath(), "--protein-enzyme", commandData.getParameters().getEnzyme().getPercolatorName(), "-g",
+					"-y", "--no-terminate", "-N", "200000", commandData.getInputTSV().getAbsolutePath()};	
 		}
 	}
+	
+	/*static File getFastaPlusDecoyFile(File fasta, SearchParameters parameters) {
+		File fastaPlusDecoy=new File(fasta.getParentFile(), parameters.getEnzyme().getPercolatorName()+"_"+fasta.getName());
+		if (fastaPlusDecoy.exists()&&fastaPlusDecoy.canRead()) return fastaPlusDecoy;
+		
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(fasta);
+		
+	}*/
 
 	static File getPercolator(int percolatorVersionNumber) {
 		String percolatorVersion;

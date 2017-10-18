@@ -33,7 +33,7 @@ public class PeptideUtils {
 		FragmentationModel model=new FragmentationModel(peptide, parameters.getAAConstants());
 		double[] primaryIons=model.getPrimaryIons(parameters.getFragType(), charge);
 		
-		String decoy=reverse(peptide, parameters);
+		String decoy=reverse(peptide, parameters.getEnzyme());
 		int attempts=0;
 		int maxTries=10;
 		while (attempts<maxTries) {
@@ -62,7 +62,7 @@ public class PeptideUtils {
 	}
 	
 	public static String getDecoy(String peptide, HashSet<String> backgroundProteome, SearchParameters parameters) {
-		String decoy=reverse(peptide, parameters);
+		String decoy=reverse(peptide, parameters.getEnzyme());
 		int attempts=0;
 		int maxTries=3;
 		while (attempts<maxTries) {
@@ -76,10 +76,9 @@ public class PeptideUtils {
 		return decoy;
 	}
 	
-	public static String reverse(String peptide, SearchParameters parameters) {
-		Triplet<double[], double[], String[]>triplet=getMasses(peptide, parameters.getAAConstants());
-		String[] aas=triplet.z;
-		reverse(aas, parameters.getEnzyme());
+	public static String reverse(String peptide, DigestionEnzyme enzyme) {
+		String[] aas=getAAs(peptide);
+		reverse(aas, enzyme);
 		return getSequence(aas);
 	}
 	
@@ -239,6 +238,37 @@ public class PeptideUtils {
 			}
 		}
 		return new Triplet<double[], double[], String[]>(masses.toArray(), neutralLosses.toArray(), aas.toArray(new String[aas.size()]));
+	}
+
+	public static String[] getAAs(String sequence) {
+		char[] ca=sequence.toCharArray();
+		
+		ArrayList<String> aas=new ArrayList<String>();
+		for (int i = 0; i < ca.length; i++) {
+			if (ca[i]=='[') {
+				StringBuilder sb=new StringBuilder();
+				i++;
+				while (ca[i]!=']') {
+					sb.append(ca[i]);
+					i++;
+				}
+				if (aas.size()==0) {
+					// handling of n-termini mods assumes you can't have multiple []s in a row
+					i++;
+					aas.add(Character.toString(ca[i]));
+				}
+				String massText = sb.toString();
+				double modificationMass = Double.valueOf(massText);
+				String aaString=aas.get(aas.size()-1);
+				char aaChar=aaString.charAt(0);
+				modificationMass=MassConstants.getAccurateModificationMass(aaChar, modificationMass);
+
+				aas.set(aas.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
+			} else {
+				aas.add(Character.toString(ca[i]));
+			}
+		}
+		return aas.toArray(new String[aas.size()]);
 	}
 
 	

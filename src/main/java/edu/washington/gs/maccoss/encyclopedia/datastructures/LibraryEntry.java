@@ -320,7 +320,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		if (shuffle) {
 			reverseSequence=PeptideUtils.shuffle(peptideModSeq, shuffleSeed, parameters);
 		} else {
-			reverseSequence=PeptideUtils.reverse(peptideModSeq, parameters);
+			reverseSequence=PeptideUtils.reverse(peptideModSeq, parameters.getEnzyme());
 		}
 		HashSet<String> revAcc=new HashSet<String>();
 		for (String accession : accessions) {

@@ -5,6 +5,7 @@ import java.util.HashSet;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import junit.framework.TestCase;
 
 public class PeptideUtilsTest extends TestCase {
@@ -40,7 +41,7 @@ public class PeptideUtilsTest extends TestCase {
 	}
 
 	public void testReverse() {
-		String s=PeptideUtils.reverse("ABC[+57]DEFGHIJK", PARAMETERS);
+		String s=PeptideUtils.reverse("ABC[+57]DEFGHIJK", PARAMETERS.getEnzyme());
 		assertEquals("JIHGFEDC[+57.0214635]BAK", s);
 	}
 	
@@ -98,7 +99,24 @@ public class PeptideUtilsTest extends TestCase {
 		assertEquals("Q[-17.026549]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
 		sequence="Q[-17.026549]QRHS[+79.96633]DSCCSLEEK";
 		assertEquals("Q[-17.026549]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
-		
+	}
+	
+	public void testGetAAs() {
+		for (int i=0; i<100; i++) {
+			StringBuilder sb=new StringBuilder();
+			double length=Math.random()*30+5;
+			for (int j=0; j<length; j++) {
+				int index=(int)(AminoAcidConstants.AAs.length*Math.random());
+				if (index>=AminoAcidConstants.AAs.length) index=AminoAcidConstants.AAs.length-1;
+				sb.append(AminoAcidConstants.AAs[index]);
+				if (Math.random()>0.8) {
+					sb.append("[+"+(100+Math.random()*100)+"]"); // outside any mass reformatting
+				}
+			}
+			String sequence=sb.toString();
+			String processedSequence=General.toString(PeptideUtils.getAAs(sequence), "");
+			assertEquals(sequence, processedSequence);
+		}
 	}
 	
 	public void testGetMasses() {

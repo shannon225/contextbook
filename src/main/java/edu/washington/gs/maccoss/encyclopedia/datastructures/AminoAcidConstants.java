@@ -7,6 +7,7 @@ import gnu.trove.map.hash.TIntCharHashMap;
 import gnu.trove.procedure.TCharDoubleProcedure;
 
 public class AminoAcidConstants {
+	public static final char[] AAs="ARNDCEQGHLIKMFPSTWYV".toCharArray();
 	
 	// ordered by H C O N S
 	private final TCharDoubleHashMap fixedMods;
@@ -87,7 +88,6 @@ public class AminoAcidConstants {
 		atomicComposition.put('W', new int[] {10, 11, 1, 2, 0});
 		atomicComposition.put('Y', new int[] {9, 9, 2, 1, 0});
 
-		
 		massesByAA.put('A', 71.037114);
 		massesByAA.put('R', 156.101111);
 		massesByAA.put('N', 114.042927);
@@ -109,12 +109,9 @@ public class AminoAcidConstants {
 		massesByAA.put('Y', 163.06332);
 		massesByAA.put('V', 99.068414);
 		
-		massesByAA.forEachEntry(new TCharDoubleProcedure() {
-			public boolean execute(char arg0, double arg1) {
-				aasByNominal.put((int)Math.round(arg1), arg0);
-				return true;
-			}
-		});
+		for (int i=0; i<AAs.length; i++) {
+			aasByNominal.put((int)Math.round(massesByAA.get(AAs[i])), AAs[i]);
+		}
 	}
 	
 	public TCharDoubleHashMap getFixedMods() {

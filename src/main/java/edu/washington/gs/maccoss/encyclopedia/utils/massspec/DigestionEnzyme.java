@@ -13,6 +13,7 @@ import gnu.trove.set.hash.TCharHashSet;
 public class DigestionEnzyme {
 	private static final char[] AAs="ACDEFGHIKLMNPQRSTVWY".toCharArray();
 	private final String name;
+	private final String percolatorName;
 	private final TCharHashSet nterm;
 	private final TCharHashSet cterm;
 	
@@ -23,7 +24,6 @@ public class DigestionEnzyme {
 		enzymes.add(getEnzyme("Lys-C"));
 		enzymes.add(getEnzyme("Lys-N"));
 		enzymes.add(getEnzyme("Arg-C"));
-		enzymes.add(getEnzyme("CNBr"));
 		enzymes.add(getEnzyme("Chymotrypsin"));
 		enzymes.add(getEnzyme("Pepsin A"));
 		enzymes.add(getEnzyme("Elastase"));
@@ -41,48 +41,42 @@ public class DigestionEnzyme {
 			c.addAll(AAs);
 			c.remove('P');
 			
-			return new DigestionEnzyme("Trypsin", n, c);
+			return new DigestionEnzyme("Trypsin", "trypsin", n, c);
 			
 		} else if ("Trypsin/p".equalsIgnoreCase(enzymeName)) {
 			n.add('K');
 			n.add('R');
 			c.addAll(AAs);
 			
-			return new DigestionEnzyme("Trypsin/p", n, c);
+			return new DigestionEnzyme("Trypsin/p", "trypsinp", n, c);
 			
 		} else if ("No Enzyme".equalsIgnoreCase(enzymeName)) {
 			
-			return new DigestionEnzyme("No Enzyme", n, c);
+			return new DigestionEnzyme("No Enzyme", "no_enzyme", n, c);
 			
 		} else if ("None".equalsIgnoreCase(enzymeName)) {
 			
-			return new DigestionEnzyme("No Enzyme", n, c);
+			return new DigestionEnzyme("No Enzyme", "no_enzyme", n, c);
 			
 		} else if ("Lys-C".equalsIgnoreCase(enzymeName)) {
 			n.add('K');
 			c.addAll(AAs);
 			c.remove('P');
 			
-			return new DigestionEnzyme("Lys-C", n, c);
+			return new DigestionEnzyme("Lys-C", "lys-c", n, c);
 			
 		} else if ("Lys-N".equalsIgnoreCase(enzymeName)) {
 			n.addAll(AAs);
 			c.add('K');
 			
-			return new DigestionEnzyme("Lys-N", n, c);
+			return new DigestionEnzyme("Lys-N", "lys-n", n, c);
 			
 		} else if ("Arg-C".equalsIgnoreCase(enzymeName)) {
 			n.add('R');
 			c.addAll(AAs);
 			c.remove('P');
 			
-			return new DigestionEnzyme("Arg-C", n, c);
-			
-		} else if ("CNBr".equalsIgnoreCase(enzymeName)) {
-			n.add('M');
-			c.addAll(AAs);
-			
-			return new DigestionEnzyme("CNBr", n, c);
+			return new DigestionEnzyme("Arg-C", "arg-c", n, c);
 			
 		} else if ("Chymotrypsin".equalsIgnoreCase(enzymeName)) {
 			n.add('F');
@@ -92,14 +86,14 @@ public class DigestionEnzyme {
 			c.addAll(AAs);
 			c.remove('P');
 			
-			return new DigestionEnzyme("Chymotrypsin", n, c);
+			return new DigestionEnzyme("Chymotrypsin", "chymotrypsin", n, c);
 			
 		} else if ("Elastase".equalsIgnoreCase(enzymeName)) {
 			n.add('A');
 			n.add('V');
 			c.addAll(AAs);
 			
-			return new DigestionEnzyme("Elastase", n, c);
+			return new DigestionEnzyme("Elastase", "elastase", n, c);
 			
 		} else if ("Thermolysin".equalsIgnoreCase(enzymeName)) {
 			c.add('A');
@@ -112,27 +106,32 @@ public class DigestionEnzyme {
 			n.remove('D');
 			n.remove('E');
 			
-			return new DigestionEnzyme("Thermolysin", n, c);
+			return new DigestionEnzyme("Thermolysin", "thermolysin", n, c);
 			
 		} else if ("Pepsin A".equalsIgnoreCase(enzymeName)) {
 			n.add('F');
 			n.add('L');
 			c.addAll(AAs);
 			
-			return new DigestionEnzyme("Pepsin A", n, c);
+			return new DigestionEnzyme("Pepsin A", "pepsin", n, c);
 		}
 		
 		throw new EncyclopediaException("Unknown digestion enzyme ["+enzymeName+"]");
 	}
 	
-	DigestionEnzyme(String name, TCharHashSet nterm, TCharHashSet cterm) {
+	DigestionEnzyme(String name, String percolatorName, TCharHashSet nterm, TCharHashSet cterm) {
 		this.name=name;
+		this.percolatorName=percolatorName;
 		this.nterm=nterm;
 		this.cterm=cterm;
 	}
 	
 	public String getName() {
 		return name;
+	}
+	
+	public String getPercolatorName() {
+		return percolatorName;
 	}
 	
 	public boolean isCutSite(char pre, char post) {
@@ -166,6 +165,24 @@ public class DigestionEnzyme {
 			return true;
 		}
 		return false;
+	}
+	
+	public String reverseProtein(String sequence) {
+		StringBuilder sb=new StringBuilder();
+		
+		int start=0;
+		int stop;
+
+		while (start<sequence.length()) {
+			stop=start;
+			while ((stop<sequence.length()-1)&&!isCutSite(sequence.charAt(stop), sequence.charAt(stop+1))) {
+				stop++;
+			}
+			String peptide=sequence.substring(start, stop+1);
+			sb.append(PeptideUtils.reverse(peptide, this));
+			start=stop+1;
+		}
+		return sb.toString();
 	}
 	
 	public ArrayList<String> digestProtein(String sequence, int minLength, int maxLength, int maxMissedCleavages, AminoAcidConstants constants) {
