@@ -7,6 +7,7 @@ import java.util.Optional;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AbstractSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 
 public class PecanJobData extends AbstractSearchJobData {
 	public static final String OUTPUT_FILE_SUFFIX=".pecan.txt";
@@ -20,14 +21,14 @@ public class PecanJobData extends AbstractSearchJobData {
 	private final PecanScoringFactory taskFactory;
 
 	public PecanJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, PecanScoringFactory taskFactory) {
-		super(diaFile, getPercolatorExecutionData(diaFile, fastaFile), taskFactory.getParameters(), taskFactory.getVersion());
+		super(diaFile, getPercolatorExecutionData(diaFile, fastaFile, taskFactory.getParameters()), taskFactory.getParameters(), taskFactory.getVersion());
 		this.targetList=targetList;
 		this.fastaFile=fastaFile;
 		this.taskFactory=taskFactory;
 	}
 
 	public PecanJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, File outputFile, PecanScoringFactory taskFactory) {
-		super(diaFile, getPercolatorExecutionData(outputFile, fastaFile), taskFactory.getParameters(), taskFactory.getVersion());
+		super(diaFile, getPercolatorExecutionData(outputFile, fastaFile, taskFactory.getParameters()), taskFactory.getParameters(), taskFactory.getVersion());
 		this.targetList=targetList;
 		this.fastaFile=fastaFile;
 		this.taskFactory=taskFactory;
@@ -40,10 +41,10 @@ public class PecanJobData extends AbstractSearchJobData {
 		this.taskFactory=taskFactory;
 	}
 
-	public static PercolatorExecutionData getPercolatorExecutionData(File referenceFileLocation, File fastaFile) {
+	public static PercolatorExecutionData getPercolatorExecutionData(File referenceFileLocation, File fastaFile, SearchParameters parameters) {
 		return new PercolatorExecutionData(new File(getPrefixFromOutput(referenceFileLocation) + FEATURE_FILE_SUFFIX), fastaFile,
 				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_FILE_SUFFIX), 
-				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_PROTEIN_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_PROTEIN_FILE_SUFFIX));
+				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_PROTEIN_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_PROTEIN_FILE_SUFFIX), parameters);
 	}
 
 	private static String getPrefixFromOutput(File outputFile) {

@@ -11,6 +11,17 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 import junit.framework.TestCase;
 
 public class DigestionEnzymeTest extends TestCase {
+	public void testReverse() {
+		String bsa=">ALBU_HUMAN Serum albumin OS=Homo sapiens GN=ALB PE=1 SV=2\n"+"MWVTFISLLFLFSSAYSRGVFRRDAHKSEVAHRFKDLGEENFKALVLIAFAQYLQQCPF\n"
+				+"EDHVKLVNEVTEFAKTCVADESAENCDKSLHTLFGDKLCTVATLRETYGEMADCCAKQEPENECFLQH\n";
+
+		FastaEntryInterface entry=FastaReader.readFasta(bsa, "").get(0);
+		String sequence=entry.getSequence();
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+		String reversed=enzyme.reverseProtein(sequence);
+		assertEquals("SYASSFLFLLSIFTVWMRFVGRRHADKHAVESRFKFNEEGLDKVHDEFPCQQLYQAFAILVLAKAFETVENVLKDCNEASEDAVCTKDGFLTHLSKLTAVTCLRACCDAMEGYTEKHQLFCENEPEQ", reversed);
+	}
+	
 	public void testFixedMods() {
 		String bsa=">ALBU_HUMAN Serum albumin OS=Homo sapiens GN=ALB PE=1 SV=2\n"+"MWVTFISLLFLFSSAYSRGVFRRDAHKSEVAHRFKDLGEENFKALVLIAFAQYLQQCPF\n"
 				+"EDHVKLVNEVTEFAKTCVADESAENCDKSLHTLFGDKLCTVATLRETYGEMADCCAKQEPENECFLQH\n";

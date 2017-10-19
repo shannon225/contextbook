@@ -8,7 +8,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
@@ -22,7 +24,7 @@ public class PercolatorExecutorTest extends TestCase {
 		File decoyFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated.peptide_decoy.txt");
 		File outputProteinFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated.protein.txt");
 		File decoyProteinFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated.protein_decoy.txt");
-		PercolatorExecutionData percolatorFiles=new PercolatorExecutionData(featureFile, fastaFile, outputFile, decoyFile, outputProteinFile, decoyProteinFile);
+		PercolatorExecutionData percolatorFiles=new PercolatorExecutionData(featureFile, fastaFile, outputFile, decoyFile, outputProteinFile, decoyProteinFile, SearchParameterParser.getDefaultParametersObject());
 		PercolatorExecutor e=new PercolatorExecutor(getDefaultPercolaterVersion(), percolatorFiles);
 		BlockingQueue<OutputMessage> result=e.start();
 
@@ -65,7 +67,7 @@ public class PercolatorExecutorTest extends TestCase {
 		fastaFile.deleteOnExit();
 		Files.copy(is, fastaFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		
-		PercolatorExecutionData percolatorFiles=getPercolatorFiles(featureFile, fastaFile);
+		PercolatorExecutionData percolatorFiles=getPercolatorFiles(featureFile, fastaFile, SearchParameterParser.getDefaultParametersObject());
 
 
 		Pair<ArrayList<PercolatorPeptide>, Float> origpair=PercolatorExecutor.executePercolatorTSV(getDefaultPercolaterVersion(), percolatorFiles, 0.01f);
@@ -81,7 +83,7 @@ public class PercolatorExecutorTest extends TestCase {
 		assertTrue(decoyPair.x.size()<origpair.x.size()/99f);
 	}
 
-	public static PercolatorExecutionData getPercolatorFiles(File featureFile, File fastaFile) throws IOException {
+	public static PercolatorExecutionData getPercolatorFiles(File featureFile, File fastaFile, SearchParameters parameters) throws IOException {
 		File outputFile=File.createTempFile("percolator", ".txt");
 		outputFile.deleteOnExit();
 		File decoyFile=File.createTempFile("percolator", ".decoy.txt");
@@ -90,7 +92,7 @@ public class PercolatorExecutorTest extends TestCase {
 		outputProteinFile.deleteOnExit();
 		File decoyProteinFile=File.createTempFile("percolator", ".protein_decoy.txt");
 		decoyProteinFile.deleteOnExit();
-		PercolatorExecutionData percolatorFiles=new PercolatorExecutionData(featureFile, fastaFile, outputFile, decoyFile, outputProteinFile, decoyProteinFile);
+		PercolatorExecutionData percolatorFiles=new PercolatorExecutionData(featureFile, fastaFile, outputFile, decoyFile, outputProteinFile, decoyProteinFile, parameters);
 		return percolatorFiles;
 	}
 

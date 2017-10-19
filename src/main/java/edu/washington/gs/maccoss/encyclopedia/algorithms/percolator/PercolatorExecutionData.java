@@ -2,6 +2,8 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
 import java.io.File;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+
 public class PercolatorExecutionData {
 	private final File inputTSV;
 	private final File fastaFile;
@@ -9,14 +11,16 @@ public class PercolatorExecutionData {
 	private final File peptideDecoyFile;
 	private final File proteinOutputFile;
 	private final File proteinDecoyFile;
+	private final SearchParameters parameters;
 
-	public PercolatorExecutionData(File inputTSV, File fastaFile, File peptideOutputFile, File peptideDecoyFile, File proteinOutputFile, File proteinDecoyFile) {
+	public PercolatorExecutionData(File inputTSV, File fastaFile, File peptideOutputFile, File peptideDecoyFile, File proteinOutputFile, File proteinDecoyFile, SearchParameters parameters) {
 		this.inputTSV=inputTSV;
 		this.fastaFile=fastaFile;
 		this.peptideOutputFile=peptideOutputFile;
 		this.peptideDecoyFile=peptideDecoyFile;
 		this.proteinOutputFile=proteinOutputFile;
 		this.proteinDecoyFile=proteinDecoyFile;
+		this.parameters=parameters;
 	}
 	
 	public boolean hasDataAvailable() {
@@ -49,5 +53,8 @@ public class PercolatorExecutionData {
 
 	public File getProteinDecoyFile() {
 		return proteinDecoyFile;
+	}
+	public SearchParameters getParameters() {
+		return parameters;
 	}
 }

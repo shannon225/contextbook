@@ -5,10 +5,13 @@ import java.util.ArrayList;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 
 public class ExtendedFastaEntry extends FastaEntry {
-	ArrayList<VariableModification> potentialMods=new ArrayList<>();
+	private final ArrayList<AlleleVariant> potentialVariants=new ArrayList<>();
 
 	public ExtendedFastaEntry(String filename, String annotation, String sequence) {
 		super(filename, annotation, sequence);
 	}
 
+	public void addPotentialVariant(AlleleVariant variant) {
+		potentialVariants.add(variant);
+	}
 }

@@ -66,7 +66,7 @@ public class XCorDIATest extends TestCase {
 		final File diaFile = File.createTempFile("test_", ".dia");
 		diaFile.delete(); // ensure it doesn't exist
 
-		final PercolatorExecutionData percolatorFiles = XCorDIAJobData.getPercolatorExecutionData(diaFile, fastaFile);
+		final PercolatorExecutionData percolatorFiles = XCorDIAJobData.getPercolatorExecutionData(diaFile, fastaFile, parameters);
 
 		percolatorFiles.getInputTSV().deleteOnExit();
 		percolatorFiles.getProteinDecoyFile().deleteOnExit();

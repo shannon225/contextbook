@@ -21,11 +21,11 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData {
 	private final LibraryScoringFactory taskFactory;
 
 	public EncyclopediaJobData(File diaFile, File fastaFile, LibraryInterface library, LibraryScoringFactory taskFactory) {
-		this(diaFile, null, getPercolatorExecutionData(diaFile, fastaFile), taskFactory.getParameters(), taskFactory.getVersion(), library, taskFactory);
+		this(diaFile, null, getPercolatorExecutionData(diaFile, fastaFile, taskFactory.getParameters()), taskFactory.getParameters(), taskFactory.getVersion(), library, taskFactory);
 	}
 
 	public EncyclopediaJobData(File diaFile, File fastaFile, LibraryInterface library, File outputFile, LibraryScoringFactory taskFactory) {
-		this(diaFile, null, getPercolatorExecutionData(outputFile, fastaFile), taskFactory.getParameters(), taskFactory.getVersion(), library, taskFactory);
+		this(diaFile, null, getPercolatorExecutionData(outputFile, fastaFile, taskFactory.getParameters()), taskFactory.getParameters(), taskFactory.getVersion(), library, taskFactory);
 	}
 
 	public EncyclopediaJobData(File diaFile, PercolatorExecutionData percolatorFiles, SearchParameters parameters, String version, LibraryInterface library, LibraryScoringFactory taskFactory) {
@@ -39,10 +39,10 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData {
 		this.taskFactory = taskFactory;
 	}
 
-	private static PercolatorExecutionData getPercolatorExecutionData(File referenceFileLocation, File fastaFile) {
+	private static PercolatorExecutionData getPercolatorExecutionData(File referenceFileLocation, File fastaFile, SearchParameters parameters) {
 		return new PercolatorExecutionData(new File(getPrefixFromOutput(referenceFileLocation) + FEATURE_FILE_SUFFIX), fastaFile,
 				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_FILE_SUFFIX), 
-				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_PROTEIN_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_PROTEIN_FILE_SUFFIX));
+				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_PROTEIN_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_PROTEIN_FILE_SUFFIX), parameters);
 	}
 
 	static String getPrefixFromOutput(File outputFile) {
