@@ -56,7 +56,7 @@ public class FragmentationModel {
 		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, null, minimumMass, false);
 	}
 	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double[] targetMasses, double minimumMass, boolean isDecoy) {
-		String sequence=getModifiedSequence(params.getAAConstants());
+		String sequence=getModifiedSequence();
 		double precursorMZ=getChargedMass(precursorCharge);
 		FragmentIon[] ions=getPrimaryIonObjects(params.getFragType(), precursorCharge);
 		MassTolerance fragmentTolerance=params.getFragmentTolerance();
@@ -108,26 +108,10 @@ public class FragmentationModel {
 		return new Pair<Character, Double>(c, null);
 	}
 	
-	public String getModifiedSequence(AminoAcidConstants aaConstants) {
-		TCharDoubleHashMap fixedMods=aaConstants.getFixedMods();
-		
+	public String getModifiedSequence() {
 		StringBuilder sb=new StringBuilder();
 		for (String aa : aas) {
 			sb.append(aa);
-
-			if (aa.length()==1) {
-				char aaChar=aa.charAt(0);
-				if (fixedMods.contains(aaChar)) {
-					double mass=fixedMods.get(aaChar);
-					if (mass!=0.0f) {
-						String formattedMass=Double.toString(mass);
-						if (formattedMass.charAt(0)!='+'&&formattedMass.charAt(0)!='-') {
-							formattedMass="+"+formattedMass;
-						}
-						sb.append("["+formattedMass+"]");
-					}
-				}
-			}
 		}
 		return sb.toString();
 	}

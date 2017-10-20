@@ -303,6 +303,7 @@ public class SearchToBLIB {
 			return;
 		}
 		Logger.logLine("Using "+representativeJob.getDiaFile().getName()+" to extract representative search parameters");
+		SearchParameters parameters=representativeJob.getParameters();
 
 		String filename=libFile.getName();
 		if (filename.lastIndexOf('.')>0) {
@@ -313,9 +314,8 @@ public class SearchToBLIB {
 		File bigPercolatorDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_decoy.txt");
 		File bigPercolatorProteinFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_results.txt");
 		File bigPercolatorProteinDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_decoy.txt");
-		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, fastaFile, bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile);
+		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, fastaFile, bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile, parameters);
 		
-		SearchParameters parameters=representativeJob.getParameters();
 		float threshold=parameters.getEffectivePercolatorThreshold();
 		try {
 			Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides;

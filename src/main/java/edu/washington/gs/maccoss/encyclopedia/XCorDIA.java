@@ -133,7 +133,7 @@ public class XCorDIA {
 						targets=new ArrayList<FastaPeptideEntry>();
 						ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(targetsFile);
 						for (FastaEntryInterface entry : entries) {
-							ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants().getVariableMods());
+							ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
 							for (String peptide : peptides) {
 								FastaPeptideEntry pe=entry.getSubEntry(peptide);
 								targets.add(pe);
@@ -217,7 +217,7 @@ public class XCorDIA {
 		// add database to proteome
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(jobData.getFastaFile());
 		for (FastaEntryInterface entry : entries) {
-			ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants().getVariableMods());
+			ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
 			backgroundProteome.addAll(peptides);
 
 			if (!jobData.getTargetList().isPresent()) {
@@ -365,7 +365,7 @@ public class XCorDIA {
 						tasks.add(entry);
 						
 						if (!parameters.isDontRunDecoys()) {
-							String smartDecoy=PeptideUtils.reverse(sequence, parameters);
+							String smartDecoy=PeptideUtils.reverse(sequence, parameters.getEnzyme());
 							FastaPeptideEntry decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.DECOY_STRING), smartDecoy);
 							XCorrLibraryEntry reventry=XCorrLibraryEntry.generateEntry(true, decoyPeptide.getFilename(), decoyPeptide.getAccessions(), charge, decoyPeptide.getSequence(), parameters);
 							tasks.add(reventry);
@@ -386,7 +386,7 @@ public class XCorDIA {
 								reventry=XCorrLibraryEntry.generateEntry(true, shuffledPeptide.getFilename(), shuffledPeptide.getAccessions(), charge, shuffledPeptide.getSequence(), parameters);
 								tasks.add(reventry);
 								
-								smartDecoy=PeptideUtils.reverse(shuffledSequence, parameters);
+								smartDecoy=PeptideUtils.reverse(shuffledSequence, parameters.getEnzyme());
 								decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.DECOY_STRING+LibraryEntry.SHUFFLE_STRING), smartDecoy);
 								reventry=XCorrLibraryEntry.generateEntry(true, decoyPeptide.getFilename(), decoyPeptide.getAccessions(), charge, decoyPeptide.getSequence(), parameters);
 								tasks.add(reventry);

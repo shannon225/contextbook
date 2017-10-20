@@ -1,26 +1,26 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific;
 
-public class VariableModification {
+public class AlleleVariant {
 	private final int startSite;
 	private final int stopSite;
 	private final String originalSequence;
 	private final String newSequence;
 
-	public VariableModification(int site, double modification, char aminoAcid) {
+	public AlleleVariant(int site, double modification, char aminoAcid) {
 		this.startSite=site;
 		this.stopSite=site;
 		this.originalSequence=Character.toString(aminoAcid);
 		this.newSequence=Character.toString(aminoAcid)+"["+modification+"]";
 	}
 
-	public VariableModification(int site, char originalSequence, char newSequence) {
+	public AlleleVariant(int site, char originalSequence, char newSequence) {
 		this.startSite=site;
 		this.stopSite=site;
 		this.originalSequence=Character.toString(originalSequence);
 		this.newSequence=Character.toString(newSequence);
 	}
 
-	public VariableModification(int startSite, int stopSite, String originalSequence, String newSequence) {
+	public AlleleVariant(int startSite, int stopSite, String originalSequence, String newSequence) {
 		this.startSite=startSite;
 		this.stopSite=stopSite;
 		this.originalSequence=originalSequence;

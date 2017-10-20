@@ -6,9 +6,12 @@ import java.util.ArrayList;
 
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import junit.framework.TestCase;
 
 public class FastaReaderTest extends TestCase {
@@ -105,7 +108,7 @@ public class FastaReaderTest extends TestCase {
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		for (FastaEntryInterface entry : entries) {
 			countNTermProtein++;
-			ArrayList<String> peptides=enzyme.digestProtein(entry.getSequence(), 8, 40, 2);
+			ArrayList<String> peptides=enzyme.digestProtein(entry.getSequence(), 8, 40, 2, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 			for (String sequence : peptides) {
 				countBase++;
 				countNTermProtein++;
@@ -162,7 +165,7 @@ public class FastaReaderTest extends TestCase {
 
 		entry=FastaReader.readFasta(ecoli, "").get(0);
 		assertEquals("MDKKSARIRRATRARRKLQELGATRLVVHRTPRHIYAQVIAPNGSEVLVAASTVEKAIAEQLKYTGNKDAAAAVGKAVAERALEKGIKDVSFDRSGFQYHGRVQALADAAREAGLQF", entry.getSequence());
-		ArrayList<String> peptides=DigestionEnzyme.getEnzyme("trypsin").digestProtein(entry.getSequence(), 8, 40, 1);
+		ArrayList<String> peptides=DigestionEnzyme.getEnzyme("trypsin").digestProtein(entry.getSequence(), 8, 40, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 		assertTrue(peptides.contains("GIKDVSFDR"));
 	}
 

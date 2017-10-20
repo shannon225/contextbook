@@ -154,7 +154,7 @@ public class BackgroundGenerator {
 		for (FastaEntryInterface entry : entries) {
 			ArrayList<String> peptides;
 			if (digest) {
-				peptides=params.getEnzyme().digestProtein(entry.getSequence(), params.getMinPeptideLength(), params.getMaxPeptideLength(), params.getMaxMissedCleavages(), params.getAAConstants().getVariableMods());
+				peptides=params.getEnzyme().digestProtein(entry.getSequence(), params.getMinPeptideLength(), params.getMaxPeptideLength(), params.getMaxMissedCleavages(), params.getAAConstants());
 			} else {
 				peptides=new ArrayList<String>();
 				peptides.add(entry.getSequence());

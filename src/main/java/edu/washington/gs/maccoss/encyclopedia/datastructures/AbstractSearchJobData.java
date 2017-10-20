@@ -60,10 +60,10 @@ public abstract class AbstractSearchJobData implements SearchJobData {
 			Logger.errorLine("Missing output file: "+percolatorFiles.getPeptideOutputFile().getName());
 			return false;
 		}
-		if (!percolatorFiles.getProteinOutputFile().exists()) {
+		/*if (!percolatorFiles.getProteinOutputFile().exists()) {
 			Logger.errorLine("Missing output file: "+percolatorFiles.getProteinOutputFile().getName());
 			return false;
-		}
+		}*/
 		return true;
 	}
 }

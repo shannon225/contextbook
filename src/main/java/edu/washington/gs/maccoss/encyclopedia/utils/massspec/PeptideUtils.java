@@ -13,7 +13,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class PeptideUtils {
 	public static byte getExpectedChargeState(String peptide) {
@@ -34,7 +33,7 @@ public class PeptideUtils {
 		FragmentationModel model=new FragmentationModel(peptide, parameters.getAAConstants());
 		double[] primaryIons=model.getPrimaryIons(parameters.getFragType(), charge);
 		
-		String decoy=reverse(peptide, parameters);
+		String decoy=reverse(peptide, parameters.getEnzyme());
 		int attempts=0;
 		int maxTries=10;
 		while (attempts<maxTries) {
@@ -63,7 +62,7 @@ public class PeptideUtils {
 	}
 	
 	public static String getDecoy(String peptide, HashSet<String> backgroundProteome, SearchParameters parameters) {
-		String decoy=reverse(peptide, parameters);
+		String decoy=reverse(peptide, parameters.getEnzyme());
 		int attempts=0;
 		int maxTries=3;
 		while (attempts<maxTries) {
@@ -77,10 +76,9 @@ public class PeptideUtils {
 		return decoy;
 	}
 	
-	public static String reverse(String peptide, SearchParameters parameters) {
-		Triplet<double[], double[], String[]>triplet=getMasses(peptide, parameters.getAAConstants());
-		String[] aas=triplet.z;
-		reverse(aas, parameters.getEnzyme());
+	public static String reverse(String peptide, DigestionEnzyme enzyme) {
+		String[] aas=getAAs(peptide);
+		reverse(aas, enzyme);
 		return getSequence(aas);
 	}
 	
@@ -242,6 +240,37 @@ public class PeptideUtils {
 		return new Triplet<double[], double[], String[]>(masses.toArray(), neutralLosses.toArray(), aas.toArray(new String[aas.size()]));
 	}
 
+	public static String[] getAAs(String sequence) {
+		char[] ca=sequence.toCharArray();
+		
+		ArrayList<String> aas=new ArrayList<String>();
+		for (int i = 0; i < ca.length; i++) {
+			if (ca[i]=='[') {
+				StringBuilder sb=new StringBuilder();
+				i++;
+				while (ca[i]!=']') {
+					sb.append(ca[i]);
+					i++;
+				}
+				if (aas.size()==0) {
+					// handling of n-termini mods assumes you can't have multiple []s in a row
+					i++;
+					aas.add(Character.toString(ca[i]));
+				}
+				String massText = sb.toString();
+				double modificationMass = Double.valueOf(massText);
+				String aaString=aas.get(aas.size()-1);
+				char aaChar=aaString.charAt(0);
+				modificationMass=MassConstants.getAccurateModificationMass(aaChar, modificationMass);
+
+				aas.set(aas.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
+			} else {
+				aas.add(Character.toString(ca[i]));
+			}
+		}
+		return aas.toArray(new String[aas.size()]);
+	}
+
 	
 	public static String getPeptideSeq(String peptideModSeq) {
 		StringBuilder sb=new StringBuilder();
@@ -300,7 +329,6 @@ public class PeptideUtils {
 	
 	public static String formatForSkyline(String sequence, AminoAcidConstants aaConstants, DecimalFormat df) {
 		char[] ca=sequence.toCharArray();
-		TCharDoubleHashMap fixedMods=aaConstants.getFixedMods();
 		
 		ArrayList<String> aas=new ArrayList<String>();
 		for (int i = 0; i < ca.length; i++) {
@@ -331,19 +359,6 @@ public class PeptideUtils {
 		StringBuilder sb=new StringBuilder();
 		for (String aa : aas) {
 			sb.append(aa);
-			if (aa.length()==1) {
-				char aaChar=aa.charAt(0);
-				if (fixedMods.contains(aaChar)) {
-					double mass=fixedMods.get(aaChar);
-					if (mass!=0.0f) {
-						String formattedMass=df==null?Double.toString(mass):df.format(mass);
-						if (formattedMass.charAt(0)!='+'&&formattedMass.charAt(0)!='-') {
-							formattedMass="+"+formattedMass;
-						}
-						sb.append("["+formattedMass+"]");
-					}
-				}
-			}
 		}
 		return sb.toString();
 	}

@@ -211,7 +211,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 			
 			ArrayList<FastaEntryInterface> targetProteins=FastaReader.readFasta(targetFile);
 			for (FastaEntryInterface entry : targetProteins) {
-				ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants().getVariableMods());
+				ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
 				for (String peptide : peptides) {
 					FastaPeptideEntry pe=entry.getSubEntry(peptide);
 					targets.add(pe);
@@ -219,7 +219,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 			}
 		}
 		
-		PercolatorExecutionData percolatorFiles=PecanJobData.getPercolatorExecutionData(diaFile, fastaFile);
+		PercolatorExecutionData percolatorFiles=PecanJobData.getPercolatorExecutionData(diaFile, fastaFile, parameters);
 		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, percolatorFiles.getInputTSV());
 		return new PecanJob(processor, new PecanJobData(Optional.ofNullable(targets), diaFile, fastaFile, percolatorFiles, factory));
 	}
