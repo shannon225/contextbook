@@ -23,7 +23,6 @@ import java.util.zip.DataFormatException;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
@@ -41,9 +40,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
@@ -166,8 +163,7 @@ public class XCorDIA {
 		if (jobData.getPercolatorFiles().hasDataAvailable()) {
 			try {
 				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(jobData.getPercolatorFiles().getPeptideOutputFile(), jobData.getParameters().getEffectivePercolatorThreshold(), false).x;
-				ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptidesFromTSV);
-				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides ("+proteins.size()+" proteins) identified at "+(jobData.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(jobData.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 				return;
 			} catch (Exception e) {
 				// problem! so just continue on and overwrite old result
@@ -419,9 +415,7 @@ public class XCorDIA {
 		stripefile.close();
 		
 		Logger.logLine("Writing elib result library...");
-		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
-		jobs.add(jobData);
-		SearchToBLIB.convert(progress, jobs, jobData.getPercolatorFiles().getFastaFile(), jobData.getResultLibrary(), false, true);
+		SearchToBLIB.convertElib(progress, jobData, jobData.getResultLibrary(), parameters);
 		
 		/*if (false&&!targetList.isPresent()) { //FIXME
 			HashSet<String> accessions=new HashSet<String>();
@@ -443,8 +437,7 @@ public class XCorDIA {
 			runPie(progress, Optional.of(newTargets), diaFile, fastaFile, featureFile, outputFile, taskFactory);
 			
 		} else {*/
-			ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides);
-			Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
+			Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peptides identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 			Logger.logLine(""); 
 			progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 		//}

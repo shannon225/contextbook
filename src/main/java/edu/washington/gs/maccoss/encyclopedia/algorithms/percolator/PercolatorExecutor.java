@@ -13,6 +13,7 @@ import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
@@ -26,7 +27,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 
 public class PercolatorExecutor extends ExternalExecutor {
-	private static final String DECOY_ACCESSION="decoy_";
 	public static final String PI_0_TAG="pi_0=";
 	public static final String V3_01="v3-01";
 	public static final String V2_10="v2-10";
@@ -100,8 +100,10 @@ public class PercolatorExecutor extends ExternalExecutor {
 		if (percolatorVersion==2) {
 			return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(), "-y", commandData.getInputTSV().getAbsolutePath()};
 		} else {
+			//return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(), 
+			//		"-P", LibraryEntry.DECOY_STRING, "-f", getFastaPlusDecoyFile(commandData.getFastaFile(), commandData.getParameters()).getAbsolutePath(), "--results-proteins", commandData.getProteinOutputFile().getAbsolutePath(), "--decoy-results-proteins", commandData.getProteinDecoyFile().getAbsolutePath(), "--protein-enzyme", commandData.getParameters().getEnzyme().getPercolatorName(), "-g",
+			//		"-y", "--no-terminate", "-N", "200000", commandData.getInputTSV().getAbsolutePath()};	
 			return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(), 
-					"-P", DECOY_ACCESSION, "-f", getFastaPlusDecoyFile(commandData.getFastaFile(), commandData.getParameters()).getAbsolutePath(), "--results-proteins", commandData.getProteinOutputFile().getAbsolutePath(), "--decoy-results-proteins", commandData.getProteinDecoyFile().getAbsolutePath(), "--protein-enzyme", commandData.getParameters().getEnzyme().getPercolatorName(), "-g",
 					"-y", "--no-terminate", "-N", "200000", commandData.getInputTSV().getAbsolutePath()};	
 		}
 	}
@@ -115,7 +117,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(fasta);
 		for (FastaEntryInterface entry : entries) {
 			writer.write(entry);
-			FastaEntry reverse=new FastaEntry(entry.getFilename(), DECOY_ACCESSION+entry.getAnnotation(), parameters.getEnzyme().reverseProtein(entry.getSequence()));
+			FastaEntry reverse=new FastaEntry(entry.getFilename(), LibraryEntry.DECOY_STRING+entry.getAnnotation(), parameters.getEnzyme().reverseProtein(entry.getSequence()));
 			writer.write(reverse);
 		}
 		writer.close();

@@ -113,8 +113,14 @@ public class PSMData implements PeptidePrecursor {
 		return duration;
 	}
 	
-	public static final String ACCESSION_TOKEN=";";
+	public static final String ACCESSION_TOKEN=",";
 	public static String accessionsToString(Collection<String> accessions) {
+		return accessionsToString(accessions, ACCESSION_TOKEN);
+	}
+	public static String accessionsToString(Collection<String> accessions, String deliminator) {
+		if (accessions.size()==0) return "";
+		if (accessions.size()==1) return accessions.iterator().next();
+
 		StringBuilder sb=new StringBuilder();
 		ArrayList<String> accessionList=new ArrayList<String>(accessions);
 		Collections.sort(accessionList);

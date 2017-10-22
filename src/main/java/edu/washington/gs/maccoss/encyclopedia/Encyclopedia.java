@@ -24,7 +24,6 @@ import java.util.zip.DataFormatException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
@@ -38,7 +37,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorEx
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -293,13 +291,13 @@ public class Encyclopedia {
 		File elibFile=job.getResultLibrary();
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		jobs.add(job);
-		SearchToBLIB.convert(progress, jobs, job.getPercolatorFiles().getFastaFile(), elibFile, false, true);
+		
+		SearchToBLIB.convertElib(progress, job, elibFile, parameters);
 
 		Logger.logLine("Grouping proteins...");
-		ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides);
 		
-		progress.update("Found "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
-		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peptides processed, "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
+		progress.update("Found "+passingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peptides processed, "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 
 	}
 

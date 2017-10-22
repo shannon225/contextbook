@@ -9,7 +9,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorEx
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
@@ -41,6 +40,7 @@ public class PecanParameterParser {
 		map.put("-addDecoysToBackground", "false");
 		map.put("-dontRunDecoys", "false");
 		map.put("-percolatorThreshold", "0.01");
+		map.put("-percolatorProteinThreshold", "0.01");
 		map.put("-alpha", "1.8");
 		map.put("-beta", "0.4");
 		map.put("-percolatorVersionNumber", Byte.toString(PercolatorExecutor.DEFAULT_VERSION_NUMBER));
@@ -84,6 +84,7 @@ public class PecanParameterParser {
 		final boolean addDecoysToBackgound;
 		final boolean dontRunDecoys;
 		final float percolatorThreshold;
+		final float percolatorProteinThreshold;
 		final float alpha;
 		final float beta;
 		final DataAcquisitionType dataAcquisitionType;
@@ -229,6 +230,7 @@ public class PecanParameterParser {
 		addDecoysToBackgound=SearchParameterParser.getBoolean("-addDecoysToBackground", parameters, false);
 		dontRunDecoys=SearchParameterParser.getBoolean("-dontRunDecoys", parameters, false);
 		percolatorThreshold=SearchParameterParser.getFloat("-percolatorThreshold", parameters, 0.01f);
+		percolatorProteinThreshold=SearchParameterParser.getFloat("-percolatorProteinThreshold", parameters, 0.01f);
 		alpha=SearchParameterParser.getFloat("-alpha", parameters, 1.8f);
 		beta=SearchParameterParser.getFloat("-beta", parameters, 0.4f);
 		numberOfThreadsUsed=SearchParameterParser.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
@@ -240,6 +242,6 @@ public class PecanParameterParser {
 		percolatorVersionNumber=SearchParameterParser.getInteger("-percolatorVersionNumber", parameters, 3);
 		quantifyAcrossSamples=SearchParameterParser.getBoolean("-quantifyAcrossSamples", parameters, false);
 		
-		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, alpha, beta, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minQuantitativeIonNumber, quantifyAcrossSamples);
+		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, percolatorProteinThreshold, alpha, beta, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minQuantitativeIonNumber, quantifyAcrossSamples);
 	}
 }

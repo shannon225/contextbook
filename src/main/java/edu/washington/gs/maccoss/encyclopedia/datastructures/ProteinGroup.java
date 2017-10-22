@@ -2,9 +2,11 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
-public class ProteinGroup implements Comparable<ProteinGroup> {
+public class ProteinGroup implements ProteinGroupInterface {
 	private final float nspScore;
+	private final float posteriorErrorProb;
 	private final ArrayList<String> equivalentAccessions;
 	private final int hash;
 	private final ArrayList<String> sequences;
@@ -14,17 +16,14 @@ public class ProteinGroup implements Comparable<ProteinGroup> {
 	 * @param nspScore
 	 * @param equivalentAccessions note, destructively sorts this array!
 	 */
-	public ProteinGroup(float nspScore, ArrayList<String> equivalentAccessions, ArrayList<String> sequences) {
+	public ProteinGroup(float nspScore, float posteriorErrorProb, ArrayList<String> equivalentAccessions, ArrayList<String> sequences) {
 		this.nspScore=nspScore;
+		this.posteriorErrorProb=posteriorErrorProb;
 		this.equivalentAccessions=equivalentAccessions;
 		this.sequences=sequences;
-		Collections.sort(equivalentAccessions);
+		Collections.sort(this.equivalentAccessions);
 		
-		hash=getAccessionString(equivalentAccessions).hashCode();
-	}
-
-	private String getAccessionString(ArrayList<String> equivalentAccessions) {
-		return PSMData.accessionsToString(equivalentAccessions);
+		hash=PSMData.accessionsToString(this.equivalentAccessions).hashCode();
 	}
 	
 	@Override
@@ -34,39 +33,47 @@ public class ProteinGroup implements Comparable<ProteinGroup> {
 	
 	@Override
 	public boolean equals(Object obj) {
-		if (obj==null||!(obj instanceof ProteinGroup)) return false;
+		if (obj==null||!(obj instanceof ProteinGroupInterface)) return false;
 		if (hashCode()!=obj.hashCode()) return false;
-		return equivalentAccessions.toString().equals(((ProteinGroup)obj).equivalentAccessions.toString());
+		return PSMData.accessionsToString(getEquivalentAccessions()).equals(PSMData.accessionsToString(((ProteinGroupInterface)obj).getEquivalentAccessions()));
 	}
 	
 	@Override
 	public String toString() {
-		return getAccessionString(equivalentAccessions);
-	}
-	
-	public ArrayList<String> getSequences() {
-		return sequences;
+		return PSMData.accessionsToString(equivalentAccessions);
 	}
 	
 	@Override
-	public int compareTo(ProteinGroup o) {
-		if (o==null) return 1;
-		int c=Float.compare(nspScore, o.nspScore);
-		if (c!=0) return c;
-		
-		c=Integer.compare(equivalentAccessions.size(), o.equivalentAccessions.size());
-		if (c!=0) return c;
-		return equivalentAccessions.toString().compareTo(((ProteinGroup)o).equivalentAccessions.toString());
+	public ArrayList<String> getSequences() {
+		return sequences;
 	}
 
-	public float getNspScore() {
+	@Override
+	public float getNSPScore() {
 		return nspScore;
 	}
+	
+	@Override
+	public int compareTo(ProteinGroupInterface o) {
+		if (o==null) return 1;
+		
+		//int c=Float.compare(getNSPScore(), o.getNSPScore());
+		int c=-Float.compare(getPosteriorErrorProb(), o.getPosteriorErrorProb());
+		if (c!=0) return c;
+		
+		List<String> acc2=o.getEquivalentAccessions();
+		List<String> acc1=getEquivalentAccessions();
+		c=Integer.compare(acc1.size(), acc2.size());
+		if (c!=0) return c;
+		return PSMData.accessionsToString(acc1).compareTo(PSMData.accessionsToString(acc2));
+	}
 
+	@Override
 	public ArrayList<String> getEquivalentAccessions() {
 		return equivalentAccessions;
 	}
 	
+	@Override
 	public boolean isDecoy() {
 		for (String accession : equivalentAccessions) {
 			if (!accession.startsWith(LibraryEntry.DECOY_STRING)) {
@@ -74,5 +81,10 @@ public class ProteinGroup implements Comparable<ProteinGroup> {
 			}
 		}
 		return true;
+	}
+	
+	@Override
+	public float getPosteriorErrorProb() {
+		return posteriorErrorProb;
 	}
 }

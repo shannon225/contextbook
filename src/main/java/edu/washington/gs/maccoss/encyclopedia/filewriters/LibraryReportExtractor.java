@@ -8,7 +8,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,7 +17,7 @@ import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideReportData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupQuantifier;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -32,7 +31,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class LibraryReportExtractor {
-	public static void extractMatrix(LibraryFile library, ArrayList<ProteinGroup> proteins) throws IOException, SQLException, DataFormatException {
+	public static void extractMatrix(LibraryFile library, ArrayList<ProteinGroupInterface> proteins) throws IOException, SQLException, DataFormatException {
 		File stubFile=library.getFile();
 		if (stubFile==null) {
 			throw new EncyclopediaException("Please save .ELIB before trying to read matrix data from it!");
@@ -77,7 +76,6 @@ public class LibraryReportExtractor {
 					
 					peptideWriter.print("\t"+sourceFile);
 					proteinWriter.print("\t"+sourceFile);
-					proteinWriter.print("\tnum_"+sourceFile);
 				}
 				averageTIC=averageTIC/sourceFiles.size();
 				
@@ -191,7 +189,7 @@ public class LibraryReportExtractor {
 				}
 				Logger.logLine("Finished writing peptide report!");
 				
-				for (ProteinGroup protein : proteins) {
+				for (ProteinGroupInterface protein : proteins) {
 					//System.out.println(protein.getEquivalentAccessions().size()+"\t"+protein.getNspScore()+"\t"+protein.toString());
 					proteinWriter.print(protein.toString());
 					proteinWriter.print("\t"+protein.getEquivalentAccessions().size()); // numPeptides
