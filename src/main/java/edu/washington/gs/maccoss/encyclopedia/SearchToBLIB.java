@@ -158,7 +158,7 @@ public class SearchToBLIB {
 				pecanJobs.add(job);
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, fastaFile, outputFile, writeBlib, alignBetweenFiles);
+			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
@@ -214,7 +214,7 @@ public class SearchToBLIB {
 				pecanJobs.add(job);
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, fastaFile, outputFile, writeBlib, alignBetweenFiles);
+			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
@@ -266,14 +266,14 @@ public class SearchToBLIB {
 				pecanJobs.add(job);
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, fastaFile, outputFile, writeBlib, alignBetweenFiles);
+			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
 		}
 	}
 	
-	public static void convert(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File fastaFile, File libFile, boolean writeBlib, boolean alignBetweenFiles) {
+	public static void convert(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File libFile, boolean writeBlib, boolean alignBetweenFiles) {
 		ArrayList<SearchJobData> processedJobs=new ArrayList<SearchJobData>();
 		ArrayList<File> featureFiles=new ArrayList<File>();
 		SearchJobData representativeJob=null;
@@ -315,7 +315,7 @@ public class SearchToBLIB {
 		File bigPercolatorDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_decoy.txt");
 		File bigPercolatorProteinFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_results.txt");
 		File bigPercolatorProteinDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_decoy.txt");
-		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, fastaFile, bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile, parameters);
+		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, representativeJob.getPercolatorFiles().getFastaFile(), bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile, parameters);
 		
 		float threshold=parameters.getEffectivePercolatorThreshold();
 		try {

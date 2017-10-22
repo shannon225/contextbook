@@ -731,7 +731,7 @@ public class SearchPanel extends JPanel {
 					}
 				}
 
-				SearchToBLIBJob job=new SearchToBLIBJob(blibFile, getVisibleTab().getBackgroundFastaFile(), isAlignedBetweenFiles(), processorTableModel);
+				SearchToBLIBJob job=new SearchToBLIBJob(blibFile, isAlignedBetweenFiles(), processorTableModel);
 				if (job!=null) {
 					processorTableModel.addJob(job);
 				}
@@ -768,7 +768,7 @@ public class SearchPanel extends JPanel {
 					}
 				}
 
-				SearchToELIBJob job=new SearchToELIBJob(elibFile, getVisibleTab().getBackgroundFastaFile(), isAlignedBetweenFiles(), processorTableModel);
+				SearchToELIBJob job=new SearchToELIBJob(elibFile, isAlignedBetweenFiles(), processorTableModel);
 				if (job!=null) {
 					processorTableModel.addJob(job);
 				}
