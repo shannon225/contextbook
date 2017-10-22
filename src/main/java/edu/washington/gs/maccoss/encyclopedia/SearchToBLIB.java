@@ -509,7 +509,7 @@ public class SearchToBLIB {
 				subProgress.update("Wrote "+globalPassingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 			}
 			
-			Optional<ArrayList<PercolatorProteinGroup>> proteins=null;
+			ArrayList<PercolatorProteinGroup> proteins=null;
 			if (globalPercolatorFiles.isPresent()) {
 				Pair<ArrayList<PercolatorPeptide>, Float> targets=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorFiles.get().getPeptideOutputFile(), parameters.getEffectivePercolatorThreshold(), true);
 				Pair<ArrayList<PercolatorPeptide>, Float> decoys=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorFiles.get().getPeptideDecoyFile(), parameters.getEffectivePercolatorThreshold(), true);
@@ -522,7 +522,7 @@ public class SearchToBLIB {
 				Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>> targetDecoyProteins=ParsimonyProteinGrouper.groupProteins(targets.x, decoys.x, parameters.getPercolatorProteinThreshold());
 				Logger.logLine("Writing global target/decoy proteins: "+targetDecoyProteins.x.size()+"/"+targetDecoyProteins.y.size());
 				elib.addTargetDecoyProteins("global", targetDecoyProteins.x, targetDecoyProteins.y);
-				proteins=Optional.of(targetDecoyProteins.x);
+				proteins=targetDecoyProteins.x;
 			}
 			
 			elib.addMetadata(parameters.toParameterMap());
@@ -531,11 +531,11 @@ public class SearchToBLIB {
 			elib.createIndices();
 			elib.saveAsFile(elibFile);
 			
-			if (proteins.isPresent()) {
+			if (proteins!=null) {
 				if (inferrer.isPresent()) {
 					try {
 						ArrayList<ProteinGroupInterface> proteinGroups=new ArrayList<>();
-						for (ProteinGroupInterface pg : proteins.get()) {
+						for (ProteinGroupInterface pg : proteins) {
 							proteinGroups.add(pg);
 						}
 						LibraryReportExtractor.extractMatrix(elib, proteinGroups);
