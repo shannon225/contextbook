@@ -722,7 +722,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try {
 			Statement s=c.createStatement();
 			try {
-				ResultSet rs=s.executeQuery("SELECT p.proteingroup, p.proteinaccession, p2p.peptideseq, p.qvalue, p.PosteriorErrorProbability FROM proteinscores p, peptidetoprotein p2p WHERE p.proteinaccession=p2p.proteinaccession ORDER BY p.proteingroup");
+				ResultSet rs=s.executeQuery("SELECT p.proteingroup, p.proteinaccession, p2p.peptideseq, p.qvalue, p.MinimumPeptidePEP FROM proteinscores p, peptidetoprotein p2p WHERE p.proteinaccession=p2p.proteinaccession ORDER BY p.proteingroup");
 				
 				ArrayList<ProteinGroupInterface> proteinGroups=new ArrayList<>();
 
@@ -770,7 +770,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		Connection c=getConnection();
 		try {
 			PreparedStatement prep=c
-					.prepareStatement("INSERT INTO proteinscores (ProteinGroup, ProteinAccession, SourceFile, QValue, PosteriorErrorProbability, IsDecoy) VALUES (?,?,?,?,?,?)");
+					.prepareStatement("INSERT INTO proteinscores (ProteinGroup, ProteinAccession, SourceFile, QValue, MinimumPeptidePEP, IsDecoy) VALUES (?,?,?,?,?,?)");
 			try {
 				int group=0;
 				for (PercolatorProteinGroup protein : targets) {
@@ -1438,7 +1438,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 								// SourceFile) )");
 				
 				s.execute("CREATE TABLE IF NOT EXISTS proteinscores ( "
-						+"ProteinGroup int not null, ProteinAccession string not null, SourceFile string not null, QValue double not null, PosteriorErrorProbability double not null, IsDecoy boolean not null "
+						+"ProteinGroup int not null, ProteinAccession string not null, SourceFile string not null, QValue double not null, MinimumPeptidePEP double not null, IsDecoy boolean not null "
 						+")");
 
 				c.commit();
