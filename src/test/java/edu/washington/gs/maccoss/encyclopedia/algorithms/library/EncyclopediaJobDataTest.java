@@ -1,8 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
-import junit.framework.TestCase;
-
 import java.io.File;
+
+import junit.framework.TestCase;
 
 public class EncyclopediaJobDataTest extends TestCase {
 	public void testGetOutputAbsolutePathPrefix() {

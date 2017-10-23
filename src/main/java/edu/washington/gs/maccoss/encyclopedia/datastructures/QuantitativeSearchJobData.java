@@ -1,9 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import java.io.File;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
-
-import java.io.File;
 
 public abstract class QuantitativeSearchJobData extends AbstractSearchJobData {
 	protected final StripeFileInterface diaFileReader;

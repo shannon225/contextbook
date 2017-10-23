@@ -14,7 +14,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.map.hash.TCharDoubleHashMap;
 
 //@Immutable
 public class FragmentationModel {
