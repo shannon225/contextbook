@@ -11,11 +11,8 @@ import java.util.HashMap;
 
 import org.apache.commons.math3.stat.inference.TestUtils;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusElibParser.Coordinate;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusElibParser.QuantitationLog;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
@@ -74,6 +71,27 @@ public class EncyclopediaElibParser {
 		sampleKey.put("23aug2017_hela_serum_timecourse_wide_6d.mzML", new Coordinate(6, 4));
 		sampleKey.put("23aug2017_hela_serum_timecourse_wide_6e.mzML", new Coordinate(6, 5));
 		sampleKey.put("23aug2017_hela_serum_timecourse_wide_6f.mzML", new Coordinate(6, 6));
+	}
+	
+	private static HashMap<String, QuantitationLog> getQuantData() throws IOException, SQLException {
+		File file=new File("/Volumes/BriansSSD/hela_serum_timecourse/combined.elib");
+		
+		LibraryFile library=new LibraryFile();
+		library.openFile(file);
+
+		HashMap<String, QuantitationLog> quantLog=new HashMap<>();
+		Connection c=library.getConnection();
+		Statement s=c.createStatement();
+		ResultSet rs = s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.PeptideSeq, pep.SourceFile, max(pep.LocalizedIntensity), max(pep.TotalIntensity), pep.IsSiteSpecific, pep.RTInSecondsCenter,pep.localizationScore,"+
+				"group_concat(p.ProteinAccession, '" + PSMData.ACCESSION_TOKEN + "') as ProteinAccessions " +
+				"from " +
+				"peptidelocalizations pep " +
+				"left join peptidetoprotein p " +
+				"where " +
+				"pep.PeptideSeq = p.PeptideSeq " +
+				"group by pep.rowid;"
+		);
+		
 	}
 	
 	/*private static HashMap<String, QuantitationLog> getQuantData(File file) throws IOException, SQLException {
