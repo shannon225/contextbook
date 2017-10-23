@@ -17,6 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorEx
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
@@ -92,7 +93,7 @@ public class PercolatorReader {
 					float posteriorErrorProb=Float.parseFloat(row.get("posterior_error_prob"));
 					String peptideIDs=row.get("peptideIds");
 					if (keepDecoys||!proteinIDs.startsWith(LibraryEntry.DECOY_STRING)) {
-						data.add(new PercolatorProteinGroup(proteinIDs.split(";"), peptideIDs.split(" "), qvalue, posteriorErrorProb));
+						data.add(new PercolatorProteinGroup(proteinIDs.split(PSMData.ACCESSION_TOKEN), peptideIDs.split(" "), qvalue, posteriorErrorProb));
 					}
 				}
 			}

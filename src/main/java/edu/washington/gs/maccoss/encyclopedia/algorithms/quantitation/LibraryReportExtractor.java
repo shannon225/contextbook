@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.filewriters;
+package edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.zip.DataFormatException;
@@ -32,6 +33,9 @@ import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class LibraryReportExtractor {
 	public static void extractMatrix(LibraryFile library, ArrayList<ProteinGroupInterface> proteins) throws IOException, SQLException, DataFormatException {
+		extractMatrix(library, proteins, Optional.ofNullable(null));
+	}
+	public static void extractMatrix(LibraryFile library, ArrayList<ProteinGroupInterface> proteins, Optional<CoefficientOfVariationCalculator> cvCalculator) throws IOException, SQLException, DataFormatException {
 		File stubFile=library.getFile();
 		if (stubFile==null) {
 			throw new EncyclopediaException("Please save .ELIB before trying to read matrix data from it!");
@@ -100,7 +104,6 @@ public class LibraryReportExtractor {
 						"group by pep.rowid;"
 				);
 				int count=0;
-				int totalAdded=0;
 				while (rs.next()) {
 					count++;
 					if (count%10000==0) {
@@ -112,7 +115,6 @@ public class LibraryReportExtractor {
 					float totalIntensity=rs.getFloat(4);
 					int numberOfQuantIons=rs.getInt(5);
 					String proteinToken=rs.getString(6);
-					HashSet<String> accessions=PSMData.stringToAccessions(proteinToken);
 					
 					int index=Collections.binarySearch(sourceFiles, sourceFile);
 					if (index<0) throw new EncyclopediaException("Unexpected sample: "+sourceFile);
@@ -124,11 +126,6 @@ public class LibraryReportExtractor {
 						normalizedIntensity=totalIntensity/tic*averageTIC;
 					} else {
 						normalizedIntensity=totalIntensity;
-					}
-					
-					boolean added=proteinQuantifiers.get(index).addIntensity(accessions, normalizedIntensity);
-					if (added) {
-						totalAdded++;
 					}
 					
 					Pair<String, float[]> pair=intensitiesByPeptideModSeq.get(peptideModSeq);
@@ -145,11 +142,43 @@ public class LibraryReportExtractor {
 					intensitiesArray[index]+=normalizedIntensity; // sums charge states together
 					numFragmentsArray[index]=numberOfQuantIons;
 				}
-				Logger.logLine("Finished processing "+count+" records, found "+totalAdded+" quantitative unique peptides. Writing reports...");
+				
+				int totalAdded=0;
+				HashSet<String> badPeptides=new HashSet<>();
+				for (Entry<String, Pair<String, float[]>> entry : intensitiesByPeptideModSeq.entrySet()) {
+					String peptideModSeq=entry.getKey();
+					String proteinToken=entry.getValue().x;
+					HashSet<String> accessions=PSMData.stringToAccessions(proteinToken);
+					float[] intensitiesArray=entry.getValue().y;
+					
+					// FIXME add CV limiter here
+					if (cvCalculator.isPresent()) {
+						if (!cvCalculator.get().passesCV(sourceFiles, intensitiesArray)) {
+							badPeptides.add(peptideModSeq);
+							continue;
+						};
+					}
+					
+					for (int index=0; index<intensitiesArray.length; index++) {
+						boolean added=proteinQuantifiers.get(index).addIntensity(accessions, intensitiesArray[index]);
+						if (added) {
+							totalAdded++;
+						}
+					}
+				}
+				
+				if (cvCalculator.isPresent()) {
+					Logger.logLine("Finished processing "+totalAdded+"/"+count+" measurements. Found "+intensitiesByPeptideModSeq.size()+" quantitative peptides (where "+badPeptides.size()+" were outside a CV of "+cvCalculator.get().getMaximumAcceptedCV()+"). Writing reports...");
+				} else {
+					Logger.logLine("Finished processing "+count+" records, found "+totalAdded+" quantitative unique peptides. Writing reports...");
+				}
 				
 				int numberInconsistentFragments=0;
 				for (Entry<String, Pair<String, float[]>> entry : intensitiesByPeptideModSeq.entrySet()) {
 					String peptideModSeq=entry.getKey();
+					if (badPeptides.size()>0&&badPeptides.contains(peptideModSeq)) {
+						continue;
+					}
 					Pair<String, float[]> pair=entry.getValue();
 					peptideWriter.print(peptideModSeq);
 					peptideWriter.print("\t");

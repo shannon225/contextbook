@@ -30,6 +30,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPe
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQuantExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
@@ -49,7 +50,6 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;

@@ -113,7 +113,7 @@ public class PSMData implements PeptidePrecursor {
 		return duration;
 	}
 	
-	public static final String ACCESSION_TOKEN=",";
+	public static final String ACCESSION_TOKEN=";";
 	public static String accessionsToString(Collection<String> accessions) {
 		return accessionsToString(accessions, ACCESSION_TOKEN);
 	}
