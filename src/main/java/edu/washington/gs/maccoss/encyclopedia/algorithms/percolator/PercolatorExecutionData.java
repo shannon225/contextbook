@@ -26,8 +26,6 @@ public class PercolatorExecutionData {
 	public boolean hasDataAvailable() {
 		if (!peptideOutputFile.exists()||!peptideOutputFile.canRead()) return false;
 		if (!peptideDecoyFile.exists()||!peptideDecoyFile.canRead()) return false;
-		if (!proteinOutputFile.exists()||!proteinOutputFile.canRead()) return false;
-		if (!proteinDecoyFile.exists()||!proteinDecoyFile.canRead()) return false;
 		return true;
 	}
 	

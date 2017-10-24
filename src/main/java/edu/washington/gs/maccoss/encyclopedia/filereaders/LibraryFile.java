@@ -13,25 +13,27 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.zip.DataFormatException;
 
 import com.google.common.collect.ImmutableList;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Chromatogram;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
@@ -39,6 +41,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LocalizedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -65,8 +68,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	public static final String ELIB=".elib";
 	public static final String VERSION_STRING="version";
 	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] { new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4),
-			new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8), new Version(0, 1, 9), new Version(0, 1, 10), new Version(0, 1, 11), new Version(0, 1, 12) };
-	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 12);
+			new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8), new Version(0, 1, 9), new Version(0, 1, 10), new Version(0, 1, 11), new Version(0, 1, 12), new Version(0, 1, 13) };
+	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 13);
 
 	private File userFile=null;
 	private File tempFile;
@@ -678,7 +681,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		return index;
 	}
 
-	public void addTargetDecoyData(ArrayList<PercolatorPeptide> targets, ArrayList<PercolatorPeptide> decoys) throws IOException, SQLException {
+	public void addTargetDecoyPeptides(ArrayList<PercolatorPeptide> targets, ArrayList<PercolatorPeptide> decoys) throws IOException, SQLException {
 		Connection c=getConnection();
 		try {
 			PreparedStatement prep=c
@@ -703,6 +706,98 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					prep.setFloat(6, peptide.getPosteriorErrorProb());
 					prep.setBoolean(7, peptide.isPSMIDDecoy());
 					prep.addBatch();
+				}
+				prep.executeBatch();
+
+				c.commit();
+			} finally {
+				prep.close();
+			}
+		} finally {
+			c.close();
+		}
+	}
+	
+	public ArrayList<ProteinGroupInterface> getProteinGroups() throws IOException, SQLException {
+		Connection c=getConnection();
+		try {
+			Statement s=c.createStatement();
+			try {
+				ResultSet rs=s.executeQuery("SELECT p.proteingroup, p.proteinaccession, p2p.peptideseq, p.qvalue, p.MinimumPeptidePEP FROM proteinscores p, peptidetoprotein p2p WHERE p.proteinaccession=p2p.proteinaccession ORDER BY p.proteingroup");
+				
+				ArrayList<ProteinGroupInterface> proteinGroups=new ArrayList<>();
+
+				int previousProteinGroup=-1;
+				HashSet<String> accessions=new HashSet<>();
+				HashSet<String> peptides=new HashSet<>();
+				float prevQValue=0;
+				float prevPEP=0;
+				while (rs.next()) {
+					int proteinGroup=rs.getInt(1);
+					String accession=rs.getString(2);
+					String peptideseq=rs.getString(3);
+					float qvalue=rs.getFloat(4);
+					float pep=rs.getFloat(5);				
+					
+					if (proteinGroup!=previousProteinGroup) {
+						previousProteinGroup=proteinGroup;
+						if (accessions.size()>0) {
+							proteinGroups.add(new PercolatorProteinGroup(accessions.toArray(new String[accessions.size()]), peptides.toArray(new String[peptides.size()]), prevQValue, prevPEP));
+						}
+						accessions.clear();
+						accessions.add(accession);
+						peptides.clear();
+						peptides.add(peptideseq);
+						prevQValue=qvalue;
+						prevPEP=pep;
+					} else {
+						accessions.add(accession);
+						peptides.add(peptideseq);
+					}
+				}
+				if (accessions.size()>0) {
+					proteinGroups.add(new PercolatorProteinGroup(accessions.toArray(new String[accessions.size()]), peptides.toArray(new String[peptides.size()]), prevQValue, prevPEP));
+				}
+
+				return proteinGroups;
+			} finally {
+				s.close();
+			}
+		} finally {
+			c.close();
+		}
+	}
+
+	public void addTargetDecoyProteins(String fileID, ArrayList<PercolatorProteinGroup> targets, ArrayList<PercolatorProteinGroup> decoys) throws IOException, SQLException {
+		Connection c=getConnection();
+		try {
+			PreparedStatement prep=c
+					.prepareStatement("INSERT INTO proteinscores (ProteinGroup, ProteinAccession, SourceFile, QValue, MinimumPeptidePEP, IsDecoy) VALUES (?,?,?,?,?,?)");
+			try {
+				int group=0;
+				for (PercolatorProteinGroup protein : targets) {
+					group++;
+					for (String accession : protein.getAccessions()) {
+						prep.setInt(1, group);
+						prep.setString(2, accession);
+						prep.setString(3, fileID);
+						prep.setFloat(4, protein.getQValue());
+						prep.setFloat(5, protein.getPosteriorErrorProb());
+						prep.setBoolean(6, false);
+						prep.addBatch();
+					}
+				}
+				for (PercolatorProteinGroup protein : decoys) {
+					group++;
+					for (String accession : protein.getAccessions()) {
+						prep.setInt(1, group);
+						prep.setString(2, accession);
+						prep.setString(3, fileID);
+						prep.setFloat(4, protein.getQValue());
+						prep.setFloat(5, protein.getPosteriorErrorProb());
+						prep.setBoolean(6, true);
+						prep.addBatch();
+					}
 				}
 				prep.executeBatch();
 
@@ -1343,6 +1438,10 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, QValue double not null, PosteriorErrorProbability double not null, IsDecoy boolean not null "
 						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq,
 								// SourceFile) )");
+				
+				s.execute("CREATE TABLE IF NOT EXISTS proteinscores ( "
+						+"ProteinGroup int not null, ProteinAccession string not null, SourceFile string not null, QValue double not null, MinimumPeptidePEP double not null, IsDecoy boolean not null "
+						+")");
 
 				c.commit();
 			} finally {
@@ -1372,6 +1471,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 				s.execute("drop index if exists 'PeptideModSeq_PrecursorCharge_SourceFile_Fragments_index'");
 				s.execute("drop index if exists 'PeptideSeq_Fragments_index'");
+
+				s.execute("drop index if exists 'ProteinGroup_ProteinScores_index'");
+				s.execute("drop index if exists 'ProteinAccession_ProteinScores_index'");
 
 				s.execute("drop index if exists 'PeptideModSeq_PrecursorCharge_SourceFile_Scores_index'");
 				s.execute("drop index if exists 'PeptideSeq_Scores_index'");
@@ -1408,6 +1510,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 				s.execute("create index if not exists 'PeptideModSeq_PrecursorCharge_SourceFile_Scores_index' on 'peptidescores' ('PeptideModSeq' ASC, 'PrecursorCharge' ASC, 'SourceFile' ASC)");
 				s.execute("create index if not exists 'PeptideSeq_Scores_index' on 'peptidescores' ('PeptideSeq' ASC)");
+
+				s.execute("create index if not exists 'ProteinGroup_ProteinScores_index' on 'proteinscores' ('ProteinGroup' ASC)");
+				s.execute("create index if not exists 'ProteinAccession_ProteinScores_index' on 'proteinscores' ('ProteinAccession' ASC)");
 
 				s.execute("create index if not exists 'PeptideModSeq_PrecursorCharge_SourceFile_Fragments_index' on 'fragmentquants' ('PeptideModSeq' ASC, 'PrecursorCharge' ASC, 'SourceFile' ASC)");
 				s.execute("create index if not exists 'PeptideSeq_Fragments_index' on 'fragmentquants' ('PeptideSeq' ASC)");

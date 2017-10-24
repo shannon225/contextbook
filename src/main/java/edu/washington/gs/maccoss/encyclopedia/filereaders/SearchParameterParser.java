@@ -39,6 +39,7 @@ public class SearchParameterParser {
 		map.put("-precursorIsolationMargin", "0");
 		map.put("-enzyme", "trypsin");
 		map.put("-percolatorThreshold", "0.01");
+		map.put("-percolatorProteinThreshold", "0.01");
 		map.put("-percolatorVersionNumber", Byte.toString(PercolatorExecutor.DEFAULT_VERSION_NUMBER));
 		map.put("-expectedPeakWidth", "25");
 		map.put("-acquisition", DataAcquisitionType.toName(DataAcquisitionType.DIA));
@@ -62,6 +63,7 @@ public class SearchParameterParser {
 		map.put("-ftolunits", "ppm");
 		map.put("-foffset", "0");
 		map.put("-percolatorThreshold", "0.01");
+		map.put("-percolatorProteinThreshold", "0.01");
 		map.put("-percolatorLocation", "internal");
 		map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
@@ -96,6 +98,7 @@ public class SearchParameterParser {
 		final double precursorIsolationMargin;
 		final DigestionEnzyme enzyme;
 		final float percolatorThreshold;
+		final float percolatorProteinThreshold;
 		final DataAcquisitionType dataAcquisitionType;
 		final int numberOfThreadsUsed;
 		final float targetWindowCenter;
@@ -234,6 +237,7 @@ public class SearchParameterParser {
 		}
 
 		percolatorThreshold=getFloat("-percolatorThreshold", parameters, 0.01f);
+		percolatorProteinThreshold=getFloat("-percolatorProteinThreshold", parameters, 0.01f);
 		numberOfThreadsUsed=SearchParameterParser.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
 		targetWindowCenter=SearchParameterParser.getFloat("-targetWindowCenter", parameters, -1f);
 		precursorWindowSize=SearchParameterParser.getFloat("-precursorWindowSize", parameters, -1f);
@@ -274,7 +278,7 @@ public class SearchParameterParser {
 		}
 		quantifyAcrossSamples=SearchParameterParser.getBoolean("-quantifyAcrossSamples", parameters, false);
 		
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
+		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorProteinThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
 				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minQuantitativeIonNumber, localizationModification, breadthType, numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples);
 	}
 

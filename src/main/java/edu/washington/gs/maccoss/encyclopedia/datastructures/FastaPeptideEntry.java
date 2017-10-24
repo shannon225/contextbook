@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableSortedSet;
+
 import gnu.trove.map.hash.TIntIntHashMap;
 
 public class FastaPeptideEntry implements Comparable<FastaPeptideEntry> {

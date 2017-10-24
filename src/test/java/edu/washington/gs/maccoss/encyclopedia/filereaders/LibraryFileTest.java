@@ -3,7 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 import java.io.File;
 import java.util.ArrayList;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 
 public class LibraryFileTest {

@@ -31,6 +31,8 @@ public class CorrelationPeakFrequencyCalculator {
 		TDoubleArrayList masses=new TDoubleArrayList();
 		int count=0;
 		for (int i=clone.size()-1; i>=0; i--) {
+			if (clone.get(i).isBadMeasurement()) continue;
+			
 			masses.add(clone.get(i).mass);
 			count++;
 			if (count>=n) break;
@@ -38,13 +40,15 @@ public class CorrelationPeakFrequencyCalculator {
 		return masses.toArray();
 	}
 
-	public void increment(double target, float intensity, float correlation) {
+	public void increment(double target, float intensity, float correlation, boolean passesThreshold) {
 		int value=binarySearch(peaks, target);
 		if (value>=0) {
-			peaks.get(value).increment(intensity, correlation);
+			peaks.get(value).increment(intensity, correlation, passesThreshold);
 		} else {
 			value=-(value+1);
-			peaks.add(value, new Count(target, intensity, correlation));
+			Count c=new Count(target);
+			c.increment(intensity, correlation, passesThreshold);
+			peaks.add(value, c);
 		}
 	}
 
@@ -78,15 +82,24 @@ public class CorrelationPeakFrequencyCalculator {
 		private final double mass;
 		private float maxIntensity=0.0f;
 		private float count=0.0f;
-		public Count(double mass, float intensity, float correlation) {
+		private float totalGoodIntensity=0.0f;
+		private float totalBadIntensity=0.0f;
+		
+		public Count(double mass) {
 			this.mass=mass;
-			this.maxIntensity=intensity;
-			count=correlation;
 		}
-		public float increment(float intensity, float correlation) {
-			if (intensity>maxIntensity) maxIntensity=intensity;
-			count=count+correlation;
-			return count;
+		public void increment(float intensity, float correlation, boolean passesThreshold) {
+			if (passesThreshold) {
+				totalGoodIntensity+=intensity;
+				if (intensity>maxIntensity) maxIntensity=intensity;
+				count=count+correlation;
+			} else {
+				totalBadIntensity+=intensity;
+			}
+		}
+		
+		public boolean isBadMeasurement() {
+			return totalBadIntensity>0.2f*totalGoodIntensity;
 		}
 		
 		@Override
@@ -95,8 +108,12 @@ public class CorrelationPeakFrequencyCalculator {
 		 */
 		public int compareTo(Count o) {
 			if (o==null) return 1;
-			int c=Float.compare(count, o.count);
+			int c=Integer.compare(isBadMeasurement()?-1:1, o.isBadMeasurement()?-1:1);
 			if (c!=0) return c;
+			
+			c=Float.compare(count, o.count);
+			if (c!=0) return c;
+			
 			return Double.compare(maxIntensity, o.maxIntensity);
 		}
 	}

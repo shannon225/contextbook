@@ -1,12 +1,14 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms;
+package edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.DotProduct;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizationData;

@@ -4,10 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -15,7 +15,6 @@ import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.AlternatePeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
@@ -28,14 +27,17 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParame
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.LibraryReportExtractor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQuantExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
@@ -48,7 +50,6 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -157,7 +158,7 @@ public class SearchToBLIB {
 				pecanJobs.add(job);
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, fastaFile, outputFile, writeBlib, alignBetweenFiles);
+			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
@@ -213,7 +214,7 @@ public class SearchToBLIB {
 				pecanJobs.add(job);
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, fastaFile, outputFile, writeBlib, alignBetweenFiles);
+			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
@@ -265,14 +266,14 @@ public class SearchToBLIB {
 				pecanJobs.add(job);
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, fastaFile, outputFile, writeBlib, alignBetweenFiles);
+			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
 		}
 	}
 	
-	public static void convert(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File fastaFile, File libFile, boolean writeBlib, boolean alignBetweenFiles) {
+	public static void convert(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File libFile, boolean writeBlib, boolean alignBetweenFiles) {
 		ArrayList<SearchJobData> processedJobs=new ArrayList<SearchJobData>();
 		ArrayList<File> featureFiles=new ArrayList<File>();
 		SearchJobData representativeJob=null;
@@ -314,7 +315,7 @@ public class SearchToBLIB {
 		File bigPercolatorDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_decoy.txt");
 		File bigPercolatorProteinFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_results.txt");
 		File bigPercolatorProteinDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_decoy.txt");
-		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, fastaFile, bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile, parameters);
+		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, representativeJob.getPercolatorFiles().getFastaFile(), bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile, parameters);
 		
 		float threshold=parameters.getEffectivePercolatorThreshold();
 		try {
@@ -330,8 +331,7 @@ public class SearchToBLIB {
 				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), bigPercolatorFiles, threshold);
 			}
 			
-			ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides.x);
-			Logger.logLine("Identified "+passingPeptides.x.size()+" peptides ("+proteins.size()+" proteins) across all files at a "+(threshold*100.0f)+"% FDR threshold.");
+			Logger.logLine("Identified "+passingPeptides.x.size()+" peptides across all files at a "+(threshold*100.0f)+"% FDR threshold.");
 
 			Optional<PeakLocationInferrerInterface> inferrer;
 			if (alignBetweenFiles) {
@@ -351,7 +351,7 @@ public class SearchToBLIB {
 			if (writeBlib) {
 				convertBlib(progress, pecanJobs, libFile, Optional.of(passingPeptides.x), inferrer);
 			} else {
-				convertElib(progress, pecanJobs, libFile, Optional.of(passingPeptides), Optional.ofNullable(featureFiles.size()==1?null:new Pair<File, File>(bigPercolatorFile, bigPercolatorDecoyFile)), inferrer, proteins, parameters);
+				convertElib(progress, pecanJobs, libFile, Optional.of(passingPeptides), Optional.ofNullable(featureFiles.size()==1?null:bigPercolatorFiles), inferrer, parameters);
 			}
 			progress.update(passingPeptides.x.size()+" peptides identified at "+(threshold*100.0f)+"% FDR", 1.0f);
 		} catch (IOException ioe) {
@@ -458,8 +458,13 @@ public class SearchToBLIB {
 		subProgress.update(diaFileName +": Finished writing to Skyline BLIB at"+new Date().toString(), 1.0f);
 		return counterTotals;
 	}
-	
-	static void convertElib(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File elibFile, Optional<Pair<ArrayList<PercolatorPeptide>, Float>> passingPeptides, Optional<Pair<File, File>> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, ArrayList<ProteinGroup> proteins, SearchParameters parameters) {
+
+	static void convertElib(ProgressIndicator progress, SearchJobData pecanJob, File elibFile, SearchParameters parameters) {
+		ArrayList<SearchJobData> jobs=new ArrayList<>();
+		jobs.add(pecanJob);
+		convertElib(progress, jobs, elibFile, Optional.empty(), Optional.empty(), Optional.empty(), parameters);
+	}
+	static void convertElib(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File elibFile, Optional<Pair<ArrayList<PercolatorPeptide>, Float>> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters) {
 		try {
 			LibraryFile elib=new LibraryFile();
 			elib.openFile();
@@ -490,24 +495,34 @@ public class SearchToBLIB {
 						Pair<ArrayList<PercolatorPeptide>, Float> targets=PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideOutputFile(), parameters.getEffectivePercolatorThreshold(), true);
 						Pair<ArrayList<PercolatorPeptide>, Float> decoys=PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideDecoyFile(), parameters.getEffectivePercolatorThreshold(), true);
 						Logger.logLine("Writing local target/decoy peptides: "+targets.x.size()+"/"+decoys.x.size()+", pi0: "+targets.y);
-						elib.addTargetDecoyData(targets.x, decoys.x);
+						elib.addTargetDecoyPeptides(targets.x, decoys.x);
 						elib.addMetadata("pi0", Float.toString(targets.y));
 						elib.addProteinsFromPercolator(targets.x);
 						elib.addProteinsFromPercolator(decoys.x);
+						
+						Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>> targetDecoyProteins=ParsimonyProteinGrouper.groupProteins(targets.x, decoys.x, parameters.getPercolatorProteinThreshold());
+						Logger.logLine("Writing local target/decoy proteins: "+targetDecoyProteins.x.size()+"/"+targetDecoyProteins.y.size());
+						elib.addTargetDecoyProteins(job.getDiaFile().getName(), targetDecoyProteins.x, targetDecoyProteins.y);
 					}
 				}
 				
-				subProgress.update("Wrote "+globalPassingPeptides.size()+" peptides ("+proteins.size()+" proteins) identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+				subProgress.update("Wrote "+globalPassingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 			}
 			
+			ArrayList<PercolatorProteinGroup> proteins=null;
 			if (globalPercolatorFiles.isPresent()) {
-				Pair<ArrayList<PercolatorPeptide>, Float> targets=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorFiles.get().x, parameters.getEffectivePercolatorThreshold(), true);
-				Pair<ArrayList<PercolatorPeptide>, Float> decoys=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorFiles.get().y, parameters.getEffectivePercolatorThreshold(), true);
+				Pair<ArrayList<PercolatorPeptide>, Float> targets=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorFiles.get().getPeptideOutputFile(), parameters.getEffectivePercolatorThreshold(), true);
+				Pair<ArrayList<PercolatorPeptide>, Float> decoys=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorFiles.get().getPeptideDecoyFile(), parameters.getEffectivePercolatorThreshold(), true);
 				Logger.logLine("Writing global target/decoy peptides: "+targets.x.size()+"/"+decoys.x.size()+", pi0: "+targets.y);
-				elib.addTargetDecoyData(targets.x, decoys.x);
+				elib.addTargetDecoyPeptides(targets.x, decoys.x);
 				elib.addMetadata("pi0", Float.toString(targets.y));
 				elib.addProteinsFromPercolator(targets.x);
 				elib.addProteinsFromPercolator(decoys.x);
+
+				Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>> targetDecoyProteins=ParsimonyProteinGrouper.groupProteins(targets.x, decoys.x, parameters.getPercolatorProteinThreshold());
+				Logger.logLine("Writing global target/decoy proteins: "+targetDecoyProteins.x.size()+"/"+targetDecoyProteins.y.size());
+				elib.addTargetDecoyProteins("global", targetDecoyProteins.x, targetDecoyProteins.y);
+				proteins=targetDecoyProteins.x;
 			}
 			
 			elib.addMetadata(parameters.toParameterMap());
@@ -516,13 +531,20 @@ public class SearchToBLIB {
 			elib.createIndices();
 			elib.saveAsFile(elibFile);
 			
-			if (pecanJobs.size()>1&&inferrer.isPresent()) {
-				try {
-					LibraryReportExtractor.extractMatrix(elib, proteins);
-				} catch (DataFormatException e) {
-					Logger.errorException(e);
+			if (proteins!=null) {
+				if (inferrer.isPresent()) {
+					try {
+						ArrayList<ProteinGroupInterface> proteinGroups=new ArrayList<>();
+						for (ProteinGroupInterface pg : proteins) {
+							proteinGroups.add(pg);
+						}
+						LibraryReportExtractor.extractMatrix(elib, proteinGroups);
+					} catch (DataFormatException e) {
+						Logger.errorException(e);
+					}
 				}
 			}
+			
 			elib.close();
 			
 		} catch (IOException ioe) {

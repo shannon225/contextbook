@@ -46,10 +46,10 @@ public class CASiLSearchParameters extends SearchParameters {
 	
 
 	public CASiLSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin,
-			MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme, float percolatorThreshold, Integer percolatorVersionNumber,
+			MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme, float percolatorThreshold, float percolatorProteinThreshold, Integer percolatorVersionNumber,
 			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, int numberOfQuantitativePeaks,
 			int minNumOfQuantitativePeaks, int minQuantitativeIonNumber, PeptideModification modification, ScoringBreadthType searchType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples) {
-		super(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold,
+		super(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorProteinThreshold,
 				percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks,
 				minQuantitativeIonNumber, Optional.of(modification), searchType, getNumberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples);
 	}
@@ -63,7 +63,7 @@ public class CASiLSearchParameters extends SearchParameters {
 			mod=PeptideModification.phosphorylation;
 		}
 		return new CASiLSearchParameters(params.getAAConstants(), params.getFragType(), params.getPrecursorTolerance(), params.getPrecursorOffsetPPM(), params.getPrecursorIsolationMargin(),
-				params.getFragmentTolerance(), params.getFragmentOffsetPPM(), params.getLibraryFragmentTolerance(), params.getEnzyme(), params.getPercolatorThreshold(),
+				params.getFragmentTolerance(), params.getFragmentOffsetPPM(), params.getLibraryFragmentTolerance(), params.getEnzyme(), params.getPercolatorThreshold(), params.getPercolatorProteinThreshold(),
 				params.getPercolatorVersionNumber(), params.getDataAcquisitionType(), params.getNumberOfThreadsUsed(), params.getExpectedPeakWidth(), params.getTargetWindowCenter(),
 				params.getPrecursorWindowSize(), params.getNumberOfQuantitativePeaks(), params.getMinNumOfQuantitativePeaks(), params.getMinQuantitativeIonNumber(), mod, params.getScoringBreadthType(),
 				params.getNumberOfExtraDecoyLibrariesSearched(), params.isQuantifySameFragmentsAcrossSamples());

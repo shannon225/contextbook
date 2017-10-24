@@ -8,12 +8,13 @@ import java.util.ArrayList;
 
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.AlleleVariant;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import gnu.trove.map.hash.TCharDoubleHashMap;
@@ -193,6 +194,12 @@ public class FastaReaderTest extends TestCase {
 		
 		entries=FastaReader.readFasta(temp, "NP_"); // test filter
 		assertEquals(3934, entries.size());
+
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		File reverseConcatenated=PercolatorExecutor.getFastaPlusDecoyFile(temp, parameters);
+		ArrayList<FastaEntryInterface> reverseConcatenatedEntries=FastaReader.readFasta(reverseConcatenated);
+		assertEquals(4178*2, reverseConcatenatedEntries.size());
+		reverseConcatenated.deleteOnExit();
 
 		/*
 		TIntObjectHashMap<TFloatArrayList> peptideDefects=new TIntObjectHashMap<TFloatArrayList>();

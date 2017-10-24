@@ -25,6 +25,7 @@ public class SearchParameters {
 	protected final MassTolerance libraryFragmentTolerance;
 	protected final DigestionEnzyme enzyme;
 	protected final float percolatorThreshold;
+	protected final float percolatorProteinThreshold;
 	protected final int percolatorVersionNumber;
 	protected final DataAcquisitionType dataAcquisitionType;
 	protected final int numberOfThreadsUsed;	
@@ -44,7 +45,7 @@ public class SearchParameters {
 	protected final boolean quantifyAcrossSamples;
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
-			float percolatorThreshold, Integer percolatorVersionNumber, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
+			float percolatorThreshold, float percolatorProteinThreshold, Integer percolatorVersionNumber, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
 			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int minQuantitativeIonNumber, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
@@ -56,6 +57,7 @@ public class SearchParameters {
 		this.libraryFragmentTolerance=libraryFragmentTolerance;
 		this.enzyme=enzyme;
 		this.percolatorThreshold=percolatorThreshold;
+		this.percolatorProteinThreshold=percolatorProteinThreshold;
 		this.percolatorVersionNumber=percolatorVersionNumber==null?PercolatorExecutor.DEFAULT_VERSION_NUMBER:percolatorVersionNumber;
 		this.dataAcquisitionType=dataAcquisitionType;
 		this.numberOfThreadsUsed=numberOfThreadsUsed;
@@ -194,6 +196,10 @@ public class SearchParameters {
 
 	public float getPercolatorThreshold() {
 		return percolatorThreshold;
+	}
+
+	public float getPercolatorProteinThreshold() {
+		return percolatorProteinThreshold;
 	}
 
 	public float getEffectivePercolatorThreshold() {

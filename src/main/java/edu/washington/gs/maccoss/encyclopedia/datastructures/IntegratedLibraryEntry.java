@@ -2,7 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.HashSet;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 
 public class IntegratedLibraryEntry extends ChromatogramLibraryEntry {
 	private final TransitionRefinementData refinementData;

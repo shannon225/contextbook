@@ -1,19 +1,20 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
 
 public class PercolatorPeptideTest {
 	public static void main(String[] args) {
 		ArrayList<PercolatorPeptide> peptides=getPeptides();
-		ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(peptides);
-		for (ProteinGroup proteinGroup : proteins) {
-			ArrayList<String> accessions=proteinGroup.getEquivalentAccessions();
+		ArrayList<ProteinGroupInterface> proteins=ParsimonyProteinGrouper.groupProteins(peptides);
+		for (ProteinGroupInterface proteinGroup : proteins) {
+			List<String> accessions=proteinGroup.getEquivalentAccessions();
 			String accessionString=PSMData.accessionsToString(accessions);
-			ArrayList<String> peptidesInProtein=proteinGroup.getSequences();
+			List<String> peptidesInProtein=proteinGroup.getSequences();
 			for (String string : peptidesInProtein) {
 				System.out.println(string+"\t"+accessionString);
 			}
