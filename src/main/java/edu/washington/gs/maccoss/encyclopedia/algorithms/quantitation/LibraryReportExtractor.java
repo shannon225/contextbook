@@ -30,6 +30,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TObjectFloatHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class LibraryReportExtractor {
@@ -63,6 +64,10 @@ public class LibraryReportExtractor {
 					rs.close();
 
 					Collections.sort(sourceFiles);
+				}
+				TObjectIntHashMap<String> indexByFile=new TObjectIntHashMap<>();
+				for (int i=0; i<sourceFiles.size(); i++) {
+					indexByFile.put(sourceFiles.get(i), i);
 				}
 				
 				ArrayList<ProteinGroupQuantifier> proteinQuantifiers=new ArrayList<ProteinGroupQuantifier>();
@@ -121,8 +126,16 @@ public class LibraryReportExtractor {
 					int numberOfQuantIons=rs.getInt(5);
 					String proteinToken=rs.getString(6);
 					
-					int index=Collections.binarySearch(sourceFiles, sourceFile);
-					if (index<0) throw new EncyclopediaException("Unexpected sample: "+sourceFile);
+					int index=indexByFile.get(sourceFile);
+					if (index<0) {
+						Logger.errorLine("Can't find ["+sourceFile+"]!");
+						Logger.errorLine("Keys: {");
+						for (String name : sourceFiles) {
+							Logger.errorLine("    "+name);
+						}
+						Logger.errorLine("}");
+						throw new EncyclopediaException("Unexpected sample: "+sourceFile);
+					}
 
 					// FIXME NEED TO NORMALIZE BY TIC
 					float tic=ticBySourceFileMap.get(sourceFile);
@@ -206,7 +219,7 @@ public class LibraryReportExtractor {
 						}
 					}
 				} else {
-					Logger.logLine("Finished processing "+count+" records, found "+totalAdded+" quantitative unique peptides. Writing reports...");
+					Logger.logLine("Finished processing "+count+" records, found "+intensitiesByPeptideModSeq.size()+" quantitative unique peptides. Writing reports...");
 				}
 				
 				int numberInconsistentFragments=0;
