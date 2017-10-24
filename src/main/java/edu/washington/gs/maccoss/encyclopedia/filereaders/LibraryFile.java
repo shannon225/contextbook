@@ -728,8 +728,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				ArrayList<ProteinGroupInterface> proteinGroups=new ArrayList<>();
 
 				int previousProteinGroup=-1;
-				ArrayList<String> accessions=new ArrayList<>();
-				ArrayList<String> peptides=new ArrayList<>();
+				HashSet<String> accessions=new HashSet<>();
+				HashSet<String> peptides=new HashSet<>();
 				float prevQValue=0;
 				float prevPEP=0;
 				while (rs.next()) {
@@ -740,6 +740,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					float pep=rs.getFloat(5);				
 					
 					if (proteinGroup!=previousProteinGroup) {
+						previousProteinGroup=proteinGroup;
 						if (accessions.size()>0) {
 							proteinGroups.add(new PercolatorProteinGroup(accessions.toArray(new String[accessions.size()]), peptides.toArray(new String[peptides.size()]), prevQValue, prevPEP));
 						}

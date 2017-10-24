@@ -1,6 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation;
 
-public class SampleCoordinate {
+public class SampleCoordinate implements Comparable<SampleCoordinate> {
 	private final int replicateIndex;
 	private final int sampleIndex;
 
@@ -15,6 +15,14 @@ public class SampleCoordinate {
 
 	public int getSampleIndex() {
 		return sampleIndex;
+	}
+	
+	@Override
+	public int compareTo(SampleCoordinate o) {
+		int c=Integer.compare(sampleIndex, o.sampleIndex);
+		if (c!=0) return c;
+		c=Integer.compare(replicateIndex, o.replicateIndex);
+		return c;
 	}
 
 	@Override

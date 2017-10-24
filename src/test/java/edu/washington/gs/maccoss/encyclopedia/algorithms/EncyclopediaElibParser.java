@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
@@ -10,6 +11,7 @@ import java.util.zip.DataFormatException;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.CoefficientOfVariationCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.SampleCoordinate;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 
 public class EncyclopediaElibParser {
@@ -19,14 +21,16 @@ public class EncyclopediaElibParser {
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException {
 		loadMap();
 		
-		File file=new File("/Volumes/BriansSSD/hela_serum_timecourse/combined.elib");
+		File file=new File("/Volumes/BriansSSD/hela_serum_timecourse/hela_serum_timecourse_wide_window_combined.elib");
 
 		CoefficientOfVariationCalculator cvCalculator=new CoefficientOfVariationCalculator(sampleKey, sampleNames, 0.2f);
 
 		LibraryFile library=new LibraryFile();
 		library.openFile(file);
 		
-		LibraryReportExtractor.extractMatrix(library, library.getProteinGroups(), Optional.of(cvCalculator));
+		ArrayList<ProteinGroupInterface> proteinGroups=library.getProteinGroups();
+		System.out.println(proteinGroups.size()+" total protein groups");
+		LibraryReportExtractor.extractMatrix(library, proteinGroups, Optional.of(cvCalculator));
 	}
 
 	public static void loadMap() {
