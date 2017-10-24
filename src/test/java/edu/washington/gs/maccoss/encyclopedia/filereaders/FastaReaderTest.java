@@ -1,12 +1,17 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.AlleleVariant;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
@@ -219,5 +224,25 @@ public class FastaReaderTest extends TestCase {
 			System.out.println(nominal+"\t"+defects[(int)(defects.length*0.05f)]+"\t"+defects[(int)(defects.length*0.25f)]+"\t"+defects[(int)(defects.length*0.5f)]+"\t"+defects[(int)(defects.length*0.75f)]+"\t"+defects[(int)(defects.length*0.95f)]);
 		}
 		*/
+	}
+	
+	/*
+	 * @MoMo
+	 * test reading Peff format and using ExtendedFastaEntry 
+	 */
+	public void testFastaReaderForPeff() throws Exception {
+		InputStream is=getClass().getResourceAsStream("/nextprot2017_testPEFF1.0rc25_small.peff");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), "nextprot2017_testPEFF1.0rc25_small.peff", null, true);
+		assertEquals(25, entries.size());
+		for (FastaEntryInterface entry : entries) {
+			System.out.println(entry.getAccession());
+			System.out.println(entry.getSequence());
+			if (entry instanceof ExtendedFastaEntry) {
+				for (AlleleVariant variant : ((ExtendedFastaEntry)entry).getPotentialVariant()) {
+					System.out.println(variant.getStartSite()+":"+variant.getStopSite()+"\t"+variant.getOriginalSequence()+"\t"+variant.getNewSequence());
+				}
+			}
+		}
+		//
 	}
 }

@@ -2,8 +2,13 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Set;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.AlleleVariant;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import gnu.trove.list.array.TIntArrayList;
@@ -185,11 +190,28 @@ public class DigestionEnzyme {
 		return sb.toString();
 	}
 	
+	//@MoMo
+	public ArrayList<String> digestProtein(FastaEntryInterface entry, int minLength, int maxLength, int maxMissedCleavages, AminoAcidConstants constants) {
+		String originalSeq=entry.getSequence();
+		ArrayList<String> peptides=digestProtein(originalSeq, minLength, maxLength, maxMissedCleavages, constants);
+		if (entry instanceof ExtendedFastaEntry) {
+			ExtendedFastaEntry peffentry=(ExtendedFastaEntry)entry;
+			ArrayList<AlleleVariant> variants=peffentry.getPotentialVariant();
+			for (int index=0; index<variants.size(); index++) {
+				AlleleVariant variant=variants.get(index);
+				String newSeq=originalSeq.substring(0, variant.getStartSite())+variant.getNewSequence()+originalSeq.substring(variant.getStopSite());
+				peptides.addAll(this.digestProtein(newSeq, minLength, maxLength, maxMissedCleavages, constants));
+			}
+			peptides=new ArrayList<String>(new HashSet<String>(peptides));
+		}
+		return peptides;
+	}
+	
+	//change this to a private function
 	public ArrayList<String> digestProtein(String sequence, int minLength, int maxLength, int maxMissedCleavages, AminoAcidConstants constants) {
 		TCharDoubleHashMap fixedMods=constants.getFixedMods();
 		ModificationMassMap variableMods=constants.getVariableMods();
 		int totalAllowedStarts=maxMissedCleavages+1;
-		
 		ArrayList<String> peptides=new ArrayList<String>();
 		String peptide;
 		TIntArrayList starts=new TIntArrayList();
@@ -251,7 +273,6 @@ public class DigestionEnzyme {
 				peptides.add(adjustForFixed(peptide.substring(0, i+1)+"["+mass+"]"+peptide.substring(i+1), fixedMods));
 			}
 		}
-		
 		return peptides;
 	}
 	

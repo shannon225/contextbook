@@ -10,12 +10,14 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class FastaReader {
+	
 	public static ArrayList<FastaPeptideEntry> readPeptideFasta(File f) {
 		ArrayList<FastaEntryInterface> fasta=readFasta(f);
 		
@@ -31,6 +33,7 @@ public class FastaReader {
 	}
 	public static ArrayList<FastaEntryInterface> readFasta(File f, String keyword) {
 		BufferedReader in=null;
+		
 		ArrayList<FastaEntryInterface> entryList=new ArrayList<FastaEntryInterface>();
 		try {
 			in=new BufferedReader(new FileReader(f));
@@ -59,7 +62,12 @@ public class FastaReader {
 		return readFasta(new BufferedReader(new InputStreamReader(s)), fileName, null);
 	}
 	
+	//@MoMo this should be removed after adding peffFormat into PARAMETER
 	public static ArrayList<FastaEntryInterface> readFasta(BufferedReader in, String fileName, String keyword) {
+		return readFasta(in, fileName, keyword, false);
+	}
+	
+	public static ArrayList<FastaEntryInterface> readFasta(BufferedReader in, String fileName, String keyword, Boolean peffFormat) {
 		if (keyword!=null) {
 			keyword=keyword.toLowerCase();
 		}
@@ -75,7 +83,11 @@ public class FastaReader {
 				if (eachline.startsWith(">")) {
 					if (annotation!=null) {
 						if (keyword==null||annotation.toLowerCase().indexOf(keyword)>=0) {
-							entryList.add(new FastaEntry(fileName, annotation, sequence.toString()));
+							if (peffFormat){
+								entryList.add(new ExtendedFastaEntry(fileName, annotation, sequence.toString()));	
+							}else{
+								entryList.add(new FastaEntry(fileName, annotation, sequence.toString()));
+							}
 						}
 					}
 					annotation=eachline;
@@ -86,7 +98,11 @@ public class FastaReader {
 			}
 			if (annotation!=null) {
 				if (keyword==null||annotation.toLowerCase().indexOf(keyword)>=0) {
-					entryList.add(new FastaEntry(fileName, annotation, sequence.toString()));
+					if (peffFormat){
+						entryList.add(new ExtendedFastaEntry(fileName, annotation, sequence.toString()));	
+					}else{
+						entryList.add(new FastaEntry(fileName, annotation, sequence.toString()));
+					}
 				}
 			}
 			return entryList;
