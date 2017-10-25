@@ -199,7 +199,7 @@ public class DigestionEnzyme {
 			ArrayList<AlleleVariant> variants=peffentry.getPotentialVariant();
 			for (int index=0; index<variants.size(); index++) {
 				AlleleVariant variant=variants.get(index);
-				String newSeq=originalSeq.substring(0, variant.getStartSite())+variant.getNewSequence()+originalSeq.substring(variant.getStopSite());
+				String newSeq=originalSeq.substring(0, variant.getStartSite()-1)+variant.getNewSequence()+originalSeq.substring(variant.getStopSite());
 				peptides.addAll(this.digestProtein(newSeq, minLength, maxLength, maxMissedCleavages, constants));
 			}
 			peptides=new ArrayList<String>(new HashSet<String>(peptides));
@@ -207,20 +207,21 @@ public class DigestionEnzyme {
 		return peptides;
 	}
 	
-	//change this to a private function
-	public ArrayList<String> digestProtein(String sequence, int minLength, int maxLength, int maxMissedCleavages, AminoAcidConstants constants) {
+	private ArrayList<String> digestProtein(String sequence, int minLength, int maxLength, int maxMissedCleavages, AminoAcidConstants constants) {
 		TCharDoubleHashMap fixedMods=constants.getFixedMods();
 		ModificationMassMap variableMods=constants.getVariableMods();
 		int totalAllowedStarts=maxMissedCleavages+1;
 		ArrayList<String> peptides=new ArrayList<String>();
 		String peptide;
+		char stopCodon = '*';
 		TIntArrayList starts=new TIntArrayList();
 		starts.add(0);
 		int stop;
-
-		while (starts.get(0)<sequence.length()) {
+		
+		//@MoMo; adding stop codon checking
+		while (starts.get(0)<sequence.length()&&sequence.charAt(starts.get(0))!=stopCodon) {
 			stop=starts.get(0);
-			while ((stop<sequence.length()-1)&&!isCutSite(sequence.charAt(stop), sequence.charAt(stop+1))) {
+			while ((stop<sequence.length()-1)&&!isCutSite(sequence.charAt(stop), sequence.charAt(stop+1))&&sequence.charAt(stop+1)!=stopCodon) {
 				stop++;
 			}
 			for (int i=0; i<starts.size(); i++) {

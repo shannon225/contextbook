@@ -29,12 +29,13 @@ public class ExtendedFastaEntryTest extends TestCase {
 		ArrayList<AlleleVariant> variants=extendedEntry.getPotentialVariant();
 		
 		assertEquals(160,variants.size());
-		
-		String entrySequence=extendedEntry.getSequence();
+		assertEquals(extendedEntry.getSequence(),sequence);
+
 		for (int index=0; index<variants.size(); index++) {
 			AlleleVariant variant=variants.get(index);
-			assertEquals(entrySequence.substring(variant.getStartSite()-1, variant.getStopSite()),variant.getOriginalSequence());
-			
+			assertEquals(sequence.substring(variant.getStartSite()-1, variant.getStopSite()),variant.getOriginalSequence());
+			String newSeq = sequence.substring(0,variant.getStartSite()-1)+variant.getNewSequence()+sequence.substring(variant.getStopSite());
+			assertEquals(newSeq.length(),sequence.length()-variant.getOriginalSequence().length() +variant.getNewSequence().length());
 		}
 	}
 	
