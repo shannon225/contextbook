@@ -89,6 +89,7 @@ public class ParsimonyProteinGrouper {
 		for (Protein protein : sortedProteins) {
 			protein.recalculateNSP();
 		}
+		
 		ArrayList<ProteinGroupInterface> keptProteins=new ArrayList<ProteinGroupInterface>();
 		while (sortedProteins.size()>0) {
 			Collections.sort(sortedProteins);
@@ -101,6 +102,7 @@ public class ParsimonyProteinGrouper {
 			HashSet<String> equivalentAccessions=new HashSet<String>();
 			for (Protein protein : equivalentProteins) {
 				equivalentAccessions.add(protein.accession);
+				sortedProteins.remove(protein);
 			}
 			ArrayList<String> sequences=new ArrayList<String>();
 			for (Peptide peptide : highestRankedProtein.peptides) {
@@ -190,30 +192,40 @@ public class ParsimonyProteinGrouper {
 		 * @return returns identical proteins that contain the same peptides
 		 */
 		public ArrayList<Protein> claimAllPeptides() {
-			ArrayList<Protein> identicalProteins=new ArrayList<ParsimonyProteinGrouper.Protein>();
-			boolean first=true;
+			HashSet<Protein> similarProteins=new HashSet<>();
 			for (Peptide peptide : peptides) {
-				if (first) {
-					identicalProteins.addAll(peptide.proteins);
-				} else {
-					ArrayList<Protein> toBeRemoved=new ArrayList<ParsimonyProteinGrouper.Protein>();
-					for (Protein protein : identicalProteins) {
-						if (!peptide.proteins.contains(protein)) {
-							toBeRemoved.add(protein);
-						}
-					}
-					identicalProteins.removeAll(toBeRemoved);
+				similarProteins.addAll(peptide.proteins);
+			}
+			
+			ArrayList<Protein> identicalProteins=new ArrayList<ParsimonyProteinGrouper.Protein>();
+			for (Protein protein : similarProteins) {
+				if (this.hasEquivalentPeptides(protein)) {
+					identicalProteins.add(protein);
 				}
+			}
+			
+			for (Peptide peptide : peptides) {
 				peptide.claimPeptide(this);
 			}
 			return identicalProteins;
+		}
+		
+		public boolean hasEquivalentPeptides(Protein p) {
+			if (peptides.size()!=p.peptides.size()) return false;
+			
+			HashSet<Peptide> sequences=new HashSet<>(peptides);
+			for (Peptide peptide : p.peptides) {
+				if (!sequences.contains(peptide)) return false;
+			}
+			return true;
 		}
 
 		@Override
 		public int compareTo(Protein o) {
 			if (o==null) return 1;
-			//int c=Float.compare(nsp, o.nsp);
 			int c=-Float.compare(minPosterorErrorProbability, o.minPosterorErrorProbability);
+			if (c!=0) return c;
+			c=Float.compare(nsp, o.nsp);
 			if (c!=0) return c;
 			return accession.compareTo(o.accession);
 		}
@@ -226,7 +238,7 @@ public class ParsimonyProteinGrouper {
 		@Override
 		public boolean equals(Object obj) {
 			if (obj==null) return false;
-			return accession.equals(((Peptide)obj).sequence);
+			return accession.equals(((Protein)obj).accession);
 		}
 	}
 }

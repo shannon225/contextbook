@@ -11,8 +11,8 @@ import junit.framework.TestCase;
 
 public class ParsimonyProteinGrouperTest extends TestCase {
 	public static void main(String[] args) {
-		File outputFile=new File("/Volumes/BriansSSD/pecan/group_concatenated_results.txt");
-		File decoyFile=new File("/Volumes/BriansSSD/pecan/group_concatenated_decoy.txt");
+		File outputFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/hela_serum_timecourse_wide_window_combined_concatenated_results.txt");
+		File decoyFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/hela_serum_timecourse_wide_window_combined_concatenated_decoy.txt");
 		ArrayList<PercolatorPeptide> targets=PercolatorReader.getPassingPeptidesFromTSV(outputFile, 0.01f, true).x;
 		ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(decoyFile, 0.01f, true).x;
 		
