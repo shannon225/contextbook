@@ -20,6 +20,8 @@ public class ParsimonyProteinGrouper {
 		allPeptides.addAll(passingDecoys);
 		
 		ArrayList<ProteinGroupInterface> allProteins=groupProteins(allPeptides);
+		if (allProteins.size()==0) return new Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>>(new ArrayList<>(), new ArrayList<>());
+		
 		Collections.sort(allProteins);
 
 		// calculate decoy/target FDR
