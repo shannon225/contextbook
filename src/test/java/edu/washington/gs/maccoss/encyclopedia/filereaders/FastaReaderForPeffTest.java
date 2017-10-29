@@ -48,34 +48,9 @@ public class FastaReaderForPeffTest extends TestCase {
 	}
 	
 	public void testFunction(){
-		TIntArrayList sites = new TIntArrayList(); 
-		TIntArrayList a = new TIntArrayList(); 
-		a.add(1);
-		a.add(2);
-		sites.addAll(a.subList(0, a.size()));
-		System.out.println(sites); 
 		
-		String abc = "abc";
-		System.out.println("--"+abc.substring(abc.length()-1));
-		HashSet<String> lalala = new HashSet<String>();
-		lalala.add("abc");
-		
-		if (lalala.contains(abc)){
-			System.out.println("has string");	
-		}
 	}
 
-	private static void compute(Iterable<String> peptides,double precursorMzStart,double precursorMzEnd, double isolationWindowWidth) {
-		byte[] charges=new byte[] {(byte)2, (byte)3};
-		for (String peptide : peptides) {
-			for (byte charge : charges) {
-				double mz=constants.getChargedMass(peptide, charge);
-				if ((mz>=precursorMzStart)&&(mz<=precursorMzEnd)) {
-					//do something
-				}
-			}
-		}
-	}
-	
+
 
 }
