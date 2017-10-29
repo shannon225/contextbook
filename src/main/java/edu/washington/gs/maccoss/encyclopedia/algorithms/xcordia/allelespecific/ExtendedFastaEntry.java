@@ -1,12 +1,15 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific;
 
+
+
 import java.util.ArrayList;
+import java.util.TreeSet;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 
 public class ExtendedFastaEntry extends FastaEntry {
-	private final ArrayList<AlleleVariant> potentialVariants=new ArrayList<>();
+	private final ArrayList<AlleleVariant> potentialVariants=new ArrayList<AlleleVariant>();
 
 	public ExtendedFastaEntry(String filename, String annotation, String sequence) {
 		super(filename, annotation, sequence);
@@ -28,8 +31,11 @@ public class ExtendedFastaEntry extends FastaEntry {
 			String[] info=variantAnnotation.substring(index+1, endIndex).split("\\|");
 			try {
 				int start=Integer.parseInt(info[0]);
+				
 				if (simple) {
+					//System.out.println(info.length);
 					this.addPotentialVariant(new AlleleVariant(start, sequence.charAt(start-1), info[1].charAt(0)));
+					
 				} else {
 					int end=Integer.parseInt(info[1]);
 					//length == 2 for the deletion cases, e.g. (4|4|)
@@ -49,4 +55,5 @@ public class ExtendedFastaEntry extends FastaEntry {
 	public ArrayList<AlleleVariant> getPotentialVariant() {
 		return potentialVariants;
 	}
+	
 }

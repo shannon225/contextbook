@@ -1,6 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific;
 
 import java.util.ArrayList;
+import java.util.TreeSet;
+
 import junit.framework.TestCase;
 
 public class ExtendedFastaEntryTest extends TestCase {
@@ -30,7 +32,7 @@ public class ExtendedFastaEntryTest extends TestCase {
 		
 		assertEquals(160,variants.size());
 		assertEquals(extendedEntry.getSequence(),sequence);
-
+		
 		for (int index=0; index<variants.size(); index++) {
 			AlleleVariant variant=variants.get(index);
 			assertEquals(sequence.substring(variant.getStartSite()-1, variant.getStopSite()),variant.getOriginalSequence());

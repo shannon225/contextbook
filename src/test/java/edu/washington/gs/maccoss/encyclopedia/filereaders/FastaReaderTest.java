@@ -241,7 +241,7 @@ public class FastaReaderTest extends TestCase {
 		InputStream is=getClass().getResourceAsStream("/nextprot2017_testPEFF1.0rc25_small.peff");
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), "nextprot2017_testPEFF1.0rc25_small.peff", null, true);
 		assertEquals(25, entries.size());
- 
+
 		for (FastaEntryInterface entry : entries) {
 			if (!(entry instanceof ExtendedFastaEntry)) {
 				throw new Exception("Error occured when reading peff file, each entry should be an ExtendedFastaEntry object");

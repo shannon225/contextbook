@@ -1,13 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.AlleleVariant;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -190,68 +190,176 @@ public class DigestionEnzyme {
 		return sb.toString();
 	}
 	
-	//@MoMo
+	//@MoMo 
 	public ArrayList<String> digestProtein(FastaEntryInterface entry, int minLength, int maxLength, int maxMissedCleavages, AminoAcidConstants constants) {
-		String originalSeq=entry.getSequence();
-		ArrayList<String> peptides=digestProtein(originalSeq, minLength, maxLength, maxMissedCleavages, constants);
 		if (entry instanceof ExtendedFastaEntry) {
-			ExtendedFastaEntry peffentry=(ExtendedFastaEntry)entry;
-			ArrayList<AlleleVariant> variants=peffentry.getPotentialVariant();
-			for (int index=0; index<variants.size(); index++) {
-				AlleleVariant variant=variants.get(index);
-				String newSeq=originalSeq.substring(0, variant.getStartSite()-1)+variant.getNewSequence()+originalSeq.substring(variant.getStopSite());
-				peptides.addAll(this.digestProtein(newSeq, minLength, maxLength, maxMissedCleavages, constants));
-			}
-			peptides=new ArrayList<String>(new HashSet<String>(peptides));
+			return digestProtein(entry.getSequence(), minLength, maxLength, maxMissedCleavages, constants,((ExtendedFastaEntry)entry).getPotentialVariant());
+		} else {
+			return (digestProtein(entry.getSequence(), minLength, maxLength, maxMissedCleavages, constants,new ArrayList<AlleleVariant>()));
 		}
-		return peptides;
 	}
-	
-	private ArrayList<String> digestProtein(String sequence, int minLength, int maxLength, int maxMissedCleavages, AminoAcidConstants constants) {
-		TCharDoubleHashMap fixedMods=constants.getFixedMods();
-		ModificationMassMap variableMods=constants.getVariableMods();
+
+	//@MoMo modified 
+	private ArrayList<String> digestProtein(String sequence, int minLength, int maxLength, int maxMissedCleavages, AminoAcidConstants constants, ArrayList<AlleleVariant> variants) {
 		int totalAllowedStarts=maxMissedCleavages+1;
 		ArrayList<String> peptides=new ArrayList<String>();
-		String peptide;
-		char stopCodon = '*';
 		TIntArrayList starts=new TIntArrayList();
 		starts.add(0);
 		int stop;
-		
-		//@MoMo; adding stop codon checking
-		while (starts.get(0)<sequence.length()&&sequence.charAt(starts.get(0))!=stopCodon) {
-			stop=starts.get(0);
-			while ((stop<sequence.length()-1)&&!isCutSite(sequence.charAt(stop), sequence.charAt(stop+1))&&sequence.charAt(stop+1)!=stopCodon) {
+
+		// digestion for canonical sequence
+		while (starts.get(starts.size()-1)<sequence.length()) {
+			stop=starts.get(starts.size()-1);
+			while ((stop<sequence.length()-1)&&!isCutSite(sequence.charAt(stop), sequence.charAt(stop+1))) {
 				stop++;
 			}
-			for (int i=0; i<starts.size(); i++) {
-				int start=starts.get(i);
-				peptide=sequence.substring(start, stop+1);
-				if ((peptide.length()>=minLength)&&(peptide.length()<=maxLength)) {
-					peptides.addAll(getModifiedForms(peptide, fixedMods, variableMods));
-					
-					if (start==0&&(variableMods!=null&&!variableMods.isEmpty()&&peptide.length()!=0)) {
-						double mass=variableMods.getProteinNTermMod(peptide.charAt(0));
-						if (mass!=ModificationMassMap.MISSING) {
-							peptides.add("["+mass+"]"+peptide);
-						}
-					}
-					if (stop==sequence.length()-1&&(variableMods!=null&&!variableMods.isEmpty()&&peptide.length()!=0)) {
-						double mass=variableMods.getProteinCTermMod(peptide.charAt(peptide.length()-1));
-						if (mass!=ModificationMassMap.MISSING) {
-							peptides.add(peptide+"["+mass+"]");
-						}
-					}
+			for (int i=starts.size()-1; (i>starts.size()-1-totalAllowedStarts)&&i>=0; i--) {
+				peptides.addAll(getPeptides(starts.get(i), stop, minLength, maxLength, sequence, constants));
+			}
+			starts.add(stop+1);
+		}
+
+		// digestion for sequence variants
+		char stopCodon='*';
+		int currentIndex=1;
+		int stopCodonIndex;
+		int cuts;
+		int endIndex;
+		int index;
+		int start;
+		TIntArrayList blockedIndices;
+		HashMap<Integer, ArrayList<Integer>> usedPair=new HashMap<Integer, ArrayList<Integer>>();
+		String sequenceVariant="";
+		Collections.sort(variants);
+
+		for (int i=0; i<variants.size(); i++) {
+			AlleleVariant variant=variants.get(i);
+			for (int idx=currentIndex; idx<starts.size(); idx++) {
+				if ((variant.getStartSite()>starts.get(idx-1))&&(variant.getStartSite()<=starts.get(idx))) {
+					currentIndex=idx;
+					break;
 				}
 			}
-			starts.insert(0, stop+1);
-			if (starts.size()>totalAllowedStarts) {
-				starts.removeAt(starts.size()-1);
+
+			String perviousAA=(variant.getStartSite()-2<0)?"":sequence.substring(variant.getStartSite()-2, variant.getStartSite()-1);
+			String nextAA=(variant.getStopSite()==sequence.length())?"*":sequence.substring(variant.getStopSite(), variant.getStopSite()+1);
+			TIntArrayList addedStarts=getStartsAddedByVariant(variant, perviousAA, nextAA);
+
+			blockedIndices=new TIntArrayList();
+			if (variant.getStartSite()==starts.get(currentIndex)) {
+				blockedIndices.add(currentIndex);
+			} else if ((variant.getStartSite()-1==starts.get(currentIndex-1))&&!addedStarts.contains(starts.get(currentIndex-1))) {
+				blockedIndices.add(currentIndex-1);
+			}
+			
+			if (addedStarts.contains(starts.get(currentIndex-1))) {
+				addedStarts.remove(starts.get(currentIndex-1));
+			}
+			
+			
+			endIndex=getNextIndex(currentIndex, 0, blockedIndices, starts.size()-1, 1);
+			stopCodonIndex=variant.getNewSequence().indexOf(stopCodon);
+			if (stopCodonIndex<0) {
+				sequenceVariant=sequence.substring(0, variant.getStartSite()-1)+variant.getNewSequence()+sequence.substring(variant.getStopSite());
+			} else {
+				sequenceVariant=sequence.substring(0, variant.getStartSite()-1)+variant.getNewSequence().substring(0, stopCodonIndex);
+			}
+
+			usedPair=new HashMap<Integer, ArrayList<Integer>>();
+			for (int j=0; j<addedStarts.size()+totalAllowedStarts; j++) {
+				if (j<addedStarts.size()) {
+					stop=addedStarts.get(j)-1;
+				} else {
+					index=getNextIndex(endIndex, j-addedStarts.size(), blockedIndices, starts.size()-1, 1);
+					stop=starts.get(index)-1+variant.getNewSequence().length()-variant.getOriginalSequence().length();
+				}
+				if (stop>sequenceVariant.length()-1) {
+					break;
+				}
+
+				cuts=totalAllowedStarts;
+				while (cuts>0&&(j-cuts-addedStarts.size()<0)) {
+					int offset=(j-cuts);
+					if (offset<0) {
+						index=getNextIndex(endIndex, 0-offset, blockedIndices, starts.size()-1, -1);
+						start=starts.get(index);
+					} else {
+						start=addedStarts.get(offset);
+					}
+					if (!usedPair.containsKey(start)||!usedPair.get(start).contains(stop)) {
+						peptides.addAll(getPeptides(start, stop, minLength, maxLength, sequenceVariant, constants));
+						if (!usedPair.containsKey(start)) {
+							usedPair.put(start, new ArrayList<Integer>());
+						}
+						usedPair.get(start).add(stop);
+					}
+					cuts--;
+				}
 			}
 		}
 		return peptides;
 	}
 	
+	//@MoMo 
+	private int getNextIndex(int index, int indexOffset, TIntArrayList blockedIndices, int lastIndex, int direction) {
+		int nextIndex=index;
+		while (indexOffset>=0) {
+			nextIndex=(indexOffset!=0)?nextIndex+direction:nextIndex;
+			while (blockedIndices.contains(nextIndex)) {
+				nextIndex+=direction;
+			}
+			indexOffset--;
+		}
+		nextIndex=(nextIndex<0)?0:nextIndex;
+		nextIndex=(nextIndex>lastIndex)?lastIndex:nextIndex;
+		return nextIndex;
+	}
+	
+	//@MoMo 
+	private TIntArrayList getStartsAddedByVariant(AlleleVariant variant, String before, String after) {
+		char stopCodon='*';
+		TIntArrayList addedStarts=new TIntArrayList();
+		String sequence=before+variant.getNewSequence()+after;
+		int offset=before.length();
+		for (int i=0; i<sequence.length()-1; i++) {
+			if (isCutSite(sequence.charAt(i), sequence.charAt(i+1))) {
+				addedStarts.add(i-offset+variant.getStartSite());
+			} else if (sequence.charAt(i)==stopCodon) {
+				addedStarts.add(i-offset+variant.getStartSite()-1);
+				break;
+			}
+		}
+		return addedStarts;
+	}
+	
+	//@MoMo 
+	private ArrayList<String> getPeptides(int start, int stop, int minLength, int maxLength, String sequence, AminoAcidConstants constants) {
+		TCharDoubleHashMap fixedMods=constants.getFixedMods();
+		ModificationMassMap variableMods=constants.getVariableMods();
+		ArrayList<String> peptides=new ArrayList<String>();
+
+		String peptide=sequence.substring(start, stop+1);
+		if ((peptide.length()>=minLength)&&(peptide.length()<=maxLength)) {
+			peptides.addAll(getModifiedForms(peptide, fixedMods, variableMods));
+
+			if (start==0&&(variableMods!=null&&!variableMods.isEmpty()&&peptide.length()!=0)) {
+				double mass=variableMods.getProteinNTermMod(peptide.charAt(0));
+				if (mass!=ModificationMassMap.MISSING) {
+					peptides.add("["+mass+"]"+peptide);
+				}
+			}
+			if (stop==sequence.length()-1&&(variableMods!=null&&!variableMods.isEmpty()&&peptide.length()!=0)) {
+				double mass=variableMods.getProteinCTermMod(peptide.charAt(peptide.length()-1));
+				if (mass!=ModificationMassMap.MISSING) {
+					peptides.add(peptide+"["+mass+"]");
+				}
+			}
+		}
+		return peptides;
+	}
+
+
+
 	public ArrayList<String> getModifiedForms(String peptide, TCharDoubleHashMap fixedMods, ModificationMassMap variableMods) {
 		
 		ArrayList<String> peptides=new ArrayList<String>();
@@ -274,6 +382,10 @@ public class DigestionEnzyme {
 				peptides.add(adjustForFixed(peptide.substring(0, i+1)+"["+mass+"]"+peptide.substring(i+1), fixedMods));
 			}
 		}
+		return peptides;
+	}
+	public ArrayList<String> getTerminalModifiedForms(String peptide,int start,int end, int sequenceLength) {
+		ArrayList<String> peptides=new ArrayList<String>();
 		return peptides;
 	}
 	

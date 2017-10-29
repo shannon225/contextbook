@@ -27,7 +27,7 @@ public class PercolatorExecutorTest extends TestCase {
 		PercolatorExecutionData percolatorFiles=new PercolatorExecutionData(featureFile, fastaFile, outputFile, decoyFile, outputProteinFile, decoyProteinFile, SearchParameterParser.getDefaultParametersObject());
 		PercolatorExecutor e=new PercolatorExecutor(getDefaultPercolaterVersion(), percolatorFiles);
 		BlockingQueue<OutputMessage> result=e.start();
-
+             
 		int outputlines=0;
 
 		while (!e.isFinished()||!result.isEmpty()) {
