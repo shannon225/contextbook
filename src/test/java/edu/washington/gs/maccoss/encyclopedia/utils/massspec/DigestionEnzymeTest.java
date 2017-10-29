@@ -457,7 +457,7 @@ public class DigestionEnzymeTest extends TestCase {
 	public void testDigestionWithVariants() {
 		String fakeTTR=">nxp:NX_P02766-1 \\DbUniqueId=NX_P02766-1 \\PName=Transthyretin isoform Iso 1 \\GName=TTR \\NcbiTaxId=9606 \\TaxName=Homo Sapiens \\Length=147 \\SV=266 \\EV=656 \\PE=1 \\ModResPsi=(62|MOD:00041|L-gamma-carboxyglutamic acid)(69|MOD:00047|O-phospho-L-threonine)(72|MOD:00046|O-phospho-L-serine) \\ModRes=(118||N-linked (GlcNAc...)) "
 				+"\\VariantSimple=(2|G)(5|H)(5|C)(8|H)(112|*)(137|T)(146|R)(147|D)(147|*)(56|P) "
-				+"\\VariantComplex=(70|75|)(110|110|DK)(110|110|APT)(142|142|) \\Processed=(1|20|signal peptide)(21|147|mature protein)"
+				+"\\VariantComplex=(70|75|)(110|110|DK)(110|110|APT)(142|142|)(20|40|) \\Processed=(1|20|signal peptide)(21|147|mature protein)"
 				+"\nMASHRLLLLCLAGLVFVSEAGPTGTGESKCPLMVKVLDAVRGSPAINVAVHVFRKAADDTWEPFASGKTSESGELHGLTTEEEFVEGIYKVEIDTKSYWKALGISPFHEHAEVVFTANDSGPRRYTIAALLSPYSYSTTAVVTNPKE";
 		HashSet<String> expected=new HashSet<String>();
 		// peptides from standard sequence
@@ -483,6 +483,7 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("AEVVFTANDSGPR");
 		expected.add("ALGISPFHEAPTAEVVFTANDSGPR");
 		expected.add("YTIAALLSPYSYSTTAVTNPK");
+		expected.add("LLLLCLAGLVFVSER");
 
 		FastaEntryInterface entry=FastaReader.readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(fakeTTR.getBytes(StandardCharsets.UTF_8)))), "", "", true).get(0);
 
@@ -506,7 +507,7 @@ public class DigestionEnzymeTest extends TestCase {
 	public void testMissedCleavageWithVariants() {
 		String fakeTTR=">nxp:NX_P02766-1 \\DbUniqueId=NX_P02766-1 \\PName=Transthyretin isoform Iso 1 \\GName=TTR \\NcbiTaxId=9606 \\TaxName=Homo Sapiens \\Length=147 \\SV=266 \\EV=656 \\PE=1 \\ModResPsi=(62|MOD:00041|L-gamma-carboxyglutamic acid)(69|MOD:00047|O-phospho-L-threonine)(72|MOD:00046|O-phospho-L-serine) \\ModRes=(118||N-linked (GlcNAc...)) "
 				+"\\VariantSimple=(2|G)(5|H)(5|C)(8|H)(112|*)(137|T)(146|R)(147|D)(147|*)(56|P) "
-				+"\\VariantComplex=(70|75|)(110|110|DK)(110|110|APT)(142|142|) \\Processed=(1|20|signal peptide)(21|147|mature protein)"
+				+"\\VariantComplex=(70|75|)(110|110|DK)(110|110|APT)(142|142|)(20|40|)(135|147|) \\Processed=(1|20|signal peptide)(21|147|mature protein)"
 				+"\nMASHRLLLLCLAGLVFVSEAGPTGTGESKCPLMVKVLDAVRGSPAINVAVHVFRKAADDTWEPFASGKTSESGELHGLTTEEEFVEGIYKVEIDTKSYWKALGISPFHEHAEVVFTANDSGPRRYTIAALLSPYSYSTTAVVTNPKE";
 		HashSet<String> expected=new HashSet<String>();
 		// peptides from standard sequence
@@ -565,7 +566,10 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("AEVVFTANDSGPR");
 		expected.add("ALGISPFHEAPTAEVVFTANDSGPR");
 		expected.add("YTIAALLSPYSYSTTAVTNPK");
-
+		expected.add("LLLLCLAGLVFVSER");
+		expected.add("YTIAALLSPY");
+		
+		
 		// with 1 miss cleavage
 		expected.add("AADDTWEPFASGKTHGLTTEEEFVEGIYK");
 		expected.add("THGLTTEEEFVEGIYKVEIDTK");
@@ -577,7 +581,9 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("RYTIAALLSPYSYSTTAVTNPK");
 		expected.add("YTIAALLSPYSYSTTAVTNPKE");
 		expected.add("ALGISPFHEAPTAEVVFTANDSGPRR");
-
+		expected.add("MASHRLLLLCLAGLVFVSER");
+		expected.add("LLLLCLAGLVFVSERGSPAINVAVHVFR");
+		expected.add("RYTIAALLSPY");
 		FastaEntryInterface entry=FastaReader.readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(fakeTTR.getBytes(StandardCharsets.UTF_8)))), "", "", true).get(0);
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		ArrayList<String> sequences=enzyme.digestProtein(entry, 8, 40, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
@@ -594,8 +600,5 @@ public class DigestionEnzymeTest extends TestCase {
 		assertEquals(0, expected.size());
 
 	}
-	
-	
-	
 
 }

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
@@ -29,7 +30,7 @@ public class FastaReaderForPeffTest extends TestCase {
 		
 		//System.out.println(abc.substring(0, idx));
 		
-		/*
+		
 		File peffFile=new File("J:/1_LabData/20171017_peff_fileformat/nextprot2017_testPEFF1.0rc25_a.peff");
 		//File outputFile
 		InputStream is= new FileInputStream(peffFile);
@@ -38,12 +39,24 @@ public class FastaReaderForPeffTest extends TestCase {
 		System.out.println("Number of entry in peff file: "+entries.size());
 		
 		
-		
+		int count =0;
+		int sum=0;
+		System.out.println("done reading");
 		for (FastaEntryInterface entry : entries) {
-			ArrayList<String> peptides=enzyme.digestProtein(entry, minLength, maxLength, maxMissedCleavages, constants);
+			if (entry instanceof ExtendedFastaEntry){
+				sum+=((ExtendedFastaEntry)entry).getPotentialVariant().size();
+			}
+			if (count%100==0){
+				System.out.print(count+" ");
+				if (count%2000==0){
+					System.out.println();
+				}
+			}
+			//ArrayList<String> peptides=enzyme.digestProtein(entry, minLength, maxLength, maxMissedCleavages, constants);
+			count++;
 			//
 		}
-		*/
+		System.out.println(entries.size()+" entries\t"+sum+" variants");
 		
 	}
 	

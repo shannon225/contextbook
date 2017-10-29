@@ -246,18 +246,23 @@ public class DigestionEnzyme {
 			TIntArrayList addedStarts=getStartsAddedByVariant(variant, perviousAA, nextAA);
 
 			blockedIndices=new TIntArrayList();
-			if (variant.getStartSite()==starts.get(currentIndex)) {
-				blockedIndices.add(currentIndex);
-			} else if ((variant.getStartSite()-1==starts.get(currentIndex-1))&&!addedStarts.contains(starts.get(currentIndex-1))) {
+			index=currentIndex;
+			//printVariantInfo(variant,sequence,starts,currentIndex);
+			while (index<starts.size()&&starts.get(index)<=variant.getStopSite()){
+				blockedIndices.add(index);
+				index++;
+			}
+			if ((variant.getStartSite()-1==starts.get(currentIndex-1))&&!addedStarts.contains(starts.get(currentIndex-1))) {
 				blockedIndices.add(currentIndex-1);
 			}
+			
 			
 			if (addedStarts.contains(starts.get(currentIndex-1))) {
 				addedStarts.remove(starts.get(currentIndex-1));
 			}
 			
 			
-			endIndex=getNextIndex(currentIndex, 0, blockedIndices, starts.size()-1, 1);
+			endIndex=getAvailableIndex(currentIndex, 0, blockedIndices, starts.size()-1, 1);
 			stopCodonIndex=variant.getNewSequence().indexOf(stopCodon);
 			if (stopCodonIndex<0) {
 				sequenceVariant=sequence.substring(0, variant.getStartSite()-1)+variant.getNewSequence()+sequence.substring(variant.getStopSite());
@@ -270,7 +275,7 @@ public class DigestionEnzyme {
 				if (j<addedStarts.size()) {
 					stop=addedStarts.get(j)-1;
 				} else {
-					index=getNextIndex(endIndex, j-addedStarts.size(), blockedIndices, starts.size()-1, 1);
+					index=getAvailableIndex(endIndex, j-addedStarts.size(), blockedIndices, starts.size()-1, 1);
 					stop=starts.get(index)-1+variant.getNewSequence().length()-variant.getOriginalSequence().length();
 				}
 				if (stop>sequenceVariant.length()-1) {
@@ -281,11 +286,16 @@ public class DigestionEnzyme {
 				while (cuts>0&&(j-cuts-addedStarts.size()<0)) {
 					int offset=(j-cuts);
 					if (offset<0) {
-						index=getNextIndex(endIndex, 0-offset, blockedIndices, starts.size()-1, -1);
+						index=getAvailableIndex(endIndex, 0-offset, blockedIndices, starts.size()-1, -1);
 						start=starts.get(index);
 					} else {
 						start=addedStarts.get(offset);
 					}
+					if (stop<start){
+						
+						System.out.println(start+"\t"+addedStarts.size()+"\t"+blockedIndices.size());
+					}
+						
 					if (!usedPair.containsKey(start)||!usedPair.get(start).contains(stop)) {
 						peptides.addAll(getPeptides(start, stop, minLength, maxLength, sequenceVariant, constants));
 						if (!usedPair.containsKey(start)) {
@@ -299,9 +309,9 @@ public class DigestionEnzyme {
 		}
 		return peptides;
 	}
-	
+
 	//@MoMo 
-	private int getNextIndex(int index, int indexOffset, TIntArrayList blockedIndices, int lastIndex, int direction) {
+	private int getAvailableIndex(int index, int indexOffset, TIntArrayList blockedIndices, int lastIndex, int direction) {
 		int nextIndex=index;
 		while (indexOffset>=0) {
 			nextIndex=(indexOffset!=0)?nextIndex+direction:nextIndex;
@@ -337,7 +347,6 @@ public class DigestionEnzyme {
 		TCharDoubleHashMap fixedMods=constants.getFixedMods();
 		ModificationMassMap variableMods=constants.getVariableMods();
 		ArrayList<String> peptides=new ArrayList<String>();
-
 		String peptide=sequence.substring(start, stop+1);
 		if ((peptide.length()>=minLength)&&(peptide.length()<=maxLength)) {
 			peptides.addAll(getModifiedForms(peptide, fixedMods, variableMods));
@@ -384,10 +393,7 @@ public class DigestionEnzyme {
 		}
 		return peptides;
 	}
-	public ArrayList<String> getTerminalModifiedForms(String peptide,int start,int end, int sequenceLength) {
-		ArrayList<String> peptides=new ArrayList<String>();
-		return peptides;
-	}
+
 	
 	/**
 	 * assumes if there's a mod in []s then the fixed part has already been considered
