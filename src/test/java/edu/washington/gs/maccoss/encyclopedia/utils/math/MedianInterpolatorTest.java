@@ -29,7 +29,7 @@ public class MedianInterpolatorTest extends TestCase {
 		rts=getPhosphoData();
 		//rts=getCleanData();
 		RetentionTimeAlignmentInterface filter=new RetentionTimeFilter(rts);
-		filter.plot(rts, Optional.ofNullable(null));
+		filter.plot(rts, Optional.ofNullable(new File("/Users/searleb/Downloads/blah.txt")));
 	}
 	
 	public void testInterpolation() throws Exception {

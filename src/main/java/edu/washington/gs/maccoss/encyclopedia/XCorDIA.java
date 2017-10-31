@@ -338,6 +338,12 @@ public class XCorDIA {
 			executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 			
 			int count=0;
+			HashSet<String> allPeptidesInWindow=new HashSet<>();
+			for (FastaPeptideEntry peptide : targets) {
+				String sequence=peptide.getSequence();
+				allPeptidesInWindow.add(sequence);
+			}
+			
 			for (FastaPeptideEntry peptide : targets) {
 				String sequence=peptide.getSequence();
 
@@ -361,7 +367,7 @@ public class XCorDIA {
 						tasks.add(entry);
 						
 						if (!parameters.isDontRunDecoys()) {
-							String smartDecoy=PeptideUtils.reverse(sequence, parameters.getEnzyme());
+							String smartDecoy=PeptideUtils.getDecoy(sequence, allPeptidesInWindow, parameters);
 							FastaPeptideEntry decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.DECOY_STRING), smartDecoy);
 							XCorrLibraryEntry reventry=XCorrLibraryEntry.generateEntry(true, decoyPeptide.getFilename(), decoyPeptide.getAccessions(), charge, decoyPeptide.getSequence(), parameters);
 							tasks.add(reventry);
@@ -382,7 +388,7 @@ public class XCorDIA {
 								reventry=XCorrLibraryEntry.generateEntry(true, shuffledPeptide.getFilename(), shuffledPeptide.getAccessions(), charge, shuffledPeptide.getSequence(), parameters);
 								tasks.add(reventry);
 								
-								smartDecoy=PeptideUtils.reverse(shuffledSequence, parameters.getEnzyme());
+								smartDecoy=PeptideUtils.getDecoy(shuffledSequence, allPeptidesInWindow, parameters);
 								decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.DECOY_STRING+LibraryEntry.SHUFFLE_STRING), smartDecoy);
 								reventry=XCorrLibraryEntry.generateEntry(true, decoyPeptide.getFilename(), decoyPeptide.getAccessions(), charge, decoyPeptide.getSequence(), parameters);
 								tasks.add(reventry);
