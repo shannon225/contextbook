@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.AlleleVariant;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
@@ -599,6 +600,84 @@ public class DigestionEnzymeTest extends TestCase {
 		}
 		assertEquals(0, expected.size());
 
+	}
+	
+	public void testModificationsWithVariants() {
+		String fakeTTR=">nxp:NX_P02766-1 \\DbUniqueId=NX_P02766-1 \\PName=Transthyretin isoform Iso 1 \\GName=TTR \\NcbiTaxId=9606 \\TaxName=Homo Sapiens \\Length=147 \\SV=266 \\EV=656 \\PE=1 \\ModResPsi=(62|MOD:00041|L-gamma-carboxyglutamic acid)(69|MOD:00047|O-phospho-L-threonine)(72|MOD:00046|O-phospho-L-serine) \\ModRes=(118||N-linked (GlcNAc...)) "
+				+"\\VariantSimple=(5|C)(8|W)(12|*)(18|P) "
+				+"\\VariantComplex=(2|4|)(11|11|WK)(14|14|W*) \\Processed=(1|20|signal peptide)(21|147|mature protein)"
+				+"\nMAWHLLWLCLAGLVFVREAGPTGTGESKCPLMV";
+		FastaEntryInterface entry=FastaReader.readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(fakeTTR.getBytes(StandardCharsets.UTF_8)))), "", "", true).get(0);
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+		
+		// WITH FIXED MODS
+		ArrayList<String> sequences=enzyme.digestProtein(entry, 8, 30, 2, new AminoAcidConstants(new TCharDoubleHashMap(new char[] {'C'}, new double[] {57.0214635}), new ModificationMassMap()));
+		
+		//123456789012345678901234567890123
+		//MAWHLLWLCLAGLVFVREAGPTGTGESKCPLMV
+		
+		HashSet<String> expected=getExpectedForModsWithVariants();
+		
+		for (String sequence : sequences) {
+			if (!expected.contains(sequence)) System.out.println(sequence+" missing from expected");
+			assertTrue(expected.remove(sequence));
+		}
+		assertTrue(expected.size()==0);
+		
+		// WITH FIXED AND VARIABLE MODS
+		sequences=enzyme.digestProtein(entry, 8, 30, 2, new AminoAcidConstants(new TCharDoubleHashMap(new char[] {'C'}, new double[] {57.0214635}), new ModificationMassMap("W=15.994915")));
+
+		expected=getExpectedForModsWithVariants();
+		HashSet<String> expectedWithMods=new HashSet<>();
+		for (String sequence : expected) {
+			expectedWithMods.add(sequence);
+
+			for (int i=0; i<sequence.length(); i++) {
+				if (sequence.charAt(i)=='W') {
+					expectedWithMods.add(sequence.substring(0, i+1)+"[15.994915]"+sequence.substring(i+1));
+				}
+			}
+		}
+		
+		for (String sequence : sequences) {
+			if (!expectedWithMods.contains(sequence)) System.out.println(sequence+" missing from expected with mods");
+			assertTrue(expectedWithMods.remove(sequence));
+		}
+		assertTrue(expectedWithMods.size()==0);
+	}
+
+	public HashSet<String> getExpectedForModsWithVariants() {
+		HashSet<String> expected=new HashSet<>();
+		//////////////123456789012345678901234567890
+		
+		expected.add("MAWHLLWLC[57.0214635]LAGLVFVR"); // canonical
+		expected.add("MAWHC[57.0214635]LWLC[57.0214635]LAGLVFVR"); //(5|C)
+		expected.add("MAWHLLWWC[57.0214635]LAGLVFVR"); //(8|W)
+		expected.add("MAWHLLWLC[57.0214635]LA"); //(12|*)
+		expected.add("MLLWLC[57.0214635]LAGLVFVR"); //(2|4|)
+		expected.add("MAWHLLWLC[57.0214635]LWK"); // (11|11|WK)
+		expected.add("MAWHLLWLC[57.0214635]LWKGLVFVR"); // (11|11|WK)
+		expected.add("MAWHLLWLC[57.0214635]LAGLW"); // (14|14|W*)
+
+		//////////////123456789012345678901234567890
+		expected.add("MAWHLLWLC[57.0214635]LAGLVFVREAGPTGTGESK"); // canonical
+		expected.add("MAWHC[57.0214635]LWLC[57.0214635]LAGLVFVREAGPTGTGESK"); //(5|C)
+		expected.add("MAWHLLWWC[57.0214635]LAGLVFVREAGPTGTGESK"); //(8|W)
+		expected.add("GLVFVREAGPTGTGESK"); //(11|11|WK)
+		expected.add("MLLWLC[57.0214635]LAGLVFVREAGPTGTGESK"); //(2|4|)
+		//expected.add("VFVREAGPTGTGESK"); // SHOULD NOT EXIST (14|14|W*)
+		expected.add("MAWHLLWLC[57.0214635]LAGLVFVRPAGPTGTGESK"); //(18|P)
+		
+		//////////////8901234567890123456
+		expected.add("EAGPTGTGESK"); // canonical
+		//expected.add("PAGPTGTGESK"); // SHOULD NOT EXIST (18|P)
+		expected.add("EAGPTGTGESKC[57.0214635]PLMV"); // canonical
+
+		// two cleavages
+		expected.add("MLLWLC[57.0214635]LAGLVFVREAGPTGTGESKC[57.0214635]PLMV"); // canonical
+		expected.add("MAWHLLWLC[57.0214635]LWKGLVFVREAGPTGTGESK"); //(11|11|WK)
+		expected.add("GLVFVREAGPTGTGESKC[57.0214635]PLMV"); //(11|11|WK)
+		return expected;
 	}
 
 }
