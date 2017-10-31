@@ -1,6 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific;
 
-public class AlleleVariant {
+public class AlleleVariant implements Comparable<AlleleVariant>{
 	private final int startSite;
 	private final int stopSite;
 	private final String originalSequence;
@@ -42,4 +42,11 @@ public class AlleleVariant {
 	public String getNewSequence() {
 		return newSequence;
 	}
+
+
+	@Override
+	public int compareTo(AlleleVariant variant ) {
+		return this.getStartSite()-variant.getStartSite();
+	}
+	
 }

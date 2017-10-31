@@ -75,7 +75,7 @@ public class XCorDIATest extends TestCase {
 		PecanSearchParameters parameters=PecanParameterParser.getDefaultParametersObject();
 		System.out.println("STARTING PARAMS: "+parameters.getAAConstants().getFixedModString());
 		FastaEntry entry=new FastaEntry("APEPTIDEKACPEPTIDECKMARECYSPEPTIDESK");
-		ArrayList<String> seqs=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
+		ArrayList<String> seqs=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
 
 		final File fastaFile = File.createTempFile("test_", ".fasta");
 		fastaFile.deleteOnExit();
@@ -218,9 +218,9 @@ public class XCorDIATest extends TestCase {
 		@Override
 		public ArrayList<Stripe> getStripes(Range targetMzRange, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
 			double[] masses = new double[] {
-					 147.11285d // y1 of ACPEPTIDECK (no fixed mod)
-					,329.12785d // b3 of ACPEPTIDECK (includes fixed mod)
-					,531.27082d // b4 of MORE... (no fixed mod)
+					 147.11285d, // y1 of ACPEPTIDECK (no fixed mod)
+					 329.12785d, // b3 of ACPEPTIDECK (includes fixed mod)
+					 531.27082d // b4 of MORE... (no fixed mod)
 			};
 
 			final float[] intens = new float[masses.length];

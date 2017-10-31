@@ -1,13 +1,17 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.AlleleVariant;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -110,7 +114,7 @@ public class FastaReaderTest extends TestCase {
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		for (FastaEntryInterface entry : entries) {
 			countNTermProtein++;
-			ArrayList<String> peptides=enzyme.digestProtein(entry.getSequence(), 8, 40, 2, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+			ArrayList<String> peptides=enzyme.digestProtein(entry, 8, 40, 2, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 			for (String sequence : peptides) {
 				countBase++;
 				countNTermProtein++;
@@ -167,7 +171,7 @@ public class FastaReaderTest extends TestCase {
 
 		entry=FastaReader.readFasta(ecoli, "").get(0);
 		assertEquals("MDKKSARIRRATRARRKLQELGATRLVVHRTPRHIYAQVIAPNGSEVLVAASTVEKAIAEQLKYTGNKDAAAAVGKAVAERALEKGIKDVSFDRSGFQYHGRVQALADAAREAGLQF", entry.getSequence());
-		ArrayList<String> peptides=DigestionEnzyme.getEnzyme("trypsin").digestProtein(entry.getSequence(), 8, 40, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		ArrayList<String> peptides=DigestionEnzyme.getEnzyme("trypsin").digestProtein(entry, 8, 40, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 		assertTrue(peptides.contains("GIKDVSFDR"));
 	}
 
@@ -227,5 +231,21 @@ public class FastaReaderTest extends TestCase {
 			System.out.println(nominal+"\t"+defects[(int)(defects.length*0.05f)]+"\t"+defects[(int)(defects.length*0.25f)]+"\t"+defects[(int)(defects.length*0.5f)]+"\t"+defects[(int)(defects.length*0.75f)]+"\t"+defects[(int)(defects.length*0.95f)]);
 		}
 		*/
+	}
+	
+	/*
+	 * @MoMo
+	 * test reading Peff format and using ExtendedFastaEntry 
+	 */
+	public void testFastaReaderForPeff() throws Exception {
+		InputStream is=getClass().getResourceAsStream("/nextprot2017_testPEFF1.0rc25_small.peff");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), "nextprot2017_testPEFF1.0rc25_small.peff", null, true);
+		assertEquals(25, entries.size());
+
+		for (FastaEntryInterface entry : entries) {
+			if (!(entry instanceof ExtendedFastaEntry)) {
+				throw new Exception("Error occured when reading peff file, each entry should be an ExtendedFastaEntry object");
+			}
+		}
 	}
 }

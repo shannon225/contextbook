@@ -68,6 +68,7 @@ public class FastaPeptideEntry implements Comparable<FastaPeptideEntry> {
 		return accessions;
 	}
 
+
 	/**
 	 * Returns this entry's set of accessions with the given flag
 	 * prepended to each. Useful for generating decoys.
