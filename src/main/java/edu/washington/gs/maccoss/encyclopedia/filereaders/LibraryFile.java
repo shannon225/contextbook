@@ -938,7 +938,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			try (PreparedStatement prep=c.prepareStatement("select "+"e.PrecursorMZ, "+"e.PrecursorCharge, "+"e.PeptideModSeq, "+"e.Copies, "+"e.RTInSeconds, "+"e.Score, "+"e.MassEncodedLength, "
 					+"e.MassArray, "+"e.IntensityEncodedLength, "+"e.IntensityArray, "+"e.CorrelationEncodedLength, "+"e.CorrelationArray blob, "+"e.RTInSecondsStart, "+"e.RTInSecondsStop,"
 					+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile "+"from "
-					+"entries e "+"left join peptidetoprotein p "+"where "+"e.PeptideSeq=p.PeptideSeq "+"and e.PeptideModSeq = ? "+"and e.PrecursorCharge = ? "+"group by e.rowid;")) {
+					+"entries e "+"left join peptidetoprotein p "+"where "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"and e.PeptideModSeq = ? "+"and e.PrecursorCharge = ? "+"group by e.rowid;")) {
 				for (PeptidePrecursor precursor : entries) {
 					prep.setString(1, precursor.getPeptideModSeq());
 					prep.setByte(2, precursor.getPrecursorCharge());
@@ -955,7 +955,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#
 	 * getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
 	 */
@@ -965,7 +965,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			try (PreparedStatement s=c.prepareStatement("select "+"e.PrecursorMZ, "+"e.PrecursorCharge, "+"e.PeptideModSeq, "+"e.Copies, "+"e.RTInSeconds, "+"e.Score, "+"e.MassEncodedLength, "
 					+"e.MassArray, "+"e.IntensityEncodedLength, "+"e.IntensityArray, "+"e.CorrelationEncodedLength, "+"e.CorrelationArray blob, "+"e.RTInSecondsStart, "+"e.RTInSecondsStop, "
 					+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile "+"from "
-					+"entries e "+"left join peptidetoprotein p "+"where "+"e.PeptideSeq=p.PeptideSeq "+"and e.PeptideModSeq = ? "+"and e.PrecursorCharge = ? "+"group by e.rowid;")) {
+					+"entries e "+"left join peptidetoprotein p "+"where "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"and e.PeptideModSeq = ? "+"and e.PrecursorCharge = ? "+"group by e.rowid;")) {
 				s.setString(1, peptideModSeq);
 				s.setByte(2, charge);
 				ResultSet rs=s.executeQuery();
@@ -1036,7 +1036,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#
 	 * getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
 	 */
@@ -1065,7 +1065,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#
 	 * getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
 	 */
@@ -1075,7 +1075,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			try (PreparedStatement s=c.prepareStatement("select "+"e.PrecursorMZ, "+"e.PrecursorCharge, "+"e.PeptideModSeq, "+"e.Copies, "+"e.RTInSeconds, "+"e.Score, "+"e.MassEncodedLength, "
 					+"e.MassArray, "+"e.IntensityEncodedLength, "+"e.IntensityArray, "+"e.CorrelationEncodedLength, "+"e.CorrelationArray blob, "+"e.RTInSecondsStart, "+"e.RTInSecondsStop, "
 					+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile "+"from "
-					+"entries e "+"left join peptidetoprotein p "+"where "+"e.PeptideSeq=p.PeptideSeq "+"and e.PrecursorMz between ? and ? "+"group by e.rowid;")) {
+					+"entries e "+"left join peptidetoprotein p "+"where "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"and e.PrecursorMz between ? and ? "+"group by e.rowid;")) {
 				s.setFloat(1, precursorMz.getStart());
 				s.setFloat(2, precursorMz.getStop());
 				ResultSet rs=s.executeQuery();
@@ -1138,7 +1138,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			try (PreparedStatement s=c.prepareStatement("select "+"e.PrecursorMZ, "+"e.PrecursorCharge, "+"e.PeptideModSeq, "+"e.Copies, "+"e.RTInSeconds, "+"e.Score, "+"e.MassEncodedLength, "
 					+"e.MassArray, "+"e.IntensityEncodedLength, "+"e.IntensityArray, "+"e.CorrelationEncodedLength, "+"e.CorrelationArray blob, "+"e.RTInSecondsStart, "+"e.RTInSecondsStop, "
 					+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile "+"from "
-					+"entries e "+"left join peptidetoprotein p "+"where "+"e.PeptideSeq=p.PeptideSeq "+"group by e.rowid")) {
+					+"entries e "+"left join peptidetoprotein p "+"where "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"group by e.rowid")) {
 
 				ResultSet rs=s.executeQuery();
 
@@ -1201,7 +1201,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile, "
 					+"l.LocalizationPeptideModSeq, "+"l.LocalizationScore, "+"l.LocalizationIons, "+"l.NumberOfMods, "+"l.NumberOfModifiableResidues, "+"l.isSiteSpecific "+"from "
 					+"peptidelocalizations l, "+"entries e "+"left join peptidetoprotein p "+"where "+"l.isLocalized=1 and "+"l.LocalizationScore>="+minimumLocalizationScore+" and "
-					+"e.PeptideModSeq=l.PeptideModSeq and "+"e.PrecursorCharge=l.PrecursorCharge and "+"e.SourceFile=l.SourceFile and "+"e.PeptideSeq=p.PeptideSeq "+"group by e.rowid";
+					+"e.PeptideModSeq=l.PeptideModSeq and "+"not p.isdecoy and "+"e.PrecursorCharge=l.PrecursorCharge and "+"e.SourceFile=l.SourceFile and "+"e.PeptideSeq=p.PeptideSeq "+"group by e.rowid";
 			try (PreparedStatement s=c.prepareStatement(sql)) {
 				ResultSet rs=s.executeQuery();
 
