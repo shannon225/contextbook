@@ -6,19 +6,22 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 
 public class ParsimonyProteinGrouper {
-	public static ArrayList<ScoredObject<ProteinGroup>> groupProteins(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<PercolatorPeptide> passingDecoys, float fdrThreshold) {
+	public static Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>> groupProteins(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<PercolatorPeptide> passingDecoys, float fdrThreshold) {
 		ArrayList<PercolatorPeptide> allPeptides=new ArrayList<>();
 		allPeptides.addAll(passingPeptides);
 		allPeptides.addAll(passingDecoys);
 		
-		ArrayList<ProteinGroup> allProteins=groupProteins(allPeptides);
+		ArrayList<ProteinGroupInterface> allProteins=groupProteins(allPeptides);
+		if (allProteins.size()==0) return new Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>>(new ArrayList<>(), new ArrayList<>());
+		
 		Collections.sort(allProteins);
 
 		// calculate decoy/target FDR
@@ -31,7 +34,7 @@ public class ParsimonyProteinGrouper {
 			} else {
 				numberOfTargets++;
 			}
-			fdrs[i]=numberOfDecoys/numberOfTargets;
+			fdrs[i]=numberOfDecoys/(float)numberOfTargets;
 		}
 		
 		// estimate q-values
@@ -44,16 +47,22 @@ public class ParsimonyProteinGrouper {
 			}
 		}
 		
-		ArrayList<ScoredObject<ProteinGroup>> keptProteins=new ArrayList<ScoredObject<ProteinGroup>>();
+		ArrayList<PercolatorProteinGroup> keptTargets=new ArrayList<PercolatorProteinGroup>();
+		ArrayList<PercolatorProteinGroup> keptDecoys=new ArrayList<PercolatorProteinGroup>();
 		for (int i=allProteins.size()-1; i>=0; i--) {
-			if (fdrs[i]<=fdrThreshold&&!allProteins.get(i).isDecoy()) {
-				keptProteins.add(new ScoredObject<ProteinGroup>(fdrs[i], allProteins.get(i)));
+			if (fdrs[i]<=fdrThreshold) {
+				ProteinGroupInterface group=allProteins.get(i);
+				if (group.isDecoy()) {
+					keptDecoys.add(new PercolatorProteinGroup(group.getEquivalentAccessions(), group.getSequences(), fdrs[i], group.getPosteriorErrorProb()));
+				} else {
+					keptTargets.add(new PercolatorProteinGroup(group.getEquivalentAccessions(), group.getSequences(), fdrs[i], group.getPosteriorErrorProb()));
+				}
 			}
 		}
-		return keptProteins;
+		return new Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>>(keptTargets, keptDecoys);
 	}
 	
-	public static ArrayList<ProteinGroup> groupProteins(ArrayList<PercolatorPeptide> passingPeptides) {
+	public static ArrayList<ProteinGroupInterface> groupProteins(ArrayList<PercolatorPeptide> passingPeptides) {
 		HashMap<String, Peptide> peptides=new HashMap<String, ParsimonyProteinGrouper.Peptide>();
 		HashMap<String, Protein> proteins=new HashMap<String, ParsimonyProteinGrouper.Protein>();
 		
@@ -63,7 +72,7 @@ public class ParsimonyProteinGrouper {
 			
 			Peptide peptide=peptides.get(sequence);
 			if (peptide==null) {
-				peptide=new Peptide(sequence, 1.0f-percolatorPeptide.getPosteriorErrorProb());
+				peptide=new Peptide(sequence, percolatorPeptide.getPosteriorErrorProb());
 				peptides.put(sequence, peptide);
 			}
 			
@@ -78,45 +87,42 @@ public class ParsimonyProteinGrouper {
 			}
 		}
 
-		Logger.logLine(proteins.size()+" total accessions from "+peptides.size()+" peptides...");
-
 		ArrayList<Protein> sortedProteins=new ArrayList<ParsimonyProteinGrouper.Protein>(proteins.values());
 		for (Protein protein : sortedProteins) {
 			protein.recalculateNSP();
 		}
-		ArrayList<ProteinGroup> keptProteins=new ArrayList<ProteinGroup>();
+		
+		ArrayList<ProteinGroupInterface> keptProteins=new ArrayList<ProteinGroupInterface>();
 		while (sortedProteins.size()>0) {
 			Collections.sort(sortedProteins);
 			Protein highestRankedProtein=sortedProteins.remove(sortedProteins.size()-1);
 			if (highestRankedProtein.getNSP()==0.0f) {
 				break;
 			}
-			float nspScore=highestRankedProtein.getNSP();
 			ArrayList<Protein> equivalentProteins=highestRankedProtein.claimAllPeptides();
 			
 			HashSet<String> equivalentAccessions=new HashSet<String>();
 			for (Protein protein : equivalentProteins) {
 				equivalentAccessions.add(protein.accession);
+				sortedProteins.remove(protein);
 			}
 			ArrayList<String> sequences=new ArrayList<String>();
 			for (Peptide peptide : highestRankedProtein.peptides) {
 				sequences.add(peptide.sequence);
 			}
-			keptProteins.add(new ProteinGroup(nspScore, new ArrayList<String>(equivalentAccessions), sequences));
+			keptProteins.add(new ProteinGroup(highestRankedProtein.getNSP(), highestRankedProtein.getMinPosterorErrorProbability(), new ArrayList<String>(equivalentAccessions), sequences));
 		}
-		
-		Logger.logLine(keptProteins.size()+" parsimonious proteins from "+peptides.size()+" peptides");
 		return keptProteins;
 	}
 
 	static class Peptide {
 		private final String sequence;
-		private final float probability;
+		private final float posteriorErrorProbability;
 		private final ArrayList<Protein> proteins;
 
-		public Peptide(String sequence, float probability) {
+		public Peptide(String sequence, float posteriorErrorProbability) {
 			this.sequence=sequence;
-			this.probability=probability;
+			this.posteriorErrorProbability=posteriorErrorProbability;
 			this.proteins=new ArrayList<ParsimonyProteinGrouper.Protein>();
 		}
 
@@ -149,6 +155,7 @@ public class ParsimonyProteinGrouper {
 		private final String accession;
 		private final ArrayList<Peptide> peptides;
 		private float nsp;
+		private float minPosterorErrorProbability;
 
 		public Protein(String accession) {
 			this.accession=accession;
@@ -166,11 +173,19 @@ public class ParsimonyProteinGrouper {
 		public float getNSP() {
 			return nsp;
 		}
+		
+		public float getMinPosterorErrorProbability() {
+			return minPosterorErrorProbability;
+		}
 
 		public void recalculateNSP() {
 			nsp=0.0f;
+			minPosterorErrorProbability=1.0f;
 			for (Peptide peptide : peptides) {
-				nsp+=peptide.probability;
+				nsp+=(1.0f-peptide.posteriorErrorProbability);
+				if (peptide.posteriorErrorProbability<minPosterorErrorProbability) {
+					minPosterorErrorProbability=peptide.posteriorErrorProbability;
+				}
 			}
 		}
 		
@@ -179,29 +194,40 @@ public class ParsimonyProteinGrouper {
 		 * @return returns identical proteins that contain the same peptides
 		 */
 		public ArrayList<Protein> claimAllPeptides() {
-			ArrayList<Protein> identicalProteins=new ArrayList<ParsimonyProteinGrouper.Protein>();
-			boolean first=true;
+			HashSet<Protein> similarProteins=new HashSet<>();
 			for (Peptide peptide : peptides) {
-				if (first) {
-					identicalProteins.addAll(peptide.proteins);
-				} else {
-					ArrayList<Protein> toBeRemoved=new ArrayList<ParsimonyProteinGrouper.Protein>();
-					for (Protein protein : identicalProteins) {
-						if (!peptide.proteins.contains(protein)) {
-							toBeRemoved.add(protein);
-						}
-					}
-					identicalProteins.removeAll(toBeRemoved);
+				similarProteins.addAll(peptide.proteins);
+			}
+			
+			ArrayList<Protein> identicalProteins=new ArrayList<ParsimonyProteinGrouper.Protein>();
+			for (Protein protein : similarProteins) {
+				if (this.hasEquivalentPeptides(protein)) {
+					identicalProteins.add(protein);
 				}
+			}
+			
+			for (Peptide peptide : peptides) {
 				peptide.claimPeptide(this);
 			}
 			return identicalProteins;
+		}
+		
+		public boolean hasEquivalentPeptides(Protein p) {
+			if (peptides.size()!=p.peptides.size()) return false;
+			
+			HashSet<Peptide> sequences=new HashSet<>(peptides);
+			for (Peptide peptide : p.peptides) {
+				if (!sequences.contains(peptide)) return false;
+			}
+			return true;
 		}
 
 		@Override
 		public int compareTo(Protein o) {
 			if (o==null) return 1;
-			int c=Float.compare(nsp, o.nsp);
+			int c=-Float.compare(minPosterorErrorProbability, o.minPosterorErrorProbability);
+			if (c!=0) return c;
+			c=Float.compare(nsp, o.nsp);
 			if (c!=0) return c;
 			return accession.compareTo(o.accession);
 		}
@@ -214,7 +240,7 @@ public class ParsimonyProteinGrouper {
 		@Override
 		public boolean equals(Object obj) {
 			if (obj==null) return false;
-			return accession.equals(((Peptide)obj).sequence);
+			return accession.equals(((Protein)obj).accession);
 		}
 	}
 }

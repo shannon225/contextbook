@@ -15,7 +15,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
@@ -70,7 +72,53 @@ public class PercolatorReader {
 
 		return new Pair<ArrayList<PercolatorPeptide>, Float>(data, pi0[0]);
 	}
+	
+	/**
+	 * THIS IS DANGEROUS BECAUSE THERE IS NO PARSIMONY APPLIED! CONSIDER JUST USING PARSIMONYPROTEINGROUPER
+	 * @param f
+	 * @param qValueThreshold
+	 * @param keepDecoys
+	 * @return
+	 */
+	public static ArrayList<PercolatorProteinGroup> getPassingProteinsFromTSV(File f, final float qValueThreshold, final boolean keepDecoys) {
+		final ArrayList<PercolatorProteinGroup> data=new ArrayList<>();
+		
+		TableParserMuscle muscle=new TableParserMuscle() {
+			@Override
+			public void processRow(Map<String, String> row) {
+				String proteinIDs=row.get("ProteinId");
+				
+				float qvalue=Float.parseFloat(row.get("q-value"));
+				if (qvalue<qValueThreshold) {
+					float posteriorErrorProb=Float.parseFloat(row.get("posterior_error_prob"));
+					String peptideIDs=row.get("peptideIds");
+					if (keepDecoys||!proteinIDs.startsWith(LibraryEntry.DECOY_STRING)) {
+						data.add(new PercolatorProteinGroup(proteinIDs.split(PSMData.ACCESSION_TOKEN), peptideIDs.split(" "), qvalue, posteriorErrorProb));
+					}
+				}
+			}
+		};
+		
+		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
+		TableParserProducer producer=new TableParserProducer(blockingQueue, f, "\t", 1);
+		TableParserConsumer consumer=new TableParserConsumer(blockingQueue, muscle);
 
+		Thread producerThread=new Thread(producer);
+		Thread consumerThread=new Thread(consumer);
+		producerThread.start();
+		consumerThread.start();
+
+		try {
+			producerThread.join();
+			consumerThread.join();
+		} catch (InterruptedException ie) {
+			Logger.errorLine("Percolator reading interrupted!");
+			Logger.errorException(ie);
+		}
+
+		return data;
+	}
+	
 	public static ArrayList<ScoredObject<String>> getPassingPeptidesFromXML(File f, final float qValueThreshold) {
 		ArrayList<ScoredObject<String>> data=readPercolator(f);
 		

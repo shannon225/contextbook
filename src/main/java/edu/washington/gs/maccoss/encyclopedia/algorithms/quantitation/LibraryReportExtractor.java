@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.filewriters;
+package edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,17 +8,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideReportData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupQuantifier;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -30,9 +30,14 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TObjectFloatHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
+import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class LibraryReportExtractor {
-	public static void extractMatrix(LibraryFile library, ArrayList<ProteinGroup> proteins) throws IOException, SQLException, DataFormatException {
+	public static void extractMatrix(LibraryFile library, ArrayList<ProteinGroupInterface> proteins) throws IOException, SQLException, DataFormatException {
+		extractMatrix(library, proteins, Optional.ofNullable(null));
+	}
+	public static void extractMatrix(LibraryFile library, ArrayList<ProteinGroupInterface> proteins, Optional<CoefficientOfVariationCalculator> cvCalculator) throws IOException, SQLException, DataFormatException {
 		File stubFile=library.getFile();
 		if (stubFile==null) {
 			throw new EncyclopediaException("Please save .ELIB before trying to read matrix data from it!");
@@ -47,15 +52,23 @@ public class LibraryReportExtractor {
 			PrintWriter proteinWriter=null;
 			try {
 				ArrayList<String> sourceFiles=new ArrayList<String>();
-				
-				Logger.logLine("Getting source files...");
-				ResultSet rs=s.executeQuery("select distinct SourceFile from peptidequants");
-				while (rs.next()) {
-					sourceFiles.add(rs.getString(1));
+				if (cvCalculator.isPresent()) {
+					Logger.logLine("Using pre-selected source files...");
+					sourceFiles=cvCalculator.get().getSortedSampleNames();
+				} else {
+					Logger.logLine("Getting source files...");
+					ResultSet rs=s.executeQuery("select distinct SourceFile from peptidequants");
+					while (rs.next()) {
+						sourceFiles.add(rs.getString(1));
+					}
+					rs.close();
+
+					Collections.sort(sourceFiles);
 				}
-				rs.close();
-				
-				Collections.sort(sourceFiles);
+				TObjectIntHashMap<String> indexByFile=new TObjectIntHashMap<>();
+				for (int i=0; i<sourceFiles.size(); i++) {
+					indexByFile.put(sourceFiles.get(i), i);
+				}
 				
 				ArrayList<ProteinGroupQuantifier> proteinQuantifiers=new ArrayList<ProteinGroupQuantifier>();
 				for (int i=0; i<sourceFiles.size(); i++) {
@@ -77,7 +90,6 @@ public class LibraryReportExtractor {
 					
 					peptideWriter.print("\t"+sourceFile);
 					proteinWriter.print("\t"+sourceFile);
-					proteinWriter.print("\tnum_"+sourceFile);
 				}
 				averageTIC=averageTIC/sourceFiles.size();
 				
@@ -87,7 +99,7 @@ public class LibraryReportExtractor {
 				
 				HashMap<String, int[]> numFragmentsByPeptideModSeq=new HashMap<String, int[]>();
 				TreeMap<String, Pair<String, float[]>> intensitiesByPeptideModSeq=new TreeMap<String, Pair<String, float[]>>();
-				rs = s.executeQuery("select " +
+				ResultSet rs = s.executeQuery("select " +
 						"pep.PrecursorCharge, " +
 						"pep.PeptideModSeq, " +
 						"pep.SourceFile, " +
@@ -102,7 +114,6 @@ public class LibraryReportExtractor {
 						"group by pep.rowid;"
 				);
 				int count=0;
-				int totalAdded=0;
 				while (rs.next()) {
 					count++;
 					if (count%10000==0) {
@@ -114,10 +125,17 @@ public class LibraryReportExtractor {
 					float totalIntensity=rs.getFloat(4);
 					int numberOfQuantIons=rs.getInt(5);
 					String proteinToken=rs.getString(6);
-					HashSet<String> accessions=PSMData.stringToAccessions(proteinToken);
 					
-					int index=Collections.binarySearch(sourceFiles, sourceFile);
-					if (index<0) throw new EncyclopediaException("Unexpected sample: "+sourceFile);
+					int index=indexByFile.get(sourceFile);
+					if (index<0) {
+						Logger.errorLine("Can't find ["+sourceFile+"]!");
+						Logger.errorLine("Keys: {");
+						for (String name : sourceFiles) {
+							Logger.errorLine("    "+name);
+						}
+						Logger.errorLine("}");
+						throw new EncyclopediaException("Unexpected sample: "+sourceFile);
+					}
 
 					// FIXME NEED TO NORMALIZE BY TIC
 					float tic=ticBySourceFileMap.get(sourceFile);
@@ -126,11 +144,6 @@ public class LibraryReportExtractor {
 						normalizedIntensity=totalIntensity/tic*averageTIC;
 					} else {
 						normalizedIntensity=totalIntensity;
-					}
-					
-					boolean added=proteinQuantifiers.get(index).addIntensity(accessions, normalizedIntensity);
-					if (added) {
-						totalAdded++;
 					}
 					
 					Pair<String, float[]> pair=intensitiesByPeptideModSeq.get(peptideModSeq);
@@ -147,11 +160,76 @@ public class LibraryReportExtractor {
 					intensitiesArray[index]+=normalizedIntensity; // sums charge states together
 					numFragmentsArray[index]=numberOfQuantIons;
 				}
-				Logger.logLine("Finished processing "+count+" records, found "+totalAdded+" quantitative unique peptides. Writing reports...");
+				
+				int totalAdded=0;
+				HashSet<String> badCVPeptides=new HashSet<>();
+				HashSet<String> badCompletenessPeptides=new HashSet<>();
+				TObjectFloatHashMap<String> cvs=new TObjectFloatHashMap<>();
+				for (Entry<String, Pair<String, float[]>> entry : intensitiesByPeptideModSeq.entrySet()) {
+					String peptideModSeq=entry.getKey();
+					String proteinToken=entry.getValue().x;
+					HashSet<String> accessions=PSMData.stringToAccessions(proteinToken);
+					float[] intensitiesArray=entry.getValue().y;
+					
+					if (cvCalculator.isPresent()) {
+						Pair<Float, Boolean> pair=cvCalculator.get().getCV(sourceFiles, intensitiesArray);
+						float cv=pair.x;
+						boolean atLeastSampleFullyMeasured=pair.y;
+						
+						cvs.put(peptideModSeq, cv);
+						if (Float.isNaN(cv)||cv>cvCalculator.get().getMaximumAcceptedCV()) {
+							badCVPeptides.add(peptideModSeq);
+							continue;
+						};
+						
+						if (!atLeastSampleFullyMeasured) {
+							badCompletenessPeptides.add(peptideModSeq);
+							continue;
+						}
+					}
+					
+					for (int index=0; index<intensitiesArray.length; index++) {
+						boolean added=proteinQuantifiers.get(index).addIntensity(accessions, intensitiesArray[index]);
+						if (added) {
+							totalAdded++;
+						}
+					}
+				}
+				
+				if (cvCalculator.isPresent()) {
+					Logger.logLine("Finished processing "+totalAdded+"/"+count+" measurements. Found "+intensitiesByPeptideModSeq.size()+" quantitative peptides (where "+badCVPeptides.size()+" were outside a CV of "+cvCalculator.get().getMaximumAcceptedCV()+" and "+badCompletenessPeptides.size()+" were incomplete). Writing reports...");
+
+					File cvReportFile=new File(stubFile.getParentFile(), stubFile.getName()+".cvs.txt");
+					PrintWriter cvWriter=null; 
+					try {
+						cvWriter=new PrintWriter(cvReportFile, "UTF-8");
+						cvWriter.println("peptide\tcv");
+						
+						final PrintWriter finalCVWriter=cvWriter;
+						cvs.forEachEntry(new TObjectFloatProcedure<String>() {
+							@Override
+							public boolean execute(String a, float b) {
+								finalCVWriter.println(a+"\t"+b);
+								return true;
+							}
+						});
+					} finally {
+						if (cvWriter!=null) {
+							cvWriter.close();
+						}
+					}
+				} else {
+					Logger.logLine("Finished processing "+count+" records, found "+intensitiesByPeptideModSeq.size()+" quantitative unique peptides. Writing reports...");
+				}
 				
 				int numberInconsistentFragments=0;
 				for (Entry<String, Pair<String, float[]>> entry : intensitiesByPeptideModSeq.entrySet()) {
 					String peptideModSeq=entry.getKey();
+					if (badCompletenessPeptides.size()>0&&badCompletenessPeptides.contains(peptideModSeq)) {
+						continue;
+					} else if (badCVPeptides.size()>0&&badCVPeptides.contains(peptideModSeq)) {
+						continue;
+					}
 					Pair<String, float[]> pair=entry.getValue();
 					peptideWriter.print(peptideModSeq);
 					peptideWriter.print("\t");
@@ -189,19 +267,27 @@ public class LibraryReportExtractor {
 				if (numberInconsistentFragments>0) {
 					Logger.errorLine("Inconsistent number of fragments in "+numberInconsistentFragments+" of "+intensitiesByPeptideModSeq.size()+" peptides");
 				}
-				Logger.logLine("Finished writing peptide report!");
+				Logger.logLine("Finished writing peptide report for "+totalAdded+" unique peptides!");
 				
-				for (ProteinGroup protein : proteins) {
-					//System.out.println(protein.getEquivalentAccessions().size()+"\t"+protein.getNspScore()+"\t"+protein.toString());
-					proteinWriter.print(protein.toString());
-					proteinWriter.print("\t"+protein.getEquivalentAccessions().size()); // numPeptides
+				int numberProteinsKept=0;
+				for (ProteinGroupInterface protein : proteins) {
+					if (protein.isDecoy()) continue;
+					
+					StringBuilder sb=new StringBuilder(protein.toString());
+					sb.append("\t"+protein.getEquivalentAccessions().size());
+					float totalIntensity=0.0f;
 					for (ProteinGroupQuantifier proteinQuantifier : proteinQuantifiers) {
 						float intensity=proteinQuantifier.getIntensity(protein);
-						proteinWriter.print("\t"+intensity);
+						totalIntensity+=intensity;
+						sb.append("\t"+intensity);
 					}
-					proteinWriter.println();
+					
+					if (totalIntensity>0.0f) {
+						numberProteinsKept++;
+						proteinWriter.println(sb.toString());
+					}
 				}
-				Logger.logLine("Finished writing protein report!");
+				Logger.logLine("Finished writing protein report for "+numberProteinsKept+" protein groups!");
 				
 				rs.close();
 			} finally {
@@ -259,7 +345,6 @@ public class LibraryReportExtractor {
 						"pep.QuantIonIntensityLength, pep.QuantIonIntensityArray "+
 						"from " +
 						"peptidequants pep " +
-						"join peptidescores s using (peptidemodseq, precursorcharge) " +
 						"left join peptidetoprotein p " +
 						"where " +
 						"pep.PeptideSeq = p.PeptideSeq " +

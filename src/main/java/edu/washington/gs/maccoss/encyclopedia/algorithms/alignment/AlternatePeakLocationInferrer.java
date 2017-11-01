@@ -3,16 +3,16 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.zip.DataFormatException;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
@@ -157,12 +157,8 @@ public class AlternatePeakLocationInferrer {
 						float[] intensity=chrom.getIntensityArray();
 						float[] correlation=chrom.getCorrelationArray();
 						for (int i=0; i<correlation.length; i++) {
-							if (correlation[i]>=TransitionRefiner.quantitativeCorrelationThreshold) {
-								bestIonsMap.increment(masses[i], intensity[i], correlation[i]);
-							}
-							if (correlation[i]>=TransitionRefiner.identificationCorrelationThreshold) {
-								bestWeakIonsMap.increment(masses[i], intensity[i], correlation[i]);
-							}
+							bestIonsMap.increment(masses[i], intensity[i], correlation[i], correlation[i]>=TransitionRefiner.quantitativeCorrelationThreshold);
+							bestWeakIonsMap.increment(masses[i], intensity[i], correlation[i], correlation[i]>=TransitionRefiner.identificationCorrelationThreshold);
 						}
 					}
 					
@@ -195,8 +191,8 @@ public class AlternatePeakLocationInferrer {
 			String peptideModSeq=entry.getKey();
 			double[] ions=entry.getValue().getTopNMasses(numberOfQuantitativePeaks);
 			if (ions==null||ions.length==0) {
-				double[] altIons=weakIonCounter.get(peptideModSeq).getTopNMasses(numberOfQuantitativePeaks);
-				bestIons.put(peptideModSeq, altIons);
+				//double[] altIons=weakIonCounter.get(peptideModSeq).getTopNMasses(numberOfQuantitativePeaks);
+				//bestIons.put(peptideModSeq, altIons);
 			} else {
 				if (ions.length>=params.getMinNumOfQuantitativePeaks()) {
 					strongAboveThreshold++;

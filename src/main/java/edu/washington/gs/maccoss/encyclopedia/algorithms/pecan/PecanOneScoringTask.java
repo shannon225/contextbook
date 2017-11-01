@@ -152,8 +152,10 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 						float totalSumRawScore=0.0f;
 						for (int j=0; j<scanAveragingWindow; j++) {
 							int scanIndex=index+j;
-							totalSumRawScore+=sumRawScores[scanIndex];
-							weightedFragmentDeltaMass[d]+=sumRawScores[scanIndex]*fragmentDeltaMasses[d][scanIndex];
+							if (scanIndex<sumRawScores.length) {
+								totalSumRawScore+=sumRawScores[scanIndex];
+								weightedFragmentDeltaMass[d]+=sumRawScores[scanIndex]*fragmentDeltaMasses[d][scanIndex];
+							}
 						}
 						if (totalSumRawScore>0) {
 							weightedFragmentDeltaMass[d]=weightedFragmentDeltaMass[d]/totalSumRawScore;

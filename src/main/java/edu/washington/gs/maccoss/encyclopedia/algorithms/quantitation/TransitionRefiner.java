@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms;
+package edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation;
 
 import java.awt.Color;
 import java.util.ArrayList;

@@ -31,6 +31,7 @@ public class FastaEntry implements FastaEntryInterface {
 	
 	public String getAnnotation() {
 		int start=annotation.charAt(0)=='>'?1:0;
+		if (start==0) return annotation;
 		return annotation.substring(start);
 	}
 

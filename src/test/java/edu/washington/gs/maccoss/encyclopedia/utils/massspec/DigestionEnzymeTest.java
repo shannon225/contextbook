@@ -1,9 +1,16 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.AlleleVariant;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
@@ -44,7 +51,7 @@ public class DigestionEnzymeTest extends TestCase {
 		ModificationMassMap variableMods=new ModificationMassMap(); //"C=14.01565");
 		AminoAcidConstants constants=new AminoAcidConstants(AminoAcidConstants.getFixedModsMap("C+57 (Carbamidomethyl)"), variableMods);
 		
-		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 40, 0, constants);
+		ArrayList<String> sequences=enzyme.digestProtein(entry, 8, 40, 0, constants);
 		assertEquals(expected.size(), sequences.size());
 		for (String peptide : sequences) {
 			assertTrue(expected.contains(peptide));
@@ -72,7 +79,7 @@ public class DigestionEnzymeTest extends TestCase {
 		variableMods=new ModificationMassMap("C=14.01565");
 		constants=new AminoAcidConstants(AminoAcidConstants.getFixedModsMap("C+57 (Carbamidomethyl)"), variableMods);
 		
-		sequences=enzyme.digestProtein(sequence, 8, 40, 0, constants);
+		sequences=enzyme.digestProtein(entry, 8, 40, 0, constants);
 		assertEquals(expected.size(), sequences.size());
 		for (String peptide : sequences) {
 			assertTrue(expected.contains(peptide));
@@ -120,7 +127,7 @@ public class DigestionEnzymeTest extends TestCase {
 		ModificationMassMap variableMods=new ModificationMassMap("K=8.014199,W=15.994915,nE=-18.026549,nQ=-17.026549,nC=-17.026549,a=42.010565,z=14.0");
 		AminoAcidConstants constants=new AminoAcidConstants(new TCharDoubleHashMap(), variableMods);
 		
-		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 40, 0, constants);
+		ArrayList<String> sequences=enzyme.digestProtein(entry, 8, 40, 0, constants);
 		assertEquals(expected.size(), sequences.size());
 		for (String peptide : sequences) {
 			assertTrue(expected.contains(peptide));
@@ -131,7 +138,7 @@ public class DigestionEnzymeTest extends TestCase {
 		System.out.println("BOLA2T:");
 		String sequence="MELSAEYLREKLQRDLEAEHVEVEDTTLNRCSCSFRVLVVSAKFEGKPLLQRHRFCTE";
 		for (DigestionEnzyme enzyme : DigestionEnzyme.getAvailableEnzymes()) {
-			ArrayList<String> sequences=enzyme.digestProtein(sequence, 6, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+			ArrayList<String> sequences=enzyme.digestProtein(new FastaEntry(sequence), 6, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 			for (String string : sequences) {
 				if (string.indexOf("RHRF")>=0) {
 					System.out.println(enzyme.getName()+": "+string);
@@ -142,7 +149,7 @@ public class DigestionEnzymeTest extends TestCase {
 		System.out.println("\nBOLA2F:");
 		sequence="MELSAEYLREKLQRDLEAEHVEVEDTTLNRCSCSFRVLVVSAKFEGKPLLQRHSLDPSMTIHCDMVITYGLDQLENCQTCGTDYIISVLNLLTLIVEQINTKLPSSFVEKLFIPSSKLLFLRYHKDKEVVAVAHAVYQAMLSLKNIPVLETAYKLILGEMTCALNNLLHSLQLPEACSEIKHEAFKNHVFNVDNAKFVVKFDLSALTTIGNAKNSSL";
 		for (DigestionEnzyme enzyme : DigestionEnzyme.getAvailableEnzymes()) {
-			ArrayList<String> sequences=enzyme.digestProtein(sequence, 6, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+			ArrayList<String> sequences=enzyme.digestProtein(new FastaEntry(sequence), 6, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 			for (String string : sequences) {
 				if (string.indexOf("RHSL")>=0) {
 					System.out.println(enzyme.getName()+": "+string);
@@ -163,7 +170,7 @@ public class DigestionEnzymeTest extends TestCase {
 		
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("no enzyme");
 
-		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 99999999, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		ArrayList<String> sequences=enzyme.digestProtein(entry, 8, 99999999, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 		assertEquals(1, sequences.size());
 		assertEquals(entry.getSequence(), sequences.get(0));
 	}
@@ -297,7 +304,7 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("LVAASQAALGL");
 		expected.add("KLVAASQAALGL");
 
-		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 40, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		ArrayList<String> sequences=enzyme.digestProtein(entry, 8, 40, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 		assertEquals(expected.size(), sequences.size());
 		for (String peptide : sequences) {
 			assertTrue(expected.contains(peptide));
@@ -365,7 +372,7 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("ETCFAEEGK");
 		expected.add("LVAASQAALGL");
 		
-		ArrayList<String> sequences=enzyme.digestProtein(sequence, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		ArrayList<String> sequences=enzyme.digestProtein(entry, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 		assertEquals(expected.size(), sequences.size());
 		for (String peptide : sequences) {
 			assertTrue(expected.contains(peptide));
@@ -397,7 +404,7 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("VEKCCKADDKETCF");
 		expected.add("VAASQAAL");
 
-		sequences=enzyme.digestProtein(sequence, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		sequences=enzyme.digestProtein(entry, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 		assertEquals(expected.size(), sequences.size());
 		for (String peptide : sequences) {
 			assertTrue(expected.contains(peptide));
@@ -440,11 +447,237 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("KLVAASQAALGL");
 
 
-		sequences=enzyme.digestProtein(sequence, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		sequences=enzyme.digestProtein(entry, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 		assertEquals(expected.size(), sequences.size());
 		for (String peptide : sequences) {
 			assertTrue(expected.contains(peptide));
 		}
+	}
+
+	//@MoMo 
+	public void testDigestionWithVariants() {
+		String fakeTTR=">nxp:NX_P02766-1 \\DbUniqueId=NX_P02766-1 \\PName=Transthyretin isoform Iso 1 \\GName=TTR \\NcbiTaxId=9606 \\TaxName=Homo Sapiens \\Length=147 \\SV=266 \\EV=656 \\PE=1 \\ModResPsi=(62|MOD:00041|L-gamma-carboxyglutamic acid)(69|MOD:00047|O-phospho-L-threonine)(72|MOD:00046|O-phospho-L-serine) \\ModRes=(118||N-linked (GlcNAc...)) "
+				+"\\VariantSimple=(2|G)(5|H)(5|C)(8|H)(112|*)(137|T)(146|R)(147|D)(147|*)(56|P) "
+				+"\\VariantComplex=(70|75|)(110|110|DK)(110|110|APT)(142|142|)(20|40|) \\Processed=(1|20|signal peptide)(21|147|mature protein)"
+				+"\nMASHRLLLLCLAGLVFVSEAGPTGTGESKCPLMVKVLDAVRGSPAINVAVHVFRKAADDTWEPFASGKTSESGELHGLTTEEEFVEGIYKVEIDTKSYWKALGISPFHEHAEVVFTANDSGPRRYTIAALLSPYSYSTTAVVTNPKE";
+		HashSet<String> expected=new HashSet<String>();
+		// peptides from standard sequence
+		expected.add("LLLLCLAGLVFVSEAGPTGTGESK");
+		expected.add("GSPAINVAVHVFR");
+		expected.add("AADDTWEPFASGK");
+		expected.add("TSESGELHGLTTEEEFVEGIYK");
+		expected.add("ALGISPFHEHAEVVFTANDSGPR");
+		expected.add("YTIAALLSPYSYSTTAVVTNPK");
+
+		// simple variant
+		expected.add("MASHCLLLLCLAGLVFVSEAGPTGTGESK");
+		expected.add("MASHHLLLLCLAGLVFVSEAGPTGTGESK");
+		expected.add("LLHLCLAGLVFVSEAGPTGTGESK");
+		expected.add("YTIAALLSPYSYTTTAVVTNPK");
+		expected.add("YTIAALLSPYSYSTTAVVTNPR");
+		expected.add("ALGISPFHEHA");
+		expected.add("KPADDTWEPFASGK");
+
+		// complex variant
+		expected.add("THGLTTEEEFVEGIYK");
+		expected.add("ALGISPFHEDK");
+		expected.add("AEVVFTANDSGPR");
+		expected.add("ALGISPFHEAPTAEVVFTANDSGPR");
+		expected.add("YTIAALLSPYSYSTTAVTNPK");
+		expected.add("LLLLCLAGLVFVSER");
+
+		FastaEntryInterface entry=FastaReader.readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(fakeTTR.getBytes(StandardCharsets.UTF_8)))), "", "", true).get(0);
+
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+
+		ArrayList<String> sequences=enzyme.digestProtein(entry, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		assertEquals(expected.size(), sequences.size());
+		for (String pep : sequences) {
+			if (!expected.contains(pep)) {
+				System.out.println("generated but not expected: "+pep);
+			}
+		}
+		expected.removeAll(sequences);
+		for (String pep : expected) {
+			System.out.println("expected but not generated: "+pep);
+		}
+		assertEquals(0, expected.size());
+	}
+
+	//@MoMo 
+	public void testMissedCleavageWithVariants() {
+		String fakeTTR=">nxp:NX_P02766-1 \\DbUniqueId=NX_P02766-1 \\PName=Transthyretin isoform Iso 1 \\GName=TTR \\NcbiTaxId=9606 \\TaxName=Homo Sapiens \\Length=147 \\SV=266 \\EV=656 \\PE=1 \\ModResPsi=(62|MOD:00041|L-gamma-carboxyglutamic acid)(69|MOD:00047|O-phospho-L-threonine)(72|MOD:00046|O-phospho-L-serine) \\ModRes=(118||N-linked (GlcNAc...)) "
+				+"\\VariantSimple=(2|G)(5|H)(5|C)(8|H)(112|*)(137|T)(146|R)(147|D)(147|*)(56|P) "
+				+"\\VariantComplex=(70|75|)(110|110|DK)(110|110|APT)(142|142|)(20|40|)(135|147|) \\Processed=(1|20|signal peptide)(21|147|mature protein)"
+				+"\nMASHRLLLLCLAGLVFVSEAGPTGTGESKCPLMVKVLDAVRGSPAINVAVHVFRKAADDTWEPFASGKTSESGELHGLTTEEEFVEGIYKVEIDTKSYWKALGISPFHEHAEVVFTANDSGPRRYTIAALLSPYSYSTTAVVTNPKE";
+		HashSet<String> expected=new HashSet<String>();
+		// peptides from standard sequence
+		expected.add("LLLLCLAGLVFVSEAGPTGTGESK");
+		expected.add("GSPAINVAVHVFR");
+		expected.add("AADDTWEPFASGK");
+		expected.add("TSESGELHGLTTEEEFVEGIYK");
+		expected.add("ALGISPFHEHAEVVFTANDSGPR");
+		expected.add("YTIAALLSPYSYSTTAVVTNPK");
+		// peptide from standard sequence with 1 miss cleavage
+
+		expected.add("MASHRLLLLCLAGLVFVSEAGPTGTGESK");
+		expected.add("LLLLCLAGLVFVSEAGPTGTGESKCPLMVK");
+		expected.add("CPLMVKVLDAVR");
+		expected.add("VLDAVRGSPAINVAVHVFR");
+		expected.add("GSPAINVAVHVFRK");
+		expected.add("KAADDTWEPFASGK");
+		expected.add("AADDTWEPFASGKTSESGELHGLTTEEEFVEGIYK");
+		expected.add("TSESGELHGLTTEEEFVEGIYKVEIDTK");
+		expected.add("VEIDTKSYWK");
+		expected.add("SYWKALGISPFHEHAEVVFTANDSGPR");
+		expected.add("ALGISPFHEHAEVVFTANDSGPRR");
+		expected.add("RYTIAALLSPYSYSTTAVVTNPK");
+		expected.add("YTIAALLSPYSYSTTAVVTNPKE");
+		expected.add("YTIAALLSPYSYSTTAVVTNPKE");
+
+		// simple variant
+		expected.add("MASHCLLLLCLAGLVFVSEAGPTGTGESK");
+		expected.add("MASHHLLLLCLAGLVFVSEAGPTGTGESK");
+		expected.add("LLHLCLAGLVFVSEAGPTGTGESK");
+		expected.add("YTIAALLSPYSYTTTAVVTNPK");
+		expected.add("YTIAALLSPYSYSTTAVVTNPR");
+		expected.add("ALGISPFHEHA");
+		expected.add("KPADDTWEPFASGK");
+		// with 1 miss cleavage
+
+		expected.add("MGSHRLLLLCLAGLVFVSEAGPTGTGESK");
+		expected.add("MASHCLLLLCLAGLVFVSEAGPTGTGESKCPLMVK");
+		expected.add("MASHHLLLLCLAGLVFVSEAGPTGTGESKCPLMVK");
+		expected.add("MASHRLLHLCLAGLVFVSEAGPTGTGESK");
+		expected.add("LLHLCLAGLVFVSEAGPTGTGESKCPLMVK");
+		expected.add("SYWKALGISPFHEHA");
+		expected.add("RYTIAALLSPYSYTTTAVVTNPK");
+		expected.add("YTIAALLSPYSYTTTAVVTNPKE");
+		expected.add("RYTIAALLSPYSYSTTAVVTNPR");
+		expected.add("YTIAALLSPYSYSTTAVVTNPKD");
+		expected.add("KPADDTWEPFASGK");
+		expected.add("KPADDTWEPFASGKTSESGELHGLTTEEEFVEGIYK");
+		expected.add("YTIAALLSPYSYSTTAVVTNPRE");
+		expected.add("YTIAALLSPYSYSTTAVVTNPKD");
+		expected.add("GSPAINVAVHVFRKPADDTWEPFASGK");
+
+		// complex variant
+		expected.add("THGLTTEEEFVEGIYK");
+		expected.add("ALGISPFHEDK");
+		expected.add("AEVVFTANDSGPR");
+		expected.add("ALGISPFHEAPTAEVVFTANDSGPR");
+		expected.add("YTIAALLSPYSYSTTAVTNPK");
+		expected.add("LLLLCLAGLVFVSER");
+		expected.add("YTIAALLSPY");
+		
+		
+		// with 1 miss cleavage
+		expected.add("AADDTWEPFASGKTHGLTTEEEFVEGIYK");
+		expected.add("THGLTTEEEFVEGIYKVEIDTK");
+		expected.add("ALGISPFHEDKAEVVFTANDSGPR");
+		expected.add("SYWKALGISPFHEDK");
+		expected.add("AEVVFTANDSGPRR");
+		expected.add("ALGISPFHEDKAEVVFTANDSGPR");
+		expected.add("SYWKALGISPFHEAPTAEVVFTANDSGPR");
+		expected.add("RYTIAALLSPYSYSTTAVTNPK");
+		expected.add("YTIAALLSPYSYSTTAVTNPKE");
+		expected.add("ALGISPFHEAPTAEVVFTANDSGPRR");
+		expected.add("MASHRLLLLCLAGLVFVSER");
+		expected.add("LLLLCLAGLVFVSERGSPAINVAVHVFR");
+		expected.add("RYTIAALLSPY");
+		FastaEntryInterface entry=FastaReader.readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(fakeTTR.getBytes(StandardCharsets.UTF_8)))), "", "", true).get(0);
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+		ArrayList<String> sequences=enzyme.digestProtein(entry, 8, 40, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		assertEquals(expected.size(), sequences.size());
+		for (String pep : sequences) {
+			if (!expected.contains(pep)) {
+				System.out.println("generated but not expected: "+pep);
+			}
+		}
+		expected.removeAll(sequences);
+		for (String pep : expected) {
+			System.out.println("expected but not generated: "+pep);
+		}
+		assertEquals(0, expected.size());
+
+	}
+	
+	public void testModificationsWithVariants() {
+		String fakeTTR=">nxp:NX_P02766-1 \\DbUniqueId=NX_P02766-1 \\PName=Transthyretin isoform Iso 1 \\GName=TTR \\NcbiTaxId=9606 \\TaxName=Homo Sapiens \\Length=147 \\SV=266 \\EV=656 \\PE=1 \\ModResPsi=(62|MOD:00041|L-gamma-carboxyglutamic acid)(69|MOD:00047|O-phospho-L-threonine)(72|MOD:00046|O-phospho-L-serine) \\ModRes=(118||N-linked (GlcNAc...)) "
+				+"\\VariantSimple=(5|C)(8|W)(12|*)(18|P) "
+				+"\\VariantComplex=(2|4|)(11|11|WK)(14|14|W*) \\Processed=(1|20|signal peptide)(21|147|mature protein)"
+				+"\nMAWHLLWLCLAGLVFVREAGPTGTGESKCPLMV";
+		FastaEntryInterface entry=FastaReader.readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(fakeTTR.getBytes(StandardCharsets.UTF_8)))), "", "", true).get(0);
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+		
+		// WITH FIXED MODS
+		ArrayList<String> sequences=enzyme.digestProtein(entry, 8, 30, 2, new AminoAcidConstants(new TCharDoubleHashMap(new char[] {'C'}, new double[] {57.0214635}), new ModificationMassMap()));
+		
+		//123456789012345678901234567890123
+		//MAWHLLWLCLAGLVFVREAGPTGTGESKCPLMV
+		
+		HashSet<String> expected=getExpectedForModsWithVariants();
+		
+		for (String sequence : sequences) {
+			if (!expected.contains(sequence)) System.out.println(sequence+" missing from expected");
+			assertTrue(expected.remove(sequence));
+		}
+		assertTrue(expected.size()==0);
+		
+		// WITH FIXED AND VARIABLE MODS
+		sequences=enzyme.digestProtein(entry, 8, 30, 2, new AminoAcidConstants(new TCharDoubleHashMap(new char[] {'C'}, new double[] {57.0214635}), new ModificationMassMap("W=15.994915")));
+
+		expected=getExpectedForModsWithVariants();
+		HashSet<String> expectedWithMods=new HashSet<>();
+		for (String sequence : expected) {
+			expectedWithMods.add(sequence);
+
+			for (int i=0; i<sequence.length(); i++) {
+				if (sequence.charAt(i)=='W') {
+					expectedWithMods.add(sequence.substring(0, i+1)+"[15.994915]"+sequence.substring(i+1));
+				}
+			}
+		}
+		
+		for (String sequence : sequences) {
+			if (!expectedWithMods.contains(sequence)) System.out.println(sequence+" missing from expected with mods");
+			assertTrue(expectedWithMods.remove(sequence));
+		}
+		assertTrue(expectedWithMods.size()==0);
+	}
+
+	public HashSet<String> getExpectedForModsWithVariants() {
+		HashSet<String> expected=new HashSet<>();
+		//////////////123456789012345678901234567890
+		
+		expected.add("MAWHLLWLC[57.0214635]LAGLVFVR"); // canonical
+		expected.add("MAWHC[57.0214635]LWLC[57.0214635]LAGLVFVR"); //(5|C)
+		expected.add("MAWHLLWWC[57.0214635]LAGLVFVR"); //(8|W)
+		expected.add("MAWHLLWLC[57.0214635]LA"); //(12|*)
+		expected.add("MLLWLC[57.0214635]LAGLVFVR"); //(2|4|)
+		expected.add("MAWHLLWLC[57.0214635]LWK"); // (11|11|WK)
+		expected.add("MAWHLLWLC[57.0214635]LWKGLVFVR"); // (11|11|WK)
+		expected.add("MAWHLLWLC[57.0214635]LAGLW"); // (14|14|W*)
+
+		//////////////123456789012345678901234567890
+		expected.add("MAWHLLWLC[57.0214635]LAGLVFVREAGPTGTGESK"); // canonical
+		expected.add("MAWHC[57.0214635]LWLC[57.0214635]LAGLVFVREAGPTGTGESK"); //(5|C)
+		expected.add("MAWHLLWWC[57.0214635]LAGLVFVREAGPTGTGESK"); //(8|W)
+		expected.add("GLVFVREAGPTGTGESK"); //(11|11|WK)
+		expected.add("MLLWLC[57.0214635]LAGLVFVREAGPTGTGESK"); //(2|4|)
+		//expected.add("VFVREAGPTGTGESK"); // SHOULD NOT EXIST (14|14|W*)
+		expected.add("MAWHLLWLC[57.0214635]LAGLVFVRPAGPTGTGESK"); //(18|P)
+		
+		//////////////8901234567890123456
+		expected.add("EAGPTGTGESK"); // canonical
+		//expected.add("PAGPTGTGESK"); // SHOULD NOT EXIST (18|P)
+		expected.add("EAGPTGTGESKC[57.0214635]PLMV"); // canonical
+
+		// two cleavages
+		expected.add("MLLWLC[57.0214635]LAGLVFVREAGPTGTGESKC[57.0214635]PLMV"); // canonical
+		expected.add("MAWHLLWLC[57.0214635]LWKGLVFVREAGPTGTGESK"); //(11|11|WK)
+		expected.add("GLVFVREAGPTGTGESKC[57.0214635]PLMV"); //(11|11|WK)
+		return expected;
 	}
 
 }

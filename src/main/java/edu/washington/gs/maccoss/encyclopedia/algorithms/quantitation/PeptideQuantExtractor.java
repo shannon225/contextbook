@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms;
+package edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -36,13 +36,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
-import gnu.trove.map.TObjectByteMap;
-import gnu.trove.map.hash.TObjectByteHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class PeptideQuantExtractor {
-	private static final byte NO_ENTRY_CHARGE = 0;
-
 	private final ProgressIndicator progress;
 	private final StripeFileInterface stripefile;
 	//private final PhosphoLocalizer localizer;
@@ -72,7 +68,7 @@ public class PeptideQuantExtractor {
 
 	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, final SearchJobData job, boolean limitToQuantifiable, ArrayList<PercolatorPeptide> globalPassingPSMIDs, ArrayList<PercolatorPeptide> localPassingPSMIDs, final Optional<PeakLocationInferrerInterface> inferrer, StripeFileInterface stripeFile, LibraryInterface searchedLibrary, final SearchParameters parameters) {
 		HashSet<String> passingPeptideSequences=new HashSet<String>();
-		final TObjectByteMap<String> savedPeptides = new TObjectByteHashMap<>(10, 0.5f, NO_ENTRY_CHARGE); // specify the no entry value to be zero
+		final TObjectFloatHashMap<String> savedPeptides=new TObjectFloatHashMap<String>();
 		for (PercolatorPeptide psm : globalPassingPSMIDs) {
 			String psmID=psm.getPsmID();
 			boolean isDecoy=PercolatorPeptide.isPSMIDDecoy(psmID);
@@ -80,7 +76,7 @@ public class PeptideQuantExtractor {
 			if (!isDecoy) {
 				String peptideModSeq=PeptideUtils.getCorrectedMasses(PercolatorPeptide.getPeptideSequence(psmID));
 				passingPeptideSequences.add(peptideModSeq);
-				savedPeptides.put(peptideModSeq, psm.getPrecursorCharge());
+				savedPeptides.put(peptideModSeq, psm.getPosteriorErrorProb());
 			}
 		}
 		Logger.logLine("Number of global peptides: "+savedPeptides.size()+" vs local peptides: "+localPassingPSMIDs.size());
@@ -98,17 +94,9 @@ public class PeptideQuantExtractor {
 		TableParserMuscle muscle=new TableParserMuscle() {
 			@Override
 			public void processRow(Map<String, String> row) {
-				final String psmID=row.get("id");
-				final String peptideModSeq=PeptideUtils.getCorrectedMasses(PercolatorPeptide.getPeptideSequence(psmID));
-
-				// FIXME need to get peptide charge from window
-				final byte precursorCharge=PercolatorPeptide.getCharge(psmID);
-
-				// Shouldn't be possible for the PSM to have zero charge, but this assertion won't run without -ea
-				assert precursorCharge != NO_ENTRY_CHARGE;
-
-				// only accept IDs for the correct charge state
-				if (savedPeptides.get(peptideModSeq) == precursorCharge) {
+				String psmID=row.get("id");
+				String peptideModSeq=PeptideUtils.getCorrectedMasses(PercolatorPeptide.getPeptideSequence(psmID));
+				if (savedPeptides.contains(peptideModSeq)) {
 					boolean isDecoy=PercolatorPeptide.isPSMIDDecoy(psmID);
 					if (!isDecoy) {
 						boolean wasInferred;
@@ -177,7 +165,9 @@ public class PeptideQuantExtractor {
 						}
 
 						double precursorMZ=Double.parseDouble(row.get("precursorMz"));
-
+						// FIXME need to get peptide charge from window
+						byte precursorCharge=PercolatorPeptide.getCharge(psmID);
+						
 						float score=localSavedIDs.contains(psmID)?localSavedIDs.get(psmID):1.0f;
 
 						float sortingScore;

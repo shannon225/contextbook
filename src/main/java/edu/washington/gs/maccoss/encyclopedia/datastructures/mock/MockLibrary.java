@@ -14,7 +14,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 
 /**
  * use for testing, does not SQRT!

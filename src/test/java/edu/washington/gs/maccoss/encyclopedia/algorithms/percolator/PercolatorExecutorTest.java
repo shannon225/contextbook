@@ -19,15 +19,15 @@ import junit.framework.TestCase;
 public class PercolatorExecutorTest extends TestCase {
 	public static void main(String[] args) throws Exception {
 		File fastaFile=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640_plusReverse.fasta");
-		File featureFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated.features.txt");
-		File outputFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated.peptide.txt");
-		File decoyFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated.peptide_decoy.txt");
-		File outputProteinFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated.protein.txt");
-		File decoyProteinFile=new File("/Volumes/BriansSSD/hela_serum_timecourse/wide_timecourse_concatenated.protein_decoy.txt");
+		File featureFile=new File("/Volumes/BriansSSD/pecan/group_concatenated_features.txt");
+		File outputFile=new File("/Volumes/BriansSSD/pecan/group_concatenated_results.txt");
+		File decoyFile=new File("/Volumes/BriansSSD/pecan/group_concatenated_decoy.txt");
+		File outputProteinFile=new File("/Volumes/BriansSSD/pecan/group_concatenated_protein_results.txt");
+		File decoyProteinFile=new File("/Volumes/BriansSSD/pecan/group_concatenated_protein_decoy.txt");
 		PercolatorExecutionData percolatorFiles=new PercolatorExecutionData(featureFile, fastaFile, outputFile, decoyFile, outputProteinFile, decoyProteinFile, SearchParameterParser.getDefaultParametersObject());
 		PercolatorExecutor e=new PercolatorExecutor(getDefaultPercolaterVersion(), percolatorFiles);
 		BlockingQueue<OutputMessage> result=e.start();
-
+             
 		int outputlines=0;
 
 		while (!e.isFinished()||!result.isEmpty()) {

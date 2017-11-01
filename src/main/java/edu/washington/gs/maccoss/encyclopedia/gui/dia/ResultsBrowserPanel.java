@@ -33,11 +33,11 @@ import javax.swing.table.TableRowSorter;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.axis.ValueAxis;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideQuantExtractorTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQuantExtractorTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;

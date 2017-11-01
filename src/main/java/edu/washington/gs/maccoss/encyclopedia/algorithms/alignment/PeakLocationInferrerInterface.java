@@ -2,7 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
 import java.util.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
 

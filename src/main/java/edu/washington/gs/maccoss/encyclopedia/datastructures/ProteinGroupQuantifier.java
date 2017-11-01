@@ -8,12 +8,12 @@ import gnu.trove.map.hash.TObjectFloatHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
 public class ProteinGroupQuantifier {
-	private final HashMap<String, ProteinGroup> groups=new HashMap<String, ProteinGroup>();
-	private final TObjectFloatHashMap<ProteinGroup> intensities=new TObjectFloatHashMap<ProteinGroup>();
-	private final TObjectIntHashMap<ProteinGroup> numQuantPeptides=new TObjectIntHashMap<ProteinGroup>();
+	private final HashMap<String, ProteinGroupInterface> groups=new HashMap<String, ProteinGroupInterface>();
+	private final TObjectFloatHashMap<ProteinGroupInterface> intensities=new TObjectFloatHashMap<ProteinGroupInterface>();
+	private final TObjectIntHashMap<ProteinGroupInterface> numQuantPeptides=new TObjectIntHashMap<ProteinGroupInterface>();
 
-	public ProteinGroupQuantifier(ArrayList<ProteinGroup> groupList) {
-		for (ProteinGroup group : groupList) {
+	public ProteinGroupQuantifier(ArrayList<ProteinGroupInterface> groupList) {
+		for (ProteinGroupInterface group : groupList) {
 			for (String accession : group.getEquivalentAccessions()) {
 				groups.put(accession, group);
 			}
@@ -21,9 +21,9 @@ public class ProteinGroupQuantifier {
 	}
 
 	public boolean addIntensity(Collection<String> accessions, float intensity) {
-		ProteinGroup group=null;
+		ProteinGroupInterface group=null;
 		for (String accession : accessions) {
-			ProteinGroup newGroup=groups.get(accession);
+			ProteinGroupInterface newGroup=groups.get(accession);
 			if (newGroup!=null) {
 				if (group==null) {
 					group=newGroup;
@@ -41,11 +41,11 @@ public class ProteinGroupQuantifier {
 		return true;
 	}
 	
-	public float getIntensity(ProteinGroup group) {
+	public float getIntensity(ProteinGroupInterface group) {
 		return intensities.get(group);
 	}
 	
-	public int getNumberOfQuantitativePeptides(ProteinGroup group) {
+	public int getNumberOfQuantitativePeptides(ProteinGroupInterface group) {
 		return numQuantPeptides.get(group);
 	}
 }

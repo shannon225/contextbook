@@ -27,7 +27,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.BackgroundGenerator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
@@ -45,7 +44,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
@@ -145,7 +143,7 @@ public class Pecanpie {
 						targets=new ArrayList<FastaPeptideEntry>();
 						ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(targetsFile);
 						for (FastaEntryInterface entry : entries) {
-							ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
+							ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
 							for (String peptide : peptides) {
 								FastaPeptideEntry pe=entry.getSubEntry(peptide);
 								targets.add(pe);
@@ -178,8 +176,7 @@ public class Pecanpie {
 		if (jobData.getPercolatorFiles().hasDataAvailable()) {
 			try {
 				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(jobData.getPercolatorFiles().getPeptideOutputFile(), jobData.getParameters().getEffectivePercolatorThreshold(), false).x;
-				ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptidesFromTSV);
-				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides ("+proteins.size()+" proteins) identified at "+(jobData.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(jobData.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 				return;
 			} catch (Exception e) {
 				// problem! so just continue on and overwrite old result
@@ -249,7 +246,7 @@ public class Pecanpie {
 		// add database to proteome
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(fastaFile);
 		for (FastaEntryInterface entry : entries) {
-			ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry.getSequence(), parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
+			ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
 			backgroundProteome.addAll(peptides);
 
 			if (!targetList.isPresent()) {
@@ -489,10 +486,9 @@ public class Pecanpie {
 
 		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
 		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), percolatorFiles, parameters.getEffectivePercolatorThreshold()).x;
-		ArrayList<ProteinGroup> proteins=ParsimonyProteinGrouper.groupProteins(passingPeptides);
 		stripefile.close();
 		
-		Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peptides ("+proteins.size()+" proteins) identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
+		Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peptides identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 
 		progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 	}

@@ -1,10 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
-import com.google.common.collect.Sets;
-import junit.framework.TestCase;
-
 import java.util.ArrayList;
 import java.util.Collections;
+
+import com.google.common.collect.Sets;
+
+import junit.framework.TestCase;
 
 /**
  * @author Seth Just
