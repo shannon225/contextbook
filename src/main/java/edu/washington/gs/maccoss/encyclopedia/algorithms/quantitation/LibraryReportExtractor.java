@@ -108,6 +108,7 @@ public class LibraryReportExtractor {
 						"group_concat(p.ProteinAccession, '" + PSMData.ACCESSION_TOKEN + "') as ProteinAccessions " +
 						"from " +
 						"peptidequants pep " +
+						"join peptidescores s using (peptidemodseq, precursorcharge) " + // outer join to scores table means we'll skip quant rows from unscored charge states
 						"left join peptidetoprotein p " +
 						"where " +
 						"pep.PeptideSeq = p.PeptideSeq " +
