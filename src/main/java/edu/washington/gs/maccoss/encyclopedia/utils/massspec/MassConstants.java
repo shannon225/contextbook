@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 
 public class MassConstants {
 	public final static double neutronMass=1.0086649158849;
@@ -54,7 +55,7 @@ public class MassConstants {
 			return 42.010565;
 		}
 		
-		for (PeptideModification mod : PeptideModification.MODIFICATIONS) {
+		for (PeptideModification mod : AminoAcidConstants.getDefaultLocalizationModifications()) {
 			if (mod.isModificationMass(aa, modificationMass)) {
 				return mod.getMass();
 			}

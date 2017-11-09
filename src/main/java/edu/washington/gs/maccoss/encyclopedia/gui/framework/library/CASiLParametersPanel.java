@@ -98,7 +98,7 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 	private final JComboBox<MassTolerance> libraryTolerance=new JComboBox<MassTolerance>(TOLERANCE_VALUES);
 	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
 	private final JComboBox<ScoringBreadthType> searchBreadthType=new JComboBox<>(CASiL_SEARCH_TYPES);
-	private final JComboBox<PeptideModification> modificationType=new JComboBox<>(PeptideModification.MODIFICATIONS);
+	private final JComboBox<PeptideModification> modificationType=new JComboBox<>(AminoAcidConstants.getDefaultLocalizationModifications().toArray(new PeptideModification[0]));
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 	private final SpinnerModel percolatorThreshold=new SpinnerNumberModel(0.01, 0.001, 0.1, 0.001);
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);

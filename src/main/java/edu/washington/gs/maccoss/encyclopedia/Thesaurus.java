@@ -15,8 +15,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
+import com.google.common.base.Joiner;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
@@ -31,6 +33,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLOneScoring
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
@@ -109,7 +112,13 @@ public class Thesaurus {
 	
 				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 				if (!parameters.getLocalizingModification().isPresent()) {
-					Logger.errorLine("You are required to specify one localization modification ("+PeptideModification.getShortnameList()+")");
+					AminoAcidConstants constants = parameters.getAAConstants();
+					String availableLocalizationModifications = Joiner.on(", ").join(
+					constants.getLocalizationModifications()
+							.stream()
+							.map(PeptideModification::getShortname)
+							.collect(Collectors.toList()));
+					Logger.errorLine("You are required to specify one localization modification (" + availableLocalizationModifications + ")");
 					System.exit(1);
 				}
 
@@ -180,7 +189,13 @@ public class Thesaurus {
 	public static CASiLJobData checkJob(CASiLJobData job) throws IOException, DataFormatException, SQLException {
 		if (!(job.getTaskFactory() instanceof CASiLOneScoringFactory)) {
 			if (!job.getParameters().getLocalizingModification().isPresent()) {
-				throw new EncyclopediaException("You are required to specify one localization modification ("+PeptideModification.getShortnameList()+")");
+				AminoAcidConstants constants = job.getParameters().getAAConstants();
+				String availableLocalizationModifications = Joiner.on(", ").join(
+						constants.getLocalizationModifications()
+								.stream()
+								.map(PeptideModification::getShortname)
+								.collect(Collectors.toList()));
+				throw new EncyclopediaException("You are required to specify one localization modification (" + availableLocalizationModifications + ")");
 			}
 			
 			Logger.logLine("Setting up localization engine...");

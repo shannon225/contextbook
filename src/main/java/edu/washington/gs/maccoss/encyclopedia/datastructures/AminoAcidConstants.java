@@ -1,10 +1,14 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TCharObjectHashMap;
 import gnu.trove.map.hash.TIntCharHashMap;
 import gnu.trove.procedure.TCharDoubleProcedure;
+import java.util.Collection;
 
 public class AminoAcidConstants {
 	public static final char[] AAs="ARNDCEQGHLIKMFPSTWYV".toCharArray();
@@ -12,14 +16,10 @@ public class AminoAcidConstants {
 	// ordered by H C O N S
 	private final TCharDoubleHashMap fixedMods;
 	private final ModificationMassMap variableMods;
+	private final ImmutableCollection<PeptideModification> localizationModifications;
 	private final TCharObjectHashMap<int[]> atomicComposition=new TCharObjectHashMap<int[]>();
 	final private TCharDoubleHashMap massesByAA=new TCharDoubleHashMap();
 	final private TIntCharHashMap aasByNominal=new TIntCharHashMap();
-	
-	public static AminoAcidConstants getConstants(String fixedAAName, ModificationMassMap variableMods) {
-		TCharDoubleHashMap fixedMods=getFixedModsMap(fixedAAName);
-		return new AminoAcidConstants(fixedMods, variableMods);
-	}
 
 	public static TCharDoubleHashMap getFixedModsMap(String name) {
 		TCharDoubleHashMap fixedMods;
@@ -49,16 +49,37 @@ public class AminoAcidConstants {
 		return "No fixed modifications";
 	}
 
+	public static ImmutableCollection<PeptideModification> getDefaultLocalizationModifications() {
+		return ImmutableList.of(
+				new PeptideModification("Phosphorylation (STY)", "Phosphorylation", 79.966331, new double[]{97.976896, 97.976896, 0.0}, new char[]{'S', 'T', 'Y'}),
+				new PeptideModification("Acetylation (K)", "Acetylation", 42.010565, new double[1], new char[]{'K'}),
+				new PeptideModification("Oxidation (MW)", "Oxidation", 15.994915, new double[2], new char[]{'M', 'W'}),
+				new PeptideModification("N-Methylation (KR)", "Methylation", 14.015650, new double[2], new char[]{'K', 'R'}),
+				new PeptideModification("Ubiquitination (K)", "Ubiquitination", 114.042927, new double[1], new char[]{'K'}),
+				new PeptideModification("O-HexNAc (ST)", "OHexNAc", 203.079373, new double[]{203.079373, 203.079373}, new char[]{'S', 'T'}));
+	}
+
+	public static AminoAcidConstants getConstants(String fixedAAName, ModificationMassMap variableMods) {
+		TCharDoubleHashMap fixedMods = getFixedModsMap(fixedAAName);
+		return new AminoAcidConstants(fixedMods, variableMods);
+	}
+
 	/**
 	 * assumes +57 C-alkylation
 	 */
 	public AminoAcidConstants() {
 		this(new TCharDoubleHashMap(new char[] {'C'}, new double[] {57.0214635}), new ModificationMassMap());
 	}
+
 	public AminoAcidConstants(TCharDoubleHashMap fixedMods, ModificationMassMap variableMods) {
+		this(fixedMods, variableMods, getDefaultLocalizationModifications());
+	}
+
+	public AminoAcidConstants(TCharDoubleHashMap fixedMods, ModificationMassMap variableMods, Collection<PeptideModification> localizationModifications) {
 		this.fixedMods=fixedMods;
 		this.variableMods=variableMods;
-		
+		this.localizationModifications = ImmutableList.copyOf(localizationModifications);
+
 		atomicComposition.put('A', new int[] {5, 3, 1, 1, 0});
 		if (fixedMods.contains('C')&&Math.round(fixedMods.get('C'))==57) {
 			atomicComposition.put('C', new int[] {8, 5, 2, 2, 1}); // assumes +57 is carbamidomethyl alkylation
@@ -192,5 +213,17 @@ public class AminoAcidConstants {
 		} else {
 			return null;
 		}
+	}
+
+	public ImmutableCollection<PeptideModification> getLocalizationModifications() {
+		return localizationModifications;
+	}
+
+	public double getNeutralLoss(char aminoAcid, double modificationMass) {
+		return localizationModifications.stream()
+				.filter(mod -> mod.isModificationMass(aminoAcid, modificationMass))
+				.findAny()
+				.map(filteredMod -> filteredMod.getNeutralLoss(aminoAcid))
+				.orElse(0d);
 	}
 }

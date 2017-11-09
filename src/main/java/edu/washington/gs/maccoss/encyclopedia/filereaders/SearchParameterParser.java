@@ -250,7 +250,12 @@ public class SearchParameterParser {
 		
 		value=parameters.get("-localizationModification");
 		if (value!=null) {
-			localizationModification=Optional.ofNullable(PeptideModification.getModification(value));
+			final String localizationModificationName = value;
+			localizationModification =
+					aaConstants.getLocalizationModifications()
+							.stream()
+							.filter(mod -> localizationModificationName.equalsIgnoreCase(mod.getShortname()))
+							.findAny();
 		} else {
 			localizationModification=Optional.empty();
 		}
