@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -113,12 +114,8 @@ public class Thesaurus {
 				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 				if (!parameters.getLocalizingModification().isPresent()) {
 					AminoAcidConstants constants = parameters.getAAConstants();
-					String availableLocalizationModifications = Joiner.on(", ").join(
-					constants.getLocalizationModifications()
-							.stream()
-							.map(PeptideModification::getShortname)
-							.collect(Collectors.toList()));
-					Logger.errorLine("You are required to specify one localization modification (" + availableLocalizationModifications + ")");
+					String message = getRequiredLocalizationMessage(constants.getLocalizationModifications());
+					Logger.errorLine(message);
 					System.exit(1);
 				}
 
@@ -190,14 +187,10 @@ public class Thesaurus {
 		if (!(job.getTaskFactory() instanceof CASiLOneScoringFactory)) {
 			if (!job.getParameters().getLocalizingModification().isPresent()) {
 				AminoAcidConstants constants = job.getParameters().getAAConstants();
-				String availableLocalizationModifications = Joiner.on(", ").join(
-						constants.getLocalizationModifications()
-								.stream()
-								.map(PeptideModification::getShortname)
-								.collect(Collectors.toList()));
-				throw new EncyclopediaException("You are required to specify one localization modification (" + availableLocalizationModifications + ")");
+				String message = getRequiredLocalizationMessage(constants.getLocalizationModifications());
+				throw new EncyclopediaException(message);
 			}
-			
+
 			Logger.logLine("Setting up localization engine...");
 			StripeFileInterface stripefile=StripeFileGenerator.getFile(job.getDiaFile(), job.getParameters());
 			PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, job.getParameters().getLocalizingModification().get(), job.getParameters());
@@ -341,4 +334,14 @@ public class Thesaurus {
 		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peptides processed, "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 
 	}
+
+	private static String getRequiredLocalizationMessage(Collection<PeptideModification> localizationModifications) {
+		String availableLocalizationModifications = Joiner.on(", ").join(
+				localizationModifications
+						.stream()
+						.map(PeptideModification::getShortname)
+						.collect(Collectors.toList()));
+		return "You are required to specify one localization modification (" + availableLocalizationModifications + ")";
+	}
+
 }
