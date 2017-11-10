@@ -71,6 +71,10 @@ public class AminoAcidConstants {
 		return new AminoAcidConstants(fixedMods, variableMods);
 	}
 
+	public static AminoAcidConstants createEmptyFixedAndVariable() {
+		return new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+	}
+
 	/**
 	 * assumes +57 C-alkylation
 	 */
