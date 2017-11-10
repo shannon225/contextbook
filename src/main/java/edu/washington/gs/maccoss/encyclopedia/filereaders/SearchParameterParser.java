@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
@@ -249,13 +251,20 @@ public class SearchParameterParser {
 		percolatorVersionNumber=SearchParameterParser.getInteger("-percolatorVersionNumber", parameters, 3);
 		
 		value=parameters.get("-localizationModification");
-		if (value!=null) {
+		if (value != null) {
 			final String localizationModificationName = value;
-			localizationModification =
+			Set<PeptideModification> peptideModifications =
 					aaConstants.getLocalizationModifications()
 							.stream()
 							.filter(mod -> localizationModificationName.equalsIgnoreCase(mod.getShortname()))
-							.findAny();
+							.collect(Collectors.toSet());
+			if (peptideModifications.size() == 0) {
+				localizationModification = Optional.empty();
+			} else if (peptideModifications.size() == 1) {
+				localizationModification = Optional.of(peptideModifications.iterator().next());
+			} else {
+				throw new IllegalStateException("Multiple modifications found corresponding to: " + localizationModificationName);
+			}
 		} else {
 			localizationModification=Optional.empty();
 		}
