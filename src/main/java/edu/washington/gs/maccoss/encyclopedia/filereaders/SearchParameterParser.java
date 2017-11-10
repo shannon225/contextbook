@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -259,7 +260,20 @@ public class SearchParameterParser {
 							.stream()
 							.filter(mod -> localizationModificationName.equalsIgnoreCase(mod.getShortname()))
 							.collect(Collectors.toSet());
-			localizationModification=Optional.of(Iterables.getOnlyElement(peptideModifications));
+
+			PeptideModification mod;
+			try {
+				mod = Iterables.getOnlyElement(peptideModifications);
+			} catch (NoSuchElementException noElement) {
+				// Preserves previous behavior where an 'unknown' mod to the system will be treated as not specifying a localization mod.
+				// We think we should throw in this case since this silent error is misleading.
+				mod = null;
+			} catch (IllegalStateException multipleElements) {
+				throw new IllegalStateException("Multiple modifications correspond to " + localizationModificationName);
+			}
+
+			localizationModification=Optional.ofNullable(mod);
+
 		} else {
 			localizationModification=Optional.empty();
 		}
