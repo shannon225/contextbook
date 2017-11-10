@@ -8,7 +8,10 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TCharObjectHashMap;
 import gnu.trove.map.hash.TIntCharHashMap;
 import gnu.trove.procedure.TCharDoubleProcedure;
+
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.Optional;
 
 public class AminoAcidConstants {
 	public static final char[] AAs="ARNDCEQGHLIKMFPSTWYV".toCharArray();
@@ -220,10 +223,15 @@ public class AminoAcidConstants {
 	}
 
 	public double getNeutralLoss(char aminoAcid, double modificationMass) {
-		return localizationModifications.stream()
+		return getNeutralLoss(localizationModifications, aminoAcid, modificationMass)
+				.orElse(getNeutralLoss(getDefaultLocalizationModifications(), aminoAcid, modificationMass).orElse(0d));
+	}
+
+	private static Optional<Double> getNeutralLoss(Collection<PeptideModification> modifications, char aminoAcid, double modificationMass) {
+		return modifications.stream()
+				.sorted(Comparator.comparing(mod -> Math.abs(mod.getMass() - modificationMass)))
 				.filter(mod -> mod.isModificationMass(aminoAcid, modificationMass))
-				.findAny()
-				.map(filteredMod -> filteredMod.getNeutralLoss(aminoAcid))
-				.orElse(0d);
+				.findFirst()
+				.map(filteredMod -> filteredMod.getNeutralLoss(aminoAcid));
 	}
 }
