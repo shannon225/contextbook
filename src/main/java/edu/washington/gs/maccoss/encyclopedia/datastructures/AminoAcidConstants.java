@@ -303,7 +303,7 @@ public class AminoAcidConstants {
 							} else {
 								return modificationMass;
 							}
-						});
+						}));
 	}
 
 }
