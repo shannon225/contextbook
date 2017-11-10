@@ -227,7 +227,7 @@ public class AminoAcidConstants {
 
 	public double getNeutralLoss(char aminoAcid, double modificationMass) {
 		return getNeutralLoss(localizationModifications, aminoAcid, modificationMass)
-				.orElse(getNeutralLoss(getDefaultLocalizationModifications(), aminoAcid, modificationMass).orElse(0d));
+				.orElseGet(() -> getNeutralLoss(getDefaultLocalizationModifications(), aminoAcid, modificationMass).orElse(0d));
 	}
 
 	private static Optional<Double> getNeutralLoss(Collection<PeptideModification> modifications, char aminoAcid, double modificationMass) {
