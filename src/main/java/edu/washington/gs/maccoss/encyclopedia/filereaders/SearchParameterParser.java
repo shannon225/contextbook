@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.Iterables;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
@@ -258,13 +259,7 @@ public class SearchParameterParser {
 							.stream()
 							.filter(mod -> localizationModificationName.equalsIgnoreCase(mod.getShortname()))
 							.collect(Collectors.toSet());
-			if (peptideModifications.size() == 0) {
-				localizationModification = Optional.empty();
-			} else if (peptideModifications.size() == 1) {
-				localizationModification = Optional.of(peptideModifications.iterator().next());
-			} else {
-				throw new IllegalStateException("Multiple modifications found corresponding to: " + localizationModificationName);
-			}
+			localizationModification=Optional.of(Iterables.getOnlyElement(peptideModifications));
 		} else {
 			localizationModification=Optional.empty();
 		}
