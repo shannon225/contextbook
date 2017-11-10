@@ -174,7 +174,7 @@ public class PeptideUtils {
 				double modificationMass = Double.valueOf(massText);
 				String aaString=aas.get(aas.size()-1);
 				char aaChar=aaString.charAt(0);
-				modificationMass=MassConstants.getAccurateModificationMass(aaChar, modificationMass);
+				modificationMass=AminoAcidConstants.getAccurateModificationMass(aaChar, modificationMass);
 
 				aas.set(aas.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
 			} else {
@@ -225,7 +225,7 @@ public class PeptideUtils {
 				double modificationMass = Double.valueOf(massText);
 				String aaString=aas.get(masses.size()-1);
 				char aaChar=aaString.charAt(0);
-				modificationMass=MassConstants.getAccurateModificationMass(aaChar, modificationMass);
+				modificationMass=AminoAcidConstants.getAccurateModificationMass(aaChar, modificationMass);
 
 				masses.set(masses.size()-1, masses.get(masses.size()-1)+modificationMass);
 				double neutralLoss = aaConstants.getNeutralLoss(aaChar, modificationMass);
@@ -261,7 +261,7 @@ public class PeptideUtils {
 				double modificationMass = Double.valueOf(massText);
 				String aaString=aas.get(aas.size()-1);
 				char aaChar=aaString.charAt(0);
-				modificationMass=MassConstants.getAccurateModificationMass(aaChar, modificationMass);
+				modificationMass=AminoAcidConstants.getAccurateModificationMass(aaChar, modificationMass);
 
 				aas.set(aas.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
 			} else {

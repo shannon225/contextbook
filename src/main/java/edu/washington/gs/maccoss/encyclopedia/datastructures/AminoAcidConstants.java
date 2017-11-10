@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TCharObjectHashMap;
 import gnu.trove.map.hash.TIntCharHashMap;
@@ -234,4 +235,58 @@ public class AminoAcidConstants {
 				.findFirst()
 				.map(filteredMod -> filteredMod.getNeutralLoss(aminoAcid));
 	}
+
+	private static final MassTolerance tolerance=new MassTolerance(1.0); // 1 ppm is about the accuracy of floats
+
+	public static double getAccurateModificationMass(char aa, double modificationMass) {
+
+		if (aa=='C') {
+			if (tolerance.equals(57.0, modificationMass)) { // Carbamidomethyl
+				return 57.0214635;
+			} else if (tolerance.equals(58.0, modificationMass)) { // Carboxymethyl
+				return 58.005479;
+			} else if (tolerance.equals(46.0, modificationMass)) { // MMTS
+				return 45.987721;
+			} else if (tolerance.equals(99.0, modificationMass)) { // Carbamidomethyl + acetyl
+				return 57.0214635+42.010565;
+			} else if (tolerance.equals(40.0, modificationMass)) { // Carbamidomethyl - pyro-glu
+				return 57.0214635-17.026549;
+			}
+		}
+
+		if (aa=='M'||aa=='W') {
+			if (tolerance.equals(16.0, modificationMass)) { // Oxidation
+				return 15.994915;
+			} else if (tolerance.equals(58.0, modificationMass)) { // Ox + acetyl
+				return 42.010565+15.994915;
+			}
+		}
+
+		if (aa=='Q') {
+			if (tolerance.equals(-17.0, modificationMass)) { // pyro-glu
+				return -17.026549;
+			}
+		}
+
+		if (aa=='S'||aa=='T'||aa=='Y') {
+			if (tolerance.equals(80.0, modificationMass)) { // Phospho
+				return PeptideModification.phosphorylation.getMass();
+			} else if (tolerance.equals(122.0, modificationMass)) { // Phospho + acetyl
+				return 42.010565+PeptideModification.phosphorylation.getMass();
+			}
+		}
+
+		if (tolerance.equals(42.0, modificationMass)) { // acetyl
+			return 42.010565;
+		}
+
+		for (PeptideModification mod : getDefaultLocalizationModifications()) {
+			if (mod.isModificationMass(aa, modificationMass)) {
+				return mod.getMass();
+			}
+		}
+
+		return modificationMass;
+	}
+
 }
