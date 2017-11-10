@@ -237,8 +237,8 @@ public class AminoAcidConstants {
 
 	private static Optional<PeptideModification> findModification(Collection<PeptideModification> modifications, char aminoAcid, double modificationMass) {
 		return modifications.stream()
-				.sorted(Comparator.comparing(mod -> Math.abs(mod.getMass() - modificationMass)))
 				.filter(mod -> mod.isModificationMass(aminoAcid, modificationMass))
+				.sorted(Comparator.comparing(mod -> Math.abs(mod.getMass() - modificationMass)))
 				.findFirst();
 	}
 
