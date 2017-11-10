@@ -41,7 +41,7 @@ public class PeptideUtilsTest extends TestCase {
 	}
 
 	public void testReverse() {
-		String s=PeptideUtils.reverse("ABC[+57]DEFGHIJK", PARAMETERS.getEnzyme());
+		String s=PeptideUtils.reverse("ABC[+57]DEFGHIJK", PARAMETERS.getEnzyme(), PARAMETERS.getAAConstants());
 		assertEquals("JIHGFEDC[+57.0214635]BAK", s);
 	}
 	
@@ -102,6 +102,7 @@ public class PeptideUtilsTest extends TestCase {
 	}
 	
 	public void testGetAAs() {
+		AminoAcidConstants aminoAcidConstants = new AminoAcidConstants();
 		for (int i=0; i<100; i++) {
 			StringBuilder sb=new StringBuilder();
 			double length=Math.random()*30+5;
@@ -114,7 +115,7 @@ public class PeptideUtilsTest extends TestCase {
 				}
 			}
 			String sequence=sb.toString();
-			String processedSequence=General.toString(PeptideUtils.getAAs(sequence), "");
+			String processedSequence=General.toString(PeptideUtils.getAAs(sequence, aminoAcidConstants), "");
 			assertEquals(sequence, processedSequence);
 		}
 	}

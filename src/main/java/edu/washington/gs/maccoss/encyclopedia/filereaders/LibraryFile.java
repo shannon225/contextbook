@@ -34,6 +34,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptid
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Chromatogram;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
@@ -1194,7 +1195,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
-	public ArrayList<LocalizedLibraryEntry> getAllLocalizedEntries(float minimumLocalizationScore, PeptideModification mod, boolean sqrt) throws IOException, SQLException, DataFormatException {
+	public ArrayList<LocalizedLibraryEntry> getAllLocalizedEntries(float minimumLocalizationScore, PeptideModification mod, boolean sqrt, AminoAcidConstants aminoAcidConstants) throws IOException, SQLException, DataFormatException {
 		try (Connection c=getConnection()) {
 			String sql="select "+"e.PrecursorMZ, "+"e.PrecursorCharge, "+"e.PeptideModSeq, "+"e.Copies, "+"l.RTInSecondsCenter, "+"e.Score, "+"e.MassEncodedLength, "+"e.MassArray, "
 					+"e.IntensityEncodedLength, "+"e.IntensityArray, "+"e.CorrelationEncodedLength, "+"e.CorrelationArray blob, "+"e.RTInSecondsStart, "+"e.RTInSecondsStop, "
@@ -1246,7 +1247,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					HashSet<String> accessions=PSMData.stringToAccessions(rs.getString(17));
 					String sourceFile=rs.getString(18);
 
-					AmbiguousPeptideModSeq peptideAnnotation=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq(rs.getString(19), mod);
+					AmbiguousPeptideModSeq peptideAnnotation=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq(rs.getString(19), mod, aminoAcidConstants);
 					float localizationScore=rs.getFloat(20);
 					FragmentIon[] localizationIons=FragmentIon.fromArchiveString(rs.getString(21));
 					int numberOfMods=rs.getInt(22);

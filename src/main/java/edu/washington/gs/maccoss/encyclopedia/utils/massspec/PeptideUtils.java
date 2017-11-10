@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
+import java.awt.event.KeyEvent;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -12,6 +13,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
+
+import javax.swing.*;
 
 public class PeptideUtils {
 	public static byte getExpectedChargeState(String peptide) {
@@ -32,7 +35,7 @@ public class PeptideUtils {
 		FragmentationModel model=new FragmentationModel(peptide, parameters.getAAConstants());
 		double[] primaryIons=model.getPrimaryIons(parameters.getFragType(), charge);
 		
-		String decoy=reverse(peptide, parameters.getEnzyme());
+		String decoy=reverse(peptide, parameters.getEnzyme(), parameters.getAAConstants());
 		int attempts=0;
 		int maxTries=10;
 		while (attempts<maxTries) {
@@ -61,7 +64,7 @@ public class PeptideUtils {
 	}
 	
 	public static String getDecoy(String peptide, HashSet<String> backgroundProteome, SearchParameters parameters) {
-		String decoy=reverse(peptide, parameters.getEnzyme());
+		String decoy=reverse(peptide, parameters.getEnzyme(), parameters.getAAConstants());
 		int attempts=0;
 		int maxTries=3;
 		while (attempts<maxTries) {
@@ -74,9 +77,9 @@ public class PeptideUtils {
 		}
 		return decoy;
 	}
-	
-	public static String reverse(String peptide, DigestionEnzyme enzyme) {
-		String[] aas=getAAs(peptide);
+
+	public static String reverse(String peptide, DigestionEnzyme enzyme, AminoAcidConstants aminoAcidConstants) {
+		String[] aas=getAAs(peptide, aminoAcidConstants);
 		reverse(aas, enzyme);
 		return getSequence(aas);
 	}
@@ -152,8 +155,16 @@ public class PeptideUtils {
 			}
 		}
 	}
-	
+
+	/**
+	 * @deprecated Use {@link #getCorrectedMasses(String, AminoAcidConstants)}
+	 */
+	@Deprecated
 	public static String getCorrectedMasses(String sequence) {
+		return getCorrectedMasses(sequence, new AminoAcidConstants());
+	}
+
+	public static String getCorrectedMasses(String sequence, AminoAcidConstants aminoAcidConstants) {
 		char[] ca=sequence.toCharArray();
 		
 		ArrayList<String> aas=new ArrayList<String>();
@@ -174,7 +185,7 @@ public class PeptideUtils {
 				double modificationMass = Double.valueOf(massText);
 				String aaString=aas.get(aas.size()-1);
 				char aaChar=aaString.charAt(0);
-				modificationMass=AminoAcidConstants.getAccurateModificationMass(aaChar, modificationMass);
+				modificationMass=aminoAcidConstants.getAccurateModificationMass(aaChar, modificationMass);
 
 				aas.set(aas.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
 			} else {
@@ -225,7 +236,7 @@ public class PeptideUtils {
 				double modificationMass = Double.valueOf(massText);
 				String aaString=aas.get(masses.size()-1);
 				char aaChar=aaString.charAt(0);
-				modificationMass=AminoAcidConstants.getAccurateModificationMass(aaChar, modificationMass);
+				modificationMass=aaConstants.getAccurateModificationMass(aaChar, modificationMass);
 
 				masses.set(masses.size()-1, masses.get(masses.size()-1)+modificationMass);
 				double neutralLoss = aaConstants.getNeutralLoss(aaChar, modificationMass);
@@ -240,7 +251,7 @@ public class PeptideUtils {
 		return new Triplet<double[], double[], String[]>(masses.toArray(), neutralLosses.toArray(), aas.toArray(new String[aas.size()]));
 	}
 
-	public static String[] getAAs(String sequence) {
+	public static String[] getAAs(String sequence, AminoAcidConstants aminoAcidConstants) {
 		char[] ca=sequence.toCharArray();
 		
 		ArrayList<String> aas=new ArrayList<String>();
@@ -261,7 +272,7 @@ public class PeptideUtils {
 				double modificationMass = Double.valueOf(massText);
 				String aaString=aas.get(aas.size()-1);
 				char aaChar=aaString.charAt(0);
-				modificationMass=AminoAcidConstants.getAccurateModificationMass(aaChar, modificationMass);
+				modificationMass=aminoAcidConstants.getAccurateModificationMass(aaChar, modificationMass);
 
 				aas.set(aas.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
 			} else {

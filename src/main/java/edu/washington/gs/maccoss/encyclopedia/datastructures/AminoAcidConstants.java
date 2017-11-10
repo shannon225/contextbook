@@ -10,6 +10,8 @@ import gnu.trove.map.hash.TCharObjectHashMap;
 import gnu.trove.map.hash.TIntCharHashMap;
 import gnu.trove.procedure.TCharDoubleProcedure;
 
+import javax.swing.*;
+import java.awt.event.KeyEvent;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Optional;
@@ -242,8 +244,7 @@ public class AminoAcidConstants {
 
 	private static final MassTolerance tolerance=new MassTolerance(1.0); // 1 ppm is about the accuracy of floats
 
-	public static double getAccurateModificationMass(char aa, double modificationMass) {
-
+	public double getAccurateModificationMass(char aa, double modificationMass) {
 		if (aa=='C') {
 			if (tolerance.equals(57.0, modificationMass)) { // Carbamidomethyl
 				return 57.0214635;
