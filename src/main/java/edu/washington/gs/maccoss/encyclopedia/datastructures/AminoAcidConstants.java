@@ -15,6 +15,7 @@ import java.awt.event.KeyEvent;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class AminoAcidConstants {
 	public static final char[] AAs="ARNDCEQGHLIKMFPSTWYV".toCharArray();
@@ -245,49 +246,51 @@ public class AminoAcidConstants {
 	private static final MassTolerance tolerance=new MassTolerance(1.0); // 1 ppm is about the accuracy of floats
 
 	public double getAccurateModificationMass(char aa, double modificationMass) {
-		if (aa=='C') {
-			if (tolerance.equals(57.0, modificationMass)) { // Carbamidomethyl
-				return 57.0214635;
-			} else if (tolerance.equals(58.0, modificationMass)) { // Carboxymethyl
-				return 58.005479;
-			} else if (tolerance.equals(46.0, modificationMass)) { // MMTS
-				return 45.987721;
-			} else if (tolerance.equals(99.0, modificationMass)) { // Carbamidomethyl + acetyl
-				return 57.0214635+42.010565;
-			} else if (tolerance.equals(40.0, modificationMass)) { // Carbamidomethyl - pyro-glu
-				return 57.0214635-17.026549;
-			}
-		}
-
-		if (aa=='M'||aa=='W') {
-			if (tolerance.equals(16.0, modificationMass)) { // Oxidation
-				return 15.994915;
-			} else if (tolerance.equals(58.0, modificationMass)) { // Ox + acetyl
-				return 42.010565+15.994915;
-			}
-		}
-
-		if (aa=='Q') {
-			if (tolerance.equals(-17.0, modificationMass)) { // pyro-glu
-				return -17.026549;
-			}
-		}
-
-		if (aa=='S'||aa=='T'||aa=='Y') {
-			if (tolerance.equals(80.0, modificationMass)) { // Phospho
-				return PeptideModification.phosphorylation.getMass();
-			} else if (tolerance.equals(122.0, modificationMass)) { // Phospho + acetyl
-				return 42.010565+PeptideModification.phosphorylation.getMass();
-			}
-		}
-
-		if (tolerance.equals(42.0, modificationMass)) { // acetyl
-			return 42.010565;
-		}
-
 		return findModification(getDefaultLocalizationModifications(), aa, modificationMass)
 				.map(PeptideModification::getMass)
-				.orElse(modificationMass);
+				.orElseGet(() -> {
+					if (aa == 'C') {
+						if (tolerance.equals(57.0, modificationMass)) { // Carbamidomethyl
+							return 57.0214635;
+						} else if (tolerance.equals(58.0, modificationMass)) { // Carboxymethyl
+							return 58.005479;
+						} else if (tolerance.equals(46.0, modificationMass)) { // MMTS
+							return 45.987721;
+						} else if (tolerance.equals(99.0, modificationMass)) { // Carbamidomethyl + acetyl
+							return 57.0214635 + 42.010565;
+						} else if (tolerance.equals(40.0, modificationMass)) { // Carbamidomethyl - pyro-glu
+							return 57.0214635 - 17.026549;
+						}
+					}
+
+					if (aa == 'M' || aa == 'W') {
+						if (tolerance.equals(16.0, modificationMass)) { // Oxidation
+							return 15.994915;
+						} else if (tolerance.equals(58.0, modificationMass)) { // Ox + acetyl
+							return 42.010565 + 15.994915;
+						}
+					}
+
+					if (aa == 'Q') {
+						if (tolerance.equals(-17.0, modificationMass)) { // pyro-glu
+							return -17.026549;
+						}
+					}
+
+					if (aa == 'S' || aa == 'T' || aa == 'Y') {
+						if (tolerance.equals(80.0, modificationMass)) { // Phospho
+							return PeptideModification.phosphorylation.getMass();
+						} else if (tolerance.equals(122.0, modificationMass)) { // Phospho + acetyl
+							return 42.010565 + PeptideModification.phosphorylation.getMass();
+						}
+					}
+
+					if (tolerance.equals(42.0, modificationMass)) { // acetyl
+						return 42.010565;
+					} else {
+						return modificationMass;
+					}
+				});
 	}
 
 }
