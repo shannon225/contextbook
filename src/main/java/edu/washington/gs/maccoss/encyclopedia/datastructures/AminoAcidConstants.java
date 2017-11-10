@@ -57,12 +57,12 @@ public class AminoAcidConstants {
 
 	public static ImmutableCollection<PeptideModification> getDefaultLocalizationModifications() {
 		return ImmutableList.of(
-				new PeptideModification("Phosphorylation (STY)", "Phosphorylation", 79.966331, new double[]{97.976896, 97.976896, 0.0}, new char[]{'S', 'T', 'Y'}),
-				new PeptideModification("Acetylation (K)", "Acetylation", 42.010565, new double[1], new char[]{'K'}),
-				new PeptideModification("Oxidation (MW)", "Oxidation", 15.994915, new double[2], new char[]{'M', 'W'}),
-				new PeptideModification("N-Methylation (KR)", "Methylation", 14.015650, new double[2], new char[]{'K', 'R'}),
-				new PeptideModification("Ubiquitination (K)", "Ubiquitination", 114.042927, new double[1], new char[]{'K'}),
-				new PeptideModification("O-HexNAc (ST)", "OHexNAc", 203.079373, new double[]{203.079373, 203.079373}, new char[]{'S', 'T'}));
+				PeptideModification.phosphorylation,
+				PeptideModification.acetylation,
+				PeptideModification.oxidation,
+				PeptideModification.methylation,
+				PeptideModification.ubiquitination,
+				PeptideModification.oHexNAc);
 	}
 
 	public static AminoAcidConstants getConstants(String fixedAAName, ModificationMassMap variableMods) {

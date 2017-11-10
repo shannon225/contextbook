@@ -6,6 +6,11 @@ public class PeptideModification {
 
 	public static final String NO_MODIFICATION_NAME = "none";
 	public static PeptideModification phosphorylation = new PeptideModification("Phosphorylation (STY)", "Phosphorylation", 79.966331, new double[]{97.976896, 97.976896, 0.0}, new char[]{'S', 'T', 'Y'});
+	public static PeptideModification acetylation     = new PeptideModification("Acetylation (K)", "Acetylation", 42.010565, new double[1], new char[]{'K'});
+	public static PeptideModification oxidation       = new PeptideModification("Oxidation (MW)", "Oxidation", 15.994915, new double[2], new char[]{'M', 'W'});
+	public static PeptideModification methylation     = new PeptideModification("N-Methylation (KR)", "Methylation", 14.015650, new double[2], new char[]{'K', 'R'});
+	public static PeptideModification ubiquitination  = new PeptideModification("Ubiquitination (K)", "Ubiquitination", 114.042927, new double[1], new char[]{'K'});
+	public static PeptideModification oHexNAc         = new PeptideModification("O-HexNAc (ST)", "OHexNAc", 203.079373, new double[]{203.079373, 203.079373}, new char[]{'S', 'T'});
 	static PeptideModification polymorphism           = new PeptideModification("Nucleotide Polymorphism", "Polymorphism", 0.0, new double["ACDEFGHIKLMNPQRSTVWY".length()], "ACDEFGHIKLMNPQRSTVWY".toCharArray());
 
 	private final String name;
