@@ -229,11 +229,15 @@ public class AminoAcidConstants {
 	}
 
 	private static Optional<Double> getNeutralLoss(Collection<PeptideModification> modifications, char aminoAcid, double modificationMass) {
+		return findModification(modifications, aminoAcid, modificationMass)
+				.map(mod -> mod.getNeutralLoss(aminoAcid));
+	}
+
+	private static Optional<PeptideModification> findModification(Collection<PeptideModification> modifications, char aminoAcid, double modificationMass) {
 		return modifications.stream()
 				.sorted(Comparator.comparing(mod -> Math.abs(mod.getMass() - modificationMass)))
 				.filter(mod -> mod.isModificationMass(aminoAcid, modificationMass))
-				.findFirst()
-				.map(filteredMod -> filteredMod.getNeutralLoss(aminoAcid));
+				.findFirst();
 	}
 
 	private static final MassTolerance tolerance=new MassTolerance(1.0); // 1 ppm is about the accuracy of floats
@@ -280,13 +284,9 @@ public class AminoAcidConstants {
 			return 42.010565;
 		}
 
-		for (PeptideModification mod : getDefaultLocalizationModifications()) {
-			if (mod.isModificationMass(aa, modificationMass)) {
-				return mod.getMass();
-			}
-		}
-
-		return modificationMass;
+		return findModification(getDefaultLocalizationModifications(), aa, modificationMass)
+				.map(PeptideModification::getMass)
+				.orElse(modificationMass);
 	}
 
 }
