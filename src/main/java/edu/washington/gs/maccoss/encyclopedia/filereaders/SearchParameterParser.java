@@ -265,7 +265,7 @@ public class SearchParameterParser {
 			try {
 				mod = Iterables.getOnlyElement(peptideModifications);
 			} catch (NoSuchElementException noElement) {
-				// Preserves previous behavior where an 'unknown' mod to the system will be treated as not specifying a localization mod.
+				// Preserves previous behavior where a mod 'unknown' to the system will be treated as not specifying a localization mod.
 				// We think we should throw in this case since this silent error is misleading.
 				mod = null;
 			} catch (IllegalStateException multipleElements) {
