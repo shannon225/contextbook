@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
-import org.apache.commons.lang3.text.WordUtils;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.AlleleVariant;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
@@ -22,16 +21,11 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-
 
 public class FastaReaderForPeffTest {
 	private final static int minLength=8;
@@ -41,14 +35,14 @@ public class FastaReaderForPeffTest {
 	private final static DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 
 	public static void main(String[] args) throws Exception {
-		//checkDigestionRunningTimeForPeff();
-		
-		
+		// checkDigestionRunningTimeForPeff();
+
 		File peffFile=new File("J:/1_LabData/20171017_peff_fileformat/nextprot2017_testPEFF1.0rc25_a.peff");
-		//File peffFile=new File("J:/1_LabData/20171017_peff_fileformat/nextprot2017_testPEFF1.0rc25_small.peff");
+		// File peffFile=new
+		// File("J:/1_LabData/20171017_peff_fileformat/nextprot2017_testPEFF1.0rc25_small.peff");
 		File rangeFile=new File("J:/1_LabData/20171017_peff_fileformat/MZranges.csv");
-		String outputFolder = "J:/1_LabData/20171017_peff_fileformat/";
-		
+		String outputFolder="J:/1_LabData/20171017_peff_fileformat/";
+
 		InputStream is=new FileInputStream(peffFile);
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), peffFile.getName(), null, true);
 		ArrayList<Range> ranges=readRangeFile(rangeFile);
@@ -59,7 +53,6 @@ public class FastaReaderForPeffTest {
 			results.add(new CountingResult(ranges.size()));
 		}
 
-		
 		for (int i=0; i<entries.size(); i++) {
 			FastaEntryInterface entry=entries.get(i);
 			ArrayList<String> peptideSequences=enzyme.digestProtein(entry.getSequence(), minLength, maxLength, maxMissedCleavages, constants, new ArrayList<AlleleVariant>());
@@ -69,7 +62,6 @@ public class FastaReaderForPeffTest {
 				variants=((ExtendedFastaEntry)entry).getPotentialVariant();
 			}
 
-			
 			ArrayList<Peptide> peptides=new ArrayList<Peptide>();
 			for (String sequence : peptideSequences) {
 				int start=entry.getSequence().indexOf(sequence)+1;
@@ -79,20 +71,20 @@ public class FastaReaderForPeffTest {
 				peptides.add(peptide);
 			}
 
-			// only variants locate at the peptide sequence are associated with peptide
+			// only variants locate at the peptide sequence are associated with
+			// peptide
 			Collections.sort(variants);
 			associateVariantWithPeptide(variants, peptides);
-			
+
 			for (int chargeOffset=-1; chargeOffset<=1; chargeOffset++) {
 				int index=chargeOffset+1;
 				countPeptideAndVariantInRanges(peptides, ranges, chargeOffset, results.get(index));
 			}
 		}
-		outputReports(results,ranges,outputFolder);
-		
+		outputReports(results, ranges, outputFolder);
+
 	}
-	
-	
+
 	private static ArrayList<Range> readRangeFile(File rangeFile) {
 		BufferedReader in=null;
 		ArrayList<Range> ranges=new ArrayList<Range>();
@@ -129,7 +121,7 @@ public class FastaReaderForPeffTest {
 		}
 		return ranges;
 	}
-	
+
 	private static void associateVariantWithPeptide(ArrayList<AlleleVariant> variants, ArrayList<Peptide> peptides) {
 		int varIndex=0;
 		for (int i=0; i<peptides.size(); i++) {
@@ -146,7 +138,7 @@ public class FastaReaderForPeffTest {
 			}
 		}
 	}
-	
+
 	private static void countPeptideAndVariantInRanges(ArrayList<Peptide> peptides, ArrayList<Range> ranges, int chargeOffset, CountingResult result) {
 		for (Peptide peptide : peptides) {
 
@@ -187,7 +179,19 @@ public class FastaReaderForPeffTest {
 				if (offset>0) {
 					variantSequence+=peptide.getSequence().substring(0, offset);
 				}
-				if (!variant.getNewSequence().equals("*")) {
+
+				boolean hasStopCodon=false;
+				for (int idx=0; idx<variant.getNewSequence().length(); idx++) {
+					// some variant is weird, like DD->DEL*THPW*L*KVSGL
+					// stop at first stop codon
+					if (variant.getNewSequence().charAt(idx)=='*') {
+						hasStopCodon=true;
+						variantSequence+=variant.getNewSequence().substring(0, idx);
+						break;
+					}
+				}
+
+				if (!hasStopCodon) {
 					variantSequence+=variant.getNewSequence();
 					offset=peptide.getEndSite()-variant.getStopSite();
 					if (offset>0) {
@@ -204,10 +208,11 @@ public class FastaReaderForPeffTest {
 				String sequenceVariation=variant.getOriginalSequence()+"->"+variant.getNewSequence();
 				if (!result.variantTypeCount.containsKey(sequenceVariation)) {
 					VariantType vType;
-					if (variant.getNewSequence().equals("*")) {
+					if (hasStopCodon) {
 						vType=new VariantType(sequenceVariation, Double.MAX_VALUE);
+
 					} else {
-						double deltaMass = constants.getMass(variant.getNewSequence())-constants.getMass(variant.getOriginalSequence());
+						double deltaMass=constants.getMass(variant.getNewSequence())-constants.getMass(variant.getOriginalSequence());
 						vType=new VariantType(sequenceVariation, deltaMass);
 					}
 					result.variantTypeCount.put(sequenceVariation, vType);
@@ -227,10 +232,10 @@ public class FastaReaderForPeffTest {
 			}
 		}
 	}
-	
-	private static void outputReports(ArrayList<CountingResult> results,ArrayList<Range> ranges,String outputFolder){
-		
-		PrintWriter writer; 
+
+	private static void outputReports(ArrayList<CountingResult> results, ArrayList<Range> ranges, String outputFolder) {
+
+		PrintWriter writer;
 		File outputFile=new File(outputFolder+"sequence_variant_region_counting_summary.csv");
 		try {
 			writer=new PrintWriter(outputFile, "UTF-8");
@@ -248,33 +253,33 @@ public class FastaReaderForPeffTest {
 			writer.println("number of peptide-variant pair in same mz region:,"+General.sum(results.get(i).variantInSameRange));
 			writer.println("number of peptide-variant pair in different mz region:,"+General.sum(results.get(i).variantInDiffRange));
 			writer.println();
-			
-			String filepath = outputFolder+"sequence_variant_delta_mass_histogram_for_charge_offset_"+(i-1)+".csv";
-			outputHistogramFile(results.get(i).mzDifferences,0.5f,filepath);
-			filepath = outputFolder+"sequence_variant_mz_region_distribution_for_charge_offset_"+(i-1)+".csv";
-			outputVariantMZRegionDistribution(ranges,results.get(i),filepath);
-			filepath = outputFolder+"sequence_variation_record_for_charge_offset_"+(i-1)+".csv";
-			outputSequenceVarianceFrequency(results.get(i),filepath);
+
+			String filepath=outputFolder+"sequence_variant_delta_mass_histogram_for_charge_offset_"+(i-1)+".csv";
+			outputHistogramFile(results.get(i).mzDifferences, 0.5f, filepath);
+			filepath=outputFolder+"sequence_variant_mz_region_distribution_for_charge_offset_"+(i-1)+".csv";
+			outputVariantMZRegionDistribution(ranges, results.get(i), filepath);
+			filepath=outputFolder+"sequence_variation_record_for_charge_offset_"+(i-1)+".csv";
+			outputSequenceVarianceFrequency(results.get(i), filepath);
 		}
 		writer.close();
 		System.out.println("done");
 	}
-	
-	private static void outputHistogramFile(ArrayList<Double> deltaMZs ,double binSize,String outputFilepath){
+
+	private static void outputHistogramFile(ArrayList<Double> deltaMZs, double binSize, String outputFilepath) {
 		Collections.sort(deltaMZs);
-		double minValue= Math.floor(deltaMZs.get(0));
-		double maxValue= Math.ceil(deltaMZs.get(deltaMZs.size()-1));
-		int arraylength = (int)Math.ceil((maxValue-minValue)/binSize)+1;
-		double[] x = new double[arraylength];
-		int[] y = new int[arraylength];
-		
+		double minValue=Math.floor(deltaMZs.get(0));
+		double maxValue=Math.ceil(deltaMZs.get(deltaMZs.size()-1));
+		int arraylength=(int)Math.ceil((maxValue-minValue)/binSize)+1;
+		double[] x=new double[arraylength];
+		int[] y=new int[arraylength];
+
 		int index=0;
-		x[0] = minValue;
-		for (int i =0;i<x.length-1;i++){
+		x[0]=minValue;
+		for (int i=0; i<x.length-1; i++) {
 			x[i+1]=x[i]+binSize;
-			for (int j=index;j<deltaMZs.size();j++){
-				double mz = deltaMZs.get(j);
-				if (mz>=x[i+1]){
+			for (int j=index; j<deltaMZs.size(); j++) {
+				double mz=deltaMZs.get(j);
+				if (mz>=x[i+1]) {
 					index=j;
 					break;
 				} else {
@@ -282,20 +287,20 @@ public class FastaReaderForPeffTest {
 				}
 			}
 		}
-		PrintWriter writer; 
-		File outputFile = new File(outputFilepath);
-		try{
+		PrintWriter writer;
+		File outputFile=new File(outputFilepath);
+		try {
 			writer=new PrintWriter(outputFile, "UTF-8");
 		} catch (FileNotFoundException|UnsupportedEncodingException e) {
 			throw new EncyclopediaException("Error writing peff file peptide-variant mz delta result!", e);
 		}
 		writer.println("deltaMS bin,counts");
-		for (int i =0;i<x.length;i++){
+		for (int i=0; i<x.length; i++) {
 			writer.println(x[i]+","+y[i]);
 		}
 		writer.close();
 	}
-	
+
 	private static void outputVariantMZRegionDistribution(ArrayList<Range> ranges, CountingResult result, String outputFilepath) {
 		PrintWriter writer;
 		File outputFile=new File(outputFilepath);
@@ -314,8 +319,8 @@ public class FastaReaderForPeffTest {
 		}
 		writer.close();
 	}
-	
-	private static void outputSequenceVarianceFrequency (CountingResult result, String outputFilepath){
+
+	private static void outputSequenceVarianceFrequency(CountingResult result, String outputFilepath) {
 		PrintWriter writer;
 		File outputFile=new File(outputFilepath);
 		try {
@@ -326,16 +331,11 @@ public class FastaReaderForPeffTest {
 
 		writer.println("sequence variation,delta mass,count");
 
-		DecimalFormat mzFormat=new DecimalFormat("##.00");
-		for (String sequenceVariance : result.variantTypeCount.keySet()){
+		for (String sequenceVariance : result.variantTypeCount.keySet()) {
 			writer.println(sequenceVariance+","+result.variantTypeCount.get(sequenceVariance).deltaMass()+","+result.variantTypeCount.get(sequenceVariance).count);
 		}
-		writer.close();		
+		writer.close();
 	}
-	
-
-
-
 
 	private static void checkDigestionRunningTimeForPeff() throws FileNotFoundException {
 		File peffFile=new File("J:/1_LabData/20171017_peff_fileformat/nextprot2017_testPEFF1.0rc25_a.peff");
@@ -345,7 +345,7 @@ public class FastaReaderForPeffTest {
 		InputStream is=new FileInputStream(peffFile);
 		long startTime=System.currentTimeMillis();
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), peffFile.getName(), null, true);
-		
+
 		System.out.println("Number of entry in peff file: "+entries.size());
 		long endTime=System.currentTimeMillis();
 		long duration=(endTime-startTime);
@@ -371,7 +371,7 @@ public class FastaReaderForPeffTest {
 		is=new FileInputStream(peffFile);
 		startTime=System.currentTimeMillis();
 		entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), peffFile.getName(), null, false);
-		
+
 		System.out.println("Number of entry in peff file: "+entries.size());
 		endTime=System.currentTimeMillis();
 		duration=(endTime-startTime);
@@ -403,7 +403,6 @@ class Peptide implements Comparable<Peptide> {
 	private int end=0;
 	private byte expectedCharge=(byte)0;
 	private final ArrayList<AlleleVariant> variants=new ArrayList<AlleleVariant>();
-	
 
 	public Peptide(String sequence, byte charge) {
 		this.sequence=sequence;
@@ -438,6 +437,7 @@ class Peptide implements Comparable<Peptide> {
 	public int getEndSite() {
 		return end;
 	}
+
 	@Override
 	public int compareTo(Peptide o) {
 		if (this.getStartSite()>o.getStartSite()) {
@@ -464,7 +464,6 @@ class CountingResult {
 		variantInSameRange=new int[noOfMZRegions];
 		variantInDiffRange=new int[noOfMZRegions];
 	}
-	 
 
 }
 
@@ -472,15 +471,17 @@ class VariantType {
 	private final String sequenceVariant;
 	private final double deltaMass;
 	public int count;
-	public VariantType(String sequenceVariant, double delta){
-		this.sequenceVariant = sequenceVariant;
+
+	public VariantType(String sequenceVariant, double delta) {
+		this.sequenceVariant=sequenceVariant;
 		this.deltaMass=delta;
 	}
-	public String getSequenceVariant(){
+
+	public String getSequenceVariant() {
 		return sequenceVariant;
 	}
-	public double deltaMass (){
+
+	public double deltaMass() {
 		return deltaMass;
 	}
 }
-
