@@ -10,12 +10,9 @@ import gnu.trove.map.hash.TCharObjectHashMap;
 import gnu.trove.map.hash.TIntCharHashMap;
 import gnu.trove.procedure.TCharDoubleProcedure;
 
-import javax.swing.*;
-import java.awt.event.KeyEvent;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 public class AminoAcidConstants {
 	public static final char[] AAs="ARNDCEQGHLIKMFPSTWYV".toCharArray();
@@ -262,52 +259,54 @@ public class AminoAcidConstants {
 			fixedOrVariable = fixedModMass;
 		}
 
-		return Optional.ofNullable(fixedOrVariable).orElseGet(() ->
-				findModification(getDefaultLocalizationModifications(), aa, modificationMass)
-						.map(PeptideModification::getMass)
-						.orElseGet(() -> {
-							if (aa == 'C') {
-								if (tolerance.equals(57.0, modificationMass)) { // Carbamidomethyl
-									return 57.0214635;
-								} else if (tolerance.equals(58.0, modificationMass)) { // Carboxymethyl
-									return 58.005479;
-								} else if (tolerance.equals(46.0, modificationMass)) { // MMTS
-									return 45.987721;
-								} else if (tolerance.equals(99.0, modificationMass)) { // Carbamidomethyl + acetyl
-									return 57.0214635 + 42.010565;
-								} else if (tolerance.equals(40.0, modificationMass)) { // Carbamidomethyl - pyro-glu
-									return 57.0214635 - 17.026549;
-								}
-							}
+		if (fixedOrVariable != null) {
+			return fixedOrVariable;
+		} else {
+			Optional<PeptideModification> modification = findModification(getDefaultLocalizationModifications(), aa, modificationMass);
+			Optional<Double> opModificationMass = modification.map(PeptideModification::getMass);
+			return opModificationMass.orElseGet(() -> {
+				if (aa == 'C') {
+					if (tolerance.equals(57.0, modificationMass)) { // Carbamidomethyl
+						return 57.0214635;
+					} else if (tolerance.equals(58.0, modificationMass)) { // Carboxymethyl
+						return 58.005479;
+					} else if (tolerance.equals(46.0, modificationMass)) { // MMTS
+						return 45.987721;
+					} else if (tolerance.equals(99.0, modificationMass)) { // Carbamidomethyl + acetyl
+						return 57.0214635 + 42.010565;
+					} else if (tolerance.equals(40.0, modificationMass)) { // Carbamidomethyl - pyro-glu
+						return 57.0214635 - 17.026549;
+					}
+				}
 
-							if (aa == 'M' || aa == 'W') {
-								if (tolerance.equals(16.0, modificationMass)) { // Oxidation
-									return 15.994915;
-								} else if (tolerance.equals(58.0, modificationMass)) { // Ox + acetyl
-									return 42.010565 + 15.994915;
-								}
-							}
+				if (aa == 'M' || aa == 'W') {
+					if (tolerance.equals(16.0, modificationMass)) { // Oxidation
+						return 15.994915;
+					} else if (tolerance.equals(58.0, modificationMass)) { // Ox + acetyl
+						return 42.010565 + 15.994915;
+					}
+				}
 
-							if (aa == 'Q') {
-								if (tolerance.equals(-17.0, modificationMass)) { // pyro-glu
-									return -17.026549;
-								}
-							}
+				if (aa == 'Q') {
+					if (tolerance.equals(-17.0, modificationMass)) { // pyro-glu
+						return -17.026549;
+					}
+				}
 
-							if (aa == 'S' || aa == 'T' || aa == 'Y') {
-								if (tolerance.equals(80.0, modificationMass)) { // Phospho
-									return PeptideModification.phosphorylation.getMass();
-								} else if (tolerance.equals(122.0, modificationMass)) { // Phospho + acetyl
-									return 42.010565 + PeptideModification.phosphorylation.getMass();
-								}
-							}
+				if (aa == 'S' || aa == 'T' || aa == 'Y') {
+					if (tolerance.equals(80.0, modificationMass)) { // Phospho
+						return PeptideModification.phosphorylation.getMass();
+					} else if (tolerance.equals(122.0, modificationMass)) { // Phospho + acetyl
+						return 42.010565 + PeptideModification.phosphorylation.getMass();
+					}
+				}
 
-							if (tolerance.equals(42.0, modificationMass)) { // acetyl
-								return 42.010565;
-							} else {
-								return modificationMass;
-							}
-						}));
+				if (tolerance.equals(42.0, modificationMass)) { // acetyl
+					return 42.010565;
+				} else {
+					return modificationMass;
+				}
+			});
+		}
 	}
-
 }
