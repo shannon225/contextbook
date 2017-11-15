@@ -14,6 +14,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.xml.parsers.SAXParserFactory;
 
+import com.google.common.collect.ImmutableMap;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -35,6 +36,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	private final BlockingQueue<MzmlBlock> mzmlBlockQueue;
 	private final SearchParameters parameters;
 	private final HashMap<Range, TFloatArrayList> retentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
+	private final ImmutableMap.Builder<String, String> softwareAccessionIdToVersionBuilder = ImmutableMap.builder();
 
 	private Throwable error;
 
@@ -120,6 +122,12 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	private boolean isSkipSpectrumWithBadEncoding = false;
 	private int numSkippedWithBadEncoding = 0;
 	private static final int MAX_BAD_ENCODING_SKIPPED = 1000;
+
+	/**
+	 * Field is only used to temporarily store software version when reading.
+	 * Use {@link #getSoftwareAccessionIdToVersion()}
+ 	 */
+	private String softwareVersion;
 	
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
@@ -185,6 +193,8 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 				} else if ("charge state".equalsIgnoreCase(attributes.getValue("name"))) {
 					selectedCharge=Byte.parseByte(attributes.getValue("value"));
 				}
+			} else if ("software".equalsIgnoreCase(getPreviousElementTag())) {
+				softwareAccessionIdToVersionBuilder.put(attributes.getValue("accession"), softwareVersion);
 			}
 		} else if ("precursor".equalsIgnoreCase(qName)) {
 			spectrumRef=attributes.getValue("spectrumRef");
@@ -193,9 +203,22 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 		} else if ("spectrum".equalsIgnoreCase(qName)) {
 			spectrumName=attributes.getValue("id");
 			spectrumIndex=Integer.parseInt(attributes.getValue("index"));
+		} else if ("software".equalsIgnoreCase(qName)) {
+			softwareVersion = attributes.getValue("version");
 		}
 
 		tagList.add(qName);
+	}
+
+	private String getPreviousElementTag() {
+		return tagList.get(tagList.size() - 1);
+	}
+
+	/**
+	 * @return A mapping of PSI-MS controlled software accession id to version.
+	 */
+	public ImmutableMap<String, String> getSoftwareAccessionIdToVersion() {
+		return softwareAccessionIdToVersionBuilder.build();
 	}
 
 	@Override

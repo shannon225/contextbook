@@ -21,8 +21,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.zip.DataFormatException;
 
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
@@ -42,6 +44,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	public static final String FILENAME_ATTRIBUTE="filename";
 	public static final String TOTAL_PRECURSOR_TIC_ATTRIBUTE="totalPrecursorTIC";
 	public static final String GRADIENT_LENGTH_ATTRIBUTE="gradientLength";
+	public static final String SOFTWARE_VERSION_PREFIX = "SoftwareVersion_";
 
 	public static final String DIA_EXTENSION=".dia";
 	
@@ -226,6 +229,14 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		map.put(SOURCENAME_ATTRIBUTE, sourceName==null?UNKNOWN_VALUE:sourceName);
 		map.put(FILELOCATION_ATTRIBUTE, fileLocation==null?UNKNOWN_VALUE:fileLocation);
 		addMetadata(map);
+	}
+
+	public void setSoftwareVersions(final Map<String, String> softwareAccessionIdToVersion) throws IOException, SQLException {
+		if (!softwareAccessionIdToVersion.isEmpty()) {
+			Map<String, String> toAdd = Maps.newHashMap();
+			softwareAccessionIdToVersion.forEach((key, value) -> toAdd.put(SOFTWARE_VERSION_PREFIX + key, value));
+			addMetadata(toAdd);
+		}
 	}
 
 	public void addMetadata(String key, String value) throws IOException, SQLException {
