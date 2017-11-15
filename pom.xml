@@ -161,6 +161,25 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<!-- Allows us to properly fetch artifact version programmatically in code.
+					We do this to save program information in files creates by this artifact.
+					Usage:
+					Class k = ...
+					k.getPackage().getImplementationVersion() -> {$version}
+				-->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+							<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+							<mainClass>edu.washington.gs.maccoss.encyclopedia.Main</mainClass>;
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 
