@@ -27,21 +27,33 @@ public abstract class SQLFile {
 	public boolean doesColumnExist(File f, String table, String column) throws IOException, SQLException {
 		Connection c=getConnection(f);
 		try {
-			Statement s=c.createStatement();
-			try {
-				ResultSet rs=s.executeQuery("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = '"+table+"'");
-				while (rs.next()) {
-					String statement=rs.getString(1);
-					if (statement.toLowerCase().indexOf(" "+column.toLowerCase()+" ")>=0) {
-						return true;
-					}
-				}
-				return false;
-			} finally {
-				s.close();
-			}
+			return doesColumnExist(c, table, column);
 		} finally {
 			c.close();
+		}
+	}
+
+	/**
+	 *
+	 * @param c : an open connection. n.b. this method will not close the connection
+	 * @param table
+	 * @param column
+	 * @return whether the column exists in said table
+	 * @throws SQLException
+	 */
+	protected boolean doesColumnExist(Connection c, String table, String column) throws SQLException {
+		Statement s=c.createStatement();
+		try {
+			ResultSet rs=s.executeQuery("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = '"+table+"'");
+			while (rs.next()) {
+				String statement=rs.getString(1);
+				if (statement.toLowerCase().indexOf(" "+column.toLowerCase()+" ")>=0) {
+					return true;
+				}
+			}
+			return false;
+		} finally {
+			s.close();
 		}
 	}
 }
