@@ -9,7 +9,10 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
@@ -31,6 +34,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 	public static final String V3_01="v3-01";
 	public static final String V2_10="v2-10";
 	public static final byte DEFAULT_VERSION_NUMBER=3;
+	private static final Pattern PERCOLATOR_VERSION_PATTERN = Pattern.compile("Percolator version (.+),");
 
 	PercolatorExecutor(int percolatorVersion, PercolatorExecutionData commandData) {
 		super(generateCommand(percolatorVersion, commandData));
@@ -42,10 +46,16 @@ public class PercolatorExecutor extends ExternalExecutor {
 
 		Float pi0=null;
 		String errorMessage=null;
+		Optional<String> percolatorExecutableVersion = Optional.empty();
 		while (!e.isFinished()||!result.isEmpty()) {
 			if (!result.isEmpty()) {
 				OutputMessage data=result.take();
-				if (!data.isStdOutput()) {
+				if (data.isStdOutput()) {
+					if (!percolatorExecutableVersion.isPresent()) {
+						String message = data.getMessage();
+						percolatorExecutableVersion = getPercolatorVersionFromOutput(message);
+					}
+				} else {
 					Logger.logLine(data.getMessage());
 					String trim=data.getMessage().trim();
 					if (trim.startsWith("Error : ")) {
@@ -79,9 +89,20 @@ public class PercolatorExecutor extends ExternalExecutor {
 			throw new EncyclopediaException("Error appending to Percolator text file", ioe);
 		}
 
+		commandData.setPercolatorExecutableVersion(percolatorExecutableVersion.orElse(null));
+
 		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(commandData.getPeptideOutputFile(), threshold, false);
 		
 		return passingPeptides;
+	}
+
+	static Optional<String> getPercolatorVersionFromOutput(String standardOutputLine) {
+		Matcher matcher = PERCOLATOR_VERSION_PATTERN.matcher(standardOutputLine);
+		if (matcher.find()) {
+			return Optional.ofNullable(matcher.group(1));
+		} else {
+			return Optional.empty();
+		}
 	}
 
 	private static void checkResult(PercolatorExecutor e) throws EncyclopediaException {

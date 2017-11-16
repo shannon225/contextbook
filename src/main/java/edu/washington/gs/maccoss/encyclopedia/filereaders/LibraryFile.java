@@ -67,7 +67,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	public static final String DLIB=".dlib";
 	public static final String ELIB=".elib";
 	public static final String VERSION_STRING="version";
-	public static final String ENCYCLOPEDIA_VERSION = "EncyclopediaVersion" ;
+	public static final String ENCYCLOPEDIA_VERSION = "EncyclopediaVersion";
+	public static final String PERCOLATOR_VERSION = "PercolatorVersion";
 	public static final String UNKNOWN = "Unknown";
 	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] { new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4),
 			new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8), new Version(0, 1, 9), new Version(0, 1, 10), new Version(0, 1, 11), new Version(0, 1, 12), new Version(0, 1, 13) };
