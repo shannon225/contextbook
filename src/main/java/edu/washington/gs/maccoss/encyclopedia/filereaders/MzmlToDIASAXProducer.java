@@ -14,7 +14,11 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.xml.parsers.SAXParserFactory;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentComponent;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentId;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -37,6 +41,9 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	private final SearchParameters parameters;
 	private final HashMap<Range, TFloatArrayList> retentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 	private final ImmutableMap.Builder<String, String> softwareAccessionIdToVersionBuilder = ImmutableMap.builder();
+
+	private final ImmutableMultimap.Builder<InstrumentId, InstrumentComponent> instrumentIdToInstrumentComponentBuilder = ImmutableMultimap.builder();
+	private ImmutableList.Builder<InstrumentComponent> instrumentComponentsBuilder = ImmutableList.builder();
 
 	private Throwable error;
 
@@ -128,7 +135,10 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	 * Use {@link #getSoftwareAccessionIdToVersion()}
  	 */
 	private String softwareVersion;
-	
+
+	private InstrumentId.Builder currentInstrumentConfigurationIdBuilder = InstrumentId.builder();
+	private InstrumentComponent.Builder currentInstrumentComponentBuilder = InstrumentComponent.builder();
+
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
 		dataSB.setLength(0);
@@ -195,6 +205,16 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 				}
 			} else if ("software".equalsIgnoreCase(getPreviousElementTag())) {
 				softwareAccessionIdToVersionBuilder.put(attributes.getValue("accession"), softwareVersion);
+			} else if ("instrumentConfiguration".equalsIgnoreCase(getPreviousElementTag())) {
+				currentInstrumentConfigurationIdBuilder
+						.setAccession(attributes.getValue("accession"))
+						.setName(attributes.getValue("name"));
+			} else if (InstrumentComponent.Type.typeFor(getPreviousElementTag()).isPresent()) {
+				currentInstrumentComponentBuilder
+						.setType(InstrumentComponent.Type.typeFor(getPreviousElementTag()).get())
+						.setCvRef(attributes.getValue("cvRef"))
+						.setAccessionId(attributes.getValue("accession"))
+						.setName(attributes.getValue("name"));
 			}
 		} else if ("precursor".equalsIgnoreCase(qName)) {
 			spectrumRef=attributes.getValue("spectrumRef");
@@ -205,6 +225,10 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 			spectrumIndex=Integer.parseInt(attributes.getValue("index"));
 		} else if ("software".equalsIgnoreCase(qName)) {
 			softwareVersion = attributes.getValue("version");
+		} else if (InstrumentComponent.Type.typeFor(qName).isPresent()) {
+			currentInstrumentComponentBuilder.setOrder(Integer.parseInt(attributes.getValue("order")));
+		} else if ("instrumentConfiguration".equalsIgnoreCase(qName)) {
+			currentInstrumentConfigurationIdBuilder.setInstrumentConfigurationId(attributes.getValue("id"));
 		}
 
 		tagList.add(qName);
@@ -219,6 +243,10 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	 */
 	public ImmutableMap<String, String> getSoftwareAccessionIdToVersion() {
 		return softwareAccessionIdToVersionBuilder.build();
+	}
+
+	public ImmutableMultimap<InstrumentId, InstrumentComponent> getInstrumentConfigurations() {
+		return instrumentIdToInstrumentComponentBuilder.build();
 	}
 
 	@Override
@@ -356,6 +384,15 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 					}
 				}
 			}
+		}
+
+		if (InstrumentComponent.Type.typeFor(qName).isPresent()) {
+			instrumentComponentsBuilder.add(currentInstrumentComponentBuilder.build());
+			currentInstrumentComponentBuilder = InstrumentComponent.builder();
+		} else if ("instrumentConfiguration".equalsIgnoreCase(qName)) {
+			instrumentIdToInstrumentComponentBuilder.putAll(currentInstrumentConfigurationIdBuilder.build(), instrumentComponentsBuilder.build());
+			currentInstrumentConfigurationIdBuilder = InstrumentId.builder();
+			instrumentComponentsBuilder = ImmutableList.builder();
 		}
 
 		tagList.remove(tagList.size()-1);

@@ -70,4 +70,16 @@ public class MzmlToDIASAXProducerTest extends TestCase {
 
 	}
 
+	public void testGetInstrumentConfiguration() throws Exception {
+		FileAndExpectedSoftwareVersions harness = getTestResource();
+		File mzMLFile = harness.getTestMzMLFile();
+		File diaFileSaveDestination = new File(mzMLFile.getParentFile(), "test-dia" + StripeFile.DIA_EXTENSION);
+		MzmlToDIAConverter.convertSAX(mzMLFile, diaFileSaveDestination, Mockito.mock(SearchParameters.class), false);
+		StripeFile f = new StripeFile();
+		f.openFile(diaFileSaveDestination);
+		HashMap<String, String> metadata = f.getMetadata();
+		String encodedInstrumentConfigurations = metadata.get(StripeFile.INSTRUMENT_CONFIGURATIONS);
+		// TODO Decode
+	}
+
 }
