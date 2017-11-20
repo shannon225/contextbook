@@ -11,7 +11,7 @@ public final class InstrumentComponent {
 	public final Type type;
 
 	public enum Type {
-		SOURCE("source"),
+		SOURCE  ("source"),
 		ANALYZER("analyzer"),
 		DETECTOR("detector");
 
