@@ -15,7 +15,7 @@ public final class InstrumentComponent {
 		ANALYZER("analyzer"),
 		DETECTOR("detector");
 
-		private final String name;
+		public final String name;
 
 		Type(String name) {
 			this.name = name;

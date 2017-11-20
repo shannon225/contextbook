@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.zip.DataFormatException;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -32,7 +33,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentComponent;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentComponentTranscoder;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentId;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentIdTranscoder;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -237,8 +240,16 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 
 	public void setInstrumentConfiguration(ImmutableMultimap<InstrumentId, InstrumentComponent> instrumentConfigurations) throws IOException, SQLException {
 		Map<String, String> m = Maps.newHashMap();
-		String value = null; // TODO Encode
-		m.put(INSTRUMENT_CONFIGURATIONS, value);
+		m.put(INSTRUMENT_CONFIGURATIONS,
+				Joiner.on("[multiInstrumentBreak]")
+						.join(instrumentConfigurations.asMap().entrySet()
+						.stream()
+						.map(entry ->
+								InstrumentIdTranscoder.encode(entry.getKey()) + "[instrumentIdConfigBreak]" +
+								Joiner.on(";").join(entry.getValue().stream()
+										.map(InstrumentComponentTranscoder::encode)
+										.iterator()))
+						.iterator()));
 		addMetadata(m);
 	}
 
