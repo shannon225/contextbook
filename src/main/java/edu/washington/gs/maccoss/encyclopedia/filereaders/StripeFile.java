@@ -27,6 +27,7 @@ import java.util.zip.DataFormatException;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
@@ -52,6 +53,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	public static final String TOTAL_PRECURSOR_TIC_ATTRIBUTE="totalPrecursorTIC";
 	public static final String GRADIENT_LENGTH_ATTRIBUTE="gradientLength";
 	public static final String SOFTWARE_VERSION_PREFIX = "SoftwareVersion_";
+	public static final String SOFTWARE_VERSIONS_DELIMITER = ";";
 	public static final String INSTRUMENT_CONFIGURATIONS = "InstrumentConfigurations";
 
 	public static final String DIA_EXTENSION=".dia";
@@ -247,10 +249,12 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		}
 	}
 
-	public void setSoftwareVersions(final Map<String, String> softwareAccessionIdToVersion) throws IOException, SQLException {
+	public void setSoftwareVersions(final Multimap<String, String> softwareAccessionIdToVersion) throws IOException, SQLException {
 		if (!softwareAccessionIdToVersion.isEmpty()) {
 			Map<String, String> toAdd = Maps.newHashMap();
-			softwareAccessionIdToVersion.forEach((key, value) -> toAdd.put(SOFTWARE_VERSION_PREFIX + key, value));
+			softwareAccessionIdToVersion.asMap().forEach((key, value) -> {
+				toAdd.put(SOFTWARE_VERSION_PREFIX + key, Joiner.on(SOFTWARE_VERSIONS_DELIMITER).join(value));
+			});
 			addMetadata(toAdd);
 		}
 	}

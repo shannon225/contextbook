@@ -14,8 +14,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.xml.parsers.SAXParserFactory;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
@@ -42,7 +40,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	private final BlockingQueue<MzmlBlock> mzmlBlockQueue;
 	private final SearchParameters parameters;
 	private final HashMap<Range, TFloatArrayList> retentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
-	private final ImmutableMap.Builder<String, String> softwareAccessionIdToVersionBuilder = ImmutableMap.builder();
+	private final ImmutableMultimap.Builder<String, String> softwareAccessionIdToVersionBuilder = ImmutableMultimap.builder();
 
 	private final ImmutableMultimap.Builder<InstrumentId, InstrumentComponent> instrumentIdToInstrumentComponentBuilder = ImmutableMultimap.builder();
 	private ImmutableList.Builder<InstrumentComponent> instrumentComponentsBuilder = ImmutableList.builder();
@@ -241,9 +239,9 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	}
 
 	/**
-	 * @return A mapping of PSI-MS controlled software accession id to version.
+	 * @return A mapping of PSI-MS controlled software accession id to version(s).
 	 */
-	public ImmutableMap<String, String> getSoftwareAccessionIdToVersion() {
+	public ImmutableMultimap<String, String> getSoftwareAccessionIdToVersion() {
 		return softwareAccessionIdToVersionBuilder.build();
 	}
 
