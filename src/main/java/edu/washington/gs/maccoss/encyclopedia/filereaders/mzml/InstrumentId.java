@@ -27,7 +27,7 @@ public final class InstrumentId {
 	}
 
 	public static Builder builder() {
-		return builder();
+		return new Builder();
 	}
 
 	public static final class Builder {
