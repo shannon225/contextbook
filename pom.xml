@@ -175,7 +175,6 @@
 						<manifest>
 							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
 							<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-							<mainClass>edu.washington.gs.maccoss.encyclopedia.Main</mainClass>;
 						</manifest>
 					</archive>
 				</configuration>
