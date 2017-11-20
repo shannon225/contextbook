@@ -240,9 +240,11 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 
 	public void setInstrumentConfiguration(ImmutableMultimap<InstrumentId, InstrumentComponent> instrumentConfigurations) throws IOException, SQLException {
-		Map<String, String> m = Maps.newHashMap();
-		m.put(INSTRUMENT_CONFIGURATIONS, InstrumentMapTranscoder.encode(instrumentConfigurations));
-		addMetadata(m);
+		if (!instrumentConfigurations.isEmpty()) {
+			Map<String, String> m = Maps.newHashMap();
+			m.put(INSTRUMENT_CONFIGURATIONS, InstrumentMapTranscoder.encode(instrumentConfigurations));
+			addMetadata(m);
+		}
 	}
 
 	public void setSoftwareVersions(final Map<String, String> softwareAccessionIdToVersion) throws IOException, SQLException {
