@@ -36,6 +36,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentCompone
 import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentComponentTranscoder;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentId;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentIdTranscoder;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentMapTranscoder;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -240,16 +241,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 
 	public void setInstrumentConfiguration(ImmutableMultimap<InstrumentId, InstrumentComponent> instrumentConfigurations) throws IOException, SQLException {
 		Map<String, String> m = Maps.newHashMap();
-		m.put(INSTRUMENT_CONFIGURATIONS,
-				Joiner.on("[multiInstrumentBreak]")
-						.join(instrumentConfigurations.asMap().entrySet()
-						.stream()
-						.map(entry ->
-								InstrumentIdTranscoder.encode(entry.getKey()) + "[instrumentIdConfigBreak]" +
-								Joiner.on(";").join(entry.getValue().stream()
-										.map(InstrumentComponentTranscoder::encode)
-										.iterator()))
-						.iterator()));
+		m.put(INSTRUMENT_CONFIGURATIONS, InstrumentMapTranscoder.encode(instrumentConfigurations));
 		addMetadata(m);
 	}
 

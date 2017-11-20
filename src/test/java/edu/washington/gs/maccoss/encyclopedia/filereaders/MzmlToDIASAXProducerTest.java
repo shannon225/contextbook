@@ -1,7 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentComponent;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentId;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentMapTranscoder;
 import junit.framework.TestCase;
 import org.mockito.Mockito;
 
@@ -79,7 +83,44 @@ public class MzmlToDIASAXProducerTest extends TestCase {
 		f.openFile(diaFileSaveDestination);
 		HashMap<String, String> metadata = f.getMetadata();
 		String encodedInstrumentConfigurations = metadata.get(StripeFile.INSTRUMENT_CONFIGURATIONS);
-		// TODO Decode
+		ImmutableMultimap<InstrumentId, InstrumentComponent> decodedInstrumentMap = InstrumentMapTranscoder.decode(encodedInstrumentConfigurations);
+		assertTrue(decodedInstrumentMap.asMap().size() == 1);
+		decodedInstrumentMap.asMap().forEach((entry, value) -> {
+			assertEquals("IC1", entry.instrumentConfigurationId);
+			assertEquals("MS:1002533", entry.accession);
+			assertEquals("TripleTOF 6600", entry.name);
+			value.forEach(component -> {
+				switch (component.order) {
+					case 1:
+						assertEquals("MS", component.cvRef);
+						assertEquals("MS:1000073", component.accessionId);
+						assertEquals("electrospray ionization", component.name);
+						break;
+					case 2:
+						assertEquals("MS", component.cvRef);
+						assertEquals("MS:1000081", component.accessionId);
+						assertEquals("quadrupole", component.name);
+						break;
+					case 3:
+						assertEquals("MS", component.cvRef);
+						assertEquals("MS:1000081", component.accessionId);
+						assertEquals("quadrupole", component.name);
+						break;
+					case 4:
+						assertEquals("MS", component.cvRef);
+						assertEquals("MS:1000084", component.accessionId);
+						assertEquals("time-of-flight", component.name);
+						break;
+					case 5:
+						assertEquals("MS", component.cvRef);
+						assertEquals("MS:1000253", component.accessionId);
+						assertEquals("electron multiplier", component.name);
+						break;
+					default:
+						fail();
+				}
+			});
+		});
 	}
 
 }

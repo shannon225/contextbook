@@ -56,7 +56,7 @@ public class InstrumentIdTranscoder {
 		}
 
 		public InstrumentId.Builder decodeAppendGeneral(InstrumentId.Builder builder, String encodedEntries) {
-			Pattern compile = Pattern.compile(key + ":(.+)" + ENTRY_DELIM);
+			Pattern compile = Pattern.compile(key + ":([^" + ENTRY_DELIM + "]+)");
 			Matcher matcher = compile.matcher(encodedEntries);
 			if (matcher.find()) {
 				decodeAppendImplementation(builder, matcher.group(1));
