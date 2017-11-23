@@ -1,7 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific;
 
-
-
 import java.util.ArrayList;
 import java.util.TreeSet;
 
@@ -14,11 +12,12 @@ public class ExtendedFastaEntry extends FastaEntry {
 	public ExtendedFastaEntry(String filename, String annotation, String sequence) {
 		super(filename, annotation, sequence);
 		String processedAnnotation=this.getAnnotation();
-		String[] annotates=processedAnnotation.split("\\\\");
+		String[] annotates=processedAnnotation.split(" ");
+
 		for (int index=0; index<annotates.length; index++) {
-			if (annotates[index].startsWith("VariantSimple=")) {
+			if (annotates[index].startsWith("\\VariantSimple=")) {
 				parseVariantAnnotation(annotates[index].substring(14), true);
-			} else if (annotates[index].startsWith("VariantComplex=")) {
+			} else if (annotates[index].startsWith("\\VariantComplex=")) {
 				parseVariantAnnotation(annotates[index].substring(15), false);
 			}
 		}
@@ -26,24 +25,28 @@ public class ExtendedFastaEntry extends FastaEntry {
 
 	private void parseVariantAnnotation(String variantAnnotation, Boolean simple) {
 		String sequence=this.getSequence();
-		for (int index=variantAnnotation.indexOf('('); index>=0; index=variantAnnotation.indexOf('(', index+1)) {
-			int endIndex=variantAnnotation.indexOf(')', index);
+		int endIndex=0;
+		for (int index=variantAnnotation.indexOf('('); index>=0; index=variantAnnotation.indexOf('(', endIndex+1)) {
+			endIndex=variantAnnotation.indexOf(')', index);
 			String[] info=variantAnnotation.substring(index+1, endIndex).split("\\|");
+			int start;
 			try {
-				int start=Integer.parseInt(info[0]);
-				
-				if (simple) {
-					//System.out.println(info.length);
-					this.addPotentialVariant(new AlleleVariant(start, sequence.charAt(start-1), info[1].charAt(0)));
-					
-				} else {
-					int end=Integer.parseInt(info[1]);
-					//length == 2 for the deletion cases, e.g. (4|4|)
-					String newseq=(info.length>2)?info[2]:""; 
-					this.addPotentialVariant(new AlleleVariant(start, end, sequence.substring(start-1, end), newseq));
+				start=Integer.parseInt(info[0]);
+			} catch (NumberFormatException e) {
+				throw new EncyclopediaException("Error on parsing variant index"+this.getAccession()+" ["+variantAnnotation.substring(index+1, endIndex)+"]", e);
+			}
+			int end;
+			if (simple) {
+				this.addPotentialVariant(new AlleleVariant(start, sequence.charAt(start-1), info[1].charAt(0)));
+			} else {
+				try {
+					end=Integer.parseInt(info[1]);
+				} catch (NumberFormatException e) {
+					throw new EncyclopediaException("Error on parsing variant index"+this.getAccession()+" ["+variantAnnotation.substring(index+1, endIndex)+"]", e);
 				}
-			} catch (Exception e) {
-				throw new EncyclopediaException("Error parsing peff variant annotation format from "+this.getAccession()+" ["+variantAnnotation+"]", e);
+				// length == 2 for the deletion cases, e.g. (4|4|)
+				String newseq=(info.length>2)?info[2]:"";
+				this.addPotentialVariant(new AlleleVariant(start, end, sequence.substring(start-1, end), newseq));
 			}
 		}
 	}
@@ -55,5 +58,5 @@ public class ExtendedFastaEntry extends FastaEntry {
 	public ArrayList<AlleleVariant> getPotentialVariant() {
 		return potentialVariants;
 	}
-	
+
 }
