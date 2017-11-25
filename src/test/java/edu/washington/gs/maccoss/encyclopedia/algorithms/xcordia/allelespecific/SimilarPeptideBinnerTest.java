@@ -6,24 +6,60 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
+import edu.washington.gs.maccoss.encyclopedia.XCorDIA;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequencyCalculator;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequencyInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizationData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.UnitBackgroundFrequencyCalculator;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import junit.framework.TestCase;
 
 public class SimilarPeptideBinnerTest extends TestCase {
 	public static void main(String[] args) throws Exception {
+
+		HashMap<String, String> defaults=PecanParameterParser.getDefaultParameters();
+		defaults.put("-localizationModification", "Phosphorylation");
+		defaults.put("-scoringBreadthType", "uncal20");
+		PecanSearchParameters parameters=PecanParameterParser.parseParameters(defaults);
+		
+		System.out.println("Reading raw file...");
+		File diaFile=new File("/Users/searleb/Documents/school/xcordia_manuscript/demux/20141121_3_4_DIA_1.dia");
+		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
+		
+		UnitBackgroundFrequencyCalculator unitBackgroundFrequencyCalculator=new UnitBackgroundFrequencyCalculator(0.01f);
+		BackgroundFrequencyInterface background=unitBackgroundFrequencyCalculator;
+		//background=BackgroundFrequencyCalculator.generateBackground(stripefile);
+		
+		PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, PeptideModification.polymorphism, background, parameters);
+		
+		ArrayList<Range> ranges=new ArrayList<>(stripefile.getRanges().keySet());
+		Collections.sort(ranges);
+
+		System.out.println("Reading peff fasta file...");
 		File peffFile=new File("/Users/searleb/Documents/school/xcordia_manuscript/amyloid_protein.peff");
 		InputStream is=new FileInputStream(peffFile);
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), peffFile.getName(), null, true);
-		PecanSearchParameters parameters=PecanParameterParser.getDefaultParametersObject();
 		
-		HashSet<FastaPeptideEntry> targets=new HashSet<>();
+		PeptideDatabase targets=new PeptideDatabase();
 		for (FastaEntryInterface protein : entries) {
 			ArrayList<String> peptides=parameters.getEnzyme().digestProtein(protein, 6, 100, 0, parameters.getAAConstants());
 			for (String peptide : peptides) {
@@ -32,9 +68,21 @@ public class SimilarPeptideBinnerTest extends TestCase {
 			}
 		}
 		
-		SimilarPeptideBinner binner=new SimilarPeptideBinner();
-		ArrayList<ArrayList<FastaPeptideEntry>> bins=binner.binPeptides(targets);
-		System.out.println(targets.size()+"/"+bins.size());
+		System.out.println("Total unique peptides: "+targets.size());
+		for (Range range : ranges) {
+			HashSet<FastaPeptideEntry> peptides=XCorDIA.getPeptidesInRange(parameters, targets, range);
+			SimilarPeptideBinner binner=new SimilarPeptideBinner();
+			ArrayList<ArrayList<FastaPeptideEntry>> bins=binner.binPeptides(peptides);
+			int[] counts=new int[6];
+			for (ArrayList<FastaPeptideEntry> bin : bins) {
+				int index=Math.min(counts.length-1, bin.size());
+				if (bin.size()<counts.length) {
+					counts[index]++;
+				}
+				//PhosphoLocalizationData actuallyPhosphoData=localizer.extractPhosphoFormsFromStripes(peptideModSeq, precursorMz, precursorCharge, permutations, retentionTime, stripes, true);
+			}
+			System.out.println(range.toString()+"\t"+peptides.size()+"\t"+bins.size()+"\t"+(peptides.size()-bins.size())+"\t"+General.toString(counts));
+		}
 	}
 	
 	public void testBinner() {

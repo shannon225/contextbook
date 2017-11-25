@@ -230,7 +230,7 @@ public class XCorDIA {
 			boundaries.add(range.getStart());
 			boundaries.add(range.getStop());
 			if (!parameters.useTargetWindowCenter()||range.contains(parameters.getTargetWindowCenter())) {
-				if (arePeptidesInRange(targets, range, parameters)) {
+				if (areAnyPeptidesInRange(targets, range, parameters)) {
 					ranges.add(range);
 				}
 			}
@@ -314,24 +314,14 @@ public class XCorDIA {
 			
 			executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 			
-			int count=0;
-			HashSet<FastaPeptideEntry> allPeptidesInWindow=new HashSet<>();
+			HashSet<FastaPeptideEntry> allPeptidesInWindow=getPeptidesInRange(parameters, targets, range);
+
 			HashSet<String> allPeptideSequencesInWindow=new HashSet<>();
-			for (FastaPeptideEntry peptide : targets) {
-				String sequence=peptide.getSequence();
-				byte expectedCharge=PeptideUtils.getExpectedChargeState(sequence);
-				byte minCharge=(byte)Math.max(parameters.getMinCharge(), expectedCharge-1);
-				byte maxCharge=(byte)Math.min(parameters.getMaxCharge(), expectedCharge+1);
-					
-				for (byte charge=minCharge; charge<=maxCharge; charge++) {
-					double mz=parameters.getAAConstants().getChargedMass(sequence, charge);
-					if (range.contains((float)mz)) {
-						allPeptidesInWindow.add(peptide);
-						allPeptideSequencesInWindow.add(sequence);
-					}
-				}
+			for (FastaPeptideEntry entry : allPeptidesInWindow) {
+				allPeptideSequencesInWindow.add(entry.getSequence());
 			}
-			
+
+			int count=0;
 			for (FastaPeptideEntry peptide : allPeptidesInWindow) {
 				String sequence=peptide.getSequence();
 
@@ -410,8 +400,26 @@ public class XCorDIA {
 		progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 	}
 
+	public static HashSet<FastaPeptideEntry> getPeptidesInRange(PecanSearchParameters parameters, PeptideDatabase targets, Range range) {
+		HashSet<FastaPeptideEntry> allPeptidesInWindow=new HashSet<>();
+		for (FastaPeptideEntry peptide : targets) {
+			String sequence=peptide.getSequence();
+			byte expectedCharge=PeptideUtils.getExpectedChargeState(sequence);
+			byte minCharge=(byte)Math.max(parameters.getMinCharge(), expectedCharge-1);
+			byte maxCharge=(byte)Math.min(parameters.getMaxCharge(), expectedCharge+1);
+				
+			for (byte charge=minCharge; charge<=maxCharge; charge++) {
+				double mz=parameters.getAAConstants().getChargedMass(sequence, charge);
+				if (range.contains((float)mz)) {
+					allPeptidesInWindow.add(peptide);
+				}
+			}
+		}
+		return allPeptidesInWindow;
+	}
+
 	
-	public static boolean arePeptidesInRange(PeptideDatabase targets, Range range, PecanSearchParameters parameters) {
+	public static boolean areAnyPeptidesInRange(PeptideDatabase targets, Range range, PecanSearchParameters parameters) {
 		// check to see if we need to process this stripe
 		for (FastaPeptideEntry peptide : targets) {
 			for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
