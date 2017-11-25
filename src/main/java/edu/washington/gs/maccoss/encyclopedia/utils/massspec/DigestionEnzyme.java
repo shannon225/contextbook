@@ -13,10 +13,13 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
+import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TCharHashSet;
 
 public class DigestionEnzyme {
 	private static final char[] AAs="ACDEFGHIKLMNPQRSTVWY".toCharArray();
+	private final char stopCodon='*';
 	private final String name;
 	private final String percolatorName;
 	private final TCharHashSet nterm;
@@ -195,12 +198,12 @@ public class DigestionEnzyme {
 		if (entry instanceof ExtendedFastaEntry) {
 			return digestProtein(entry.getSequence(), minLength, maxLength, maxMissedCleavages, constants,((ExtendedFastaEntry)entry).getPotentialVariant());
 		} else {
-			return (digestProtein(entry.getSequence(), minLength, maxLength, maxMissedCleavages, constants,new ArrayList<AlleleVariant>()));
+			return digestProtein(entry.getSequence(), minLength, maxLength, maxMissedCleavages, constants,new ArrayList<AlleleVariant>());
 		}
 	}
 
 	//@MoMo modified 
-	private ArrayList<String> digestProtein(String sequence, int minLength, int maxLength, int maxMissedCleavages, AminoAcidConstants constants, ArrayList<AlleleVariant> variants) {
+	public ArrayList<String> digestProtein(String sequence, int minLength, int maxLength, int maxMissedCleavages, AminoAcidConstants constants, ArrayList<AlleleVariant> variants) {
 		int totalAllowedStarts=maxMissedCleavages+1;
 		ArrayList<String> peptides=new ArrayList<String>();
 		TIntArrayList starts=new TIntArrayList();
@@ -220,7 +223,6 @@ public class DigestionEnzyme {
 		}
 
 		// digestion for sequence variants
-		char stopCodon='*';
 		int currentIndex=1;
 		int stopCodonIndex;
 		int cuts;
@@ -229,7 +231,6 @@ public class DigestionEnzyme {
 		int start;
 		int lastIndex = starts.size()-1;
 		TIntArrayList blockedIndices;
-		HashMap<Integer, ArrayList<Integer>> usedPair=new HashMap<Integer, ArrayList<Integer>>();
 		String sequenceVariant="";
 		Collections.sort(variants);
 
@@ -242,17 +243,34 @@ public class DigestionEnzyme {
 				}
 			}
 
-			String perviousAA=(variant.getStartSite()-2<0)?"":sequence.substring(variant.getStartSite()-2, variant.getStartSite()-1);
-			String nextAA=(variant.getStopSite()==sequence.length())?"*":sequence.substring(variant.getStopSite(), variant.getStopSite()+1);
+			char perviousAA=(variant.getStartSite()-2<0)?Character.MIN_VALUE:sequence.charAt(variant.getStartSite()-2);
+			char nextAA=(variant.getStopSite()==sequence.length())?'*':sequence.charAt(variant.getStopSite());
+					
+			
+			// variant may introduce additional cutting site to sequence
 			TIntArrayList addedStarts=getStartsAddedByVariant(variant, perviousAA, nextAA);
 
 			blockedIndices=new TIntArrayList();
 			index=currentIndex;
-			//printVariantInfo(variant,sequence,starts,currentIndex);
+			
+			/* 
+			 * sequence deletion, and substitution on cutting sites can block existing start sites (index) from protein sequence
+			 * 
+			 * check if there is a deletion happens and removes the cutting site from sequence
+			 * or variant happens on the N-terminal of cutting site(for example K or R for trypsin) 
+			 */ 
+			 
 			while (index<starts.size()&&starts.get(index)<=variant.getStopSite()){
 				blockedIndices.add(index);
 				index++;
-			}
+			} 
+			/*
+			 *  variant can introduce/remove the cutting site right before variant itself. 
+			 *  For example KP to KX can introduce a cutting site at K for Trypsin
+			 *  KX to KP can remove the cutting site at k for Trypsin 
+			 */
+			// variant.getStartSite()-1 is to check whether the variant happens at amino acid right after cutting site
+			// addedStarts.contains(starts.get(currentIndex-1) this is to check whether this variant block the cutting site at the residue right before it  
 			if ((variant.getStartSite()-1==starts.get(currentIndex-1))&&!addedStarts.contains(starts.get(currentIndex-1))) {
 				blockedIndices.add(currentIndex-1);
 			}
@@ -262,40 +280,46 @@ public class DigestionEnzyme {
 				addedStarts.remove(starts.get(currentIndex-1));
 			}
 			
-			
+			// looking for the closet stop site that covers variant 
 			endIndex=getAvailableIndex(currentIndex, 0, blockedIndices, lastIndex, 1);
+			
 			stopCodonIndex=variant.getNewSequence().indexOf(stopCodon);
 			if (stopCodonIndex<0) {
 				sequenceVariant=sequence.substring(0, variant.getStartSite()-1)+variant.getNewSequence()+sequence.substring(variant.getStopSite());
 			} else {
 				sequenceVariant=sequence.substring(0, variant.getStartSite()-1)+variant.getNewSequence().substring(0, stopCodonIndex);
 			}
-
-			usedPair=new HashMap<Integer, ArrayList<Integer>>();
+			
+			//
+			TIntObjectHashMap<TIntArrayList> usedPair=new TIntObjectHashMap<>();
 			for (int j=0; j<addedStarts.size()+totalAllowedStarts; j++) {
 				if (j<addedStarts.size()) {
 					stop=addedStarts.get(j)-1;
 				} else {
+					// looking for the next available stop site     
 					index=getAvailableIndex(endIndex, j-addedStarts.size(), blockedIndices, lastIndex, 1);
 					stop=starts.get(index)-1+variant.getNewSequence().length()-variant.getOriginalSequence().length();
 				}
 				if (stop>sequenceVariant.length()-1) {
 					break;
 				}
-
+				// look for start site
 				cuts=totalAllowedStarts;
 				while (cuts>0&&(j-cuts-addedStarts.size()<0)) {
 					int offset=(j-cuts);
 					if (offset<0) {
+						// the start site locates before variant and it is also 0-offset-1 miss cleavage away from stop site.  
 						index=getAvailableIndex(endIndex, 0-offset, blockedIndices, lastIndex, -1);
 						start=starts.get(index);
 					} else {
+						// the start site within variant sequence 
 						start=addedStarts.get(offset);
-					}					
+					}
+					// Check whether we have generated peptides for this start and stop sites pair already  
 					if (!usedPair.containsKey(start)||!usedPair.get(start).contains(stop)) {
 						peptides.addAll(getPeptides(start, stop, minLength, maxLength, sequenceVariant, constants));
 						if (!usedPair.containsKey(start)) {
-							usedPair.put(start, new ArrayList<Integer>());
+							usedPair.put(start, new TIntArrayList());
 						}
 						usedPair.get(start).add(stop);
 					}
@@ -307,14 +331,14 @@ public class DigestionEnzyme {
 	}
 
 	//@MoMo 
-	private int getAvailableIndex(int index, int indexOffset, TIntArrayList blockedIndices, int lastIndex, int direction) {
+	private int getAvailableIndex(int index, int allowedStarts, TIntArrayList blockedIndices, int lastIndex, int direction) {
 		int nextIndex=index;
-		while (indexOffset>=0) {
-			nextIndex=(indexOffset!=0)?nextIndex+direction:nextIndex;
+		while (allowedStarts>=0) {
+			nextIndex=(allowedStarts!=0)?nextIndex+direction:nextIndex;
 			while (blockedIndices.contains(nextIndex)) {
 				nextIndex+=direction;
 			}
-			indexOffset--;
+			allowedStarts--;
 		}
 		nextIndex=(nextIndex<0)?0:nextIndex;
 		nextIndex=(nextIndex>lastIndex)?lastIndex:nextIndex;
@@ -322,11 +346,11 @@ public class DigestionEnzyme {
 	}
 	
 	//@MoMo 
-	private TIntArrayList getStartsAddedByVariant(AlleleVariant variant, String before, String after) {
-		char stopCodon='*';
+	private TIntArrayList getStartsAddedByVariant(AlleleVariant variant, char before, char after) {
+		
 		TIntArrayList addedStarts=new TIntArrayList();
 		String sequence=before+variant.getNewSequence()+after;
-		int offset=before.length();
+		int offset= (before == Character.MIN_VALUE)? 0:1;
 		for (int i=0; i<sequence.length()-1; i++) {
 			if (isCutSite(sequence.charAt(i), sequence.charAt(i+1))) {
 				addedStarts.add(i-offset+variant.getStartSite());
