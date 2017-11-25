@@ -4,19 +4,26 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.AlleleVariant;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 import junit.framework.TestCase;
 
@@ -80,27 +87,23 @@ public class FastaReaderTest extends TestCase {
 		writer.close();
 	}*/
 	
-	/*public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
+		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false);
 		File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
-		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f);
-		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
-		TreeSet<String> eightOrLess=new TreeSet<String>();
-		for (FastaEntryInterface entry : entries) {
-			ArrayList<String> peptides=enzyme.digestProtein(entry.getSequence(), 6, 8, 0);
+		ArrayList<FastaEntryInterface> targetProteins=FastaReader.readFasta(f);
+		
+		PrintWriter writer=new PrintWriter("/Users/searleb/Documents/chromatogram_library_manuscript/sp_iso_HUMAN_4.9.2015_UP000005640.peptides.txt");
+		for (FastaEntryInterface entry : targetProteins) {
+			ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
 			for (String peptide : peptides) {
-				if (peptide.length()<=8) {
-					eightOrLess.add(peptide);
-				}
+				writer.println(entry.getAccession()+"\t"+PeptideUtils.getPeptideSeq(peptide));
 			}
 		}
-		System.out.println(eightOrLess.size());
-		
-		for (String peptide : eightOrLess) {
-			System.out.println(peptide);
-		}
-	}*/
+		writer.flush();
+		writer.close();
+	}
 	
-	public static void main(String[] args) {
+	public static void main2(String[] args) {
 		File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f);
 

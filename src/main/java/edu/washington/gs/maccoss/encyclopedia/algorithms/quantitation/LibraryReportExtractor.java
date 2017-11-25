@@ -79,7 +79,7 @@ public class LibraryReportExtractor {
 				peptideWriter.print("Peptide\tProtein\tnumFragments");
 				
 				proteinWriter=new PrintWriter(proteinReportFile, "UTF-8");
-				proteinWriter.print("Protein\tnumEquivalentAccessions");
+				proteinWriter.print("Protein\tNumPeptides\tPeptideSequences");
 				
 				float averageTIC=0.0f;
 				TObjectFloatHashMap<String> ticBySourceFileMap=new TObjectFloatHashMap<String>();
@@ -162,6 +162,7 @@ public class LibraryReportExtractor {
 				}
 				
 				int totalAdded=0;
+				HashMap<String, ArrayList<String>> peptidesInProtein=new HashMap<>();
 				HashSet<String> badCVPeptides=new HashSet<>();
 				HashSet<String> badCompletenessPeptides=new HashSet<>();
 				TObjectFloatHashMap<String> cvs=new TObjectFloatHashMap<>();
@@ -188,11 +189,25 @@ public class LibraryReportExtractor {
 						}
 					}
 					
+					boolean anyAdded=false;
 					for (int index=0; index<intensitiesArray.length; index++) {
 						boolean added=proteinQuantifiers.get(index).addIntensity(accessions, intensitiesArray[index]);
 						if (added) {
+							anyAdded=true;
 							totalAdded++;
 						}
+					}
+					
+					if (anyAdded) {
+						for (String accession : accessions) {
+							ArrayList<String> peptides=peptidesInProtein.get(accession);
+							if (peptides==null) {
+								peptides=new ArrayList<>();
+								peptidesInProtein.put(accession, peptides);
+							}
+							peptides.add(peptideModSeq);
+						}
+						
 					}
 				}
 				
@@ -273,8 +288,28 @@ public class LibraryReportExtractor {
 				for (ProteinGroupInterface protein : proteins) {
 					if (protein.isDecoy()) continue;
 					
+					HashSet<String> peptides=new HashSet<>();
+					for (String accession : protein.getEquivalentAccessions()) {
+						ArrayList<String> thisAccessionsPeptides=peptidesInProtein.get(accession);
+						if (thisAccessionsPeptides!=null) {
+							peptides.addAll(thisAccessionsPeptides);
+						}
+					}
+					ArrayList<String> sortedPeptides=new ArrayList<>(peptides);
+					Collections.sort(sortedPeptides);
+					
 					StringBuilder sb=new StringBuilder(protein.toString());
-					sb.append("\t"+protein.getEquivalentAccessions().size());
+					sb.append("\t"+sortedPeptides.size());
+					boolean first=true;
+					for (String peptide : sortedPeptides) {
+						if (first) {
+							sb.append("\t");
+							first=false;
+						} else {
+							sb.append(";");
+						}
+						sb.append(peptide);
+					}
 					float totalIntensity=0.0f;
 					for (ProteinGroupQuantifier proteinQuantifier : proteinQuantifiers) {
 						float intensity=proteinQuantifier.getIntensity(protein);

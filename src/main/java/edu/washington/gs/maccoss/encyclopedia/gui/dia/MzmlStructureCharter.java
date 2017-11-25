@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import org.jfree.chart.ChartPanel;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ScanRangeTracker;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlScanRangeTrackerSAXProducer;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
@@ -30,16 +31,14 @@ public class MzmlStructureCharter {
 		paramMap.put("-acquisition", "DIA"); // NON-OVERLAPPING!
 		SearchParameters parameters=PecanParameterParser.parseParameters(paramMap);
 
-		HashMap<Range, TFloatArrayList> retentionTimesByStripe=null;
-		HashMap<Range, TFloatArrayList> retentionTimesByPrecursor=null;
+		ScanRangeTracker scanTracker=null;
 		try {
 			Logger.logLine("Indexing "+mzMLFile.getName()+" ...");
 			StripeFile stripeFile=new StripeFile();
 			stripeFile.openFile();
 
 			MzmlScanRangeTrackerSAXProducer producer=new MzmlScanRangeTrackerSAXProducer(mzMLFile, parameters);
-			retentionTimesByStripe=producer.getRetentionTimesByStripe().getStripeRTsInSecs();
-			retentionTimesByPrecursor=producer.getRetentionTimesByStripe().getPrecursorRTsInSecs();
+			scanTracker=producer.getRetentionTimesByStripe();
 
 			Thread producerThread=new Thread(producer);
 
@@ -62,6 +61,13 @@ public class MzmlStructureCharter {
 		} catch (SQLException sqle) {
 			throw new EncyclopediaException("DIA reading SQL error!", sqle);
 		}
+		
+		return getStructureChart(scanTracker);
+	}
+
+	public static ChartPanel getStructureChart(ScanRangeTracker scanTracker) {
+		HashMap<Range, TFloatArrayList> retentionTimesByStripe=scanTracker.getStripeRTsInSecs();
+		HashMap<Range, TFloatArrayList> retentionTimesByPrecursor=scanTracker.getPrecursorRTsInSecs();
 
 		float firstScan=Float.MAX_VALUE;
 		ArrayList<XYTraceInterface> traces=new ArrayList<>();
@@ -94,7 +100,7 @@ public class MzmlStructureCharter {
 			}
 		}
 
-		ChartPanel panel=Charter.getChart("M/Z ("+mzMLFile.getName()+")", "Retention Time (secs)", false, traces.toArray(new XYTraceInterface[traces.size()]));
+		ChartPanel panel=Charter.getChart("M/Z", "Retention Time (secs)", false, traces.toArray(new XYTraceInterface[traces.size()]));
 		return panel;
 	}
 

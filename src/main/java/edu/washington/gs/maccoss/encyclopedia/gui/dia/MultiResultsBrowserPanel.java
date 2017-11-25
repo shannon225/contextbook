@@ -249,6 +249,31 @@ public class MultiResultsBrowserPanel extends JPanel {
 		worker.execute();
 	}
 	
+	public void updateTables(final File f, final Pair<ArrayList<String>, ArrayList<PeptideReportData>> pair) {
+		SwingWorkerProgress<Pair<ArrayList<StripeFileInterface>, ArrayList<PeptideReportData>>> worker=new SwingWorkerProgress<Pair<ArrayList<StripeFileInterface>, ArrayList<PeptideReportData>>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Library") {
+			@Override
+			protected Pair<ArrayList<StripeFileInterface>, ArrayList<PeptideReportData>> doInBackgroundForReal() throws Exception {
+				ArrayList<String> sampleNames=pair.x;
+				ArrayList<StripeFileInterface> stripeFiles=new ArrayList<StripeFileInterface>();
+
+				for (String sampleName : sampleNames) {
+					Logger.logLine("Trying to load "+sampleName);
+					StripeFileInterface file=StripeFileGenerator.getFile(new File(f.getParentFile(), sampleName), parameters, true);
+					stripeFiles.add(file);
+				}
+				
+				return new Pair<ArrayList<StripeFileInterface>, ArrayList<PeptideReportData>>(stripeFiles, pair.y);
+			}
+			@Override
+			protected void doneForReal(Pair<ArrayList<StripeFileInterface>, ArrayList<PeptideReportData>> t) {
+				Logger.logLine("Finished loading data, updating GUI ("+t.x.size()+" files, "+t.y.size()+" peptides)");
+				peptideModel.updateEntries(t.y);
+				sampleModel.updateEntries(t.x);
+			}
+		};
+		worker.execute();
+	}
+	
 	public void updateToSelectedPeptide() {
 		int[] selection=peptideTable.getSelectedRows();
 		if (selection.length<=0) return;
