@@ -174,8 +174,8 @@ public class DigestionEnzyme {
 		}
 		return false;
 	}
-	
-	public String reverseProtein(String sequence) {
+
+	public String reverseProtein(String sequence, AminoAcidConstants aminoAcidConstants) {
 		StringBuilder sb=new StringBuilder();
 		
 		int start=0;
@@ -187,7 +187,7 @@ public class DigestionEnzyme {
 				stop++;
 			}
 			String peptide=sequence.substring(start, stop+1);
-			sb.append(PeptideUtils.reverse(peptide, this));
+			sb.append(PeptideUtils.reverse(peptide, this, aminoAcidConstants));
 			start=stop+1;
 		}
 		return sb.toString();
