@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific;
 
+import java.awt.Color;
+import java.awt.Dimension;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,27 +11,43 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import javax.swing.JTabbedPane;
+
+import org.jfree.chart.ChartPanel;
 
 import edu.washington.gs.maccoss.encyclopedia.XCorDIA;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequencyCalculator;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequencyInterface;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.UnitBackgroundFrequencyCalculator;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.VariantXcorDIAOneScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorrLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorrStripe;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import junit.framework.TestCase;
 
@@ -46,10 +64,8 @@ public class SimilarPeptideBinnerTest extends TestCase {
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 		
 		UnitBackgroundFrequencyCalculator unitBackgroundFrequencyCalculator=new UnitBackgroundFrequencyCalculator(0.01f);
-		BackgroundFrequencyInterface background=unitBackgroundFrequencyCalculator;
+		UnitBackgroundFrequencyCalculator background=unitBackgroundFrequencyCalculator;
 		//background=BackgroundFrequencyCalculator.generateBackground(stripefile);
-		
-		PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, PeptideModification.polymorphism, background, parameters);
 		
 		ArrayList<Range> ranges=new ArrayList<>(stripefile.getRanges().keySet());
 		Collections.sort(ranges);
@@ -69,19 +85,98 @@ public class SimilarPeptideBinnerTest extends TestCase {
 		}
 		
 		System.out.println("Total unique peptides: "+targets.size());
+
+		XCorDIAOneScorer scorer=new XCorDIAOneScorer(parameters, background);
+		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
+
+		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
+		LinkedBlockingQueue<ModificationLocalizationData> localizationQueue=new LinkedBlockingQueue<ModificationLocalizationData>();
 		for (Range range : ranges) {
+			float dutyCycle=stripefile.getRanges().get(range);
+			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+			ArrayList<Stripe> xcorStripes=new ArrayList<>();
+			for (Stripe stripe : stripes) {
+				xcorStripes.add(new XCorrStripe(stripe, parameters));
+			}
+			
 			HashSet<FastaPeptideEntry> peptides=XCorDIA.getPeptidesInRange(parameters, targets, range);
 			SimilarPeptideBinner binner=new SimilarPeptideBinner();
 			ArrayList<ArrayList<FastaPeptideEntry>> bins=binner.binPeptides(peptides);
-			int[] counts=new int[6];
+
 			for (ArrayList<FastaPeptideEntry> bin : bins) {
-				int index=Math.min(counts.length-1, bin.size());
-				if (bin.size()<counts.length) {
-					counts[index]++;
+				boolean keepWorking=false;
+				for (FastaPeptideEntry peptide : bin) {
+					if (peptide.getAccessions().contains("nxp:NX_P0DJI9-1")) {
+						keepWorking=true;
+						break;
+					}
 				}
-				//PhosphoLocalizationData actuallyPhosphoData=localizer.extractPhosphoFormsFromStripes(peptideModSeq, precursorMz, precursorCharge, permutations, retentionTime, stripes, true);
+				if (!keepWorking) continue;
+
+				ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
+				HashMap<String, FastaPeptideEntry> entryBySequence=new HashMap<>();
+				for (FastaPeptideEntry peptide : bin) {
+					for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
+						double mz=parameters.getAAConstants().getChargedMass(peptide.getSequence(), charge);
+						if (range.contains((float)mz)) {
+							XCorrLibraryEntry entry=XCorrLibraryEntry.generateEntry(false, peptide.getFilename(), peptide.getAccessions(), charge, peptide.getSequence(), parameters);
+							entryBySequence.put(entry.getPeptideModSeq(), peptide);
+							tasks.add(entry);	
+						}
+					}
+				}
+				
+				VariantXcorDIAOneScoringTask task=new VariantXcorDIAOneScoringTask(scorer, background, tasks, xcorStripes, dutyCycle, precursors, resultsQueue, localizationQueue, parameters);
+				task.call();
+				
+				ArrayList<ModificationLocalizationData> localized=new ArrayList<>();
+				float minRT=Float.MAX_VALUE;
+				float maxRT=-Float.MAX_VALUE;
+				while (localizationQueue.size()>0) {
+					ModificationLocalizationData data=localizationQueue.take();
+					String peptideModSeq=data.getLocalizationPeptideModSeq().getPeptideModSeq();
+					float rtInSeconds=data.getRetentionTimeApexInSeconds();
+					FragmentIon[] targetIons=data.getLocalizingIons();
+					
+					System.out.println(peptideModSeq+"("+targetIons.length+")\trt:"+(rtInSeconds/60.0f)+"\tlocalized:"+data.isLocalized()+"(score:"+data.getLocalizationScore()+")");
+					
+					if (data.isLocalized()) {
+						localized.add(data);
+						if (rtInSeconds>maxRT) maxRT=rtInSeconds;
+						if (rtInSeconds<minRT) minRT=rtInSeconds;
+					}
+				}
+				HashMap<String, ChartPanel> panels=new HashMap<>();
+				for (ModificationLocalizationData data : localized) {
+					for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
+						String peptideModSeq=data.getLocalizationPeptideModSeq().getPeptideModSeq();
+						
+						double mz=parameters.getAAConstants().getChargedMass(peptideModSeq, charge);
+						if (range.contains((float)mz)) {
+							String accessions=General.toString(entryBySequence.get(peptideModSeq).getAccessions());
+							float rtInSeconds=data.getRetentionTimeApexInSeconds();
+							FragmentIon[] targetIons=data.getLocalizingIons();
+							FragmentIon[] allIons=new FragmentationModel(peptideModSeq, parameters.getAAConstants()).getPrimaryIonObjects(parameters.getFragType(), charge);
+		
+							ArrayList<Spectrum> wideStripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(minRT-60, maxRT+60, stripes);
+							HashMap<FragmentIon, XYTrace> uniqueFragmentIons=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), targetIons, wideStripeSubset, (Float)null, GraphType.boldline);
+							HashMap<FragmentIon, XYTrace> allFragmentIons=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), allIons, wideStripeSubset, rtInSeconds, GraphType.dashedline);
+			
+							HashMap<FragmentIon, XYTrace> allFragments=new HashMap<FragmentIon, XYTrace>();
+							allFragments.putAll(allFragmentIons);
+							allFragments.putAll(uniqueFragmentIons);
+							ArrayList<XYTrace> uniqueFragmentsList=new ArrayList<XYTrace>(allFragments.values());
+							uniqueFragmentsList.add(new XYTrace(new float[] {rtInSeconds/60f,  rtInSeconds/60f}, new float[] {0.0f, (float)XYTrace.getMaxY(uniqueFragmentsList)}, GraphType.dashedline, "Apex", Color.BLACK, null));
+							XYTraceInterface[] fragmentTraces=uniqueFragmentsList.toArray(new XYTrace[uniqueFragmentsList.size()]);
+							
+							panels.put(peptideModSeq, Charter.getChart(accessions+": "+peptideModSeq+" Retention Time (min)", "Intensity", false, fragmentTraces));
+						}
+					}
+				}
+				if (bin.size()>1&&panels.size()>0) {
+					Charter.launchCharts(bin.get(0).getSequence(), panels);
+				}
 			}
-			System.out.println(range.toString()+"\t"+peptides.size()+"\t"+bins.size()+"\t"+(peptides.size()-bins.size())+"\t"+General.toString(counts));
 		}
 	}
 	

@@ -495,6 +495,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 				apex=(Stripe)stripeSubset.get(k);
 			}
 		}
+		Range peakRange=new Range(apex.getScanStartTime(), apex.getScanStartTime());
 		//System.out.println("\t"+peptideModSeq.getPeptideAnnotation()+" --> ("+targetIons.length+") "+bestLocalizationScore+" localization score at "+(apex.getScanStartTime()/60f)+" min"); //FIXME 
 
 		boolean isLocalized=false;
@@ -506,11 +507,10 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 		int numberOfMods=PeptideUtils.getNumberOfMods(peptideModSeq.getPeptideModSeq(), localizer.getModification().getNominalMass());
 		ArrayList<FragmentIon> wellShapedIons=new ArrayList<FragmentIon>();
 		
-		Range peakRange=new Range(apex.getScanStartTime(), apex.getScanStartTime());
 		//System.out.println("\t"+peptideModSeq.getPeptideAnnotation()+" ("+bestLocalizationScore+" score)\tNOT GOOD ENOUGH");
 		if (bestLocalizationScore>=minimumScore) {
 			// generate quant data from localizing ions only
-			TransitionRefinementData quantData=localizer.quantifyPeptide(peptideModSeq.getPeptideModSeq(), localizedEntry.getPrecursorCharge(), targetIons, apex.getScanStartTime(),
+			TransitionRefinementData quantData=PhosphoLocalizer.quantifyPeptide(parameters, peptideModSeq.getPeptideModSeq(), localizedEntry.getPrecursorCharge(), targetIons, apex.getScanStartTime(),
 					stripeSubset, takenIdentifiedIons, Optional.ofNullable((float[]) null));
 			//System.out.println("\t"+peptideModSeq.getPeptideAnnotation()+" ("+bestLocalizationScore+" score)\ta)"+(quantData!=null));
 			if (quantData!=null) {
@@ -525,7 +525,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 
 				// calculate quant data for all ions
 				float[] medianChromatogram=quantData.getMedianChromatogram();
-				TransitionRefinementData allQuantData=localizer.quantifyPeptide(peptideModSeq.getPeptideModSeq(), localizedEntry.getPrecursorCharge(), allIons, apex.getScanStartTime(),
+				TransitionRefinementData allQuantData=PhosphoLocalizer.quantifyPeptide(parameters, peptideModSeq.getPeptideModSeq(), localizedEntry.getPrecursorCharge(), allIons, apex.getScanStartTime(),
 						stripeSubset, takenIdentifiedIons, Optional.of(medianChromatogram));
 				//System.out.println("\t"+peptideModSeq.getPeptideAnnotation()+" ("+bestLocalizationScore+" score)\tb)"+(allQuantData!=null));
 				if (allQuantData!=null) {
@@ -547,7 +547,8 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 		}
 		
 		ModificationLocalizationData modData=new ModificationLocalizationData(peptideModSeq, apex.getScanStartTime(), bestLocalizationScore, numberOfMods, isSiteSpecific, isLocalized, isCompletelyAmbiguous, wellShapedIons.toArray(new FragmentIon[wellShapedIons.size()]), localizationIntensity, totalIntensity);
-		return new Triplet<ModificationLocalizationData, Stripe, Range>(modData, apex, peakRange);
+		Pair<ModificationLocalizationData, Range> modDataPlusRange=new Pair<ModificationLocalizationData, Range>(modData, peakRange);
+		return new Triplet<ModificationLocalizationData, Stripe, Range>(modDataPlusRange.x, apex, modDataPlusRange.y);
 	}
 	
 }

@@ -387,7 +387,7 @@ public class PhosphoLocalizer {
 				System.out.println("B) "+targetPeptideSequence+" --> "+(bestRT-params.getExpectedPeakWidth()+","+bestRT+params.getExpectedPeakWidth()));
 				
 				ArrayList<Spectrum> localStripes=getScanSubset(bestRT-params.getExpectedPeakWidth(), bestRT+params.getExpectedPeakWidth(), stripes);
-				TransitionRefinementData quantData=quantifyPeptide(targetPeptideSequence, precursorCharge, targets, bestRT, localStripes, previouslyIdentifiedIons, Optional.ofNullable((float[])null));
+				TransitionRefinementData quantData=quantifyPeptide(params, targetPeptideSequence, precursorCharge, targets, bestRT, localStripes, previouslyIdentifiedIons, Optional.ofNullable((float[])null));
 				System.out.println("C) "+targetPeptideSequence+" --> "+(quantData==null));
 				if (quantData==null) continue;
 				
@@ -416,7 +416,7 @@ public class PhosphoLocalizer {
 
 				// check for other non-localizing peaks for confirmation
 				float[] medianChromatogram=quantData.getMedianChromatogram();
-				TransitionRefinementData allQuantData=quantifyPeptide(targetPeptideSequence, precursorCharge, allIonsTypes, bestRT, localStripes, previouslyIdentifiedIons, Optional.of(medianChromatogram));
+				TransitionRefinementData allQuantData=quantifyPeptide(params, targetPeptideSequence, precursorCharge, allIonsTypes, bestRT, localStripes, previouslyIdentifiedIons, Optional.of(medianChromatogram));
 				System.out.println("E) "+targetPeptideSequence+" --> "+(allQuantData==null));
 				if (allQuantData==null) continue;
 
@@ -485,7 +485,7 @@ public class PhosphoLocalizer {
 		return new PhosphoLocalizationData(allVsUniqueList, uniqueFragmentIons, otherFragmentIons, uniqueTargetFragments, uniqueIdentifiedTargetFragments, localizationScores, passingForms);
 	}
 	
-	public TransitionRefinementData quantifyPeptide(String peptideModSeq, byte precursorCharge, FragmentIon[] targetMasses, float targetRT, ArrayList<Spectrum> stripes, FragmentIonBlacklist blacklistedIons, Optional<float[]> medianChromatogram) {
+	public static TransitionRefinementData quantifyPeptide(SearchParameters params, String peptideModSeq, byte precursorCharge, FragmentIon[] targetMasses, float targetRT, ArrayList<Spectrum> stripes, FragmentIonBlacklist blacklistedIons, Optional<float[]> medianChromatogram) {
 		/*System.out.println("THINKING ABOUT BLACKLIST: "+peptideModSeq+", "+blacklistedIons.size());
 		if (blacklistedIons.size()>0) {
 			for (FragmentIon ion : targetMasses) {

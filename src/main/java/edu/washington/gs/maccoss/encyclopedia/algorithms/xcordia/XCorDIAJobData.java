@@ -22,18 +22,22 @@ public class XCorDIAJobData extends QuantitativeSearchJobData {
 	private final File fastaFile;
 	private final XCorDIAOneScoringFactory taskFactory;
 
+	// gui
 	public XCorDIAJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, XCorDIAOneScoringFactory taskFactory) {
 		this(targetList, diaFile, fastaFile, getPercolatorExecutionData(diaFile, fastaFile, taskFactory.getParameters()), taskFactory);
 	}
 
+	// command line
 	public XCorDIAJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, File outputFile, XCorDIAOneScoringFactory taskFactory) {
 		this(targetList, diaFile, fastaFile, getPercolatorExecutionData(outputFile, fastaFile, taskFactory.getParameters()), taskFactory);
 	}
 
+	// internal only
 	public XCorDIAJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, PercolatorExecutionData percolatorFiles, XCorDIAOneScoringFactory taskFactory) {
 		this(targetList, diaFile, null, fastaFile, percolatorFiles, taskFactory);
 	}
 
+	// used by testing
 	public XCorDIAJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, StripeFileInterface diaFileReader, File fastaFile, PercolatorExecutionData percolatorFiles,
 			XCorDIAOneScoringFactory taskFactory) {
 		super(diaFile, diaFileReader, percolatorFiles, taskFactory.getParameters(), taskFactory.getVersion());

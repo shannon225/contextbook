@@ -17,6 +17,10 @@ public class IntRange implements Comparable<Range> {
 		}
 	}
 	
+	public int getLength() {
+		return stop-start+1;
+	}
+	
 	@Override
 	public String toString() {
 		return start+" to "+stop;
