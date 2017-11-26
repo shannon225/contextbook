@@ -6,6 +6,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 
 public class ExtendedFastaEntry extends FastaEntry {
+	// immutable after construction
 	private final ArrayList<AlleleVariant> potentialVariants=new ArrayList<AlleleVariant>();
 
 	public ExtendedFastaEntry(String filename, String annotation, String sequence) {
@@ -22,6 +23,11 @@ public class ExtendedFastaEntry extends FastaEntry {
 		}
 	}
 
+	/**
+	 * only called during construction
+	 * @param variantAnnotation
+	 * @param simple
+	 */
 	private void parseVariantAnnotation(String variantAnnotation, Boolean simple) {
 		String sequence=this.getSequence();
 		int endIndex=0;
@@ -36,7 +42,7 @@ public class ExtendedFastaEntry extends FastaEntry {
 			}
 			int end;
 			if (simple) {
-				this.addPotentialVariant(new AlleleVariant(start, sequence.charAt(start-1), info[1].charAt(0)));
+				potentialVariants.add(new AlleleVariant(start, sequence.charAt(start-1), info[1].charAt(0)));
 			} else {
 				try {
 					end=Integer.parseInt(info[1]);
@@ -45,13 +51,9 @@ public class ExtendedFastaEntry extends FastaEntry {
 				}
 				// length == 2 for the deletion cases, e.g. (4|4|)
 				String newseq=(info.length>2)?info[2]:"";
-				this.addPotentialVariant(new AlleleVariant(start, end, sequence.substring(start-1, end), newseq));
+				potentialVariants.add(new AlleleVariant(start, end, sequence.substring(start-1, end), newseq));
 			}
 		}
-	}
-
-	public void addPotentialVariant(AlleleVariant variant) {
-		potentialVariants.add(variant);
 	}
 
 	public ArrayList<AlleleVariant> getPotentialVariants() {
