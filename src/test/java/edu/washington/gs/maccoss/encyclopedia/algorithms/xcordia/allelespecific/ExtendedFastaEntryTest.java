@@ -27,7 +27,7 @@ public class ExtendedFastaEntryTest extends TestCase {
 				+"\\VariantComplex=(3|3|SH)(4|4|)(32|32|LM)(142|142|) \\Processed=(1|20|signal peptide)(21|147|mature protein)\n";
 		String sequence="MASHRLLLLCLAGLVFVSEAGPTGTGESKCPLMVKVLDAVRGSPAINVAVHVFRKAADDTWEPFASGKTSESGELHGLTTEEEFVEGIYKVEIDTKSYWKALGISPFHEHAEVVFTANDSGPRRYTIAALLSPYSYSTTAVVTNPKE";
 		ExtendedFastaEntry extendedEntry=new ExtendedFastaEntry("testExtendedFastaEntry", annotation, sequence);
-		ArrayList<AlleleVariant> variants=extendedEntry.getPotentialVariant();
+		ArrayList<AlleleVariant> variants=extendedEntry.getPotentialVariants();
 		
 		assertEquals(160,variants.size());
 		assertEquals(extendedEntry.getSequence(),sequence);

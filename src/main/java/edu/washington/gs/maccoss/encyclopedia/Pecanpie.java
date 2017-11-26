@@ -143,11 +143,8 @@ public class Pecanpie {
 						targets=new ArrayList<FastaPeptideEntry>();
 						ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(targetsFile);
 						for (FastaEntryInterface entry : entries) {
-							ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
-							for (String peptide : peptides) {
-								FastaPeptideEntry pe=entry.getSubEntry(peptide);
-								targets.add(pe);
-							}
+							ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
+							targets.addAll(peptides);
 						}
 					}
 				} else {
@@ -246,14 +243,15 @@ public class Pecanpie {
 		// add database to proteome
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(fastaFile);
 		for (FastaEntryInterface entry : entries) {
-			ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
-			backgroundProteome.addAll(peptides);
+			ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
+			for (FastaPeptideEntry peptide : peptides) {
+				backgroundProteome.add(peptide.getSequence());
+			}
 
 			if (!targetList.isPresent()) {
 				// search all peptides in database
-				for (String peptide : peptides) {
-					FastaPeptideEntry pe=entry.getSubEntry(peptide);
-					targets.add(pe);
+				for (FastaPeptideEntry peptide : peptides) {
+					targets.add(peptide);
 				}
 			}
 		}

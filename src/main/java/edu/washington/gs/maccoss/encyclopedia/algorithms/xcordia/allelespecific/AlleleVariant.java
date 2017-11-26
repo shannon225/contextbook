@@ -1,6 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific;
 
-public class AlleleVariant implements Comparable<AlleleVariant>{
+public class AlleleVariant implements Comparable<AlleleVariant> {
+	public static final AlleleVariant EMPTY_VARIANT=new AlleleVariant(0, 0, "", "");
+	
 	private final int startSite;
 	private final int stopSite;
 	private final String originalSequence;

@@ -19,6 +19,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -55,15 +56,16 @@ public class FastaReaderForPeffTest {
 
 		for (int i=0; i<entries.size(); i++) {
 			FastaEntryInterface entry=entries.get(i);
-			ArrayList<String> peptideSequences=enzyme.digestProtein(entry.getSequence(), minLength, maxLength, maxMissedCleavages, constants, new ArrayList<AlleleVariant>());
+			ArrayList<FastaPeptideEntry> peptideSequences=enzyme.digestProtein(entry, minLength, maxLength, maxMissedCleavages, constants, new ArrayList<AlleleVariant>());
 			ArrayList<AlleleVariant> variants=new ArrayList<AlleleVariant>();
 
 			if (entry instanceof ExtendedFastaEntry) {
-				variants=((ExtendedFastaEntry)entry).getPotentialVariant();
+				variants=((ExtendedFastaEntry)entry).getPotentialVariants();
 			}
 
 			ArrayList<Peptide> peptides=new ArrayList<Peptide>();
-			for (String sequence : peptideSequences) {
+			for (FastaPeptideEntry p : peptideSequences) {
+				String sequence=p.getSequence();
 				int start=entry.getSequence().indexOf(sequence)+1;
 				int end=start+sequence.length()-1;
 				Peptide peptide=new Peptide(sequence, PeptideUtils.getExpectedChargeState(sequence));
@@ -355,7 +357,7 @@ public class FastaReaderForPeffTest {
 		startTime=System.currentTimeMillis();
 		for (FastaEntryInterface entry : entries) {
 			if (entry instanceof ExtendedFastaEntry) {
-				sum+=((ExtendedFastaEntry)entry).getPotentialVariant().size();
+				sum+=((ExtendedFastaEntry)entry).getPotentialVariants().size();
 			}
 			if (count%2000==0) {
 				System.out.print(count+" ");
@@ -381,7 +383,7 @@ public class FastaReaderForPeffTest {
 		startTime=System.currentTimeMillis();
 		for (FastaEntryInterface entry : entries) {
 			if (entry instanceof ExtendedFastaEntry) {
-				sum+=((ExtendedFastaEntry)entry).getPotentialVariant().size();
+				sum+=((ExtendedFastaEntry)entry).getPotentialVariants().size();
 			}
 			if (count%2000==0) {
 				System.out.print(count+" ");

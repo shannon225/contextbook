@@ -1,7 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific;
 
 import java.awt.Color;
-import java.awt.Dimension;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,8 +12,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import javax.swing.JTabbedPane;
 
 import org.jfree.chart.ChartPanel;
 
@@ -77,10 +74,9 @@ public class SimilarPeptideBinnerTest extends TestCase {
 		
 		PeptideDatabase targets=new PeptideDatabase();
 		for (FastaEntryInterface protein : entries) {
-			ArrayList<String> peptides=parameters.getEnzyme().digestProtein(protein, 6, 100, 0, parameters.getAAConstants());
-			for (String peptide : peptides) {
-				FastaPeptideEntry pe=protein.getSubEntry(peptide);
-				targets.add(pe);
+			ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(protein, 6, 100, 0, parameters.getAAConstants());
+			for (FastaPeptideEntry peptide : peptides) {
+				targets.add(peptide);
 			}
 		}
 		
@@ -188,13 +184,12 @@ public class SimilarPeptideBinnerTest extends TestCase {
 		ExtendedFastaEntry entry=new ExtendedFastaEntry("source", annotation, sequence);
 		
 		PecanSearchParameters parameters=PecanParameterParser.getDefaultParametersObject();
-		ArrayList<String> simplePeptides=parameters.getEnzyme().digestProtein(simpleEntry, 6, 100, 0, parameters.getAAConstants());
-		ArrayList<String> peptides=parameters.getEnzyme().digestProtein(entry, 6, 100, 0, parameters.getAAConstants());
+		ArrayList<FastaPeptideEntry> simplePeptides=parameters.getEnzyme().digestProtein(simpleEntry, 6, 100, 0, parameters.getAAConstants());
+		ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, 6, 100, 0, parameters.getAAConstants());
 
 		HashSet<FastaPeptideEntry> targets=new HashSet<>();
-		for (String peptide : peptides) {
-			FastaPeptideEntry pe=entry.getSubEntry(peptide);
-			targets.add(pe);
+		for (FastaPeptideEntry peptide : peptides) {
+			targets.add(peptide);
 		}
 		
 		SimilarPeptideBinner binner=new SimilarPeptideBinner();

@@ -75,7 +75,7 @@ public class XCorDIATest extends TestCase {
 		PecanSearchParameters parameters=PecanParameterParser.getDefaultParametersObject();
 		System.out.println("STARTING PARAMS: "+parameters.getAAConstants().getFixedModString());
 		FastaEntry entry=new FastaEntry("APEPTIDEKACPEPTIDECKMARECYSPEPTIDESK");
-		ArrayList<String> seqs=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
+		ArrayList<FastaPeptideEntry> seqs=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
 
 		final File fastaFile = File.createTempFile("test_", ".fasta");
 		fastaFile.deleteOnExit();
@@ -95,7 +95,7 @@ public class XCorDIATest extends TestCase {
 		final AtomicBoolean failed = new AtomicBoolean(false);
 
 		XCorDIAJobData jobData = new XCorDIAJobData(
-				Optional.of(seqs.stream().map(this::toEntry).collect(Collectors.toCollection(Lists::newArrayList))),
+				Optional.of(seqs),
 				diaFile,
 				new FakeStripeFile(diaFile),
 				fastaFile,

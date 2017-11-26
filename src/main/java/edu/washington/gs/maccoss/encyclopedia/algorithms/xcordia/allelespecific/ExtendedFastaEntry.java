@@ -1,7 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific;
 
 import java.util.ArrayList;
-import java.util.TreeSet;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -55,7 +54,7 @@ public class ExtendedFastaEntry extends FastaEntry {
 		potentialVariants.add(variant);
 	}
 
-	public ArrayList<AlleleVariant> getPotentialVariant() {
+	public ArrayList<AlleleVariant> getPotentialVariants() {
 		return potentialVariants;
 	}
 
