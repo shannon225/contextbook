@@ -56,6 +56,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.ThrowingConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
@@ -530,8 +531,8 @@ public class SearchToBLIB {
 
 				percolatorExecutionData
 						.getPercolatorExecutableVersion()
-						.ifPresent((ThrowingConsumer<String>) version -> {
-							elib.addMetadata(LibraryFile.PERCOLATOR_VERSION, version);
+						.ifPresent((ThrowingConsumer<Version>) version -> {
+							elib.addMetadata(LibraryFile.PERCOLATOR_VERSION, version.toString());
 						});
 			}
 			
