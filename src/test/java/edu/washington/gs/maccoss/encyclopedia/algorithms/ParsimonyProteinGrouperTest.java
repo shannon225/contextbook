@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
@@ -29,7 +30,7 @@ public class ParsimonyProteinGrouperTest extends TestCase {
 		
 		int randomPeptides=10;
 		for (int i=0; i<randomPeptides; i++) {
-			String psmID=PercolatorPeptide.getPSMID("FILE", 0.0f, false, RandomGenerator.randomSequence(i), (byte)2);
+			String psmID=PercolatorPeptide.getPSMID("FILE", 0.0f, Optional.empty(), false, RandomGenerator.randomSequence(i), (byte)2);
 			peptides.add(new PercolatorPeptide(psmID, ">"+RandomGenerator.randomSequence(i), 0.0f, 0.0f));
 		}
 		ArrayList<ProteinGroupInterface> proteins=ParsimonyProteinGrouper.groupProteins(peptides);
@@ -38,9 +39,9 @@ public class ParsimonyProteinGrouperTest extends TestCase {
 		peptides.clear();
 		for (int i=0; i<randomPeptides; i++) {
 			String accession=RandomGenerator.randomSequence(i);
-			String psmID=PercolatorPeptide.getPSMID("FILE", 0.0f, false, RandomGenerator.randomSequence(i), (byte)2);
+			String psmID=PercolatorPeptide.getPSMID("FILE", 0.0f, Optional.empty(), false, RandomGenerator.randomSequence(i), (byte)2);
 			peptides.add(new PercolatorPeptide(psmID, ">"+accession, 0.0f, 0.0f));
-			psmID=PercolatorPeptide.getPSMID("FILE", 0.0f, false, RandomGenerator.randomSequence(i+10), (byte)2);
+			psmID=PercolatorPeptide.getPSMID("FILE", 0.0f, Optional.empty(), false, RandomGenerator.randomSequence(i+10), (byte)2);
 			peptides.add(new PercolatorPeptide(psmID, ">"+accession, 0.0f, 0.0f));
 		}
 		proteins=ParsimonyProteinGrouper.groupProteins(peptides);
@@ -54,10 +55,10 @@ public class ParsimonyProteinGrouperTest extends TestCase {
 		for (int i=0; i<randomPeptides; i++) {
 			String accession=RandomGenerator.randomSequence(i);
 			String altAccession=RandomGenerator.randomSequence(i)+"-alt";
-			String psmID=PercolatorPeptide.getPSMID("FILE", 0.0f, false, RandomGenerator.randomSequence(i), (byte)2);
+			String psmID=PercolatorPeptide.getPSMID("FILE", 0.0f, Optional.empty(), false, RandomGenerator.randomSequence(i), (byte)2);
 			peptides.add(new PercolatorPeptide(psmID, ">"+accession, 0.0f, 0.0f));
 			peptides.add(new PercolatorPeptide(psmID, ">"+altAccession, 0.0f, 0.0f));
-			psmID=PercolatorPeptide.getPSMID("FILE", 0.0f, false, RandomGenerator.randomSequence(i+10), (byte)2);
+			psmID=PercolatorPeptide.getPSMID("FILE", 0.0f, Optional.empty(), false, RandomGenerator.randomSequence(i+10), (byte)2);
 			peptides.add(new PercolatorPeptide(psmID, ">"+accession, 0.0f, 0.0f));
 			peptides.add(new PercolatorPeptide(psmID, ">"+altAccession, 0.0f, 0.0f));
 		}

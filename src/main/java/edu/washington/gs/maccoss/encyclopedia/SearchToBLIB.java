@@ -34,6 +34,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.LibraryRep
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQuantExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.VariantXCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -592,6 +593,9 @@ public class SearchToBLIB {
 		if (job instanceof CASiLJobData) {
 			Logger.logLine("Reading localization data from disk...");
 			localizationData=Optional.of(LocalizationDataToTSVConsumer.readLocalizationFile(((CASiLJobData)job).getLocalizationFile(), globalPassingPeptides, job.getParameters()));
+		} else if (job instanceof VariantXCorDIAJobData) {
+			Logger.logLine("Reading localization data from disk...");
+			localizationData=Optional.of(LocalizationDataToTSVConsumer.readLocalizationFile(((VariantXCorDIAJobData)job).getLocalizationFile(), globalPassingPeptides, job.getParameters()));
 		} else {
 			localizationData=Optional.empty();
 		}

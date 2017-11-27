@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
@@ -22,7 +23,7 @@ public class PercolatorPeptideTest {
 	}
 
 	public static String getPSMID(String peptideModSeq) {
-		return PercolatorPeptide.getPSMID("file", 0, false, peptideModSeq, (byte)2);
+		return PercolatorPeptide.getPSMID("file", 0, Optional.empty(), false, peptideModSeq, (byte)2);
 	}
 
 	public static ArrayList<PercolatorPeptide> getPeptides() {

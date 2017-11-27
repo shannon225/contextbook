@@ -310,6 +310,9 @@ public class Thesaurus {
 	
 		Logger.logLine("Running Percolator...");
 		ArrayList<PercolatorPeptide> passingPeptides=Encyclopedia.percolatePeptides(progress, job, stripefile, saveResultsConsumer);
+		// NOTE: does not perform retention time alignment! 
+		// If we had to pick new peptides this would force 
+		// re-localization!
 
 		localizationConsumer.close();
 		

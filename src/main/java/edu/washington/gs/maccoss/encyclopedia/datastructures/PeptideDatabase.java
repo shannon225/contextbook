@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.VariantFastaPeptideEntry;
+
 public class PeptideDatabase implements Iterable<FastaPeptideEntry> {
 	private final HashMap<String, FastaPeptideEntry> peptidesBySequence=new HashMap<String, FastaPeptideEntry>();
 	
@@ -18,7 +20,14 @@ public class PeptideDatabase implements Iterable<FastaPeptideEntry> {
 	public void add(FastaPeptideEntry newPeptide) {
 		FastaPeptideEntry entry=peptidesBySequence.get(newPeptide.getSequence());
 		if (entry!=null) {
-			entry.addAccessions(newPeptide.getAccessions());
+			if (entry instanceof VariantFastaPeptideEntry&&!(newPeptide instanceof VariantFastaPeptideEntry)) {
+				// prefer to keep non-variant peptides as the canonical annotation
+				peptidesBySequence.put(newPeptide.getSequence(), newPeptide);
+				newPeptide.addAccessions(entry.getAccessions());
+			} else {
+				// if neither or both are variants then keep first
+				entry.addAccessions(newPeptide.getAccessions());
+			}
 		} else {
 			peptidesBySequence.put(newPeptide.getSequence(), newPeptide);
 		}

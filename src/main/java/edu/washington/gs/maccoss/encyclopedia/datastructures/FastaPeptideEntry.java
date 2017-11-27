@@ -10,7 +10,7 @@ import gnu.trove.map.hash.TIntIntHashMap;
 
 public class FastaPeptideEntry implements Comparable<FastaPeptideEntry> {
 	private final String filename;
-	private final HashSet<String> accessions=new HashSet<String>();
+	private final HashSet<String> accessions=new HashSet<String>(); // not immutable!
 	private final String sequence;
 
 	public FastaPeptideEntry(String filename, HashSet<String> accessions, String sequence) {
@@ -27,11 +27,7 @@ public class FastaPeptideEntry implements Comparable<FastaPeptideEntry> {
 
 	public FastaPeptideEntry(String sequence) {
 		this("Unknown File", "Unknown Annotation", sequence);
-	}
-	
-	public void addAccession(String accession) {
-		accessions.add(accession);
-	}
+	} 
 	
 	public void addAccessions(HashSet<String> accessions) {
 		this.accessions.addAll(accessions);

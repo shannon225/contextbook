@@ -33,7 +33,7 @@ public class XCorDIAJobData extends QuantitativeSearchJobData {
 	}
 
 	// internal only
-	public XCorDIAJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, PercolatorExecutionData percolatorFiles, XCorDIAOneScoringFactory taskFactory) {
+	private XCorDIAJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, PercolatorExecutionData percolatorFiles, XCorDIAOneScoringFactory taskFactory) {
 		this(targetList, diaFile, null, fastaFile, percolatorFiles, taskFactory);
 	}
 
@@ -53,7 +53,7 @@ public class XCorDIAJobData extends QuantitativeSearchJobData {
 				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_PROTEIN_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_PROTEIN_FILE_SUFFIX), parameters);
 	}
 
-	private static String getPrefixFromOutput(File outputFile) {
+	protected static String getPrefixFromOutput(File outputFile) {
 		final String absolutePath = outputFile.getAbsolutePath();
 
 		if (absolutePath.endsWith(OUTPUT_FILE_SUFFIX)) {

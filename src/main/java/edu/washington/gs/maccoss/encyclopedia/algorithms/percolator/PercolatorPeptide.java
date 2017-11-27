@@ -1,7 +1,12 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
 import java.util.Comparator;
+import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorrLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.AlleleVariant;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.VariantFastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
@@ -111,11 +116,18 @@ public class PercolatorPeptide implements PeptidePrecursor {
 	}
 
 	public static String getPSMID(LibraryEntry peptide, float rt, StripeFileInterface diaFile) {
-		return getPSMID(diaFile.getOriginalFileName(),rt,peptide.isDecoy(),peptide.getPeptideModSeq(),peptide.getPrecursorCharge());
+		if (peptide instanceof XCorrLibraryEntry) {
+			FastaPeptideEntry fasta=((XCorrLibraryEntry) peptide).getPeptide();
+			if (fasta instanceof VariantFastaPeptideEntry) {
+				AlleleVariant variant=((VariantFastaPeptideEntry) fasta).getVariant();
+				return getPSMID(diaFile.getOriginalFileName(),rt,Optional.ofNullable(variant), peptide.isDecoy(),peptide.getPeptideModSeq(),peptide.getPrecursorCharge());
+			}
+		}
+		return getPSMID(diaFile.getOriginalFileName(),rt,Optional.empty(), peptide.isDecoy(),peptide.getPeptideModSeq(),peptide.getPrecursorCharge());
 	}
 	
-	public static String getPSMID(String diaFileName, float rt, boolean isDecoy, String peptideModSeq, byte peptideCharge) {
-		return diaFileName+":"+rt+":"+(isDecoy ? "decoy" : "")+peptideModSeq+"+"+peptideCharge;
+	public static String getPSMID(String diaFileName, float rt, Optional<AlleleVariant> maybeVariant, boolean isDecoy, String peptideModSeq, byte peptideCharge) {
+		return diaFileName+":"+rt+":"+(maybeVariant.isPresent()?maybeVariant.get().toString()+":":"")+(isDecoy ? "decoy" : "")+peptideModSeq+"+"+peptideCharge;
 	}
 	
 
@@ -146,7 +158,7 @@ public class PercolatorPeptide implements PeptidePrecursor {
 
 	public static float getRT(String psmID) {
 		int colonIndex=psmID.indexOf(":");
-		int colonIndex2=psmID.lastIndexOf(":");
+		int colonIndex2=psmID.indexOf(":", colonIndex+1);
 		if (colonIndex2>colonIndex) {
 			return Float.parseFloat(psmID.substring(colonIndex+1, colonIndex2));
 		}

@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -91,7 +92,8 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 			passingPeptideModSeqs.put(peptide.getPeptideModSeq(), peptide);
 		}
 		final AminoAcidConstants aaConstants=parameters.getAAConstants();
-		final PeptideModification modification=parameters.getLocalizingModification().get();
+		Optional<PeptideModification> localizingModification = parameters.getLocalizingModification();
+		final PeptideModification modification=localizingModification.isPresent()?localizingModification.get():PeptideModification.polymorphism;
 		final HashMap<String, ModificationLocalizationData> result=new HashMap<String, ModificationLocalizationData>();
 		final HashSet<AmbiguouslyModifiedPeptide> previouslyDetected=new HashSet<>();
 		final TObjectFloatHashMap<AmbiguouslyModifiedPeptide> notAnnotated=new TObjectFloatHashMap<>();
@@ -102,9 +104,9 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 			public void processRow(Map<String, String> row) {
 				String peptideModSeq=row.get("peptideModSeq");
 				float totalIntensity=Float.parseFloat(row.get("totalIntensity"));
-				AmbiguouslyModifiedPeptide ambigous=new AmbiguouslyModifiedPeptide(passingPeptideModSeqs.remove(peptideModSeq), aaConstants);
 				
 				if (passingPeptideModSeqs.containsKey(peptideModSeq)) {
+					AmbiguouslyModifiedPeptide ambigous=new AmbiguouslyModifiedPeptide(passingPeptideModSeqs.remove(peptideModSeq), aaConstants);
 					previouslyDetected.add(ambigous);
 					float localizationScore=Float.parseFloat(row.get("localizationScore"));
 					boolean isSiteSpecific=Boolean.parseBoolean(row.get("isSiteSpecific"));
@@ -138,9 +140,9 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 							e.printStackTrace();
 						}
 					}
-				} else {
+				//} else {
 					// NOTE: relies on empty values being 0
-					notAnnotated.put(ambigous, Math.max(notAnnotated.get(ambigous), totalIntensity));
+					//notAnnotated.put(ambigous, Math.max(notAnnotated.get(ambigous), totalIntensity));
 				}
 			}
 		};

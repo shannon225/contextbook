@@ -10,57 +10,55 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneAuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequencyInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
-public class VariantXCorDIAOneScoringFactory implements LibraryScoringFactory {
+public class VariantXCorDIAOneScoringFactory extends XCorDIAOneScoringFactory {
 	public static final String version="0.1";
-	private final PecanSearchParameters parameters;
-	private final BackgroundFrequencyInterface background;
+	private BackgroundFrequencyInterface background=null;
 	private final BlockingQueue<ModificationLocalizationData> localizationQueue;
 
 	public VariantXCorDIAOneScoringFactory(PecanSearchParameters parameters, BackgroundFrequencyInterface background, BlockingQueue<ModificationLocalizationData> localizationQueue) {
-		this.parameters=parameters;
+		super(parameters);
 		this.background=background;
 		this.localizationQueue=localizationQueue;
+	}
+	
+	public BlockingQueue<ModificationLocalizationData> getLocalizationQueue() {
+		return localizationQueue;
+	}
+	
+	public void setBackground(BackgroundFrequencyInterface background) {
+		this.background=background;
 	}
 
 	@Override
 	public PSMScorer getLibraryScorer(LibraryBackgroundInterface background) {
-		return new XCorDIAOneScorer(parameters, background); 
+		return new XCorDIAOneScorer(getParameters(), background); 
 	}
 
 	@Override
 	public PeptideScoringResultsConsumer getResultsConsumer(File outputFile, BlockingQueue<PeptideScoringResult> resultsQueue, StripeFileInterface diaFile) {
-		return new ScoringResultsToTSVConsumer(outputFile, diaFile, EncyclopediaOneAuxillaryPSMScorer.getScoreNames(false), resultsQueue, 1);
+		return new ScoringResultsToTSVConsumer(outputFile, diaFile, General.concatenate(EncyclopediaOneAuxillaryPSMScorer.getScoreNames(false), "neededToLocalize", "numberOfWellShapedIons"), resultsQueue, 1);
 	}
 
 	@Override
 	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
-		return new VariantXcorDIAOneScoringTask(scorer, background, entries, stripes, dutyCycle, precursors, resultsQueue, localizationQueue, parameters);
+		if (background==null) throw new EncyclopediaException("You must initialize background before generating a scoring task!");
+		return new VariantXcorDIAOneScoringTask(scorer, background, entries, stripes, dutyCycle, precursors, resultsQueue, localizationQueue, getParameters());
 	}
 	
 	@Override
 	public AbstractLibraryScoringTask getDDAScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
 		throw new EncyclopediaException("Sorry, DDA scoring for XCorDIA is not implemented!");
-	}
-
-	@Override
-	public SearchParameters getParameters() {
-		return parameters;
-	}
-	
-	public PecanSearchParameters getPecanParameters() {
-		return parameters;
 	}
 
 	@Override

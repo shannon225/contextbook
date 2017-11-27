@@ -26,6 +26,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorEx
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCordiaSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.VariantXCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
@@ -103,7 +104,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(new LabeledComponent("<p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Parameters", new JLabel()));
 		
-		backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta"), true) {
+		backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta", ".peff"), true) {
 			private static final long serialVersionUID=1L;
 
 			@Override
@@ -117,7 +118,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 			}
 		};
 		options.add(backgroundFasta);
-		targetFasta=new FileChooserPanel(null, "Target", new SimpleFilenameFilter(".fas", ".fasta"), true);
+		targetFasta=new FileChooserPanel(null, "Target", new SimpleFilenameFilter(".fas", ".fasta", ".peff"), true);
 		options.add(targetFasta);
 		options.add(new LabeledComponent("Target/Decoy Approach", numberOfExtraDecoyLibraries));
 		options.add(new LabeledComponent("Data Acquisition Type", acquisition));
@@ -220,9 +221,24 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 				}
 			}
 		}
+
+		boolean isPeff=false;
+		if (targetFile!=null) {
+			if (targetFile.getName().toLowerCase().endsWith(".peff")) {
+				isPeff=true;
+			}
+		} else if (fastaFile!=null&&fastaFile.getName().toLowerCase().endsWith(".peff")) {
+			isPeff=true;
+		}
 		
 		XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(parameters);
-		return new XCorDIAJob(processor, new XCorDIAJobData(Optional.ofNullable(targets), diaFile, fastaFile, factory));
+		XCorDIAJobData jobData;
+		if (isPeff) {
+			jobData=new VariantXCorDIAJobData(Optional.ofNullable(targets), diaFile, fastaFile, factory);
+		} else {
+			jobData=new XCorDIAJobData(Optional.ofNullable(targets), diaFile, fastaFile, factory);
+		}
+		return new XCorDIAJob(processor, jobData);
 	}
 
 	public XCordiaSearchParameters getParameters() {

@@ -18,6 +18,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModifica
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -25,6 +26,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -78,6 +80,9 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			modelBatch.put(entry.getPeptideModSeq(), model);
 		}
 		
+		ScoredTimepoint bestTimepoint=null;
+		boolean reportedScores=false;
+		
 		for (LibraryEntry entry : entryBatch) {
 			XCorrLibraryEntry xcordiaEntry = getXCorrEntry(entry);
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(xcordiaEntry.getPeptideModSeq(), parameters.getAAConstants());
@@ -94,11 +99,12 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			int index=Math.round(calculator.getMaxRT()); // rt=index
 
 			// no need to localize
-			if (entryBatch.size()==1) {
+			/*if (entryBatch.size()==1) {
 				ScoredIndex scanIndex=new ScoredIndex(primary[index], index);
 				finalScoreTimepoint(xcordiaEntry, predictedIsotopeDistribution, calculator, scanIndex);
 				return;
-			}
+			}*/
+			
 			IntRange indexRange = getPeakRange(index);
 			
 			// get localizing ions			
@@ -107,34 +113,45 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			float[] frequencies=background.getFrequencies(ions, entry.getPrecursorMZ(), parameters.getFragmentTolerance());
 			
 			// run localization scoring on target ions
-			int bestIndex=0;
-			float maxRawScore=-Float.MAX_VALUE;
-			float maxRawPrimary=-Float.MAX_VALUE;
+			int bestLocalizationIndex=0;
+			float maxLocalizationScore=-Float.MAX_VALUE;
+			float maxLocalizedPrimary=-Float.MAX_VALUE;
 			float[] negLogProbsSiteSpecific=new float[indexRange.getLength()];
 			for (int i = indexRange.getStart(); i <= indexRange.getStop(); i++) {
 				float rawScore = PhosphoLocalizer.score(parameters, ions, targets, frequencies, stripes.get(i), true);
 				negLogProbsSiteSpecific[i-indexRange.getStart()]=rawScore;
-				if (rawScore>maxRawScore||(rawScore==maxRawScore&&averagePrimary[i]>maxRawPrimary)) {
-					maxRawScore=rawScore;
-					maxRawPrimary=averagePrimary[i];
-					bestIndex=i;
+				if (rawScore>maxLocalizationScore||(rawScore==maxLocalizationScore&&averagePrimary[i]>maxLocalizedPrimary)) {
+					maxLocalizationScore=rawScore;
+					maxLocalizedPrimary=averagePrimary[i];
+					bestLocalizationIndex=i;
 				}
 			}
 			negLogProbsSiteSpecific=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, Math.round(parameters.getExpectedPeakWidth()/(dutyCycle)));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
 			
 			// calculate final scoring on best localization index 
-			ScoredIndex scanIndex=new ScoredIndex(primary[bestIndex], bestIndex);
-			finalScoreTimepoint(xcordiaEntry, predictedIsotopeDistribution, calculator, scanIndex);
-			if (!xcordiaEntry.isDecoy()) {
-				// don't bother logging decoys
-				FragmentIon[] allIons=modelBatch.get(xcordiaEntry.getPeptideModSeq()).getPrimaryIonObjects(parameters.getFragType(), xcordiaEntry.getPrecursorCharge());
+			ScoredIndex scanIndex=new ScoredIndex(primary[bestLocalizationIndex], bestLocalizationIndex);
+			FragmentIon[] allIons=modelBatch.get(xcordiaEntry.getPeptideModSeq()).getPrimaryIonObjects(parameters.getFragType(), xcordiaEntry.getPrecursorCharge());
 
-				ArrayList<Spectrum> stripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(stripes.get(indexRange.getStart()).getScanStartTime(), stripes.get(indexRange.getStop()).getScanStartTime()+parameters.getExpectedPeakWidth(), stripes);
-				ModificationLocalizationData data=getLocalizationData(stripes.get(bestIndex), xcordiaEntry.getPeptideModSeq(), xcordiaEntry.getPrecursorCharge(), 
-						minimumScore, maxRawScore, targets, allIons, stripeSubset);
-				
-				localizationQueue.add(data);
+			ArrayList<Spectrum> stripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(stripes.get(indexRange.getStart()).getScanStartTime(), stripes.get(indexRange.getStop()).getScanStartTime()+parameters.getExpectedPeakWidth(), stripes);
+			Pair<ModificationLocalizationData, Integer> pair=getLocalizationData(stripes.get(bestLocalizationIndex), xcordiaEntry.getPeptideModSeq(), xcordiaEntry.getPrecursorCharge(), 
+					minimumScore, maxLocalizationScore, targets, allIons, stripeSubset);
+			
+			localizationQueue.add(pair.x);
+			ScoredTimepoint timepoint = new ScoredTimepoint(xcordiaEntry, predictedIsotopeDistribution, calculator, scanIndex, entryBatch.size()>1, pair.y);
+			
+			if (bestTimepoint==null||timepoint.scoredIndex.x>bestTimepoint.scoredIndex.x) {
+				bestTimepoint=timepoint;
 			}
+			if (pair.x.isLocalized()) {
+				// report every localized timepoint
+				finalScoreTimepoint(timepoint);
+				reportedScores=true;
+			}
+		}
+		
+		// always report something
+		if (!reportedScores&&bestTimepoint!=null) {
+			finalScoreTimepoint(bestTimepoint);
 		}
 	}
 
@@ -161,7 +178,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 	}
 	
 	FragmentIonBlacklist takenIdentifiedIons=new FragmentIonBlacklist(parameters.getFragmentTolerance()); // not necessary
-	private ModificationLocalizationData getLocalizationData(Stripe apex, String peptideModSeq, byte precursorCharge, float minimumScore, float bestLocalizationScore, FragmentIon[] targetIons, FragmentIon[] allIons, ArrayList<Spectrum> stripeSubset) {
+	private Pair<ModificationLocalizationData, Integer> getLocalizationData(Stripe apex, String peptideModSeq, byte precursorCharge, float minimumScore, float bestLocalizationScore, FragmentIon[] targetIons, FragmentIon[] allIons, ArrayList<Spectrum> stripeSubset) {
 		int targetNumFragments=Math.max(parameters.getMinNumOfQuantitativePeaks(), 3);
 		
 		//Range peakRange=new Range(apex.getScanStartTime(), apex.getScanStartTime());
@@ -220,7 +237,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 		AmbiguousPeptideModSeq ambiguousPeptideModSeq=AmbiguousPeptideModSeq.getUnambigous(peptideModSeq, PeptideModification.polymorphism, parameters.getAAConstants());
 		
 		ModificationLocalizationData modData=new ModificationLocalizationData(ambiguousPeptideModSeq, apexRT, bestLocalizationScore, numberOfMods, isSiteSpecific, isLocalized, isCompletelyAmbiguous, wellShapedIons.toArray(new FragmentIon[wellShapedIons.size()]), localizationIntensity, totalIntensity);
-		return modData;
+		return new Pair<ModificationLocalizationData, Integer>(modData, numIdentificationPeaks);
 	}
 
 	private XCorrLibraryEntry getXCorrEntry(LibraryEntry entry) {
@@ -228,23 +245,42 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 		if (entry instanceof XCorrLibraryEntry) {
 			xcordiaEntry=(XCorrLibraryEntry)entry;
 		} else {
-			xcordiaEntry=XCorrLibraryEntry.generateEntry(false, entry.getSource(), entry.getAccessions(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), parameters);
+			FastaPeptideEntry peptide=new FastaPeptideEntry(entry.getSource(), entry.getAccessions(), entry.getPeptideModSeq());
+			xcordiaEntry=XCorrLibraryEntry.generateEntry(false, peptide, entry.getPrecursorCharge(), parameters);
 		}
 		xcordiaEntry.init();
 		return xcordiaEntry;
 	}
+	
+	private class ScoredTimepoint {
+		XCorrLibraryEntry xcordiaEntry;
+		float[] predictedIsotopeDistribution;
+		EValueCalculator calculator;
+		ScoredIndex scoredIndex;
+		boolean neededToLocalize;
+		int numberOfWellShapedIons;
+		public ScoredTimepoint(XCorrLibraryEntry xcordiaEntry, float[] predictedIsotopeDistribution,
+				EValueCalculator calculator, ScoredIndex scoredIndex, boolean neededToLocalize,
+				int numberOfWellShapedIons) {
+			this.xcordiaEntry = xcordiaEntry;
+			this.predictedIsotopeDistribution = predictedIsotopeDistribution;
+			this.calculator = calculator;
+			this.scoredIndex = scoredIndex;
+			this.neededToLocalize = neededToLocalize;
+			this.numberOfWellShapedIons = numberOfWellShapedIons;
+		}
+	}
 
-	private void finalScoreTimepoint(XCorrLibraryEntry xcordiaEntry, float[] predictedIsotopeDistribution,
-			EValueCalculator calculator, ScoredIndex scoredIndex) {
-		Stripe stripe=super.stripes.get(scoredIndex.y);
-		float[] auxScoreArray=scorer.auxScore(xcordiaEntry, stripe, predictedIsotopeDistribution, precursors);
-		float evalue=calculator.getNegLog10EValue(scoredIndex.x);
+	private void finalScoreTimepoint(ScoredTimepoint timepoint) {
+		Stripe stripe=super.stripes.get(timepoint.scoredIndex.y);
+		float[] auxScoreArray=scorer.auxScore(timepoint.xcordiaEntry, stripe, timepoint.predictedIsotopeDistribution, precursors);
+		float evalue=timepoint.calculator.getNegLog10EValue(timepoint.scoredIndex.x);
 		if (Float.isNaN(evalue)) {
 			evalue=-1.0f;
 		}
 		
-		PeptideScoringResult result=new PeptideScoringResult(xcordiaEntry);
-		result.addStripe(scoredIndex.x, General.concatenate(auxScoreArray, scoredIndex.x, evalue), stripe);
+		PeptideScoringResult result=new PeptideScoringResult(timepoint.xcordiaEntry);
+		result.addStripe(timepoint.scoredIndex.x, General.concatenate(auxScoreArray, timepoint.scoredIndex.x, evalue, timepoint.neededToLocalize?1:0, timepoint.numberOfWellShapedIons), stripe);
 		resultsQueue.add(result);
 	}
 

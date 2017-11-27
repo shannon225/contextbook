@@ -23,6 +23,7 @@ import java.util.zip.DataFormatException;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
@@ -30,11 +31,16 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgrou
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequencyCalculator;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequencyInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.VariantXCorDIAOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorrLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorrStripe;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.SimilarPeptideBinner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.VariantXCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
@@ -42,11 +48,13 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
@@ -61,7 +69,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ThreadableTask;
 import gnu.trove.set.hash.TDoubleHashSet;
 
-public class XCorDIA {
+public class VariantXCorDIA {
 	public static final String TARGET_FASTA_TAG="-t";
 	public static final String OUTPUT_RESULT_TAG="-o";
 	public static final String INPUT_DIA_TAG="-i";
@@ -148,7 +156,7 @@ public class XCorDIA {
 				Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
 				Logger.logLine(parameters.toString());
 				
-				XCorDIAJobData jobData=new XCorDIAJobData(Optional.ofNullable(targets), diaFile, fastaFile, outputFile, factory);
+				VariantXCorDIAJobData jobData=new VariantXCorDIAJobData(Optional.ofNullable(targets), diaFile, fastaFile, outputFile, factory);
 
 				runPie(new EmptyProgressIndicator(), jobData);
 			} catch (Exception e) {
@@ -159,22 +167,42 @@ public class XCorDIA {
 			}
 		}
 	}
-	
-	public static void runPie(ProgressIndicator progress, XCorDIAJobData jobData) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
-		if (jobData instanceof VariantXCorDIAJobData) {
-			VariantXCorDIA.runPie(progress, (VariantXCorDIAJobData)jobData);
-			return;
+
+	public static VariantXCorDIAJobData checkJob(VariantXCorDIAJobData job) throws IOException, DataFormatException, SQLException {
+		if (!(job.getTaskFactory() instanceof VariantXCorDIAOneScoringFactory)) {
+			Logger.logLine("Setting up localization engine...");
+			PecanSearchParameters parameters=job.getTaskFactory().getPecanParameters();
+			StripeFileInterface stripefile=StripeFileGenerator.getFile(job.getDiaFile(), job.getParameters());
+			BackgroundFrequencyInterface background=BackgroundFrequencyCalculator.generateBackground(stripefile);
+			VariantXCorDIAOneScoringFactory factory=new VariantXCorDIAOneScoringFactory(parameters, background, new LinkedBlockingQueue<ModificationLocalizationData>());
+			job=job.updateTaskFactory(factory);
 		}
+		return job;
+	}
+	
+	public static void runPie(ProgressIndicator progress, VariantXCorDIAJobData jobData) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		if (jobData.getPercolatorFiles().hasDataAvailable()) {
 			try {
 				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(jobData.getPercolatorFiles().getPeptideOutputFile(), jobData.getParameters().getEffectivePercolatorThreshold(), false).x;
+				File elibFile=jobData.getResultLibrary();
+				if (!elibFile.exists()) {
+					//job=checkJob(job);
+					progress.update("Writing elib result library...");
+					Logger.logLine("Writing elib result library...");
+					ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
+					jobs.add(jobData);
+					SearchToBLIB.convert(progress, jobs, elibFile, false, true);
+				}
 				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(jobData.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 				return;
 			} catch (Exception e) {
+				Logger.errorException(e);
+				Logger.errorLine("Found error reading old results, discarding and reprocessing!");
 				// problem! so just continue on and overwrite old result
 			}
 		}
-
+		jobData=checkJob(jobData);
+		
 		long startTime=System.currentTimeMillis();
 		final PecanSearchParameters parameters=jobData.getTaskFactory().getPecanParameters();
 		
@@ -200,7 +228,7 @@ public class XCorDIA {
 		}
 		LibraryBackgroundInterface background=new LibraryBackground(backgroundProteome, parameters);
 		XCorDIAOneScorer xcordiaScorer=(XCorDIAOneScorer)jobData.getTaskFactory().getLibraryScorer(background);
-
+		
 		float minMzRange=Float.MAX_VALUE;
 		float maxMzRange=-Float.MAX_VALUE;
 		for (Range range : stripefile.getRanges().keySet()) {
@@ -236,7 +264,7 @@ public class XCorDIA {
 			boundaries.add(range.getStart());
 			boundaries.add(range.getStop());
 			if (!parameters.useTargetWindowCenter()||range.contains(parameters.getTargetWindowCenter())) {
-				if (areAnyPeptidesInRange(targets, range, parameters)) {
+				if (XCorDIA.areAnyPeptidesInRange(targets, range, parameters)) {
 					ranges.add(range);
 				}
 			}
@@ -257,10 +285,17 @@ public class XCorDIA {
 			useBin[index]=true;
 		}
 		
+		// localization queues
+		BlockingQueue<ModificationLocalizationData> localizationQueue=((VariantXCorDIAOneScoringFactory)jobData.getTaskFactory()).getLocalizationQueue();
+		File localizationFile=jobData.getLocalizationFile();
+		
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
 		PeptideScoringResultsConsumer resultsConsumer=jobData.getTaskFactory().getResultsConsumer(jobData.getPercolatorFiles().getInputTSV(), resultsQueue, stripefile);
+		LocalizationDataToTSVConsumer localizationConsumer=new LocalizationDataToTSVConsumer(localizationFile, localizationQueue);
 		Thread consumerThread=new Thread(resultsConsumer);
 		consumerThread.start();
+		Thread consumer4Thread=new Thread(localizationConsumer);
+		consumer4Thread.start();
 		
 		int rangesFinished=0;
 		// get stripes
@@ -320,7 +355,11 @@ public class XCorDIA {
 			
 			executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 			
-			HashSet<FastaPeptideEntry> allPeptidesInWindow=getPeptidesInRange(parameters, targets, range);
+			
+			HashSet<FastaPeptideEntry> allPeptidesInWindow=XCorDIA.getPeptidesInRange(parameters, targets, range);
+
+			SimilarPeptideBinner binner=new SimilarPeptideBinner();
+			ArrayList<ArrayList<FastaPeptideEntry>> bins=binner.binPeptides(allPeptidesInWindow);
 
 			HashSet<String> allPeptideSequencesInWindow=new HashSet<>();
 			for (FastaPeptideEntry entry : allPeptidesInWindow) {
@@ -328,58 +367,61 @@ public class XCorDIA {
 			}
 
 			int count=0;
-			for (FastaPeptideEntry peptide : allPeptidesInWindow) {
-				String sequence=peptide.getSequence();
 
-				byte expectedCharge=PeptideUtils.getExpectedChargeState(sequence);
-				byte minCharge=(byte)Math.max(parameters.getMinCharge(), expectedCharge-1);
-				byte maxCharge=(byte)Math.min(parameters.getMaxCharge(), expectedCharge+1);
-					
-				for (byte charge=minCharge; charge<=maxCharge; charge++) {
-					double mz=parameters.getAAConstants().getChargedMass(sequence, charge);
-					if (range.contains((float)mz)) {
-						count++;
-						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
+			for (ArrayList<FastaPeptideEntry> bin : bins) {
+				ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
+				count++;
+				for (FastaPeptideEntry peptide : bin) {
+					String sequence=peptide.getSequence();
+	
+					byte expectedCharge=PeptideUtils.getExpectedChargeState(sequence);
+					byte minCharge=(byte)Math.max(parameters.getMinCharge(), expectedCharge-1);
+					byte maxCharge=(byte)Math.min(parameters.getMaxCharge(), expectedCharge+1);
 						
-						XCorrLibraryEntry entry=XCorrLibraryEntry.generateEntry(false, peptide, charge, parameters);
-						tasks.add(entry);
-						
-						if (!parameters.isDontRunDecoys()) {
-							String smartDecoy=PeptideUtils.getDecoy(sequence, allPeptideSequencesInWindow, parameters);
-							FastaPeptideEntry decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.DECOY_STRING), smartDecoy);
-							XCorrLibraryEntry reventry=XCorrLibraryEntry.generateEntry(true, decoyPeptide, charge, parameters);
-							tasks.add(reventry);
-
-							float extraDecoys=parameters.getNumberOfExtraDecoyLibrariesSearched();
-							while (extraDecoys>0.0f) {
-								if (extraDecoys<1.0f) {
-									// check percentage
-									float test=RandomGenerator.random(count);
-									if (test>extraDecoys) {
-										break;
+					for (byte charge=minCharge; charge<=maxCharge; charge++) {
+						double mz=parameters.getAAConstants().getChargedMass(sequence, charge);
+						if (range.contains((float)mz)) {
+							
+							XCorrLibraryEntry entry=XCorrLibraryEntry.generateEntry(false, peptide, charge, parameters);
+							tasks.add(entry);
+							
+							if (!parameters.isDontRunDecoys()) {
+								String smartDecoy=PeptideUtils.getDecoy(sequence, allPeptideSequencesInWindow, parameters);
+								FastaPeptideEntry decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.DECOY_STRING), smartDecoy);
+								XCorrLibraryEntry reventry=XCorrLibraryEntry.generateEntry(true, decoyPeptide, charge, parameters);
+								tasks.add(reventry);
+	
+								float extraDecoys=parameters.getNumberOfExtraDecoyLibrariesSearched();
+								while (extraDecoys>0.0f) {
+									if (extraDecoys<1.0f) {
+										// check percentage
+										float test=RandomGenerator.random(count);
+										if (test>extraDecoys) {
+											break;
+										}
 									}
+									extraDecoys=extraDecoys-1.0f;
+	
+									String shuffledSequence=PeptideUtils.shuffle(sequence, Float.hashCode(extraDecoys), parameters);
+									FastaPeptideEntry shuffledPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.SHUFFLE_STRING), shuffledSequence);
+									reventry=XCorrLibraryEntry.generateEntry(true, shuffledPeptide, charge, parameters);
+									tasks.add(reventry);
+									
+									smartDecoy=PeptideUtils.getDecoy(shuffledSequence, allPeptideSequencesInWindow, parameters);
+									decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.DECOY_STRING+LibraryEntry.SHUFFLE_STRING), smartDecoy);
+									reventry=XCorrLibraryEntry.generateEntry(true, decoyPeptide, charge, parameters);
+									tasks.add(reventry);
 								}
-								extraDecoys=extraDecoys-1.0f;
-
-								String shuffledSequence=PeptideUtils.shuffle(sequence, Float.hashCode(extraDecoys), parameters);
-								FastaPeptideEntry shuffledPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.SHUFFLE_STRING), shuffledSequence);
-								reventry=XCorrLibraryEntry.generateEntry(true, shuffledPeptide, charge, parameters);
-								tasks.add(reventry);
-								
-								smartDecoy=PeptideUtils.getDecoy(shuffledSequence, allPeptideSequencesInWindow, parameters);
-								decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.DECOY_STRING+LibraryEntry.SHUFFLE_STRING), smartDecoy);
-								reventry=XCorrLibraryEntry.generateEntry(true, decoyPeptide, charge, parameters);
-								tasks.add(reventry);
 							}
+	
 						}
-
-						executor.submit(jobData.getTaskFactory().getScoringTask(xcordiaScorer, tasks, stripes, dutyCycle, precursors, resultsQueue));
 					}
 				}
+				executor.submit(jobData.getTaskFactory().getScoringTask(xcordiaScorer, tasks, stripes, dutyCycle, precursors, resultsQueue));
 			}
 			executor.shutdown();
 			while (!executor.isTerminated()) {
-				Logger.logLine(workQueue.size()+" peptides remaining for "+range+"...");
+				Logger.logLine(workQueue.size()+" peptide groups remaining for "+range+"...");
 				float finishedFraction=(count-workQueue.size())/(float)count;
 				progress.update(baseMessage, baseProgress+baseIncrement*(0.2f+finishedFraction*0.8f));
 				Thread.sleep(500);
@@ -389,53 +431,24 @@ public class XCorDIA {
 			rangesFinished++;
 		}
 		resultsQueue.put(PeptideScoringResult.POISON_RESULT);
+		localizationQueue.put(ModificationLocalizationData.POISON_RESULT);
 
 		consumerThread.join();
+		consumer4Thread.join();
 		resultsConsumer.close();
+		localizationConsumer.close();
+		
 		Logger.logLine("Finished generating feature file, analyzed "+resultsConsumer.getNumberProcessed()+" peptides.");
 
 		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
 		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), jobData.getPercolatorFiles(), parameters.getEffectivePercolatorThreshold()).x;
-		stripefile.close();
 		
 		Logger.logLine("Writing elib result library...");
 		SearchToBLIB.convertElib(progress, jobData, jobData.getResultLibrary(), parameters);
+		stripefile.close();
 		
 		Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peptides identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 
 		progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 	}
-
-	public static HashSet<FastaPeptideEntry> getPeptidesInRange(PecanSearchParameters parameters, PeptideDatabase targets, Range range) {
-		HashSet<FastaPeptideEntry> allPeptidesInWindow=new HashSet<>();
-		for (FastaPeptideEntry peptide : targets) {
-			String sequence=peptide.getSequence();
-			byte expectedCharge=PeptideUtils.getExpectedChargeState(sequence);
-			byte minCharge=(byte)Math.max(parameters.getMinCharge(), expectedCharge-1);
-			byte maxCharge=(byte)Math.min(parameters.getMaxCharge(), expectedCharge+1);
-				
-			for (byte charge=minCharge; charge<=maxCharge; charge++) {
-				double mz=parameters.getAAConstants().getChargedMass(sequence, charge);
-				if (range.contains((float)mz)) {
-					allPeptidesInWindow.add(peptide);
-				}
-			}
-		}
-		return allPeptidesInWindow;
-	}
-
-	
-	public static boolean areAnyPeptidesInRange(PeptideDatabase targets, Range range, PecanSearchParameters parameters) {
-		// check to see if we need to process this stripe
-		for (FastaPeptideEntry peptide : targets) {
-			for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
-				double mz=parameters.getAAConstants().getChargedMass(peptide.getSequence(), charge);
-				if (range.contains((float)mz)) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
 }

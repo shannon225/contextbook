@@ -102,7 +102,7 @@ public class SimilarPeptideBinnerTest extends TestCase {
 			for (ArrayList<FastaPeptideEntry> bin : bins) {
 				boolean keepWorking=false;
 				for (FastaPeptideEntry peptide : bin) {
-					if (peptide.getAccessions().contains("nxp:NX_P0DJI9-1")) {
+					if (peptide.getAccessions().contains("nxp:NX_P0DJI8-1")) {
 						keepWorking=true;
 						break;
 					}
@@ -115,7 +115,7 @@ public class SimilarPeptideBinnerTest extends TestCase {
 					for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
 						double mz=parameters.getAAConstants().getChargedMass(peptide.getSequence(), charge);
 						if (range.contains((float)mz)) {
-							XCorrLibraryEntry entry=XCorrLibraryEntry.generateEntry(false, peptide.getFilename(), peptide.getAccessions(), charge, peptide.getSequence(), parameters);
+							XCorrLibraryEntry entry=XCorrLibraryEntry.generateEntry(false, peptide, charge, parameters);
 							entryBySequence.put(entry.getPeptideModSeq(), peptide);
 							tasks.add(entry);	
 						}
@@ -149,7 +149,12 @@ public class SimilarPeptideBinnerTest extends TestCase {
 						
 						double mz=parameters.getAAConstants().getChargedMass(peptideModSeq, charge);
 						if (range.contains((float)mz)) {
-							String accessions=General.toString(entryBySequence.get(peptideModSeq).getAccessions());
+							FastaPeptideEntry fastaPeptideEntry = entryBySequence.get(peptideModSeq);
+							String variantTag="";
+							if (fastaPeptideEntry instanceof VariantFastaPeptideEntry) {
+								variantTag=", "+((VariantFastaPeptideEntry) fastaPeptideEntry).getVariant().toString();
+							}
+							String accessions=General.toString(fastaPeptideEntry.getAccessions());
 							float rtInSeconds=data.getRetentionTimeApexInSeconds();
 							FragmentIon[] targetIons=data.getLocalizingIons();
 							FragmentIon[] allIons=new FragmentationModel(peptideModSeq, parameters.getAAConstants()).getPrimaryIonObjects(parameters.getFragType(), charge);
@@ -165,7 +170,7 @@ public class SimilarPeptideBinnerTest extends TestCase {
 							uniqueFragmentsList.add(new XYTrace(new float[] {rtInSeconds/60f,  rtInSeconds/60f}, new float[] {0.0f, (float)XYTrace.getMaxY(uniqueFragmentsList)}, GraphType.dashedline, "Apex", Color.BLACK, null));
 							XYTraceInterface[] fragmentTraces=uniqueFragmentsList.toArray(new XYTrace[uniqueFragmentsList.size()]);
 							
-							panels.put(peptideModSeq, Charter.getChart(accessions+": "+peptideModSeq+" Retention Time (min)", "Intensity", false, fragmentTraces));
+							panels.put(peptideModSeq+variantTag, Charter.getChart(accessions+": "+peptideModSeq+" Retention Time (min)", "Intensity", false, fragmentTraces));
 						}
 					}
 				}

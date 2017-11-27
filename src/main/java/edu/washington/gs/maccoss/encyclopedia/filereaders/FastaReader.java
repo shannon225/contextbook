@@ -64,10 +64,15 @@ public class FastaReader {
 	
 	//@MoMo this should be removed after adding peffFormat into PARAMETER
 	public static ArrayList<FastaEntryInterface> readFasta(BufferedReader in, String fileName, String keyword) {
-		return readFasta(in, fileName, keyword, false);
+		return readFasta(in, fileName, keyword, fileName.toLowerCase().endsWith(".peff"));
 	}
 	
-	public static ArrayList<FastaEntryInterface> readFasta(BufferedReader in, String fileName, String keyword, Boolean peffFormat) {
+	public static ArrayList<FastaEntryInterface> readFasta(BufferedReader in, String fileName, String keyword, boolean peffFormat) {
+		if (peffFormat) {
+			Logger.logLine("Reading PEFF formated FASTA database");
+		} else {
+			Logger.logLine("Reading standard formated FASTA database");
+		}
 		if (keyword!=null) {
 			keyword=keyword.toLowerCase();
 		}
