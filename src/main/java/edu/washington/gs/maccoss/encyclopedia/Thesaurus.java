@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -15,8 +16,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
+import com.google.common.base.Joiner;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
@@ -31,6 +34,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLOneScoring
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
@@ -109,7 +113,9 @@ public class Thesaurus {
 	
 				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 				if (!parameters.getLocalizingModification().isPresent()) {
-					Logger.errorLine("You are required to specify one localization modification ("+PeptideModification.getShortnameList()+")");
+					AminoAcidConstants constants = parameters.getAAConstants();
+					String message = getRequiredLocalizationMessage(constants.getLocalizationModifications());
+					Logger.errorLine(message);
 					System.exit(1);
 				}
 
@@ -180,9 +186,11 @@ public class Thesaurus {
 	public static CASiLJobData checkJob(CASiLJobData job) throws IOException, DataFormatException, SQLException {
 		if (!(job.getTaskFactory() instanceof CASiLOneScoringFactory)) {
 			if (!job.getParameters().getLocalizingModification().isPresent()) {
-				throw new EncyclopediaException("You are required to specify one localization modification ("+PeptideModification.getShortnameList()+")");
+				AminoAcidConstants constants = job.getParameters().getAAConstants();
+				String message = getRequiredLocalizationMessage(constants.getLocalizationModifications());
+				throw new EncyclopediaException(message);
 			}
-			
+
 			Logger.logLine("Setting up localization engine...");
 			StripeFileInterface stripefile=StripeFileGenerator.getFile(job.getDiaFile(), job.getParameters());
 			PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, job.getParameters().getLocalizingModification().get(), job.getParameters());
@@ -326,4 +334,14 @@ public class Thesaurus {
 		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peptides processed, "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 
 	}
+
+	private static String getRequiredLocalizationMessage(Collection<PeptideModification> localizationModifications) {
+		String availableLocalizationModifications = Joiner.on(", ").join(
+				localizationModifications
+						.stream()
+						.map(PeptideModification::getShortname)
+						.collect(Collectors.toList()));
+		return "You are required to specify one localization modification (" + availableLocalizationModifications + ")";
+	}
+
 }

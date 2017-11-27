@@ -29,7 +29,7 @@ import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class SNPLocalizerExample {
 	
-	public static void main(String[] args) throws Exception {
+	public static void main2(String[] args) throws Exception {
 		File diaFile=new File("/Volumes/DataBackup/23aug2017_hela_serum_timecourse/23aug2017_fingerprint_s_dia_002.mzML");
 
 		HashMap<String, String> defaults=SearchParameterParser.getDefaultParameters();
@@ -117,7 +117,7 @@ public class SNPLocalizerExample {
 		Charter.launchChart("Retention Time (All Ions)", "Localization Score", true, new Dimension(1000, 400), traces.toArray(new XYTrace[traces.size()]));
 	}
 
-	public static void main2(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
 		File diaFile=new File("/Volumes/BriansSSD/20150908_6BB2_DIA_01.dia ");
 
 		HashMap<String, String> defaults=SearchParameterParser.getDefaultParameters();
@@ -181,17 +181,17 @@ public class SNPLocalizerExample {
 			Charter.launchChart(sequenceKey+" Retention Time (min)", "Intensity", false, new Dimension(1000, 400), fragmentTraces);
 		}
 
-		float duration=stripefile.getGradientLength()/20.0f;
-		EncyclopediaOneScorer scorer=new EncyclopediaOneScorer(parameters, (UnitBackgroundFrequencyCalculator)unitBackgroundFrequencyCalculator);
-		model=new FragmentationModel(libentry.getPeptideModSeq(), parameters.getAAConstants());
-		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), libentry.getPrecursorCharge());
-		TFloatFloatHashMap primary=new TFloatFloatHashMap();
-		for (int i=0; i<stripes.size(); i++) {
-			Stripe stripe=stripes.get(i);
-			if (stripe.getScanStartTime()>retentionTime-duration&&stripe.getScanStartTime()<retentionTime+duration) {
-				primary.put(stripe.getScanStartTime()/60f, scorer.score(libentry, stripe, ions));
-			}
-		}
+//		float duration=stripefile.getGradientLength()/20.0f;
+//		EncyclopediaOneScorer scorer=new EncyclopediaOneScorer(parameters, (UnitBackgroundFrequencyCalculator)unitBackgroundFrequencyCalculator);
+//		model=new FragmentationModel(libentry.getPeptideModSeq(), parameters.getAAConstants());
+//		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), libentry.getPrecursorCharge());
+//		TFloatFloatHashMap primary=new TFloatFloatHashMap();
+//		for (int i=0; i<stripes.size(); i++) {
+//			Stripe stripe=stripes.get(i);
+//			if (stripe.getScanStartTime()>retentionTime-duration&&stripe.getScanStartTime()<retentionTime+duration) {
+//				primary.put(stripe.getScanStartTime()/60f, scorer.score(libentry, stripe, ions));
+//			}
+//		}
 		
 		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=actuallyPhosphoData.getScoreTraces();
 		ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
