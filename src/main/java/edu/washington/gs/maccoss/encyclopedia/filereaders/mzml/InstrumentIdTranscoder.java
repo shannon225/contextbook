@@ -60,11 +60,8 @@ public class InstrumentIdTranscoder {
 			Matcher matcher = compile.matcher(encodedEntries);
 			if (matcher.find()) {
 				decodeAppendImplementation(builder, matcher.group(1));
-				return builder;
-			} else {
-				return builder;
 			}
-
+			return builder;
 		}
 		protected abstract InstrumentId.Builder decodeAppendImplementation(InstrumentId.Builder builder, String encodedEntryValue);
 	}
