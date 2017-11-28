@@ -15,7 +15,6 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
-import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import junit.framework.TestCase;
 
 public class PercolatorExecutorTest extends TestCase {
@@ -60,16 +59,13 @@ public class PercolatorExecutorTest extends TestCase {
 
 	public void testGetPercolatorVersionFromConsole() {
 		String line = "Percolator version 3.01, Build Date May 23 2017 12:14:41";
-		assertEquals(new Version(3, 1, 0), PercolatorExecutor.getPercolatorVersionFromOutput(line).orElse(null));
-
-		line = "Percolator version 3.10, Build Date May 23 2017 12:14:41";
-		assertEquals(new Version(3, 10, 0), PercolatorExecutor.getPercolatorVersionFromOutput(line).orElse(null));
+		assertEquals("3.01", PercolatorExecutor.getPercolatorVersionFromOutput(line).orElse(null));
 
 		line = "Percolator version 3.14.15, Build Date May 23 2017 12:14:41";
-		assertEquals(new Version(3, 14, 15), PercolatorExecutor.getPercolatorVersionFromOutput(line).orElse(null));
+		assertEquals("3.14.15", PercolatorExecutor.getPercolatorVersionFromOutput(line).orElse(null));
 
-		line = "Percolator version 2.0, Build Date May 23 2017 12:14:41";
-		assertEquals(new Version(2, 0, 0), PercolatorExecutor.getPercolatorVersionFromOutput(line).orElse(null));
+		line = "Percolator version 2, Build Date May 23 2017 12:14:41";
+		assertEquals("2", PercolatorExecutor.getPercolatorVersionFromOutput(line).orElse(null));
 
 		line = "Percolator version , Build Date May 23 2017 12:14:41";
 		assertFalse(PercolatorExecutor.getPercolatorVersionFromOutput(line).isPresent());

@@ -27,7 +27,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
-import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 
 public class PercolatorExecutor extends ExternalExecutor {
@@ -47,7 +46,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 
 		Float pi0=null;
 		String errorMessage=null;
-		Optional<Version> percolatorExecutableVersion = Optional.empty();
+		Optional<String> percolatorExecutableVersion = Optional.empty();
 		while (!e.isFinished()||!result.isEmpty()) {
 			if (!result.isEmpty()) {
 				OutputMessage data=result.take();
@@ -97,11 +96,10 @@ public class PercolatorExecutor extends ExternalExecutor {
 		return passingPeptides;
 	}
 
-	static Optional<Version> getPercolatorVersionFromOutput(String standardOutputLine) {
+	static Optional<String> getPercolatorVersionFromOutput(String standardOutputLine) {
 		Matcher matcher = PERCOLATOR_VERSION_PATTERN.matcher(standardOutputLine);
-		final String match;
-		if (matcher.find() && (match = matcher.group(1)) != null) {
-			return Optional.of(new Version(match));
+		if (matcher.find()) {
+			return Optional.ofNullable(matcher.group(1));
 		} else {
 			return Optional.empty();
 		}
