@@ -18,7 +18,7 @@ public class InstrumentComponentTranscoder {
 			}
 
 			@Override
-			public InstrumentComponent.Builder decodeAppendImplementation(InstrumentComponent.Builder builder, String encodedEntryValue) {
+			protected InstrumentComponent.Builder decodeAppendImplementation(InstrumentComponent.Builder builder, String encodedEntryValue) {
 				return builder.setOrder(Integer.parseInt(encodedEntryValue));
 			}
 		},
