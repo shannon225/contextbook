@@ -85,10 +85,8 @@ public class InstrumentComponentTranscoder {
 			Matcher matcher = compile.matcher(encodedEntries);
 			if (matcher.find()) {
 				decodeAppendImplementation(builder, matcher.group(1));
-				return builder;
-			} else {
-				return builder;
 			}
+			return builder;
 		}
 
 		protected abstract InstrumentComponent.Builder decodeAppendImplementation(InstrumentComponent.Builder builder, String encodedEntryValue);
