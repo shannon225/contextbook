@@ -15,7 +15,6 @@ import javax.swing.event.ChangeListener;
 import javax.xml.parsers.SAXParserFactory;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentComponent;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentId;
@@ -209,9 +208,9 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 				currentInstrumentConfigurationIdBuilder
 						.setAccession(attributes.getValue("accession"))
 						.setName(attributes.getValue("name"));
-			} else if (InstrumentComponent.Type.typeFor(getPreviousElementTag()).isPresent()) {
+			} else if (InstrumentComponent.Type.getTypeByName(getPreviousElementTag()).isPresent()) {
 				currentInstrumentComponentBuilder
-						.setType(InstrumentComponent.Type.typeFor(getPreviousElementTag()).get())
+						.setType(InstrumentComponent.Type.getTypeByName(getPreviousElementTag()).get())
 						.setCvRef(attributes.getValue("cvRef"))
 						.setAccessionId(attributes.getValue("accession"))
 						.setName(attributes.getValue("name"));
@@ -225,7 +224,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 			spectrumIndex=Integer.parseInt(attributes.getValue("index"));
 		} else if ("software".equalsIgnoreCase(qName)) {
 			softwareVersion = attributes.getValue("version");
-		} else if (InstrumentComponent.Type.typeFor(qName).isPresent()) {
+		} else if (InstrumentComponent.Type.getTypeByName(qName).isPresent()) {
 			currentInstrumentComponentBuilder.setOrder(Integer.parseInt(attributes.getValue("order")));
 		} else if ("instrumentConfiguration".equalsIgnoreCase(qName)) {
 			currentInstrumentConfigurationIdBuilder.setInstrumentConfigurationId(attributes.getValue("id"));
@@ -386,7 +385,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 			}
 		}
 
-		if (InstrumentComponent.Type.typeFor(qName).isPresent()) {
+		if (InstrumentComponent.Type.getTypeByName(qName).isPresent()) {
 			instrumentComponentsBuilder.add(currentInstrumentComponentBuilder.build());
 			currentInstrumentComponentBuilder = InstrumentComponent.builder();
 		} else if ("instrumentConfiguration".equalsIgnoreCase(qName)) {

@@ -21,7 +21,7 @@ public final class InstrumentComponent {
 			this.name = name;
 		}
 
-		public static Optional<Type> typeFor(String name) {
+		public static Optional<Type> getTypeByName(String name) {
 			for (Type t : Type.values()) {
 				if (t.name.equalsIgnoreCase(name)) {
 					return Optional.of(t);

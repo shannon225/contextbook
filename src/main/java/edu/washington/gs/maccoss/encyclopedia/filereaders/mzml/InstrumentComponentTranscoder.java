@@ -63,7 +63,7 @@ public class InstrumentComponentTranscoder {
 
 			@Override
 			protected InstrumentComponent.Builder decodeAppendImplementation(InstrumentComponent.Builder builder, String encodedEntryValue) {
-				InstrumentComponent.Type.typeFor(encodedEntryValue).ifPresent(builder::setType);
+				InstrumentComponent.Type.getTypeByName(encodedEntryValue).ifPresent(builder::setType);
 				return builder;
 			}
 		};
