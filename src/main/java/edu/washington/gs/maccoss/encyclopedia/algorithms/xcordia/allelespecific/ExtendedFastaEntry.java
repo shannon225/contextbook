@@ -42,7 +42,12 @@ public class ExtendedFastaEntry extends FastaEntry {
 			}
 			int end;
 			if (simple) {
-				potentialVariants.add(new AlleleVariant(start, sequence.charAt(start-1), info[1].charAt(0)));
+				char switchFrom=sequence.charAt(start-1);
+				char switchTo=info[1].charAt(0);
+				if (!(switchFrom=='I'&&switchTo=='L')&&!(switchFrom=='L'&&switchTo=='I')) {
+					// if both aren't I/L then add
+					potentialVariants.add(new AlleleVariant(start, switchTo, switchFrom));
+				}
 			} else {
 				try {
 					end=Integer.parseInt(info[1]);
