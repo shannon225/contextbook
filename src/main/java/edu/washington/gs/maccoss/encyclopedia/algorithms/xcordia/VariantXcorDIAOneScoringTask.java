@@ -18,6 +18,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModifica
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.VariantFastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
@@ -133,7 +134,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			FragmentIon[] allIons=modelBatch.get(xcordiaEntry.getPeptideModSeq()).getPrimaryIonObjects(parameters.getFragType(), xcordiaEntry.getPrecursorCharge());
 
 			ArrayList<Spectrum> stripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(stripes.get(indexRange.getStart()).getScanStartTime(), stripes.get(indexRange.getStop()).getScanStartTime()+parameters.getExpectedPeakWidth(), stripes);
-			Pair<ModificationLocalizationData, Integer> pair=getLocalizationData(stripes.get(bestLocalizationIndex), xcordiaEntry.getPeptideModSeq(), xcordiaEntry.getPrecursorCharge(), 
+			Pair<ModificationLocalizationData, Integer> pair=getLocalizationData(xcordiaEntry.getPeptide(), stripes.get(bestLocalizationIndex), xcordiaEntry.getPeptideModSeq(), xcordiaEntry.getPrecursorCharge(), 
 					minimumScore, maxLocalizationScore, targets, allIons, stripeSubset);
 			
 			localizationQueue.add(pair.x);
@@ -178,7 +179,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 	}
 	
 	FragmentIonBlacklist takenIdentifiedIons=new FragmentIonBlacklist(parameters.getFragmentTolerance()); // not necessary
-	private Pair<ModificationLocalizationData, Integer> getLocalizationData(Stripe apex, String peptideModSeq, byte precursorCharge, float minimumScore, float bestLocalizationScore, FragmentIon[] targetIons, FragmentIon[] allIons, ArrayList<Spectrum> stripeSubset) {
+	private Pair<ModificationLocalizationData, Integer> getLocalizationData(FastaPeptideEntry peptide, Stripe apex, String peptideModSeq, byte precursorCharge, float minimumScore, float bestLocalizationScore, FragmentIon[] targetIons, FragmentIon[] allIons, ArrayList<Spectrum> stripeSubset) {
 		int targetNumFragments=Math.max(parameters.getMinNumOfQuantitativePeaks(), 3);
 		
 		//Range peakRange=new Range(apex.getScanStartTime(), apex.getScanStartTime());
@@ -234,7 +235,13 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 				}
 			}
 		}
-		AmbiguousPeptideModSeq ambiguousPeptideModSeq=AmbiguousPeptideModSeq.getUnambigous(peptideModSeq, PeptideModification.polymorphism, parameters.getAAConstants());
+		String annotation;
+		if (peptide instanceof VariantFastaPeptideEntry) {
+			annotation=((VariantFastaPeptideEntry)peptide).getVariant().toString();
+		} else {
+			annotation="canonical";
+		}
+		AmbiguousPeptideModSeq ambiguousPeptideModSeq=AmbiguousPeptideModSeq.getUnambigous(peptideModSeq, PeptideModification.polymorphism, parameters.getAAConstants(), annotation);
 		
 		ModificationLocalizationData modData=new ModificationLocalizationData(ambiguousPeptideModSeq, apexRT, bestLocalizationScore, numberOfMods, isSiteSpecific, isLocalized, isCompletelyAmbiguous, wellShapedIons.toArray(new FragmentIon[wellShapedIons.size()]), localizationIntensity, totalIntensity);
 		return new Pair<ModificationLocalizationData, Integer>(modData, numIdentificationPeaks);

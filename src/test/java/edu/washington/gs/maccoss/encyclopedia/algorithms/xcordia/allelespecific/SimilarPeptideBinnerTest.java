@@ -57,7 +57,7 @@ public class SimilarPeptideBinnerTest extends TestCase {
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(defaults);
 		
 		System.out.println("Reading raw file...");
-		File diaFile=new File("/Users/searleb/Documents/school/xcordia_manuscript/demux/20141121_3_4_DIA_1.dia");
+		File diaFile=new File("/Users/searleb/Documents/xcordia_manuscript/demux/20141121_3_4_DIA_1.dia");
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 		
 		UnitBackgroundFrequencyCalculator unitBackgroundFrequencyCalculator=new UnitBackgroundFrequencyCalculator(0.01f);
@@ -68,7 +68,7 @@ public class SimilarPeptideBinnerTest extends TestCase {
 		Collections.sort(ranges);
 
 		System.out.println("Reading peff fasta file...");
-		File peffFile=new File("/Users/searleb/Documents/school/xcordia_manuscript/amyloid_protein.peff");
+		File peffFile=new File("/Users/searleb/Documents/xcordia_manuscript/amyloid_protein.peff");
 		InputStream is=new FileInputStream(peffFile);
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), peffFile.getName(), null, true);
 		

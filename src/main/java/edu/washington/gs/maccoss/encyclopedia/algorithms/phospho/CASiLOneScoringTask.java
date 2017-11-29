@@ -300,7 +300,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 			boolean keepRight) {
 		Pair<AmbiguousPeptideModSeq, FragmentIon[]> rightPeptide;
 		if (keepRight&&rightIndex>=0) {
-			AmbiguousPeptideModSeq rightAmbiguity=AmbiguousPeptideModSeq.getRightAmbiguity(peptideModSeqs.get(rightIndex), localizingModification, parameters.getAAConstants());
+			AmbiguousPeptideModSeq rightAmbiguity=AmbiguousPeptideModSeq.getRightAmbiguity(peptideModSeqs.get(rightIndex), localizingModification, parameters.getAAConstants(), "");
 			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
 			// shrink the number of unique ions subtractors to the pool of remaining sequences to the left
 			for (int j=0; j<=rightIndex; j++) {
@@ -321,7 +321,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 			boolean keepLeft) {
 		Pair<AmbiguousPeptideModSeq, FragmentIon[]> leftPeptide;
 		if (keepLeft&&leftIndex<peptideModSeqs.size()) {
-			AmbiguousPeptideModSeq leftAmbiguity=AmbiguousPeptideModSeq.getLeftAmbiguity(peptideModSeqs.get(leftIndex), localizingModification, parameters.getAAConstants());
+			AmbiguousPeptideModSeq leftAmbiguity=AmbiguousPeptideModSeq.getLeftAmbiguity(peptideModSeqs.get(leftIndex), localizingModification, parameters.getAAConstants(), "");
 
 			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
 			// shrink the number of unique ions subtractors to the pool of remaining sequences to the right

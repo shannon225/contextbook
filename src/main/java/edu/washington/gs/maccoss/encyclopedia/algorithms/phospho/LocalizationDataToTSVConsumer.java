@@ -171,7 +171,7 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 			if (!previouslyDetected.contains(ambigPeptide)) {
 				previouslyDetected.add(ambigPeptide);
 				
-				AmbiguousPeptideModSeq localizationPeptideModSeq=AmbiguousPeptideModSeq.getFullyAmbiguous(peptide.getPeptideModSeq(), modification, aaConstants);
+				AmbiguousPeptideModSeq localizationPeptideModSeq=AmbiguousPeptideModSeq.getFullyAmbiguous(peptide.getPeptideModSeq(), modification, aaConstants, "");
 				
 				ModificationLocalizationData data=new ModificationLocalizationData(localizationPeptideModSeq, peptide.getRT(), 0.0f, localizationPeptideModSeq.getNumModifications(), false, false, true, new FragmentIon[0], 0.0f, totalIntensity);
 				result.put(peptide.getPeptideModSeq(), data);

@@ -142,6 +142,24 @@ public class PhosphoLocalizerTest extends TestCase {
 		return psmdata;
 	}
 	
+	public void testSequenceUniqueness() {
+		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
+		ArrayList<String> peptideModSeqs=new ArrayList<>();
+		peptideModSeqs.add("AEAESLYQSKYEELQITAGR");
+		peptideModSeqs.add("AEAESLYQSKYEELQLTAGR");
+		
+
+		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
+		for (String peptideModSeq : peptideModSeqs) {
+			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+			entryMap.put(peptideModSeq, model);
+		}
+		FragmentIon[] targets=PhosphoLocalizer.getUniqueFragmentIons(peptideModSeqs.get(0), (byte)3, entryMap, params);
+		assertEquals(0, targets.length);
+		targets=PhosphoLocalizer.getUniqueFragmentIons(peptideModSeqs.get(1), (byte)3, entryMap, params);
+		assertEquals(0, targets.length);
+	}
+	
 	public void testGetUniqueFragmentIonsRightInwards() {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
 		String peptide="LYSGS[+80.0]PTR";
@@ -159,7 +177,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		// go right to left, drop the first
 		for (int i=peptideModSeqs.size()-1; i>=1; i--) {
 			String targetPeptide=peptideModSeqs.get(i);
-			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getRightAmbiguity(targetPeptide, PeptideModification.phosphorylation, params.getAAConstants());
+			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getRightAmbiguity(targetPeptide, PeptideModification.phosphorylation, params.getAAConstants(), "");
 			
 			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
 			// shrink the number of unique ions subtractors to the pool of remaining sequences to the right
@@ -179,7 +197,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		// go left to right, drop the last
 		for (int i=0; i<peptideModSeqs.size()-1; i++) {
 			String targetPeptide=peptideModSeqs.get(i);
-			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getLeftAmbiguity(targetPeptide, PeptideModification.phosphorylation, params.getAAConstants());
+			AmbiguousPeptideModSeq targetPeptideName=AmbiguousPeptideModSeq.getLeftAmbiguity(targetPeptide, PeptideModification.phosphorylation, params.getAAConstants(), "");
 
 			HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
 			// shrink the number of unique ions subtractors to the pool of
