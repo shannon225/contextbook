@@ -149,7 +149,7 @@ public class AlternatePeakLocationInferrer {
 							ionCounter.put(peptideModSeq, bestIonsMap);
 						}
 						CorrelationPeakFrequencyCalculator bestWeakIonsMap=weakIonCounter.get(peptideModSeq);
-						if (bestWeakIonsMap==null) {
+						if (bestWeakIonsMap==null) { // note, weak ions aren't used anymore
 							bestWeakIonsMap=new CorrelationPeakFrequencyCalculator(fragmentTolerance);
 							weakIonCounter.put(peptideModSeq, bestWeakIonsMap);
 						}

@@ -4,6 +4,8 @@ import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TFloatArrayList;
 
 public class AnnotatedLibraryEntry extends LibraryEntry {
 	private final FragmentIon[] ionAnnotations;
@@ -55,6 +57,30 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 				ionAnnotations[indicies[i]]=fragmentIon;
 			}
 		}
+	}
+	
+	public static AnnotatedLibraryEntry getAnnotationsOnly(LibraryEntry entry, SearchParameters parameters) {
+		double[] massArray=entry.getMassArray();
+		float[] intensityArray=entry.getIntensityArray();
+		float[] correlationArray=entry.getCorrelationArray();
+		
+		TDoubleArrayList newMasses=new TDoubleArrayList();
+		TFloatArrayList newIntensities=new TFloatArrayList();
+		TFloatArrayList newCorrelations=new TFloatArrayList();
+		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge())) {
+			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.mass);
+			for (int i=0; i<indicies.length; i++) {
+				newMasses.add(massArray[indicies[i]]);
+				newIntensities.add(intensityArray[indicies[i]]);
+				newCorrelations.add(correlationArray[indicies[i]]);
+			}
+		}
+		
+		LibraryEntry newEntry=new LibraryEntry(entry.getSource(), entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), entry.getCopies(),
+				entry.getRetentionTime(), entry.getScore(), newMasses.toArray(), newIntensities.toArray(), newCorrelations.toArray());
+
+		return new AnnotatedLibraryEntry(newEntry, parameters);
 	}
 	
 	@Override

@@ -144,8 +144,8 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 		XYTraceInterface posTrace=new XYTrace(positivePoints, GraphType.line, "Positive", new Color(26, 198, 49, 100), 2.0f);
 		
 		XYTraceInterface median2=new XYTrace(rtWarper.getKnots(), GraphType.line, "Retention Time Fit", new Color(26, 198, 49, 100), 2.0f);
-		XYTraceInterface selectedTrace=new XYTrace(selectedRTs, GraphType.tinypoint, "Data Used In Fit", Color.BLUE, 1.0f);
-		XYTraceInterface trace=new XYTrace(removedRTs, GraphType.tinypoint, "Data Removed From Fit", Color.RED, 1.0f);
+		XYTraceInterface selectedTrace=new XYTrace(selectedRTs, GraphType.tinypoint, "Data Used In Fit", new Color(0f, 0f, 1f, 0.2f), 1.0f);
+		XYTraceInterface trace=new XYTrace(removedRTs, GraphType.tinypoint, "Data Removed From Fit", new Color(1f, 0f, 0f, 0.2f), 1.0f);
 		
 		if (saveFileSeed.isPresent()) {
 			String saveFilePrefix=saveFileSeed.get().getAbsolutePath();

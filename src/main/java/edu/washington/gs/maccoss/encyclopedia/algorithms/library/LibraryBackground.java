@@ -16,13 +16,13 @@ public class LibraryBackground implements LibraryBackgroundInterface {
 	private final int total;
 	
 	public static void main(String[] args) throws Exception {
-		File libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/cptac2_human_hcd_selected.elib");
+		File libraryFile=new File("/Users/searleb/Documents/school/encyclopedia_manuscript/22oct2017_hela_serum_timecourse_narrow_library.elib");
 		LibraryFile file=new LibraryFile();
 		file.openFile(libraryFile);
-		ArrayList<LibraryEntry> entries=file.getEntries(new Range(700, 800), false);
+		ArrayList<LibraryEntry> entries=file.getEntries(new Range(700.57f, 712.57f), false);
 		LibraryBackground background=new LibraryBackground(entries);
-		for (int i=0; i<background.background.length; i++) {
-			System.out.println(i+"\t"+background.getFraction(i+0.1)); // to avoid rounding errors
+		for (int i=100; i<=1000; i++) {
+			System.out.println(i+"\t"+(1.0f/background.getFraction(i+0.1))); // to avoid rounding errors
 		}
 	}
 

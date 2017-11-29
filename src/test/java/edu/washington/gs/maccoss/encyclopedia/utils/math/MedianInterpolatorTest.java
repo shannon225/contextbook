@@ -80,6 +80,7 @@ public class MedianInterpolatorTest extends TestCase {
 				String s=row.get("predicted");
 				if (s==null) s=row.get("library");
 				float predicted=Float.parseFloat(s);//*60f;
+				if (predicted>110) return;
 				float actual=Float.parseFloat(row.get("actual"));
 				rts.add(new XYPoint(predicted, actual));
 			}

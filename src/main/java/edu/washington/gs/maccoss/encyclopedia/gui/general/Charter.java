@@ -165,8 +165,8 @@ public class Charter {
 	public static void writeAsPDF(File f, String xAxis, String yAxis, boolean displayLegend, XYTraceInterface... traces) {
 		JFreeChart chart=getChart(xAxis, yAxis, displayLegend, traces).getChart();
 		//Dimension d=new Dimension(792, 612);
-		Dimension d=new Dimension(600, 450);
-		//Dimension d=new Dimension(400, 300);
+		//Dimension d=new Dimension(600, 450);
+		Dimension d=new Dimension(400, 300);
 		
 		try {
 			// NOTE: this uses itextPDF 4.2, which is LGPL. Do not upgrade to the AGPL version! 
