@@ -1,10 +1,18 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TCharObjectHashMap;
 import gnu.trove.map.hash.TIntCharHashMap;
 import gnu.trove.procedure.TCharDoubleProcedure;
+
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Optional;
 
 public class AminoAcidConstants {
 	public static final char[] AAs="ARNDCEQGHLIKMFPSTWYV".toCharArray();
@@ -12,14 +20,10 @@ public class AminoAcidConstants {
 	// ordered by H C O N S
 	private final TCharDoubleHashMap fixedMods;
 	private final ModificationMassMap variableMods;
+	private final ImmutableCollection<PeptideModification> localizationModifications;
 	private final TCharObjectHashMap<int[]> atomicComposition=new TCharObjectHashMap<int[]>();
 	final private TCharDoubleHashMap massesByAA=new TCharDoubleHashMap();
 	final private TIntCharHashMap aasByNominal=new TIntCharHashMap();
-	
-	public static AminoAcidConstants getConstants(String fixedAAName, ModificationMassMap variableMods) {
-		TCharDoubleHashMap fixedMods=getFixedModsMap(fixedAAName);
-		return new AminoAcidConstants(fixedMods, variableMods);
-	}
 
 	public static TCharDoubleHashMap getFixedModsMap(String name) {
 		TCharDoubleHashMap fixedMods;
@@ -49,16 +53,41 @@ public class AminoAcidConstants {
 		return "No fixed modifications";
 	}
 
+	public static ImmutableCollection<PeptideModification> getDefaultLocalizationModifications() {
+		return ImmutableList.of(
+				PeptideModification.phosphorylation,
+				PeptideModification.acetylation,
+				PeptideModification.oxidation,
+				PeptideModification.methylation,
+				PeptideModification.ubiquitination,
+				PeptideModification.oHexNAc);
+	}
+
+	public static AminoAcidConstants getConstants(String fixedAAName, ModificationMassMap variableMods) {
+		TCharDoubleHashMap fixedMods = getFixedModsMap(fixedAAName);
+		return new AminoAcidConstants(fixedMods, variableMods);
+	}
+
+	public static AminoAcidConstants createEmptyFixedAndVariable() {
+		return new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+	}
+
 	/**
 	 * assumes +57 C-alkylation
 	 */
 	public AminoAcidConstants() {
 		this(new TCharDoubleHashMap(new char[] {'C'}, new double[] {57.0214635}), new ModificationMassMap());
 	}
+
 	public AminoAcidConstants(TCharDoubleHashMap fixedMods, ModificationMassMap variableMods) {
+		this(fixedMods, variableMods, getDefaultLocalizationModifications());
+	}
+
+	public AminoAcidConstants(TCharDoubleHashMap fixedMods, ModificationMassMap variableMods, Collection<PeptideModification> localizationModifications) {
 		this.fixedMods=fixedMods;
 		this.variableMods=variableMods;
-		
+		this.localizationModifications = ImmutableList.copyOf(localizationModifications);
+
 		atomicComposition.put('A', new int[] {5, 3, 1, 1, 0});
 		if (fixedMods.contains('C')&&Math.round(fixedMods.get('C'))==57) {
 			atomicComposition.put('C', new int[] {8, 5, 2, 2, 1}); // assumes +57 is carbamidomethyl alkylation
@@ -191,6 +220,93 @@ public class AminoAcidConstants {
 			return c;
 		} else {
 			return null;
+		}
+	}
+
+	public ImmutableCollection<PeptideModification> getLocalizationModifications() {
+		return localizationModifications;
+	}
+
+	public double getNeutralLoss(char aminoAcid, double modificationMass) {
+		return getNeutralLoss(localizationModifications, aminoAcid, modificationMass)
+				.orElseGet(() -> getNeutralLoss(getDefaultLocalizationModifications(), aminoAcid, modificationMass).orElse(0d));
+	}
+
+	private static Optional<Double> getNeutralLoss(Collection<PeptideModification> modifications, char aminoAcid, double modificationMass) {
+		return findModification(modifications, aminoAcid, modificationMass)
+				.map(mod -> mod.getNeutralLoss(aminoAcid));
+	}
+
+	private static Optional<PeptideModification> findModification(Collection<PeptideModification> modifications, char aminoAcid, double modificationMass) {
+		return modifications.stream()
+				.filter(mod -> mod.isModificationMass(aminoAcid, modificationMass))
+				.sorted(Comparator.comparing(mod -> Math.abs(mod.getMass() - modificationMass)))
+				.findFirst();
+	}
+
+	private static final MassTolerance tolerance=new MassTolerance(1.0); // 1 ppm is about the accuracy of floats
+
+	public double getAccurateModificationMass(char aa, double modificationMass) {
+
+		Double fixedOrVariable;
+
+		final double noEntry = fixedMods.getNoEntryValue();
+		double fixedModMass = fixedMods.get(aa);
+		if (noEntry == fixedModMass) {
+			double variableModMass = variableMods.getVariableMod(aa);
+			fixedOrVariable = variableModMass == ModificationMassMap.MISSING ? null : variableModMass;
+		} else {
+			fixedOrVariable = fixedModMass;
+		}
+
+		if (fixedOrVariable != null) {
+			return fixedOrVariable;
+		} else {
+			Optional<PeptideModification> modification = findModification(getDefaultLocalizationModifications(), aa, modificationMass);
+			Optional<Double> opModificationMass = modification.map(PeptideModification::getMass);
+			return opModificationMass.orElseGet(() -> {
+				if (aa == 'C') {
+					if (tolerance.equals(57.0, modificationMass)) { // Carbamidomethyl
+						return 57.0214635;
+					} else if (tolerance.equals(58.0, modificationMass)) { // Carboxymethyl
+						return 58.005479;
+					} else if (tolerance.equals(46.0, modificationMass)) { // MMTS
+						return 45.987721;
+					} else if (tolerance.equals(99.0, modificationMass)) { // Carbamidomethyl + acetyl
+						return 57.0214635 + 42.010565;
+					} else if (tolerance.equals(40.0, modificationMass)) { // Carbamidomethyl - pyro-glu
+						return 57.0214635 - 17.026549;
+					}
+				}
+
+				if (aa == 'M' || aa == 'W') {
+					if (tolerance.equals(16.0, modificationMass)) { // Oxidation
+						return 15.994915;
+					} else if (tolerance.equals(58.0, modificationMass)) { // Ox + acetyl
+						return 42.010565 + 15.994915;
+					}
+				}
+
+				if (aa == 'Q') {
+					if (tolerance.equals(-17.0, modificationMass)) { // pyro-glu
+						return -17.026549;
+					}
+				}
+
+				if (aa == 'S' || aa == 'T' || aa == 'Y') {
+					if (tolerance.equals(80.0, modificationMass)) { // Phospho
+						return PeptideModification.phosphorylation.getMass();
+					} else if (tolerance.equals(122.0, modificationMass)) { // Phospho + acetyl
+						return 42.010565 + PeptideModification.phosphorylation.getMass();
+					}
+				}
+
+				if (tolerance.equals(42.0, modificationMass)) { // acetyl
+					return 42.010565;
+				} else {
+					return modificationMass;
+				}
+			});
 		}
 	}
 }

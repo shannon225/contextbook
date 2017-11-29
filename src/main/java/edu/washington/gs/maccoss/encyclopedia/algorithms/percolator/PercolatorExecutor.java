@@ -117,7 +117,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(fasta);
 		for (FastaEntryInterface entry : entries) {
 			writer.write(entry);
-			FastaEntry reverse=new FastaEntry(entry.getFilename(), LibraryEntry.DECOY_STRING+entry.getAnnotation(), parameters.getEnzyme().reverseProtein(entry.getSequence()));
+			FastaEntry reverse=new FastaEntry(entry.getFilename(), LibraryEntry.DECOY_STRING+entry.getAnnotation(), parameters.getEnzyme().reverseProtein(entry.getSequence(), parameters.getAAConstants()));
 			writer.write(reverse);
 		}
 		writer.close();

@@ -248,8 +248,8 @@ public class AmbiguousPeptideModSeq {
 
 		return sb.toString();
 	}
-	
-	public static AmbiguousPeptideModSeq getAmbiguousPeptideModSeq(String peptideAnnotation, PeptideModification mod) {
+
+	public static AmbiguousPeptideModSeq getAmbiguousPeptideModSeq(String peptideAnnotation, PeptideModification mod, AminoAcidConstants aminoAcidConstants) {
 
 		//String[] aas;
 		//byte ambiguityDirection; // left is -1, right is 1, no direction is 0
@@ -293,7 +293,7 @@ public class AmbiguousPeptideModSeq {
 				double modificationMass = Double.valueOf(massText);
 				String aaString=aas.get(aas.size()-1);
 				char aaChar=aaString.charAt(0);
-				modificationMass=MassConstants.getAccurateModificationMass(aaChar, modificationMass);
+				modificationMass=aminoAcidConstants.getAccurateModificationMass(aaChar, modificationMass);
 
 				// adjust last
 				aas.set(aas.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");

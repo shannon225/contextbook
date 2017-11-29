@@ -35,7 +35,8 @@ public class AmbiguousPeptideModSeqTest extends TestCase {
 	}
 
 	private void assertRetrieval(String annotationString) {
-		AmbiguousPeptideModSeq seq=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq(annotationString, PeptideModification.phosphorylation);
+		AminoAcidConstants aminoAcidConstants = new AminoAcidConstants();
+		AmbiguousPeptideModSeq seq=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq(annotationString, PeptideModification.phosphorylation, aminoAcidConstants);
 		assertEquals(annotationString, seq.getPeptideAnnotation());
 	}
 
