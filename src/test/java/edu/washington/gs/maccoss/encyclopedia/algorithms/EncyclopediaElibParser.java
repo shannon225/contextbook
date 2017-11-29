@@ -21,7 +21,8 @@ public class EncyclopediaElibParser {
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException {
 		loadMap();
 		
-		File file=new File("/Volumes/BriansSSD/hela_serum_timecourse/hela_serum_timecourse_wide_window_combined.elib");
+		File file=new File("/Users/searleb/Downloads/hela_serum_timecourse_wide_window_combined.elib");
+		//File file=new File("/Volumes/BriansSSD/hela_serum_timecourse/hela_serum_timecourse_wide_window_combined.elib");
 
 		CoefficientOfVariationCalculator cvCalculator=new CoefficientOfVariationCalculator(sampleKey, sampleNames, 0.2f);
 

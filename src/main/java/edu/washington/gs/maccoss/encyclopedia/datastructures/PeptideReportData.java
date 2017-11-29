@@ -26,7 +26,10 @@ public class PeptideReportData implements PeptidePrecursor {
 	
 	HashMap<String, QuantitativeDIAData> dataBySourceFile=new HashMap<>();
 	public void addQuantitativeDIAData(String sourceFile, QuantitativeDIAData data) {
-		dataBySourceFile.put(sourceFile, data);
+		final QuantitativeDIAData previousData = dataBySourceFile.put(sourceFile, data);
+		if (null != previousData) {
+			throw new IllegalStateException("Data conflicts with existing entry for sample " + sourceFile + " (charge " + data.getPrecursorCharge() + " vs. " + previousData.getPrecursorCharge() + ")");
+		}
 		maxNumOfFragments=Math.max(maxNumOfFragments, data.getMassArray().length);
 	}
 	

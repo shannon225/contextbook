@@ -5,8 +5,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import com.google.common.collect.Iterables;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
@@ -249,8 +253,27 @@ public class SearchParameterParser {
 		percolatorVersionNumber=SearchParameterParser.getInteger("-percolatorVersionNumber", parameters, 3);
 		
 		value=parameters.get("-localizationModification");
-		if (value!=null) {
-			localizationModification=Optional.ofNullable(PeptideModification.getModification(value));
+		if (value != null) {
+			final String localizationModificationName = value;
+			Set<PeptideModification> peptideModifications =
+					aaConstants.getLocalizationModifications()
+							.stream()
+							.filter(mod -> localizationModificationName.equalsIgnoreCase(mod.getShortname()))
+							.collect(Collectors.toSet());
+
+			PeptideModification mod;
+			try {
+				mod = Iterables.getOnlyElement(peptideModifications);
+			} catch (NoSuchElementException noElement) {
+				// Preserves previous behavior where a mod 'unknown' to the system will be treated as not specifying a localization mod.
+				// We think we should throw in this case since this silent error is misleading.
+				mod = null;
+			} catch (IllegalStateException multipleElements) {
+				throw new IllegalStateException("Multiple modifications correspond to " + localizationModificationName);
+			}
+
+			localizationModification=Optional.ofNullable(mod);
+
 		} else {
 			localizationModification=Optional.empty();
 		}

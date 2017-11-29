@@ -111,7 +111,7 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 					boolean isLocalized=Boolean.parseBoolean(row.get("isLocalized"));
 					ModificationLocalizationData prev=result.get(peptideModSeq);
 					String ambiPeptideModSeq=row.get("localizationPeptideModSeq");
-					AmbiguousPeptideModSeq localizationPeptideModSeq=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq(ambiPeptideModSeq, modification);
+					AmbiguousPeptideModSeq localizationPeptideModSeq=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq(ambiPeptideModSeq, modification, aaConstants);
 					
 					boolean moreSiteSpecific = prev==null||(isSiteSpecific&&!prev.isSiteSpecific());
 					boolean notLessSiteSpecific = prev==null||localizationPeptideModSeq.getAmbiguityValue()>=prev.getLocalizationPeptideModSeq().getAmbiguityValue();

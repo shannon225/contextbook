@@ -165,8 +165,8 @@ public class Charter {
 	public static void writeAsPDF(File f, String xAxis, String yAxis, boolean displayLegend, XYTraceInterface... traces) {
 		JFreeChart chart=getChart(xAxis, yAxis, displayLegend, traces).getChart();
 		//Dimension d=new Dimension(792, 612);
-		Dimension d=new Dimension(600, 450);
-		//Dimension d=new Dimension(400, 300);
+		//Dimension d=new Dimension(600, 450);
+		Dimension d=new Dimension(400, 300);
 		
 		try {
 			// NOTE: this uses itextPDF 4.2, which is LGPL. Do not upgrade to the AGPL version! 
@@ -460,7 +460,12 @@ public class Charter {
 
 			case dashedline:
 				renderer=new XYLineAndShapeRenderer();
-				renderer.setSeriesStroke(0, new BasicStroke(trace.getThickness().orElse(2.0f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0.0f, new float[] {3.0f, 5.0f}, 0.0f));
+				Float thickness=trace.getThickness().orElse(2.0f);
+				if (thickness>5) {
+					renderer.setSeriesStroke(0, new BasicStroke(thickness, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] {12.0f, 16.0f}, 0.0f));
+				} else {
+					renderer.setSeriesStroke(0, new BasicStroke(thickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0.0f, new float[] {3.0f, 5.0f}, 0.0f));
+				}
 				((XYLineAndShapeRenderer) renderer).setDrawSeriesLineAsPath(true);
 				((XYLineAndShapeRenderer) renderer).setBaseShapesVisible(false);
 

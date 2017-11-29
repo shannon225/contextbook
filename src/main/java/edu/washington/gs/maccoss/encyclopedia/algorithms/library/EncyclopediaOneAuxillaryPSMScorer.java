@@ -45,8 +45,6 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		this.sparseModelCalculator=sparseModelCalculator;
 	}
 
-
-
 	public EncyclopediaOneAuxillaryPSMScorer getEntryOptimizedScorer(LibraryEntry entry) {
 		SparseXCorrCalculator librarySparse=new SparseXCorrCalculator(entry, new Range((float)entry.getPrecursorMZ()-10f, (float)entry.getPrecursorMZ()+10f), parameters);
 		SparseXCorrCalculator sparseModel=new SparseXCorrCalculator(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters);
