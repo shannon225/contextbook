@@ -267,7 +267,7 @@ public class StripeFile extends VersionedSQLFile implements StripeFileInterface 
 	public void addPrecursor(ArrayList<PrecursorScan> precursors) throws IOException, SQLException {
 		Connection c = getConnection();
 		try {
-			PreparedStatement prep=c.prepareStatement("insert into precursor (SpectrumName, SpectrumIndex, ScanStartTime, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray) VALUES (?,?,?,?,?,?,?)");
+			PreparedStatement prep=c.prepareStatement("insert into precursor (SpectrumName, SpectrumIndex, ScanStartTime, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, TIC) VALUES (?,?,?,?,?,?,?, ?)");
 			try {
 				for (PrecursorScan precursor : precursors) {
 					prep.setString(1, precursor.getSpectrumName());
@@ -279,6 +279,7 @@ public class StripeFile extends VersionedSQLFile implements StripeFileInterface 
 					byte[] intensityByteArray=ByteConverter.toByteArray(precursor.getIntensityArray());
 					prep.setInt(6, intensityByteArray.length);
 					prep.setBytes(7, CompressionUtils.compress(intensityByteArray));
+					prep.setFloat(8, precursor.getTIC());
 					prep.addBatch();
 				}
 				prep.executeBatch();
