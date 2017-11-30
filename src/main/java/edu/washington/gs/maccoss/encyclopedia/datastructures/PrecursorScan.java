@@ -15,12 +15,16 @@ public class PrecursorScan implements Spectrum, Comparable<PrecursorScan> {
 	private final float tic;
 
 	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, double[] massArray, float[] intensityArray) {
+		this(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray, General.sum(intensityArray));
+	}
+
+	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, double[] massArray, float[] intensityArray, float tic) {
 		this.spectrumName=spectrumName;
 		this.spectrumIndex=spectrumIndex;
 		this.scanStartTime=scanStartTime;
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
-		this.tic=General.sum(intensityArray);
+		this.tic=tic;
 	}
 	
 	@Override
