@@ -165,6 +165,8 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 				writer.flush();
 				writer.close();
 
+				// Use a list that's backed by the file we just wrote; this allows
+				// the points to fall out of memory until this list is accessed.
 				return new LazyFileReadingRtDataList(file, "UTF-8");
 			} catch (IOException e) {
 				Logger.errorLine("Error writing retention time mapping file.");
