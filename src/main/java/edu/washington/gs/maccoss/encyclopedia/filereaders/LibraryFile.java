@@ -1261,6 +1261,10 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 			Logger.logLine("Opening library "+userFile.getName()+" (version: "+version+")");
 		}
 
+		if (new Version(0, 0, 0).equals(version)) { // new file, do no patching
+			return;
+		}
+
 		if (new Version(0, 1, 2).amIAbove(version)&&version.amIAbove(new Version(0, 0, 9))) {
 			if (userFile!=null) {
 				Logger.logLine("Updating library to "+new Version(0, 1, 2));
