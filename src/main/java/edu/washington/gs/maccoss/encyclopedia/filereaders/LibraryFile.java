@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.StringTokenizer;
@@ -28,6 +27,7 @@ import com.google.common.collect.ImmutableList;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
@@ -63,6 +63,7 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 	public static boolean OPEN_IN_PLACE=false;
 
 	private static final String SOURCEFILE_TIC_PREFIX="TIC_";
+	private static final String SOURCEFILE_RT_ALIGN_PREFIX="ALIGN_";
 	private static final String SOURCEFILE_STRING="sourcefile";
 	private static final String SOURCE_FILE_SPLIT="|";
 	public static final String DLIB=".dlib";
@@ -143,7 +144,7 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 	}
 
 	public void addTIC(StripeFileInterface diaFile) throws IOException, SQLException {
-		String key=SOURCEFILE_TIC_PREFIX+diaFile.getOriginalFileName();
+		String key=SOURCEFILE_TIC_PREFIX+ getOriginalFileName(diaFile);
 
 		HashMap<String, String> map=new HashMap<String, String>();
 		map.put(key, Float.toString(diaFile.getTIC()));
@@ -152,8 +153,7 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 	}
 
 	public float getTIC(StripeFileInterface diaFile) throws IOException, SQLException {
-		String originalFileName=diaFile.getOriginalFileName();
-		return getTIC(originalFileName);
+		return getTIC(getOriginalFileName(diaFile));
 	}
 
 	public float getTIC(String originalFileName) throws IOException, SQLException {
@@ -163,6 +163,34 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 		if (value==null)
 			return 0.0f;
 		return Float.parseFloat(value);
+	}
+
+	private static String getOriginalFileName(SearchJobData job) {
+		return getOriginalFileName(job.getDiaFileReader());
+	}
+
+	private static String getOriginalFileName(StripeFileInterface diaFile) {
+		return diaFile.getOriginalFileName();
+	}
+
+	public void addRtAlignment(SearchJobData job, PeakLocationInferrerInterface inferrer) {
+		Optional.ofNullable(inferrer.getAlignmentData(job))
+				.ifPresent(alignment -> addRtAlignment(job, alignment));
+	}
+
+	public void addRtAlignment(SearchJobData job, List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignment) {
+		final String key = getOriginalFileName(job);
+
+		System.out.println("Alignment for " + key);
+		alignment.forEach(pt -> {
+			System.out.println(String.format("%f\t%f\t%f\t%f\t%f",
+					pt.getLibrary(),
+					pt.getActual(),
+					pt.getPredictedActual(),
+					pt.getDelta(),
+					pt.getProbability()
+					));
+		});
 	}
 
 	public void setSources(List<? extends SearchJobData> sources) throws IOException, SQLException {

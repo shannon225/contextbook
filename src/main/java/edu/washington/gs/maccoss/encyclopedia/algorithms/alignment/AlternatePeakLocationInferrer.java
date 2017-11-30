@@ -53,6 +53,7 @@ public class AlternatePeakLocationInferrer {
 
 		// construct alignments
 		HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap=new HashMap<SearchJobData, RetentionTimeAlignmentInterface>();
+		HashMap<SearchJobData, List<RetentionTimeAlignmentInterface.AlignmentDataPoint>> alignmentDataMap = new HashMap<>();
 		HashMap<String, Float> alignedRTInMinBySequenceMap=new HashMap<String, Float>();
 		// add all bestJob archetypals
 		TObjectFloatHashMap<String> archetypals=peptideMappings.get(bestJob);
@@ -91,7 +92,10 @@ public class AlternatePeakLocationInferrer {
 				
 				RetentionTimeAlignmentInterface alignment=new RetentionTimeFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
 				alignmentMap.put(job, alignment);
-				alignment.plot(points, Optional.ofNullable(job.getDiaFile()));
+
+				final List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignmentResults =
+						alignment.plot(points, Optional.ofNullable(job.getDiaFile()));
+				alignmentDataMap.put(job, alignmentResults);
 
 				// align local archetypals to the seed
 				rtInSec.forEachEntry(new TObjectFloatProcedure<String>() {
@@ -105,7 +109,7 @@ public class AlternatePeakLocationInferrer {
 			}
 		}
 
-		return new SimplePeakLocationInferrer(alignmentMap, alignedRTInMinBySequenceMap, bestIons, params);
+		return new SimplePeakLocationInferrer(alignmentMap, alignmentDataMap, alignedRTInMinBySequenceMap, bestIons, params);
 	}
 
 	static Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> getArchetypals(ProgressIndicator progress, List<? extends SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
