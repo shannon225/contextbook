@@ -63,14 +63,17 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 	public static boolean OPEN_IN_PLACE=false;
 
 	private static final String SOURCEFILE_TIC_PREFIX="TIC_";
-	private static final String SOURCEFILE_RT_ALIGN_PREFIX="ALIGN_";
 	private static final String SOURCEFILE_STRING="sourcefile";
 	private static final String SOURCE_FILE_SPLIT="|";
 	public static final String DLIB=".dlib";
 	public static final String ELIB=".elib";
-	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] { new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4),
-			new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8), new Version(0, 1, 9), new Version(0, 1, 10), new Version(0, 1, 11), new Version(0, 1, 12), new Version(0, 1, 13) };
-	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 13);
+
+	public static final Version[] ACCEPTABLE_VERSIONS = new Version[] {
+			new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4),
+			new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8), new Version(0, 1, 9),
+			new Version(0, 1, 10), new Version(0, 1, 11), new Version(0, 1, 12), new Version(0, 1, 13), new Version(0, 1, 14)
+	};
+	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 14);
 
 	private File userFile=null;
 	private File tempFile;
@@ -179,18 +182,39 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 	}
 
 	public void addRtAlignment(SearchJobData job, List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignment) {
-		final String key = getOriginalFileName(job);
+		final String sourceFile = getOriginalFileName(job);
 
-		System.out.println("Alignment for " + key);
-		alignment.forEach(pt -> {
-			System.out.println(String.format("%f\t%f\t%f\t%f\t%f",
-					pt.getLibrary(),
-					pt.getActual(),
-					pt.getPredictedActual(),
-					pt.getDelta(),
-					pt.getProbability()
-					));
-		});
+		try (Connection c = getConnection()) {
+			c.setAutoCommit(false);
+
+			try (PreparedStatement s = c.prepareStatement(
+					"INSERT INTO retentiontimes (SourceFile, Library, Actual, Predicted, Delta, Probability) VALUES (?, ?, ?, ?, ?, ?)"
+			)) {
+				for (int i = 0, alignmentSize = alignment.size(); i < alignmentSize; i++) {
+					final RetentionTimeAlignmentInterface.AlignmentDataPoint pt = alignment.get(i);
+
+					s.setString(1, sourceFile);
+					s.setFloat(2, pt.getLibrary());
+					s.setFloat(3, pt.getActual());
+					s.setFloat(4, pt.getPredictedActual());
+					s.setFloat(5, pt.getDelta());
+					s.setFloat(6, pt.getProbability());
+					s.addBatch();
+
+					if (i % 8192 == 0) {
+						s.executeBatch();
+						s.clearBatch();
+					}
+				}
+				s.executeBatch();
+			} catch (SQLException e) {
+				c.rollback();
+			} finally {
+				c.commit();
+			}
+		} catch (SQLException | IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void setSources(List<? extends SearchJobData> sources) throws IOException, SQLException {
@@ -1406,6 +1430,8 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 		s.execute("CREATE TABLE IF NOT EXISTS proteinscores ( "
 				+"ProteinGroup int not null, ProteinAccession string not null, SourceFile string not null, QValue double not null, MinimumPeptidePEP double not null, IsDecoy boolean not null "
 				+")");
+
+		s.execute("CREATE TABLE IF NOT EXISTS retentiontimes (SourceFile string not null, Library float not null, Actual float not null, Predicted float not null, Delta float not null, Probability float not null)");
 	}
 
 	public void dropIndices() throws IOException, SQLException {
