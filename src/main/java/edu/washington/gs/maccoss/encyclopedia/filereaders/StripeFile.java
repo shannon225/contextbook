@@ -32,10 +32,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
-public class StripeFile extends SQLFile implements StripeFileInterface {
-	
+public class StripeFile extends VersionedSQLFile implements StripeFileInterface {
+	private static final Version MOST_RECENT_VERSION = new Version(0, 1, 0);
+
 	private static final String UNKNOWN_VALUE="unknown";
 	public static final String FILELOCATION_ATTRIBUTE="filelocation";
 	public static final String SOURCENAME_ATTRIBUTE="sourcename";
@@ -227,35 +229,6 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		map.put(FILELOCATION_ATTRIBUTE, fileLocation==null?UNKNOWN_VALUE:fileLocation);
 		addMetadata(map);
 	}
-
-	public void addMetadata(String key, String value) throws IOException, SQLException {
-		HashMap<String, String> map=new HashMap<String, String>();
-		map.put(key, value==null?UNKNOWN_VALUE:value);
-		addMetadata(map);
-	}
-	
-	public HashMap<String, String> getMetadata() throws IOException, SQLException {
-		Connection c = getConnection();
-		try {
-			Statement s=c.createStatement();
-			try {
-				ResultSet rs=s.executeQuery("select Key, Value from metadata");
-
-				HashMap<String, String> map=new HashMap<String, String>();
-				while (rs.next()) {
-					String key=rs.getString(1);
-					String value=rs.getString(2);
-					map.put(key, value);
-				}
-
-				return map;
-			} finally {
-				s.close();
-			}
-		} finally {
-			c.close();
-		}
-	}
 	
 	public float getTIC() throws IOException, SQLException {
 		String value=getMetadata().get(StripeFile.TOTAL_PRECURSOR_TIC_ATTRIBUTE);
@@ -291,27 +264,6 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		return Float.parseFloat(value);
 	}
 
-	public void addMetadata(Map<String, String> data) throws IOException, SQLException {
-		Connection c = getConnection();
-		try {
-			PreparedStatement prep=c.prepareStatement("insert into metadata (Key, Value) VALUES (?,?)");
-			try {
-				for (Entry<String, String> entry : data.entrySet()) {
-					prep.setString(1, entry.getKey());
-					prep.setString(2, entry.getValue());
-					prep.addBatch();
-				}
-				prep.executeBatch();
-				prep.close();
-				c.commit();
-			} finally {
-				prep.close();
-			}
-		} finally {
-			c.close();
-		}
-	}
-
 	public void addPrecursor(ArrayList<PrecursorScan> precursors) throws IOException, SQLException {
 		Connection c = getConnection();
 		try {
@@ -340,13 +292,13 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		}
 	}
 
-	private Connection getConnection() throws IOException, SQLException {
+	protected Connection getConnection() throws IOException, SQLException {
 		if (isOpenFileInPlace && !userFile.exists()){
 			throw new IllegalStateException("No file to obtain a connection to!");
 		}
 		return isOpenFileInPlace ? getConnection(userFile): getConnection(tempFile);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface#getPrecursors(float, float)
 	 */
@@ -567,32 +519,33 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		return new Stripe(spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray);
 	}
 
-	private void createNewTables() throws IOException, SQLException {
-		Connection c = getConnection();
-		try {
-			Statement s=c.createStatement();
-			try {
-				s.execute("create table if not exists metadata ( Key string not null, Value string not null, primary key (Key) )");
-				s.execute("create table if not exists ranges ( Start float not null, Stop float not null, DutyCycle float not null )");
-				s.execute("create table if not exists spectra ( SpectrumName string not null, PrecursorName string, SpectrumIndex int not null, ScanStartTime float not null, IsolationWindowLower float not null, IsolationWindowCenter float not null, IsolationWindowUpper float not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, primary key (SpectrumIndex) )");
-				s.execute("create table if not exists precursor ( SpectrumName string not null, SpectrumIndex int not null, ScanStartTime float not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, TIC float, primary key (SpectrumIndex) )");
+	@Override
+	public Version getMostRecentVersion() {
+		return MOST_RECENT_VERSION;
+	}
 
-				if (!doesColumnExist(c, "precursor", "TIC")) {
-					s.execute("alter table precursor add column TIC float");
-				}
-
-				s.execute("create index if not exists \"spectra_index_isolation_window_lower\" on \"spectra\" (\"IsolationWindowLower\" ASC)");
-				s.execute("create index if not exists \"spectra_index_isolation_window_upper\" on \"spectra\" (\"IsolationWindowUpper\" ASC)");
-				s.execute("create index if not exists \"spectra_index_scan_start_time\" on \"spectra\" (\"ScanStartTime\" ASC)");
-				s.execute("create index if not exists \"precursor_index_scan_start_time\" on \"precursor\" (\"ScanStartTime\" ASC)");
-
-				c.commit();
-			} finally {
-				s.close();
+	@Override
+	protected void applyPatches(Version currentVersion, Statement s) throws IOException, SQLException {
+		if (new Version(0, 0, 0).equals(currentVersion)) {
+			// Because versioning was added to StripeFile later, version 0.0.0 can mean either a new file
+			// or a file created before versioning. Thus we must check for the existence of tables we want to alter.
+			if (doesTableExist(s.getConnection(), "precursor")) {
+				s.execute("alter table precursor add column TIC float");
 			}
-		} finally {
-			c.close();
 		}
+	}
+
+	@Override
+	protected void createTables(Statement s) throws IOException, SQLException {
+		s.execute("create table if not exists metadata ( Key string not null, Value string not null, primary key (Key) )");
+		s.execute("create table if not exists ranges ( Start float not null, Stop float not null, DutyCycle float not null )");
+		s.execute("create table if not exists spectra ( SpectrumName string not null, PrecursorName string, SpectrumIndex int not null, ScanStartTime float not null, IsolationWindowLower float not null, IsolationWindowCenter float not null, IsolationWindowUpper float not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, primary key (SpectrumIndex) )");
+		s.execute("create table if not exists precursor ( SpectrumName string not null, SpectrumIndex int not null, ScanStartTime float not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, TIC float, primary key (SpectrumIndex) )");
+
+		s.execute("create index if not exists \"spectra_index_isolation_window_lower\" on \"spectra\" (\"IsolationWindowLower\" ASC)");
+		s.execute("create index if not exists \"spectra_index_isolation_window_upper\" on \"spectra\" (\"IsolationWindowUpper\" ASC)");
+		s.execute("create index if not exists \"spectra_index_scan_start_time\" on \"spectra\" (\"ScanStartTime\" ASC)");
+		s.execute("create index if not exists \"precursor_index_scan_start_time\" on \"precursor\" (\"ScanStartTime\" ASC)");
 	}
 
 	/* (non-Javadoc)

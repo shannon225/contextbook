@@ -23,7 +23,30 @@ public abstract class SQLFile {
 			throw new IOException("Error reading database file: "+f.getAbsolutePath());
 		}
 	}
-	
+
+	public boolean doesTableExist(File file,  String table) throws IOException, SQLException {
+		Connection connection = getConnection(file);
+		try {
+			return doesTableExist(connection, table);
+		} finally {
+			connection.close();
+		}
+	}
+
+	public boolean doesTableExist(Connection c, String table) throws IOException, SQLException {
+		Statement s=c.createStatement();
+		try {
+			ResultSet rs=s.executeQuery("SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = '"+table+"'");
+			while (rs.next()) {
+				int count=rs.getInt(1);
+				return count>0;
+			}
+			return false;
+		} finally {
+			s.close();
+		}
+	}
+
 	public boolean doesColumnExist(File f, String table, String column) throws IOException, SQLException {
 		Connection c=getConnection(f);
 		try {
