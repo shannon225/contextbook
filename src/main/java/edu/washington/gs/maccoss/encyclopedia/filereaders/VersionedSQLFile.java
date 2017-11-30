@@ -12,6 +12,8 @@ import java.util.Map;
  * A SQLFile with a metadata table.
  * Version is stored in the metadata table.
  *
+ * n.b., All subclasses must call createNewTables() from their open() method
+ *
  * Created with IntelliJ IDEA.
  * User: caleb
  * Date: 11/29/2017
@@ -22,14 +24,14 @@ public abstract class VersionedSQLFile extends SQLFile {
 
 	/**
 	 *
-	 * @return The maximal current version of this file. New files will be given this this version.
+	 * @return The maximal current version of this file. New files will be given this version.
 	 */
 	public abstract Version getMostRecentVersion();
 
 	protected abstract Connection getConnection() throws IOException, SQLException;
 
 	/**
-	 * Apply all alterations to the sql file to updated it from its current version to the most recent version
+	 * Apply all alterations to the sql file to update it from its current version to the most recent version
 	 * @param currentVersion the current version of the file, or 0.0.0 if it did not previously have a version
 	 * @param statement
 	 */
@@ -78,7 +80,7 @@ public abstract class VersionedSQLFile extends SQLFile {
 		return new Version(meta.get(VERSION_STRING));
 	}
 
-	public final Map<String, String> getMetadata() throws IOException, SQLException {
+	public final HashMap<String, String> getMetadata() throws IOException, SQLException {
 		Connection c=getConnection();
 		try {
 			Statement s=c.createStatement();
@@ -114,6 +116,8 @@ public abstract class VersionedSQLFile extends SQLFile {
 			try {
 				s.execute("create table if not exists metadata ( Key string not null, Value string not null, primary key (Key) )");
 				s.execute("create index if not exists 'Key_Metadata_index' on 'metadata' ('Key' ASC)");
+
+				c.commit(); // commit so getVersion() finds the new table
 
 				Version version = getVersion(); // will be 0.0.0 if metadata table was just created
 

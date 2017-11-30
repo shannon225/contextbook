@@ -24,7 +24,7 @@ public abstract class SQLFile {
 		}
 	}
 
-	public boolean doesTableExist(File file,  String table) throws IOException, SQLException {
+	public final boolean doesTableExist(File file,  String table) throws IOException, SQLException {
 		Connection connection = getConnection(file);
 		try {
 			return doesTableExist(connection, table);
@@ -33,7 +33,7 @@ public abstract class SQLFile {
 		}
 	}
 
-	public boolean doesTableExist(Connection c, String table) throws IOException, SQLException {
+	public final boolean doesTableExist(Connection c, String table) throws IOException, SQLException {
 		Statement s=c.createStatement();
 		try {
 			ResultSet rs=s.executeQuery("SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = '"+table+"'");
@@ -47,7 +47,7 @@ public abstract class SQLFile {
 		}
 	}
 
-	public boolean doesColumnExist(File f, String table, String column) throws IOException, SQLException {
+	public final boolean doesColumnExist(File f, String table, String column) throws IOException, SQLException {
 		Connection c=getConnection(f);
 		try {
 			return doesColumnExist(c, table, column);
@@ -64,7 +64,7 @@ public abstract class SQLFile {
 	 * @return whether the column exists in said table
 	 * @throws SQLException
 	 */
-	protected boolean doesColumnExist(Connection c, String table, String column) throws SQLException {
+	protected final boolean doesColumnExist(Connection c, String table, String column) throws SQLException {
 		Statement s=c.createStatement();
 		try {
 			ResultSet rs=s.executeQuery("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = '"+table+"'");
