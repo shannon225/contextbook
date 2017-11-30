@@ -53,7 +53,7 @@ public abstract class VersionedSQLFile extends SQLFile {
 	public final void addMetadata(Map<String, String> data) throws IOException, SQLException {
 		Connection c=getConnection();
 		try {
-			PreparedStatement prep=c.prepareStatement("insert into metadata (Key, Value) VALUES (?,?)");
+			PreparedStatement prep=c.prepareStatement("insert or replace into metadata (Key, Value) VALUES (?,?)");
 			try {
 				for (Map.Entry<String, String> entry : data.entrySet()) {
 					prep.setString(1, entry.getKey());
