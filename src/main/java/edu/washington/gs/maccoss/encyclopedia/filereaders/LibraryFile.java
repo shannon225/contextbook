@@ -1204,10 +1204,11 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 	}
 
 	private static void populatePeptideToProtein(Connection c) throws SQLException {
-		System.out.println("POPULATING PEPTIDE TO PROTEIN");
-		System.out.println("entries SIZE: "+c.prepareStatement("select count(*) from entries").executeQuery().getInt(1));
-		System.out.println("proteins SIZE: "+c.prepareStatement("select count(*) from proteins").executeQuery().getInt(1));
-		System.out.println("peptidetoprotein SIZE: "+c.prepareStatement("select count(*) from peptidetoprotein").executeQuery().getInt(1));
+		// TODO: if you re-enable this, be sure to close these statements which are not being closed
+//		System.out.println("POPULATING PEPTIDE TO PROTEIN");
+//		System.out.println("entries SIZE: "+c.prepareStatement("select count(*) from entries").executeQuery().getInt(1));
+//		System.out.println("proteins SIZE: "+c.prepareStatement("select count(*) from proteins").executeQuery().getInt(1));
+//		System.out.println("peptidetoprotein SIZE: "+c.prepareStatement("select count(*) from peptidetoprotein").executeQuery().getInt(1));
 
 		try (PreparedStatement s=c.prepareStatement("select * from proteins p;")) {
 			s.execute();
@@ -1244,10 +1245,11 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		System.out.println("CHECKING PEPTIDE TO PROTEIN");
-		System.out.println("entries SIZE: "+c.prepareStatement("select count(*) from entries").executeQuery().getInt(1));
-		System.out.println("proteins SIZE: "+c.prepareStatement("select count(*) from proteins").executeQuery().getInt(1));
-		System.out.println("peptidetoprotein SIZE: "+c.prepareStatement("select count(*) from peptidetoprotein").executeQuery().getInt(1));
+		// TODO: if you re-enable this, be sure to close these statements which are not being closed
+//		System.out.println("CHECKING PEPTIDE TO PROTEIN");
+//		System.out.println("entries SIZE: "+c.prepareStatement("select count(*) from entries").executeQuery().getInt(1));
+//		System.out.println("proteins SIZE: "+c.prepareStatement("select count(*) from proteins").executeQuery().getInt(1));
+//		System.out.println("peptidetoprotein SIZE: "+c.prepareStatement("select count(*) from peptidetoprotein").executeQuery().getInt(1));
 
 	}
 
