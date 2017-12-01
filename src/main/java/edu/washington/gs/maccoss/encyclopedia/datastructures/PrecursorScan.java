@@ -83,4 +83,12 @@ public class PrecursorScan implements Spectrum, Comparable<PrecursorScan> {
 		}
 		return spectra;
 	}
+
+	public static PrecursorScan getPrecursorScanWithPositiveTIC(String spectrumName, int spectrumIndex, float scanStartTime, double[] massArray, float[] intensityArray, Float tic) {
+		if (tic==null || !Float.isFinite(tic) || tic <= 0) {
+			tic = General.sum(intensityArray);
+		}
+
+		return new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray, tic);
+	}
 }
