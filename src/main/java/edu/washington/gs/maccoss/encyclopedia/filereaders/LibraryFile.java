@@ -194,11 +194,15 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 					final RetentionTimeAlignmentInterface.AlignmentDataPoint pt = alignment.get(i);
 
 					s.setString(1, sourceFile);
-					s.setFloat(2, pt.getLibrary());
-					s.setFloat(3, pt.getActual());
-					s.setFloat(4, pt.getPredictedActual());
-					s.setFloat(5, pt.getDelta());
+
+					// Convert values in minutes to seconds
+					s.setFloat(2, 60*pt.getLibrary());
+					s.setFloat(3, 60*pt.getActual());
+					s.setFloat(4, 60*pt.getPredictedActual());
+					s.setFloat(5, 60*pt.getDelta());
+
 					s.setFloat(6, pt.getProbability());
+
 					s.addBatch();
 
 					if (i % 8192 == 0) {
