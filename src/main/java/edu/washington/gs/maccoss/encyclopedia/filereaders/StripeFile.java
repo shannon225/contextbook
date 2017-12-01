@@ -309,7 +309,7 @@ public class StripeFile extends VersionedSQLFile implements StripeFileInterface 
 		try {
 			Statement s=c.createStatement();
 			try {
-				ResultSet rs=s.executeQuery("select SpectrumName, SpectrumIndex, ScanStartTime, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray from precursor "
+				ResultSet rs=s.executeQuery("select SpectrumName, SpectrumIndex, ScanStartTime, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, TIC from precursor "
 						+"where ScanStartTime between "+minRT+" and "+maxRT);
 
 				ArrayList<PrecursorScan> precursors=new ArrayList<PrecursorScan>();
@@ -321,7 +321,9 @@ public class StripeFile extends VersionedSQLFile implements StripeFileInterface 
 					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(5), massEncodedLength));
 					int intensityEncodedLength=rs.getInt(6);
 					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(7), intensityEncodedLength));
-					precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray));
+					float tic=rs.getFloat(8);
+
+					precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray, tic));
 				}
 
 				return precursors;

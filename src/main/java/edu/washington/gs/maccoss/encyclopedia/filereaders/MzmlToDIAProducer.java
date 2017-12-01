@@ -90,6 +90,16 @@ public class MzmlToDIAProducer implements Runnable {
 			} else {
 				throw new EncyclopediaException("Unexpected time unit: "+unit);
 			}
+
+			Float tic=null;
+			CVParam ticCVParam=cvparams.get("MS:1000285"); // total ion current
+			if (ticCVParam!=null) {
+				try {
+					tic = Float.parseFloat(ticCVParam.getValue());
+				} catch (NullPointerException | NumberFormatException e) {
+					tic = null;
+				}
+			}
 			
 			float scanStartTime=multiplier*Float.parseFloat(scanStartTimeCVParams.getValue());
 			BinaryDataArrayList bdal=spectrum.getBinaryDataArrayList();
@@ -114,7 +124,7 @@ public class MzmlToDIAProducer implements Runnable {
 					double[] deltaArray=General.multiply(massArray, parameters.getPrecursorOffsetPPM()/1000000.0);
 					massArray=General.subtract(massArray, deltaArray);
 				}
-				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray));
+				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray, tic));
 			} else {
 				
 				float isolationWindowTarget;
