@@ -30,7 +30,7 @@ public class CachedStripeFile implements StripeFileInterface {
 		
 		float sum=0.0f;
 		for (PrecursorScan precursorScan : precursors) {
-			sum+=General.sum(precursorScan.getIntensityArray());
+			sum+=precursorScan.getTIC();
 		}
 		tic=sum;
 		
