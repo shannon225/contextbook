@@ -323,7 +323,7 @@ public class StripeFile extends VersionedSQLFile implements StripeFileInterface 
 					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(7), intensityEncodedLength));
 					float tic=rs.getFloat(8);
 
-					precursors.add(PrecursorScan.getPrecursorScanWithPositiveTIC(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray, tic));
+					precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray, tic));
 				}
 
 				return precursors;

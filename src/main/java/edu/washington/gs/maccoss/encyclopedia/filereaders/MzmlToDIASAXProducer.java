@@ -241,7 +241,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 					double[] deltaArray=General.multiply(massArray, parameters.getPrecursorOffsetPPM()/1000000.0);
 					massArray=General.subtract(massArray, deltaArray);
 				}
-				precursors.add(PrecursorScan.getPrecursorScanWithPositiveTIC(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray, tic));
+				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray, tic));
 
 			} else {
 				if (spectrumRef==null) spectrumRef="Unknown";

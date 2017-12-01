@@ -93,7 +93,7 @@ public class MzmlReader {
 			float[] intensityArray=ByteConverter.toFloatArray(bdal.getBinaryDataArray().get(1).getBinaryDataAsNumberArray());
 
 			if (p==null) {
-				precursors.add(PrecursorScan.getPrecursorScanWithPositiveTIC(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray, tic));
+				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray, tic));
 			} else {
 				HashMap<String, CVParam> isolationCVParams=asCVMap(p.getIsolationWindow().getCvParam());
 				float isolationWindowTarget=Float.parseFloat(isolationCVParams.get("MS:1000827").getValue());
