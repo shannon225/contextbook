@@ -1280,7 +1280,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					while (rs.next()) {
 						ins.setString(1, rs.getString("peptideseq"));
 						for (String acc : PSMData.stringToAccessions(rs.getString("proteinaccessions"))) {
-							ins.setBoolean(2, true); // everything that was
+							ins.setBoolean(2, false); // everything that was
 														// originally added to
 														// proteins is not a
 														// decoy
