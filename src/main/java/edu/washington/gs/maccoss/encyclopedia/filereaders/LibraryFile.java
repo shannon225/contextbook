@@ -1321,13 +1321,16 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try {
 			Statement s=c.createStatement();
 			try {
-				try {
-					Version version=getVersion();
+				// lack of a metadata table implies this is a new file. no patches are needed, and all tables will
+				// be created
+				Version version = doesTableExist(c, "metadata") ? getVersion() : null;
+
+				if (version!=null) {
 					if (userFile!=null) {
 						Logger.logLine("Opening library "+userFile.getName()+" (version: "+version+")");
 					}
 
-					if (new Version(0, 1, 2).amIAbove(version)&&version.amIAbove(new Version(0, 0, 9))) {
+					if (new Version(0, 1, 2).amIAbove(version) && version.amIAbove(new Version(0, 0, 9))) {
 						if (userFile!=null) {
 							Logger.logLine("Updating library to "+new Version(0, 1, 2));
 						}
@@ -1403,10 +1406,6 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						}
 						s.execute("ALTER TABLE peptidetoprotein ADD COLUMN isDecoy boolean");
 					}
-
-				} catch (SQLException sqle) {
-					// the metadata table is missing, so do nothing and create
-					// it in the next line
 				}
 
 				// UNIQUE constraints cost as much as an index and can't
