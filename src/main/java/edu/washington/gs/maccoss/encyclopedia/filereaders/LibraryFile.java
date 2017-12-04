@@ -59,7 +59,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
-public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
+public class LibraryFile extends SQLFile implements LibraryInterface {
 	public static boolean OPEN_IN_PLACE=false;
 
 	private static final String SOURCEFILE_TIC_PREFIX="TIC_";
@@ -67,6 +67,7 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 	private static final String SOURCE_FILE_SPLIT="|";
 	public static final String DLIB=".dlib";
 	public static final String ELIB=".elib";
+	public static final String VERSION_STRING="version";
 	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] { new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4),
 			new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8), new Version(0, 1, 9), new Version(0, 1, 10), new Version(0, 1, 11), new Version(0, 1, 12), new Version(0, 1, 13) };
 	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 13);
@@ -121,6 +122,8 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 
 	public void saveFile() throws IOException, SQLException {
 		if (userFile!=null) {
+			setFileVersion();
+
 			Connection c=getConnection();
 
 			try {
@@ -179,6 +182,44 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 		addMetadata(map);
 	}
 
+	public void setFileVersion() throws IOException, SQLException {
+		HashMap<String, String> map=new HashMap<String, String>();
+		map.put(VERSION_STRING, MOST_RECENT_VERSION.toString());
+		addMetadata(map);
+	}
+
+	public void addMetadata(String key, String value) throws IOException, SQLException {
+		HashMap<String, String> data=new HashMap<>();
+		data.put(key, value);
+		addMetadata(data);
+	}
+
+	public void addMetadata(Map<String, String> data) throws IOException, SQLException {
+		Connection c=getConnection();
+		try {
+			PreparedStatement prep=c.prepareStatement("insert into metadata (Key, Value) VALUES (?,?)");
+			try {
+				for (Entry<String, String> entry : data.entrySet()) {
+					prep.setString(1, entry.getKey());
+					prep.setString(2, entry.getValue());
+					prep.addBatch();
+				}
+				prep.executeBatch();
+				prep.close();
+				c.commit();
+			} finally {
+				prep.close();
+			}
+		} finally {
+			c.close();
+		}
+	}
+
+	public Version getVersion() throws IOException, SQLException {
+		HashMap<String, String> meta=getMetadata();
+		return new Version(meta.get(VERSION_STRING));
+	}
+
 	public List<Path> getSourceFiles() throws IOException, SQLException {
 		final String sources=getMetadata().get(SOURCEFILE_STRING);
 
@@ -209,6 +250,28 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 		}
 	}
 
+	public HashMap<String, String> getMetadata() throws IOException, SQLException {
+		Connection c=getConnection();
+		try {
+			Statement s=c.createStatement();
+			try {
+				ResultSet rs=s.executeQuery("select Key, Value from metadata");
+
+				HashMap<String, String> map=new HashMap<String, String>();
+				while (rs.next()) {
+					String key=rs.getString(1);
+					String value=rs.getString(2);
+					map.put(key, value);
+				}
+
+				return map;
+			} finally {
+				s.close();
+			}
+		} finally {
+			c.close();
+		}
+	}
 
 	public void addIntegratedEntries(ArrayList<IntegratedLibraryEntry> entries, Optional<PeakLocationInferrerInterface> inferrer, Optional<HashMap<String, ModificationLocalizationData>> localizationData)
 			throws IOException, SQLException {
@@ -299,7 +362,7 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 				}
 
 			}
-			
+
 			Logger.logLine("Writing "+dataAndSourceList.size()+" peptides to peptidequants table...");
 
 			// Issue 25 - skip entries that the RT inferrer could not process.
@@ -543,7 +606,7 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 		peptidePrep.setString(index++, topN.getPeptideSeq());
 		peptidePrep.setString(index++, sourceFile);
 		peptidePrep.setFloat(index++, topN.getApexRT());
-		
+
 		peptidePrep.setFloat(index++, topN.getRtScanRange().getStart());
 		peptidePrep.setFloat(index++, topN.getRtScanRange().getStop());
 		peptidePrep.setFloat(index++, topN.getTIC());
@@ -655,14 +718,14 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 			c.close();
 		}
 	}
-	
+
 	public ArrayList<ProteinGroupInterface> getProteinGroups() throws IOException, SQLException {
 		Connection c=getConnection();
 		try {
 			Statement s=c.createStatement();
 			try {
 				ResultSet rs=s.executeQuery("SELECT p.proteingroup, p.proteinaccession, p2p.peptideseq, p.qvalue, p.MinimumPeptidePEP FROM proteinscores p, peptidetoprotein p2p WHERE p.proteinaccession=p2p.proteinaccession ORDER BY p.proteingroup");
-				
+
 				ArrayList<ProteinGroupInterface> proteinGroups=new ArrayList<>();
 
 				int previousProteinGroup=-1;
@@ -675,8 +738,8 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 					String accession=rs.getString(2);
 					String peptideseq=rs.getString(3);
 					float qvalue=rs.getFloat(4);
-					float pep=rs.getFloat(5);				
-					
+					float pep=rs.getFloat(5);
+
 					if (proteinGroup!=previousProteinGroup) {
 						previousProteinGroup=proteinGroup;
 						if (accessions.size()>0) {
@@ -1253,133 +1316,143 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 
 	}
 
-	@Override
-	public Version getMostRecentVersion() {
-		return MOST_RECENT_VERSION;
-	}
+	private void createNewTables() throws IOException, SQLException {
+		Connection c=getConnection();
+		try {
+			Statement s=c.createStatement();
+			try {
+				try {
+					Version version=getVersion();
+					if (userFile!=null) {
+						Logger.logLine("Opening library "+userFile.getName()+" (version: "+version+")");
+					}
 
-	protected void applyPatches(Version version, Statement s) throws IOException, SQLException {
-		if (userFile!=null) {
-			Logger.logLine("Opening library "+userFile.getName()+" (version: "+version+")");
-		}
+					if (new Version(0, 1, 2).amIAbove(version)&&version.amIAbove(new Version(0, 0, 9))) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 2));
+						}
+						s.execute("ALTER TABLE entries ADD COLUMN CorrelationEncodedLength int");
+						s.execute("ALTER TABLE entries ADD COLUMN CorrelationArray blob");
+						s.execute("ALTER TABLE entries ADD COLUMN RTInSecondsStart double");
+						s.execute("ALTER TABLE entries ADD COLUMN RTInSecondsStop double");
+						s.execute("ALTER TABLE entries ADD COLUMN MedianChromatogramEncodedLength int");
+						s.execute("ALTER TABLE entries ADD COLUMN MedianChromatogramArray blob");
+					}
+					if (new Version(0, 1, 4).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 4));
+						}
+						s.execute("ALTER TABLE fragmentquants ADD COLUMN Background double");
+						s.execute("ALTER TABLE fragmentquants ADD COLUMN PeptideSeq string");
+						s.execute("ALTER TABLE peptidequants ADD COLUMN PeptideSeq string");
+					}
 
-		if (new Version(0, 0, 0).equals(version)) { // new file, do no patching
-			return;
-		}
+					if (new Version(0, 1, 5).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 5));
+						}
+						s.execute("ALTER TABLE peptidequants ADD COLUMN RTInSecondsCenter double");
+					}
 
-		if (new Version(0, 1, 2).amIAbove(version)&&version.amIAbove(new Version(0, 0, 9))) {
-			if (userFile!=null) {
-				Logger.logLine("Updating library to "+new Version(0, 1, 2));
+					if (new Version(0, 1, 6).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 6));
+						}
+						s.execute("ALTER TABLE peptidequants ADD COLUMN IdentifiedTICRatio double");
+					}
+
+					if (new Version(0, 1, 7).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 7));
+						}
+						s.execute("ALTER TABLE fragmentquants ADD COLUMN IonIndex int");
+					}
+
+					if (new Version(0, 1, 8).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 8));
+						}
+						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonMassLength int");
+						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonMassArray blob");
+					}
+
+					if (new Version(0, 1, 10).amIAbove(version)) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 10));
+						}
+						s.execute("CREATE TABLE IF NOT EXISTS peptidetoprotein ("+"PeptideSeq string not null,"+"ProteinAccession string not null"+");");
+						s.execute("ALTER TABLE peptidetoprotein ADD COLUMN isDecoy boolean");
+
+						populatePeptideToProtein(c);
+						s.execute("DROP TABLE proteins;");
+					}
+
+					if (new Version(0, 1, 11).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 11));
+						}
+						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonIntensityLength int");
+						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonIntensityArray blob");
+						s.execute("ALTER TABLE peptidequants ADD COLUMN MedianChromatogramRTEncodedLength int");
+						s.execute("ALTER TABLE peptidequants ADD COLUMN MedianChromatogramRTArray blob");
+					}
+
+					if (new Version(0, 1, 12).amIAbove(version)&&version.amIAbove(new Version(0, 1, 10))) {
+						if (userFile!=null) {
+							Logger.logLine("Updating library to "+new Version(0, 1, 12));
+						}
+						s.execute("ALTER TABLE peptidetoprotein ADD COLUMN isDecoy boolean");
+					}
+
+				} catch (SQLException sqle) {
+					// the metadata table is missing, so do nothing and create
+					// it in the next line
+				}
+
+				// UNIQUE constraints cost as much as an index and can't
+				// add/drop them, so we have to live without the constraint and
+				// deal with it in code
+				s.execute("CREATE TABLE IF NOT EXISTS metadata ( "+"Key string not null, Value string not null "+")"); // +"UNIQUE
+																														// (Key)
+																														// )");
+
+				s.execute("CREATE TABLE IF NOT EXISTS entries ( "
+						+"PrecursorMz double not null, PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, Copies int not null, RTInSeconds double not null, Score double not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, CorrelationEncodedLength int, CorrelationArray blob, RTInSecondsStart double, RTInSecondsStop double, MedianChromatogramEncodedLength int, MedianChromatogramArray blob, SourceFile string not null "
+						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq,
+								// SourceFile) )");
+
+				s.execute("CREATE TABLE IF NOT EXISTS peptidetoprotein ("+"PeptideSeq string not null,"+"isDecoy boolean,"+"ProteinAccession string not null"+");");
+
+				s.execute("CREATE TABLE IF NOT EXISTS peptidequants ( "
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, RTInSecondsCenter double not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, QuantIonMassLength int not null, QuantIonMassArray blob not null, QuantIonIntensityLength int, QuantIonIntensityArray blob, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null, MedianChromatogramRTEncodedLength int, MedianChromatogramRTArray blob, IdentifiedTICRatio double not null "
+						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq,
+								// SourceFile) )");
+
+				s.execute("CREATE TABLE IF NOT EXISTS peptidelocalizations ( "
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, LocalizationIons string, NumberOfMods int, NumberOfModifiableResidues int, IsSiteSpecific boolean, IsLocalized boolean, RTInSecondsCenter double, LocalizedIntensity double, TotalIntensity double "
+						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq,
+								// SourceFile) )");
+
+				s.execute("CREATE TABLE IF NOT EXISTS fragmentquants ( "
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, IonType string not null, IonIndex int not null, FragmentMass double not null, Correlation double not null, Background double not null, DeltaMassPPM double not null, Intensity double not null "
+						+")");
+
+				s.execute("CREATE TABLE IF NOT EXISTS peptidescores ( "
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, QValue double not null, PosteriorErrorProbability double not null, IsDecoy boolean not null "
+						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq,
+								// SourceFile) )");
+
+				s.execute("CREATE TABLE IF NOT EXISTS proteinscores ( "
+						+"ProteinGroup int not null, ProteinAccession string not null, SourceFile string not null, QValue double not null, MinimumPeptidePEP double not null, IsDecoy boolean not null "
+						+")");
+
+				c.commit();
+			} finally {
+				s.close();
 			}
-			s.execute("ALTER TABLE entries ADD COLUMN CorrelationEncodedLength int");
-			s.execute("ALTER TABLE entries ADD COLUMN CorrelationArray blob");
-			s.execute("ALTER TABLE entries ADD COLUMN RTInSecondsStart double");
-			s.execute("ALTER TABLE entries ADD COLUMN RTInSecondsStop double");
-			s.execute("ALTER TABLE entries ADD COLUMN MedianChromatogramEncodedLength int");
-			s.execute("ALTER TABLE entries ADD COLUMN MedianChromatogramArray blob");
+		} finally {
+			c.close();
 		}
-		if (new Version(0, 1, 4).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
-			if (userFile!=null) {
-				Logger.logLine("Updating library to "+new Version(0, 1, 4));
-			}
-			s.execute("ALTER TABLE fragmentquants ADD COLUMN Background double");
-			s.execute("ALTER TABLE fragmentquants ADD COLUMN PeptideSeq string");
-			s.execute("ALTER TABLE peptidequants ADD COLUMN PeptideSeq string");
-		}
-
-		if (new Version(0, 1, 5).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
-			if (userFile!=null) {
-				Logger.logLine("Updating library to "+new Version(0, 1, 5));
-			}
-			s.execute("ALTER TABLE peptidequants ADD COLUMN RTInSecondsCenter double");
-		}
-
-		if (new Version(0, 1, 6).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
-			if (userFile!=null) {
-				Logger.logLine("Updating library to "+new Version(0, 1, 6));
-			}
-			s.execute("ALTER TABLE peptidequants ADD COLUMN IdentifiedTICRatio double");
-		}
-
-		if (new Version(0, 1, 7).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
-			if (userFile!=null) {
-				Logger.logLine("Updating library to "+new Version(0, 1, 7));
-			}
-			s.execute("ALTER TABLE fragmentquants ADD COLUMN IonIndex int");
-		}
-
-		if (new Version(0, 1, 8).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
-			if (userFile!=null) {
-				Logger.logLine("Updating library to "+new Version(0, 1, 8));
-			}
-			s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonMassLength int");
-			s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonMassArray blob");
-		}
-
-		if (new Version(0, 1, 10).amIAbove(version)) {
-			if (userFile!=null) {
-				Logger.logLine("Updating library to "+new Version(0, 1, 10));
-			}
-			s.execute("CREATE TABLE IF NOT EXISTS peptidetoprotein ("+"PeptideSeq string not null,"+"ProteinAccession string not null"+");");
-			s.execute("ALTER TABLE peptidetoprotein ADD COLUMN isDecoy boolean");
-
-			populatePeptideToProtein(s.getConnection());
-			s.execute("DROP TABLE proteins;");
-		}
-
-		if (new Version(0, 1, 11).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
-			if (userFile!=null) {
-				Logger.logLine("Updating library to "+new Version(0, 1, 11));
-			}
-			s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonIntensityLength int");
-			s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonIntensityArray blob");
-			s.execute("ALTER TABLE peptidequants ADD COLUMN MedianChromatogramRTEncodedLength int");
-			s.execute("ALTER TABLE peptidequants ADD COLUMN MedianChromatogramRTArray blob");
-		}
-
-		if (new Version(0, 1, 12).amIAbove(version)&&version.amIAbove(new Version(0, 1, 10))) {
-			if (userFile!=null) {
-				Logger.logLine("Updating library to "+new Version(0, 1, 12));
-			}
-			s.execute("ALTER TABLE peptidetoprotein ADD COLUMN isDecoy boolean");
-		}
-	}
-
-	@Override
-	protected void createTables(Statement s) throws IOException, SQLException {
-		// UNIQUE constraints cost as much as an index and can't
-		// add/drop them, so we have to live without the constraint and
-		// deal with it in code
-
-		s.execute("CREATE TABLE IF NOT EXISTS entries ( "
-				+"PrecursorMz double not null, PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, Copies int not null, RTInSeconds double not null, Score double not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, CorrelationEncodedLength int, CorrelationArray blob, RTInSecondsStart double, RTInSecondsStop double, MedianChromatogramEncodedLength int, MedianChromatogramArray blob, SourceFile string not null "
-				+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq,
-		// SourceFile) )");
-
-		s.execute("CREATE TABLE IF NOT EXISTS peptidetoprotein ("+"PeptideSeq string not null,"+"isDecoy boolean,"+"ProteinAccession string not null"+");");
-
-		s.execute("CREATE TABLE IF NOT EXISTS peptidequants ( "
-				+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, RTInSecondsCenter double not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, QuantIonMassLength int not null, QuantIonMassArray blob not null, QuantIonIntensityLength int, QuantIonIntensityArray blob, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null, MedianChromatogramRTEncodedLength int, MedianChromatogramRTArray blob, IdentifiedTICRatio double not null "
-				+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq,
-		// SourceFile) )");
-
-		s.execute("CREATE TABLE IF NOT EXISTS peptidelocalizations ( "
-				+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, LocalizationIons string, NumberOfMods int, NumberOfModifiableResidues int, IsSiteSpecific boolean, IsLocalized boolean, RTInSecondsCenter double, LocalizedIntensity double, TotalIntensity double "
-				+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq,
-		// SourceFile) )");
-
-		s.execute("CREATE TABLE IF NOT EXISTS fragmentquants ( "
-				+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, IonType string not null, IonIndex int not null, FragmentMass double not null, Correlation double not null, Background double not null, DeltaMassPPM double not null, Intensity double not null "
-				+")");
-
-		s.execute("CREATE TABLE IF NOT EXISTS peptidescores ( "
-				+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, QValue double not null, PosteriorErrorProbability double not null, IsDecoy boolean not null "
-				+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq,
-		// SourceFile) )");
-
-		s.execute("CREATE TABLE IF NOT EXISTS proteinscores ( "
-				+"ProteinGroup int not null, ProteinAccession string not null, SourceFile string not null, QValue double not null, MinimumPeptidePEP double not null, IsDecoy boolean not null "
-				+")");
 	}
 
 	public void dropIndices() throws IOException, SQLException {
@@ -1425,6 +1498,8 @@ public class LibraryFile extends VersionedSQLFile implements LibraryInterface {
 		try {
 			Statement s=c.createStatement();
 			try {
+				s.execute("create index if not exists 'Key_Metadata_index' on 'metadata' ('Key' ASC)");
+
 				s.execute("create index if not exists 'PeptideModSeq_PrecursorCharge_SourceFile_Entries_index' on 'entries' ('PeptideModSeq' ASC, 'PrecursorCharge' ASC, 'SourceFile' ASC)");
 				s.execute("create index if not exists 'PeptideSeq_Entries_index' on 'entries' ('PeptideSeq' ASC)");
 				s.execute("create index if not exists 'PrecursorMz_Entries_index' on 'entries' ('PrecursorMz' ASC)");
