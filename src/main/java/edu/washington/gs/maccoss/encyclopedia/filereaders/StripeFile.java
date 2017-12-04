@@ -214,10 +214,17 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		saveFile();
 	}
 
+	public void setFileVersion() throws IOException, SQLException {
+		HashMap<String, String> map=new HashMap<String, String>();
+		map.put(VERSION_STRING, getMostRecentVersion().toString());
+		addMetadata(map);
+	}
+
 	public void saveFile() throws IOException, SQLException {
 		writeRanges();
 
 		if (userFile!=null && !isOpenFileInPlace) {
+			setFileVersion();
 			Files.copy(tempFile.toPath(), userFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
 	}
@@ -572,17 +579,18 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		return new Stripe(spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray);
 	}
 
+	public Version getVersion() throws IOException, SQLException {
+		HashMap<String, String> meta=getMetadata();
+		return new Version(meta.get(VERSION_STRING));
+	}
+
 	public Version getMostRecentVersion() {
 		return MOST_RECENT_VERSION;
 	}
 
 	protected void applyPatches(Version currentVersion, Statement s) throws IOException, SQLException {
 		if (new Version(0, 0, 0).equals(currentVersion)) {
-			// Because versioning was added to StripeFile later, version 0.0.0 can mean either a new file
-			// or a file created before versioning. Thus we must check for the existence of tables we want to alter.
-			if (doesTableExist(s.getConnection(), "precursor")) {
-				s.execute("alter table precursor add column TIC float");
-			}
+			s.execute("alter table precursor add column TIC float");
 		}
 	}
 
@@ -591,6 +599,11 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		try {
 			Statement s=c.createStatement();
 			try {
+				Version version = doesTableExist(c, "metadata") ? getVersion() : null;
+				if (version!=null) {
+					applyPatches(version, s);
+				}
+
 				s.execute("create table if not exists metadata ( Key string not null, Value string not null, primary key (Key) )");
 				s.execute("create table if not exists ranges ( Start float not null, Stop float not null, DutyCycle float not null )");
 				s.execute("create table if not exists spectra ( SpectrumName string not null, PrecursorName string, SpectrumIndex int not null, ScanStartTime float not null, IsolationWindowLower float not null, IsolationWindowCenter float not null, IsolationWindowUpper float not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, primary key (SpectrumIndex) )");
