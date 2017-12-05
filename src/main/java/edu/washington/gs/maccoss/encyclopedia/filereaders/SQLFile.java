@@ -11,6 +11,8 @@ import java.sql.Statement;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public abstract class SQLFile {
+	public static final String VERSION_STRING="version";
+
 	public Connection getConnection(File f) throws IOException {
 		Connection c=null;
 		try {
