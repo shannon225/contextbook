@@ -223,9 +223,12 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	public void saveFile() throws IOException, SQLException {
 		writeRanges();
 
-		if (userFile!=null && !isOpenFileInPlace) {
+		if (userFile!=null) {
 			setFileVersion();
-			Files.copy(tempFile.toPath(), userFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+			if (!isOpenFileInPlace) {
+				Files.copy(tempFile.toPath(), userFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			}
 		}
 	}
 
