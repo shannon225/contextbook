@@ -1,9 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Optional;
+import java.util.*;
 
+import com.sun.istack.Nullable;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
@@ -19,6 +18,7 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 	
 	// alignments are seed (x) to sample (y), in minutes
 	private final HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap;
+	private final HashMap<SearchJobData, List<RetentionTimeAlignmentInterface.AlignmentDataPoint>> alignmentDataMap;
 
 	// alignedRTs are as if they were in the seed (x) file
 	private final HashMap<String, Float> alignedRTInMinBySequenceMap;
@@ -26,8 +26,9 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 	private final HashMap<String, double[]> bestIons;
 	private final SearchParameters params;
 
-	SimplePeakLocationInferrer(HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap, HashMap<String, Float> alignedRTInMinBySequenceMap, HashMap<String, double[]> bestIons, SearchParameters params) {
+	SimplePeakLocationInferrer(HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap, HashMap<SearchJobData, List<RetentionTimeAlignmentInterface.AlignmentDataPoint>> alignmentDataMap, HashMap<String, Float> alignedRTInMinBySequenceMap, HashMap<String, double[]> bestIons, SearchParameters params) {
 		this.alignmentMap=alignmentMap;
+		this.alignmentDataMap = alignmentDataMap;
 		this.alignedRTInMinBySequenceMap=alignedRTInMinBySequenceMap;
 		this.bestIons=bestIons;
 		this.params=params;
@@ -121,5 +122,10 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 		} else {
 			return f.getYValue(alignedRTInMin)*60f;
 		}
+	}
+
+	@Override
+	public List<RetentionTimeAlignmentInterface.AlignmentDataPoint> getAlignmentData(SearchJobData job) {
+		return alignmentDataMap.getOrDefault(job, Collections.emptyList());
 	}
 }

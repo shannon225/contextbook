@@ -12,22 +12,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.StringTokenizer;
 import java.util.zip.DataFormatException;
 
 import com.google.common.collect.ImmutableList;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
@@ -69,10 +62,13 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	public static final String ELIB=".elib";
 	public static final String ENCYCLOPEDIA_VERSION = "EncyclopediaVersion";
 	public static final String PERCOLATOR_VERSION = "PercolatorVersion";
-	public static final String UNKNOWN = "Unknown";
-	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] { new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4),
-			new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8), new Version(0, 1, 9), new Version(0, 1, 10), new Version(0, 1, 11), new Version(0, 1, 12), new Version(0, 1, 13) };
-	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 13);
+	public static final Version[] ACCEPTABLE_VERSIONS = new Version[] {
+			new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4),
+			new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8), new Version(0, 1, 9),
+			new Version(0, 1, 10), new Version(0, 1, 11), new Version(0, 1, 12), new Version(0, 1, 13), new Version(0, 1, 14)
+	};
+	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 14);
+
 
 	private File userFile=null;
 	private File tempFile;
@@ -148,7 +144,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public void addTIC(StripeFileInterface diaFile) throws IOException, SQLException {
-		String key=SOURCEFILE_TIC_PREFIX+diaFile.getOriginalFileName();
+		String key=SOURCEFILE_TIC_PREFIX+ getOriginalFileName(diaFile);
 
 		HashMap<String, String> map=new HashMap<String, String>();
 		map.put(key, Float.toString(diaFile.getTIC()));
@@ -157,8 +153,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public float getTIC(StripeFileInterface diaFile) throws IOException, SQLException {
-		String originalFileName=diaFile.getOriginalFileName();
-		return getTIC(originalFileName);
+		return getTIC(getOriginalFileName(diaFile));
 	}
 
 	public float getTIC(String originalFileName) throws IOException, SQLException {
@@ -168,6 +163,59 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		if (value==null)
 			return 0.0f;
 		return Float.parseFloat(value);
+	}
+
+	private static String getOriginalFileName(SearchJobData job) {
+		return getOriginalFileName(job.getDiaFileReader());
+	}
+
+	private static String getOriginalFileName(StripeFileInterface diaFile) {
+		return diaFile.getOriginalFileName();
+	}
+
+	public void addRtAlignment(SearchJobData job, PeakLocationInferrerInterface inferrer) {
+		Optional.ofNullable(inferrer.getAlignmentData(job))
+				.ifPresent(alignment -> addRtAlignment(job, alignment));
+	}
+
+	public void addRtAlignment(SearchJobData job, List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignment) {
+		final String sourceFile = getOriginalFileName(job);
+
+		try (Connection c = getConnection()) {
+			c.setAutoCommit(false);
+
+			try (PreparedStatement s = c.prepareStatement(
+					"INSERT INTO retentiontimes (SourceFile, Library, Actual, Predicted, Delta, Probability) VALUES (?, ?, ?, ?, ?, ?)"
+			)) {
+				for (int i = 0, alignmentSize = alignment.size(); i < alignmentSize; i++) {
+					final RetentionTimeAlignmentInterface.AlignmentDataPoint pt = alignment.get(i);
+
+					s.setString(1, sourceFile);
+
+					// Convert values in minutes to seconds
+					s.setFloat(2, 60*pt.getLibrary());
+					s.setFloat(3, 60*pt.getActual());
+					s.setFloat(4, 60*pt.getPredictedActual());
+					s.setFloat(5, 60*pt.getDelta());
+
+					s.setFloat(6, pt.getProbability());
+
+					s.addBatch();
+
+					if (i % 8192 == 0) {
+						s.executeBatch();
+						s.clearBatch();
+					}
+				}
+				s.executeBatch();
+			} catch (SQLException e) {
+				c.rollback();
+			} finally {
+				c.commit();
+			}
+		} catch (SQLException | IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void setSources(List<? extends SearchJobData> sources) throws IOException, SQLException {
@@ -1446,6 +1494,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				s.execute("CREATE TABLE IF NOT EXISTS proteinscores ( "
 						+"ProteinGroup int not null, ProteinAccession string not null, SourceFile string not null, QValue double not null, MinimumPeptidePEP double not null, IsDecoy boolean not null "
 						+")");
+
+				s.execute("CREATE TABLE IF NOT EXISTS retentiontimes (SourceFile string not null, Library float not null, Actual float not null, Predicted float not null, Delta float not null, Probability float not null)");
 
 				c.commit();
 			} finally {

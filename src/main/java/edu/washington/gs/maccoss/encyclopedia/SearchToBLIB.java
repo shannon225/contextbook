@@ -576,8 +576,11 @@ public class SearchToBLIB {
 
 		Logger.logLine("Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides", 0.00001f);
+
 		elib.addTIC(stripeFile);
-		
+
+		inferrer.ifPresent(inf -> elib.addRtAlignment(job, inf));
+
 		LibraryInterface library=null;
 		if (job instanceof EncyclopediaJobData) {
 			library=((EncyclopediaJobData)job).getLibrary();

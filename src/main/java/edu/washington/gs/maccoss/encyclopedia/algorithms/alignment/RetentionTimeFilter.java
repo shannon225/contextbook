@@ -1,13 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
-import java.awt.Color;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Optional;
-
+import com.google.common.collect.ImmutableList;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
@@ -22,6 +15,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribut
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Gaussian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.UnitDistribution;
 import gnu.trove.list.array.TFloatArrayList;
+
+import java.awt.*;
+import java.io.*;
+import java.util.*;
+import java.util.List;
 
 public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 	//private static final String RT_STRING="iRT from DDA Library";
@@ -66,7 +64,7 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface#plot(java.util.ArrayList, java.util.Optional)
 	 */
 	@Override
-	public void plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed) {
+	public List<AlignmentDataPoint> plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed) {
 		TFloatArrayList deltas=new TFloatArrayList();
 		ArrayList<XYPoint> removedRTs=new ArrayList<XYPoint>();
 		ArrayList<XYPoint> selectedRTs=new ArrayList<XYPoint>();
@@ -88,7 +86,7 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 		float[] deltaArray=deltas.toArray();
 		if (deltaArray.length==0) {
 			Logger.errorLine("Sorry, not enough points to plot RT alignment");
-			return;
+			return Collections.emptyList();
 		}
 		Arrays.sort(deltaArray);
 		int min=0; //Math.round(deltaArray.length*0.05f);
@@ -153,7 +151,8 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 			Charter.writeAsPDF(new File(saveFilePrefix+".rt_fit.pdf"), xAxis, yAxis, false, median2, selectedTrace, trace);
 
 			try {
-				PrintWriter writer=new PrintWriter(new File(saveFilePrefix+".rt_fit.txt"), "UTF-8");
+				final File file = new File(saveFilePrefix + ".rt_fit.txt");
+				PrintWriter writer=new PrintWriter(file, "UTF-8");
 				writer.println("library\tactual\twarpToActual\tdelta\tfitProb");
 				for (int i=0; i<rts.size(); i++) {
 					XYPoint xyPoint=rts.get(i);
@@ -165,13 +164,21 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 				}
 				writer.flush();
 				writer.close();
+
+				// Use a list that's backed by the file we just wrote; this allows
+				// the points to fall out of memory until this list is accessed.
+				return new LazyFileReadingRtDataList(file, "UTF-8");
 			} catch (IOException e) {
 				Logger.errorLine("Error writing retention time mapping file.");
 				Logger.errorException(e);
+
+				return Collections.emptyList();
 			}
 		} else {
 			Charter.launchChart("Delta RT", "Count", true, posTrace, posHistTrace, histTrace);
 			Charter.launchChart(xAxis, yAxis, true, median2, selectedTrace, trace);
+
+			return Collections.emptyList();
 		}
 	}
 	
@@ -260,5 +267,76 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 		positive=model.getPositive();
 		negative=model.getNegative();
 		return model;
+	}
+
+	/**
+	 * Allow fetching data that's been written to disk.
+	 */
+	private class LazyFileReadingRtDataList extends AbstractList<AlignmentDataPoint> {
+		private final File file;
+		private final String encoding;
+
+		boolean isOpen = false;
+		int size = 0;
+		List<AlignmentDataPoint> data;
+
+		public LazyFileReadingRtDataList(File file, String encoding) {
+			this.file = file;
+			this.encoding = encoding;
+		}
+
+		@Override
+		public AlignmentDataPoint get(int index) {
+			checkOpen();
+			return data.get(index);
+		}
+
+		@Override
+		public int size() {
+			checkOpen();
+			return size;
+		}
+
+		private synchronized void checkOpen() {
+			if (!isOpen) {
+				try {
+					open();
+				} catch (IOException e) {
+					size = 0;
+					data = Collections.emptyList();
+				}
+				isOpen = true;
+			}
+		}
+
+		private synchronized void open() throws IOException {
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), encoding))) {
+				final ImmutableList.Builder<AlignmentDataPoint> list = ImmutableList.builder();
+
+				String line;
+				while (null != (line = reader.readLine())) {
+					try {
+						final String[] cells = line.split("\\t");
+						if (cells.length != 5) {
+							System.err.println("invalid line: " + line);
+							continue;
+						}
+
+						float x = Float.parseFloat(cells[0]);
+						float y = Float.parseFloat(cells[1]);
+						float pred = Float.parseFloat(cells[2]);
+						float delta = Float.parseFloat(cells[3]);
+						float prob = Float.parseFloat(cells[4]);
+
+						list.add(AlignmentDataPoint.of(x, y, pred, delta, prob));
+					} catch (Exception e) {
+						continue;
+					}
+				}
+
+				data = list.build();
+				size = data.size();
+			}
+		}
 	}
 }
