@@ -14,6 +14,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.xml.parsers.SAXParserFactory;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMultimap;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentComponent;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentId;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -35,6 +39,10 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	private final BlockingQueue<MzmlBlock> mzmlBlockQueue;
 	private final SearchParameters parameters;
 	private final HashMap<Range, TFloatArrayList> retentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
+	private final ImmutableMultimap.Builder<String, String> softwareAccessionIdToVersionBuilder = ImmutableMultimap.builder();
+
+	private final ImmutableMultimap.Builder<InstrumentId, InstrumentComponent> instrumentIdToInstrumentComponentBuilder = ImmutableMultimap.builder();
+	private ImmutableList.Builder<InstrumentComponent> instrumentComponentsBuilder = ImmutableList.builder();
 
 	private Throwable error;
 
@@ -120,7 +128,16 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	private boolean isSkipSpectrumWithBadEncoding = false;
 	private int numSkippedWithBadEncoding = 0;
 	private static final int MAX_BAD_ENCODING_SKIPPED = 1000;
-	
+
+	/**
+	 * Field is only used to temporarily store software version when reading.
+	 * Use {@link #getSoftwareAccessionIdToVersion()}
+ 	 */
+	private String softwareVersion;
+
+	private InstrumentId.Builder currentInstrumentConfigurationIdBuilder = InstrumentId.builder();
+	private InstrumentComponent.Builder currentInstrumentComponentBuilder = InstrumentComponent.builder();
+
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
 		dataSB.setLength(0);
@@ -185,6 +202,18 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 				} else if ("charge state".equalsIgnoreCase(attributes.getValue("name"))) {
 					selectedCharge=Byte.parseByte(attributes.getValue("value"));
 				}
+			} else if ("software".equalsIgnoreCase(getPreviousElementTag())) {
+				softwareAccessionIdToVersionBuilder.put(attributes.getValue("accession"), softwareVersion);
+			} else if ("instrumentConfiguration".equalsIgnoreCase(getPreviousElementTag())) {
+				currentInstrumentConfigurationIdBuilder
+						.setAccession(attributes.getValue("accession"))
+						.setName(attributes.getValue("name"));
+			} else if (InstrumentComponent.Type.getTypeByName(getPreviousElementTag()).isPresent()) {
+				currentInstrumentComponentBuilder
+						.setType(InstrumentComponent.Type.getTypeByName(getPreviousElementTag()).get())
+						.setCvRef(attributes.getValue("cvRef"))
+						.setAccessionId(attributes.getValue("accession"))
+						.setName(attributes.getValue("name"));
 			}
 		} else if ("precursor".equalsIgnoreCase(qName)) {
 			spectrumRef=attributes.getValue("spectrumRef");
@@ -193,9 +222,30 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 		} else if ("spectrum".equalsIgnoreCase(qName)) {
 			spectrumName=attributes.getValue("id");
 			spectrumIndex=Integer.parseInt(attributes.getValue("index"));
+		} else if ("software".equalsIgnoreCase(qName)) {
+			softwareVersion = attributes.getValue("version");
+		} else if (InstrumentComponent.Type.getTypeByName(qName).isPresent()) {
+			currentInstrumentComponentBuilder.setOrder(Integer.parseInt(attributes.getValue("order")));
+		} else if ("instrumentConfiguration".equalsIgnoreCase(qName)) {
+			currentInstrumentConfigurationIdBuilder.setInstrumentConfigurationId(attributes.getValue("id"));
 		}
 
 		tagList.add(qName);
+	}
+
+	private String getPreviousElementTag() {
+		return tagList.get(tagList.size() - 1);
+	}
+
+	/**
+	 * @return A mapping of PSI-MS controlled software accession id to version(s).
+	 */
+	public ImmutableMultimap<String, String> getSoftwareAccessionIdToVersion() {
+		return softwareAccessionIdToVersionBuilder.build();
+	}
+
+	public ImmutableMultimap<InstrumentId, InstrumentComponent> getInstrumentConfigurations() {
+		return instrumentIdToInstrumentComponentBuilder.build();
 	}
 
 	@Override
@@ -333,6 +383,15 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 					}
 				}
 			}
+		}
+
+		if (InstrumentComponent.Type.getTypeByName(qName).isPresent()) {
+			instrumentComponentsBuilder.add(currentInstrumentComponentBuilder.build());
+			currentInstrumentComponentBuilder = InstrumentComponent.builder();
+		} else if ("instrumentConfiguration".equalsIgnoreCase(qName)) {
+			instrumentIdToInstrumentComponentBuilder.putAll(currentInstrumentConfigurationIdBuilder.build(), instrumentComponentsBuilder.build());
+			currentInstrumentConfigurationIdBuilder = InstrumentId.builder();
+			instrumentComponentsBuilder = ImmutableList.builder();
 		}
 
 		tagList.remove(tagList.size()-1);
