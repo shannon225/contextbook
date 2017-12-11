@@ -384,6 +384,15 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(convertMSP);
 
+		JMenuItem convertTraML=new JMenuItem("Convert TraML to Library", convertDBIcon);
+		convertTraML.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				convertTRAML();
+			}
+		});
+		convertMenu.add(convertTraML);
+		
 		JMenuItem subsetELIB=new JMenuItem("Create Subset Library", convertDBIcon);
 		subsetELIB.addActionListener(new ActionListener() {
 			@Override

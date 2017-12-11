@@ -23,9 +23,9 @@ public class AmbiguousPeptideModSeqTest extends TestCase {
 	}
 	
 	public void testgetNumModifiableSites() {
-		AmbiguousPeptideModSeq seq=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq("SF(S[+79.966331]>KEVEER", PeptideModification.phosphorylation);
+		AmbiguousPeptideModSeq seq=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq("SF(S[+79.966331]>KEVEER", PeptideModification.phosphorylation, PARAMETERS.getAAConstants());
 		assertEquals(2, seq.getNumModifiableSites());
-		seq=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq("<S[+79.966331])FSKEVEER", PeptideModification.phosphorylation);
+		seq=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq("<S[+79.966331])FSKEVEER", PeptideModification.phosphorylation, PARAMETERS.getAAConstants());
 		assertEquals(2, seq.getNumModifiableSites());
 
 	}

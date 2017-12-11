@@ -58,14 +58,20 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumComparator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+import gnu.trove.map.hash.TDoubleDoubleHashMap;
+import gnu.trove.map.hash.TFloatDoubleHashMap;
+import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class DIABrowserPanel extends JPanel {
 	private static final String STRUCTURE_TITLE="Structure";
+	private static final String INTENSITY_DISTRIBUTION_TITLE="Intensity Distributions";
 	private static final long serialVersionUID=1L;
 	public static final Color[] colors=new Color[] {Color.red, Color.blue, Color.green, Color.cyan, Color.magenta, Color.orange, Color.yellow, Color.pink, Color.gray, 
 			Color.red.darker(), Color.blue.darker(), Color.green.darker(), Color.cyan.darker(), Color.magenta.darker(), Color.orange.darker(), Color.yellow.darker(), Color.pink.darker(), Color.gray.darker()};
 
 	private final FileChooserPanel rawFileChooser;
+	private final JSplitPane distributionSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane rawSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane split=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JTable table;
@@ -196,6 +202,7 @@ public class DIABrowserPanel extends JPanel {
 		left.add(searchPanel, BorderLayout.SOUTH);
 
 		primaryTabs.addTab("Scans", rawSplit);
+		primaryTabs.addTab(INTENSITY_DISTRIBUTION_TITLE, distributionSplit);
         
 		split.setLeftComponent(left);
 		split.setRightComponent(primaryTabs);
@@ -215,6 +222,8 @@ public class DIABrowserPanel extends JPanel {
 	
 	private float maxTIC=0.0f;
 	private XYTrace chromatogram=null;
+	private XYTrace precursorIntensityHistogram=null;
+	private XYTrace fragmentIntensityHistogram=null;
 
 	public void updateRaw(final File f) {
 		SwingWorkerProgress<ArrayList<Spectrum>> worker=new SwingWorkerProgress<ArrayList<Spectrum>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Raw File") {
@@ -242,6 +251,7 @@ public class DIABrowserPanel extends JPanel {
 				int increment=precursors.size()/1000;
 				int scanCount=0;
 				float tic=0.0f;
+				TFloatFloatHashMap precursorIonDistribution=new TFloatFloatHashMap();
 				for (PrecursorScan precursorScan : precursors) {
 					scans.add(precursorScan);
 					tic+=precursorScan.getTIC();
@@ -253,12 +263,30 @@ public class DIABrowserPanel extends JPanel {
 						tic=0;
 					}
 					scanCount++;
+					
+					for (float intensity : precursorScan.getIntensityArray()) {
+						float bin=((int)(10.0f*Log.protectedLog10(intensity)))/10.0f;
+						precursorIonDistribution.adjustOrPutValue(bin, 1.0f, 1.0f);
+					}
 				}
 				chromatogram=new XYTrace(tics, GraphType.area, "Precursor TIC");
+				precursorIntensityHistogram=new XYTrace(precursorIonDistribution, GraphType.area, "Log10 Precursor Intensity Distribution");
 				
+				TDoubleDoubleHashMap fragmentIonDistribution=new TDoubleDoubleHashMap();
 				for (Stripe stripe : dia.getStripes(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), -Float.MAX_VALUE, Float.MAX_VALUE, false)) {
 					scans.add(stripe);
+					for (float intensity : stripe.getIntensityArray()) {
+						double bin=((int)(10.0*Log.protectedLog10(intensity)))/10.0;
+						fragmentIonDistribution.adjustOrPutValue(bin, 1.0, 1.0);
+					}
 				}
+				fragmentIntensityHistogram=new XYTrace(fragmentIonDistribution, GraphType.area, "Log10 Fragment Intensity Distribution");
+				
+				
+				final ChartPanel precursorIntensities=Charter.getChart("Log10 Precursor Intensity", "Count", false, precursorIntensityHistogram);
+				final ChartPanel fragmentIntensities=Charter.getChart("Log10 Fragment Intensity", "Count", false, fragmentIntensityHistogram);
+				distributionSplit.setTopComponent(precursorIntensities);
+				distributionSplit.setBottomComponent(fragmentIntensities);
 				
 				Collections.sort(scans, new SpectrumComparator(SpectrumComparator.compareWithRT));
 				

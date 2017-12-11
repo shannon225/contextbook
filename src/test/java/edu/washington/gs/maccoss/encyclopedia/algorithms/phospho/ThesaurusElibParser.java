@@ -9,10 +9,10 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.TreeMap;
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.commons.math3.stat.inference.TestUtils;
@@ -277,7 +277,7 @@ public class ThesaurusElibParser {
 			siteSpecificPValues.add(pValue);
 			siteSpecificFC.add(getFoldChange(data, targetFoldChangeData));
 		}
-		System.out.println("Found "+siteSpecificPeptides.size()+" peptides ("+localized+" are site specific):");
+		System.out.println("Found "+siteSpecificPeptides.size()+" peptides:");
 		double[] siteSpecificAdjustedPValues=BenjaminiHochberg.calculateAdjustedPValues(siteSpecificPValues.toArray());
 
 		ArrayList<String> peptides=new ArrayList<>();
@@ -333,7 +333,7 @@ public class ThesaurusElibParser {
 
 					float[][] data=log.getNormalizedData();
 
-					System.out.println(log.peptideModSeq+"+"+log.charge+" rt:"+General.mean(log.rtInSecondsList.toArray())+" motif:"+log.motif+" localized:"+log.isSiteSpecific+" ("+log.protein+") p="+pValue+", FDR="+totalAdjustedPValues[pep]);
+					System.out.println(log.peptideModSeq+"+"+log.charge+" rt:"+General.mean(log.rtInSecondsList.toArray())+" localized:"+log.isSiteSpecific+" ("+log.protein+") FDR="+totalAdjustedPValues[pep]);
 
 					boolean first=true;
 					for (int samp=data.length-1; samp>=0; samp--) {
@@ -380,10 +380,10 @@ public class ThesaurusElibParser {
 					float[][] data=log.getNormalizedData();
 					double pValue=getANOVAPValue(data);
 					System.out.print(log.peptideModSeq+"\t"+log.protein+"\t"+pValue+"\t"+totalAdjustedPValues[pep]);
-					System.out.print("\t"+(log.motif!=null&&log.motif.matches("R.R..[ST].....")));
-					System.out.print("\t"+(log.motif!=null&&log.motif.matches("..R..[ST].....")));
-					System.out.print("\t"+(log.motif!=null&&log.motif.matches(".....[ST][FLW]....")));
-					System.out.print("\t"+(log.motif!=null&&log.motif.matches(".....[ST]P....")));
+					System.out.print("\t"+(log.doesMotifMatch("R.R..[ST].....")));
+					System.out.print("\t"+(log.doesMotifMatch("..R..[ST].....")));
+					System.out.print("\t"+(log.doesMotifMatch(".....[ST][FLW]....")));
+					System.out.print("\t"+(log.doesMotifMatch(".....[ST]P....")));
 					for (int i=0; i<data.length; i++) {
 						System.out.print('\t');
 						System.out.print(QuickMedian.median(data[i].clone()));

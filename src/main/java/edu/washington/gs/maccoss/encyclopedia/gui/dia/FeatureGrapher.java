@@ -116,7 +116,7 @@ public class FeatureGrapher {
 			TFloatArrayList targets=targetData.get(key);
 			TFloatArrayList decoys=decoyData.get(key);
 			
-			ArrayList<XYPoint>[] points=PivotTableGenerator.createPivotTables(new float[][] {targets.toArray(), decoys.toArray()});
+			ArrayList<XYPoint>[] points=PivotTableGenerator.createPivotTables(new float[][] {targets.toArray(), decoys.toArray()}, true);
 			XYTraceInterface[] traces=new XYTraceInterface[2];
 			traces[0]=new XYTrace(points[0], GraphType.line, "Target");
 			traces[1]=new XYTrace(points[1], GraphType.line, "Decoy");
