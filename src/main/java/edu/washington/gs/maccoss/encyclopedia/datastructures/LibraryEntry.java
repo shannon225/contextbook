@@ -71,7 +71,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		this.peptideModSeq=peptideModSeq;
 		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq);
 		this.copies=copies;
-		if (retentionTime>0.0f) { 
+		if (retentionTime!=0.0f) { 
 			this.retentionTime=retentionTime;
 		} else {
 			// ignores mods! This would be a problem if everything is modified (IMac prep)
