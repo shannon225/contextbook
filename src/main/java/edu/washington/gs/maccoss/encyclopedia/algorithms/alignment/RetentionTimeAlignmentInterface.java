@@ -47,7 +47,18 @@ public interface RetentionTimeAlignmentInterface {
 		 */
 		float getProbability();
 
-		static AlignmentDataPoint of(float lib, float actual, float pred, float delta, float prob) {
+		/**
+		 * @return if the data point corresponds to decoy data
+		 */
+		Boolean isDecoy();
+
+		/**
+		 *
+		 * @return the peptide mod sequence
+		 */
+		String getPeptideModSeq();
+
+		static AlignmentDataPoint of(float lib, float actual, float pred, float delta, float prob, Boolean decoy, String peptideModSeq) {
 			return new AlignmentDataPoint() {
 				@Override
 				public float getLibrary() {
@@ -72,6 +83,16 @@ public interface RetentionTimeAlignmentInterface {
 				@Override
 				public float getProbability() {
 					return prob;
+				}
+
+				@Override
+				public Boolean isDecoy() {
+					return decoy;
+				}
+
+				@Override
+				public String getPeptideModSeq() {
+					return peptideModSeq;
 				}
 			};
 		}

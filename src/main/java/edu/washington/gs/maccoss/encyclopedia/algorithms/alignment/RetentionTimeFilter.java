@@ -325,7 +325,7 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 				while (null != (line = reader.readLine())) {
 					try {
 						final String[] cells = line.split("\\t");
-						if (cells.length != 5) {
+						if (cells.length != 7) {
 							System.err.println("invalid line: " + line);
 							continue;
 						}
@@ -335,8 +335,10 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 						float pred = Float.parseFloat(cells[2]);
 						float delta = Float.parseFloat(cells[3]);
 						float prob = Float.parseFloat(cells[4]);
+						Boolean decoy = "?".equals(cells[5]) ? null : Boolean.parseBoolean(cells[5]);
+						String pepModSeq = "?".equals(cells[6]) ? null : cells[6];
 
-						list.add(AlignmentDataPoint.of(x, y, pred, delta, prob));
+						list.add(AlignmentDataPoint.of(x, y, pred, delta, prob, decoy, pepModSeq));
 					} catch (Exception e) {
 						continue;
 					}
