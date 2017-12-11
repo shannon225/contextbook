@@ -187,7 +187,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			c.setAutoCommit(false);
 
 			try (PreparedStatement s = c.prepareStatement(
-					"INSERT INTO retentiontimes (SourceFile, Library, Actual, Predicted, Delta, Probability) VALUES (?, ?, ?, ?, ?, ?)"
+					"INSERT INTO retentiontimes (SourceFile, Library, Actual, Predicted, Delta, Probability, Decoy, PeptideModSeq) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 			)) {
 				for (int i = 0, alignmentSize = alignment.size(); i < alignmentSize; i++) {
 					final RetentionTimeAlignmentInterface.AlignmentDataPoint pt = alignment.get(i);
@@ -201,6 +201,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					s.setFloat(5, 60*pt.getDelta());
 
 					s.setFloat(6, pt.getProbability());
+					s.setObject(7, pt.isDecoy()); // used setObject to handle null Boolean
+					s.setString(8, pt.getPeptideModSeq());
 
 					s.addBatch();
 
@@ -1497,7 +1499,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						+"ProteinGroup int not null, ProteinAccession string not null, SourceFile string not null, QValue double not null, MinimumPeptidePEP double not null, IsDecoy boolean not null "
 						+")");
 
-				s.execute("CREATE TABLE IF NOT EXISTS retentiontimes (SourceFile string not null, Library float not null, Actual float not null, Predicted float not null, Delta float not null, Probability float not null)");
+				s.execute("CREATE TABLE IF NOT EXISTS retentiontimes (SourceFile string not null, Library float not null, Actual float not null, Predicted float not null, Delta float not null, Probability float not null, Decoy boolean, PeptideModSeq string)");
 
 				c.commit();
 			} finally {
