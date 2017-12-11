@@ -22,6 +22,14 @@ public class AmbiguousPeptideModSeqTest extends TestCase {
 		
 	}
 	
+	public void testgetNumModifiableSites() {
+		AmbiguousPeptideModSeq seq=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq("SF(S[+79.966331]>KEVEER", PeptideModification.phosphorylation, PARAMETERS.getAAConstants());
+		assertEquals(2, seq.getNumModifiableSites());
+		seq=AmbiguousPeptideModSeq.getAmbiguousPeptideModSeq("<S[+79.966331])FSKEVEER", PeptideModification.phosphorylation, PARAMETERS.getAAConstants());
+		assertEquals(2, seq.getNumModifiableSites());
+
+	}
+	
 	public void testRetrieval() {
 		String annotationString="KG<S[+79.966331])GDYMPMSPK";
 		AmbiguousPeptideModSeq target=AmbiguousPeptideModSeq.getLeftAmbiguity("KGS[+79.966331]GDYMPMSPK", PeptideModification.phosphorylation, PARAMETERS.getAAConstants());
@@ -49,8 +57,8 @@ public class AmbiguousPeptideModSeqTest extends TestCase {
 		AmbiguousPeptideModSeq unambig=AmbiguousPeptideModSeq.getUnambigous("KGSGDYMPMS[+79.966331]PK", PeptideModification.phosphorylation,PARAMETERS.getAAConstants());
 		AmbiguousPeptideModSeq unambig2=AmbiguousPeptideModSeq.getUnambigous("KGSGDY[+79.966331]MPMSPK", PeptideModification.phosphorylation,PARAMETERS.getAAConstants());
 		
-		assertEquals("KG(S[+79.966331]GDY>MPMSPK", right.removeAmbiguity(unambig).get().getPeptideAnnotation());
-		assertEquals("KG(S[+79.966331]>GDYMPMSPK", right.removeAmbiguity(unambig, unambig2).get().getPeptideAnnotation());
+		assertEquals("KG(S[+79.966331]GDY>MPMSPK", right.removeAmbiguity(PeptideModification.phosphorylation, unambig).get().getPeptideAnnotation());
+		assertEquals("KG(S[+79.966331]>GDYMPMSPK", right.removeAmbiguity(PeptideModification.phosphorylation, unambig, unambig2).get().getPeptideAnnotation());
 	}
 	
 	public void testAmbiguity() {;
@@ -120,7 +128,7 @@ public class AmbiguousPeptideModSeqTest extends TestCase {
 			AmbiguousPeptideModSeq s=AmbiguousPeptideModSeq.getFullyAmbiguous(targetPeptide, PeptideModification.phosphorylation, PARAMETERS.getAAConstants());
 			AmbiguousPeptideModSeq unambiguous=AmbiguousPeptideModSeq.getUnambigous(unambiguousPeptides[i], PeptideModification.phosphorylation, PARAMETERS.getAAConstants());
 			
-			assertEquals(expectedResult[i], s.removeAmbiguity(unambiguous).get().getPeptideAnnotation());
+			assertEquals(expectedResult[i], s.removeAmbiguity(PeptideModification.phosphorylation, unambiguous).get().getPeptideAnnotation());
 		}
 	}
 	

@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
+import java.util.regex.Matcher;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
@@ -54,6 +55,23 @@ public class PercolatorExecutorTest extends TestCase {
 		String peptideString="-.FNNFINDSLLEGAIDALKR.-";
 		String parsed=PercolatorExecutor.parsePeptideSequence(peptideString);
 		assertEquals("FNNFINDSLLEGAIDALKR", parsed);
+	}
+
+	public void testGetPercolatorVersionFromConsole() {
+		String line = "Percolator version 3.01, Build Date May 23 2017 12:14:41";
+		assertEquals("3.01", PercolatorExecutor.getPercolatorVersionFromOutput(line).orElse(null));
+
+		line = "Percolator version 3.14.15, Build Date May 23 2017 12:14:41";
+		assertEquals("3.14.15", PercolatorExecutor.getPercolatorVersionFromOutput(line).orElse(null));
+
+		line = "Percolator version 2, Build Date May 23 2017 12:14:41";
+		assertEquals("2", PercolatorExecutor.getPercolatorVersionFromOutput(line).orElse(null));
+
+		line = "Percolator version , Build Date May 23 2017 12:14:41";
+		assertFalse(PercolatorExecutor.getPercolatorVersionFromOutput(line).isPresent());
+
+		line = "Percolator version, Build Date May 23 2017 12:14:41";
+		assertFalse(PercolatorExecutor.getPercolatorVersionFromOutput(line).isPresent());
 	}
 
 	public void testPercolatorExecutor() throws Exception {

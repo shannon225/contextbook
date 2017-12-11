@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RTRTPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
@@ -317,7 +318,7 @@ public class Encyclopedia {
 			}
 			
 			ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
-			RetentionTimeAlignmentInterface filter=getRescoringModel(passingPeptides, data, job);
+			RetentionTimeAlignmentInterface filter=getRescoringModel(passingPeptides, data, job, false);
 			
 			PeptideScoringResultsConsumer rescoredResultsConsumer=job.getTaskFactory().getResultsConsumer(job.getPercolatorFiles().getInputTSV(), new LinkedBlockingQueue<PeptideScoringResult>(), stripefile);
 			Thread finalWriteConsumerThread=new Thread(rescoredResultsConsumer);
@@ -334,6 +335,7 @@ public class Encyclopedia {
 			progress.update("Re-running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)");
 			pair=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), job.getPercolatorFiles(), parameters.getEffectivePercolatorThreshold());
 			passingPeptides=pair.x;
+			filter=getRescoringModel(passingPeptides, data, job, true);
 			
 			progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 			return passingPeptides;
@@ -346,7 +348,7 @@ public class Encyclopedia {
 		}
 	}
 
-	public static RetentionTimeAlignmentInterface getRescoringModel(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<PeptideScoringResult> data, EncyclopediaJobData job) {
+	public static RetentionTimeAlignmentInterface getRescoringModel(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<PeptideScoringResult> data, EncyclopediaJobData job, boolean finalPass) {
 		HashSet<String> passingSeqs=new HashSet<String>();
 		for (PercolatorPeptide pass : passingPeptides) {
 			passingSeqs.add(PercolatorPeptide.getPeptideData(pass.getPsmID()));
@@ -362,7 +364,7 @@ public class Encyclopedia {
 					float entryTime=entry.getScanStartTime();
 
 					Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
-					XYPoint point=new XYPoint(entryTime/60.0f, first.x.y.getScanStartTime()/60.0f);
+					XYPoint point=new RTRTPoint(entryTime/60.0f, first.x.y.getScanStartTime()/60.0f, entry.isDecoy(), entry.getPeptideModSeq());
 					rtSet.add(point);
 				}
 			}
@@ -371,7 +373,8 @@ public class Encyclopedia {
 		Logger.logLine("Generating retention time mapping using "+rts.size()+" points...");
 		RetentionTimeAlignmentInterface filter=new RetentionTimeFilter(rts);
 		
-		filter.plot(rts, Optional.ofNullable(job.getPercolatorFiles().getPeptideOutputFile()));
+		final String passTag=finalPass?".final":".first";
+		filter.plot(rts, Optional.ofNullable(new File(job.getPercolatorFiles().getPeptideOutputFile().getAbsolutePath()+passTag)));
 		return filter;
 	}
 }

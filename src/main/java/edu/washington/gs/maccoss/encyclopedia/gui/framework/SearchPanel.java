@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -14,7 +15,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.StringTokenizer;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -33,6 +36,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumn;
@@ -43,6 +47,8 @@ import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCordiaSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideTrie;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -50,6 +56,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.TraMLToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.DIABrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.FeatureGrapher;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.LocalizationResultsBrowserPanel;
@@ -358,7 +365,7 @@ public class SearchPanel extends JPanel {
 		if (ProgramType.PecanPie!=program) {
 			bar.add(convertMenu);
 		}
-
+		
 		JMenuItem convertBLIB=new JMenuItem("Convert BLIB to Library", convertDBIcon);
 		convertBLIB.addActionListener(new ActionListener() {
 			@Override
@@ -376,6 +383,24 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		convertMenu.add(convertMSP);
+
+		JMenuItem convertTraML=new JMenuItem("Convert TraML to Library", convertDBIcon);
+		convertTraML.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				convertTRAML();
+			}
+		});
+		convertMenu.add(convertTraML);
+		
+		JMenuItem subsetELIB=new JMenuItem("Create Subset Library", convertDBIcon);
+		subsetELIB.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				subsetELIB();
+			}
+		});
+		convertMenu.add(subsetELIB);
 		
 		JMenu helpMenu=new JMenu("Help");
 		helpMenu.setMnemonic(KeyEvent.VK_H);
@@ -413,7 +438,7 @@ public class SearchPanel extends JPanel {
 	}
 	
 	public void launchFeatureBrowser() {
-		File featureFile=FileChooserPanel.getFiles(null, "Feature text files", new SimpleFilenameFilter("features.txt"), (JFrame)null)[0];
+		File featureFile=FileChooserPanel.getFiles(null, "Feature text files", new SimpleFilenameFilter("features.txt"), (JFrame)null, true)[0];
 
 		if (featureFile!=null&&featureFile.exists()) {
 			final JFrame dialog=new JFrame("Global Feature Browser");
@@ -571,6 +596,108 @@ public class SearchPanel extends JPanel {
 		dialog.setVisible(true);
 	}
 	
+	public void subsetELIB() {
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(SearchPanel.this);
+		final JDialog dialog=new JDialog(frame, "Subset Library", true);
+		
+		final FileChooserPanel elibFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".dlib", ".elib"), true);
+		final FileChooserPanel saveFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".dlib", ".elib"), true, false);
+		
+		final JTextArea textArea = new JTextArea(25, 80);
+		textArea.setFont(new Font("Monospaced", Font.PLAIN, 10));
+		JScrollPane scrollPane = new JScrollPane(textArea); 
+		textArea.setEditable(true);
+
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(elibFileChooser);
+		options.add(saveFileChooser);
+		options.add(new JLabel("Subset peptides:", JLabel.LEFT));
+		options.add(scrollPane);
+		
+		JPanel buttons=new JPanel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JButton okButton=new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+
+				final File elibFile=elibFileChooser.getFile();
+				final File saveFile=saveFileChooser.getFile();
+				final String text=textArea.getText();
+				
+				if (elibFile!=null&&elibFile.exists()&&saveFile!=null&&text!=null&&text.length()>0) {
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(SearchPanel.this), "Please wait...", "Reading Library File") {
+						@Override
+						protected Nothing doInBackgroundForReal() throws Exception {
+							HashSet<String> targets=new HashSet<>();
+							StringTokenizer st=new StringTokenizer(text);
+							while (st.hasMoreTokens()) {
+								targets.add(st.nextToken());
+							}
+							
+							LibraryFile library=new LibraryFile();
+							library.openFile(elibFile);
+							
+
+							LibraryFile saveLibrary=new LibraryFile();
+							saveLibrary.openFile();
+							
+							ArrayList<LibraryEntry> toWrite=new ArrayList<>();
+							for (LibraryEntry entry : library.getAllEntries(false)) {
+								if (targets.contains(entry.getPeptideSeq())) {
+									toWrite.add(entry);
+								}
+							}
+							Logger.logLine("Found "+toWrite.size()+" peptides from "+targets.size()+" target sequences. Writing to ["+saveFile.getAbsolutePath()+"]...");
+							
+							saveLibrary.dropIndices();
+							saveLibrary.addEntries(toWrite);
+							saveLibrary.addProteinsFromEntries(toWrite);
+							saveLibrary.createIndices();
+							saveLibrary.saveAsFile(saveFile);
+							
+							library.close();
+							saveLibrary.close();
+							
+							return Nothing.NOTHING;
+						}
+						@Override
+						protected void doneForReal(Nothing t) {
+						}
+					};
+					worker.execute();
+					
+				} else {
+					JOptionPane.showMessageDialog(frame, "You must specify a library file and peptide sequences!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+				}
+			}
+		});
+		buttons.add(okButton);
+		JButton cancelButton=new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+			}
+		});
+		buttons.add(cancelButton);
+		
+		JPanel mainpane=new JPanel(new BorderLayout());
+		mainpane.add(options, BorderLayout.CENTER);
+		mainpane.add(buttons, BorderLayout.SOUTH);
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		
+		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		//dialog.setSize(500, 600);
+		dialog.setVisible(true);
+	}
+	
 	public void convertBLIB() {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(SearchPanel.this);
 		final JDialog dialog=new JDialog(frame, "Convert BLIB to Library", true);
@@ -680,6 +807,73 @@ public class SearchPanel extends JPanel {
 					worker.execute();
 				} else {
 					JOptionPane.showMessageDialog(frame, "You must specify a MSP and a FASTA file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+				}
+			}
+		});
+		buttons.add(okButton);
+		JButton cancelButton=new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+			}
+		});
+		buttons.add(cancelButton);
+		
+		JPanel mainpane=new JPanel(new BorderLayout());
+		mainpane.add(options, BorderLayout.CENTER);
+		mainpane.add(buttons, BorderLayout.SOUTH);
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		
+		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(500, 170);
+		dialog.setVisible(true);
+	}
+	
+	public void convertTRAML() {
+		final SearchParameters params=getVisibleTab().getParameters();
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(SearchPanel.this);
+		final JDialog dialog=new JDialog(frame, "Convert TraML to Library", true);
+		
+		final FileChooserPanel tramlFileChooser=new FileChooserPanel(null, "TraML", new SimpleFilenameFilter(".traml"), true);
+		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);
+
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(tramlFileChooser);
+		options.add(fastaFileChooser);
+		
+		JPanel buttons=new JPanel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JButton okButton=new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+
+				final File tramlFile=tramlFileChooser.getFile();
+				final File fastaFile=fastaFileChooser.getFile();
+				
+				if (tramlFile!=null&&tramlFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(SearchPanel.this), "Please wait...", "Reading TraML File") {
+						@Override
+						protected Nothing doInBackgroundForReal() throws Exception {
+							TraMLToLibraryConverter.convertTraML(tramlFile, fastaFile, params.getAAConstants());
+							Logger.logLine("Finished reading "+tramlFile.getName());
+							return Nothing.NOTHING;
+						}
+
+						@Override
+						protected void doneForReal(Nothing t) {
+						}
+					};
+					worker.execute();
+				} else {
+					JOptionPane.showMessageDialog(frame, "You must specify a TraML and a FASTA file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
 				}
 			}
 		});

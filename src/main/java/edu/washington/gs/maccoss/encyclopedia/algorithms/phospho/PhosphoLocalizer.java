@@ -249,7 +249,7 @@ public class PhosphoLocalizer {
 			// FIXME BUT WE NEED TO REMOVE THE (S[+80])SSSSK RT AS A POSSIBILITY!
 			
 			// fix ambiguity based on previously identified peptides
-			Optional<AmbiguousPeptideModSeq> ambiguityRemoved=targetPeptideAnnotation.removeAmbiguity(previouslyIdentified);
+			Optional<AmbiguousPeptideModSeq> ambiguityRemoved=targetPeptideAnnotation.removeAmbiguity(modification, previouslyIdentified);
 			System.out.println("AMBIGUITY: "+targetPeptideAnnotation.getPeptideAnnotation()+", "+!ambiguityRemoved.isPresent()); //FIXME
 			for (AmbiguousPeptideModSeq prev : previouslyIdentified) {
 				System.out.println("\tPREVIOUS ID:"+prev.getPeptideAnnotation());
@@ -364,7 +364,8 @@ public class PhosphoLocalizer {
 			uniqueIdentifiedTargetFragments.put(peptideAnnotation, identifiedTargets.toArray(new FragmentIon[identifiedTargets.size()]));
 
 			boolean isLocalized = maxRawScore>=minimumScore;
-			
+
+			System.out.println("0) "+isLocalized+", "+maxRawScore+", "+bestScore+", "+minimumScore);
 			if (isLocalized||maxRawScore>bestScore) {
 				if (bestScore<maxRawScore) {
 					bestScore=maxRawScore;

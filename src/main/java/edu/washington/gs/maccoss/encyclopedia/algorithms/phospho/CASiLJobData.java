@@ -13,6 +13,7 @@ public class CASiLJobData extends EncyclopediaJobData {
 	public static final String LOG_FILE_SUFFIX=".log";
 	public static final String OUTPUT_FILE_SUFFIX=".thesaurus.txt";
 	public static final String FEATURE_FILE_SUFFIX=".thesaurus_features.txt";
+	public static final String THESAURUS_REPORT_FILE_SUFFIX=".thesaurus" + LibraryFile.ELIB;
 
 	public CASiLJobData(File diaFile, LibraryInterface library, File outputFile, File fastaFile, LibraryScoringFactory taskFactory) {
 		super(diaFile, getPercolatorExecutionData(outputFile, fastaFile, taskFactory.getParameters()), taskFactory.getParameters(), taskFactory.getVersion(), library, taskFactory);
@@ -39,7 +40,7 @@ public class CASiLJobData extends EncyclopediaJobData {
 
 	public File getResultLibrary() {
 		String absolutePath = getPrefixFromOutput(getPercolatorFiles().getPeptideOutputFile());
-		return new File(absolutePath+".thesaurus" + LibraryFile.ELIB);
+		return new File(absolutePath+THESAURUS_REPORT_FILE_SUFFIX);
 	}
 
 	static String getPrefixFromOutput(File outputFile) {

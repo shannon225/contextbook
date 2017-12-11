@@ -27,6 +27,7 @@ public enum DataAcquisitionType {
 	public static DataAcquisitionType getAcquisitionType(String s) {
 		if ("FALSE".equalsIgnoreCase(s)) return DIA;
 		if ("DIA".equalsIgnoreCase(s)) return DIA;
+		if ("PRM".equalsIgnoreCase(s)) return DIA;
 		if ("TRUE".equalsIgnoreCase(s)) return OVERLAPPING_DIA;
 		if ("OVERLAPPINGDIA".equalsIgnoreCase(s)) return OVERLAPPING_DIA;
 		if ("OVERLAPPING".equalsIgnoreCase(s)) return OVERLAPPING_DIA;

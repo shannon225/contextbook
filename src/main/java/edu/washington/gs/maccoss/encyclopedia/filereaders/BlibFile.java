@@ -24,6 +24,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
@@ -33,6 +34,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
@@ -136,7 +138,8 @@ public class BlibFile extends SQLFile {
 										+"where RefSpectra.id == RefSpectraPeaks.RefSpectraID");
 					}
 				}
-
+				
+				AminoAcidConstants constants=new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 				int missing=0;
 				int total=0;
 				while (rs.next()) {
@@ -144,11 +147,10 @@ public class BlibFile extends SQLFile {
 					double precursorMZ=rs.getDouble(2);
 					byte precursorCharge=(byte)rs.getInt(3);
 					String peptideModSeq=rs.getString(4);
-					if (precursorMZ<=0.0&&precursorCharge>0) {
-						// precursors not set? This is a bug in Skyline exporting
-						FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-						precursorMZ=model.getChargedMass(precursorCharge);
-					}
+					
+					// precursors not set? This is a bug in Skyline exporting
+					FragmentationModel model=new FragmentationModel(peptideModSeq, constants);
+					precursorMZ=model.getChargedMass(precursorCharge);
 					
 					int copies=rs.getInt(5);
 					int numPeaks=rs.getInt(6);

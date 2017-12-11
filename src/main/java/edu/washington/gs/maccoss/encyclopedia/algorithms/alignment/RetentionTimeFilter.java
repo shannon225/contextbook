@@ -141,9 +141,10 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 		
 		XYTraceInterface posTrace=new XYTrace(positivePoints, GraphType.line, "Positive", new Color(26, 198, 49, 100), 2.0f);
 		
+		float alpha=Math.min(1.0f, 5000.0f/rts.size());
 		XYTraceInterface median2=new XYTrace(rtWarper.getKnots(), GraphType.line, "Retention Time Fit", new Color(26, 198, 49, 100), 2.0f);
-		XYTraceInterface selectedTrace=new XYTrace(selectedRTs, GraphType.tinypoint, "Data Used In Fit", new Color(0f, 0f, 1f, 0.2f), 1.0f);
-		XYTraceInterface trace=new XYTrace(removedRTs, GraphType.tinypoint, "Data Removed From Fit", new Color(1f, 0f, 0f, 0.2f), 1.0f);
+		XYTraceInterface selectedTrace=new XYTrace(selectedRTs, GraphType.tinypoint, "Data Used In Fit", new Color(0f, 0f, 1f, alpha), 1.0f);
+		XYTraceInterface trace=new XYTrace(removedRTs, GraphType.tinypoint, "Data Removed From Fit", new Color(1f, 0f, 0f, alpha), 1.0f);
 		
 		if (saveFileSeed.isPresent()) {
 			String saveFilePrefix=saveFileSeed.get().getAbsolutePath();
@@ -153,14 +154,21 @@ public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 			try {
 				final File file = new File(saveFilePrefix + ".rt_fit.txt");
 				PrintWriter writer=new PrintWriter(file, "UTF-8");
-				writer.println("library\tactual\twarpToActual\tdelta\tfitProb");
+				writer.println("library\tactual\twarpToActual\tdelta\tfitProb\tisDecoy\tsequence");
+				
 				for (int i=0; i<rts.size(); i++) {
 					XYPoint xyPoint=rts.get(i);
 					float modelRT=rtWarper.getYValue((float)xyPoint.x);
 					float delta=getDelta((float)xyPoint.y, (float)xyPoint.x);
 
 					float prob=getProbabilityFitsModel((float)xyPoint.y, (float)xyPoint.x);
-					writer.println(xyPoint.x+"\t"+xyPoint.y+"\t"+modelRT+"\t"+delta+"\t"+prob);
+					
+					if (xyPoint instanceof RTRTPoint) {
+						RTRTPoint rtPoint=(RTRTPoint)xyPoint;
+						writer.println(xyPoint.x+"\t"+xyPoint.y+"\t"+modelRT+"\t"+delta+"\t"+prob+"\t"+rtPoint.isDecoy()+"\t"+rtPoint.getPeptideModSeq());
+					} else {
+						writer.println(xyPoint.x+"\t"+xyPoint.y+"\t"+modelRT+"\t"+delta+"\t"+prob+"\t?\t?");
+					}
 				}
 				writer.flush();
 				writer.close();

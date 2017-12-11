@@ -15,6 +15,11 @@ public class Peak implements PointInterface {
 		this.mass = mass;
 		this.intensity = intensity;
 	}
+	
+	@Override
+	public String toString() {
+		return "("+mass+","+intensity+")";
+	}
 
 	@Override
 	public double getX() {

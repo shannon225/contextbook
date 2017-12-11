@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.function.Consumer;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
@@ -53,6 +54,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.ThrowingConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -329,6 +331,7 @@ public class SearchToBLIB {
 			} else {
 				TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
 				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), bigPercolatorFiles, threshold);
+
 			}
 			
 			Logger.logLine("Identified "+passingPeptides.x.size()+" peptides across all files at a "+(threshold*100.0f)+"% FDR threshold.");
@@ -511,8 +514,9 @@ public class SearchToBLIB {
 			
 			ArrayList<PercolatorProteinGroup> proteins=null;
 			if (globalPercolatorFiles.isPresent()) {
-				Pair<ArrayList<PercolatorPeptide>, Float> targets=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorFiles.get().getPeptideOutputFile(), parameters.getEffectivePercolatorThreshold(), true);
-				Pair<ArrayList<PercolatorPeptide>, Float> decoys=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorFiles.get().getPeptideDecoyFile(), parameters.getEffectivePercolatorThreshold(), true);
+				final PercolatorExecutionData percolatorExecutionData = globalPercolatorFiles.get();
+				Pair<ArrayList<PercolatorPeptide>, Float> targets=PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideOutputFile(), parameters.getEffectivePercolatorThreshold(), true);
+				Pair<ArrayList<PercolatorPeptide>, Float> decoys=PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideDecoyFile(), parameters.getEffectivePercolatorThreshold(), true);
 				Logger.logLine("Writing global target/decoy peptides: "+targets.x.size()+"/"+decoys.x.size()+", pi0: "+targets.y);
 				elib.addTargetDecoyPeptides(targets.x, decoys.x);
 				elib.addMetadata("pi0", Float.toString(targets.y));
@@ -523,6 +527,12 @@ public class SearchToBLIB {
 				Logger.logLine("Writing global target/decoy proteins: "+targetDecoyProteins.x.size()+"/"+targetDecoyProteins.y.size());
 				elib.addTargetDecoyProteins("global", targetDecoyProteins.x, targetDecoyProteins.y);
 				proteins=targetDecoyProteins.x;
+
+				percolatorExecutionData
+						.getPercolatorExecutableVersion()
+						.ifPresent((ThrowingConsumer<String>) version -> {
+							elib.addMetadata(LibraryFile.PERCOLATOR_VERSION, version);
+						});
 			}
 			
 			elib.addMetadata(parameters.toParameterMap());
