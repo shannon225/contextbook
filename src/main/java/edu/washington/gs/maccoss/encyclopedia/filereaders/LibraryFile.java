@@ -68,6 +68,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	public static final String DLIB=".dlib";
 	public static final String ELIB=".elib";
 	public static final String VERSION_STRING="version";
+	public static final String ENCYCLOPEDIA_VERSION = "EncyclopediaVersion";
+	public static final String PERCOLATOR_VERSION = "PercolatorVersion";
+	public static final String UNKNOWN = "Unknown";
 	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] { new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4),
 			new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8), new Version(0, 1, 9), new Version(0, 1, 10), new Version(0, 1, 11), new Version(0, 1, 12), new Version(0, 1, 13) };
 	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 13);
@@ -113,6 +116,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 	public void saveAsFile(File userFile) throws IOException, SQLException {
 		this.userFile=userFile;
+		String version = getClass().getPackage().getImplementationVersion();
+		addMetadata(ENCYCLOPEDIA_VERSION, version == null ? UNKNOWN : version);
 		saveFile();
 	}
 
@@ -939,7 +944,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			try (PreparedStatement prep=c.prepareStatement("select "+"e.PrecursorMZ, "+"e.PrecursorCharge, "+"e.PeptideModSeq, "+"e.Copies, "+"e.RTInSeconds, "+"e.Score, "+"e.MassEncodedLength, "
 					+"e.MassArray, "+"e.IntensityEncodedLength, "+"e.IntensityArray, "+"e.CorrelationEncodedLength, "+"e.CorrelationArray blob, "+"e.RTInSecondsStart, "+"e.RTInSecondsStop,"
 					+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile "+"from "
-					+"entries e "+"left join peptidetoprotein p "+"where "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"and e.PeptideModSeq = ? "+"and e.PrecursorCharge = ? "+"group by e.rowid;")) {
+					+"entries e "+"left join peptidetoprotein p "+"on "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"where e.PeptideModSeq = ? "+"and e.PrecursorCharge = ? "+"group by e.rowid;")) {
 				for (PeptidePrecursor precursor : entries) {
 					prep.setString(1, precursor.getPeptideModSeq());
 					prep.setByte(2, precursor.getPrecursorCharge());
@@ -966,7 +971,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			try (PreparedStatement s=c.prepareStatement("select "+"e.PrecursorMZ, "+"e.PrecursorCharge, "+"e.PeptideModSeq, "+"e.Copies, "+"e.RTInSeconds, "+"e.Score, "+"e.MassEncodedLength, "
 					+"e.MassArray, "+"e.IntensityEncodedLength, "+"e.IntensityArray, "+"e.CorrelationEncodedLength, "+"e.CorrelationArray blob, "+"e.RTInSecondsStart, "+"e.RTInSecondsStop, "
 					+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile "+"from "
-					+"entries e "+"left join peptidetoprotein p "+"where "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"and e.PeptideModSeq = ? "+"and e.PrecursorCharge = ? "+"group by e.rowid;")) {
+					+"entries e "+"left join peptidetoprotein p "+"on "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"where e.PeptideModSeq = ? "+"and e.PrecursorCharge = ? "+"group by e.rowid;")) {
 				s.setString(1, peptideModSeq);
 				s.setByte(2, charge);
 				ResultSet rs=s.executeQuery();
@@ -1076,7 +1081,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			try (PreparedStatement s=c.prepareStatement("select "+"e.PrecursorMZ, "+"e.PrecursorCharge, "+"e.PeptideModSeq, "+"e.Copies, "+"e.RTInSeconds, "+"e.Score, "+"e.MassEncodedLength, "
 					+"e.MassArray, "+"e.IntensityEncodedLength, "+"e.IntensityArray, "+"e.CorrelationEncodedLength, "+"e.CorrelationArray blob, "+"e.RTInSecondsStart, "+"e.RTInSecondsStop, "
 					+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile "+"from "
-					+"entries e "+"left join peptidetoprotein p "+"where "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"and e.PrecursorMz between ? and ? "+"group by e.rowid;")) {
+					+"entries e "+"left join peptidetoprotein p "+"on "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"where e.PrecursorMz between ? and ? "+"group by e.rowid;")) {
 				s.setFloat(1, precursorMz.getStart());
 				s.setFloat(2, precursorMz.getStop());
 				ResultSet rs=s.executeQuery();
@@ -1139,7 +1144,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			try (PreparedStatement s=c.prepareStatement("select "+"e.PrecursorMZ, "+"e.PrecursorCharge, "+"e.PeptideModSeq, "+"e.Copies, "+"e.RTInSeconds, "+"e.Score, "+"e.MassEncodedLength, "
 					+"e.MassArray, "+"e.IntensityEncodedLength, "+"e.IntensityArray, "+"e.CorrelationEncodedLength, "+"e.CorrelationArray blob, "+"e.RTInSecondsStart, "+"e.RTInSecondsStop, "
 					+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile "+"from "
-					+"entries e "+"left join peptidetoprotein p "+"where "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"group by e.rowid")) {
+					+"entries e "+"left join peptidetoprotein p "+"on "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"group by e.rowid")) {
 
 				ResultSet rs=s.executeQuery();
 
@@ -1201,8 +1206,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					+"e.IntensityEncodedLength, "+"e.IntensityArray, "+"e.CorrelationEncodedLength, "+"e.CorrelationArray blob, "+"e.RTInSecondsStart, "+"e.RTInSecondsStop, "
 					+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile, "
 					+"l.LocalizationPeptideModSeq, "+"l.LocalizationScore, "+"l.LocalizationIons, "+"l.NumberOfMods, "+"l.NumberOfModifiableResidues, "+"l.isSiteSpecific "+"from "
-					+"peptidelocalizations l, "+"entries e "+"left join peptidetoprotein p "+"where "+"l.isLocalized=1 and "+"l.LocalizationScore>="+minimumLocalizationScore+" and "
-					+"e.PeptideModSeq=l.PeptideModSeq and "+"not p.isdecoy and "+"e.PrecursorCharge=l.PrecursorCharge and "+"e.SourceFile=l.SourceFile and "+"e.PeptideSeq=p.PeptideSeq "+"group by e.rowid";
+					+"peptidelocalizations l, "+"entries e "+"left join peptidetoprotein p "+"on "+"e.PeptideSeq=p.PeptideSeq and not p.isdecoy where "+"l.isLocalized=1 and "+"l.LocalizationScore>="+minimumLocalizationScore+" and "
+					+"e.PeptideModSeq=l.PeptideModSeq and "+"e.PrecursorCharge=l.PrecursorCharge and "+"e.SourceFile=l.SourceFile and "+"group by e.rowid";
 			try (PreparedStatement s=c.prepareStatement(sql)) {
 				ResultSet rs=s.executeQuery();
 
@@ -1280,7 +1285,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					while (rs.next()) {
 						ins.setString(1, rs.getString("peptideseq"));
 						for (String acc : PSMData.stringToAccessions(rs.getString("proteinaccessions"))) {
-							ins.setBoolean(2, true); // everything that was
+							ins.setBoolean(2, false); // everything that was
 														// originally added to
 														// proteins is not a
 														// decoy

@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
 import java.io.File;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 
@@ -12,6 +13,7 @@ public class PercolatorExecutionData {
 	private final File proteinOutputFile;
 	private final File proteinDecoyFile;
 	private final SearchParameters parameters;
+	private String percolatorExecutableVersion;
 
 	public PercolatorExecutionData(File inputTSV, File fastaFile, File peptideOutputFile, File peptideDecoyFile, File proteinOutputFile, File proteinDecoyFile, SearchParameters parameters) {
 		this.inputTSV=inputTSV;
@@ -35,6 +37,20 @@ public class PercolatorExecutionData {
 
 	public File getInputTSV() {
 		return inputTSV;
+	}
+
+	/**
+	 * @param percolatorExecutableVersion Canonical version of Percolator parsed directly when running the actual executable
+	 */
+	void setPercolatorExecutableVersion(String percolatorExecutableVersion) {
+		this.percolatorExecutableVersion = percolatorExecutableVersion;
+	}
+
+	/**
+	 * @return Canonical version of Percolator parsed directly when running the actual executable
+	 */
+	public Optional<String> getPercolatorExecutableVersion() {
+		return Optional.ofNullable(this.percolatorExecutableVersion);
 	}
 
 	public File getPeptideOutputFile() {

@@ -161,6 +161,24 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<!-- Allows us to properly fetch artifact version programmatically in code.
+					We do this to save program information in files creates by this artifact.
+					Usage:
+					Class k = ...
+					k.getPackage().getImplementationVersion() -> {$version}
+				-->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+							<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 
@@ -217,6 +235,11 @@
 			<artifactId>itext</artifactId>
 			<version>4.2.0</version>
 		</dependency>
-		
-	</dependencies>
+		<!-- For ease of and faster test development -->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-all</artifactId>
+			<version>1.9.5</version>
+		</dependency>
+    </dependencies>
 </project>
