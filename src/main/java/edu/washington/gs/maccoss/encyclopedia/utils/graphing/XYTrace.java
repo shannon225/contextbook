@@ -12,7 +12,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TDoubleDoubleHashMap;
 import gnu.trove.map.hash.TFloatFloatHashMap;
+import gnu.trove.procedure.TDoubleDoubleProcedure;
 import gnu.trove.procedure.TFloatFloatProcedure;
 
 public class XYTrace implements XYTraceInterface {
@@ -161,6 +163,22 @@ public class XYTrace implements XYTraceInterface {
 		this(General.toDoubleArray(x), General.toDoubleArray(y), type, name, color, thickness);
 	}
 	
+	public XYTrace(TDoubleDoubleHashMap map, GraphType type, String name, Color color, Float thickness) {
+		this.color=Optional.ofNullable(color);
+		this.thickness=Optional.ofNullable(thickness);
+		this.type=type;
+		this.points=new ArrayList<XYPoint>();
+		this.name=name;
+
+		map.forEachEntry(new TDoubleDoubleProcedure() {
+			public boolean execute(double x, double y) {
+				points.add(new XYPoint(x, y));
+				return true;
+			}
+		});
+		Collections.sort(points);
+	}
+	
 	public XYTrace(TFloatFloatHashMap map, GraphType type, String name, Color color, Float thickness) {
 		this.color=Optional.ofNullable(color);
 		this.thickness=Optional.ofNullable(thickness);
@@ -175,6 +193,9 @@ public class XYTrace implements XYTraceInterface {
 			}
 		});
 		Collections.sort(points);
+	}
+	public XYTrace(TDoubleDoubleHashMap map, GraphType type, String name) {
+		this(map, type, name, null, null);
 	}
 	public XYTrace(TFloatFloatHashMap map, GraphType type, String name) {
 		this(map, type, name, null, null);

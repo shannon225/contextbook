@@ -28,6 +28,14 @@ public class General {
 		}
 		return count;
 	}
+
+	public static double[][] transposeMatrix(double[][] m) {
+		double[][] temp = new double[m[0].length][m.length];
+		for (int i = 0; i < m.length; i++)
+			for (int j = 0; j < m[0].length; j++)
+				temp[j][i] = m[i][j];
+		return temp;
+	}
 	
 	public static float[] toFloatArray(double[] a) {
 		float[] f=new float[a.length];
@@ -95,6 +103,17 @@ public class General {
 			lastIndex+=a[i].length;
 		}
 		return r;
+	}
+	
+	public static String toString(double[] i, String delim) {
+		StringBuilder sb=new StringBuilder();
+		for (Object g : i) {
+			if (sb.length()>0) {
+				sb.append(delim);
+			}
+			sb.append(g);
+		}
+		return sb.toString();
 	}
 	
 	public static String toString(Object[] i, String delim) {
@@ -296,6 +315,17 @@ public class General {
 		return sum/v.length;
 	}
 	
+	public static float mean(float[][] v) {
+		if (v.length==0) return 0.0f;
+		int length=0;
+		float sum=0.0f;
+		for (int i=0; i<v.length; i++) {
+			length+=v[i].length;
+			sum+=sum(v[i]);
+		}
+		return sum/length;
+	}
+	
 	public static float mean(float[] v, int startIndex, int stopIndex) {
 		float sum=0.0f;
 		int count=0;
@@ -407,6 +437,16 @@ public class General {
 		float[] r=new float[v1.length];
 		for (int i=0; i<r.length; i++) {
 			r[i]=v1[i]*m;
+		}
+		return r;
+	}
+
+	public static float[] multiply(float[] v1, float[] v2) {
+		assert(v1.length==v2.length);
+		
+		float[] r=new float[v1.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=v1[i]*v2[i];
 		}
 		return r;
 	}

@@ -21,13 +21,23 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.zip.DataFormatException;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentComponent;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentComponentTranscoder;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentId;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentIdTranscoder;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentMapTranscoder;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -44,6 +54,9 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	public static final String FILENAME_ATTRIBUTE="filename";
 	public static final String TOTAL_PRECURSOR_TIC_ATTRIBUTE="totalPrecursorTIC";
 	public static final String GRADIENT_LENGTH_ATTRIBUTE="gradientLength";
+	public static final String SOFTWARE_VERSION_PREFIX = "SoftwareVersion_";
+	public static final String SOFTWARE_VERSIONS_DELIMITER = ";";
+	public static final String INSTRUMENT_CONFIGURATIONS = "InstrumentConfigurations";
 
 	public static final String DIA_EXTENSION=".dia";
 
@@ -238,6 +251,24 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		map.put(SOURCENAME_ATTRIBUTE, sourceName==null?UNKNOWN_VALUE:sourceName);
 		map.put(FILELOCATION_ATTRIBUTE, fileLocation==null?UNKNOWN_VALUE:fileLocation);
 		addMetadata(map);
+	}
+
+	public void setInstrumentConfiguration(ImmutableMultimap<InstrumentId, InstrumentComponent> instrumentConfigurations) throws IOException, SQLException {
+		if (!instrumentConfigurations.isEmpty()) {
+			Map<String, String> m = Maps.newHashMap();
+			m.put(INSTRUMENT_CONFIGURATIONS, InstrumentMapTranscoder.encode(instrumentConfigurations));
+			addMetadata(m);
+		}
+	}
+
+	public void setSoftwareVersions(final Multimap<String, String> softwareAccessionIdToVersion) throws IOException, SQLException {
+		if (!softwareAccessionIdToVersion.isEmpty()) {
+			Map<String, String> toAdd = Maps.newHashMap();
+			softwareAccessionIdToVersion.asMap().forEach((key, value) -> {
+				toAdd.put(SOFTWARE_VERSION_PREFIX + key, Joiner.on(SOFTWARE_VERSIONS_DELIMITER).join(value));
+			});
+			addMetadata(toAdd);
+		}
 	}
 
 	public void addMetadata(String key, String value) throws IOException, SQLException {

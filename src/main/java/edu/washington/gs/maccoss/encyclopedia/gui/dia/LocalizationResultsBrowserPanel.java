@@ -305,7 +305,7 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 						}
 					}
 					HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge()), downcastedSpectra, entry.getRetentionTime(), GraphType.dashedline);
-					HashMap<FragmentIon, XYTrace> targetMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), entry.getLocalizationIons(), downcastedSpectra, entry.getRetentionTime(), GraphType.boldline);
+					HashMap<FragmentIon, XYTrace> targetMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), entry.getLocalizationIons(), downcastedSpectra, null, GraphType.boldline);
 					fragmentTraceMap.putAll(targetMap);
 					ArrayList<XYTrace> traces=new ArrayList<XYTrace>(fragmentTraceMap.values());
 					
@@ -313,7 +313,7 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 					
 					String annotation = entry.getPeptideAnnotation().getNonDirectionalPeptideAnnotation();
 					tabs.add(annotation+" ("+(Math.round(entry.getLocalizationScore()*10.0f)/10.0f)+")", fragmentChart);
-					Logger.logLine("Finished reading peptide "+entry.getSpectrumName());
+					Logger.logLine("Finished reading peptide "+entry.getSpectrumName()+", "+entry.getNumberOfModifiableResidues()+" residues, "+entry.getLocalizationIons().length+" ions");
 				}
 				chartSplit.setBottomComponent(tabs);
 

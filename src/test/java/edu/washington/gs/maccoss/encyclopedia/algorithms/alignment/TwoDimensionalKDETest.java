@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter3d;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.MedianInterpolatorTest;
 
@@ -21,7 +20,7 @@ public class TwoDimensionalKDETest {
 		//rts=MedianInterpolatorTest.getCleanData();
 		rts=new ArrayList<XYPoint>(rts.subList(0, 10000));
 		System.out.println(rts.size());
-		File f=new File("/Users/searleb/Downloads/clib/23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.mzML.encyclopedia.txt.rt_fit.txt");
+		File f=new File("/Users/searleb/Documents/chromatogram_library_manuscript/quant_replicates/23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.mzML.encyclopedia.txt.first.rt_fit.txt");
 		//f=new File("/Users/searleb/Downloads/23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.mzML.encyclopedia.txt.rt_fit.txt");
 		rts=MedianInterpolatorTest.getData(f);
 		
