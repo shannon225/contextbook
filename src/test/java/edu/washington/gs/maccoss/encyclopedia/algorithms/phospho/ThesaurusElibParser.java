@@ -9,6 +9,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.TreeMap;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.TreeSet;
@@ -32,11 +34,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedianDouble;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class ThesaurusElibParser {
-	public static HashMap<String, Coordinate> sampleKey=new HashMap<>();
+	public static TreeMap<String, Coordinate> sampleKey=new TreeMap<>();
 	
 	private static final int numberOfSampleTypes=6;
 	private static final int numberOfReplicates=6;
@@ -219,12 +222,12 @@ public class ThesaurusElibParser {
 		sampleKey.put("22jun2016_mcf7_phospho_6e.mzML", new Coordinate(6, 5));
 		sampleKey.put("22jun2016_mcf7_phospho_6f.mzML", new Coordinate(6, 6));
 	}
-	public static final boolean TOTAL_ANALYSIS=false;
+	public static final boolean TOTAL_ANALYSIS=true;
 	
 	public static final boolean MOTIF_ANALYSIS=false;
-	public static final boolean ANOVA_ANALYSIS=false;
+	public static final boolean ANOVA_ANALYSIS=true;
 	public static final boolean HEATMAP_ANALYSIS=false;
-	public static final boolean MULTIPLE_FORM_ANALYSIS=true;
+	public static final boolean MULTIPLE_FORM_ANALYSIS=false;
 	public static final boolean SITE_SPECIFIC_VS_TOTAL_ANALYSIS=false;
 	
 	public static void main(String[] args) throws Exception {
@@ -235,20 +238,21 @@ public class ThesaurusElibParser {
 		byte targetFoldChangeData=INS_VS_CONTROL;
 
 		PeptideModification mod=PeptideModification.phosphorylation;
-		String[] targets=null;//KGSGDYMPMSPK;//targetPeptides;
+		String[] targets=null;//new String[] {"SFSKEVEER", "ILQEKLDQPVSAPPSPR", "HRGSEEDPLLSPVETWK", "RASGQAFELILSPR"};//KGSGDYMPMSPK;//targetPeptides;
 		File[] f=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs").listFiles();
 		//f=new File[] {new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1a.dia.thesaurus.elib")};
 		
-		Pair<HashMap<String,QuantitationLog>, HashMap<String,QuantitationLog>> quantLogPair=getQuantData(targets, f);
-		HashMap<String, QuantitationLog> totalQuantLog=quantLogPair.x;
-		HashMap<String, QuantitationLog> siteSpecificQuantLog=quantLogPair.y;
+		Pair<TreeMap<String,QuantitationLog>, TreeMap<String,QuantitationLog>> quantLogPair=getQuantData(targets, f);
+		TreeMap<String, QuantitationLog> totalQuantLog=quantLogPair.x;
+		TreeMap<String, QuantitationLog> siteSpecificQuantLog=quantLogPair.y;
 		
-		HashMap<String, QuantitationLog> primaryQuantLog=TOTAL_ANALYSIS?totalQuantLog:siteSpecificQuantLog;
+		TreeMap<String, QuantitationLog> primaryQuantLog=TOTAL_ANALYSIS?totalQuantLog:siteSpecificQuantLog;
 		
 		PeptideMotifTrie motifTrie=new PeptideMotifTrie(primaryQuantLog.values(), mod);
 
 		System.out.println("Reading FASTA...");
-		ArrayList<FastaEntryInterface> fasta=FastaReader.readFasta(new File("/Users/searleb/Documents/school/projects/pecandata/UP000005640_9606.fasta"));
+		ArrayList<FastaEntryInterface> fasta=FastaReader.readFasta(new File("/Users/searleb/Downloads/uniprot.HUMAN.fasta"));
+		//ArrayList<FastaEntryInterface> fasta=FastaReader.readFasta(new File("/Users/searleb/Documents/school/projects/pecandata/UP000005640_9606.fasta"));
 		motifTrie.addFasta(fasta);
 		
 		ArrayList<String> siteSpecificPeptides=new ArrayList<>();
@@ -256,7 +260,7 @@ public class ThesaurusElibParser {
 		TDoubleArrayList siteSpecificFC=new TDoubleArrayList();
 		for (String peptide : siteSpecificQuantLog.keySet()) {
 			QuantitationLog log=siteSpecificQuantLog.get(peptide);
-			if (log.getNumMeasurements()<18) continue;
+			//if (log.getNumMeasurements()<18) continue;
 			if (!log.isAtLeastOneCaseFull()) continue;
 			
 			float[][] data=log.getNormalizedData();
@@ -273,6 +277,7 @@ public class ThesaurusElibParser {
 			siteSpecificPValues.add(pValue);
 			siteSpecificFC.add(getFoldChange(data, targetFoldChangeData));
 		}
+		System.out.println("Found "+siteSpecificPeptides.size()+" peptides ("+localized+" are site specific):");
 		double[] siteSpecificAdjustedPValues=BenjaminiHochberg.calculateAdjustedPValues(siteSpecificPValues.toArray());
 
 		ArrayList<String> peptides=new ArrayList<>();
@@ -280,7 +285,7 @@ public class ThesaurusElibParser {
 		TDoubleArrayList totalFC=new TDoubleArrayList();
 		for (String peptide : totalQuantLog.keySet()) {
 			QuantitationLog log=totalQuantLog.get(peptide);
-			if (log.getNumMeasurements()<18) continue;
+			//if (log.getNumMeasurements()<18) continue;
 			if (!log.isAtLeastOneCaseFull()) continue;
 			
 			float[][] data=log.getNormalizedData();
@@ -306,8 +311,8 @@ public class ThesaurusElibParser {
 				if (totalAdjustedPValues[pep]<0.05) {
 					String peptide=peptides.get(pep);
 					QuantitationLog log=primaryQuantLog.get(peptide);
-					if (log.motif!=null) {
-						motifs.add(log.motif);
+					if (log.motifMap.size()!=0) {
+						motifs.addAll(log.getMotifs());
 					}
 				}
 			}
@@ -327,7 +332,6 @@ public class ThesaurusElibParser {
 				if (true||totalAdjustedPValues[pep]<0.05) {
 
 					float[][] data=log.getNormalizedData();
-					double pValue=getANOVAPValue(data);
 
 					System.out.println(log.peptideModSeq+"+"+log.charge+" rt:"+General.mean(log.rtInSecondsList.toArray())+" motif:"+log.motif+" localized:"+log.isSiteSpecific+" ("+log.protein+") p="+pValue+", FDR="+totalAdjustedPValues[pep]);
 
@@ -349,11 +353,7 @@ public class ThesaurusElibParser {
 							} else {
 								System.out.print('\t');
 							}
-							if (data[samp][rep]>0) {
-								System.out.print(data[samp][rep]);
-							} else {
-								System.out.print(0);
-							}
+							System.out.print(data[samp][rep]);
 						}
 						System.out.println();
 					}
@@ -364,7 +364,7 @@ public class ThesaurusElibParser {
 
 		if (HEATMAP_ANALYSIS) {
 			System.out.println();
-			System.out.print("Peptide\tProtein\tp-value\tFDR\tAKT\tLAKT\tMTOR\tMAPK");
+			System.out.print("Peptide\tProtein\tisSiteSpecific\tp-value\tFDR\tAKT\tLAKT\tMTOR\tMAPK");
 			for (int i=0; i<6; i++) {
 				System.out.print('\t');
 				System.out.print(getSampleName(i+1));
@@ -489,9 +489,9 @@ public class ThesaurusElibParser {
 		}
 	}
 
-	private static Pair<HashMap<String, QuantitationLog>, HashMap<String, QuantitationLog>> getQuantData(String[] targets, File[] f) throws IOException, SQLException {
-		HashMap<String, QuantitationLog> quantLog=new HashMap<>();
-		HashMap<String, QuantitationLog> siteSpecificQuantLog=new HashMap<>();
+	private static Pair<TreeMap<String, QuantitationLog>, TreeMap<String, QuantitationLog>> getQuantData(String[] targets, File[] f) throws IOException, SQLException {
+		TreeMap<String, QuantitationLog> quantLog=new TreeMap<>();
+		TreeMap<String, QuantitationLog> siteSpecificQuantLog=new TreeMap<>();
 		for (File file : f) {
 			if (file.getName().endsWith(LibraryFile.ELIB)) {
 				System.out.println("Parsing "+file.getName()+"...");
@@ -560,7 +560,7 @@ public class ThesaurusElibParser {
 				c.close();
 			}
 		}
-		return new Pair<HashMap<String,QuantitationLog>, HashMap<String,QuantitationLog>>(quantLog, siteSpecificQuantLog);
+		return new Pair<TreeMap<String,QuantitationLog>, TreeMap<String,QuantitationLog>>(quantLog, siteSpecificQuantLog);
 	}
 	
 	private static double getANOVAPValue(float[][] data) {
@@ -587,7 +587,7 @@ public class ThesaurusElibParser {
 				int endIndex=start+indicies[i]+5;
 				int rightPad=Math.max(0, endIndex-fasta.getSequence().length());
 				String motif=(StringUtils.getPad(leftPad, 'X'))+(fasta.getSequence().substring(beginIndex+leftPad, endIndex-rightPad))+(StringUtils.getPad(rightPad, 'X'));
-				entry.motif=motif;
+				entry.addMotif(fasta.getAccession(), start+indicies[i], motif);
 			}
 		}
 	}
@@ -595,7 +595,7 @@ public class ThesaurusElibParser {
 	public static class QuantitationLog extends SimplePeptidePrecursor {
 		boolean isSiteSpecific=false;
 		final byte charge;
-		String motif=null;
+		TreeMap<String, TIntObjectHashMap<String>> motifMap=new TreeMap<String, TIntObjectHashMap<String>>();
 		final String protein;
 		final String peptideModSeq;
 		final TObjectFloatHashMap<Coordinate> intensities=new TObjectFloatHashMap<>();
@@ -607,6 +607,43 @@ public class ThesaurusElibParser {
 			this.protein=protein;
 			this.peptideModSeq=peptideModSeq;
 			this.charge=charge;
+		}
+		
+		public String toSitesString() {
+			StringBuilder sb=new StringBuilder();
+			for (Entry<String, TIntObjectHashMap<String>> entry : motifMap.entrySet()) {
+				if (sb.length()>0) sb.append(";");
+				sb.append(entry.getKey()+"("+General.toString(entry.getValue().keys())+")");
+			}
+			if (sb.length()==0) return protein+"(?)";
+			return sb.toString();
+		}
+		
+		public HashSet<String> getMotifs() {
+			HashSet<String> set=new HashSet<String>();
+			for (TIntObjectHashMap<String> map : motifMap.values()) {
+				set.addAll(map.valueCollection());
+			}
+			return set;
+		}
+		
+		public void addMotif(String accession, int index, String motif) {
+			TIntObjectHashMap<String> map=motifMap.get(accession);
+			if (map==null) {
+				map=new TIntObjectHashMap<>();
+				motifMap.put(accession, map);
+			}
+			map.put(index, motif);
+		}
+		
+		public boolean doesMotifMatch(String s) {
+			for (TIntObjectHashMap<String> map : motifMap.values()) {
+				for (String string : map.valueCollection()) {
+					if (string.matches(s))
+						return true;
+				}
+			}
+			return false;
 		}
 		
 		public int getNumMeasurements() {
