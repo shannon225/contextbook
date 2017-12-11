@@ -1,8 +1,16 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
+import org.apache.commons.math3.stat.inference.TestUtils;
+
 import junit.framework.TestCase;
 
 public class BenjaminiHochbergTest extends TestCase {
+	public void testAnova() {
+		double[] h0=new double[] {0, 0, 0, 0};
+		double[] e0=new double[] {36448.918, 34901.35, 34727.184, 28472.402};
+		assertEquals(3.15e-4, TestUtils.tTest(h0, e0), 1e-5);
+	}
+	
 	public void testBH() {
 		double[] adjusted=BenjaminiHochberg.calculateAdjustedPValues(pvalues);
 		for (int i=0; i<adjusted.length; i++) {

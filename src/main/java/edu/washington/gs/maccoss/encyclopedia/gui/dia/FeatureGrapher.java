@@ -34,7 +34,7 @@ import gnu.trove.list.array.TFloatArrayList;
 
 public class FeatureGrapher {
 	public static void main(String[] args) {
-		File featureFile=FileChooserPanel.getFiles(null, "Feature text files", new SimpleFilenameFilter("features.txt"), (JFrame)null)[0];
+		File featureFile=FileChooserPanel.getFiles(null, "Feature text files", new SimpleFilenameFilter("features.txt"), (JFrame)null, true)[0];
 
 		final JFrame f=new JFrame(featureFile.getName()+" Statistics");
 		f.addWindowListener(new WindowAdapter() {
