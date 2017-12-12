@@ -59,6 +59,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumComparator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import gnu.trove.map.hash.TDoubleDoubleHashMap;
 import gnu.trove.map.hash.TFloatDoubleHashMap;
 import gnu.trove.map.hash.TFloatFloatHashMap;
@@ -73,6 +74,7 @@ public class DIABrowserPanel extends JPanel {
 	private final FileChooserPanel rawFileChooser;
 	private final JSplitPane distributionSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane rawSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+	private final JSplitPane spectrumSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JSplitPane split=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JTable table;
 	private final TableRowSorter<TableModel> rowSorter;
@@ -202,6 +204,7 @@ public class DIABrowserPanel extends JPanel {
 		left.add(searchPanel, BorderLayout.SOUTH);
 
 		primaryTabs.addTab("Scans", rawSplit);
+		rawSplit.setBottomComponent(spectrumSplit);
 		primaryTabs.addTab(INTENSITY_DISTRIBUTION_TITLE, distributionSplit);
         
 		split.setLeftComponent(left);
@@ -325,7 +328,11 @@ public class DIABrowserPanel extends JPanel {
 		if (locationRaw<=5) {
 			locationRaw=400;
 		}
-		
+		int locationSpectrum=spectrumSplit.getDividerLocation();
+		//System.out.println("locationRaw:"+locationRaw);
+		if (locationSpectrum<=5) {
+			locationSpectrum=400;
+		}
 		
 		if (entries==null) {
 			if (chromatogram!=null) {
@@ -335,25 +342,35 @@ public class DIABrowserPanel extends JPanel {
 				return;
 			}
 		} else {
-				if (entries.size()==1) {
-					rawSplit.setBottomComponent(Charter.getChart(entries.get(0)));
-					float rt=entries.get(0).getScanStartTime()/60f;
-					XYTrace marker=new XYTrace(new double[] {rt, rt}, new double[] {0, maxTIC}, GraphType.dashedline, "marker");
-					rawSplit.setTopComponent(Charter.getChart("Retention Time", "Precursor TIC", false, chromatogram, marker));
-				} else {
-					rawSplit.setBottomComponent(Charter.getChart(SpectrumUtils.mergeSpectra(entries, parameters.getFragmentTolerance())));
-					
-					float minRT=Float.MAX_VALUE;
-					float maxRT=-Float.MAX_VALUE;
-					for (Spectrum spectrum : entries) {
-						float rt=spectrum.getScanStartTime()/60f;
-						if (rt>maxRT) maxRT=rt;
-						if (rt<minRT) minRT=rt;
-					}
-					XYTrace marker=new XYTrace(new double[] {maxRT, minRT}, new double[] {0, maxTIC}, GraphType.dashedline, "marker");
-					rawSplit.setTopComponent(Charter.getChart("Retention Time", "Precursor TIC", false, chromatogram, marker));
+			final Spectrum spectrum;
+			final double[] rtRange;
+			if (entries.size()==1) {
+				spectrum=entries.get(0);
+				float rt=spectrum.getScanStartTime()/60f;
+				rtRange=new double[] {rt, rt};
+			} else {
+				spectrum=SpectrumUtils.mergeSpectra(entries, parameters.getFragmentTolerance());
+				float minRT=Float.MAX_VALUE;
+				float maxRT=-Float.MAX_VALUE;
+				for (Spectrum entry : entries) {
+					float rt=entry.getScanStartTime()/60f;
+					if (rt>maxRT) maxRT=rt;
+					if (rt<minRT) minRT=rt;
 				}
+				rtRange=new double[] {maxRT, minRT};
+			}
+
+			final ChartPanel spectrumChart=Charter.getChart(spectrum);
+			XYTrace intensityHistogram=new XYTrace(PivotTableGenerator.createPivotTable(Log.log10(spectrum.getIntensityArray())), GraphType.area, "Log10 Fragment Intensity Distribution");
+			final ChartPanel precursorIntensities=Charter.getChart("Log10 Intensity", "Count (N="+spectrum.getIntensityArray().length+")", false, intensityHistogram);
+			
+			spectrumSplit.setLeftComponent(spectrumChart);
+			spectrumSplit.setRightComponent(precursorIntensities);
+			
+			XYTrace marker=new XYTrace(rtRange, new double[] {0, maxTIC}, GraphType.dashedline, "marker");
+			rawSplit.setTopComponent(Charter.getChart("Retention Time", "Precursor TIC", false, chromatogram, marker));
 		}
+		spectrumSplit.setDividerLocation(locationSpectrum);
 		rawSplit.setDividerLocation(locationRaw);
 		split.setDividerLocation(location);
 	}
