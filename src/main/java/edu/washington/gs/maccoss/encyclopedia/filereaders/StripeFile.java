@@ -337,7 +337,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	public void addMetadata(Map<String, String> data) throws IOException, SQLException {
 		Connection c = getConnection();
 		try {
-			PreparedStatement prep=c.prepareStatement("insert into metadata (Key, Value) VALUES (?,?)");
+			PreparedStatement prep=c.prepareStatement("insert or replace into metadata (Key, Value) VALUES (?,?)");
 			try {
 				for (Entry<String, String> entry : data.entrySet()) {
 					prep.setString(1, entry.getKey());
@@ -623,8 +623,62 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 
 	protected void applyPatches(Version currentVersion, Statement s) throws IOException, SQLException {
-		if (new Version(0, 0, 0).equals(currentVersion)) {
-			s.execute("alter table precursor add column TIC float");
+
+			if (new Version(0, 0, 0).equals(currentVersion)) {
+				s.execute("alter table precursor add column TIC float");
+				s.getConnection().commit();
+				populateTICColumn(s.getConnection());
+			}
+
+	}
+
+	private void populateTICColumn(Connection connection) throws SQLException, IOException {
+		final boolean wasAutoCommit = connection.getAutoCommit();
+		connection.setAutoCommit(false);
+		Statement s1=null;
+		PreparedStatement batchInsertStatement=null;
+		try {
+			s1 = connection.createStatement();
+			s1.execute("create table tic_temp_store (SpectrumIndex int primary key, TIC float)");
+			batchInsertStatement = connection.prepareStatement("insert into tic_temp_store values (?, ?)");
+			final ResultSet resultSet = s1.executeQuery("select SpectrumIndex, IntensityEncodedLength, IntensityArray from precursor");
+
+			int count=0;
+
+			while (resultSet.next()) {
+				try {
+					final int spectrumIndex = resultSet.getInt(1);
+					final int intensityEncodedLength = resultSet.getInt(2);
+					final float[] intensityArray = ByteConverter.toFloatArray(CompressionUtils.decompress(
+														resultSet.getBytes(3), intensityEncodedLength));
+					final float tic = General.sum(intensityArray);
+
+					batchInsertStatement.setInt(1, spectrumIndex);
+					batchInsertStatement.setFloat(2, tic);
+					batchInsertStatement.addBatch();
+
+					if (++count % 8192 == 0) {
+						batchInsertStatement.executeBatch();
+					}
+				} catch (DataFormatException e) {
+					Logger.errorException(e); // log and continue
+				}
+			}
+			batchInsertStatement.executeBatch();
+
+			connection.commit();
+			s1.execute("update precursor set TIC = (select TIC from tic_temp_store where precursor.SpectrumIndex = tic_temp_store.SpectrumIndex)");
+
+			s1.execute("drop table tic_temp_store");
+			connection.commit();
+		} finally {
+			connection.setAutoCommit(wasAutoCommit);
+			if (s1!=null) {
+				s1.close();
+			}
+			if (batchInsertStatement!=null) {
+				batchInsertStatement.close();
+			}
 		}
 	}
 
@@ -655,6 +709,9 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 			}
 		} finally {
 			c.close();
+		}
+		if (isOpenFileInPlace) {
+			setFileVersion();
 		}
 	}
 
