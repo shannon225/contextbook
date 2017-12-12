@@ -12,6 +12,7 @@ public class SpectrumUtils {
 		TFloatArrayList intensities=new TFloatArrayList();
 		
 		float minRT=Float.MAX_VALUE;
+		float tic=0f;
 		for (Spectrum spectrum : spectra) {
 			if (spectrum.getScanStartTime()<minRT) minRT=spectrum.getScanStartTime();
 			
@@ -28,8 +29,9 @@ public class SpectrumUtils {
 					intensities.setQuick(index, intensities.getQuick(index)+intens[i]);
 				}
 			}
+			tic += spectrum.getTIC();
 		}
-		return new PrecursorScan("Combined", 0, minRT, masses.toArray(), intensities.toArray());
+		return new PrecursorScan("Combined", 0, minRT, masses.toArray(), intensities.toArray(), tic);
 	}
 
 	public static int getIndex(TDoubleArrayList peaks, double target, MassTolerance tolerance) {

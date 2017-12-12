@@ -120,6 +120,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	private Boolean isMZ=null;
 	private double[] massArray=null;
 	private float[] intensityArray=null;
+	private Float tic=null;
 	private final StringBuilder dataSB=new StringBuilder();
 	
 	private Float selectedIon=null;
@@ -145,6 +146,8 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 			if ("spectrum".equalsIgnoreCase(tagList.get(tagList.size()-1))) {
 				if ("ms level".equalsIgnoreCase(attributes.getValue("name"))) {
 					msLevel=Integer.parseInt(attributes.getValue("value"));
+				} else if ("total ion current".equalsIgnoreCase(attributes.getValue("name"))) {
+					tic=Float.parseFloat(attributes.getValue("value"));
 				}
 				
 			} else if ("scan".equalsIgnoreCase(tagList.get(tagList.size()-1))) {
@@ -272,6 +275,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 				dataSB.setLength(0);
 				massArray=null;
 				intensityArray=null;
+				tic=null;
 				
 				selectedIon=null;
 				
@@ -287,7 +291,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 					double[] deltaArray=General.multiply(massArray, parameters.getPrecursorOffsetPPM()/1000000.0);
 					massArray=General.subtract(massArray, deltaArray);
 				}
-				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray));
+				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray, tic));
 
 			} else {
 				if (spectrumRef==null) spectrumRef="Unknown";
@@ -352,6 +356,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 			dataSB.setLength(0);
 			massArray=null;
 			intensityArray=null;
+			tic=null;
 			
 			selectedIon=null;
 		}

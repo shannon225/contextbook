@@ -27,7 +27,7 @@ public class MzmlToDIAConsumer implements Runnable {
 				if (MzmlBlock.POISON_BLOCK==block) break;
 				
 				for (PrecursorScan precursor : block.getPrecursors()) {
-					totalPrecursorTIC+=General.sum(precursor.getIntensityArray());
+					totalPrecursorTIC+=precursor.getTIC();
 				}
 				
 				stripeFile.addPrecursor(block.getPrecursors());

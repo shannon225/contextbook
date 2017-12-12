@@ -12,22 +12,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.StringTokenizer;
 import java.util.zip.DataFormatException;
 
 import com.google.common.collect.ImmutableList;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
@@ -67,13 +60,15 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	private static final String SOURCE_FILE_SPLIT="|";
 	public static final String DLIB=".dlib";
 	public static final String ELIB=".elib";
-	public static final String VERSION_STRING="version";
 	public static final String ENCYCLOPEDIA_VERSION = "EncyclopediaVersion";
 	public static final String PERCOLATOR_VERSION = "PercolatorVersion";
 	public static final String UNKNOWN = "Unknown";
-	public static final Version[] ACCEPTABLE_VERSIONS=new Version[] { new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4),
-			new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8), new Version(0, 1, 9), new Version(0, 1, 10), new Version(0, 1, 11), new Version(0, 1, 12), new Version(0, 1, 13) };
-	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 13);
+	public static final Version[] ACCEPTABLE_VERSIONS = new Version[] {
+			new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4),
+			new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8), new Version(0, 1, 9),
+			new Version(0, 1, 10), new Version(0, 1, 11), new Version(0, 1, 12), new Version(0, 1, 13), new Version(0, 1, 14)
+	};
+	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 14);
 
 	private File userFile=null;
 	private File tempFile;
@@ -151,7 +146,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public void addTIC(StripeFileInterface diaFile) throws IOException, SQLException {
-		String key=SOURCEFILE_TIC_PREFIX+diaFile.getOriginalFileName();
+		String key=SOURCEFILE_TIC_PREFIX+ getOriginalFileName(diaFile);
 
 		HashMap<String, String> map=new HashMap<String, String>();
 		map.put(key, Float.toString(diaFile.getTIC()));
@@ -160,8 +155,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public float getTIC(StripeFileInterface diaFile) throws IOException, SQLException {
-		String originalFileName=diaFile.getOriginalFileName();
-		return getTIC(originalFileName);
+		return getTIC(getOriginalFileName(diaFile));
 	}
 
 	public float getTIC(String originalFileName) throws IOException, SQLException {
@@ -171,6 +165,61 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		if (value==null)
 			return 0.0f;
 		return Float.parseFloat(value);
+	}
+
+	private static String getOriginalFileName(SearchJobData job) {
+		return getOriginalFileName(job.getDiaFileReader());
+	}
+
+	private static String getOriginalFileName(StripeFileInterface diaFile) {
+		return diaFile.getOriginalFileName();
+	}
+
+	public void addRtAlignment(SearchJobData job, PeakLocationInferrerInterface inferrer) {
+		Optional.ofNullable(inferrer.getAlignmentData(job))
+				.ifPresent(alignment -> addRtAlignment(job, alignment));
+	}
+
+	public void addRtAlignment(SearchJobData job, List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignment) {
+		final String sourceFile = getOriginalFileName(job);
+
+		try (Connection c = getConnection()) {
+			c.setAutoCommit(false);
+
+			try (PreparedStatement s = c.prepareStatement(
+					"INSERT INTO retentiontimes (SourceFile, Library, Actual, Predicted, Delta, Probability, Decoy, PeptideModSeq) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+			)) {
+				for (int i = 0, alignmentSize = alignment.size(); i < alignmentSize; i++) {
+					final RetentionTimeAlignmentInterface.AlignmentDataPoint pt = alignment.get(i);
+
+					s.setString(1, sourceFile);
+
+					// Convert values in minutes to seconds
+					s.setFloat(2, 60*pt.getLibrary());
+					s.setFloat(3, 60*pt.getActual());
+					s.setFloat(4, 60*pt.getPredictedActual());
+					s.setFloat(5, 60*pt.getDelta());
+
+					s.setFloat(6, pt.getProbability());
+					s.setObject(7, pt.isDecoy()); // used setObject to handle null Boolean
+					s.setString(8, pt.getPeptideModSeq());
+
+					s.addBatch();
+
+					if (i % 8192 == 0) {
+						s.executeBatch();
+						s.clearBatch();
+					}
+				}
+				s.executeBatch();
+			} catch (SQLException e) {
+				c.rollback();
+			} finally {
+				c.commit();
+			}
+		} catch (SQLException | IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void setSources(List<? extends SearchJobData> sources) throws IOException, SQLException {
@@ -192,7 +241,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		map.put(VERSION_STRING, MOST_RECENT_VERSION.toString());
 		addMetadata(map);
 	}
-	
+
 	public void addMetadata(String key, String value) throws IOException, SQLException {
 		HashMap<String, String> data=new HashMap<>();
 		data.put(key, value);
@@ -367,7 +416,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				}
 
 			}
-			
+
 			Logger.logLine("Writing "+dataAndSourceList.size()+" peptides to peptidequants table...");
 
 			// Issue 25 - skip entries that the RT inferrer could not process.
@@ -611,7 +660,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		peptidePrep.setString(index++, topN.getPeptideSeq());
 		peptidePrep.setString(index++, sourceFile);
 		peptidePrep.setFloat(index++, topN.getApexRT());
-		
+
 		peptidePrep.setFloat(index++, topN.getRtScanRange().getStart());
 		peptidePrep.setFloat(index++, topN.getRtScanRange().getStop());
 		peptidePrep.setFloat(index++, topN.getTIC());
@@ -723,14 +772,14 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			c.close();
 		}
 	}
-	
+
 	public ArrayList<ProteinGroupInterface> getProteinGroups() throws IOException, SQLException {
 		Connection c=getConnection();
 		try {
 			Statement s=c.createStatement();
 			try {
 				ResultSet rs=s.executeQuery("SELECT p.proteingroup, p.proteinaccession, p2p.peptideseq, p.qvalue, p.MinimumPeptidePEP FROM proteinscores p, peptidetoprotein p2p WHERE p.proteinaccession=p2p.proteinaccession ORDER BY p.proteingroup");
-				
+
 				ArrayList<ProteinGroupInterface> proteinGroups=new ArrayList<>();
 
 				int previousProteinGroup=-1;
@@ -743,8 +792,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					String accession=rs.getString(2);
 					String peptideseq=rs.getString(3);
 					float qvalue=rs.getFloat(4);
-					float pep=rs.getFloat(5);				
-					
+					float pep=rs.getFloat(5);
+
 					if (proteinGroup!=previousProteinGroup) {
 						previousProteinGroup=proteinGroup;
 						if (accessions.size()>0) {
@@ -1272,10 +1321,11 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	private static void populatePeptideToProtein(Connection c) throws SQLException {
-		System.out.println("POPULATING PEPTIDE TO PROTEIN");
-		System.out.println("entries SIZE: "+c.prepareStatement("select count(*) from entries").executeQuery().getInt(1));
-		System.out.println("proteins SIZE: "+c.prepareStatement("select count(*) from proteins").executeQuery().getInt(1));
-		System.out.println("peptidetoprotein SIZE: "+c.prepareStatement("select count(*) from peptidetoprotein").executeQuery().getInt(1));
+		// TODO: if you re-enable this, be sure to close these statements which are not being closed
+//		System.out.println("POPULATING PEPTIDE TO PROTEIN");
+//		System.out.println("entries SIZE: "+c.prepareStatement("select count(*) from entries").executeQuery().getInt(1));
+//		System.out.println("proteins SIZE: "+c.prepareStatement("select count(*) from proteins").executeQuery().getInt(1));
+//		System.out.println("peptidetoprotein SIZE: "+c.prepareStatement("select count(*) from peptidetoprotein").executeQuery().getInt(1));
 
 		try (PreparedStatement s=c.prepareStatement("select * from proteins p;")) {
 			s.execute();
@@ -1312,10 +1362,11 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		System.out.println("CHECKING PEPTIDE TO PROTEIN");
-		System.out.println("entries SIZE: "+c.prepareStatement("select count(*) from entries").executeQuery().getInt(1));
-		System.out.println("proteins SIZE: "+c.prepareStatement("select count(*) from proteins").executeQuery().getInt(1));
-		System.out.println("peptidetoprotein SIZE: "+c.prepareStatement("select count(*) from peptidetoprotein").executeQuery().getInt(1));
+		// TODO: if you re-enable this, be sure to close these statements which are not being closed
+//		System.out.println("CHECKING PEPTIDE TO PROTEIN");
+//		System.out.println("entries SIZE: "+c.prepareStatement("select count(*) from entries").executeQuery().getInt(1));
+//		System.out.println("proteins SIZE: "+c.prepareStatement("select count(*) from proteins").executeQuery().getInt(1));
+//		System.out.println("peptidetoprotein SIZE: "+c.prepareStatement("select count(*) from peptidetoprotein").executeQuery().getInt(1));
 
 	}
 
@@ -1324,13 +1375,16 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try {
 			Statement s=c.createStatement();
 			try {
-				try {
-					Version version=getVersion();
+				// lack of a metadata table implies this is a new file. no patches are needed, and all tables will
+				// be created
+				Version version = doesTableExist(c, "metadata") ? getVersion() : null;
+
+				if (version!=null) {
 					if (userFile!=null) {
 						Logger.logLine("Opening library "+userFile.getName()+" (version: "+version+")");
 					}
 
-					if (new Version(0, 1, 2).amIAbove(version)&&version.amIAbove(new Version(0, 0, 9))) {
+					if (new Version(0, 1, 2).amIAbove(version) && version.amIAbove(new Version(0, 0, 9))) {
 						if (userFile!=null) {
 							Logger.logLine("Updating library to "+new Version(0, 1, 2));
 						}
@@ -1406,10 +1460,6 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						}
 						s.execute("ALTER TABLE peptidetoprotein ADD COLUMN isDecoy boolean");
 					}
-
-				} catch (SQLException sqle) {
-					// the metadata table is missing, so do nothing and create
-					// it in the next line
 				}
 
 				// UNIQUE constraints cost as much as an index and can't
@@ -1444,10 +1494,12 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, QValue double not null, PosteriorErrorProbability double not null, IsDecoy boolean not null "
 						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq,
 								// SourceFile) )");
-				
+
 				s.execute("CREATE TABLE IF NOT EXISTS proteinscores ( "
 						+"ProteinGroup int not null, ProteinAccession string not null, SourceFile string not null, QValue double not null, MinimumPeptidePEP double not null, IsDecoy boolean not null "
 						+")");
+
+				s.execute("CREATE TABLE IF NOT EXISTS retentiontimes (SourceFile string not null, Library float not null, Actual float not null, Predicted float not null, Delta float not null, Probability float not null, Decoy boolean, PeptideModSeq string)");
 
 				c.commit();
 			} finally {

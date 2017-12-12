@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
+import java.util.List;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
@@ -16,4 +17,5 @@ public interface PeakLocationInferrerInterface {
 
 	float getWarpedRTInSec(SearchJobData job, String peptideModSeq);
 
+	List<RetentionTimeAlignmentInterface.AlignmentDataPoint> getAlignmentData(SearchJobData job);
 }
