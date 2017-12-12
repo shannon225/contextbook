@@ -14,7 +14,6 @@ public class PrecursorScan implements Spectrum, Comparable<PrecursorScan> {
 	private final float[] intensityArray;
 	private final float tic;
 
-	@Deprecated
 	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, double[] massArray, float[] intensityArray) {
 		this(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray, null);
 	}

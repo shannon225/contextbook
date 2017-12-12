@@ -76,15 +76,6 @@ public class MzmlReader {
 			} else {
 				throw new EncyclopediaException("Unexpected time unit: "+unit);
 			}
-			Float tic=null;
-			CVParam ticCVParam=cvparams.get("MS:1000285"); // total ion current
-			if (ticCVParam!=null) {
-				try {
-					tic = Float.parseFloat(ticCVParam.getValue());
-				} catch (NullPointerException | NumberFormatException e) {
-					tic = null;
-				}
-			}
 			
 			float scanStartTime=multiplier*Float.parseFloat(scanStartTimeCVParams.getValue());
 			BinaryDataArrayList bdal=spectrum.getBinaryDataArrayList();
@@ -93,7 +84,7 @@ public class MzmlReader {
 			float[] intensityArray=ByteConverter.toFloatArray(bdal.getBinaryDataArray().get(1).getBinaryDataAsNumberArray());
 
 			if (p==null) {
-				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray, tic));
+				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray));
 			} else {
 				HashMap<String, CVParam> isolationCVParams=asCVMap(p.getIsolationWindow().getCvParam());
 				float isolationWindowTarget=Float.parseFloat(isolationCVParams.get("MS:1000827").getValue());
