@@ -64,6 +64,10 @@ public class PercolatorExecutorTest extends TestCase {
 		line = "Percolator version 3.14.15, Build Date May 23 2017 12:14:41";
 		assertEquals("3.14.15", PercolatorExecutor.getPercolatorVersionFromOutput(line).orElse(null));
 
+		// Taken directly from executing src/main/resources/bin/percolator-v2-10.lin
+		line = "Percolator version 2.09, Build Date Apr 15 2016 15:42:56";
+		assertEquals("2.09", PercolatorExecutor.getPercolatorVersionFromOutput(line).orElse(null));
+
 		line = "Percolator version 2, Build Date May 23 2017 12:14:41";
 		assertEquals("2", PercolatorExecutor.getPercolatorVersionFromOutput(line).orElse(null));
 
