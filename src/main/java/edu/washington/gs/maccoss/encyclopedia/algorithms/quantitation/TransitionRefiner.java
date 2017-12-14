@@ -177,8 +177,9 @@ public class TransitionRefiner {
 					// clause of the `if` above, because the insertion point returned
 					// by binary search can be the end of the array.
 					// Note that the resulting index could still be out of bounds, but
-					// only if the array is length zero, which is guarded against earlier
-					// in this method.
+					// only if the array is length zero. However, it's probably safe to
+					// assume that the arrays have matching length, and the call to
+					// `getIndexRange()` above would have failed if the length was zero.
 					if (index >= retentionTimes.length) {
 						index = retentionTimes.length - 1;
 					}
