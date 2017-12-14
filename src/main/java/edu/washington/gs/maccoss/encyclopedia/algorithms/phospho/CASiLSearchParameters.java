@@ -47,10 +47,10 @@ public class CASiLSearchParameters extends SearchParameters {
 	public CASiLSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin,
 			MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme, float percolatorThreshold, Integer percolatorVersionNumber,
 			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, int numberOfQuantitativePeaks,
-			int minNumOfQuantitativePeaks, PeptideModification modification, ScoringBreadthType searchType, float getNumberOfExtraDecoyLibrariesSearched) {
+			int minNumOfQuantitativePeaks, PeptideModification modification, ScoringBreadthType searchType, float getNumberOfExtraDecoyLibrariesSearched, boolean filterPeaklists) {
 		super(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold,
 				percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks,
-				Optional.of(modification), searchType, getNumberOfExtraDecoyLibrariesSearched);
+				Optional.of(modification), searchType, getNumberOfExtraDecoyLibrariesSearched, filterPeaklists);
 	}
 
 	public static CASiLSearchParameters convertFromEncyclopeDIA(SearchParameters params) {
@@ -65,7 +65,7 @@ public class CASiLSearchParameters extends SearchParameters {
 				params.getFragmentTolerance(), params.getFragmentOffsetPPM(), params.getLibraryFragmentTolerance(), params.getEnzyme(), params.getPercolatorThreshold(),
 				params.getPercolatorVersionNumber(), params.getDataAcquisitionType(), params.getNumberOfThreadsUsed(), params.getExpectedPeakWidth(), params.getTargetWindowCenter(),
 				params.getPrecursorWindowSize(), params.getNumberOfQuantitativePeaks(), params.getMinNumOfQuantitativePeaks(), mod, params.getScoringBreadthType(),
-				params.getNumberOfExtraDecoyLibrariesSearched());
+				params.getNumberOfExtraDecoyLibrariesSearched(), params.isFilterPeaklists());
 	}
 
 }

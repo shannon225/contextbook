@@ -104,6 +104,7 @@ public class SearchParameterParser {
 		final int percolatorVersionNumber;
 		final Optional<PeptideModification> localizationModification;
 		final ScoringBreadthType breadthType;
+		final boolean filterPeaklists;
 		
 		String value=parameters.get("-frag");
 		if (value==null) {
@@ -236,7 +237,6 @@ public class SearchParameterParser {
 		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 5);
 		minNumOfQuantitativePeaks=SearchParameterParser.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
 		percolatorVersionNumber=SearchParameterParser.getInteger("-percolatorVersionNumber", parameters, 3);
-		
 		value=parameters.get("-localizationModification");
 		if (value!=null) {
 			localizationModification=Optional.ofNullable(PeptideModification.getModification(value));
@@ -265,9 +265,10 @@ public class SearchParameterParser {
 		} else {
 			numberOfExtraDecoyLibrariesSearched=tempNumberOfExtraDecoyLibrariesSearched;
 		}
+		filterPeaklists=SearchParameterParser.getBoolean("-filterPeaklists", parameters, false);
 		
 		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
-				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, localizationModification, breadthType, numberOfExtraDecoyLibrariesSearched);
+				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, localizationModification, breadthType, numberOfExtraDecoyLibrariesSearched, filterPeaklists);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

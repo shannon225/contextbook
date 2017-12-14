@@ -40,10 +40,11 @@ public class SearchParameters {
 	protected final boolean useNLsForXCorr=false;
 	protected final ScoringBreadthType CASiLBreadthType;
 	protected final Optional<PeptideModification> localizingModification; 
+	protected final boolean filterPeaklists;
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, Integer percolatorVersionNumber, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
-			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched) {
+			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean filterPeaklists) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -65,6 +66,7 @@ public class SearchParameters {
 		this.CASiLBreadthType=CASiLBreadthType;
 		this.localizingModification=localizingModification;
 		this.numberOfExtraDecoyLibrariesSearched=getNumberOfExtraDecoyLibrariesSearched;
+		this.filterPeaklists=filterPeaklists;
 	}
 	
 	public void savePreferences(File libraryFile) throws IOException,BackingStoreException {
@@ -108,6 +110,7 @@ public class SearchParameters {
 		sb.append(" -numberOfQuantitativePeaks "+numberOfQuantitativePeaks+"\n");
 		sb.append(" -minNumOfQuantitativePeaks "+minNumOfQuantitativePeaks+"\n");
 		sb.append(" -getNumberOfExtraDecoyLibrariesSearched "+numberOfExtraDecoyLibrariesSearched+"\n");
+		sb.append(" -filterPeaklists "+filterPeaklists+"\n");
 		if (useTargetWindowCenter()) {
 			sb.append(" -targetWindowCenter "+targetWindowCenter+"\n");
 		}
@@ -141,6 +144,7 @@ public class SearchParameters {
 		map.put("-getNumberOfExtraDecoyLibrariesSearched", numberOfExtraDecoyLibrariesSearched+"");
 		map.put("-targetWindowCenter", targetWindowCenter+"");
 		map.put("-scoringBreadthType", getScoringBreadthType().toShortname());
+		map.put(" -filterPeaklists ", filterPeaklists+"");
 		if (localizingModification.isPresent()) {
 			map.put("-localizationModification", localizingModification.get().getShortname());
 		} else {
@@ -251,5 +255,8 @@ public class SearchParameters {
 	}
 	public boolean applyRTAlignment() {
 		return ScoringBreadthType.ENTIRE_RT_WINDOW==CASiLBreadthType;
+	}
+	public boolean isFilterPeaklists() {
+		return filterPeaklists;
 	}
 }

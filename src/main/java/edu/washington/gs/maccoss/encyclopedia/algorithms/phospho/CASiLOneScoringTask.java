@@ -337,7 +337,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 		return leftPeptide;
 	}
 	
-	class LocalizedForm {
+	static class LocalizedForm {
 		private final FragmentationModel localizedModel;
 		private final LibraryEntry localizedEntry;
 		private final ArrayList<Spectrum> scansToConsider;
@@ -348,7 +348,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 		}
 	}
 	
-	public LocalizedForm getLocalizedForm(AmbiguousPeptideModSeq targetPeptide, byte charge, HashMap<String, FragmentationModel> modelMap, HashMap<String, double[]> ionsByPeptide, HashMap<LibraryEntry, ArrayList<Spectrum>> scansByEntry, SearchParameters parameters) {
+	public static LocalizedForm getLocalizedForm(AmbiguousPeptideModSeq targetPeptide, byte charge, HashMap<String, FragmentationModel> modelMap, HashMap<String, double[]> ionsByPeptide, HashMap<LibraryEntry, ArrayList<Spectrum>> scansByEntry, SearchParameters parameters) {
 		String targetPeptideModSeq=targetPeptide.getPeptideModSeq();
 		FragmentationModel targetModel=modelMap.get(targetPeptideModSeq);
 
@@ -396,7 +396,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 		return new LocalizedForm(localizedForm.x, localizedForm.y, bestScans);
 	}
 	
-	private int getNumberOfMatchingIons(double[] a, double[] b, MassTolerance tolerance) {
+	private static int getNumberOfMatchingIons(double[] a, double[] b, MassTolerance tolerance) {
 		if (a==null||b==null) return 0;
 		double[] x,y;
 		if (a.length>b.length) {
