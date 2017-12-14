@@ -180,7 +180,7 @@ public class TransitionRefiner {
 					// only if the array is length zero, which is guarded against earlier
 					// in this method.
 					if (index >= retentionTimes.length) {
-						index = retentionTimes.length;
+						index = retentionTimes.length - 1;
 					}
 
 					initialIndices=getIndexRange(medianChromatogram, index);
