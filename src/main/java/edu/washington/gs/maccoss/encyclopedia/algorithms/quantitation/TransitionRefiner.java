@@ -168,8 +168,21 @@ public class TransitionRefiner {
 				if (!testRange.contains(retentionTimeInSec)) {
 						// if it wasn't inferred and our boundaries were outside the range, we need to reset the range 
 					int index=Arrays.binarySearch(retentionTimes, retentionTimeInSec);
-					if (index<0) index=-(index+1);
-					
+
+					if (index < 0) {
+						index = -(index + 1);
+					}
+
+					// Issue #79. Guard against out-of-bounds. This is NOT an `else`
+					// clause of the `if` above, because the insertion point returned
+					// by binary search can be the end of the array.
+					// Note that the resulting index could still be out of bounds, but
+					// only if the array is length zero, which is guarded against earlier
+					// in this method.
+					if (index >= retentionTimes.length) {
+						index = retentionTimes.length;
+					}
+
 					initialIndices=getIndexRange(medianChromatogram, index);
 				}
 				testRange=new Range(retentionTimes[initialIndices.getStart()], retentionTimes[initialIndices.getStop()]);
