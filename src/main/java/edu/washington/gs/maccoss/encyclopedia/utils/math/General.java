@@ -37,6 +37,14 @@ public class General {
 		return temp;
 	}
 	
+	public static float[] toFloatArray(Float[] a) {
+		float[] f=new float[a.length];
+		for (int i=0; i<f.length; i++) {
+			f[i]=a[i]==null?0.0f:a[i].floatValue();
+		}
+		return f;
+	}
+	
 	public static float[] toFloatArray(double[] a) {
 		float[] f=new float[a.length];
 		for (int i=0; i<f.length; i++) {

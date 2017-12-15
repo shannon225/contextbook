@@ -634,7 +634,6 @@ public class PhosphoLocalizer {
 		for (float freq : matches.values()) {
 			logProb+=Log.protectedLog10(freq);
 		}
-
 		return -logProb;
 	}
 

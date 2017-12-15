@@ -20,10 +20,14 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
@@ -35,14 +39,16 @@ import gnu.trove.map.hash.TFloatFloatHashMap;
 public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 	
 	private final PhosphoLocalizer localizer;
+	private final float dutyCycle;
 	private final ScoringBreadthType breadth;
 	private final PeptideModification localizingModification;
 	private final BlockingQueue<ModificationLocalizationData> localizationQueue;
 	private final float minimumScore;
 	
-	public ThesaurusOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, 
+	public ThesaurusOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, 
 			PhosphoLocalizer localizer, BlockingQueue<PeptideScoringResult> resultsQueue, BlockingQueue<ModificationLocalizationData> localizationQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
+		this.dutyCycle=dutyCycle;
 		this.localizer=localizer;
 		this.breadth=parameters.getScoringBreadthType();
 		this.localizationQueue=localizationQueue;
@@ -134,6 +140,16 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 					bestForm=localizedForm;
 				}
 			}
+			System.out.println("CHECK: "+bestPeptideModSeq+"\t"+bestIndex.x+"\t"+(stripes.get(bestIndex.y).getScanStartTime()/60f));
+			ArrayList<XYTraceInterface> traces=new ArrayList<>();
+			float[] rts=new float[stripes.size()];
+			for (int i = 0; i < rts.length; i++) {
+				rts[i]=stripes.get(i).getScanStartTime()/60f;
+			}
+			for (Entry<String, Float[]> scores : primaryScores.entrySet()) {
+				traces.add(new XYTrace(rts, General.toFloatArray(scores.getValue()), GraphType.boldline, scores.getKey()));
+			}
+			Charter.launchChart("RT", "Score", true, traces.toArray(new XYTraceInterface[traces.size()]));
 			
 			// get next best match at that RT
 			float nextBestScore=-Float.MAX_VALUE;
@@ -142,7 +158,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 				String peptideModSeq=entry.getKey();
 				if (peptideModSeq!=bestPeptideModSeq) {
 					float score=entry.getValue()[bestIndex.y];
-					if (score>nextBestScore) {
+					if (score!=THIS_PEPTIDE_IS_NOT_HERE&&score>nextBestScore) {
 						nextBestPeptideModSeq=peptideModSeq;
 						nextBestScore=score;
 					}
@@ -152,16 +168,23 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			// check localization ions versus that sequence
 			float apexRT=stripes.get(bestIndex.y).getScanStartTime();
 			ArrayList<Spectrum> stripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(apexRT-parameters.getExpectedPeakWidth(), apexRT+parameters.getExpectedPeakWidth(), stripes);
-			FragmentIon[] localizingIons=getUniqueFragmentIons(entryMap.get(bestPeptideModSeq), entryMap.get(nextBestPeptideModSeq), precursorCharge, parameters);
+			
+			FragmentIon[] localizingIons;
+			if (nextBestPeptideModSeq!=null) {
+				localizingIons=getUniqueFragmentIons(entryMap.get(bestPeptideModSeq), entryMap.get(nextBestPeptideModSeq), precursorCharge, parameters);
+			} else {
+				localizingIons=bestForm.allIons;
+			}
 			AmbiguousPeptideModSeq ambiPeptideModSeq=AmbiguousPeptideModSeq.getUnambigous(bestPeptideModSeq, parameters.getLocalizingModification().get(), parameters.getAAConstants());
-			Triplet<ModificationLocalizationData, Stripe, Range> locData=CASiLOneScoringTask.calculateLocalizationScoring(false, minimumScore, parameters, nextBestScore, localizer, bestForm.localizedEntry, ambiPeptideModSeq, localizingIons, bestForm.allIons, takenIdentifiedIons, stripeSubset);
+			Triplet<ModificationLocalizationData, Stripe, Range> locData=CASiLOneScoringTask.calculateLocalizationScoring(false, minimumScore, parameters, dutyCycle, localizer, bestForm.localizedEntry, ambiPeptideModSeq, localizingIons, bestForm.allIons, takenIdentifiedIons, stripeSubset);
 			
 			// if localized, then keep and remove from localizedForms
 			ModificationLocalizationData data=locData.x;
 			Stripe apex=locData.y;
 			Range peakRange=locData.z;
 			
-			if (bestNonlocalizedResult==null||data.isLocalized()) {
+			boolean wasLocalized=bestNonlocalizedResult==null||data.isLocalized();
+			if (wasLocalized) {
 				
 				TFloatFloatHashMap scoreByRTMap=new TFloatFloatHashMap();
 				Float[] primaryScoreArray=primaryScores.get(bestPeptideModSeq);
@@ -201,13 +224,19 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			
 			for (FragmentIon target : localizingIons) {
 				takenIdentifiedIons.addIonToBlacklist(target.mass, peakRange);
-
-				// null out scores from taken ions
-				for (int i=0; i<stripes.size(); i++) {
-					if (peakRange.contains(stripes.get(i).getScanStartTime())) {
-						for (Float[] scoreArray : primaryScores.values()) {
-							scoreArray[i]=null;
+			}
+			// null out scores from taken ions
+			for (int i=0; i<stripes.size(); i++) {
+				if (peakRange.contains(stripes.get(i).getScanStartTime())) {
+					for (Entry<String, Float[]> entry : primaryScores.entrySet()) {
+						if ((!wasLocalized)||entry.getKey()!=bestPeptideModSeq) {
+							entry.getValue()[i]=null;
 						}
+					}
+				} else {
+					if (wasLocalized) {
+						// we found it elsewhere so it wasn't here
+						primaryScores.get(bestPeptideModSeq)[i]=THIS_PEPTIDE_IS_NOT_HERE;
 					}
 				}
 			}
@@ -222,6 +251,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			}
 		}
 	}
+	private final Float THIS_PEPTIDE_IS_NOT_HERE=-1f;
 
 	private ScoredIndex updateScores(ArrayList<Spectrum> scans, LibraryEntry localizedEntry, FragmentIon[] allIons, Float[] primary, FragmentIonBlacklist takenIdentifiedIons) {
 		ScoredIndex bestIndex=null;

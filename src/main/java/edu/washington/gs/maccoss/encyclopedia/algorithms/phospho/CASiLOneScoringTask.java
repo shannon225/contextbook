@@ -476,12 +476,12 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 
 	public static Triplet<ModificationLocalizationData, Stripe, Range> calculateLocalizationScoring(boolean wasPreviouslyObservedSite, float minimumScore, SearchParameters parameters, float dutyCycle, PhosphoLocalizer localizer, LibraryEntry localizedEntry, AmbiguousPeptideModSeq peptideModSeq, FragmentIon[] targetIons, FragmentIon[] allIons, FragmentIonBlacklist takenIdentifiedIons, ArrayList<Spectrum> stripeSubset) {
 		int targetNumFragments=Math.max(parameters.getMinNumOfQuantitativePeaks(), 3);
-									
+								
 		double[] targetIonsMasses=FragmentIon.getMasses(targetIons);
 		float[] frequencies=localizer.getBackground().getFrequencies(targetIonsMasses, localizedEntry.getPrecursorMZ(), parameters.getFragmentTolerance());
 		
 		//System.out.println("\t"+peptideModSeq.getPeptideAnnotation()+" --> "+General.toString(targetIonsMasses));
-		
+
 		float[] negLogProbsSiteSpecific=new float[stripeSubset.size()];
 		for (int k=0; k<stripeSubset.size(); k++) {
 			negLogProbsSiteSpecific[k]=PhosphoLocalizer.score(parameters, targetIonsMasses, targetIons, frequencies, stripeSubset.get(k), true);

@@ -49,13 +49,13 @@ public class PhosphoLocalizerExample {
 		
 		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/VillenJ_Exactive_HumanPhosphoproteome.dlib");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1a.dia");
-		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1b.dia");
+		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1b.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1c.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1f.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_2c.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_5c.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_5c.dia");
-		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_3a_160627233451.mzML");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_3a_160627233451.mzML");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_04.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4a_PRM.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4b_PRM.dia");
@@ -88,7 +88,7 @@ public class PhosphoLocalizerExample {
 		
 		UnitBackgroundFrequencyCalculator unitbackground=new UnitBackgroundFrequencyCalculator(0.01f);
 		BackgroundFrequencyInterface background=unitbackground;
-		background=BackgroundFrequencyCalculator.generateBackground(stripefile);
+		//background=BackgroundFrequencyCalculator.generateBackground(stripefile);
 		
 		float duration=stripefile.getGradientLength()/20.0f;
 		
@@ -97,7 +97,7 @@ public class PhosphoLocalizerExample {
 		String peptideModSeq;
 		float retentionTime;
 		byte precursorCharge;
-		if (true) {
+		if (false) {
 			peptideModSeq="S[+80.0]FSKEVEER";
 			retentionTime=2225.5823f;
 			precursorCharge=2;
@@ -176,7 +176,7 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="NTPSQHSHSIQHS[+80.0]PER";
 			retentionTime=1256.3296f;
 			precursorCharge=4;
-		} else if (true) {
+		} else if (false) {
 			// IRS1
 			peptideModSeq="KGS[+80.0]GDYMPMS[+80.0]PK";
 			retentionTime=2949.1633f;
@@ -332,7 +332,8 @@ public class PhosphoLocalizerExample {
 		entries.add(libentry);
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
 		BlockingQueue<ModificationLocalizationData> localizationQueue=new LinkedBlockingQueue<ModificationLocalizationData>();
-		ThesaurusOneScoringTask task=new ThesaurusOneScoringTask(scorer, entries, stripes, precursors, localizer, resultsQueue, localizationQueue, parameters);
+		ThesaurusOneScoringTask task=new ThesaurusOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, localizationQueue, parameters);
+		//CASiLOneScoringTask task=new CASiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, localizationQueue, parameters);
 		task.call();
 
 		int index=0;
