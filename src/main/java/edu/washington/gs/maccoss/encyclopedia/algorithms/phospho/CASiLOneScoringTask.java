@@ -533,7 +533,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 					intensities=allQuantData.getIntegrationArray();
 					correlations=allQuantData.getCorrelationArray();
 					for (int i=0; i<correlations.length; i++) {
-						if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+						if (correlations[i]>=TransitionRefiner.quantitativeCorrelationThreshold) {
 							numIdentificationPeaks++;
 							totalIntensity+=intensities[i];
 						}

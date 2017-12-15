@@ -1,23 +1,19 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefinementData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLOneScoringTask.LocalizedForm;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -30,30 +26,23 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import gnu.trove.map.hash.TFloatFloatHashMap;
-import gnu.trove.set.hash.TIntHashSet;
 
 public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
-	private static final int peaksKept=-1; // only keep the first peak
 	
 	private final PhosphoLocalizer localizer;
-	private final float dutyCycle;
 	private final ScoringBreadthType breadth;
 	private final PeptideModification localizingModification;
 	private final BlockingQueue<ModificationLocalizationData> localizationQueue;
 	private final float minimumScore;
 	
-	public ThesaurusOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, 
+	public ThesaurusOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, 
 			PhosphoLocalizer localizer, BlockingQueue<PeptideScoringResult> resultsQueue, BlockingQueue<ModificationLocalizationData> localizationQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
-		this.dutyCycle=dutyCycle;
 		this.localizer=localizer;
 		this.breadth=parameters.getScoringBreadthType();
 		this.localizationQueue=localizationQueue;
@@ -100,25 +89,32 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			entryMap.put(peptideModSeq, model);
 			ionsByPeptide.put(peptideModSeq, model.getPrimaryIons(parameters.getFragType(), firstEntry.getPrecursorCharge()));
 		}
-		
-		HashMap<String, LocalizableForm> unlocalizedForms=new HashMap<>();
+
+		HashSet<String> unlocalizedIsoforms=new HashSet<>();
+		HashMap<String, LocalizableForm> allIsoforms=new HashMap<>();
 		for (String peptideModSeq : peptideModSeqs) {
 			LocalizableForm form=getLocalizedForm(peptideModSeq, firstEntry.getPrecursorCharge(), entryMap, ionsByPeptide, seedEntries, parameters);
 			if (form!=null) {
-				unlocalizedForms.put(peptideModSeq, form);
+				allIsoforms.put(peptideModSeq, form);
+				unlocalizedIsoforms.add(peptideModSeq);
 			}
 		}
 
+		HashMap<String, Float[]> primaryScores=new HashMap<>(); // scores are re-used unless they fall in the RT range of a previously localized form
 		ArrayList<Spectrum> scans=getTargetSpectra(seedEntries);
-
 		FragmentIonBlacklist takenIdentifiedIons=new FragmentIonBlacklist(parameters.getFragmentTolerance());
-		HashMap<String, Float[]> primaryScores=new HashMap<>();
-		String bestPeptideModSeq=null;
-		ScoredIndex bestIndex=null;
 		
-		while (unlocalizedForms.size()>0) {
+		PeptideScoringResult bestNonlocalizedResult=null;
+		ModificationLocalizationData bestNonlocalizedData=null;
+		boolean anyLocalized=false;
+		
+		while (unlocalizedIsoforms.size()>0) {
+			String bestPeptideModSeq=null;
+			ScoredIndex bestIndex=null;
+			LocalizableForm bestForm=null;
+			
 			// get the highest scoring RT point for all peptide sequences
-			for (Entry<String, LocalizableForm> entry : unlocalizedForms.entrySet()) {
+			for (Entry<String, LocalizableForm> entry : allIsoforms.entrySet()) {
 				String peptideModSeq=entry.getKey();
 				LocalizableForm localizedForm=entry.getValue();
 				
@@ -132,9 +128,10 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 				}
 	
 				ScoredIndex score=updateScores(scans, localizedEntry, allIons, primary, takenIdentifiedIons);
-				if (bestIndex==null||score.x>bestIndex.x) {
+				if (unlocalizedIsoforms.contains(peptideModSeq)&&(bestIndex==null||score.x>bestIndex.x)) {
 					bestIndex=score;
 					bestPeptideModSeq=peptideModSeq;
+					bestForm=localizedForm;
 				}
 			}
 			
@@ -153,10 +150,76 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			}
 			
 			// check localization ions versus that sequence
+			float apexRT=stripes.get(bestIndex.y).getScanStartTime();
+			ArrayList<Spectrum> stripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(apexRT-parameters.getExpectedPeakWidth(), apexRT+parameters.getExpectedPeakWidth(), stripes);
+			FragmentIon[] localizingIons=getUniqueFragmentIons(entryMap.get(bestPeptideModSeq), entryMap.get(nextBestPeptideModSeq), precursorCharge, parameters);
+			AmbiguousPeptideModSeq ambiPeptideModSeq=AmbiguousPeptideModSeq.getUnambigous(bestPeptideModSeq, parameters.getLocalizingModification().get(), parameters.getAAConstants());
+			Triplet<ModificationLocalizationData, Stripe, Range> locData=CASiLOneScoringTask.calculateLocalizationScoring(false, minimumScore, parameters, nextBestScore, localizer, bestForm.localizedEntry, ambiPeptideModSeq, localizingIons, bestForm.allIons, takenIdentifiedIons, stripeSubset);
 			
 			// if localized, then keep and remove from localizedForms
+			ModificationLocalizationData data=locData.x;
+			Stripe apex=locData.y;
+			Range peakRange=locData.z;
 			
+			if (bestNonlocalizedResult==null||data.isLocalized()) {
+				
+				TFloatFloatHashMap scoreByRTMap=new TFloatFloatHashMap();
+				Float[] primaryScoreArray=primaryScores.get(bestPeptideModSeq);
+				for (int i=0; i<stripes.size(); i++) {
+					scoreByRTMap.put(stripes.get(i).getScanStartTime(), primaryScoreArray[i]);
+				}
+				EValueCalculator calculator=new EValueCalculator(scoreByRTMap);
+				float[] auxScoreArray=((EncyclopediaScorer)scorer).getAuxScorer().score(bestForm.localizedEntry, apex, predictedIsotopeDistribution, precursors);
+	
+				float score=((EncyclopediaScorer)scorer).score(bestForm.localizedEntry, apex, bestForm.allIons);
+				float evalue=calculator.getNegLog10EValue(score);
+				if (Float.isNaN(evalue)) {
+					evalue=-1.0f;
+				}
+
+				PeptideScoringResult result=new PeptideScoringResult(bestForm.localizedEntry);
+				result.addStripe(score, General.concatenate(auxScoreArray, evalue, data.getLocalizationScore()), apex);
+
+				if (bestNonlocalizedResult==null) {
+					bestNonlocalizedResult=result;
+					bestNonlocalizedData=data;
+				}
+				
+				if (data.isLocalized()) {
+					anyLocalized=true;
+					resultsQueue.add(result);
+
+					if (!bestForm.localizedEntry.isDecoy()) {
+						// don't bother logging decoys
+						localizationQueue.add(data);
+					}
+				}
+			}
+
 			// FIXME how do we know when to give up and just report a poor score? 
+			unlocalizedIsoforms.remove(bestPeptideModSeq); // should we only do this if we can actually localize the peak?
+			
+			for (FragmentIon target : localizingIons) {
+				takenIdentifiedIons.addIonToBlacklist(target.mass, peakRange);
+
+				// null out scores from taken ions
+				for (int i=0; i<stripes.size(); i++) {
+					if (peakRange.contains(stripes.get(i).getScanStartTime())) {
+						for (Float[] scoreArray : primaryScores.values()) {
+							scoreArray[i]=null;
+						}
+					}
+				}
+			}
+		}
+		
+		if (!anyLocalized&&bestNonlocalizedResult!=null) {
+			resultsQueue.add(bestNonlocalizedResult);
+
+			if (!bestNonlocalizedResult.getEntry().isDecoy()) {
+				// don't bother logging decoys
+				localizationQueue.add(bestNonlocalizedData);
+			}
 		}
 	}
 
@@ -234,11 +297,9 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 	}
 	
 	static class LocalizableForm {
-		private final FragmentationModel localizedModel;
 		private final LibraryEntry localizedEntry;
 		private final FragmentIon[] allIons;
 		public LocalizableForm(FragmentationModel localizedModel, LibraryEntry localizedEntry, SearchParameters parameters) {
-			this.localizedModel=localizedModel;
 			this.localizedEntry=localizedEntry;
 			allIons=localizedModel.getPrimaryIonObjects(parameters.getFragType(), localizedEntry.getPrecursorCharge());
 		}
@@ -352,5 +413,14 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 		}
 		
 		return Log.protectedLog10(dotProduct)+Log.logFactorial(count); // X!Tandem score
+	}
+
+	private static FragmentIon[] getUniqueFragmentIons(FragmentationModel target, FragmentationModel nextBest, byte precursorCharge, SearchParameters params) {
+		HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(target.getPrimaryIonObjects(params.getFragType(), precursorCharge, false)));
+		ions.removeAll(Arrays.asList(nextBest.getPrimaryIonObjects(params.getFragType(), precursorCharge, false)));
+
+		FragmentIon[] ionArray=ions.toArray(new FragmentIon[ions.size()]);
+		Arrays.sort(ionArray);
+		return ionArray;
 	}
 }

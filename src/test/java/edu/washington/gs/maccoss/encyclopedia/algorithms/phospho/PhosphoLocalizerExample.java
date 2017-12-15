@@ -332,7 +332,7 @@ public class PhosphoLocalizerExample {
 		entries.add(libentry);
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
 		BlockingQueue<ModificationLocalizationData> localizationQueue=new LinkedBlockingQueue<ModificationLocalizationData>();
-		CASiLOneScoringTask task=new CASiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, localizationQueue, parameters);
+		ThesaurusOneScoringTask task=new ThesaurusOneScoringTask(scorer, entries, stripes, precursors, localizer, resultsQueue, localizationQueue, parameters);
 		task.call();
 
 		int index=0;
