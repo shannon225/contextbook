@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -92,6 +93,7 @@ public class TraMLToLibraryConverter {
 
 			ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
 			for (PeptideEntry peptide : peptideByID.values()) {
+				Collections.sort(peptide.peaks);
 				Pair<double[], float[]> peakArrays=Peak.toArrays(peptide.peaks);
 				double precursorMZ=aaConstants.getChargedMass(peptide.peptideModSeq, peptide.charge);
 				HashSet<String> accessions=new HashSet<>();
