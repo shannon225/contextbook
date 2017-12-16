@@ -35,9 +35,9 @@ public class TraMLToLibraryConverter {
 	public static void main(String[] args) {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
 		File tramlFile=new File("/Users/searleb/Documents/phospho_localization/rosenberger/dda_psgs_consensus_spectral_library/psgs_standard_consensus_filtered.TraML");
-		File fastaFile=new File("/Users/searleb/Documents/phospho_localization/rosenberger/PSGS_reference_peptides_decoys.fasta");
+		//File fastaFile=new File("/Users/searleb/Documents/phospho_localization/rosenberger/PSGS_reference_peptides_decoys.fasta");
 		Long time=System.currentTimeMillis();
-		convertTraML(tramlFile, fastaFile, params.getAAConstants());
+		convertTraML(tramlFile, null, params.getAAConstants());
 		System.out.println(System.currentTimeMillis()-time);
 	}
 
@@ -134,6 +134,7 @@ public class TraMLToLibraryConverter {
 			Logger.logLine("Writing library file "+library.getName());
 			library.dropIndices();
 			library.addEntries(entries);
+			library.addProteinsFromEntries(entries);
 			library.createIndices();
 			library.saveAsFile(libraryFile);
 			return library;
