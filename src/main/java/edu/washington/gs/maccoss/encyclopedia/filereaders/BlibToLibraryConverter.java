@@ -6,6 +6,8 @@ import java.sql.SQLException;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
+import com.sun.jna.Library;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -56,8 +58,11 @@ public class BlibToLibraryConverter {
 			Version version=elibFile.getVersion();
 			if (LibraryFile.isVersionAcceptable(version)) {
 				return Optional.of((LibraryInterface)elibFile);
-			} else {
+			} else if (LibraryFile.MOST_RECENT_VERSION.amIAbove(version)) {
 				Logger.errorLine(f.getName()+" is an old Library file (version:"+version+")! Please delete it!");
+			} else {
+				Logger.errorLine(f.getName()+" is an new Library file (version:"+version+")! Proceed with caution or update software!");
+				return Optional.of((LibraryInterface)elibFile);
 			}
 			return Optional.empty();
 			

@@ -132,19 +132,19 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 					primary=new Float[scans.size()];
 					primaryScores.put(peptideModSeq, primary);
 				}
-	
 				ScoredIndex score=updateScores(scans, localizedEntry, allIons, primary, takenIdentifiedIons);
+
 				if (unlocalizedIsoforms.contains(peptideModSeq)&&(bestIndex==null||score.x>bestIndex.x)) {
 					bestIndex=score;
 					bestPeptideModSeq=peptideModSeq;
 					bestForm=localizedForm;
 				}
 			}
-			System.out.println("CHECK: "+bestPeptideModSeq+"\t"+bestIndex.x+"\t"+(stripes.get(bestIndex.y).getScanStartTime()/60f));
+			System.out.println("CHECK: "+bestPeptideModSeq+"\t"+bestIndex.x+"\t"+(scans.get(bestIndex.y).getScanStartTime()/60f)+" (total scans: "+scans.size()+")"); //FIXME
 			ArrayList<XYTraceInterface> traces=new ArrayList<>();
-			float[] rts=new float[stripes.size()];
+			float[] rts=new float[scans.size()];
 			for (int i = 0; i < rts.length; i++) {
-				rts[i]=stripes.get(i).getScanStartTime()/60f;
+				rts[i]=scans.get(i).getScanStartTime()/60f;
 			}
 			for (Entry<String, Float[]> scores : primaryScores.entrySet()) {
 				traces.add(new XYTrace(rts, General.toFloatArray(scores.getValue()), GraphType.boldline, scores.getKey()));
@@ -166,8 +166,9 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			}
 			
 			// check localization ions versus that sequence
-			float apexRT=stripes.get(bestIndex.y).getScanStartTime();
-			ArrayList<Spectrum> stripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(apexRT-parameters.getExpectedPeakWidth(), apexRT+parameters.getExpectedPeakWidth(), stripes);
+			float apexRT=scans.get(bestIndex.y).getScanStartTime();
+			// use stripes here in case we're on the border
+			ArrayList<Spectrum> stripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(apexRT-parameters.getExpectedPeakWidth(), apexRT+parameters.getExpectedPeakWidth(), stripes); 
 			
 			FragmentIon[] localizingIons;
 			if (nextBestPeptideModSeq!=null) {
@@ -188,8 +189,8 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 				
 				TFloatFloatHashMap scoreByRTMap=new TFloatFloatHashMap();
 				Float[] primaryScoreArray=primaryScores.get(bestPeptideModSeq);
-				for (int i=0; i<stripes.size(); i++) {
-					scoreByRTMap.put(stripes.get(i).getScanStartTime(), primaryScoreArray[i]);
+				for (int i=0; i<scans.size(); i++) {
+					scoreByRTMap.put(scans.get(i).getScanStartTime(), primaryScoreArray[i]);
 				}
 				EValueCalculator calculator=new EValueCalculator(scoreByRTMap);
 				float[] auxScoreArray=((EncyclopediaScorer)scorer).getAuxScorer().score(bestForm.localizedEntry, apex, predictedIsotopeDistribution, precursors);
@@ -226,8 +227,8 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 				takenIdentifiedIons.addIonToBlacklist(target.mass, peakRange);
 			}
 			// null out scores from taken ions
-			for (int i=0; i<stripes.size(); i++) {
-				if (peakRange.contains(stripes.get(i).getScanStartTime())) {
+			for (int i=0; i<scans.size(); i++) {
+				if (peakRange.contains(scans.get(i).getScanStartTime())) {
 					for (Entry<String, Float[]> entry : primaryScores.entrySet()) {
 						if ((!wasLocalized)||entry.getKey()!=bestPeptideModSeq) {
 							entry.getValue()[i]=null;
@@ -445,7 +446,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 		return Log.protectedLog10(dotProduct)+Log.logFactorial(count); // X!Tandem score
 	}
 
-	private static FragmentIon[] getUniqueFragmentIons(FragmentationModel target, FragmentationModel nextBest, byte precursorCharge, SearchParameters params) {
+	public static FragmentIon[] getUniqueFragmentIons(FragmentationModel target, FragmentationModel nextBest, byte precursorCharge, SearchParameters params) {
 		HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(target.getPrimaryIonObjects(params.getFragType(), precursorCharge, false)));
 		ions.removeAll(Arrays.asList(nextBest.getPrimaryIonObjects(params.getFragType(), precursorCharge, false)));
 

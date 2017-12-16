@@ -43,6 +43,7 @@ public class PhosphoLocalizer {
 		this.modification=localizingModification;
 		this.minimumScore=-Log.log10(params.getPercolatorThreshold());
 		this.background=BackgroundFrequencyCalculator.generateBackground(diaFile);
+		//this.background=new UnitBackgroundFrequencyCalculator(0.01f);
 		this.gradientLength=diaFile.getGradientLength();
 	}
 
@@ -61,6 +62,7 @@ public class PhosphoLocalizer {
 		this.params=params;
 		this.minimumScore=-Log.log10(params.getPercolatorThreshold());
 		this.background=BackgroundFrequencyCalculator.generateBackground(diaFile);
+		//this.background=new UnitBackgroundFrequencyCalculator(0.01f);
 		this.gradientLength=diaFile.getGradientLength();
 	}
 	
