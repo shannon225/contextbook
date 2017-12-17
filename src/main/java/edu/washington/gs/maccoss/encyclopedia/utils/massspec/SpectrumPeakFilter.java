@@ -10,8 +10,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 public class SpectrumPeakFilter {
 	private final static PeakIntensityComparator intensityComparator=new PeakIntensityComparator();
 	private final static int NUM_PEAKS_PER_BIN=10;
-	private final static double BIN_SIZE=10.0;// m/z
-	private final static int NUM_OF_BINS=200; // only consider up to 2,000 m/z
+	private final static double BIN_SIZE=20.0;// m/z
+	private final static int NUM_OF_BINS=100; // only consider up to 2,000 m/z
 												// (anything over will be placed
 												// in the last bin)
 

@@ -28,6 +28,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 		
 		HashMap<String, String> paramMap=PecanParameterParser.getDefaultParameters();
 		paramMap.put("-acquisition", "DIA"); // NON-OVERLAPPING!
+		//paramMap.put("-filterPeaklists", "true"); 
 		
 		SearchParameters parameters=PecanParameterParser.parseParameters(paramMap);
 		System.out.println(parameters);

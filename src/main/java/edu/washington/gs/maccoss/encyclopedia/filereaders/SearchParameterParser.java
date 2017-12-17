@@ -47,6 +47,7 @@ public class SearchParameterParser {
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
 		map.put("-numberOfQuantitativePeaks", "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
+		map.put("-filterPeaklists", "false");
 		return map;
 	}
 	
