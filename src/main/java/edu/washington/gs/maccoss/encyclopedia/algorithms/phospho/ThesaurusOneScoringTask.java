@@ -140,16 +140,6 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 					bestForm=localizedForm;
 				}
 			}
-			System.out.println("CHECK: "+bestPeptideModSeq+"\t"+bestIndex.x+"\t"+(scans.get(bestIndex.y).getScanStartTime()/60f)+" (total scans: "+scans.size()+")"); //FIXME
-			ArrayList<XYTraceInterface> traces=new ArrayList<>();
-			float[] rts=new float[scans.size()];
-			for (int i = 0; i < rts.length; i++) {
-				rts[i]=scans.get(i).getScanStartTime()/60f;
-			}
-			for (Entry<String, Float[]> scores : primaryScores.entrySet()) {
-				traces.add(new XYTrace(rts, General.toFloatArray(scores.getValue()), GraphType.boldline, scores.getKey()));
-			}
-			Charter.launchChart("RT", "Score", true, traces.toArray(new XYTraceInterface[traces.size()]));
 			
 			// get next best match at that RT
 			float nextBestScore=-Float.MAX_VALUE;
@@ -158,12 +148,24 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 				String peptideModSeq=entry.getKey();
 				if (peptideModSeq!=bestPeptideModSeq) {
 					float score=entry.getValue()[bestIndex.y];
-					if (score!=THIS_PEPTIDE_IS_NOT_HERE&&score>nextBestScore) {
+					if (score>nextBestScore) { //score!=THIS_PEPTIDE_IS_NOT_HERE&&
 						nextBestPeptideModSeq=peptideModSeq;
 						nextBestScore=score;
 					}
 				}
 			}
+			
+//			System.out.println("CHECK: "+bestPeptideModSeq+"\t"+bestIndex.x+"\t"+(scans.get(bestIndex.y).getScanStartTime()/60f)+" (total scans: "+scans.size()+")"); //FIXME
+//			ArrayList<XYTraceInterface> traces=new ArrayList<>();
+//			float[] rts=new float[scans.size()];
+//			for (int i = 0; i < rts.length; i++) {
+//				rts[i]=scans.get(i).getScanStartTime()/60f;
+//			}
+//			for (Entry<String, Float[]> scores : primaryScores.entrySet()) {
+//				traces.add(new XYTrace(rts, General.toFloatArray(scores.getValue()), GraphType.boldline, scores.getKey()));
+//			}
+//			Charter.launchChart("RT", "Score", true, traces.toArray(new XYTraceInterface[traces.size()]));
+//			System.out.println("Testing "+bestPeptideModSeq+" ("+bestIndex.x+") vs "+nextBestPeptideModSeq+" ("+nextBestScore+")");
 			
 			// check localization ions versus that sequence
 			float apexRT=scans.get(bestIndex.y).getScanStartTime();
@@ -182,11 +184,9 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			// if localized, then keep and remove from localizedForms
 			ModificationLocalizationData data=locData.x;
 			Stripe apex=locData.y;
-			Range peakRange=locData.z;
+			Range peakRange=locData.z.addBuffer(dutyCycle);
 			
-			boolean wasLocalized=bestNonlocalizedResult==null||data.isLocalized();
-			if (wasLocalized) {
-				
+			if ((bestNonlocalizedResult==null)||data.isLocalized()) {
 				TFloatFloatHashMap scoreByRTMap=new TFloatFloatHashMap();
 				Float[] primaryScoreArray=primaryScores.get(bestPeptideModSeq);
 				for (int i=0; i<scans.size(); i++) {
@@ -222,7 +222,8 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 
 			// FIXME how do we know when to give up and just report a poor score? 
 			unlocalizedIsoforms.remove(bestPeptideModSeq); // should we only do this if we can actually localize the peak?
-			
+
+			//System.out.println("Blocking off "+(peakRange.getStart()/60f)+" to "+(peakRange.getStop()/60f)+" for "+bestPeptideModSeq+" --> "+data.isLocalized()+", "+data.getLocalizationScore());
 			for (FragmentIon target : localizingIons) {
 				takenIdentifiedIons.addIonToBlacklist(target.mass, peakRange);
 			}
@@ -230,14 +231,16 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			for (int i=0; i<scans.size(); i++) {
 				if (peakRange.contains(scans.get(i).getScanStartTime())) {
 					for (Entry<String, Float[]> entry : primaryScores.entrySet()) {
-						if ((!wasLocalized)||entry.getKey()!=bestPeptideModSeq) {
-							entry.getValue()[i]=null;
+						if ((!data.isLocalized())||entry.getKey()!=bestPeptideModSeq) {
+							if (unlocalizedIsoforms.contains(entry.getKey())) {// &&entry.getValue()[i]!=THIS_PEPTIDE_IS_NOT_HERE) {
+								entry.getValue()[i]=null;
+							}
 						}
 					}
 				} else {
-					if (wasLocalized) {
+					if (data.isLocalized()) {
 						// we found it elsewhere so it wasn't here
-						primaryScores.get(bestPeptideModSeq)[i]=THIS_PEPTIDE_IS_NOT_HERE;
+						//primaryScores.get(bestPeptideModSeq)[i]=THIS_PEPTIDE_IS_NOT_HERE;
 					}
 				}
 			}

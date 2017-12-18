@@ -1107,7 +1107,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
-	public ArrayList<LocalizedLibraryEntry> getAllLocalizedEntries(float minimumLocalizationScore, PeptideModification mod, boolean sqrt) throws IOException, SQLException, DataFormatException {
+	public ArrayList<LocalizedLibraryEntry> getAllLocalizedEntries(float minimumLocalizationScore, boolean requireLocalization, PeptideModification mod, boolean sqrt) throws IOException, SQLException, DataFormatException {
 		try (Connection c = getConnection()) {
 			String sql = "select " +
 					"e.PrecursorMZ, " +
@@ -1139,7 +1139,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					"entries e " +
 					"left join peptidetoprotein p " +
 					"where " +
-					"l.isLocalized=1 and "+
+					(requireLocalization?"l.isLocalized=1 and ":"")+
 					"l.LocalizationScore>="+minimumLocalizationScore+" and " +
 					"e.PeptideModSeq=l.PeptideModSeq and " +
 					"e.PrecursorCharge=l.PrecursorCharge and " +

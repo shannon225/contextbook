@@ -64,11 +64,17 @@ public class ThesaurusTest {
 		ArrayList<LibraryEntry> entries=new ArrayList<>();
 		LibraryEntry libentry;
 		if (true) {
-			libentry=library.getEntries("GSVY[+79.966331]HVPLNIVQADAVR[+10.008269]", (byte)3, false).get(0);
-			libentry=libentry.updateRetentionTime(4273.0068359375f);
+			libentry=library.getEntries("NS[+79.966331]LNHSNSTLNVGPSR[+10.008269]", (byte)3, false).get(0);
+			libentry=libentry.updateRetentionTime(27.5f*60);
 			entries.add(libentry);
-			libentry=library.getEntries("GS[+79.966331]VYHVPLNIVQADAVR[+10.008269]", (byte)3, false).get(0);
-			libentry=libentry.updateRetentionTime(4273.0068359375f);
+			libentry=library.getEntries("NSLNHS[+79.966331]NSTLNVGPSR[+10.008269]", (byte)3, false).get(0);
+			libentry=libentry.updateRetentionTime(27.5f*60);
+			entries.add(libentry);
+			libentry=library.getEntries("NSLNHSNS[+79.966331]TLNVGPSR[+10.008269]", (byte)3, false).get(0);
+			libentry=libentry.updateRetentionTime(27.5f*60);
+			entries.add(libentry);
+			libentry=library.getEntries("NSLNHSNST[+79.966331]LNVGPSR[+10.008269]", (byte)3, false).get(0);
+			libentry=libentry.updateRetentionTime(27.5f*60);
 			entries.add(libentry);
 		} else {
 			System.exit(1);
