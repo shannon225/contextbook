@@ -187,6 +187,22 @@ public class General {
 		return sb.toString();
 	}
 	
+	public static String toFloatArrayString(float[] f, String arrayName) {
+		if (f==null) return null;
+		
+		StringBuilder sb=new StringBuilder("float[] ");
+		sb.append(arrayName);
+		sb.append("=new float[] {");
+		for (int i=0; i<f.length; i++) {
+			if (i>0) {
+				sb.append("f,");
+			}
+			sb.append(f[i]);
+		}
+		sb.append("f};");
+		return sb.toString();
+	}
+	
 	public static String toString(double[] i) {
 		if (i==null) return null;
 		
@@ -207,25 +223,26 @@ public class General {
 		int start=Math.max(0, range.getStart()-1);
 		float deltaY=v[stop]-v[start];
 		float deltaX=stop-start;
-		if (deltaX==0.0f) return new float[v.length];
+		if (deltaX==0.0f) return normalize(v, range); //new float[v.length];
+		
+		float max=General.max(extract(v, range));
+		if (v[start]>=max||v[stop]>=max) return normalize(v, range);
 		
 		float m=deltaY/deltaX;
 		float b=v[stop]-m*stop;
 		
 		for (int i=0; i<v.length; i++) {
-			float background=m*i+b;
-			if (background>v[i]) {
-				v[i]=0.0f;
-			} else if (background>0.0f) {
-				v[i]=v[i]-background;
+			if (range.contains(i)) {
+				float background=m*i+b;
+				if (background>v[i]) {
+					v[i]=0.0f;
+				} else if (background>0.0f) {
+					v[i]=v[i]-background;
+				}
 			}
 		}
 		
-		float sum=sum(v, range);
-		if (sum==0.0f) {
-			return new float[v.length];
-		}
-		return divide(v, sum);
+		return normalize(v, range);
 	}
 	
 	public static float[] normalize(float[] v, IntRange range) {

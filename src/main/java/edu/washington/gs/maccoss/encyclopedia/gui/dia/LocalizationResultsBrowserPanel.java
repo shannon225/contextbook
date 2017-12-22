@@ -192,8 +192,8 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 				ArrayList<LocalizedLibraryEntry> entries=new ArrayList<>();
 				library=BlibToLibraryConverter.getFile(f);
 				if (library instanceof LibraryFile) {
-					//entries=((LibraryFile)library).getAllLocalizedEntries(-10, false, parameters.getLocalizingModification().get(), false);
-					entries=((LibraryFile)library).getAllLocalizedEntries(-Log.log10(parameters.getPercolatorThreshold()), true, parameters.getLocalizingModification().get(), false);
+					entries=((LibraryFile)library).getAllLocalizedEntries(-100000, false, parameters.getLocalizingModification().get(), false);
+					//entries=((LibraryFile)library).getAllLocalizedEntries(-Log.log10(parameters.getPercolatorThreshold()), true, parameters.getLocalizingModification().get(), false);
 				}
 				
 				if (entries.size()==0) {

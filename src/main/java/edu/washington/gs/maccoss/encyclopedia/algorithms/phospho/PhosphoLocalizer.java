@@ -612,6 +612,10 @@ public class PhosphoLocalizer {
 
 		double[] massArray=stripe.getMassArray();
 		
+		return score(parameters, ions, ionTypes, frequencies, massArray);
+	}
+
+	public static float score(SearchParameters parameters, double[] ions, FragmentIon[] ionTypes, float[] frequencies, double[] massArray) {
 		// only keep 
 		HashSet<String> uniqueIonTypes=new HashSet<String>();
 		TObjectFloatHashMap<String> matches=new TObjectFloatHashMap<String>();

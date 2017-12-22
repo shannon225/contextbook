@@ -25,6 +25,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class TransitionRefiner {
+	public static boolean DISPLAY_PLOTS=false;
+
 	// minimum threshold to call this peak as worth quantifying
 	public static final float quantitativeCorrelationThreshold=0.9f;
 	
@@ -116,7 +118,7 @@ public class TransitionRefiner {
 	}
 
 	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> medianChromatogram) {
-		return identifyTransitions(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, retentionTimes, medianChromatogram, false);
+		return identifyTransitions(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, retentionTimes, medianChromatogram, DISPLAY_PLOTS);
 	}
 	static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean plot) {
 		if (chromatograms.size()==0) return new TransitionRefinementData(peptideModSeq, precursorCharge, new FragmentIon[0], chromatograms, new float[0], new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]));
@@ -136,7 +138,7 @@ public class TransitionRefiner {
 				}
 			}
 			indices=getIndexRange(medianChromatogram, maxIndex);
-			normalizedChromatograms=normalizeAndBackgroundSubtract(chromatograms, indices);
+			normalizedChromatograms=normalizeAndBackgroundSubtract(chromatograms, indices, maybeMedianChromatogram.isPresent());
 			
 		} else {
 			// start across the entire width
@@ -162,7 +164,7 @@ public class TransitionRefiner {
 			IntRange initialIndices=getIndexRange(medianChromatogram, maxIndex);
 
 			// then refine on the local area
-			normalizedChromatograms=normalizeAndBackgroundSubtract(chromatograms, initialIndices);
+			normalizedChromatograms=normalizeAndBackgroundSubtract(chromatograms, initialIndices, maybeMedianChromatogram.isPresent());
 			
 			// find the maximum point
 			medianChromatogram=new float[chromatograms.get(0).length];
@@ -182,6 +184,11 @@ public class TransitionRefiner {
 				}
 			}
 			indices=getIndexRange(medianChromatogram, maxIndex);
+		}
+		for (int i=0; i<medianChromatogram.length; i++) {
+			if (!indices.contains(i)) {
+				medianChromatogram[i]=0.0f;
+			}
 		}
 
 		float medianMean=General.mean(medianChromatogram, indices.getStart(), indices.getStop());
@@ -293,12 +300,17 @@ public class TransitionRefiner {
 	}
 
 	public static float calculateCorrelation(float medianMean, IntRange indices, float[] medianChromatogram, float[] normalizedChromatogram) {
-		float fragmentMean=General.mean(normalizedChromatogram, indices.getStart(), indices.getStop());
+		int start=indices.getStart();
+		int stop=indices.getStop();
+		//if (start>0) start=start-1;
+		//if (stop<medianChromatogram.length-1) start=start+1;
+		
+		float fragmentMean=General.mean(normalizedChromatogram, start, stop);
 		
 		float medianDeltaSquareSum=0.0f;
 		float fragmentDeltaSquareSum=0.0f;
 		float deltaProductSum=0.0f;
-		for (int j=indices.getStart(); j<=indices.getStop(); j++) {
+		for (int j=start; j<=stop; j++) {
 			float deltaMedian=medianChromatogram[j]-medianMean;
 			float deltaFragment=normalizedChromatogram[j]-fragmentMean;
 			medianDeltaSquareSum+=deltaMedian*deltaMedian;
@@ -497,12 +509,15 @@ public class TransitionRefiner {
 		return normalizedChromatograms;
 	}
 
-	public static ArrayList<float[]> normalizeAndBackgroundSubtract(ArrayList<float[]> chromatograms, IntRange range) {
+	public static ArrayList<float[]> normalizeAndBackgroundSubtract(ArrayList<float[]> chromatograms, IntRange range, boolean backgroundSubtract) {
 		ArrayList<float[]> normalizedChromatograms=new ArrayList<float[]>();
 		for (float[] fs : chromatograms) {
-			// TODO CONSIDER PUTTING BACKGROUND SUBTRACTION INTO CORRELATION! (but not this way)
-			//normalizedChromatograms.add(General.normalizeAndBackgroundSubtract(fs, range));
-			normalizedChromatograms.add(General.normalize(fs, range));
+			if (backgroundSubtract) {
+				// TODO IS THIS THE RIGHT WAY TO DO BACKGROUND SUBTRACTION IN CORRELATION?
+				normalizedChromatograms.add(General.normalizeAndBackgroundSubtract(fs, range));
+			} else {
+				normalizedChromatograms.add(General.normalize(fs, range));
+			}
 		}
 		return normalizedChromatograms;
 	}

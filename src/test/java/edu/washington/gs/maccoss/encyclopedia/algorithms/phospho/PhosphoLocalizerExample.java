@@ -70,7 +70,16 @@ public class PhosphoLocalizerExample {
 		
 		//File libraryFile=new File("/Users/searleb/Documents/phospho_localization/data/VillenJ_Exactive_HumanPhosphoproteome.elib");
 		//File diaFile=new File("/Users/searleb/Documents/phospho_localization/data/hela/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
-
+		
+		//diaFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_01_170506220515.dia");
+		//diaFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_02_170507024206.dia");
+		diaFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_03_170507071858.dia");
+		//diaFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_04.dia");
+		//libraryFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_01_170506220515.dia.elib");
+		//libraryFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_02_170507024206.dia.elib");
+		libraryFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_03_170507071858.dia.elib");
+		//libraryFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_04.dia.elib");
+		
 		LibraryFile library=new LibraryFile();
 		library.openFile(libraryFile);
 		
@@ -129,7 +138,7 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="GIAPAS[+80.0]PMLGNASNPNKADIPER";
 			retentionTime=4189.1591796875f;
 			precursorCharge=3;
-		} else if (false) {
+		} else if (true) {
 			// repeat 2 sp|P83731|RL24_HUMAN
 			peptideModSeq="AITGAS[+80.0]LADIMAK";
 			retentionTime=5680.037109375f;
@@ -266,12 +275,12 @@ public class PhosphoLocalizerExample {
 			HashMap<FragmentIon, XYTrace> allFragments=new HashMap<FragmentIon, XYTrace>();
 			for (int i=0; i<correlations.length; i++) {
 				
-				if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+				//if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
 					XYTrace unique=uniqueFragments.get(ions[i]);
 					if (unique!=null) allFragments.put(ions[i], unique);
 					XYTrace other=otherFragments.get(ions[i]);
 					if (other!=null) allFragments.put(ions[i], other);
-				}
+				//}
 			}
 			//allFragments.putAll(uniqueFragments);
 			//allFragments.putAll(otherFragments);
@@ -327,6 +336,7 @@ public class PhosphoLocalizerExample {
 		}
 		float dutyCycle=stripefile.getRanges().get(range);
 
+		TransitionRefiner.DISPLAY_PLOTS=true;
 		System.out.println("Based on all ions");
 		ArrayList<LibraryEntry> entries=new ArrayList<>();
 		entries.add(libentry);
