@@ -50,12 +50,12 @@ public class PercolatorExecutor extends ExternalExecutor {
 		while (!e.isFinished()||!result.isEmpty()) {
 			if (!result.isEmpty()) {
 				OutputMessage data=result.take();
-				if (data.isStdOutput()) {
+				if (!data.isStdOutput()) {
 					if (!percolatorExecutableVersion.isPresent()) {
 						String message = data.getMessage();
 						percolatorExecutableVersion = getPercolatorVersionFromOutput(message);
 					}
-				} else {
+
 					Logger.logLine(data.getMessage());
 					String trim=data.getMessage().trim();
 					if (trim.startsWith("Error : ")) {
