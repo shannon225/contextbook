@@ -59,6 +59,7 @@ public class PecanSearchParameters extends SearchParameters {
 		sb.append(" -minNumOfQuantitativePeaks "+minNumOfQuantitativePeaks+"\n");
 		sb.append(" -alpha "+alpha+"\n");
 		sb.append(" -beta "+beta+"\n");
+		sb.append(" -quantifyAcrossSamples "+quantifyAcrossSamples+"\n");
 		
 		return sb.toString();
 	}
@@ -92,6 +93,7 @@ public class PecanSearchParameters extends SearchParameters {
 		map.put("-minNumOfQuantitativePeaks", minNumOfQuantitativePeaks+"");
 		map.put("-alpha", alpha+"");
 		map.put("-beta", beta+"");
+		map.put("-quantifyAcrossSamples", quantifyAcrossSamples+"");
 		return map;
 	}
 	
