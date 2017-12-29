@@ -35,9 +35,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import gnu.trove.map.hash.TFloatFloatHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
 
 public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 	
+	private static final float MAXIMUM_DELTA_FROM_BEST_SCORE = 0.9f;
 	private final PhosphoLocalizer localizer;
 	private final float dutyCycle;
 	private final ScoringBreadthType breadth;
@@ -114,6 +116,9 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 		ModificationLocalizationData bestNonlocalizedData=null;
 		boolean anyLocalized=false;
 		
+		HashMap<String, ScoredIndex> bestIndicies=new HashMap<>();
+		TObjectIntHashMap<String> numberOfAttempts=new TObjectIntHashMap<>();
+		
 		while (unlocalizedIsoforms.size()>0) {
 			String bestPeptideModSeq=null;
 			ScoredIndex bestIndex=null;
@@ -133,12 +138,24 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 					primaryScores.put(peptideModSeq, primary);
 				}
 				ScoredIndex score=updateScores(scans, localizedEntry, allIons, primary, takenIdentifiedIons);
+				if (!bestIndicies.containsKey(peptideModSeq)) {
+					bestIndicies.put(peptideModSeq, score);
+				}
 
-				if (unlocalizedIsoforms.contains(peptideModSeq)&&(bestIndex==null||score.x>bestIndex.x)) {
+				if (unlocalizedIsoforms.contains(peptideModSeq)
+						&&(bestIndex==null||score.x>bestIndex.x)
+						&&(bestIndicies.get(peptideModSeq).x*MAXIMUM_DELTA_FROM_BEST_SCORE<score.x)) {
 					bestIndex=score;
 					bestPeptideModSeq=peptideModSeq;
 					bestForm=localizedForm;
 				}
+			}
+			//System.out.println("CHECK: "+bestPeptideModSeq+"\t"+bestIndex.x+"\t"+(scans.get(bestIndex.y).getScanStartTime()/60f)+" (total scans: "+scans.size()+"), attempts:"+numberOfAttempts.get(bestPeptideModSeq)); //FIXME
+			
+			numberOfAttempts.adjustOrPutValue(bestPeptideModSeq, 1, 1);
+			if (bestIndicies.get(bestPeptideModSeq).x*MAXIMUM_DELTA_FROM_BEST_SCORE>=bestIndex.x) {
+				unlocalizedIsoforms.remove(bestPeptideModSeq); // bad score, not worth considering
+				continue;
 			}
 			
 			// get next best match at that RT
@@ -155,7 +172,6 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 				}
 			}
 			
-//			System.out.println("CHECK: "+bestPeptideModSeq+"\t"+bestIndex.x+"\t"+(scans.get(bestIndex.y).getScanStartTime()/60f)+" (total scans: "+scans.size()+")"); //FIXME
 //			ArrayList<XYTraceInterface> traces=new ArrayList<>();
 //			float[] rts=new float[scans.size()];
 //			for (int i = 0; i < rts.length; i++) {
@@ -170,7 +186,8 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			// check localization ions versus that sequence
 			float apexRT=scans.get(bestIndex.y).getScanStartTime();
 			// use stripes here in case we're on the border
-			ArrayList<Spectrum> stripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(apexRT-parameters.getExpectedPeakWidth(), apexRT+parameters.getExpectedPeakWidth(), stripes); 
+			Range generalPeakArea=new Range(apexRT-parameters.getExpectedPeakWidth(), apexRT+parameters.getExpectedPeakWidth());
+			ArrayList<Spectrum> stripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(generalPeakArea.getStart(), generalPeakArea.getStop(), stripes); 
 			
 			FragmentIon[] localizingIons;
 			if (nextBestPeptideModSeq!=null) {
@@ -220,9 +237,6 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 				}
 			}
 
-			// FIXME how do we know when to give up and just report a poor score? 
-			unlocalizedIsoforms.remove(bestPeptideModSeq); // should we only do this if we can actually localize the peak?
-
 			//System.out.println("Blocking off "+(peakRange.getStart()/60f)+" to "+(peakRange.getStop()/60f)+" for "+bestPeptideModSeq+" --> "+data.isLocalized()+", "+data.getLocalizationScore());
 			for (FragmentIon target : localizingIons) {
 				takenIdentifiedIons.addIonToBlacklist(target.mass, peakRange);
@@ -231,18 +245,27 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			for (int i=0; i<scans.size(); i++) {
 				if (peakRange.contains(scans.get(i).getScanStartTime())) {
 					for (Entry<String, Float[]> entry : primaryScores.entrySet()) {
-						if ((!data.isLocalized())||entry.getKey()!=bestPeptideModSeq) {
+						if (entry.getKey()!=bestPeptideModSeq) {
 							if (unlocalizedIsoforms.contains(entry.getKey())) {// &&entry.getValue()[i]!=THIS_PEPTIDE_IS_NOT_HERE) {
 								entry.getValue()[i]=null;
 							}
+						} else if (!data.isLocalized()) {
+							// if not localized and around the peak shape area
+							entry.getValue()[i]=THIS_PEPTIDE_IS_NOT_HERE;
 						}
 					}
 				} else {
-					if (data.isLocalized()) {
-						// we found it elsewhere so it wasn't here
-						//primaryScores.get(bestPeptideModSeq)[i]=THIS_PEPTIDE_IS_NOT_HERE;
+					if (!data.isLocalized()&&generalPeakArea.contains(scans.get(i).getScanStartTime())) {
+						// if not localized and anywhere near the apex
+						primaryScores.get(bestPeptideModSeq)[i]=THIS_PEPTIDE_IS_NOT_HERE;
 					}
 				}
+			}
+
+			// FIXME how do we know when to give up and just report a poor score?
+			if (data.isLocalized()||numberOfAttempts.get(bestPeptideModSeq)>1) {
+				// try up to 2x times
+				unlocalizedIsoforms.remove(bestPeptideModSeq); // should we only do this if we can actually localize the peak?
 			}
 		}
 		

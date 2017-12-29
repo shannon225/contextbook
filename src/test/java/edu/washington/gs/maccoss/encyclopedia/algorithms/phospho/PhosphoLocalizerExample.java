@@ -49,20 +49,20 @@ public class PhosphoLocalizerExample {
 		
 		File libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/VillenJ_Exactive_HumanPhosphoproteome.dlib");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1a.dia");
-		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1b.dia");
-		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1c.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1b.dia");
+		File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1c.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1f.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_2c.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_5c.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_5c.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_3a_160627233451.mzML");
-		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_04.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4a_PRM.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4b_PRM.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4c_PRM.dia");
-		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_03_170507071858.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_01_170506220515.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_02_170507024206.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_03_170507071858.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_04.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
 
 		//File libraryFile=new File("/Users/searleb/Documents/phospho_localization/data/VillenJ_Exactive_HumanPhosphoproteome.elib");
@@ -73,11 +73,11 @@ public class PhosphoLocalizerExample {
 		
 		//diaFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_01_170506220515.dia");
 		//diaFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_02_170507024206.dia");
-		diaFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_03_170507071858.dia");
+		//diaFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_03_170507071858.dia");
 		//diaFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_04.dia");
 		//libraryFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_01_170506220515.dia.elib");
 		//libraryFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_02_170507024206.dia.elib");
-		libraryFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_03_170507071858.dia.elib");
+		//libraryFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_03_170507071858.dia.elib");
 		//libraryFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_04.dia.elib");
 		
 		LibraryFile library=new LibraryFile();
@@ -138,7 +138,7 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="GIAPAS[+80.0]PMLGNASNPNKADIPER";
 			retentionTime=4189.1591796875f;
 			precursorCharge=3;
-		} else if (true) {
+		} else if (false) {
 			// repeat 2 sp|P83731|RL24_HUMAN
 			peptideModSeq="AITGAS[+80.0]LADIMAK";
 			retentionTime=5680.037109375f;
@@ -195,7 +195,7 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="KGS[+80.0]GDYMPMSPK";
 			retentionTime=2949.1633f;
 			precursorCharge=2;
-		} else if (false) {
+		} else if (true) {
 			// IRS1
 			peptideModSeq="KGSGDYMPMS[+80.0]PK";
 			retentionTime=2949.1633f;

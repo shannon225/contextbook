@@ -1,10 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
@@ -26,7 +24,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
@@ -537,13 +534,14 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 					intensities=allQuantData.getIntegrationArray();
 					correlations=allQuantData.getCorrelationArray();
 					
-					HashSet<FragmentIon> targetIonSet=new HashSet<>(Arrays.asList(targetIons));
 					TDoubleArrayList matchingPeaks=new TDoubleArrayList();
 					for (int i=0; i<correlations.length; i++) {
 						numConsideredPeaks++;
 						if (correlations[i]>=TransitionRefiner.quantitativeCorrelationThreshold&&intensities[i]>0.0f) {
 							numIdentificationPeaks+=1.0f;
 							totalIntensity+=intensities[i];
+						} else if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold&&intensities[i]>0.0f) {
+							numIdentificationPeaks+=0.5f;
 						} else if (intensities[i]>0.0f) {
 							numIdentificationPeaks+=0.1f;
 						}
@@ -557,7 +555,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 					//System.out.println(localizedEntry.getPeptideModSeq()+" Final: "+bestLocalizationScore);
 					
 					isCompletelyAmbiguous=AmbiguousPeptideModSeq.isCompletelyAmbiguous(peptideModSeq, localizer.getModification());
-					isLocalized=bestLocalizationScore>=minimumScore&&wellShapedIons.size()>0&&numIdentificationPeaks>=targetNumFragments&&!isCompletelyAmbiguous;
+					isLocalized=bestLocalizationScore>=minimumScore&&wellShapedIons.size()>0&&numIdentificationPeaks>targetNumFragments&&!isCompletelyAmbiguous;
 					isSiteSpecific=isLocalized&&AmbiguousPeptideModSeq.isSiteSpecific(peptideModSeq, localizer.getModification());
 					//System.out.println("\tLocalized "+isLocalized+"/"+isSiteSpecific+" for "+peptideModSeq.getPeptideAnnotation()+" ("+bestLocalizationScore+" score vs "+minimumScore+"minimum, "+numIdentificationPeaks+"/"+correlations.length+" peaks)"); // FIXME
 				}
