@@ -151,10 +151,13 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 				}
 			}
 			//System.out.println("CHECK: "+bestPeptideModSeq+"\t"+bestIndex.x+"\t"+(scans.get(bestIndex.y).getScanStartTime()/60f)+" (total scans: "+scans.size()+"), attempts:"+numberOfAttempts.get(bestPeptideModSeq)); //FIXME
+			if (bestIndex==null) {
+				break;
+			}
 			
 			numberOfAttempts.adjustOrPutValue(bestPeptideModSeq, 1, 1);
 			ScoredIndex previousScoreIndex=bestIndicies.get(bestPeptideModSeq);
-			if (bestIndex!=null&&previousScoreIndex!=null&&previousScoreIndex.x*MAXIMUM_DELTA_FROM_BEST_SCORE>=bestIndex.x) {
+			if (previousScoreIndex!=null&&previousScoreIndex.x*MAXIMUM_DELTA_FROM_BEST_SCORE>=bestIndex.x) {
 				unlocalizedIsoforms.remove(bestPeptideModSeq); // bad score, not worth considering
 				continue;
 			}
