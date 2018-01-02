@@ -20,14 +20,10 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
@@ -144,13 +140,16 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 					alreadyConsideredScores.put(peptideModSeq, alreadyConsidered);
 				}
 				ScoredIndex score=updateScores(scans, localizedEntry, allIons, primary, alreadyConsidered, takenIdentifiedIons);
-				if (!bestIndicies.containsKey(peptideModSeq)) {
+				
+				ScoredIndex previousBest=bestIndicies.get(peptideModSeq);
+				if (previousBest==null) {
+					previousBest=score;
 					bestIndicies.put(peptideModSeq, score);
 				}
 
-				if (unlocalizedIsoforms.contains(peptideModSeq)
+				if (score!=null&&unlocalizedIsoforms.contains(peptideModSeq)
 						&&(bestIndex==null||score.x>bestIndex.x)
-						&&(bestIndicies.get(peptideModSeq).x*MAXIMUM_DELTA_FROM_BEST_SCORE<score.x)) {
+						&&(previousBest.x*MAXIMUM_DELTA_FROM_BEST_SCORE<score.x)) {
 					bestIndex=score;
 					bestPeptideModSeq=peptideModSeq;
 					bestForm=localizedForm;
