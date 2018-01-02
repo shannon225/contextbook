@@ -79,6 +79,9 @@ public class PhosphoLocalizerExample {
 		//libraryFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_02_170507024206.dia.elib");
 		//libraryFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_03_170507071858.dia.elib");
 		//libraryFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_04.dia.elib");
+
+		diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/rosenberger/chludwig_K150309_013_SW_0-Pmix_George_dilution_0_in_human.dia");
+		libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/rosenberger/psgs_standard_consensus_filtered.dlib");
 		
 		LibraryFile library=new LibraryFile();
 		library.openFile(libraryFile);
@@ -106,7 +109,11 @@ public class PhosphoLocalizerExample {
 		String peptideModSeq;
 		float retentionTime;
 		byte precursorCharge;
-		if (false) {
+		if (true) {
+			peptideModSeq="KSST[+79.966331]APDEISTSTK[+8.014199]";
+			retentionTime=17.6f*60f;
+			precursorCharge=3;
+		} else if (false) {
 			peptideModSeq="S[+80.0]FSKEVEER";
 			retentionTime=2225.5823f;
 			precursorCharge=2;

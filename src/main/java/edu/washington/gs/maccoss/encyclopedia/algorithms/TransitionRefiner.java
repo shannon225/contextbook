@@ -288,6 +288,8 @@ public class TransitionRefiner {
 	}
 	
 	static float[][] extractChromatograms(float[][] intensities) {
+		if (intensities.length==0) return new float[0][];
+		
 		float[][] chromatograms=new float[intensities[0].length][];
 		for (int ionIndex=0; ionIndex<chromatograms.length; ionIndex++) {
 			float[] chromatogram=new float[intensities.length];

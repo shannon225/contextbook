@@ -98,6 +98,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			ionsByPeptide.put(peptideModSeq, model.getPrimaryIons(parameters.getFragType(), firstEntry.getPrecursorCharge()));
 		}
 
+		HashMap<String, Range> localizedIsoforms=new HashMap<>();
 		HashSet<String> unlocalizedIsoforms=new HashSet<>();
 		HashMap<String, LocalizableForm> allIsoforms=new HashMap<>();
 		for (String peptideModSeq : peptideModSeqs) {
@@ -109,6 +110,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 		}
 
 		HashMap<String, Float[]> primaryScores=new HashMap<>(); // scores are re-used unless they fall in the RT range of a previously localized form
+		HashMap<String, boolean[]> alreadyConsideredScores=new HashMap<>();
 		ArrayList<Spectrum> scans=getTargetSpectra(seedEntries);
 		FragmentIonBlacklist takenIdentifiedIons=new FragmentIonBlacklist(parameters.getFragmentTolerance());
 		
@@ -119,6 +121,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 		HashMap<String, ScoredIndex> bestIndicies=new HashMap<>();
 		TObjectIntHashMap<String> numberOfAttempts=new TObjectIntHashMap<>();
 		
+		boolean first=true;
 		while (unlocalizedIsoforms.size()>0) {
 			String bestPeptideModSeq=null;
 			ScoredIndex bestIndex=null;
@@ -133,11 +136,14 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 				FragmentIon[] allIons=localizedForm.allIons;
 				
 				Float[] primary=primaryScores.get(peptideModSeq);
+				boolean[] alreadyConsidered=alreadyConsideredScores.get(peptideModSeq);
 				if (primary==null) {
 					primary=new Float[scans.size()];
+					alreadyConsidered=new boolean[primary.length];
 					primaryScores.put(peptideModSeq, primary);
+					alreadyConsideredScores.put(peptideModSeq, alreadyConsidered);
 				}
-				ScoredIndex score=updateScores(scans, localizedEntry, allIons, primary, takenIdentifiedIons);
+				ScoredIndex score=updateScores(scans, localizedEntry, allIons, primary, alreadyConsidered, takenIdentifiedIons);
 				if (!bestIndicies.containsKey(peptideModSeq)) {
 					bestIndicies.put(peptideModSeq, score);
 				}
@@ -162,52 +168,70 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 				continue;
 			}
 			
-			// get next best match at that RT
-			float nextBestScore=-Float.MAX_VALUE;
-			String nextBestPeptideModSeq=null;
-			for (Entry<String, Float[]> entry : primaryScores.entrySet()) {
-				String peptideModSeq=entry.getKey();
-				if (peptideModSeq!=bestPeptideModSeq) {
-					float score=entry.getValue()[bestIndex.y];
-					if (score>nextBestScore) { //score!=THIS_PEPTIDE_IS_NOT_HERE&&
-						nextBestPeptideModSeq=peptideModSeq;
-						nextBestScore=score;
-					}
-				}
-			}
-			
-//			ArrayList<XYTraceInterface> traces=new ArrayList<>();
-//			float[] rts=new float[scans.size()];
-//			for (int i = 0; i < rts.length; i++) {
-//				rts[i]=scans.get(i).getScanStartTime()/60f;
+//			if (first) { //FIXME
+//				ArrayList<XYTraceInterface> traces=new ArrayList<>();
+//				float[] rts=new float[scans.size()];
+//				for (int i = 0; i < rts.length; i++) {
+//					rts[i]=scans.get(i).getScanStartTime()/60f;
+//				}
+//				for (Entry<String, Float[]> scores : primaryScores.entrySet()) {
+//					traces.add(new XYTrace(rts, General.toFloatArray(scores.getValue()), GraphType.boldline, scores.getKey()));
+//				}
+//				Charter.launchChart("RT", "Score", true, traces.toArray(new XYTraceInterface[traces.size()]));
+//				first=false;
 //			}
-//			for (Entry<String, Float[]> scores : primaryScores.entrySet()) {
-//				traces.add(new XYTrace(rts, General.toFloatArray(scores.getValue()), GraphType.boldline, scores.getKey()));
-//			}
-//			Charter.launchChart("RT", "Score", true, traces.toArray(new XYTraceInterface[traces.size()]));
-//			System.out.println("Testing "+bestPeptideModSeq+" ("+bestIndex.x+") vs "+nextBestPeptideModSeq+" ("+nextBestScore+")");
 			
 			// check localization ions versus that sequence
 			float apexRT=scans.get(bestIndex.y).getScanStartTime();
 			// use stripes here in case we're on the border
 			Range generalPeakArea=new Range(apexRT-parameters.getExpectedPeakWidth(), apexRT+parameters.getExpectedPeakWidth());
 			ArrayList<Spectrum> stripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(generalPeakArea.getStart(), generalPeakArea.getStop(), stripes); 
+
+			// get next best match at that RT
+			FragmentIon[] localizingIons=null;
+			Pair<Stripe, Float> bestLocalizedStripe=null;
 			
-			FragmentIon[] localizingIons;
-			if (nextBestPeptideModSeq!=null) {
-				localizingIons=getUniqueFragmentIons(entryMap.get(bestPeptideModSeq), entryMap.get(nextBestPeptideModSeq), precursorCharge, parameters);
-			} else {
+			for (Entry<String, Float[]> entry : primaryScores.entrySet()) {
+				String peptideModSeq=entry.getKey();
+				if (peptideModSeq!=bestPeptideModSeq) {
+					float score=entry.getValue()[bestIndex.y];
+					Range previousLocalization=localizedIsoforms.get(peptideModSeq);
+					// if we've previously localized this peptide 
+					// AND it wasn't at this location 
+					// AND it scores WORSE than the current peptide (i.e. it's not a peptide that's eluting twice)
+					// THEN (and only then) we can confidently say it isn't here, so we can ignore it
+					if (previousLocalization!=null&&!previousLocalization.contains(apexRT)&&score<bestIndex.x) {
+						continue;
+					}
+					
+					localizingIons=getUniqueFragmentIons(entryMap.get(bestPeptideModSeq), entryMap.get(peptideModSeq), precursorCharge, parameters);
+					
+					Pair<Stripe, Float> localizedStripe = CASiLOneScoringTask.getBestLocalizationStripe(parameters, dutyCycle, localizer, bestForm.localizedEntry, localizingIons, stripeSubset);
+					//System.out.println("Testing "+bestPeptideModSeq+" ("+bestIndex.x+") vs "+peptideModSeq+" ("+score+"): localization: "+localizedStripe.y);
+					if (bestLocalizedStripe==null||bestLocalizedStripe.y>localizedStripe.y) {
+						// keep the lowest localization scoring form! (the closest to the form we're considering)
+						bestLocalizedStripe=localizedStripe;
+					}
+				}
+			}	
+			
+			if (bestLocalizedStripe==null) {
 				localizingIons=bestForm.allIons;
+				bestLocalizedStripe = CASiLOneScoringTask.getBestLocalizationStripe(parameters, dutyCycle, localizer, bestForm.localizedEntry, localizingIons, stripeSubset);
 			}
+			
 			AmbiguousPeptideModSeq ambiPeptideModSeq=AmbiguousPeptideModSeq.getUnambigous(bestPeptideModSeq, parameters.getLocalizingModification().get(), parameters.getAAConstants());
-			Triplet<ModificationLocalizationData, Stripe, Range> locData=CASiLOneScoringTask.calculateLocalizationScoring(false, minimumScore, parameters, dutyCycle, localizer, bestForm.localizedEntry, ambiPeptideModSeq, localizingIons, bestForm.allIons, takenIdentifiedIons, stripeSubset);
+			Triplet<ModificationLocalizationData, Stripe, Range> locData=CASiLOneScoringTask.generateLocalizationData(false, minimumScore, parameters, localizer, bestForm.localizedEntry,
+					ambiPeptideModSeq, localizingIons, bestForm.allIons, takenIdentifiedIons, stripeSubset, bestLocalizedStripe);
 			
 			// if localized, then keep and remove from localizedForms
 			ModificationLocalizationData data=locData.x;
 			Stripe apex=locData.y;
 			Range peakRange=locData.z.addBuffer(dutyCycle);
-			
-			if ((bestNonlocalizedResult==null)||data.isLocalized()) {
+			float score=((EncyclopediaScorer)scorer).score(bestForm.localizedEntry, apex, bestForm.allIons);
+			boolean replaceBestNonLocalizedResult = bestNonlocalizedResult==null||(score>=bestNonlocalizedResult.getBestScore()&&bestNonlocalizedData.getLocalizationScore()<data.getLocalizationScore());
+			//System.out.println(bestPeptideModSeq+" --> "+apex.getScanStartTime()/60f+" min, score:"+score+" vs "+(bestNonlocalizedResult==null?"null":Float.toString(bestNonlocalizedResult.getBestScore()))+" ("+replaceBestNonLocalizedResult+")");
+			if (replaceBestNonLocalizedResult||data.isLocalized()) {
 				TFloatFloatHashMap scoreByRTMap=new TFloatFloatHashMap();
 				Float[] primaryScoreArray=primaryScores.get(bestPeptideModSeq);
 				for (int i=0; i<scans.size(); i++) {
@@ -216,7 +240,6 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 				EValueCalculator calculator=new EValueCalculator(scoreByRTMap);
 				float[] auxScoreArray=((EncyclopediaScorer)scorer).getAuxScorer().score(bestForm.localizedEntry, apex, predictedIsotopeDistribution, precursors);
 	
-				float score=((EncyclopediaScorer)scorer).score(bestForm.localizedEntry, apex, bestForm.allIons);
 				float evalue=calculator.getNegLog10EValue(score);
 				if (Float.isNaN(evalue)) {
 					evalue=-1.0f;
@@ -225,7 +248,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 				PeptideScoringResult result=new PeptideScoringResult(bestForm.localizedEntry);
 				result.addStripe(score, General.concatenate(auxScoreArray, evalue, data.getLocalizationScore()), apex);
 
-				if (bestNonlocalizedResult==null) {
+				if (replaceBestNonLocalizedResult) {
 					bestNonlocalizedResult=result;
 					bestNonlocalizedData=data;
 				}
@@ -249,21 +272,26 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			for (int i=0; i<scans.size(); i++) {
 				if (peakRange.contains(scans.get(i).getScanStartTime())) {
 					for (Entry<String, Float[]> entry : primaryScores.entrySet()) {
-						if (entry.getKey()!=bestPeptideModSeq) {
-							if (unlocalizedIsoforms.contains(entry.getKey())) {// &&entry.getValue()[i]!=THIS_PEPTIDE_IS_NOT_HERE) {
+						String peptideModSeq = entry.getKey();
+						if (peptideModSeq!=bestPeptideModSeq) {
+							if (unlocalizedIsoforms.contains(peptideModSeq)) {// &&entry.getValue()[i]!=THIS_PEPTIDE_IS_NOT_HERE) {
 								entry.getValue()[i]=null;
 							}
 						} else if (!data.isLocalized()) {
 							// if not localized and around the peak shape area
-							entry.getValue()[i]=THIS_PEPTIDE_IS_NOT_HERE;
+							alreadyConsideredScores.get(peptideModSeq)[i]=true;
 						}
 					}
 				} else {
 					if (!data.isLocalized()&&generalPeakArea.contains(scans.get(i).getScanStartTime())) {
 						// if not localized and anywhere near the apex
-						primaryScores.get(bestPeptideModSeq)[i]=THIS_PEPTIDE_IS_NOT_HERE;
+						alreadyConsideredScores.get(bestPeptideModSeq)[i]=true;
 					}
 				}
+			}
+			
+			if (data.isLocalized()) {
+				localizedIsoforms.put(bestPeptideModSeq, peakRange);
 			}
 
 			// FIXME how do we know when to give up and just report a poor score?
@@ -282,16 +310,15 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			}
 		}
 	}
-	private final Float THIS_PEPTIDE_IS_NOT_HERE=-1f;
 
-	private ScoredIndex updateScores(ArrayList<Spectrum> scans, LibraryEntry localizedEntry, FragmentIon[] allIons, Float[] primary, FragmentIonBlacklist takenIdentifiedIons) {
+	private ScoredIndex updateScores(ArrayList<Spectrum> scans, LibraryEntry localizedEntry, FragmentIon[] allIons, Float[] primary, boolean[] alreadyConsidered, FragmentIonBlacklist takenIdentifiedIons) {
 		ScoredIndex bestIndex=null;
 		for (int i=0; i<scans.size(); i++) {
 			Spectrum stripe=scans.get(i);
 			if (primary[i]==null) { 
 				primary[i]=score(localizedEntry, stripe, allIons, takenIdentifiedIons, parameters);
 			}
-			if (bestIndex==null||bestIndex.x<primary[i]) {
+			if ((!alreadyConsidered[i])&&(bestIndex==null||bestIndex.x<primary[i])) {
 				bestIndex=new ScoredIndex(primary[i], i);
 			}
 		}
