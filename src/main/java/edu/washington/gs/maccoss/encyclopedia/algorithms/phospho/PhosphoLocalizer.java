@@ -636,10 +636,11 @@ public class PhosphoLocalizer {
 			}
 		}
 
-		float logProb=Log.log10(uniqueIonTypes.size()); // bonferroni correction
+		float logProb=0;//Log.log10(uniqueIonTypes.size()); // bonferroni correction
 		for (float freq : matches.values()) {
 			logProb+=Log.protectedLog10(freq);
 		}
+		
 		return -logProb;
 	}
 

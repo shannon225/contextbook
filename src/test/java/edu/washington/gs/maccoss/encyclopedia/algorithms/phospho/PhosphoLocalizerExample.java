@@ -82,6 +82,10 @@ public class PhosphoLocalizerExample {
 
 		diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/rosenberger/chludwig_K150309_013_SW_0-Pmix_George_dilution_0_in_human.dia");
 		libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/rosenberger/psgs_standard_consensus_filtered.dlib");
+		//diaFile=new File("/Users/searleb/Documents/phospho_localization/0.6.2/20170430_HeLa_phosp_DIA_B_01_170506220515.dia");
+		//libraryFile=new File("/Users/searleb/Documents/phospho_localization/0.6.2/20170430_HeLa_phosp_DIA_B_01_170506220515.dia.elib");
+		diaFile=new File("/Users/searleb/Documents/phospho_localization/rosenberger/chludwig_K150309_013_SW_0-Pmix_George_dilution_0_in_human.dia");
+		libraryFile=new File("/Users/searleb/Documents/phospho_localization/rosenberger/psgs_standard_consensus_filtered.dlib");
 		
 		LibraryFile library=new LibraryFile();
 		library.openFile(libraryFile);
@@ -93,8 +97,9 @@ public class PhosphoLocalizerExample {
 		defaults.put("-lftol", "16.67");
 		//defaults.put("-frag", "yonly");
 		//defaults.put("-scoringBreadthType", "uncal20");
-		defaults.put("-scoringBreadthType", "window");
+		defaults.put("-scoringBreadthType", "recal");
 		
+
 		SearchParameters parameters=SearchParameterParser.parseParameters(defaults);
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 		
@@ -110,6 +115,15 @@ public class PhosphoLocalizerExample {
 		float retentionTime;
 		byte precursorCharge;
 		if (true) {
+			peptideModSeq="RLSISS[+79.966331]LNPSNALSR[+10.008269]";
+			retentionTime=3927.18115234375f;
+			precursorCharge=3;
+		} else if (true) {
+			peptideModSeq="AASAPAKES[+80.0]PR";
+			retentionTime=18.2f*60f;
+			precursorCharge=2;
+		} else if (false) {
+			// rosenberger
 			peptideModSeq="KSST[+79.966331]APDEISTSTK[+8.014199]";
 			retentionTime=17.6f*60f;
 			precursorCharge=3;
@@ -343,7 +357,7 @@ public class PhosphoLocalizerExample {
 		}
 		float dutyCycle=stripefile.getRanges().get(range);
 
-		TransitionRefiner.DISPLAY_PLOTS=true;
+		//TransitionRefiner.DISPLAY_PLOTS=true;
 		System.out.println("Based on all ions");
 		ArrayList<LibraryEntry> entries=new ArrayList<>();
 		entries.add(libentry);
