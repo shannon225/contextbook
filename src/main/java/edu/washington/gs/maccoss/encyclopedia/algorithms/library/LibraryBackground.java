@@ -31,7 +31,7 @@ public class LibraryBackground implements LibraryBackgroundInterface {
 		for (String sequence : peptides) {
 			for (byte charge=params.getMinCharge(); charge<=params.getMaxCharge(); charge++) {
 				FragmentationModel model=new FragmentationModel(sequence, params.getAAConstants());
-				double[] ions=model.getPrimaryIons(params.getFragType(), charge);
+				double[] ions=model.getPrimaryIons(params.getFragType(), charge, false);
 				for (double ion : ions) {
 					int index=(int)ion; // truncate
 					if (index<background.length) {

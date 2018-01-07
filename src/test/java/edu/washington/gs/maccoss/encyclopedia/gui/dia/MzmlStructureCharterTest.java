@@ -1,7 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
 import java.awt.Dimension;
-import java.io.File;
 
 import org.jfree.chart.ChartPanel;
 

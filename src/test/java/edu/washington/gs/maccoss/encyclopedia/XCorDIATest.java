@@ -102,7 +102,7 @@ public class XCorDIATest extends TestCase {
 				percolatorFiles,
 				new XCorDIAOneScoringFactory(new PecanSearchParameters(
 						new AminoAcidConstants(), // includes C+57 ONLY
-						FragmentationType.YONLY,
+						FragmentationType.HCD,
 						new MassTolerance(10),
 						new MassTolerance(10),
 						DigestionEnzyme.getEnzyme("trypsin"),
@@ -137,7 +137,7 @@ public class XCorDIATest extends TestCase {
 
 										// Get fragments based on the fixed mods in the modSeq
 										final FragmentIon[] fragmentIons = new FragmentationModel(entry.getPeptideModSeq(), NO_MODS)
-												.getPrimaryIonObjects(FragmentationType.YONLY, (byte)1); // XCorr model only has +1 ions
+												.getPrimaryIonObjects(FragmentationType.HCD, (byte)1, false); // XCorr model only has +1 ions
 										final double[] fragMasses = Arrays.stream(fragmentIons)
 												.mapToDouble(ion -> ion.mass)
 												.toArray();

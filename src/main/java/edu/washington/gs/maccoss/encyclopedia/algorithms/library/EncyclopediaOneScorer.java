@@ -70,7 +70,7 @@ public class EncyclopediaOneScorer implements EncyclopediaScorer {
 	@Override
 	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Spectrum spectrum, boolean normalize) {
 		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
-		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge());
+		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
 		
 		return getIndividualPeakScores(entry, spectrum, normalize, ions);
 	}

@@ -19,7 +19,7 @@ public class FragmentationModelTest extends TestCase {
 	public void testModifiedFragmentation() {
 		String sequence="A[+42.0]QRHS[+79.96633]DSSLEEK";
 		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
-		FragmentIon[] ions=model.getPrimaryIonObjects(FragmentationType.CID, (byte)3);
+		FragmentIon[] ions=model.getPrimaryIonObjects(FragmentationType.CID, (byte)3, false);
 		for (int i=0; i<ions.length; i++) {
 			System.out.println(ions[i]+"\t"+ions[i].mass);
 		}
@@ -46,14 +46,14 @@ public class FragmentationModelTest extends TestCase {
 	public void testPrimaryIons() {
 		String sequence="PEPT[+80]IDER";
 		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
-		double[] ions=model.getPrimaryIons(FragmentationType.CID, (byte)2);
+		double[] ions=model.getPrimaryIons(FragmentationType.CID, (byte)2, false);
 		double[] expected=new double[] {98.06063, 175.11955, 227.10323, 304.16215, 324.15603, 407.226834, 419.18915, 505.20373, 520.310934, 532.27325, 615.344054, 618.28783, 635.337934,
 				712.3968540000001, 713.32095, 733.31483, 764.380534, 810.3737500000001, 841.4394540000001, 862.35743, 920.481634, 938.4922540000001, 939.4163500000001, 1018.45853, 1036.4691500000001};
 		for (int i=0; i<ions.length; i++) {
 			assertEquals(expected[i], ions[i], 0.1);
 		}
 
-		ions=model.getPrimaryIons(FragmentationType.ETD, (byte)2);
+		ions=model.getPrimaryIons(FragmentationType.ETD, (byte)2, false);
 		expected=new double[] {115.08717911000001, 158.09300089, 159.10082593, 244.12977911, 287.13560089, 288.14342593, 341.18257911, 402.16260088999996, 403.17042592999996, 424.25338311,
 				515.2467008899999, 516.25452593, 522.23027911, 537.33748311, 598.31750489, 599.3253299300001, 635.31437911, 652.36448311, 695.37030489, 696.29440089, 696.3781299300001,
 				697.3022259300001, 750.34137911, 781.40708311, 793.3472008900001, 794.3550259300001, 824.41290489, 825.4207299300001, 879.38397911, 921.4657048900001, 922.3898008900001,

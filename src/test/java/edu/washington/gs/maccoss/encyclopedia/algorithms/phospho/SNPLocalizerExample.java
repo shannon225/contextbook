@@ -94,7 +94,7 @@ public class SNPLocalizerExample {
 		float duration=stripefile.getGradientLength()/20.0f;
 		EncyclopediaOneScorer scorer=new EncyclopediaOneScorer(parameters, (UnitBackgroundFrequencyCalculator)unitBackgroundFrequencyCalculator);
 		model=new FragmentationModel(libentry.getPeptideModSeq(), parameters.getAAConstants());
-		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), libentry.getPrecursorCharge());
+		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), libentry.getPrecursorCharge(), false);
 		TFloatFloatHashMap primary=new TFloatFloatHashMap();
 		for (int i=0; i<stripes.size(); i++) {
 			Stripe stripe=stripes.get(i);

@@ -1,11 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders.mzml;
 
 
-import com.google.common.base.Joiner;
-
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.google.common.base.Joiner;
 
 public class InstrumentComponentTranscoder {
 

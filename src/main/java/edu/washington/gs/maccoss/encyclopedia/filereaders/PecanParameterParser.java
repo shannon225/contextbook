@@ -120,7 +120,7 @@ public class PecanParameterParser {
 
 		value=parameters.get("-frag");
 		if (value==null) {
-			fragType=FragmentationType.YONLY;
+			fragType=FragmentationType.HCD;
 		} else {
 			fragType=FragmentationType.getFragmentationType(value);
 		}

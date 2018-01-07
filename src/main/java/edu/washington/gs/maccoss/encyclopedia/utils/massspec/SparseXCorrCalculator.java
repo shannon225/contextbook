@@ -190,7 +190,7 @@ public class SparseXCorrCalculator {
 		
 		ArrayList<Peak> allPeaks=new ArrayList<Peak>();
 		switch (type) {
-			case YONLY:
+			case HCD:
 				FragmentIon[] yIons=model.getYIons();
 				allPeaks.addAll(getPeaks(yIons, 0.0, ArrayXCorrCalculator.primaryIonIntensity));
 				if (params.isUseNLsForXCorr()) {

@@ -341,7 +341,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		ArrayList<FragmentIon> forwardIons=new ArrayList<FragmentIon>();
 		ArrayList<FragmentIon> reverseIons=new ArrayList<FragmentIon>();
 		switch (parameters.getFragType()) {
-		case YONLY:
+		case HCD:
 			Collections.addAll(forwardIons, forwardModel.getYIons());
 			Collections.addAll(reverseIons, reverseModel.getYIons());
 			break;

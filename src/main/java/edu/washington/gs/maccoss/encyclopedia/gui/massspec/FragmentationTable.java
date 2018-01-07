@@ -28,7 +28,7 @@ public class FragmentationTable extends JPanel {
 		
 		peptideModSeq=peptideModSeq.replaceAll("\\(", "").replaceAll("\\)", "");
 		FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-		FragmentIon[] all=model.getPrimaryIonObjects(params.getFragType(), spec.getPrecursorCharge());
+		FragmentIon[] all=model.getPrimaryIonObjects(params.getFragType(), spec.getPrecursorCharge(), false);
 		double[] massArray=spec.getMassArray();
 		
 		ArrayList<FragmentIon> matched=new ArrayList<FragmentIon>();
@@ -58,11 +58,11 @@ public class FragmentationTable extends JPanel {
 		if (transitionRefinementData!=null) {
 			String peptideModSeq=transitionRefinementData.getPeptideModSeq();
 			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-			all=model.getPrimaryIonObjects(params.getFragType(), transitionRefinementData.getPrecursorCharge());
+			all=model.getPrimaryIonObjects(params.getFragType(), transitionRefinementData.getPrecursorCharge(), false);
 		} else {
 			String peptideModSeq=sequenceKey.replaceAll("\\(", "").replaceAll("\\)", "");
 			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-			all=model.getPrimaryIonObjects(params.getFragType(), (byte)3);
+			all=model.getPrimaryIonObjects(params.getFragType(), (byte)3, false);
 		}
 		
 		FragmentIon[] targets=data.getUniqueTargetFragments().get(sequenceKey);

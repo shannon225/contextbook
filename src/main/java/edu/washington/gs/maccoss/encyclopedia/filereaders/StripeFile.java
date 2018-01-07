@@ -21,7 +21,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 import java.util.zip.DataFormatException;
 
 import com.google.common.base.Joiner;
@@ -34,9 +33,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentComponent;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentComponentTranscoder;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentId;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentIdTranscoder;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentMapTranscoder;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;

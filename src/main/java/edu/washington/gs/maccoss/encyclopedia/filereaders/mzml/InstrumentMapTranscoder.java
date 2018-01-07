@@ -1,10 +1,10 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders.mzml;
 
+import java.util.List;
+
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMultimap;
-
-import java.util.List;
 
 public class InstrumentMapTranscoder {
 

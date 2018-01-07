@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.zip.DataFormatException;
 
-import com.google.common.collect.ImmutableMap;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQuantExtractor;

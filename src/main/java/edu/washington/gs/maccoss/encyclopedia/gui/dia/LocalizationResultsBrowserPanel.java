@@ -304,7 +304,7 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 							downcastedSpectra.add(spectrum);
 						}
 					}
-					HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge()), downcastedSpectra, entry.getRetentionTime(), GraphType.dashedline);
+					HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge(), true), downcastedSpectra, entry.getRetentionTime(), GraphType.dashedline);
 					HashMap<FragmentIon, XYTrace> targetMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), entry.getLocalizationIons(), downcastedSpectra, null, GraphType.boldline);
 					fragmentTraceMap.putAll(targetMap);
 					ArrayList<XYTrace> traces=new ArrayList<XYTrace>(fragmentTraceMap.values());

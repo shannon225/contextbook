@@ -1,6 +1,21 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
+import java.awt.Color;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
 import com.google.common.collect.ImmutableList;
+
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
@@ -15,11 +30,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribut
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Gaussian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.UnitDistribution;
 import gnu.trove.list.array.TFloatArrayList;
-
-import java.awt.*;
-import java.io.*;
-import java.util.*;
-import java.util.List;
 
 public class RetentionTimeFilter implements RetentionTimeAlignmentInterface {
 	//private static final String RT_STRING="iRT from DDA Library";

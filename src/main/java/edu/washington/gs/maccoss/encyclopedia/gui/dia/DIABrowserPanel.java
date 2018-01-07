@@ -61,7 +61,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import gnu.trove.map.hash.TDoubleDoubleHashMap;
-import gnu.trove.map.hash.TFloatDoubleHashMap;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class DIABrowserPanel extends JPanel {

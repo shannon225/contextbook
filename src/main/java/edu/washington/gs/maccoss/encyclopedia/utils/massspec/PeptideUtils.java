@@ -1,6 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
-import java.awt.event.KeyEvent;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -13,8 +12,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
-
-import javax.swing.*;
 
 public class PeptideUtils {
 	public static byte getExpectedChargeState(String peptide) {
@@ -33,7 +30,7 @@ public class PeptideUtils {
 	
 	public static String getSmartDecoy(String peptide, byte charge, HashSet<String> backgroundProteome, SearchParameters parameters) {
 		FragmentationModel model=new FragmentationModel(peptide, parameters.getAAConstants());
-		double[] primaryIons=model.getPrimaryIons(parameters.getFragType(), charge);
+		double[] primaryIons=model.getPrimaryIons(parameters.getFragType(), charge, false);
 		
 		String decoy=reverse(peptide, parameters.getEnzyme(), parameters.getAAConstants());
 		int attempts=0;
@@ -43,7 +40,7 @@ public class PeptideUtils {
 				decoy=shuffle(decoy, parameters);
 			} else {
 				model=new FragmentationModel(decoy, parameters.getAAConstants());
-				double[] decoyIons=model.getPrimaryIons(parameters.getFragType(), charge);
+				double[] decoyIons=model.getPrimaryIons(parameters.getFragType(), charge, false);
 				int matches=0;
 				for (double decoyFragment : decoyIons) {
 					Optional<Double> match=parameters.getFragmentTolerance().getMatch(primaryIons, decoyFragment);

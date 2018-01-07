@@ -151,7 +151,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		if (inferrer.isPresent()) {
 			masses=inferrer.get().getTopNBestIons(peptideModSeq, precursorCharge);
 		}
-		AnnotatedLibraryEntry unitEntry=model.getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, masses, 0.0, false);
+		AnnotatedLibraryEntry unitEntry=model.getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, masses, 0.0, false, true);
 		
 		return Optional.ofNullable(extractSpectrum(unitEntry, duration, limitToQuantifiable, integrateEverything, wasInferred));
 	}

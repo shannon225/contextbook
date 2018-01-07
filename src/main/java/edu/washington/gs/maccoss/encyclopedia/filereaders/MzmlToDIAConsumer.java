@@ -7,7 +7,6 @@ import java.util.concurrent.BlockingQueue;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class MzmlToDIAConsumer implements Runnable {
 	private final BlockingQueue<MzmlBlock> mzmlBlockQueue;

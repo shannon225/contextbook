@@ -267,7 +267,7 @@ public class PhosphoLocalizer {
 				model=new FragmentationModel(targetPeptideSequence, params.getAAConstants());
 			}
 			
-			FragmentIon[] allIonsTypes=model.getPrimaryIonObjects(params.getFragType(), precursorCharge);
+			FragmentIon[] allIonsTypes=model.getPrimaryIonObjects(params.getFragType(), precursorCharge, false);
 			double[] allIons=FragmentIon.getMasses(allIonsTypes);
 			
 			ArrayList<FragmentIon> allTargets=new ArrayList<FragmentIon>(Arrays.asList(targets));

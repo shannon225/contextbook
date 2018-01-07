@@ -48,16 +48,16 @@ public class FragmentationModel {
 		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, 0.0, isDecoy);
 	}
 
-	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass) {
-		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, minimumMass, false);
+	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass, boolean forQuant) {
+		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, minimumMass, false, forQuant);
 	} 
-	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass, boolean isDecoy) {
-		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, null, minimumMass, false);
+	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass, boolean isDecoy, boolean forQuant) {
+		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, null, minimumMass, false, forQuant);
 	}
-	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double[] targetMasses, double minimumMass, boolean isDecoy) {
+	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double[] targetMasses, double minimumMass, boolean isDecoy, boolean forQuant) {
 		String sequence=getModifiedSequence();
 		double precursorMZ=getChargedMass(precursorCharge);
-		FragmentIon[] ions=getPrimaryIonObjects(params.getFragType(), precursorCharge);
+		FragmentIon[] ions=getPrimaryIonObjects(params.getFragType(), precursorCharge, forQuant);
 		MassTolerance fragmentTolerance=params.getFragmentTolerance();
 		ions = FragmentIon.getUniqueFragments(ions, fragmentTolerance);
 		
@@ -120,8 +120,8 @@ public class FragmentationModel {
 	 * @param type
 	 * @return
 	 */
-	public double[] getPrimaryIons(FragmentationType type, byte precursorCharge) {
-		FragmentIon[] ions=getPrimaryIonObjects(type, precursorCharge);
+	public double[] getPrimaryIons(FragmentationType type, byte precursorCharge, boolean forQuant) {
+		FragmentIon[] ions=getPrimaryIonObjects(type, precursorCharge, forQuant);
 		double[] masses=new double[ions.length];
 		for (int i=0; i<ions.length; i++) {
 			masses[i]=ions[i].mass;
@@ -129,17 +129,28 @@ public class FragmentationModel {
 		return masses;
 	}
 
-	public FragmentIon[] getPrimaryIonObjects(FragmentationType type, byte precursorCharge) {
-		return getPrimaryIonObjects(type, precursorCharge, true);
+	public FragmentIon[] getPrimaryIonObjects(FragmentationType type, byte precursorCharge, boolean forQuant) {
+		return getPrimaryIonObjects(type, precursorCharge, true, forQuant);
 	}
-	public FragmentIon[] getPrimaryIonObjects(FragmentationType type, byte precursorCharge, boolean useNeutralLosses) {
+	public FragmentIon[] getPrimaryIonObjects(FragmentationType type, byte precursorCharge, boolean useNeutralLosses, boolean forQuant) {
 		switch (type) {
-			case YONLY:
-				FragmentIon[] yIons=getYIons(useNeutralLosses);
-				if (precursorCharge>2) {
-					return concatAndSort(yIons, getPlus2s(yIons));
+			case HCD:
+				if (forQuant) {
+					// include B ions too
+					FragmentIon[] yIonsCID=getYIons(useNeutralLosses);
+					FragmentIon[] bIonsCID=getBIons(useNeutralLosses);
+					if (precursorCharge>2) {
+						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), bIonsCID, getPlus2s(bIonsCID));
+					} else {
+						return concatAndSort(bIonsCID, yIonsCID);
+					}
 				} else {
-					return yIons;
+					FragmentIon[] yIons=getYIons(useNeutralLosses);
+					if (precursorCharge>2) {
+						return concatAndSort(yIons, getPlus2s(yIons));
+					} else {
+						return yIons;
+					}
 				}
 			case CID:
 				FragmentIon[] yIonsCID=getYIons(useNeutralLosses);

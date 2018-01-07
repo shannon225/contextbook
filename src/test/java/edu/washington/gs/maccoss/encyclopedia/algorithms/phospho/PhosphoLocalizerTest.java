@@ -241,7 +241,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		for (String peptideModSeq : permutations) {
 			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
 			entryMap.put(peptideModSeq, model);
-			FragmentIon[] ions=model.getPrimaryIonObjects(params.getFragType(), charge);
+			FragmentIon[] ions=model.getPrimaryIonObjects(params.getFragType(), charge, false);
 			//System.out.println(peptideModSeq);
 			for (int i=0; i<ions.length; i++) {
 				//System.out.println(ions[i]+"\t"+ions[i].mass);

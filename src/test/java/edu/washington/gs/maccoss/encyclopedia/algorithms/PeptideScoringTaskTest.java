@@ -48,7 +48,7 @@ public class PeptideScoringTaskTest {
 	private static byte PLOTTING_METHOD=FragmentationTraceTask.PLOT_INTENSITIES; // not final to avoid test warnings
 	
 	private static final Range FRAGMENTATION_RANGE=new Range(0f, 2000f);
-	private static final PecanSearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false);
+	private static final PecanSearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.HCD, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false);
 
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		

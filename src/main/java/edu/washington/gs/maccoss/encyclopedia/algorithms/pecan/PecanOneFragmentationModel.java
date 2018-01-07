@@ -21,7 +21,7 @@ public class PecanOneFragmentationModel extends AbstractPecanFragmentationModel 
 	}
 	public PecanLibraryEntry getPecanSpectrum(byte precursorCharge, double[] sortedBinCounterKeys, TDoubleIntHashMap binCounter, Range fragmentationRange, SearchParameters params, boolean isDecoy) {
 		TDoubleFloatHashMap peakMap=new TDoubleFloatHashMap();
-		double[] ions=getPrimaryIons(params.getFragType(), precursorCharge);
+		double[] ions=getPrimaryIons(params.getFragType(), precursorCharge, false);
 		float totalOfSquares=0.0f;
 		for (int i=0; i<ions.length; i++) {
 			if (!fragmentationRange.contains((float)ions[i])) {

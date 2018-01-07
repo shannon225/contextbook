@@ -12,7 +12,6 @@ import java.util.zip.DataFormatException;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class CachedStripeFile implements StripeFileInterface {
 	private final File userFile;

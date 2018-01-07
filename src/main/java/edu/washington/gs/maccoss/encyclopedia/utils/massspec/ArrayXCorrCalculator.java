@@ -199,7 +199,7 @@ public class ArrayXCorrCalculator {
 		
 		ArrayList<Peak> allPeaks=new ArrayList<Peak>();
 		switch (type) {
-			case YONLY:
+			case HCD:
 				FragmentIon[] yIons=model.getYIons();
 				allPeaks.addAll(getPeaks(yIons, 0.0, primaryIonIntensity));
 				if (params.isUseNLsForXCorr()) {

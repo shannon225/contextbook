@@ -1,22 +1,23 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentComponent;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentId;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentMapTranscoder;
-import junit.framework.TestCase;
-import org.mockito.Mockito;
-
 import java.io.File;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.mockito.Mockito;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentComponent;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentId;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentMapTranscoder;
+import junit.framework.TestCase;
 
 public class MzmlToDIASAXProducerTest extends TestCase {
 

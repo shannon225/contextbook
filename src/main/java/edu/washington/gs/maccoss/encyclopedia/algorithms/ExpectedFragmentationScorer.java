@@ -28,7 +28,7 @@ public class ExpectedFragmentationScorer extends AuxillaryPSMScorer {
 		float[] intensities=spectrum.getIntensityArray();
 		
 
-		FragmentIon[] modelIons=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge());
+		FragmentIon[] modelIons=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
 
 		TFloatArrayList ions=new TFloatArrayList();
 		for (FragmentIon ion : modelIons) {
@@ -46,7 +46,7 @@ public class ExpectedFragmentationScorer extends AuxillaryPSMScorer {
 	@Override
 	public float[] getMissingDataScores(LibraryEntry entry) {
 		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
-		FragmentIon[] modelIons=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge());
+		FragmentIon[] modelIons=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
 
 		TFloatArrayList ions=new TFloatArrayList();
 		for (FragmentIon ion : modelIons) {
@@ -60,7 +60,7 @@ public class ExpectedFragmentationScorer extends AuxillaryPSMScorer {
 	@Override
 	public String[] getScoreNames(LibraryEntry entry) {
 		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
-		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge());
+		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
 		
 		ArrayList<String> names=new ArrayList<String>();
 		for (FragmentIon ion : ions) {

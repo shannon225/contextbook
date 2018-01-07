@@ -1,7 +1,12 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Optional;
+
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -9,10 +14,6 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TCharObjectHashMap;
 import gnu.trove.map.hash.TIntCharHashMap;
 import gnu.trove.procedure.TCharDoubleProcedure;
-
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Optional;
 
 public class AminoAcidConstants {
 	public static final char[] AAs="ARNDCEQGHLIKMFPSTWYV".toCharArray();

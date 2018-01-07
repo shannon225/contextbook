@@ -24,7 +24,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
@@ -100,7 +99,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 			// generate an ion map for all forms
 			HashMap<String, double[]> ionsByPeptide=new HashMap<>();
 			for (Entry<String, FragmentationModel> modelEntry : entryMap.entrySet()) {
-				ionsByPeptide.put(modelEntry.getKey(), modelEntry.getValue().getPrimaryIons(parameters.getFragType(), firstEntry.getPrecursorCharge()));
+				ionsByPeptide.put(modelEntry.getKey(), modelEntry.getValue().getPrimaryIons(parameters.getFragType(), firstEntry.getPrecursorCharge(), true));
 			}
 
 			ArrayList<AmbiguousPeptideModSeq> previouslyIdentified=new ArrayList<AmbiguousPeptideModSeq>();
@@ -161,7 +160,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 					ArrayList<Spectrum> stripeList=localizedForm.scansToConsider;
 
 					AuxillaryPSMScorer auxScorer=eScorer.getAuxScorer().getEntryOptimizedScorer(localizedEntry);
-					FragmentIon[] allIons=localizedModel.getPrimaryIonObjects(parameters.getFragType(), localizedEntry.getPrecursorCharge());
+					FragmentIon[] allIons=localizedModel.getPrimaryIonObjects(parameters.getFragType(), localizedEntry.getPrecursorCharge(), false);
 					
 					float[] primary=new float[stripeList.size()];
 					for (int i=0; i<stripeList.size(); i++) {
@@ -433,7 +432,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 			
 		} else if (breadth==ScoringBreadthType.RECALIBRATED_20_PERCENT||breadth==ScoringBreadthType.RECALIBRATED_PEAK_WIDTH) {
 			FragmentationModel model=new FragmentationModel(seedEntry.getPeptideModSeq(), parameters.getAAConstants());
-			FragmentIon[] allIons=model.getPrimaryIonObjects(parameters.getFragType(), seedEntry.getPrecursorCharge());
+			FragmentIon[] allIons=model.getPrimaryIonObjects(parameters.getFragType(), seedEntry.getPrecursorCharge(), false);
 			float[] primary=new float[super.stripes.size()];
 			for (int i=0; i<super.stripes.size(); i++) {
 				Spectrum stripe=super.stripes.get(i);
