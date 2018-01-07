@@ -140,7 +140,7 @@ public class PhosphoLocalizer {
 		
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : peptideModSeqs) {
-			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+			FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
 			entryMap.put(peptideModSeq, model);
 		}
 		
@@ -264,10 +264,10 @@ public class PhosphoLocalizer {
 			FragmentationModel model=entryMap.get(targetPeptideSequence);
 			if (model==null) {
 				// can happen if ambiguity is removed
-				model=new FragmentationModel(targetPeptideSequence, params.getAAConstants());
+				model=PeptideUtils.getPeptideModel(targetPeptideSequence, params.getAAConstants());
 			}
 			
-			FragmentIon[] allIonsTypes=model.getPrimaryIonObjects(params.getFragType(), precursorCharge, false);
+			FragmentIon[] allIonsTypes=model.getPrimaryIonObjects(params.getFragType(), precursorCharge, false, true);
 			double[] allIons=FragmentIon.getMasses(allIonsTypes);
 			
 			ArrayList<FragmentIon> allTargets=new ArrayList<FragmentIon>(Arrays.asList(targets));
@@ -649,13 +649,13 @@ public class PhosphoLocalizer {
 
 	public static FragmentIon[] getUniqueFragmentIons(String peptideModSeq, byte precursorCharge, HashMap<String, FragmentationModel> availableModels, SearchParameters params) {
 		FragmentationModel unitEntry=availableModels.get(peptideModSeq);
-		HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(unitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false)));
+		HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(unitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false, true)));
 
 		for (Entry<String, FragmentationModel> otherEntry : availableModels.entrySet()) {
 			String otherPeptideModSeq=otherEntry.getKey();
 			if (!peptideModSeq.equals(otherPeptideModSeq)) {
 				FragmentationModel otherUnitEntry=otherEntry.getValue();
-				ions.removeAll(Arrays.asList(otherUnitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false)));
+				ions.removeAll(Arrays.asList(otherUnitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false, true)));
 			}
 		}
 
@@ -669,7 +669,7 @@ public class PhosphoLocalizer {
 		for (Entry<String, FragmentationModel> entry : entryMap.entrySet()) {
 			String peptideModSeq=entry.getKey();
 			FragmentationModel unitEntry=entry.getValue();
-			HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(unitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false)));
+			HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(unitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false, true)));
 
 			for (Entry<String, FragmentationModel> otherEntry : entryMap.entrySet()) {
 				String otherPeptideModSeq=otherEntry.getKey();
@@ -678,7 +678,7 @@ public class PhosphoLocalizer {
 					FragmentationModel otherUnitEntry=otherEntry.getValue();
 
 					//TODO: memoize this call, as it gets called a quadratic number of times
-					final FragmentIon[] otherUnitIons = otherUnitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false);
+					final FragmentIon[] otherUnitIons = otherUnitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false, true);
 
 					// this commented line relies on FragmentIon#equals, which previously used a 0.1 Da tolerance (hard-coded)
 //					ions.removeAll(Arrays.asList(otherUnitIons));

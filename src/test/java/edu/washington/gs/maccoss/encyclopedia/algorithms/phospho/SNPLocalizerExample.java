@@ -24,6 +24,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
@@ -51,7 +52,7 @@ public class SNPLocalizerExample {
 		float retentionTime=86.5f*60;
 		byte precursorCharge=2;
 
-		FragmentationModel model=new FragmentationModel(peptideModSeq, parameters.getAAConstants());
+		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, parameters.getAAConstants());
 		HashSet<String> accessions=new HashSet<>();
 		accessions.add("KRT13");
 		LibraryEntry libentry=model.getUnitSpectrum("23aug2017_fingerprint_p_dia_002", accessions, precursorCharge, retentionTime, parameters);
@@ -93,8 +94,8 @@ public class SNPLocalizerExample {
 
 		float duration=stripefile.getGradientLength()/20.0f;
 		EncyclopediaOneScorer scorer=new EncyclopediaOneScorer(parameters, (UnitBackgroundFrequencyCalculator)unitBackgroundFrequencyCalculator);
-		model=new FragmentationModel(libentry.getPeptideModSeq(), parameters.getAAConstants());
-		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), libentry.getPrecursorCharge(), false);
+		model=PeptideUtils.getPeptideModel(libentry.getPeptideModSeq(), parameters.getAAConstants());
+		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), libentry.getPrecursorCharge(), false, true);
 		TFloatFloatHashMap primary=new TFloatFloatHashMap();
 		for (int i=0; i<stripes.size(); i++) {
 			Stripe stripe=stripes.get(i);
@@ -139,7 +140,7 @@ public class SNPLocalizerExample {
 		float retentionTime=40*60;
 		byte precursorCharge=2;
 
-		FragmentationModel model=new FragmentationModel(peptideModSeq, parameters.getAAConstants());
+		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, parameters.getAAConstants());
 		HashSet<String> accessions=new HashSet<>();
 		accessions.add("SAA1_HUMAN");
 		accessions.add("SAA2_HUMAN");
@@ -183,7 +184,7 @@ public class SNPLocalizerExample {
 
 //		float duration=stripefile.getGradientLength()/20.0f;
 //		EncyclopediaOneScorer scorer=new EncyclopediaOneScorer(parameters, (UnitBackgroundFrequencyCalculator)unitBackgroundFrequencyCalculator);
-//		model=new FragmentationModel(libentry.getPeptideModSeq(), parameters.getAAConstants());
+//		model=PeptideUtils.getPeptideModel(libentry.getPeptideModSeq(), parameters.getAAConstants());
 //		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), libentry.getPrecursorCharge());
 //		TFloatFloatHashMap primary=new TFloatFloatHashMap();
 //		for (int i=0; i<stripes.size(); i++) {

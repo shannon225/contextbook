@@ -9,6 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TDoubleIntHashMap;
 import junit.framework.TestCase;
 
@@ -18,7 +19,7 @@ public class FragmentationModelTest extends TestCase {
 	
 	public void testModifiedFragmentation() {
 		String sequence="A[+42.0]QRHS[+79.96633]DSSLEEK";
-		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
+		FragmentationModel model=PeptideUtils.getPeptideModel(sequence, PARAMETERS.getAAConstants());
 		FragmentIon[] ions=model.getPrimaryIonObjects(FragmentationType.CID, (byte)3, false);
 		for (int i=0; i<ions.length; i++) {
 			System.out.println(ions[i]+"\t"+ions[i].mass);
@@ -27,17 +28,17 @@ public class FragmentationModelTest extends TestCase {
 	
 	public void testGetModifiedSequence() {
 		String sequence="PEPT[+80]IDER";
-		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
+		FragmentationModel model=PeptideUtils.getPeptideModel(sequence, PARAMETERS.getAAConstants());
 
 		assertEquals("PEPT[+79.966331]IDER", model.getModifiedSequence());
 
 		sequence="[-17]EPTIDER";
-		model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
+		model=PeptideUtils.getPeptideModel(sequence, PARAMETERS.getAAConstants());
 
 		assertEquals("E[-17.0]PTIDER", model.getModifiedSequence());
 
 		sequence="[+42]S[+80]PEPTIDER";
-		model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
+		model=PeptideUtils.getPeptideModel(sequence, PARAMETERS.getAAConstants());
 
 		// FIXME this is bad! should be fixed at some point (if we start seeing weird modification structures)
 		assertEquals("S[+42.010565][+79.966331]PEPTIDER", model.getModifiedSequence());
@@ -45,7 +46,7 @@ public class FragmentationModelTest extends TestCase {
 
 	public void testPrimaryIons() {
 		String sequence="PEPT[+80]IDER";
-		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
+		FragmentationModel model=PeptideUtils.getPeptideModel(sequence, PARAMETERS.getAAConstants());
 		double[] ions=model.getPrimaryIons(FragmentationType.CID, (byte)2, false);
 		double[] expected=new double[] {98.06063, 175.11955, 227.10323, 304.16215, 324.15603, 407.226834, 419.18915, 505.20373, 520.310934, 532.27325, 615.344054, 618.28783, 635.337934,
 				712.3968540000001, 713.32095, 733.31483, 764.380534, 810.3737500000001, 841.4394540000001, 862.35743, 920.481634, 938.4922540000001, 939.4163500000001, 1018.45853, 1036.4691500000001};
@@ -68,7 +69,7 @@ public class FragmentationModelTest extends TestCase {
 		double[] expectedB=new double[] {98.06063, 227.10323, 324.15599, 425.20367, 538.28773, 653.31467, 782.35727, 938.45838};
 		double[] expectedY=new double[] {175.11955, 304.16214, 419.18908, 532.27314, 633.32082, 730.37359, 859.41618, 956.46894};
 
-		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
+		FragmentationModel model=PeptideUtils.getPeptideModel(sequence, PARAMETERS.getAAConstants());
 		double[] bs=FragmentIon.getMasses(model.getBIons());
 		for (int i=0; i<bs.length; i++) {
 			assertEquals(expectedB[i], bs[i], 0.1);
@@ -88,7 +89,7 @@ public class FragmentationModelTest extends TestCase {
 				859.41618+80-97.976896, 956.46894+80-97.976896};
 		Arrays.sort(expectedY);
 
-		FragmentationModel model=new FragmentationModel(sequence, PARAMETERS.getAAConstants());
+		FragmentationModel model=PeptideUtils.getPeptideModel(sequence, PARAMETERS.getAAConstants());
 		double[] bs=FragmentIon.getMasses(model.getBIons());
 		for (int i=0; i<bs.length; i++) {
 			assertEquals(expectedB[i], bs[i], 0.1);

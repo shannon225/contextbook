@@ -6,7 +6,6 @@ import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
@@ -21,15 +20,14 @@ public class FragmentationModel {
 	private final double[] neutralLosses;
 	private final String[] aas;
 	
-	public FragmentationModel(String modifiedSequence, AminoAcidConstants aaConstants) {
-		Triplet<double[], double[], String[]> tuple=PeptideUtils.getMasses(modifiedSequence, aaConstants);
-		masses=tuple.x;
-		neutralLosses=tuple.y;
-		aas=tuple.z;
+	public FragmentationModel(double[] masses, double[] neutralLosses, String[] aas) {
+		this.masses=masses;
+		this.neutralLosses=neutralLosses;
+		this.aas=aas;
 	}
-	
+
 	public static AnnotatedLibraryEntry generateEntry(String peptideModSeq, String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, boolean isDecoy, SearchParameters params) {
-		FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
 		return model.getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, isDecoy);
 	}
 
@@ -86,10 +84,18 @@ public class FragmentationModel {
 
 		return new AnnotatedLibraryEntry(filename, accessions, 1, precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, masses, unitIntensities, unitCorrelation, annotationList.toArray(new FragmentIon[annotationList.size()]), isDecoy);
 	}
+	public double[] getMasses() {
+		return masses;
+	}
+	
+	public double[] getNeutralLosses() {
+		return neutralLosses;
+	}
 	
 	public String[] getAas() {
 		return aas;
 	}
+	
 	public String toString() {
 		StringBuilder sb=new StringBuilder();
 		for (String aa : aas) {
@@ -128,6 +134,11 @@ public class FragmentationModel {
 		}
 		return masses;
 	}
+	
+	//FIXME
+//	public FragmentIon[] getModificationSpecificIons(Range precursorRange, FragmentationType type, byte precursorCharge, boolean forQuant) {
+//		
+//	}
 
 	public FragmentIon[] getPrimaryIonObjects(FragmentationType type, byte precursorCharge, boolean forQuant) {
 		return getPrimaryIonObjects(type, precursorCharge, true, forQuant);

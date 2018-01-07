@@ -6,6 +6,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.list.array.TIntArrayList;
 
 public class PhosphoPermuter {
@@ -14,7 +15,7 @@ public class PhosphoPermuter {
 		String modificationTag=modification.toMassString();
 		char[] modifibleAAs=modification.getModifiableAAs();
 		
-		FragmentationModel model=new FragmentationModel(peptideModSeq, aaConstants);
+		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, aaConstants);
 		String[] aas=model.getAas();
 		
 		int phosphoCount=0;

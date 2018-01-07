@@ -24,7 +24,7 @@ public class TransitionRefinerTest {
 		float rtRange=params.getExpectedPeakWidth();
 		StripeFileInterface dia=StripeFileGenerator.getFile(diaFile, params, true);
 
-		FragmentationModel model=new FragmentationModel(sequence, params.getAAConstants());
+		FragmentationModel model=PeptideUtils.getPeptideModel(sequence, params.getAAConstants());
 		AnnotatedLibraryEntry entry=model.getUnitSpectrum(diaFile.getName(), new HashSet<>(), precursorCharge, targetRT, params);
 		ArrayList<Stripe> stripes=dia.getStripes(entry.getPrecursorMZ(), targetRT-rtRange, targetRT+rtRange, false);
 		Collections.sort(stripes);

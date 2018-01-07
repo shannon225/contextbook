@@ -24,6 +24,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TFloatFloatHashMap;
@@ -151,7 +152,7 @@ public class PhosphoLocalizerTest extends TestCase {
 
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : peptideModSeqs) {
-			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+			FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
 			entryMap.put(peptideModSeq, model);
 		}
 
@@ -207,7 +208,7 @@ public class PhosphoLocalizerTest extends TestCase {
 
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : peptideModSeqs) {
-			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+			FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
 			entryMap.put(peptideModSeq, model);
 		}
 		
@@ -239,9 +240,9 @@ public class PhosphoLocalizerTest extends TestCase {
 		
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : permutations) {
-			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+			FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
 			entryMap.put(peptideModSeq, model);
-			FragmentIon[] ions=model.getPrimaryIonObjects(params.getFragType(), charge, false);
+			FragmentIon[] ions=model.getPrimaryIonObjects(params.getFragType(), charge, false, true);
 			//System.out.println(peptideModSeq);
 			for (int i=0; i<ions.length; i++) {
 				//System.out.println(ions[i]+"\t"+ions[i].mass);

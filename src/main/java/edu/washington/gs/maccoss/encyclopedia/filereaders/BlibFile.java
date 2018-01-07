@@ -149,7 +149,7 @@ public class BlibFile extends SQLFile {
 					String peptideModSeq=rs.getString(4);
 					
 					// precursors not set? This is a bug in Skyline exporting
-					FragmentationModel model=new FragmentationModel(peptideModSeq, constants);
+					FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, constants);
 					precursorMZ=model.getChargedMass(precursorCharge);
 					
 					int copies=rs.getInt(5);
@@ -331,7 +331,7 @@ public class BlibFile extends SQLFile {
 					prepRTs.setInt(7,  1);
 					prepRTs.addBatch();
 					
-					FragmentationModel model=new FragmentationModel(peptideModSeq, aaConstants);
+					FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, aaConstants);
 					String[] aas=model.getAas();
 					for (int i=0; i<aas.length; i++) {
 						boolean added=false;

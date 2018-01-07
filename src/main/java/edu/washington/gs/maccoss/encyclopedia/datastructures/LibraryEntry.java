@@ -250,7 +250,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	public String getAccuratePeptideModSeq(AminoAcidConstants aaConstants) {
 		String sequence=accuratePeptideModSeq;
 		if (sequence==null) {
-			sequence=PeptideUtils.getSequence(PeptideUtils.getMasses(peptideModSeq, aaConstants).z);
+			sequence=PeptideUtils.getSequence(PeptideUtils.getPeptideModel(peptideModSeq, aaConstants).getAas());
 			accuratePeptideModSeq=sequence;
 			return sequence;
 		} 
@@ -335,8 +335,8 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	}
 
 	public Pair<FragmentationModel, LibraryEntry> getEntryFromNewSequence(String newSequence, HashSet<String> accessions, boolean markAsDecoy, SearchParameters parameters) {
-		FragmentationModel forwardModel=new FragmentationModel(peptideModSeq, parameters.getAAConstants());
-		FragmentationModel reverseModel=new FragmentationModel(newSequence, parameters.getAAConstants());
+		FragmentationModel forwardModel=PeptideUtils.getPeptideModel(peptideModSeq, parameters.getAAConstants());
+		FragmentationModel reverseModel=PeptideUtils.getPeptideModel(newSequence, parameters.getAAConstants());
 		
 		ArrayList<FragmentIon> forwardIons=new ArrayList<FragmentIon>();
 		ArrayList<FragmentIon> reverseIons=new ArrayList<FragmentIon>();

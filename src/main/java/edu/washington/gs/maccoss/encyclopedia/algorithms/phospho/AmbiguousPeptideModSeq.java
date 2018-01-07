@@ -333,7 +333,7 @@ public class AmbiguousPeptideModSeq {
 	}
 	
 	public static AmbiguousPeptideModSeq getFullyAmbiguous(String targetPeptide, PeptideModification modification, AminoAcidConstants aaConstants) {
-		String[] aas=PeptideUtils.getMasses(targetPeptide, aaConstants).z;
+		String[] aas=PeptideUtils.getPeptideModel(targetPeptide, aaConstants).getAas();
 		boolean[] modifiable=new boolean[aas.length];
 		boolean[] isModified=new boolean[aas.length];
 		int[] modificationGroup=new int[aas.length];
@@ -355,7 +355,7 @@ public class AmbiguousPeptideModSeq {
 	}
 	
 	public static AmbiguousPeptideModSeq getUnambigous(String targetPeptide, PeptideModification modification, AminoAcidConstants aaConstants) {
-		String[] aas=PeptideUtils.getMasses(targetPeptide, aaConstants).z;
+		String[] aas=PeptideUtils.getPeptideModel(targetPeptide, aaConstants).getAas();
 		boolean[] modifiable=new boolean[aas.length];
 		boolean[] isModified=new boolean[aas.length];
 		int[] modificationGroup=new int[aas.length];
@@ -379,7 +379,7 @@ public class AmbiguousPeptideModSeq {
 	}
 	
 	public static AmbiguousPeptideModSeq getLeftAmbiguity(String targetPeptide, PeptideModification modification, AminoAcidConstants aaConstants) {
-		String[] aas=PeptideUtils.getMasses(targetPeptide, aaConstants).z;
+		String[] aas=PeptideUtils.getPeptideModel(targetPeptide, aaConstants).getAas();
 		boolean[] modifiable=new boolean[aas.length];
 		boolean[] isModified=new boolean[aas.length];
 		int[] modificationGroup=new int[aas.length];
@@ -420,7 +420,7 @@ public class AmbiguousPeptideModSeq {
 	}
 	
 	public static AmbiguousPeptideModSeq getRightAmbiguity(String targetPeptide, PeptideModification modification, AminoAcidConstants aaConstants) {
-		String[] aas=PeptideUtils.getMasses(targetPeptide, aaConstants).z;
+		String[] aas=PeptideUtils.getPeptideModel(targetPeptide, aaConstants).getAas();
 		boolean[] modifiable=new boolean[aas.length];
 		boolean[] isModified=new boolean[aas.length];
 		int[] modificationGroup=new int[aas.length];

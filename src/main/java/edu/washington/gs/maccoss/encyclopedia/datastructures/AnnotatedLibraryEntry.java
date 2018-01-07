@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
@@ -33,7 +34,7 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 		this.ionAnnotations=new FragmentIon[massArray.length];
 		this.isDecoy=false;
 
-		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), true)) {
 			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.mass);
 			for (int i=0; i<indicies.length; i++) {
@@ -50,7 +51,7 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 		this.ionAnnotations=new FragmentIon[massArray.length];
 		this.isDecoy=false;
 
-		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), true)) {
 			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.mass);
 			for (int i=0; i<indicies.length; i++) {
@@ -67,7 +68,7 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 		TDoubleArrayList newMasses=new TDoubleArrayList();
 		TFloatArrayList newIntensities=new TFloatArrayList();
 		TFloatArrayList newCorrelations=new TFloatArrayList();
-		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), true)) {
 			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.mass);
 			for (int i=0; i<indicies.length; i++) {

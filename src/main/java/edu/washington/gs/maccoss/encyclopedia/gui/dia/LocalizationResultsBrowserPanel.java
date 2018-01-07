@@ -54,6 +54,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 
@@ -296,7 +297,7 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 	
 				JTabbedPane tabs=new JTabbedPane();
 				for (LocalizedLibraryEntry entry : entries) {
-					FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+					FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 					
 					ArrayList<Spectrum> downcastedSpectra=new ArrayList<Spectrum>();
 					for (Spectrum spectrum : stripes) {
@@ -304,7 +305,7 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 							downcastedSpectra.add(spectrum);
 						}
 					}
-					HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge(), true), downcastedSpectra, entry.getRetentionTime(), GraphType.dashedline);
+					HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge(), true, true), downcastedSpectra, entry.getRetentionTime(), GraphType.dashedline);
 					HashMap<FragmentIon, XYTrace> targetMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), entry.getLocalizationIons(), downcastedSpectra, null, GraphType.boldline);
 					fragmentTraceMap.putAll(targetMap);
 					ArrayList<XYTrace> traces=new ArrayList<XYTrace>(fragmentTraceMap.values());

@@ -32,6 +32,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
@@ -264,8 +265,8 @@ public class PhosphoLocalizerExample {
 		}
 
 		EncyclopediaOneScorer scorer=new EncyclopediaOneScorer(parameters, unitbackground);
-		FragmentationModel model=new FragmentationModel(libentry.getPeptideModSeq(), parameters.getAAConstants());
-		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), libentry.getPrecursorCharge(), false);
+		FragmentationModel model=PeptideUtils.getPeptideModel(libentry.getPeptideModSeq(), parameters.getAAConstants());
+		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), libentry.getPrecursorCharge(), false, true);
 		TFloatFloatHashMap primary=new TFloatFloatHashMap();
 		for (int i=0; i<stripes.size(); i++) {
 			Stripe stripe=stripes.get(i);

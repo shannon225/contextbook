@@ -92,7 +92,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 
 			HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 			for (String peptideModSeq : peptideModSeqs) {
-				FragmentationModel model=new FragmentationModel(peptideModSeq, parameters.getAAConstants());
+				FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, parameters.getAAConstants());
 				entryMap.put(peptideModSeq, model);
 			}
 
@@ -160,7 +160,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 					ArrayList<Spectrum> stripeList=localizedForm.scansToConsider;
 
 					AuxillaryPSMScorer auxScorer=eScorer.getAuxScorer().getEntryOptimizedScorer(localizedEntry);
-					FragmentIon[] allIons=localizedModel.getPrimaryIonObjects(parameters.getFragType(), localizedEntry.getPrecursorCharge(), false);
+					FragmentIon[] allIons=localizedModel.getPrimaryIonObjects(parameters.getFragType(), localizedEntry.getPrecursorCharge(), false, true);
 					
 					float[] primary=new float[stripeList.size()];
 					for (int i=0; i<stripeList.size(); i++) {
@@ -431,8 +431,8 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 			stripeList=PhosphoLocalizer.getScanSubsetFromStripes(seedEntry.getScanStartTime()-duration, seedEntry.getScanStartTime()+duration, super.stripes);
 			
 		} else if (breadth==ScoringBreadthType.RECALIBRATED_20_PERCENT||breadth==ScoringBreadthType.RECALIBRATED_PEAK_WIDTH) {
-			FragmentationModel model=new FragmentationModel(seedEntry.getPeptideModSeq(), parameters.getAAConstants());
-			FragmentIon[] allIons=model.getPrimaryIonObjects(parameters.getFragType(), seedEntry.getPrecursorCharge(), false);
+			FragmentationModel model=PeptideUtils.getPeptideModel(seedEntry.getPeptideModSeq(), parameters.getAAConstants());
+			FragmentIon[] allIons=model.getPrimaryIonObjects(parameters.getFragType(), seedEntry.getPrecursorCharge(), false, true);
 			float[] primary=new float[super.stripes.size()];
 			for (int i=0; i<super.stripes.size(); i++) {
 				Spectrum stripe=super.stripes.get(i);

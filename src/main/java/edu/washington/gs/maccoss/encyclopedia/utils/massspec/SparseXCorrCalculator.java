@@ -186,7 +186,7 @@ public class SparseXCorrCalculator {
 		
 		FragmentationType type=params.getFragType();
 		AminoAcidConstants aaConstants=params.getAAConstants();
-		FragmentationModel model=new FragmentationModel(modifiedSequence, aaConstants);
+		FragmentationModel model=PeptideUtils.getPeptideModel(modifiedSequence, aaConstants);
 		
 		ArrayList<Peak> allPeaks=new ArrayList<Peak>();
 		switch (type) {

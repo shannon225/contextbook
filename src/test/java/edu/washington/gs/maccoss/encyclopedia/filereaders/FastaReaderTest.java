@@ -215,7 +215,7 @@ public class FastaReaderTest extends TestCase {
 		for (FastaEntry entry : entries) {
 			ArrayList<String> peptides=PARAMETERS.getEnzyme().digestProtein(entry.getSequence(), PARAMETERS.getMinPeptideLength(), PARAMETERS.getMaxPeptideLength(), PARAMETERS.getMaxMissedCleavages());
 			for (String sequence : peptides) {
-				FragmentationModel model=new FragmentationModel(sequence);
+				FragmentationModel model=PeptideUtils.getPeptideModel(sequence);
 				double[] ions=model.getPrimaryIons(PARAMETERS.getFragType());
 				for (double d : ions) {
 					d=(d+1.00727646681290)/2;

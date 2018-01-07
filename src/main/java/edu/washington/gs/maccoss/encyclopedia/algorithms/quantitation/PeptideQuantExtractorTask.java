@@ -144,7 +144,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	}
 
 	private Optional<TransitionRefinementData> extractSpectrum(HashSet<String> accessions, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable, final Optional<PeakLocationInferrerInterface> inferrer, boolean integrateEverything, boolean wasInferred) {
-		FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
 		
 		// if inferrer is present then we need to integrate everything in the target mass list
 		double[] masses=null; // getUnitSpectrum is null tolerant!

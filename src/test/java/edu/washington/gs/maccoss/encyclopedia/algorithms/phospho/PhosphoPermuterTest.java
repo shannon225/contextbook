@@ -6,6 +6,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import junit.framework.TestCase;
 
 public class PhosphoPermuterTest extends TestCase {
@@ -110,7 +111,7 @@ public class PhosphoPermuterTest extends TestCase {
 		}};
 
 		for (int i=0; i<permutations.size(); i++) {
-			FragmentationModel model=new FragmentationModel(permutations.get(i), parameters.getAAConstants());
+			FragmentationModel model=PeptideUtils.getPeptideModel(permutations.get(i), parameters.getAAConstants());
 			FragmentIon[] yions=model.getYIons();
 			for (int j=0; j<yions.length; j++) {
 				assertEquals(expected[i][j], yions[j].mass, 0.01);

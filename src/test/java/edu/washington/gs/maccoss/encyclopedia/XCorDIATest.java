@@ -23,7 +23,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScori
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
@@ -64,7 +63,7 @@ public class XCorDIATest extends TestCase {
 	 * fails or succeeds based on flags, while the "true" cause of the failure is
 	 * written to the console when it's encountered.
 	 *
-	 * If the sanity-check exception in {@link PeptideUtils#getMasses(String, AminoAcidConstants)}
+	 * If the sanity-check exception in {@link PeptideUtils#getPeptideModel(String, AminoAcidConstants)}
 	 * is disabled, this test (currently) fails because of strange fragments in entries
 	 * that don't exist in the correct.
 	 *
@@ -136,7 +135,7 @@ public class XCorDIATest extends TestCase {
 										);
 
 										// Get fragments based on the fixed mods in the modSeq
-										final FragmentIon[] fragmentIons = new FragmentationModel(entry.getPeptideModSeq(), NO_MODS)
+										final FragmentIon[] fragmentIons = PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), NO_MODS)
 												.getPrimaryIonObjects(FragmentationType.HCD, (byte)1, false); // XCorr model only has +1 ions
 										final double[] fragMasses = Arrays.stream(fragmentIons)
 												.mapToDouble(ion -> ion.mass)

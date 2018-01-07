@@ -10,6 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 
 public class LibraryBackground implements LibraryBackgroundInterface {
 	private final int[] background=new int[4000];
@@ -30,7 +31,7 @@ public class LibraryBackground implements LibraryBackgroundInterface {
 		Arrays.fill(background, 1); // add a pseudocount
 		for (String sequence : peptides) {
 			for (byte charge=params.getMinCharge(); charge<=params.getMaxCharge(); charge++) {
-				FragmentationModel model=new FragmentationModel(sequence, params.getAAConstants());
+				FragmentationModel model=PeptideUtils.getPeptideModel(sequence, params.getAAConstants());
 				double[] ions=model.getPrimaryIons(params.getFragType(), charge, false);
 				for (double ion : ions) {
 					int index=(int)ion; // truncate
