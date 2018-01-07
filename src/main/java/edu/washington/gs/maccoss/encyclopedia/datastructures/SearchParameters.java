@@ -43,10 +43,11 @@ public class SearchParameters {
 	protected final ScoringBreadthType CASiLBreadthType;
 	protected final Optional<PeptideModification> localizingModification; 
 	protected final boolean quantifyAcrossSamples;
+	protected final boolean verifyModificationIons;
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, float percolatorProteinThreshold, Integer percolatorVersionNumber, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
-			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int minQuantitativeIonNumber, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples) {
+			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int minQuantitativeIonNumber, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -71,6 +72,7 @@ public class SearchParameters {
 		this.localizingModification=localizingModification;
 		this.numberOfExtraDecoyLibrariesSearched=getNumberOfExtraDecoyLibrariesSearched;
 		this.quantifyAcrossSamples=quantifyAcrossSamples;
+		this.verifyModificationIons=verifyModificationIons;
 	}
 	
 	public void savePreferences(File libraryFile, File fastaFile) throws IOException,BackingStoreException {
@@ -116,6 +118,7 @@ public class SearchParameters {
 		sb.append(" -minNumOfQuantitativePeaks "+minNumOfQuantitativePeaks+"\n");
 		sb.append(" -quantifyAcrossSamples "+quantifyAcrossSamples+"\n");
 		sb.append(" -getNumberOfExtraDecoyLibrariesSearched "+numberOfExtraDecoyLibrariesSearched+"\n");
+		sb.append(" -verifyModificationIons "+verifyModificationIons+"\n");
 		if (useTargetWindowCenter()) {
 			sb.append(" -targetWindowCenter "+targetWindowCenter+"\n");
 		}
@@ -150,6 +153,7 @@ public class SearchParameters {
 		map.put("-getNumberOfExtraDecoyLibrariesSearched", numberOfExtraDecoyLibrariesSearched+"");
 		map.put("-targetWindowCenter", targetWindowCenter+"");
 		map.put("-scoringBreadthType", getScoringBreadthType().toShortname());
+		map.put("-verifyModificationIons", verifyModificationIons+"");
 		if (localizingModification.isPresent()) {
 			map.put("-localizationModification", localizingModification.get().getShortname());
 		} else {
@@ -267,5 +271,8 @@ public class SearchParameters {
 	
 	public boolean isQuantifySameFragmentsAcrossSamples() {
 		return quantifyAcrossSamples;
+	}
+	public boolean isVerifyModificationIons() {
+		return verifyModificationIons;
 	}
 }

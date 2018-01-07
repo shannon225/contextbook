@@ -248,7 +248,7 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 		ScoringBreadthType CASiLSearchBreadthType=(ScoringBreadthType)searchBreadthType.getSelectedItem();
 		PeptideModification modification=(PeptideModification)modificationType.getSelectedItem();
 		float percolatorThreshold=0.01f;
-		CASiLSearchParameters parameters=new CASiLSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, percolatorThreshold, percolatorThreshold, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, modification, CASiLSearchBreadthType, 0.0f, searchPanel.isAlignedBetweenFiles());
+		CASiLSearchParameters parameters=new CASiLSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, percolatorThreshold, percolatorThreshold, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, modification, CASiLSearchBreadthType, 0.0f, searchPanel.isAlignedBetweenFiles(), true);
 		return parameters;
 	}
 	

@@ -11,7 +11,7 @@ import gnu.trove.set.hash.TIntHashSet;
 import junit.framework.TestCase;
 
 public class AmbiguousPeptideModSeqTest extends TestCase {
-	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"), false);
+	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"), false, true);
 	public static void main(String[] args) {
 		System.out.println(AmbiguousPeptideModSeq.getLeftAmbiguity("S[+79.966331]SSR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()));
 		System.out.println(AmbiguousPeptideModSeq.getRightAmbiguity("S[+79.966331]SSR", PeptideModification.phosphorylation,PARAMETERS.getAAConstants()));

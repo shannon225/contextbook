@@ -91,7 +91,7 @@ public class FastaReaderTest extends TestCase {
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
-		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false);
+		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true);
 		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
 		File f=new File("/Users/searleb/Documents/chromatogram_library_manuscript/real_pecan/cerevisiae_orf_trans_all.fasta");
 		ArrayList<FastaEntryInterface> targetProteins=FastaReader.readFasta(f);

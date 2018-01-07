@@ -209,6 +209,7 @@ public class PeptideUtils {
 		char[] ca=sequence.toCharArray();
 		
 		TDoubleArrayList masses=new TDoubleArrayList();
+		TDoubleArrayList modifications=new TDoubleArrayList();
 		TDoubleArrayList neutralLosses=new TDoubleArrayList();
 		ArrayList<String> aas=new ArrayList<String>();
 		for (int i = 0; i < ca.length; i++) {
@@ -224,6 +225,7 @@ public class PeptideUtils {
 					i++;
 					masses.add(aaConstants.getMass(ca[i]));
 					neutralLosses.add(0.0);
+					modifications.add(0.0);
 					aas.add(Character.toString(ca[i]));
 				}
 				String massText = sb.toString();
@@ -235,14 +237,16 @@ public class PeptideUtils {
 				masses.set(masses.size()-1, masses.get(masses.size()-1)+modificationMass);
 				double neutralLoss = aaConstants.getNeutralLoss(aaChar, modificationMass);
 				neutralLosses.set(masses.size()-1, neutralLoss);
+				modifications.set(masses.size()-1, modificationMass);
 				aas.set(masses.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
 			} else {
 				masses.add(aaConstants.getMass(ca[i]));
 				neutralLosses.add(0.0);
+				modifications.add(0.0);
 				aas.add(Character.toString(ca[i]));
 			}
 		}
-		return new FragmentationModel(masses.toArray(), neutralLosses.toArray(), aas.toArray(new String[aas.size()]));
+		return new FragmentationModel(masses.toArray(), modifications.toArray(), neutralLosses.toArray(), aas.toArray(new String[aas.size()]));
 	}
 
 	public static String[] getAAs(String sequence, AminoAcidConstants aminoAcidConstants) {

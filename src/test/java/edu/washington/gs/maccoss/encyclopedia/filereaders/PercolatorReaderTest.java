@@ -25,7 +25,7 @@ public class PercolatorReaderTest extends TestCase {
 	private static final String REVERSE_PSMID="110415_bcs_hela_starved_DDA.mzML:11.096461:decoyEDIT[+79.966331]PEPR+2";
 	private static final String FORWARD_PSMID="110415_bcs_hela_starved_DDA.mzML:11.096461:PEPT[+79.966331]IDER+2";
 	
-	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false);
+	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true);
 	
 	public static void main(String[] args) {
 		File f=new File("/Volumes/BriansSSD/nick/110815_bcs_hela_6mz_600_700.mzML.encyclopedia.decoy.txt");

@@ -29,6 +29,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
@@ -648,14 +649,19 @@ public class PhosphoLocalizer {
 	}
 
 	public static FragmentIon[] getUniqueFragmentIons(String peptideModSeq, byte precursorCharge, HashMap<String, FragmentationModel> availableModels, SearchParameters params) {
+		FragmentationType fragType=params.getFragType();
+		return getUniqueFragmentIons(peptideModSeq, precursorCharge, availableModels, fragType);
+	}
+
+	public static FragmentIon[] getUniqueFragmentIons(String peptideModSeq, byte precursorCharge, HashMap<String, FragmentationModel> availableModels, FragmentationType fragType) {
 		FragmentationModel unitEntry=availableModels.get(peptideModSeq);
-		HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(unitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false, true)));
+		HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(unitEntry.getPrimaryIonObjects(fragType, precursorCharge, false, true)));
 
 		for (Entry<String, FragmentationModel> otherEntry : availableModels.entrySet()) {
 			String otherPeptideModSeq=otherEntry.getKey();
 			if (!peptideModSeq.equals(otherPeptideModSeq)) {
 				FragmentationModel otherUnitEntry=otherEntry.getValue();
-				ions.removeAll(Arrays.asList(otherUnitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false, true)));
+				ions.removeAll(Arrays.asList(otherUnitEntry.getPrimaryIonObjects(fragType, precursorCharge, false, true)));
 			}
 		}
 

@@ -30,7 +30,7 @@ public class DotProduct implements PSMPeakScorer {
 	
 	@Override
 	public float score(LibraryEntry entry, Spectrum spectrum, FragmentIon[] ions) {
-		return PeakScores.sumScores(getIndividualPeakScores(entry, spectrum, false));
+		return PeakScores.sumScores(getIndividualPeakScores(entry, spectrum, false, ions));
 	}
 	
 	@Override

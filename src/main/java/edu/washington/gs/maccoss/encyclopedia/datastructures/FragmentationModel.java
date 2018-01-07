@@ -2,8 +2,11 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
@@ -17,11 +20,13 @@ import gnu.trove.list.array.TDoubleArrayList;
 //@Immutable
 public class FragmentationModel {
 	private final double[] masses;
+	private final double[] modificationMasses;
 	private final double[] neutralLosses;
 	private final String[] aas;
 	
-	public FragmentationModel(double[] masses, double[] neutralLosses, String[] aas) {
+	public FragmentationModel(double[] masses, double[] modificationMasses, double[] neutralLosses, String[] aas) {
 		this.masses=masses;
+		this.modificationMasses=modificationMasses;
 		this.neutralLosses=neutralLosses;
 		this.aas=aas;
 	}
@@ -88,6 +93,10 @@ public class FragmentationModel {
 		return masses;
 	}
 	
+	public double[] getModificationMasses() {
+		return modificationMasses;
+	}
+	
 	public double[] getNeutralLosses() {
 		return neutralLosses;
 	}
@@ -135,10 +144,43 @@ public class FragmentationModel {
 		return masses;
 	}
 	
-	//FIXME
-//	public FragmentIon[] getModificationSpecificIons(Range precursorRange, FragmentationType type, byte precursorCharge, boolean forQuant) {
-//		
-//	}
+	/**
+	 * finds the ions that uniquely describe this model if it is modified in a
+	 * way where ions might appear in the same precursor isolation window. If it
+	 * is not, then returns Optional.empty() and you don't need to worry about
+	 * modifications.
+	 * 
+	 * @param precursorRange
+	 * @param type
+	 * @param precursorCharge
+	 * @param forQuant
+	 * @return
+	 */
+	public Optional<FragmentIon[]> getModificationSpecificIonObjects(Range precursorRange, FragmentationType type, byte precursorCharge, boolean forQuant) {
+		HashMap<String, FragmentationModel> availableModels=new HashMap<>();
+		
+		double precursorMz=getChargedMass(precursorCharge);
+		for (int i=0; i<modificationMasses.length; i++) {
+			if (modificationMasses[i]!=0.0&&precursorRange.contains(precursorMz+modificationMasses[i]/precursorCharge)) {
+				String[] altAAs=aas.clone();
+				double[] altMasses=masses.clone();
+				double[] altModMasses=modificationMasses.clone();
+				double[] altNLs=neutralLosses.clone();
+				
+				altAAs[i]=aas[i].substring(0, 1);
+				altMasses[i]=masses[i]-modificationMasses[i];
+				altModMasses[i]=0.0;
+				altNLs[i]=0.0;
+				
+				FragmentationModel altModel=new FragmentationModel(altMasses, altModMasses, altNLs, altAAs);
+				availableModels.put(altModel.getModifiedSequence(), altModel);
+			}
+		}
+		
+		if (availableModels.size()==0) return Optional.empty();
+		
+		return Optional.of(PhosphoLocalizer.getUniqueFragmentIons(getModifiedSequence(), precursorCharge, availableModels, type));
+	}
 
 	public FragmentIon[] getPrimaryIonObjects(FragmentationType type, byte precursorCharge, boolean forQuant) {
 		return getPrimaryIonObjects(type, precursorCharge, true, forQuant);

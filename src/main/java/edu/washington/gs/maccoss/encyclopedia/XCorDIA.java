@@ -367,7 +367,7 @@ public class XCorDIA {
 							}
 						}
 
-						executor.submit(jobData.getTaskFactory().getScoringTask(xcordiaScorer, tasks, stripes, dutyCycle, precursors, resultsQueue));
+						executor.submit(jobData.getTaskFactory().getScoringTask(xcordiaScorer, tasks, stripes, range, dutyCycle, precursors, resultsQueue));
 					}
 				}
 			}

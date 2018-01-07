@@ -6,7 +6,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import junit.framework.TestCase;
 
 public class PeakFrequencyCalculatorTest extends TestCase {
-	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false);
+	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true);
 	
 	public void testPeakFrequencyCalculator() {
 		PeakFrequencyCalculator calculator=new PeakFrequencyCalculator(PARAMETERS.getFragmentTolerance());

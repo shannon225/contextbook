@@ -54,6 +54,7 @@ public class SearchParameterParser {
 		map.put("-numberOfQuantitativePeaks", "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
 		map.put("-minQuantitativeIonNumber", "3");
+		map.put("-verifyModificationIons", "true");
 		return map;
 	}
 	
@@ -117,6 +118,7 @@ public class SearchParameterParser {
 		final Optional<PeptideModification> localizationModification;
 		final ScoringBreadthType breadthType;
 		final boolean quantifyAcrossSamples;
+		final boolean verifyModificationIons;
 		
 		String value=parameters.get("-frag");
 		if (value==null) {
@@ -301,9 +303,10 @@ public class SearchParameterParser {
 			numberOfExtraDecoyLibrariesSearched=tempNumberOfExtraDecoyLibrariesSearched;
 		}
 		quantifyAcrossSamples=SearchParameterParser.getBoolean("-quantifyAcrossSamples", parameters, false);
+		verifyModificationIons=SearchParameterParser.getBoolean("-verifyModificationIons", parameters, true);
 		
 		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorProteinThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
-				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minQuantitativeIonNumber, localizationModification, breadthType, numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples);
+				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minQuantitativeIonNumber, localizationModification, breadthType, numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

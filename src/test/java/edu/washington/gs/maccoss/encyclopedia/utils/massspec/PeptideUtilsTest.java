@@ -9,7 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import junit.framework.TestCase;
 
 public class PeptideUtilsTest extends TestCase {
-	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"), false);
+	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"), false, true);
 	
 	public void testGetExpectedChargeState() {
 		assertEquals(1, PeptideUtils.getExpectedChargeState("LACDEFQFEDCAI"));

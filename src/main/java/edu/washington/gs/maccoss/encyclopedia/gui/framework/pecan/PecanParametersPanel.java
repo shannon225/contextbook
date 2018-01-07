@@ -244,7 +244,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		
 		boolean isPercolatorTwo=PercolatorExecutor.V2_10.equals(percolatorVersion.getSelectedItem());
 		PecanSearchParameters parameters=new PecanSearchParameters(aaConstants, fragmentation, precursorPPMValue, fragmentPPMValue, digestionEnzyme, isPercolatorTwo?2:3,
-				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, numberOfExtraDecoyLibrariesValue, searchPanel.isAlignedBetweenFiles());
+				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, numberOfExtraDecoyLibrariesValue, searchPanel.isAlignedBetweenFiles(), true);
 		return parameters;
 	}
 	

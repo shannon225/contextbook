@@ -292,7 +292,7 @@ public class Thesaurus {
 					tasks.add(entry);
 					tasks.add(entry.getDecoy(parameters));
 				}
-				executor.submit(taskFactory.getScoringTask(scorer, tasks, stripes, dutyCycle, precursors, resultsQueue));
+				executor.submit(taskFactory.getScoringTask(scorer, tasks, stripes, range, dutyCycle, precursors, resultsQueue));
 			}
 			
 			executor.shutdown();

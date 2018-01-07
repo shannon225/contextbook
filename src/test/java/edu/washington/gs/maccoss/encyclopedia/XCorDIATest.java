@@ -105,7 +105,7 @@ public class XCorDIATest extends TestCase {
 						new MassTolerance(10),
 						new MassTolerance(10),
 						DigestionEnzyme.getEnzyme("trypsin"),
-						false
+						false, true
 				)) {
 					@Override
 					public PeptideScoringResultsConsumer getResultsConsumer(File outputFile, BlockingQueue<PeptideScoringResult> resultsQueue, StripeFileInterface diaFile) {

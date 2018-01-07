@@ -8,7 +8,7 @@ import gnu.trove.map.hash.TDoubleIntHashMap;
 public abstract class AbstractPecanFragmentationModel extends FragmentationModel {
 
 	public AbstractPecanFragmentationModel(FragmentationModel model) {
-		super(model.getMasses(), model.getNeutralLosses(), model.getAas());
+		super(model.getMasses(), model.getModificationMasses(), model.getNeutralLosses(), model.getAas());
 	}
 	
 	public abstract PecanLibraryEntry getPecanSpectrum(byte precursorCharge, double[] sortedBinCounterKeys, TDoubleIntHashMap binCounter, Range fragmentationRange, SearchParameters params, boolean isDecoy);

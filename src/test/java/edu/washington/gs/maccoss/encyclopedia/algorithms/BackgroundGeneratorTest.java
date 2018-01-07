@@ -21,7 +21,7 @@ import junit.framework.TestCase;
 
 public class BackgroundGeneratorTest extends TestCase {
 	private static final PecanSearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50),
-			DigestionEnzyme.getEnzyme("trypsin"), 0, false);
+			DigestionEnzyme.getEnzyme("trypsin"), 0, false, true);
 
 	public void testGenerateBackground() {
 		InputStream is=getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
