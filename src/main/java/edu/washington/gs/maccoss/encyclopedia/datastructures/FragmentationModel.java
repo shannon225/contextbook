@@ -19,6 +19,7 @@ import gnu.trove.list.array.TDoubleArrayList;
 
 //@Immutable
 public class FragmentationModel {
+	private static final int NUMBER_OF_NEUTRONS_TO_CONSIDER_STILL_IN_RANGE=4;
 	private final double[] masses;
 	private final double[] modificationMasses;
 	private final double[] neutralLosses;
@@ -161,7 +162,10 @@ public class FragmentationModel {
 		
 		double precursorMz=getChargedMass(precursorCharge);
 		for (int i=0; i<modificationMasses.length; i++) {
-			if (modificationMasses[i]!=0.0&&precursorRange.contains(precursorMz+modificationMasses[i]/precursorCharge)) {
+			double unmodifiedMass=precursorMz-modificationMasses[i]/precursorCharge;
+			Range unmodifiedPrecursorRange=new Range((float)(unmodifiedMass-(NUMBER_OF_NEUTRONS_TO_CONSIDER_STILL_IN_RANGE*MassConstants.neutronMass/precursorCharge)), (float)unmodifiedMass);
+			
+			if (modificationMasses[i]!=0.0&&precursorRange.contains(unmodifiedPrecursorRange)) {
 				String[] altAAs=aas.clone();
 				double[] altMasses=masses.clone();
 				double[] altModMasses=modificationMasses.clone();
@@ -179,7 +183,9 @@ public class FragmentationModel {
 		
 		if (availableModels.size()==0) return Optional.empty();
 		
-		return Optional.of(PhosphoLocalizer.getUniqueFragmentIons(getModifiedSequence(), precursorCharge, availableModels, type));
+		final String peptideModSeq=getModifiedSequence();
+		availableModels.put(peptideModSeq, this);
+		return Optional.of(PhosphoLocalizer.getUniqueFragmentIons(peptideModSeq, precursorCharge, availableModels, type));
 	}
 
 	public FragmentIon[] getPrimaryIonObjects(FragmentationType type, byte precursorCharge, boolean forQuant) {

@@ -189,7 +189,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 
 					for (XYTrace trace : peptideResult.getFragmentationTraces()) {
 						XYTrace sgSmoothed=SkylineSGFilter.paddedSavitzkyGolaySmooth(trace);
-						traces.add(sgSmoothed);
+						traces.add(trace);
 					}
 				}
 				ChartPanel chart=Charter.getChart("Retention Time (min)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));

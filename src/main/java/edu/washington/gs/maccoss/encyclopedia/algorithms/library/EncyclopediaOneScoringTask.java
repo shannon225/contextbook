@@ -7,7 +7,6 @@ import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.DotProduct;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
@@ -29,14 +28,12 @@ import gnu.trove.set.hash.TIntHashSet;
 public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 	private final float dutyCycle;
 	private final Range precursorIsolationRange;
-	private final DotProduct dotproductScorer;
 	
 	public EncyclopediaOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
 			SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.dutyCycle=dutyCycle;
-		this.precursorIsolationRange=precursorIsolationRange;
-		this.dotproductScorer=new DotProduct(parameters);
+		this.precursorIsolationRange=new Range(precursorIsolationRange.getStart(), precursorIsolationRange.getStop());
 	}
 	
 	private static final int peaksKept=5;
@@ -67,7 +64,9 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 				primary[i]=eScorer.score(entry, stripe, ions);
 				
 				if (modificationSpecificIons.isPresent()) {
-					if (dotproductScorer.score(entry, stripe, modificationSpecificIons.get())<=0.0f) {
+					// if modified signal represents less than 10% of the score then don't trust it
+					float scoreFromModIons=eScorer.score(entry, stripe, modificationSpecificIons.get());
+					if (scoreFromModIons/primary[i]<0.1f) {
 						primary[i]=0.0f;
 					}
 				}

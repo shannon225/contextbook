@@ -97,6 +97,16 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
+							<filters>
+						        	<filter>
+						        	    <artifact>*:*</artifact>
+						        	    <excludes>
+						        	        <exclude>META-INF/*.SF</exclude>
+						        	        <exclude>META-INF/*.DSA</exclude>
+						        	        <exclude>META-INF/*.RSA</exclude>
+						       		    </excludes>
+						        	</filter>
+						    	</filters>
 							<finalName>${globalTargetName}</finalName>
 							<transformers>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
@@ -112,6 +122,16 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
+							<filters>
+						        	<filter>
+						        	    <artifact>*:*</artifact>
+						        	    <excludes>
+						        	        <exclude>META-INF/*.SF</exclude>
+						        	        <exclude>META-INF/*.DSA</exclude>
+						        	        <exclude>META-INF/*.RSA</exclude>
+						       		    </excludes>
+						        	</filter>
+						    	</filters>
 							<finalName>${phosphoTargetName}</finalName>
 							<transformers>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
@@ -127,6 +147,16 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
+							<filters>
+						        	<filter>
+						        	    <artifact>*:*</artifact>
+						        	    <excludes>
+						        	        <exclude>META-INF/*.SF</exclude>
+						        	        <exclude>META-INF/*.DSA</exclude>
+						        	        <exclude>META-INF/*.RSA</exclude>
+						       		    </excludes>
+						        	</filter>
+						    	</filters>
 							<finalName>${encyclopediaTargetName}</finalName>
 							<transformers>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
@@ -142,6 +172,16 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
+							<filters>
+						        	<filter>
+						        	    <artifact>*:*</artifact>
+						        	    <excludes>
+						        	        <exclude>META-INF/*.SF</exclude>
+						        	        <exclude>META-INF/*.DSA</exclude>
+						        	        <exclude>META-INF/*.RSA</exclude>
+						       		    </excludes>
+						        	</filter>
+						    	</filters>
 							<finalName>${xcordiaTargetName}</finalName>
 							<transformers>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
@@ -157,6 +197,16 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
+							<filters>
+						        	<filter>
+						        	    <artifact>*:*</artifact>
+						        	    <excludes>
+						        	        <exclude>META-INF/*.SF</exclude>
+						        	        <exclude>META-INF/*.DSA</exclude>
+						        	        <exclude>META-INF/*.RSA</exclude>
+						       		    </excludes>
+						        	</filter>
+						    	</filters>
 							<finalName>${walnutTargetName}</finalName>
 							<transformers>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
