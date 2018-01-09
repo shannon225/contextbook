@@ -1,8 +1,52 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math.distributions;
 
+import java.util.Arrays;
+
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.list.array.TFloatArrayList;
 import junit.framework.TestCase;
 
 public class GaussianTest extends TestCase {
+	// calculates error in trapezoidal areas given N number of points across the peak 
+	public static void main(String[] args) {
+		Gaussian dist=new Gaussian(0, 1, 1);
+		
+		Range r=new Range(-3, 3);
+		float baseline=(float)(dist.getCDF(r.getStop())-dist.getCDF(r.getStart()));
+		for (int numPointsAcrossPeak=35; numPointsAcrossPeak>0; numPointsAcrossPeak--) {
+			float interval=r.getRange()/(float)numPointsAcrossPeak;
+			float increment=interval/100f;
+
+			TFloatArrayList totalAreas=new TFloatArrayList();
+			for (int offset=0; offset<100; offset++) {
+				float lastX=r.getStart()+offset*increment;
+				float lastY=0.0f;
+				float x=r.getStart()+offset*increment+interval;
+				
+				float totalArea=0.0f;
+				for (int i=1; i<numPointsAcrossPeak; i++) {
+					if (!r.contains(x)) continue;
+					float y=(float)dist.getProbability(x);
+					
+					float trapezoidalArea=(x-lastX)*((lastY+y)/2.0f);
+					totalArea+=trapezoidalArea;
+					lastX=x;
+					lastY=y;
+					x=x+interval;
+				}
+				float trapizoidalArea=(x-lastX)*((lastY)/2.0f);
+				totalArea+=trapizoidalArea;
+				totalAreas.add(totalArea-baseline);
+			}
+			
+			final float[] areas=totalAreas.toArray();
+			Arrays.sort(areas);
+			final float mean=General.mean(areas);
+			System.out.println(numPointsAcrossPeak+"\t"+100*mean+"\t"+100*areas[Math.round(areas.length*0.05f)]+"\t"+100*areas[Math.round(areas.length*0.95f)]);
+		}
+	}
+	
 	public void testGaussian() {
 		float prior=7f;
 		Distribution g=new Gaussian(0, 1, prior);
