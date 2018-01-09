@@ -64,9 +64,9 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 				primary[i]=eScorer.score(entry, stripe, ions);
 				
 				if (modificationSpecificIons.isPresent()) {
-					// if modified signal represents less than 10% of the score then don't trust it
+					// if modified signal represents less than 25% of the score then don't trust it
 					float scoreFromModIons=eScorer.score(entry, stripe, modificationSpecificIons.get());
-					if (scoreFromModIons/primary[i]<0.1f) {
+					if (scoreFromModIons/primary[i]<0.25f) {
 						primary[i]=0.0f;
 					}
 				}
