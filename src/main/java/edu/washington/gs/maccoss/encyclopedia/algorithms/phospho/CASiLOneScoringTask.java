@@ -541,6 +541,7 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 						}*/
 						if (correlations[i]>0.0f&&intensities[i]>0.0f) {
 							numIdentificationPeaks+=correlations[i]*correlations[i];
+							totalIntensity+=intensities[i];
 							matchingPeaks.add(allIons[i].mass);
 						}
 						//System.out.println(localizedEntry.getPeptideModSeq()+", "+numIdentificationPeaks+") "+targetIonSet.contains(allIons[i])+", "+allIons[i].toString()+", "+allIons[i].mass+"\t"+intensities[i]+"\t"+correlations[i]);

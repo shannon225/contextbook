@@ -178,7 +178,7 @@ public class ThesaurusElibParser {
 		sampleKey.put("22jun2016_mcf7_phospho_6e.mzML", new Coordinate(6, 5));
 		sampleKey.put("22jun2016_mcf7_phospho_6f.mzML", new Coordinate(6, 6));
 	}
-	public static final boolean TOTAL_ANALYSIS=true;
+	public static final boolean TOTAL_ANALYSIS=false;
 	
 	public static final boolean MOTIF_ANALYSIS=false;
 	public static final boolean ANOVA_ANALYSIS=true;
@@ -194,7 +194,7 @@ public class ThesaurusElibParser {
 
 		PeptideModification mod=PeptideModification.phosphorylation;
 		String[] targets=null;//new String[] {"SFSKEVEER", "ILQEKLDQPVSAPPSPR", "HRGSEEDPLLSPVETWK", "RASGQAFELILSPR"};//KGSGDYMPMSPK;//targetPeptides;
-		File[] f=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs").listFiles();
+		File[] f=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/0.6.3_elibs").listFiles();
 		//f=new File[] {new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1a.dia.thesaurus.elib")};
 		
 		Pair<TreeMap<String,QuantitationLog>, TreeMap<String,QuantitationLog>> quantLogPair=getQuantData(targets, f);
@@ -230,7 +230,7 @@ public class ThesaurusElibParser {
 			if (pValue<0) continue;
 			siteSpecificPeptides.add(peptide);
 			siteSpecificPValues.add(pValue);
-			if (log.isSiteSpecific) localized++;
+			if (log.bestLocalizationFDR<0.01) localized++;
 		}
 		System.out.println("Found "+siteSpecificPeptides.size()+" peptides ("+localized+" are site specific):");
 		double[] siteSpecificAdjustedPValues=BenjaminiHochberg.calculateAdjustedPValues(siteSpecificPValues.toArray());
@@ -275,6 +275,7 @@ public class ThesaurusElibParser {
 		}
 
 		if (ANOVA_ANALYSIS) {
+			System.out.println(siteSpecificPValues.size()+":"+totalPValues.size());
 			int length=primaryQuantLog==siteSpecificQuantLog?siteSpecificPValues.size():totalPValues.size();
 			for (int pep=0; pep<length; pep++) {
 				// if
@@ -284,24 +285,21 @@ public class ThesaurusElibParser {
 				String peptide;
 				QuantitationLog log;
 				double fdr;
-				double pValue;
 				
 				if (primaryQuantLog==siteSpecificQuantLog) {
 					peptide=siteSpecificPeptides.get(pep);
 					log=siteSpecificQuantLog.get(peptide);
-					pValue=siteSpecificPValues.get(pep);
 					fdr=siteSpecificAdjustedPValues[pep];
 				} else {
 					peptide=totalPeptides.get(pep);
 					log=totalQuantLog.get(peptide);
-					pValue=totalPValues.get(pep);
 					fdr=totalAdjustedPValues[pep];
 				}
 				if (true||fdr<0.05) {
 
 					float[][] data=log.getNormalizedData();
 
-					System.out.println(log.peptideModSeq+"+"+log.charge+" rt:"+General.mean(log.rtInSecondsList.toArray())+" localized:"+log.isSiteSpecific+" p="+pValue+", FDR="+fdr+" ("+log.toSitesString()+")");
+					System.out.println(log.peptideModSeq+"+"+log.charge+" rt:"+General.mean(log.rtInSecondsList.toArray())+" localizationFDR:"+log.bestLocalizationFDR+", quantFDR="+fdr+" ("+log.toSitesString()+")");
 					
 					boolean first=true;
 					for (int samp=data.length-1; samp>=0; samp--) {
@@ -332,7 +330,7 @@ public class ThesaurusElibParser {
 
 		if (HEATMAP_ANALYSIS) {
 			System.out.println();
-			System.out.print("Peptide\tProtein\tisSiteSpecific\tp-value\tFDR\tAKT\tLAKT\tMTOR\tMAPK");
+			System.out.print("Peptide\tProtein\tlocalizationFDR\tquantFDR\tAKT\tLAKT\tMTOR\tMAPK");
 			for (int i=0; i<6; i++) {
 				System.out.print('\t');
 				System.out.print(getSampleName(i+1));
@@ -347,7 +345,7 @@ public class ThesaurusElibParser {
 
 					float[][] data=log.getNormalizedData();
 					double pValue=getANOVAPValue(data);
-					System.out.print(log.peptideModSeq+"\t"+log.toSitesString()+"\t"+log.isSiteSpecific+"\t"+pValue+"\t"+totalAdjustedPValues[pep]);
+					System.out.print(log.peptideModSeq+"\t"+log.toSitesString()+"\t"+log.bestLocalizationFDR+"\t"+totalAdjustedPValues[pep]);
 					System.out.print("\t"+(log.doesMotifMatch("R.R..[ST].....")));
 					System.out.print("\t"+(log.doesMotifMatch("..R..[ST].....")));
 					System.out.print("\t"+(log.doesMotifMatch(".....[ST][FLW]....")));
@@ -468,7 +466,7 @@ public class ThesaurusElibParser {
 
 				Connection c=library.getConnection();
 				Statement s=c.createStatement();
-				ResultSet rs = s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.PeptideSeq, pep.SourceFile, max(pep.LocalizedIntensity), max(pep.TotalIntensity), pep.IsSiteSpecific, pep.RTInSecondsCenter,pep.localizationScore,"+
+				ResultSet rs = s.executeQuery("select pep.PrecursorCharge, pep.PeptideModSeq, pep.PeptideSeq, pep.SourceFile, max(pep.LocalizedIntensity), max(pep.TotalIntensity), pep.localizationFDR, pep.RTInSecondsCenter,pep.localizationScore,"+
 						"group_concat(p.ProteinAccession, '" + PSMData.ACCESSION_TOKEN + "') as ProteinAccessions " +
 						"from " +
 						"peptidelocalizations pep " +
@@ -484,7 +482,7 @@ public class ThesaurusElibParser {
 					String sourceFile=rs.getString(4);
 					float localizedIntensity=rs.getFloat(5);
 					float totalIntensity=rs.getFloat(6);
-					boolean isSiteSpecific=rs.getBoolean(7);
+					double bestLocalizationFDR=rs.getDouble(7);
 					float rtInSeconds=rs.getFloat(8);
 					float localizationScore=rs.getFloat(9);
 					String proteinToken=rs.getString(10);
@@ -517,8 +515,8 @@ public class ThesaurusElibParser {
 							siteLog=new QuantitationLog(proteinToken, peptideModSeq, precursorCharge);
 							siteSpecificQuantLog.put(peptideModSeq, siteLog);
 						}
-						log.addIntensity(coord, totalIntensity, rtInSeconds, localizationScore, isSiteSpecific);
-						siteLog.addIntensity(coord, localizedIntensity, rtInSeconds, localizationScore, isSiteSpecific);
+						log.addIntensity(coord, totalIntensity, rtInSeconds, localizationScore, bestLocalizationFDR);
+						siteLog.addIntensity(coord, localizedIntensity, rtInSeconds, localizationScore, bestLocalizationFDR);
 						
 					}
 				}
@@ -560,7 +558,7 @@ public class ThesaurusElibParser {
 	}
 	
 	public static class QuantitationLog extends SimplePeptidePrecursor {
-		boolean isSiteSpecific=false;
+		double bestLocalizationFDR=1.0;
 		final byte charge;
 		TreeMap<String, TIntObjectHashMap<String>> motifMap=new TreeMap<String, TIntObjectHashMap<String>>();
 		final String protein;
@@ -632,10 +630,10 @@ public class ThesaurusElibParser {
 			return false;
 		}
 		
-		public void addIntensity(Coordinate c, float intensity, float rtInSeconds, float localizationScore, boolean isSiteSpecific) {
+		public void addIntensity(Coordinate c, float intensity, float rtInSeconds, float localizationScore, double bestLocalizationFDR) {
 			intensities.adjustOrPutValue(c, intensity, intensity);
-			if (isSiteSpecific) {
-				this.isSiteSpecific=true;
+			if (this.bestLocalizationFDR>bestLocalizationFDR) {
+				this.bestLocalizationFDR=bestLocalizationFDR;
 			}
 			this.rtInSecondsList.add(rtInSeconds);
 			this.localizationScores.add(localizationScore);
