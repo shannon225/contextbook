@@ -541,13 +541,19 @@ public class CASiLOneScoringTask extends AbstractLibraryScoringTask {
 						}*/
 						if (correlations[i]>0.0f&&intensities[i]>0.0f) {
 							numIdentificationPeaks+=correlations[i]*correlations[i];
+						}
+						if (intensities[i]>0.0f) {
 							totalIntensity+=intensities[i];
 							matchingPeaks.add(allIons[i].mass);
 						}
 						//System.out.println(localizedEntry.getPeptideModSeq()+", "+numIdentificationPeaks+") "+targetIonSet.contains(allIons[i])+", "+allIons[i].toString()+", "+allIons[i].mass+"\t"+intensities[i]+"\t"+correlations[i]);
 					}
 					// recalculate localization scores using only the peaks are remotely ok
-					//bestLocalizationScore=PhosphoLocalizer.score(parameters, targetIonsMasses, targetIons, frequencies, matchingPeaks.toArray());
+					// FIXME
+//					double[] targetIonsMasses=FragmentIon.getMasses(targetIons);
+//					float[] frequencies=localizer.getBackground().getFrequencies(targetIonsMasses, localizedEntry.getPrecursorMZ(), parameters.getFragmentTolerance());
+//					bestLocalizationScore=PhosphoLocalizer.score(parameters, targetIonsMasses, targetIons, frequencies, matchingPeaks.toArray());
+
 					//System.out.println(localizedEntry.getPeptideModSeq()+" Final: "+bestLocalizationScore);
 					
 					isCompletelyAmbiguous=AmbiguousPeptideModSeq.isCompletelyAmbiguous(peptideModSeq, localizer.getModification());

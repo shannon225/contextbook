@@ -48,8 +48,10 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.BenjaminiHochberg;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 public class LibraryFile extends SQLFile implements LibraryInterface {
 	public static boolean OPEN_IN_PLACE=false;
@@ -371,13 +373,26 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				}
 			}
 			
-			
+			TObjectDoubleHashMap<String> localizationFDRValues=new TObjectDoubleHashMap<>();
+			if (localizationData.isPresent()) {
+				ArrayList<String> keys=new ArrayList<>();
+				TDoubleArrayList pValues=new TDoubleArrayList();
+				for (Entry<String, ModificationLocalizationData> entry : localizationData.get().entrySet()) {
+					keys.add(entry.getKey());
+					double pvalue=Math.pow(10, -entry.getValue().getLocalizationScore());
+					pValues.add(pvalue);
+				}
+				double[] fdrValues=BenjaminiHochberg.calculateAdjustedPValues(pValues.toArray());
+				for (int i=0; i<fdrValues.length; i++) {
+					localizationFDRValues.put(keys.get(i), fdrValues[i]);
+				}
+			}
 			int start=0;
 			int stop=NUMBER_OF_PEPTIDE_ENTRIES_AT_ONCE;
 			while (stop<dataAndSourceList.size()) {
 				internalWritePeptideQuantLibraryEntriesToConnection(c, inferrer, dataAndSourceList.subList(start, stop));
 				if (localizationData.isPresent()) {
-					internalWritePeptideLocalizationsToConnection(c, inferrer, localizationData.get(), dataAndSourceList.subList(start, stop));
+					internalWritePeptideLocalizationsToConnection(c, inferrer, localizationData.get(), localizationFDRValues, dataAndSourceList.subList(start, stop));
 				}
 				start=stop;
 				stop=stop+NUMBER_OF_PEPTIDE_ENTRIES_AT_ONCE;
@@ -385,7 +400,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			if (start<dataAndSourceList.size()) {
 				internalWritePeptideQuantLibraryEntriesToConnection(c, inferrer, dataAndSourceList.subList(start, dataAndSourceList.size()));
 				if (localizationData.isPresent()) {
-					internalWritePeptideLocalizationsToConnection(c, inferrer, localizationData.get(), dataAndSourceList.subList(start, dataAndSourceList.size()));
+					internalWritePeptideLocalizationsToConnection(c, inferrer, localizationData.get(), localizationFDRValues, dataAndSourceList.subList(start, dataAndSourceList.size()));
 				}
 			}
 
@@ -433,7 +448,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
-	private void internalWritePeptideLocalizationsToConnection(Connection c, Optional<PeakLocationInferrer> inferrer, HashMap<String, ModificationLocalizationData> localizationData, List<Pair<TransitionRefinementData, String>> dataAndSouceList)
+	private void internalWritePeptideLocalizationsToConnection(Connection c, Optional<PeakLocationInferrer> inferrer, HashMap<String, ModificationLocalizationData> localizationData, TObjectDoubleHashMap<String> localizationFDRValues, List<Pair<TransitionRefinementData, String>> dataAndSouceList)
 			throws SQLException, IOException {
 		int numStatements=0;
 		for (Pair<TransitionRefinementData, String> pair : dataAndSouceList) {
@@ -441,10 +456,10 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				numStatements++;
 			}
 		}
-		StringBuilder peptidePrepString=new StringBuilder("INSERT INTO peptidelocalizations (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, LocalizationIons, NumberOfMods, NumberOfModifiableResidues, IsSiteSpecific, IsLocalized, RTInSecondsCenter, LocalizedIntensity, TotalIntensity)");
-		peptidePrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+		StringBuilder peptidePrepString=new StringBuilder("INSERT INTO peptidelocalizations (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, LocalizationPeptideModSeq, LocalizationScore, LocalizationFDR, LocalizationIons, NumberOfMods, NumberOfModifiableResidues, IsSiteSpecific, IsLocalized, RTInSecondsCenter, LocalizedIntensity, TotalIntensity)");
+		peptidePrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 		for (int i=1; i<numStatements; i++) {
-			peptidePrepString.append(", (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+			peptidePrepString.append(", (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 		}		
 		
 		PreparedStatement peptidePrep=c.prepareStatement(peptidePrepString.toString());
@@ -453,7 +468,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			int pepIndex=1;
 			
 			for (Pair<TransitionRefinementData, String> pair : dataAndSouceList) {
-				pepIndex=prepareLocalizationData(pair.x, pair.y, inferrer, localizationData, peptidePrep, pepIndex);
+				pepIndex=prepareLocalizationData(pair.x, pair.y, inferrer, localizationData, localizationFDRValues, peptidePrep, pepIndex);
 			}
 			
 			if (pepIndex>1) {
@@ -464,7 +479,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
-	public int prepareLocalizationData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrer> inferrer, HashMap<String, ModificationLocalizationData> localizationData, PreparedStatement peptidePrep, int index)
+	public int prepareLocalizationData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrer> inferrer, HashMap<String, ModificationLocalizationData> localizationData, TObjectDoubleHashMap<String> localizationFDRValues, PreparedStatement peptidePrep, int index)
 			throws SQLException, IOException {
 		ModificationLocalizationData modData=localizationData.get(data.getPeptideModSeq());
 
@@ -476,6 +491,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			
 			peptidePrep.setString(index++, modData.getLocalizationPeptideModSeq().getPeptideAnnotation());
 			peptidePrep.setFloat(index++, modData.getLocalizationScore());
+			peptidePrep.setDouble(index++, localizationFDRValues.get(data.getPeptideModSeq()));
 			peptidePrep.setString(index++, FragmentIon.toArchiveString(modData.getLocalizingIons()));
 			peptidePrep.setInt(index++, modData.getNumberOfMods());
 			peptidePrep.setInt(index++, modData.getLocalizationPeptideModSeq().getNumModifiableSites());
@@ -1333,7 +1349,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq, SourceFile) )");
 
 				s.execute("CREATE TABLE IF NOT EXISTS peptidelocalizations ( "
-						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, LocalizationIons string, NumberOfMods int, NumberOfModifiableResidues int, IsSiteSpecific boolean, IsLocalized boolean, RTInSecondsCenter double, LocalizedIntensity double, TotalIntensity double "
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, LocalizationPeptideModSeq string, LocalizationScore double, LocalizationFDR double, LocalizationIons string, NumberOfMods int, NumberOfModifiableResidues int, IsSiteSpecific boolean, IsLocalized boolean, RTInSecondsCenter double, LocalizedIntensity double, TotalIntensity double "
 						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq, SourceFile) )");
 
 				s.execute("CREATE TABLE IF NOT EXISTS fragmentquants ( "

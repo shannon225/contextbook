@@ -64,17 +64,14 @@ public class ThesaurusTest {
 		ArrayList<LibraryEntry> entries=new ArrayList<>();
 		LibraryEntry libentry;
 		if (true) {
-			libentry=library.getEntries("NS[+79.966331]LNHSNSTLNVGPSR[+10.008269]", (byte)3, false).get(0);
-			libentry=libentry.updateRetentionTime(27.5f*60);
+			libentry=library.getEntries("RLS[+79.966331]ISSLNPSNALSR[+10.008269]", (byte)3, false).get(0);
+			libentry=libentry.updateRetentionTime(3927.18115234375f);
 			entries.add(libentry);
-			libentry=library.getEntries("NSLNHS[+79.966331]NSTLNVGPSR[+10.008269]", (byte)3, false).get(0);
-			libentry=libentry.updateRetentionTime(27.5f*60);
+			libentry=library.getEntries("RLSIS[+79.966331]SLNPSNALSR[+10.008269]", (byte)3, false).get(0);
+			libentry=libentry.updateRetentionTime(3927.18115234375f);
 			entries.add(libentry);
-			libentry=library.getEntries("NSLNHSNS[+79.966331]TLNVGPSR[+10.008269]", (byte)3, false).get(0);
-			libentry=libentry.updateRetentionTime(27.5f*60);
-			entries.add(libentry);
-			libentry=library.getEntries("NSLNHSNST[+79.966331]LNVGPSR[+10.008269]", (byte)3, false).get(0);
-			libentry=libentry.updateRetentionTime(27.5f*60);
+			libentry=library.getEntries("RLSISS[+79.966331]LNPSNALSR[+10.008269]", (byte)3, false).get(0);
+			libentry=libentry.updateRetentionTime(3927.18115234375f);
 			entries.add(libentry);
 		} else {
 			System.exit(1);
@@ -93,15 +90,15 @@ public class ThesaurusTest {
 		for (LibraryEntry entry : entries) {
 			AnnotatedLibraryEntry anEntry=new AnnotatedLibraryEntry(entry, parameters);
 
+			LibraryEntry bestAlt=null;
 			FragmentIon[] localizingIons=null;
 			for (LibraryEntry altEntry : entries) {
 				if (entry!=altEntry) {
 					FragmentIon[] ions=ThesaurusOneScoringTask.getUniqueFragmentIons(models.get(entry.getPeptideModSeq()), models.get(altEntry.getPeptideModSeq()), entry.getPrecursorCharge(), parameters);
-					if (localizingIons==null) {
-						localizingIons=ions;
-					} else if (ions.length<localizingIons.length) {
+					if (localizingIons==null||ions.length<localizingIons.length) {
 						// fewer ions separate these
 						localizingIons=ions;
+						bestAlt=altEntry;
 					}
 				}
 			}
@@ -115,7 +112,7 @@ public class ThesaurusTest {
 			chromatograms.putAll(ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), localizingIons, spectra, null, GraphType.boldline));
 			Charter.launchChart(entry.getPeptideModSeq()+" Retention Time (min)", "Intensity ("+localizingIons.length+")", false, new Dimension(500, 300), chromatograms.values().toArray(new XYTraceInterface[chromatograms.size()]));
 			
-			System.out.println(entry.getPeptideModSeq()+" ("+localizingIons.length+")");
+			System.out.println(entry.getPeptideModSeq()+" ("+localizingIons.length+") vs "+bestAlt.getPeptideModSeq());
 			for (FragmentIon fragmentIon : localizingIons) {
 				System.out.println("\t"+fragmentIon+" ("+fragmentIon.mass+")");
 			}
