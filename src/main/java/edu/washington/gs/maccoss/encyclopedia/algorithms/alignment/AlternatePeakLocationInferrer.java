@@ -46,6 +46,10 @@ public class AlternatePeakLocationInferrer {
 			if (length>max) {
 				max=length;
 				bestJob=entry.getKey();
+			} else if (length==max&&bestJob!=null) {
+				if (bestJob.getDiaFile().getName().compareTo(entry.getKey().getDiaFile().getName())>0) {
+					bestJob=entry.getKey();
+				}
 			}
 		}
 		Logger.logLine("Setting "+bestJob.getDiaFile().getName()+" as the seed experiment.");
