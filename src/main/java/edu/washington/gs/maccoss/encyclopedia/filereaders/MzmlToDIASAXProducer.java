@@ -31,7 +31,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.ProgressInputStream;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -316,6 +318,18 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 				byte charge=0;
 				if (selectedCharge!=null) {
 					charge=selectedCharge;
+				}
+				
+				if (parameters.getMinIntensity()>0.0f) {
+					ArrayList<Peak> peaks=new ArrayList<>();
+					for (int i=0; i<intensityArray.length; i++) {
+						if (intensityArray[i]>parameters.getMinIntensity()) {
+							peaks.add(new Peak(massArray[i], intensityArray[i]));
+						}
+					}
+					Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
+					massArray=peakArrays.x;
+					intensityArray=peakArrays.y;
 				}
 				
 				Stripe stripe=new Stripe(spectrumName, spectrumRef, spectrumIndex, scanStartTime, isolationWindowTarget-isolationWindowLowerOffset+(float)parameters.getPrecursorIsolationMargin(), isolationWindowTarget+isolationWindowUpperOffset-(float)parameters.getPrecursorIsolationMargin(),
