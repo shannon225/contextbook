@@ -178,12 +178,12 @@ public class ThesaurusElibParser {
 		sampleKey.put("22jun2016_mcf7_phospho_6e.mzML", new Coordinate(6, 5));
 		sampleKey.put("22jun2016_mcf7_phospho_6f.mzML", new Coordinate(6, 6));
 	}
-	public static final boolean TOTAL_ANALYSIS=false;
+	public static final boolean TOTAL_ANALYSIS=true;
 	
 	public static final boolean MOTIF_ANALYSIS=false;
-	public static final boolean ANOVA_ANALYSIS=true;
+	public static final boolean ANOVA_ANALYSIS=false;
 	public static final boolean HEATMAP_ANALYSIS=false;
-	public static final boolean MULTIPLE_FORM_ANALYSIS=false;
+	public static final boolean MULTIPLE_FORM_ANALYSIS=true;
 	public static final boolean SITE_SPECIFIC_VS_TOTAL_ANALYSIS=false;
 	
 	public static void main(String[] args) throws Exception {
@@ -232,7 +232,7 @@ public class ThesaurusElibParser {
 			siteSpecificPValues.add(pValue);
 			if (log.bestLocalizationFDR<0.01) localized++;
 		}
-		System.out.println("Found "+siteSpecificPeptides.size()+" peptides ("+localized+" are site specific):");
+		System.out.println("Found "+siteSpecificPeptides.size()+"/"+siteSpecificQuantLog.size()+" peptides consistently ("+localized+" are site specific):");
 		double[] siteSpecificAdjustedPValues=BenjaminiHochberg.calculateAdjustedPValues(siteSpecificPValues.toArray());
 
 		ArrayList<String> totalPeptides=new ArrayList<>();
@@ -299,7 +299,7 @@ public class ThesaurusElibParser {
 
 					float[][] data=log.getNormalizedData();
 
-					System.out.println(log.peptideModSeq+"+"+log.charge+" rt:"+General.mean(log.rtInSecondsList.toArray())+" localizationFDR:"+log.bestLocalizationFDR+", quantFDR="+fdr+" ("+log.toSitesString()+")");
+					System.out.println(log.peptideModSeq+"+"+log.charge+" rtInSeconds:"+General.mean(log.rtInSecondsList.toArray())+" localizationFDR:"+log.bestLocalizationFDR+" quantFDR="+fdr+" ("+log.toSitesString()+")");
 					
 					boolean first=true;
 					for (int samp=data.length-1; samp>=0; samp--) {
@@ -371,18 +371,19 @@ public class ThesaurusElibParser {
 		}
 		
 		if (MULTIPLE_FORM_ANALYSIS) {
-			TreeMap<String, TDoubleArrayList> pvalueMap=new TreeMap<>();
+			TreeMap<String, TDoubleArrayList> insulinFoldChange=new TreeMap<>();
 			TreeMap<String, TFloatArrayList> rtMap=new TreeMap<>();
 			for (int pep=0; pep<totalAdjustedPValues.length; pep++) {
 				String peptide=totalPeptides.get(pep);
 				QuantitationLog log=totalQuantLog.get(peptide);
-				String key=peptide.replace("[+79.966331]", "");
 				
-				TDoubleArrayList list=pvalueMap.get(key);
+				String key=peptide.replace("[+79.966331]", "")+"_"+StringUtils.countSubstring(peptide, "[+79.966331]")+"p";
+				
+				TDoubleArrayList list=insulinFoldChange.get(key);
 				TFloatArrayList rtList=rtMap.get(key);
 				if (list==null) {
 					list=new TDoubleArrayList();
-					pvalueMap.put(key, list);
+					insulinFoldChange.put(key, list);
 					rtList=new TFloatArrayList();
 					rtMap.put(key, rtList);
 				}
@@ -392,29 +393,33 @@ public class ThesaurusElibParser {
 				rtList.add(General.mean(log.rtInSecondsList.toArray()));
 				
 			}
-			
-			for (Entry<String, TDoubleArrayList> entry : pvalueMap.entrySet()) {
+
+			double greatestFC=Log.log2(10);
+			System.out.println("Peptide\tNumForms\tRTDiff\tFoldChangeDiff");
+			for (Entry<String, TDoubleArrayList> entry : insulinFoldChange.entrySet()) {
 				if (entry.getValue().size()>1) {
-					double minPValue=Double.MAX_VALUE;
-					double maxPValue=-Double.MAX_VALUE;
+					double minFC=Double.MAX_VALUE;
+					double maxFC=-Double.MAX_VALUE;
 					double minRT=0;
 					double maxRT=0;
-					double[] pvalues=entry.getValue().toArray();
+					double[] foldChanges=entry.getValue().toArray();
 					float[] rts=rtMap.get(entry.getKey()).toArray();
-					for (int j=0; j<pvalues.length; j++) {
-						if (pvalues[j]>maxPValue) {
-							maxPValue=pvalues[j];
+					for (int j=0; j<foldChanges.length; j++) {
+						if (foldChanges[j]>maxFC) {
+							maxFC=foldChanges[j];
 							maxRT=rts[j];
 						}
-						if (pvalues[j]<minPValue) {
-							minPValue=pvalues[j];
+						if (foldChanges[j]<minFC) {
+							minFC=foldChanges[j];
 							minRT=rts[j];
 						}
 					}
-					System.out.println(entry.getKey()+"\t"+entry.getValue().size()+"\t"+minPValue+"\t"+maxPValue+"\t"+(maxRT-minRT));
+					minFC=Math.min(greatestFC, Math.max(-greatestFC, minFC));
+					maxFC=Math.min(greatestFC, Math.max(-greatestFC, maxFC));
+					System.out.println(entry.getKey()+"\t"+entry.getValue().size()+"\t"+(maxRT-minRT)/60f+"\t"+(maxFC-+minFC));
 				}
 			}
-			System.out.println(pvalueMap.size()+" Total forms");
+			System.out.println(insulinFoldChange.size()+" Total forms");
 		}
 		
 		if (SITE_SPECIFIC_VS_TOTAL_ANALYSIS) {
@@ -458,7 +463,7 @@ public class ThesaurusElibParser {
 		TreeMap<String, QuantitationLog> quantLog=new TreeMap<>();
 		TreeMap<String, QuantitationLog> siteSpecificQuantLog=new TreeMap<>();
 		for (File file : f) {
-			if (file.getName().endsWith(LibraryFile.ELIB)) {
+			if (file.getName().endsWith(".thesaurus.elib")) {
 				System.out.println("Parsing "+file.getName()+"...");
 				LibraryFile library=new LibraryFile();
 				library.openFile(file);
