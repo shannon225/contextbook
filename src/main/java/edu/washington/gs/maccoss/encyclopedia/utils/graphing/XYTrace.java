@@ -17,7 +17,7 @@ import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.procedure.TDoubleDoubleProcedure;
 import gnu.trove.procedure.TFloatFloatProcedure;
 
-public class XYTrace implements XYTraceInterface {
+public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 	private final String name;
 	private final ArrayList<XYPoint> points;
 	private final GraphType type;
@@ -40,6 +40,10 @@ public class XYTrace implements XYTraceInterface {
 		
 		Collections.sort(points);
 	}
+	public int compareTo(XYTraceInterface o) {
+		if (o==null) return 1;
+		return name.compareTo(o.getName());
+	};
 	
 	public ArrayList<XYPoint> getPoints() {
 		return points;

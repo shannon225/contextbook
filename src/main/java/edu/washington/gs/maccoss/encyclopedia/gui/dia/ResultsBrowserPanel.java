@@ -218,7 +218,12 @@ public class ResultsBrowserPanel extends JPanel {
 
 				final Optional<Path> source = library.getSource(parameters);
 				if (source.isPresent()) {
-					dia = StripeFileGenerator.getFile(source.get().toFile(), parameters); // assumes the .DIA file exists or should be created
+					try {
+						dia = StripeFileGenerator.getFile(source.get().toFile(), parameters); // assumes the .DIA file exists or should be created
+					} catch (Exception e) {
+						Logger.errorLine("Sorry, can't load DIA from library annotation. Please load it after!");
+						Logger.errorException(e);
+					}
 				}
 
 				if (dia!=null&&library!=null&&parameters.getLocalizingModification().isPresent()) {
@@ -300,7 +305,7 @@ public class ResultsBrowserPanel extends JPanel {
 			entries.add(unit);
 			
 			try {
-				float rtRange=parameters.getLocalizingModification().isPresent()?dia.getGradientLength()/20.0f:parameters.getExpectedPeakWidth();
+				float rtRange=parameters.getLocalizingModification().isPresent()?dia.getGradientLength()/20.0f:(1.5f*parameters.getExpectedPeakWidth());
 				
 				ArrayList<Stripe> stripes=dia.getStripes(entry.getPrecursorMZ(), targetRT-rtRange, targetRT+rtRange, false);
 				Collections.sort(stripes);
@@ -309,6 +314,7 @@ public class ResultsBrowserPanel extends JPanel {
 				ArrayList<Spectrum> downcastedSpectra=Stripe.downcastStripeToSpectrum(stripes);
 				HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge(), true), downcastedSpectra, targetRTFloat, GraphType.line);
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>(fragmentTraceMap.values());
+				Collections.sort(traces);
 
 				ArrayList<Spectrum> precursors=PrecursorScan.downcast(dia.getPrecursors(targetRT-rtRange, targetRT+rtRange));
 				ChartPanel precursorChart=Charter.getChart("Retention Time", "Intensity", true, ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), precursors));

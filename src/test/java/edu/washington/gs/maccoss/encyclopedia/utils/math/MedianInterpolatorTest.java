@@ -5,12 +5,13 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TwoDimensionalKDE;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter3d;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
@@ -29,7 +30,10 @@ public class MedianInterpolatorTest extends TestCase {
 		rts=getPhosphoData();
 		//rts=getCleanData();
 		RetentionTimeAlignmentInterface filter=new RetentionTimeFilter(rts);
-		filter.plot(rts, Optional.ofNullable(new File("/Users/searleb/Downloads/blah.txt")));
+		TwoDimensionalKDE kde=new TwoDimensionalKDE(rts);
+		
+		Charter3d.plot(kde, kde.getXRange(), kde.getYRange(), kde.getResolution()/5);
+		//filter.plot(rts, Optional.ofNullable(new File("/Users/searleb/Downloads/blah.txt")));
 	}
 	
 	public void testInterpolation() throws Exception {

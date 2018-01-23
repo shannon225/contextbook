@@ -10,7 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 public class LibraryEntryTableModel extends AbstractTableModel {
 	private static final long serialVersionUID=1L;
 	
-	private final String[] columns=new String[] {"#", "Precursor M/Z", "Charge", "Peptide", "Protein", "Retention Time", "Score"};
+	private final String[] columns=new String[] {"#", "Precursor M/Z", "Charge", "Peptide", "Protein", "Retention Time", "TIC", "Score"};
 
 	ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
 	
@@ -49,6 +49,7 @@ public class LibraryEntryTableModel extends AbstractTableModel {
 			case 4: return String.class;
 			case 5: return Float.class;
 			case 6: return Float.class;
+			case 7: return Float.class;
 		}
 		return Object.class;
 	}
@@ -64,7 +65,8 @@ public class LibraryEntryTableModel extends AbstractTableModel {
 			case 3: return entry.getPeptideModSeq();
 			case 4: return PSMData.accessionsToString(entry.getAccessions());
 			case 5: return entry.getRetentionTime()/60f;
-			case 6: return entry.getScore();
+			case 6: return entry.getTIC();
+			case 7: return entry.getScore();
 		}
 		return null;
 	}

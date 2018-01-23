@@ -70,6 +70,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
 
 public class Charter {
@@ -495,7 +496,7 @@ public class Charter {
 			case spectrum:
 				renderer=new XYLineAndShapeRenderer();
 				((XYLineAndShapeRenderer) renderer).setBaseShapesVisible(false);
-				renderer.setBasePaint(Color.black);
+				renderer.setBasePaint(Color.DARK_GRAY);
 
 				break;
 
@@ -539,13 +540,16 @@ public class Charter {
 							dataset.addSeries(peakSeries);
 							if (annotations[i]!=null) {
 								renderer.setSeriesStroke(i, IonType.getStroke(annotations[i].type));
-								renderer.setSeriesPaint(i, IonType.getColor(annotations[i].type));
+								//renderer.setSeriesPaint(i, IonType.getColor(annotations[i].type));
+								renderer.setSeriesPaint(i, RandomGenerator.randomColor(annotations[i].toString().hashCode()));
 								
 								XYTextAnnotation xytextannotation = new XYTextAnnotation(annotations[i].toString(), x[i], y[i]);
-								xytextannotation.setPaint(IonType.getColor(annotations[i].type));
-						        xytextannotation.setFont(IonType.getFont(annotations[i].type));
+								//xytextannotation.setPaint(IonType.getColor(annotations[i].type));
+								xytextannotation.setPaint(RandomGenerator.randomColor(annotations[i].toString().hashCode()));
+						        
+								xytextannotation.setFont(IonType.getFont(annotations[i].type));
 						        xytextannotation.setTextAnchor(TextAnchor.BOTTOM_CENTER);
-						        //plot.addAnnotation(xytextannotation);
+						        plot.addAnnotation(xytextannotation);
 							} else {
 								renderer.setSeriesStroke(i, IonType.missingStroke);
 								renderer.setSeriesPaint(i, IonType.missingColor);

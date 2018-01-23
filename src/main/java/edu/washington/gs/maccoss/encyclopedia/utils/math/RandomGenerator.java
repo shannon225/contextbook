@@ -47,6 +47,7 @@ public class RandomGenerator {
 		random=randomInt(random);
 		random=randomInt(random);
 		random=randomInt(random);
+		random=randomInt(random);
 		Color c=new Color(random);
 		
 		float intensifier=(Math.abs(random)%60)/100f;
