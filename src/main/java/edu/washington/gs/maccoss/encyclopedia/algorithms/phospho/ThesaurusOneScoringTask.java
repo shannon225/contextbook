@@ -21,14 +21,10 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
@@ -55,7 +51,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 		this.localizer=localizer;
 		this.breadth=parameters.getScoringBreadthType();
 		this.localizationQueue=localizationQueue;
-		this.minimumScore=-Log.log10(parameters.getPercolatorThreshold());
+		this.minimumScore=2.0f;//-Log.log10(parameters.getPercolatorThreshold());
 		if (parameters.getLocalizingModification().isPresent()) {
 			this.localizingModification=parameters.getLocalizingModification().get();
 		} else {
