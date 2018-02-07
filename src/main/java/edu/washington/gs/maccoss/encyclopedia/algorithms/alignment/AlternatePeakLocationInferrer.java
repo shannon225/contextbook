@@ -98,7 +98,7 @@ public class AlternatePeakLocationInferrer {
 				alignmentMap.put(job, alignment);
 
 				final List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignmentResults =
-						alignment.plot(points, Optional.ofNullable(job.getDiaFile()));
+						alignment.plot(points, Optional.ofNullable(job.getPercolatorFiles().getPeptideOutputFile()));
 				alignmentDataMap.put(job, alignmentResults);
 
 				// align local archetypals to the seed
