@@ -193,7 +193,7 @@ public class TwoDimensionalKDE extends Mapper {
 			// We want to go east
 			// First check if the last move was north
 			// (but only if there was a previous move)
-			if (prev.size() > 2) {
+			if (prev.size() >= 2) {
 				final XYPoint last = prev.get(prev.size() - 2);
 				if (last.x == x) {
 					// If the previous points X coord is the same
@@ -208,7 +208,7 @@ public class TwoDimensionalKDE extends Mapper {
 			// We want to go north
 			// First check if the last move was east
 			// (but only if there was a previous move)
-			if (prev.size() > 2) {
+			if (prev.size() >= 2) {
 				final XYPoint last = prev.get(prev.size() - 2);
 				if (last.y == y) {
 					// If the previous points Y coord is the same
@@ -242,7 +242,7 @@ public class TwoDimensionalKDE extends Mapper {
 			// We want to go west
 			// First check if the last move was south
 			// (but only if there was a previous move)
-			if (prev.size() > 2) {
+			if (prev.size() >= 2) {
 				final XYPoint last = prev.get(prev.size() - 2);
 				if (last.x == x) {
 					// If the previous points X coord is the same
@@ -257,7 +257,7 @@ public class TwoDimensionalKDE extends Mapper {
 			// We want to go south
 			// First check if the last move was west
 			// (but only if there was a previous move)
-			if (prev.size() > 2) {
+			if (prev.size() >= 2) {
 				final XYPoint last = prev.get(prev.size() - 2);
 				if (last.y == y) {
 					// If the previous points Y coord is the same
