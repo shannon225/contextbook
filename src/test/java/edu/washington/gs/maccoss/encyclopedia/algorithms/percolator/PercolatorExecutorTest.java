@@ -77,6 +77,14 @@ public class PercolatorExecutorTest extends TestCase {
 		assertFalse(PercolatorExecutor.getPercolatorVersionFromOutput(line).isPresent());
 	}
 
+	public void testGetErrorMessageFromConsole() {
+		assertEquals("bad allocation", PercolatorExecutor.getErrorMessage(new OutputMessage("Exception caught: bad allocation", false)));
+		assertEquals("<error string>", PercolatorExecutor.getErrorMessage(new OutputMessage("Error : <error string>", false)));
+
+		String msg = "anything that mentions a bad allocation";
+		assertEquals(msg, PercolatorExecutor.getErrorMessage(new OutputMessage(msg, false)));
+	}
+
 	public void testPercolatorExecutor() throws Exception {
 		InputStream is=getClass().getResourceAsStream("/pecan.feature.txt");
 		File featureFile=File.createTempFile("pecan", ".feature");

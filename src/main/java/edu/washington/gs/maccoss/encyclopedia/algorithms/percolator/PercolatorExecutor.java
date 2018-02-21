@@ -1,19 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.concurrent.BlockingQueue;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -29,12 +15,26 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Optional;
+import java.util.concurrent.BlockingQueue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class PercolatorExecutor extends ExternalExecutor {
 	public static final String PI_0_TAG="pi_0=";
 	public static final String V3_01="v3-01";
 	public static final String V2_10="v2-10";
 	public static final byte DEFAULT_VERSION_NUMBER=3;
 	private static final Pattern PERCOLATOR_VERSION_PATTERN = Pattern.compile("Percolator version (.+),");
+	private static final String SELECTING_PI_0 = "Selecting pi_0=";
+	private static final String ERROR_PREFIX = "Error : ";
+	private static final String BAD_ALLOCATION = "bad allocation";
+	private static final String EXCEPTION_CAUGHT_PREFIX = "Exception caught: ";
 
 	PercolatorExecutor(int percolatorVersion, PercolatorExecutionData commandData) {
 		super(generateCommand(percolatorVersion, commandData));
@@ -57,18 +57,16 @@ public class PercolatorExecutor extends ExternalExecutor {
 					}
 
 					Logger.logLine(data.getMessage());
-					String trim=data.getMessage().trim();
-					if (trim.startsWith("Error : ")) {
-						errorMessage=trim.substring(8);
-					} else if (trim.startsWith("Exception caught: ")) {
-						errorMessage=trim.substring(26);
-					} else if (trim.indexOf("bad allocation")>=0) {
-						errorMessage=trim;
-					} else if (trim.startsWith("Selecting pi_0=")) {
-						try {
-							pi0=Float.parseFloat(trim.substring("Selecting pi_0=".length()));
-						} catch (NumberFormatException nfe) {
-							Logger.errorLine("Error parsing pi0 from ["+trim+"]");
+					errorMessage = getErrorMessage(data);
+
+					if (null == errorMessage) {
+						final String trim = data.getMessage().trim();
+						if (trim.startsWith(SELECTING_PI_0)) {
+							try {
+								pi0 = Float.parseFloat(trim.substring(SELECTING_PI_0.length()));
+							} catch (NumberFormatException nfe) {
+								Logger.errorLine("Error parsing pi0 from [" + trim + "]");
+							}
 						}
 					}
 				}
@@ -82,7 +80,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 		}
 
 		checkResult(e);
-		
+
 		try {
 		    Files.write(commandData.getPeptideOutputFile().toPath(), (PI_0_TAG+pi0+System.lineSeparator()).getBytes(), StandardOpenOption.APPEND);
 		}catch (IOException ioe) {
@@ -92,8 +90,24 @@ public class PercolatorExecutor extends ExternalExecutor {
 		commandData.setPercolatorExecutableVersion(percolatorExecutableVersion.orElse(null));
 
 		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(commandData.getPeptideOutputFile(), threshold, false);
-		
+
 		return passingPeptides;
+	}
+
+	static String getErrorMessage(OutputMessage data) {
+		final String trim=data.getMessage().trim();
+
+		final String errorMessage;
+		if (trim.startsWith(ERROR_PREFIX)) {
+			errorMessage = trim.substring(ERROR_PREFIX.length());
+		} else if (trim.startsWith(EXCEPTION_CAUGHT_PREFIX)) {
+			errorMessage = trim.substring(EXCEPTION_CAUGHT_PREFIX.length());
+		} else if (trim.contains(BAD_ALLOCATION)) {
+			errorMessage = trim;
+		} else {
+			errorMessage = null;
+		}
+		return errorMessage;
 	}
 
 	static Optional<String> getPercolatorVersionFromOutput(String standardOutputLine) {
@@ -121,14 +135,14 @@ public class PercolatorExecutor extends ExternalExecutor {
 		if (percolatorVersion==2) {
 			return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(), "-y", commandData.getInputTSV().getAbsolutePath()};
 		} else {
-			//return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(), 
+			//return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(),
 			//		"-P", LibraryEntry.DECOY_STRING, "-f", getFastaPlusDecoyFile(commandData.getFastaFile(), commandData.getParameters()).getAbsolutePath(), "--results-proteins", commandData.getProteinOutputFile().getAbsolutePath(), "--decoy-results-proteins", commandData.getProteinDecoyFile().getAbsolutePath(), "--protein-enzyme", commandData.getParameters().getEnzyme().getPercolatorName(), "-g",
-			//		"-y", "--no-terminate", "-N", "200000", commandData.getInputTSV().getAbsolutePath()};	
-			return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(), 
-					"-y", "--no-terminate", "-N", "200000", commandData.getInputTSV().getAbsolutePath()};	
+			//		"-y", "--no-terminate", "-N", "200000", commandData.getInputTSV().getAbsolutePath()};
+			return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(),
+					"-y", "--no-terminate", "-N", "200000", commandData.getInputTSV().getAbsolutePath()};
 		}
 	}
-	
+
 	public static File getFastaPlusDecoyFile(File fasta, SearchParameters parameters) {
 		File fastaPlusDecoy=new File(fasta.getParentFile(), parameters.getEnzyme().getPercolatorName()+"_"+fasta.getName());
 		if (fastaPlusDecoy.exists()&&fastaPlusDecoy.canRead()) return fastaPlusDecoy;
@@ -142,7 +156,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 			writer.write(reverse);
 		}
 		writer.close();
-		
+
 		return fastaPlusDecoy;
 	}
 
@@ -153,23 +167,23 @@ public class PercolatorExecutor extends ExternalExecutor {
 		} else {
 			percolatorVersion=V3_01;
 		}
-		
+
 		try {
 			File percolator=File.createTempFile("Percolator-" + percolatorVersion + "-", ".exe");
 			percolator.deleteOnExit();
-			
+
 			OS os=OSDetector.getOS();
 			switch (os) {
 				case WINDOWS: {
 					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+percolatorVersion+".exe");
 					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
 					percolator.setExecutable(true);
-					
+
 					// not necessary for the crux version of percolator
 					//loadLibraryFile(percolator, "xerces-c_3_1.dll");
 					//loadLibraryFile(percolator, "msvcr120.dll");
 					//loadLibraryFile(percolator, "msvcp120.dll");
-					
+
 					return percolator;
 				}
 				case MAC: {
