@@ -11,6 +11,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import junit.framework.TestCase;
 
 public class LibraryEntryTest extends TestCase {
@@ -24,8 +25,10 @@ public class LibraryEntryTest extends TestCase {
 		float[] intensityArray = new float[] { 1f, 2f, 3f, 4f, 5f, 6f,
 				7f, 8f, 9f, 10f, 11f, 12f, 13f, 14f, 15f, 16f, 17f, 18f, 19f,
 				20f, 21f, 22f, 23f, 24f, 25f };
-		
-		LibraryEntry entry=new LibraryEntry("", new HashSet<String>(), 518.73841, (byte)2, "PEPT[+80]IDER", 1, 0.0f, 0.0f, massArray, intensityArray);
+
+		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+
+		LibraryEntry entry=new LibraryEntry("", new HashSet<String>(), 518.73841, (byte)2, "PEPT[+80]IDER", 1, 0.0f, 0.0f, massArray, intensityArray, aaConstants);
 		LibraryEntry reverse=entry.getDecoy(PARAMETERS);
 		assertEquals("EDIT[+79.966331]PEPR", reverse.getPeptideModSeq());
 		
@@ -70,7 +73,7 @@ public class LibraryEntryTest extends TestCase {
 				1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
 				1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
 		LibraryEntry entry=new LibraryEntry("VillenJ_Exactive_HumanPhosphoproteome.blib", new HashSet<String>(), 1, 641.280032, (byte) 3, "NTPS[+79.966331]QHSHSIQHSPER", 2, 33.986168f, 2.04E-4f, massArray, intensityArray,
-				correlationArray);
+				correlationArray, parameters.getAAConstants());
 		
 		AnnotatedLibraryEntry annotated=new AnnotatedLibraryEntry(entry, parameters);
 		for (int ion=0; ion<annotated.getIonAnnotations().length; ion++) {

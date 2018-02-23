@@ -6,11 +6,10 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryBackground implements LibraryBackgroundInterface {
 	private final int[] background=new int[4000];
@@ -20,7 +19,7 @@ public class LibraryBackground implements LibraryBackgroundInterface {
 		File libraryFile=new File("/Users/searleb/Documents/school/encyclopedia_manuscript/22oct2017_hela_serum_timecourse_narrow_library.elib");
 		LibraryFile file=new LibraryFile();
 		file.openFile(libraryFile);
-		ArrayList<LibraryEntry> entries=file.getEntries(new Range(700.57f, 712.57f), false);
+		ArrayList<LibraryEntry> entries=file.getEntries(new Range(700.57f, 712.57f), false, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 		LibraryBackground background=new LibraryBackground(entries);
 		for (int i=100; i<=1000; i++) {
 			System.out.println(i+"\t"+(1.0f/background.getFraction(i+0.1))); // to avoid rounding errors

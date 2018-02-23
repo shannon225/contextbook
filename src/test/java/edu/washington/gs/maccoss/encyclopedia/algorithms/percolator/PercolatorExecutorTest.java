@@ -8,12 +8,15 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import junit.framework.TestCase;
 
 public class PercolatorExecutorTest extends TestCase {
@@ -42,10 +45,13 @@ public class PercolatorExecutorTest extends TestCase {
 				Thread.sleep(10);
 			}
 		}
+
+		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+
 		System.out.println("total processed: "+outputlines);
-		ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(outputFile, 0.01f, false).x;
+		ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(outputFile, 0.01f, aaConstants, false).x;
 		System.out.println("Peptides: "+peptides.size());
-		ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(decoyFile, 0.01f, true).x;
+		ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(decoyFile, 0.01f, aaConstants, true).x;
 		System.out.println("Decoys: "+decoys.size());
 		
 	}
@@ -98,16 +104,17 @@ public class PercolatorExecutorTest extends TestCase {
 		
 		PercolatorExecutionData percolatorFiles=getPercolatorFiles(featureFile, fastaFile, SearchParameterParser.getDefaultParametersObject());
 
+		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 
-		Pair<ArrayList<PercolatorPeptide>, Float> origpair=PercolatorExecutor.executePercolatorTSV(getDefaultPercolaterVersion(), percolatorFiles, 0.01f);
+		Pair<ArrayList<PercolatorPeptide>, Float> origpair=PercolatorExecutor.executePercolatorTSV(getDefaultPercolaterVersion(), percolatorFiles, 0.01f, aaConstants);
 		assertTrue(origpair.x.size()>0);
 		assertTrue(origpair.y>0);
 		
-		Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideOutputFile(), 0.01f, false);
+		Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideOutputFile(), 0.01f, aaConstants, false);
 		assertEquals(origpair.x.size(), pair.x.size());
 		assertEquals(origpair.y, pair.y, 0.001f);
 		
-		Pair<ArrayList<PercolatorPeptide>, Float> decoyPair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideDecoyFile(), 0.01f, true);
+		Pair<ArrayList<PercolatorPeptide>, Float> decoyPair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideDecoyFile(), 0.01f, aaConstants, true);
 		assertTrue(decoyPair.x.size()>0);
 		assertTrue(decoyPair.x.size()<origpair.x.size()/99f);
 	}

@@ -7,9 +7,9 @@ public class SimplePeptidePrecursor implements PeptidePrecursor {
 	private final String peptideModSeq;
 	private final String massCorrectedPeptideModSeq;
 
-	public SimplePeptidePrecursor(String peptideModSeq, byte precursorCharge) {
+	public SimplePeptidePrecursor(String peptideModSeq, byte precursorCharge, AminoAcidConstants aaConstants) {
 		this.peptideModSeq=peptideModSeq;
-		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq);
+		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq, aaConstants);
 		this.precursorCharge=precursorCharge;
 	}
 

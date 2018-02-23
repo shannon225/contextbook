@@ -134,7 +134,7 @@ public class AlternatePeakLocationInferrer {
 				File resultLibrary=((QuantitativeSearchJobData) job).getResultLibrary();
 				try {
 					LibraryInterface results=BlibToLibraryConverter.getFile(resultLibrary);
-					ArrayList<LibraryEntry> entries=results.getAllEntries(false);
+					ArrayList<LibraryEntry> entries=results.getAllEntries(false, params.getAAConstants());
 
 					TreeMap<PeptidePrecursor, LibraryEntry> fastLookupPeptides=new TreeMap<PeptidePrecursor, LibraryEntry>();
 					for (LibraryEntry libraryEntry : entries) {

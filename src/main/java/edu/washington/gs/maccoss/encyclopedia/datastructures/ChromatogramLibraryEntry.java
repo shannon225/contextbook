@@ -7,8 +7,8 @@ public class ChromatogramLibraryEntry extends LibraryEntry implements Chromatogr
 	private final Range range;
 	
 	public ChromatogramLibraryEntry(String sourceFile, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray,
-			float[] intensityArray, float[] correlationArray, float[] medianChromatogram, Range range) {
-		super(sourceFile, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray);
+			float[] intensityArray, float[] correlationArray, float[] medianChromatogram, Range range, AminoAcidConstants aaConstants) {
+		super(sourceFile, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, aaConstants);
 		this.medianChromatogram=medianChromatogram;
 		this.range=range;
 	}

@@ -175,7 +175,7 @@ public class Pecanpie {
 	public static void runPie(ProgressIndicator progress, PecanJobData jobData) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		if (jobData.getPercolatorFiles().hasDataAvailable()) {
 			try {
-				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(jobData.getPercolatorFiles().getPeptideOutputFile(), jobData.getParameters().getEffectivePercolatorThreshold(), false).x;
+				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(jobData.getPercolatorFiles().getPeptideOutputFile(), jobData.getParameters(), false).x;
 				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(jobData.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 				return;
 			} catch (Exception e) {
@@ -485,7 +485,7 @@ public class Pecanpie {
 		resultsConsumer.close();
 
 		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
-		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), percolatorFiles, parameters.getEffectivePercolatorThreshold()).x;
+		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), percolatorFiles, parameters.getEffectivePercolatorThreshold(), parameters.getAAConstants()).x;
 		stripefile.close();
 		
 		Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peptides identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");

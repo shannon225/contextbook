@@ -4,8 +4,10 @@ import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import junit.framework.TestCase;
 
 public class PeptideUtilsTest extends TestCase {
@@ -91,14 +93,15 @@ public class PeptideUtilsTest extends TestCase {
 	}
 	
 	public void testGetCorrectedMasses() {
+		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		String sequence="A[+42.0]QRHS[+79.96633]DSCCSLEEK";
-		assertEquals("A[+42.010565]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
+		assertEquals("A[+42.010565]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence, aaConstants));
 		sequence="A[+42.0]QRHS[+80.0]DSCCSLEEK";
-		assertEquals("A[+42.010565]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
+		assertEquals("A[+42.010565]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence, aaConstants));
 		sequence="Q[-17]QRHS[+80.0]DSCCSLEEK";
-		assertEquals("Q[-17.026549]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
+		assertEquals("Q[-17.026549]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence, aaConstants));
 		sequence="Q[-17.026549]QRHS[+79.96633]DSCCSLEEK";
-		assertEquals("Q[-17.026549]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
+		assertEquals("Q[-17.026549]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence, aaConstants));
 	}
 	
 	public void testGetAAs() {

@@ -16,11 +16,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.zip.DataFormatException;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideReportData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupQuantifier;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
@@ -336,7 +332,7 @@ public class LibraryReportExtractor {
 		}
 	}
 
-	public static Pair<ArrayList<String>, ArrayList<PeptideReportData>> extractMatrix(LibraryFile library) throws IOException, SQLException, DataFormatException {
+	public static Pair<ArrayList<String>, ArrayList<PeptideReportData>> extractMatrix(LibraryFile library, AminoAcidConstants aaConstants) throws IOException, SQLException, DataFormatException {
 		File stubFile=library.getFile();
 		if (stubFile==null) {
 			throw new EncyclopediaException("Please save .ELIB before trying to read matrix data from it!");
@@ -407,7 +403,7 @@ public class LibraryReportExtractor {
 
 					PeptideReportData data=intensitiesByPeptideModSeq.get(peptideModSeq);
 					if (data==null) {
-						data=new PeptideReportData(peptideModSeq, precursorCharge, accessions);
+						data=new PeptideReportData(peptideModSeq, precursorCharge, accessions, aaConstants);
 						intensitiesByPeptideModSeq.put(peptideModSeq, data);
 					}
 
@@ -426,7 +422,7 @@ public class LibraryReportExtractor {
 					} else {
 						quantIonIntensities=new float[] {};
 					}
-					QuantitativeDIAData quantData=new QuantitativeDIAData(peptideModSeq, precursorCharge, scanStartTime, rtScanRange, quantIonMasses, quantIonIntensities);
+					QuantitativeDIAData quantData=new QuantitativeDIAData(peptideModSeq, precursorCharge, scanStartTime, rtScanRange, quantIonMasses, quantIonIntensities, aaConstants);
 					data.addQuantitativeDIAData(sourceFile, quantData);
 				}
 				Logger.logLine("Finished processing "+count+" records, found "+intensitiesByPeptideModSeq.size()+" quantitative unique peptides. Writing reports...");

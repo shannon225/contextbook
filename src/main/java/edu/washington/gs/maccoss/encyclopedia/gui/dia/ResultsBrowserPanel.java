@@ -214,7 +214,7 @@ public class ResultsBrowserPanel extends JPanel {
 				library=BlibToLibraryConverter.getFile(f);
 				LibraryFile.OPEN_IN_PLACE=false;
 
-				ArrayList<LibraryEntry> entries=library.getEntries(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), false);
+				ArrayList<LibraryEntry> entries=library.getEntries(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), false, parameters.getAAConstants());
 
 				final Optional<Path> source = library.getSource(parameters);
 				if (source.isPresent()) {
@@ -325,7 +325,7 @@ public class ResultsBrowserPanel extends JPanel {
 				primaryTabs.add("Precursors", precursorChart);
 				rawSplit.setTopComponent(primaryTabs);
 				
-				PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), targetRT, entry.getScore(), 1.0f-entry.getScore(), 2*rtRange, false);
+				PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), targetRT, entry.getScore(), 1.0f-entry.getScore(), 2*rtRange, false, parameters.getAAConstants());
 				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(dia.getOriginalFileName(), psmdata, Optional.empty(), nullableLocalizer, stripes, parameters, false);
 				TransitionRefinementData data=quantTask.extractSpectrum(unit, rtRange, false, false, false);
 				if (data!=null) {
@@ -407,7 +407,7 @@ public class ResultsBrowserPanel extends JPanel {
 								annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(peptideModSeq, entry.getPrecursorCharge()), bestStripe, parameters);
 							}*/
 							Spectrum bestStripe=ChromatogramExtractor.getTargetStripeByRT(downcastedSpectra, (float)point.x);
-							AnnotatedLibraryEntry annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(peptideModSeq, entry.getPrecursorCharge()), bestStripe, parameters);
+							AnnotatedLibraryEntry annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(peptideModSeq, entry.getPrecursorCharge(), parameters.getAAConstants()), bestStripe, parameters);
 
 							JPanel specFragPane=new JPanel(new BorderLayout());
 							ChartPanel spectrumPane=Charter.getChart(annotatedEntry);
@@ -440,7 +440,7 @@ public class ResultsBrowserPanel extends JPanel {
 					tabs.add("Quantification", peakPickingSplit);
 					if (!maybePhosphoData.isPresent()) {
 						Spectrum bestStripe=ChromatogramExtractor.getTargetStripeByRT(downcastedSpectra, targetRT);
-						AnnotatedLibraryEntry annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(entry.getPeptideModSeq(), entry.getPrecursorCharge()), bestStripe, parameters);
+						AnnotatedLibraryEntry annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters.getAAConstants()), bestStripe, parameters);
 
 						JSplitPane specFragPane=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 						ChartPanel spectrumPane=Charter.getChart(annotatedEntry);
