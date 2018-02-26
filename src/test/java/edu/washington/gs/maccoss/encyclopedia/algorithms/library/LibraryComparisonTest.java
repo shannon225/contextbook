@@ -21,7 +21,7 @@ public class LibraryComparisonTest {
 		File libraryFile=new File("/Users/searleb/Documents/school/encyclopedia_manuscript/22oct2017_hela_serum_timecourse_narrow_library.elib");
 		LibraryFile file=new LibraryFile();
 		file.openFile(libraryFile);
-		ArrayList<LibraryEntry> entries=file.getEntries(new Range(0, 10000), false);
+		ArrayList<LibraryEntry> entries=file.getEntries(new Range(0, 10000), false, parameters.getAAConstants());
 		HashMap<String, LibraryEntry> ddaMap=new HashMap<>();
 		for (LibraryEntry entry : entries) {
 			ddaMap.put(getKey(entry), AnnotatedLibraryEntry.getAnnotationsOnly(entry, parameters));
@@ -32,7 +32,7 @@ public class LibraryComparisonTest {
 		libraryFile=new File("/Users/searleb/Documents/school/encyclopedia_manuscript/correct_lib_23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.mzML.elib");
 		file=new LibraryFile();
 		file.openFile(libraryFile);
-		entries=file.getEntries(new Range(0, 10000), false);
+		entries=file.getEntries(new Range(0, 10000), false, parameters.getAAConstants());
 		
 		MassTolerance tolerance=new MassTolerance(10.0);
 		System.out.println("Pearson Correlation Coefficient\tCharge\tPearson Correlation Coefficient");

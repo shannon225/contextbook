@@ -22,13 +22,13 @@ public class PSMData implements PeptidePrecursor {
 	private final HashSet<String> accessions;
 	private final boolean inferred;
 
-	public PSMData(HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, float retentionTime, float score, float sortingScore, float duration, boolean inferred) {
+	public PSMData(HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, float retentionTime, float score, float sortingScore, float duration, boolean inferred, AminoAcidConstants aaConstants) {
 		this.accessions=accessions;
 		this.spectrumIndex=spectrumIndex;
 		this.precursorMZ=precursorMZ;
 		this.precursorCharge=precursorCharge;
 		this.peptideModSeq=peptideModSeq;
-		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq);
+		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq, aaConstants);
 		this.retentionTime=retentionTime;
 		this.score=score;
 		this.sortingScore=sortingScore;

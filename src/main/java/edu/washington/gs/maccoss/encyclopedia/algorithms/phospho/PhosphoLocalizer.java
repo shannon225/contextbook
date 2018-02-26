@@ -560,7 +560,7 @@ public class PhosphoLocalizer {
 		}
 
 		// identify transitions
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions(peptideModSeq, precursorCharge, targetRT, keptMasses.toArray(new FragmentIon[keptMasses.size()]), chromatograms, retentionTimes.toArray(), medianChromatogram, false);
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions(peptideModSeq, precursorCharge, targetRT, keptMasses.toArray(new FragmentIon[keptMasses.size()]), chromatograms, retentionTimes.toArray(), medianChromatogram, false, params.getAAConstants());
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		Range rtRange=data.getRange();

@@ -1,9 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
@@ -40,7 +37,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 		super(generateCommand(percolatorVersion, commandData));
 	}
 
-	public static Pair<ArrayList<PercolatorPeptide>, Float> executePercolatorTSV(int percolatorVersion, PercolatorExecutionData commandData, float threshold) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+	public static Pair<ArrayList<PercolatorPeptide>, Float> executePercolatorTSV(int percolatorVersion, PercolatorExecutionData commandData, float threshold, AminoAcidConstants aaConstants) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		PercolatorExecutor e=new PercolatorExecutor(percolatorVersion, commandData);
 		BlockingQueue<OutputMessage> result=e.start();
 
@@ -89,7 +86,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 
 		commandData.setPercolatorExecutableVersion(percolatorExecutableVersion.orElse(null));
 
-		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(commandData.getPeptideOutputFile(), threshold, false);
+		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(commandData.getPeptideOutputFile(), threshold, aaConstants, false);
 
 		return passingPeptides;
 	}

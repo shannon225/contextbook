@@ -15,13 +15,12 @@ import java.util.HashSet;
 import java.util.StringTokenizer;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.SSRCalc;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
 public class MSPReader {
@@ -115,6 +114,9 @@ public class MSPReader {
 	}
 	
 	public static ArrayList<LibraryEntry> readMSP(BufferedReader in, String fileName, boolean keepAccessions) {
+		//TODO: take in parameters
+		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+
 		ArrayList<LibraryEntry> entryList=new ArrayList<LibraryEntry>();
 		String eachline=null;
 		try {
@@ -136,7 +138,7 @@ public class MSPReader {
 						Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
 						HashSet<String> accessions=new HashSet<String>();
 						if (accession!=null) accessions.add(accession);
-						LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y);
+						LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y, aaConstants);
 						entryList.add(entry);
 						peaks.clear();
 					}
@@ -214,7 +216,7 @@ public class MSPReader {
 				Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
 				HashSet<String> accessions=new HashSet<String>();
 				if (accession!=null) accessions.add(accession);
-				LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y);
+				LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y, aaConstants);
 				entryList.add(entry);
 			}
 			return entryList;

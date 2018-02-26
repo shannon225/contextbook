@@ -150,14 +150,6 @@ public class PeptideUtils {
 		}
 	}
 
-	/**
-	 * @deprecated Use {@link #getCorrectedMasses(String, AminoAcidConstants)}
-	 */
-	@Deprecated
-	public static String getCorrectedMasses(String sequence) {
-		return getCorrectedMasses(sequence, new AminoAcidConstants());
-	}
-
 	public static String getCorrectedMasses(String sequence, AminoAcidConstants aminoAcidConstants) {
 		char[] ca=sequence.toCharArray();
 		

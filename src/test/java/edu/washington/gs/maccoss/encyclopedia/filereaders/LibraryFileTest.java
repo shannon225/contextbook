@@ -7,7 +7,10 @@ import java.util.ArrayList;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryFileTest {
 	public static void main(String[] args) throws Exception {
@@ -38,7 +41,9 @@ public class LibraryFileTest {
 	public static void addCounts(int[] counts, File f) throws IOException, SQLException, DataFormatException {
 		LibraryFile library=(LibraryFile)BlibToLibraryConverter.getFile(f);
 
-		ArrayList<LibraryEntry> entries=library.getAllEntries(false);
+		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+
+		ArrayList<LibraryEntry> entries=library.getAllEntries(false, aaConstants);
 		for (LibraryEntry entry : entries) {
 			float[] c=entry.getCorrelationArray();
 			int n=0;
