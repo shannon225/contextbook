@@ -54,7 +54,7 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 		}
 		
 		if (topNMasses==null||topNMasses.length==0) {
-			ArrayList<Peak> topN=data.getTopNPeaks(TransitionRefiner.quantitativeCorrelationThreshold, params.getNumberOfQuantitativePeaks());
+			ArrayList<Peak> topN=data.getTopNPeaks(TransitionRefiner.quantitativeCorrelationThreshold, params.getEffectiveNumberOfQuantitativePeaks());
 			Pair<double[], float[]> pair=Peak.toArrays(topN);
 			topNMasses=pair.x;
 			float[] topNIntensities=pair.y;

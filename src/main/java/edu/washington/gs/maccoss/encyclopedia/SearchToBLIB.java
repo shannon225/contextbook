@@ -336,16 +336,11 @@ public class SearchToBLIB {
 
 			Optional<PeakLocationInferrerInterface> inferrer;
 			if (alignBetweenFiles) {
-				//if (pecanJobs.size()>1) {
-					Logger.logLine("Inferring peak boundaries across files...");
-					inferrer=Optional.of(AlternatePeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides.x, parameters));
-					Logger.logLine("...Finished peak inference.");
-				//} else {
-				//	Logger.logLine("Only processing one file so no peak inference is necessary.");
-				//	inferrer=Optional.empty();
-				//}
+				Logger.logLine("Inferring peak boundaries across files...");
+				inferrer=Optional.of(AlternatePeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides.x, parameters));
+				Logger.logLine("...Finished peak inference.");
 			} else {
-				Logger.logLine("User requested no RT alignment between files.");
+				Logger.logLine("No RT alignment between files necessary.");
 				inferrer=Optional.empty();
 			}
 			

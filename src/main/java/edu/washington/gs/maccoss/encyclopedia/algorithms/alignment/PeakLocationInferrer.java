@@ -125,7 +125,7 @@ public class PeakLocationInferrer {
 	 */
 	static Pair<HashMap<SearchJobData, ArrayList<ChromatogramLibraryEntry>>, HashMap<String, double[]>> getArchetypalPeptides(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs,
 			ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
-		int numberOfQuantitativePeaks=params.getNumberOfQuantitativePeaks();
+		int numberOfQuantitativePeaks=params.getEffectiveNumberOfQuantitativePeaks();
 		MassTolerance fragmentTolerance=params.getFragmentTolerance();
 		
 		// set up data structures

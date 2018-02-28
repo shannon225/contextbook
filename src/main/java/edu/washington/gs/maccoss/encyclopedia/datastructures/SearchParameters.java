@@ -246,7 +246,12 @@ public class SearchParameters {
 	public float getNumberOfExtraDecoyLibrariesSearched() {
 		return numberOfExtraDecoyLibrariesSearched;
 	}
+	
 	public int getNumberOfQuantitativePeaks() {
+		return numberOfQuantitativePeaks;
+	}
+	
+	public int getEffectiveNumberOfQuantitativePeaks() {
 		if (isQuantifySameFragmentsAcrossSamples()) {
 			return numberOfQuantitativePeaks;
 		} else {

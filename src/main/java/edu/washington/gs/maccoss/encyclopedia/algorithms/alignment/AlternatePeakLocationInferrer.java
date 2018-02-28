@@ -119,7 +119,7 @@ public class AlternatePeakLocationInferrer {
 	}
 
 	static Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> getArchetypals(ProgressIndicator progress, List<? extends SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
-		int numberOfQuantitativePeaks=params.getNumberOfQuantitativePeaks();
+		int numberOfQuantitativePeaks=params.getEffectiveNumberOfQuantitativePeaks();
 		MassTolerance fragmentTolerance=params.getFragmentTolerance();
 
 		HashMap<SearchJobData, TObjectFloatHashMap<String>> retentionTimeMappingsInSeconds=new HashMap<>();
