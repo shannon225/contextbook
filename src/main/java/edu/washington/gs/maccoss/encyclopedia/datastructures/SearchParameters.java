@@ -247,7 +247,11 @@ public class SearchParameters {
 		return numberOfExtraDecoyLibrariesSearched;
 	}
 	public int getNumberOfQuantitativePeaks() {
-		return numberOfQuantitativePeaks;
+		if (isQuantifySameFragmentsAcrossSamples()) {
+			return numberOfQuantitativePeaks;
+		} else {
+			return Integer.MAX_VALUE;
+		}
 	}
 	public int getMinNumOfQuantitativePeaks() {
 		return minNumOfQuantitativePeaks;
