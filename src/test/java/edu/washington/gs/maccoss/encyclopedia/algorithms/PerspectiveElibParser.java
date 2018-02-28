@@ -17,11 +17,81 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
 public class PerspectiveElibParser {
 	public static void main(String[] args) {
+		HashMap<String, Pair<TFloatArrayList, TFloatArrayList>> data=getPRM();
+		HashMap<String, Pair<TFloatArrayList, TFloatArrayList>> ddaData=getDDA();
+		HashMap<String, TFloatArrayList[]> normalDiaData=getDIA(reportNormal);
+		HashMap<String, TFloatArrayList[]> variableDiaData=getDIA(reportVariable);
+		HashMap<String, TFloatArrayList[]> overlapDiaData=getDIA(reportOverlap);
+
+		String[] keys=data.keySet().toArray(new String[data.size()]);
+		Arrays.sort(keys);
+		System.out.println("peptide,intensity,prm_ratio,cv,log intensity,delta_dda,delta_normal_dia,delta_variable_dia,delta_overlap_dia");
+		for (String key : keys) {
+			Pair<TFloatArrayList, TFloatArrayList> prmMeasurements=data.get(key);
+			float[] xs=prmMeasurements.x.toArray().clone();
+			float x=QuickMedian.median(xs);
+			float[] ys=prmMeasurements.y.toArray().clone();
+			float y=QuickMedian.median(ys);
+			float prmRatio=protectedLog2(y/x);
+
+			float[] lmA=General.divide(xs, x);
+			float[] lmB=General.divide(ys, y);
+			float cv=General.stdev(General.concatenate(lmA, lmB));
+
+			Pair<TFloatArrayList, TFloatArrayList> ddaMeasurements=ddaData.get(key);
+			Float ddaRatio=ddaMeasurements==null?null:protectedLog2(QuickMedian.median(ddaMeasurements.y.toArray().clone())/QuickMedian.median(ddaMeasurements.x.toArray().clone()));
+
+			TFloatArrayList[] diaMeasurements=normalDiaData.get(key);
+			Float normalDIARatio=diaMeasurements==null?null:protectedLog2(QuickMedian.median(diaMeasurements[1].toArray().clone())/QuickMedian.median(diaMeasurements[0].toArray().clone()));
+
+			diaMeasurements=variableDiaData.get(key);
+			Float variableDIARatio=diaMeasurements==null?null:protectedLog2(QuickMedian.median(diaMeasurements[1].toArray().clone())/QuickMedian.median(diaMeasurements[0].toArray().clone()));
+			
+			diaMeasurements=overlapDiaData.get(key);
+			Float overlapDIARatio=diaMeasurements==null?null:protectedLog2(QuickMedian.median(diaMeasurements[1].toArray().clone())/QuickMedian.median(diaMeasurements[0].toArray().clone()));
+			
+			System.out.print(key);
+			System.out.print(',');
+			System.out.print(Math.max(x,y));
+			System.out.print(',');
+			System.out.print(prmRatio);
+			System.out.print(',');
+			System.out.print(cv);
+			System.out.print(',');
+			System.out.print(Log.log10(Math.max(x,y)));
+			System.out.print(',');
+			System.out.print(ddaRatio==null?"":(ddaRatio-prmRatio));
+			System.out.print(',');
+			System.out.print(normalDIARatio==null?"":(normalDIARatio-prmRatio));
+			System.out.print(',');
+			System.out.print(variableDIARatio==null?"":(variableDIARatio-prmRatio));
+			System.out.print(',');
+			System.out.print(overlapDIARatio==null?"":(overlapDIARatio-prmRatio));
+			System.out.println();
+		}
+	}
+	
+	private static Float protectedLog2(float v) {
+		if (Float.isNaN(v)) return 0.0f;
+		if (Float.isInfinite(v)) {
+			if (v>0) {
+				return 8.0f;
+			} else {
+				return -8.0f;
+			}
+		}
+		if (v<=0) return -8.0f;
+		
+		return Log.log2(v);
+	}
+	
+	public static void oldmain(String[] args) {
 		HashMap<String, Pair<TFloatArrayList, TFloatArrayList>> data=getPRM();
 		HashMap<String, TFloatArrayList[]> diaData=getDIA();
 		
@@ -75,6 +145,10 @@ public class PerspectiveElibParser {
 	private static final int reportOverlap=3;
 
 	private static HashMap<String, TFloatArrayList[]> getDIA() {
+		return getDIA(mode);
+	}
+
+	private static HashMap<String, TFloatArrayList[]> getDIA(int mode) {
 		HashMap<String, TFloatArrayList[]> diaData=null;
 		switch (mode) {
 			case reportNormal:
@@ -91,6 +165,33 @@ public class PerspectiveElibParser {
 				break;
 		}
 		return diaData;
+	}
+
+	private static HashMap<String, Pair<TFloatArrayList, TFloatArrayList>> getDDA() {
+		AminoAcidConstants constants=new AminoAcidConstants();
+		HashMap<String, Pair<TFloatArrayList, TFloatArrayList>> data=new HashMap<>(); 
+		TableParser.parseCSV(new File("/Users/searleb/Documents/school/perspective/DDA peak areas.csv"), new TableParserMuscle() {
+			@Override
+			public void processRow(Map<String, String> row) {
+				String peptideModSeq=row.get("peptidemodseq");
+				peptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq, constants);
+				
+				String sample=row.get("sample");
+				float intensity=1.0f+Float.parseFloat(row.get("intensity")); // one pseudo count
+				Pair<TFloatArrayList, TFloatArrayList> measurements=data.get(peptideModSeq);
+				if (measurements==null) {
+					measurements=new Pair<TFloatArrayList, TFloatArrayList>(new TFloatArrayList(), new TFloatArrayList());
+					data.put(peptideModSeq, measurements);
+				}
+				
+				if ("6b".equals(sample)) {
+					measurements.x.add(intensity);
+				} else {
+					measurements.y.add(intensity);
+				}
+			}
+		});
+		return data;
 	}
 
 	private static HashMap<String, Pair<TFloatArrayList, TFloatArrayList>> getPRM() {
@@ -123,7 +224,7 @@ public class PerspectiveElibParser {
 	public static HashMap<String, TFloatArrayList[]> loadNormalDIA() {
 		try {
 			LibraryFile library=new LibraryFile();
-			library.openFile(new File("/Users/searleb/Documents/school/perspective/normal_combined.elib"));
+			library.openFile(new File("/Users/searleb/Documents/school/perspective/dda_library/normal_combined.elib"));
 			TObjectIntHashMap<String> indexBySampleNames=new TObjectIntHashMap<>();
 			indexBySampleNames.put("2017dec27_normal_dia_6b_rep1.mzML", 0);
 			indexBySampleNames.put("2017dec27_normal_dia_6b_rep2.mzML", 0);
@@ -141,7 +242,7 @@ public class PerspectiveElibParser {
 	public static HashMap<String, TFloatArrayList[]> loadVariableDIA() {
 		try {
 			LibraryFile library=new LibraryFile();
-			library.openFile(new File("/Users/searleb/Documents/school/perspective/variable_combined.elib"));
+			library.openFile(new File("/Users/searleb/Documents/school/perspective/dda_library/variable_combined.elib"));
 			TObjectIntHashMap<String> indexBySampleNames=new TObjectIntHashMap<>();
 			indexBySampleNames.put("2017dec27_variable_dia_6b_rep1.mzML", 0);
 			indexBySampleNames.put("2017dec27_variable_dia_6b_rep2.mzML", 0);
@@ -159,7 +260,7 @@ public class PerspectiveElibParser {
 	public static HashMap<String, TFloatArrayList[]> loadOverlapDIA() {
 		try {
 			LibraryFile library=new LibraryFile();
-			library.openFile(new File("/Users/searleb/Documents/school/perspective/overlap_combined.elib"));
+			library.openFile(new File("/Users/searleb/Documents/school/perspective/dda_library/overlap_combined.elib"));
 			TObjectIntHashMap<String> indexBySampleNames=new TObjectIntHashMap<>();
 			indexBySampleNames.put("2017dec27_overlap_dia_6b_rep1.mzML", 0);
 			indexBySampleNames.put("2017dec27_overlap_dia_6b_rep2.mzML", 0);

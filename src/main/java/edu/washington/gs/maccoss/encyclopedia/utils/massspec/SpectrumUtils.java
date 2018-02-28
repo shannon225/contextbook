@@ -8,6 +8,50 @@ import gnu.trove.list.array.TFloatArrayList;
 
 public class SpectrumUtils {
 	public static Spectrum mergeSpectra(ArrayList<Spectrum> spectra, MassTolerance tolerance) {
+		if (spectra.size()>50) {
+			return binnedMergeSpectra(spectra, 0.1f);
+		} else {
+			return accurateMergeSpectra(spectra, tolerance);
+		}
+	}
+	public static Spectrum binnedMergeSpectra(ArrayList<Spectrum> spectra, double binWidth) {
+		double maxMz=0.0;
+		for (Spectrum spectrum : spectra) {
+			double mz=spectrum.getMassArray()[spectrum.getMassArray().length-1];
+			if (maxMz<mz) maxMz=mz;
+		}
+		float[] bins=new float[(int)Math.ceil(maxMz/binWidth)];
+		if (bins.length==0) return  new PrecursorScan("Combined", 0, 0.0f, new double[0], new float[0], 0.0f);
+
+		float minRT=Float.MAX_VALUE;
+		float tic=0f;
+		for (Spectrum spectrum : spectra) {
+			if (spectrum.getScanStartTime()<minRT) minRT=spectrum.getScanStartTime();
+			
+			double[] mz=spectrum.getMassArray();
+			float[] intens=spectrum.getIntensityArray();
+			
+			for (int i=0; i<mz.length; i++) {
+				int index=(int)Math.round(mz[i]/binWidth);
+				if (index<0) index=0;
+				if (index>=bins.length) index=bins.length-1;
+				bins[index]+=intens[i];
+			}
+			tic += spectrum.getTIC();
+		}
+
+		TDoubleArrayList masses=new TDoubleArrayList();
+		TFloatArrayList intensities=new TFloatArrayList();
+		for (int i=0; i<bins.length; i++) {
+			if (bins[i]>0.0f) {
+				masses.add(i*binWidth);
+				intensities.add(bins[i]);
+			}
+		}
+		
+		return new PrecursorScan("Combined", 0, minRT, masses.toArray(), intensities.toArray(), tic);
+	}
+	public static Spectrum accurateMergeSpectra(ArrayList<Spectrum> spectra, MassTolerance tolerance) {
 		TDoubleArrayList masses=new TDoubleArrayList();
 		TFloatArrayList intensities=new TFloatArrayList();
 		

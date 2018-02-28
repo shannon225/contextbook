@@ -1463,7 +1463,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						s.execute("ALTER TABLE peptidequants ADD COLUMN MedianChromatogramRTArray blob");
 					}
 
-					if (new Version(0, 1, 12).amIAbove(version)&&version.amIAbove(new Version(0, 1, 10))) {
+					if (new Version(0, 1, 12).amIAbove(version)&&version.amIAbove(new Version(0, 1, 9))) {
 						if (userFile!=null) {
 							Logger.logLine("Updating library to "+new Version(0, 1, 12));
 						}
