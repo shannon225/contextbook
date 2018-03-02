@@ -23,7 +23,6 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -99,7 +98,7 @@ public class SearchPanel extends JPanel {
 	JobProcessorTableModel processorTableModel=new JobProcessorTableModel();
 	
 	private final JTabbedPane optionsTabs;
-	private final JCheckBox alignBetweenFiles;
+	//private final JCheckBox alignBetweenFiles;
 	
 	public SearchPanel(ProgramType program) {
 		super(new BorderLayout());
@@ -198,33 +197,43 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		
-		alignBetweenFiles=new JCheckBox("RT Align", true);
-		alignBetweenFiles.setToolTipText("Align retention times between files. Only uncheck for generating searchable chromatogram libraries where fractions don't share peptides.");
+		//alignBetweenFiles=new JCheckBox("RT Align", true);
+		//alignBetweenFiles.setToolTipText("Align retention times between files. Only uncheck for generating searchable chromatogram libraries where fractions don't share peptides.");
 		
 		JButton saveBlib=new JButton("Save BLIB", skylineIcon);
 		saveBlib.setToolTipText("Save Skyline BLIB library.");
 		saveBlib.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				saveBLIB();
+				saveBLIB(true);
 			}
 		});
 		
-		JButton saveElib=new JButton("Save Library", openDBIcon);
-		saveElib.setToolTipText("Save chromatogram library and quantitative reports.");
+		JButton saveChromElib=new JButton("Save Chromatogram Library", openDBIcon);
+		saveChromElib.setToolTipText("Save chromatogram library as ELIB.");
+		saveChromElib.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				saveELIB(false);
+			}
+		});
+		
+		JButton saveElib=new JButton("Save Quant Reports", openDBIcon);
+		saveElib.setToolTipText("Save quantitative reports as ELIB.");
 		saveElib.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				saveELIB();
+				saveELIB(true);
 			}
 		});
 		
 		
 		JPanel buttonPanel=new JPanel(new FlowLayout());
 		buttonPanel.add(chooseFile);
-		buttonPanel.add(alignBetweenFiles);
+		//buttonPanel.add(alignBetweenFiles);
 
 		if (ProgramType.PecanPie!=program) {
+			buttonPanel.add(saveChromElib);
 			buttonPanel.add(saveElib);
 		}
 		
@@ -275,24 +284,25 @@ public class SearchPanel extends JPanel {
 		openMZML.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		fileMenu.add(openMZML);
 
-		JMenuItem saveELIB=new JMenuItem("Save Library", openDBIcon);
+		JMenuItem saveELIB=new JMenuItem("Save Quant Reports ELIB", openDBIcon);
 		saveELIB.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				saveELIB();
+				saveELIB(true);
 			}
 		});
+		
 		saveELIB.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 
 		if (ProgramType.PecanPie!=program) {
 			fileMenu.add(saveELIB);
 		}
 
-		JMenuItem saveBLIB=new JMenuItem("Save BLIB", skylineIcon);
+		JMenuItem saveBLIB=new JMenuItem("Save Skyline BLIB", skylineIcon);
 		saveBLIB.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				saveBLIB();
+				saveBLIB(true);
 			}
 		});
 		saveBLIB.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
@@ -902,7 +912,7 @@ public class SearchPanel extends JPanel {
 		dialog.setVisible(true);
 	}
 
-	public void saveBLIB() {
+	public void saveBLIB(boolean alignBetweenFiles) {
 		JFrame frame = (JFrame)SwingUtilities.getRoot(SearchPanel.this);
 
 		Optional<String> maybeError=getVisibleTab().canLoadData();
@@ -927,7 +937,7 @@ public class SearchPanel extends JPanel {
 					}
 				}
 
-				SearchToBLIBJob job=new SearchToBLIBJob(blibFile, isAlignedBetweenFiles(), processorTableModel);
+				SearchToBLIBJob job=new SearchToBLIBJob(blibFile, alignBetweenFiles, processorTableModel);
 				if (job!=null) {
 					processorTableModel.addJob(job);
 				}
@@ -935,11 +945,11 @@ public class SearchPanel extends JPanel {
 		}
 	}
 
-	public boolean isAlignedBetweenFiles() {
-		return alignBetweenFiles.isSelected();
-	}
+//	public boolean isAlignedBetweenFiles() {
+//		return alignBetweenFiles.isSelected();
+//	}
 
-	public void saveELIB() {
+	public void saveELIB(boolean alignBetweenFiles) {
 		JFrame frame = (JFrame)SwingUtilities.getRoot(SearchPanel.this);
 
 		Optional<String> maybeError=getVisibleTab().canLoadData();
@@ -964,7 +974,7 @@ public class SearchPanel extends JPanel {
 					}
 				}
 
-				SearchToELIBJob job=new SearchToELIBJob(elibFile, isAlignedBetweenFiles(), processorTableModel);
+				SearchToELIBJob job=new SearchToELIBJob(elibFile, alignBetweenFiles, processorTableModel);
 				if (job!=null) {
 					processorTableModel.addJob(job);
 				}
