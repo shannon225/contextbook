@@ -145,7 +145,7 @@ public class SearchPanel extends JPanel {
 				Logger.errorException(e);
 			}
 		}
-		if (ProgramType.Global==program||ProgramType.PecanPie==program) {
+		if (ProgramType.Global==program||ProgramType.PecanPie==program||ProgramType.EncyclopeDIA==program) {
 			try {
 				PecanParametersPanel pecan=new PecanParametersPanel(this);
 				HashMap<String, String> map=PecanSearchParameters.readPreferences();
