@@ -182,8 +182,8 @@ public class ThesaurusElibParser {
 	
 	public static final boolean MOTIF_ANALYSIS=false;
 	public static final boolean ANOVA_ANALYSIS=false;
-	public static final boolean HEATMAP_ANALYSIS=false;
-	public static final boolean MULTIPLE_FORM_ANALYSIS=true;
+	public static final boolean HEATMAP_ANALYSIS=true;
+	public static final boolean MULTIPLE_FORM_ANALYSIS=false;
 	public static final boolean SITE_SPECIFIC_VS_TOTAL_ANALYSIS=false;
 	
 	public static void main(String[] args) throws Exception {
@@ -194,7 +194,9 @@ public class ThesaurusElibParser {
 
 		PeptideModification mod=PeptideModification.phosphorylation;
 		String[] targets=null;//new String[] {"SFSKEVEER", "ILQEKLDQPVSAPPSPR", "HRGSEEDPLLSPVETWK", "RASGQAFELILSPR"};//KGSGDYMPMSPK;//targetPeptides;
-		File[] f=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/0.6.3_elibs").listFiles();
+		File[] f=new File("/Users/searleb/Documents/backup/localization_manuscript/mcf7/0.6.3_5p_elibs").listFiles();
+		//File[] f=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/0.6.3_elibs").listFiles();
+		
 		//f=new File[] {new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1a.dia.thesaurus.elib")};
 		
 		Pair<TreeMap<String,QuantitationLog>, TreeMap<String,QuantitationLog>> quantLogPair=getQuantData(targets, f);
@@ -206,9 +208,9 @@ public class ThesaurusElibParser {
 		PeptideMotifTrie motifTrie=new PeptideMotifTrie(primaryQuantLog.values(), mod);
 
 		System.out.println("Reading FASTA...");
-		ArrayList<FastaEntryInterface> fasta=FastaReader.readFasta(new File("/Users/searleb/Downloads/uniprot.HUMAN.fasta"));
+		//ArrayList<FastaEntryInterface> fasta=FastaReader.readFasta(new File("/Users/searleb/Downloads/uniprot.HUMAN.fasta"));
 		//ArrayList<FastaEntryInterface> fasta=FastaReader.readFasta(new File("/Users/searleb/Documents/school/projects/pecandata/UP000005640_9606.fasta"));
-		motifTrie.addFasta(fasta);
+		//motifTrie.addFasta(fasta);
 		
 		ArrayList<String> siteSpecificPeptides=new ArrayList<>();
 		TDoubleArrayList siteSpecificPValues=new TDoubleArrayList();

@@ -13,6 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 public class LocalizedLibraryEntryTableModel extends AbstractTableModel {
 	private static final long serialVersionUID=1L;
 	
+	public static final int deltaRTColumnIndex=5;
 	private final String[] columns=new String[] {"#", "Peptide", "Number of Mods", "Number of Forms", "Number of Sites", "Delta RT (sec)", "Protein"};
 
 	ArrayList<Pair<String, ArrayList<LocalizedLibraryEntry>>> entries=new ArrayList<Pair<String, ArrayList<LocalizedLibraryEntry>>>();
@@ -71,17 +72,20 @@ public class LocalizedLibraryEntryTableModel extends AbstractTableModel {
 		}
 		return Object.class;
 	}
+	
+	public boolean flagRow(int rowIndex) {
+		ArrayList<LocalizedLibraryEntry> value=entries.get(rowIndex).y;
+		if (value.size()<=1) return false;
+		
+		float deltaRT = getDeltaRT(value);
+		return deltaRT<5;
+	}
 
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		String key=entries.get(rowIndex).x;
 		ArrayList<LocalizedLibraryEntry> value=entries.get(rowIndex).y;
-		float minRT=Float.MAX_VALUE;
-		float maxRT=-Float.MAX_VALUE;
-		for (LocalizedLibraryEntry entry : value) {
-			if (entry.getRetentionTime()>maxRT) maxRT=entry.getRetentionTime();
-			if (entry.getRetentionTime()<minRT) minRT=entry.getRetentionTime();
-		}
+		float deltaRT = getDeltaRT(value);
 		
 		switch (columnIndex) {
 			case 0: return rowIndex;
@@ -89,10 +93,21 @@ public class LocalizedLibraryEntryTableModel extends AbstractTableModel {
 			case 2: return value.get(0).getNumberOfModifications();
 			case 3: return value.size();
 			case 4: return value.get(0).getNumberOfModifiableResidues();
-			case 5: return maxRT-minRT;
+			case 5: return deltaRT;
 			case 6: return PSMData.accessionsToString(value.get(0).getAccessions());
 		}
 		return null;
+	}
+
+	private float getDeltaRT(ArrayList<LocalizedLibraryEntry> value) {
+		float minRT=Float.MAX_VALUE;
+		float maxRT=-Float.MAX_VALUE;
+		for (LocalizedLibraryEntry entry : value) {
+			if (entry.getRetentionTime()>maxRT) maxRT=entry.getRetentionTime();
+			if (entry.getRetentionTime()<minRT) minRT=entry.getRetentionTime();
+		}
+		float deltaRT=maxRT-minRT;
+		return deltaRT;
 	}
 	
 	
