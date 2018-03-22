@@ -268,7 +268,7 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 			}
 			tableDataSplit.setRightComponent(tabs);
 		} else {
-			float deltaRT=60f;
+			float deltaRT=300f;
 			float minRT=Float.MAX_VALUE;
 			float maxRT=-Float.MAX_VALUE;
 			for (LocalizedLibraryEntry entry : entries) {
