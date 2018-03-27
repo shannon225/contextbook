@@ -87,6 +87,19 @@ public class XCorrCalculatorTest extends TestCase {
 		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, t, PARAMETERS), "PP Model", new Dimension(300, 200));
 	}
 	
+	public void testIndexing() {
+		// just makes sure that we're not splitting boundaries
+		float fragmentBinSize=ArrayXCorrCalculator.lowResFragmentBinSize; // if tolerance is >0.25 Da, then jump to 1 Da to make use of the average amino acid mass defect
+		float offset=ArrayXCorrCalculator.lowResFragmentBinOffset;
+		float inverseBinWidth=1.0f/fragmentBinSize;
+		
+		assertEquals(564, (int)((565.2-offset)*inverseBinWidth));
+		assertEquals(564, (int)((565.3-offset)*inverseBinWidth));
+		assertEquals(564, (int)((565.4-offset)*inverseBinWidth));
+		assertEquals(564, (int)((565.5-offset)*inverseBinWidth));
+		assertEquals(564, (int)((565.6-offset)*inverseBinWidth));
+	}
+	
 	public void testXCorr() {
 		final byte charge=2;
 		final float chargedMz=(float)((1329.6335+(charge-1)*MassConstants.protonMass)/charge);
