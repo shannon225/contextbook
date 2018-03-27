@@ -14,12 +14,10 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import org.apache.commons.math3.stat.inference.TestUtils;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideTrie;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SimplePeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -636,7 +634,7 @@ public class ThesaurusEGFElibParser {
 		final TFloatArrayList localizationScores=new TFloatArrayList();
 		
 		public QuantitationLog(String protein, String peptideModSeq, byte charge) {
-			super(peptideModSeq, charge);
+			super(peptideModSeq, charge, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 			this.protein=protein;
 			this.peptideModSeq=peptideModSeq;
 			this.charge=charge;

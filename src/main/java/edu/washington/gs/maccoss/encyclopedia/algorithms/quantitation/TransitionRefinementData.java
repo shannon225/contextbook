@@ -6,11 +6,7 @@ import java.util.HashMap;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
@@ -39,15 +35,16 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	private final String peptideModSeq;
 	private final String massCorrectedPeptideModSeq;
 	private final byte precursorCharge;
-	
+	private final AminoAcidConstants aaConstants;
+
 	// NOTE: with mods, the cannonical form points to the modificationQuantData
 	// map of all possible forms. Individual forms are specified as
 	// localizationData. Either set one or the other of these! Don't set both!
 	private Optional<ModificationLocalizationData> localizationData;
 	private Optional<HashMap<String, TransitionRefinementData>> modificationQuantData;
 	
-	public TransitionRefinementData(String peptideModSeq, byte precursorCharge, FragmentIon[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range) {
-		this(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, null, null, null, null, null, null, null);
+	public TransitionRefinementData(String peptideModSeq, byte precursorCharge, FragmentIon[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range, AminoAcidConstants aaConstants) {
+		this(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, null, null, null, null, null, null, null, aaConstants);
 	}
 
 	/**
@@ -59,9 +56,9 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	 * @param massArray CAN BE NULL
 	 * @param intensityArray CAN BE NULL
 	 */
-	TransitionRefinementData(String peptideModSeq, byte precursorCharge, FragmentIon[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range, float[] deltaMassArray, double[] massArray, float[] intensityArray, float[] rtArray, ModificationLocalizationData localizationData, HashMap<String, TransitionRefinementData> modificationQuantData, Float identifiedTICRatio) {
+	TransitionRefinementData(String peptideModSeq, byte precursorCharge, FragmentIon[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range, float[] deltaMassArray, double[] massArray, float[] intensityArray, float[] rtArray, ModificationLocalizationData localizationData, HashMap<String, TransitionRefinementData> modificationQuantData, Float identifiedTICRatio, AminoAcidConstants aaConstants) {
 		this.peptideModSeq=peptideModSeq;
-		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq);
+		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq, aaConstants);
 		this.precursorCharge=precursorCharge;
 		this.fragmentMassArray=fragmentMassArray;
 		this.chromatograms=chromatograms;
@@ -77,6 +74,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		this.localizationData=Optional.ofNullable(localizationData);
 		this.modificationQuantData=Optional.ofNullable(modificationQuantData);
 		this.identifiedTICRatio=Optional.ofNullable(identifiedTICRatio);
+		this.aaConstants = aaConstants;
 	}
 
 	@Override
@@ -104,7 +102,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		float[] corrsArray=corrs.toArray();
 		
 		return new AnnotatedLibraryEntry(entry.getSource(), entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(),
-				entry.getCopies(), getApexRT(), entry.getScore(), mzsArray, intensArray, corrsArray, ionAnnotations.toArray(new FragmentIon[ionAnnotations.size()]));
+				entry.getCopies(), getApexRT(), entry.getScore(), mzsArray, intensArray, corrsArray, ionAnnotations.toArray(new FragmentIon[ionAnnotations.size()]), parameters.getAAConstants());
 	}
 	
 	@Override
@@ -212,6 +210,10 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		}
 		return total;
 	}
+
+	public final AminoAcidConstants getAaConstants() {
+		return aaConstants;
+	}
 	
 	/**
 	 * 
@@ -222,7 +224,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	 * @return
 	 */
 	public TransitionRefinementData addPeakData(float[] deltaMass, double[] mass, float[] intensity, float[] rts, float identifiedTICRatio) {
-		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, deltaMass, mass, intensity, rts, localizationData.isPresent()?localizationData.get():null, modificationQuantData.isPresent()?modificationQuantData.get():null, identifiedTICRatio);
+		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, deltaMass, mass, intensity, rts, localizationData.isPresent()?localizationData.get():null, modificationQuantData.isPresent()?modificationQuantData.get():null, identifiedTICRatio, aaConstants);
 	}
 	
 	public FragmentIon[] getFragmentMassArray() {

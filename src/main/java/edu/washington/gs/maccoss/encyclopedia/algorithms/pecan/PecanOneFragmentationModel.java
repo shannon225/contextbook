@@ -58,6 +58,6 @@ public class PecanOneFragmentationModel extends AbstractPecanFragmentationModel 
 		String sequence=getModifiedSequence();
 		double precursorMZ=params.getAAConstants().getChargedMass(sequence, precursorCharge);
 
-		return new PecanLibraryEntry(peptide, precursorMZ, precursorCharge, sequence, 1, 0.0f, 0, arrays.x, arrays.y, isDecoy, euclidianDistance);	
+		return new PecanLibraryEntry(peptide, precursorMZ, precursorCharge, sequence, 1, 0.0f, 0, arrays.x, arrays.y, isDecoy, euclidianDistance, params.getAAConstants());
 	}
 }

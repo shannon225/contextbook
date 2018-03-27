@@ -191,7 +191,7 @@ public class BlibFile extends SQLFile {
 					retentionTime=retentionTime*60.0f;
 					total++;
 
-					entries.add(new LibraryEntry(sourceFile, new HashSet<String>(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));
+					entries.add(new LibraryEntry(sourceFile, new HashSet<String>(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, constants));
 				}
 				if (missing>0) {
 					Logger.logLine("Missing iRT for "+missing+" of "+total+" peptides, using RT in file.");

@@ -88,7 +88,7 @@ public class FragmentationModel {
 		float[] unitCorrelation=new float[masses.length];
 		Arrays.fill(unitCorrelation, 1.0f);
 
-		return new AnnotatedLibraryEntry(filename, accessions, 1, precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, masses, unitIntensities, unitCorrelation, annotationList.toArray(new FragmentIon[annotationList.size()]), isDecoy);
+		return new AnnotatedLibraryEntry(filename, accessions, 1, precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, masses, unitIntensities, unitCorrelation, annotationList.toArray(new FragmentIon[annotationList.size()]), isDecoy, params.getAAConstants());
 	}
 	public double[] getMasses() {
 		return masses;

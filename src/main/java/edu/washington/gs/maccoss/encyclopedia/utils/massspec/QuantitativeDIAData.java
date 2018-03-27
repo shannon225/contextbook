@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -14,9 +15,9 @@ public class QuantitativeDIAData implements PeptidePrecursor {
 	private final double[] massArray;
 	private final float[] intensityArray;
 
-	public QuantitativeDIAData(String peptideModSeq, byte precursorCharge, float scanStartTime, Range rtScanRange, double[] massArray, float[] intensityArray) {
+	public QuantitativeDIAData(String peptideModSeq, byte precursorCharge, float scanStartTime, Range rtScanRange, double[] massArray, float[] intensityArray, AminoAcidConstants aaConstants) {
 		this.peptideModSeq=peptideModSeq;
-		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq);
+		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq, aaConstants);
 		this.precursorCharge=precursorCharge;
 		this.scanStartTime=scanStartTime;
 		this.massArray=massArray;

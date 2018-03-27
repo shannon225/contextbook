@@ -102,7 +102,7 @@ public class TraMLToLibraryConverter {
 					accessions.add(PeptideUtils.getPeptideSeq(peptide.peptideModSeq));
 				}
 				
-				LibraryEntry entry=new LibraryEntry(tramlFile.getName(), accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, 0.0f, peakArrays.x, peakArrays.y);
+				LibraryEntry entry=new LibraryEntry(tramlFile.getName(), accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, 0.0f, peakArrays.x, peakArrays.y, aaConstants);
 				entries.add(entry);
 			}
 

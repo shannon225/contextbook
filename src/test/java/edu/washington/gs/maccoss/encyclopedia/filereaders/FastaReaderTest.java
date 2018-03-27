@@ -19,6 +19,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TCharDoubleHashMap;
@@ -90,7 +91,7 @@ public class FastaReaderTest extends TestCase {
 	 * @param args
 	 * @throws Exception
 	 */
-	public static void main(String[] args) throws Exception {
+	public static void main2(String[] args) throws Exception {
 		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true);
 		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
 		File f=new File("/Users/searleb/Documents/chromatogram_library_manuscript/real_pecan/cerevisiae_orf_trans_all.fasta");
@@ -108,8 +109,27 @@ public class FastaReaderTest extends TestCase {
 		writer.close();
 	}
 	
-	public static void main2(String[] args) {
-		File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
+	public static void main(String[] args) {
+		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
+		File f=new File("/Users/searleb/Documents/school/uniprot-9606.fasta");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f);
+		AminoAcidConstants constants=new AminoAcidConstants();
+		System.out.println(entries.size());
+
+		int countKR=0;
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+		for (FastaEntryInterface entry : entries) {
+			int charge=1+getCount(entry.getSequence(), 'K', 'R');
+			double mass=constants.getMass(entry.getSequence())+MassConstants.oh2;
+			double chargedMass=(mass+MassConstants.protonMass*charge)/charge;
+			System.out.println(charge);
+			//ArrayList<String> peptides=enzyme.digestProtein(entry, 8, 40, 2, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		}
+	}
+	
+	public static void main3(String[] args) {
+		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
+		File f=new File("/Users/searleb/Documents/school/uniprot-9606.fasta");
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f);
 
 		int countBase=0;
@@ -119,6 +139,7 @@ public class FastaReaderTest extends TestCase {
 		int countMet=0;
 		int countSTY=0;
 		int countQN=0;
+		int countKR=0;
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		for (FastaEntryInterface entry : entries) {
 			countNTermProtein++;
@@ -136,6 +157,7 @@ public class FastaReaderTest extends TestCase {
 				countMet+=getCombinatorial(sequence, 'M');
 				countSTY+=getCombinatorial(sequence, 'S', 'T', 'Y');
 				countQN+=getCombinatorial(sequence, 'Q', 'N');
+				countQN+=getCombinatorial(sequence, 'K', 'R');
 			}
 		}
 		System.out.println(countBase+"\tcountBase");
@@ -148,6 +170,14 @@ public class FastaReaderTest extends TestCase {
 	}
 	
 	static int getCombinatorial(String sequence, char... target) {
+		int num=getCount(sequence, target);
+		if (num==0) return 1;
+		if (num==1) return 2;
+		if (num==2) return 4;
+		return (int)(1+num+CombinatoricsUtils.binomialCoefficient(num, 2)+CombinatoricsUtils.binomialCoefficient(num, 3));
+	}
+
+	private static int getCount(String sequence, char... target) {
 		int num=0;
 		for (char c : sequence.toCharArray()) {
 			for (int i=0; i<target.length; i++) {
@@ -156,10 +186,7 @@ public class FastaReaderTest extends TestCase {
 				}
 			}
 		}
-		if (num==0) return 1;
-		if (num==1) return 2;
-		if (num==2) return 4;
-		return (int)(1+num+CombinatoricsUtils.binomialCoefficient(num, 2)+CombinatoricsUtils.binomialCoefficient(num, 3));
+		return num;
 	}
 	
 	public void testFastaParsing() {

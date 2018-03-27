@@ -97,8 +97,10 @@ public class AlternatePeakLocationInferrer {
 				RetentionTimeAlignmentInterface alignment=new RetentionTimeFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
 				alignmentMap.put(job, alignment);
 
+				File saveFileSeed = new File(job.getPercolatorFiles().getPeptideOutputFile().getParentFile(), job.getDiaFile().getName());
+
 				final List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignmentResults =
-						alignment.plot(points, Optional.ofNullable(job.getDiaFile()));
+						alignment.plot(points, Optional.ofNullable(saveFileSeed));
 				alignmentDataMap.put(job, alignmentResults);
 
 				// align local archetypals to the seed
@@ -117,7 +119,7 @@ public class AlternatePeakLocationInferrer {
 	}
 
 	static Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> getArchetypals(ProgressIndicator progress, List<? extends SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
-		int numberOfQuantitativePeaks=params.getNumberOfQuantitativePeaks();
+		int numberOfQuantitativePeaks=params.getEffectiveNumberOfQuantitativePeaks();
 		MassTolerance fragmentTolerance=params.getFragmentTolerance();
 
 		HashMap<SearchJobData, TObjectFloatHashMap<String>> retentionTimeMappingsInSeconds=new HashMap<>();
@@ -132,7 +134,7 @@ public class AlternatePeakLocationInferrer {
 				File resultLibrary=((QuantitativeSearchJobData) job).getResultLibrary();
 				try {
 					LibraryInterface results=BlibToLibraryConverter.getFile(resultLibrary);
-					ArrayList<LibraryEntry> entries=results.getAllEntries(false);
+					ArrayList<LibraryEntry> entries=results.getAllEntries(false, params.getAAConstants());
 
 					TreeMap<PeptidePrecursor, LibraryEntry> fastLookupPeptides=new TreeMap<PeptidePrecursor, LibraryEntry>();
 					for (LibraryEntry libraryEntry : entries) {

@@ -47,7 +47,9 @@ import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCordiaSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -79,6 +81,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class SearchPanel extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -645,7 +648,7 @@ public class SearchPanel extends JPanel {
 							saveLibrary.openFile();
 							
 							ArrayList<LibraryEntry> toWrite=new ArrayList<>();
-							for (LibraryEntry entry : library.getAllEntries(false)) {
+							for (LibraryEntry entry : library.getAllEntries(false, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()))) {
 								if (targets.contains(entry.getPeptideSeq())) {
 									toWrite.add(entry);
 								}

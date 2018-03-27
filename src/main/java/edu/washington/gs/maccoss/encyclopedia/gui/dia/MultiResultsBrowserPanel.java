@@ -33,14 +33,10 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import org.jfree.chart.ChartPanel;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.LibraryReportExtractor;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideReportData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -227,7 +223,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 				}
 				LibraryFile library=(LibraryFile)ilib;
 				
-				Pair<ArrayList<String>, ArrayList<PeptideReportData>> pair=LibraryReportExtractor.extractMatrix(library);
+				Pair<ArrayList<String>, ArrayList<PeptideReportData>> pair=LibraryReportExtractor.extractMatrix(library, parameters.getAAConstants());
 				
 				ArrayList<String> sampleNames=pair.x;
 				ArrayList<StripeFileInterface> stripeFiles=new ArrayList<StripeFileInterface>();

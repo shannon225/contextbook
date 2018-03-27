@@ -154,7 +154,7 @@ public class Encyclopedia {
 	public static void runSearch(ProgressIndicator progress, EncyclopediaJobData job) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		if (job.getPercolatorFiles().hasDataAvailable()) {
 			try {
-				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideOutputFile(), job.getParameters().getEffectivePercolatorThreshold(), false).x;
+				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideOutputFile(), job.getParameters(), false).x;
 				
 				File elibFile=job.getResultLibrary();
 				if (!elibFile.exists()) {
@@ -162,7 +162,7 @@ public class Encyclopedia {
 					Logger.logLine("Writing elib result library...");
 					ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 					jobs.add(job);
-					SearchToBLIB.convert(progress, jobs, elibFile, false, true);
+					SearchToBLIB.convert(progress, jobs, elibFile, false, false);
 				}
 				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 				//progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides ("+ParsimonyProteinGrouper.groupProteins(passingPeptidesFromTSV).size()+" proteins) identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
@@ -238,7 +238,7 @@ public class Encyclopedia {
 			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
 			int count=0;
-			ArrayList<LibraryEntry> entries=library.getEntries(range, true);
+			ArrayList<LibraryEntry> entries=library.getEntries(range, true, parameters.getAAConstants());
 			LibraryBackgroundInterface background=new LibraryBackground(entries);
 			PSMScorer scorer=taskFactory.getLibraryScorer(background);
 			
@@ -309,7 +309,7 @@ public class Encyclopedia {
 		try {
 			progress.update("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)");
 			
-			Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), job.getPercolatorFiles(), parameters.getEffectivePercolatorThreshold());
+			Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), job.getPercolatorFiles(), parameters.getEffectivePercolatorThreshold(), parameters.getAAConstants());
 			passingPeptides=pair.x;
 			Logger.logLine("First pass: "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
 			
@@ -333,7 +333,7 @@ public class Encyclopedia {
 			rescoredResultsConsumer.close();
 	
 			progress.update("Re-running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)");
-			pair=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), job.getPercolatorFiles(), parameters.getEffectivePercolatorThreshold());
+			pair=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), job.getPercolatorFiles(), parameters.getEffectivePercolatorThreshold(), parameters.getAAConstants());
 			passingPeptides=pair.x;
 			filter=getRescoringModel(passingPeptides, data, job, true);
 			
