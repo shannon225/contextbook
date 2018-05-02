@@ -41,6 +41,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
@@ -164,6 +165,16 @@ public class XCorDIA {
 		if (jobData.getPercolatorFiles().hasDataAvailable()) {
 			try {
 				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(jobData.getPercolatorFiles().getPeptideOutputFile(), jobData.getParameters(), false).x;
+
+				File elibFile=jobData.getResultLibrary();
+				if (!elibFile.exists()) {
+					progress.update("Writing elib result library...");
+					Logger.logLine("Writing elib result library...");
+					ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
+					jobs.add(jobData);
+					SearchToBLIB.convert(progress, jobs, elibFile, false, false);
+				}
+				
 				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(jobData.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 				return;
 			} catch (Exception e) {
