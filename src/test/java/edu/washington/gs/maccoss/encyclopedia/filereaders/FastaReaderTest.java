@@ -122,8 +122,18 @@ public class FastaReaderTest extends TestCase {
 			int charge=1+getCount(entry.getSequence(), 'K', 'R');
 			double mass=constants.getMass(entry.getSequence())+MassConstants.oh2;
 			double chargedMass=(mass+MassConstants.protonMass*charge)/charge;
-			System.out.println(charge);
-			//ArrayList<String> peptides=enzyme.digestProtein(entry, 8, 40, 2, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+			
+			//System.out.println(charge);
+			ArrayList<String> peptides=enzyme.digestProtein(entry, 8, 40, 2, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+			for (String string : peptides) {
+				int pepCharge=2;
+				double pepMass=constants.getMass(string)+MassConstants.oh2;
+				double pepChargedMass=(pepMass+MassConstants.protonMass*pepCharge)/pepCharge;
+				
+				if (pepChargedMass>(665.3204-5)&&pepChargedMass<(665.3204+5)) {
+					System.out.println(string);
+				}
+			}
 		}
 	}
 	

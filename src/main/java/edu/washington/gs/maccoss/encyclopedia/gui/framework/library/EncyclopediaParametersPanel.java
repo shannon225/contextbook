@@ -233,7 +233,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
 		float minIntensity=-1.0f;
 		Optional<PeptideModification> modificationType=Optional.empty();
-		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, 0.01f, 0.01f, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minIntensity, modificationType, ScoringBreadthType.ENTIRE_RT_WINDOW, numberOfExtraDecoyLibrariesValue, searchPanel.isAlignedBetweenFiles(), true);
+		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, 0.01f, 0.01f, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minIntensity, modificationType, ScoringBreadthType.ENTIRE_RT_WINDOW, numberOfExtraDecoyLibrariesValue, true, true);
 		return parameters;
 	}
 	

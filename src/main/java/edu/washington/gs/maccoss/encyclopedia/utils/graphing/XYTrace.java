@@ -245,6 +245,10 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 		return toArrays(points);
 	}
 	
+	public int size() {
+		return points.size();
+	}
+	
 	public String toString() {
 		Pair<double[], double[]> pair=toArrays(points);
 		StringBuilder sb=new StringBuilder("// "+getName()+"\n");

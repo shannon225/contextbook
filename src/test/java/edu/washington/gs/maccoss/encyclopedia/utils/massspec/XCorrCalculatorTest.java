@@ -3,12 +3,15 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 import java.awt.Dimension;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
@@ -23,9 +26,9 @@ import gnu.trove.list.array.TFloatArrayList;
 import junit.framework.TestCase;
 
 public class XCorrCalculatorTest extends TestCase {
-	private static final SearchParameters MAIN_PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.HCD, new MassTolerance(10, MassErrorUnitType.PPM), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"), false, true);
+	private static final SearchParameters MAIN_PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.HCD, new MassTolerance(100, MassErrorUnitType.PPM), new MassTolerance(100, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"), false, true);
 	//private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(0.05, MassErrorUnitType.AMU), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
-	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(1, MassErrorUnitType.AMU), new MassTolerance(1, MassErrorUnitType.AMU), DigestionEnzyme.getEnzyme("trypsin"), false, true);
+	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.HCD, new MassTolerance(0.5, MassErrorUnitType.AMU), new MassTolerance(0.5, MassErrorUnitType.AMU), DigestionEnzyme.getEnzyme("trypsin"), false, true);
 	//private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10, MassErrorUnitType.PPM), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
 	
 	public static void main3(String[] args) {
@@ -74,8 +77,37 @@ public class XCorrCalculatorTest extends TestCase {
 	public static void main(String[] args) {
 		final byte charge=2;
 		final float chargedMz=(float)((1329.6335+(charge-1)*MassConstants.protonMass)/charge);
-		
+		System.out.println(chargedMz);
+
 		Spectrum s=getSDFHLFGPPGKK();
+
+		MassTolerance fragmentTolerance=new MassTolerance(MAIN_PARAMETERS.getFragmentTolerance().getPpmTolerance()*2);
+		TDoubleArrayList masses=new TDoubleArrayList();
+		TFloatArrayList intens=new TFloatArrayList();
+		double lastMass=0;
+		float lastInt=0;
+		for (int i=0; i<s.getMassArray().length; i++) {
+			if (fragmentTolerance.equals(lastMass, Math.round(s.getMassArray()[i]))) {
+				lastInt+=s.getIntensityArray()[i];
+			} else {
+				masses.add(lastMass);
+				intens.add(lastInt);
+				lastMass=Math.round(s.getMassArray()[i]);
+				lastInt=s.getIntensityArray()[i];
+			}
+		}
+		masses.add(lastMass);
+		intens.add(lastInt);
+		
+		for (int i=0; i<masses.size(); i++) {
+			System.out.println(Math.round(masses.get(i))+"\t"+intens.get(i));
+		}
+		
+		LibraryEntry entry=new LibraryEntry("", new HashSet<>(), s.getPrecursorMZ(), charge, "SDFHLFGPPGKK", 1, 0, 0, masses.toArray(), intens.toArray(), MAIN_PARAMETERS.getAAConstants());
+
+		Charter.launchChart(entry, "Initial", new Dimension(600, 400));
+		AnnotatedLibraryEntry annotatedEntry=new AnnotatedLibraryEntry(entry, PARAMETERS);
+		Charter.launchChart(annotatedEntry, "Annotated", new Dimension(600, 400));
 
 		SparseXCorrSpectrum f=SparseXCorrCalculator.normalize(s, new Range(chargedMz-10.0f, chargedMz+10.0f), false, PARAMETERS);
 		SparseXCorrSpectrum t=SparseXCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", charge, PARAMETERS);
@@ -85,6 +117,7 @@ public class XCorrCalculatorTest extends TestCase {
 		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, f, PARAMETERS), "PP Spectrum", new Dimension(300, 200));
 		t=SparseXCorrCalculator.preprocessSpectrum(t);
 		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, t, PARAMETERS), "PP Model", new Dimension(300, 200));
+		
 	}
 	
 	public void testIndexing() {
