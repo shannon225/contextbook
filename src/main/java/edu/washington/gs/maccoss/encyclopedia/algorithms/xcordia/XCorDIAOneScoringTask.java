@@ -18,7 +18,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.SortLaterXYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -130,7 +131,7 @@ public class XCorDIAOneScoringTask extends AbstractLibraryScoringTask {
 				}
 			}
 
-			XYTrace trace=new XYTrace(rts, primary, GraphType.line, "XCorr");
+			XYTraceInterface trace=new SortLaterXYTrace(rts, primary, GraphType.line, "XCorr");
 			result.setTrace(trace);
 			resultsQueue.add(result);
 		}
