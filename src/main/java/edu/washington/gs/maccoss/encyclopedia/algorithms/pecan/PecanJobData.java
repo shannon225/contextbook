@@ -5,11 +5,13 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AbstractSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 
-public class PecanJobData extends AbstractSearchJobData {
+public class PecanJobData extends QuantitativeSearchJobData {
 	public static final String OUTPUT_FILE_SUFFIX=".pecan.txt";
 	public static final String DECOY_FILE_SUFFIX=".pecan.decoy.txt";
 	public static final String OUTPUT_PROTEIN_FILE_SUFFIX=".pecan.protein.txt";
@@ -21,21 +23,21 @@ public class PecanJobData extends AbstractSearchJobData {
 	private final PecanScoringFactory taskFactory;
 
 	public PecanJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, PecanScoringFactory taskFactory) {
-		super(diaFile, getPercolatorExecutionData(diaFile, fastaFile, taskFactory.getParameters()), taskFactory.getParameters(), taskFactory.getVersion());
-		this.targetList=targetList;
-		this.fastaFile=fastaFile;
-		this.taskFactory=taskFactory;
+		this(targetList, diaFile, fastaFile, getPercolatorExecutionData(diaFile, fastaFile, taskFactory.getParameters()), taskFactory);
 	}
 
 	public PecanJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, File outputFile, PecanScoringFactory taskFactory) {
-		super(diaFile, getPercolatorExecutionData(outputFile, fastaFile, taskFactory.getParameters()), taskFactory.getParameters(), taskFactory.getVersion());
-		this.targetList=targetList;
-		this.fastaFile=fastaFile;
-		this.taskFactory=taskFactory;
+		this(targetList, diaFile, fastaFile, getPercolatorExecutionData(outputFile, fastaFile, taskFactory.getParameters()), taskFactory);
 	}
 
 	public PecanJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, PercolatorExecutionData percolatorFiles, PecanScoringFactory taskFactory) {
-		super(diaFile, percolatorFiles, taskFactory.getParameters(), taskFactory.getVersion());
+		this(targetList, diaFile, null, fastaFile, percolatorFiles, taskFactory);
+	}
+
+	public PecanJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, StripeFileInterface diaFileReader, File fastaFile, PercolatorExecutionData percolatorFiles,
+			PecanScoringFactory taskFactory) {
+		super(diaFile, diaFileReader, percolatorFiles, taskFactory.getParameters(), taskFactory.getVersion());
+
 		this.targetList=targetList;
 		this.fastaFile=fastaFile;
 		this.taskFactory=taskFactory;
@@ -79,5 +81,10 @@ public class PecanJobData extends AbstractSearchJobData {
 			absolutePath=absolutePath.substring(0, absolutePath.length()-OUTPUT_FILE_SUFFIX.length());
 		}
 		return absolutePath;
+	}
+
+	public File getResultLibrary() {
+		String absolutePath = getPrefixFromOutput(getPercolatorFiles().getPeptideOutputFile());
+		return new File(absolutePath + LibraryFile.ELIB);
 	}
 }
