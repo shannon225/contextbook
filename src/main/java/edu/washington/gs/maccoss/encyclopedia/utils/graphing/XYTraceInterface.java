@@ -17,4 +17,5 @@ public interface XYTraceInterface {
 
 	Pair<double[], double[]> toArrays();
 
+	int size();
 }

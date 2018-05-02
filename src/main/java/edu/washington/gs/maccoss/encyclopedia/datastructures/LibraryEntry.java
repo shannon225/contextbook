@@ -171,6 +171,11 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	public Pair<double[], double[]> toArrays() {
 		return new Pair<double[], double[]>(massArray, General.toDoubleArray(intensityArray));
 	}
+	
+	@Override
+	public int size() {
+		return massArray.length;
+	}
 
 	public String getSource() {
 		return source;
