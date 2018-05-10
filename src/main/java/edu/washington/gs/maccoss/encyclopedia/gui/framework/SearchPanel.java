@@ -394,6 +394,15 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(convertTraML);
 		
+		JMenuItem convertELIBtoBLIB=new JMenuItem("Convert Library to BLIB", convertDBIcon);
+		convertELIBtoBLIB.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertELIBtoBLIB(SearchPanel.this);
+			}
+		});
+		convertMenu.add(convertELIBtoBLIB);
+		
 		convertMenu.addSeparator();
 		
 		JMenuItem combineELIB=new JMenuItem("Combine Multiple Libraries", convertDBIcon);

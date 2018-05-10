@@ -15,7 +15,6 @@ import java.util.Optional;
 import java.util.StringTokenizer;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -32,6 +31,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
@@ -46,6 +46,88 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 public class SearchPanelUtilities {
 	private static final ImageIcon convertDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/convertdb.png"));
 	private static final ImageIcon fileAddIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/fileadd.png"));
+	
+	public static void convertELIBtoBLIB(Component root) {
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+		final JDialog dialog=new JDialog(frame, "Convert Library to BLIB", true);
+
+		final FileChooserPanel elibFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".dlib", ".elib"), true, true);
+
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(elibFileChooser);
+		
+		JPanel buttons=new JPanel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JButton okButton=new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+
+				final File elibFile=elibFileChooser.getFile();
+				String absolutePath=elibFile.getAbsolutePath();
+				File blibFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+BlibFile.BLIB);
+				
+				if (elibFile!=null&&elibFile.exists()) {
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library File") {
+						@Override
+						protected Nothing doInBackgroundForReal() throws Exception {
+							LibraryFile library=new LibraryFile();
+							library.openFile(elibFile);
+							final AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+							final ArrayList<LibraryEntry> allEntries=library.getAllEntries(false,  aaConstants);
+							Logger.logLine("Found "+allEntries.size()+" entries from "+elibFile.getName()+". Writing to ["+blibFile.getAbsolutePath()+"]...");
+
+							BlibFile blib=new BlibFile();
+							blib.openFile();
+							blib.setUserFile(blibFile);
+							blib.dropIndices();
+							int[] counterTotals=new int[] {0,0,0};
+							
+							counterTotals=blib.addLibrary(allEntries, library.getName(),aaConstants, "ELIB conversion", counterTotals[0], counterTotals[1], counterTotals[2]);
+
+							blib.createIndices();
+							blib.saveFile();
+							blib.close();
+							library.close();
+							Logger.logLine("Finished reading "+blibFile.getName());
+							return Nothing.NOTHING;
+						}
+						@Override
+						protected void doneForReal(Nothing t) {
+						}
+					};
+					worker.execute();
+					
+				} else {
+					JOptionPane.showMessageDialog(frame, "You must specify an ELIB or DLIB library file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+				}
+			}
+		});
+		buttons.add(okButton);
+		JButton cancelButton=new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+			}
+		});
+		buttons.add(cancelButton);
+		
+		JPanel mainpane=new JPanel(new BorderLayout());
+		mainpane.add(options, BorderLayout.CENTER);
+		mainpane.add(buttons, BorderLayout.SOUTH);
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		
+		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(500, 200);
+		dialog.setVisible(true);
+	}
 	
 	public static void combineELIBs(Component root) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);

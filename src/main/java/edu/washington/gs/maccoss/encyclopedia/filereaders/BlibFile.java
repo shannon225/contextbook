@@ -235,6 +235,13 @@ public class BlibFile extends SQLFile {
 
 	public int[] addLibrary(SearchJobData job, ArrayList<LibraryEntry> entries, int idCounter, int jobCounter, int modCounter) throws IOException, SQLException {
 		String diaFileName=job.getDiaFile().getName();
+		AminoAcidConstants aaConstants=job.getParameters().getAAConstants();
+		String version=job.getVersion();
+		return addLibrary(entries, diaFileName, aaConstants, version, idCounter, jobCounter, modCounter);
+	}
+	
+	public int[] addLibrary(ArrayList<LibraryEntry> entries, String diaFileName, AminoAcidConstants aaConstants, final String version, int idCounter, int jobCounter, int modCounter) throws IOException, SQLException {
+		
 		String spectrumIDPrefix=diaFileName;
 		if (spectrumIDPrefix.indexOf('.')>0) {
 			spectrumIDPrefix=spectrumIDPrefix.substring(0, spectrumIDPrefix.indexOf('.'));
@@ -245,7 +252,6 @@ public class BlibFile extends SQLFile {
 			rootName=rootName.substring(0, rootName.length()-5);
 		}
 		
-		AminoAcidConstants aaConstants=job.getParameters().getAAConstants();
 		modCounter++;
 		
 		Connection c=getConnection(tempFile);
@@ -266,7 +272,7 @@ public class BlibFile extends SQLFile {
 			
 			byte scoreTypeID=1;
 			if (numberOfScores==0) {
-				normalStatement.executeUpdate("insert into ScoreTypes (id, scoreType) VALUES ("+scoreTypeID+",\"Pecan_"+job.getVersion()+"\");");
+				normalStatement.executeUpdate("insert into ScoreTypes (id, scoreType) VALUES ("+scoreTypeID+",\"Pecan_"+version+"\");");
 			}
 			
 			normalStatement.close();

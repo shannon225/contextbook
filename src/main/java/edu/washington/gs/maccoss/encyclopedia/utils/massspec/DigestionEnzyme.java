@@ -30,6 +30,7 @@ public class DigestionEnzyme {
 		enzymes.add(getEnzyme("Lys-C"));
 		enzymes.add(getEnzyme("Lys-N"));
 		enzymes.add(getEnzyme("Arg-C"));
+		enzymes.add(getEnzyme("Glu-C"));
 		enzymes.add(getEnzyme("Chymotrypsin"));
 		enzymes.add(getEnzyme("Pepsin A"));
 		enzymes.add(getEnzyme("Elastase"));
@@ -83,6 +84,14 @@ public class DigestionEnzyme {
 			c.remove('P');
 			
 			return new DigestionEnzyme("Arg-C", "arg-c", n, c);
+			
+		} else if ("Glu-C".equalsIgnoreCase(enzymeName)) {
+			n.add('D');
+			n.add('E');
+			c.addAll(AAs);
+			c.remove('P');
+			
+			return new DigestionEnzyme("Glu-C", "glu-c", n, c);
 			
 		} else if ("Chymotrypsin".equalsIgnoreCase(enzymeName)) {
 			n.add('F');
