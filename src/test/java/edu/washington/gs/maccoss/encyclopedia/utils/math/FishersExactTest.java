@@ -55,6 +55,10 @@ public class FishersExactTest {
 					}
 
 				}
+				
+				@Override
+				public void cleanup() {
+				}
 			};
 
 			BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
@@ -95,6 +99,10 @@ public class FishersExactTest {
 					
 					double pvalue=getFishersExactPvalue(groupTotals[0], groupTotals[1], data[0], data[1]);
 					System.out.println(protein+"\t"+pvalue);
+				}
+				
+				@Override
+				public void cleanup() {
 				}
 			};
 

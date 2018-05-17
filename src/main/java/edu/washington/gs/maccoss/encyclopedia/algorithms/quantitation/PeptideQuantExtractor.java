@@ -206,6 +206,10 @@ public class PeptideQuantExtractor {
 					}
 				}
 			}
+			
+			@Override
+			public void cleanup() {
+			}
 		};
 		
 		TableParser.parseTSV(job.getPercolatorFiles().getInputTSV(), muscle);

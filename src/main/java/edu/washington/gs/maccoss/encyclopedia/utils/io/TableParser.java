@@ -30,6 +30,9 @@ public class TableParser {
 		try {
 			producerThread.join();
 			consumerThread.join();
+			
+			muscle.cleanup();
+			
 		} catch (InterruptedException ie) {
 			Logger.errorLine("TableParser.parseTable("+muscle.getClass().getName()+") reading interrupted!");
 			Logger.errorException(ie);

@@ -476,6 +476,72 @@ public class SearchPanelUtilities {
 		dialog.setVisible(true);
 	}
 	
+	public static void convertOpenSwath(Component root, SearchParameters params) {
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+		final JDialog dialog=new JDialog(frame, "Convert OpenSwath TSV to Library", true);
+		
+		final FileChooserPanel tramlFileChooser=new FileChooserPanel(null, "OpenSwath TSV", new SimpleFilenameFilter(".tsv"), true);
+		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);
+
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(tramlFileChooser);
+		options.add(fastaFileChooser);
+		
+		JPanel buttons=new JPanel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JButton okButton=new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+
+				final File tramlFile=tramlFileChooser.getFile();
+				final File fastaFile=fastaFileChooser.getFile();
+				
+				if (tramlFile!=null&&tramlFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading OpenSwath TSV File") {
+						@Override
+						protected Nothing doInBackgroundForReal() throws Exception {
+							TraMLToLibraryConverter.convertTraML(tramlFile, fastaFile, params.getAAConstants());
+							Logger.logLine("Finished reading "+tramlFile.getName());
+							return Nothing.NOTHING;
+						}
+
+						@Override
+						protected void doneForReal(Nothing t) {
+						}
+					};
+					worker.execute();
+				} else {
+					JOptionPane.showMessageDialog(frame, "You must specify an OpenSwath TSV and a FASTA file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+				}
+			}
+		});
+		buttons.add(okButton);
+		JButton cancelButton=new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+			}
+		});
+		buttons.add(cancelButton);
+		
+		JPanel mainpane=new JPanel(new BorderLayout());
+		mainpane.add(options, BorderLayout.CENTER);
+		mainpane.add(buttons, BorderLayout.SOUTH);
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		
+		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(500, 170);
+		dialog.setVisible(true);
+	}
+	
 	public static void convertTRAML(Component root, SearchParameters params) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		final JDialog dialog=new JDialog(frame, "Convert TraML to Library", true);

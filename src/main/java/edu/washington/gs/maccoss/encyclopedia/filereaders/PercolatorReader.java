@@ -57,6 +57,10 @@ public class PercolatorReader {
 					}
 				}
 			}
+			
+			@Override
+			public void cleanup() {
+			}
 		};
 		
 		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
@@ -102,6 +106,10 @@ public class PercolatorReader {
 						data.add(new PercolatorProteinGroup(proteinIDs.split(PSMData.ACCESSION_TOKEN), peptideIDs.split(" "), qvalue, posteriorErrorProb));
 					}
 				}
+			}
+			
+			@Override
+			public void cleanup() {
 			}
 		};
 		

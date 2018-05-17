@@ -92,6 +92,10 @@ public class FeatureGrapher {
 					}
 				}
 			}
+
+			@Override
+			public void cleanup() {
+			}
 		};
 
 		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();

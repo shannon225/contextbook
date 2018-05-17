@@ -27,7 +27,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class TraMLToLibraryConverter {
 	private static org.apache.log4j.Logger logger=org.apache.log4j.Logger.getLogger(TraMLToLibraryConverter.class);
@@ -146,29 +145,6 @@ public class TraMLToLibraryConverter {
 		}
 	}
 
-	private static class PeptideEntry {
-		private final String peptideModSeq;
-		private final float rt;
-		private final byte charge;
-		private final ArrayList<Peak> peaks;
-
-		public PeptideEntry(String peptideModSeq, byte charge, float rt) {
-			this.peptideModSeq=peptideModSeq;
-			this.charge=charge;
-			this.rt=rt;
-			this.peaks=new ArrayList<>();
-		}
-
-		public void addPeak(Peak peak) {
-			peaks.add(peak);
-		}
-
-		@Override
-		public String toString() {
-			return peptideModSeq+"+"+charge+","+rt+" ("+peaks.size()+"): "+General.toString(peaks);
-		}
-	}
-
 	private static float getRT(PeptideType peptideType) {
 		for (RetentionTimeType rtType : peptideType.getRetentionTimeList().getRetentionTime()) {
 			List<CvParamType> params=rtType.getCvParam();
@@ -184,25 +160,34 @@ public class TraMLToLibraryConverter {
 	}
 
 	private static String getPeptideModSeq(PeptideType peptideType) {
-		String sequence=peptideType.getSequence();
-		String[] aas=new String[sequence.length()];
-		for (int i=0; i<aas.length; i++) {
-			aas[i]=Character.toString(sequence.charAt(i));
-		}
-		List<ModificationType> modTypes=peptideType.getModification();
+		try {
+			String sequence=peptideType.getSequence();
+			String[] aas=new String[sequence.length()];
+			for (int i=0; i<aas.length; i++) {
+				aas[i]=Character.toString(sequence.charAt(i));
+			}
+			List<ModificationType> modTypes=peptideType.getModification();
 
-		for (ModificationType modType : modTypes) {
-			Double modMass=modType.getMonoisotopicMassDelta();
-			int index=modType.getLocation()-1;
-			aas[index]=aas[index]+"["+(modMass>=0?"+":"")+modMass+"]";
-		}
+			for (ModificationType modType : modTypes) {
+				Double modMass=modType.getMonoisotopicMassDelta();
+				int index=modType.getLocation()-1;
+				if (index==aas.length) index=aas.length-1;
+				aas[index]=aas[index]+"["+(modMass>=0?"+":"")+modMass+"]";
+			}
 
-		StringBuilder sb=new StringBuilder();
-		for (int i=0; i<aas.length; i++) {
-			sb.append(aas[i]);
+			StringBuilder sb=new StringBuilder();
+			for (int i=0; i<aas.length; i++) {
+				sb.append(aas[i]);
+			}
+			String peptideModSeq=sb.toString();
+			return peptideModSeq;
+		} catch (Exception e) {
+			Logger.errorLine("TraML parsing error! Trying to parse "+peptideType.getSequence()+", ["+peptideType.getId()+"]. "+peptideType.getModification().size()+" mods:");
+			for (ModificationType modType : peptideType.getModification()) {
+				Logger.errorLine("\t"+modType.getAverageMassDelta()+" (index: "+(modType.getLocation()-1)+")");
+			}
+			throw new EncyclopediaException(e);
 		}
-		String peptideModSeq=sb.toString();
-		return peptideModSeq;
 	}
 
 }

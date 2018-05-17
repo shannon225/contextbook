@@ -165,6 +165,10 @@ public class FreezerExperimentPivotParsingTest {
 				float tic=Float.parseFloat(row.get("tic"));
 				data.put(sample, tic);
 			}
+			
+			@Override
+			public void cleanup() {
+			}
 		};
 		
 		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
@@ -203,6 +207,10 @@ public class FreezerExperimentPivotParsingTest {
 					System.exit(1);
 				}
 			}
+			
+			@Override
+			public void cleanup() {
+			}
 		};
 		
 		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
@@ -233,6 +241,10 @@ public class FreezerExperimentPivotParsingTest {
 			public void processRow(Map<String, String> row) {
 				String peptideModSeq=row.get("PeptideModSeq");
 				data.add(peptideModSeq);
+			}
+			
+			@Override
+			public void cleanup() {
 			}
 		};
 		

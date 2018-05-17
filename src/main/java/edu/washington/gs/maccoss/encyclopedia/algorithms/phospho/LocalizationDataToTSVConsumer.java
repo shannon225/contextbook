@@ -143,6 +143,10 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 					notAnnotated.put(ambigous, Math.max(notAnnotated.get(ambigous), totalIntensity));
 				}
 			}
+			
+			@Override
+			public void cleanup() {
+			}
 		};
 		
 		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();

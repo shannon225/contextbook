@@ -218,6 +218,10 @@ public class XCorrCalculatorTest extends TestCase {
 				float intensity=Float.parseFloat(row.get("intensity"));
 				rts.add(new Peak(mass, intensity));
 			}
+			
+			@Override
+			public void cleanup() {
+			}
 		};
 
 		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();

@@ -88,6 +88,10 @@ public class MedianInterpolatorTest extends TestCase {
 				float actual=Float.parseFloat(row.get("actual"));
 				rts.add(new XYPoint(predicted, actual));
 			}
+			
+			@Override
+			public void cleanup() {
+			}
 		};
 
 		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
@@ -119,6 +123,10 @@ public class MedianInterpolatorTest extends TestCase {
 				float predicted=Float.parseFloat(row.get("predicted"));
 				float actual=Float.parseFloat(row.get("actual"));
 				rts.add(new XYPoint(predicted, actual));
+			}
+			
+			@Override
+			public void cleanup() {
 			}
 		};
 

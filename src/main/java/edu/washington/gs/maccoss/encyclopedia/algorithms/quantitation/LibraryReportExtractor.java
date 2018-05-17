@@ -135,12 +135,16 @@ public class LibraryReportExtractor {
 					}
 
 					// FIXME NEED TO NORMALIZE BY TIC
-					float tic=ticBySourceFileMap.get(sourceFile);
 					float normalizedIntensity;
-					if (tic>0.0f) {
-						normalizedIntensity=totalIntensity/tic*averageTIC;
+					if (cvCalculator.isPresent()) {
+						normalizedIntensity=totalIntensity*cvCalculator.get().getReplicateNormalizationFactor(sourceFile, ticBySourceFileMap);
 					} else {
-						normalizedIntensity=totalIntensity;
+						float tic=ticBySourceFileMap.get(sourceFile);
+						if (tic>0.0f) {
+							normalizedIntensity=totalIntensity/tic*averageTIC;
+						} else {
+							normalizedIntensity=totalIntensity;
+						}
 					}
 					
 					Pair<String, float[]> pair=intensitiesByPeptideModSeq.get(peptideModSeq);

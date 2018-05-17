@@ -190,6 +190,10 @@ public class PerspectiveElibParser {
 					measurements.y.add(intensity);
 				}
 			}
+			
+			@Override
+			public void cleanup() {
+			}
 		});
 		return data;
 	}
@@ -216,6 +220,10 @@ public class PerspectiveElibParser {
 				} else {
 					measurements.y.add(intensity);
 				}
+			}
+			
+			@Override
+			public void cleanup() {
 			}
 		});
 		return data;
