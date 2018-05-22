@@ -376,7 +376,7 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(convertBLIB);
 
-		JMenuItem convertMSP=new JMenuItem("Convert MSP to Library", convertDBIcon);
+		JMenuItem convertMSP=new JMenuItem("Convert SPTXT/MSP to Library", convertDBIcon);
 		convertMSP.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {

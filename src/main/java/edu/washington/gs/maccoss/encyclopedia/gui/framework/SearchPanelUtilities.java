@@ -412,9 +412,9 @@ public class SearchPanelUtilities {
 	
 	public static void convertMSP(Component root, SearchParameters params) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
-		final JDialog dialog=new JDialog(frame, "Convert NIST MSP to Library", true);
+		final JDialog dialog=new JDialog(frame, "Convert NIST SPTXT/MSP to Library", true);
 		
-		final FileChooserPanel mspFileChooser=new FileChooserPanel(null, "MSP", new SimpleFilenameFilter(".msp"), true);
+		final FileChooserPanel mspFileChooser=new FileChooserPanel(null, "SPTXT/MSP", new SimpleFilenameFilter(".msp", ".sptxt"), true);
 		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);
 
 		JPanel options=new JPanel();
@@ -435,7 +435,7 @@ public class SearchPanelUtilities {
 				final File fastaFile=fastaFileChooser.getFile();
 				
 				if (mspFile!=null&&mspFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
-					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading MSP File") {
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading SPTXT/MSP File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
 							MSPReader.convertMSP(mspFile, fastaFile);
@@ -449,7 +449,7 @@ public class SearchPanelUtilities {
 					};
 					worker.execute();
 				} else {
-					JOptionPane.showMessageDialog(frame, "You must specify a MSP and a FASTA file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+					JOptionPane.showMessageDialog(frame, "You must specify a SPTXT/MSP and a FASTA file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
 				}
 			}
 		});
