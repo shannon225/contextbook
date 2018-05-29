@@ -137,30 +137,30 @@ public class SearchPanel extends JPanel {
 			}
 		}
 		if (ProgramType.Global==program||ProgramType.PecanPie==program) {
+			PecanParametersPanel pecan=new PecanParametersPanel(this);
 			try {
-				PecanParametersPanel pecan=new PecanParametersPanel(this);
 				HashMap<String, String> map=PecanSearchParameters.readPreferences();
 				PecanSearchParameters parseParameters=PecanParameterParser.parseParameters(map);
 				pecan.setParameters(parseParameters, map.get(Pecanpie.BACKGROUND_FASTA_TAG), map.get(Pecanpie.TARGET_FASTA_TAG));
-				optionsTabs.addTab(pecan.getProgramName(), pecan.getSmallImage(), pecan, pecan.getProgramShortDescription());
 				
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
 				Logger.errorException(e);
 			}
+			optionsTabs.addTab(pecan.getProgramName(), pecan.getSmallImage(), pecan, pecan.getProgramShortDescription());
 		}
 		if (ProgramType.Global==program||ProgramType.XCorDIA==program) {
+			XCorDIAParametersPanel xcordia=new XCorDIAParametersPanel(this);
 			try {
-				XCorDIAParametersPanel xcordia=new XCorDIAParametersPanel(this);
 				HashMap<String, String> map=XCordiaSearchParameters.readPreferences();
 				XCordiaSearchParameters xcordiaParameters=XCordiaSearchParameters.convertFromPecan(PecanParameterParser.parseParameters(map));
 				xcordia.setParameters(xcordiaParameters, map.get(Pecanpie.BACKGROUND_FASTA_TAG), map.get(Pecanpie.TARGET_FASTA_TAG));
-				optionsTabs.addTab(xcordia.getProgramName(), xcordia.getSmallImage(), xcordia, xcordia.getProgramShortDescription());
 				
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
 				Logger.errorException(e);
 			}
+			optionsTabs.addTab(xcordia.getProgramName(), xcordia.getSmallImage(), xcordia, xcordia.getProgramShortDescription());
 		}
 
 		LogConsole console=new LogConsole();

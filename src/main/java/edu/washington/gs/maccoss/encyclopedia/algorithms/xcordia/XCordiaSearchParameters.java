@@ -51,10 +51,10 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minQuantitativeIonNumber, quantifyAcrossSamples);
 	}
 
-	public XCordiaSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme, int percolatorVersionNumber,
+	public XCordiaSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme, int percolatorVersionNumber, float percolatorThresholdValue,
 			int maxMissedCleavages, byte minCharge, byte maxCharge, DataAcquisitionType dataAcquisitionType, float precursorWindowSize, int numberOfJobs, int numberOfQuantitativePeaks, int minNumOfQuantitativeIons, int minQuantitativeIonNumber, 
 			float numberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples) {
-		super(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorVersionNumber, maxMissedCleavages, minCharge, maxCharge, dataAcquisitionType, precursorWindowSize, numberOfJobs, numberOfQuantitativePeaks, minNumOfQuantitativeIons, minQuantitativeIonNumber,
+		super(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorVersionNumber, percolatorThresholdValue, maxMissedCleavages, minCharge, maxCharge, dataAcquisitionType, precursorWindowSize, numberOfJobs, numberOfQuantitativePeaks, minNumOfQuantitativeIons, minQuantitativeIonNumber,
 				numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples);
 	}
 	

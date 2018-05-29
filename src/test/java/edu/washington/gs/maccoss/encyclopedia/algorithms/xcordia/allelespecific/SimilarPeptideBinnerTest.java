@@ -57,6 +57,7 @@ public class SimilarPeptideBinnerTest extends TestCase {
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(defaults);
 		
 		System.out.println("Reading raw file...");
+		//File diaFile=new File("/Users/searleb/Documents/backup/xcordia_manuscript/xcordia_5p/20141121_27_1_DIA_1.dia");
 		File diaFile=new File("/Users/searleb/Documents/xcordia_manuscript/demux/20141121_3_4_DIA_1.dia");
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 		
@@ -100,7 +101,7 @@ public class SimilarPeptideBinnerTest extends TestCase {
 			ArrayList<ArrayList<FastaPeptideEntry>> bins=binner.binPeptides(peptides);
 
 			for (ArrayList<FastaPeptideEntry> bin : bins) {
-				boolean keepWorking=false;
+				boolean keepWorking=true;
 				for (FastaPeptideEntry peptide : bin) {
 					if (peptide.getAccessions().contains("nxp:NX_P0DJI8-1")) {
 						keepWorking=true;
@@ -136,17 +137,19 @@ public class SimilarPeptideBinnerTest extends TestCase {
 					
 					System.out.println(peptideModSeq+"("+targetIons.length+")\trt:"+(rtInSeconds/60.0f)+"\tlocalized:"+data.isLocalized()+"(score:"+data.getLocalizationScore()+")");
 					
-					if (data.isLocalized()) {
+					//if (data.isLocalized()) {
 						localized.add(data);
 						if (rtInSeconds>maxRT) maxRT=rtInSeconds;
 						if (rtInSeconds<minRT) minRT=rtInSeconds;
-					}
+					//}
 				}
 				HashMap<String, ChartPanel> panels=new HashMap<>();
+				boolean anyLocalized=false;
 				for (ModificationLocalizationData data : localized) {
+					if (data.isLocalized()) anyLocalized=true;
+					String peptideModSeq=data.getLocalizationPeptideModSeq().getPeptideModSeq();
 					for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
-						String peptideModSeq=data.getLocalizationPeptideModSeq().getPeptideModSeq();
-						
+
 						double mz=parameters.getAAConstants().getChargedMass(peptideModSeq, charge);
 						if (range.contains((float)mz)) {
 							FastaPeptideEntry fastaPeptideEntry = entryBySequence.get(peptideModSeq);
@@ -174,11 +177,13 @@ public class SimilarPeptideBinnerTest extends TestCase {
 						}
 					}
 				}
-				if (bin.size()>1&&panels.size()>0) {
+				if (anyLocalized&&bin.size()>1&&panels.size()>0) {
+					System.out.println("Plotting "+bin.get(0).getSequence());
 					Charter.launchCharts(bin.get(0).getSequence(), panels);
 				}
 			}
 		}
+		System.out.println("Finished!");
 	}
 	
 	public void testBinner() {
