@@ -136,6 +136,22 @@ public class PecanSearchParameters extends SearchParameters {
 		this.beta=beta;
 	}
 	
+	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme, int percolatorVersionNumber, float percolatorThreshold,
+			int maxMissedCleavages, byte minCharge, byte maxCharge, DataAcquisitionType dataAcquisitionType, float precursorWindowSize, int numberOfJobs, int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int minQuantitativeIonNumber, float numberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples) {
+		super(aaConstants, fragType, precursorTolerance, 0.0, 0.0, fragmentTolerance, 0.0, fragmentTolerance, enzyme, percolatorThreshold, percolatorThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfJobs, 24f, -1f, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minQuantitativeIonNumber, Optional.ofNullable((PeptideModification)null), ScoringBreadthType.ENTIRE_RT_WINDOW, numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples);
+		minPeptideLength=5;
+		maxPeptideLength=100;
+		this.maxMissedCleavages=maxMissedCleavages;
+		this.minCharge=minCharge;
+		this.maxCharge=maxCharge;
+		minEluteTime=12;
+		numberOfReportedPeaks=1;
+		addDecoysToBackgound=false;
+		dontRunDecoys=false;
+		alpha=1.8f;
+		beta=0.4f;
+	}
+	
 	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme, int percolatorVersionNumber,
 			int maxMissedCleavages, byte minCharge, byte maxCharge, DataAcquisitionType dataAcquisitionType, float precursorWindowSize, int numberOfJobs, int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int minQuantitativeIonNumber, float numberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples) {
 		super(aaConstants, fragType, precursorTolerance, 0.0, 0.0, fragmentTolerance, 0.0, fragmentTolerance, enzyme, 0.01f, 0.01f, percolatorVersionNumber, dataAcquisitionType, numberOfJobs, 24f, -1f, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minQuantitativeIonNumber, Optional.ofNullable((PeptideModification)null), ScoringBreadthType.ENTIRE_RT_WINDOW, numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples);

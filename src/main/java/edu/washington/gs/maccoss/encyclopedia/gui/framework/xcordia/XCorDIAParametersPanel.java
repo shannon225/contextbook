@@ -84,6 +84,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
 	private final SpinnerModel minQuantitativeIonNumber=new SpinnerNumberModel(3, 0, 100, 1);
+	private final SpinnerModel percolatorThreshold=new SpinnerNumberModel(0.01, 0.001, 0.1, 0.001);
 	
 	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
 
@@ -132,6 +133,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 				
 		options.add(new LabeledComponent("Maximum Missed Cleavage", new JSpinner(maxMissedCleavage)));
 		options.add(new LabeledComponent("Percolator Version", percolatorVersion));
+		options.add(new LabeledComponent("Percolator FDR threshold", new JSpinner(percolatorThreshold)));
 		options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
 		options.add(new LabeledComponent("Minimum Number of Quantitative Ions", new JSpinner(minNumOfQuantitativeIons)));
 		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
@@ -260,8 +262,9 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		ModificationMassMap variableMods=new ModificationMassMap(VARIABLE_MODIFICATION_VALUES[((Integer)variable.getSelectedIndex())]);
 		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem(), variableMods);
 		boolean isPercolatorTwo=PercolatorExecutor.V2_10.equals(percolatorVersion.getSelectedItem());
+		float percolatorThresholdValue=((Number)percolatorThreshold.getValue()).floatValue();
 		
-		XCordiaSearchParameters parameters=new XCordiaSearchParameters(aaConstants, fragmentation, precursorPPMValue, fragmentPPMValue, digestionEnzyme, isPercolatorTwo?2:3,
+		XCordiaSearchParameters parameters=new XCordiaSearchParameters(aaConstants, fragmentation, precursorPPMValue, fragmentPPMValue, digestionEnzyme, isPercolatorTwo?2:3, percolatorThresholdValue,
 				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, numberOfExtraDecoyLibrariesValue, searchPanel.isAlignedBetweenFiles());
 		return parameters;
 	}
@@ -322,6 +325,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		numberOfQuantitativeIons.setValue(params.getNumberOfQuantitativePeaks());
 		minNumOfQuantitativeIons.setValue(params.getMinNumOfQuantitativePeaks());
 		percolatorVersion.setSelectedIndex(params.getPercolatorVersionNumber()==2?1:0);
+		percolatorThreshold.setValue(params.getPercolatorThreshold());
 	}
 	
 	@Override
