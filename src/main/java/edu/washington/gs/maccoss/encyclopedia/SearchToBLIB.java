@@ -38,6 +38,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
@@ -518,7 +519,21 @@ public class SearchToBLIB {
 						});
 			}
 			
-			elib.addMetadata(parameters.toParameterMap());
+			HashMap<String, String> parameterMap=parameters.toParameterMap();
+			for (int i=0; i<pecanJobs.size(); i++) {
+				SearchJobData job=pecanJobs.get(i);
+				parameterMap.put(job.getDiaFile().getName()+" search type", job.getSearchType());
+				if (job instanceof EncyclopediaJobData) {
+					parameterMap.put(job.getDiaFile().getName()+" library", ((EncyclopediaJobData)job).getLibrary().getName());
+				} else if (job instanceof PecanJobData) {
+					parameterMap.put(job.getDiaFile().getName()+" fasta", ((PecanJobData)job).getFastaFile().getName());
+					parameterMap.put(job.getDiaFile().getName()+" used narrow target list", Boolean.toString(((PecanJobData)job).getTargetList().isPresent()));
+				} else if (job instanceof XCorDIAJobData) {
+					parameterMap.put(job.getDiaFile().getName()+" fasta", ((XCorDIAJobData)job).getFastaFile().getName());
+					parameterMap.put(job.getDiaFile().getName()+" used narrow target list", Boolean.toString(((XCorDIAJobData)job).getTargetList().isPresent()));
+				}
+			}
+			elib.addMetadata(parameterMap);
 			elib.setSources(pecanJobs);
 
 			elib.createIndices();

@@ -2,8 +2,8 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.util.ArrayList;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.AbstractRetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -38,7 +38,7 @@ public class PeptideScoringResult {
 			float[] scores=pair.y;
 			float actualRT=stripe.getScanStartTime()/60f;
 			float modelRT=entry.getRetentionTime()/60f;
-			boolean passes=filter.getProbabilityFitsModel(actualRT, modelRT)>=RetentionTimeFilter.rejectionPValue;
+			boolean passes=filter.getProbabilityFitsModel(actualRT, modelRT)>=AbstractRetentionTimeFilter.rejectionPValue;
 			if (passes) {
 				float deltaRT=Math.abs(actualRT-filter.getYValue(modelRT));
 				float[] scoresWithRT=General.concatenate(scores, deltaRT);

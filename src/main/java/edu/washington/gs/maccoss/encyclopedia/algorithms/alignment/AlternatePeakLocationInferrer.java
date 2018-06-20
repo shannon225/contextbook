@@ -94,7 +94,7 @@ public class AlternatePeakLocationInferrer {
 					Logger.errorLine("Not enough points ("+points.size()+" out of align:"+rtInSec.size()+" and best:"+bestRTInSec.size()+") to compute regression between samples, still trying anyways.");
 				}
 				
-				RetentionTimeAlignmentInterface alignment=new RetentionTimeFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
+				RetentionTimeAlignmentInterface alignment=RetentionTimeFilter.getFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
 				alignmentMap.put(job, alignment);
 
 				File saveFileSeed = new File(job.getPercolatorFiles().getPeptideOutputFile().getParentFile(), job.getDiaFile().getName());

@@ -371,7 +371,7 @@ public class Encyclopedia {
 		}
 		ArrayList<XYPoint> rts=new ArrayList<XYPoint>(rtSet);
 		Logger.logLine("Generating retention time mapping using "+rts.size()+" points...");
-		RetentionTimeAlignmentInterface filter=new RetentionTimeFilter(rts);
+		RetentionTimeAlignmentInterface filter=RetentionTimeFilter.getFilter(rts);
 		
 		final String passTag=finalPass?".final":".first";
 		filter.plot(rts, Optional.ofNullable(new File(job.getPercolatorFiles().getPeptideOutputFile().getAbsolutePath()+passTag)));

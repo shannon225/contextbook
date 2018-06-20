@@ -165,7 +165,7 @@ public class Charter {
 	}
 
 	public static void launchChart(String xAxis, String yAxis, boolean displayLegend, XYTraceInterface... traces) {
-		launchComponent(getChart(xAxis, yAxis, displayLegend, traces), xAxis, new Dimension(792, 612));
+		launchComponent(getChart(xAxis, yAxis, displayLegend, traces), xAxis, new Dimension(600, 500));
 	}
 
 	public static void launchChart(String xAxis, String yAxis, boolean displayLegend, XYZTrace dataset) {

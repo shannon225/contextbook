@@ -94,7 +94,7 @@ public class PeakLocationInferrer {
 					Logger.errorLine("Not enough points ("+points.size()+" out of align:"+peptides.size()+" and best:"+rtsBySequence.size()+") to compute regression between samples, still trying anyways.");
 				}
 				
-				RetentionTimeAlignmentInterface alignment=new RetentionTimeFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
+				RetentionTimeAlignmentInterface alignment=RetentionTimeFilter.getFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
 				alignmentMap.put(job, alignment);
 				if (job instanceof QuantitativeSearchJobData) {
 					// try reading encyclopedia data directly from results library

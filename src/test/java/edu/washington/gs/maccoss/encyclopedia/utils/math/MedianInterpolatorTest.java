@@ -29,7 +29,7 @@ public class MedianInterpolatorTest extends TestCase {
 		//rts=getSyntheticData();
 		rts=getPhosphoData();
 		//rts=getCleanData();
-		RetentionTimeAlignmentInterface filter=new RetentionTimeFilter(rts);
+		RetentionTimeAlignmentInterface filter=RetentionTimeFilter.getFilter(rts);
 		TwoDimensionalKDE kde=new TwoDimensionalKDE(rts);
 		
 		Charter3d.plot(kde, kde.getXRange(), kde.getYRange(), kde.getResolution()/5);
@@ -75,7 +75,7 @@ public class MedianInterpolatorTest extends TestCase {
 		return getData(is);
 	}
 
-	public static ArrayList<XYPoint> getData(File f) {
+	public static ArrayList<XYPoint> getData(File f, float multiplier) {
 		final ArrayList<XYPoint> rts=new ArrayList<XYPoint>();
 
 		TableParserMuscle muscle=new TableParserMuscle() {
@@ -83,7 +83,7 @@ public class MedianInterpolatorTest extends TestCase {
 			public void processRow(Map<String, String> row) {
 				String s=row.get("predicted");
 				if (s==null) s=row.get("library");
-				float predicted=Float.parseFloat(s);//*60f;
+				float predicted=Float.parseFloat(s)*multiplier;
 				if (predicted>110) return;
 				float actual=Float.parseFloat(row.get("actual"));
 				rts.add(new XYPoint(predicted, actual));
