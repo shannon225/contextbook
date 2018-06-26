@@ -51,7 +51,7 @@ public class CASiLSearchParameters extends SearchParameters {
 			int minNumOfQuantitativePeaks, float minIntensity, PeptideModification modification, ScoringBreadthType searchType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons) {
 		super(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorProteinThreshold,
 				percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks,
-				minIntensity, Optional.of(modification), searchType, getNumberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons);
+				minIntensity, Optional.of(modification), searchType, getNumberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons, -1.0f);
 	}
 
 	public static CASiLSearchParameters convertFromEncyclopeDIA(SearchParameters params) {

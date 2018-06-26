@@ -8,6 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearRegression;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RTProbabilityModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ProphetMixtureModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Gaussian;
@@ -20,7 +21,7 @@ public class RetentionTimeFilter extends AbstractRetentionTimeFilter {
 	}
 	public static RetentionTimeFilter getFilter(ArrayList<XYPoint> rts, String xAxis, String yAxis) {
 		Function rtWarper;
-		Optional<ProphetMixtureModel> model;
+		Optional<RTProbabilityModel> model;
 		if (rts.size()>20) {
 			Logger.logLine("Enough data points ("+rts.size()+") to perform KDE alignment.");
 			TwoDimensionalKDE twoDimKDE=new TwoDimensionalKDE(rts);
@@ -40,7 +41,7 @@ public class RetentionTimeFilter extends AbstractRetentionTimeFilter {
 		return new RetentionTimeFilter(rtWarper, model, xAxis, yAxis);
 	}
 	
-	private RetentionTimeFilter(Function rtWarper, Optional<ProphetMixtureModel> model, String xAxis, String yAxis) {
+	private RetentionTimeFilter(Function rtWarper, Optional<RTProbabilityModel> model, String xAxis, String yAxis) {
 		super(rtWarper, model, xAxis, yAxis);
 	}
 

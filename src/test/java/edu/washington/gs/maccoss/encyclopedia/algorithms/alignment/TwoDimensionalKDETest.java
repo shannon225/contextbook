@@ -28,8 +28,10 @@ public class TwoDimensionalKDETest {
 		File f=new File("/Users/searleb/Documents/chromatogram_library_manuscript/hela_window_size/2018may14_hela_window_size_test_BCS_hela_wide_400_1200_1.mzML.encyclopedia.txt.first.rt_fit.txt");
 		rts=MedianInterpolatorTest.getData(f, 1f);
 		
-		RetentionTimeAlignmentInterface filter=RetentionTimeFilter.getFilter(rts);
+		RetentionTimeFilter filter=RetentionTimeFilter.getFilter(rts);
 		filter.plot(rts, Optional.ofNullable((File)null));
+		
+		RTFitMixtureModel model=new RTFitMixtureModel(rts, filter.getRtWarper());
 		
 		//filter=BrudererRetentionTimeFilter.getFilter(rts);
 		//filter.plot(rts, Optional.ofNullable((File)null));

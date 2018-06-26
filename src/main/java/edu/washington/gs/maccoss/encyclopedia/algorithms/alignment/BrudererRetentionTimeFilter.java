@@ -7,7 +7,7 @@ import java.util.Optional;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearInterpolatedFunction;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.ProphetMixtureModel;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RTProbabilityModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedianDouble;
 import gnu.trove.list.array.TDoubleArrayList;
 
@@ -38,11 +38,11 @@ public class BrudererRetentionTimeFilter extends AbstractRetentionTimeFilter {
 		
 		Function rtWarper=new LinearInterpolatedFunction(smoothedRTs);
 		
-		Optional<ProphetMixtureModel> model=Optional.empty();
+		Optional<RTProbabilityModel> model=Optional.empty();
 		return new BrudererRetentionTimeFilter(rtWarper, model, xAxis, yAxis);
 	}
 
-	private BrudererRetentionTimeFilter(Function rtWarper, Optional<ProphetMixtureModel> model, String xAxis, String yAxis) {
+	private BrudererRetentionTimeFilter(Function rtWarper, Optional<RTProbabilityModel> model, String xAxis, String yAxis) {
 		super(rtWarper, model, xAxis, yAxis);
 	}
 

@@ -97,7 +97,8 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 			return detectedRTInSec;
 		} else {
 			float warpedRTInMin=f.getYValue(alignedRTInMin);
-			float prob=f.getProbabilityFitsModel(detectedRTInSec/60f-warpedRTInMin);
+			final float actualRT=detectedRTInSec/60f;
+			float prob=f.getProbabilityFitsModel(actualRT, actualRT-warpedRTInMin);
 			if (prob>RT_OUTLIER_REJECTION_PROBABILITY) {
 				return detectedRTInSec;
 			} else {

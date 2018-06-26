@@ -44,10 +44,11 @@ public class SearchParameters {
 	protected final Optional<PeptideModification> localizingModification; 
 	protected final boolean quantifyAcrossSamples;
 	protected final boolean verifyModificationIons;
+	protected final float rtWindowInMin;
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, float percolatorProteinThreshold, Integer percolatorVersionNumber, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
-			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons) {
+			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -73,6 +74,7 @@ public class SearchParameters {
 		this.numberOfExtraDecoyLibrariesSearched=getNumberOfExtraDecoyLibrariesSearched;
 		this.quantifyAcrossSamples=quantifyAcrossSamples;
 		this.verifyModificationIons=verifyModificationIons;
+		this.rtWindowInMin=rtWindowInMin;
 	}
 	
 	public void savePreferences(File libraryFile, File fastaFile) throws IOException,BackingStoreException {
@@ -129,6 +131,7 @@ public class SearchParameters {
 		} else {
 			sb.append(" -localizationModification "+PeptideModification.NO_MODIFICATION_NAME+"\n");
 		}
+		sb.append(" -rtWindowInMin "+rtWindowInMin+"\n");
 		return sb.toString();
 	}
 	
@@ -161,6 +164,7 @@ public class SearchParameters {
 		} else {
 			map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
 		}
+		map.put("-rtWindowInMin", rtWindowInMin+"");
 		return map;
 	}
 	
@@ -285,5 +289,8 @@ public class SearchParameters {
 	}
 	public boolean isVerifyModificationIons() {
 		return verifyModificationIons;
+	}
+	public float getRtWindowInMin() {
+		return rtWindowInMin;
 	}
 }

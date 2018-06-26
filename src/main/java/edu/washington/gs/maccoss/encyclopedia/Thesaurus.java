@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -54,6 +55,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.FileLogRecorder;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
@@ -317,7 +319,11 @@ public class Thesaurus {
 		progress.update("Organizing results", (1.0f+rangesFinished)/numberOfTasks);
 	
 		Logger.logLine("Running Percolator...");
-		ArrayList<PercolatorPeptide> passingPeptides=Encyclopedia.percolatePeptides(progress, job, stripefile, saveResultsConsumer);
+		Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface> percolatorResults=Encyclopedia.percolatePeptides(progress, job, stripefile, saveResultsConsumer);
+		if (parameters.getScoringBreadthType().runRecalibration()) {
+			percolatorResults=Encyclopedia.repercolatePeptides(progress, job, stripefile, saveResultsConsumer, percolatorResults.y);
+		}
+		ArrayList<PercolatorPeptide> passingPeptides=percolatorResults.x;
 
 		localizationConsumer.close();
 		

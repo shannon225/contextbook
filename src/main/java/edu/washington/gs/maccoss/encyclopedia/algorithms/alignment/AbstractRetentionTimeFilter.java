@@ -23,8 +23,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.ProphetMixtureModel;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RTProbabilityModel;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterface {
@@ -34,24 +35,30 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 	public static final float maxDeltaForHistogram=10.0f;
 	public static final float rejectionPValue=0.05f;
 	protected final Function rtWarper;
-	protected final Optional<ProphetMixtureModel> model;
+	protected final Optional<RTProbabilityModel> model;
 	protected final String xAxis;
 	protected final String yAxis;
 	
-	AbstractRetentionTimeFilter(Function rtWarper, Optional<ProphetMixtureModel> model, String xAxis, String yAxis) {
+	AbstractRetentionTimeFilter(Function rtWarper, Optional<RTProbabilityModel> model, String xAxis, String yAxis) {
 		this.rtWarper=rtWarper;
 		this.model=model;
 		this.xAxis=xAxis;
 		this.yAxis=yAxis;
 	}
+	
+	public Function getRtWarper() {
+		return rtWarper;
+	}
 
 	@Override
 	public List<AlignmentDataPoint> plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed) {
+		TFloatArrayList rtValues=new TFloatArrayList();
 		TFloatArrayList deltas=new TFloatArrayList();
 		ArrayList<XYPoint> removedRTs=new ArrayList<XYPoint>();
 		ArrayList<XYPoint> selectedRTs=new ArrayList<XYPoint>();
 		for (int i=0; i<rts.size(); i++) {
 			XYPoint xyPoint=rts.get(i);
+			rtValues.add((float)xyPoint.y);
 			float delta=getDelta((float)xyPoint.y, (float)xyPoint.x);
 			
 			if (delta>-maxDeltaForHistogram&&delta<maxDeltaForHistogram) {
@@ -65,6 +72,7 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 				removedRTs.add(xyPoint);
 			}
 		}
+		float midRT=General.mean(rtValues.toArray());
 		float[] deltaArray=deltas.toArray();
 		if (deltaArray.length==0) {
 			Logger.errorLine("Sorry, not enough points to plot RT alignment");
@@ -76,12 +84,12 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 		//float[] truncatedDeltaArray=new float[max-min];
 		//System.arraycopy(deltaArray, min, truncatedDeltaArray, 0, max-min);
 		
+		// build histogram
 		ArrayList<XYPoint> histogram=PivotTableGenerator.createPivotTable(deltaArray);
 		ArrayList<XYPoint> posHist=new ArrayList<XYPoint>();
 		ArrayList<XYPoint> negHist=new ArrayList<XYPoint>();
-		
 		for (XYPoint xyPoint : histogram) {
-			float prob=getProbabilityFitsModel((float)xyPoint.x);
+			float prob=getProbabilityFitsModel(midRT, (float)xyPoint.x);
 			if (prob>=rejectionPValue) {
 				posHist.add(xyPoint);
 				negHist.add(new XYPoint(xyPoint.x, 0.0));
@@ -92,23 +100,20 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 	
 		XYTraceInterface histTrace=new XYTrace(negHist, GraphType.area, "Delta RT", Color.red, 3.0f);
 		XYTraceInterface posHistTrace=new XYTrace(posHist, GraphType.area, "Delta RT", Color.blue, 3.0f);
-		
 		ArrayList<XYPoint> positivePoints=new ArrayList<XYPoint>();
-		
 		int numPoints=500;
 		double range=deltaArray[max]-deltaArray[min];
 		for (int i=0; i<numPoints; i++) {
 			double x=deltaArray[min]+i*range/numPoints;
 			if (model.isPresent()){
-				positivePoints.add(new XYPoint(x, model.get().getPositive().getProbability(x)));
+				positivePoints.add(new XYPoint(x, getProbabilityFitsModel(midRT, (float)x)));
 			}
 		}
-	
+		
 		double histSum=0.0;
 		for (XYPoint xyPoint : histogram) {
 			histSum+=xyPoint.getY();
 		}
-		
 		double distSum=0;
 		for (XYPoint xyPoint : positivePoints) {
 			distSum+=xyPoint.getY();
@@ -190,7 +195,7 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 	public float getProbabilityFitsModel(float actualRT, float modelRT) {
 		float delta=getDelta(actualRT, modelRT);
 		
-		return getProbabilityFitsModel(delta);
+		return getProbability(actualRT, delta);
 	}
 
 	private float getDelta(float actualRT, float modelRT) {
@@ -203,10 +208,9 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 		}
 	}
 
-	@Override
-	public float getProbabilityFitsModel(float delta) {
+	public float getProbability(float actualRT, float delta) {
 		if (model.isPresent()) {
-			return model.get().getProbability(delta);
+			return model.get().getProbability(actualRT, delta);
 		} else {
 			return 1f;
 		}

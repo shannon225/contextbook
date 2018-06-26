@@ -56,6 +56,7 @@ public class SearchParameterParser {
 		map.put("-minQuantitativeIonNumber", "3");
 		map.put("-verifyModificationIons", "true");
 		map.put("-minIntensity", "-1.0");
+		map.put("-rtWindowInMin", "-1.0");
 		return map;
 	}
 	
@@ -120,6 +121,7 @@ public class SearchParameterParser {
 		final ScoringBreadthType breadthType;
 		final boolean quantifyAcrossSamples;
 		final boolean verifyModificationIons;
+		final float rtWindowInMin;
 		
 		String value=parameters.get("-frag");
 		if (value==null) {
@@ -253,6 +255,7 @@ public class SearchParameterParser {
 		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 5);
 		minNumOfQuantitativePeaks=SearchParameterParser.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
 		minIntensity=SearchParameterParser.getFloat("-minIntensity", parameters, 3);
+		rtWindowInMin=SearchParameterParser.getFloat("-rtWindowInMin", parameters, -1f);
 		
 		percolatorVersionNumber=SearchParameterParser.getInteger("-percolatorVersionNumber", parameters, 3);
 		
@@ -307,7 +310,7 @@ public class SearchParameterParser {
 		verifyModificationIons=SearchParameterParser.getBoolean("-verifyModificationIons", parameters, true);
 		
 		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorProteinThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
-				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, localizationModification, breadthType, numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons);
+				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, localizationModification, breadthType, numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons, rtWindowInMin);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {
