@@ -69,7 +69,7 @@ public class SimilarPeptideBinnerTest extends TestCase {
 		Collections.sort(ranges);
 
 		System.out.println("Reading peff fasta file...");
-		File peffFile=new File("/Users/searleb/Documents/xcordia_manuscript/amyloid_protein.peff");
+		File peffFile=new File("/Users/searleb/Documents/xcordia_manuscript/LCM_identified_protein.peff");
 		InputStream is=new FileInputStream(peffFile);
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), peffFile.getName(), null, true);
 		
