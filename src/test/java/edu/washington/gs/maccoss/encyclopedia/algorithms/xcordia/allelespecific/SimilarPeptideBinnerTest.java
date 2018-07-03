@@ -125,8 +125,8 @@ public class SimilarPeptideBinnerTest extends TestCase {
 						}
 					}
 				}
-				
-				VariantXcorDIAOneScoringTask task=new VariantXcorDIAOneScoringTask(scorer, background, tasks, xcorStripes, dutyCycle, precursors, resultsQueue, localizationQueue, parameters);
+
+				VariantXcorDIAOneScoringTask task=new VariantXcorDIAOneScoringTask(scorer, background, tasks, xcorStripes, range, dutyCycle, precursors, resultsQueue, localizationQueue, parameters);
 				task.call();
 				
 				ArrayList<ModificationLocalizationData> localized=new ArrayList<>();

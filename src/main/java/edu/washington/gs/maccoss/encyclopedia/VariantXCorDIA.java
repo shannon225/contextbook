@@ -24,6 +24,7 @@ import java.util.zip.DataFormatException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
@@ -417,7 +418,7 @@ public class VariantXCorDIA {
 						}
 					}
 				}
-				executor.submit(jobData.getTaskFactory().getScoringTask(xcordiaScorer, tasks, stripes, dutyCycle, precursors, resultsQueue));
+				executor.submit(jobData.getTaskFactory().getScoringTask(xcordiaScorer, tasks, stripes, range, dutyCycle, precursors, resultsQueue));
 			}
 			executor.shutdown();
 			while (!executor.isTerminated()) {
