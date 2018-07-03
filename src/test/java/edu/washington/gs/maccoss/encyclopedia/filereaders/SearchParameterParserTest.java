@@ -12,7 +12,7 @@ public class SearchParameterParserTest extends TestCase {
 		PecanSearchParameters params=PecanParameterParser.parseParameters(input);
 
 		assertEquals(160.0306485, params.getAAConstants().getMass('C')+params.getAAConstants().getFixedMods().get('C'), 0.000001);
-		assertEquals(FragmentationType.YONLY, params.getFragType());
+		assertEquals(FragmentationType.HCD, params.getFragType());
 		assertEquals(10.0, params.getPrecursorTolerance().getPpmTolerance(), 0.0000001);
 		assertEquals(10.0, params.getFragmentTolerance().getPpmTolerance(), 0.0000001);
 		assertEquals("Trypsin", params.getEnzyme().getName());

@@ -22,13 +22,13 @@ public class PSMData implements PeptidePrecursor {
 	private final HashSet<String> accessions;
 	private final boolean inferred;
 
-	public PSMData(HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, float retentionTime, float score, float sortingScore, float duration, boolean inferred) {
+	public PSMData(HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, float retentionTime, float score, float sortingScore, float duration, boolean inferred, AminoAcidConstants aaConstants) {
 		this.accessions=accessions;
 		this.spectrumIndex=spectrumIndex;
 		this.precursorMZ=precursorMZ;
 		this.precursorCharge=precursorCharge;
 		this.peptideModSeq=peptideModSeq;
-		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq);
+		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq, aaConstants);
 		this.retentionTime=retentionTime;
 		this.score=score;
 		this.sortingScore=sortingScore;
@@ -132,10 +132,12 @@ public class PSMData implements PeptidePrecursor {
 	}
 	
 	public static HashSet<String> stringToAccessions(String string) {
-		StringTokenizer st=new StringTokenizer(string, ACCESSION_TOKEN);
 		HashSet<String> accessions=new HashSet<String>();
-		while (st.hasMoreTokens()) {
-			accessions.add(st.nextToken());
+		if (string!=null) {
+			StringTokenizer st = new StringTokenizer(string, ACCESSION_TOKEN);
+			while (st.hasMoreTokens()) {
+				accessions.add(st.nextToken());
+			}
 		}
 		if (accessions.size()==0) {
 			accessions.add("unknown_protein");

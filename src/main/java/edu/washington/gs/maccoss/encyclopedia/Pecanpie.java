@@ -45,6 +45,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
@@ -160,7 +161,7 @@ public class Pecanpie {
 				
 				PecanJobData job=new PecanJobData(Optional.ofNullable(targets), diaFile, fastaFile, outputFile, factory);
 
-				runPie(new EmptyProgressIndicator(), Optional.ofNullable(targets), diaFile, fastaFile, job.getPercolatorFiles(), factory);
+				runPie(new EmptyProgressIndicator(), job);
 			} catch (Exception e) {
 				Logger.errorLine("Encountered Fatal Error!");
 				Logger.errorException(e);
@@ -170,9 +171,20 @@ public class Pecanpie {
 		}
 	}
 	public static void runPie(ProgressIndicator progress, PecanJobData jobData) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
-		if (jobData.getPercolatorFiles().hasDataAvailable()) {
+		final PercolatorExecutionData percolatorFiles=jobData.getPercolatorFiles();
+		if (percolatorFiles.hasDataAvailable()) {
 			try {
-				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(jobData.getPercolatorFiles().getPeptideOutputFile(), jobData.getParameters().getEffectivePercolatorThreshold(), false).x;
+				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideOutputFile(), jobData.getParameters(), false).x;
+
+				File elibFile=jobData.getResultLibrary();
+				if (!elibFile.exists()) {
+					progress.update("Writing elib result library...");
+					Logger.logLine("Writing elib result library...");
+					ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
+					jobs.add(jobData);
+					SearchToBLIB.convert(progress, jobs, elibFile, false, false);
+				}
+				
 				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(jobData.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 				return;
 			} catch (Exception e) {
@@ -180,38 +192,16 @@ public class Pecanpie {
 			}
 		}
 		
-		runPie(
-				progress,
-				jobData.getTargetList(),
-				new Supplier<StripeFileInterface>() {
-					@Override
-					public StripeFileInterface get() {
-						return jobData.getDiaFileReader();
-					}
-				},
-				jobData.getFastaFile(),
-				jobData.getPercolatorFiles(),
-				jobData.getTaskFactory()
-		);
-	}
-
-	static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, PercolatorExecutionData percolatorFiles, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
-		runPie(
-				progress,
-				targetList,
-				new Supplier<StripeFileInterface>() {
-					@Override
-					public StripeFileInterface get() {
-						return StripeFileGenerator.getFile(diaFile, taskFactory.getParameters());
-					}
-				},
-				fastaFile,
-				percolatorFiles,
-				taskFactory
-		);
-	}
-
-	static void runPie(ProgressIndicator progress, Optional<ArrayList<FastaPeptideEntry>> targetList, Supplier<StripeFileInterface> diaReaderSupplier, File fastaFile, PercolatorExecutionData percolatorFiles, PecanScoringFactory taskFactory) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+		final Optional<ArrayList<FastaPeptideEntry>> targetList=jobData.getTargetList();
+		final Supplier<StripeFileInterface> diaReaderSupplier=new Supplier<StripeFileInterface>() {
+			@Override
+			public StripeFileInterface get() {
+				return jobData.getDiaFileReader();
+			}
+		};
+		final File fastaFile=jobData.getFastaFile();
+		final PecanScoringFactory taskFactory=jobData.getTaskFactory();
+		
 		long startTime=System.currentTimeMillis();
 		PSMScorer backgroundScorer=taskFactory.getBackgroundScorer();
 		PSMPeakScorer pecanScorer=taskFactory.getPecanScorer();
@@ -483,8 +473,11 @@ public class Pecanpie {
 		resultsConsumer.close();
 
 		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
-		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), percolatorFiles, parameters.getEffectivePercolatorThreshold()).x;
+		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), percolatorFiles, parameters.getEffectivePercolatorThreshold(), parameters.getAAConstants()).x;
 		stripefile.close();
+		
+		Logger.logLine("Writing elib result library...");
+		SearchToBLIB.convertElib(progress, jobData, jobData.getResultLibrary(), parameters);
 		
 		Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peptides identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 

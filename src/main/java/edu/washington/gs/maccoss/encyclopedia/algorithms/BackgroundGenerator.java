@@ -90,8 +90,8 @@ public class BackgroundGenerator {
 						int index=Arrays.binarySearch(binBoundaries, parentMZ);
 						index=(-(index+1))-1;
 						if (index==i) {
-							FragmentationModel model=new FragmentationModel(sequence, params.getAAConstants());
-							double[] ions=model.getPrimaryIons(params.getFragType(), charge);
+							FragmentationModel model=PeptideUtils.getPeptideModel(sequence, params.getAAConstants());
+							double[] ions=model.getPrimaryIons(params.getFragType(), charge, false);
 							for (double ion : ions) {
 								binCounters[index].adjustOrPutValue(ion, 1, 1);
 							}
@@ -111,8 +111,8 @@ public class BackgroundGenerator {
 
 				if (index<0||index>=binCounters.length||!useBins[index]) continue;
 
-				FragmentationModel model=new FragmentationModel(sequence, params.getAAConstants());
-				double[] ions=model.getPrimaryIons(params.getFragType(), charge);
+				FragmentationModel model=PeptideUtils.getPeptideModel(sequence, params.getAAConstants());
+				double[] ions=model.getPrimaryIons(params.getFragType(), charge, false);
 				for (double ion : ions) {
 					binCounters[index].adjustOrPutValue(ion, 1, 1);
 				}

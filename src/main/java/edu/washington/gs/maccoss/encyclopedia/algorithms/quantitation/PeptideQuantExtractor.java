@@ -78,7 +78,7 @@ public class PeptideQuantExtractor {
 			boolean isDecoy=PercolatorPeptide.isPSMIDDecoy(psmID);
 			
 			if (!isDecoy) {
-				String peptideModSeq=PeptideUtils.getCorrectedMasses(PercolatorPeptide.getPeptideSequence(psmID));
+				String peptideModSeq=PeptideUtils.getCorrectedMasses(PercolatorPeptide.getPeptideSequence(psmID), job.getParameters().getAAConstants());
 				passingPeptideSequences.add(peptideModSeq);
 				savedPeptides.put(peptideModSeq, psm.getPrecursorCharge());
 			}
@@ -87,7 +87,7 @@ public class PeptideQuantExtractor {
 
 		final TObjectFloatHashMap<String> localSavedIDs=new TObjectFloatHashMap<String>();
 		for (PercolatorPeptide psm : localPassingPSMIDs) {
-			String peptideModSeq=PeptideUtils.getCorrectedMasses(PercolatorPeptide.getPeptideSequence(psm.getPsmID()));
+			String peptideModSeq=PeptideUtils.getCorrectedMasses(PercolatorPeptide.getPeptideSequence(psm.getPsmID()), job.getParameters().getAAConstants());
 			if (passingPeptideSequences.contains(peptideModSeq)) {
 				localSavedIDs.put(psm.getPsmID(), psm.getPosteriorErrorProb());
 			}
@@ -99,7 +99,7 @@ public class PeptideQuantExtractor {
 			@Override
 			public void processRow(Map<String, String> row) {
 				final String psmID=row.get("id");
-				final String peptideModSeq=PeptideUtils.getCorrectedMasses(PercolatorPeptide.getPeptideSequence(psmID));
+				final String peptideModSeq=PeptideUtils.getCorrectedMasses(PercolatorPeptide.getPeptideSequence(psmID), job.getParameters().getAAConstants());
 
 				// FIXME need to get peptide charge from window
 				final byte precursorCharge=PercolatorPeptide.getCharge(psmID);
@@ -202,9 +202,13 @@ public class PeptideQuantExtractor {
 
 						String proteinString=row.get("protein");
 						HashSet<String> accessions=PSMData.stringToAccessions(proteinString);
-						data.add(new PSMData(accessions, scanID, precursorMZ, precursorCharge, peptideModSeq, retentionTime, score, sortingScore, parameters.getExpectedPeakWidth(), wasInferred));
+						data.add(new PSMData(accessions, scanID, precursorMZ, precursorCharge, peptideModSeq, retentionTime, score, sortingScore, parameters.getExpectedPeakWidth(), wasInferred, parameters.getAAConstants()));
 					}
 				}
+			}
+			
+			@Override
+			public void cleanup() {
 			}
 		};
 		

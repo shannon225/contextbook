@@ -8,6 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -22,13 +23,13 @@ public class ExpectedFragmentationScorer extends AuxillaryPSMScorer {
 
 	@Override
 	public float[] score(LibraryEntry entry, Spectrum spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
-		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		MassTolerance tolerance=parameters.getFragmentTolerance();
 		double[] masses=spectrum.getMassArray();
 		float[] intensities=spectrum.getIntensityArray();
 		
 
-		FragmentIon[] modelIons=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge());
+		FragmentIon[] modelIons=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
 
 		TFloatArrayList ions=new TFloatArrayList();
 		for (FragmentIon ion : modelIons) {
@@ -45,8 +46,8 @@ public class ExpectedFragmentationScorer extends AuxillaryPSMScorer {
 
 	@Override
 	public float[] getMissingDataScores(LibraryEntry entry) {
-		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
-		FragmentIon[] modelIons=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge());
+		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+		FragmentIon[] modelIons=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
 
 		TFloatArrayList ions=new TFloatArrayList();
 		for (FragmentIon ion : modelIons) {
@@ -59,8 +60,8 @@ public class ExpectedFragmentationScorer extends AuxillaryPSMScorer {
 
 	@Override
 	public String[] getScoreNames(LibraryEntry entry) {
-		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
-		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge());
+		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
 		
 		ArrayList<String> names=new ArrayList<String>();
 		for (FragmentIon ion : ions) {

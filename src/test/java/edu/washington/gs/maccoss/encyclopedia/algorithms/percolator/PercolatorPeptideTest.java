@@ -1,17 +1,21 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
+import gnu.trove.map.hash.TCharDoubleHashMap;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
-
 public class PercolatorPeptideTest {
 	public static void main(String[] args) {
 		ArrayList<PercolatorPeptide> peptides=getPeptides();
-		ArrayList<ProteinGroupInterface> proteins=ParsimonyProteinGrouper.groupProteins(peptides);
+		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+		ArrayList<ProteinGroupInterface> proteins=ParsimonyProteinGrouper.groupProteins(peptides, aaConstants);
 		for (ProteinGroupInterface proteinGroup : proteins) {
 			List<String> accessions=proteinGroup.getEquivalentAccessions();
 			String accessionString=PSMData.accessionsToString(accessions);

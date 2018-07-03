@@ -9,6 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TDoubleFloatHashMap;
 import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.procedure.TDoubleFloatProcedure;
@@ -16,12 +17,12 @@ import gnu.trove.procedure.TDoubleFloatProcedure;
 public class PecanOneFragmentationModel extends AbstractPecanFragmentationModel {
 	private final FastaPeptideEntry peptide;
 	public PecanOneFragmentationModel(FastaPeptideEntry peptide, AminoAcidConstants aaConstants) {
-		super(peptide.getSequence(), aaConstants);
+		super(PeptideUtils.getPeptideModel(peptide.getSequence(), aaConstants));
 		this.peptide=peptide;
 	}
 	public PecanLibraryEntry getPecanSpectrum(byte precursorCharge, double[] sortedBinCounterKeys, TDoubleIntHashMap binCounter, Range fragmentationRange, SearchParameters params, boolean isDecoy) {
 		TDoubleFloatHashMap peakMap=new TDoubleFloatHashMap();
-		double[] ions=getPrimaryIons(params.getFragType(), precursorCharge);
+		double[] ions=getPrimaryIons(params.getFragType(), precursorCharge, false);
 		float totalOfSquares=0.0f;
 		for (int i=0; i<ions.length; i++) {
 			if (!fragmentationRange.contains((float)ions[i])) {
@@ -57,6 +58,6 @@ public class PecanOneFragmentationModel extends AbstractPecanFragmentationModel 
 		String sequence=getModifiedSequence();
 		double precursorMZ=params.getAAConstants().getChargedMass(sequence, precursorCharge);
 
-		return new PecanLibraryEntry(peptide, precursorMZ, precursorCharge, sequence, 1, 0.0f, 0, arrays.x, arrays.y, isDecoy, euclidianDistance);	
+		return new PecanLibraryEntry(peptide, precursorMZ, precursorCharge, sequence, 1, 0.0f, 0, arrays.x, arrays.y, isDecoy, euclidianDistance, params.getAAConstants());
 	}
 }

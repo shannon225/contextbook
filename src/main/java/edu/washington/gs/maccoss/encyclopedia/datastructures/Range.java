@@ -63,6 +63,13 @@ public class Range implements Comparable<Range> {
 		return false;
 	}
 	
+	public boolean contains(Range value) {
+		if (value.getStop()>=start&&value.getStart()<=stop) {
+			return true;
+		}
+		return false;
+	}
+	
 	public ArrayList<Range> chunkIntoBins(int binCount) {
 		float delta=getRange()/binCount;
 		

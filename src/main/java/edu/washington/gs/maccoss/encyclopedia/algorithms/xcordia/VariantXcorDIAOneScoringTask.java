@@ -24,11 +24,13 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
@@ -37,17 +39,19 @@ import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 	private final float dutyCycle;
+	private final Range precursorIsolationRange;
 	private final BackgroundFrequencyInterface background;
 	private final BlockingQueue<ModificationLocalizationData> localizationQueue;
 	private final float minimumScore;
 	private final int movingAverageLength;
 	
 	public VariantXcorDIAOneScoringTask(PSMScorer scorer, BackgroundFrequencyInterface background, ArrayList<LibraryEntry> entries, 
-			ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
+			ArrayList<Stripe> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
 			BlockingQueue<ModificationLocalizationData> localizationQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.background=background;
 		this.dutyCycle=dutyCycle;
+		this.precursorIsolationRange=precursorIsolationRange;
 		this.localizationQueue=localizationQueue;
 		this.minimumScore=-Log.log10(parameters.getPercolatorThreshold());
 		this.movingAverageLength=Math.round(parameters.getExpectedPeakWidth()/dutyCycle);
@@ -77,7 +81,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 	private void processBatch(ArrayList<LibraryEntry> entryBatch) {
 		HashMap<String, FragmentationModel> modelBatch=new HashMap<String, FragmentationModel>();
 		for (LibraryEntry entry : entryBatch) {
-			FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+			FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 			modelBatch.put(entry.getPeptideModSeq(), model);
 		}
 		
@@ -131,7 +135,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			
 			// calculate final scoring on best localization index 
 			ScoredIndex scanIndex=new ScoredIndex(primary[bestLocalizationIndex], bestLocalizationIndex);
-			FragmentIon[] allIons=modelBatch.get(xcordiaEntry.getPeptideModSeq()).getPrimaryIonObjects(parameters.getFragType(), xcordiaEntry.getPrecursorCharge());
+			FragmentIon[] allIons=modelBatch.get(xcordiaEntry.getPeptideModSeq()).getPrimaryIonObjects(parameters.getFragType(), xcordiaEntry.getPrecursorCharge(), true);
 
 			ArrayList<Spectrum> stripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(stripes.get(indexRange.getStart()).getScanStartTime(), stripes.get(indexRange.getStop()).getScanStartTime()+parameters.getExpectedPeakWidth(), stripes);
 			Pair<ModificationLocalizationData, Integer> pair=getLocalizationData(xcordiaEntry.getPeptide(), stripes.get(bestLocalizationIndex), xcordiaEntry.getPeptideModSeq(), xcordiaEntry.getPrecursorCharge(), 

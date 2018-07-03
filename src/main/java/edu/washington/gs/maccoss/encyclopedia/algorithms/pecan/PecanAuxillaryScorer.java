@@ -94,12 +94,12 @@ public class PecanAuxillaryScorer extends AuxillaryPSMScorer {
 	
 	@Override
 	public String[] getScoreNames(LibraryEntry entry) {
-		return new String[] {"rawScore", "peakSimilarity", "weightedRawScore", "numAboveThresholdMatches", "numMatches", "averageAbsPPM", "averagePPM", "isotopeDotProduct"};
+		return new String[] {"rawScore", "peakSimilarity", "spectrumMagnitude", "weightedRawScore", "numAboveThresholdMatches", "numMatches", "averageAbsPPM", "averagePPM", "isotopeDotProduct"};
 	}
 
 	@Override
 	public float[] getMissingDataScores(LibraryEntry entry) {
 		float maxPrePPMError=(float)parameters.getPrecursorTolerance().getToleranceThreshold();
-		return new float[] {0, 0, 0, 0, 0, maxPrePPMError, maxPrePPMError, 0};
+		return new float[] {0, 0, 0, 0, 0, 0, maxPrePPMError, maxPrePPMError, 0};
 	}
 }

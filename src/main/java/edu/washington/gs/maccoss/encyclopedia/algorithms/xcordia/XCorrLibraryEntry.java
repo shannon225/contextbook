@@ -19,7 +19,7 @@ public class XCorrLibraryEntry extends LibraryEntry {
 
 	public XCorrLibraryEntry(boolean isDecoy, String peptideModSeq, FastaPeptideEntry peptide, byte precursorCharge, SparseXCorrSpectrum spectrum, SearchParameters params) {
 		super(peptide.getFilename(), peptide.getAccessions(), spectrum.getPrecursorMZ(), precursorCharge, peptideModSeq, 1, 0.0f, // (float)SSRCalc.getHydrophobicity(peptideModSeq)
-				0.0f, spectrum.getMassArray(), spectrum.getIntensityArray());
+				0.0f, spectrum.getMassArray(), spectrum.getIntensityArray(), params.getAAConstants());
 		this.peptide=peptide;
 		this.isDecoy=isDecoy;
 		this.spectrum=spectrum;

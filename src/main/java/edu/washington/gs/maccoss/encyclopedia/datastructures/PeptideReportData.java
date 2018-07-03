@@ -17,9 +17,9 @@ public class PeptideReportData implements PeptidePrecursor {
 	volatile private float avgRT=-1;
 	volatile private int maxNumOfFragments=0;
 
-	public PeptideReportData(String peptideModSeq, byte precursorCharge, String accessions) {
+	public PeptideReportData(String peptideModSeq, byte precursorCharge, String accessions, AminoAcidConstants aaConstants) {
 		this.peptideModSeq=peptideModSeq;
-		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq);
+		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq, aaConstants);
 		this.precursorCharge=precursorCharge;
 		this.accessions=accessions;
 	}
@@ -90,10 +90,10 @@ public class PeptideReportData implements PeptidePrecursor {
 		return false;
 	}
 
-	@Override
-	public String getLegacyPeptideModSeq() {
-		return peptideModSeq;
-	}
+//	@Override
+//	public String getLegacyPeptideModSeq() {
+//		return peptideModSeq;
+//	}
 
 	@Override
 	public String getPeptideSeq() {

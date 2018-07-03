@@ -9,7 +9,6 @@ import java.util.StringTokenizer;
 import org.apache.commons.lang3.ArrayUtils;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TIntArrayList;
@@ -25,14 +24,16 @@ public class AmbiguousPeptideModSeq {
 	private final boolean[] modifiable;
 	private final int[] modificationGroup;
 	private final byte ambiguityDirection; // left is -1, right is 1, no direction is 0
+	private final PeptideModification modification;
 	private final String annotation;
 	
-	public AmbiguousPeptideModSeq(String[] aas, boolean[] modifiable, boolean[] isModified, int[] modificationGroup, byte ambiguityDirection, String annotation) {
+	public AmbiguousPeptideModSeq(String[] aas, boolean[] modifiable, boolean[] isModified, int[] modificationGroup, byte ambiguityDirection, PeptideModification modification, String annotation) {
 		this.aas=aas;
 		this.modifiable=modifiable;
 		this.isModified=isModified;
 		this.modificationGroup=modificationGroup;
 		this.ambiguityDirection=ambiguityDirection;
+		this.modification=modification;
 		this.annotation=annotation;
 	}
 	
@@ -119,10 +120,10 @@ public class AmbiguousPeptideModSeq {
 		return modificationGroup;
 	}
 
-	public Optional<AmbiguousPeptideModSeq> removeAmbiguity(AmbiguousPeptideModSeq... confirmedIDs) {
-		return removeAmbiguity(Arrays.asList(confirmedIDs));
+	public Optional<AmbiguousPeptideModSeq> removeAmbiguity(PeptideModification modification, AmbiguousPeptideModSeq... confirmedIDs) {
+		return removeAmbiguity(modification, Arrays.asList(confirmedIDs));
 	}
-	public Optional<AmbiguousPeptideModSeq> removeAmbiguity(List<AmbiguousPeptideModSeq> confirmedIDs) {
+	public Optional<AmbiguousPeptideModSeq> removeAmbiguity(PeptideModification modification, List<AmbiguousPeptideModSeq> confirmedIDs) {
 		String[] newaas=aas.clone();
 		boolean[] newisModified=isModified.clone();
 		boolean[] newmodifiable=modifiable.clone();
@@ -169,7 +170,7 @@ public class AmbiguousPeptideModSeq {
 				}
 			}
 		}
-		AmbiguousPeptideModSeq newSeq=new AmbiguousPeptideModSeq(newaas, newmodifiable, newisModified, newmodificationGroup, ambiguityDirection, annotation);
+		AmbiguousPeptideModSeq newSeq=new AmbiguousPeptideModSeq(newaas, newmodifiable, newisModified, newmodificationGroup, ambiguityDirection, modification, annotation);
 		
 		boolean ok=false;
 		for (int i=0; i<newmodificationGroup.length; i++) {
@@ -261,8 +262,8 @@ public class AmbiguousPeptideModSeq {
 
 		return sb.toString();
 	}
-	
-	public static AmbiguousPeptideModSeq getAmbiguousPeptideModSeq(String peptideAnnotation, PeptideModification mod) {
+
+	public static AmbiguousPeptideModSeq getAmbiguousPeptideModSeq(String peptideAnnotation, PeptideModification mod, AminoAcidConstants aminoAcidConstants) {
 		int indexOfAnnotation=peptideAnnotation.indexOf(ANNOTATION_TOKEN);
 		String annotation;
 		if (indexOfAnnotation>0) {
@@ -314,7 +315,7 @@ public class AmbiguousPeptideModSeq {
 				double modificationMass = Double.valueOf(massText);
 				String aaString=aas.get(aas.size()-1);
 				char aaChar=aaString.charAt(0);
-				modificationMass=MassConstants.getAccurateModificationMass(aaChar, modificationMass);
+				modificationMass=aminoAcidConstants.getAccurateModificationMass(aaChar, modificationMass);
 
 				// adjust last
 				aas.set(aas.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
@@ -349,11 +350,11 @@ public class AmbiguousPeptideModSeq {
 		boolean[] isModifiableArray=ArrayUtils.toPrimitive(modifiable.toArray(new Boolean[modifiable.size()]));
 		int[] modificationGroupArray=modificationGroup.toArray();
 		
-		return new AmbiguousPeptideModSeq(aaArray, isModifiableArray, isModifiedArray, modificationGroupArray, ambiguityDirection, annotation);
+		return new AmbiguousPeptideModSeq(aaArray, isModifiableArray, isModifiedArray, modificationGroupArray, ambiguityDirection, mod, annotation);
 	}
 	
 	public static AmbiguousPeptideModSeq getFullyAmbiguous(String targetPeptide, PeptideModification modification, AminoAcidConstants aaConstants, String annotation) {
-		String[] aas=PeptideUtils.getMasses(targetPeptide, aaConstants).z;
+		String[] aas=PeptideUtils.getPeptideModel(targetPeptide, aaConstants).getAas();
 		boolean[] modifiable=new boolean[aas.length];
 		boolean[] isModified=new boolean[aas.length];
 		int[] modificationGroup=new int[aas.length];
@@ -371,11 +372,11 @@ public class AmbiguousPeptideModSeq {
 				}
 			}
 		}
-		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup, (byte)0, annotation);
+		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup, (byte)0, modification, annotation);
 	}
 	
 	public static AmbiguousPeptideModSeq getUnambigous(String targetPeptide, PeptideModification modification, AminoAcidConstants aaConstants, String annotation) {
-		String[] aas=PeptideUtils.getMasses(targetPeptide, aaConstants).z;
+		String[] aas=PeptideUtils.getPeptideModel(targetPeptide, aaConstants).getAas();
 		boolean[] modifiable=new boolean[aas.length];
 		boolean[] isModified=new boolean[aas.length];
 		int[] modificationGroup=new int[aas.length];
@@ -395,11 +396,11 @@ public class AmbiguousPeptideModSeq {
 				}
 			}
 		}
-		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup, (byte)0, annotation);
+		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup, (byte)0, modification, annotation);
 	}
 	
 	public static AmbiguousPeptideModSeq getLeftAmbiguity(String targetPeptide, PeptideModification modification, AminoAcidConstants aaConstants, String annotation) {
-		String[] aas=PeptideUtils.getMasses(targetPeptide, aaConstants).z;
+		String[] aas=PeptideUtils.getPeptideModel(targetPeptide, aaConstants).getAas();
 		boolean[] modifiable=new boolean[aas.length];
 		boolean[] isModified=new boolean[aas.length];
 		int[] modificationGroup=new int[aas.length];
@@ -436,11 +437,11 @@ public class AmbiguousPeptideModSeq {
 				}
 			}
 		}
-		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup, (byte)-1, annotation);
+		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup, (byte)-1, modification, annotation);
 	}
 	
 	public static AmbiguousPeptideModSeq getRightAmbiguity(String targetPeptide, PeptideModification modification, AminoAcidConstants aaConstants, String annotation) {
-		String[] aas=PeptideUtils.getMasses(targetPeptide, aaConstants).z;
+		String[] aas=PeptideUtils.getPeptideModel(targetPeptide, aaConstants).getAas();
 		boolean[] modifiable=new boolean[aas.length];
 		boolean[] isModified=new boolean[aas.length];
 		int[] modificationGroup=new int[aas.length];
@@ -477,7 +478,7 @@ public class AmbiguousPeptideModSeq {
 				}
 			}
 		}
-		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup, (byte)1, annotation);
+		return new AmbiguousPeptideModSeq(aas, modifiable, isModified, modificationGroup, (byte)1, modification, annotation);
 	}
 
 	public static boolean isSiteSpecific(AmbiguousPeptideModSeq targetPeptideName, PeptideModification modification) {

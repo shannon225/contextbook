@@ -29,6 +29,10 @@ public class BenjaminiHochberg {
 		for (int i=0; i<pValues.length; i++) {
 			ret[i]=adjustedByP.get(pValues[i]);
 		}
+		
+		for (int i=0; i<ret.length; i++) {
+			assert(ret[i]>=pValues[i]);
+		}
 		return ret;
 	}
 }

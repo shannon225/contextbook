@@ -16,8 +16,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
@@ -26,7 +28,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 
 public class PercolatorReader {
-	public static Pair<ArrayList<PercolatorPeptide>, Float> getPassingPeptidesFromTSV(File f, final float qValueThreshold, final boolean keepDecoys) {
+	public static Pair<ArrayList<PercolatorPeptide>, Float> getPassingPeptidesFromTSV(File f, final SearchParameters parameters, final boolean keepDecoys) {
+		return getPassingPeptidesFromTSV(f, parameters.getEffectivePercolatorThreshold(), parameters.getAAConstants(), keepDecoys);
+	}
+
+	public static Pair<ArrayList<PercolatorPeptide>, Float> getPassingPeptidesFromTSV(File f, float qValueThreshold, AminoAcidConstants aaConstants, final boolean keepDecoys) {
 		final ArrayList<PercolatorPeptide> data=new ArrayList<PercolatorPeptide>();
 		final float[] pi0=new float[1];
 		
@@ -47,9 +53,13 @@ public class PercolatorReader {
 					
 					String proteinIds=row.get("proteinIds");
 					if (keepDecoys||!proteinIds.startsWith(LibraryEntry.DECOY_STRING)) {
-						data.add(new PercolatorPeptide(psmID, proteinIds, qvalue, posteriorErrorProb));
+						data.add(new PercolatorPeptide(psmID, proteinIds, qvalue, posteriorErrorProb, aaConstants));
 					}
 				}
+			}
+			
+			@Override
+			public void cleanup() {
 			}
 		};
 		
@@ -96,6 +106,10 @@ public class PercolatorReader {
 						data.add(new PercolatorProteinGroup(proteinIDs.split(PSMData.ACCESSION_TOKEN), peptideIDs.split(" "), qvalue, posteriorErrorProb));
 					}
 				}
+			}
+			
+			@Override
+			public void cleanup() {
 			}
 		};
 		

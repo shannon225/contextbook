@@ -12,10 +12,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TDoubleDoubleHashMap;
 import gnu.trove.map.hash.TFloatFloatHashMap;
+import gnu.trove.procedure.TDoubleDoubleProcedure;
 import gnu.trove.procedure.TFloatFloatProcedure;
 
-public class XYTrace implements XYTraceInterface {
+public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 	private final String name;
 	private final ArrayList<XYPoint> points;
 	private final GraphType type;
@@ -38,6 +40,10 @@ public class XYTrace implements XYTraceInterface {
 		
 		Collections.sort(points);
 	}
+	public int compareTo(XYTraceInterface o) {
+		if (o==null) return 1;
+		return name.compareTo(o.getName());
+	};
 	
 	public ArrayList<XYPoint> getPoints() {
 		return points;
@@ -161,6 +167,22 @@ public class XYTrace implements XYTraceInterface {
 		this(General.toDoubleArray(x), General.toDoubleArray(y), type, name, color, thickness);
 	}
 	
+	public XYTrace(TDoubleDoubleHashMap map, GraphType type, String name, Color color, Float thickness) {
+		this.color=Optional.ofNullable(color);
+		this.thickness=Optional.ofNullable(thickness);
+		this.type=type;
+		this.points=new ArrayList<XYPoint>();
+		this.name=name;
+
+		map.forEachEntry(new TDoubleDoubleProcedure() {
+			public boolean execute(double x, double y) {
+				points.add(new XYPoint(x, y));
+				return true;
+			}
+		});
+		Collections.sort(points);
+	}
+	
 	public XYTrace(TFloatFloatHashMap map, GraphType type, String name, Color color, Float thickness) {
 		this.color=Optional.ofNullable(color);
 		this.thickness=Optional.ofNullable(thickness);
@@ -175,6 +197,9 @@ public class XYTrace implements XYTraceInterface {
 			}
 		});
 		Collections.sort(points);
+	}
+	public XYTrace(TDoubleDoubleHashMap map, GraphType type, String name) {
+		this(map, type, name, null, null);
 	}
 	public XYTrace(TFloatFloatHashMap map, GraphType type, String name) {
 		this(map, type, name, null, null);
@@ -218,6 +243,10 @@ public class XYTrace implements XYTraceInterface {
 	@Override
 	public Pair<double[], double[]> toArrays() {
 		return toArrays(points);
+	}
+	
+	public int size() {
+		return points.size();
 	}
 	
 	public String toString() {

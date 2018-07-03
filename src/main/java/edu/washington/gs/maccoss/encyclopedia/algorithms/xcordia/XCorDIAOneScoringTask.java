@@ -2,9 +2,11 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.DotProduct;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
@@ -12,11 +14,15 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.SortLaterXYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import gnu.trove.map.hash.TFloatFloatHashMap;
@@ -24,11 +30,15 @@ import gnu.trove.set.hash.TIntHashSet;
 
 public class XCorDIAOneScoringTask extends AbstractLibraryScoringTask {
 	private final float dutyCycle;
+	private final Range precursorIsolationRange;
+	private final DotProduct dotproductScorer;
 	
-	public XCorDIAOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
+	public XCorDIAOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
 			SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.dutyCycle=dutyCycle;
+		this.precursorIsolationRange=precursorIsolationRange;
+		this.dotproductScorer=new DotProduct(parameters);
 		
 		assert(scorer instanceof XCorDIAOneScorer);
 	}
@@ -51,6 +61,13 @@ public class XCorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			
 			PeptideScoringResult result=new PeptideScoringResult(entry);
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
+
+			Optional<FragmentIon[]> modificationSpecificIons;
+			if (parameters.isVerifyModificationIons()) {
+				modificationSpecificIons=PeptideUtils.getPeptideModel(xcordiaEntry.getPeptideModSeq(), parameters.getAAConstants()).getModificationSpecificIonObjects(precursorIsolationRange, parameters.getFragType(), entry.getPrecursorCharge(), true);
+			} else {
+				modificationSpecificIons=Optional.empty();
+			}
 			
 			float[] primary=new float[super.stripes.size()];
 			float[] rts=new float[super.stripes.size()];
@@ -63,6 +80,11 @@ public class XCorDIAOneScoringTask extends AbstractLibraryScoringTask {
 					xcordiaStripe=new XCorrStripe(stripe, parameters);
 				}
 				primary[i]=scorer.score(xcordiaEntry, xcordiaStripe, predictedIsotopeDistribution, precursors);
+				if (modificationSpecificIons.isPresent()) {
+					if (dotproductScorer.score(xcordiaEntry, xcordiaStripe, modificationSpecificIons.get())<=0.0f) {
+						primary[i]=0.0f;
+					}
+				}
 				
 				rts[i]=xcordiaStripe.getScanStartTime();
 			}
@@ -111,7 +133,7 @@ public class XCorDIAOneScoringTask extends AbstractLibraryScoringTask {
 				}
 			}
 
-			XYTrace trace=new XYTrace(rts, primary, GraphType.line, "XCorr");
+			XYTraceInterface trace=new SortLaterXYTrace(rts, primary, GraphType.line, "XCorr");
 			result.setTrace(trace);
 			resultsQueue.add(result);
 		}

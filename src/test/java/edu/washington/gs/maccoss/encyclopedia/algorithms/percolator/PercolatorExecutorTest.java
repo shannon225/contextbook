@@ -8,12 +8,15 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import junit.framework.TestCase;
 
 public class PercolatorExecutorTest extends TestCase {
@@ -42,10 +45,13 @@ public class PercolatorExecutorTest extends TestCase {
 				Thread.sleep(10);
 			}
 		}
+
+		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+
 		System.out.println("total processed: "+outputlines);
-		ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(outputFile, 0.01f, false).x;
+		ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(outputFile, 0.01f, aaConstants, false).x;
 		System.out.println("Peptides: "+peptides.size());
-		ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(decoyFile, 0.01f, true).x;
+		ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(decoyFile, 0.01f, aaConstants, true).x;
 		System.out.println("Decoys: "+decoys.size());
 		
 	}
@@ -54,6 +60,35 @@ public class PercolatorExecutorTest extends TestCase {
 		String peptideString="-.FNNFINDSLLEGAIDALKR.-";
 		String parsed=PercolatorExecutor.parsePeptideSequence(peptideString);
 		assertEquals("FNNFINDSLLEGAIDALKR", parsed);
+	}
+
+	public void testGetPercolatorVersionFromConsole() {
+		String line = "Percolator version 3.01, Build Date May 23 2017 12:14:41";
+		assertEquals("3.01", PercolatorExecutor.getPercolatorVersionFromOutput(line).orElse(null));
+
+		line = "Percolator version 3.14.15, Build Date May 23 2017 12:14:41";
+		assertEquals("3.14.15", PercolatorExecutor.getPercolatorVersionFromOutput(line).orElse(null));
+
+		// Taken directly from executing src/main/resources/bin/percolator-v2-10.lin
+		line = "Percolator version 2.09, Build Date Apr 15 2016 15:42:56";
+		assertEquals("2.09", PercolatorExecutor.getPercolatorVersionFromOutput(line).orElse(null));
+
+		line = "Percolator version 2, Build Date May 23 2017 12:14:41";
+		assertEquals("2", PercolatorExecutor.getPercolatorVersionFromOutput(line).orElse(null));
+
+		line = "Percolator version , Build Date May 23 2017 12:14:41";
+		assertFalse(PercolatorExecutor.getPercolatorVersionFromOutput(line).isPresent());
+
+		line = "Percolator version, Build Date May 23 2017 12:14:41";
+		assertFalse(PercolatorExecutor.getPercolatorVersionFromOutput(line).isPresent());
+	}
+
+	public void testGetErrorMessageFromConsole() {
+		assertEquals("bad allocation", PercolatorExecutor.getErrorMessage(new OutputMessage("Exception caught: bad allocation", false)));
+		assertEquals("<error string>", PercolatorExecutor.getErrorMessage(new OutputMessage("Error : <error string>", false)));
+
+		String msg = "anything that mentions a bad allocation";
+		assertEquals(msg, PercolatorExecutor.getErrorMessage(new OutputMessage(msg, false)));
 	}
 
 	public void testPercolatorExecutor() throws Exception {
@@ -69,16 +104,17 @@ public class PercolatorExecutorTest extends TestCase {
 		
 		PercolatorExecutionData percolatorFiles=getPercolatorFiles(featureFile, fastaFile, SearchParameterParser.getDefaultParametersObject());
 
+		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 
-		Pair<ArrayList<PercolatorPeptide>, Float> origpair=PercolatorExecutor.executePercolatorTSV(getDefaultPercolaterVersion(), percolatorFiles, 0.01f);
+		Pair<ArrayList<PercolatorPeptide>, Float> origpair=PercolatorExecutor.executePercolatorTSV(getDefaultPercolaterVersion(), percolatorFiles, 0.01f, aaConstants);
 		assertTrue(origpair.x.size()>0);
 		assertTrue(origpair.y>0);
 		
-		Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideOutputFile(), 0.01f, false);
+		Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideOutputFile(), 0.01f, aaConstants, false);
 		assertEquals(origpair.x.size(), pair.x.size());
 		assertEquals(origpair.y, pair.y, 0.001f);
 		
-		Pair<ArrayList<PercolatorPeptide>, Float> decoyPair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideDecoyFile(), 0.01f, true);
+		Pair<ArrayList<PercolatorPeptide>, Float> decoyPair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideDecoyFile(), 0.01f, aaConstants, true);
 		assertTrue(decoyPair.x.size()>0);
 		assertTrue(decoyPair.x.size()<origpair.x.size()/99f);
 	}

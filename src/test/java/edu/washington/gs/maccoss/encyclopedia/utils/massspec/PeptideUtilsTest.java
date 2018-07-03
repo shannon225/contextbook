@@ -4,12 +4,14 @@ import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import junit.framework.TestCase;
 
 public class PeptideUtilsTest extends TestCase {
-	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"), false);
+	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50), DigestionEnzyme.getEnzyme("trypsin"), false, true);
 	
 	public void testGetExpectedChargeState() {
 		assertEquals(1, PeptideUtils.getExpectedChargeState("LACDEFQFEDCAI"));
@@ -41,7 +43,7 @@ public class PeptideUtilsTest extends TestCase {
 	}
 
 	public void testReverse() {
-		String s=PeptideUtils.reverse("ABC[+57]DEFGHIJK", PARAMETERS.getEnzyme());
+		String s=PeptideUtils.reverse("ABC[+57]DEFGHIJK", PARAMETERS.getEnzyme(), PARAMETERS.getAAConstants());
 		assertEquals("JIHGFEDC[+57.0214635]BAK", s);
 	}
 	
@@ -91,17 +93,19 @@ public class PeptideUtilsTest extends TestCase {
 	}
 	
 	public void testGetCorrectedMasses() {
+		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		String sequence="A[+42.0]QRHS[+79.96633]DSCCSLEEK";
-		assertEquals("A[+42.010565]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
+		assertEquals("A[+42.010565]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence, aaConstants));
 		sequence="A[+42.0]QRHS[+80.0]DSCCSLEEK";
-		assertEquals("A[+42.010565]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
+		assertEquals("A[+42.010565]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence, aaConstants));
 		sequence="Q[-17]QRHS[+80.0]DSCCSLEEK";
-		assertEquals("Q[-17.026549]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
+		assertEquals("Q[-17.026549]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence, aaConstants));
 		sequence="Q[-17.026549]QRHS[+79.96633]DSCCSLEEK";
-		assertEquals("Q[-17.026549]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
+		assertEquals("Q[-17.026549]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence, aaConstants));
 	}
 	
 	public void testGetAAs() {
+		AminoAcidConstants aminoAcidConstants = AminoAcidConstants.createEmptyFixedAndVariable();
 		for (int i=0; i<100; i++) {
 			StringBuilder sb=new StringBuilder();
 			double length=Math.random()*30+5;
@@ -114,7 +118,7 @@ public class PeptideUtilsTest extends TestCase {
 				}
 			}
 			String sequence=sb.toString();
-			String processedSequence=General.toString(PeptideUtils.getAAs(sequence), "");
+			String processedSequence=General.toString(PeptideUtils.getAAs(sequence, aminoAcidConstants), "");
 			assertEquals(sequence, processedSequence);
 		}
 	}
@@ -122,42 +126,42 @@ public class PeptideUtilsTest extends TestCase {
 	public void testGetMasses() {
 		String sequence="PEPTIDER";
 		double[] expected=new double[] {97.0528, 129.0426, 97.0528, 101.0477, 113.0841, 115.027, 129.0426, 156.1011};
-		double[] masses=PeptideUtils.getMasses(sequence, PARAMETERS.getAAConstants()).x;
+		double[] masses=PeptideUtils.getPeptideModel(sequence, PARAMETERS.getAAConstants()).getMasses();
 		for (int i=0; i<masses.length; i++) {
 			assertEquals(expected[i], masses[i], 0.1);
 		}
 
 		sequence="PEPT[+80]IDER";
 		expected=new double[] {97.0528, 129.0426, 97.0528, 101.0477+80.0, 113.0841, 115.027, 129.0426, 156.1011};
-		masses=PeptideUtils.getMasses(sequence, PARAMETERS.getAAConstants()).x;
+		masses=PeptideUtils.getPeptideModel(sequence, PARAMETERS.getAAConstants()).getMasses();
 		for (int i=0; i<masses.length; i++) {
 			assertEquals(expected[i], masses[i], 0.1);
 		}
 
 		sequence="PE[-17]PTIDER";
 		expected=new double[] {97.0528, 129.0426-17.0, 97.0528, 101.0477, 113.0841, 115.027, 129.0426, 156.1011};
-		masses=PeptideUtils.getMasses(sequence, PARAMETERS.getAAConstants()).x;
+		masses=PeptideUtils.getPeptideModel(sequence, PARAMETERS.getAAConstants()).getMasses();
 		for (int i=0; i<masses.length; i++) {
 			assertEquals(expected[i], masses[i], 0.1);
 		}
 
 		sequence="[-17]PEPTIDER";
 		expected=new double[] {97.0528-17.0, 129.0426, 97.0528, 101.0477, 113.0841, 115.027, 129.0426, 156.1011};
-		masses=PeptideUtils.getMasses(sequence, PARAMETERS.getAAConstants()).x;
+		masses=PeptideUtils.getPeptideModel(sequence, PARAMETERS.getAAConstants()).getMasses();
 		for (int i=0; i<masses.length; i++) {
 			assertEquals(expected[i], masses[i], 0.1);
 		}
 
 		sequence="[+42]PEPTIDER";
 		expected=new double[] {97.0528+42.0, 129.0426, 97.0528, 101.0477, 113.0841, 115.027, 129.0426, 156.1011};
-		masses=PeptideUtils.getMasses(sequence, PARAMETERS.getAAConstants()).x;
+		masses=PeptideUtils.getPeptideModel(sequence, PARAMETERS.getAAConstants()).getMasses();
 		for (int i=0; i<masses.length; i++) {
 			assertEquals(expected[i], masses[i], 0.1);
 		}
 
 		sequence="PEPTIDER[+14]";
 		expected=new double[] {97.0528, 129.0426, 97.0528, 101.0477, 113.0841, 115.027, 129.0426, 156.1011+14.0};
-		masses=PeptideUtils.getMasses(sequence, PARAMETERS.getAAConstants()).x;
+		masses=PeptideUtils.getPeptideModel(sequence, PARAMETERS.getAAConstants()).getMasses();
 		for (int i=0; i<masses.length; i++) {
 			assertEquals(expected[i], masses[i], 0.1);
 		}

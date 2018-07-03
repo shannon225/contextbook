@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
-import java.awt.Frame;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -17,10 +16,8 @@ import java.util.HashMap;
 import java.util.Optional;
 
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -44,9 +41,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParame
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCordiaSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
@@ -69,9 +64,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.LogConsole;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.ProgressRenderer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
 
 public class SearchPanel extends JPanel {
@@ -90,7 +83,7 @@ public class SearchPanel extends JPanel {
 	JobProcessorTableModel processorTableModel=new JobProcessorTableModel();
 	
 	private final JTabbedPane optionsTabs;
-	private final JCheckBox alignBetweenFiles;
+	//private final JCheckBox alignBetweenFiles;
 	
 	public SearchPanel(ProgramType program) {
 		super(new BorderLayout());
@@ -136,7 +129,7 @@ public class SearchPanel extends JPanel {
 				Logger.errorException(e);
 			}
 		}
-		if (ProgramType.Global==program||ProgramType.PecanPie==program) {
+		if (ProgramType.Global==program||ProgramType.PecanPie==program||ProgramType.EncyclopeDIA==program) {
 			PecanParametersPanel pecan=new PecanParametersPanel(this);
 			try {
 				HashMap<String, String> map=PecanSearchParameters.readPreferences();
@@ -189,33 +182,43 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		
-		alignBetweenFiles=new JCheckBox("RT Align", true);
-		alignBetweenFiles.setToolTipText("Align retention times between files. Only uncheck for generating searchable chromatogram libraries where fractions don't share peptides.");
+		//alignBetweenFiles=new JCheckBox("RT Align", true);
+		//alignBetweenFiles.setToolTipText("Align retention times between files. Only uncheck for generating searchable chromatogram libraries where fractions don't share peptides.");
 		
 		JButton saveBlib=new JButton("Save BLIB", skylineIcon);
 		saveBlib.setToolTipText("Save Skyline BLIB library.");
 		saveBlib.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				saveBLIB();
+				saveBLIB(true);
 			}
 		});
 		
-		JButton saveElib=new JButton("Save Library", openDBIcon);
-		saveElib.setToolTipText("Save chromatogram library and quantitative reports.");
+		JButton saveChromElib=new JButton("Save Chromatogram Library", openDBIcon);
+		saveChromElib.setToolTipText("Save chromatogram library as ELIB.");
+		saveChromElib.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				saveELIB(false);
+			}
+		});
+		
+		JButton saveElib=new JButton("Save Quant Reports", openDBIcon);
+		saveElib.setToolTipText("Save quantitative reports as ELIB.");
 		saveElib.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				saveELIB();
+				saveELIB(true);
 			}
 		});
 		
 		
 		JPanel buttonPanel=new JPanel(new FlowLayout());
 		buttonPanel.add(chooseFile);
-		buttonPanel.add(alignBetweenFiles);
+		//buttonPanel.add(alignBetweenFiles);
 
 		if (ProgramType.PecanPie!=program) {
+			buttonPanel.add(saveChromElib);
 			buttonPanel.add(saveElib);
 		}
 		
@@ -265,25 +268,28 @@ public class SearchPanel extends JPanel {
 		});
 		openMZML.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		fileMenu.add(openMZML);
+		
+		fileMenu.addSeparator();
 
-		JMenuItem saveELIB=new JMenuItem("Save Library", openDBIcon);
+		JMenuItem saveELIB=new JMenuItem("Save Quant Reports ELIB", openDBIcon);
 		saveELIB.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				saveELIB();
+				saveELIB(true);
 			}
 		});
+		
 		saveELIB.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 
 		if (ProgramType.PecanPie!=program) {
 			fileMenu.add(saveELIB);
 		}
 
-		JMenuItem saveBLIB=new JMenuItem("Save BLIB", skylineIcon);
+		JMenuItem saveBLIB=new JMenuItem("Save Skyline BLIB", skylineIcon);
 		saveBLIB.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				saveBLIB();
+				saveBLIB(true);
 			}
 		});
 		saveBLIB.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
@@ -318,6 +324,8 @@ public class SearchPanel extends JPanel {
 		if (ProgramType.CASiL!=program) {
 			viewMenu.add(launchMultiBrowser);
 		}
+		
+		viewMenu.addSeparator();
 
 		JMenuItem launchDIABrowser=new JMenuItem("Launch RAW File Browser", diaBrowserIcon);
 		launchDIABrowser.addActionListener(new ActionListener() {
@@ -358,24 +366,62 @@ public class SearchPanel extends JPanel {
 		if (ProgramType.PecanPie!=program) {
 			bar.add(convertMenu);
 		}
-
+		
 		JMenuItem convertBLIB=new JMenuItem("Convert BLIB to Library", convertDBIcon);
 		convertBLIB.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				convertBLIB();
+				SearchPanelUtilities.convertBLIB(SearchPanel.this, getVisibleTab().getParameters());
 			}
 		});
 		convertMenu.add(convertBLIB);
 
-		JMenuItem convertMSP=new JMenuItem("Convert MSP to Library", convertDBIcon);
+		JMenuItem convertMSP=new JMenuItem("Convert SPTXT/MSP to Library", convertDBIcon);
 		convertMSP.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				convertMSP();
+				SearchPanelUtilities.convertMSP(SearchPanel.this, getVisibleTab().getParameters());
 			}
 		});
 		convertMenu.add(convertMSP);
+
+		JMenuItem convertTraML=new JMenuItem("Convert TraML to Library", convertDBIcon);
+		convertTraML.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertTRAML(SearchPanel.this, getVisibleTab().getParameters());
+			}
+		});
+		convertMenu.add(convertTraML);
+		
+		JMenuItem convertELIBtoBLIB=new JMenuItem("Convert Library to BLIB", convertDBIcon);
+		convertELIBtoBLIB.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertELIBtoBLIB(SearchPanel.this);
+			}
+		});
+		convertMenu.add(convertELIBtoBLIB);
+		
+		convertMenu.addSeparator();
+		
+		JMenuItem combineELIB=new JMenuItem("Combine Multiple Libraries", convertDBIcon);
+		combineELIB.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.combineELIBs(SearchPanel.this);
+			}
+		});
+		convertMenu.add(combineELIB);
+		
+		JMenuItem subsetELIB=new JMenuItem("Create Subset Library", convertDBIcon);
+		subsetELIB.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.subsetELIB(SearchPanel.this);
+			}
+		});
+		convertMenu.add(subsetELIB);
 		
 		JMenu helpMenu=new JMenu("Help");
 		helpMenu.setMnemonic(KeyEvent.VK_H);
@@ -413,7 +459,7 @@ public class SearchPanel extends JPanel {
 	}
 	
 	public void launchFeatureBrowser() {
-		File featureFile=FileChooserPanel.getFiles(null, "Feature text files", new SimpleFilenameFilter("features.txt"), (JFrame)null)[0];
+		File featureFile=FileChooserPanel.getFiles(null, "Feature text files", new SimpleFilenameFilter("features.txt"), (JFrame)null, true)[0];
 
 		if (featureFile!=null&&featureFile.exists()) {
 			final JFrame dialog=new JFrame("Global Feature Browser");
@@ -570,143 +616,8 @@ public class SearchPanel extends JPanel {
 		dialog.setSize(1900, 1030);
 		dialog.setVisible(true);
 	}
-	
-	public void convertBLIB() {
-		final JFrame frame = (JFrame)SwingUtilities.getRoot(SearchPanel.this);
-		final JDialog dialog=new JDialog(frame, "Convert BLIB to Library", true);
-		
-		final FileChooserPanel blibFileChooser=new FileChooserPanel(null, "BLIB", new SimpleFilenameFilter(".blib"), true);
-		final FileChooserPanel iRTFileChooser=new FileChooserPanel(null, "IRT Database", new SimpleFilenameFilter(".irtdb"), false);
-		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);
 
-		JPanel options=new JPanel();
-		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
-		options.add(blibFileChooser);
-		options.add(iRTFileChooser);
-		options.add(fastaFileChooser);
-		
-		JPanel buttons=new JPanel();
-		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
-		JButton okButton=new JButton("OK");
-		okButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				dialog.setVisible(false);
-				dialog.dispose();
-
-				final File blibFile=blibFileChooser.getFile();
-				final File irtFile=iRTFileChooser.getFile();
-				final File fastaFile=fastaFileChooser.getFile();
-				
-				if (blibFile!=null&&blibFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
-					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(SearchPanel.this), "Please wait...", "Reading BLIB File") {
-						@Override
-						protected Nothing doInBackgroundForReal() throws Exception {
-							BlibToLibraryConverter.convert(blibFile, Optional.ofNullable(irtFile), fastaFile, getVisibleTab().getParameters());
-							Logger.logLine("Finished reading "+blibFile.getName());
-							return Nothing.NOTHING;
-						}
-						@Override
-						protected void doneForReal(Nothing t) {
-						}
-					};
-					worker.execute();
-					
-				} else {
-					JOptionPane.showMessageDialog(frame, "You must specify a BLIB and a FASTA file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
-				}
-			}
-		});
-		buttons.add(okButton);
-		JButton cancelButton=new JButton("Cancel");
-		cancelButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				dialog.setVisible(false);
-				dialog.dispose();
-			}
-		});
-		buttons.add(cancelButton);
-		
-		JPanel mainpane=new JPanel(new BorderLayout());
-		mainpane.add(options, BorderLayout.CENTER);
-		mainpane.add(buttons, BorderLayout.SOUTH);
-		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
-		
-		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
-		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		dialog.pack(); 
-		dialog.setSize(500, 200);
-		dialog.setVisible(true);
-	}
-	
-	public void convertMSP() {
-		final JFrame frame = (JFrame)SwingUtilities.getRoot(SearchPanel.this);
-		final JDialog dialog=new JDialog(frame, "Convert NIST MSP to Library", true);
-		
-		final FileChooserPanel mspFileChooser=new FileChooserPanel(null, "MSP", new SimpleFilenameFilter(".msp"), true);
-		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);
-
-		JPanel options=new JPanel();
-		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
-		options.add(mspFileChooser);
-		options.add(fastaFileChooser);
-		
-		JPanel buttons=new JPanel();
-		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
-		JButton okButton=new JButton("OK");
-		okButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				dialog.setVisible(false);
-				dialog.dispose();
-
-				final File mspFile=mspFileChooser.getFile();
-				final File fastaFile=fastaFileChooser.getFile();
-				
-				if (mspFile!=null&&mspFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
-					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(SearchPanel.this), "Please wait...", "Reading MSP File") {
-						@Override
-						protected Nothing doInBackgroundForReal() throws Exception {
-							MSPReader.convertMSP(mspFile, fastaFile);
-							Logger.logLine("Finished reading "+mspFile.getName());
-							return Nothing.NOTHING;
-						}
-
-						@Override
-						protected void doneForReal(Nothing t) {
-						}
-					};
-					worker.execute();
-				} else {
-					JOptionPane.showMessageDialog(frame, "You must specify a MSP and a FASTA file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
-				}
-			}
-		});
-		buttons.add(okButton);
-		JButton cancelButton=new JButton("Cancel");
-		cancelButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				dialog.setVisible(false);
-				dialog.dispose();
-			}
-		});
-		buttons.add(cancelButton);
-		
-		JPanel mainpane=new JPanel(new BorderLayout());
-		mainpane.add(options, BorderLayout.CENTER);
-		mainpane.add(buttons, BorderLayout.SOUTH);
-		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
-		
-		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
-		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		dialog.pack(); 
-		dialog.setSize(500, 170);
-		dialog.setVisible(true);
-	}
-
-	public void saveBLIB() {
+	public void saveBLIB(boolean alignBetweenFiles) {
 		JFrame frame = (JFrame)SwingUtilities.getRoot(SearchPanel.this);
 
 		Optional<String> maybeError=getVisibleTab().canLoadData();
@@ -731,7 +642,7 @@ public class SearchPanel extends JPanel {
 					}
 				}
 
-				SearchToBLIBJob job=new SearchToBLIBJob(blibFile, isAlignedBetweenFiles(), processorTableModel);
+				SearchToBLIBJob job=new SearchToBLIBJob(blibFile, alignBetweenFiles, processorTableModel);
 				if (job!=null) {
 					processorTableModel.addJob(job);
 				}
@@ -739,11 +650,11 @@ public class SearchPanel extends JPanel {
 		}
 	}
 
-	public boolean isAlignedBetweenFiles() {
-		return alignBetweenFiles.isSelected();
-	}
+//	public boolean isAlignedBetweenFiles() {
+//		return alignBetweenFiles.isSelected();
+//	}
 
-	public void saveELIB() {
+	public void saveELIB(boolean alignBetweenFiles) {
 		JFrame frame = (JFrame)SwingUtilities.getRoot(SearchPanel.this);
 
 		Optional<String> maybeError=getVisibleTab().canLoadData();
@@ -768,7 +679,7 @@ public class SearchPanel extends JPanel {
 					}
 				}
 
-				SearchToELIBJob job=new SearchToELIBJob(elibFile, isAlignedBetweenFiles(), processorTableModel);
+				SearchToELIBJob job=new SearchToELIBJob(elibFile, alignBetweenFiles, processorTableModel);
 				if (job!=null) {
 					processorTableModel.addJob(job);
 				}

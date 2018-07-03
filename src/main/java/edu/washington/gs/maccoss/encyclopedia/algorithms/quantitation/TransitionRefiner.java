@@ -6,6 +6,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import org.jfree.chart.ChartPanel;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
@@ -102,8 +105,10 @@ public class TransitionRefiner {
 		ions.add(new FragmentIon(8, (byte)8, IonType.y));
 		ions.add(new FragmentIon(9, (byte)9, IonType.y));
 		FragmentIon[] fragmentMasses=ions.toArray(new FragmentIon[ions.size()]);
+
+		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		
-		TransitionRefinementData data=identifyTransitions("ASVAAQQQEEAR", (byte)2, 30.74576187133789f, fragmentMasses, chromatograms, rts, Optional.ofNullable((float[])null), true);
+		TransitionRefinementData data=identifyTransitions("ASVAAQQQEEAR", (byte)2, 30.74576187133789f, fragmentMasses, chromatograms, rts, Optional.ofNullable((float[])null), true, aaConstants);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		for (int i=0; i<integrations.length; i++) {
@@ -112,15 +117,16 @@ public class TransitionRefiner {
 		Charter.launchCharts("TITLE", getChartPanels(data));
 	}
 
-	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, boolean wasInferred) {
-		return identifyTransitions(peptideModSeq, precursorCharge, retentionTimeInSec, fragmentMasses, chromatograms, retentionTimes, Optional.ofNullable((float[])null), wasInferred, false);
+	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, boolean wasInferred, AminoAcidConstants aaConstants) {
+		return identifyTransitions(peptideModSeq, precursorCharge, retentionTimeInSec, fragmentMasses, chromatograms, retentionTimes, Optional.ofNullable((float[])null), wasInferred, false, aaConstants);
 	}
 
-	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> medianChromatogram, boolean wasInferred) {
-		return identifyTransitions(peptideModSeq, precursorCharge, retentionTimeInSec, fragmentMasses, chromatograms, retentionTimes, medianChromatogram, wasInferred, false);
+	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> medianChromatogram, boolean wasInferred, AminoAcidConstants aaConstants) {
+		return identifyTransitions(peptideModSeq, precursorCharge, retentionTimeInSec, fragmentMasses, chromatograms, retentionTimes, medianChromatogram, wasInferred, false, aaConstants);
 	}
-	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean wasInferred, boolean plot) {
-		if (chromatograms.size()==0) return new TransitionRefinementData(peptideModSeq, precursorCharge, new FragmentIon[0], chromatograms, new float[0], new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]));
+
+	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean wasInferred, boolean plot, AminoAcidConstants aaConstants) {
+		if (chromatograms.size()==0) return new TransitionRefinementData(peptideModSeq, precursorCharge, new FragmentIon[0], chromatograms, new float[0], new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]), aaConstants);
 		ArrayList<float[]> normalizedChromatograms;
 		int maxIndex;
 		IntRange indices;
@@ -168,8 +174,22 @@ public class TransitionRefiner {
 				if (!testRange.contains(retentionTimeInSec)) {
 						// if it wasn't inferred and our boundaries were outside the range, we need to reset the range 
 					int index=Arrays.binarySearch(retentionTimes, retentionTimeInSec);
-					if (index<0) index=-(index+1);
-					
+
+					if (index < 0) {
+						index = -(index + 1);
+					}
+
+					// Issue #79. Guard against out-of-bounds. This is NOT an `else`
+					// clause of the `if` above, because the insertion point returned
+					// by binary search can be the end of the array.
+					// Note that the resulting index could still be out of bounds, but
+					// only if the array is length zero. However, it's probably safe to
+					// assume that the arrays have matching length, and the call to
+					// `getIndexRange()` above would have failed if the length was zero.
+					if (index >= retentionTimes.length) {
+						index = retentionTimes.length - 1;
+					}
+
 					initialIndices=getIndexRange(medianChromatogram, index);
 				}
 				testRange=new Range(retentionTimes[initialIndices.getStart()], retentionTimes[initialIndices.getStop()]);
@@ -233,7 +253,7 @@ public class TransitionRefiner {
 			Charter.launchCharts(peptideModSeq+" chart", panels);
 		}
 		
-		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range);
+		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, aaConstants);
 	}
 	
 	public static int[] numberOfCoelutingIons(double[] targetMasses, double[] allIons, ArrayList<Spectrum> stripes, int halfPeakWidthInScans, MassTolerance fragmentTolerance) {

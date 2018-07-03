@@ -24,7 +24,8 @@ public class DigestionEnzymeTest extends TestCase {
 		FastaEntryInterface entry=FastaReader.readFasta(bsa, "").get(0);
 		String sequence=entry.getSequence();
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
-		String reversed=enzyme.reverseProtein(sequence);
+		AminoAcidConstants aminoAcidConstants = new AminoAcidConstants();
+		String reversed=enzyme.reverseProtein(sequence, aminoAcidConstants);
 		assertEquals("SYASSFLFLLSIFTVWMRFVGRRHADKHAVESRFKFNEEGLDKVHDEFPCQQLYQAFAILVLAKAFETVENVLKDCNEASEDAVCTKDGFLTHLSKLTAVTCLRACCDAMEGYTEKHQLFCENEPEQ", reversed);
 	}
 	

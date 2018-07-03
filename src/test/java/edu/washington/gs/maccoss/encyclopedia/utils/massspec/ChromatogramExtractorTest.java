@@ -31,13 +31,13 @@ public class ChromatogramExtractorTest {
 		
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 		String peptideModSeq1="KT[+79.966331]APTLSPEHWK";
-		FragmentationModel model1=new FragmentationModel(peptideModSeq1, parameters.getAAConstants());
-		FragmentIon[] ionTypes1=model1.getPrimaryIonObjects(FragmentationType.CID, charge);
+		FragmentationModel model1=PeptideUtils.getPeptideModel(peptideModSeq1, parameters.getAAConstants());
+		FragmentIon[] ionTypes1=model1.getPrimaryIonObjects(FragmentationType.CID, charge, false);
 		availableModels.put(peptideModSeq1, model1);
 
 		String peptideModSeq2="KTAPTLS[+79.966331]PEHWK";
-		FragmentationModel model2=new FragmentationModel(peptideModSeq2, parameters.getAAConstants());
-		FragmentIon[] ionTypes2=model2.getPrimaryIonObjects(FragmentationType.CID, charge);
+		FragmentationModel model2=PeptideUtils.getPeptideModel(peptideModSeq2, parameters.getAAConstants());
+		FragmentIon[] ionTypes2=model2.getPrimaryIonObjects(FragmentationType.CID, charge, false);
 		availableModels.put(peptideModSeq2, model2);
 
 		FragmentIon[] unique1=PhosphoLocalizer.getUniqueFragmentIons(peptideModSeq1, charge, availableModels, parameters);

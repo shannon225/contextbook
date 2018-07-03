@@ -14,6 +14,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParame
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequencyInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
@@ -51,9 +52,9 @@ public class VariantXCorDIAOneScoringFactory extends XCorDIAOneScoringFactory {
 	}
 
 	@Override
-	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
+	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
 		if (background==null) throw new EncyclopediaException("You must initialize background before generating a scoring task!");
-		return new VariantXcorDIAOneScoringTask(scorer, background, entries, stripes, dutyCycle, precursors, resultsQueue, localizationQueue, getParameters());
+		return new VariantXcorDIAOneScoringTask(scorer, background, entries, stripes, precursorIsolationRange, dutyCycle, precursors, resultsQueue, localizationQueue, getParameters());
 	}
 	
 	@Override

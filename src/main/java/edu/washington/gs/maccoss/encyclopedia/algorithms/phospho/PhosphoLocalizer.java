@@ -29,6 +29,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
@@ -140,7 +141,7 @@ public class PhosphoLocalizer {
 		
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : peptideModSeqs) {
-			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+			FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
 			entryMap.put(peptideModSeq, model);
 		}
 		
@@ -249,7 +250,7 @@ public class PhosphoLocalizer {
 			// FIXME BUT WE NEED TO REMOVE THE (S[+80])SSSSK RT AS A POSSIBILITY!
 			
 			// fix ambiguity based on previously identified peptides
-			Optional<AmbiguousPeptideModSeq> ambiguityRemoved=targetPeptideAnnotation.removeAmbiguity(previouslyIdentified);
+			Optional<AmbiguousPeptideModSeq> ambiguityRemoved=targetPeptideAnnotation.removeAmbiguity(modification, previouslyIdentified);
 			System.out.println("AMBIGUITY: "+targetPeptideAnnotation.getPeptideAnnotation()+", "+!ambiguityRemoved.isPresent()); //FIXME
 			for (AmbiguousPeptideModSeq prev : previouslyIdentified) {
 				System.out.println("\tPREVIOUS ID:"+prev.getPeptideAnnotation());
@@ -264,10 +265,10 @@ public class PhosphoLocalizer {
 			FragmentationModel model=entryMap.get(targetPeptideSequence);
 			if (model==null) {
 				// can happen if ambiguity is removed
-				model=new FragmentationModel(targetPeptideSequence, params.getAAConstants());
+				model=PeptideUtils.getPeptideModel(targetPeptideSequence, params.getAAConstants());
 			}
 			
-			FragmentIon[] allIonsTypes=model.getPrimaryIonObjects(params.getFragType(), precursorCharge);
+			FragmentIon[] allIonsTypes=model.getPrimaryIonObjects(params.getFragType(), precursorCharge, false, true);
 			double[] allIons=FragmentIon.getMasses(allIonsTypes);
 			
 			ArrayList<FragmentIon> allTargets=new ArrayList<FragmentIon>(Arrays.asList(targets));
@@ -364,7 +365,8 @@ public class PhosphoLocalizer {
 			uniqueIdentifiedTargetFragments.put(peptideAnnotation, identifiedTargets.toArray(new FragmentIon[identifiedTargets.size()]));
 
 			boolean isLocalized = maxRawScore>=minimumScore;
-			
+
+			System.out.println("0) "+isLocalized+", "+maxRawScore+", "+bestScore+", "+minimumScore);
 			if (isLocalized||maxRawScore>bestScore) {
 				if (bestScore<maxRawScore) {
 					bestScore=maxRawScore;
@@ -558,7 +560,7 @@ public class PhosphoLocalizer {
 		}
 
 		// identify transitions
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions(peptideModSeq, precursorCharge, targetRT, keptMasses.toArray(new FragmentIon[keptMasses.size()]), chromatograms, retentionTimes.toArray(), medianChromatogram, false);
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions(peptideModSeq, precursorCharge, targetRT, keptMasses.toArray(new FragmentIon[keptMasses.size()]), chromatograms, retentionTimes.toArray(), medianChromatogram, false, params.getAAConstants());
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		Range rtRange=data.getRange();
@@ -647,14 +649,19 @@ public class PhosphoLocalizer {
 	}
 
 	public static FragmentIon[] getUniqueFragmentIons(String peptideModSeq, byte precursorCharge, HashMap<String, FragmentationModel> availableModels, SearchParameters params) {
+		FragmentationType fragType=params.getFragType();
+		return getUniqueFragmentIons(peptideModSeq, precursorCharge, availableModels, fragType);
+	}
+
+	public static FragmentIon[] getUniqueFragmentIons(String peptideModSeq, byte precursorCharge, HashMap<String, FragmentationModel> availableModels, FragmentationType fragType) {
 		FragmentationModel unitEntry=availableModels.get(peptideModSeq);
-		HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(unitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false)));
+		HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(unitEntry.getPrimaryIonObjects(fragType, precursorCharge, false, true)));
 
 		for (Entry<String, FragmentationModel> otherEntry : availableModels.entrySet()) {
 			String otherPeptideModSeq=otherEntry.getKey();
 			if (!peptideModSeq.equals(otherPeptideModSeq)) {
 				FragmentationModel otherUnitEntry=otherEntry.getValue();
-				ions.removeAll(Arrays.asList(otherUnitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false)));
+				ions.removeAll(Arrays.asList(otherUnitEntry.getPrimaryIonObjects(fragType, precursorCharge, false, true)));
 			}
 		}
 
@@ -668,7 +675,7 @@ public class PhosphoLocalizer {
 		for (Entry<String, FragmentationModel> entry : entryMap.entrySet()) {
 			String peptideModSeq=entry.getKey();
 			FragmentationModel unitEntry=entry.getValue();
-			HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(unitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false)));
+			HashSet<FragmentIon> ions=new HashSet<FragmentIon>(Arrays.asList(unitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false, true)));
 
 			for (Entry<String, FragmentationModel> otherEntry : entryMap.entrySet()) {
 				String otherPeptideModSeq=otherEntry.getKey();
@@ -677,7 +684,7 @@ public class PhosphoLocalizer {
 					FragmentationModel otherUnitEntry=otherEntry.getValue();
 
 					//TODO: memoize this call, as it gets called a quadratic number of times
-					final FragmentIon[] otherUnitIons = otherUnitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false);
+					final FragmentIon[] otherUnitIons = otherUnitEntry.getPrimaryIonObjects(params.getFragType(), precursorCharge, false, true);
 
 					// this commented line relies on FragmentIon#equals, which previously used a 0.1 Da tolerance (hard-coded)
 //					ions.removeAll(Arrays.asList(otherUnitIons));

@@ -18,6 +18,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 
 public class FragmentationTable extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -27,8 +28,8 @@ public class FragmentationTable extends JPanel {
 		super(new BorderLayout());
 		
 		peptideModSeq=peptideModSeq.replaceAll("\\(", "").replaceAll("\\)", "");
-		FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-		FragmentIon[] all=model.getPrimaryIonObjects(params.getFragType(), spec.getPrecursorCharge());
+		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
+		FragmentIon[] all=model.getPrimaryIonObjects(params.getFragType(), spec.getPrecursorCharge(), false);
 		double[] massArray=spec.getMassArray();
 		
 		ArrayList<FragmentIon> matched=new ArrayList<FragmentIon>();
@@ -57,12 +58,12 @@ public class FragmentationTable extends JPanel {
 		FragmentIon[] all;
 		if (transitionRefinementData!=null) {
 			String peptideModSeq=transitionRefinementData.getPeptideModSeq();
-			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-			all=model.getPrimaryIonObjects(params.getFragType(), transitionRefinementData.getPrecursorCharge());
+			FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
+			all=model.getPrimaryIonObjects(params.getFragType(), transitionRefinementData.getPrecursorCharge(), false);
 		} else {
 			String peptideModSeq=sequenceKey.replaceAll("\\(", "").replaceAll("\\)", "");
-			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-			all=model.getPrimaryIonObjects(params.getFragType(), (byte)3);
+			FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
+			all=model.getPrimaryIonObjects(params.getFragType(), (byte)3, false);
 		}
 		
 		FragmentIon[] targets=data.getUniqueTargetFragments().get(sequenceKey);

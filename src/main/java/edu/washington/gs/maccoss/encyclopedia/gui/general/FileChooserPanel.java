@@ -28,12 +28,17 @@ public class FileChooserPanel extends JPanel {
 	private final boolean required;
 	private final String fileType;
 	private final FilenameFilter filter;
+	private final boolean isLoad;
 
 	public FileChooserPanel(File f, String fileTypeLocal, FilenameFilter filterLocal, boolean required) {
+		this(f, fileTypeLocal, filterLocal, required, true);
+	}
+	public FileChooserPanel(File f, String fileTypeLocal, FilenameFilter filterLocal, boolean required, boolean isLoad) {
 		super(new BorderLayout());
 		this.setOpaque(true);
 		this.setBackground(Color.white);
 		
+		this.isLoad=isLoad;
 		this.fileType=fileTypeLocal;
 		this.filter=filterLocal;
 		this.required=required;
@@ -66,9 +71,9 @@ public class FileChooserPanel extends JPanel {
 		Component root=SwingUtilities.getRoot(FileChooserPanel.this);
 		File[] files;
 		if (root instanceof Frame) {
-			files=getFiles(file, fileType, filter, (Frame)root);
+			files=getFiles(file, fileType, filter, (Frame)root, isLoad);
 		} else {
-			files=getFiles(file, fileType, filter, (Dialog)root);
+			files=getFiles(file, fileType, filter, (Dialog)root, isLoad);
 			
 		}
 		update(files);
@@ -99,8 +104,8 @@ public class FileChooserPanel extends JPanel {
 		}
 	}
 
-	public static File[] getFiles(File startingFile, String fileType, FilenameFilter filter, Dialog frame) {
-		FileDialog dialog=new FileDialog(frame, "Select a "+fileType+" file", FileDialog.LOAD);
+	public static File[] getFiles(File startingFile, String fileType, FilenameFilter filter, Dialog frame, boolean isLoad) {
+		FileDialog dialog=new FileDialog(frame, "Select a "+fileType+" file", isLoad?FileDialog.LOAD:FileDialog.SAVE);
 		if (startingFile!=null) {
 			dialog.setFile(startingFile.getAbsolutePath());
 		}
@@ -110,8 +115,8 @@ public class FileChooserPanel extends JPanel {
 		return files;
 	}
 
-	public static File[] getFiles(File startingFile, String fileType, FilenameFilter filter, Frame frame) {
-		FileDialog dialog=new FileDialog(frame, "Select a "+fileType+" file", FileDialog.LOAD);
+	public static File[] getFiles(File startingFile, String fileType, FilenameFilter filter, Frame frame, boolean isLoad) {
+		FileDialog dialog=new FileDialog(frame, "Select a "+fileType+" file", isLoad?FileDialog.LOAD:FileDialog.SAVE);
 		if (startingFile!=null) {
 			dialog.setFile(startingFile.getAbsolutePath());
 		}

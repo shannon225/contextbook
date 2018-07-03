@@ -5,11 +5,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
@@ -30,18 +28,18 @@ public class PeptideUtils {
 	}
 	
 	public static String getSmartDecoy(String peptide, byte charge, HashSet<String> backgroundProteome, SearchParameters parameters) {
-		FragmentationModel model=new FragmentationModel(peptide, parameters.getAAConstants());
-		double[] primaryIons=model.getPrimaryIons(parameters.getFragType(), charge);
+		FragmentationModel model=PeptideUtils.getPeptideModel(peptide, parameters.getAAConstants());
+		double[] primaryIons=model.getPrimaryIons(parameters.getFragType(), charge, false);
 		
-		String decoy=reverse(peptide, parameters.getEnzyme());
+		String decoy=reverse(peptide, parameters.getEnzyme(), parameters.getAAConstants());
 		int attempts=0;
 		int maxTries=10;
 		while (attempts<maxTries) {
 			if (backgroundProteome.contains(decoy)) {
 				decoy=shuffle(decoy, parameters);
 			} else {
-				model=new FragmentationModel(decoy, parameters.getAAConstants());
-				double[] decoyIons=model.getPrimaryIons(parameters.getFragType(), charge);
+				model=PeptideUtils.getPeptideModel(decoy, parameters.getAAConstants());
+				double[] decoyIons=model.getPrimaryIons(parameters.getFragType(), charge, false);
 				int matches=0;
 				for (double decoyFragment : decoyIons) {
 					Optional<Double> match=parameters.getFragmentTolerance().getMatch(primaryIons, decoyFragment);
@@ -62,7 +60,7 @@ public class PeptideUtils {
 	}
 	
 	public static String getDecoy(String peptide, HashSet<String> backgroundProteome, SearchParameters parameters) {
-		String decoy=reverse(peptide, parameters.getEnzyme());
+		String decoy=reverse(peptide, parameters.getEnzyme(), parameters.getAAConstants());
 		int attempts=0;
 		int maxTries=3;
 		while (attempts<maxTries) {
@@ -75,9 +73,9 @@ public class PeptideUtils {
 		}
 		return decoy;
 	}
-	
-	public static String reverse(String peptide, DigestionEnzyme enzyme) {
-		String[] aas=getAAs(peptide);
+
+	public static String reverse(String peptide, DigestionEnzyme enzyme, AminoAcidConstants aminoAcidConstants) {
+		String[] aas=getAAs(peptide, aminoAcidConstants);
 		reverse(aas, enzyme);
 		return getSequence(aas);
 	}
@@ -108,8 +106,7 @@ public class PeptideUtils {
 	 * @return
 	 */
 	public static String shuffle(String peptide, SearchParameters parameters) {
-		Triplet<double[], double[], String[]>triplet=getMasses(peptide, parameters.getAAConstants());
-		String[] aas=triplet.z;
+		String[] aas=getPeptideModel(peptide, parameters.getAAConstants()).getAas();
 		shuffle(aas, 0, parameters.getEnzyme());
 		return getSequence(aas);
 	}
@@ -121,8 +118,7 @@ public class PeptideUtils {
 	 * @return
 	 */
 	public static String shuffle(String peptide, int shuffleSeed, SearchParameters parameters) {
-		Triplet<double[], double[], String[]>triplet=getMasses(peptide, parameters.getAAConstants());
-		String[] aas=triplet.z;
+		String[] aas=getPeptideModel(peptide, parameters.getAAConstants()).getAas();
 		shuffle(aas, shuffleSeed, parameters.getEnzyme());
 		return getSequence(aas);
 	}
@@ -153,8 +149,8 @@ public class PeptideUtils {
 			}
 		}
 	}
-	
-	public static String getCorrectedMasses(String sequence) {
+
+	public static String getCorrectedMasses(String sequence, AminoAcidConstants aminoAcidConstants) {
 		char[] ca=sequence.toCharArray();
 		
 		ArrayList<String> aas=new ArrayList<String>();
@@ -175,7 +171,7 @@ public class PeptideUtils {
 				double modificationMass = Double.valueOf(massText);
 				String aaString=aas.get(aas.size()-1);
 				char aaChar=aaString.charAt(0);
-				modificationMass=MassConstants.getAccurateModificationMass(aaChar, modificationMass);
+				modificationMass=aminoAcidConstants.getAccurateModificationMass(aaChar, modificationMass);
 
 				aas.set(aas.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
 			} else {
@@ -201,10 +197,11 @@ public class PeptideUtils {
 	 * @param sequence
 	 * @return
 	 */
-	public static Triplet<double[], double[], String[]> getMasses(String sequence, AminoAcidConstants aaConstants) {
+	public static FragmentationModel getPeptideModel(String sequence, AminoAcidConstants aaConstants) {
 		char[] ca=sequence.toCharArray();
 		
 		TDoubleArrayList masses=new TDoubleArrayList();
+		TDoubleArrayList modifications=new TDoubleArrayList();
 		TDoubleArrayList neutralLosses=new TDoubleArrayList();
 		ArrayList<String> aas=new ArrayList<String>();
 		for (int i = 0; i < ca.length; i++) {
@@ -220,27 +217,31 @@ public class PeptideUtils {
 					i++;
 					masses.add(aaConstants.getMass(ca[i]));
 					neutralLosses.add(0.0);
+					modifications.add(0.0);
 					aas.add(Character.toString(ca[i]));
 				}
 				String massText = sb.toString();
 				double modificationMass = Double.valueOf(massText);
 				String aaString=aas.get(masses.size()-1);
 				char aaChar=aaString.charAt(0);
-				modificationMass=MassConstants.getAccurateModificationMass(aaChar, modificationMass);
+				modificationMass=aaConstants.getAccurateModificationMass(aaChar, modificationMass);
 
 				masses.set(masses.size()-1, masses.get(masses.size()-1)+modificationMass);
-				neutralLosses.set(masses.size()-1, PeptideModification.getNeutralLoss(aaChar, modificationMass));
+				double neutralLoss = aaConstants.getNeutralLoss(aaChar, modificationMass);
+				neutralLosses.set(masses.size()-1, neutralLoss);
+				modifications.set(masses.size()-1, modificationMass);
 				aas.set(masses.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
 			} else {
 				masses.add(aaConstants.getMass(ca[i]));
 				neutralLosses.add(0.0);
+				modifications.add(0.0);
 				aas.add(Character.toString(ca[i]));
 			}
 		}
-		return new Triplet<double[], double[], String[]>(masses.toArray(), neutralLosses.toArray(), aas.toArray(new String[aas.size()]));
+		return new FragmentationModel(masses.toArray(), modifications.toArray(), neutralLosses.toArray(), aas.toArray(new String[aas.size()]));
 	}
 
-	public static String[] getAAs(String sequence) {
+	public static String[] getAAs(String sequence, AminoAcidConstants aminoAcidConstants) {
 		char[] ca=sequence.toCharArray();
 		
 		ArrayList<String> aas=new ArrayList<String>();
@@ -261,7 +262,7 @@ public class PeptideUtils {
 				double modificationMass = Double.valueOf(massText);
 				String aaString=aas.get(aas.size()-1);
 				char aaChar=aaString.charAt(0);
-				modificationMass=MassConstants.getAccurateModificationMass(aaChar, modificationMass);
+				modificationMass=aminoAcidConstants.getAccurateModificationMass(aaChar, modificationMass);
 
 				aas.set(aas.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
 			} else {

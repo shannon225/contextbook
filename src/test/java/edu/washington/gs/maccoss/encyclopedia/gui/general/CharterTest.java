@@ -22,6 +22,9 @@ public class CharterTest {
 			public void processRow(Map<String, String> row) {
 				hash.put(Log.log10(Float.parseFloat(row.get("mean"))), Float.parseFloat(row.get("cv")));
 			}
+			@Override
+			public void cleanup() {
+			}
 		});
 		
 		System.out.println("Parsed "+hash.size()+" values...");

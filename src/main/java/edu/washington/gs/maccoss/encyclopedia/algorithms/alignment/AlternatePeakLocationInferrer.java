@@ -46,6 +46,10 @@ public class AlternatePeakLocationInferrer {
 			if (length>max) {
 				max=length;
 				bestJob=entry.getKey();
+			} else if (length==max&&bestJob!=null) {
+				if (bestJob.getDiaFile().getName().compareTo(entry.getKey().getDiaFile().getName())>0) {
+					bestJob=entry.getKey();
+				}
 			}
 		}
 		Logger.logLine("Setting "+bestJob.getDiaFile().getName()+" as the seed experiment.");
@@ -53,6 +57,7 @@ public class AlternatePeakLocationInferrer {
 
 		// construct alignments
 		HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap=new HashMap<SearchJobData, RetentionTimeAlignmentInterface>();
+		HashMap<SearchJobData, List<RetentionTimeAlignmentInterface.AlignmentDataPoint>> alignmentDataMap = new HashMap<>();
 		HashMap<String, Float> alignedRTInMinBySequenceMap=new HashMap<String, Float>();
 		// add all bestJob archetypals
 		TObjectFloatHashMap<String> archetypals=peptideMappings.get(bestJob);
@@ -89,9 +94,14 @@ public class AlternatePeakLocationInferrer {
 					Logger.errorLine("Not enough points ("+points.size()+" out of align:"+rtInSec.size()+" and best:"+bestRTInSec.size()+") to compute regression between samples, still trying anyways.");
 				}
 				
-				RetentionTimeAlignmentInterface alignment=new RetentionTimeFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
+				RetentionTimeAlignmentInterface alignment=RetentionTimeFilter.getFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
 				alignmentMap.put(job, alignment);
-				alignment.plot(points, Optional.ofNullable(job.getDiaFile()));
+
+				File saveFileSeed = new File(job.getPercolatorFiles().getPeptideOutputFile().getParentFile(), job.getDiaFile().getName());
+
+				final List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignmentResults =
+						alignment.plot(points, Optional.ofNullable(saveFileSeed));
+				alignmentDataMap.put(job, alignmentResults);
 
 				// align local archetypals to the seed
 				rtInSec.forEachEntry(new TObjectFloatProcedure<String>() {
@@ -105,11 +115,11 @@ public class AlternatePeakLocationInferrer {
 			}
 		}
 
-		return new SimplePeakLocationInferrer(alignmentMap, alignedRTInMinBySequenceMap, bestIons, params);
+		return new SimplePeakLocationInferrer(alignmentMap, alignmentDataMap, alignedRTInMinBySequenceMap, bestIons, params);
 	}
 
 	static Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> getArchetypals(ProgressIndicator progress, List<? extends SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
-		int numberOfQuantitativePeaks=params.getNumberOfQuantitativePeaks();
+		int numberOfQuantitativePeaks=params.getEffectiveNumberOfQuantitativePeaks();
 		MassTolerance fragmentTolerance=params.getFragmentTolerance();
 
 		HashMap<SearchJobData, TObjectFloatHashMap<String>> retentionTimeMappingsInSeconds=new HashMap<>();
@@ -124,7 +134,7 @@ public class AlternatePeakLocationInferrer {
 				File resultLibrary=((QuantitativeSearchJobData) job).getResultLibrary();
 				try {
 					LibraryInterface results=BlibToLibraryConverter.getFile(resultLibrary);
-					ArrayList<LibraryEntry> entries=results.getAllEntries(false);
+					ArrayList<LibraryEntry> entries=results.getAllEntries(false, params.getAAConstants());
 
 					TreeMap<PeptidePrecursor, LibraryEntry> fastLookupPeptides=new TreeMap<PeptidePrecursor, LibraryEntry>();
 					for (LibraryEntry libraryEntry : entries) {
@@ -149,7 +159,7 @@ public class AlternatePeakLocationInferrer {
 							ionCounter.put(peptideModSeq, bestIonsMap);
 						}
 						CorrelationPeakFrequencyCalculator bestWeakIonsMap=weakIonCounter.get(peptideModSeq);
-						if (bestWeakIonsMap==null) {
+						if (bestWeakIonsMap==null) { // note, weak ions aren't used anymore
 							bestWeakIonsMap=new CorrelationPeakFrequencyCalculator(fragmentTolerance);
 							weakIonCounter.put(peptideModSeq, bestWeakIonsMap);
 						}

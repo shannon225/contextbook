@@ -28,11 +28,11 @@ public enum IonType {
 	public static final Color oddColor=new Color(26, 148, 49);
 	public static final Color bcColor=new Color(226, 75, 59);
 	public static final Color yzColor=new Color(59, 109, 226);
-	public static final Color missingColor=Color.black;
+	public static final Color missingColor=Color.DARK_GRAY;
 	public static final BasicStroke primaryStroke=new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 	public static final BasicStroke secondaryStroke=new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 	public static final BasicStroke missingStroke=new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
-	public static final Font primaryAnnotationFont=new Font("News Gothic MT", Font.BOLD, 10);
+	public static final Font primaryAnnotationFont=new Font("News Gothic MT", Font.BOLD, 14);
 	public static final Font secondaryAnnotationFont=new Font("News Gothic MT", Font.PLAIN, 10);
 	public static final Font missingAnnotationFont=new Font("News Gothic MT", Font.PLAIN, 10);
 

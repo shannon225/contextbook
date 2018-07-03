@@ -15,13 +15,13 @@ import java.util.HashSet;
 import java.util.StringTokenizer;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.SSRCalc;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
 public class MSPReader {
@@ -115,11 +115,15 @@ public class MSPReader {
 	}
 	
 	public static ArrayList<LibraryEntry> readMSP(BufferedReader in, String fileName, boolean keepAccessions) {
+		//TODO: take in parameters
+		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+
 		ArrayList<LibraryEntry> entryList=new ArrayList<LibraryEntry>();
 		String eachline=null;
 		try {
 			
 			String peptideModSeq=null;
+			String fullname=null;
 			String accession=null;
 			byte precursorCharge=0;
 			double precursorMZ=0.0;
@@ -136,11 +140,13 @@ public class MSPReader {
 						Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
 						HashSet<String> accessions=new HashSet<String>();
 						if (accession!=null) accessions.add(accession);
-						LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y);
+						LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y, aaConstants);
 						entryList.add(entry);
 						peaks.clear();
+						fullname=null;
+						
 					}
-				} else if (eachline.startsWith("Num peaks: ")) {
+				} else if (eachline.startsWith("Num peaks: ")||eachline.startsWith("NumPeaks: ")) {
 					INNERLOOP: while ((eachline=in.readLine())!=null) {
 						if (eachline.trim().length()==0) {
 							break INNERLOOP;
@@ -150,10 +156,20 @@ public class MSPReader {
 						float intensity=Float.parseFloat(st.nextToken());
 						peaks.add(new Peak(mass, intensity));
 					}
+				} else if (eachline.startsWith("FullName: ")) {
+					fullname=eachline.substring(10);
 				} else if (eachline.startsWith("Comment: ")) {
 					HashMap<String, String> map=split(eachline);
 					precursorMZ=Double.parseDouble(map.get("Parent"));
-					score=1.0f-Float.parseFloat(map.get("Unassigned"));
+					String scoreString=map.get("Unassigned");
+					
+					if (scoreString==null) {
+						scoreString=map.get("Prob");
+						score=Float.parseFloat(scoreString);
+						
+					} else {
+						score=1.0f-Float.parseFloat(scoreString);
+					}
 					
 					if (keepAccessions) {
 						accession=map.get("Protein");
@@ -164,10 +180,23 @@ public class MSPReader {
 							}
 						}
 					}
+
+					String rtString=map.get("RetentionTime");
+					if (rtString!=null) {
+						if (rtString.indexOf(',')>0) {
+							rtString=rtString.substring(0, rtString.indexOf(','));
+						}
+						retentionTime=Float.parseFloat(rtString);
+					} else {
+						retentionTime=(float)SSRCalc.getHydrophobicity(peptideModSeq);
+					}
 					
-					String fullName=map.get("Fullname");
-					String sequence=fullName.substring(fullName.indexOf('.')+1, fullName.lastIndexOf('.'));
-					precursorCharge=Byte.parseByte(fullName.substring(fullName.lastIndexOf('/')+1));
+					if (fullname==null) {
+						fullname=map.get("Fullname");
+					}
+					String sequence=fullname.substring(fullname.indexOf('.')+1, fullname.lastIndexOf('.'));
+					sequence=PeptideUtils.getPeptideSeq(sequence);
+					precursorCharge=Byte.parseByte(fullname.substring(fullname.lastIndexOf('/')+1));
 					
 					String mods=map.get("Mods");
 					StringTokenizer st=new StringTokenizer(mods, "/");
@@ -207,14 +236,13 @@ public class MSPReader {
 					} else {
 						peptideModSeq=sequence;
 					}
-					retentionTime=(float)SSRCalc.getHydrophobicity(peptideModSeq);
 				}
 			}
 			if (peaks.size()>0) {
 				Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
 				HashSet<String> accessions=new HashSet<String>();
 				if (accession!=null) accessions.add(accession);
-				LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y);
+				LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y, aaConstants);
 				entryList.add(entry);
 			}
 			return entryList;

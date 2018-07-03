@@ -11,6 +11,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SparseXCorrCalculator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SparseXCorrSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
@@ -45,8 +46,6 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		this.sparseModelCalculator=sparseModelCalculator;
 	}
 
-
-
 	public EncyclopediaOneAuxillaryPSMScorer getEntryOptimizedScorer(LibraryEntry entry) {
 		SparseXCorrCalculator librarySparse=new SparseXCorrCalculator(entry, new Range((float)entry.getPrecursorMZ()-10f, (float)entry.getPrecursorMZ()+10f), parameters);
 		SparseXCorrCalculator sparseModel=new SparseXCorrCalculator(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters);
@@ -63,8 +62,8 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 
 		MassTolerance acquiredTolerance=parameters.getFragmentTolerance();
 		MassTolerance libraryTolerance=parameters.getLibraryFragmentTolerance();
-		FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
-		double[] ions=model.getPrimaryIons(parameters.getFragType(), entry.getPrecursorCharge());
+		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+		double[] ions=model.getPrimaryIons(parameters.getFragType(), entry.getPrecursorCharge(), false);
 		
 		double[] predictedMasses=entry.getMassArray();
 		float[] predictedIntensities=entry.getIntensityArray();

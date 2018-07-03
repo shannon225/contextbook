@@ -5,14 +5,10 @@ import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 
 /**
@@ -31,7 +27,7 @@ public class MockLibrary implements LibraryInterface {
 	public String getName() {
 		return "Testing library of "+entries.length+" entries";
 	}
-	public ArrayList<LibraryEntry> getAllEntries(boolean sqrt) throws IOException, SQLException, DataFormatException {
+	public ArrayList<LibraryEntry> getAllEntries(boolean sqrt, AminoAcidConstants aaConstants) throws IOException, SQLException, DataFormatException {
 		return new ArrayList<LibraryEntry>(Arrays.asList(entries));
 	}
 
@@ -46,18 +42,18 @@ public class MockLibrary implements LibraryInterface {
 		return returnables;
 	}
 	
-	@Override
-	public HashMap<PeptidePrecursor, ArrayList<LibraryEntry>> getEntries(ArrayList<PeptidePrecursor> entries, boolean sqrt) throws IOException, SQLException, DataFormatException {
-		HashMap<PeptidePrecursor, ArrayList<LibraryEntry>> map=new HashMap<PeptidePrecursor, ArrayList<LibraryEntry>>();
-		for (PeptidePrecursor peptidePrecursor : entries) {
-			ArrayList<LibraryEntry> results=getEntries(peptidePrecursor.getPeptideModSeq(),  peptidePrecursor.getPrecursorCharge(), sqrt);
-			map.put(peptidePrecursor, results);
-		}
-		return map;
-	}
+//	@Override
+//	public HashMap<PeptidePrecursor, ArrayList<LibraryEntry>> getEntries(ArrayList<PeptidePrecursor> entries, boolean sqrt) throws IOException, SQLException, DataFormatException {
+//		HashMap<PeptidePrecursor, ArrayList<LibraryEntry>> map=new HashMap<PeptidePrecursor, ArrayList<LibraryEntry>>();
+//		for (PeptidePrecursor peptidePrecursor : entries) {
+//			ArrayList<LibraryEntry> results=getEntries(peptidePrecursor.getPeptideModSeq(),  peptidePrecursor.getPrecursorCharge(), sqrt);
+//			map.put(peptidePrecursor, results);
+//		}
+//		return map;
+//	}
 
 	@Override
-	public ArrayList<LibraryEntry> getEntries(Range precursorMz, boolean sqrt) throws IOException, SQLException, DataFormatException {
+	public ArrayList<LibraryEntry> getEntries(Range precursorMz, boolean sqrt, AminoAcidConstants aaConstants) throws IOException, SQLException, DataFormatException {
 		ArrayList<LibraryEntry> returnables=new ArrayList<LibraryEntry>();
 		for (LibraryEntry entry : entries) {
 			if (precursorMz.contains((float)entry.getPrecursorMZ())) {

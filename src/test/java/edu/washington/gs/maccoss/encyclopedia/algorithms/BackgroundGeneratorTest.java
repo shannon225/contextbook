@@ -21,7 +21,7 @@ import junit.framework.TestCase;
 
 public class BackgroundGeneratorTest extends TestCase {
 	private static final PecanSearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50),
-			DigestionEnzyme.getEnzyme("trypsin"), 0, false);
+			DigestionEnzyme.getEnzyme("trypsin"), 0, false, true);
 
 	public void testGenerateBackground() {
 		InputStream is=getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
@@ -53,7 +53,7 @@ public class BackgroundGeneratorTest extends TestCase {
 		Arrays.sort(keys);
 
 		PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaPeptideEntry(peptide), PARAMETERS.getAAConstants());
-		double[] ions=model.getPrimaryIons(PARAMETERS.getFragType(), charge);
+		double[] ions=model.getPrimaryIons(PARAMETERS.getFragType(), charge, false);
 		int[] expectedCounts=new int[] { 184, 356, 33, 24, 8, 19, 10, 16, 11, 15, 7, 10, 4, 8, 6, 9, 16, 17 };
 		for (int i=0; i<ions.length; i++) {
 			double[] matches=PARAMETERS.getFragmentTolerance().getMatches(keys, ions[i]);
@@ -80,7 +80,7 @@ public class BackgroundGeneratorTest extends TestCase {
 		Arrays.sort(keys);
 
 		model=new PecanOneFragmentationModel(new FastaPeptideEntry(peptide), PARAMETERS.getAAConstants());
-		ions=model.getPrimaryIons(PARAMETERS.getFragType(), charge);
+		ions=model.getPrimaryIons(PARAMETERS.getFragType(), charge, false);
 		expectedCounts=new int[] { 392, 41, 5, 62, 6, 5, 10, 5, 12, 18, 8, 10, 7, 14, 37, 8, 15, 22, 29, 32 };
 		for (int i=0; i<ions.length; i++) {
 			double[] matches=PARAMETERS.getFragmentTolerance().getMatches(keys, ions[i]);

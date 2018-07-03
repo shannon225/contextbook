@@ -45,6 +45,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
@@ -104,7 +105,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 					}
 				});
 
-				SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA, false);
+				SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA, false, true);
 				f.getContentPane().add(new PeptideExtractingBrowserPanel(params), BorderLayout.CENTER);
 
 				f.pack();
@@ -188,7 +189,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 
 					for (XYTrace trace : peptideResult.getFragmentationTraces()) {
 						XYTrace sgSmoothed=SkylineSGFilter.paddedSavitzkyGolaySmooth(trace);
-						traces.add(sgSmoothed);
+						traces.add(trace);
 					}
 				}
 				ChartPanel chart=Charter.getChart("Retention Time (min)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
@@ -208,7 +209,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 				
 				ChartPanel ionCountchart=Charter.getChart("Retention Time (min)", "RawScore", false, ionCounttrace);*/
 				BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
-				XCorDIAOneScoringTask xcorrTask=new XCorDIAOneScoringTask(new XCorDIAOneScorer(parameters, null), entries, stripes, 2.5f, new PrecursorScanMap(new ArrayList<PrecursorScan>()), resultsQueue, parameters);
+				XCorDIAOneScoringTask xcorrTask=new XCorDIAOneScoringTask(new XCorDIAOneScorer(parameters, null), entries, stripes, new Range(0.0f, 0.0f), 2.5f, new PrecursorScanMap(new ArrayList<PrecursorScan>()), resultsQueue, parameters);
 				xcorrTask.call();
 				
 				PeptideScoringResult ionCountResult=resultsQueue.take();

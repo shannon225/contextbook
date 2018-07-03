@@ -44,8 +44,8 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	private final float[] correlationArray;
 	private final HashSet<String> accessions;
 
-	public LibraryEntry(String source, HashSet<String> accessions, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray) {
-		this(source, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, getUnitArray(massArray.length));
+	public LibraryEntry(String source, HashSet<String> accessions, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, AminoAcidConstants aaConstants) {
+		this(source, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, getUnitArray(massArray.length), aaConstants);
 	}
 	
 	private static float[] getUnitArray(int length) {
@@ -54,24 +54,42 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		return unit;
 	}
 
-	public LibraryEntry(String source, HashSet<String> accessions, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray) {
-		this(source, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray);
+	public LibraryEntry(String source, HashSet<String> accessions, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, AminoAcidConstants aaConstants) {
+		this(source, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, aaConstants);
 	}
 
-	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray) {
-		this(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, getUnitArray(massArray.length));
-		
+	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, AminoAcidConstants aaConstants) {
+		this(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, getUnitArray(massArray.length), aaConstants);
 	}
-	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray) {
+
+	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, AminoAcidConstants aaConstants) {
+		this(
+				source,
+				accessions,
+				spectrumIndex,
+				precursorMZ,
+				precursorCharge,
+				peptideModSeq,
+				PeptideUtils.getCorrectedMasses(peptideModSeq, aaConstants),
+				copies,
+				retentionTime,
+				score,
+				massArray,
+				intensityArray,
+				correlationArray
+		);
+	}
+
+	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, String massCorrectedPeptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray) {
 		this.source=source;
 		this.accessions=new HashSet<String>(accessions);
 		this.spectrumIndex=spectrumIndex;
 		this.precursorMZ=precursorMZ;
 		this.precursorCharge=precursorCharge;
 		this.peptideModSeq=peptideModSeq;
-		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq);
+		this.massCorrectedPeptideModSeq=massCorrectedPeptideModSeq;
 		this.copies=copies;
-		if (retentionTime>0.0f) { 
+		if (retentionTime!=0.0f) { 
 			this.retentionTime=retentionTime;
 		} else {
 			// ignores mods! This would be a problem if everything is modified (IMac prep)
@@ -103,7 +121,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	 * @return
 	 */
 	public LibraryEntry updateRetentionTime(float rtInSec) {
-		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, rtInSec, score, massArray, intensityArray, correlationArray);
+		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, rtInSec, score, massArray, intensityArray, correlationArray);
 	}
 	/**
 	 * only use for testing
@@ -153,6 +171,11 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	public Pair<double[], double[]> toArrays() {
 		return new Pair<double[], double[]>(massArray, General.toDoubleArray(intensityArray));
 	}
+	
+	@Override
+	public int size() {
+		return massArray.length;
+	}
 
 	public String getSource() {
 		return source;
@@ -189,7 +212,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 				unit[i]=1.0f;
 			}
 		}
-		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, rt, score, massArray, unit, correlationArray);
+		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, rt, score, massArray, unit, correlationArray);
 	}
 	
 	public float getTIC() {
@@ -250,7 +273,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	public String getAccuratePeptideModSeq(AminoAcidConstants aaConstants) {
 		String sequence=accuratePeptideModSeq;
 		if (sequence==null) {
-			sequence=PeptideUtils.getSequence(PeptideUtils.getMasses(peptideModSeq, aaConstants).z);
+			sequence=PeptideUtils.getSequence(PeptideUtils.getPeptideModel(peptideModSeq, aaConstants).getAas());
 			accuratePeptideModSeq=sequence;
 			return sequence;
 		} 
@@ -320,7 +343,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		if (shuffle) {
 			reverseSequence=PeptideUtils.shuffle(peptideModSeq, shuffleSeed, parameters);
 		} else {
-			reverseSequence=PeptideUtils.reverse(peptideModSeq, parameters.getEnzyme());
+			reverseSequence=PeptideUtils.reverse(peptideModSeq, parameters.getEnzyme(), parameters.getAAConstants());
 		}
 		HashSet<String> revAcc=new HashSet<String>();
 		for (String accession : accessions) {
@@ -335,13 +358,13 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	}
 
 	public Pair<FragmentationModel, LibraryEntry> getEntryFromNewSequence(String newSequence, HashSet<String> accessions, boolean markAsDecoy, SearchParameters parameters) {
-		FragmentationModel forwardModel=new FragmentationModel(peptideModSeq, parameters.getAAConstants());
-		FragmentationModel reverseModel=new FragmentationModel(newSequence, parameters.getAAConstants());
+		FragmentationModel forwardModel=PeptideUtils.getPeptideModel(peptideModSeq, parameters.getAAConstants());
+		FragmentationModel reverseModel=PeptideUtils.getPeptideModel(newSequence, parameters.getAAConstants());
 		
 		ArrayList<FragmentIon> forwardIons=new ArrayList<FragmentIon>();
 		ArrayList<FragmentIon> reverseIons=new ArrayList<FragmentIon>();
 		switch (parameters.getFragType()) {
-		case YONLY:
+		case HCD:
 			Collections.addAll(forwardIons, forwardModel.getYIons());
 			Collections.addAll(reverseIons, reverseModel.getYIons());
 			break;
@@ -413,9 +436,9 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(reversedPeaks);
 		
 		if (markAsDecoy) {
-			return new Pair<FragmentationModel, LibraryEntry>(reverseModel, new ReverseLibraryEntry(source, accessions, precursorMZ, precursorCharge, newSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z));	
+			return new Pair<FragmentationModel, LibraryEntry>(reverseModel, new ReverseLibraryEntry(source, accessions, precursorMZ, precursorCharge, newSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z, parameters.getAAConstants()));
 		} else {
-			return new Pair<FragmentationModel, LibraryEntry>(reverseModel, new LibraryEntry(source, accessions, precursorMZ, precursorCharge, newSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z));	
+			return new Pair<FragmentationModel, LibraryEntry>(reverseModel, new LibraryEntry(source, accessions, precursorMZ, precursorCharge, newSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z, parameters.getAAConstants()));
 		}
 	}
 }

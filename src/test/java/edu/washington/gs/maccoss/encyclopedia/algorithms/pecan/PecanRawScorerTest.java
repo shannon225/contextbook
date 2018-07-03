@@ -2,10 +2,13 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
 import java.util.HashSet;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import junit.framework.TestCase;
 
 public class PecanRawScorerTest extends TestCase {
@@ -24,7 +27,9 @@ public class PecanRawScorerTest extends TestCase {
 	}
 	
 	public LibraryEntry getEntry(double[] masses, float[] intensities) {
-		return new LibraryEntry("", new HashSet<String>(), 1, (byte)1, "", 1, 1, 1, masses, intensities);
+		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+
+		return new LibraryEntry("", new HashSet<String>(), 1, (byte)1, "", 1, 1, 1, masses, intensities, aaConstants);
 	}
 	public Stripe getStripe(double[] masses, float[] intensities) {
 		return new Stripe("", "", 1, 1, 1, 1, masses, intensities);

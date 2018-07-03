@@ -183,7 +183,7 @@ public class VariantXCorDIA {
 	public static void runPie(ProgressIndicator progress, VariantXCorDIAJobData jobData) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		if (jobData.getPercolatorFiles().hasDataAvailable()) {
 			try {
-				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(jobData.getPercolatorFiles().getPeptideOutputFile(), jobData.getParameters().getEffectivePercolatorThreshold(), false).x;
+				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(jobData.getPercolatorFiles().getPeptideOutputFile(), jobData.getParameters().getEffectivePercolatorThreshold(), jobData.getParameters().getAAConstants(), false).x;
 				File elibFile=jobData.getResultLibrary();
 				if (!elibFile.exists()) {
 					//job=checkJob(job);
@@ -441,7 +441,7 @@ public class VariantXCorDIA {
 		Logger.logLine("Finished generating feature file, analyzed "+resultsConsumer.getNumberProcessed()+" peptides.");
 
 		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
-		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), jobData.getPercolatorFiles(), parameters.getEffectivePercolatorThreshold()).x;
+		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), jobData.getPercolatorFiles(), parameters.getEffectivePercolatorThreshold(), parameters.getAAConstants()).x;
 		
 		Logger.logLine("Writing elib result library...");
 		SearchToBLIB.convertElib(progress, jobData, jobData.getResultLibrary(), parameters);

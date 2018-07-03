@@ -33,6 +33,7 @@ public class DigestionEnzyme {
 		enzymes.add(getEnzyme("Lys-C"));
 		enzymes.add(getEnzyme("Lys-N"));
 		enzymes.add(getEnzyme("Arg-C"));
+		enzymes.add(getEnzyme("Glu-C"));
 		enzymes.add(getEnzyme("Chymotrypsin"));
 		enzymes.add(getEnzyme("Pepsin A"));
 		enzymes.add(getEnzyme("Elastase"));
@@ -86,6 +87,14 @@ public class DigestionEnzyme {
 			c.remove('P');
 			
 			return new DigestionEnzyme("Arg-C", "arg-c", n, c);
+			
+		} else if ("Glu-C".equalsIgnoreCase(enzymeName)) {
+			n.add('D');
+			n.add('E');
+			c.addAll(AAs);
+			c.remove('P');
+			
+			return new DigestionEnzyme("Glu-C", "glu-c", n, c);
 			
 		} else if ("Chymotrypsin".equalsIgnoreCase(enzymeName)) {
 			n.add('F');
@@ -175,8 +184,8 @@ public class DigestionEnzyme {
 		}
 		return false;
 	}
-	
-	public String reverseProtein(String sequence) {
+
+	public String reverseProtein(String sequence, AminoAcidConstants aminoAcidConstants) {
 		StringBuilder sb=new StringBuilder();
 		
 		int start=0;
@@ -188,7 +197,7 @@ public class DigestionEnzyme {
 				stop++;
 			}
 			String peptide=sequence.substring(start, stop+1);
-			sb.append(PeptideUtils.reverse(peptide, this));
+			sb.append(PeptideUtils.reverse(peptide, this, aminoAcidConstants));
 			start=stop+1;
 		}
 		return sb.toString();

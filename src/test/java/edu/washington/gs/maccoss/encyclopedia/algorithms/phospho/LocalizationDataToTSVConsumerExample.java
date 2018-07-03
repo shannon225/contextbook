@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import org.apache.commons.lang3.StringUtils;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
@@ -28,8 +31,10 @@ public class LocalizationDataToTSVConsumerExample {
 			if (p.getName().endsWith(".thesaurus.txt")) {
 
 				File f=new File(p.getAbsolutePath()+".localizations.txt");
-				
-				ArrayList<PercolatorPeptide> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(p, 0.05f, false).x;
+
+				final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+
+				ArrayList<PercolatorPeptide> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(p, 0.05f, aaConstants, false).x;
 				HashSet<String> peptides=new HashSet<>();
 				for (PercolatorPeptide peptide : passingPeptides) {
 					int numMods=StringUtils.countMatches(peptide.getPeptideModSeq(), "[");

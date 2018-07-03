@@ -2,7 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
 
-public class ProphetMixtureModel {
+public class ProphetMixtureModel implements RTProbabilityModel {
 	private Distribution positive;
 	private Distribution negative;
 	private final boolean fixedMeans;
@@ -11,6 +11,11 @@ public class ProphetMixtureModel {
 		this.positive=positive;
 		this.negative=negative;
 		this.fixedMeans=fixedMeans;
+	}
+
+	@Override
+	public float getProbability(float retentionTime, float delta) {
+		return getProbability(delta);
 	}
 	
 	public float getProbability(float x) {

@@ -36,4 +36,27 @@ public class RangeTest extends TestCase {
 		assertEquals(-10f, widest.getStart());
 		assertEquals(40f, widest.getStop());
 	}
+	
+	public void testContains() {
+		Range r1=new Range(100, 200);
+		Range r2=new Range(199, 199);
+		Range r3=new Range(199, 201);
+		Range r4=new Range(200, 300);
+		Range r5=new Range(300, 400);
+
+		Range r6=new Range(101, 101);
+		Range r7=new Range(99, 101);
+		Range r8=new Range(98, 99);
+		
+		Range r9=new Range(0, 300);
+		
+		assertTrue(r1.contains(r2));
+		assertTrue(r1.contains(r3));
+		assertTrue(r1.contains(r4));
+		assertFalse(r1.contains(r5));
+		assertTrue(r1.contains(r6));
+		assertTrue(r1.contains(r7));
+		assertFalse(r1.contains(r8));
+		assertTrue(r1.contains(r9));
+	}
 }

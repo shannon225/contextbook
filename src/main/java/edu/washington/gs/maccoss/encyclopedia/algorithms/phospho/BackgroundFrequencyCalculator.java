@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
@@ -114,7 +115,7 @@ public class BackgroundFrequencyCalculator implements BackgroundFrequencyInterfa
 		return new BackgroundFrequencyCalculator(binBoundaries, binCounters, numberOfSpectra);
 	}
 	
-	public static BackgroundFrequencyInterface generateBackground(StripeFileInterface diafile, LibraryInterface library) throws DataFormatException, SQLException, IOException {
+	public static BackgroundFrequencyInterface generateBackground(StripeFileInterface diafile, LibraryInterface library, AminoAcidConstants aaConstants) throws DataFormatException, SQLException, IOException {
 		TDoubleHashSet boundaries=new TDoubleHashSet();
 		for (Range range : diafile.getRanges().keySet()) {
 			boundaries.add(range.getStart());
@@ -122,7 +123,7 @@ public class BackgroundFrequencyCalculator implements BackgroundFrequencyInterfa
 		}
 		double[] binBoundaries=boundaries.toArray();
 		Arrays.sort(binBoundaries);
-		
+
 		TDoubleIntHashMap[] binCounters=new TDoubleIntHashMap[binBoundaries.length-1];
 		int[] numberOfSpectra=new int[binBoundaries.length-1];
 		for (int i=0; i<binCounters.length; i++) {
@@ -131,7 +132,7 @@ public class BackgroundFrequencyCalculator implements BackgroundFrequencyInterfa
 		}
 
 		if (library!=null) {
-			ArrayList<LibraryEntry> allEntries=library.getAllEntries(false);
+			ArrayList<LibraryEntry> allEntries=library.getAllEntries(false, aaConstants);
 			for (LibraryEntry entry : allEntries) {
 				double[] ions=entry.getMassArray();
 				int index=Arrays.binarySearch(binBoundaries, entry.getPrecursorMZ());

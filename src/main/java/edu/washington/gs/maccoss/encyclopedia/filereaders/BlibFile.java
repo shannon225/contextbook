@@ -24,6 +24,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
@@ -33,6 +34,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
@@ -136,7 +138,8 @@ public class BlibFile extends SQLFile {
 										+"where RefSpectra.id == RefSpectraPeaks.RefSpectraID");
 					}
 				}
-
+				
+				AminoAcidConstants constants=new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 				int missing=0;
 				int total=0;
 				while (rs.next()) {
@@ -144,11 +147,10 @@ public class BlibFile extends SQLFile {
 					double precursorMZ=rs.getDouble(2);
 					byte precursorCharge=(byte)rs.getInt(3);
 					String peptideModSeq=rs.getString(4);
-					if (precursorMZ<=0.0&&precursorCharge>0) {
-						// precursors not set? This is a bug in Skyline exporting
-						FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
-						precursorMZ=model.getChargedMass(precursorCharge);
-					}
+					
+					// precursors not set? This is a bug in Skyline exporting
+					FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, constants);
+					precursorMZ=model.getChargedMass(precursorCharge);
 					
 					int copies=rs.getInt(5);
 					int numPeaks=rs.getInt(6);
@@ -189,7 +191,7 @@ public class BlibFile extends SQLFile {
 					retentionTime=retentionTime*60.0f;
 					total++;
 
-					entries.add(new LibraryEntry(sourceFile, new HashSet<String>(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray));
+					entries.add(new LibraryEntry(sourceFile, new HashSet<String>(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, constants));
 				}
 				if (missing>0) {
 					Logger.logLine("Missing iRT for "+missing+" of "+total+" peptides, using RT in file.");
@@ -233,6 +235,13 @@ public class BlibFile extends SQLFile {
 
 	public int[] addLibrary(SearchJobData job, ArrayList<LibraryEntry> entries, int idCounter, int jobCounter, int modCounter) throws IOException, SQLException {
 		String diaFileName=job.getDiaFile().getName();
+		AminoAcidConstants aaConstants=job.getParameters().getAAConstants();
+		String version=job.getVersion();
+		return addLibrary(entries, diaFileName, aaConstants, version, idCounter, jobCounter, modCounter);
+	}
+	
+	public int[] addLibrary(ArrayList<LibraryEntry> entries, String diaFileName, AminoAcidConstants aaConstants, final String version, int idCounter, int jobCounter, int modCounter) throws IOException, SQLException {
+		
 		String spectrumIDPrefix=diaFileName;
 		if (spectrumIDPrefix.indexOf('.')>0) {
 			spectrumIDPrefix=spectrumIDPrefix.substring(0, spectrumIDPrefix.indexOf('.'));
@@ -243,7 +252,6 @@ public class BlibFile extends SQLFile {
 			rootName=rootName.substring(0, rootName.length()-5);
 		}
 		
-		AminoAcidConstants aaConstants=job.getParameters().getAAConstants();
 		modCounter++;
 		
 		Connection c=getConnection(tempFile);
@@ -264,7 +272,7 @@ public class BlibFile extends SQLFile {
 			
 			byte scoreTypeID=1;
 			if (numberOfScores==0) {
-				normalStatement.executeUpdate("insert into ScoreTypes (id, scoreType) VALUES ("+scoreTypeID+",\"Pecan_"+job.getVersion()+"\");");
+				normalStatement.executeUpdate("insert into ScoreTypes (id, scoreType) VALUES ("+scoreTypeID+",\"Pecan_"+version+"\");");
 			}
 			
 			normalStatement.close();
@@ -329,7 +337,7 @@ public class BlibFile extends SQLFile {
 					prepRTs.setInt(7,  1);
 					prepRTs.addBatch();
 					
-					FragmentationModel model=new FragmentationModel(peptideModSeq, aaConstants);
+					FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, aaConstants);
 					String[] aas=model.getAas();
 					for (int i=0; i<aas.length; i++) {
 						boolean added=false;

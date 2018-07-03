@@ -67,6 +67,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.map.hash.TFloatFloatHashMap;
@@ -213,11 +214,16 @@ public class ResultsBrowserPanel extends JPanel {
 				library=BlibToLibraryConverter.getFile(f);
 				LibraryFile.OPEN_IN_PLACE=false;
 
-				ArrayList<LibraryEntry> entries=library.getEntries(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), false);
+				ArrayList<LibraryEntry> entries=library.getEntries(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), false, parameters.getAAConstants());
 
 				final Optional<Path> source = library.getSource(parameters);
 				if (source.isPresent()) {
-					dia = StripeFileGenerator.getFile(source.get().toFile(), parameters); // assumes the .DIA file exists or should be created
+					try {
+						dia = StripeFileGenerator.getFile(source.get().toFile(), parameters); // assumes the .DIA file exists or should be created
+					} catch (Exception e) {
+						Logger.errorLine("Sorry, can't load DIA from library annotation. Please load it after!");
+						Logger.errorException(e);
+					}
 				}
 
 				if (dia!=null&&library!=null&&parameters.getLocalizingModification().isPresent()) {
@@ -292,22 +298,23 @@ public class ResultsBrowserPanel extends JPanel {
 			split.setRightComponent(dataSplit);
 		} else {
 			Logger.logLine("Parsing peptide...");
-			FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+			FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 			ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
 			float targetRT=entry.getRetentionTime();
-			AnnotatedLibraryEntry unit=model.getUnitSpectrum(dia.getOriginalFileName(), entry.getAccessions(), (byte)entry.getPrecursorCharge(), targetRT, parameters, 00.0);
+			AnnotatedLibraryEntry unit=model.getUnitSpectrum(dia.getOriginalFileName(), entry.getAccessions(), (byte)entry.getPrecursorCharge(), targetRT, parameters, 0.0, true);
 			entries.add(unit);
 			
 			try {
-				float rtRange=parameters.getLocalizingModification().isPresent()?dia.getGradientLength()/20.0f:parameters.getExpectedPeakWidth();
+				float rtRange=parameters.getLocalizingModification().isPresent()?dia.getGradientLength()/20.0f:(1.5f*parameters.getExpectedPeakWidth());
 				
 				ArrayList<Stripe> stripes=dia.getStripes(entry.getPrecursorMZ(), targetRT-rtRange, targetRT+rtRange, false);
 				Collections.sort(stripes);
 
 				Float targetRTFloat=targetRT;
 				ArrayList<Spectrum> downcastedSpectra=Stripe.downcastStripeToSpectrum(stripes);
-				HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge()), downcastedSpectra, targetRTFloat, GraphType.line);
+				HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge(), true), downcastedSpectra, targetRTFloat, GraphType.line);
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>(fragmentTraceMap.values());
+				Collections.sort(traces);
 
 				ArrayList<Spectrum> precursors=PrecursorScan.downcast(dia.getPrecursors(targetRT-rtRange, targetRT+rtRange));
 				ChartPanel precursorChart=Charter.getChart("Retention Time", "Intensity", true, ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), precursors));
@@ -318,7 +325,7 @@ public class ResultsBrowserPanel extends JPanel {
 				primaryTabs.add("Precursors", precursorChart);
 				rawSplit.setTopComponent(primaryTabs);
 				
-				PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), targetRT, entry.getScore(), 1.0f-entry.getScore(), 2*rtRange, false);
+				PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), targetRT, entry.getScore(), 1.0f-entry.getScore(), 2*rtRange, false, parameters.getAAConstants());
 				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(dia.getOriginalFileName(), psmdata, Optional.empty(), nullableLocalizer, stripes, parameters, false);
 				TransitionRefinementData data=quantTask.extractSpectrum(unit, rtRange, false, false, false);
 				if (data!=null) {
@@ -400,7 +407,7 @@ public class ResultsBrowserPanel extends JPanel {
 								annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(peptideModSeq, entry.getPrecursorCharge()), bestStripe, parameters);
 							}*/
 							Spectrum bestStripe=ChromatogramExtractor.getTargetStripeByRT(downcastedSpectra, (float)point.x);
-							AnnotatedLibraryEntry annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(peptideModSeq, entry.getPrecursorCharge()), bestStripe, parameters);
+							AnnotatedLibraryEntry annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(peptideModSeq, entry.getPrecursorCharge(), parameters.getAAConstants()), bestStripe, parameters);
 
 							JPanel specFragPane=new JPanel(new BorderLayout());
 							ChartPanel spectrumPane=Charter.getChart(annotatedEntry);
@@ -433,7 +440,7 @@ public class ResultsBrowserPanel extends JPanel {
 					tabs.add("Quantification", peakPickingSplit);
 					if (!maybePhosphoData.isPresent()) {
 						Spectrum bestStripe=ChromatogramExtractor.getTargetStripeByRT(downcastedSpectra, targetRT);
-						AnnotatedLibraryEntry annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(entry.getPeptideModSeq(), entry.getPrecursorCharge()), bestStripe, parameters);
+						AnnotatedLibraryEntry annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters.getAAConstants()), bestStripe, parameters);
 
 						JSplitPane specFragPane=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 						ChartPanel spectrumPane=Charter.getChart(annotatedEntry);

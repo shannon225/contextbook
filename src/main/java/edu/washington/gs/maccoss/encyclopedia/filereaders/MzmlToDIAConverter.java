@@ -144,6 +144,8 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 					threads[i].join();
 				}
 
+				stripeFile.setSoftwareVersions(producer.getSoftwareAccessionIdToVersion());
+				stripeFile.setInstrumentConfiguration(producer.getInstrumentConfigurations());
 				stripeFile.setFileName(mzMLFile.getName(), producer.getMzMLID(), mzMLFile.getAbsolutePath());
 
 				Logger.logLine("Finalizing "+diaFile.getName()+" ...");

@@ -3,9 +3,10 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math;
 import java.util.ArrayList;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import gnu.trove.set.hash.TDoubleHashSet;
 
 public class PivotTableGenerator {
-	public static ArrayList<XYPoint>[] createPivotTables(float[][] datas) {
+	public static ArrayList<XYPoint>[] createPivotTables(float[][] datas, boolean removeNonZero) {
 		float actualMin=Float.MAX_VALUE;
 		float actualMax=-Float.MAX_VALUE;
 		
@@ -32,6 +33,29 @@ public class PivotTableGenerator {
 			ArrayList<XYPoint> trace=createPivotTable(data, actualMin, actualMax, (actualMax-actualMin)/binCount);
 			traces[a]=trace;
 		}
+
+		if (removeNonZero) {
+			TDoubleHashSet xs=new TDoubleHashSet();
+			for (int i=0; i<traces.length; i++) {
+				ArrayList<XYPoint> trace=traces[i];
+				for (XYPoint point : trace) {
+					if (point.getY()>0.0) {
+						xs.add(point.getX());
+					}
+				}
+			}
+			for (int i=0; i<traces.length; i++) {
+				ArrayList<XYPoint> trace=traces[i];
+				ArrayList<XYPoint> keepers=new ArrayList<>();
+				for (XYPoint point : trace) {
+					if (xs.contains(point.x)) {
+						keepers.add(point);
+					}
+				}
+				traces[i]=keepers;
+			}
+		}
+		
 		return traces;
 	}
 	

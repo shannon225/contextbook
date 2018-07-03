@@ -6,6 +6,11 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.font.TextAttribute;
@@ -22,6 +27,7 @@ import java.util.Map.Entry;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JMenuItem;
 import javax.swing.JTabbedPane;
 
 import org.jfree.chart.ChartFactory;
@@ -138,6 +144,10 @@ public class Charter {
 		launchComponent(getChart(trace, title), title, dim);
 	}
 
+	public static void launchChart(LibraryEntry trace, String title, Dimension dim) {
+		launchComponent(getChart(trace, title), title, dim);
+	}
+
 	public static void launchCharts(String title, Map<String, ChartPanel> panelMap) {
 		launchComponent(getTabbedChartPane(panelMap), title, new Dimension(792, 612));
 	}
@@ -155,7 +165,7 @@ public class Charter {
 	}
 
 	public static void launchChart(String xAxis, String yAxis, boolean displayLegend, XYTraceInterface... traces) {
-		launchComponent(getChart(xAxis, yAxis, displayLegend, traces), xAxis, new Dimension(792, 612));
+		launchComponent(getChart(xAxis, yAxis, displayLegend, traces), xAxis, new Dimension(600, 500));
 	}
 
 	public static void launchChart(String xAxis, String yAxis, boolean displayLegend, XYZTrace dataset) {
@@ -165,8 +175,8 @@ public class Charter {
 	public static void writeAsPDF(File f, String xAxis, String yAxis, boolean displayLegend, XYTraceInterface... traces) {
 		JFreeChart chart=getChart(xAxis, yAxis, displayLegend, traces).getChart();
 		//Dimension d=new Dimension(792, 612);
-		Dimension d=new Dimension(600, 450);
-		//Dimension d=new Dimension(400, 300);
+		//Dimension d=new Dimension(600, 450);
+		Dimension d=new Dimension(400, 300);
 		
 		try {
 			// NOTE: this uses itextPDF 4.2, which is LGPL. Do not upgrade to the AGPL version! 
@@ -281,6 +291,12 @@ public class Charter {
 		return chart;
 	}
 
+	public static ChartPanel getChart(LibraryEntry trace, String title) {
+		ChartPanel chart=getChart("M/Z", "Intensity", false, trace);
+		chart.getChart().setTitle(title);
+		return chart;
+	}
+
 	public static ChartPanel getChart(Spectrum trace, String title) {
 		ChartPanel chart=getChart("M/Z", "Intensity", false, new XYTrace(trace));
 		chart.getChart().setTitle(title);
@@ -362,7 +378,7 @@ public class Charter {
 	public static ChartPanel getChart(String xAxis, String yAxis, boolean displayLegend, XYTraceInterface... traces) {
 		return getChart(xAxis, yAxis, displayLegend, 0.0, traces);
 	}
-	public static ChartPanel getChart(String xAxis, String yAxis, boolean displayLegend, double maxY, XYTraceInterface... traces) {
+	public static ChartPanel getChart(final String xAxis, String yAxis, boolean displayLegend, double maxY, final XYTraceInterface... traces) {
 		boolean scaleToMax=true;
 		if (maxY==0.0) {
 			scaleToMax=false;
@@ -495,7 +511,7 @@ public class Charter {
 			case spectrum:
 				renderer=new XYLineAndShapeRenderer();
 				((XYLineAndShapeRenderer) renderer).setBaseShapesVisible(false);
-				renderer.setBasePaint(Color.black);
+				renderer.setBasePaint(Color.DARK_GRAY);
 
 				break;
 
@@ -526,7 +542,6 @@ public class Charter {
 
 			case spectrum:
 				double yThreshold=General.max(y)*0.2;
-				
 				if (trace instanceof AnnotatedLibraryEntry) {
 					AnnotatedLibraryEntry entry=(AnnotatedLibraryEntry)(Spectrum)trace;
 					FragmentIon[] annotations=entry.getIonAnnotations();
@@ -538,14 +553,17 @@ public class Charter {
 							peakSeries.add(x[i], y[i]);
 							dataset.addSeries(peakSeries);
 							if (annotations[i]!=null) {
+								Color color=IonType.getColor(annotations[i].type);
+								//Color color=RandomGenerator.randomColor(annotations[i].toString().hashCode());
 								renderer.setSeriesStroke(i, IonType.getStroke(annotations[i].type));
-								renderer.setSeriesPaint(i, IonType.getColor(annotations[i].type));
+								renderer.setSeriesPaint(i, color);
 								
 								XYTextAnnotation xytextannotation = new XYTextAnnotation(annotations[i].toString(), x[i], y[i]);
-								xytextannotation.setPaint(IonType.getColor(annotations[i].type));
-						        xytextannotation.setFont(IonType.getFont(annotations[i].type));
+								xytextannotation.setPaint(color);
+								
+								xytextannotation.setFont(IonType.getFont(annotations[i].type));
 						        xytextannotation.setTextAnchor(TextAnchor.BOTTOM_CENTER);
-						        //plot.addAnnotation(xytextannotation);
+						        plot.addAnnotation(xytextannotation);
 							} else {
 								renderer.setSeriesStroke(i, IonType.missingStroke);
 								renderer.setSeriesPaint(i, IonType.missingColor);
@@ -553,7 +571,7 @@ public class Charter {
 								if (y[i]>yThreshold) {
 									XYTextAnnotation xytextannotation = new XYTextAnnotation(MASS_FORMAT.format(x[i]), x[i], y[i]);
 									xytextannotation.setPaint(IonType.missingColor);
-							        xytextannotation.setFont(IonType.missingAnnotationFont);
+							        xytextannotation.setFont(IonType.primaryAnnotationFont);//missingAnnotationFont);
 							        xytextannotation.setTextAnchor(TextAnchor.BOTTOM_CENTER);
 							        //plot.addAnnotation(xytextannotation);
 								}
@@ -624,12 +642,51 @@ public class Charter {
 			domainAxis.setTickLabelFont(font);
 		}
 
-		ChartPanel chartPanel=new ChartPanel(chart, false);
+		final ChartPanel chartPanel=new ChartPanel(chart, false);
 		if (!displayLegend) {
 			chartPanel.getChart().removeLegend();
 		} else {
 			chartPanel.getChart().getLegend().setItemFont(font3);
 		}
+		JMenuItem copyItem=new JMenuItem("Copy data values");
+		chartPanel.getPopupMenu().add(copyItem, 2);
+		copyItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				StringBuilder header=new StringBuilder("Row");
+				int length=0;
+				for (XYTraceInterface trace : traces) {
+					if (trace.size()>length) length=trace.size();
+				}
+				StringBuilder[] rows=new StringBuilder[length];
+				for (int i=0; i<rows.length; i++) {
+					rows[i]=new StringBuilder(Integer.toString(i+1));
+				}
+				
+				for (XYTraceInterface trace : traces) {
+					header.append("\t"+xAxis+"\t"+trace.getName());
+					
+					Pair<double[], double[]> pairs=trace.toArrays();
+					for (int i=0; i<rows.length; i++) {
+						if (pairs.x.length>i) {
+							rows[i].append("\t"+pairs.x[i]+"\t"+pairs.y[i]);
+						} else {
+							rows[i].append("\t\t");
+						}
+					}
+				}
+				StringBuilder sb=new StringBuilder(header.toString());
+				sb.append("\n");
+				for (int i=0; i<rows.length; i++) {
+					sb.append(rows[i]);
+					sb.append("\n");
+				}
+				StringSelection stringSelection = new StringSelection(sb.toString());
+				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+				clipboard.setContents(stringSelection, null);
+			}
+		});
+		
 		//rangeAxis.setTickUnit(new NumberTickUnit(20)); 
 		//domainAxis.setTickUnit(new NumberTickUnit(20));
 		//rangeAxis.setRange(0, 135);

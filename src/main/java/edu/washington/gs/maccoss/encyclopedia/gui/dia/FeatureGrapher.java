@@ -34,7 +34,7 @@ import gnu.trove.list.array.TFloatArrayList;
 
 public class FeatureGrapher {
 	public static void main(String[] args) {
-		File featureFile=FileChooserPanel.getFiles(null, "Feature text files", new SimpleFilenameFilter("features.txt"), (JFrame)null)[0];
+		File featureFile=FileChooserPanel.getFiles(null, "Feature text files", new SimpleFilenameFilter("features.txt"), (JFrame)null, true)[0];
 
 		final JFrame f=new JFrame(featureFile.getName()+" Statistics");
 		f.addWindowListener(new WindowAdapter() {
@@ -92,6 +92,10 @@ public class FeatureGrapher {
 					}
 				}
 			}
+
+			@Override
+			public void cleanup() {
+			}
 		};
 
 		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
@@ -116,7 +120,7 @@ public class FeatureGrapher {
 			TFloatArrayList targets=targetData.get(key);
 			TFloatArrayList decoys=decoyData.get(key);
 			
-			ArrayList<XYPoint>[] points=PivotTableGenerator.createPivotTables(new float[][] {targets.toArray(), decoys.toArray()});
+			ArrayList<XYPoint>[] points=PivotTableGenerator.createPivotTables(new float[][] {targets.toArray(), decoys.toArray()}, true);
 			XYTraceInterface[] traces=new XYTraceInterface[2];
 			traces[0]=new XYTrace(points[0], GraphType.line, "Target");
 			traces[1]=new XYTrace(points[1], GraphType.line, "Decoy");

@@ -9,11 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
@@ -24,8 +20,10 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import junit.framework.TestCase;
 
@@ -138,7 +136,7 @@ public class PhosphoLocalizerTest extends TestCase {
 			retentionTime=1309.1414f;
 		}
 		
-		PSMData psmdata=new PSMData(new HashSet<String>(), 0, precursorMZ, precursorCharge, peptideModSeq, retentionTime, 0, 0, 12, false);
+		PSMData psmdata=new PSMData(new HashSet<String>(), 0, precursorMZ, precursorCharge, peptideModSeq, retentionTime, 0, 0, 12, false, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 		return psmdata;
 	}
 	
@@ -151,7 +149,7 @@ public class PhosphoLocalizerTest extends TestCase {
 
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : peptideModSeqs) {
-			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+			FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
 			entryMap.put(peptideModSeq, model);
 		}
 		FragmentIon[] targets=PhosphoLocalizer.getUniqueFragmentIons(peptideModSeqs.get(0), (byte)3, entryMap, params);
@@ -169,7 +167,7 @@ public class PhosphoLocalizerTest extends TestCase {
 
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : peptideModSeqs) {
-			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+			FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
 			entryMap.put(peptideModSeq, model);
 		}
 
@@ -225,7 +223,7 @@ public class PhosphoLocalizerTest extends TestCase {
 
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : peptideModSeqs) {
-			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+			FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
 			entryMap.put(peptideModSeq, model);
 		}
 		
@@ -257,9 +255,9 @@ public class PhosphoLocalizerTest extends TestCase {
 		
 		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
 		for (String peptideModSeq : permutations) {
-			FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+			FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
 			entryMap.put(peptideModSeq, model);
-			FragmentIon[] ions=model.getPrimaryIonObjects(params.getFragType(), charge);
+			FragmentIon[] ions=model.getPrimaryIonObjects(params.getFragType(), charge, false, true);
 			//System.out.println(peptideModSeq);
 			for (int i=0; i<ions.length; i++) {
 				//System.out.println(ions[i]+"\t"+ions[i].mass);

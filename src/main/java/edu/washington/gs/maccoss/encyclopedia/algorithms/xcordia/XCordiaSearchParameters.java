@@ -45,17 +45,17 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 	public XCordiaSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin,
 			MassTolerance fragmentTolerance, double fragmentOffsetPPM, DigestionEnzyme enzyme, int minPeptideLength, int maxPeptideLength, int maxMissedCleavages, byte minCharge, byte maxCharge,
 			int minEluteTime, int numberOfReportedPeaks, boolean addDecoysToBackgound, boolean dontRunDecoys, float percolatorThreshold, float percolatorProteinThreshold, float alpha, float beta, Integer percolatorVersionNumber,
-			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float targetWindowCenter, float precursorWindowSize, int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int minQuantitativeIonNumber, boolean quantifyAcrossSamples) {
+			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float targetWindowCenter, float precursorWindowSize, int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, float minIntensity, boolean quantifyAcrossSamples, boolean verifyModificationIons) {
 		super(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages,
 				minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, percolatorProteinThreshold, alpha, beta, percolatorVersionNumber, dataAcquisitionType,
-				numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minQuantitativeIonNumber, quantifyAcrossSamples);
+				numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, quantifyAcrossSamples, verifyModificationIons);
 	}
 
-	public XCordiaSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme, int percolatorVersionNumber, float percolatorThresholdValue,
-			int maxMissedCleavages, byte minCharge, byte maxCharge, DataAcquisitionType dataAcquisitionType, float precursorWindowSize, int numberOfJobs, int numberOfQuantitativePeaks, int minNumOfQuantitativeIons, int minQuantitativeIonNumber, 
-			float numberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples) {
-		super(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorVersionNumber, percolatorThresholdValue, maxMissedCleavages, minCharge, maxCharge, dataAcquisitionType, precursorWindowSize, numberOfJobs, numberOfQuantitativePeaks, minNumOfQuantitativeIons, minQuantitativeIonNumber,
-				numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples);
+	public XCordiaSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme, int percolatorVersionNumber, float percolatorThreshold, float percolatorProteinThreshold,
+			int maxMissedCleavages, byte minCharge, byte maxCharge, DataAcquisitionType dataAcquisitionType, float precursorWindowSize, int numberOfJobs, int numberOfQuantitativePeaks, int minNumOfQuantitativeIons, float minIntensity, 
+			float numberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons) {
+		super(aaConstants, fragType, precursorTolerance, fragmentTolerance, enzyme, percolatorVersionNumber, percolatorThreshold, percolatorProteinThreshold, maxMissedCleavages, minCharge, maxCharge, dataAcquisitionType, precursorWindowSize, numberOfJobs, numberOfQuantitativePeaks, minNumOfQuantitativeIons, minIntensity,
+				numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons);
 	}
 	
 	public static XCordiaSearchParameters convertFromPecan(PecanSearchParameters params) {
@@ -64,7 +64,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				params.getMaxPeptideLength(), params.getMaxMissedCleavages(), params.getMinCharge(), params.getMaxCharge(), params.getMinEluteTime(),
 				params.getNumberOfReportedPeaks(), params.isAddDecoysToBackgound(), params.isDontRunDecoys(), params.getPercolatorThreshold(), params.getPercolatorProteinThreshold(), params.getAlpha(), 
 				params.getBeta(), params.getPercolatorVersionNumber(), params.getDataAcquisitionType(), params.getNumberOfThreadsUsed(), params.getTargetWindowCenter(),
-				params.getPrecursorWindowSize(), params.getNumberOfQuantitativePeaks(), params.getMinNumOfQuantitativePeaks(), params.getMinQuantitativeIonNumber(), params.isQuantifySameFragmentsAcrossSamples());
+				params.getPrecursorWindowSize(), params.getNumberOfQuantitativePeaks(), params.getMinNumOfQuantitativePeaks(), params.getMinIntensity(), params.isQuantifySameFragmentsAcrossSamples(), params.isVerifyModificationIons());
 	}
 
 }

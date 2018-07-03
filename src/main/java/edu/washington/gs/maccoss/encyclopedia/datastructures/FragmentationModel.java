@@ -2,11 +2,13 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
@@ -17,19 +19,21 @@ import gnu.trove.list.array.TDoubleArrayList;
 
 //@Immutable
 public class FragmentationModel {
+	private static final int NUMBER_OF_NEUTRONS_TO_CONSIDER_STILL_IN_RANGE=4;
 	private final double[] masses;
+	private final double[] modificationMasses;
 	private final double[] neutralLosses;
 	private final String[] aas;
 	
-	public FragmentationModel(String modifiedSequence, AminoAcidConstants aaConstants) {
-		Triplet<double[], double[], String[]> tuple=PeptideUtils.getMasses(modifiedSequence, aaConstants);
-		masses=tuple.x;
-		neutralLosses=tuple.y;
-		aas=tuple.z;
+	public FragmentationModel(double[] masses, double[] modificationMasses, double[] neutralLosses, String[] aas) {
+		this.masses=masses;
+		this.modificationMasses=modificationMasses;
+		this.neutralLosses=neutralLosses;
+		this.aas=aas;
 	}
-	
+
 	public static AnnotatedLibraryEntry generateEntry(String peptideModSeq, String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, boolean isDecoy, SearchParameters params) {
-		FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
 		return model.getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, isDecoy);
 	}
 
@@ -48,16 +52,16 @@ public class FragmentationModel {
 		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, 0.0, isDecoy);
 	}
 
-	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass) {
-		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, minimumMass, false);
+	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass, boolean forQuant) {
+		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, minimumMass, false, forQuant);
 	} 
-	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass, boolean isDecoy) {
-		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, null, minimumMass, false);
+	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass, boolean isDecoy, boolean forQuant) {
+		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, null, minimumMass, false, forQuant);
 	}
-	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double[] targetMasses, double minimumMass, boolean isDecoy) {
+	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double[] targetMasses, double minimumMass, boolean isDecoy, boolean forQuant) {
 		String sequence=getModifiedSequence();
 		double precursorMZ=getChargedMass(precursorCharge);
-		FragmentIon[] ions=getPrimaryIonObjects(params.getFragType(), precursorCharge);
+		FragmentIon[] ions=getPrimaryIonObjects(params.getFragType(), precursorCharge, forQuant);
 		MassTolerance fragmentTolerance=params.getFragmentTolerance();
 		ions = FragmentIon.getUniqueFragments(ions, fragmentTolerance);
 		
@@ -84,12 +88,24 @@ public class FragmentationModel {
 		float[] unitCorrelation=new float[masses.length];
 		Arrays.fill(unitCorrelation, 1.0f);
 
-		return new AnnotatedLibraryEntry(filename, accessions, 1, precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, masses, unitIntensities, unitCorrelation, annotationList.toArray(new FragmentIon[annotationList.size()]), isDecoy);
+		return new AnnotatedLibraryEntry(filename, accessions, 1, precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, masses, unitIntensities, unitCorrelation, annotationList.toArray(new FragmentIon[annotationList.size()]), isDecoy, params.getAAConstants());
+	}
+	public double[] getMasses() {
+		return masses;
+	}
+	
+	public double[] getModificationMasses() {
+		return modificationMasses;
+	}
+	
+	public double[] getNeutralLosses() {
+		return neutralLosses;
 	}
 	
 	public String[] getAas() {
 		return aas;
 	}
+	
 	public String toString() {
 		StringBuilder sb=new StringBuilder();
 		for (String aa : aas) {
@@ -120,26 +136,80 @@ public class FragmentationModel {
 	 * @param type
 	 * @return
 	 */
-	public double[] getPrimaryIons(FragmentationType type, byte precursorCharge) {
-		FragmentIon[] ions=getPrimaryIonObjects(type, precursorCharge);
+	public double[] getPrimaryIons(FragmentationType type, byte precursorCharge, boolean forQuant) {
+		FragmentIon[] ions=getPrimaryIonObjects(type, precursorCharge, forQuant);
 		double[] masses=new double[ions.length];
 		for (int i=0; i<ions.length; i++) {
 			masses[i]=ions[i].mass;
 		}
 		return masses;
 	}
-
-	public FragmentIon[] getPrimaryIonObjects(FragmentationType type, byte precursorCharge) {
-		return getPrimaryIonObjects(type, precursorCharge, true);
+	
+	/**
+	 * finds the ions that uniquely describe this model if it is modified in a
+	 * way where ions might appear in the same precursor isolation window. If it
+	 * is not, then returns Optional.empty() and you don't need to worry about
+	 * modifications.
+	 * 
+	 * @param precursorRange
+	 * @param type
+	 * @param precursorCharge
+	 * @param forQuant
+	 * @return
+	 */
+	public Optional<FragmentIon[]> getModificationSpecificIonObjects(Range precursorRange, FragmentationType type, byte precursorCharge, boolean forQuant) {
+		HashMap<String, FragmentationModel> availableModels=new HashMap<>();
+		
+		double precursorMz=getChargedMass(precursorCharge);
+		for (int i=0; i<modificationMasses.length; i++) {
+			double unmodifiedMass=precursorMz-modificationMasses[i]/precursorCharge;
+			Range unmodifiedPrecursorRange=new Range((float)(unmodifiedMass-(NUMBER_OF_NEUTRONS_TO_CONSIDER_STILL_IN_RANGE*MassConstants.neutronMass/precursorCharge)), (float)unmodifiedMass);
+			
+			if (modificationMasses[i]!=0.0&&precursorRange.contains(unmodifiedPrecursorRange)) {
+				String[] altAAs=aas.clone();
+				double[] altMasses=masses.clone();
+				double[] altModMasses=modificationMasses.clone();
+				double[] altNLs=neutralLosses.clone();
+				
+				altAAs[i]=aas[i].substring(0, 1);
+				altMasses[i]=masses[i]-modificationMasses[i];
+				altModMasses[i]=0.0;
+				altNLs[i]=0.0;
+				
+				FragmentationModel altModel=new FragmentationModel(altMasses, altModMasses, altNLs, altAAs);
+				availableModels.put(altModel.getModifiedSequence(), altModel);
+			}
+		}
+		
+		if (availableModels.size()==0) return Optional.empty();
+		
+		final String peptideModSeq=getModifiedSequence();
+		availableModels.put(peptideModSeq, this);
+		return Optional.of(PhosphoLocalizer.getUniqueFragmentIons(peptideModSeq, precursorCharge, availableModels, type));
 	}
-	public FragmentIon[] getPrimaryIonObjects(FragmentationType type, byte precursorCharge, boolean useNeutralLosses) {
+
+	public FragmentIon[] getPrimaryIonObjects(FragmentationType type, byte precursorCharge, boolean forQuant) {
+		return getPrimaryIonObjects(type, precursorCharge, true, forQuant);
+	}
+	public FragmentIon[] getPrimaryIonObjects(FragmentationType type, byte precursorCharge, boolean useNeutralLosses, boolean forQuant) {
 		switch (type) {
-			case YONLY:
-				FragmentIon[] yIons=getYIons(useNeutralLosses);
-				if (precursorCharge>2) {
-					return concatAndSort(yIons, getPlus2s(yIons));
+			case HCD:
+				if (forQuant) {
+					// include B ions too
+					FragmentIon[] yIonsCID=getYIons(useNeutralLosses);
+					FragmentIon[] bIonsCID=getBIons(useNeutralLosses);
+					if (precursorCharge>2) {
+						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), bIonsCID, getPlus2s(bIonsCID));
+					} else {
+						return concatAndSort(bIonsCID, yIonsCID);
+					}
 				} else {
-					return yIons;
+					FragmentIon[] yIons=getYIons(useNeutralLosses);
+					if (precursorCharge>2) {
+						return concatAndSort(yIons, getPlus2s(yIons));
+					} else {
+						return yIons;
+					}
 				}
 			case CID:
 				FragmentIon[] yIonsCID=getYIons(useNeutralLosses);

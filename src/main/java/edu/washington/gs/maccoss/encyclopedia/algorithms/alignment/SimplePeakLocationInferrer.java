@@ -1,7 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
@@ -19,6 +21,7 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 	
 	// alignments are seed (x) to sample (y), in minutes
 	private final HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap;
+	private final HashMap<SearchJobData, List<RetentionTimeAlignmentInterface.AlignmentDataPoint>> alignmentDataMap;
 
 	// alignedRTs are as if they were in the seed (x) file
 	private final HashMap<String, Float> alignedRTInMinBySequenceMap;
@@ -26,8 +29,9 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 	private final HashMap<String, double[]> bestIons;
 	private final SearchParameters params;
 
-	SimplePeakLocationInferrer(HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap, HashMap<String, Float> alignedRTInMinBySequenceMap, HashMap<String, double[]> bestIons, SearchParameters params) {
+	SimplePeakLocationInferrer(HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap, HashMap<SearchJobData, List<RetentionTimeAlignmentInterface.AlignmentDataPoint>> alignmentDataMap, HashMap<String, Float> alignedRTInMinBySequenceMap, HashMap<String, double[]> bestIons, SearchParameters params) {
 		this.alignmentMap=alignmentMap;
+		this.alignmentDataMap = alignmentDataMap;
 		this.alignedRTInMinBySequenceMap=alignedRTInMinBySequenceMap;
 		this.bestIons=bestIons;
 		this.params=params;
@@ -50,11 +54,11 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 		}
 		
 		if (topNMasses==null||topNMasses.length==0) {
-			ArrayList<Peak> topN=data.getTopNPeaks(TransitionRefiner.quantitativeCorrelationThreshold, params.getNumberOfQuantitativePeaks());
+			ArrayList<Peak> topN=data.getTopNPeaks(TransitionRefiner.quantitativeCorrelationThreshold, params.getEffectiveNumberOfQuantitativePeaks());
 			Pair<double[], float[]> pair=Peak.toArrays(topN);
 			topNMasses=pair.x;
 			float[] topNIntensities=pair.y;
-			return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities));
+			return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities, params.getAAConstants()));
 		}
 		
 		float[] topNIntensities=new float[topNMasses.length];
@@ -66,7 +70,7 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 			}
 			topNIntensities[i]=sum;
 		}
-		return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities));
+		return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities, params.getAAConstants()));
 	}
 
 	/* (non-Javadoc)
@@ -93,7 +97,8 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 			return detectedRTInSec;
 		} else {
 			float warpedRTInMin=f.getYValue(alignedRTInMin);
-			float prob=f.getProbabilityFitsModel(detectedRTInSec/60f-warpedRTInMin);
+			final float actualRT=detectedRTInSec/60f;
+			float prob=f.getProbabilityFitsModel(actualRT, actualRT-warpedRTInMin);
 			if (prob>RT_OUTLIER_REJECTION_PROBABILITY) {
 				return detectedRTInSec;
 			} else {
@@ -121,5 +126,10 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 		} else {
 			return f.getYValue(alignedRTInMin)*60f;
 		}
+	}
+
+	@Override
+	public List<RetentionTimeAlignmentInterface.AlignmentDataPoint> getAlignmentData(SearchJobData job) {
+		return alignmentDataMap.getOrDefault(job, Collections.emptyList());
 	}
 }

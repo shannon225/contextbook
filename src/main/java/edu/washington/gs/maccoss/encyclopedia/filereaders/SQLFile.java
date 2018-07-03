@@ -11,6 +11,8 @@ import java.sql.Statement;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public abstract class SQLFile {
+	public static final String VERSION_STRING="version";
+
 	public Connection getConnection(File f) throws IOException {
 		Connection c=null;
 		try {
@@ -23,25 +25,60 @@ public abstract class SQLFile {
 			throw new IOException("Error reading database file: "+f.getAbsolutePath());
 		}
 	}
-	
-	public boolean doesColumnExist(File f, String table, String column) throws IOException, SQLException {
+
+	public final boolean doesTableExist(File file,  String table) throws IOException, SQLException {
+		Connection connection = getConnection(file);
+		try {
+			return doesTableExist(connection, table);
+		} finally {
+			connection.close();
+		}
+	}
+
+	public final boolean doesTableExist(Connection c, String table) throws IOException, SQLException {
+		Statement s=c.createStatement();
+		try {
+			ResultSet rs=s.executeQuery("SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = '"+table+"'");
+			while (rs.next()) {
+				int count=rs.getInt(1);
+				return count>0;
+			}
+			return false;
+		} finally {
+			s.close();
+		}
+	}
+
+	public final boolean doesColumnExist(File f, String table, String column) throws IOException, SQLException {
 		Connection c=getConnection(f);
 		try {
-			Statement s=c.createStatement();
-			try {
-				ResultSet rs=s.executeQuery("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = '"+table+"'");
-				while (rs.next()) {
-					String statement=rs.getString(1);
-					if (statement.toLowerCase().indexOf(" "+column.toLowerCase()+" ")>=0) {
-						return true;
-					}
-				}
-				return false;
-			} finally {
-				s.close();
-			}
+			return doesColumnExist(c, table, column);
 		} finally {
 			c.close();
+		}
+	}
+
+	/**
+	 *
+	 * @param c : an open connection. n.b. this method will not close the connection
+	 * @param table
+	 * @param column
+	 * @return whether the column exists in said table
+	 * @throws SQLException
+	 */
+	protected final boolean doesColumnExist(Connection c, String table, String column) throws SQLException {
+		Statement s=c.createStatement();
+		try {
+			ResultSet rs=s.executeQuery("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = '"+table+"'");
+			while (rs.next()) {
+				String statement=rs.getString(1);
+				if (statement.toLowerCase().indexOf(" "+column.toLowerCase()+" ")>=0) {
+					return true;
+				}
+			}
+			return false;
+		} finally {
+			s.close();
 		}
 	}
 }

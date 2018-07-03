@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -15,13 +16,16 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
+import com.google.common.base.Joiner;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -31,6 +35,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLOneScoring
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
@@ -50,6 +55,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.FileLogRecorder;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
@@ -109,7 +115,9 @@ public class Thesaurus {
 	
 				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 				if (!parameters.getLocalizingModification().isPresent()) {
-					Logger.errorLine("You are required to specify one localization modification ("+PeptideModification.getShortnameList()+")");
+					AminoAcidConstants constants = parameters.getAAConstants();
+					String message = getRequiredLocalizationMessage(constants.getLocalizationModifications());
+					Logger.errorLine(message);
 					System.exit(1);
 				}
 
@@ -142,7 +150,7 @@ public class Thesaurus {
 
 		if (job.getPercolatorFiles().hasDataAvailable()) {
 			try {
-				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideOutputFile(), job.getParameters().getEffectivePercolatorThreshold(), false).x;
+				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideOutputFile(), job.getParameters(), false).x;
 				
 				File elibFile=job.getResultLibrary();
 				if (!elibFile.exists()) {
@@ -151,7 +159,7 @@ public class Thesaurus {
 					Logger.logLine("Writing elib result library...");
 					ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 					jobs.add(job);
-					SearchToBLIB.convert(progress, jobs, elibFile, false, true);
+					SearchToBLIB.convert(progress, jobs, elibFile, false, false);
 				}
 				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 				//progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides ("+ParsimonyProteinGrouper.groupProteins(passingPeptidesFromTSV).size()+" proteins) identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
@@ -180,9 +188,11 @@ public class Thesaurus {
 	public static CASiLJobData checkJob(CASiLJobData job) throws IOException, DataFormatException, SQLException {
 		if (!(job.getTaskFactory() instanceof CASiLOneScoringFactory)) {
 			if (!job.getParameters().getLocalizingModification().isPresent()) {
-				throw new EncyclopediaException("You are required to specify one localization modification ("+PeptideModification.getShortnameList()+")");
+				AminoAcidConstants constants = job.getParameters().getAAConstants();
+				String message = getRequiredLocalizationMessage(constants.getLocalizationModifications());
+				throw new EncyclopediaException(message);
 			}
-			
+
 			Logger.logLine("Setting up localization engine...");
 			StripeFileInterface stripefile=StripeFileGenerator.getFile(job.getDiaFile(), job.getParameters());
 			PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, job.getParameters().getLocalizingModification().get(), job.getParameters());
@@ -260,7 +270,7 @@ public class Thesaurus {
 			LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 	
-			ArrayList<LibraryEntry> entries=library.getEntries(range, true);
+			ArrayList<LibraryEntry> entries=library.getEntries(range, true, parameters.getAAConstants());
 			LibraryBackgroundInterface background=new LibraryBackground(entries);
 			PSMScorer scorer=taskFactory.getLibraryScorer(background);
 			
@@ -284,7 +294,7 @@ public class Thesaurus {
 					tasks.add(entry);
 					tasks.add(entry.getDecoy(parameters));
 				}
-				executor.submit(taskFactory.getScoringTask(scorer, tasks, stripes, dutyCycle, precursors, resultsQueue));
+				executor.submit(taskFactory.getScoringTask(scorer, tasks, stripes, range, dutyCycle, precursors, resultsQueue));
 			}
 			
 			executor.shutdown();
@@ -309,10 +319,11 @@ public class Thesaurus {
 		progress.update("Organizing results", (1.0f+rangesFinished)/numberOfTasks);
 	
 		Logger.logLine("Running Percolator...");
-		ArrayList<PercolatorPeptide> passingPeptides=Encyclopedia.percolatePeptides(progress, job, stripefile, saveResultsConsumer);
-		// NOTE: does not perform retention time alignment! 
-		// If we had to pick new peptides this would force 
-		// re-localization!
+		Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface> percolatorResults=Encyclopedia.percolatePeptides(progress, job, stripefile, saveResultsConsumer);
+		if (parameters.getScoringBreadthType().runRecalibration()) {
+			percolatorResults=Encyclopedia.repercolatePeptides(progress, job, stripefile, saveResultsConsumer, percolatorResults.y);
+		}
+		ArrayList<PercolatorPeptide> passingPeptides=percolatorResults.x;
 
 		localizationConsumer.close();
 		
@@ -329,4 +340,14 @@ public class Thesaurus {
 		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peptides processed, "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 
 	}
+
+	private static String getRequiredLocalizationMessage(Collection<PeptideModification> localizationModifications) {
+		String availableLocalizationModifications = Joiner.on(", ").join(
+				localizationModifications
+						.stream()
+						.map(PeptideModification::getShortname)
+						.collect(Collectors.toList()));
+		return "You are required to specify one localization modification (" + availableLocalizationModifications + ")";
+	}
+
 }

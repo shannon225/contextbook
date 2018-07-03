@@ -32,6 +32,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
@@ -60,6 +61,7 @@ public class PhosphoLocalizerExample {
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_2c.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_5c.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_5c.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_3a_160627233451.mzML");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_04.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4a_PRM.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4b_PRM.dia");
@@ -96,7 +98,7 @@ public class PhosphoLocalizerExample {
 		
 		UnitBackgroundFrequencyCalculator unitbackground=new UnitBackgroundFrequencyCalculator(0.01f);
 		BackgroundFrequencyInterface background=unitbackground;
-		//background=BackgroundFrequencyCalculator.generateBackground(stripefile);
+		background=BackgroundFrequencyCalculator.generateBackground(stripefile);
 		
 		float duration=stripefile.getGradientLength()/20.0f;
 		
@@ -110,7 +112,7 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="GIAPAS[+80.0]PMLGNASNPNKADIPER";
 			retentionTime=4189.1591796875f;
 			precursorCharge=3;
-		} else if (true) {
+		} else if (false) {
 			// repeat 2 sp|P83731|RL24_HUMAN
 			peptideModSeq="AITGAS[+80.0]LADIMAK";
 			retentionTime=5680.037109375f;
@@ -157,6 +159,11 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="NTPSQHSHSIQHS[+80.0]PER";
 			retentionTime=1256.3296f;
 			precursorCharge=4;
+		} else if (true) {
+			// IRS1
+			peptideModSeq="KGS[+80.0]GDYMPMS[+80.0]PK";
+			retentionTime=2949.1633f;
+			precursorCharge=2;
 		} else if (true) {
 			// IRS1
 			peptideModSeq="KGS[+80.0]GDYMPMSPK";
@@ -258,8 +265,8 @@ public class PhosphoLocalizerExample {
 		}
 
 		EncyclopediaOneScorer scorer=new EncyclopediaOneScorer(parameters, unitbackground);
-		FragmentationModel model=new FragmentationModel(libentry.getPeptideModSeq(), parameters.getAAConstants());
-		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), libentry.getPrecursorCharge());
+		FragmentationModel model=PeptideUtils.getPeptideModel(libentry.getPeptideModSeq(), parameters.getAAConstants());
+		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), libentry.getPrecursorCharge(), false, true);
 		TFloatFloatHashMap primary=new TFloatFloatHashMap();
 		for (int i=0; i<stripes.size(); i++) {
 			Stripe stripe=stripes.get(i);

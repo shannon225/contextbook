@@ -32,6 +32,17 @@ public class Charter3d extends AbstractAnalysis {
         plot(mapper, new Range(-3, 3), new Range(-3, 3), 80);
 	}
 	
+	public static Color getColor(java.awt.Color c) {
+		return new Color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
+	}
+	
+	private static final float FACTOR=0.7f;
+	public static Color getDarker(Color c) {
+        return new Color(Math.max(c.r*FACTOR, 0.0f),
+                         Math.max(c.g*FACTOR, 0.0f),
+                         Math.max(c.b*FACTOR, 0.0f),
+                         c.a);
+	}
 
 	public Charter3d(Mapper mapper, Range xrange, Range yrange, int steps) {
 		this.mapper=mapper;

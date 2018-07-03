@@ -186,11 +186,11 @@ public class SparseXCorrCalculator {
 		
 		FragmentationType type=params.getFragType();
 		AminoAcidConstants aaConstants=params.getAAConstants();
-		FragmentationModel model=new FragmentationModel(modifiedSequence, aaConstants);
+		FragmentationModel model=PeptideUtils.getPeptideModel(modifiedSequence, aaConstants);
 		
 		ArrayList<Peak> allPeaks=new ArrayList<Peak>();
 		switch (type) {
-			case YONLY:
+			case HCD:
 				FragmentIon[] yIons=model.getYIons();
 				allPeaks.addAll(getPeaks(yIons, 0.0, ArrayXCorrCalculator.primaryIonIntensity));
 				if (params.isUseNLsForXCorr()) {

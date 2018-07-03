@@ -14,8 +14,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.SortLaterXYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
@@ -221,6 +221,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 					float[] completeAuxArray=General.concatenate(new float[] {numAboveThresholdMatches[index], numMatches[index], midTime[index]}, averageAuxScores,
 							new float[] {fragmentDeltaMassAverage, fragmentDeltaMassVariance, duration, maxIDP, midIDP, precursorPPMVariance, bgsubScores[index],
 									sumZScores[index]/scanAveragingWindow, rank, rawScores[index]});
+					
 					result.addStripe(goodStripes.get(i).x/scanAveragingWindow, completeAuxArray, medianStripe);
 
 					if (identifiedPeaks>getPecanSearchParameters().getNumberOfReportedPeaks()) {
@@ -256,7 +257,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 				}
 			}
 
-			result.setTrace(new XYTrace(scoreMap, GraphType.line, entry.getPeptideModSeq()));
+			result.setTrace(new SortLaterXYTrace(scoreMap, GraphType.line, entry.getPeptideModSeq()));
 
 			if (result.size()>0&&resultsQueue!=null) {
 				try {

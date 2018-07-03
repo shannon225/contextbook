@@ -1,0 +1,34 @@
+EncyclopeDIA License:
+Copyright 2018 Brian C. Searle (searleb@uw.edu)
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+EncyclopeDIA requires some additional open source libraries to build source code as well.
+
+Eclipse Public License:
+junit (http://junit.org/junit4)
+
+Apache 2:
+guava (https://github.com/google/guava)
+sqlite-jdbc (https://bitbucket.org/xerial/sqlite-jdbc)
+jmzml (https://github.com/PRIDE-Utilities/jmzml)
+batik (https://xmlgraphics.apache.org/batik)
+
+LGPL:
+trove4j (http://trove4j.sourceforge.net/)
+jfreechart (http://www.jfree.org/jfreechart/)
+jfreesvg (www.jfree.org/jfreesvg/)
+
+New BSD:
+jzy3d-api (https://github.com/jzy3d/jzy3d-api)

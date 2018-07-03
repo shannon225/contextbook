@@ -13,13 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationI
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
@@ -144,24 +138,24 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	}
 
 	private Optional<TransitionRefinementData> extractSpectrum(HashSet<String> accessions, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable, final Optional<PeakLocationInferrerInterface> inferrer, boolean integrateEverything, boolean wasInferred) {
-		FragmentationModel model=new FragmentationModel(peptideModSeq, params.getAAConstants());
+		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
 		
 		// if inferrer is present then we need to integrate everything in the target mass list
 		double[] masses=null; // getUnitSpectrum is null tolerant!
 		if (inferrer.isPresent()) {
 			masses=inferrer.get().getTopNBestIons(peptideModSeq, precursorCharge);
 		}
-		AnnotatedLibraryEntry unitEntry=model.getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, masses, 0.0, false);
+		AnnotatedLibraryEntry unitEntry=model.getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, masses, 0.0, false, true);
 		
 		return Optional.ofNullable(extractSpectrum(unitEntry, duration, limitToQuantifiable, integrateEverything, wasInferred));
 	}
 
 	public TransitionRefinementData extractSpectrum(AnnotatedLibraryEntry unitEntry, float duration, boolean limitToQuantifiable, boolean integrateEverything, boolean wasInferred) {
 		ArrayList<Stripe> stripes=getScanSubset(unitEntry.getRetentionTime()-duration, unitEntry.getRetentionTime()+duration);
-		return quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes, integrateEverything, wasInferred);
+		return quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes, integrateEverything, wasInferred, params.getAAConstants());
 	}
 
-	public static TransitionRefinementData quantifyPeptide(PSMPeakScorer scorer, AnnotatedLibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<Stripe> stripes, boolean integrateEverything, boolean wasInferred) {
+	public static TransitionRefinementData quantifyPeptide(PSMPeakScorer scorer, AnnotatedLibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<Stripe> stripes, boolean integrateEverything, boolean wasInferred, AminoAcidConstants aaConstants) {
 		// find the center
 		float bestDelta=Float.MAX_VALUE;
 		PeakScores[] bestScores=null;
@@ -246,7 +240,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		}
 
 		// identify transitions
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions(unitEntry.getPeptideModSeq(), unitEntry.getPrecursorCharge(), unitEntry.getScanStartTime(), fragmentMasses.toArray(new FragmentIon[fragmentMasses.size()]), chromatograms, retentionTimes.toArray(), wasInferred);
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions(unitEntry.getPeptideModSeq(), unitEntry.getPrecursorCharge(), unitEntry.getScanStartTime(), fragmentMasses.toArray(new FragmentIon[fragmentMasses.size()]), chromatograms, retentionTimes.toArray(), wasInferred, aaConstants);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		Range rtRange=data.getRange();

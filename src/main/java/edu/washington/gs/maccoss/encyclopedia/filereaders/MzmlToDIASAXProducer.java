@@ -18,15 +18,22 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMultimap;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentComponent;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentId;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.ProgressInputStream;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -35,6 +42,10 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	private final BlockingQueue<MzmlBlock> mzmlBlockQueue;
 	private final SearchParameters parameters;
 	private final HashMap<Range, TFloatArrayList> retentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
+	private final ImmutableMultimap.Builder<String, String> softwareAccessionIdToVersionBuilder = ImmutableMultimap.builder();
+
+	private final ImmutableMultimap.Builder<InstrumentId, InstrumentComponent> instrumentIdToInstrumentComponentBuilder = ImmutableMultimap.builder();
+	private ImmutableList.Builder<InstrumentComponent> instrumentComponentsBuilder = ImmutableList.builder();
 
 	private Throwable error;
 
@@ -112,6 +123,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	private Boolean isMZ=null;
 	private double[] massArray=null;
 	private float[] intensityArray=null;
+	private Float tic=null;
 	private final StringBuilder dataSB=new StringBuilder();
 	
 	private Float selectedIon=null;
@@ -120,7 +132,16 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	private boolean isSkipSpectrumWithBadEncoding = false;
 	private int numSkippedWithBadEncoding = 0;
 	private static final int MAX_BAD_ENCODING_SKIPPED = 1000;
-	
+
+	/**
+	 * Field is only used to temporarily store software version when reading.
+	 * Use {@link #getSoftwareAccessionIdToVersion()}
+ 	 */
+	private String softwareVersion;
+
+	private InstrumentId.Builder currentInstrumentConfigurationIdBuilder = InstrumentId.builder();
+	private InstrumentComponent.Builder currentInstrumentComponentBuilder = InstrumentComponent.builder();
+
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
 		dataSB.setLength(0);
@@ -128,6 +149,8 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 			if ("spectrum".equalsIgnoreCase(tagList.get(tagList.size()-1))) {
 				if ("ms level".equalsIgnoreCase(attributes.getValue("name"))) {
 					msLevel=Integer.parseInt(attributes.getValue("value"));
+				} else if ("total ion current".equalsIgnoreCase(attributes.getValue("name"))) {
+					tic=Float.parseFloat(attributes.getValue("value"));
 				}
 				
 			} else if ("scan".equalsIgnoreCase(tagList.get(tagList.size()-1))) {
@@ -185,6 +208,18 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 				} else if ("charge state".equalsIgnoreCase(attributes.getValue("name"))) {
 					selectedCharge=Byte.parseByte(attributes.getValue("value"));
 				}
+			} else if ("software".equalsIgnoreCase(getPreviousElementTag())) {
+				softwareAccessionIdToVersionBuilder.put(attributes.getValue("accession"), softwareVersion);
+			} else if ("instrumentConfiguration".equalsIgnoreCase(getPreviousElementTag())) {
+				currentInstrumentConfigurationIdBuilder
+						.setAccession(attributes.getValue("accession"))
+						.setName(attributes.getValue("name"));
+			} else if (InstrumentComponent.Type.getTypeByName(getPreviousElementTag()).isPresent()) {
+				currentInstrumentComponentBuilder
+						.setType(InstrumentComponent.Type.getTypeByName(getPreviousElementTag()).get())
+						.setCvRef(attributes.getValue("cvRef"))
+						.setAccessionId(attributes.getValue("accession"))
+						.setName(attributes.getValue("name"));
 			}
 		} else if ("precursor".equalsIgnoreCase(qName)) {
 			spectrumRef=attributes.getValue("spectrumRef");
@@ -193,9 +228,30 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 		} else if ("spectrum".equalsIgnoreCase(qName)) {
 			spectrumName=attributes.getValue("id");
 			spectrumIndex=Integer.parseInt(attributes.getValue("index"));
+		} else if ("software".equalsIgnoreCase(qName)) {
+			softwareVersion = attributes.getValue("version");
+		} else if (InstrumentComponent.Type.getTypeByName(qName).isPresent()) {
+			currentInstrumentComponentBuilder.setOrder(Integer.parseInt(attributes.getValue("order")));
+		} else if ("instrumentConfiguration".equalsIgnoreCase(qName)) {
+			currentInstrumentConfigurationIdBuilder.setInstrumentConfigurationId(attributes.getValue("id"));
 		}
 
 		tagList.add(qName);
+	}
+
+	private String getPreviousElementTag() {
+		return tagList.get(tagList.size() - 1);
+	}
+
+	/**
+	 * @return A mapping of PSI-MS controlled software accession id to version(s).
+	 */
+	public ImmutableMultimap<String, String> getSoftwareAccessionIdToVersion() {
+		return softwareAccessionIdToVersionBuilder.build();
+	}
+
+	public ImmutableMultimap<InstrumentId, InstrumentComponent> getInstrumentConfigurations() {
+		return instrumentIdToInstrumentComponentBuilder.build();
 	}
 
 	@Override
@@ -222,6 +278,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 				dataSB.setLength(0);
 				massArray=null;
 				intensityArray=null;
+				tic=null;
 				
 				selectedIon=null;
 				
@@ -237,7 +294,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 					double[] deltaArray=General.multiply(massArray, parameters.getPrecursorOffsetPPM()/1000000.0);
 					massArray=General.subtract(massArray, deltaArray);
 				}
-				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray));
+				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray, tic));
 
 			} else {
 				if (spectrumRef==null) spectrumRef="Unknown";
@@ -261,6 +318,18 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 				byte charge=0;
 				if (selectedCharge!=null) {
 					charge=selectedCharge;
+				}
+				
+				if (parameters.getMinIntensity()>0.0f) {
+					ArrayList<Peak> peaks=new ArrayList<>();
+					for (int i=0; i<intensityArray.length; i++) {
+						if (intensityArray[i]>parameters.getMinIntensity()) {
+							peaks.add(new Peak(massArray[i], intensityArray[i]));
+						}
+					}
+					Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
+					massArray=peakArrays.x;
+					intensityArray=peakArrays.y;
 				}
 				
 				Stripe stripe=new Stripe(spectrumName, spectrumRef, spectrumIndex, scanStartTime, isolationWindowTarget-isolationWindowLowerOffset+(float)parameters.getPrecursorIsolationMargin(), isolationWindowTarget+isolationWindowUpperOffset-(float)parameters.getPrecursorIsolationMargin(),
@@ -302,6 +371,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 			dataSB.setLength(0);
 			massArray=null;
 			intensityArray=null;
+			tic=null;
 			
 			selectedIon=null;
 		}
@@ -333,6 +403,15 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 					}
 				}
 			}
+		}
+
+		if (InstrumentComponent.Type.getTypeByName(qName).isPresent()) {
+			instrumentComponentsBuilder.add(currentInstrumentComponentBuilder.build());
+			currentInstrumentComponentBuilder = InstrumentComponent.builder();
+		} else if ("instrumentConfiguration".equalsIgnoreCase(qName)) {
+			instrumentIdToInstrumentComponentBuilder.putAll(currentInstrumentConfigurationIdBuilder.build(), instrumentComponentsBuilder.build());
+			currentInstrumentConfigurationIdBuilder = InstrumentId.builder();
+			instrumentComponentsBuilder = ImmutableList.builder();
 		}
 
 		tagList.remove(tagList.size()-1);

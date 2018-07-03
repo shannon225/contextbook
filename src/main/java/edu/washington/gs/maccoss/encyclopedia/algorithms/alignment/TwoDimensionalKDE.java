@@ -46,6 +46,10 @@ public class TwoDimensionalKDE extends Mapper {
 				float actual=Float.parseFloat(row.get("actual"));
 				rts.add(new XYPoint(predicted, actual));
 			}
+			
+			@Override
+			public void cleanup() {
+			}
 		};
 
 		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
@@ -190,8 +194,34 @@ public class TwoDimensionalKDE extends Mapper {
 		if (northeast==max||east==north) {
 			traceNorthEast(i+1, j+1, prev);
 		} else if (east==max) {
+			// We want to go east
+			// First check if the last move was north
+			// (but only if there was a previous move)
+			if (prev.size() >= 2) {
+				final XYPoint last = prev.get(prev.size() - 2);
+				if (last.x == x) {
+					// If the previous points X coord is the same
+					// as this point, the last move was to the north.
+					// Thus we remove this current point and just move
+					// northeast from the last point.
+					prev.remove(prev.size() - 1);
+				}
+			}
 			traceNorthEast(i+1, j, prev);
 		} else {
+			// We want to go north
+			// First check if the last move was east
+			// (but only if there was a previous move)
+			if (prev.size() >= 2) {
+				final XYPoint last = prev.get(prev.size() - 2);
+				if (last.y == y) {
+					// If the previous points Y coord is the same
+					// as this point, the last move was to the east.
+					// Thus we remove this current point and just move
+					// northeast from the last point.
+					prev.remove(prev.size() - 1);
+				}
+			}
 			traceNorthEast(i, j+1, prev);
 		}
 	}
@@ -213,8 +243,34 @@ public class TwoDimensionalKDE extends Mapper {
 		if (southwest==max||west==south) {
 			traceSouthWest(i-1, j-1, prev);
 		} else if (west==max) {
+			// We want to go west
+			// First check if the last move was south
+			// (but only if there was a previous move)
+			if (prev.size() >= 2) {
+				final XYPoint last = prev.get(prev.size() - 2);
+				if (last.x == x) {
+					// If the previous points X coord is the same
+					// as this point, the last move was to the south.
+					// Thus we remove this current point and just move
+					// southwest from the last point.
+					prev.remove(prev.size() - 1);
+				}
+			}
 			traceSouthWest(i-1, j, prev);
 		} else {
+			// We want to go south
+			// First check if the last move was west
+			// (but only if there was a previous move)
+			if (prev.size() >= 2) {
+				final XYPoint last = prev.get(prev.size() - 2);
+				if (last.y == y) {
+					// If the previous points Y coord is the same
+					// as this point, the last move was to the west.
+					// Thus we remove this current point and just move
+					// southwest from the last point.
+					prev.remove(prev.size() - 1);
+				}
+			}
 			traceSouthWest(i, j-1, prev);
 		}
 	}

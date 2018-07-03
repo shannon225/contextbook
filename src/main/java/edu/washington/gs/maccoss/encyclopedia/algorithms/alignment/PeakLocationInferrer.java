@@ -57,7 +57,7 @@ public class PeakLocationInferrer {
 
 		Logger.logLine("Seed experiment: "+bestJob.getDiaFile().getName()+" ("+max+" archetypal peptides)");
 		Logger.logLine("Seed Percolator file: "+bestJob.getPercolatorFiles().getPeptideOutputFile().getAbsolutePath());
-		ArrayList<PercolatorPeptide> alignmentSeed=PercolatorReader.getPassingPeptidesFromTSV(bestJob.getPercolatorFiles().getPeptideOutputFile(), bestJob.getParameters().getEffectivePercolatorThreshold(), false).x;
+		ArrayList<PercolatorPeptide> alignmentSeed=PercolatorReader.getPassingPeptidesFromTSV(bestJob.getPercolatorFiles().getPeptideOutputFile(), bestJob.getParameters(), false).x;
 		TObjectFloatHashMap<String> rtsBySequence=new TObjectFloatHashMap<String>();
 		for (PercolatorPeptide peptide : alignmentSeed) {
 			rtsBySequence.put(peptide.getPeptideModSeq(), peptide.getRT());
@@ -83,7 +83,7 @@ public class PeakLocationInferrer {
 				count++;
 
 				ArrayList<XYPoint> points=new ArrayList<XYPoint>();
-				ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideOutputFile(), job.getParameters().getEffectivePercolatorThreshold(), false).x;
+				ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideOutputFile(), job.getParameters(), false).x;
 				for (PercolatorPeptide peptide : peptides) {
 					String seq=peptide.getPeptideModSeq();
 					if (rtsBySequence.containsKey(seq)) {
@@ -94,7 +94,7 @@ public class PeakLocationInferrer {
 					Logger.errorLine("Not enough points ("+points.size()+" out of align:"+peptides.size()+" and best:"+rtsBySequence.size()+") to compute regression between samples, still trying anyways.");
 				}
 				
-				RetentionTimeAlignmentInterface alignment=new RetentionTimeFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
+				RetentionTimeAlignmentInterface alignment=RetentionTimeFilter.getFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
 				alignmentMap.put(job, alignment);
 				if (job instanceof QuantitativeSearchJobData) {
 					// try reading encyclopedia data directly from results library
@@ -111,7 +111,7 @@ public class PeakLocationInferrer {
 			}
 		}
 
-		return new SimplePeakLocationInferrer(alignmentMap, alignedRTInMinBySequenceMap, bestIons, params);
+		return new SimplePeakLocationInferrer(alignmentMap, new HashMap<>(), alignedRTInMinBySequenceMap, bestIons, params);
 	}
 
 	/**
@@ -125,7 +125,7 @@ public class PeakLocationInferrer {
 	 */
 	static Pair<HashMap<SearchJobData, ArrayList<ChromatogramLibraryEntry>>, HashMap<String, double[]>> getArchetypalPeptides(ProgressIndicator progress, ArrayList<SearchJobData> pecanJobs,
 			ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
-		int numberOfQuantitativePeaks=params.getNumberOfQuantitativePeaks();
+		int numberOfQuantitativePeaks=params.getEffectiveNumberOfQuantitativePeaks();
 		MassTolerance fragmentTolerance=params.getFragmentTolerance();
 		
 		// set up data structures
@@ -168,7 +168,7 @@ public class PeakLocationInferrer {
 				File resultLibrary=((QuantitativeSearchJobData) job).getResultLibrary();
 				try {
 					LibraryInterface results=BlibToLibraryConverter.getFile(resultLibrary);
-					ArrayList<LibraryEntry> entries=results.getAllEntries(false);
+					ArrayList<LibraryEntry> entries=results.getAllEntries(false, params.getAAConstants());
 					ArrayList<ChromatogramLibraryEntry> bestEntries=new ArrayList<ChromatogramLibraryEntry>();
 
 					TreeMap<PeptidePrecursor, LibraryEntry> fastLookupPeptides=new TreeMap<PeptidePrecursor, LibraryEntry>();

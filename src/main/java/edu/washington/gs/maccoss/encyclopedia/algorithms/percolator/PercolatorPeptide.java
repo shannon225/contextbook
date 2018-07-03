@@ -6,11 +6,14 @@ import java.util.Optional;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorrLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.AlleleVariant;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.VariantFastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class PercolatorPeptide implements PeptidePrecursor {
 	private final String psmID;
@@ -35,12 +38,17 @@ public class PercolatorPeptide implements PeptidePrecursor {
 		}
 	};
 
+	@Deprecated
 	public PercolatorPeptide(String psmID, String proteinIDs, float qValue, float posteriorErrorProb) {
+		this(psmID, proteinIDs, qValue, posteriorErrorProb, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+	}
+
+	public PercolatorPeptide(String psmID, String proteinIDs, float qValue, float posteriorErrorProb, AminoAcidConstants aaConstants) {
 		this.psmID=psmID;
 		this.proteinIDs=proteinIDs;
 		this.qValue=qValue;
 		this.posteriorErrorProb=posteriorErrorProb;
-		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(getPeptideSequence(psmID));
+		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(getPeptideSequence(psmID), aaConstants);
 	}
 	
 	@Override

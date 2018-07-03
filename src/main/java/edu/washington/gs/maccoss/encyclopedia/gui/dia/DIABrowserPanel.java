@@ -58,15 +58,22 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumComparator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
+import gnu.trove.map.hash.TDoubleDoubleHashMap;
+import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class DIABrowserPanel extends JPanel {
 	private static final String STRUCTURE_TITLE="Structure";
+	private static final String INTENSITY_DISTRIBUTION_TITLE="Intensity Distributions";
 	private static final long serialVersionUID=1L;
 	public static final Color[] colors=new Color[] {Color.red, Color.blue, Color.green, Color.cyan, Color.magenta, Color.orange, Color.yellow, Color.pink, Color.gray, 
 			Color.red.darker(), Color.blue.darker(), Color.green.darker(), Color.cyan.darker(), Color.magenta.darker(), Color.orange.darker(), Color.yellow.darker(), Color.pink.darker(), Color.gray.darker()};
 
 	private final FileChooserPanel rawFileChooser;
+	private final JSplitPane distributionSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane rawSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+	private final JSplitPane spectrumSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JSplitPane split=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JTable table;
 	private final TableRowSorter<TableModel> rowSorter;
@@ -106,7 +113,7 @@ public class DIABrowserPanel extends JPanel {
 					}
 				});
 
-				SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA, false);
+				SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA, false, true);
 				f.getContentPane().add(new DIABrowserPanel(params), BorderLayout.CENTER);
 
 				f.pack();
@@ -196,6 +203,8 @@ public class DIABrowserPanel extends JPanel {
 		left.add(searchPanel, BorderLayout.SOUTH);
 
 		primaryTabs.addTab("Scans", rawSplit);
+		rawSplit.setBottomComponent(spectrumSplit);
+		primaryTabs.addTab(INTENSITY_DISTRIBUTION_TITLE, distributionSplit);
         
 		split.setLeftComponent(left);
 		split.setRightComponent(primaryTabs);
@@ -215,6 +224,8 @@ public class DIABrowserPanel extends JPanel {
 	
 	private float maxTIC=0.0f;
 	private XYTrace chromatogram=null;
+	private XYTrace precursorIntensityHistogram=null;
+	private XYTrace fragmentIntensityHistogram=null;
 
 	public void updateRaw(final File f) {
 		SwingWorkerProgress<ArrayList<Spectrum>> worker=new SwingWorkerProgress<ArrayList<Spectrum>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Raw File") {
@@ -242,6 +253,7 @@ public class DIABrowserPanel extends JPanel {
 				int increment=precursors.size()/1000;
 				int scanCount=0;
 				float tic=0.0f;
+				TFloatFloatHashMap precursorIonDistribution=new TFloatFloatHashMap();
 				for (PrecursorScan precursorScan : precursors) {
 					scans.add(precursorScan);
 					tic+=precursorScan.getTIC();
@@ -253,12 +265,30 @@ public class DIABrowserPanel extends JPanel {
 						tic=0;
 					}
 					scanCount++;
+					
+					for (float intensity : precursorScan.getIntensityArray()) {
+						float bin=((int)(10.0f*Log.protectedLog10(intensity)))/10.0f;
+						precursorIonDistribution.adjustOrPutValue(bin, 1.0f, 1.0f);
+					}
 				}
 				chromatogram=new XYTrace(tics, GraphType.area, "Precursor TIC");
+				precursorIntensityHistogram=new XYTrace(precursorIonDistribution, GraphType.area, "Log10 Precursor Intensity Distribution");
 				
+				TDoubleDoubleHashMap fragmentIonDistribution=new TDoubleDoubleHashMap();
 				for (Stripe stripe : dia.getStripes(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), -Float.MAX_VALUE, Float.MAX_VALUE, false)) {
 					scans.add(stripe);
+					for (float intensity : stripe.getIntensityArray()) {
+						double bin=((int)(10.0*Log.protectedLog10(intensity)))/10.0;
+						fragmentIonDistribution.adjustOrPutValue(bin, 1.0, 1.0);
+					}
 				}
+				fragmentIntensityHistogram=new XYTrace(fragmentIonDistribution, GraphType.area, "Log10 Fragment Intensity Distribution");
+				
+				
+				final ChartPanel precursorIntensities=Charter.getChart("Log10 Precursor Intensity", "Count", false, precursorIntensityHistogram);
+				final ChartPanel fragmentIntensities=Charter.getChart("Log10 Fragment Intensity", "Count", false, fragmentIntensityHistogram);
+				distributionSplit.setTopComponent(precursorIntensities);
+				distributionSplit.setBottomComponent(fragmentIntensities);
 				
 				Collections.sort(scans, new SpectrumComparator(SpectrumComparator.compareWithRT));
 				
@@ -297,7 +327,11 @@ public class DIABrowserPanel extends JPanel {
 		if (locationRaw<=5) {
 			locationRaw=400;
 		}
-		
+		int locationSpectrum=spectrumSplit.getDividerLocation();
+		//System.out.println("locationRaw:"+locationRaw);
+		if (locationSpectrum<=5) {
+			locationSpectrum=400;
+		}
 		
 		if (entries==null) {
 			if (chromatogram!=null) {
@@ -307,25 +341,35 @@ public class DIABrowserPanel extends JPanel {
 				return;
 			}
 		} else {
-				if (entries.size()==1) {
-					rawSplit.setBottomComponent(Charter.getChart(entries.get(0)));
-					float rt=entries.get(0).getScanStartTime()/60f;
-					XYTrace marker=new XYTrace(new double[] {rt, rt}, new double[] {0, maxTIC}, GraphType.dashedline, "marker");
-					rawSplit.setTopComponent(Charter.getChart("Retention Time", "Precursor TIC", false, chromatogram, marker));
-				} else {
-					rawSplit.setBottomComponent(Charter.getChart(SpectrumUtils.mergeSpectra(entries, parameters.getFragmentTolerance())));
-					
-					float minRT=Float.MAX_VALUE;
-					float maxRT=-Float.MAX_VALUE;
-					for (Spectrum spectrum : entries) {
-						float rt=spectrum.getScanStartTime()/60f;
-						if (rt>maxRT) maxRT=rt;
-						if (rt<minRT) minRT=rt;
-					}
-					XYTrace marker=new XYTrace(new double[] {maxRT, minRT}, new double[] {0, maxTIC}, GraphType.dashedline, "marker");
-					rawSplit.setTopComponent(Charter.getChart("Retention Time", "Precursor TIC", false, chromatogram, marker));
+			final Spectrum spectrum;
+			final double[] rtRange;
+			if (entries.size()==1) {
+				spectrum=entries.get(0);
+				float rt=spectrum.getScanStartTime()/60f;
+				rtRange=new double[] {rt, rt};
+			} else {
+				spectrum=SpectrumUtils.mergeSpectra(entries, parameters.getFragmentTolerance());
+				float minRT=Float.MAX_VALUE;
+				float maxRT=-Float.MAX_VALUE;
+				for (Spectrum entry : entries) {
+					float rt=entry.getScanStartTime()/60f;
+					if (rt>maxRT) maxRT=rt;
+					if (rt<minRT) minRT=rt;
 				}
+				rtRange=new double[] {maxRT, minRT};
+			}
+
+			final ChartPanel spectrumChart=Charter.getChart(spectrum);
+			XYTrace intensityHistogram=new XYTrace(PivotTableGenerator.createPivotTable(Log.log10(spectrum.getIntensityArray())), GraphType.area, "Log10 Fragment Intensity Distribution");
+			final ChartPanel precursorIntensities=Charter.getChart("Log10 Intensity", "Count (N="+spectrum.getIntensityArray().length+")", false, intensityHistogram);
+			
+			spectrumSplit.setLeftComponent(spectrumChart);
+			spectrumSplit.setRightComponent(precursorIntensities);
+			
+			XYTrace marker=new XYTrace(rtRange, new double[] {0, maxTIC}, GraphType.dashedline, "marker");
+			rawSplit.setTopComponent(Charter.getChart("Retention Time", "Precursor TIC", false, chromatogram, marker));
 		}
+		spectrumSplit.setDividerLocation(locationSpectrum);
 		rawSplit.setDividerLocation(locationRaw);
 		split.setDividerLocation(location);
 	}

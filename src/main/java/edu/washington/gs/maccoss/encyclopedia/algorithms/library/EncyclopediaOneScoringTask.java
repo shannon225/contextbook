@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
@@ -13,10 +14,12 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import gnu.trove.map.hash.TFloatFloatHashMap;
@@ -24,11 +27,13 @@ import gnu.trove.set.hash.TIntHashSet;
 
 public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 	private final float dutyCycle;
+	private final Range precursorIsolationRange;
 	
-	public EncyclopediaOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
+	public EncyclopediaOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
 			SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.dutyCycle=dutyCycle;
+		this.precursorIsolationRange=new Range(precursorIsolationRange.getStart(), precursorIsolationRange.getStop());
 	}
 	
 	private static final int peaksKept=5;
@@ -39,8 +44,15 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 		int movingAverageLength=Math.round(parameters.getExpectedPeakWidth()/dutyCycle);
 		for (LibraryEntry entry : super.entries) {
 			AuxillaryPSMScorer auxScorer=eScorer.getAuxScorer().getEntryOptimizedScorer(entry);
-			FragmentationModel model=new FragmentationModel(entry.getPeptideModSeq(), parameters.getAAConstants());
-			FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge());
+			FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+			FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), true);
+			Optional<FragmentIon[]> modificationSpecificIons;
+			if (parameters.isVerifyModificationIons()) {
+				modificationSpecificIons=model.getModificationSpecificIonObjects(precursorIsolationRange, parameters.getFragType(), entry.getPrecursorCharge(), true);
+			} else {
+				modificationSpecificIons=Optional.empty();
+			}
+			
 			ions=FragmentIon.getUniqueFragments(ions, parameters.getFragmentTolerance()); // ensure that all ions are unique within tolerance
 			
 			PeptideScoringResult result=new PeptideScoringResult(entry);
@@ -50,6 +62,14 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 			for (int i=0; i<super.stripes.size(); i++) {
 				Stripe stripe=super.stripes.get(i);
 				primary[i]=eScorer.score(entry, stripe, ions);
+				
+				if (modificationSpecificIons.isPresent()) {
+					// if modified signal represents less than 25% of the score then don't trust it
+					float scoreFromModIons=eScorer.score(entry, stripe, modificationSpecificIons.get());
+					if (scoreFromModIons/primary[i]<0.25f) {
+						primary[i]=0.0f;
+					}
+				}
 			}
 			
 			//float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
