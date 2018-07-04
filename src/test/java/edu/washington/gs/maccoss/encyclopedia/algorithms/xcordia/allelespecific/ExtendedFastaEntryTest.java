@@ -28,7 +28,7 @@ public class ExtendedFastaEntryTest extends TestCase {
 		ExtendedFastaEntry extendedEntry=new ExtendedFastaEntry("testExtendedFastaEntry", annotation, sequence);
 		ArrayList<AlleleVariant> variants=extendedEntry.getPotentialVariants();
 		
-		assertEquals(160,variants.size());
+		assertEquals(158,variants.size());
 		assertEquals(extendedEntry.getSequence(),sequence);
 		
 		for (int index=0; index<variants.size(); index++) {

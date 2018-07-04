@@ -46,7 +46,7 @@ public class ExtendedFastaEntry extends FastaEntry {
 				char switchTo=info[1].charAt(0);
 				if (!(switchFrom=='I'&&switchTo=='L')&&!(switchFrom=='L'&&switchTo=='I')) {
 					// if both aren't I/L then add
-					potentialVariants.add(new AlleleVariant(start, switchTo, switchFrom));
+					potentialVariants.add(new AlleleVariant(start, switchFrom, switchTo));
 				}
 			} else {
 				try {
