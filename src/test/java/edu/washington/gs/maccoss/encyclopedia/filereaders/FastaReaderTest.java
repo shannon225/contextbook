@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
@@ -111,6 +112,31 @@ public class FastaReaderTest extends TestCase {
 	}
 	
 	public static void main(String[] args) {
+		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
+		File f=new File("/Users/searleb/Documents/school/uniprot-9606.fasta");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f);
+		AminoAcidConstants constants=new AminoAcidConstants();
+		System.out.println("Proteins: "+entries.size());
+		
+		HashSet<String> allPeptides=new HashSet<>();
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+		for (FastaEntryInterface entry : entries) {
+			ArrayList<String> peptides=enzyme.digestProtein(entry, 4, 50, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+			for (String string : peptides) {
+				for (int pepCharge : new int[] {2, 3}) {
+					double pepMass=constants.getMass(string)+MassConstants.oh2;
+					double pepChargedMass=(pepMass+MassConstants.protonMass*pepCharge)/pepCharge;
+
+					if (pepChargedMass>(400)&&pepChargedMass<(1000)) {
+						allPeptides.add(string);
+					}
+				}
+			}
+		}
+		System.out.println("Peptides: "+allPeptides.size());
+	}
+	
+	public static void main4(String[] args) {
 		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
 		File f=new File("/Users/searleb/Documents/school/uniprot-9606.fasta");
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f);
