@@ -493,7 +493,7 @@ public class DigestionEnzymeTest extends TestCase {
 		assertEquals(expected.size(), sequences.size());
 		for (FastaPeptideEntry pep : sequences) {
 			if (!expected.contains(pep.getSequence())) {
-				System.out.println("generated but not expected: "+pep);
+				System.out.println("generated but not expected: "+pep.getSequence());
 			}
 			expected.remove(pep.getSequence());
 		}
