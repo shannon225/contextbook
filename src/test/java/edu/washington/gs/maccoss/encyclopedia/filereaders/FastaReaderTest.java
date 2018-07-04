@@ -121,14 +121,14 @@ public class FastaReaderTest extends TestCase {
 		HashSet<String> allPeptides=new HashSet<>();
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		for (FastaEntryInterface entry : entries) {
-			ArrayList<String> peptides=enzyme.digestProtein(entry, 4, 50, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
-			for (String string : peptides) {
+			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 4, 50, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+			for (FastaPeptideEntry pep : peptides) {
 				for (int pepCharge : new int[] {2, 3}) {
-					double pepMass=constants.getMass(string)+MassConstants.oh2;
+					double pepMass=constants.getMass(pep.getSequence())+MassConstants.oh2;
 					double pepChargedMass=(pepMass+MassConstants.protonMass*pepCharge)/pepCharge;
 
 					if (pepChargedMass>(400)&&pepChargedMass<(1000)) {
-						allPeptides.add(string);
+						allPeptides.add(pep.getSequence());
 					}
 				}
 			}
