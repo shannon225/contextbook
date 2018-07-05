@@ -21,6 +21,7 @@ import org.apache.commons.math3.stat.inference.TestUtils;
 
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
@@ -249,7 +250,8 @@ public class ThesaurusElibParser {
 		PeptideMotifTrie motifTrie=new PeptideMotifTrie(primaryQuantLog.values(), mod);
 
 		System.out.println("Reading FASTA...");
-		ArrayList<FastaEntryInterface> fasta=FastaReader.readFasta(new File("/Users/searleb/Downloads/uniprot.HUMAN.fasta"));
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		ArrayList<FastaEntryInterface> fasta=FastaReader.readFasta(new File("/Users/searleb/Downloads/uniprot.HUMAN.fasta"), parameters);
 		//ArrayList<FastaEntryInterface> fasta=FastaReader.readFasta(new File("/Users/searleb/Documents/school/projects/pecandata/UP000005640_9606.fasta"));
 		motifTrie.addFasta(fasta);
 		

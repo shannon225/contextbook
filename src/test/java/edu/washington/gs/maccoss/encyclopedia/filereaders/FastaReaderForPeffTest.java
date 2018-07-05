@@ -21,6 +21,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
@@ -35,6 +36,7 @@ public class FastaReaderForPeffTest {
 	private final static DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 
 	public static void main(String[] args) throws Exception {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		// checkDigestionRunningTimeForPeff();
 
 		File peffFile=new File("J:/1_LabData/20171017_peff_fileformat/nextprot2017_testPEFF1.0rc25_a.peff");
@@ -44,7 +46,7 @@ public class FastaReaderForPeffTest {
 		String outputFolder="J:/1_LabData/20171017_peff_fileformat/";
 
 		InputStream is=new FileInputStream(peffFile);
-		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), peffFile.getName(), null, true);
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), peffFile.getName(), null, true, parameters);
 		ArrayList<Range> ranges=readRangeFile(rangeFile);
 		Collections.sort(ranges);
 
@@ -339,13 +341,14 @@ public class FastaReaderForPeffTest {
 	}
 
 	private static void checkDigestionRunningTimeForPeff() throws FileNotFoundException {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		File peffFile=new File("J:/1_LabData/20171017_peff_fileformat/nextprot2017_testPEFF1.0rc25_a.peff");
 		// File peffFile=new
 		// File("J:/1_LabData/20171017_peff_fileformat/nextprot2017_testPEFF1.0rc25_small.peff");
 		// File outputFile
 		InputStream is=new FileInputStream(peffFile);
 		long startTime=System.currentTimeMillis();
-		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), peffFile.getName(), null, true);
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), peffFile.getName(), null, true, parameters);
 
 		System.out.println("Number of entry in peff file: "+entries.size());
 		long endTime=System.currentTimeMillis();
@@ -371,7 +374,7 @@ public class FastaReaderForPeffTest {
 
 		is=new FileInputStream(peffFile);
 		startTime=System.currentTimeMillis();
-		entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), peffFile.getName(), null, false);
+		entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), peffFile.getName(), null, false, parameters);
 
 		System.out.println("Number of entry in peff file: "+entries.size());
 		endTime=System.currentTimeMillis();

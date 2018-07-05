@@ -30,20 +30,20 @@ public class MSPReader {
 		File fastaFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/UP000005640_9606.fasta");
 		File libraryFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/cptac2_human_hcd_selected.elib");
 		
-		convertMSP(mspFile, fastaFile, libraryFile);
+		convertMSP(mspFile, fastaFile, libraryFile, SearchParameterParser.getDefaultParametersObject());
 	}
-	public static void convertMSP(File mspFile, File fastaFile) throws IOException, SQLException {
+	public static void convertMSP(File mspFile, File fastaFile, SearchParameters parameters) throws IOException, SQLException {
 		String absolutePath=mspFile.getAbsolutePath();
 		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
-		convertMSP(mspFile, fastaFile, libraryFile);
+		convertMSP(mspFile, fastaFile, libraryFile, parameters);
 	}
 
-	public static void convertMSP(File mspFile, File fastaFile, File libraryFile) throws IOException, SQLException {
+	public static void convertMSP(File mspFile, File fastaFile, File libraryFile, SearchParameters parameters) throws IOException, SQLException {
 		Logger.logLine("Reading MSP file "+mspFile.getName());
 		ArrayList<LibraryEntry> entries=readMSP(mspFile, false);
 
 		Logger.logLine("Reading Fasta file "+fastaFile.getName());
-		ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile);
+		ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile, parameters);
 
 		Logger.logLine("Constructing trie from library peptides");
 		PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(entries);

@@ -97,7 +97,7 @@ public class FastaReaderTest extends TestCase {
 		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true);
 		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
 		File f=new File("/Users/searleb/Documents/chromatogram_library_manuscript/real_pecan/cerevisiae_orf_trans_all.fasta");
-		ArrayList<FastaEntryInterface> targetProteins=FastaReader.readFasta(f);
+		ArrayList<FastaEntryInterface> targetProteins=FastaReader.readFasta(f, parameters);
 		
 		//PrintWriter writer=new PrintWriter("/Users/searleb/Documents/chromatogram_library_manuscript/sp_iso_HUMAN_4.9.2015_UP000005640.peptides.txt");
 		PrintWriter writer=new PrintWriter("/Users/searleb/Documents/chromatogram_library_manuscript/real_pecan/cerevisiae_orf_trans_all.peptides.txt");
@@ -111,10 +111,11 @@ public class FastaReaderTest extends TestCase {
 		writer.close();
 	}
 	
-	public static void main(String[] args) {
+	public static void main3(String[] args) {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
 		File f=new File("/Users/searleb/Documents/school/uniprot-9606.fasta");
-		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f);
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
 		AminoAcidConstants constants=new AminoAcidConstants();
 		System.out.println("Proteins: "+entries.size());
 		
@@ -137,9 +138,10 @@ public class FastaReaderTest extends TestCase {
 	}
 	
 	public static void main4(String[] args) {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
 		File f=new File("/Users/searleb/Documents/school/uniprot-9606.fasta");
-		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f);
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
 		AminoAcidConstants constants=new AminoAcidConstants();
 		System.out.println(entries.size());
 
@@ -164,10 +166,11 @@ public class FastaReaderTest extends TestCase {
 		}
 	}
 	
-	public static void main3(String[] args) {
+	public static void main(String[] args) {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
 		File f=new File("/Users/searleb/Documents/school/uniprot-9606.fasta");
-		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f);
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
 
 		int countBase=0;
 		int countNTermProtein=0;
@@ -228,6 +231,7 @@ public class FastaReaderTest extends TestCase {
 	}
 	
 	public void testFastaParsing() {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		String bsa=">ALBU_HUMAN Serum albumin OS=Homo sapiens GN=ALB PE=1 SV=2\n"+"MKWVTFISLLFLFSSAYSRGVFRRDAHKSEVAHRFKDLGEENFKALVLIAFAQYLQQCPF\n"
 				+"EDHVKLVNEVTEFAKTCVADESAENCDKSLHTLFGDKLCTVATLRETYGEMADCCAKQEP\n"+"ERNECFLQHKDDNPNLPRLVRPEVDVMCTAFHDNEETFLKKYLYEIARRHPYFYAPELLF\n"
 				+"FAKRYKAAFTECCQAADKAACLLPKLDELRDEGKASSAKQRLKCASLQKFGERAFKAWAV\n"+"ARLSQRFPKAEFAEVSKLVTDLTKVHTECCHGDLLECADDRADLAKYICENQDSISSKLK\n"
@@ -235,14 +239,14 @@ public class FastaReaderTest extends TestCase {
 				+"QLGEYKFQNALLVRYTKKVPQVSTPTLVEVSRNLGKVGSKCCKHPEAKRMPCAEDYLSVV\n"+"LNQLCVLHEKTPVSDRVTKCCTESLVNRRPCFSALEVDETYVPKEFNAETFTFHADICTL\n"
 				+"SEKERQIKKQTALVELVKHKPKATKEQLKAVMDDFAAFVEKCCKADDKETCFAEEGKKLV\n"+"AASQAALGL";
 
-		FastaEntryInterface entry=FastaReader.readFasta(bsa, "").get(0);
+		FastaEntryInterface entry=FastaReader.readFasta(bsa, "", parameters).get(0);
 		assertEquals("ALBU_HUMAN", entry.getAccession());
 		assertEquals("MKWVTFISLLFLFSSAYSRGVFRRDAHKSEVAHRFKDLGEENFKALVLIAFAQYLQQCPFEDHVKLVNEVTEFAKTCVADESAENCDKSLHTLFGDKLCTVATLRETYGEMADCCAKQEPERNECFLQHKDDNPNLPRLVRPEVDVMCTAFHDNEETFLKKYLYEIARRHPYFYAPELLFFAKRYKAAFTECCQAADKAACLLPKLDELRDEGKASSAKQRLKCASLQKFGERAFKAWAVARLSQRFPKAEFAEVSKLVTDLTKVHTECCHGDLLECADDRADLAKYICENQDSISSKLKECCEKPLLEKSHCIAEVENDEMPADLPSLAADFVESKDVCKNYAEAKDVFLGMFLYEYARRHPDYSVVLLLRLAKTYETTLEKCCAAADPHECYAKVFDEFKPLVEEPQNLIKQNCELFEQLGEYKFQNALLVRYTKKVPQVSTPTLVEVSRNLGKVGSKCCKHPEAKRMPCAEDYLSVVLNQLCVLHEKTPVSDRVTKCCTESLVNRRPCFSALEVDETYVPKEFNAETFTFHADICTLSEKERQIKKQTALVELVKHKPKATKEQLKAVMDDFAAFVEKCCKADDKETCFAEEGKKLVAASQAALGL", entry.getSequence());
 
 		String ecoli=">gi|16131183|ref|NP_417763.1| 50S ribosomal subunit protein L18 [Escherichia coli str. K-12 substr. MG1655]\n"
 				+"MDKKSARIRRATRARRKLQELGATRLVVHRTPRHIYAQVIAPNGSEVLVAASTVEKAIAEQLKYTGNKDA\n"+"AAAVGKAVAERALEKGIKDVSFDRSGFQYHGRVQALADAAREAGLQF\n";
 
-		entry=FastaReader.readFasta(ecoli, "").get(0);
+		entry=FastaReader.readFasta(ecoli, "", parameters).get(0);
 		assertEquals("MDKKSARIRRATRARRKLQELGATRLVVHRTPRHIYAQVIAPNGSEVLVAASTVEKAIAEQLKYTGNKDAAAAVGKAVAERALEKGIKDVSFDRSGFQYHGRVQALADAAREAGLQF", entry.getSequence());
 		ArrayList<FastaPeptideEntry> peptides=DigestionEnzyme.getEnzyme("trypsin").digestProtein(entry, 8, 40, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 		boolean found=false;
@@ -256,15 +260,16 @@ public class FastaReaderTest extends TestCase {
 	}
 
 	public void testFastaReader() throws Exception {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		InputStream is=getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
-		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(is, "ecoli-190209-contam_correctNL.fasta");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(is, "ecoli-190209-contam_correctNL.fasta", parameters);
 
 		assertEquals(4178, entries.size());
 		
 		File temp=File.createTempFile("ecoli_", ".fasta"); // test write
 		temp.deleteOnExit();
 		FastaWriter.writeFasta(temp, entries);
-		ArrayList<FastaEntryInterface> writtenEntries=FastaReader.readFasta(temp);
+		ArrayList<FastaEntryInterface> writtenEntries=FastaReader.readFasta(temp, parameters);
 
 		assertEquals(4178, writtenEntries.size());
 		for (int i=0; i<writtenEntries.size(); i++) {
@@ -272,12 +277,11 @@ public class FastaReaderTest extends TestCase {
 			assertEquals(entries.get(i).getSequence(), writtenEntries.get(i).getSequence());
 		}
 		
-		entries=FastaReader.readFasta(temp, "NP_"); // test filter
+		entries=FastaReader.readFasta(temp, "NP_", parameters); // test filter
 		assertEquals(3934, entries.size());
 
-		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		File reverseConcatenated=PercolatorExecutor.getFastaPlusDecoyFile(temp, parameters);
-		ArrayList<FastaEntryInterface> reverseConcatenatedEntries=FastaReader.readFasta(reverseConcatenated);
+		ArrayList<FastaEntryInterface> reverseConcatenatedEntries=FastaReader.readFasta(reverseConcatenated, parameters);
 		assertEquals(4178*2, reverseConcatenatedEntries.size());
 		reverseConcatenated.deleteOnExit();
 
@@ -318,8 +322,9 @@ public class FastaReaderTest extends TestCase {
 	 * test reading Peff format and using ExtendedFastaEntry 
 	 */
 	public void testFastaReaderForPeff() throws Exception {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		InputStream is=getClass().getResourceAsStream("/nextprot2017_testPEFF1.0rc25_small.peff");
-		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), "nextprot2017_testPEFF1.0rc25_small.peff", null, true);
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), "nextprot2017_testPEFF1.0rc25_small.peff", null, true, parameters);
 		assertEquals(25, entries.size());
 
 		for (FastaEntryInterface entry : entries) {

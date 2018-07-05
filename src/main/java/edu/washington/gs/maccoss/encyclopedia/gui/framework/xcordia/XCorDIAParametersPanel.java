@@ -216,7 +216,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 			Logger.logLine("Reading targets from ["+targetFile.getName()+"]");
 			targets=new ArrayList<FastaPeptideEntry>();
 			
-			ArrayList<FastaEntryInterface> targetProteins=FastaReader.readFasta(targetFile);
+			ArrayList<FastaEntryInterface> targetProteins=FastaReader.readFasta(targetFile, parameters);
 			for (FastaEntryInterface entry : targetProteins) {
 				ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
 				for (FastaPeptideEntry peptide : peptides) {

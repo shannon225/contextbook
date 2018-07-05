@@ -35,9 +35,11 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
@@ -74,7 +76,7 @@ public class SimilarPeptideBinnerTest extends TestCase {
 		System.out.println("Reading peff fasta file...");
 		File peffFile=new File("/Users/searleb/Documents/xcordia_manuscript/LCM_identified_protein.peff");
 		InputStream is=new FileInputStream(peffFile);
-		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), peffFile.getName(), null, true);
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), peffFile.getName(), null, true, parameters);
 		
 		PeptideDatabase targets=new PeptideDatabase();
 		for (FastaEntryInterface protein : entries) {
@@ -190,13 +192,13 @@ public class SimilarPeptideBinnerTest extends TestCase {
 	}
 	
 	public void testBinner() {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		String annotation=">nxp:NX_P0DJI8-1 \\DbUniqueId=NX_P0DJI8-1 \\PName=Serum amyloid A-1 protein isoform Iso 1 \\GName=SAA1 \\NcbiTaxId=9606 \\TaxName=Homo Sapiens \\Length=122 \\SV=95 \\EV=159 \\PE=1 \\ModResPsi=(101|MOD:00316|N4,N4-dimethyl-L-asparagine) \\VariantSimple=(15|S)(70|A)(75|V)(78|N)(86|L)(90|D) \\Processed=(1|18|signal peptide)(19|94|mature protein)(19|122|mature protein)(20|120|mature protein)(20|121|mature protein)(20|122|mature protein)(21|122|mature protein)(22|119|mature protein)(95|122|maturation peptide)";
 		String simpleAnnotation=">nxp:NX_P0DJI8-1";
 		String sequence="MKLLTGLVFCSLVLGVSSRSFFSFLGEAFDGARDMWRAYSDMREANYIGSDKYFHARGNYDAAKRGPGGVWAAEAISDARENIQRFFGHGAEDSLADQAANEWGRSGKDPNHFRPAGLPEKY";
 		FastaEntry simpleEntry=new FastaEntry("source", simpleAnnotation, sequence);
-		ExtendedFastaEntry entry=new ExtendedFastaEntry("source", annotation, sequence);
+		ExtendedFastaEntry entry=new ExtendedFastaEntry("source", annotation, sequence, parameters);
 		
-		PecanSearchParameters parameters=PecanParameterParser.getDefaultParametersObject();
 		ArrayList<FastaPeptideEntry> simplePeptides=parameters.getEnzyme().digestProtein(simpleEntry, 6, 100, 0, parameters.getAAConstants());
 		ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, 6, 100, 0, parameters.getAAConstants());
 

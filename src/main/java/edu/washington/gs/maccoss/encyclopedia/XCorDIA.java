@@ -127,10 +127,10 @@ public class XCorDIA {
 				if (arguments.containsKey(TARGET_FASTA_TAG)) {
 					File targetsFile=new File(arguments.get(TARGET_FASTA_TAG));
 					if (SearchParameterParser.getBoolean("-tp", arguments, false)) {
-						targets=FastaReader.readPeptideFasta(targetsFile);
+						targets=FastaReader.readPeptideFasta(targetsFile, parameters);
 					} else {
 						targets=new ArrayList<FastaPeptideEntry>();
-						ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(targetsFile);
+						ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(targetsFile, parameters);
 						for (FastaEntryInterface entry : entries) {
 							ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
 							for (FastaPeptideEntry peptide : peptides) {
@@ -225,7 +225,7 @@ public class XCorDIA {
 
 		Logger.logLine("Reading FASTA peptides...");
 		// add database to proteome
-		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(jobData.getFastaFile());
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(jobData.getFastaFile(), parameters);
 		for (FastaEntryInterface entry : entries) {
 			ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
 

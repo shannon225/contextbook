@@ -198,7 +198,7 @@ public class BlibFile extends SQLFile {
 				}
 
 				Logger.logLine("Reading Fasta file "+fastaFile.getName());
-				ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile);
+				ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile, params);
 				
 				Logger.logLine("Constructing trie from library peptides");
 				PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(entries);

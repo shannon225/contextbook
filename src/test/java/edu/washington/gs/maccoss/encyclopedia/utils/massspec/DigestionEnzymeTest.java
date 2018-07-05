@@ -12,7 +12,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 import junit.framework.TestCase;
 
@@ -21,7 +23,8 @@ public class DigestionEnzymeTest extends TestCase {
 		String bsa=">ALBU_HUMAN Serum albumin OS=Homo sapiens GN=ALB PE=1 SV=2\n"+"MWVTFISLLFLFSSAYSRGVFRRDAHKSEVAHRFKDLGEENFKALVLIAFAQYLQQCPF\n"
 				+"EDHVKLVNEVTEFAKTCVADESAENCDKSLHTLFGDKLCTVATLRETYGEMADCCAKQEPENECFLQH\n";
 
-		FastaEntryInterface entry=FastaReader.readFasta(bsa, "").get(0);
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		FastaEntryInterface entry=FastaReader.readFasta(bsa, "", parameters).get(0);
 		String sequence=entry.getSequence();
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		AminoAcidConstants aminoAcidConstants = new AminoAcidConstants();
@@ -33,7 +36,8 @@ public class DigestionEnzymeTest extends TestCase {
 		String bsa=">ALBU_HUMAN Serum albumin OS=Homo sapiens GN=ALB PE=1 SV=2\n"+"MWVTFISLLFLFSSAYSRGVFRRDAHKSEVAHRFKDLGEENFKALVLIAFAQYLQQCPF\n"
 				+"EDHVKLVNEVTEFAKTCVADESAENCDKSLHTLFGDKLCTVATLRETYGEMADCCAKQEPENECFLQH\n";
 
-		FastaEntryInterface entry=FastaReader.readFasta(bsa, "").get(0);
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		FastaEntryInterface entry=FastaReader.readFasta(bsa, "", parameters).get(0);
 		String sequence=entry.getSequence();
 		
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
@@ -90,7 +94,8 @@ public class DigestionEnzymeTest extends TestCase {
 		String bsa=">ALBU_HUMAN Serum albumin OS=Homo sapiens GN=ALB PE=1 SV=2\n"+"MWVTFISLLFLFSSAYSRGVFRRDAHKSEVAHRFKDLGEENFKALVLIAFAQYLQQCPF\n"
 				+"EDHVKLVNEVTEFAKTCVADESAENCDKSLHTLFGDKLCTVATLRETYGEMADCCAKQEPENECFLQH\n";
 
-		FastaEntryInterface entry=FastaReader.readFasta(bsa, "").get(0);
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		FastaEntryInterface entry=FastaReader.readFasta(bsa, "", parameters).get(0);
 		String sequence=entry.getSequence();
 		
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
@@ -165,7 +170,8 @@ public class DigestionEnzymeTest extends TestCase {
 				+"QLGEYKFQNALLVRYTKKVPQVSTPTLVEVSRNLGKVGSKCCKHPEAKRMPCAEDYLSVV\n"+"LNQLCVLHEKTPVSDRVTKCCTESLVNRRPCFSALEVDETYVPKEFNAETFTFHADICTL\n"
 				+"SEKERQIKKQTALVELVKHKPKATKEQLKAVMDDFAAFVEKCCKADDKETCFAEEGKKLV\n"+"AASQAALGL";
 
-		FastaEntryInterface entry=FastaReader.readFasta(bsa, "").get(0);
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		FastaEntryInterface entry=FastaReader.readFasta(bsa, "", parameters).get(0);
 		
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("no enzyme");
 
@@ -183,7 +189,8 @@ public class DigestionEnzymeTest extends TestCase {
 				+"QLGEYKFQNALLVRYTKKVPQVSTPTLVEVSRNLGKVGSKCCKHPEAKRMPCAEDYLSVV\n"+"LNQLCVLHEKTPVSDRVTKCCTESLVNRRPCFSALEVDETYVPKEFNAETFTFHADICTL\n"
 				+"SEKERQIKKQTALVELVKHKPKATKEQLKAVMDDFAAFVEKCCKADDKETCFAEEGKKLV\n"+"AASQAALGL";
 
-		FastaEntryInterface entry=FastaReader.readFasta(bsa, "").get(0);
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		FastaEntryInterface entry=FastaReader.readFasta(bsa, "", parameters).get(0);
 		String sequence=entry.getSequence();
 		
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
@@ -318,7 +325,8 @@ public class DigestionEnzymeTest extends TestCase {
 				+"QLGEYKFQNALLVRYTKKVPQVSTPTLVEVSRNLGKVGSKCCKHPEAKRMPCAEDYLSVV\n"+"LNQLCVLHEKTPVSDRVTKCCTESLVNRRPCFSALEVDETYVPKEFNAETFTFHADICTL\n"
 				+"SEKERQIKKQTALVELVKHKPKATKEQLKAVMDDFAAFVEKCCKADDKETCFAEEGKKLV\n"+"AASQAALGL";
 
-		FastaEntryInterface entry=FastaReader.readFasta(bsa, "").get(0);
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		FastaEntryInterface entry=FastaReader.readFasta(bsa, "", parameters).get(0);
 		String sequence=entry.getSequence();
 		
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
@@ -485,7 +493,8 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("YTIAALLSPYSYSTTAVTNPK");
 		expected.add("LLLLCLAGLVFVSER");
 
-		FastaEntryInterface entry=FastaReader.readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(fakeTTR.getBytes(StandardCharsets.UTF_8)))), "", "", true).get(0);
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		FastaEntryInterface entry=FastaReader.readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(fakeTTR.getBytes(StandardCharsets.UTF_8)))), "", "", true, parameters).get(0);
 
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 
@@ -585,7 +594,8 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("MASHRLLLLCLAGLVFVSER");
 		expected.add("LLLLCLAGLVFVSERGSPAINVAVHVFR");
 		expected.add("RYTIAALLSPY");
-		FastaEntryInterface entry=FastaReader.readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(fakeTTR.getBytes(StandardCharsets.UTF_8)))), "", "", true).get(0);
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		FastaEntryInterface entry=FastaReader.readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(fakeTTR.getBytes(StandardCharsets.UTF_8)))), "", "", true, parameters).get(0);
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 40, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 		assertEquals(expected.size(), sequences.size());
@@ -603,11 +613,12 @@ public class DigestionEnzymeTest extends TestCase {
 	}
 	
 	public void testModificationsWithVariants() {
-		String fakeTTR=">nxp:NX_P02766-1 \\DbUniqueId=NX_P02766-1 \\PName=Transthyretin isoform Iso 1 \\GName=TTR \\NcbiTaxId=9606 \\TaxName=Homo Sapiens \\Length=147 \\SV=266 \\EV=656 \\PE=1 \\ModResPsi=(62|MOD:00041|L-gamma-carboxyglutamic acid)(69|MOD:00047|O-phospho-L-threonine)(72|MOD:00046|O-phospho-L-serine) \\ModRes=(118||N-linked (GlcNAc...)) "
+		String fakeTTR=">nxp:NX_P02766-1 \\DbUniqueId=NX_P02766-1 \\PName=Transthyretin isoform Iso 1 \\GName=TTR \\NcbiTaxId=9606 \\TaxName=Homo Sapiens \\Length=147 \\SV=266 \\EV=656 \\PE=1 "
 				+"\\VariantSimple=(5|C)(8|W)(12|*)(18|P) "
 				+"\\VariantComplex=(2|4|)(11|11|WK)(14|14|W*) \\Processed=(1|20|signal peptide)(21|147|mature protein)"
 				+"\nMAWHLLWLCLAGLVFVREAGPTGTGESKCPLMV";
-		FastaEntryInterface entry=FastaReader.readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(fakeTTR.getBytes(StandardCharsets.UTF_8)))), "", "", true).get(0);
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		FastaEntryInterface entry=FastaReader.readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(fakeTTR.getBytes(StandardCharsets.UTF_8)))), "", "", true, parameters).get(0);
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		
 		// WITH FIXED MODS

@@ -146,7 +146,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 
 		Logger.logLine("Generating reverse-concatenated FASTA: "+fastaPlusDecoy.getName());
 		FastaWriter writer=new FastaWriter(fastaPlusDecoy);
-		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(fasta);
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(fasta, parameters);
 		for (FastaEntryInterface entry : entries) {
 			writer.write(entry);
 			FastaEntry reverse=new FastaEntry(entry.getFilename(), LibraryEntry.DECOY_STRING+entry.getAnnotation(), parameters.getEnzyme().reverseProtein(entry.getSequence(), parameters.getAAConstants()));

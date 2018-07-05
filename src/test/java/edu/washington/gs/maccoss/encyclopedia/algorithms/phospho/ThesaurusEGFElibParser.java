@@ -20,6 +20,7 @@ import org.apache.commons.math3.stat.inference.TestUtils;
 
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
@@ -221,7 +222,8 @@ public class ThesaurusEGFElibParser {
 
 		System.out.println("Reading FASTA...");
 		//ArrayList<FastaEntryInterface> fasta=FastaReader.readFasta(new File("/Users/searleb/Documents/school/projects/pecandata/UP000005640_9606.fasta"));
-		ArrayList<FastaEntryInterface> fasta=FastaReader.readFasta(new File("/Users/searleb/Documents/data/dbs/UP000005640_9606.fasta"));
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		ArrayList<FastaEntryInterface> fasta=FastaReader.readFasta(new File("/Users/searleb/Documents/data/dbs/UP000005640_9606.fasta"), parameters);
 		motifTrie.addFasta(fasta);
 		
 		ArrayList<String> siteSpecificPeptides=new ArrayList<>();

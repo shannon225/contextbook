@@ -11,6 +11,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -22,10 +23,10 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 public class OpenSwathTSVToLibraryConverter {
 
 
-	public static LibraryFile convertOpenSwathTSV(File tsvFile, File fastaFile, AminoAcidConstants aaConstants) {
+	public static LibraryFile convertOpenSwathTSV(File tsvFile, File fastaFile, SearchParameters parameters) {
 		String absolutePath=tsvFile.getAbsolutePath();
 		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
-		return convertOpenSwathTSV(tsvFile, fastaFile, libraryFile, aaConstants);
+		return convertOpenSwathTSV(tsvFile, fastaFile, libraryFile, parameters);
 	}
 	
 	private static String getFromMap(Map<String, String> row, String... options) {
@@ -68,7 +69,8 @@ public class OpenSwathTSVToLibraryConverter {
 		}
 	}
 
-	public static LibraryFile convertOpenSwathTSV(File tsvFile, File fastaFile, File libraryFile, AminoAcidConstants aaConstants) {
+	public static LibraryFile convertOpenSwathTSV(File tsvFile, File fastaFile, File libraryFile, SearchParameters parameters) {
+		AminoAcidConstants aaConstants=parameters.getAAConstants();
 		try {
 			final ArrayList<PeptideEntry> peptides=new ArrayList<PeptideEntry>();
 			TableParserMuscle muscle=new TableParserMuscle() {
@@ -120,7 +122,7 @@ public class OpenSwathTSVToLibraryConverter {
 
 			if (fastaFile!=null) {
 				Logger.logLine("Reading Fasta file "+fastaFile.getName());
-				ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile);
+				ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile, parameters);
 			
 				Logger.logLine("Constructing trie from library peptides");
 				PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(entries);

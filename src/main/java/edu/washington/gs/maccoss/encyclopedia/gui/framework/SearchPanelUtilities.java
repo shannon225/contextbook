@@ -438,7 +438,7 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading SPTXT/MSP File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							MSPReader.convertMSP(mspFile, fastaFile);
+							MSPReader.convertMSP(mspFile, fastaFile, params);
 							Logger.logLine("Finished reading "+mspFile.getName());
 							return Nothing.NOTHING;
 						}
@@ -504,7 +504,7 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading OpenSwath TSV File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							TraMLToLibraryConverter.convertTraML(tramlFile, fastaFile, params.getAAConstants());
+							TraMLToLibraryConverter.convertTraML(tramlFile, fastaFile, params);
 							Logger.logLine("Finished reading "+tramlFile.getName());
 							return Nothing.NOTHING;
 						}
@@ -570,7 +570,7 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading TraML File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							TraMLToLibraryConverter.convertTraML(tramlFile, fastaFile, params.getAAConstants());
+							TraMLToLibraryConverter.convertTraML(tramlFile, fastaFile, params);
 							Logger.logLine("Finished reading "+tramlFile.getName());
 							return Nothing.NOTHING;
 						}

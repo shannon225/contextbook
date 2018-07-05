@@ -36,17 +36,18 @@ public class TraMLToLibraryConverter {
 		File tramlFile=new File("/Users/searleb/Documents/phospho_localization/rosenberger/dda_psgs_consensus_spectral_library/psgs_standard_consensus_filtered.TraML");
 		//File fastaFile=new File("/Users/searleb/Documents/phospho_localization/rosenberger/PSGS_reference_peptides_decoys.fasta");
 		Long time=System.currentTimeMillis();
-		convertTraML(tramlFile, null, params.getAAConstants());
+		convertTraML(tramlFile, null, params);
 		System.out.println(System.currentTimeMillis()-time);
 	}
 
-	public static LibraryFile convertTraML(File tramlFile, File fastaFile, AminoAcidConstants aaConstants) {
+	public static LibraryFile convertTraML(File tramlFile, File fastaFile, SearchParameters parameters) {
 		String absolutePath=tramlFile.getAbsolutePath();
 		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
-		return convertTraML(tramlFile, fastaFile, libraryFile, aaConstants);
+		return convertTraML(tramlFile, fastaFile, libraryFile, parameters);
 	}
 
-	public static LibraryFile convertTraML(File tramlFile, File fastaFile, File libraryFile, AminoAcidConstants aaConstants) {
+	public static LibraryFile convertTraML(File tramlFile, File fastaFile, File libraryFile, SearchParameters parameters) {
+		AminoAcidConstants aaConstants=parameters.getAAConstants();
 		TraMLParser traMLParser=new TraMLParser();
 
 		HashMap<String, PeptideEntry> peptideByID=new HashMap<>();
@@ -107,7 +108,7 @@ public class TraMLToLibraryConverter {
 
 			if (fastaFile!=null) {
 				Logger.logLine("Reading Fasta file "+fastaFile.getName());
-				ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile);
+				ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile, parameters);
 			
 				Logger.logLine("Constructing trie from library peptides");
 				PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(entries);

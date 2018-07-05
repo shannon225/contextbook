@@ -139,7 +139,7 @@ public class SearchToBLIB {
 		try {
 			ArrayList<FastaPeptideEntry> targets;
 			if (arguments.containsKey(XCorDIA.TARGET_FASTA_TAG)) {
-				targets=FastaReader.readPeptideFasta(new File(arguments.get(XCorDIA.TARGET_FASTA_TAG)));
+				targets=FastaReader.readPeptideFasta(new File(arguments.get(XCorDIA.TARGET_FASTA_TAG)), parameters);
 			} else {
 				targets=null;
 			}
@@ -195,7 +195,7 @@ public class SearchToBLIB {
 		try {
 			ArrayList<FastaPeptideEntry> targets;
 			if (arguments.containsKey(Pecanpie.TARGET_FASTA_TAG)) {
-				targets=FastaReader.readPeptideFasta(new File(arguments.get(Pecanpie.TARGET_FASTA_TAG)));
+				targets=FastaReader.readPeptideFasta(new File(arguments.get(Pecanpie.TARGET_FASTA_TAG)), parameters);
 			} else {
 				targets=null;
 			}

@@ -11,7 +11,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -25,7 +27,8 @@ public class BackgroundGeneratorTest extends TestCase {
 
 	public void testGenerateBackground() {
 		InputStream is=getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
-		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(is, "contam_correctNL.fasta");
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(is, "contam_correctNL.fasta", parameters);
 		TDoubleArrayList bins=new TDoubleArrayList();
 		for (double i=400.0; i<=900.0; i+=5.0) {
 			bins.add(i);
