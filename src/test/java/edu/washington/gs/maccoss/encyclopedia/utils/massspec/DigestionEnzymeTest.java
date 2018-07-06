@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -14,6 +15,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 import junit.framework.TestCase;
@@ -55,7 +57,7 @@ public class DigestionEnzymeTest extends TestCase {
 		ModificationMassMap variableMods=new ModificationMassMap(); //"C=14.01565");
 		AminoAcidConstants constants=new AminoAcidConstants(AminoAcidConstants.getFixedModsMap("C+57 (Carbamidomethyl)"), variableMods);
 		
-		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 40, 0, constants);
+		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 40, 0, constants, false);
 		assertEquals(expected.size(), sequences.size());
 		for (FastaPeptideEntry peptide : sequences) {
 			assertTrue(expected.contains(peptide.getSequence()));
@@ -83,7 +85,7 @@ public class DigestionEnzymeTest extends TestCase {
 		variableMods=new ModificationMassMap("C=14.01565");
 		constants=new AminoAcidConstants(AminoAcidConstants.getFixedModsMap("C+57 (Carbamidomethyl)"), variableMods);
 		
-		sequences=enzyme.digestProtein(entry, 8, 40, 0, constants);
+		sequences=enzyme.digestProtein(entry, 8, 40, 0, constants, false);
 		assertEquals(expected.size(), sequences.size());
 		for (FastaPeptideEntry peptide : sequences) {
 			assertTrue(expected.contains(peptide.getSequence()));
@@ -132,7 +134,7 @@ public class DigestionEnzymeTest extends TestCase {
 		ModificationMassMap variableMods=new ModificationMassMap("K=8.014199,W=15.994915,nE=-18.026549,nQ=-17.026549,nC=-17.026549,a=42.010565,z=14.0");
 		AminoAcidConstants constants=new AminoAcidConstants(new TCharDoubleHashMap(), variableMods);
 		
-		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 40, 0, constants);
+		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 40, 0, constants, false);
 		assertEquals(expected.size(), sequences.size());
 		for (FastaPeptideEntry peptide : sequences) {
 			assertTrue(expected.contains(peptide.getSequence()));
@@ -143,7 +145,7 @@ public class DigestionEnzymeTest extends TestCase {
 		System.out.println("BOLA2T:");
 		String sequence="MELSAEYLREKLQRDLEAEHVEVEDTTLNRCSCSFRVLVVSAKFEGKPLLQRHRFCTE";
 		for (DigestionEnzyme enzyme : DigestionEnzyme.getAvailableEnzymes()) {
-			ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(new FastaEntry(sequence), 6, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+			ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(new FastaEntry(sequence), 6, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
 			for (FastaPeptideEntry string : sequences) {
 				if (string.getSequence().indexOf("RHRF")>=0) {
 					System.out.println(enzyme.getName()+": "+string);
@@ -154,7 +156,7 @@ public class DigestionEnzymeTest extends TestCase {
 		System.out.println("\nBOLA2F:");
 		sequence="MELSAEYLREKLQRDLEAEHVEVEDTTLNRCSCSFRVLVVSAKFEGKPLLQRHSLDPSMTIHCDMVITYGLDQLENCQTCGTDYIISVLNLLTLIVEQINTKLPSSFVEKLFIPSSKLLFLRYHKDKEVVAVAHAVYQAMLSLKNIPVLETAYKLILGEMTCALNNLLHSLQLPEACSEIKHEAFKNHVFNVDNAKFVVKFDLSALTTIGNAKNSSL";
 		for (DigestionEnzyme enzyme : DigestionEnzyme.getAvailableEnzymes()) {
-			ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(new FastaEntry(sequence), 6, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+			ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(new FastaEntry(sequence), 6, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
 			for (FastaPeptideEntry string : sequences) {
 				if (string.getSequence().indexOf("RHSL")>=0) {
 					System.out.println(enzyme.getName()+": "+string);
@@ -175,7 +177,7 @@ public class DigestionEnzymeTest extends TestCase {
 		
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("no enzyme");
 
-		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 99999999, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 99999999, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
 		assertEquals(1, sequences.size());
 		assertEquals(entry.getSequence(), sequences.get(0).getSequence());
 	}
@@ -310,7 +312,7 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("LVAASQAALGL");
 		expected.add("KLVAASQAALGL");
 
-		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 40, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 40, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
 		assertEquals(expected.size(), sequences.size());
 		for (FastaPeptideEntry peptide : sequences) {
 			assertTrue(expected.contains(peptide.getSequence()));
@@ -379,7 +381,7 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("ETCFAEEGK");
 		expected.add("LVAASQAALGL");
 		
-		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
 		assertEquals(expected.size(), sequences.size());
 		for (FastaPeptideEntry peptide : sequences) {
 			assertTrue(expected.contains(peptide.getSequence()));
@@ -411,7 +413,7 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("VEKCCKADDKETCF");
 		expected.add("VAASQAAL");
 
-		sequences=enzyme.digestProtein(entry, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		sequences=enzyme.digestProtein(entry, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
 		assertEquals(expected.size(), sequences.size());
 		for (FastaPeptideEntry peptide : sequences) {
 			assertTrue(expected.contains(peptide.getSequence()));
@@ -454,7 +456,7 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("KLVAASQAALGL");
 
 
-		sequences=enzyme.digestProtein(entry, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		sequences=enzyme.digestProtein(entry, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
 		assertEquals(expected.size(), sequences.size());
 		for (FastaPeptideEntry peptide : sequences) {
 			assertTrue(expected.contains(peptide.getSequence()));
@@ -498,7 +500,7 @@ public class DigestionEnzymeTest extends TestCase {
 
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 
-		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 40, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
 		assertEquals(expected.size(), sequences.size());
 		for (FastaPeptideEntry pep : sequences) {
 			if (!expected.contains(pep.getSequence())) {
@@ -597,7 +599,7 @@ public class DigestionEnzymeTest extends TestCase {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		FastaEntryInterface entry=FastaReader.readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(fakeTTR.getBytes(StandardCharsets.UTF_8)))), "", "", true, parameters).get(0);
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
-		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 40, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 40, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
 		assertEquals(expected.size(), sequences.size());
 		for (FastaPeptideEntry pep : sequences) {
 			if (!expected.contains(pep.getSequence())) {
@@ -612,6 +614,41 @@ public class DigestionEnzymeTest extends TestCase {
 
 	}
 	
+	public void testExpectedModificationsWithVariants() {
+		String fakeTTR=">nxp:NX_Q96B36-1 \\DbUniqueId=NX_Q96B36-1 \\PName=Proline-rich AKT1 substrate 1 isoform Iso 1 \\GName=AKT1S1 \\NcbiTaxId=9606 \\TaxName=Homo Sapiens \\Length=256 \\SV=135 \\EV=428 \\PE=1 "
+						+ "\\ModResPsi=(3|MOD:00046|O-phospho-L-serine)(51|MOD:00078|omega-N-methyl-L-arginine)(73|MOD:00047|O-phospho-L-threonine)(90|MOD:00047|O-phospho-L-threonine)(97|MOD:00047|O-phospho-L-threonine)(116|MOD:00046|O-phospho-L-serine)(187|MOD:00046|O-phospho-L-serine)(198|MOD:00047|O-phospho-L-threonine)(247|MOD:00046|O-phospho-L-serine)(88|MOD:00046|O-phospho-L-serine)(92|MOD:00046|O-phospho-L-serine)(183|MOD:00046|O-phospho-L-serine)(202|MOD:00046|O-phospho-L-serine)(203|MOD:00046|O-phospho-L-serine)(211|MOD:00046|O-phospho-L-serine)(212|MOD:00046|O-phospho-L-serine)(246|MOD:00047|O-phospho-L-threonine) "
+						//+ "\\VariantSimple=(1|V)(3|L)(5|H)(12|T)(13|M)(19|C)(21|W)(21|Q)(23|Q)(26|M)(27|D)(33|T)(40|H)(41|L)(42|S)(43|S)(46|H)(46|C)(47|P)(51|Q)(51|L)(55|V)(59|H)(60|C)(60|H)(61|Y)(63|R)(68|G)(76|Q)(76|W)(78|A)(79|V)(80|S)(82|Q)(86|L)(87|S)(88|C)(88|R)(93|T)(95|W)(95|Q)(95|P)(97|A)(99|V)(103|D)(106|H)(107|K)(114|G)(115|I)(122|T)(122|V)(129|I)(130|A)(135|T)(136|I)(141|H)(141|S)(142|R)(142|H)(142|S)(145|K)(147|E)(149|K)(151|I)(161|S)(162|T)(163|D)(166|I)(168|L)(170|H)(172|V)(174|T)(182|E)(185|S)(186|L)(188|L)(190|F)(190|I)(192|S)(197|T)(198|I)(201|W)(201|Q)(204|N)(207|D)(209|R)(209|L)(214|Y)(215|P)(223|H)(233|A)(233|S)(234|H)(239|V)(242|L)(245|K)(117|R)(212|L)(249|L)(252|Q)(7|K)(51|*)(53|S)(58|V)(64|N)(104|K)(158|*)(163|A)(199|*)(200|V) \\VariantComplex=(39|39|PP)(206|206|)(114|115|) \\Processed=(1|256|mature protein)"
+						+"\n"+"MASGRPEELWEAVVGAAERFRARTGTELVLLTAAPPPPPRPGPCAYAAHGRGALAEAARR" + 
+						"CLHDIALAHRAATAARPPAPPPAPQPPSPTPSPPRPTLAREDNEEDEDEPTETETSGEQL" + 
+						"GISDNGGLFVMDEDATLQDLPPFCESDPESTDDGSLSEETPAGPPTCSVPPASALPTQQY" + 
+						"AKSLPVSVPVWGFKEKRTEARSSDEENGPPSSPDLDRIAASMRALVLREAEDTQVFGDLP" + 
+						"RPRLNTSDFQKLKRKY";
+		HashMap<String, String> paramMap=SearchParameterParser.getDefaultParameters();
+		paramMap.put("-variable", "S=79.966331,T=79.966331,Y=79.966331");
+		SearchParameters parameters=PecanParameterParser.parseParameters(paramMap);
+		FastaEntryInterface entry=FastaReader.readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(fakeTTR.getBytes(StandardCharsets.UTF_8)))), "", "", true, parameters).get(0);
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+		
+		// WITH FIXED AND VARIABLE MODS
+		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 4, 40, 0, parameters.getAAConstants(), false);
+		int haveSTYButNoMods=0;
+		for (FastaPeptideEntry fastaPeptideEntry : sequences) {
+			if (fastaPeptideEntry.getSequence().indexOf("[79")==-1) {
+				if (fastaPeptideEntry.getSequence().indexOf("S")>=0||fastaPeptideEntry.getSequence().indexOf("T")>=0||fastaPeptideEntry.getSequence().indexOf("Y")>=0) {
+					haveSTYButNoMods++;
+				}
+ 			}
+		}
+		assertEquals(22, sequences.size());
+		assertEquals(9, haveSTYButNoMods);
+
+		sequences=enzyme.digestProtein(entry, 4, 40, 0, parameters.getAAConstants(), true);
+		for (FastaPeptideEntry fastaPeptideEntry : sequences) {
+			assertTrue(fastaPeptideEntry.getSequence().indexOf("[79")>=0);
+		}
+		assertEquals(10, sequences.size());
+	}
+	
 	public void testModificationsWithVariants() {
 		String fakeTTR=">nxp:NX_P02766-1 \\DbUniqueId=NX_P02766-1 \\PName=Transthyretin isoform Iso 1 \\GName=TTR \\NcbiTaxId=9606 \\TaxName=Homo Sapiens \\Length=147 \\SV=266 \\EV=656 \\PE=1 "
 				+"\\VariantSimple=(5|C)(8|W)(12|*)(18|P) "
@@ -622,7 +659,7 @@ public class DigestionEnzymeTest extends TestCase {
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		
 		// WITH FIXED MODS
-		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 30, 2, new AminoAcidConstants(new TCharDoubleHashMap(new char[] {'C'}, new double[] {57.0214635}), new ModificationMassMap()));
+		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 30, 2, new AminoAcidConstants(new TCharDoubleHashMap(new char[] {'C'}, new double[] {57.0214635}), new ModificationMassMap()), false);
 		
 		//123456789012345678901234567890123
 		//MAWHLLWLCLAGLVFVREAGPTGTGESKCPLMV
@@ -634,27 +671,6 @@ public class DigestionEnzymeTest extends TestCase {
 			assertTrue(expected.remove(sequence.getSequence()));
 		}
 		assertTrue(expected.size()==0);
-		
-		// WITH FIXED AND VARIABLE MODS
-		sequences=enzyme.digestProtein(entry, 8, 30, 2, new AminoAcidConstants(new TCharDoubleHashMap(new char[] {'C'}, new double[] {57.0214635}), new ModificationMassMap("W=15.994915")));
-
-		expected=getExpectedForModsWithVariants();
-		HashSet<String> expectedWithMods=new HashSet<>();
-		for (String sequence : expected) {
-			expectedWithMods.add(sequence);
-
-			for (int i=0; i<sequence.length(); i++) {
-				if (sequence.charAt(i)=='W') {
-					expectedWithMods.add(sequence.substring(0, i+1)+"[15.994915]"+sequence.substring(i+1));
-				}
-			}
-		}
-		
-		for (FastaPeptideEntry sequence : sequences) {
-			if (!expectedWithMods.contains(sequence.getSequence())) System.out.println(sequence+" missing from expected with mods");
-			assertTrue(expectedWithMods.remove(sequence.getSequence()));
-		}
-		assertTrue(expectedWithMods.size()==0);
 	}
 
 	public HashSet<String> getExpectedForModsWithVariants() {

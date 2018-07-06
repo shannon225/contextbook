@@ -31,6 +31,8 @@ public class PecanSearchParameters extends SearchParameters {
 	private final boolean dontRunDecoys; // only for testing
 	private final float alpha;
 	private final float beta;
+	private final boolean requireVariableMods;
+	
 	public String toString() {
 		final StringBuilder sb=new StringBuilder();
 		sb.append(" -fixed "+aaConstants.getFixedModString()+"\n");
@@ -61,6 +63,7 @@ public class PecanSearchParameters extends SearchParameters {
 		sb.append(" -beta "+beta+"\n");
 		sb.append(" -quantifyAcrossSamples "+quantifyAcrossSamples+"\n");
 		sb.append(" -minIntensity "+minIntensity+"\n");
+		sb.append(" -requireVariableMods "+requireVariableMods+"\n");
 		
 		return sb.toString();
 	}
@@ -96,6 +99,7 @@ public class PecanSearchParameters extends SearchParameters {
 		map.put("-beta", beta+"");
 		map.put("-quantifyAcrossSamples", quantifyAcrossSamples+"");
 		map.put("-minIntensity", minIntensity+"");
+		map.put("-requireVariableMods", "false");
 		return map;
 	}
 	
@@ -125,7 +129,7 @@ public class PecanSearchParameters extends SearchParameters {
 	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance,
 			double fragmentOffsetPPM, DigestionEnzyme enzyme, int minPeptideLength, int maxPeptideLength, int maxMissedCleavages, byte minCharge, byte maxCharge, int minEluteTime,
 			int numberOfReportedPeaks, boolean addDecoysToBackgound, boolean dontRunDecoys, float percolatorThreshold, float percolatorProteinThreshold, float alpha, float beta, Integer percolatorVersionNumber,
-			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float targetWindowCenter, float precursorWindowSize, int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, float minIntensity, boolean quantifyAcrossSamples, boolean verifyModificationIons) {
+			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float targetWindowCenter, float precursorWindowSize, int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, float minIntensity, boolean quantifyAcrossSamples, boolean verifyModificationIons, boolean requireVariableMods) {
 		super(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, fragmentTolerance, enzyme, percolatorThreshold, percolatorProteinThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, minEluteTime*2.0f, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, Optional.ofNullable((PeptideModification)null), ScoringBreadthType.ENTIRE_RT_WINDOW, 0, quantifyAcrossSamples, verifyModificationIons, -1.0f);
 		this.minPeptideLength=minPeptideLength;
 		this.maxPeptideLength=maxPeptideLength;
@@ -138,10 +142,11 @@ public class PecanSearchParameters extends SearchParameters {
 		this.dontRunDecoys=dontRunDecoys;
 		this.alpha=alpha;
 		this.beta=beta;
+		this.requireVariableMods=requireVariableMods;
 	}
 	
 	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme, int percolatorVersionNumber, float percolatorThreshold,
-			int maxMissedCleavages, byte minCharge, byte maxCharge, DataAcquisitionType dataAcquisitionType, float precursorWindowSize, int numberOfJobs, int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int minQuantitativeIonNumber, float numberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons) {
+			int maxMissedCleavages, byte minCharge, byte maxCharge, DataAcquisitionType dataAcquisitionType, float precursorWindowSize, int numberOfJobs, int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int minQuantitativeIonNumber, float numberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, boolean requireVariableMods) {
 		super(aaConstants, fragType, precursorTolerance, 0.0, 0.0, fragmentTolerance, 0.0, fragmentTolerance, enzyme, percolatorThreshold, percolatorThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfJobs, 24f, -1f, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minQuantitativeIonNumber, Optional.ofNullable((PeptideModification)null), ScoringBreadthType.ENTIRE_RT_WINDOW, numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons, -1.0f);
 		minPeptideLength=5;
 		maxPeptideLength=100;
@@ -154,10 +159,11 @@ public class PecanSearchParameters extends SearchParameters {
 		dontRunDecoys=false;
 		alpha=1.8f;
 		beta=0.4f;
+		this.requireVariableMods=requireVariableMods;
 	}
 	
 	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, MassTolerance fragmentTolerance, DigestionEnzyme enzyme, int percolatorVersionNumber, float percolatorThreshold, float percolatorProteinThreshold, 
-			int maxMissedCleavages, byte minCharge, byte maxCharge, DataAcquisitionType dataAcquisitionType, float precursorWindowSize, int numberOfJobs, int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, float minIntensity, float numberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons) {
+			int maxMissedCleavages, byte minCharge, byte maxCharge, DataAcquisitionType dataAcquisitionType, float precursorWindowSize, int numberOfJobs, int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, float minIntensity, float numberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, boolean requireVariableMods) {
 		super(aaConstants, fragType, precursorTolerance, 0.0, 0.0, fragmentTolerance, 0.0, fragmentTolerance, enzyme, percolatorThreshold, percolatorProteinThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfJobs, 24f, -1f, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, Optional.ofNullable((PeptideModification)null), ScoringBreadthType.ENTIRE_RT_WINDOW, numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons, -1.0f);
 		minPeptideLength=5;
 		maxPeptideLength=100;
@@ -170,9 +176,10 @@ public class PecanSearchParameters extends SearchParameters {
 		dontRunDecoys=false;
 		alpha=1.8f;
 		beta=0.4f;
+		this.requireVariableMods=requireVariableMods;
 	}
 
-	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme, DataAcquisitionType dataAcquisitionType, boolean quantifyAcrossSamples, boolean verifyModificationIons) {
+	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme, DataAcquisitionType dataAcquisitionType, boolean quantifyAcrossSamples, boolean verifyModificationIons, boolean requireVariableMods) {
 		super(aaConstants, fragType, precursorTolerance, 0.0, 0.0, fragmentTolerance, 0.0, fragmentTolerance, enzyme, 0.01f, 0.01f, null, dataAcquisitionType, Runtime.getRuntime().availableProcessors(), 24f, -1f, -1f, 5, 0, -1.0f, Optional.ofNullable((PeptideModification)null), ScoringBreadthType.ENTIRE_RT_WINDOW, 0, quantifyAcrossSamples, verifyModificationIons, -1.0f);
 		minPeptideLength=5;
 		maxPeptideLength=100;
@@ -185,9 +192,10 @@ public class PecanSearchParameters extends SearchParameters {
 		dontRunDecoys=false;
 		alpha=1.8f;
 		beta=0.4f;
+		this.requireVariableMods=requireVariableMods;
 	}
 
-	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme, boolean quantifyAcrossSamples, boolean verifyModificationIons) {
+	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme, boolean quantifyAcrossSamples, boolean verifyModificationIons, boolean requireVariableMods) {
 		super(aaConstants, fragType, precursorTolerance, 0.0, 0.0, fragmentTolerance, 0.0, fragmentTolerance, enzyme, 0.01f, 0.01f, null, DataAcquisitionType.DIA, Runtime.getRuntime().availableProcessors(), 24f, -1f, -1f, 5, 0, -1.0f, Optional.ofNullable((PeptideModification)null), ScoringBreadthType.ENTIRE_RT_WINDOW, 0, quantifyAcrossSamples, verifyModificationIons, -1.0f);
 		minPeptideLength=5;
 		maxPeptideLength=100;
@@ -200,10 +208,11 @@ public class PecanSearchParameters extends SearchParameters {
 		dontRunDecoys=false;
 		alpha=1.8f;
 		beta=0.4f;
+		this.requireVariableMods=requireVariableMods;
 	}
 
 	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance fragmentTolerance, MassTolerance precursorTolerance, DigestionEnzyme enzyme,
-			int maxMissedCleavages, boolean quantifyAcrossSamples, boolean verifyModificationIons) {
+			int maxMissedCleavages, boolean quantifyAcrossSamples, boolean verifyModificationIons, boolean requireVariableMods) {
 		super(aaConstants, fragType, precursorTolerance, 0.0, 0.0, fragmentTolerance, 0.0, fragmentTolerance, enzyme, 0.01f, 0.01f, null, DataAcquisitionType.DIA, Runtime.getRuntime().availableProcessors(), 24f, -1f, -1f, 5, 0, -1.0f, Optional.ofNullable((PeptideModification)null), ScoringBreadthType.ENTIRE_RT_WINDOW, 0, quantifyAcrossSamples, verifyModificationIons, -1.0f);
 		this.maxMissedCleavages=maxMissedCleavages;
 		minPeptideLength=5;
@@ -216,6 +225,7 @@ public class PecanSearchParameters extends SearchParameters {
 		dontRunDecoys=false;
 		alpha=1.8f;
 		beta=0.4f;
+		this.requireVariableMods=requireVariableMods;
 	}
 
 	public int getMaxMissedCleavages() {
@@ -260,5 +270,8 @@ public class PecanSearchParameters extends SearchParameters {
 	
 	public float getBeta() {
 		return beta;
+	}
+	public boolean isRequireVariableMods() {
+		return requireVariableMods;
 	}
 }

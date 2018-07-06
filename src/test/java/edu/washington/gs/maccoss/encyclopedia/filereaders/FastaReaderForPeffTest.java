@@ -57,7 +57,7 @@ public class FastaReaderForPeffTest {
 
 		for (int i=0; i<entries.size(); i++) {
 			FastaEntryInterface entry=entries.get(i);
-			ArrayList<FastaPeptideEntry> peptideSequences=enzyme.digestProtein(entry, minLength, maxLength, maxMissedCleavages, constants, new ArrayList<AlleleVariant>());
+			ArrayList<FastaPeptideEntry> peptideSequences=enzyme.digestProtein(entry, minLength, maxLength, maxMissedCleavages, constants, false, new ArrayList<AlleleVariant>());
 			ArrayList<AlleleVariant> variants=new ArrayList<AlleleVariant>();
 
 			if (entry instanceof ExtendedFastaEntry) {
@@ -364,7 +364,7 @@ public class FastaReaderForPeffTest {
 			if (count%2000==0) {
 				System.out.print(count+" ");
 			}
-			enzyme.digestProtein(entry, minLength, maxLength, maxMissedCleavages, constants);
+			enzyme.digestProtein(entry, minLength, maxLength, maxMissedCleavages, constants, false);
 			count++;
 		}
 		endTime=System.currentTimeMillis();
@@ -390,7 +390,7 @@ public class FastaReaderForPeffTest {
 			if (count%2000==0) {
 				System.out.print(count+" ");
 			}
-			enzyme.digestProtein(entry, minLength, maxLength, maxMissedCleavages, constants);
+			enzyme.digestProtein(entry, minLength, maxLength, maxMissedCleavages, constants, false);
 			count++;
 		}
 		endTime=System.currentTimeMillis();

@@ -74,7 +74,7 @@ public class XCorDIATest extends TestCase {
 		PecanSearchParameters parameters=PecanParameterParser.getDefaultParametersObject();
 		System.out.println("STARTING PARAMS: "+parameters.getAAConstants().getFixedModString());
 		FastaEntry entry=new FastaEntry("APEPTIDEKACPEPTIDECKMARECYSPEPTIDESK");
-		ArrayList<FastaPeptideEntry> seqs=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
+		ArrayList<FastaPeptideEntry> seqs=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants(), false);
 
 		final File fastaFile = File.createTempFile("test_", ".fasta");
 		fastaFile.deleteOnExit();
@@ -105,7 +105,7 @@ public class XCorDIATest extends TestCase {
 						new MassTolerance(10),
 						new MassTolerance(10),
 						DigestionEnzyme.getEnzyme("trypsin"),
-						false, true
+						false, true, false
 				)) {
 					@Override
 					public PeptideScoringResultsConsumer getResultsConsumer(File outputFile, BlockingQueue<PeptideScoringResult> resultsQueue, StripeFileInterface diaFile) {

@@ -38,7 +38,7 @@ public class Spectra3dPanelTest {
 	}
 
 	public static void main(String[] args) throws Exception {
-		SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(16.7), new MassTolerance(16.7), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA, false, true);
+		SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(16.7), new MassTolerance(16.7), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA, false, true, false);
 
 		File file=new File("/Users/searleb/Documents/school/perspective/rawfiles/2017dec27_variable_dia_6b_rep1.mzML");
 		StripeFileInterface raw=StripeFileGenerator.getFile(file, params, true);
@@ -99,7 +99,7 @@ public class Spectra3dPanelTest {
 	}
 
 	public static void main2(String[] args) throws Exception {
-		SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA, false, true);
+		SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA, false, true, false);
 
 		File file=new File("/Users/searleb/Documents/school/perspective/rawfiles/2017dec27_variable_dia_6b_rep1.mzML");
 		StripeFileInterface raw=StripeFileGenerator.getFile(file, params, true);

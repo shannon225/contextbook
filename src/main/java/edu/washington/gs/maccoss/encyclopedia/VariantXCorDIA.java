@@ -24,7 +24,6 @@ import java.util.zip.DataFormatException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
@@ -140,7 +139,7 @@ public class VariantXCorDIA {
 						targets=new ArrayList<FastaPeptideEntry>();
 						ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(targetsFile, parameters);
 						for (FastaEntryInterface entry : entries) {
-							ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
+							ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants(), parameters.isRequireVariableMods());
 							for (FastaPeptideEntry peptide : peptides) {
 								targets.add(peptide);
 							}
@@ -245,7 +244,7 @@ public class VariantXCorDIA {
 		// add database to proteome
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(jobData.getFastaFile(), parameters);
 		for (FastaEntryInterface entry : entries) {
-			ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
+			ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants(), parameters.isRequireVariableMods());
 
 			for (FastaPeptideEntry peptide : peptides) {
 				backgroundProteome.add(peptide.getSequence());

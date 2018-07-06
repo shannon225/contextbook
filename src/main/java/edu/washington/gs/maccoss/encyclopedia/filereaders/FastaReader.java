@@ -89,7 +89,7 @@ public class FastaReader {
 				if (eachline.startsWith(">")) {
 					if (annotation!=null) {
 						if (keyword==null||annotation.toLowerCase().indexOf(keyword)>=0) {
-							if (peffFormat){
+							if (peffFormat) {
 								entryList.add(new ExtendedFastaEntry(fileName, annotation, sequence.toString(), parameters));	
 							}else{
 								entryList.add(new FastaEntry(fileName, annotation, sequence.toString()));

@@ -26,9 +26,9 @@ import gnu.trove.list.array.TFloatArrayList;
 import junit.framework.TestCase;
 
 public class XCorrCalculatorTest extends TestCase {
-	private static final SearchParameters MAIN_PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.HCD, new MassTolerance(100, MassErrorUnitType.PPM), new MassTolerance(100, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"), false, true);
+	private static final SearchParameters MAIN_PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.HCD, new MassTolerance(100, MassErrorUnitType.PPM), new MassTolerance(100, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 	//private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(0.05, MassErrorUnitType.AMU), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
-	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.HCD, new MassTolerance(0.5, MassErrorUnitType.AMU), new MassTolerance(0.5, MassErrorUnitType.AMU), DigestionEnzyme.getEnzyme("trypsin"), false, true);
+	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.HCD, new MassTolerance(0.5, MassErrorUnitType.AMU), new MassTolerance(0.5, MassErrorUnitType.AMU), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 	//private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10, MassErrorUnitType.PPM), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
 	
 	public static void main3(String[] args) {

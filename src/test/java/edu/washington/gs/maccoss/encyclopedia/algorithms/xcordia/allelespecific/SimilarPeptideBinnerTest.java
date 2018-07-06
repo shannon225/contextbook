@@ -19,8 +19,6 @@ import edu.washington.gs.maccoss.encyclopedia.XCorDIA;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequencyInterface;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.UnitBackgroundFrequencyCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.VariantXcorDIAOneScoringTask;
@@ -30,7 +28,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorrStripe;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -80,7 +77,7 @@ public class SimilarPeptideBinnerTest extends TestCase {
 		
 		PeptideDatabase targets=new PeptideDatabase();
 		for (FastaEntryInterface protein : entries) {
-			ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(protein, 6, 100, 0, parameters.getAAConstants());
+			ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(protein, 6, 100, 0, parameters.getAAConstants(), false);
 			for (FastaPeptideEntry peptide : peptides) {
 				targets.add(peptide);
 			}
@@ -199,8 +196,8 @@ public class SimilarPeptideBinnerTest extends TestCase {
 		FastaEntry simpleEntry=new FastaEntry("source", simpleAnnotation, sequence);
 		ExtendedFastaEntry entry=new ExtendedFastaEntry("source", annotation, sequence, parameters);
 		
-		ArrayList<FastaPeptideEntry> simplePeptides=parameters.getEnzyme().digestProtein(simpleEntry, 6, 100, 0, parameters.getAAConstants());
-		ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, 6, 100, 0, parameters.getAAConstants());
+		ArrayList<FastaPeptideEntry> simplePeptides=parameters.getEnzyme().digestProtein(simpleEntry, 6, 100, 0, parameters.getAAConstants(), false);
+		ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, 6, 100, 0, parameters.getAAConstants(), false);
 
 		HashSet<FastaPeptideEntry> targets=new HashSet<>();
 		for (FastaPeptideEntry peptide : peptides) {

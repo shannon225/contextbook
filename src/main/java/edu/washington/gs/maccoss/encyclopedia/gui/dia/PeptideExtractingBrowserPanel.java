@@ -105,7 +105,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 					}
 				});
 
-				SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA, false, true);
+				SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA, false, true, false);
 				f.getContentPane().add(new PeptideExtractingBrowserPanel(params), BorderLayout.CENTER);
 
 				f.pack();

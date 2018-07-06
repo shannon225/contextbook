@@ -51,6 +51,7 @@ public class PecanParameterParser {
 		map.put("-minNumOfQuantitativePeaks", "3");
 		map.put("-minQuantitativeIonNumber", "3");
 		map.put("-minIntensity", "-1.0");
+		map.put("-requireVariableMods", "false");
 		return map;
 	}
 	
@@ -97,6 +98,7 @@ public class PecanParameterParser {
 		final float minIntensity;
 		final int percolatorVersionNumber;
 		final boolean quantifyAcrossSamples;
+		final boolean requireVariableMods;
 
 		ModificationMassMap variableMods=new ModificationMassMap(parameters.get("-variable"));
 
@@ -242,7 +244,8 @@ public class PecanParameterParser {
 		minIntensity=SearchParameterParser.getFloat("-minIntensity", parameters, 3);
 		percolatorVersionNumber=SearchParameterParser.getInteger("-percolatorVersionNumber", parameters, 3);
 		quantifyAcrossSamples=SearchParameterParser.getBoolean("-quantifyAcrossSamples", parameters, false);
+		requireVariableMods=SearchParameterParser.getBoolean("-requireVariableMods", parameters, false);
 		
-		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, percolatorProteinThreshold, alpha, beta, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, quantifyAcrossSamples, true);
+		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, percolatorProteinThreshold, alpha, beta, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, quantifyAcrossSamples, true, requireVariableMods);
 	}
 }

@@ -9,7 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import junit.framework.TestCase;
 
 public class IsotopicDistributionCalculatorTest extends TestCase {
-	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true);
+	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 
 	public void testGetIsotopeDistributionLongString() {
 		float[] dist=IsotopicDistributionCalculator.getIsotopeDistribution("LACDEFQFEDCAIRLACDEFQFEDCAIR", PARAMETERS.getAAConstants());

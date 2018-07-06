@@ -25,12 +25,18 @@ public class ExtendedFastaEntry extends FastaEntry {
 		String[] annotates=processedAnnotation.split(" \\\\");
 
 		for (int index=0; index<annotates.length; index++) {
-			if (annotates[index].startsWith("VariantSimple=")) {
-				parseVariantAnnotation(annotates[index].substring(13), true);
-			} else if (annotates[index].startsWith("VariantComplex=")) {
-				parseVariantAnnotation(annotates[index].substring(14), false);
-			} else if (annotates[index].startsWith("ModResPsi=")) {
-				parseModificationAnnotation(annotates[index].substring(10), parameters);
+			if (parameters.getAAConstants().getVariableMods().isEmpty()) {
+				// search for variants (don't do both)
+				if (annotates[index].startsWith("VariantSimple=")) {
+					parseVariantAnnotation(annotates[index].substring(13), true);
+				} else if (annotates[index].startsWith("VariantComplex=")) {
+					parseVariantAnnotation(annotates[index].substring(14), false);
+				}
+			} else {
+				// otherwise search for mods (don't do both)
+				if (annotates[index].startsWith("ModResPsi=")) {
+					parseModificationAnnotation(annotates[index].substring(10), parameters);
+				}
 			}
 		}
 	}
@@ -54,12 +60,16 @@ public class ExtendedFastaEntry extends FastaEntry {
 			char switchFrom=sequence.charAt(start-1);
 			String modAccession=info[1];
 
-			PTM ptm=modReader.getPTMbyAccession(modAccession);
+			PTM ptm=modMap.get(modAccession);
 			if (ptm==null) {
 				ptm=modReader.getPTMbyAccession(modAccession);
 				modMap.put(modAccession, ptm);
 			}
 
+			if (null==ptm) {
+				Logger.errorLine("Unexpected modification ["+modAccession+"]!");
+			}
+			
 			if (checkMod(parameters, switchFrom, ptm, start==1, start==sequence.length())) {
 				potentialVariants.add(new AlleleVariant(start, ptm.getMonoDeltaMass(), switchFrom));
 			}
@@ -79,10 +89,6 @@ public class ExtendedFastaEntry extends FastaEntry {
 			if (tolerance.equals(ptm.getMonoDeltaMass(), delta)) return true;
 		}
 		double delta = variableMods.getVariableMod(switchFrom);
-		if (null==ptm) {
-			Logger.errorLine("Unexpected modification!");
-			return false;
-		}
 		return tolerance.equals(ptm.getMonoDeltaMass(), delta);
 	}
 

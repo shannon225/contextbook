@@ -204,16 +204,16 @@ public class DigestionEnzyme {
 	}
 	
 	//@MoMo 
-	public ArrayList<FastaPeptideEntry> digestProtein(FastaEntryInterface entry, int minLength, int maxLength, int maxMissedCleavages, AminoAcidConstants constants) {
+	public ArrayList<FastaPeptideEntry> digestProtein(FastaEntryInterface entry, int minLength, int maxLength, int maxMissedCleavages, AminoAcidConstants constants, boolean requireVariant) {
 		if (entry instanceof ExtendedFastaEntry) {
-			return digestProtein(entry, minLength, maxLength, maxMissedCleavages, constants, ((ExtendedFastaEntry)entry).getPotentialVariants());
+			return digestProtein(entry, minLength, maxLength, maxMissedCleavages, constants, requireVariant, ((ExtendedFastaEntry)entry).getPotentialVariants());
 		} else {
-			return digestProtein(entry, minLength, maxLength, maxMissedCleavages, constants, new ArrayList<AlleleVariant>());
+			return digestProtein(entry, minLength, maxLength, maxMissedCleavages, constants, requireVariant, new ArrayList<AlleleVariant>());
 		}
 	}
 
 	//@MoMo modified 
-	public ArrayList<FastaPeptideEntry> digestProtein(FastaEntryInterface protein, int minLength, int maxLength, int maxMissedCleavages, AminoAcidConstants constants, ArrayList<AlleleVariant> variants) {
+	public ArrayList<FastaPeptideEntry> digestProtein(FastaEntryInterface protein, int minLength, int maxLength, int maxMissedCleavages, AminoAcidConstants constants, boolean requireVariant, ArrayList<AlleleVariant> variants) {
 		String sequence=protein.getSequence();
 		
 		int totalAllowedStarts=maxMissedCleavages+1;
@@ -228,8 +228,10 @@ public class DigestionEnzyme {
 			while ((stop<sequence.length()-1)&&!isCutSite(sequence.charAt(stop), sequence.charAt(stop+1))) {
 				stop++;
 			}
-			for (int i=starts.size()-1; (i>starts.size()-1-totalAllowedStarts)&&i>=0; i--) {
-				peptides.addAll(getPeptides(protein, starts.get(i), stop, minLength, maxLength, sequence, constants, Optional.empty()));
+			if (!requireVariant) {
+				for (int i=starts.size()-1; (i>starts.size()-1-totalAllowedStarts)&&i>=0; i--) {
+					peptides.addAll(getPeptides(protein, starts.get(i), stop, minLength, maxLength, sequence, constants, Optional.empty(), protein instanceof ExtendedFastaEntry));
+				}
 			}
 			starts.add(stop+1);
 		}
@@ -329,7 +331,7 @@ public class DigestionEnzyme {
 					}
 					// Check whether we have generated peptides for this start and stop sites pair already  
 					if (!usedPair.containsKey(start)||!usedPair.get(start).contains(stop)) {
-						peptides.addAll(getPeptides(protein, start, stop, minLength, maxLength, sequenceVariant, constants, Optional.of(variant)));
+						peptides.addAll(getPeptides(protein, start, stop, minLength, maxLength, sequenceVariant, constants, Optional.of(variant), protein instanceof ExtendedFastaEntry));
 						if (!usedPair.containsKey(start)) {
 							usedPair.put(start, new TIntArrayList());
 						}
@@ -374,36 +376,37 @@ public class DigestionEnzyme {
 	}
 	
 	//@MoMo 
-	private ArrayList<FastaPeptideEntry> getPeptides(FastaEntryInterface protein, int start, int stop, int minLength, int maxLength, String sequence, AminoAcidConstants constants, Optional<AlleleVariant> maybeVariant) {
+	private ArrayList<FastaPeptideEntry> getPeptides(FastaEntryInterface protein, int start, int stop, int minLength, int maxLength, String sequence, AminoAcidConstants constants, Optional<AlleleVariant> maybeVariant, boolean useOnlyAnnotatedMods) {
 		TCharDoubleHashMap fixedMods=constants.getFixedMods();
 		ModificationMassMap variableMods=constants.getVariableMods();
 		ArrayList<FastaPeptideEntry> peptides=new ArrayList<FastaPeptideEntry>();
 		String peptide=sequence.substring(start, stop+1);
 		if ((peptide.length()>=minLength)&&(peptide.length()<=maxLength)) {
-			peptides.addAll(getModifiedForms(protein, peptide, fixedMods, variableMods, maybeVariant));
-
-			if (start==0&&(variableMods!=null&&!variableMods.isEmpty()&&peptide.length()!=0)) {
-				double mass=variableMods.getProteinNTermMod(peptide.charAt(0));
-				if (mass!=ModificationMassMap.MISSING) {
-					peptides.add(generateEntry(protein, "["+mass+"]"+peptide, maybeVariant));
+			peptides.addAll(getModifiedForms(protein, peptide, fixedMods, variableMods, maybeVariant, useOnlyAnnotatedMods));
+			if (!useOnlyAnnotatedMods) {
+				if (start==0&&(variableMods!=null&&!variableMods.isEmpty()&&peptide.length()!=0)) {
+					double mass=variableMods.getProteinNTermMod(peptide.charAt(0));
+					if (mass!=ModificationMassMap.MISSING) {
+						peptides.add(generateEntry(protein, "["+mass+"]"+peptide, maybeVariant));
+					}
 				}
-			}
-			if (stop==sequence.length()-1&&(variableMods!=null&&!variableMods.isEmpty()&&peptide.length()!=0)) {
-				double mass=variableMods.getProteinCTermMod(peptide.charAt(peptide.length()-1));
-				if (mass!=ModificationMassMap.MISSING) {
-					peptides.add(generateEntry(protein, peptide+"["+mass+"]", maybeVariant));
+				if (stop==sequence.length()-1&&(variableMods!=null&&!variableMods.isEmpty()&&peptide.length()!=0)) {
+					double mass=variableMods.getProteinCTermMod(peptide.charAt(peptide.length()-1));
+					if (mass!=ModificationMassMap.MISSING) {
+						peptides.add(generateEntry(protein, peptide+"["+mass+"]", maybeVariant));
+					}
 				}
 			}
 		}
 		return peptides;
 	}
 
-	public ArrayList<FastaPeptideEntry> getModifiedForms(FastaEntryInterface protein, String peptide, TCharDoubleHashMap fixedMods, ModificationMassMap variableMods, Optional<AlleleVariant> maybeVariant) {
+	public ArrayList<FastaPeptideEntry> getModifiedForms(FastaEntryInterface protein, String peptide, TCharDoubleHashMap fixedMods, ModificationMassMap variableMods, Optional<AlleleVariant> maybeVariant, boolean useOnlyAnnotatedMods) {
 		
 		ArrayList<FastaPeptideEntry> peptides=new ArrayList<FastaPeptideEntry>();
 		peptides.add(adjustForFixed(protein, peptide, fixedMods, maybeVariant));
 		
-		if (variableMods==null|| variableMods.isEmpty()||peptide.length()==0) return peptides;
+		if (useOnlyAnnotatedMods||variableMods==null|| variableMods.isEmpty()||peptide.length()==0) return peptides;
 
 		double mass=variableMods.getNTermMod(peptide.charAt(0));
 		if (mass!=ModificationMassMap.MISSING) {

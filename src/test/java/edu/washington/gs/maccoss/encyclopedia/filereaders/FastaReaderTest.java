@@ -94,7 +94,7 @@ public class FastaReaderTest extends TestCase {
 	 * @throws Exception
 	 */
 	public static void main2(String[] args) throws Exception {
-		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true);
+		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
 		File f=new File("/Users/searleb/Documents/chromatogram_library_manuscript/real_pecan/cerevisiae_orf_trans_all.fasta");
 		ArrayList<FastaEntryInterface> targetProteins=FastaReader.readFasta(f, parameters);
@@ -102,7 +102,7 @@ public class FastaReaderTest extends TestCase {
 		//PrintWriter writer=new PrintWriter("/Users/searleb/Documents/chromatogram_library_manuscript/sp_iso_HUMAN_4.9.2015_UP000005640.peptides.txt");
 		PrintWriter writer=new PrintWriter("/Users/searleb/Documents/chromatogram_library_manuscript/real_pecan/cerevisiae_orf_trans_all.peptides.txt");
 		for (FastaEntryInterface entry : targetProteins) {
-			ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
+			ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants(), false);
 			for (FastaPeptideEntry peptide : peptides) {
 				writer.println(entry.getAccession()+"\t"+PeptideUtils.getPeptideSeq(peptide.getSequence()));
 			}
@@ -122,7 +122,7 @@ public class FastaReaderTest extends TestCase {
 		HashSet<String> allPeptides=new HashSet<>();
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		for (FastaEntryInterface entry : entries) {
-			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 4, 50, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 4, 50, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
 			for (FastaPeptideEntry pep : peptides) {
 				for (int pepCharge : new int[] {2, 3}) {
 					double pepMass=constants.getMass(pep.getSequence())+MassConstants.oh2;
@@ -153,7 +153,7 @@ public class FastaReaderTest extends TestCase {
 			double chargedMass=(mass+MassConstants.protonMass*charge)/charge;
 			
 			//System.out.println(charge);
-			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 8, 40, 2, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 8, 40, 2, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
 			for (FastaPeptideEntry string : peptides) {
 				int pepCharge=2;
 				double pepMass=constants.getMass(string.getSequence())+MassConstants.oh2;
@@ -183,7 +183,7 @@ public class FastaReaderTest extends TestCase {
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		for (FastaEntryInterface entry : entries) {
 			countNTermProtein++;
-			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 8, 40, 2, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 8, 40, 2, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
 			for (FastaPeptideEntry peptide : peptides) {
 				String sequence=peptide.getSequence();
 				countBase++;
@@ -248,7 +248,7 @@ public class FastaReaderTest extends TestCase {
 
 		entry=FastaReader.readFasta(ecoli, "", parameters).get(0);
 		assertEquals("MDKKSARIRRATRARRKLQELGATRLVVHRTPRHIYAQVIAPNGSEVLVAASTVEKAIAEQLKYTGNKDAAAAVGKAVAERALEKGIKDVSFDRSGFQYHGRVQALADAAREAGLQF", entry.getSequence());
-		ArrayList<FastaPeptideEntry> peptides=DigestionEnzyme.getEnzyme("trypsin").digestProtein(entry, 8, 40, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		ArrayList<FastaPeptideEntry> peptides=DigestionEnzyme.getEnzyme("trypsin").digestProtein(entry, 8, 40, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
 		boolean found=false;
 		for (FastaPeptideEntry fastaPeptideEntry : peptides) {
 			if ("GIKDVSFDR".equals(fastaPeptideEntry.getSequence())) {

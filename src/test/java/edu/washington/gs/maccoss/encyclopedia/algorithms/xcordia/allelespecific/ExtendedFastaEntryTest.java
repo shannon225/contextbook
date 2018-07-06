@@ -94,13 +94,13 @@ public class ExtendedFastaEntryTest extends TestCase {
 		parameters=PecanParameterParser.parseParameters(map);
 		extendedEntry=new ExtendedFastaEntry("testExtendedFastaEntry", annotation, sequence, parameters);
 		variants=extendedEntry.getPotentialVariants();
-		assertEquals(113+16-1,variants.size());
+		assertEquals(16-1,variants.size());
 		
 		// methylation
 		map.put("-variable", "R=14.015650,K=14.015650,H=14.015650");
 		parameters=PecanParameterParser.parseParameters(map);
 		extendedEntry=new ExtendedFastaEntry("testExtendedFastaEntry", annotation, sequence, parameters);
 		variants=extendedEntry.getPotentialVariants();
-		assertEquals(113+16-15,variants.size());
+		assertEquals(16-15,variants.size());
 	}
 }

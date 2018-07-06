@@ -62,8 +62,10 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 
 	private static final String[] NUMBER_OF_EXTRA_DECOY_ITEMS=new String[] {"Normal Target/Decoy", "+10% Extra Decoys", "+20% Extra Decoys", "+50% Extra Decoys", "+100% Extra Decoys (2x Time)"};
 	private static final float[] NUMBER_OF_EXTRA_DECOY_VALUES=new float[] {0.0f, 0.1f, 0.2f, 0.5f, 1.0f};
-	private static final String[] VARIABLE_MODIFICATION_ITEMS=new String[] {"None", "STY+80 (Phosphorylation)", "M+16 (Oxidation)"};
-	private static final String[] VARIABLE_MODIFICATION_VALUES=new String[] {"-", "S=79.966331,T=79.966331,Y=79.966331", "M=15.994915"};
+	
+	private static final String[] VARIABLE_MODIFICATION_ITEMS=new String[] {"None", "STY+80 (Phosphorylation enriched)", "STY+80 (Phosphorylation unenriched)", "M+16 (Oxidation unenriched)"};
+	private static final String[] VARIABLE_MODIFICATION_VALUES=new String[] {"-", "S=79.966331,T=79.966331,Y=79.966331", "S=79.966331,T=79.966331,Y=79.966331", "M=15.994915"};
+	private static final boolean[] IS_REQUIRE_VARIABLE_MODS=new boolean[] {false, true, false, false};
 	
 	private final FileChooserPanel backgroundFasta;
 	private final FileChooserPanel targetFasta;
@@ -218,7 +220,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 			
 			ArrayList<FastaEntryInterface> targetProteins=FastaReader.readFasta(targetFile, parameters);
 			for (FastaEntryInterface entry : targetProteins) {
-				ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants());
+				ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants(), parameters.isRequireVariableMods());
 				for (FastaPeptideEntry peptide : peptides) {
 					targets.add(peptide);
 				}
@@ -261,12 +263,14 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		int minQuantitativeIonNumberValue=((Integer)minQuantitativeIonNumber.getValue());
 		float numberOfExtraDecoyLibrariesValue=NUMBER_OF_EXTRA_DECOY_VALUES[((Integer)numberOfExtraDecoyLibraries.getSelectedIndex())];
 		ModificationMassMap variableMods=new ModificationMassMap(VARIABLE_MODIFICATION_VALUES[((Integer)variable.getSelectedIndex())]);
+		boolean isRequireVariableMods=IS_REQUIRE_VARIABLE_MODS[((Integer)variable.getSelectedIndex())];
+		
 		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem(), variableMods);
 		boolean isPercolatorTwo=PercolatorExecutor.V2_10.equals(percolatorVersion.getSelectedItem());
 		float percolatorThresholdValue=((Number)percolatorThreshold.getValue()).floatValue();
 
 		XCordiaSearchParameters parameters=new XCordiaSearchParameters(aaConstants, fragmentation, precursorPPMValue, fragmentPPMValue, digestionEnzyme, isPercolatorTwo?2:3, percolatorThresholdValue, percolatorThresholdValue,
-				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, numberOfExtraDecoyLibrariesValue, true, true);
+				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, numberOfExtraDecoyLibrariesValue, true, true, isRequireVariableMods);
 		return parameters;
 	}
 	

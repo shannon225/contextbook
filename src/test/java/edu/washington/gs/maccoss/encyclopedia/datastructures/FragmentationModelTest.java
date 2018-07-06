@@ -15,7 +15,7 @@ import junit.framework.TestCase;
 
 public class FragmentationModelTest extends TestCase {
 	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(50), new MassTolerance(50),
-			DigestionEnzyme.getEnzyme("trypsin"), false, true);
+			DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 	
 	public void testModifiedFragmentation() {
 		String sequence="A[+42.0]QRHS[+79.96633]DSSLEEK";
