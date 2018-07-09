@@ -11,6 +11,8 @@ import javax.swing.table.AbstractTableModel;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+
 public class JobProcessorTableModel extends AbstractTableModel implements JobProcessor {
 	private static final long serialVersionUID=1L;
 	
@@ -68,6 +70,7 @@ public class JobProcessorTableModel extends AbstractTableModel implements JobPro
 	 */
 	@Override
 	public void addJob(SwingJob job) {
+		Logger.logLine("Adding new job to queue: "+job.getJobTitle());
 		queue.add(job);
 		executor.submit(job);
 		fireTableDataChanged();
