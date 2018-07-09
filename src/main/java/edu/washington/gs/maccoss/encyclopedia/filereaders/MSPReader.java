@@ -180,16 +180,6 @@ public class MSPReader {
 							}
 						}
 					}
-
-					String rtString=map.get("RetentionTime");
-					if (rtString!=null) {
-						if (rtString.indexOf(',')>0) {
-							rtString=rtString.substring(0, rtString.indexOf(','));
-						}
-						retentionTime=Float.parseFloat(rtString);
-					} else {
-						retentionTime=(float)SSRCalc.getHydrophobicity(peptideModSeq);
-					}
 					
 					if (fullname==null) {
 						fullname=map.get("Fullname");
@@ -235,6 +225,17 @@ public class MSPReader {
 						
 					} else {
 						peptideModSeq=sequence;
+					}
+
+					// uses peptideModSeq so needs to be last
+					String rtString=map.get("RetentionTime");
+					if (rtString!=null) {
+						if (rtString.indexOf(',')>0) {
+							rtString=rtString.substring(0, rtString.indexOf(','));
+						}
+						retentionTime=Float.parseFloat(rtString);
+					} else {
+						retentionTime=(float)SSRCalc.getHydrophobicity(peptideModSeq);
 					}
 				}
 			}
