@@ -75,6 +75,7 @@ public class ExtendedFastaEntryTest extends TestCase {
 				"AKSLPVSVPVWGFKEKRTEARSSDEENGPPSSPDLDRIAASMRALVLREAEDTQVFGDLP" + 
 				"RPRLNTSDFQKLKRKY";
 
+		// no mods (so use variants)
 		HashMap<String, String> map=PecanParameterParser.getDefaultParameters();
 		SearchParameters parameters=PecanParameterParser.parseParameters(map);
 		ExtendedFastaEntry extendedEntry=new ExtendedFastaEntry("testExtendedFastaEntry", annotation, sequence, parameters);
@@ -89,14 +90,14 @@ public class ExtendedFastaEntryTest extends TestCase {
 		// AKSLPVSVPV WGFKEKRTEA RSSDEENGPP SSPDLDRIAA SMRALVLREA EDTQVFGDLP 240
 		// RPRLNTSDFQ KLKRKY 
 
-		// phosphorylation
+		// phosphorylation (no variants)
 		map.put("-variable", "S=79.966331,T=79.966331,Y=79.966331");
 		parameters=PecanParameterParser.parseParameters(map);
 		extendedEntry=new ExtendedFastaEntry("testExtendedFastaEntry", annotation, sequence, parameters);
 		variants=extendedEntry.getPotentialVariants();
 		assertEquals(16-1,variants.size());
 		
-		// methylation
+		// methylation (no variants)
 		map.put("-variable", "R=14.015650,K=14.015650,H=14.015650");
 		parameters=PecanParameterParser.parseParameters(map);
 		extendedEntry=new ExtendedFastaEntry("testExtendedFastaEntry", annotation, sequence, parameters);
