@@ -183,7 +183,8 @@ public class Pecanpie {
 					jobs.add(jobData);
 					SearchToBLIB.convert(progress, jobs, elibFile, false, false);
 				}
-				
+
+				Logger.logLine("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(jobData.getParameters().getPercolatorThreshold()*100.0f)+"% FDR");
 				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(jobData.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 				return;
 			} catch (Exception e) {

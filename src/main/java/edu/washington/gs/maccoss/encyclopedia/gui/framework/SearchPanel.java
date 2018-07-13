@@ -642,6 +642,7 @@ public class SearchPanel extends JPanel {
 					}
 				}
 
+				Logger.logLine("Adding BLIB export to queue for ["+blibFile.getAbsolutePath()+"]");
 				SearchToBLIBJob job=new SearchToBLIBJob(blibFile, alignBetweenFiles, processorTableModel);
 				if (job!=null) {
 					processorTableModel.addJob(job);
@@ -679,6 +680,7 @@ public class SearchPanel extends JPanel {
 					}
 				}
 
+				Logger.logLine("Adding ELIB export to queue for ["+elibFile.getAbsolutePath()+"]");
 				SearchToELIBJob job=new SearchToELIBJob(elibFile, alignBetweenFiles, processorTableModel);
 				if (job!=null) {
 					processorTableModel.addJob(job);
@@ -704,6 +706,7 @@ public class SearchPanel extends JPanel {
 			dialog.setVisible(true);
 			if (dialog.getFiles()!=null) {
 				for (File file : dialog.getFiles()) {
+					Logger.logLine("Adding mzML import to queue for ["+file.getAbsolutePath()+"]");
 					getVisibleTab().getJob(file, processorTableModel);
 				}
 			}
