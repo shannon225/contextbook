@@ -28,6 +28,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 		
 		HashMap<String, String> paramMap=PecanParameterParser.getDefaultParameters();
 		paramMap.put("-acquisition", "DIA"); // NON-OVERLAPPING!
+		//paramMap.put("-filterPeaklists", "true"); 
 		
 		SearchParameters parameters=PecanParameterParser.parseParameters(paramMap);
 		System.out.println(parameters);
@@ -103,7 +104,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 				BlockingQueue<MzmlBlock> deconvolutionBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);
 				OverlapDeconvoluter deconvoluter=new OverlapDeconvoluter(parameters.getFragmentTolerance(), mzmlBlockQueue, deconvolutionBlockQueue);
 				retentionTimesByStripe=deconvoluter.getRetentionTimesByStripe();
-				MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(deconvolutionBlockQueue, stripeFile);
+				MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(deconvolutionBlockQueue, stripeFile, parameters);
 
 				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
 				Thread deconvoluterThread=new Thread(deconvoluter);
@@ -112,7 +113,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 				threads=new Thread[] {producerThread, deconvoluterThread, consumerThread};
 				
 			} else {
-				MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(mzmlBlockQueue, stripeFile);
+				MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(mzmlBlockQueue, stripeFile, parameters);
 
 				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
 				Thread consumerThread=new Thread(consumer);
@@ -202,7 +203,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 				BlockingQueue<MzmlBlock> deconvolutionBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);
 				OverlapDeconvoluter deconvoluter=new OverlapDeconvoluter(parameters.getFragmentTolerance(), mzmlBlockQueue, deconvolutionBlockQueue);
 				retentionTimesByStripe=deconvoluter.getRetentionTimesByStripe();
-				MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(deconvolutionBlockQueue, stripeFile);
+				MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(deconvolutionBlockQueue, stripeFile, parameters);
 
 				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
 				Thread producerThread=new Thread(producer);
@@ -212,7 +213,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 				threads=new Thread[] {producerThread, deconvoluterThread, consumerThread};
 				
 			} else {
-				MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(mzmlBlockQueue, stripeFile);
+				MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(mzmlBlockQueue, stripeFile, parameters);
 
 				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
 				Thread producerThread=new Thread(producer);

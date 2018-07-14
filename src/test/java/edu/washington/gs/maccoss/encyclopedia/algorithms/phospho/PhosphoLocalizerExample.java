@@ -62,17 +62,13 @@ public class PhosphoLocalizerExample {
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_5c.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_5c.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_3a_160627233451.mzML");
-		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_04.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4a_PRM.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4b_PRM.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/prms/20160718_FU_bcs_4c_PRM.dia");
-
-		//File diaFile=new File("/Volumes/WorkingDisk/20161123_phospho_MCF7_PRM/20160718_FU_bcs_6a_PRM.dia");
-		//File diaFile=new File("/Volumes/WorkingDisk/20161123_phospho_MCF7_PRM/20160718_FU_bcs_6b_PRM.dia");
-		//File diaFile=new File("/Volumes/WorkingDisk/20161123_phospho_MCF7_PRM/20160718_FU_bcs_6c_PRM.dia");
-		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_03_170507071858.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_01_170506220515.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_02_170507024206.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_03_170507071858.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/phospho_repeats/final_data/hela_repeats/20170430_HeLa_phosp_DIA_B_04.dia");
 		//File diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/hela_phospho/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
 
 		//File libraryFile=new File("/Users/searleb/Documents/phospho_localization/data/VillenJ_Exactive_HumanPhosphoproteome.elib");
@@ -80,7 +76,23 @@ public class PhosphoLocalizerExample {
 		
 		//File libraryFile=new File("/Users/searleb/Documents/phospho_localization/data/VillenJ_Exactive_HumanPhosphoproteome.elib");
 		//File diaFile=new File("/Users/searleb/Documents/phospho_localization/data/hela/110515_bcs_hela_phospho_starved_20mz_500_900.dia");
+		
+		//diaFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_01_170506220515.dia");
+		//diaFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_02_170507024206.dia");
+		//diaFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_03_170507071858.dia");
+		//diaFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_04.dia");
+		//libraryFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_01_170506220515.dia.elib");
+		//libraryFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_02_170507024206.dia.elib");
+		//libraryFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_03_170507071858.dia.elib");
+		//libraryFile=new File("/Users/searleb/Documents/phospho_localization/hela_repeats/dia/20170430_HeLa_phosp_DIA_B_04.dia.elib");
 
+		diaFile=new File("/Users/searleb/Documents/school/localization_manuscript/rosenberger/chludwig_K150309_013_SW_0-Pmix_George_dilution_0_in_human.dia");
+		libraryFile=new File("/Users/searleb/Documents/school/localization_manuscript/rosenberger/psgs_standard_consensus_filtered.dlib");
+		//diaFile=new File("/Users/searleb/Documents/phospho_localization/0.6.2/20170430_HeLa_phosp_DIA_B_01_170506220515.dia");
+		//libraryFile=new File("/Users/searleb/Documents/phospho_localization/0.6.2/20170430_HeLa_phosp_DIA_B_01_170506220515.dia.elib");
+		diaFile=new File("/Users/searleb/Documents/phospho_localization/rosenberger/chludwig_K150309_013_SW_0-Pmix_George_dilution_0_in_human.dia");
+		libraryFile=new File("/Users/searleb/Documents/phospho_localization/rosenberger/psgs_standard_consensus_filtered.dlib");
+		
 		LibraryFile library=new LibraryFile();
 		library.openFile(libraryFile);
 		
@@ -91,14 +103,15 @@ public class PhosphoLocalizerExample {
 		defaults.put("-lftol", "16.67");
 		//defaults.put("-frag", "yonly");
 		//defaults.put("-scoringBreadthType", "uncal20");
-		defaults.put("-scoringBreadthType", "window");
+		defaults.put("-scoringBreadthType", "recal");
 		
+
 		SearchParameters parameters=SearchParameterParser.parseParameters(defaults);
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters, true);
 		
 		UnitBackgroundFrequencyCalculator unitbackground=new UnitBackgroundFrequencyCalculator(0.01f);
 		BackgroundFrequencyInterface background=unitbackground;
-		background=BackgroundFrequencyCalculator.generateBackground(stripefile);
+		//background=BackgroundFrequencyCalculator.generateBackground(stripefile);
 		
 		float duration=stripefile.getGradientLength()/20.0f;
 		
@@ -107,12 +120,52 @@ public class PhosphoLocalizerExample {
 		String peptideModSeq;
 		float retentionTime;
 		byte precursorCharge;
-		if (false) {
-			// MCF7 same RT, but different quant
+		if (true) {
+			peptideModSeq="RLSISS[+79.966331]LNPSNALSR[+10.008269]";
+			retentionTime=3927.18115234375f;
+			precursorCharge=3;
+		} else if (true) {
+			peptideModSeq="AASAPAKES[+80.0]PR";
+			retentionTime=18.2f*60f;
+			precursorCharge=2;
+		} else if (false) {
+			// rosenberger
+			peptideModSeq="KSST[+79.966331]APDEISTSTK[+8.014199]";
+			retentionTime=17.6f*60f;
+			precursorCharge=3;
+		} else if (false) {
+			peptideModSeq="S[+80.0]FSKEVEER";
+			retentionTime=2225.5823f;
+			precursorCharge=2;
+		} else if (false) {
+			// targeted
+			peptideModSeq="IHLGS[+80.0]SPK";
+			retentionTime=34.7f*60f;
+			precursorCharge=2;
+			
+		} else if (false) {
+			// targeted
+			peptideModSeq="MGSS[+80.0]PLEVPKPR";
+			retentionTime=56.95f*60f;
+			precursorCharge=2;
+			
+		} else if (false) {
+			// targeted
+			peptideModSeq="LGS[+80.0]PKPER";
+			retentionTime=1315f;
+			precursorCharge=2;
+			
+		} else if (false) {
+			// targeted
+			peptideModSeq="VDS[+80.0]PSHGLVTSSLC[+57.0]IPSPAR";
+			retentionTime=5010f;
+			precursorCharge=3;
+			
+		} else if (false) {
 			peptideModSeq="GIAPAS[+80.0]PMLGNASNPNKADIPER";
 			retentionTime=4189.1591796875f;
 			precursorCharge=3;
-		} else if (false) {
+		} else if (true) {
 			// repeat 2 sp|P83731|RL24_HUMAN
 			peptideModSeq="AITGAS[+80.0]LADIMAK";
 			retentionTime=5680.037109375f;
@@ -159,7 +212,7 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="NTPSQHSHSIQHS[+80.0]PER";
 			retentionTime=1256.3296f;
 			precursorCharge=4;
-		} else if (true) {
+		} else if (false) {
 			// IRS1
 			peptideModSeq="KGS[+80.0]GDYMPMS[+80.0]PK";
 			retentionTime=2949.1633f;
@@ -169,7 +222,7 @@ public class PhosphoLocalizerExample {
 			peptideModSeq="KGS[+80.0]GDYMPMSPK";
 			retentionTime=2949.1633f;
 			precursorCharge=2;
-		} else if (false) {
+		} else if (true) {
 			// IRS1
 			peptideModSeq="KGSGDYMPMS[+80.0]PK";
 			retentionTime=2949.1633f;
@@ -249,12 +302,12 @@ public class PhosphoLocalizerExample {
 			HashMap<FragmentIon, XYTrace> allFragments=new HashMap<FragmentIon, XYTrace>();
 			for (int i=0; i<correlations.length; i++) {
 				
-				if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+				//if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
 					XYTrace unique=uniqueFragments.get(ions[i]);
 					if (unique!=null) allFragments.put(ions[i], unique);
 					XYTrace other=otherFragments.get(ions[i]);
 					if (other!=null) allFragments.put(ions[i], other);
-				}
+				//}
 			}
 			//allFragments.putAll(uniqueFragments);
 			//allFragments.putAll(otherFragments);
@@ -310,12 +363,14 @@ public class PhosphoLocalizerExample {
 		}
 		float dutyCycle=stripefile.getRanges().get(range);
 
+		//TransitionRefiner.DISPLAY_PLOTS=true;
 		System.out.println("Based on all ions");
 		ArrayList<LibraryEntry> entries=new ArrayList<>();
 		entries.add(libentry);
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
 		BlockingQueue<ModificationLocalizationData> localizationQueue=new LinkedBlockingQueue<ModificationLocalizationData>();
-		CASiLOneScoringTask task=new CASiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, localizationQueue, parameters);
+		ThesaurusOneScoringTask task=new ThesaurusOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, localizationQueue, parameters);
+		//CASiLOneScoringTask task=new CASiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, localizationQueue, parameters);
 		task.call();
 
 		int index=0;

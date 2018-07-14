@@ -74,6 +74,16 @@ public class PeptideScoringResult {
 		goodStripes.add(new Pair<ScoredObject<Stripe>, float[]>(new ScoredObject<Stripe>(score, stripe), auxScoreArray));
 	}
 	
+	public float getBestScore() {
+		float bestScore=-Float.MAX_VALUE;
+		for (Pair<ScoredObject<Stripe>, float[]> pair : goodStripes) {
+			if (pair.x.x>bestScore) {
+				bestScore=pair.x.x;
+			}
+		}
+		return bestScore;
+	}
+	
 	public void setTrace(XYTraceInterface trace) {
 		this.trace=trace;
 	}

@@ -8,6 +8,11 @@ public class ScoredIndex implements Comparable<ScoredIndex> {
 		this.x=x;
 		this.y=y;
 	}
+	
+	@Override
+	public String toString() {
+		return y+"("+x+")";
+	}
 
 	@Override
 	public int compareTo(ScoredIndex o) {

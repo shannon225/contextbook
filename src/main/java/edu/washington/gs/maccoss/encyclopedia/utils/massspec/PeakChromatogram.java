@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
@@ -36,6 +37,14 @@ public class PeakChromatogram extends Peak {
 			correlations.add(peak.correlation);
 		}
 		return new Triplet<double[], float[], float[]>(masses.toArray(), intensities.toArray(), correlations.toArray());
+	}
+	
+	public static ArrayList<PeakChromatogram> fromChromatogramArrays(double[] masses, float[] intensities, float[] correlations) {
+		ArrayList<PeakChromatogram> peaks=new ArrayList<>();
+		for (int i=0; i<masses.length; i++) {
+			peaks.add(new PeakChromatogram(masses[i], intensities[i], correlations[i]));
+		}
+		return peaks;
 	}
 	
 }

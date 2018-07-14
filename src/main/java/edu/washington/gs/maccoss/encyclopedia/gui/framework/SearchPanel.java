@@ -334,9 +334,7 @@ public class SearchPanel extends JPanel {
 				launchDIABrowser();
 			}
 		});
-		if (ProgramType.CASiL!=program) {
-			viewMenu.add(launchDIABrowser);
-		}
+		viewMenu.add(launchDIABrowser);
 
 		JMenuItem launchPeptideBrowser=new JMenuItem("Launch Peptide Browser", peptideBrowserIcon);
 		launchPeptideBrowser.addActionListener(new ActionListener() {

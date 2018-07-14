@@ -8,6 +8,35 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import junit.framework.TestCase;
 
 public class GeneralTest extends TestCase {
+	public static void main(String[] args) {
+		float[] trace1=new float[] {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,112.29789f,423.9019f,1224.1725f,2097.833f,2401.0515f,2442.4944f,1957.5907f,1112.6595f,663.86957f,70.27865f,90.12375f,452.2014f,778.6451f,1336.3347f,1713.0786f,1695.5273f,1582.425f,1025.2372f};
+		float[] trace2=new float[] {220.44585f,240.8575f,220.44585f,159.21089f,57.152626f,0.0f,0.0f,0.0f,0.0f,39.170887f,109.11889f,151.08769f,165.0773f,151.08769f,0.0f,0.0f,389.32227f,1019.15393f,1640.3691f,1752.7599f,2154.8984f,2047.731f,1431.2571f,746.2825f,748.64935f};
+		float[] trace3=new float[] {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,23.815647f,66.34359f,91.86036f,33.17489f,136.65439f,191.12698f,125.09421f,200.71704f,305.5598f,308.63654f,245.67061f,116.66209f,132.78282f,47.665627f,0.0f,0.0f};
+		float[] trace4=new float[] {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,255.44011f,633.43134f,1312.1504f,1667.1926f,1698.5582f,1406.2466f,790.25836f,189.12079f,16.356602f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
+		float[] trace5=new float[] {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,58.54496f,42.353264f,306.30713f,350.11023f,616.84064f,643.0764f,735.50006f,631.24084f,606.2967f,338.6701f,295.63544f,34.493084f,55.7604f,0.0f,0.0f,0.0f,0.0f,0.0f};
+		float[] rts=new float[trace1.length];
+		for (int i=0; i<rts.length; i++) {
+			rts[i]=i;
+		}
+		IntRange range=new IntRange(8, 18);
+		
+		if (false) {
+			trace1=General.normalize(trace1, range);
+			trace2=General.normalize(trace2, range);
+			trace3=General.normalize(trace3, range);
+			trace4=General.normalize(trace4, range);
+			trace5=General.normalize(trace5, range);
+		} else {
+			trace1=General.normalizeAndBackgroundSubtract(trace1, range);
+			trace2=General.normalizeAndBackgroundSubtract(trace2, range);
+			trace3=General.normalizeAndBackgroundSubtract(trace3, range);
+			trace4=General.normalizeAndBackgroundSubtract(trace4, range);
+			trace5=General.normalizeAndBackgroundSubtract(trace5, range);
+		}
+
+		Charter.launchChart("Intens", "RT", false, getTrace(trace1, rts), getTrace(trace2, rts), getTrace(trace3, rts), getTrace(trace4, rts), getTrace(trace5, rts));
+	}
+	
 	public void testNumberOfOccurances() {
 		String s="THISISATHESISTEST";
 		assertEquals(2, General.numberOfOccurances(s, "TH"));
@@ -35,7 +64,7 @@ public class GeneralTest extends TestCase {
 		assertEquals("1000,1000", General.toString(indices));
 	}
 
-	public static void main(String[] args) {
+	public static void main2(String[] args) {
 	//public void testNormalize() {
 		float[] b3=new float[] { 23338.361328125f, 16978.677734375f, 26238.6640625f, 28618.11328125f, 47211.97265625f, 60493.10546875f, 85625.6953125f, 154640.59375f, 163637.515625f, 113405.609375f,
 				164475.375f, 202257.890625f, 100290.7734375f, 63675.58984375f, 31520.583984375f, 22526.6953125f, 0.0f, 0.0f, 0.0f, 6942.896484375f, 25359.82421875f, 26355.232421875f, 28414.279296875f,

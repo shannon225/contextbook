@@ -37,6 +37,14 @@ public class General {
 		return temp;
 	}
 	
+	public static float[] toFloatArray(Float[] a) {
+		float[] f=new float[a.length];
+		for (int i=0; i<f.length; i++) {
+			f[i]=a[i]==null?0.0f:a[i].floatValue();
+		}
+		return f;
+	}
+	
 	public static float[] toFloatArray(double[] a) {
 		float[] f=new float[a.length];
 		for (int i=0; i<f.length; i++) {
@@ -218,25 +226,26 @@ public class General {
 		int start=Math.max(0, range.getStart()-1);
 		float deltaY=v[stop]-v[start];
 		float deltaX=stop-start;
-		if (deltaX==0.0f) return new float[v.length];
+		if (deltaX==0.0f) return normalize(v, range); //new float[v.length];
+		
+		float max=General.max(extract(v, range));
+		if (v[start]>=max||v[stop]>=max) return normalize(v, range);
 		
 		float m=deltaY/deltaX;
 		float b=v[stop]-m*stop;
 		
 		for (int i=0; i<v.length; i++) {
-			float background=m*i+b;
-			if (background>v[i]) {
-				v[i]=0.0f;
-			} else if (background>0.0f) {
-				v[i]=v[i]-background;
+			if (range.contains(i)) {
+				float background=m*i+b;
+				if (background>v[i]) {
+					v[i]=0.0f;
+				} else if (background>0.0f) {
+					v[i]=v[i]-background;
+				}
 			}
 		}
 		
-		float sum=sum(v, range);
-		if (sum==0.0f) {
-			return new float[v.length];
-		}
-		return divide(v, sum);
+		return normalize(v, range);
 	}
 	
 	public static float[] normalize(float[] v, IntRange range) {

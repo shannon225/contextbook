@@ -53,6 +53,13 @@ public class IntRange implements Comparable<Range> {
 		return stop-start;
 	}
 	
+	public boolean contains(int value) {
+		if (value>=start&&value<=stop) {
+			return true;
+		}
+		return false;
+	}
+	
 	public boolean contains(float value) {
 		if (value>=start&&value<=stop) {
 			return true;
