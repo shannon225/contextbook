@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import javax.swing.table.AbstractTableModel;
 
-import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryReportExtractor.PeptideReportData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.LibraryReportExtractor.PeptideReportData;
 
 public class MultiPeptideResultsTableModel extends AbstractTableModel {
 	private static final long serialVersionUID=1L;

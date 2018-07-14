@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.filewriters;
+package edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
