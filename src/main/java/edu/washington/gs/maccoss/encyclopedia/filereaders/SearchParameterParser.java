@@ -57,6 +57,7 @@ public class SearchParameterParser {
 		map.put("-verifyModificationIons", "true");
 		map.put("-minIntensity", "-1.0");
 		map.put("-rtWindowInMin", "-1.0");
+        map.put("-filterPeaklists", "false");
 		return map;
 	}
 	
@@ -122,6 +123,7 @@ public class SearchParameterParser {
 		final boolean quantifyAcrossSamples;
 		final boolean verifyModificationIons;
 		final float rtWindowInMin;
+        final boolean filterPeaklists;
 		
 		String value=parameters.get("-frag");
 		if (value==null) {
@@ -258,7 +260,6 @@ public class SearchParameterParser {
 		rtWindowInMin=SearchParameterParser.getFloat("-rtWindowInMin", parameters, -1f);
 		
 		percolatorVersionNumber=SearchParameterParser.getInteger("-percolatorVersionNumber", parameters, 3);
-		
 		value=parameters.get("-localizationModification");
 		if (value != null) {
 			final String localizationModificationName = value;
@@ -308,9 +309,10 @@ public class SearchParameterParser {
 		}
 		quantifyAcrossSamples=SearchParameterParser.getBoolean("-quantifyAcrossSamples", parameters, false);
 		verifyModificationIons=SearchParameterParser.getBoolean("-verifyModificationIons", parameters, true);
-		
+        filterPeaklists=SearchParameterParser.getBoolean("-filterPeaklists", parameters, false);
+
 		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorProteinThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
-				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, localizationModification, breadthType, numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons, rtWindowInMin);
+				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, localizationModification, breadthType, numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons, rtWindowInMin, filterPeaklists);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

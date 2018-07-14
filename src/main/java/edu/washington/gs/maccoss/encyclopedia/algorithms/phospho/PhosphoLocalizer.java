@@ -53,6 +53,7 @@ public class PhosphoLocalizer {
 		this.modification=localizingModification;
 		this.minimumScore=-Log.log10(params.getPercolatorThreshold());
 		this.background=BackgroundFrequencyCalculator.generateBackground(diaFile);
+		//this.background=new UnitBackgroundFrequencyCalculator(0.01f);
 		this.gradientLength=diaFile.getGradientLength();
 	}
 
@@ -71,6 +72,7 @@ public class PhosphoLocalizer {
 		this.params=params;
 		this.minimumScore=-Log.log10(params.getPercolatorThreshold());
 		this.background=BackgroundFrequencyCalculator.generateBackground(diaFile);
+		//this.background=new UnitBackgroundFrequencyCalculator(0.01f);
 		this.gradientLength=diaFile.getGradientLength();
 	}
 	
@@ -620,6 +622,10 @@ public class PhosphoLocalizer {
 
 		double[] massArray=stripe.getMassArray();
 		
+		return score(parameters, ions, ionTypes, frequencies, massArray);
+	}
+
+	public static float score(SearchParameters parameters, double[] ions, FragmentIon[] ionTypes, float[] frequencies, double[] massArray) {
 		// only keep 
 		HashSet<String> uniqueIonTypes=new HashSet<String>();
 		TObjectFloatHashMap<String> matches=new TObjectFloatHashMap<String>();
@@ -640,11 +646,11 @@ public class PhosphoLocalizer {
 			}
 		}
 
-		float logProb=Log.log10(uniqueIonTypes.size()); // bonferroni correction
+		float logProb=0;//Log.log10(uniqueIonTypes.size()); // bonferroni correction
 		for (float freq : matches.values()) {
 			logProb+=Log.protectedLog10(freq);
 		}
-
+		
 		return -logProb;
 	}
 

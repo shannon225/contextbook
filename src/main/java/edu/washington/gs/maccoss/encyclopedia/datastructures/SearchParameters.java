@@ -44,11 +44,12 @@ public class SearchParameters {
 	protected final Optional<PeptideModification> localizingModification; 
 	protected final boolean quantifyAcrossSamples;
 	protected final boolean verifyModificationIons;
-	protected final float rtWindowInMin;
+    protected final float rtWindowInMin;
+    protected final boolean filterPeaklists;
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, float percolatorProteinThreshold, Integer percolatorVersionNumber, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
-			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin) {
+			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -74,7 +75,8 @@ public class SearchParameters {
 		this.numberOfExtraDecoyLibrariesSearched=getNumberOfExtraDecoyLibrariesSearched;
 		this.quantifyAcrossSamples=quantifyAcrossSamples;
 		this.verifyModificationIons=verifyModificationIons;
-		this.rtWindowInMin=rtWindowInMin;
+        this.rtWindowInMin=rtWindowInMin;
+        this.filterPeaklists=filterPeaklists;
 	}
 	
 	public void savePreferences(File libraryFile, File fastaFile) throws IOException,BackingStoreException {
@@ -132,6 +134,7 @@ public class SearchParameters {
 			sb.append(" -localizationModification "+PeptideModification.NO_MODIFICATION_NAME+"\n");
 		}
 		sb.append(" -rtWindowInMin "+rtWindowInMin+"\n");
+        sb.append(" -filterPeaklists "+filterPeaklists+"\n");
 		return sb.toString();
 	}
 	
@@ -165,6 +168,7 @@ public class SearchParameters {
 			map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
 		}
 		map.put("-rtWindowInMin", rtWindowInMin+"");
+        map.put(" -filterPeaklists ", filterPeaklists+"");
 		return map;
 	}
 	
@@ -292,5 +296,8 @@ public class SearchParameters {
 	}
 	public float getRtWindowInMin() {
 		return rtWindowInMin;
-	}
+}
+    public boolean isFilterPeaklists() {
+        return filterPeaklists;
+    }
 }

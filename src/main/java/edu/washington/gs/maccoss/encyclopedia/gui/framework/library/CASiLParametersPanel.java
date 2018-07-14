@@ -82,7 +82,7 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 	private static final String programName="Thesaurus";
 	private static final String programShortDescription="Phosphopeptide Positional Isomer Search Engine";
 	private static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">Thesaurus: Software for Detecting Positional Phosphopeptide Isomers from Data-Independent Acquisition (DIA) MS/MS Data<br></p></b>"
-			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">Thesaurus extracts peptide fragmentation chromatograms from MZML files, matches them to spectra in libraries, and calculates various scoring features. Matches are localized and alternate positional isomers are explored. These isomers are interpreted by Percolator to identify site-specific peptides at an estimated 5% FDR.";
+			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">Thesaurus extracts peptide fragmentation chromatograms from MZML files, matches them to spectra in libraries, and calculates various scoring features. Matches are localized and alternate positional isomers are explored. These isomers are interpreted by Percolator to identify site-specific peptides.";
 
 	private final FileChooserPanel backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta"), true);
 	private final FileChooserPanel libraryFileChooser;
@@ -102,7 +102,6 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 	private final SpinnerModel percolatorThreshold=new SpinnerNumberModel(0.01, 0.001, 0.1, 0.001);
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
-	private final SpinnerModel minQuantitativeIonNumber=new SpinnerNumberModel(3, 0, 100, 1);
 	private final SearchPanel searchPanel;
 
 	public CASiLParametersPanel(SearchPanel searchPanel) {
@@ -244,11 +243,14 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 		float targetWindowCenter=-1f;
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
-		int minQuantitativeIonNumberValue=((Integer)minQuantitativeIonNumber.getValue());
 		ScoringBreadthType CASiLSearchBreadthType=(ScoringBreadthType)searchBreadthType.getSelectedItem();
 		PeptideModification modification=(PeptideModification)modificationType.getSelectedItem();
-		float percolatorThreshold=0.01f;
-		CASiLSearchParameters parameters=new CASiLSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, percolatorThreshold, percolatorThreshold, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, modification, CASiLSearchBreadthType, 0.0f, true, true);
+		float percolatorThresholdValue=((Number)percolatorThreshold.getValue()).floatValue();
+		
+		CASiLSearchParameters parameters=new CASiLSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, 
+				fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, percolatorThresholdValue, percolatorThresholdValue, (isPercolatorTwo?2:3), 
+				dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, 
+				minNumOfQuantitativeIonsValue, 0.0f, modification, CASiLSearchBreadthType, 0.0f, true, false, false);
 		return parameters;
 	}
 	

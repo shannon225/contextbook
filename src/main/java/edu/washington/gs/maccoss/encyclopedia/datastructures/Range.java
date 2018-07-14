@@ -17,6 +17,10 @@ public class Range implements Comparable<Range> {
 		}
 	}
 	
+	public Range addBuffer(float buffer) {
+		return new Range(start-buffer, stop+buffer);
+	}
+	
 	@Override
 	public String toString() {
 		return start+" to "+stop;

@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.io.File;
@@ -25,6 +26,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
@@ -56,7 +58,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtract
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 
 public class LocalizationResultsBrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -122,6 +123,7 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 		};
 		rowSorter=new TableRowSorter<TableModel>(table.getModel());
 		table.setRowSorter(rowSorter);
+		table.getColumnModel().getColumn(LocalizedLibraryEntryTableModel.deltaRTColumnIndex).setCellRenderer(new StatusColumnCellRenderer());
 
 		jtfFilter=new JTextField();
 		jtfFilter.getDocument().addDocumentListener(new DocumentListener() {
@@ -194,7 +196,7 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 				ArrayList<LocalizedLibraryEntry> entries=new ArrayList<>();
 				library=BlibToLibraryConverter.getFile(f);
 				if (library instanceof LibraryFile) {
-					entries=((LibraryFile)library).getAllLocalizedEntries(-Log.log10(parameters.getPercolatorThreshold()), parameters.getLocalizingModification().get(), false, parameters.getAAConstants());
+					entries=((LibraryFile)library).getAllLocalizedEntries(-100000f, false, parameters.getLocalizingModification().get(), false, parameters.getAAConstants());
 				}
 				
 				if (entries.size()==0) {
@@ -326,5 +328,25 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 		}
 		tableDataSplit.setDividerLocation(location);
 		chartSplit.setDividerLocation(locationRaw);
+	}
+
+	private class StatusColumnCellRenderer extends DefaultTableCellRenderer {
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+			JLabel l=(JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+			
+	        LocalizedLibraryEntryTableModel tableModel = (LocalizedLibraryEntryTableModel) table.getModel();
+			if (tableModel.flagRow(row)) {
+				l.setBackground(Color.pink);
+			} else {
+				l.setBackground(Color.white);
+			}
+			l.setForeground(Color.black);
+
+			return l;
+
+		}
 	}
 }
