@@ -24,7 +24,8 @@ public class PivotTableGenerator {
 			}
 		}
 		
-		int binCount=(length/datas.length)/20;
+		int binCount=(length/datas.length)/100;
+		System.out.println(length+" / "+datas.length+" / 100 = "+binCount);
 
 		@SuppressWarnings("unchecked")
 		ArrayList<XYPoint>[] traces=new ArrayList[datas.length];
