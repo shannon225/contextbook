@@ -37,7 +37,7 @@ import gnu.trove.map.hash.TObjectIntHashMap;
 
 public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 	
-	private static final float MAXIMUM_DELTA_FROM_BEST_SCORE = 0.9f;
+	public static final float MAXIMUM_DELTA_FROM_BEST_SCORE = 0.9f;
 	private final PhosphoLocalizer localizer;
 	private final float dutyCycle;
 	private final ScoringBreadthType breadth;
@@ -158,7 +158,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 						globalPrimaryScores[peak].put(peptideModSeq, primary);
 						globalAlreadyConsideredScores[peak].put(peptideModSeq, alreadyConsidered);
 					}
-					ScoredIndex score=updateScores(globalScans[peak], localizedEntry, allIons, primary, alreadyConsidered, blacklistedScans, takenIdentifiedIons);
+					ScoredIndex score=updateScores(globalScans[peak], localizedEntry, allIons, primary, alreadyConsidered, blacklistedScans, takenIdentifiedIons, parameters);
 					
 					ScoredIndex previousBest=bestIndicies.get(peptideModSeq);
 					if (previousBest==null) {
@@ -230,7 +230,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 					
 					FragmentIon[] localizingIons=getUniqueFragmentIons(entryMap.get(bestPeptideModSeq), entryMap.get(peptideModSeq), precursorCharge, parameters);
 					
-					Pair<Stripe, Float> localizedStripe = CASiLOneScoringTask.getBestLocalizationStripe(parameters, dutyCycle, localizer, bestForm.localizedEntry, localizingIons, stripeSubset);
+					Pair<Stripe, Float> localizedStripe = CASiLOneScoringTask.getBestLocalizationStripe(parameters, dutyCycle, localizer.getBackground(), bestForm.localizedEntry, localizingIons, stripeSubset);
 					//System.out.println("Testing "+bestPeptideModSeq+" ("+bestIndex.x+") vs "+peptideModSeq+" ("+score+"): localization: "+localizedStripe.y);
 					if (bestLocalizedStripe==null||bestLocalizedStripe.y>localizedStripe.y) {
 						// keep the lowest localization scoring form! (the closest to the form we're considering)
@@ -242,11 +242,11 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			
 			if (bestLocalizedStripe==null) {
 				bestLocalizingIons=bestForm.allIons;
-				bestLocalizedStripe = CASiLOneScoringTask.getBestLocalizationStripe(parameters, dutyCycle, localizer, bestForm.localizedEntry, bestLocalizingIons, stripeSubset);
+				bestLocalizedStripe = CASiLOneScoringTask.getBestLocalizationStripe(parameters, dutyCycle, localizer.getBackground(), bestForm.localizedEntry, bestLocalizingIons, stripeSubset);
 			}
 			
 			AmbiguousPeptideModSeq ambiPeptideModSeq=AmbiguousPeptideModSeq.getUnambigous(bestPeptideModSeq, parameters.getLocalizingModification().get(), parameters.getAAConstants(), "");
-			Triplet<ModificationLocalizationData, Stripe, Range> locData=CASiLOneScoringTask.generateLocalizationData(false, minimumScore, parameters, localizer, bestForm.localizedEntry,
+			Triplet<ModificationLocalizationData, Stripe, Range> locData=CASiLOneScoringTask.generateLocalizationData(false, minimumScore, parameters, localizer.getModification(), bestForm.localizedEntry,
 					ambiPeptideModSeq, bestLocalizingIons, bestForm.allIons, takenIdentifiedIons, stripeSubset, bestLocalizedStripe);
 			
 			// if localized, then keep and remove from localizedForms
@@ -346,7 +346,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 		}
 	}
 
-	private ScoredIndex updateScores(ArrayList<Spectrum> scans, LibraryEntry localizedEntry, FragmentIon[] allIons, Float[] primary, boolean[] alreadyConsidered, Collection<Range> blacklistedRanges, FragmentIonBlacklist takenIdentifiedIons) {
+	public static ScoredIndex updateScores(ArrayList<Spectrum> scans, LibraryEntry localizedEntry, FragmentIon[] allIons, Float[] primary, boolean[] alreadyConsidered, Collection<Range> blacklistedRanges, FragmentIonBlacklist takenIdentifiedIons, SearchParameters parameters) {
 		float bestScore=-Float.MAX_VALUE;
 		int bestIndex=0;
 		for (int i=0; i<scans.size(); i++) {
@@ -431,9 +431,9 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 		return bestStripe;
 	}
 	
-	static class LocalizableForm {
-		private final LibraryEntry localizedEntry;
-		private final FragmentIon[] allIons;
+	public static class LocalizableForm {
+		public final LibraryEntry localizedEntry;
+		public final FragmentIon[] allIons;
 		public LocalizableForm(FragmentationModel localizedModel, LibraryEntry localizedEntry, SearchParameters parameters) {
 			this.localizedEntry=localizedEntry;
 			allIons=localizedModel.getPrimaryIonObjects(parameters.getFragType(), localizedEntry.getPrecursorCharge(), true);

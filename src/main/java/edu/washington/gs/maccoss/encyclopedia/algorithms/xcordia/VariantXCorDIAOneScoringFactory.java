@@ -49,6 +49,7 @@ public class VariantXCorDIAOneScoringFactory extends XCorDIAOneScoringFactory {
 	@Override
 	public PeptideScoringResultsConsumer getResultsConsumer(File outputFile, BlockingQueue<PeptideScoringResult> resultsQueue, StripeFileInterface diaFile) {
 		return new ScoringResultsToTSVConsumer(outputFile, diaFile, General.concatenate(EncyclopediaOneAuxillaryPSMScorer.getScoreNames(false), "neededToLocalize", "numberOfWellShapedIons"), resultsQueue, 1);
+		//return new ScoringResultsToTSVConsumer(outputFile, diaFile, General.concatenate(EncyclopediaOneAuxillaryPSMScorer.getScoreNames(false), "numberOfWellShapedIons"), resultsQueue, 1);
 	}
 
 	@Override

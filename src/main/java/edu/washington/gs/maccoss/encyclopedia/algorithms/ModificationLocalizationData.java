@@ -9,6 +9,7 @@ public class ModificationLocalizationData {
 	private final AmbiguousPeptideModSeq localizationPeptideModSeq;
 	private final float retentionTimeApexInSeconds;
 	private final float localizationScore;
+	private final float numIdentificationPeaks;
 	private final int numberOfMods;
 	private final boolean isSiteSpecific;
 	private final boolean isLocalized;
@@ -20,6 +21,7 @@ public class ModificationLocalizationData {
 		this.localizationPeptideModSeq=null;
 		this.retentionTimeApexInSeconds=0.0f;
 		this.localizationScore=0.0f;
+		this.numIdentificationPeaks=0.0f;
 		this.numberOfMods=0;
 		this.isSiteSpecific=false;
 		this.isLocalized=false;
@@ -28,11 +30,12 @@ public class ModificationLocalizationData {
 		this.totalIntensity=0.0f;
 	}
 	
-	public ModificationLocalizationData(AmbiguousPeptideModSeq localizationPeptideModSeq, float retentionTimeApexInSeconds, float localizationScore, int numberOfMods, boolean isSiteSpecific, boolean isLocalized, boolean isCompletelyAmbiguous,
+	public ModificationLocalizationData(AmbiguousPeptideModSeq localizationPeptideModSeq, float retentionTimeApexInSeconds, float localizationScore, float numIdentificationPeaks, int numberOfMods, boolean isSiteSpecific, boolean isLocalized, boolean isCompletelyAmbiguous,
 			FragmentIon[] localizingIons, float localizingIntensity, float totalIntensity) {
 		this.localizationPeptideModSeq=localizationPeptideModSeq;
 		this.retentionTimeApexInSeconds=retentionTimeApexInSeconds;
 		this.localizationScore=localizationScore;
+		this.numIdentificationPeaks=numIdentificationPeaks;
 		this.numberOfMods=numberOfMods;
 		if (this.localizationPeptideModSeq!=null&&this.localizationPeptideModSeq.getNumModifiableSites()==numberOfMods) {
 			this.isSiteSpecific=true;
@@ -59,6 +62,10 @@ public class ModificationLocalizationData {
 
 	public float getLocalizationScore() {
 		return localizationScore;
+	}
+	
+	public float getNumIdentificationPeaks() {
+		return numIdentificationPeaks;
 	}
 
 	public int getNumberOfMods() {

@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific;
+package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia;
 
 import java.awt.Color;
 import java.io.BufferedReader;
@@ -23,11 +23,8 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.UnitBackgroundFrequencyCalculator;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.VariantXcorDIAOneScoringTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorrLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorrStripe;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.SimilarPeptideBinner;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.VariantFastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -51,59 +48,18 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import junit.framework.TestCase;
 
-public class SimilarPeptideBinnerTest extends TestCase {
+public class VariantXcorDIAOneScoringTaskTest {
 	public static void main(String[] args) throws Exception {
-		HashMap<String, String> defaults=PecanParameterParser.getDefaultParameters();
-		PecanSearchParameters parameters=PecanParameterParser.parseParameters(defaults);
-
-		File diaFile=new File("/Users/searleb/Documents/school/xcordia/hela/122715_bcs_hela_24mz_400_1000.dia");
-		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
-		ArrayList<Range> ranges=new ArrayList<>(stripefile.getRanges().keySet());
-		Collections.sort(ranges);
-
-		//File f=new File("/Users/searleb/Documents/school/uniprot-9606.fasta");
-		//File f=new File("/Users/searleb/Documents/school/xcordia/nextprot2017_testPEFF1.0rc25_a.peff");
-		File f=new File("/Users/searleb/Documents/school/xcordia/LCM_identified_protein.peff");
-		InputStream is=new FileInputStream(f);
-		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), f.getName(), null, true, parameters);
-
-		System.out.println("Number of entries: "+entries.size());
-		PeptideDatabase targets=new PeptideDatabase();
-		for (FastaEntryInterface protein : entries) {
-			ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(protein, 6, 50, 0, parameters.getAAConstants(), false);
-			for (FastaPeptideEntry peptide : peptides) {
-				targets.add(peptide);
-			}
-		}
-
-		int singletons=0;
-		int multiples=0;
-		for (Range range : ranges) {
-			HashSet<FastaPeptideEntry> peptides=XCorDIA.getPeptidesInRange(parameters, targets, range);
-			SimilarPeptideBinner binner=new SimilarPeptideBinner();
-			ArrayList<ArrayList<FastaPeptideEntry>> bins=binner.binPeptides(peptides);
-			
-			for (ArrayList<FastaPeptideEntry> list : bins) {
-				if (list.size()>1) {
-					multiples+=list.size();
-				} else if (list.size()==1) {
-					singletons++;
-				}
-			}
-			System.out.println(range+"\tsingle:"+singletons+"\tmultiple:"+multiples+"\t"+targets.size());
-		}
-		System.out.println("FINAL: single:"+singletons+"\tmultiple:"+multiples+"\t"+targets.size());
-	}
-	public static void main2(String[] args) throws Exception {
 
 		HashMap<String, String> defaults=PecanParameterParser.getDefaultParameters();
+		defaults.put("-variable", "S=79.966331,T=79.966331,Y=79.966331");
 		defaults.put("-localizationModification", "Phosphorylation");
+		defaults.put("-requireVariableMods", "true");
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(defaults);
 		
 		System.out.println("Reading raw file...");
-		File diaFile=new File("/Users/searleb/Documents/backup/xcordia_manuscript/xcordia_5p/20141121_27_1_DIA_1.dia");
+		File diaFile=new File("/Users/searleb/Documents/school/xcordia/phospho/20170430_HeLa_phosp_DIA_B_01_170506220515.dia");
 		//File diaFile=new File("/Users/searleb/Documents/xcordia_manuscript/demux/20141121_3_4_DIA_1.dia");
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 		
@@ -114,18 +70,39 @@ public class SimilarPeptideBinnerTest extends TestCase {
 		ArrayList<Range> ranges=new ArrayList<>(stripefile.getRanges().keySet());
 		Collections.sort(ranges);
 
-		System.out.println("Reading peff fasta file...");
-		File peffFile=new File("/Users/searleb/Documents/school/xcordia/LCM_identified_protein.peff");
-		//File peffFile=new File("/Users/searleb/Documents/xcordia_manuscript/LCM_identified_protein.peff");
-		InputStream is=new FileInputStream(peffFile);
-		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), peffFile.getName(), null, true, parameters);
+		String proteinFasta=">nxp:NX_O60271-1 \\DbUniqueId=NX_O60271-1 \\PName=C-Jun-amino-terminal kinase-interacting protein 4 isoform Iso 1 \\GName=SPAG9 \\NcbiTaxId=9606 \\TaxName=Homo Sapiens \\Length=1321 \\SV=287 \\EV=597 \\PE=1 \\ModResPsi=(1|MOD:00058|N-acetyl-L-methionine)(109|MOD:00046|O-phospho-L-serine)(177|MOD:00047|O-phospho-L-threonine)(183|MOD:00046|O-phospho-L-serine)(185|MOD:00046|O-phospho-L-serine)(190|MOD:00046|O-phospho-L-serine)(191|MOD:00047|O-phospho-L-threonine)(194|MOD:00046|O-phospho-L-serine)(203|MOD:00046|O-phospho-L-serine)(217|MOD:00047|O-phospho-L-threonine)(226|MOD:00047|O-phospho-L-threonine)(229|MOD:00046|O-phospho-L-serine)(238|MOD:00046|O-phospho-L-serine)(249|MOD:00046|O-phospho-L-serine)(251|MOD:00046|O-phospho-L-serine)(265|MOD:00046|O-phospho-L-serine)(268|MOD:00046|O-phospho-L-serine)(272|MOD:00046|O-phospho-L-serine)(275|MOD:00047|O-phospho-L-threonine)(276|MOD:00047|O-phospho-L-threonine)(279|MOD:00046|O-phospho-L-serine)(280|MOD:00047|O-phospho-L-threonine)(283|MOD:00046|O-phospho-L-serine)(287|MOD:00047|O-phospho-L-threonine)(290|MOD:00047|O-phospho-L-threonine)(292|MOD:00047|O-phospho-L-threonine)(311|MOD:00046|O-phospho-L-serine)(329|MOD:00046|O-phospho-L-serine)(330|MOD:00047|O-phospho-L-threonine)(332|MOD:00046|O-phospho-L-serine)(339|MOD:00046|O-phospho-L-serine)(347|MOD:00046|O-phospho-L-serine)(348|MOD:00047|O-phospho-L-threonine)(363|MOD:00046|O-phospho-L-serine)(364|MOD:00046|O-phospho-L-serine)(365|MOD:00047|O-phospho-L-threonine)(367|MOD:00047|O-phospho-L-threonine)(379|MOD:00047|O-phospho-L-threonine)(381|MOD:00046|O-phospho-L-serine)(387|MOD:00046|O-phospho-L-serine)(388|MOD:00046|O-phospho-L-serine)(391|MOD:00046|O-phospho-L-serine)(418|MOD:00047|O-phospho-L-threonine)(493|MOD:00046|O-phospho-L-serine)(497|MOD:00047|O-phospho-L-threonine)(586|MOD:00047|O-phospho-L-threonine)(588|MOD:00046|O-phospho-L-serine)(593|MOD:00046|O-phospho-L-serine)(594|MOD:00046|O-phospho-L-serine)(595|MOD:00047|O-phospho-L-threonine)(597|MOD:00046|O-phospho-L-serine)(705|MOD:00046|O-phospho-L-serine)(728|MOD:00046|O-phospho-L-serine)(730|MOD:00046|O-phospho-L-serine)(732|MOD:00046|O-phospho-L-serine)(733|MOD:00046|O-phospho-L-serine)(813|MOD:00046|O-phospho-L-serine)(815|MOD:00046|O-phospho-L-serine)(932|MOD:00046|O-phospho-L-serine)(1188|MOD:00046|O-phospho-L-serine)(1238|MOD:00046|O-phospho-L-serine)(1244|MOD:00046|O-phospho-L-serine)(1246|MOD:00047|O-phospho-L-threonine)(1249|MOD:00047|O-phospho-L-threonine)(1262|MOD:00046|O-phospho-L-serine)(1264|MOD:00047|O-phospho-L-threonine)(1302|MOD:00046|O-phospho-L-serine) \\VariantSimple=(8|A)(8|L)(10|E)(12|D)(14|R)(26|D)(30|C)(30|F)(41|C)(41|H)(43|N)(45|V)(59|D)(64|M)(66|T)(69|R)(70|K)(77|V)(80|V)(109|F)(114|R)(115|R)(116|N)(118|H)(120|Q)(121|M)(128|A)(135|V)(137|S)(138|C)(143|G)(145|P)(168|R)(171|V)(180|Y)(185|T)(185|N)(190|A)(192|P)(192|G)(193|Y)(194|N)(200|C)(200|H)(201|S)(203|L)(206|F)(211|D)(212|V)(217|I)(218|A)(223|A)(224|R)(226|S)(227|L)(233|I)(238|C)(241|H)(241|C)(243|D)(243|Y)(247|Q)(256|N)(257|V)(266|V)(274|G)(277|L)(279|L)(281|T)(282|T)(282|D)(283|L)(284|V)(284|G)(285|A)(287|A)(287|R)(291|V)(292|A)(295|N)(299|K)(300|E)(301|S)(302|L)(304|I)(305|I)(306|A)(307|V)(309|H)(311|L)(315|E)(316|R)(317|V)(321|A)(322|D)(322|S)(324|K)(337|Q)(341|F)(342|*)(344|V)(346|K)(349|R)(350|D)(353|V)(356|H)(357|F)(358|N)(366|R)(367|I)(370|V)(376|H)(377|H)(382|V)(386|V)(390|V)(391|L)(393|V)(399|K)(408|Q)(410|A)(412|S)(418|R)(418|A)(424|T)(429|M)(430|A)(431|N)(437|T)(439|G)(458|V)(465|N)(465|R)(467|K)(468|K)(472|Q)(477|Q)(477|W)(480|S)(483|V)(484|K)(487|V)(489|G)(491|N)(492|N)(493|N)(493|C)(495|T)(502|W)(507|K)(521|S)(526|R)(530|*)(533|K)(535|N)(544|I)(545|P)(546|K)(549|S)(554|H)(558|Q)(566|M)(568|T)(569|T)(573|A)(574|F)(579|S)(579|D)(580|V)(580|T)(582|M)(584|Y)(585|I)(586|I)(587|L)(589|I)(589|F)(594|N)(594|G)(604|Y)(606|G)(611|G)(616|G)(616|S)(618|S)(619|V)(621|H)(624|R)(630|C)(630|H)(634|T)(641|S)(646|L)(648|C)(648|*)(651|L)(657|I)(658|A)(661|H)(665|N)(671|M)(673|A)(674|C)(681|T)(684|*)(685|V)(692|A)(693|I)(694|S)(695|V)(695|F)(697|V)(697|S)(699|R)(699|N)(706|I)(709|G)(715|V)(717|V)(718|A)(727|Q)(728|G)(730|C)(733|T)(735|G)(748|S)(749|E)(756|T)(760|V)(762|I)(765|Y)(766|L)(768|I)(770|G)(771|I)(772|T)(779|D)(783|E)(785|L)(786|S)(788|G)(788|*)(789|S)(797|N)(803|V)(805|E)(808|T)(818|A)(820|R)(824|Y)(824|R)(830|S)(831|C)(835|I)(837|I)(840|E)(842|N)(846|D)(847|W)(853|M)(855|P)(856|S)(859|S)(861|I)(49|A)(107|K)(291|N)(557|R)(647|A)(771|F)(863|S)(866|L)(867|L)(868|L)(869|N)(871|R)(872|L)(874|I)(879|R)(881|A)(884|Y)(884|S)(892|A)(895|A)(897|E)(899|V)(901|P)(907|N)(913|I)(915|A)(915|S)(916|*)(917|Y)(920|I)(922|F)(933|A)(934|M)(937|L)(940|G)(949|P)(950|A)(956|N)(958|L)(961|A)(963|L)(967|N)(971|I)(971|A)(972|L)(972|T)(977|H)(979|V)(982|H)(987|I)(987|A)(988|T)(993|F)(997|F)(999|F)(1002|L)(1007|L)(1012|V)(1013|M)(1013|A)(1019|G)(1023|P)(1024|V)(1029|L)(1030|A)(1031|E)(1032|R)(1043|I)(1045|Q)(1045|W)(1049|F)(1050|V)(1051|H)(1054|N)(1054|S)(1057|R)(1063|V)(1069|C)(1070|A)(1076|V)(1076|T)(1083|V)(1083|E)(1084|V)(1085|L)(1086|A)(1093|*)(1096|T)(1096|P)(1097|L)(1102|M)(1107|H)(1111|M)(1112|I)(1114|F)(1116|R)(1122|Q)(1131|C)(1135|L)(1145|C)(1152|I)(1152|V)(1156|S)(1157|H)(1158|F)(1160|L)(1161|E)(1162|I)(1167|V)(1169|C)(1175|I)(1179|P)(1180|D)(1181|I)(1184|K)(1185|H)(1186|S)(1191|H)(1191|C)(1191|P)(1193|C)(1194|V)(1202|S)(1206|C)(1206|S)(1214|Y)(1223|W)(1223|Q)(1225|V)(1228|V)(1228|C)(1230|L)(1237|F)(1241|I)(1241|N)(1244|T)(1246|M)(1253|T)(1254|R)(1255|L)(1259|Q)(1259|K)(1261|D)(1264|M)(1265|L)(1265|T)(1266|F)(1271|A)(1273|N)(1279|V)(1280|N)(1282|Q)(1283|I)(1287|S)(1290|L)(2|Q)(153|N)(165|D)(226|I)(271|R)(322|V)(333|S)(380|D)(385|G)(398|N)(401|S)(577|M)(600|A)(621|C)(675|F)(711|G)(727|L)(799|S)(832|L)(922|L)(961|V)(1003|V)(1005|G)(1086|F)(1087|M)(1098|G)(1144|C)(1150|V)(1174|D)(1192|A)(1196|Q)(1208|L)(1224|N)(1274|R)(1282|P)(1291|A)(1292|F)(1294|R)(1297|I)(1300|K)(1301|L)(1305|N)(1308|M)(1317|I)(1320|S) \\VariantComplex=(269|269|QPQ)(291|291|DD)(337|337|)(563|563|)(565|565|)(753|753|) \\Processed=(1|1321|mature protein)\n" + 
+				"MELEDGVVYQEEPGGSGAVMSERVSGLAGSIYREFERLIGRYDEEVVKELMPLVVAVLEN\n" + 
+				"LDSVFAQDQEHQVELELLRDDNEQLITQYEREKALRKHAEEKFIEFEDSQEQEKKDLQTR\n" + 
+				"VESLESQTRQLELKAKNYADQISRLEEREAELKKEYNALHQRHTEMIHNYMEHLERTKLH\n" + 
+				"QLSGSDQLESTAHSRIRKERPISLGIFPLPAGDGLLTPDAQKGGETPGSEQWKFQELSQP\n" + 
+				"RSHTSLKVSNSPEPQKAVEQEDELSDVSQGGSKATTPASTANSDVATIPTDTPLKEENEG\n" + 
+				"FVKVTDAPNKSEISKHIEVQVAQETRNVSTGSAENEEKSEVQAIIESTPELDMDKDLSGY\n" + 
+				"KGSSTPTKGIENKAFDRNTESLFEELSSAGSGLIGDVDEGADLLGMGREVENLILENTQL\n" + 
+				"LETKNALNIVKNDLIAKVDELTCEKDVLQGELEAVKQAKLKLEEKNRELEEELRKARAEA\n" + 
+				"EDARQKAKDDDDSDIPTAQRKRFTRVEMARVLMERNQYKERLMELQEAVRWTEMIRASRE\n" + 
+				"NPAMQEKKRSSIWQFFSRLFSSSSNTTKKPEPPVNLKYNAPTSHVTPSVKKRSSTLSQLP\n" + 
+				"GDKSKAFDFLSEETEASLASRREQKREQYRQVKAHVQKEDGRVQAFGWSLPQKYKQVTNG\n" + 
+				"QGENKMKNLPVPVYLRPLDEKDTSMKLWCAVGVNLSGGKTRDGGSVVGASVFYKDVAGLD\n" + 
+				"TEGSKQRSASQSSLDKLDQELKEQQKELKNQEELSSLVWICTSTHSATKVLIIDAVQPGN\n" + 
+				"ILDSFTVCNSHVLCIASVPGARETDYPAGEDLSESGQVDKASLCGSMTSNSSAETDSLLG\n" + 
+				"GITVVGCSAEGVTGAATSPSTNGASPVMDKPPEMEAENSEVDENVPTAEEATEATEGNAG\n" + 
+				"SAEDTVDISQTGVYTEHVFTDPLGVQIPEDLSPVYQSSNDSDAYKDQISVLPNEQDLVRE\n" + 
+				"EAQKMSSLLPTMWLGAQNGCLYVHSSVAQWRKCLHSIKLKDSILSIVHVKGIVLVALADG\n" + 
+				"TLAIFHRGVDGQWDLSNYHLLDLGRPHHSIRCMTVVHDKVWCGYRNKIYVVQPKAMKIEK\n" + 
+				"SFDAHPRKESQVRQLAWVGDGVWVSIRLDSTLRLYHAHTYQHLQDVDIEPYVSKMLGTGK\n" + 
+				"LGFSFVRITALMVSCNRLWVGTGNGVIISIPLTETNKTSGVPGNRPGSVIRVYGDENSDK\n" + 
+				"VTPGTFIPYCSMAHAQLCFHGHRDAVKFFVAVPGQVISPQSSSSGTDLTGDKAGPSAQEP\n" + 
+				"GSQTPLKSMLVISGGEGYIDFRMGDEGGESELLGEDLPLEPSVTKAERSHLIVWQVMYGN\n" + 
+				"E";
+		FastaEntryInterface protein=FastaReader.readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(proteinFasta.getBytes(StandardCharsets.UTF_8)))), "", "", true, parameters).get(0);
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		
+		// WITH FIXED AND VARIABLE MODS
+		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(protein, 35, 36, 0, parameters.getAAConstants(), true);
 		PeptideDatabase targets=new PeptideDatabase();
-		for (FastaEntryInterface protein : entries) {
-			ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(protein, 6, 100, 0, parameters.getAAConstants(), false);
-			for (FastaPeptideEntry peptide : peptides) {
-				targets.add(peptide);
-			}
+		for (FastaPeptideEntry peptide : sequences) {
+			System.out.println(peptide.getSequence());
+			targets.add(peptide);
 		}
 		
 		System.out.println("Total unique peptides: "+targets.size());
@@ -148,15 +125,6 @@ public class SimilarPeptideBinnerTest extends TestCase {
 			ArrayList<ArrayList<FastaPeptideEntry>> bins=binner.binPeptides(peptides);
 
 			for (ArrayList<FastaPeptideEntry> bin : bins) {
-				boolean keepWorking=true;
-				for (FastaPeptideEntry peptide : bin) {
-					if (peptide.getAccessions().contains("nxp:NX_P0DJI8-1")) {
-						keepWorking=true;
-						break;
-					}
-				}
-				if (!keepWorking) continue;
-
 				ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 				HashMap<String, FastaPeptideEntry> entryBySequence=new HashMap<>();
 				for (FastaPeptideEntry peptide : bin) {
@@ -231,62 +199,5 @@ public class SimilarPeptideBinnerTest extends TestCase {
 			}
 		}
 		System.out.println("Finished!");
-	}
-	
-	public void testBinner() {
-		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
-		String annotation=">nxp:NX_P0DJI8-1 \\DbUniqueId=NX_P0DJI8-1 \\PName=Serum amyloid A-1 protein isoform Iso 1 \\GName=SAA1 \\NcbiTaxId=9606 \\TaxName=Homo Sapiens \\Length=122 \\SV=95 \\EV=159 \\PE=1 \\ModResPsi=(101|MOD:00316|N4,N4-dimethyl-L-asparagine) \\VariantSimple=(15|S)(70|A)(75|V)(78|N)(86|L)(90|D) \\Processed=(1|18|signal peptide)(19|94|mature protein)(19|122|mature protein)(20|120|mature protein)(20|121|mature protein)(20|122|mature protein)(21|122|mature protein)(22|119|mature protein)(95|122|maturation peptide)";
-		String simpleAnnotation=">nxp:NX_P0DJI8-1";
-		String sequence="MKLLTGLVFCSLVLGVSSRSFFSFLGEAFDGARDMWRAYSDMREANYIGSDKYFHARGNYDAAKRGPGGVWAAEAISDARENIQRFFGHGAEDSLADQAANEWGRSGKDPNHFRPAGLPEKY";
-		FastaEntry simpleEntry=new FastaEntry("source", simpleAnnotation, sequence);
-		ExtendedFastaEntry entry=new ExtendedFastaEntry("source", annotation, sequence, parameters);
-		
-		ArrayList<FastaPeptideEntry> simplePeptides=parameters.getEnzyme().digestProtein(simpleEntry, 6, 100, 0, parameters.getAAConstants(), false);
-		ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, 6, 100, 0, parameters.getAAConstants(), false);
-
-		HashSet<FastaPeptideEntry> targets=new HashSet<>();
-		for (FastaPeptideEntry peptide : peptides) {
-			targets.add(peptide);
-		}
-		
-		SimilarPeptideBinner binner=new SimilarPeptideBinner();
-		ArrayList<ArrayList<FastaPeptideEntry>> bins=binner.binPeptides(targets);
-
-		assertFalse(peptides.size()==bins.size());
-		assertTrue(simplePeptides.size()==bins.size());
-	}
-	
-	public void testModBinner() {
-		String fakeTTR=">nxp:NX_Q96B36-1 \\DbUniqueId=NX_Q96B36-1 \\PName=Proline-rich AKT1 substrate 1 isoform Iso 1 \\GName=AKT1S1 \\NcbiTaxId=9606 \\TaxName=Homo Sapiens \\Length=256 \\SV=135 \\EV=428 \\PE=1 "
-				+ "\\ModResPsi=(3|MOD:00046|O-phospho-L-serine)(51|MOD:00078|omega-N-methyl-L-arginine)(73|MOD:00047|O-phospho-L-threonine)(90|MOD:00047|O-phospho-L-threonine)(97|MOD:00047|O-phospho-L-threonine)(116|MOD:00046|O-phospho-L-serine)(187|MOD:00046|O-phospho-L-serine)(198|MOD:00047|O-phospho-L-threonine)(247|MOD:00046|O-phospho-L-serine)(88|MOD:00046|O-phospho-L-serine)(92|MOD:00046|O-phospho-L-serine)(183|MOD:00046|O-phospho-L-serine)(202|MOD:00046|O-phospho-L-serine)(203|MOD:00046|O-phospho-L-serine)(211|MOD:00046|O-phospho-L-serine)(212|MOD:00046|O-phospho-L-serine)(246|MOD:00047|O-phospho-L-threonine) "
-				//+ "\\VariantSimple=(1|V)(3|L)(5|H)(12|T)(13|M)(19|C)(21|W)(21|Q)(23|Q)(26|M)(27|D)(33|T)(40|H)(41|L)(42|S)(43|S)(46|H)(46|C)(47|P)(51|Q)(51|L)(55|V)(59|H)(60|C)(60|H)(61|Y)(63|R)(68|G)(76|Q)(76|W)(78|A)(79|V)(80|S)(82|Q)(86|L)(87|S)(88|C)(88|R)(93|T)(95|W)(95|Q)(95|P)(97|A)(99|V)(103|D)(106|H)(107|K)(114|G)(115|I)(122|T)(122|V)(129|I)(130|A)(135|T)(136|I)(141|H)(141|S)(142|R)(142|H)(142|S)(145|K)(147|E)(149|K)(151|I)(161|S)(162|T)(163|D)(166|I)(168|L)(170|H)(172|V)(174|T)(182|E)(185|S)(186|L)(188|L)(190|F)(190|I)(192|S)(197|T)(198|I)(201|W)(201|Q)(204|N)(207|D)(209|R)(209|L)(214|Y)(215|P)(223|H)(233|A)(233|S)(234|H)(239|V)(242|L)(245|K)(117|R)(212|L)(249|L)(252|Q)(7|K)(51|*)(53|S)(58|V)(64|N)(104|K)(158|*)(163|A)(199|*)(200|V) \\VariantComplex=(39|39|PP)(206|206|)(114|115|) \\Processed=(1|256|mature protein)"
-				+"\n"+"MASGRPEELWEAVVGAAERFRARTGTELVLLTAAPPPPPRPGPCAYAAHGRGALAEAARR" + 
-				"CLHDIALAHRAATAARPPAPPPAPQPPSPTPSPPRPTLAREDNEEDEDEPTETETSGEQL" + 
-				"GISDNGGLFVMDEDATLQDLPPFCESDPESTDDGSLSEETPAGPPTCSVPPASALPTQQY" + 
-				"AKSLPVSVPVWGFKEKRTEARSSDEENGPPSSPDLDRIAASMRALVLREAEDTQVFGDLP" + 
-				"RPRLNTSDFQKLKRKY";
-		HashMap<String, String> paramMap=SearchParameterParser.getDefaultParameters();
-		paramMap.put("-variable", "S=79.966331,T=79.966331,Y=79.966331");
-		SearchParameters parameters=PecanParameterParser.parseParameters(paramMap);
-		FastaEntryInterface entry=FastaReader.readFasta(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(fakeTTR.getBytes(StandardCharsets.UTF_8)))), "", "", true, parameters).get(0);
-		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
-		
-		// WITH FIXED AND VARIABLE MODS
-		ArrayList<FastaPeptideEntry> targets=enzyme.digestProtein(entry, 4, 40, 0, parameters.getAAConstants(), false);
-		
-		SimilarPeptideBinner binner=new SimilarPeptideBinner();
-		ArrayList<ArrayList<FastaPeptideEntry>> bins=binner.binPeptides(targets);
-		
-		assertEquals(12, bins.size());
-		
-		int count=0;
-		for (ArrayList<FastaPeptideEntry> arrayList : bins) {
-			count+=arrayList.size();
-			for (FastaPeptideEntry peptide : arrayList) {
-				System.out.println(peptide.getSequence());
-			}
-			System.out.println();
-		}
-		assertEquals(22, count);
 	}
 }
