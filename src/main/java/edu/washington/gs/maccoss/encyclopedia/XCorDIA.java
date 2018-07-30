@@ -70,8 +70,8 @@ public class XCorDIA {
 
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
-		if (arguments.containsKey("-original")) {
-			arguments.remove("-original");
+		if (arguments.containsKey("-classic")) {
+			arguments.remove("-classic");
 		} else {
 			VariantXCorDIA.main(args);
 			return;
@@ -83,6 +83,7 @@ public class XCorDIA {
 			Logger.logLine("XCorDIA Help");
 			Logger.timelessLogLine("XCorDIA is a FASTA database search engine for DIA data.");
 			Logger.timelessLogLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
+			Logger.timelessLogLine("You can run in \"classic\" mode (without variant scoring) using the \"-classic\" option");
 			Logger.timelessLogLine("Required Parameters: ");
 			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file");
 			Logger.timelessLogLine("\t-f\tbackground FASTA file");

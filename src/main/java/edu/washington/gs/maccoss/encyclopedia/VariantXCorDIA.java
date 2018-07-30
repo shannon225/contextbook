@@ -263,9 +263,13 @@ public class VariantXCorDIA {
 		Logger.logLine("Found "+targets.size()+" total peptides from "+entries.size()+" proteins...");
 		
 		// get targeted ranges
+		float minMz=Float.MAX_VALUE;
+		float maxMz=-Float.MAX_VALUE;
 		TDoubleHashSet boundaries=new TDoubleHashSet();
 		ArrayList<Range> ranges=new ArrayList<Range>();
 		for (Range range : stripefile.getRanges().keySet()) {
+			if (range.getStart()<minMz) minMz=range.getStart();
+			if (range.getStop()>maxMz) maxMz=range.getStop();
 			boundaries.add(range.getStart());
 			boundaries.add(range.getStop());
 			if (!parameters.useTargetWindowCenter()||range.contains(parameters.getTargetWindowCenter())) {
@@ -274,8 +278,28 @@ public class VariantXCorDIA {
 				}
 			}
 		}
+
+		for (FastaPeptideEntry peptide : targets.getPeptides()) {
+			String sequence=peptide.getSequence();
+
+			byte expectedCharge=PeptideUtils.getExpectedChargeState(sequence);
+			byte minCharge=(byte)Math.max(parameters.getMinCharge(), expectedCharge-1);
+			byte maxCharge=(byte)Math.min(parameters.getMaxCharge(), expectedCharge+1);
+				
+			boolean keep=false;
+			for (byte charge=minCharge; charge<=maxCharge; charge++) {
+				double mz=parameters.getAAConstants().getChargedMass(sequence, charge);
+				if (mz>minMz&&mz<maxMz) {
+					keep=true;
+					break;
+				}
+			}
+			if (!keep) {
+				targets.remove(sequence);
+			}
+		}
 		Collections.sort(ranges);
-		Logger.logLine("Found "+ranges.size()+" matching ranges...");
+		Logger.logLine("Found "+ranges.size()+" matching ranges, trimmed targets down to "+targets.size()+" peptides...");
 		
 		double[] binBoundaries=boundaries.toArray();
 		boolean[] useBin=new boolean[binBoundaries.length];
