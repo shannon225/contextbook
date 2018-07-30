@@ -70,6 +70,12 @@ public class XCorDIA {
 
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
+		if (arguments.containsKey("-original")) {
+			arguments.remove("-original");
+		} else {
+			VariantXCorDIA.main(args);
+			return;
+		}
 		if (arguments.size()==0) {
 			SearchGUIMain.runGUI(ProgramType.XCorDIA);
 			

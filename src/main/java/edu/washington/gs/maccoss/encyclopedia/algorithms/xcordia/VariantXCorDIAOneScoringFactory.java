@@ -48,14 +48,16 @@ public class VariantXCorDIAOneScoringFactory extends XCorDIAOneScoringFactory {
 
 	@Override
 	public PeptideScoringResultsConsumer getResultsConsumer(File outputFile, BlockingQueue<PeptideScoringResult> resultsQueue, StripeFileInterface diaFile) {
-		return new ScoringResultsToTSVConsumer(outputFile, diaFile, General.concatenate(EncyclopediaOneAuxillaryPSMScorer.getScoreNames(false), "neededToLocalize", "numberOfWellShapedIons"), resultsQueue, 1);
-		//return new ScoringResultsToTSVConsumer(outputFile, diaFile, General.concatenate(EncyclopediaOneAuxillaryPSMScorer.getScoreNames(false), "numberOfWellShapedIons"), resultsQueue, 1);
+		//return new ScoringResultsToTSVConsumer(outputFile, diaFile, General.concatenate(EncyclopediaOneAuxillaryPSMScorer.getScoreNames(false), "neededToLocalize", "numberOfWellShapedIons"), resultsQueue, 1);
+		return new ScoringResultsToTSVConsumer(outputFile, diaFile, General.concatenate(EncyclopediaOneAuxillaryPSMScorer.getScoreNames(false), "neededToLocalize", "numberOfWellShapedIons", "ionCountScore"), resultsQueue, 1);
 	}
 
 	@Override
 	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
 		if (background==null) throw new EncyclopediaException("You must initialize background before generating a scoring task!");
-		return new VariantXcorDIAOneScoringTask(scorer, background, entries, stripes, precursorIsolationRange, dutyCycle, precursors, resultsQueue, localizationQueue, getParameters());
+		//return new VariantXcorDIAOneScoringTask(scorer, background, entries, stripes, precursorIsolationRange, dutyCycle, precursors, resultsQueue, localizationQueue, getParameters());
+		return new LocalizingXcorDIAOneScoringTask(scorer, background, entries, stripes, precursorIsolationRange, dutyCycle, precursors, resultsQueue, localizationQueue, getParameters());
+		
 	}
 	
 	@Override

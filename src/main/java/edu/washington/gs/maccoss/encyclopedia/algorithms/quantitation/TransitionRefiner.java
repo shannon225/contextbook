@@ -127,11 +127,52 @@ public class TransitionRefiner {
 
 	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean wasInferred, boolean plot, AminoAcidConstants aaConstants) {
 		if (chromatograms.size()==0) return new TransitionRefinementData(peptideModSeq, precursorCharge, new FragmentIon[0], chromatograms, new float[0], new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]), aaConstants);
+		MedianChromatogramData medianData = extractMedianChromatogram(retentionTimeInSec, chromatograms, retentionTimes, maybeMedianChromatogram, wasInferred);
+
+		float medianMean=General.mean(medianData.getMedianChromatogram(), medianData.getIndices().getStart(), medianData.getIndices().getStop());
+		float[] correlationArray=new float[medianData.getNormalizedChromatograms().size()];
+		float[] integrationArray=new float[correlationArray.length];
+		float[] backgroundArray=new float[correlationArray.length];
+		for (int i=0; i<medianData.getNormalizedChromatograms().size(); i++) {
+			float[] normalizedChromatogram=medianData.getNormalizedChromatograms().get(i);
+			float correlation=calculateCorrelation(medianMean, medianData.getIndices(), medianData.getMedianChromatogram(), normalizedChromatogram);
+			correlationArray[i]=correlation;
+
+			FloatPair intensity=integrate(medianData.getIndices(), retentionTimes, chromatograms.get(i));
+
+			integrationArray[i]=intensity.getOne();
+			backgroundArray[i]=intensity.getTwo();
+			
+			// calculate trapezoidal background area
+			integrationArray[i]=integrationArray[i]-backgroundArray[i];
+		}
+
+		Range range=new Range(retentionTimes[medianData.getIndices().getStart()], retentionTimes[medianData.getIndices().getStop()]);
+		if (plot) {
+			HashMap<String, ChartPanel> panels=new HashMap<String, ChartPanel>();
+			panels.put("unnormalized", getChart(chromatograms, correlationArray, retentionTimes, range));
+			panels.put("unnormalized_uncolored", getChart(chromatograms, new float[correlationArray.length], retentionTimes, range));
+			panels.put("normalized", getChart(medianData.getNormalizedChromatograms(), correlationArray, retentionTimes, range));
+			panels.put("median", Charter.getChart("scan", "intensity", false, toXYTrace(medianData.getMedianChromatogram(), retentionTimes, "median", null, null)));
+			
+			ArrayList<XYTrace> traces=getTraces(medianData.getNormalizedChromatograms(), correlationArray, retentionTimes, range);
+			traces.add(0, toXYTrace(medianData.getMedianChromatogram(), retentionTimes, "median", Color.black, null, GraphType.dashedline, 6.0f));
+			panels.put("traces", Charter.getChart("scan", "intensity", false, traces.toArray(new XYTrace[traces.size()])));
+			
+			Charter.launchCharts(peptideModSeq+" chart", panels);
+		}
+		
+		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, correlationArray, integrationArray, backgroundArray, medianData.getMedianChromatogram(), range, aaConstants);
+	}
+
+	public static MedianChromatogramData extractMedianChromatogram(float retentionTimeInSec, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean adjustPeakBoundaries) {
+		if (chromatograms.size()==0) return new MedianChromatogramData(new ArrayList<>(), new IntRange(0, 0), new float[0]);
+		
 		ArrayList<float[]> normalizedChromatograms;
-		int maxIndex;
 		IntRange indices;
 		float[] medianChromatogram;
-		
+
+		int maxIndex;
 		if (maybeMedianChromatogram.isPresent()&&maybeMedianChromatogram.get().length>0) {
 			// already started with a median chromatogram
 			medianChromatogram=maybeMedianChromatogram.get();
@@ -169,7 +210,7 @@ public class TransitionRefiner {
 			}
 			IntRange initialIndices=getIndexRange(medianChromatogram, maxIndex);
 			
-			if (!wasInferred) {
+			if (!adjustPeakBoundaries) {
 				Range testRange=new Range(retentionTimes[initialIndices.getStart()], retentionTimes[initialIndices.getStop()]);
 				if (!testRange.contains(retentionTimeInSec)) {
 						// if it wasn't inferred and our boundaries were outside the range, we need to reset the range 
@@ -219,41 +260,10 @@ public class TransitionRefiner {
 			}
 			indices=getIndexRange(medianChromatogram, maxIndex);
 		}
-
-		float medianMean=General.mean(medianChromatogram, indices.getStart(), indices.getStop());
-		float[] correlationArray=new float[normalizedChromatograms.size()];
-		float[] integrationArray=new float[correlationArray.length];
-		float[] backgroundArray=new float[correlationArray.length];
-		for (int i=0; i<normalizedChromatograms.size(); i++) {
-			float[] normalizedChromatogram=normalizedChromatograms.get(i);
-			float correlation=calculateCorrelation(medianMean, indices, medianChromatogram, normalizedChromatogram);
-			correlationArray[i]=correlation;
-
-			FloatPair intensity=integrate(indices, retentionTimes, chromatograms.get(i));
-
-			integrationArray[i]=intensity.getOne();
-			backgroundArray[i]=intensity.getTwo();
-			
-			// calculate trapezoidal background area
-			integrationArray[i]=integrationArray[i]-backgroundArray[i];
-		}
-
-		Range range=new Range(retentionTimes[indices.getStart()], retentionTimes[indices.getStop()]);
-		if (plot) {
-			HashMap<String, ChartPanel> panels=new HashMap<String, ChartPanel>();
-			panels.put("unnormalized", getChart(chromatograms, correlationArray, retentionTimes, range));
-			panels.put("unnormalized_uncolored", getChart(chromatograms, new float[correlationArray.length], retentionTimes, range));
-			panels.put("normalized", getChart(normalizedChromatograms, correlationArray, retentionTimes, range));
-			panels.put("median", Charter.getChart("scan", "intensity", false, toXYTrace(medianChromatogram, retentionTimes, "median", null, null)));
-			
-			ArrayList<XYTrace> traces=getTraces(normalizedChromatograms, correlationArray, retentionTimes, range);
-			traces.add(0, toXYTrace(medianChromatogram, retentionTimes, "median", Color.black, null, GraphType.dashedline, 6.0f));
-			panels.put("traces", Charter.getChart("scan", "intensity", false, traces.toArray(new XYTrace[traces.size()])));
-			
-			Charter.launchCharts(peptideModSeq+" chart", panels);
-		}
 		
-		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, aaConstants);
+
+		MedianChromatogramData medianData=new MedianChromatogramData(normalizedChromatograms, indices, medianChromatogram);
+		return medianData;
 	}
 	
 	public static int[] numberOfCoelutingIons(double[] targetMasses, double[] allIons, ArrayList<Spectrum> stripes, int halfPeakWidthInScans, MassTolerance fragmentTolerance) {
