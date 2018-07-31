@@ -25,10 +25,12 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.Transition
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.VariantFastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRangeSet;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -47,6 +49,7 @@ import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
+	private static final float IDENTIFICATION_CORRELATION_THRESHOLD = TransitionRefiner.identificationCorrelationThreshold;
 	private static final int MINIMUM_NUMBER_OF_PEAKS = 3;
 	private static final float MINIMUM_LOCALIZATION_SCORE_TO_CONTINUE = 2.0f;
 	
@@ -108,7 +111,8 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 				primary[i]=scorer.score(xcordiaEntry, xcordiaStripe, predictedIsotopeDistribution, precursors);
 			}
 			
-			float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
+			// moving average of only 3 scans
+			float[] averagePrimary=movingCenteredAverage(primary, 3);//gaussianCenteredAverage(primary, movingAverageLength);
 			
 			// determine the N best peaks for this peptide
 			LinkedList<ScoredIndex> keptIndicies=new LinkedList<>();
@@ -116,18 +120,25 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 				if (keptIndicies.size()==0) {
 					keptIndicies.add(new ScoredIndex(averagePrimary[i], i));
 				} else if (averagePrimary[i]>keptIndicies.get(keptIndicies.size()-1).x) {
-					int upperIndexRange=i+movingAverageLength;
-					int lowerIndexRange=i-movingAverageLength;
-					int count=0;
+					//Range range = new Range(i-movingAverageLength/2, i+movingAverageLength/2);
+					Range range = new Range(i-1, i+1); // can't choose adjacent peaks
+					int insertionPoint=0;
+					boolean alreadyGotThisSpot=false;
 					for (ScoredIndex scoredIndex : keptIndicies) {
-						if (averagePrimary[i]>scoredIndex.x&&(scoredIndex.y<lowerIndexRange||scoredIndex.y>upperIndexRange)) {
+						if (range.contains(scoredIndex.y)) {
+							alreadyGotThisSpot=true;
 							break;
 						}
-						count++;
+						if (averagePrimary[i]>scoredIndex.x) {
+							break;
+						}
+						insertionPoint++;
 					}
-					keptIndicies.add(count, new ScoredIndex(averagePrimary[i], i));
-					if (keptIndicies.size()>seedEntries.size()) {
-						keptIndicies.removeLast();
+					if (!alreadyGotThisSpot) {
+						keptIndicies.add(insertionPoint, new ScoredIndex(averagePrimary[i], i));
+//						if (keptIndicies.size()>seedEntries.size()) {
+//							keptIndicies.removeLast();
+//						}
 					}
 				}
 			}
@@ -183,7 +194,7 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 			for (int i=0; i<allIonsData.getNormalizedChromatograms().size(); i++) {
 				float[] normalizedChromatogram=allIonsData.getNormalizedChromatograms().get(i);
 				float correlation=TransitionRefiner.calculateCorrelation(medianMean, allIonsData.getIndices(), allIonsData.getMedianChromatogram(), normalizedChromatogram);
-				if (correlation>TransitionRefiner.identificationCorrelationThreshold) {
+				if (correlation>IDENTIFICATION_CORRELATION_THRESHOLD) {
 					numberOfPeaks++;
 					foundLocalizingIons.add(allIonObjects.get(i));
 				}
@@ -222,20 +233,30 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 		for (int i=bestScoresByEntry.size()-1; i>=0; i--) {
 			ScoredObject<IndexedObject<PeptidePrecursor>> scoredPeptide=bestScoresByEntry.get(i);
 			
-			if (!previouslyPicked.contains(scoredPeptide.y.y)) {
+			boolean alreadyGotThisSpot=false;
+			Range range = new Range(scoredPeptide.y.x-1, scoredPeptide.y.x+1); // can't choose adjacent peaks
+			for (int j = 0; j < pickedPeakIndicies.size(); j++) {
+				if (range.contains(pickedPeakIndicies.get(j))) {
+					alreadyGotThisSpot=true;
+				}
+			}
+			if ((!alreadyGotThisSpot)) {
 				previouslyPicked.add(scoredPeptide.y.y);
 				pickedPeakIndicies.add(scoredPeptide.y.x);
 			}
-			
-			if (previouslyPicked.size()==seedEntries.size()) break;
 		}
 
+		IntRangeSet previouslyConsideredRanges=new IntRangeSet();
 		// localize each of N peaks
 		float bestXCorrSoFar=-Float.MAX_VALUE;
 		PeptidePrecursor bestPeptideSoFar=null;
 		ScoreData bestScoreSoFar=null;
 		HashMap<PeptidePrecursor, ScoreData> scoredPeptides=new HashMap<>();
+		int count=0;
 		for (int index : pickedPeakIndicies.toArray()) {
+			if (count>=seedEntries.size()) break;
+			if (previouslyConsideredRanges.contains(index)) continue;
+			
 			// find the top and second best scoring peptides
 			float topScore=-Float.MAX_VALUE;
 			float secondTopScore=-Float.MAX_VALUE;
@@ -255,7 +276,12 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 				}
 			}
 			
-			if (scoredPeptides.containsKey(topScoring)) continue;
+			if (scoredPeptides.containsKey(topScoring)) {
+				previouslyConsideredRanges.addRange(new IntRange(index-1, index+1));
+				continue;
+			}
+			
+			count++;
 
 			// get fragment ion map containing all ions
 			FragmentationModel topModel=modelsByEntry.get(topScoring);
@@ -268,7 +294,7 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 			FragmentIon[] uniqueIonsWithMissing=getUniqueFragmentIons(topModel, secondTopModel, topScoring.getPrecursorCharge(), parameters.getFragType());
 			double[] uniqueIonMassesWithMissing = FragmentIon.getMasses(uniqueIonsWithMissing);
 			ArrayList<float[]> variantSpecificChromatogramsWithMissing=chromMap.getChromatograms(uniqueIonMassesWithMissing);
-
+			
 			ArrayList<FragmentIon> uniqueIons=new ArrayList<>();
 			ArrayList<float[]> variantSpecificChromatograms=new ArrayList<>();
 			for (int i = 0; i < uniqueIonsWithMissing.length; i++) {
@@ -291,13 +317,13 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 				for (int j = 0; j < uniqueIonMasses.length; j++) {
 					float[] normalizedChromatogram=variantSpecificData.getNormalizedChromatograms().get(j);
 					float correlation=TransitionRefiner.calculateCorrelation(medianMean, variantSpecificData.getIndices(), variantSpecificData.getMedianChromatogram(), normalizedChromatogram);
-					if (correlation>TransitionRefiner.identificationCorrelationThreshold) {
+					if (correlation>IDENTIFICATION_CORRELATION_THRESHOLD) {
 						logProb+=-Log.protectedLog10(frequencies[j]);
 						foundLocalizingIons.add(uniqueIons.get(j));
 					}
 				}
 			}
-
+			
 			if (logProb>=MINIMUM_LOCALIZATION_SCORE_TO_CONTINUE||topScore>bestXCorrSoFar) {
 				// check all ions versus median trace
 				ArrayList<float[]> allChromatogramsWithMissing=chromMap.getChromatograms(allIonsWithMissing);
@@ -324,7 +350,7 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 				for (int i=0; i<allIonsData.getNormalizedChromatograms().size(); i++) {
 					float[] normalizedChromatogram=allIonsData.getNormalizedChromatograms().get(i);
 					float correlation=TransitionRefiner.calculateCorrelation(medianMean, allIonsData.getIndices(), allIonsData.getMedianChromatogram(), normalizedChromatogram);
-					if (correlation>TransitionRefiner.identificationCorrelationThreshold) {
+					if (correlation>IDENTIFICATION_CORRELATION_THRESHOLD) {
 						numberOfPeaks++;
 					}
 					sumCorrelation+=correlation*correlation;
@@ -338,6 +364,7 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 				}
 				if (logProb>=MINIMUM_LOCALIZATION_SCORE_TO_CONTINUE&&numberOfPeaks>=MINIMUM_NUMBER_OF_PEAKS) {
 					scoredPeptides.put(topScoring, score);
+					previouslyConsideredRanges.addRange(allIonsData.getIndices());
 				}
 			}
 		}
