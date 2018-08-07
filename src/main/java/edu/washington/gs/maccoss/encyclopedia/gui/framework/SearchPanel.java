@@ -51,6 +51,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.dia.LocalizationResultsBrowser
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.MultiResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.PeptideExtractingBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.AustinsSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.CASiLParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.LindsaysSpecialEncyclopediaPanel;
@@ -104,6 +105,9 @@ public class SearchPanel extends JPanel {
 						break;
 					case 2:
 						encyclopedia=new MoMosSpecialEncyclopediaPanel(this);
+						break;
+					case 3:
+						encyclopedia=new AustinsSpecialEncyclopediaPanel(this);
 						break;
 					default:
 						encyclopedia=new EncyclopediaParametersPanel(this);
