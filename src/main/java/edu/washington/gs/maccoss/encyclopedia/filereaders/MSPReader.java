@@ -32,13 +32,13 @@ public class MSPReader {
 		
 		convertMSP(mspFile, fastaFile, libraryFile, SearchParameterParser.getDefaultParametersObject());
 	}
-	public static void convertMSP(File mspFile, File fastaFile, SearchParameters parameters) throws IOException, SQLException {
+	public static void convertMSP(File mspFile, File fastaFile, SearchParameters parameters) throws IOException, SQLException, IllegalArgumentException {
 		String absolutePath=mspFile.getAbsolutePath();
 		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
 		convertMSP(mspFile, fastaFile, libraryFile, parameters);
 	}
 
-	public static void convertMSP(File mspFile, File fastaFile, File libraryFile, SearchParameters parameters) throws IOException, SQLException {
+	public static void convertMSP(File mspFile, File fastaFile, File libraryFile, SearchParameters parameters) throws IOException, SQLException, IllegalArgumentException {
 		Logger.logLine("Reading MSP file "+mspFile.getName());
 		ArrayList<LibraryEntry> entries=readMSP(mspFile, false);
 
@@ -84,37 +84,33 @@ public class MSPReader {
 		library.close();
 	}
 	
-	public static ArrayList<LibraryEntry> readMSP(File f, boolean keepAccessions) {
+	public static ArrayList<LibraryEntry> readMSP(File f, boolean keepAccessions) throws IOException, IllegalArgumentException{
 		BufferedReader in=null;
 		ArrayList<LibraryEntry> entryList=new ArrayList<LibraryEntry>();
 		try {
 			in=new BufferedReader(new FileReader(f));
 			return readMSP(in, f.getName(), keepAccessions);
 
-		} catch (IOException ioe) {
-			Logger.errorLine("I/O Error found reading NIST MSP Library ["+f.getAbsolutePath()+"]");
-			Logger.errorException(ioe);
-			return entryList;
 		} finally {
 			if (in!=null) {
 				try {
 					in.close();
 				} catch (IOException ioe) {
-					ioe.printStackTrace();
+					throw(ioe);
 				}
 			}
 		}
 	}
 	
-	public static ArrayList<LibraryEntry> readMSP(String s, String fileName, boolean keepAccessions) {
+	public static ArrayList<LibraryEntry> readMSP(String s, String fileName, boolean keepAccessions) throws IOException, IllegalArgumentException {
 		return readMSP(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)))), fileName, keepAccessions);
 	}
 	
-	public static ArrayList<LibraryEntry> readMSP(InputStream s, String fileName, boolean keepAccessions) {
+	public static ArrayList<LibraryEntry> readMSP(InputStream s, String fileName, boolean keepAccessions) throws IOException, IllegalArgumentException {
 		return readMSP(new BufferedReader(new InputStreamReader(s)), fileName, keepAccessions);
 	}
 	
-	public static ArrayList<LibraryEntry> readMSP(BufferedReader in, String fileName, boolean keepAccessions) {
+	public static ArrayList<LibraryEntry> readMSP(BufferedReader in, String fileName, boolean keepAccessions) throws IOException, IllegalArgumentException {
 		//TODO: take in parameters
 		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 
@@ -248,20 +244,12 @@ public class MSPReader {
 			}
 			return entryList;
 
-		} catch (IOException ioe) {
-			Logger.errorLine("I/O Error found reading NIST MSP Library ["+fileName+"]");
-			Logger.errorException(ioe);
-			return entryList;
-		} catch (Exception e) {
-			Logger.errorLine("I/O Error found reading NIST MSP Library ["+fileName+"], parsing ["+eachline+"]");
-			Logger.errorException(e);
-			return entryList;
 		} finally {
 			if (in!=null) {
 				try {
 					in.close();
 				} catch (IOException ioe) {
-					ioe.printStackTrace();
+					throw(ioe);
 				}
 			}
 		}
