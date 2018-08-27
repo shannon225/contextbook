@@ -182,10 +182,17 @@ public class MSPReader {
 					}
 					String sequence=fullname.substring(fullname.indexOf('.')+1, fullname.lastIndexOf('.'));
 					sequence=PeptideUtils.getPeptideSeq(sequence);
-					precursorCharge=Byte.parseByte(fullname.substring(fullname.lastIndexOf('/')+1));
+					
+					//Issue 90: The charge may be stored as a separate field in the comment,
+					//or attached to the peptide sequence itself e.g. PEPTIDER+2
+					if (map.containsKey("Charge")) {
+						precursorCharge = Byte.parseByte(map.get("Charge"));
+					} else {
+						precursorCharge=Byte.parseByte(fullname.substring(fullname.lastIndexOf('/')+1));
+					}
 					
 					String mods=map.get("Mods");
-					StringTokenizer st=new StringTokenizer(mods, "/");
+					StringTokenizer st=new StringTokenizer(mods, "/()");
 					int modCount=Integer.parseInt(st.nextToken());
 					if (modCount>0) {
 						TIntDoubleHashMap modMap=new TIntDoubleHashMap();
@@ -314,7 +321,7 @@ public class MSPReader {
 			return -17.026549;
 		} else if (aa=='C'&&"Carbamidomethyl".equalsIgnoreCase(mod)) {
 			return 	57.0214635;
-		} else if (aa=='C'&&"Pyro-carbamidomethyl".equalsIgnoreCase(mod)) {
+		} else if (aa=='C'&&("Pyro-carbamidomethyl".equalsIgnoreCase(mod)||"Pyro-cmC".equalsIgnoreCase(mod))) {
 			return 39.994915; // +57,-17
 		} else if ("Acetyl".equalsIgnoreCase(mod)) {
 			return 42.010565;
