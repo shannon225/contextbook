@@ -121,6 +121,7 @@ public class MSPReader {
 			String peptideModSeq=null;
 			String fullname=null;
 			String accession=null;
+			String altName=null; //Issue 90: A fallback when the full name is not present in the file
 			byte precursorCharge=0;
 			double precursorMZ=0.0;
 			float retentionTime=0.0f;
@@ -131,7 +132,9 @@ public class MSPReader {
 				if (eachline.trim().length()==0) {
 					continue OUTERLOOP;
 				}
+				
 				if (eachline.startsWith("Name: ")) {
+					altName = eachline.substring(6);
 					if (peaks.size()>0) {
 						Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
 						HashSet<String> accessions=new HashSet<String>();
@@ -159,9 +162,13 @@ public class MSPReader {
 					precursorMZ=Double.parseDouble(map.get("Parent"));
 					String scoreString=map.get("Unassigned");
 					
+					//Issue 90: If the score is missing, just write "0".
+					//This is the same value used when importing a .blib generated in skyline.
 					if (scoreString==null) {
 						scoreString=map.get("Prob");
-						score=Float.parseFloat(scoreString);
+						if (scoreString != null) {
+							score=Float.parseFloat(scoreString);
+						}
 						
 					} else {
 						score=1.0f-Float.parseFloat(scoreString);
@@ -179,8 +186,19 @@ public class MSPReader {
 					
 					if (fullname==null) {
 						fullname=map.get("Fullname");
+						if (fullname == null) {
+							fullname = altName; //Issue 90: If no other name information is included, fall back to sequence and charge.
+						}
 					}
-					String sequence=fullname.substring(fullname.indexOf('.')+1, fullname.lastIndexOf('.'));
+					
+					//Issue 90: sptext files do not always contain periods
+					String sequence;
+					if (fullname.contains(".")) {
+						sequence=fullname.substring(fullname.indexOf('.')+1, fullname.lastIndexOf('.'));
+					} else {
+						sequence = fullname;
+					}
+					
 					sequence=PeptideUtils.getPeptideSeq(sequence);
 					
 					//Issue 90: The charge may be stored as a separate field in the comment,
