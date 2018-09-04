@@ -17,8 +17,9 @@ import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TCharHashSet;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-public class DigestionEnzyme {
+public final class DigestionEnzyme {
 	private static final char[] AAs="ACDEFGHIKLMNPQRSTVWY".toCharArray();
 	private final char stopCodon='*';
 	private final String name;
@@ -136,14 +137,38 @@ public class DigestionEnzyme {
 		
 		throw new EncyclopediaException("Unknown digestion enzyme ["+enzymeName+"]");
 	}
-	
-	DigestionEnzyme(String name, String percolatorName, TCharHashSet nterm, TCharHashSet cterm) {
+
+	public DigestionEnzyme(String name, String percolatorName, TCharHashSet nterm, TCharHashSet cterm) {
 		this.name=name;
 		this.percolatorName=percolatorName;
 		this.nterm=nterm;
 		this.cterm=cterm;
 	}
-	
+
+	/**
+	 * Check enzyme equality (ignoring {@link #name} and {@link #percolatorName}).
+	 */
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof DigestionEnzyme)) {
+			return false;
+		}
+
+		return nterm.equals(((DigestionEnzyme) o).nterm)
+				&& cterm.equals(((DigestionEnzyme) o).cterm);
+	}
+
+	/**
+	 * Hash code matching {@link #equals(Object)}
+	 */
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder()
+				.append(nterm)
+				.append(cterm)
+				.toHashCode();
+	}
+
 	public String getName() {
 		return name;
 	}
