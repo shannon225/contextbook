@@ -1,9 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Optional;
+import java.util.*;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.AlleleVariant;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
@@ -16,11 +13,13 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TCharSet;
 import gnu.trove.set.hash.TCharHashSet;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 public final class DigestionEnzyme {
-	private static final char[] AAs="ACDEFGHIKLMNPQRSTVWY".toCharArray();
+	public static final char[] AAs="ACDEFGHIKLMNPQRSTVWY".toCharArray();
 	private final char stopCodon='*';
 	private final String name;
 	private final String percolatorName;
@@ -143,6 +142,42 @@ public final class DigestionEnzyme {
 		this.percolatorName=percolatorName;
 		this.nterm=nterm;
 		this.cterm=cterm;
+	}
+
+	public String toXTandemCode() {
+		final boolean npos = 2 * nterm.size() < AAs.length;
+		final boolean cpos = 2 * cterm.size() < AAs.length;
+
+		final char[] n, c;
+
+		if (npos) {
+			n = nterm.toArray();
+		} else {
+			final TCharSet notNterm = new TCharHashSet(AAs);
+			notNterm.removeAll(nterm);
+			n = notNterm.toArray();
+		}
+		if (cpos) {
+			c = cterm.toArray();
+		} else {
+			final TCharSet notCterm = new TCharHashSet(AAs);
+			notCterm.removeAll(cterm);
+			c = notCterm.toArray();
+		}
+
+		Arrays.sort(n);
+		Arrays.sort(c);
+
+		final String p1 = "[", p2 = "]", n1 = "{", n2 = "}";
+
+		return String.format("%s%s%s|%s%s%s",
+				npos ? p1 : n1,
+				new String(n),
+				npos ? p2 : n2,
+				cpos ? p1 : n1,
+				new String(c),
+				cpos ? p2 : n2
+		);
 	}
 
 	/**
