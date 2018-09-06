@@ -87,11 +87,34 @@ public class MzmlToDIAProducer implements Runnable {
 				multiplier=360.0f;
 			} else if ("millisecond".equalsIgnoreCase(unit)) {
 				multiplier=0.001f;
+			} else if ("microsecond".equalsIgnoreCase(unit)) {
+				multiplier=0.000001f;
 			} else {
 				throw new EncyclopediaException("Unexpected time unit: "+unit);
 			}
-			
 			float scanStartTime=multiplier*Float.parseFloat(scanStartTimeCVParams.getValue());
+
+			Float ionInjectionTime=null;
+			CVParam ionInjectionTimeCVParams=cvparams.get("MS:1000016");
+				if (ionInjectionTimeCVParams!=null) {
+					unit=scanStartTimeCVParams.getUnitName();
+				
+				if ("second".equalsIgnoreCase(unit)) {
+					multiplier=1.0f;
+				} else if ("minute".equalsIgnoreCase(unit)) {
+					multiplier=60.0f;
+				} else if ("hour".equalsIgnoreCase(unit)) {
+					multiplier=360.0f;
+				} else if ("millisecond".equalsIgnoreCase(unit)) {
+					multiplier=0.001f;
+				} else if ("microsecond".equalsIgnoreCase(unit)) {
+					multiplier=0.000001f;
+				} else {
+					throw new EncyclopediaException("Unexpected time unit: "+unit);
+				}
+				ionInjectionTime=multiplier*Float.parseFloat(ionInjectionTimeCVParams.getValue());
+			}
+			
 			BinaryDataArrayList bdal=spectrum.getBinaryDataArrayList();
 			if (bdal==null ||
 				bdal.getBinaryDataArray()==null ||
@@ -114,7 +137,7 @@ public class MzmlToDIAProducer implements Runnable {
 					double[] deltaArray=General.multiply(massArray, parameters.getPrecursorOffsetPPM()/1000000.0);
 					massArray=General.subtract(massArray, deltaArray);
 				}
-				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray));
+				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, ionInjectionTime, massArray, intensityArray));
 			} else {
 				
 				float isolationWindowTarget;
@@ -157,7 +180,7 @@ public class MzmlToDIAProducer implements Runnable {
 					double[] deltaArray=General.multiply(massArray, parameters.getFragmentOffsetPPM()/1000000.0);
 					massArray=General.subtract(massArray, deltaArray);
 				}
-				Stripe stripe=new Stripe(spectrumName, p.getSpectrumRef(), spectrumIndex, scanStartTime, isolationWindowTarget-isolationWindowLowerOffset+(float)parameters.getPrecursorIsolationMargin(), isolationWindowTarget+isolationWindowUpperOffset-(float)parameters.getPrecursorIsolationMargin(), massArray, intensityArray);
+				Stripe stripe=new Stripe(spectrumName, p.getSpectrumRef(), spectrumIndex, scanStartTime, ionInjectionTime, isolationWindowTarget-isolationWindowLowerOffset+(float)parameters.getPrecursorIsolationMargin(), isolationWindowTarget+isolationWindowUpperOffset-(float)parameters.getPrecursorIsolationMargin(), massArray, intensityArray);
 				stripes.add(stripe);
 				Range range=stripe.getRange();
 				TFloatArrayList stripeRTs=retentionTimesByStripe.get(range);

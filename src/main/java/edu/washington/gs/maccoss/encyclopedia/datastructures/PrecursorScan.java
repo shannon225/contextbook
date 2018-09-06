@@ -2,29 +2,37 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.ArrayList;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.AcquiredSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 //@Immutable
-public class PrecursorScan implements Spectrum, Comparable<PrecursorScan> {
+public class PrecursorScan implements AcquiredSpectrum, Comparable<PrecursorScan> {
 	private final String spectrumName;
 	private final int spectrumIndex;
 	private final float scanStartTime;
+	private final float ionInjectionTime;
 	private final double[] massArray;
 	private final float[] intensityArray;
 	private final float tic;
 
-	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, double[] massArray, float[] intensityArray) {
-		this(spectrumName, spectrumIndex, scanStartTime, massArray, intensityArray, null);
+	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, Float ionInjectionTime, double[] massArray, float[] intensityArray) {
+		this(spectrumName, spectrumIndex, scanStartTime, null, massArray, intensityArray, null);
 	}
 
-	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, double[] massArray, float[] intensityArray, Float tic) {
+	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, Float ionInjectionTime, double[] massArray, float[] intensityArray, Float tic) {
 		this.spectrumName=spectrumName;
 		this.spectrumIndex=spectrumIndex;
 		this.scanStartTime=scanStartTime;
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
 
+		if (ionInjectionTime==null) {
+			this.ionInjectionTime=-1f;
+		} else {
+			this.ionInjectionTime=ionInjectionTime;
+		}
+		
 		if (tic==null || !Float.isFinite(tic) || tic <= 0) {
 			tic = General.sum(intensityArray);
 		}
@@ -34,6 +42,10 @@ public class PrecursorScan implements Spectrum, Comparable<PrecursorScan> {
 	@Override
 	public float getTIC() {
 		return tic;
+	}
+	
+	public float getIonInjectionTime() {
+		return ionInjectionTime;
 	}
 	
 	@Override

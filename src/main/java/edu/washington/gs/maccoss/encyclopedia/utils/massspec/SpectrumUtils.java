@@ -21,12 +21,19 @@ public class SpectrumUtils {
 			if (maxMz<mz) maxMz=mz;
 		}
 		float[] bins=new float[(int)Math.ceil(maxMz/binWidth)];
-		if (bins.length==0) return  new PrecursorScan("Combined", 0, 0.0f, new double[0], new float[0], 0.0f);
+		if (bins.length==0) return  new PrecursorScan("Combined", 0, 0.0f, null, new double[0], new float[0], 0.0f);
 
+		float totalIIT=0.0f;
 		float minRT=Float.MAX_VALUE;
 		float tic=0f;
 		for (Spectrum spectrum : spectra) {
 			if (spectrum.getScanStartTime()<minRT) minRT=spectrum.getScanStartTime();
+			if (spectrum instanceof AcquiredSpectrum) {
+				float iit=((AcquiredSpectrum)spectrum).getIonInjectionTime();
+				if (iit>0) {
+					totalIIT+=iit;
+				}
+			}
 			
 			double[] mz=spectrum.getMassArray();
 			float[] intens=spectrum.getIntensityArray();
@@ -49,16 +56,23 @@ public class SpectrumUtils {
 			}
 		}
 		
-		return new PrecursorScan("Combined", 0, minRT, masses.toArray(), intensities.toArray(), tic);
+		return new PrecursorScan("Combined", 0, minRT, totalIIT, masses.toArray(), intensities.toArray(), tic);
 	}
 	public static Spectrum accurateMergeSpectra(ArrayList<Spectrum> spectra, MassTolerance tolerance) {
 		TDoubleArrayList masses=new TDoubleArrayList();
 		TFloatArrayList intensities=new TFloatArrayList();
-		
+
+		float totalIIT=0.0f;
 		float minRT=Float.MAX_VALUE;
 		float tic=0f;
 		for (Spectrum spectrum : spectra) {
 			if (spectrum.getScanStartTime()<minRT) minRT=spectrum.getScanStartTime();
+			if (spectrum instanceof AcquiredSpectrum) {
+				float iit=((AcquiredSpectrum)spectrum).getIonInjectionTime();
+				if (iit>0) {
+					totalIIT+=iit;
+				}
+			}
 			
 			double[] mz=spectrum.getMassArray();
 			float[] intens=spectrum.getIntensityArray();
@@ -75,7 +89,7 @@ public class SpectrumUtils {
 			}
 			tic += spectrum.getTIC();
 		}
-		return new PrecursorScan("Combined", 0, minRT, masses.toArray(), intensities.toArray(), tic);
+		return new PrecursorScan("Combined", 0, minRT, totalIIT, masses.toArray(), intensities.toArray(), tic);
 	}
 
 	public static int getIndex(TDoubleArrayList peaks, double target, MassTolerance tolerance) {

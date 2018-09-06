@@ -23,7 +23,7 @@ public class Range implements Comparable<Range> {
 	
 	@Override
 	public String toString() {
-		return start+" to "+stop;
+		return Math.round(start*10.0f)/10.0f+" to "+Math.round(stop*10.0f)/10.0f;
 	}
 	
 	@Override

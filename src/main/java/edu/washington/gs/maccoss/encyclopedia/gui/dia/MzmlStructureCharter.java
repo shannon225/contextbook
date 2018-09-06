@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.jfree.chart.ChartPanel;
 
@@ -66,22 +67,23 @@ public class MzmlStructureCharter {
 	}
 
 	public static ChartPanel getStructureChart(ScanRangeTracker scanTracker) {
-		HashMap<Range, TFloatArrayList> retentionTimesByStripe=scanTracker.getStripeRTsInSecs();
-		HashMap<Range, TFloatArrayList> retentionTimesByPrecursor=scanTracker.getPrecursorRTsInSecs();
+		TreeMap<Range, TFloatArrayList> retentionTimesByStripe=new TreeMap<>(scanTracker.getStripeRTsInSecs());
+		TreeMap<Range, TFloatArrayList> retentionTimesByPrecursor=new TreeMap<>(scanTracker.getPrecursorRTsInSecs());
 
 		float firstScan=Float.MAX_VALUE;
 		ArrayList<XYTraceInterface> traces=new ArrayList<>();
+		boolean everyOther=false;
 		for (Entry<Range, TFloatArrayList> entry : retentionTimesByStripe.entrySet()) {
 			Range range=entry.getKey();
 			TFloatArrayList rts=entry.getValue();
 			if (rts.size()>0) {
 				if (rts.get(0)<firstScan) firstScan=rts.get(0);
+				everyOther=!everyOther;
 
-				XYTraceInterface trace=new XYTrace(new float[] {range.getStart(), range.getStop()}, new float[] {rts.get(0), rts.get(0)}, GraphType.squaredline, range.toString(),
-						new Color(100, 100, 255), 5.0f);
+				XYTraceInterface trace=new XYTrace(new float[] {range.getStart(), range.getStop()}, new float[] {rts.get(0), rts.get(0)}, GraphType.squaredline, range.toString(), getColor(everyOther), 5.0f);
 				traces.add(trace);
 				if (rts.size()>1) {
-					trace=new XYTrace(new float[] {range.getStart(), range.getStop()}, new float[] {rts.get(1), rts.get(1)}, GraphType.squaredline, range.toString(), new Color(0, 0, 200), 5.0f);
+					trace=new XYTrace(new float[] {range.getStart(), range.getStop()}, new float[] {rts.get(1), rts.get(1)}, GraphType.squaredline, range.toString(), getColor(everyOther), 5.0f);
 					traces.add(trace);
 					trace=new XYTrace(new float[] {range.getStop(), range.getStop()}, new float[] {rts.get(0), rts.get(1)}, GraphType.dashedline, range.toString(), Color.gray, 1.0f);
 					traces.add(trace);
@@ -104,4 +106,7 @@ public class MzmlStructureCharter {
 		return panel;
 	}
 
+	private static Color getColor(boolean everyOther) {
+		return everyOther?new Color(0, 0, 200):new Color(100, 100, 255);
+	}
 }

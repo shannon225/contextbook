@@ -226,14 +226,14 @@ public class XCorDIATest extends TestCase {
 			Arrays.fill(intens, 1f);
 
 			return Lists.newArrayList(
-					new Stripe("0", "0", 0, 0f, 400f, 700f, masses, intens),
-					new Stripe("1", "1", 1, 1f, 400f, 700f, masses, intens),
-					new Stripe("2", "2", 2, 2f, 400f, 700f, masses, intens),
-					new Stripe("3", "3", 3, 3f, 400f, 700f, masses, intens),
-					new Stripe("4", "4", 4, 4f, 400f, 700f, masses, intens),
-					new Stripe("5", "5", 5, 5f, 400f, 700f, masses, intens),
-					new Stripe("6", "6", 6, 6f, 400f, 700f, masses, intens),
-					new Stripe("7", "7", 7, 7f, 400f, 700f, masses, intens)
+					new Stripe("0", "0", 0, 0f, 0f, 400f, 700f, masses, intens),
+					new Stripe("1", "1", 1, 1f, 0f, 400f, 700f, masses, intens),
+					new Stripe("2", "2", 2, 2f, 0f, 400f, 700f, masses, intens),
+					new Stripe("3", "3", 3, 3f, 0f, 400f, 700f, masses, intens),
+					new Stripe("4", "4", 4, 4f, 0f, 400f, 700f, masses, intens),
+					new Stripe("5", "5", 5, 5f, 0f, 400f, 700f, masses, intens),
+					new Stripe("6", "6", 6, 6f, 0f, 400f, 700f, masses, intens),
+					new Stripe("7", "7", 7, 7f, 0f, 400f, 700f, masses, intens)
 			);
 		}
 
