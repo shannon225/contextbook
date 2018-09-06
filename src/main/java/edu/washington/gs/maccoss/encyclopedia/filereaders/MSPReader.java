@@ -191,10 +191,12 @@ public class MSPReader {
 						}
 					}
 					
+					
 					//Issue 90: sptext files do not always contain periods
 					String sequence;
 					if (fullname.contains(".")) {
-						sequence=fullname.substring(fullname.indexOf('.')+1, fullname.lastIndexOf('.'));
+						String modLess = getModlessSequence(fullname);
+						sequence = modLess.substring(modLess.indexOf('.')+1, modLess.lastIndexOf('.'));
 					} else {
 						sequence = fullname;
 					}
@@ -280,6 +282,46 @@ public class MSPReader {
 		}
 	}
 
+	/**
+	 * Issue 90: Remove modifications given in brackets from a string,
+	 * without examining contents of brackets.
+	 * If no bracketed expressions exist, return original string
+	 * <p>
+	 * eg
+	 * PEPT[80.0]IDER --> PEPTIDER
+	 * [A]PEPT[80.0]IDER[B] --> PEPTIDER
+	 * R.AAAAAAAAAAAAAAAGAGAGAK.Q --> R.AAAAAAAAAAAAAAAGAGAGAK.Q
+	 * <p>
+	 * @param sequence
+	 * @return
+	 */
+	public static String getModlessSequence(String sequence) {
+		
+		StringBuilder sb = new StringBuilder();
+		boolean isInMod = false;
+		
+		for (int i = 0; i < sequence.length(); i++) {
+			
+			char c = sequence.charAt(i);
+			
+			if (isInMod) {
+				if (c == ']') {
+					isInMod = false;
+				}
+				continue;
+			} 
+			
+			if(!isInMod && c == '[') {
+				isInMod = true;
+				continue;
+			} 
+			
+			sb.append(String.valueOf(c));
+		}
+		
+		return sb.toString();
+	}
+	
 	/**
 	 *  inner quoted splitting because MSP format is insane
 	 * @param s
