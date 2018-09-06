@@ -168,6 +168,8 @@ public class MSPReader {
 						scoreString=map.get("Prob");
 						if (scoreString != null) {
 							score=Float.parseFloat(scoreString);
+						} else {
+							score = 0.0f; //Issue 90: force score of 0 if the score is missing.
 						}
 						
 					} else {
