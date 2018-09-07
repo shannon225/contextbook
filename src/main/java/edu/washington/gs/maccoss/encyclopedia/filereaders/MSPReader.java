@@ -32,13 +32,13 @@ public class MSPReader {
 		
 		convertMSP(mspFile, fastaFile, libraryFile, SearchParameterParser.getDefaultParametersObject());
 	}
-	public static void convertMSP(File mspFile, File fastaFile, SearchParameters parameters) throws IOException, SQLException {
+	public static void convertMSP(File mspFile, File fastaFile, SearchParameters parameters) throws IOException, SQLException, IllegalArgumentException {
 		String absolutePath=mspFile.getAbsolutePath();
 		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
 		convertMSP(mspFile, fastaFile, libraryFile, parameters);
 	}
 
-	public static void convertMSP(File mspFile, File fastaFile, File libraryFile, SearchParameters parameters) throws IOException, SQLException {
+	public static void convertMSP(File mspFile, File fastaFile, File libraryFile, SearchParameters parameters) throws IOException, SQLException, IllegalArgumentException {
 		Logger.logLine("Reading MSP file "+mspFile.getName());
 		ArrayList<LibraryEntry> entries=readMSP(mspFile, false);
 
@@ -84,37 +84,33 @@ public class MSPReader {
 		library.close();
 	}
 	
-	public static ArrayList<LibraryEntry> readMSP(File f, boolean keepAccessions) {
+	public static ArrayList<LibraryEntry> readMSP(File f, boolean keepAccessions) throws IOException, IllegalArgumentException{
 		BufferedReader in=null;
 		ArrayList<LibraryEntry> entryList=new ArrayList<LibraryEntry>();
 		try {
 			in=new BufferedReader(new FileReader(f));
 			return readMSP(in, f.getName(), keepAccessions);
 
-		} catch (IOException ioe) {
-			Logger.errorLine("I/O Error found reading NIST MSP Library ["+f.getAbsolutePath()+"]");
-			Logger.errorException(ioe);
-			return entryList;
 		} finally {
 			if (in!=null) {
 				try {
 					in.close();
 				} catch (IOException ioe) {
-					ioe.printStackTrace();
+					throw(ioe);
 				}
 			}
 		}
 	}
 	
-	public static ArrayList<LibraryEntry> readMSP(String s, String fileName, boolean keepAccessions) {
+	public static ArrayList<LibraryEntry> readMSP(String s, String fileName, boolean keepAccessions) throws IOException, IllegalArgumentException {
 		return readMSP(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)))), fileName, keepAccessions);
 	}
 	
-	public static ArrayList<LibraryEntry> readMSP(InputStream s, String fileName, boolean keepAccessions) {
+	public static ArrayList<LibraryEntry> readMSP(InputStream s, String fileName, boolean keepAccessions) throws IOException, IllegalArgumentException {
 		return readMSP(new BufferedReader(new InputStreamReader(s)), fileName, keepAccessions);
 	}
 	
-	public static ArrayList<LibraryEntry> readMSP(BufferedReader in, String fileName, boolean keepAccessions) {
+	public static ArrayList<LibraryEntry> readMSP(BufferedReader in, String fileName, boolean keepAccessions) throws IOException, IllegalArgumentException {
 		//TODO: take in parameters
 		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 
@@ -125,6 +121,7 @@ public class MSPReader {
 			String peptideModSeq=null;
 			String fullname=null;
 			String accession=null;
+			String altName=null; //Issue 90: A fallback when the full name is not present in the file
 			byte precursorCharge=0;
 			double precursorMZ=0.0;
 			float retentionTime=0.0f;
@@ -135,7 +132,9 @@ public class MSPReader {
 				if (eachline.trim().length()==0) {
 					continue OUTERLOOP;
 				}
+				
 				if (eachline.startsWith("Name: ")) {
+					altName = eachline.substring(6);
 					if (peaks.size()>0) {
 						Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
 						HashSet<String> accessions=new HashSet<String>();
@@ -163,9 +162,15 @@ public class MSPReader {
 					precursorMZ=Double.parseDouble(map.get("Parent"));
 					String scoreString=map.get("Unassigned");
 					
+					//Issue 90: If the score is missing, just write "0".
+					//This is the same value used when importing a .blib generated in skyline.
 					if (scoreString==null) {
 						scoreString=map.get("Prob");
-						score=Float.parseFloat(scoreString);
+						if (scoreString != null) {
+							score=Float.parseFloat(scoreString);
+						} else {
+							score = 0.0f; //Issue 90: force score of 0 if the score is missing.
+						}
 						
 					} else {
 						score=1.0f-Float.parseFloat(scoreString);
@@ -183,13 +188,33 @@ public class MSPReader {
 					
 					if (fullname==null) {
 						fullname=map.get("Fullname");
+						if (fullname == null) {
+							fullname = altName; //Issue 90: If no other name information is included, fall back to sequence and charge.
+						}
 					}
-					String sequence=fullname.substring(fullname.indexOf('.')+1, fullname.lastIndexOf('.'));
+					
+					
+					//Issue 90: sptext files do not always contain periods
+					String sequence;
+					String modLess = getModlessSequence(fullname);
+					if (modLess.contains(".")) {
+						sequence = modLess.substring(modLess.indexOf('.')+1, modLess.lastIndexOf('.'));
+					} else {
+						sequence = modLess;
+					}
+					
 					sequence=PeptideUtils.getPeptideSeq(sequence);
-					precursorCharge=Byte.parseByte(fullname.substring(fullname.lastIndexOf('/')+1));
+					
+					//Issue 90: The charge may be stored as a separate field in the comment,
+					//or attached to the peptide sequence itself e.g. PEPTIDER+2
+					if (map.containsKey("Charge")) {
+						precursorCharge = Byte.parseByte(map.get("Charge"));
+					} else {
+						precursorCharge=Byte.parseByte(fullname.substring(fullname.lastIndexOf('/')+1));
+					}
 					
 					String mods=map.get("Mods");
-					StringTokenizer st=new StringTokenizer(mods, "/");
+					StringTokenizer st=new StringTokenizer(mods, "/()");
 					int modCount=Integer.parseInt(st.nextToken());
 					if (modCount>0) {
 						TIntDoubleHashMap modMap=new TIntDoubleHashMap();
@@ -248,25 +273,57 @@ public class MSPReader {
 			}
 			return entryList;
 
-		} catch (IOException ioe) {
-			Logger.errorLine("I/O Error found reading NIST MSP Library ["+fileName+"]");
-			Logger.errorException(ioe);
-			return entryList;
-		} catch (Exception e) {
-			Logger.errorLine("I/O Error found reading NIST MSP Library ["+fileName+"], parsing ["+eachline+"]");
-			Logger.errorException(e);
-			return entryList;
 		} finally {
 			if (in!=null) {
 				try {
 					in.close();
 				} catch (IOException ioe) {
-					ioe.printStackTrace();
+					throw(ioe);
 				}
 			}
 		}
 	}
 
+	/**
+	 * Issue 90: Remove modifications given in brackets from a string,
+	 * without examining contents of brackets.
+	 * If no bracketed expressions exist, return original string
+	 * <p>
+	 * eg
+	 * PEPT[80.0]IDER --> PEPTIDER
+	 * [A]PEPT[80.0]IDER[B] --> PEPTIDER
+	 * R.AAAAAAAAAAAAAAAGAGAGAK.Q --> R.AAAAAAAAAAAAAAAGAGAGAK.Q
+	 * <p>
+	 * @param sequence
+	 * @return
+	 */
+	public static String getModlessSequence(String sequence) {
+		
+		StringBuilder sb = new StringBuilder();
+		boolean isInMod = false;
+		
+		for (int i = 0; i < sequence.length(); i++) {
+			
+			char c = sequence.charAt(i);
+			
+			if (isInMod) {
+				if (c == ']') {
+					isInMod = false;
+				}
+				continue;
+			} 
+			
+			if(!isInMod && c == '[') {
+				isInMod = true;
+				continue;
+			} 
+			
+			sb.append(String.valueOf(c));
+		}
+		
+		return sb.toString();
+	}
+	
 	/**
 	 *  inner quoted splitting because MSP format is insane
 	 * @param s
@@ -326,7 +383,7 @@ public class MSPReader {
 			return -17.026549;
 		} else if (aa=='C'&&"Carbamidomethyl".equalsIgnoreCase(mod)) {
 			return 	57.0214635;
-		} else if (aa=='C'&&"Pyro-carbamidomethyl".equalsIgnoreCase(mod)) {
+		} else if (aa=='C'&&("Pyro-carbamidomethyl".equalsIgnoreCase(mod)||"Pyro-cmC".equalsIgnoreCase(mod))) {
 			return 39.994915; // +57,-17
 		} else if ("Acetyl".equalsIgnoreCase(mod)) {
 			return 42.010565;

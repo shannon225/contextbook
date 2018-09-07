@@ -31,7 +31,7 @@ public class MSPReaderTest extends TestCase {
 		
 	}
 
-	public void testFastaReader() {
+	public void testFastaReader() throws Exception {
 		InputStream is=getClass().getResourceAsStream("/truncated.msp");
 		ArrayList<LibraryEntry> entries=MSPReader.readMSP(is, "truncated.msp", true);
 		assertEquals(4, entries.size());

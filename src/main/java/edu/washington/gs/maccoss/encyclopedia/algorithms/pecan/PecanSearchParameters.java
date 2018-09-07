@@ -126,10 +126,40 @@ public class PecanSearchParameters extends SearchParameters {
 		return map;
 	}
 	
-	public PecanSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance,
-			double fragmentOffsetPPM, DigestionEnzyme enzyme, int minPeptideLength, int maxPeptideLength, int maxMissedCleavages, byte minCharge, byte maxCharge, int minEluteTime,
-			int numberOfReportedPeaks, boolean addDecoysToBackgound, boolean dontRunDecoys, float percolatorThreshold, float percolatorProteinThreshold, float alpha, float beta, Integer percolatorVersionNumber,
-			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float targetWindowCenter, float precursorWindowSize, int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, float minIntensity, boolean quantifyAcrossSamples, boolean verifyModificationIons, boolean requireVariableMods, boolean filterPeaklists) {
+	public PecanSearchParameters(
+			AminoAcidConstants aaConstants, 
+			FragmentationType fragType, 
+			MassTolerance precursorTolerance, 
+			double precursorOffsetPPM, 
+			double precursorIsolationMargin, 
+			MassTolerance fragmentTolerance,
+			double fragmentOffsetPPM, 
+			DigestionEnzyme enzyme, 
+			int minPeptideLength, 
+			int maxPeptideLength, 
+			int maxMissedCleavages, 
+			byte minCharge, 
+			byte maxCharge, 
+			int minEluteTime,
+			int numberOfReportedPeaks, 
+			boolean addDecoysToBackgound, 
+			boolean dontRunDecoys, 
+			float percolatorThreshold, 
+			float percolatorProteinThreshold, 
+			float alpha, 
+			float beta, 
+			Integer percolatorVersionNumber,
+			DataAcquisitionType dataAcquisitionType, 
+			int numberOfThreadsUsed, 
+			float targetWindowCenter, 
+			float precursorWindowSize, 
+			int numberOfQuantitativePeaks, 
+			int minNumOfQuantitativePeaks, 
+			float minIntensity, 
+			boolean quantifyAcrossSamples, 
+			boolean verifyModificationIons, 
+			boolean requireVariableMods, 
+			boolean filterPeaklists) {
 		super(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, fragmentTolerance, enzyme, percolatorThreshold, percolatorProteinThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, minEluteTime*2.0f, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, Optional.ofNullable((PeptideModification)null), ScoringBreadthType.ENTIRE_RT_WINDOW, 0, quantifyAcrossSamples, verifyModificationIons, -1.0f, filterPeaklists);
 		this.minPeptideLength=minPeptideLength;
 		this.maxPeptideLength=maxPeptideLength;
