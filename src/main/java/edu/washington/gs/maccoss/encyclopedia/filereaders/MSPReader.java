@@ -196,11 +196,11 @@ public class MSPReader {
 					
 					//Issue 90: sptext files do not always contain periods
 					String sequence;
-					if (fullname.contains(".")) {
-						String modLess = getModlessSequence(fullname);
+					String modLess = getModlessSequence(fullname);
+					if (modLess.contains(".")) {
 						sequence = modLess.substring(modLess.indexOf('.')+1, modLess.lastIndexOf('.'));
 					} else {
-						sequence = fullname;
+						sequence = modLess;
 					}
 					
 					sequence=PeptideUtils.getPeptideSeq(sequence);
