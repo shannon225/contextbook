@@ -96,6 +96,13 @@ public final class DigestionEnzyme {
 			
 			return new DigestionEnzyme("Glu-C", "glu-c", n, c);
 			
+		} else if ("Asp-N".equalsIgnoreCase(enzymeName)) {
+			n.addAll(AAs);
+			c.add('D');
+			c.add('E');
+			
+			return new DigestionEnzyme("Asp-N", "asp-n", n, c);
+			
 		} else if ("Chymotrypsin".equalsIgnoreCase(enzymeName)) {
 			n.add('F');
 			n.add('Y');
