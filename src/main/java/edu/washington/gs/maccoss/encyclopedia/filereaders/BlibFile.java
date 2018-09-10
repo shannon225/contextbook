@@ -310,7 +310,7 @@ public class BlibFile extends SQLFile {
 					prep.setString(2, entry.getPeptideSeq()); // pepSeq
 					prep.setDouble(3, entry.getPrecursorMZ()); // precursorMZ
 					prep.setInt(4, entry.getPrecursorCharge()); // precursorCharge
-					String peptideModSeq=PeptideUtils.formatForSkyline(entry.getPeptideModSeq(), aaConstants);
+					String peptideModSeq=PeptideUtils.formatForSkyline(entry.getPeptideModSeq());
 					prep.setString(5, peptideModSeq); // peptideModSeq
 					prep.setString(6, "-"); // prevAA
 					prep.setString(7, "-"); // nextAA

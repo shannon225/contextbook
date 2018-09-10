@@ -396,6 +396,8 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(convertTraML);
 		
+		convertMenu.addSeparator();
+		
 		JMenuItem convertELIBtoBLIB=new JMenuItem("Convert Library to BLIB", convertDBIcon);
 		convertELIBtoBLIB.addActionListener(new ActionListener() {
 			@Override
@@ -404,6 +406,15 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		convertMenu.add(convertELIBtoBLIB);
+		
+		JMenuItem convertELIBtoOpenSWATH=new JMenuItem("Convert Library to OpenSWATH tsv", convertDBIcon);
+		convertELIBtoOpenSWATH.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertELIBtoOpenSWATH(SearchPanel.this, getVisibleTab().getParameters());
+			}
+		});
+		convertMenu.add(convertELIBtoOpenSWATH);
 		
 		convertMenu.addSeparator();
 		
