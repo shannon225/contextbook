@@ -10,15 +10,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SparseXCorrSpectrum
 
 public class XCorrStripe extends Stripe {
 	private final SparseXCorrSpectrum xcorrSpectrum;
-
-	public XCorrStripe(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, float isolationWindowLower, float isolationWindowUpper, double[] massArray,
-			float[] intensityArray, SearchParameters params) {
-		super(spectrumName, precursorName, spectrumIndex, scanStartTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray);
-		xcorrSpectrum=SparseXCorrCalculator.normalize(this, new Range(isolationWindowLower, isolationWindowUpper), false, params);
-	}
 	
 	public XCorrStripe(Stripe stripe, SearchParameters params) {
-		super(stripe.getSpectrumName(), stripe.getPrecursorName(), stripe.getSpectrumIndex(), stripe.getScanStartTime(), stripe.getIsolationWindowLower(), stripe.getIsolationWindowUpper(), stripe.getMassArray(), stripe.getIntensityArray());
+		super(stripe.getSpectrumName(), stripe.getPrecursorName(), stripe.getSpectrumIndex(), stripe.getScanStartTime(), stripe.getIonInjectionTime(), stripe.getIsolationWindowLower(), stripe.getIsolationWindowUpper(), stripe.getMassArray(), stripe.getIntensityArray());
 		xcorrSpectrum=SparseXCorrCalculator.normalize(this, new Range(stripe.getIsolationWindowLower(), stripe.getIsolationWindowUpper()), false, params);
 	}
 

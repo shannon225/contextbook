@@ -43,6 +43,6 @@ public class DotProductTest extends TestCase {
 		return new LibraryEntry("", new HashSet<String>(), 1, (byte)1, "", 1, 1, 1, masses, intensities, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 	}
 	public Stripe getStripe(double[] masses, float[] intensities) {
-		return new Stripe("", "", 1, 1, 1, 1, masses, intensities);
+		return new Stripe("", "", 1, 1, 0f, 1, 1, masses, intensities);
 	}
 }

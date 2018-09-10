@@ -45,6 +45,7 @@ public class MzmlToDIAConsumer implements Runnable {
 					}
 					stripes=filtered;
 				}
+
 				stripeFile.addStripe(stripes);
 			}
 			

@@ -18,6 +18,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import gnu.trove.map.hash.TCharDoubleHashMap;
+import gnu.trove.set.hash.TCharHashSet;
 import junit.framework.TestCase;
 
 public class DigestionEnzymeTest extends TestCase {
@@ -707,4 +708,18 @@ public class DigestionEnzymeTest extends TestCase {
 		return expected;
 	}
 
+	public void testXTandemCode() {
+		assertEquals("[KR]|{P}", DigestionEnzyme.getEnzyme("Trypsin").toXTandemCode());
+		assertEquals("[KR]|{}", DigestionEnzyme.getEnzyme("Trypsin/p").toXTandemCode());
+		assertEquals("[K]|{P}", DigestionEnzyme.getEnzyme("Lys-C").toXTandemCode());
+		assertEquals("{}|[K]", DigestionEnzyme.getEnzyme("Lys-N").toXTandemCode());
+		assertEquals("[R]|{P}", DigestionEnzyme.getEnzyme("Arg-C").toXTandemCode());
+		assertEquals("[DE]|{P}", DigestionEnzyme.getEnzyme("Glu-C").toXTandemCode());
+		assertEquals("[FLWY]|{P}", DigestionEnzyme.getEnzyme("Chymotrypsin").toXTandemCode());
+		assertEquals("[FL]|{}", DigestionEnzyme.getEnzyme("Pepsin A").toXTandemCode());
+		assertEquals("[AV]|{}", DigestionEnzyme.getEnzyme("Elastase").toXTandemCode());
+		assertEquals("{DE}|[AFILMV]", DigestionEnzyme.getEnzyme("Thermolysin").toXTandemCode());
+		assertEquals("[]|[]", DigestionEnzyme.getEnzyme("No Enzyme").toXTandemCode());
+		assertEquals("{}|{}", new DigestionEnzyme("Non-Specific", "nonspecific", new TCharHashSet(DigestionEnzyme.AAs), new TCharHashSet(DigestionEnzyme.AAs)).toXTandemCode());
+	}
 }

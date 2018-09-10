@@ -21,6 +21,7 @@ import java.io.FileOutputStream;
 import java.text.AttributedString;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -48,6 +49,7 @@ import org.jfree.chart.renderer.xy.XYAreaRenderer;
 import org.jfree.chart.renderer.xy.XYBlockRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.statistics.DefaultBoxAndWhiskerCategoryDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.graphics2d.svg.SVGGraphics2D;
@@ -64,6 +66,7 @@ import com.itextpdf.text.pdf.PdfWriter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Boxplotter.BoxPlotterRenderer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -77,6 +80,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
+import gnu.trove.list.array.TFloatArrayList;
 
 public class Charter {
 	public static void main(String[] args) {
@@ -320,6 +324,7 @@ public class Charter {
 		BarRenderer.setDefaultBarPainter(new StandardBarPainter());
 		BarRenderer.setDefaultShadowsVisible(false);
 	}
+	
 	public static ChartPanel getBarChart(String title, String xAxis, String yAxis, String[] categories, float[] values) {
 		assert (categories.length==values.length);
 		boolean displayLegend=false;
@@ -358,6 +363,78 @@ public class Charter {
 	    domainAxis.setMaximumCategoryLabelWidthRatio(2f);
 		if (domainAxis!=null) {
 			domainAxis.setLabelFont(font);
+			domainAxis.setTickLabelFont(font);
+		}
+
+		ChartPanel chartPanel=new ChartPanel(chart, false);
+		if (!displayLegend) {
+			chartPanel.getChart().removeLegend();
+		} else {
+			chartPanel.getChart().getLegend().setItemFont(font3);
+		}
+
+		chartPanel.setMinimumDrawWidth(0);
+		chartPanel.setMinimumDrawHeight(0);
+		chartPanel.setMaximumDrawWidth(Integer.MAX_VALUE);
+		chartPanel.setMaximumDrawHeight(Integer.MAX_VALUE);
+		return chartPanel;
+	}
+
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	public static ChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, HashMap<Comparable, TFloatArrayList> map) {
+		ArrayList<Comparable> keys=new ArrayList<>(map.keySet());
+		Collections.sort(keys);
+		
+		String[] categories=new String[keys.size()];
+		TFloatArrayList[] values=new TFloatArrayList[keys.size()];
+		for (int i=0; i<values.length; i++) {
+			Comparable key=keys.get(i);
+			categories[i]=key.toString();
+			values[i]=map.get(key);
+		}
+		return getBoxplotChart(title, xAxisLabel, yAxisLabel, categories, values);
+	}
+	
+	public static ChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, String[] categories, TFloatArrayList[] values) {
+		assert (categories.length==values.length);
+		boolean displayLegend=false;
+
+		DefaultBoxAndWhiskerCategoryDataset dataset=new DefaultBoxAndWhiskerCategoryDataset();
+		for (int i=0; i<values.length; i++) {
+			dataset.add(Boxplotter.calculateBoxAndWhiskerStatistics(values[i].toArray()), xAxisLabel, categories[i]);
+		}
+
+		BoxPlotterRenderer renderer=new BoxPlotterRenderer();
+		CategoryAxis xAxis=new CategoryAxis(xAxisLabel);
+		NumberAxis yAxis=new NumberAxis(yAxisLabel);
+		yAxis.setAutoRangeIncludesZero(false);
+		CategoryPlot plot=new CategoryPlot(dataset, xAxis, yAxis, renderer);
+
+		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
+		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
+		Font font3=new Font("News Gothic MT", Font.PLAIN, 18);
+		font=new Font("News Gothic MT", Font.PLAIN, 10);
+		font2=new Font("News Gothic MT", Font.PLAIN, 14);
+		font3=new Font("News Gothic MT", Font.PLAIN, 14);
+		final JFreeChart chart=new JFreeChart(title, font, plot, true);
+
+		plot.setBackgroundPaint(Color.white);
+		plot.setDomainGridlinePaint(Color.white);//gray);
+		plot.setDomainGridlinesVisible(false);
+		plot.setRangeGridlinePaint(Color.white);//gray);
+		plot.setRangeGridlinesVisible(false);
+		chart.setBackgroundPaint(Color.white);
+
+		NumberAxis rangeAxis=(NumberAxis) ((CategoryPlot) plot).getRangeAxis();
+		rangeAxis.setLabelFont(font2);
+		rangeAxis.setTickLabelFont(font);
+
+		CategoryAxis domainAxis=(CategoryAxis)((CategoryPlot)plot).getDomainAxis();
+		domainAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_90);
+	    domainAxis.setMaximumCategoryLabelLines(1);
+	    domainAxis.setMaximumCategoryLabelWidthRatio(2f);
+		if (domainAxis!=null) {
+			domainAxis.setLabelFont(font2);
 			domainAxis.setTickLabelFont(font);
 		}
 

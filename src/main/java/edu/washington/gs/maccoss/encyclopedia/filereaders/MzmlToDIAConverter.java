@@ -97,6 +97,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 			// at it until after the join, we're safe to not have to worry about
 			// concurrency.
 			HashMap<Range, TFloatArrayList> retentionTimesByStripe=producer.getRetentionTimesByStripe();
+			HashMap<Range, TFloatArrayList> ionInjectionTimesByStripe=producer.getIonInjectionTimesByStripe();
 
 			Thread[] threads;
 
@@ -104,6 +105,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 				BlockingQueue<MzmlBlock> deconvolutionBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);
 				OverlapDeconvoluter deconvoluter=new OverlapDeconvoluter(parameters.getFragmentTolerance(), mzmlBlockQueue, deconvolutionBlockQueue);
 				retentionTimesByStripe=deconvoluter.getRetentionTimesByStripe();
+				ionInjectionTimesByStripe=deconvoluter.getIonInjectionTimesByStripe();
 				MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(deconvolutionBlockQueue, stripeFile, parameters);
 
 				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
