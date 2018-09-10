@@ -89,7 +89,7 @@ public final class DigestionEnzyme {
 			return new DigestionEnzyme("Arg-C", "arg-c", n, c);
 			
 		} else if ("Glu-C".equalsIgnoreCase(enzymeName)) {
-			n.add('D');
+			// n.add('D'); //Danielle says not to bother
 			n.add('E');
 			c.addAll(AAs);
 			c.remove('P');
