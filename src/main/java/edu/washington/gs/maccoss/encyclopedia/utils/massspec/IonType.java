@@ -142,6 +142,42 @@ public enum IonType {
 		return "unknown";
 	}
 	
+	public static String getType(IonType t) {
+		switch (t) {
+		case a: return "a";
+		case b: return "b";
+		case c: return "c";
+		case x: return "x";
+		case y: return "y";
+		case z: return "z";
+		case z1: return "z";
+		case aNL: return "a";
+		case bNL: return "b";
+		case cNL: return "c";
+		case xNL: return "x";
+		case yNL: return "y";
+		case zNL: return "z";
+		case z1NL: return "z";
+
+		case ap2: return "a";
+		case bp2: return "b";
+		case cp2: return "c";
+		case xp2: return "x";
+		case yp2: return "y";
+		case zp2: return "z";
+		case z1p2: return "z";
+		case ap2NL: return "a";
+		case bp2NL: return "b";
+		case cp2NL: return "c";
+		case xp2NL: return "x";
+		case yp2NL: return "y";
+		case zp2NL: return "z";
+		case z1p2NL: return "z";
+		case unknown: return "unknown";
+		}
+		return "unknown";
+	}
+	
 	public static Pair<IonType, Byte> fromIndexedString(String s) {
 		byte type;
 		byte index;
@@ -240,6 +276,42 @@ public enum IonType {
 		}
 		
 		throw new EncyclopediaException("Can't process ion type: "+s);
+	}
+	
+	public static byte getCharge(IonType t) {
+		switch (t) {
+		case a: return 1;
+		case b: return 1;
+		case c: return 1;
+		case x: return 1;
+		case y: return 1;
+		case z: return 1;
+		case z1: return 1;
+		case aNL: return 1;
+		case bNL: return 1;
+		case cNL: return 1;
+		case xNL: return 1;
+		case yNL: return 1;
+		case zNL: return 1;
+		case z1NL: return 1;
+
+		case ap2: return 2;
+		case bp2: return 2;
+		case cp2: return 2;
+		case xp2: return 2;
+		case yp2: return 2;
+		case zp2: return 2;
+		case z1p2: return 2;
+		case ap2NL: return 2;
+		case bp2NL: return 2;
+		case cp2NL: return 2;
+		case xp2NL: return 2;
+		case yp2NL: return 2;
+		case zp2NL: return 2;
+		case z1p2NL: return 2;
+		case unknown: return 1;
+		}
+		return 1;
 	}
 	
 	public static Color getColor(IonType t) {

@@ -51,6 +51,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.dia.LocalizationResultsBrowser
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.MultiResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.PeptideExtractingBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.AustinsSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.CASiLParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.LindsaysSpecialEncyclopediaPanel;
@@ -104,6 +105,9 @@ public class SearchPanel extends JPanel {
 						break;
 					case 2:
 						encyclopedia=new MoMosSpecialEncyclopediaPanel(this);
+						break;
+					case 3:
+						encyclopedia=new AustinsSpecialEncyclopediaPanel(this);
 						break;
 					default:
 						encyclopedia=new EncyclopediaParametersPanel(this);
@@ -392,6 +396,8 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(convertTraML);
 		
+		convertMenu.addSeparator();
+		
 		JMenuItem convertELIBtoBLIB=new JMenuItem("Convert Library to BLIB", convertDBIcon);
 		convertELIBtoBLIB.addActionListener(new ActionListener() {
 			@Override
@@ -400,6 +406,15 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		convertMenu.add(convertELIBtoBLIB);
+		
+		JMenuItem convertELIBtoOpenSWATH=new JMenuItem("Convert Library to OpenSWATH tsv", convertDBIcon);
+		convertELIBtoOpenSWATH.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertELIBtoOpenSWATH(SearchPanel.this, getVisibleTab().getParameters());
+			}
+		});
+		convertMenu.add(convertELIBtoOpenSWATH);
 		
 		convertMenu.addSeparator();
 		

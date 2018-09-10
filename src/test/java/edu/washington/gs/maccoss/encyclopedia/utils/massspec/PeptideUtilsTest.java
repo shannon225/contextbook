@@ -66,29 +66,29 @@ public class PeptideUtilsTest extends TestCase {
 	
 	public void testSkylinePeptideModSeq() {
 		String sequence="A[+42.0]QRHS[+79.96633]DSC[+57.0214635]C[+57.0214635]SLEEK";
-		String peptideModSeq=PeptideUtils.formatForSkyline(sequence, PARAMETERS.getAAConstants());
+		String peptideModSeq=PeptideUtils.formatForSkyline(sequence);
 		assertEquals("A[+42.0]QRHS[+80.0]DSC[+57.0]C[+57.0]SLEEK", peptideModSeq);
 
-		peptideModSeq=PeptideUtils.formatForSkylinePeakBoundaries(sequence, PARAMETERS.getAAConstants());
+		peptideModSeq=PeptideUtils.formatForSkylinePeakBoundaries(sequence);
 		assertEquals("A[+42]QRHS[+80]DSC[+57]C[+57]SLEEK", peptideModSeq);
 
-		peptideModSeq=PeptideUtils.formatForEncyclopeDIA(sequence, PARAMETERS.getAAConstants());
+		peptideModSeq=PeptideUtils.formatForEncyclopeDIA(sequence);
 		assertEquals("A[+42.0]QRHS[+79.96633]DSC[+57.0214635]C[+57.0214635]SLEEK", peptideModSeq);
 
-		peptideModSeq=PeptideUtils.formatForEncyclopeDIA("A[+42.0]QRHS[+79.96633]DSC[+57.0]C[+57.0]SLEEK", PARAMETERS.getAAConstants());
+		peptideModSeq=PeptideUtils.formatForEncyclopeDIA("A[+42.0]QRHS[+79.96633]DSC[+57.0]C[+57.0]SLEEK");
 		assertEquals("A[+42.0]QRHS[+79.96633]DSC[+57.0]C[+57.0]SLEEK", peptideModSeq);
 
 		sequence="Q[-17.0]QRHS[+79.96633]DSC[+57.0214635]C[+57.0214635]SLEEK";
-		peptideModSeq=PeptideUtils.formatForSkyline(sequence, PARAMETERS.getAAConstants());
+		peptideModSeq=PeptideUtils.formatForSkyline(sequence);
 		assertEquals("Q[-17.0]QRHS[+80.0]DSC[+57.0]C[+57.0]SLEEK", peptideModSeq);
 
-		peptideModSeq=PeptideUtils.formatForSkylinePeakBoundaries(sequence, PARAMETERS.getAAConstants());
+		peptideModSeq=PeptideUtils.formatForSkylinePeakBoundaries(sequence);
 		assertEquals("Q[-17]QRHS[+80]DSC[+57]C[+57]SLEEK", peptideModSeq);
 
-		peptideModSeq=PeptideUtils.formatForEncyclopeDIA(sequence, PARAMETERS.getAAConstants());
+		peptideModSeq=PeptideUtils.formatForEncyclopeDIA(sequence);
 		assertEquals("Q[-17.0]QRHS[+79.96633]DSC[+57.0214635]C[+57.0214635]SLEEK", peptideModSeq);
 
-		peptideModSeq=PeptideUtils.formatForEncyclopeDIA("Q[-17.0]QRHS[+79.96633]DSC[+57.0]C[+57.0]SLEEK", PARAMETERS.getAAConstants());
+		peptideModSeq=PeptideUtils.formatForEncyclopeDIA("Q[-17.0]QRHS[+79.96633]DSC[+57.0]C[+57.0]SLEEK");
 		assertEquals("Q[-17.0]QRHS[+79.96633]DSC[+57.0]C[+57.0]SLEEK", peptideModSeq);
 	}
 	

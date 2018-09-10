@@ -49,13 +49,17 @@ public class SearchGUIMain {
 			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mike_rotate_icon.png"));
 		} else {
 			if (isOffending==1) {
-				shortName="PoopeDIA";
-				name="Lindsay's PoopeDIA: Peptide Searching for DIA";
+				shortName="MaiziepeDIA";
+				name="Lindsay's MaiziepeDIA: Peptide Searching for DIA";
 				image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mazie_icon.png"));
 			} else if (isOffending==2) {
 				shortName="ChocopeDIA";
 				name="MoMo's ChocopeDIA: Peptide Searching for DIA";
 				image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/chocolate2.png"));
+			} else if (isOffending==3) {
+				shortName="StupiDIA";
+				name="Austin's StupiDIA: Peptide Searching for DIA";
+				image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/austin_icon.png"));
 			} else {
 				shortName="EncyclopeDIA";
 				name="EncyclopeDIA: Peptide Searching for DIA";

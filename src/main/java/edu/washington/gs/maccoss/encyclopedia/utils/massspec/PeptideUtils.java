@@ -316,19 +316,24 @@ public class PeptideUtils {
 	private static final DecimalFormat SKYLINE_DF = new DecimalFormat(".#");
 	private static final DecimalFormat SKYLINE_PEAK_BOUNDARIES_DF = new DecimalFormat("#");
 
-	public static String formatForSkyline(String sequence, AminoAcidConstants aaConstants) {
-		return formatForSkyline(sequence, aaConstants, SKYLINE_DF);
+	public static String formatForSkyline(String sequence) {
+		return formatForSkyline(sequence, SKYLINE_DF, true);
 	}
 	
-	public static String formatForSkylinePeakBoundaries(String sequence, AminoAcidConstants aaConstants) {
-		return formatForSkyline(sequence, aaConstants, SKYLINE_PEAK_BOUNDARIES_DF);
+	public static String formatForSkylinePeakBoundaries(String sequence) {
+		return formatForSkyline(sequence, SKYLINE_PEAK_BOUNDARIES_DF, true);
 	}
 	
-	public static String formatForEncyclopeDIA(String sequence, AminoAcidConstants aaConstants) {
-		return formatForSkyline(sequence, aaConstants, null);
+	public static String formatForEncyclopeDIA(String sequence) {
+		return formatForSkyline(sequence, null, true);
 	}
 	
-	public static String formatForSkyline(String sequence, AminoAcidConstants aaConstants, DecimalFormat df) {
+	public static String formatForTPP(String sequence) {
+		// doesn't support n&c termini
+		return formatForSkyline(sequence, SKYLINE_PEAK_BOUNDARIES_DF, false);
+	}
+	
+	private static String formatForSkyline(String sequence, DecimalFormat df, boolean addPlus) {
 		char[] ca=sequence.toCharArray();
 		
 		ArrayList<String> aas=new ArrayList<String>();
@@ -348,7 +353,7 @@ public class PeptideUtils {
 				String massText = sb.toString();
 				double modificationMass = Double.valueOf(massText);
 				String formattedMass=df==null?massText:df.format(modificationMass);
-				if (formattedMass.charAt(0)!='+'&&formattedMass.charAt(0)!='-') {
+				if (addPlus&&formattedMass.charAt(0)!='+'&&formattedMass.charAt(0)!='-') {
 					formattedMass="+"+formattedMass;
 				}
 				aas.set(aas.size()-1, aas.get(aas.size()-1)+"["+formattedMass+"]");
