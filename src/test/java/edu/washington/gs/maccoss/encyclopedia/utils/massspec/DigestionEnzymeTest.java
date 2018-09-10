@@ -714,7 +714,7 @@ public class DigestionEnzymeTest extends TestCase {
 		assertEquals("[K]|{P}", DigestionEnzyme.getEnzyme("Lys-C").toXTandemCode());
 		assertEquals("{}|[K]", DigestionEnzyme.getEnzyme("Lys-N").toXTandemCode());
 		assertEquals("[R]|{P}", DigestionEnzyme.getEnzyme("Arg-C").toXTandemCode());
-		assertEquals("[DE]|{P}", DigestionEnzyme.getEnzyme("Glu-C").toXTandemCode());
+		assertEquals("[E]|{P}", DigestionEnzyme.getEnzyme("Glu-C").toXTandemCode());
 		assertEquals("[FLWY]|{P}", DigestionEnzyme.getEnzyme("Chymotrypsin").toXTandemCode());
 		assertEquals("[FL]|{}", DigestionEnzyme.getEnzyme("Pepsin A").toXTandemCode());
 		assertEquals("[AV]|{}", DigestionEnzyme.getEnzyme("Elastase").toXTandemCode());
