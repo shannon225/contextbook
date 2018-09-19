@@ -355,7 +355,7 @@ public class SearchPanelUtilities {
 							
 							ArrayList<LibraryEntry> toWrite=new ArrayList<>();
 							for (LibraryEntry entry : library.getAllEntries(false, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()))) {
-								if (targets.contains(entry.getPeptideSeq())) {
+								if (targets.contains(entry.getPeptideSeq())||targets.contains(entry.getPeptideModSeq())) {
 									toWrite.add(entry);
 								}
 							}
