@@ -23,6 +23,8 @@ public class OverlapDeconvoluter implements Runnable {
 	private final HashMap<Range, TFloatArrayList> truncatedRetentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 	private final HashMap<Range, TFloatArrayList> truncatedIonInjectionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 
+	private Throwable error;
+
 	public OverlapDeconvoluter(MassTolerance tolerance, BlockingQueue<MzmlBlock> inputQueue, BlockingQueue<MzmlBlock> outputQueue) {
 		this.tolerance=tolerance;
 		this.inputQueue=inputQueue;
@@ -145,7 +147,20 @@ public class OverlapDeconvoluter implements Runnable {
 		} catch (InterruptedException ie) {
 			Logger.errorLine("DIA writing interrupted!");
 			Logger.errorException(ie);
+		} catch (Throwable t) {
+			Logger.errorLine("Overlap deconvolution failed!");
+			Logger.errorException(t);
+
+			this.error = t;
 		}
+	}
+
+	public boolean hadError() {
+		return null != error;
+	}
+
+	public Throwable getError() {
+		return error;
 	}
 	
 	public void addRetentionTime(Stripe thisStripe) {
