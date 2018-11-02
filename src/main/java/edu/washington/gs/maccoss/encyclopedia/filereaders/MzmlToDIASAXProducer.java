@@ -66,18 +66,18 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	@Override
 	public void run() {
 		try {
-			final ProgressInputStream stream=new ProgressInputStream(new FileInputStream(mzMLFile));
-			final long length=mzMLFile.length();
+			final ProgressInputStream stream = new ProgressInputStream(new FileInputStream(mzMLFile));
+			final long length = mzMLFile.length();
 
 			stream.addChangeListener(new ChangeListener() {
-				int lastUpdate=0;
+				int lastUpdate = 0;
 
 				@Override
 				public void stateChanged(ChangeEvent e) {
-					int floor=(int)((stream.getProgress()*100L)/length);
-					if (floor>lastUpdate) {
-						Logger.logLine("Parsed "+floor+"%");
-						lastUpdate=floor;
+					int floor = (int) ((stream.getProgress() * 100L) / length);
+					if (floor > lastUpdate) {
+						Logger.logLine("Parsed " + floor + "%");
+						lastUpdate = floor;
 					}
 				}
 			});
@@ -87,8 +87,11 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 			// Just for safety, ensure that if we get this far the consumer(s) of the queue will finish
 			// If parse() already put a block, this will never be consumed, but it can't hurt
 			mzmlBlockQueue.put(MzmlBlock.POISON_BLOCK);
+		} catch (InterruptedException ie) {
+			Logger.errorLine("mzML reading interrupted!");
+			Logger.errorException(ie);
 		} catch (Throwable t) {
-			Logger.errorLine("Mzml reading failed!");
+			Logger.errorLine("mzML reading failed!");
 			Logger.errorException(t);
 
 			this.error = t;
