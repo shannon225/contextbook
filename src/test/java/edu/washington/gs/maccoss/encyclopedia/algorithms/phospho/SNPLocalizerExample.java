@@ -120,7 +120,8 @@ public class SNPLocalizerExample {
 
 	public static void main(String[] args) throws Exception {
 		//File diaFile=new File("/Volumes/BriansSSD/20150908_6BB2_DIA_01.dia ");
-		File diaFile=new File("/Users/searleb/Documents/school/xcordia_manuscript/demux/20141121_3_4_DIA_1.dia");
+		//File diaFile=new File("/Users/searleb/Documents/school/xcordia_manuscript/demux/20141121_3_4_DIA_1.dia");
+		File diaFile=new File("/Users/searleb/Documents/backup/xcordia_manuscript/xcordia_5p/20141121_3_4_DIA_1.dia");
 
 		HashMap<String, String> defaults=SearchParameterParser.getDefaultParameters();
 		defaults.put("-localizationModification", "Phosphorylation");
@@ -190,7 +191,9 @@ public class SNPLocalizerExample {
 			ArrayList<XYTrace> uniqueFragmentsList=new ArrayList<XYTrace>(allFragments.values());
 			XYTraceInterface[] fragmentTraces=uniqueFragmentsList.toArray(new XYTrace[uniqueFragmentsList.size()]);
 
-			Charter.launchChart(sequenceKey+" Retention Time (min)", "Intensity", false, new Dimension(1000, 400), fragmentTraces);
+			if ("GPGGVWAAEAISDAR".equals(data.getPeptideModSeq())||"GPGGAWAAEVISDAR".equals(data.getPeptideModSeq())) {
+				Charter.launchChart(sequenceKey+" Retention Time (min)", "Intensity", false, new Dimension(450, 300), fragmentTraces);
+			}
 		}
 
 //		float duration=stripefile.getGradientLength()/20.0f;
