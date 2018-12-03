@@ -10,7 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 public class KDE implements Distribution {
 	private final ArrayList<Distribution> data;
 	private final Range range;
-	private final int numberOfBins=20;
+	private final int numberOfBins;
 	private final double[] histogram;
 	private final double sumPriors;
 	private final double sumHistogram;
@@ -20,6 +20,7 @@ public class KDE implements Distribution {
 
 	public KDE(ArrayList<WeightedValue> values, double prior) {
 		this.prior=prior;
+		this.numberOfBins=20;
 		stdev=WeightedValue.stdev(values);
 		mean=WeightedValue.mean(values);
 		// Silverman's (1986) rule of thumb (wikipedia)
