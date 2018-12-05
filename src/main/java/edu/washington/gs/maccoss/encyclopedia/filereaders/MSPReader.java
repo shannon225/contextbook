@@ -129,7 +129,8 @@ public class MSPReader {
 			ArrayList<Peak> peaks=new ArrayList<Peak>();
 
 			OUTERLOOP: while ((eachline=in.readLine())!=null) {
-				if (eachline.trim().length()==0) {
+				eachline=eachline.trim();
+				if (eachline.length()==0) {
 					continue OUTERLOOP;
 				}
 				
@@ -143,13 +144,28 @@ public class MSPReader {
 						entryList.add(entry);
 						peaks.clear();
 						fullname=null;
-						
 					}
 				} else if (eachline.startsWith("Num peaks: ")||eachline.startsWith("NumPeaks: ")) {
 					INNERLOOP: while ((eachline=in.readLine())!=null) {
-						if (eachline.trim().length()==0) {
+						eachline=eachline.trim();
+						if (eachline.length()==0) {
 							break INNERLOOP;
 						}
+						if (eachline.startsWith("Name: ")) {
+							// indicates that we didn't get a normal linebreak to finish the entry. Assume that we've started the next entry.
+							altName = eachline.substring(6);
+							if (peaks.size()>0) {
+								Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
+								HashSet<String> accessions=new HashSet<String>();
+								if (accession!=null) accessions.add(accession);
+								LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y, aaConstants);
+								entryList.add(entry);
+								peaks.clear();
+								fullname=null;
+							}
+							break INNERLOOP;
+						}
+						
 						StringTokenizer st=new StringTokenizer(eachline);
 						double mass=Double.parseDouble(st.nextToken());
 						float intensity=Float.parseFloat(st.nextToken());
