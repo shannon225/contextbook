@@ -116,7 +116,7 @@ public class SearchGUIMain {
 			JOptionPane.showMessageDialog(f, "Warning, you only have "+mbOfMemory+" MB of memory allocated.\nPlease make sure you are running 64-bit Java!", "Warning, Low Memory!", JOptionPane.WARNING_MESSAGE, image);
 		}
 
-		Logger.logLine(shortName+" Graphical Interface ("+program.getVersion()+")");
+		Logger.logLine(shortName+" Graphical Interface (version "+program.getVersion()+")");
 		
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override

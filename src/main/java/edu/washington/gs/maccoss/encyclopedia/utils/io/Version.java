@@ -54,7 +54,7 @@ public class Version implements Comparable<Version> {
 		sb.append(revision);
 		
 		if (snapshot) {
-			sb.append("s");
+			sb.append("-SNAPSHOT");
 		}
 		return sb.toString();
 	}
