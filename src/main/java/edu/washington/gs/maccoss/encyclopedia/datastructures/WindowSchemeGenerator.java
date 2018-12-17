@@ -51,9 +51,9 @@ public class WindowSchemeGenerator {
 				float right=getOptimalBoundary(start+increment*(i+1))+margin;
 				tracker.addRange(new Range(left, right), i+1);
 			}
-			for (int i=0; i<numWindows-1; i++) {
-				float left=getOptimalBoundary(start+increment*(i+0.5f))-margin;
-				float right=getOptimalBoundary(start+increment*(i+1.5f))+margin;
+			for (int i=0; i<=numWindows; i++) {
+				float left=getOptimalBoundary(start+increment*(i-0.5f))-margin;
+				float right=getOptimalBoundary(start+increment*(i+0.5f))+margin;
 				tracker.addRange(new Range(left, right), numWindows+i+1);
 			}
 		} else if (windowingSchemeIndex==VARIABLE_WIDTH_DIA) {

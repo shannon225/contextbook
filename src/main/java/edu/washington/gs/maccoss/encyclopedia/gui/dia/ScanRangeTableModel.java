@@ -15,7 +15,7 @@ import gnu.trove.list.array.TFloatArrayList;
 public class ScanRangeTableModel extends AbstractTableModel {
 	private static final long serialVersionUID=1L;
 	
-	private final String[] columns=new String[] {"Time", "Start m/z", "Stop m/z"};
+	private final String[] columns=new String[] {"Time", "Start m/z", "Center m/z", "Stop m/z", "Delta m/z"};
 
 	ArrayList<ScoredObject<Range>> ranges=new ArrayList<>();
 	
@@ -57,6 +57,8 @@ public class ScanRangeTableModel extends AbstractTableModel {
 			case 0: return Float.class;
 			case 1: return Float.class;
 			case 2: return Float.class;
+			case 3: return Float.class;
+			case 4: return Float.class;
 		}
 		return Object.class;
 	}
@@ -68,7 +70,9 @@ public class ScanRangeTableModel extends AbstractTableModel {
 		switch (columnIndex) {
 			case 0: return entry.x;
 			case 1: return entry.y.getStart();
-			case 2: return entry.y.getStop();
+			case 2: return entry.y.getMiddle();
+			case 3: return entry.y.getStop();
+			case 4: return entry.y.getRange();
 		}
 		return null;
 	}
