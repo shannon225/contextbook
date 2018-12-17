@@ -132,6 +132,7 @@ public class TransitionRefiner {
 		IntRange indices;
 		float[] medianChromatogram;
 		
+		
 		if (maybeMedianChromatogram.isPresent()&&maybeMedianChromatogram.get().length>0) {
 			// already started with a median chromatogram
 			medianChromatogram=maybeMedianChromatogram.get();
@@ -168,6 +169,15 @@ public class TransitionRefiner {
 				}
 			}
 			IntRange initialIndices=getIndexRange(medianChromatogram, maxIndex);
+			
+			/*ArrayList<XYTrace> traces=new ArrayList<>();
+			traces.add(new XYTrace(retentionTimes, medianChromatogram, GraphType.boldline, "median"));
+			int count=0;
+			for (float[] chrom : normalizedChromatograms) {
+				count++;
+				traces.add(new XYTrace(retentionTimes, chrom, GraphType.dashedline, ""+count));
+			}
+			Charter.launchChart("X", "Y", true, traces.toArray(new XYTrace[traces.size()]));*/
 			
 			if (!wasInferred) {
 				Range testRange=new Range(retentionTimes[initialIndices.getStart()], retentionTimes[initialIndices.getStop()]);
@@ -456,7 +466,12 @@ public class TransitionRefiner {
 			rts=data.getRtArray().get();
 		}
 		panels.put("unnormalized", getChart(data.getChromatograms(), data.getCorrelationArray(), rts, data.getRange()));
-		panels.put("median", Charter.getChart("Retention Time (min)", "intensity", false, toXYTrace(data.getMedianChromatogram(), rts, "median", null, data.getRange())));
+		
+		XYTrace median = toXYTrace(data.getMedianChromatogram(), rts, "median", null, data.getRange());
+		float max=General.max(data.getMedianChromatogram());
+		XYTrace start=new XYTrace(new float[] {data.getRange().getStart()/60f, data.getRange().getStart()/60f}, new float[] {0, max},GraphType.line, "leftBoundary", Color.black, null);
+		XYTrace stop=new XYTrace(new float[] {data.getRange().getStop()/60f, data.getRange().getStop()/60f}, new float[] {0, max},GraphType.line, "rightBoundary", Color.black, null);
+		panels.put("median", Charter.getChart("Retention Time (min)", "intensity", false, median, start, stop));
 		return panels;
 	}
 

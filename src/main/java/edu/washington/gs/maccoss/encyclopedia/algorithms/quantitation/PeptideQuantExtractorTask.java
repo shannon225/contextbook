@@ -151,7 +151,8 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	}
 
 	public TransitionRefinementData extractSpectrum(AnnotatedLibraryEntry unitEntry, float duration, boolean limitToQuantifiable, boolean integrateEverything, boolean wasInferred) {
-		ArrayList<Stripe> stripes=getScanSubset(unitEntry.getRetentionTime()-duration, unitEntry.getRetentionTime()+duration);
+		// widened to 3x the expected size (+/-1.5) of the peak to make sure we don't miss something by catching just the corner 
+		ArrayList<Stripe> stripes=getScanSubset(unitEntry.getRetentionTime()-duration*1.5f, unitEntry.getRetentionTime()+duration*1.5f);
 		return quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes, integrateEverything, wasInferred, params.getAAConstants());
 	}
 

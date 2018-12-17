@@ -79,6 +79,9 @@ public class Encyclopedia {
 		} else if (arguments.containsKey("-libexport")) {
 			SearchToBLIB.main(args);
 			
+		} else if (arguments.containsKey("-walnut")||arguments.containsKey("-pecan")) {
+			Walnut.main(args);
+			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("EncyclopeDIA Help");
 			Logger.timelessLogLine("EncyclopeDIA is a library search engine for DIA data.");
