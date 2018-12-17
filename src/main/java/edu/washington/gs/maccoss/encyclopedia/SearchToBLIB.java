@@ -55,6 +55,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.ThrowingConsumer;
+import edu.washington.gs.maccoss.encyclopedia.utils.VersioningDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -102,10 +103,13 @@ public class SearchToBLIB {
 			
 		} else {
 			if (arguments.containsKey("-pecan")) {
+				VersioningDetector.checkVersionCLI(ProgramType.PecanPie);
 				convertPecan(arguments);
 			} else if (arguments.containsKey("-xcordia")) {
+				VersioningDetector.checkVersionCLI(ProgramType.XCorDIA);
 				convertXCorDIA(arguments);
 			} else {
+				VersioningDetector.checkVersionCLI(ProgramType.EncyclopeDIA);
 				convertEncyclopedia(arguments);
 			}
 		}
