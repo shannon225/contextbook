@@ -17,14 +17,13 @@ public class TransitionRefinerTest {
 		plotEIGNIISDAMK();
 		plotASVAAQQQEEAR();
 		
-		/*String sequence="AAHSAELEAVLLALAR";
+		/*String sequence="HGVQELEIELQSQLSKK";
 		byte precursorCharge=(byte)3;
-		float targetRT=87.86211f*60f;
-
-		File diaFile=new File("/Users/searleb/Documents/projects/encyclopedia/mzml/zero_hela/121115_bcs_hela_24mz_400_1000_0D_1.dia");
+		float targetRT=86.65266f*60f;
+		File diaFile=new File("/Users/bsearle/Documents/iarpa/2018_1203/10pFDR_DB/XXX_2018_1203_RJ_43_chlib600-700.dia");
 		HashMap<String, String> defaults=SearchParameterParser.getDefaultParameters();
 		SearchParameters params=SearchParameterParser.parseParameters(defaults);
-		float rtRange=params.getExpectedPeakWidth();
+		float rtRange=params.getExpectedPeakWidth()*1.5f;
 		StripeFileInterface dia=StripeFileGenerator.getFile(diaFile, params, true);
 
 		FragmentationModel model=PeptideUtils.getPeptideModel(sequence, params.getAAConstants());
@@ -32,7 +31,7 @@ public class TransitionRefinerTest {
 		ArrayList<Stripe> stripes=dia.getStripes(entry.getPrecursorMZ(), targetRT-rtRange, targetRT+rtRange, false);
 		Collections.sort(stripes);
 
-		PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), targetRT, entry.getScore(), 1.0f-entry.getScore(), 2*rtRange, false);
+		PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), targetRT, entry.getScore(), 1.0f-entry.getScore(), 2*rtRange, false, params.getAAConstants());
 		PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(dia.getOriginalFileName(), psmdata, Optional.empty(), Optional.empty(), stripes, params, false);
 		TransitionRefinementData data=quantTask.extractSpectrum(entry, rtRange, false, false, false);
 		Charter.launchCharts("TITLE", TransitionRefiner.getChartPanels(data));*/

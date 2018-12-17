@@ -119,6 +119,8 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	private Integer spectrumIndex=null;
 	private Integer msLevel=null;
 	private String spectrumRef=null;
+	private String id=null;
+	private HashMap<String, HashMap<String, String>> referenceableParamGroups=new HashMap<>();
 
 	private Float scanStartTime=null;
 	private Float ionInjectTime=null;
@@ -153,13 +155,19 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
 		dataSB.setLength(0);
-		if (tagList.size()>0&&"cvParam".equalsIgnoreCase(qName)) {
+		if (tagList.size()>0&&"referenceableParamGroupRef".equalsIgnoreCase(qName)) {
 			if ("spectrum".equalsIgnoreCase(tagList.get(tagList.size()-1))) {
-				if ("ms level".equalsIgnoreCase(attributes.getValue("name"))) {
-					msLevel=Integer.parseInt(attributes.getValue("value"));
-				} else if ("total ion current".equalsIgnoreCase(attributes.getValue("name"))) {
-					tic=Float.parseFloat(attributes.getValue("value"));
-				}
+				HashMap<String,String> mapping=referenceableParamGroups.get(attributes.getValue("ref"));
+				processSpectrumParams(mapping);
+			}
+			
+		} else if (tagList.size()>0&&"cvParam".equalsIgnoreCase(qName)) {
+			if ("spectrum".equalsIgnoreCase(tagList.get(tagList.size()-1))) {
+				processSpectrumParams(attributes);
+
+			} else if ("referenceableParamGroup".equalsIgnoreCase(tagList.get(tagList.size()-1))) {
+				HashMap<String,String> map=referenceableParamGroups.get(id);
+				map.put(attributes.getValue("name"), attributes.getValue("value"));
 				
 			} else if ("scan".equalsIgnoreCase(tagList.get(tagList.size()-1))) {
 				if ("scan start time".equalsIgnoreCase(attributes.getValue("name"))) {
@@ -249,6 +257,9 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 						.setAccessionId(attributes.getValue("accession"))
 						.setName(attributes.getValue("name"));
 			}
+		} else if ("referenceableParamGroup".equalsIgnoreCase(qName)) {
+			id=attributes.getValue("id");
+			referenceableParamGroups.put(id, new HashMap<>());
 		} else if ("precursor".equalsIgnoreCase(qName)) {
 			spectrumRef=attributes.getValue("spectrumRef");
 		} else if ("mzML".equalsIgnoreCase(qName)) {
@@ -265,6 +276,19 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 		}
 
 		tagList.add(qName);
+	}
+
+	private void processSpectrumParams(Attributes attributes) {
+		if ("ms level".equalsIgnoreCase(attributes.getValue("name"))) {
+			msLevel=Integer.parseInt(attributes.getValue("value"));
+		} else if ("total ion current".equalsIgnoreCase(attributes.getValue("name"))) {
+			tic=Float.parseFloat(attributes.getValue("value"));
+		}
+	}
+
+	private void processSpectrumParams(HashMap<String,String> attributes) {
+		if (attributes.containsKey("ms level")) msLevel=Integer.parseInt(attributes.get("ms level"));
+		if (attributes.containsKey("total ion current")) tic=Float.parseFloat(attributes.get("total ion current"));
 	}
 
 	private String getPreviousElementTag() {
@@ -360,21 +384,40 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 					massArray=peakArrays.x;
 					intensityArray=peakArrays.y;
 				}
-				Stripe stripe=new Stripe(spectrumName, spectrumRef, spectrumIndex, scanStartTime, ionInjectTime, isolationWindowTarget-isolationWindowLowerOffset+(float)parameters.getPrecursorIsolationMargin(), isolationWindowTarget+isolationWindowUpperOffset-(float)parameters.getPrecursorIsolationMargin(),
-						massArray, intensityArray, charge);
-				stripes.add(stripe);
-				Range range=stripe.getRange();
-				TFloatArrayList stripeRTs=retentionTimesByStripe.get(range);
-				TFloatArrayList stripeIITs=ionInjectionTimesByStripe.get(range);
-				if (stripeRTs==null) {
-					stripeRTs=new TFloatArrayList();
-					retentionTimesByStripe.put(range, stripeRTs);
-					stripeIITs=new TFloatArrayList();
-					ionInjectionTimesByStripe.put(range, stripeIITs);
-				}
-				stripeRTs.add(scanStartTime);
-				if (ionInjectTime!=null) {
-					stripeIITs.add(ionInjectTime);
+				
+				try {
+					Stripe stripe=new Stripe(spectrumName, spectrumRef, spectrumIndex, scanStartTime, ionInjectTime, isolationWindowTarget-isolationWindowLowerOffset+(float)parameters.getPrecursorIsolationMargin(), isolationWindowTarget+isolationWindowUpperOffset-(float)parameters.getPrecursorIsolationMargin(),
+							massArray, intensityArray, charge);
+					stripes.add(stripe);
+					
+					Range range=stripe.getRange();
+					TFloatArrayList stripeRTs=retentionTimesByStripe.get(range);
+					TFloatArrayList stripeIITs=ionInjectionTimesByStripe.get(range);
+					if (stripeRTs==null) {
+						stripeRTs=new TFloatArrayList();
+						retentionTimesByStripe.put(range, stripeRTs);
+						stripeIITs=new TFloatArrayList();
+						ionInjectionTimesByStripe.put(range, stripeIITs);
+					}
+					stripeRTs.add(scanStartTime);
+					if (ionInjectTime!=null) {
+						stripeIITs.add(ionInjectTime);
+					}
+				} catch (NullPointerException npe) {
+					Logger.errorLine("Potential nulls:");
+					Logger.errorLine("spectrumName="+spectrumName);
+					Logger.errorLine("spectrumRef="+spectrumRef);
+					Logger.errorLine("spectrumIndex="+spectrumIndex);
+					Logger.errorLine("scanStartTime="+scanStartTime);
+					Logger.errorLine("ionInjectTime="+ionInjectTime);
+					Logger.errorLine("isolationWindowTarget="+isolationWindowTarget);
+					Logger.errorLine("parameters.getPrecursorIsolationMargin()="+parameters.getPrecursorIsolationMargin());
+					Logger.errorLine("isolationWindowLowerOffset="+isolationWindowLowerOffset);
+					Logger.errorLine("isolationWindowUpperOffset="+isolationWindowUpperOffset);
+					Logger.errorLine("massArray="+massArray);
+					Logger.errorLine("intensityArray="+intensityArray);
+					Logger.errorLine("charge="+charge);
+					throw new EncyclopediaException("Null pointer found when creating stripe object", npe);
 				}
 				
 			}
