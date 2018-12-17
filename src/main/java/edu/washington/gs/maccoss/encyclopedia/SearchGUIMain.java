@@ -15,6 +15,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
+import edu.washington.gs.maccoss.encyclopedia.utils.VersioningDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
 
@@ -23,7 +24,7 @@ public class SearchGUIMain {
 		runGUI(ProgramType.Global);
 	}
 
-	public static void runGUI(ProgramType program) {
+	public static JFrame runGUI(ProgramType program) {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {
@@ -115,7 +116,7 @@ public class SearchGUIMain {
 			JOptionPane.showMessageDialog(f, "Warning, you only have "+mbOfMemory+" MB of memory allocated.\nPlease make sure you are running 64-bit Java!", "Warning, Low Memory!", JOptionPane.WARNING_MESSAGE, image);
 		}
 
-		Logger.logLine(shortName+" Graphical Interface");
+		Logger.logLine(shortName+" Graphical Interface ("+program.getVersion()+")");
 		
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
@@ -130,5 +131,9 @@ public class SearchGUIMain {
 				}
 			}
 		});
+		
+		VersioningDetector.checkVersionGUI(program, f);
+		
+		return f;
 	}
 }

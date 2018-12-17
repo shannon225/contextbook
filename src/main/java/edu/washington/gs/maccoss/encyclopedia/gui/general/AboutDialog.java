@@ -21,6 +21,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class AboutDialog {
 	private static ImageIcon citationIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/citation.png"));
@@ -41,11 +42,9 @@ public class AboutDialog {
 		                try {
 		                    Desktop.getDesktop().browse(e.getURL().toURI());
 		                } catch (IOException e1) {
-		                    // TODO Auto-generated catch block
-		                    e1.printStackTrace();
+		                    Logger.errorException(e1);
 		                } catch (URISyntaxException e1) {
-		                    // TODO Auto-generated catch block
-		                    e1.printStackTrace();
+		                    Logger.errorException(e1);
 		                }
 		            }
 		        }

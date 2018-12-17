@@ -54,6 +54,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.FileLogRecorder;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
+import edu.washington.gs.maccoss.encyclopedia.utils.VersioningDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
@@ -100,6 +101,7 @@ public class XCorDIA {
 			System.exit(1);
 			
 		} else {
+			VersioningDetector.checkVersionCLI(ProgramType.XCorDIA);
 			if (!arguments.containsKey(INPUT_DIA_TAG)||!arguments.containsKey(BACKGROUND_FASTA_TAG)) {
 				Logger.errorLine("You are required to specify an input file ("+INPUT_DIA_TAG+") and a background FASTA file ("+BACKGROUND_FASTA_TAG+")");
 				System.exit(1);

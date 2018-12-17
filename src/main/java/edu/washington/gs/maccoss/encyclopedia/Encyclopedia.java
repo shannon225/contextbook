@@ -55,6 +55,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.FileLogRecorder;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.VersioningDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
@@ -70,6 +71,7 @@ public class Encyclopedia {
 	
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
+		
 		if (arguments.size()==0) {
 			SearchGUIMain.runGUI(ProgramType.EncyclopeDIA);
 			
@@ -111,6 +113,8 @@ public class Encyclopedia {
 			System.exit(1);
 			
 		} else {
+			VersioningDetector.checkVersionCLI(ProgramType.EncyclopeDIA);
+			
 			if (!arguments.containsKey(INPUT_DIA_TAG)||!arguments.containsKey(TARGET_LIBRARY_TAG)||!arguments.containsKey(BACKGROUND_FASTA_TAG)) {
 				Logger.errorLine("You are required to specify an input file ("+INPUT_DIA_TAG+"), a library file ("+TARGET_LIBRARY_TAG+"), and a fasta file ("+BACKGROUND_FASTA_TAG+")");
 				System.exit(1);

@@ -6,11 +6,17 @@ public class Version implements Comparable<Version> {
 	private final int major;
 	private final int minor;
 	private final int revision;
+	private final boolean snapshot;
 
 	public Version(int major, int minor, int revision) {
+		this(major, minor, revision, false);
+	}
+	
+	public Version(int major, int minor, int revision, boolean snapshot) {
 		this.major=major;
 		this.minor=minor;
 		this.revision=revision;
+		this.snapshot=snapshot;
 	}
 
 	public Version(String versionString) {
@@ -18,24 +24,39 @@ public class Version implements Comparable<Version> {
 			major=0;
 			minor=0;
 			revision=0;
+			snapshot=true;
 		} else {
 			StringTokenizer st=new StringTokenizer(versionString, ".");
 			major=Integer.parseInt(st.nextToken());
 			minor=Integer.parseInt(st.nextToken());
 			if (st.hasMoreTokens()) {
-				revision=Integer.parseInt(st.nextToken());
+				String last=st.nextToken();
+				snapshot=last.endsWith("-SNAPSHOT");
+				
+				if (snapshot) {
+					revision=Integer.parseInt(last.substring(0, last.length()-9));
+				} else {
+					revision=Integer.parseInt(last);
+				}
 			} else {
 				revision=0;
+				snapshot=false;
 			}
 		}
 	}
 
 	public String toString() {
-		if (revision==0) {
-			return major+"."+minor;
-		} else {
-			return major+"."+minor+"."+revision;
+		StringBuilder sb=new StringBuilder();
+		sb.append(major);
+		sb.append(".");
+		sb.append(minor);
+		sb.append(".");
+		sb.append(revision);
+		
+		if (snapshot) {
+			sb.append("s");
 		}
+		return sb.toString();
 	}
 	
 	public boolean amIAbove(Version v) {
