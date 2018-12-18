@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.utils;
 
+import java.awt.Component;
 import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,7 +10,6 @@ import java.net.URL;
 
 import javax.swing.ImageIcon;
 import javax.swing.JEditorPane;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.event.HyperlinkEvent;
@@ -26,7 +26,7 @@ public class VersioningDetector {
 	public static boolean checkVersionCLI(ProgramType program) {
 		return checkVersionGUI(program, null);
 	}
-	public static boolean checkVersionGUI(ProgramType program, JFrame frame) {
+	public static boolean checkVersionGUI(ProgramType program, Component frame) {
 		try {
 			Version localVersion=program.getVersion();
 			if (localVersion.amIAbove(new Version(0, 0, 0))) { // otherwise is a development version
@@ -50,7 +50,7 @@ public class VersioningDetector {
 		return true;
 	}
 
-	private static void announceUpdateNotice(ProgramType program, JFrame frame, Version localVersion, Version onlineVersion) {
+	private static void announceUpdateNotice(ProgramType program, Component frame, Version localVersion, Version onlineVersion) {
 		ImageIcon icon=new ImageIcon(VersioningDetector.class.getClassLoader().getResource("images/encyclopedia_icon.png"));
 
 	    JLabel label = new JLabel();
