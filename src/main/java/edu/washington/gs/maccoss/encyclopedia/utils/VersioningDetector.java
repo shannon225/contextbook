@@ -27,9 +27,12 @@ public class VersioningDetector {
 		return checkVersionGUI(program, null);
 	}
 	public static boolean checkVersionGUI(ProgramType program, Component frame) {
+		return checkVersionGUI(program, frame, false);
+	}
+	public static boolean checkVersionGUI(ProgramType program, Component frame, boolean ignoreDev) {
 		try {
 			Version localVersion=program.getVersion();
-			if (localVersion.amIAbove(new Version(0, 0, 0))) { // otherwise is a development version
+			if (ignoreDev||localVersion.amIAbove(new Version(0, 0, 0))) { // otherwise is a development version
 				GoogleAnalytics ga=GoogleAnalytics.builder().withTrackingId("UA-131121966-1").withAppName(program.toString()).withAppVersion(program.toString()+" "+localVersion.toString()).build();
 				ga.screenView(program.toString(), localVersion.toString()).send();
 				URL url = new URL(ENCYCLOPEDIA_URL+"downloads/current_version.txt");
