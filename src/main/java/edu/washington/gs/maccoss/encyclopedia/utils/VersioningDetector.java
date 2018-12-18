@@ -24,10 +24,10 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 public class VersioningDetector {
 	private static final String ENCYCLOPEDIA_URL= "https://bitbucket.org/searleb/encyclopedia/";
 
-	public static void checkVersionCLI(ProgramType program) {
-		checkVersionGUI(program, null);
+	public static boolean checkVersionCLI(ProgramType program) {
+		return checkVersionGUI(program, null);
 	}
-	public static void checkVersionGUI(ProgramType program, JFrame frame) {
+	public static boolean checkVersionGUI(ProgramType program, JFrame frame) {
 		try {
 			Version localVersion=program.getVersion();
 			if (localVersion.amIAbove(new Version(0, 0, 0))) { // otherwise is a development version
@@ -42,11 +42,13 @@ public class VersioningDetector {
 					if (frame!=null) {
 						announceUpdateNotice(program, frame, localVersion, onlineVersion);
 					}
+					return false; // should update
 				}
 			}
 		} catch (Exception e) {
 			Logger.logLine("Sorry, I ran into an error checking for new versions. You should look online at ["+ENCYCLOPEDIA_URL+"] if you need to update your version!");
 		}
+		return true;
 	}
 
 	private static void announceUpdateNotice(ProgramType program, JFrame frame, Version localVersion, Version onlineVersion) {
