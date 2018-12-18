@@ -35,12 +35,11 @@ public class AboutDialog {
 		JLabel graphic=new JLabel(image);
 		JPanel head=new JPanel(new BorderLayout());
 		head.add(graphic, BorderLayout.NORTH);
-		JButton checkVersion=new JButton("Check");
+		JButton checkVersion=new JButton("Check Version");
 		checkVersion.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				VersioningDetector.checkVersionGUI(program, parent);
-				boolean ok=true;
+				boolean ok=VersioningDetector.checkVersionGUI(program, parent);
 				if (ok) {
 					JOptionPane.showMessageDialog(parent, "Congratulations, you're up to date!", "Up to date " + program.toString(),
 							JOptionPane.INFORMATION_MESSAGE, image);
@@ -111,7 +110,7 @@ public class AboutDialog {
 		dialog.getContentPane().add(mainPane, BorderLayout.CENTER);
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.pack(); 
-		dialog.setSize(400, 500);
+		dialog.setSize(450, 500);
 		dialog.setVisible(true);
 	}
 }
