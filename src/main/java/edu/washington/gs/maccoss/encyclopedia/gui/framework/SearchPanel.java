@@ -127,7 +127,7 @@ public class SearchPanel extends JPanel {
 				HashMap<String, String> map=CASiLSearchParameters.readPreferences();
 				CASiLSearchParameters xcordiaParameters=CASiLSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(map));
 				CASiL.setParameters(xcordiaParameters, map.get(Encyclopedia.TARGET_LIBRARY_TAG), map.get(Encyclopedia.BACKGROUND_FASTA_TAG));
-				optionsTabs.addTab(CASiL.getProgramName(), CASiL.getSmallImage(), CASiL, CASiL.getProgramShortDescription());
+				optionsTabs.addTab(CASiL.getProgram().toString(), CASiL.getSmallImage(), CASiL, CASiL.getProgramShortDescription());
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
 				Logger.errorException(e);
@@ -144,7 +144,7 @@ public class SearchPanel extends JPanel {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
 				Logger.errorException(e);
 			}
-			optionsTabs.addTab(pecan.getProgramName(), pecan.getSmallImage(), pecan, pecan.getProgramShortDescription());
+			optionsTabs.addTab(pecan.getProgram().toString(), pecan.getSmallImage(), pecan, pecan.getProgramShortDescription());
 		}
 		if (ProgramType.Global==program||ProgramType.XCorDIA==program) {
 			XCorDIAParametersPanel xcordia=new XCorDIAParametersPanel(this);
@@ -157,7 +157,7 @@ public class SearchPanel extends JPanel {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
 				Logger.errorException(e);
 			}
-			optionsTabs.addTab(xcordia.getProgramName(), xcordia.getSmallImage(), xcordia, xcordia.getProgramShortDescription());
+			optionsTabs.addTab(xcordia.getProgram().toString(), xcordia.getSmallImage(), xcordia, xcordia.getProgramShortDescription());
 		}
 
 		LogConsole console=new LogConsole();
@@ -456,7 +456,7 @@ public class SearchPanel extends JPanel {
 	public void about() {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(SearchPanel.this);
 		ParametersPanelInterface panel=getVisibleTab();
-		AboutDialog.showAbout(frame, panel.getProgramName(), panel.getAboutMessage(), panel.getCitation(), panel.getImage());
+		AboutDialog.showAbout(frame, panel.getProgram(), panel.getImage());
 	}
 	
 	public Collection<ParametersPanelInterface> getAllTabs() {

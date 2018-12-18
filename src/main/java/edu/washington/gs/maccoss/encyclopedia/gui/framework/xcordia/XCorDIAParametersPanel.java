@@ -21,6 +21,7 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 
+import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
@@ -33,7 +34,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
@@ -53,7 +53,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInterface {
 	private static final long serialVersionUID=1L;
 	private static final int numberOfCores=Runtime.getRuntime().availableProcessors();
-	private static final String programName="XCorDIA";
 	private static final String programShortDescription="XCorDIA Peptide Search";
 	public static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mike_rotate_small_icon.png"));
 	public static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mike_rotate_icon.png"));
@@ -162,23 +161,13 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	public File getBackgroundFastaFile() {
 		return backgroundFasta.getFile();
 	}
-	
-	public String getProgramName() {
-		return programName;
+
+	public ProgramType getProgram() {
+		return ProgramType.XCorDIA;
 	}
 	
 	public String getProgramShortDescription() {
 		return programShortDescription;
-	}
-	
-	@Override
-	public String getCitation() {
-		return "This is a <a href=https://sites.google.com/a/uw.edu/maccoss/>MacCoss Lab</a> project from the University of Washington, <a href=http://www.gs.washington.edu/>Department of Genome Sciences</a>. For more information please contact Brian Searle (searleb@uw.edu).";
-	}
-
-	@Override
-	public String getAboutMessage() {
-		return "XCorDIA is XCorr for DIA. Duh.";
 	}
 	
 	public ImageIcon getSmallImage() {

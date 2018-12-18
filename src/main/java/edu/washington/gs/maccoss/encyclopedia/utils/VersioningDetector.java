@@ -1,7 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.utils;
 
 import java.awt.Desktop;
-import java.awt.Font;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;

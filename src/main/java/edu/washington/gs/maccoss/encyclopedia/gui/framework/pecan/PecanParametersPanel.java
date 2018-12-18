@@ -21,6 +21,7 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 
+import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
@@ -143,22 +144,12 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		this.add(options, BorderLayout.CENTER);
 	}
 
-	public String getProgramName() {
-		return programName;
+	public ProgramType getProgram() {
+		return ProgramType.PecanPie;
 	}
 	
 	public String getProgramShortDescription() {
 		return programShortDescription;
-	}
-	
-	@Override
-	public String getCitation() {
-		return "This is a <a href=https://sites.google.com/a/uw.edu/maccoss/>MacCoss Lab</a> project from the University of Washington, <a href=http://www.gs.washington.edu/>Department of Genome Sciences</a>. For more information please contact Brian Searle (searleb@uw.edu).";
-	}
-
-	@Override
-	public String getAboutMessage() {
-		return "<b>Walnut is just like PeCAn, but with more wrinkles and slightly more bitter.";
 	}
 	
 	public ImageIcon getSmallImage() {
