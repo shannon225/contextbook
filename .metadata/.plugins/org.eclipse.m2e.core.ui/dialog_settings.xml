@@ -2,6 +2,7 @@
 <section name="Workbench">
 	<section name="MavenProjectImportWizardPage">
 		<list key="rootDirectory">
+			<item value="/Users/bsearle/Documents/software_projects/encyclopedia/encyclopedia"/>
 			<item value="/Users/searleb/Documents/school/projects/encyclopedia"/>
 			<item value="/Users/searleb/Documents/school/projects"/>
 		</list>
