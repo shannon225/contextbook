@@ -22,6 +22,16 @@ public class Networking {
 		}
 	}
 	
+	public static String getUserID() {
+		try {
+			byte[] mac=getMacAddress();
+			return bytesToHex(mac);
+
+		} catch (Exception e) {
+			return "unknown";
+		}
+	}
+	
 	public static int isOffendingAddress() {
 		try {
 			byte[] mac=getMacAddress();

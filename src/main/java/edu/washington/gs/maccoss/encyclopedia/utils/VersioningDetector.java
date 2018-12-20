@@ -18,6 +18,7 @@ import javax.swing.event.HyperlinkListener;
 import com.brsanthu.googleanalytics.GoogleAnalytics;
 
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 
 public class VersioningDetector {
@@ -34,7 +35,7 @@ public class VersioningDetector {
 			Version localVersion=program.getVersion();
 			if (ignoreDev||localVersion.amIAbove(new Version(0, 0, 0))) { // otherwise is a development version
 				GoogleAnalytics ga=GoogleAnalytics.builder().withTrackingId("UA-131121966-1").withAppName(program.toString()).withAppVersion(program.toString()+" "+localVersion.toString()).build();
-				ga.screenView(program.toString(), localVersion.toString()).send();
+				ga.screenView(program.toString(), localVersion.toString()).userId(Networking.getUserID()).sendAsync();
 				URL url = new URL(ENCYCLOPEDIA_URL+"downloads/current_version.txt");
 				BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
 				String downloadedVersion=in.readLine();
