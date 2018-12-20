@@ -7,6 +7,7 @@ import java.io.File;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Optional;
 
 import javax.swing.BorderFactory;
@@ -18,6 +19,7 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 
@@ -34,6 +36,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
@@ -44,6 +48,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
+import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
@@ -87,6 +92,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
 	private final SpinnerModel minQuantitativeIonNumber=new SpinnerNumberModel(3, 0, 100, 1);
 	private final SpinnerModel percolatorThreshold=new SpinnerNumberModel(0.01, 0.001, 0.1, 0.001);
+	private final JTextField additionalCommandLineOptions=new JTextField();
 	
 	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
 
@@ -147,7 +153,8 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		chargeRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
 		chargeRange.add(new JSpinner(maxCharge));
 		options.add(new LabeledComponent("Charge range", chargeRange));
-		
+
+		options.add(new LabeledComponent("Additonal Command Line Options", additionalCommandLineOptions));
 
 		this.add(options, BorderLayout.CENTER);
 	}
@@ -260,6 +267,12 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 
 		XCordiaSearchParameters parameters=new XCordiaSearchParameters(aaConstants, fragmentation, precursorPPMValue, fragmentPPMValue, digestionEnzyme, isPercolatorTwo?2:3, percolatorThresholdValue, percolatorThresholdValue,
 				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, numberOfExtraDecoyLibrariesValue, true, true, isRequireVariableMods);
+
+		String cmds=additionalCommandLineOptions.getText();
+		HashMap<String, String> params=parameters.toParameterMap();
+		params.putAll(CommandLineParser.parseArguments(cmds.split(" ")));
+		parameters=XCordiaSearchParameters.convertFromPecan(PecanParameterParser.parseParameters(params));
+		
 		return parameters;
 	}
 	

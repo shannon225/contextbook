@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -15,8 +16,8 @@ import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
-import edu.washington.gs.maccoss.encyclopedia.utils.VersioningDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
+import edu.washington.gs.maccoss.encyclopedia.utils.VersioningDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
 
 public class SearchGUIMain {
@@ -107,7 +108,9 @@ public class SearchGUIMain {
 		f.setJMenuBar(panel.createMenus(program));
 
 		f.pack();
-		f.setSize(new Dimension(1250, 750));
+		
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		f.setSize(new Dimension(Math.max(600, Math.min(screenSize.width-20, 1250)), Math.max(600, Math.min(screenSize.height-20, 950))));
 		f.setVisible(true);
 
 		Runtime instance=Runtime.getRuntime();

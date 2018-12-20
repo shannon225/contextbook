@@ -168,7 +168,7 @@ public class SearchParameters {
 			map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
 		}
 		map.put("-rtWindowInMin", rtWindowInMin+"");
-        map.put(" -filterPeaklists ", filterPeaklists+"");
+        map.put("-filterPeaklists", filterPeaklists+"");
 		return map;
 	}
 	

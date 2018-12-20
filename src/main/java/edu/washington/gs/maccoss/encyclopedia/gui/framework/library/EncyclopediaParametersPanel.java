@@ -4,9 +4,12 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.io.File;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.StringTokenizer;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -17,6 +20,7 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 
@@ -34,6 +38,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
@@ -43,6 +48,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
+import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
@@ -95,6 +101,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
 	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
+	private final JTextField additionalCommandLineOptions=new JTextField();
 
 	private final SearchPanel searchPanel;
 	public EncyclopediaParametersPanel(SearchPanel searchPanel) {
@@ -127,6 +134,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
 		options.add(new LabeledComponent("Minimum Number of Quantitative Ions", new JSpinner(minNumOfQuantitativeIons)));
 		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
+		options.add(new LabeledComponent("Additonal Command Line Options", additionalCommandLineOptions));
 
 		this.add(options, BorderLayout.CENTER);
 	}
@@ -229,6 +237,12 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		float minIntensity=-1.0f;
 		Optional<PeptideModification> modificationType=Optional.empty();
 		SearchParameters parameters=new SearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, 0.01f, 0.01f, isPercolatorTwo?2:3, dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minIntensity, modificationType, ScoringBreadthType.ENTIRE_RT_WINDOW, numberOfExtraDecoyLibrariesValue, true, true, -1.0f, false);
+
+		String cmds=additionalCommandLineOptions.getText();
+		HashMap<String, String> params=parameters.toParameterMap();
+		params.putAll(CommandLineParser.parseArguments(cmds.split(" ")));
+		parameters=SearchParameterParser.parseParameters(params);
+		
 		return parameters;
 	}
 	

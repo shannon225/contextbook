@@ -310,8 +310,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	public void endElement(String uri, String localName, String qName) throws SAXException {
 		if ("spectrum".equalsIgnoreCase(qName)) {
 			
-			if (isSkipSpectrumWithBadEncoding){
-				
+			if (isSkipSpectrumWithBadEncoding) {
 				Logger.errorLine("Skipping spectrum #" + spectrumIndex + ", '" + spectrumName + "': bad binary data encoding.");
 				
 				//reset variable fields
@@ -340,6 +339,13 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 				numSkippedWithBadEncoding++;
 				
 				return;
+			}
+			
+
+			if (massArray==null||intensityArray==null) {
+				// sometimes SCIEX files skip the binary data and don't populate massArray/intensityArray
+				massArray=new double[0];
+				intensityArray=new float[0];
 			}
 			
 			if (spectrumRef==null&&msLevel<=1) {
