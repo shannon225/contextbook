@@ -311,9 +311,9 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 			}
 		}
 		if (!gotIt) fragmentTolerance.setSelectedIndex(1);
-		
-		minCharge.setValue(params.getMinCharge());
-		maxCharge.setValue(params.getMaxCharge());
+
+		minCharge.setValue(new Integer(params.getMinCharge()));
+		maxCharge.setValue(new Integer(params.getMaxCharge()));
 		maxMissedCleavage.setValue(params.getMaxMissedCleavages());
 		numberOfJobs.setValue(params.getNumberOfThreadsUsed());
 		if (params.getPrecursorWindowSize()>0) {
