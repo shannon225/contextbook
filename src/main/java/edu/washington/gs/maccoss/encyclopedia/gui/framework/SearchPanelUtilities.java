@@ -541,7 +541,7 @@ public class SearchPanelUtilities {
 		dialog.setVisible(true);
 	}
 	
-	public static void convertOpenSwath(Component root, SearchParameters params) {
+	public static void convertOpenSwathToELIB(Component root, SearchParameters params) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		final JDialog dialog=new JDialog(frame, "Convert OpenSwath TSV to Library", true);
 		
@@ -569,7 +569,7 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading OpenSwath TSV File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							TraMLToLibraryConverter.convertTraML(tramlFile, fastaFile, params);
+							OpenSwathTSVToLibraryConverter.convertFromOpenSwathTSV(tramlFile, fastaFile, params);
 							Logger.logLine("Finished reading "+tramlFile.getName());
 							return Nothing.NOTHING;
 						}

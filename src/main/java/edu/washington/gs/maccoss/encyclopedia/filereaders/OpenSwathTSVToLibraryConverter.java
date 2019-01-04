@@ -139,6 +139,12 @@ public class OpenSwathTSVToLibraryConverter {
 		Logger.logLine("Finished reading "+tsvFile.getName());
 	}
 
+	public static LibraryInterface convertFromOpenSwathTSV(File tsvFile, File fastaFile, SearchParameters parameters) {
+		String absolutePath=tsvFile.getAbsolutePath();
+		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
+		return convertFromOpenSwathTSV(tsvFile, fastaFile, libraryFile, parameters);
+	}
+
 	public static LibraryFile convertFromOpenSwathTSV(File tsvFile, File fastaFile, File libraryFile, SearchParameters parameters) {
 		AminoAcidConstants aaConstants=parameters.getAAConstants();
 		try {
@@ -148,7 +154,7 @@ public class OpenSwathTSVToLibraryConverter {
 				private String lastGroup=null;
 				@Override
 				public void processRow(Map<String, String> row) {
-					int decoy=Integer.parseInt("decoy");
+					int decoy=Integer.parseInt(row.get("decoy"));
 					if (decoy!=0) return;
 					
 					String group=row.get("transition_group_id");

@@ -53,8 +53,12 @@ public class TraMLToLibraryConverter {
 		HashMap<String, PeptideEntry> peptideByID=new HashMap<>();
 
 		try {
+			Logger.logLine("Reading TraML file "+tramlFile.getName()+", this may take a while!");
+			
 			traMLParser.parse_file(tramlFile.getCanonicalPath(), logger);
 			TraMLType traML=traMLParser.getTraML();
+			
+			Logger.logLine("Parsing transition list...");
 			List<TransitionType> transitionTypeList=traML.getTransitionList().getTransition();
 
 			for (TransitionType transitionType : transitionTypeList) {
@@ -91,6 +95,7 @@ public class TraMLToLibraryConverter {
 
 			}
 
+			Logger.logLine("Parsing peptide list...");
 			ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
 			for (PeptideEntry peptide : peptideByID.values()) {
 				Collections.sort(peptide.peaks);

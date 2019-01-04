@@ -41,9 +41,11 @@ public class MSPReader {
 	public static void convertMSP(File mspFile, File fastaFile, File libraryFile, SearchParameters parameters) throws IOException, SQLException, IllegalArgumentException {
 		Logger.logLine("Reading MSP file "+mspFile.getName());
 		ArrayList<LibraryEntry> entries=readMSP(mspFile, false);
-
+		Logger.logLine("Read "+entries.size()+" total entries");
+		
 		Logger.logLine("Reading Fasta file "+fastaFile.getName());
 		ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile, parameters);
+		Logger.logLine("Read "+proteins.size()+" total proteins");
 
 		Logger.logLine("Constructing trie from library peptides");
 		PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(entries);
@@ -86,7 +88,6 @@ public class MSPReader {
 	
 	public static ArrayList<LibraryEntry> readMSP(File f, boolean keepAccessions) throws IOException, IllegalArgumentException{
 		BufferedReader in=null;
-		ArrayList<LibraryEntry> entryList=new ArrayList<LibraryEntry>();
 		try {
 			in=new BufferedReader(new FileReader(f));
 			return readMSP(in, f.getName(), keepAccessions);
@@ -127,7 +128,6 @@ public class MSPReader {
 			float retentionTime=0.0f;
 			float score=0.0f;
 			ArrayList<Peak> peaks=new ArrayList<Peak>();
-
 			OUTERLOOP: while ((eachline=in.readLine())!=null) {
 				eachline=eachline.trim();
 				if (eachline.length()==0) {
@@ -142,6 +142,9 @@ public class MSPReader {
 						if (accession!=null) accessions.add(accession);
 						LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y, aaConstants);
 						entryList.add(entry);
+						if (entryList.size()%10000==0) {
+							Logger.logLine("Read "+entryList.size()+" entries...");
+						}
 						peaks.clear();
 						fullname=null;
 					}
@@ -160,6 +163,9 @@ public class MSPReader {
 								if (accession!=null) accessions.add(accession);
 								LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y, aaConstants);
 								entryList.add(entry);
+								if (entryList.size()%10000==0) {
+									Logger.logLine("Read "+entryList.size()+" entries...");
+								}
 								peaks.clear();
 								fullname=null;
 							}
@@ -226,7 +232,9 @@ public class MSPReader {
 					if (map.containsKey("Charge")) {
 						precursorCharge = Byte.parseByte(map.get("Charge"));
 					} else {
-						precursorCharge=Byte.parseByte(fullname.substring(fullname.lastIndexOf('/')+1));
+						String substring = fullname.substring(fullname.lastIndexOf('/')+1);
+						if (substring.indexOf(' ')>0) substring=substring.substring(0, substring.indexOf(' '));
+						precursorCharge=Byte.parseByte(substring);
 					}
 					
 					String mods=map.get("Mods");
