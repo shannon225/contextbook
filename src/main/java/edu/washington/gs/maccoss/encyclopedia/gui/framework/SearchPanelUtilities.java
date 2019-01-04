@@ -64,15 +64,14 @@ public class SearchPanelUtilities {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				dialog.setVisible(false);
-				dialog.dispose();
-
 				final File elibFile=elibFileChooser.getFile();
 				String absolutePath=elibFile.getAbsolutePath();
 				File tsvFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+".tsv");
 
-				
 				if (elibFile!=null&&elibFile.exists()) {
+					dialog.setVisible(false);
+					dialog.dispose();
+
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
@@ -128,14 +127,14 @@ public class SearchPanelUtilities {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				dialog.setVisible(false);
-				dialog.dispose();
-
 				final File elibFile=elibFileChooser.getFile();
 				String absolutePath=elibFile.getAbsolutePath();
 				File blibFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+BlibFile.BLIB);
 				
 				if (elibFile!=null&&elibFile.exists()) {
+					dialog.setVisible(false);
+					dialog.dispose();
+
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
@@ -231,9 +230,6 @@ public class SearchPanelUtilities {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				dialog.setVisible(false);
-				dialog.dispose();
-				
 				final ArrayList<File> files=new ArrayList<>();
 				for (Component c : choosers.getComponents()) {
 					if (c instanceof FileChooserPanel) {
@@ -247,6 +243,9 @@ public class SearchPanelUtilities {
 				final File saveFile=saveFileChooser.getFile();
 				
 				if (files.size()>0&&saveFile!=null) {
+					dialog.setVisible(false);
+					dialog.dispose();
+					
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library Files") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
@@ -329,14 +328,14 @@ public class SearchPanelUtilities {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				dialog.setVisible(false);
-				dialog.dispose();
-
 				final File elibFile=elibFileChooser.getFile();
 				final File saveFile=saveFileChooser.getFile();
 				final String text=textArea.getText();
 				
 				if (elibFile!=null&&elibFile.exists()&&saveFile!=null&&text!=null&&text.length()>0) {
+					dialog.setVisible(false);
+					dialog.dispose();
+
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
@@ -426,14 +425,14 @@ public class SearchPanelUtilities {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				dialog.setVisible(false);
-				dialog.dispose();
-
 				final File blibFile=blibFileChooser.getFile();
 				final File irtFile=iRTFileChooser.getFile();
 				final File fastaFile=fastaFileChooser.getFile();
 				
 				if (blibFile!=null&&blibFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
+					dialog.setVisible(false);
+					dialog.dispose();
+
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading BLIB File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
@@ -493,13 +492,13 @@ public class SearchPanelUtilities {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				dialog.setVisible(false);
-				dialog.dispose();
-
 				final File mspFile=mspFileChooser.getFile();
 				final File fastaFile=fastaFileChooser.getFile();
 				
 				if (mspFile!=null&&mspFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
+					dialog.setVisible(false);
+					dialog.dispose();
+					
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading SPTXT/MSP File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
@@ -559,13 +558,14 @@ public class SearchPanelUtilities {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				dialog.setVisible(false);
-				dialog.dispose();
 
 				final File tramlFile=tramlFileChooser.getFile();
 				final File fastaFile=fastaFileChooser.getFile();
 				
 				if (tramlFile!=null&&tramlFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
+					dialog.setVisible(false);
+					dialog.dispose();
+					
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading OpenSwath TSV File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
@@ -625,13 +625,19 @@ public class SearchPanelUtilities {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				dialog.setVisible(false);
-				dialog.dispose();
 
 				final File tramlFile=tramlFileChooser.getFile();
 				final File fastaFile=fastaFileChooser.getFile();
 				
 				if (tramlFile!=null&&tramlFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
+					if (tramlFile.length()>1024*1024*10) {
+					    int result = JOptionPane.showConfirmDialog(dialog, "This file is "+(tramlFile.length()/1024/1024)+" MB and will take a very long time to convert. Are you sure?",
+					        "Warning: long conversion!", JOptionPane.OK_CANCEL_OPTION);
+					    if (result==JOptionPane.CANCEL_OPTION) return;
+					}
+					
+					dialog.setVisible(false);
+					dialog.dispose();
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading TraML File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
@@ -664,7 +670,7 @@ public class SearchPanelUtilities {
 		JPanel mainpane=new JPanel(new BorderLayout());
 		mainpane.add(options, BorderLayout.CENTER);
 		mainpane.add(buttons, BorderLayout.SOUTH);
-		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters: (ONLY USE THIS FOR SMALL LIBRARIES)")));
 		
 		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
