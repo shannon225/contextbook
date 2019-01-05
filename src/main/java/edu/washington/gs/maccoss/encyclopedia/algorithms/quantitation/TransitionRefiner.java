@@ -466,7 +466,12 @@ public class TransitionRefiner {
 			rts=data.getRtArray().get();
 		}
 		panels.put("unnormalized", getChart(data.getChromatograms(), data.getCorrelationArray(), rts, data.getRange()));
-		panels.put("median", Charter.getChart("Retention Time (min)", "intensity", false, toXYTrace(data.getMedianChromatogram(), rts, "median", null, data.getRange())));
+		
+		XYTrace median = toXYTrace(data.getMedianChromatogram(), rts, "median", null, data.getRange());
+		float max=General.max(data.getMedianChromatogram());
+		XYTrace start=new XYTrace(new float[] {data.getRange().getStart()/60f, data.getRange().getStart()/60f}, new float[] {0, max},GraphType.line, "leftBoundary", Color.black, null);
+		XYTrace stop=new XYTrace(new float[] {data.getRange().getStop()/60f, data.getRange().getStop()/60f}, new float[] {0, max},GraphType.line, "rightBoundary", Color.black, null);
+		panels.put("median", Charter.getChart("Retention Time (min)", "intensity", false, median, start, stop));
 		return panels;
 	}
 

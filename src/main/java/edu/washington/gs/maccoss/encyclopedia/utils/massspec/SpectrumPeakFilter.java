@@ -21,7 +21,7 @@ public class SpectrumPeakFilter {
 		peaks=filterPeaks(peaks);
 		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
 
-		return new Stripe(stripe.getSpectrumName(), stripe.getPrecursorName(), stripe.getSpectrumIndex(), stripe.getScanStartTime(), stripe.getIsolationWindowLower(), stripe.getIsolationWindowUpper(),
+		return new Stripe(stripe.getSpectrumName(), stripe.getPrecursorName(), stripe.getSpectrumIndex(), stripe.getScanStartTime(), stripe.getIonInjectionTime(), stripe.getIsolationWindowLower(), stripe.getIsolationWindowUpper(),
 				arrays.x, arrays.y, stripe.getCharge());
 	}
 

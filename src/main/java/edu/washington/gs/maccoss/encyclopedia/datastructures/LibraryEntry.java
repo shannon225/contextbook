@@ -123,6 +123,17 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	public LibraryEntry updateRetentionTime(float rtInSec) {
 		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, rtInSec, score, massArray, intensityArray, correlationArray);
 	}
+	
+	/**
+	 * only use for testing
+	 * @param newMassArray
+	 * @param newIntensityArray
+	 * @return
+	 */
+	public LibraryEntry updateMS2(double[] newMassArray, float[] newIntensityArray) {
+		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, newMassArray, newIntensityArray, getUnitArray(newMassArray.length));
+	}
+	
 	/**
 	 * only use for testing
 	 */

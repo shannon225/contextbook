@@ -42,6 +42,7 @@ public class SearchParameterParser {
 		map.put("-poffset", "0");
 		map.put("-foffset", "0");
 		map.put("-precursorIsolationMargin", "0");
+		map.put("-precursorWindowSize", "-1");
 		map.put("-enzyme", "trypsin");
 		map.put("-percolatorThreshold", "0.01");
 		map.put("-percolatorProteinThreshold", "0.01");
@@ -256,7 +257,7 @@ public class SearchParameterParser {
 		expectedPeakWidth=SearchParameterParser.getFloat("-expectedPeakWidth", parameters, 25f);
 		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 5);
 		minNumOfQuantitativePeaks=SearchParameterParser.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
-		minIntensity=SearchParameterParser.getFloat("-minIntensity", parameters, 3);
+		minIntensity=SearchParameterParser.getFloat("-minIntensity", parameters, -1.0f);
 		rtWindowInMin=SearchParameterParser.getFloat("-rtWindowInMin", parameters, -1f);
 		
 		percolatorVersionNumber=SearchParameterParser.getInteger("-percolatorVersionNumber", parameters, 3);

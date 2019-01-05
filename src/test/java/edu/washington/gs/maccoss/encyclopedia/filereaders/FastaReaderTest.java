@@ -17,6 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
@@ -24,7 +25,10 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
+import gnu.trove.set.hash.TIntHashSet;
 import junit.framework.TestCase;
 
 public class FastaReaderTest extends TestCase {
@@ -165,8 +169,72 @@ public class FastaReaderTest extends TestCase {
 			}
 		}
 	}
-	
+
 	public static void main(String[] args) {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		AminoAcidConstants aaConstants=parameters.getAAConstants();
+		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
+		File f=new File("/Users/searleb/Documents/school/uniprot-9606.fasta");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
+		Range possiblePrecursors=new Range(400, 1000);
+		
+		DigestionEnzyme trypsin=DigestionEnzyme.getEnzyme("trypsin");
+		DigestionEnzyme gluc=DigestionEnzyme.getEnzyme("glu-c");
+		DigestionEnzyme chymotrypsin=DigestionEnzyme.getEnzyme("chymotrypsin");
+		DigestionEnzyme lysc=DigestionEnzyme.getEnzyme("lys-c");
+		DigestionEnzyme argc=DigestionEnzyme.getEnzyme("arg-c");
+		DigestionEnzyme aspn=DigestionEnzyme.getEnzyme("asp-n");
+			
+		int totalTotalSTY=0;
+		int totalVisibleSTY=0;
+		int totalTheOnlyOneSTY=0;
+		int totalOneOfTwoSTY=0;
+		for (FastaEntryInterface entry : entries) {
+			int totalSTY=getCount(entry.getSequence(), 'S', 'T', 'Y');
+			TIntHashSet visibleSTYIndicies=new TIntHashSet();
+			TIntHashSet theOnlyOneSTYIndicies=new TIntHashSet();
+			TIntHashSet oneOfTwoSTYIndicies=new TIntHashSet();
+
+			for (DigestionEnzyme enzyme : new DigestionEnzyme[] {trypsin, chymotrypsin}) { //,trypsin,chymotrypsin,gluc,aspn,lysc,argc
+				ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 0, 9999999, 0, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
+				int peptideIndex=0;
+				for (FastaPeptideEntry peptide : peptides) {
+					String sequence=peptide.getSequence();
+	
+					double mass=aaConstants.getMass(sequence)+MassConstants.oh2+79.966331;
+					boolean ok=false;
+					for (int charge=2; charge<=4; charge++) {
+						double chargedMass=(mass+MassConstants.protonMass*charge)/charge;
+						if (possiblePrecursors.contains(chargedMass)) {
+							ok=true;
+							break;
+						}
+					}
+	
+					int countSTY=getCount(sequence, 'S', 'T', 'Y');
+					
+					if (ok) {
+						visibleSTYIndicies.addAll(General.add(getAllIndicies(sequence, 'S', 'T', 'Y'), peptideIndex));
+						if (countSTY==1) {
+							theOnlyOneSTYIndicies.add(peptideIndex+getFirstIndex(sequence, 'S', 'T', 'Y'));
+						}
+						if (countSTY<=2) {
+							oneOfTwoSTYIndicies.addAll(General.add(getAllIndicies(sequence, 'S', 'T', 'Y'), peptideIndex));
+						}
+					}
+					
+					peptideIndex+=sequence.length();
+				}
+			}
+			totalTotalSTY+=totalSTY;
+			totalVisibleSTY+=visibleSTYIndicies.size();
+			totalTheOnlyOneSTY+=theOnlyOneSTYIndicies.size();
+			totalOneOfTwoSTY+=oneOfTwoSTYIndicies.size();
+		}
+		System.out.println(totalTotalSTY+"\t"+totalVisibleSTY+"\t"+totalTheOnlyOneSTY+"\t"+totalOneOfTwoSTY);
+	}
+	
+	public static void main5(String[] args) {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
 		File f=new File("/Users/searleb/Documents/school/uniprot-9606.fasta");
@@ -216,6 +284,30 @@ public class FastaReaderTest extends TestCase {
 		if (num==1) return 2;
 		if (num==2) return 4;
 		return (int)(1+num+CombinatoricsUtils.binomialCoefficient(num, 2)+CombinatoricsUtils.binomialCoefficient(num, 3));
+	}
+
+	private static int getFirstIndex(String sequence, char... target) {
+		int lowestIndex=Integer.MAX_VALUE;
+		
+		for (int i=0; i<target.length; i++) {
+			int index=sequence.indexOf(target[i]);
+			if (index>=0&&lowestIndex>index) {
+				lowestIndex=index;
+			}
+		}
+		return lowestIndex;
+	}
+
+	private static int[] getAllIndicies(String sequence, char... target) {
+		TIntArrayList indicies=new TIntArrayList();
+		for (int index=0; index<sequence.length(); index++) {
+			for (int i=0; i<target.length; i++) {
+				if (sequence.charAt(index)==target[i]) {
+					indicies.add(index);
+				}
+			}
+		}
+		return indicies.toArray();
 	}
 
 	private static int getCount(String sequence, char... target) {

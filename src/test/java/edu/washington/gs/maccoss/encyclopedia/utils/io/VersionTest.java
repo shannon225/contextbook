@@ -10,8 +10,8 @@ public class VersionTest extends TestCase {
 		Version v4=new Version("1.1.9");
 		Version v5=new Version("0.9.8");
 		
-		assertEquals("1.2", v1.toString());
-		assertEquals("1.2", v2.toString());
+		assertEquals("1.2.0", v1.toString());
+		assertEquals("1.2.0", v2.toString());
 		assertEquals("1.2.1", v3.toString());
 		assertEquals("1.1.9", v4.toString());
 		assertEquals("0.9.8", v5.toString());

@@ -10,6 +10,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import ch.qos.logback.core.util.TimeUtil;
+import com.sun.istack.Nullable;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.OverlapDeconvoluter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -89,60 +91,109 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 			StripeFile stripeFile=new StripeFile(isOpenFileInPlace);
 			stripeFile.openFile();
 
-			BlockingQueue<MzmlBlock> mzmlBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);
-			MzmlToDIASAXProducer producer=new MzmlToDIASAXProducer(mzMLFile, mzmlBlockQueue, parameters);
-			Thread producerThread=new Thread(producer);
+			final BlockingQueue<MzmlBlock> mzmlBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);
+			final MzmlToDIASAXProducer producer=new MzmlToDIASAXProducer(mzMLFile, mzmlBlockQueue, parameters);
+
+			@Nullable OverlapDeconvoluter deconvoluter;
+			MzmlToDIAConsumer consumer;
+
+			final Thread producerThread=new Thread(producer);
+			@Nullable final Thread deconvoluterThread;
+			Thread consumerThread;
 
 			// will be populated after we join back up. Since we're not looking
 			// at it until after the join, we're safe to not have to worry about
 			// concurrency.
 			HashMap<Range, TFloatArrayList> retentionTimesByStripe=producer.getRetentionTimesByStripe();
-
-			Thread[] threads;
+			HashMap<Range, TFloatArrayList> ionInjectionTimesByStripe=producer.getIonInjectionTimesByStripe();
 
 			if (parameters.isDeconvoluteOverlappingWindows()) {
 				BlockingQueue<MzmlBlock> deconvolutionBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);
-				OverlapDeconvoluter deconvoluter=new OverlapDeconvoluter(parameters.getFragmentTolerance(), mzmlBlockQueue, deconvolutionBlockQueue);
+				deconvoluter = new OverlapDeconvoluter(parameters.getFragmentTolerance(), mzmlBlockQueue, deconvolutionBlockQueue);
 				retentionTimesByStripe=deconvoluter.getRetentionTimesByStripe();
-				MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(deconvolutionBlockQueue, stripeFile, parameters);
+				ionInjectionTimesByStripe=deconvoluter.getIonInjectionTimesByStripe();
+				consumer = new MzmlToDIAConsumer(deconvolutionBlockQueue, stripeFile, parameters);
 
 				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
-				Thread deconvoluterThread=new Thread(deconvoluter);
-				Thread consumerThread=new Thread(consumer);
-
-				threads=new Thread[] {producerThread, deconvoluterThread, consumerThread};
-				
+				deconvoluterThread = new Thread(deconvoluter);
+				consumerThread = new Thread(consumer);
 			} else {
-				MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(mzmlBlockQueue, stripeFile, parameters);
+				deconvoluter = null;
+				deconvoluterThread = null;
+
+				consumer = new MzmlToDIAConsumer(mzmlBlockQueue, stripeFile, parameters);
 
 				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
-				Thread consumerThread=new Thread(consumer);
+				consumerThread = new Thread(consumer);
 
-				threads=new Thread[] {producerThread, consumerThread};
 			}
 
-			for (int i=0; i<threads.length; i++) {
-				threads[i].start();
+			producerThread.start();
+			if (null != deconvoluterThread) {
+				deconvoluterThread.start();
 			}
+			consumerThread.start();
 
 			try {
-				producerThread.join();
+				// Spin on threads waiting for execution to finish.
+				// If we encounter an error, interrupt the other threads
+				// and throw an exception after they die. Otherwise wait
+				// until all the threads have finished.
+				while (true) {
+					boolean alive = false;
 
-				if (producer.hadError()) {
-					for (Thread thread : threads) {
-						if (thread != producerThread) {
-							// this will terminate the processing loop if the threads have not received the poison item
-							// (note that this is because the deconvoluter and consumers are written correctly to do this)
-							thread.interrupt();
+					producerThread.join(100L);
+					if (producerThread.isAlive()) {
+						alive = true;
+					} else if (producer.hadError()) {
+						if (null != deconvoluterThread) {
+							deconvoluterThread.interrupt();
+						}
+						consumerThread.interrupt();
+
+						if (null != deconvoluterThread) {
+							deconvoluterThread.join();
+						}
+						consumerThread.join();
+
+						throw new EncyclopediaException(producer.getError());
+					}
+
+					if (null != deconvoluterThread) {
+						deconvoluterThread.join(100L);
+						if (deconvoluterThread.isAlive()) {
+							alive = true;
+						} else if (deconvoluter.hadError()) {
+							producerThread.interrupt();
+							consumerThread.interrupt();
+
+							producerThread.join();
+							consumerThread.join();
+
+							throw new EncyclopediaException(deconvoluter.getError());
 						}
 					}
 
-					throw new EncyclopediaException(producer.getError());
-				}
+					consumerThread.join(100L);
+					if (consumerThread.isAlive()) {
+						alive = true;
+					} else if (consumer.hadError()) {
+						producerThread.interrupt();
+						if (null != deconvoluterThread) {
+							deconvoluterThread.interrupt();
+						}
 
-				// note that this will join the producer a second time, but it will return instantly
-				for (int i=0; i<threads.length; i++) {
-					threads[i].join();
+						producerThread.join();
+						if (null != deconvoluterThread) {
+							deconvoluterThread.join();
+						}
+
+						throw new EncyclopediaException(consumer.getError());
+					}
+
+					if (!alive) {
+						break;
+					}
 				}
 
 				stripeFile.setSoftwareVersions(producer.getSoftwareAccessionIdToVersion());

@@ -8,7 +8,7 @@ import junit.framework.TestCase;
 
 public class PeptideTrieTest extends TestCase {
 
-	public void testTrie() {
+	public void testTrie() throws Exception {
 		InputStream is=getClass().getResourceAsStream("/truncated.msp");
 		ArrayList<LibraryEntry> entries=MSPReader.readMSP(is, "truncated.msp", true);
 		PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(entries) {

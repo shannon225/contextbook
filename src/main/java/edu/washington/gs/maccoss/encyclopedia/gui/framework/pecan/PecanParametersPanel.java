@@ -21,6 +21,7 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 
+import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
@@ -66,7 +67,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 	private final FileChooserPanel targetFasta;
 	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {DataAcquisitionType.toName(DataAcquisitionType.OVERLAPPING_DIA), DataAcquisitionType.toName(DataAcquisitionType.DIA)});
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "Glu-C", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
-	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "None"});
+	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "C+125 (NEM)", "None"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.HCD), FragmentationType.toName(FragmentationType.ETD)});
 	private final JComboBox<String> percolatorVersion=new JComboBox<String>(new String[] {PercolatorExecutor.V3_01, PercolatorExecutor.V2_10});
 
@@ -143,22 +144,12 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		this.add(options, BorderLayout.CENTER);
 	}
 
-	public String getProgramName() {
-		return programName;
+	public ProgramType getProgram() {
+		return ProgramType.PecanPie;
 	}
 	
 	public String getProgramShortDescription() {
 		return programShortDescription;
-	}
-	
-	@Override
-	public String getCitation() {
-		return "This is a <a href=https://sites.google.com/a/uw.edu/maccoss/>MacCoss Lab</a> project from the University of Washington, <a href=http://www.gs.washington.edu/>Department of Genome Sciences</a>. For more information please contact Brian Searle (searleb@uw.edu).";
-	}
-
-	@Override
-	public String getAboutMessage() {
-		return "<b>Walnut is just like PeCAn, but with more wrinkles and slightly more bitter.";
 	}
 	
 	public ImageIcon getSmallImage() {
@@ -283,8 +274,8 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		}
 		if (!gotIt) fragmentTolerance.setSelectedIndex(1);
 		
-		minCharge.setValue(params.getMinCharge());
-		maxCharge.setValue(params.getMaxCharge());
+		minCharge.setValue(new Integer(params.getMinCharge()));
+		maxCharge.setValue(new Integer(params.getMaxCharge()));
 		maxMissedCleavage.setValue(params.getMaxMissedCleavages());
 		numberOfJobs.setValue(params.getNumberOfThreadsUsed());
 		if (params.getPrecursorWindowSize()>0) {

@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -16,6 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
+import edu.washington.gs.maccoss.encyclopedia.utils.VersioningDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
 
 public class SearchGUIMain {
@@ -23,7 +25,7 @@ public class SearchGUIMain {
 		runGUI(ProgramType.Global);
 	}
 
-	public static void runGUI(ProgramType program) {
+	public static JFrame runGUI(ProgramType program) {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {
@@ -49,13 +51,17 @@ public class SearchGUIMain {
 			image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mike_rotate_icon.png"));
 		} else {
 			if (isOffending==1) {
-				shortName="PoopeDIA";
-				name="Lindsay's PoopeDIA: Peptide Searching for DIA";
+				shortName="MaiziepeDIA";
+				name="Lindsay's MaiziepeDIA: Peptide Searching for DIA";
 				image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mazie_icon.png"));
 			} else if (isOffending==2) {
 				shortName="ChocopeDIA";
 				name="MoMo's ChocopeDIA: Peptide Searching for DIA";
 				image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/chocolate2.png"));
+			} else if (isOffending==3) {
+				shortName="StupiDIA";
+				name="Austin's StupiDIA: Peptide Searching for DIA";
+				image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/austin_icon.png"));
 			} else {
 				shortName="EncyclopeDIA";
 				name="EncyclopeDIA: Peptide Searching for DIA";
@@ -102,7 +108,9 @@ public class SearchGUIMain {
 		f.setJMenuBar(panel.createMenus(program));
 
 		f.pack();
-		f.setSize(new Dimension(1250, 750));
+		
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		f.setSize(new Dimension(Math.max(600, Math.min(screenSize.width-20, 1250)), Math.max(600, Math.min(screenSize.height-20, 950))));
 		f.setVisible(true);
 
 		Runtime instance=Runtime.getRuntime();
@@ -111,7 +119,7 @@ public class SearchGUIMain {
 			JOptionPane.showMessageDialog(f, "Warning, you only have "+mbOfMemory+" MB of memory allocated.\nPlease make sure you are running 64-bit Java!", "Warning, Low Memory!", JOptionPane.WARNING_MESSAGE, image);
 		}
 
-		Logger.logLine(shortName+" Graphical Interface");
+		Logger.logLine(shortName+" Graphical Interface (version "+program.getVersion()+")");
 		
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
@@ -126,5 +134,9 @@ public class SearchGUIMain {
 				}
 			}
 		});
+		
+		VersioningDetector.checkVersionGUI(program, f);
+		
+		return f;
 	}
 }

@@ -19,7 +19,11 @@ public class OverlapDeconvoluter implements Runnable {
 	private final BlockingQueue<MzmlBlock> inputQueue;
 	private final BlockingQueue<MzmlBlock> outputQueue;
 	private final HashMap<Range, TFloatArrayList> retentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
+	private final HashMap<Range, TFloatArrayList> ionInjectionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 	private final HashMap<Range, TFloatArrayList> truncatedRetentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
+	private final HashMap<Range, TFloatArrayList> truncatedIonInjectionTimesByStripe=new HashMap<Range, TFloatArrayList>();
+
+	private Throwable error;
 
 	public OverlapDeconvoluter(MassTolerance tolerance, BlockingQueue<MzmlBlock> inputQueue, BlockingQueue<MzmlBlock> outputQueue) {
 		this.tolerance=tolerance;
@@ -29,6 +33,9 @@ public class OverlapDeconvoluter implements Runnable {
 	
 	public HashMap<Range, TFloatArrayList> getRetentionTimesByStripe() {
 		return retentionTimesByStripe;
+	}
+	public HashMap<Range, TFloatArrayList> getIonInjectionTimesByStripe() {
+		return ionInjectionTimesByStripe;
 	}
 	
 	public void run() {
@@ -140,19 +147,37 @@ public class OverlapDeconvoluter implements Runnable {
 		} catch (InterruptedException ie) {
 			Logger.errorLine("DIA writing interrupted!");
 			Logger.errorException(ie);
+		} catch (Throwable t) {
+			Logger.errorLine("Overlap deconvolution failed!");
+			Logger.errorException(t);
+
+			this.error = t;
 		}
+	}
+
+	public boolean hadError() {
+		return null != error;
+	}
+
+	public Throwable getError() {
+		return error;
 	}
 	
 	public void addRetentionTime(Stripe thisStripe) {
 		Range range=thisStripe.getRange();
 		Range truncatedRange=new Range((int)range.getStart(), (int)range.getStop()); // to deal with rounding errors
 		TFloatArrayList stripeRTs=truncatedRetentionTimesByStripe.get(truncatedRange);
+		TFloatArrayList stripeIITs=truncatedIonInjectionTimesByStripe.get(truncatedRange);
 		if (stripeRTs==null) {
 			stripeRTs=new TFloatArrayList();
 			truncatedRetentionTimesByStripe.put(truncatedRange, stripeRTs);
 			retentionTimesByStripe.put(range, stripeRTs);
+			stripeIITs=new TFloatArrayList();
+			truncatedIonInjectionTimesByStripe.put(truncatedRange, stripeIITs);
+			ionInjectionTimesByStripe.put(range, stripeIITs);
 		}
 		stripeRTs.add(thisStripe.getScanStartTime());
+		stripeIITs.add(thisStripe.getIonInjectionTime());
 	}
 	
 	public static Pair<Stripe, Stripe> deconvolute(Stripe earlyLow, Stripe earlyHigh, Stripe center, Stripe lateLow, Stripe lateHigh, MassTolerance tolerance) {
@@ -205,7 +230,7 @@ public class OverlapDeconvoluter implements Runnable {
 		Pair<double[], float[]> arrays=Peak.toArrays(lowerPeaks);
 		int scanNumber=useNegativeScanNumber?(Integer.MAX_VALUE-center.getSpectrumIndex()):center.getSpectrumIndex();
 		
-		Stripe lowerStripe=new Stripe(center.getSpectrumName(), center.getPrecursorName(), scanNumber, center.getScanStartTime(), lowerRange.getStart(), lowerRange.getStop(), arrays.x, arrays.y);
+		Stripe lowerStripe=new Stripe(center.getSpectrumName(), center.getPrecursorName(), scanNumber, center.getScanStartTime(), center.getIonInjectionTime(), lowerRange.getStart(), lowerRange.getStop(), arrays.x, arrays.y);
 		return lowerStripe;
 	}
 

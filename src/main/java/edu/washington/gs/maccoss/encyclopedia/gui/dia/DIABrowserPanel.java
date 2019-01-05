@@ -11,6 +11,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
@@ -60,17 +61,20 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumComparator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
+import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TDoubleDoubleHashMap;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class DIABrowserPanel extends JPanel {
 	private static final String STRUCTURE_TITLE="Structure";
 	private static final String INTENSITY_DISTRIBUTION_TITLE="Intensity Distributions";
+	private static final String BOXPLOT_TITLE="Range Statistics";
 	private static final long serialVersionUID=1L;
 	public static final Color[] colors=new Color[] {Color.red, Color.blue, Color.green, Color.cyan, Color.magenta, Color.orange, Color.yellow, Color.pink, Color.gray, 
 			Color.red.darker(), Color.blue.darker(), Color.green.darker(), Color.cyan.darker(), Color.magenta.darker(), Color.orange.darker(), Color.yellow.darker(), Color.pink.darker(), Color.gray.darker()};
 
 	private final FileChooserPanel rawFileChooser;
+	private final JSplitPane boxplotSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane distributionSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane rawSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane spectrumSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
@@ -205,6 +209,7 @@ public class DIABrowserPanel extends JPanel {
 		primaryTabs.addTab("Scans", rawSplit);
 		rawSplit.setBottomComponent(spectrumSplit);
 		primaryTabs.addTab(INTENSITY_DISTRIBUTION_TITLE, distributionSplit);
+		primaryTabs.addTab(BOXPLOT_TITLE, boxplotSplit);
         
 		split.setLeftComponent(left);
 		split.setRightComponent(primaryTabs);
@@ -271,12 +276,50 @@ public class DIABrowserPanel extends JPanel {
 						precursorIonDistribution.adjustOrPutValue(bin, 1.0f, 1.0f);
 					}
 				}
+				
+				float threshold=maxTIC/20f;
+				float minRT=Float.MAX_VALUE;
+				float maxRT=0.0f;
+				for (XYPoint point : tics) {
+					if (point.y>threshold) {
+						if (point.x<minRT) minRT=(float)point.x;
+						if (point.x>maxRT) maxRT=(float)point.x;
+					}
+				}
 				chromatogram=new XYTrace(tics, GraphType.area, "Precursor TIC");
 				precursorIntensityHistogram=new XYTrace(precursorIonDistribution, GraphType.area, "Log10 Precursor Intensity Distribution");
 				
 				TDoubleDoubleHashMap fragmentIonDistribution=new TDoubleDoubleHashMap();
+
+				@SuppressWarnings("rawtypes")
+				HashMap<Comparable, TFloatArrayList> maxIITByRange=new HashMap<>();
+				@SuppressWarnings("rawtypes")
+				HashMap<Comparable, TFloatArrayList> maxIITByRT=new HashMap<>();
 				for (Stripe stripe : dia.getStripes(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), -Float.MAX_VALUE, Float.MAX_VALUE, false)) {
 					scans.add(stripe);
+					
+					float rtInMin=stripe.getScanStartTime()/60f;
+					if (rtInMin>minRT&&rtInMin<maxRT) {
+						@SuppressWarnings("rawtypes")
+						Comparable key=stripe.getRange();
+						TFloatArrayList iits=maxIITByRange.get(key);
+						if (iits==null) {
+							iits=new TFloatArrayList();
+							maxIITByRange.put(key, iits);
+						}
+	
+						key=5f*Math.round(stripe.getScanStartTime()/300f);
+						TFloatArrayList rts=maxIITByRT.get(key);
+						if (rts==null) {
+							rts=new TFloatArrayList();
+							maxIITByRT.put(key, rts);
+						}
+						
+						iits.add(stripe.getIonInjectionTime()*1000f);
+						rts.add(stripe.getIonInjectionTime()*1000f);
+					}
+					
+					stripe.getScanStartTime();
 					for (float intensity : stripe.getIntensityArray()) {
 						double bin=((int)(10.0*Log.protectedLog10(intensity)))/10.0;
 						fragmentIonDistribution.adjustOrPutValue(bin, 1.0, 1.0);
@@ -289,6 +332,13 @@ public class DIABrowserPanel extends JPanel {
 				final ChartPanel fragmentIntensities=Charter.getChart("Log10 Fragment Intensity", "Count", false, fragmentIntensityHistogram);
 				distributionSplit.setTopComponent(precursorIntensities);
 				distributionSplit.setBottomComponent(fragmentIntensities);
+				distributionSplit.setDividerLocation(400);
+				
+				final ChartPanel iits=Charter.getBoxplotChart(null, "Precursor Isolation Window", "Ion Injection Time (in msec)", maxIITByRange);
+				final ChartPanel rts=Charter.getBoxplotChart(null, "Retention Time Bin (in min)", "Ion Injection Time (in msec)", maxIITByRT);
+				boxplotSplit.setTopComponent(iits);
+				boxplotSplit.setBottomComponent(rts);
+				boxplotSplit.setDividerLocation(400);
 				
 				Collections.sort(scans, new SpectrumComparator(SpectrumComparator.compareWithRT));
 				
@@ -297,6 +347,7 @@ public class DIABrowserPanel extends JPanel {
 			@Override
 			protected void doneForReal(ArrayList<Spectrum> t) {
 				model.updateEntries(t);
+				table.addRowSelectionInterval(0, 0);
 			}
 		};
 		worker.execute();

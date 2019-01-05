@@ -7,6 +7,7 @@ import java.io.File;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Optional;
 
 import javax.swing.BorderFactory;
@@ -18,9 +19,11 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 
+import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
@@ -33,6 +36,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
@@ -44,6 +48,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
+import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
@@ -53,7 +58,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInterface {
 	private static final long serialVersionUID=1L;
 	private static final int numberOfCores=Runtime.getRuntime().availableProcessors();
-	private static final String programName="XCorDIA";
 	private static final String programShortDescription="XCorDIA Peptide Search";
 	public static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mike_rotate_small_icon.png"));
 	public static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mike_rotate_icon.png"));
@@ -70,8 +74,8 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	private final FileChooserPanel backgroundFasta;
 	private final FileChooserPanel targetFasta;
 	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {DataAcquisitionType.toName(DataAcquisitionType.OVERLAPPING_DIA), DataAcquisitionType.toName(DataAcquisitionType.DIA)});
-	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
-	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "None"});
+	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Glu-C", "Lys-C", "Arg-C", "Asp-N", "Lys-N", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
+	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "C+125 (NEM)", "None"});
 	private final JComboBox<String> variable=new JComboBox<String>(VARIABLE_MODIFICATION_ITEMS);
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.HCD), FragmentationType.toName(FragmentationType.ETD)});
 
@@ -88,6 +92,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
 	private final SpinnerModel minQuantitativeIonNumber=new SpinnerNumberModel(3, 0, 100, 1);
 	private final SpinnerModel percolatorThreshold=new SpinnerNumberModel(0.01, 0.001, 0.1, 0.001);
+	private final JTextField additionalCommandLineOptions=new JTextField();
 	
 	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
 
@@ -148,7 +153,8 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		chargeRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
 		chargeRange.add(new JSpinner(maxCharge));
 		options.add(new LabeledComponent("Charge range", chargeRange));
-		
+
+		options.add(new LabeledComponent("Additonal Command Line Options", additionalCommandLineOptions));
 
 		this.add(options, BorderLayout.CENTER);
 	}
@@ -162,23 +168,13 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	public File getBackgroundFastaFile() {
 		return backgroundFasta.getFile();
 	}
-	
-	public String getProgramName() {
-		return programName;
+
+	public ProgramType getProgram() {
+		return ProgramType.XCorDIA;
 	}
 	
 	public String getProgramShortDescription() {
 		return programShortDescription;
-	}
-	
-	@Override
-	public String getCitation() {
-		return "This is a <a href=https://sites.google.com/a/uw.edu/maccoss/>MacCoss Lab</a> project from the University of Washington, <a href=http://www.gs.washington.edu/>Department of Genome Sciences</a>. For more information please contact Brian Searle (searleb@uw.edu).";
-	}
-
-	@Override
-	public String getAboutMessage() {
-		return "XCorDIA is XCorr for DIA. Duh.";
 	}
 	
 	public ImageIcon getSmallImage() {
@@ -271,6 +267,12 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 
 		XCordiaSearchParameters parameters=new XCordiaSearchParameters(aaConstants, fragmentation, precursorPPMValue, fragmentPPMValue, digestionEnzyme, isPercolatorTwo?2:3, percolatorThresholdValue, percolatorThresholdValue,
 				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, numberOfExtraDecoyLibrariesValue, true, true, isRequireVariableMods);
+
+		String cmds=additionalCommandLineOptions.getText();
+		HashMap<String, String> params=parameters.toParameterMap();
+		params.putAll(CommandLineParser.parseArguments(cmds.split(" ")));
+		parameters=XCordiaSearchParameters.convertFromPecan(PecanParameterParser.parseParameters(params));
+		
 		return parameters;
 	}
 	
@@ -309,9 +311,9 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 			}
 		}
 		if (!gotIt) fragmentTolerance.setSelectedIndex(1);
-		
-		minCharge.setValue(params.getMinCharge());
-		maxCharge.setValue(params.getMaxCharge());
+
+		minCharge.setValue(new Integer(params.getMinCharge()));
+		maxCharge.setValue(new Integer(params.getMaxCharge()));
 		maxMissedCleavage.setValue(params.getMaxMissedCleavages());
 		numberOfJobs.setValue(params.getNumberOfThreadsUsed());
 		if (params.getPrecursorWindowSize()>0) {

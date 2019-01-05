@@ -56,6 +56,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.FileLogRecorder;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.VersioningDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
@@ -93,6 +94,8 @@ public class Thesaurus {
 			System.exit(1);
 			
 		} else {
+			VersioningDetector.checkVersionCLI(ProgramType.CASiL);
+			
 			if (!arguments.containsKey(Encyclopedia.INPUT_DIA_TAG)||!arguments.containsKey(Encyclopedia.TARGET_LIBRARY_TAG)||!arguments.containsKey(Encyclopedia.BACKGROUND_FASTA_TAG)) {
 				Logger.errorLine("You are required to specify an input file ("+Encyclopedia.INPUT_DIA_TAG+"), a library file ("+Encyclopedia.TARGET_LIBRARY_TAG+"), and a fasta file ("+Encyclopedia.BACKGROUND_FASTA_TAG+")");
 				System.exit(1);

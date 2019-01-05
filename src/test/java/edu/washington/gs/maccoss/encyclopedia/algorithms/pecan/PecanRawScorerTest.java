@@ -32,6 +32,6 @@ public class PecanRawScorerTest extends TestCase {
 		return new LibraryEntry("", new HashSet<String>(), 1, (byte)1, "", 1, 1, 1, masses, intensities, aaConstants);
 	}
 	public Stripe getStripe(double[] masses, float[] intensities) {
-		return new Stripe("", "", 1, 1, 1, 1, masses, intensities);
+		return new Stripe("", "", 1, 1, 0f, 1, 1, masses, intensities);
 	}
 }

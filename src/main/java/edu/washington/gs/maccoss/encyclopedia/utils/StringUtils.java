@@ -61,4 +61,14 @@ public class StringUtils {
 		Arrays.fill(ca, c);
 		return new String(ca);
 	}
+	
+	public static String wrap(String s, int wrap) {
+		StringBuilder sb=new StringBuilder();
+		char[] ca=s.toCharArray();
+		for (int i=0; i<ca.length; i++) {
+			if (i>0&&i%wrap==0) sb.append('\n');
+			sb.append(ca[i]);
+		}
+		return sb.toString();
+	}
 }

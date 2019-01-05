@@ -9,7 +9,8 @@ public class Networking {
 	final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
 	private static final String[] poopAddresses=new String[] {
 		"98-90-96-DF-EE-BC",
-		"B8-CA-3A-98-6D-BF"
+		"B8-CA-3A-98-6D-BF",
+		"F8-32-E4-BD-D1-46"
 	};
 	
 	public static void main(String arg[]) {
@@ -18,6 +19,16 @@ public class Networking {
 			System.out.println(bytesToHex(mac));
 		} catch (Exception e) {
 			System.out.println(e);
+		}
+	}
+	
+	public static String getUserID() {
+		try {
+			byte[] mac=getMacAddress();
+			return bytesToHex(mac);
+
+		} catch (Exception e) {
+			return "unknown";
 		}
 	}
 	

@@ -1,15 +1,22 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -17,8 +24,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class OpenSwathTSVToLibraryConverter {
 
@@ -26,7 +37,7 @@ public class OpenSwathTSVToLibraryConverter {
 	public static LibraryFile convertOpenSwathTSV(File tsvFile, File fastaFile, SearchParameters parameters) {
 		String absolutePath=tsvFile.getAbsolutePath();
 		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
-		return convertOpenSwathTSV(tsvFile, fastaFile, libraryFile, parameters);
+		return convertFromOpenSwathTSV(tsvFile, fastaFile, libraryFile, parameters);
 	}
 	
 	private static String getFromMap(Map<String, String> row, String... options) {
@@ -68,8 +79,67 @@ public class OpenSwathTSVToLibraryConverter {
 			}
 		}
 	}
+	
+	public static void convertToOpenSwathTSV(SearchParameters params, final File elibFile, File tsvFile) throws IOException, SQLException, DataFormatException {
+		LibraryFile library=new LibraryFile();
+		library.openFile(elibFile);
+		final AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+		final ArrayList<LibraryEntry> allEntries=library.getAllEntries(false,  aaConstants);
+		Logger.logLine("Found "+allEntries.size()+" entries from "+elibFile.getName()+". Writing to ["+tsvFile.getAbsolutePath()+"]...");
 
-	public static LibraryFile convertOpenSwathTSV(File tsvFile, File fastaFile, File libraryFile, SearchParameters parameters) {
+		try {
+			PrintWriter writer=new PrintWriter(tsvFile, "UTF-8");
+			HashSet<String> alreadyUsed=new HashSet<>();
+			writer.println(General.toString(new String[] {
+					"transition_group_id", "transition_name", "ProteinId", "PeptideSequence", "ModifiedPeptideSequence", "FullPeptideName", "RetentionTime", "PrecursorMz", "PrecursorCharge",
+					"ProductMz", "ProductCharge", "LibraryIntensity", "FragmentIonType", "FragmentSeriesNumber", "IsDecoy", "quantifying_transition"}, "\t"));
+			for (LibraryEntry e : allEntries) {
+				AnnotatedLibraryEntry entry=AnnotatedLibraryEntry.getAnnotationsOnly(e, params);
+				
+				Object ModifiedSequence=PeptideUtils.formatForTPP(entry.getPeptideModSeq());
+				Object transition_group_id=ModifiedSequence+"+"+entry.getPrecursorCharge();
+				Object PeptideSequence=entry.getPeptideSeq();
+				Object RetentionTime=new Float(entry.getRetentionTime());
+				Object PrecursorMz=new Double(entry.getPrecursorMZ());
+				Object PrecursorCharge=new Integer(entry.getPrecursorCharge());
+				Object IsDecoy=entry.isDecoy()?"1":"0";
+				Object ProteinId=PSMData.accessionsToString(entry.getAccessions());
+				
+				double[] masses=entry.getMassArray();
+				float[] intensities=entry.getIntensityArray();
+				FragmentIon[] ions=entry.getIonAnnotations();
+				
+				for (int i=0; i<ions.length; i++) {
+					if (ions[i]!=null) {
+						Object ProductCharge=new Byte(IonType.getCharge(ions[i].type));
+						Object FragmentIonType=IonType.getType(ions[i].type);
+						Object FragmentIonOrdinal=ions[i].index;
+						Object transition_name=transition_group_id+"_"+FragmentIonType+FragmentIonOrdinal+"+"+PrecursorCharge;
+						Object ProductMz=new Double(masses[i]);
+						Object LibraryIntensity=new Float(intensities[i]);
+						Object quantifying_transition="1";
+						
+						if (!alreadyUsed.contains(transition_name)) {
+							alreadyUsed.add((String)transition_name);
+							writer.println(General.toString(new Object[] {
+									transition_group_id,transition_name,ProteinId,PeptideSequence,ModifiedSequence,ModifiedSequence,RetentionTime,PrecursorMz,PrecursorCharge,
+									ProductMz,ProductCharge,LibraryIntensity,FragmentIonType,FragmentIonOrdinal,IsDecoy, quantifying_transition}, "\t"));
+						}
+					}
+				}
+			}
+			writer.flush();
+			writer.close();
+		} catch (IOException e) {
+			Logger.errorLine("Error writing library to OpenSWATH file.");
+			Logger.errorException(e);
+		}
+		
+		library.close();
+		Logger.logLine("Finished reading "+tsvFile.getName());
+	}
+
+	public static LibraryFile convertFromOpenSwathTSV(File tsvFile, File fastaFile, File libraryFile, SearchParameters parameters) {
 		AminoAcidConstants aaConstants=parameters.getAAConstants();
 		try {
 			final ArrayList<PeptideEntry> peptides=new ArrayList<PeptideEntry>();

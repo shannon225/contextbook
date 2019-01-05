@@ -469,6 +469,14 @@ public class General {
 		return r;
 	}
 
+	public static int[] add(int[] v1, int v) {
+		int[] r=new int[v1.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=v1[i]+v;
+		}
+		return r;
+	}
+
 	public static float[] subtract(float[] v1, float v) {
 		float[] r=new float[v1.length];
 		for (int i=0; i<r.length; i++) {

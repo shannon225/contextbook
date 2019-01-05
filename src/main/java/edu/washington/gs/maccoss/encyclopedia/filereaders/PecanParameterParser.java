@@ -243,7 +243,7 @@ public class PecanParameterParser {
 		precursorWindowSize=SearchParameterParser.getFloat("-precursorWindowSize", parameters, -1f);
 		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 5);
 		minNumOfQuantitativePeaks=SearchParameterParser.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
-		minIntensity=SearchParameterParser.getFloat("-minIntensity", parameters, 3);
+		minIntensity=SearchParameterParser.getFloat("-minIntensity", parameters, -1.0f);
 		percolatorVersionNumber=SearchParameterParser.getInteger("-percolatorVersionNumber", parameters, 3);
 		quantifyAcrossSamples=SearchParameterParser.getBoolean("-quantifyAcrossSamples", parameters, false);
 		requireVariableMods=SearchParameterParser.getBoolean("-requireVariableMods", parameters, false);

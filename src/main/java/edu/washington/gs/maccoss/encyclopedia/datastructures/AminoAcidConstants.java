@@ -37,6 +37,9 @@ public class AminoAcidConstants {
 		}else if ("C+46 (MMTS)".equalsIgnoreCase(name)) {
 			fixedMods=new TCharDoubleHashMap(new char[] {'C'}, new double[] {45.987721});
 			
+		}else if ("C+125 (NEM)".equalsIgnoreCase(name)) {
+			fixedMods=new TCharDoubleHashMap(new char[] {'C'}, new double[] {125.047679});
+			
 		} else {
 			fixedMods=new TCharDoubleHashMap();
 		}
@@ -50,6 +53,8 @@ public class AminoAcidConstants {
 			return "C+58 (Carboxymethyl)";
 		} else if (Math.round(constants.getFixedMods().get('C'))==46) {
 			return "C+46 (MMTS)";
+		} else if (Math.round(constants.getFixedMods().get('C'))==125) {
+			return "C+125 (NEM)";
 		}
 		return "No fixed modifications";
 	}
