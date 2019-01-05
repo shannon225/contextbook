@@ -2,8 +2,8 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.util.ArrayList;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 
 public class MSMSBlock {
 	public static final MSMSBlock POISON_BLOCK=new MSMSBlock(new ArrayList<PrecursorScan>(), new ArrayList<FragmentScan>());

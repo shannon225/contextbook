@@ -1,5 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
@@ -7,14 +11,10 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 public class PercolatorPeptideTest {
 	public static void main(String[] args) {
-		ArrayList<PercolatorPeptide> peptides=getPeptides();
 		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+		ArrayList<PercolatorPeptide> peptides=getPeptides(aaConstants);
 		ArrayList<ProteinGroupInterface> proteins=ParsimonyProteinGrouper.groupProteins(peptides, aaConstants);
 		for (ProteinGroupInterface proteinGroup : proteins) {
 			List<String> accessions=proteinGroup.getEquivalentAccessions();
@@ -30,353 +30,353 @@ public class PercolatorPeptideTest {
 		return PercolatorPeptide.getPSMID("file", 0, Optional.empty(), false, peptideModSeq, (byte)2);
 	}
 
-	public static ArrayList<PercolatorPeptide> getPeptides() {
+	public static ArrayList<PercolatorPeptide> getPeptides(AminoAcidConstants aacs) {
 		ArrayList<PercolatorPeptide> peptides=new ArrayList<PercolatorPeptide>();
-		peptides.add(new PercolatorPeptide(getPSMID("YGQTIRPICLPCTEGTTR"), "tr|E7ETN3|E7ETN3_HUMAN;sp|P00751|CFAB_HUMAN;tr|B4E1Z4|B4E1Z4_HUMAN;tr|H7C5H1|H7C5H1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LLIYGASSR"), "sp|P01619|KV320_HUMAN", 0, 0));
+		peptides.add(new PercolatorPeptide(getPSMID("YGQTIRPICLPCTEGTTR"), "tr|E7ETN3|E7ETN3_HUMAN;sp|P00751|CFAB_HUMAN;tr|B4E1Z4|B4E1Z4_HUMAN;tr|H7C5H1|H7C5H1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LLIYGASSR"), "sp|P01619|KV320_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("RGHLFLQTDQPIYNPGQR"),
 				"sp|P0C0L4|CO4A_HUMAN;tr|A0A0G2JL54|A0A0G2JL54_HUMAN;tr|F5GXS0|F5GXS0_HUMAN;tr|A0A140TA49|A0A140TA49_HUMAN;tr|A0A140TA29|A0A140TA29_HUMAN;sp|P0C0L4-2|CO4A_HUMAN;tr|A0A140TA32|A0A140TA32_HUMAN;sp|P0C0L5|CO4B_HUMAN;tr|A0A0G2JPR0|A0A0G2JPR0_HUMAN;tr|A0A140TA44|A0A140TA44_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LLLSYGASR"), "sp|Q99728-3|BARD1_HUMAN;sp|Q99728|BARD1_HUMAN;sp|Q99728-2|BARD1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("EAQLPVIENK"), "sp|P00747|PLMN_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LLLSYGASR"), "sp|Q99728-3|BARD1_HUMAN;sp|Q99728|BARD1_HUMAN;sp|Q99728-2|BARD1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("EAQLPVIENK"), "sp|P00747|PLMN_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("ADDKETCFAEEGK"),
 				"sp|P02768-2|ALBU_HUMAN;sp|P02768-3|ALBU_HUMAN;tr|H0YA55|H0YA55_HUMAN;tr|B7WNR0|B7WNR0_HUMAN;tr|C9JKR2|C9JKR2_HUMAN;sp|P02768|ALBU_HUMAN;tr|A0A087WWT3|A0A087WWT3_HUMAN;tr|D6RHD5|D6RHD5_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("GPSVFPLAPSSK"), "tr|A0A0A0MS08|A0A0A0MS08_HUMAN;sp|P01857|IGHG1_HUMAN;tr|A0A0A0MS07|A0A0A0MS07_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("FNWYVDGVEVHNAK"), "tr|A0A0A0MS08|A0A0A0MS08_HUMAN;sp|P01857|IGHG1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("GPSVFPLAPCSR"), "tr|A0A075B6N8|A0A075B6N8_HUMAN;sp|P01860|IGHG3_HUMAN;sp|P01859|IGHG2_HUMAN;sp|P01861|IGHG4_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("IWDVVEK"), "sp|P01024|CO3_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("AESPEVCFNEESPK"), "sp|P43652|AFAM_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("VSALLTPAEQTGTWK"), "sp|P04114|APOB_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("GPSVFPLAPSSK"), "tr|A0A0A0MS08|A0A0A0MS08_HUMAN;sp|P01857|IGHG1_HUMAN;tr|A0A0A0MS07|A0A0A0MS07_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("FNWYVDGVEVHNAK"), "tr|A0A0A0MS08|A0A0A0MS08_HUMAN;sp|P01857|IGHG1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("GPSVFPLAPCSR"), "tr|A0A075B6N8|A0A075B6N8_HUMAN;sp|P01860|IGHG3_HUMAN;sp|P01859|IGHG2_HUMAN;sp|P01861|IGHG4_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("IWDVVEK"), "sp|P01024|CO3_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("AESPEVCFNEESPK"), "sp|P43652|AFAM_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("VSALLTPAEQTGTWK"), "sp|P04114|APOB_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("NNVPCSPK"),
 				"sp|P0C0L4|CO4A_HUMAN;tr|A0A0G2JL54|A0A0G2JL54_HUMAN;tr|F5GXS0|F5GXS0_HUMAN;tr|A0A140TA49|A0A140TA49_HUMAN;tr|A0A140TA29|A0A140TA29_HUMAN;sp|P0C0L4-2|CO4A_HUMAN;tr|A0A140TA32|A0A140TA32_HUMAN;sp|P0C0L5|CO4B_HUMAN;tr|A0A0G2JPR0|A0A0G2JPR0_HUMAN;tr|A0A140TA44|A0A140TA44_HUMAN",
-				0, 0));
+				0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("LICQATGFSPR"),
-				"tr|A0A087WYJ9|A0A087WYJ9_HUMAN;sp|P01871-2|IGHM_HUMAN;tr|A0A1B0GUU9|A0A1B0GUU9_HUMAN;tr|A0A075B6N9|A0A075B6N9_HUMAN;sp|P04220|MUCB_HUMAN;sp|P01871|IGHM_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("GIYGTISR"), "sp|P01031|CO5_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TVQAVLTVPK"), "tr|I3L4N7|I3L4N7_HUMAN;sp|P36955|PEDF_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TLEAQLTPR"), "sp|P05546|HEP2_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ISASAEELR"), "sp|P06727|APOA4_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("EIMENYNIALR"), "sp|P08603|CFAH_HUMAN;sp|Q03591|FHR1_HUMAN;tr|B1AKG0|B1AKG0_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("SASDLTWDNLK"), "sp|P02787|TRFE_HUMAN;tr|H7C5E8|H7C5E8_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ITCQGDSLR"), "sp|P01714|LV319_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("FVYHLSDLCK"), "sp|P01591|IGJ_HUMAN;tr|D6RD17|D6RD17_HUMAN;tr|D6RHJ6|D6RHJ6_HUMAN", 0, 0));
+				"tr|A0A087WYJ9|A0A087WYJ9_HUMAN;sp|P01871-2|IGHM_HUMAN;tr|A0A1B0GUU9|A0A1B0GUU9_HUMAN;tr|A0A075B6N9|A0A075B6N9_HUMAN;sp|P04220|MUCB_HUMAN;sp|P01871|IGHM_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("GIYGTISR"), "sp|P01031|CO5_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TVQAVLTVPK"), "tr|I3L4N7|I3L4N7_HUMAN;sp|P36955|PEDF_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TLEAQLTPR"), "sp|P05546|HEP2_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ISASAEELR"), "sp|P06727|APOA4_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("EIMENYNIALR"), "sp|P08603|CFAH_HUMAN;sp|Q03591|FHR1_HUMAN;tr|B1AKG0|B1AKG0_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("SASDLTWDNLK"), "sp|P02787|TRFE_HUMAN;tr|H7C5E8|H7C5E8_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ITCQGDSLR"), "sp|P01714|LV319_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("FVYHLSDLCK"), "sp|P01591|IGJ_HUMAN;tr|D6RD17|D6RD17_HUMAN;tr|D6RHJ6|D6RHJ6_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("TEGDGVYTLNNEK"),
 				"tr|H3BS21|H3BS21_HUMAN;tr|H3BMJ7|H3BMJ7_HUMAN;sp|P00738|HPT_HUMAN;sp|P00738-2|HPT_HUMAN;tr|J3KSV1|J3KSV1_HUMAN;tr|J3KRH2|J3KRH2_HUMAN;tr|J3QQI8|J3QQI8_HUMAN;tr|J3QLC9|J3QLC9_HUMAN",
-				0, 0));
+				0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("TGAQELLR"),
-				"tr|A0A0A0MT01|A0A0A0MT01_HUMAN;sp|P06396|GELS_HUMAN;tr|A0A0A0MS51|A0A0A0MS51_HUMAN;sp|P06396-2|GELS_HUMAN;sp|P06396-3|GELS_HUMAN;sp|P06396-4|GELS_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TLLPVSKPEIR"), "sp|P01031|CO5_HUMAN", 0, 0));
+				"tr|A0A0A0MT01|A0A0A0MT01_HUMAN;sp|P06396|GELS_HUMAN;tr|A0A0A0MS51|A0A0A0MS51_HUMAN;sp|P06396-2|GELS_HUMAN;sp|P06396-3|GELS_HUMAN;sp|P06396-4|GELS_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TLLPVSKPEIR"), "sp|P01031|CO5_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("YIYGKPVQGVAYVR"),
 				"sp|P0C0L4|CO4A_HUMAN;tr|A0A0G2JL54|A0A0G2JL54_HUMAN;tr|F5GXS0|F5GXS0_HUMAN;tr|A0A140TA49|A0A140TA49_HUMAN;tr|A0A140TA29|A0A140TA29_HUMAN;sp|P0C0L4-2|CO4A_HUMAN;tr|A0A140TA32|A0A140TA32_HUMAN;sp|P0C0L5|CO4B_HUMAN;tr|A0A0G2JPR0|A0A0G2JPR0_HUMAN;tr|A0A140TA44|A0A140TA44_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("FSGSNSGNTATLTISR"), "sp|P80748|LV321_HUMAN;tr|A0A075B6K5|A0A075B6K5_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("FSGSNSGNTATLTISR"), "sp|P80748|LV321_HUMAN;tr|A0A075B6K5|A0A075B6K5_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("SIQNNVR"),
-				"sp|Q14624-4|ITIH4_HUMAN;sp|Q14624-3|ITIH4_HUMAN;tr|H7C0L5|H7C0L5_HUMAN;sp|Q14624-2|ITIH4_HUMAN;tr|B7ZKJ8|B7ZKJ8_HUMAN;sp|Q14624|ITIH4_HUMAN", 0, 0));
+				"sp|Q14624-4|ITIH4_HUMAN;sp|Q14624-3|ITIH4_HUMAN;tr|H7C0L5|H7C0L5_HUMAN;sp|Q14624-2|ITIH4_HUMAN;tr|B7ZKJ8|B7ZKJ8_HUMAN;sp|Q14624|ITIH4_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("TLLSNLEEAKK"),
 				"sp|P10909-4|CLUS_HUMAN;tr|E5RH61|E5RH61_HUMAN;tr|E7ETB4|E7ETB4_HUMAN;tr|E5RJZ5|E5RJZ5_HUMAN;tr|E5RGB0|E5RGB0_HUMAN;tr|E7ERK6|E7ERK6_HUMAN;tr|E5RG36|E5RG36_HUMAN;tr|H0YLK8|H0YLK8_HUMAN;sp|P10909-5|CLUS_HUMAN;sp|P10909|CLUS_HUMAN;sp|P10909-2|CLUS_HUMAN",
-				0, 0));
+				0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("TPSAAYLWVGTGASEAEK"),
-				"tr|A0A0A0MT01|A0A0A0MT01_HUMAN;sp|P06396|GELS_HUMAN;tr|A0A0A0MS51|A0A0A0MS51_HUMAN;sp|P06396-2|GELS_HUMAN;sp|P06396-3|GELS_HUMAN;sp|P06396-4|GELS_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("GMTNINDGLLR"), "tr|E7ET33|E7ET33_HUMAN;sp|Q06033-2|ITIH3_HUMAN;tr|A0A087WW43|A0A087WW43_HUMAN;sp|Q06033|ITIH3_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TPLGDTTHTCPR"), "tr|A0A075B6N8|A0A075B6N8_HUMAN;sp|P01860|IGHG3_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TPEVTCVVVDVSHEDPEVK"), "tr|A0A0A0MS08|A0A0A0MS08_HUMAN;sp|P01857|IGHG1_HUMAN;tr|A0A0A0MS07|A0A0A0MS07_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TQQLLER"), "sp|Q96DV4|RM38_HUMAN", 0, 0));
+				"tr|A0A0A0MT01|A0A0A0MT01_HUMAN;sp|P06396|GELS_HUMAN;tr|A0A0A0MS51|A0A0A0MS51_HUMAN;sp|P06396-2|GELS_HUMAN;sp|P06396-3|GELS_HUMAN;sp|P06396-4|GELS_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("GMTNINDGLLR"), "tr|E7ET33|E7ET33_HUMAN;sp|Q06033-2|ITIH3_HUMAN;tr|A0A087WW43|A0A087WW43_HUMAN;sp|Q06033|ITIH3_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TPLGDTTHTCPR"), "tr|A0A075B6N8|A0A075B6N8_HUMAN;sp|P01860|IGHG3_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TPEVTCVVVDVSHEDPEVK"), "tr|A0A0A0MS08|A0A0A0MS08_HUMAN;sp|P01857|IGHG1_HUMAN;tr|A0A0A0MS07|A0A0A0MS07_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TQQLLER"), "sp|Q96DV4|RM38_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("LGNQEPGGQTALK"),
-				"tr|A0A0J9YY65|A0A0J9YY65_HUMAN;sp|P08697|A2AP_HUMAN;tr|A0A0J9YWQ3|A0A0J9YWQ3_HUMAN;tr|C9JMH6|C9JMH6_HUMAN;tr|C9JPV4|C9JPV4_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("IHWESASLLR"), "sp|P01024|CO3_HUMAN;tr|M0QYC8|M0QYC8_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("MGLAFESTK"), "tr|A8MUN2|A8MUN2_HUMAN;sp|P04114|APOB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("RNTEILTGSWSDQTYPEGTQAIYK"), "sp|P08603|CFAH_HUMAN;tr|Q5TFM2|Q5TFM2_HUMAN;tr|A0A0D9SG88|A0A0D9SG88_HUMAN;sp|P08603-2|CFAH_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LEPYADQLR"), "sp|P06727|APOA4_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("GLEWVGR"), "sp|A0A0B4J1V0|HV315_HUMAN;sp|A0A0B4J1Y9|HV372_HUMAN;sp|A0A0B4J1V6|HV373_HUMAN;tr|A0A0G2JN55|A0A0G2JN55_HUMAN", 0, 0));
+				"tr|A0A0J9YY65|A0A0J9YY65_HUMAN;sp|P08697|A2AP_HUMAN;tr|A0A0J9YWQ3|A0A0J9YWQ3_HUMAN;tr|C9JMH6|C9JMH6_HUMAN;tr|C9JPV4|C9JPV4_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("IHWESASLLR"), "sp|P01024|CO3_HUMAN;tr|M0QYC8|M0QYC8_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("MGLAFESTK"), "tr|A8MUN2|A8MUN2_HUMAN;sp|P04114|APOB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("RNTEILTGSWSDQTYPEGTQAIYK"), "sp|P08603|CFAH_HUMAN;tr|Q5TFM2|Q5TFM2_HUMAN;tr|A0A0D9SG88|A0A0D9SG88_HUMAN;sp|P08603-2|CFAH_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LEPYADQLR"), "sp|P06727|APOA4_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("GLEWVGR"), "sp|A0A0B4J1V0|HV315_HUMAN;sp|A0A0B4J1Y9|HV372_HUMAN;sp|A0A0B4J1V6|HV373_HUMAN;tr|A0A0G2JN55|A0A0G2JN55_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("SYSCQVTHEGSTVEK"),
 				"sp|P0CF74|LAC6_HUMAN;sp|P0CG05|LAC2_HUMAN;sp|B9A064|IGLL5_HUMAN;tr|A0A0B4J231|A0A0B4J231_HUMAN;tr|A0A075B6K8|A0A075B6K8_HUMAN;tr|A0A075B6L0|A0A075B6L0_HUMAN;sp|P0CG04|LAC1_HUMAN;sp|P0CG06|LAC3_HUMAN;tr|A0A075B6K9|A0A075B6K9_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("AFTECCVVASQLR"), "sp|P01031|CO5_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("VEPYGENFNK"), "sp|P06727|APOA4_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("SAVQGPPER"), "sp|P01877|IGHA2_HUMAN;tr|A0A0G2JMB2|A0A0G2JMB2_HUMAN;sp|P01876|IGHA1_HUMAN;tr|A0A075B6N7|A0A075B6N7_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("YTVNQCR"), "tr|E9PFZ2|E9PFZ2_HUMAN;sp|P00450|CERU_HUMAN;tr|H7C5R1|H7C5R1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("WQSIPLCVEK"), "sp|P08603|CFAH_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("AGGSWDLAVQER"), "sp|P22792|CPN2_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("IQPSGGTNINEALLR"), "tr|Q5T985|Q5T985_HUMAN;sp|P19823|ITIH2_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("KIEEIAAK"), "sp|P01031|CO5_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("AFTECCVVASQLR"), "sp|P01031|CO5_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("VEPYGENFNK"), "sp|P06727|APOA4_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("SAVQGPPER"), "sp|P01877|IGHA2_HUMAN;tr|A0A0G2JMB2|A0A0G2JMB2_HUMAN;sp|P01876|IGHA1_HUMAN;tr|A0A075B6N7|A0A075B6N7_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("YTVNQCR"), "tr|E9PFZ2|E9PFZ2_HUMAN;sp|P00450|CERU_HUMAN;tr|H7C5R1|H7C5R1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("WQSIPLCVEK"), "sp|P08603|CFAH_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("AGGSWDLAVQER"), "sp|P22792|CPN2_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("IQPSGGTNINEALLR"), "tr|Q5T985|Q5T985_HUMAN;sp|P19823|ITIH2_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("KIEEIAAK"), "sp|P01031|CO5_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("LRTEGDGVYTLNDK"),
 				"sp|P00738|HPT_HUMAN;sp|P00739|HPTR_HUMAN;tr|J3QR68|J3QR68_HUMAN;tr|H0Y300|H0Y300_HUMAN;sp|P00739-2|HPTR_HUMAN;tr|J3KRH2|J3KRH2_HUMAN;tr|J3KTC3|J3KTC3_HUMAN;tr|J3QLC9|J3QLC9_HUMAN;tr|A0A0C4DGL8|A0A0C4DGL8_HUMAN",
-				0, 0));
+				0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("VTSIQDWVQK"),
-				"sp|P00738|HPT_HUMAN;sp|P00738-2|HPT_HUMAN;tr|J3QR68|J3QR68_HUMAN;tr|H0Y300|H0Y300_HUMAN;tr|A0A087WU08|A0A087WU08_HUMAN;tr|J3QLC9|J3QLC9_HUMAN;tr|A0A0C4DGL8|A0A0C4DGL8_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("IAELSATAQEIIK"), "sp|P04114|APOB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("EALQGVGDMGR"), "tr|A0A096LPE2|A0A096LPE2_HUMAN;sp|P35542|SAA4_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("KYENILK"), "sp|P53367-2|ARFP1_HUMAN;sp|P53367|ARFP1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("VTEPISAESGEQVER"), "sp|O14791|APOL1_HUMAN;sp|O14791-2|APOL1_HUMAN;sp|O14791-3|APOL1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LGADMEDVCGR"), "tr|H0Y7L5|H0Y7L5_HUMAN;tr|E7ERP7|E7ERP7_HUMAN;tr|E9PEV4|E9PEV4_HUMAN;sp|P02649|APOE_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LGEVNTYAGDLQK"), "sp|P06727|APOA4_HUMAN", 0, 0));
+				"sp|P00738|HPT_HUMAN;sp|P00738-2|HPT_HUMAN;tr|J3QR68|J3QR68_HUMAN;tr|H0Y300|H0Y300_HUMAN;tr|A0A087WU08|A0A087WU08_HUMAN;tr|J3QLC9|J3QLC9_HUMAN;tr|A0A0C4DGL8|A0A0C4DGL8_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("IAELSATAQEIIK"), "sp|P04114|APOB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("EALQGVGDMGR"), "tr|A0A096LPE2|A0A096LPE2_HUMAN;sp|P35542|SAA4_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("KYENILK"), "sp|P53367-2|ARFP1_HUMAN;sp|P53367|ARFP1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("VTEPISAESGEQVER"), "sp|O14791|APOL1_HUMAN;sp|O14791-2|APOL1_HUMAN;sp|O14791-3|APOL1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LGADMEDVCGR"), "tr|H0Y7L5|H0Y7L5_HUMAN;tr|E7ERP7|E7ERP7_HUMAN;tr|E9PEV4|E9PEV4_HUMAN;sp|P02649|APOE_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LGEVNTYAGDLQK"), "sp|P06727|APOA4_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("TEGDGVYTLNDK"),
 				"sp|P00738|HPT_HUMAN;sp|P00739|HPTR_HUMAN;tr|J3QR68|J3QR68_HUMAN;tr|H0Y300|H0Y300_HUMAN;sp|P00739-2|HPTR_HUMAN;tr|J3KRH2|J3KRH2_HUMAN;tr|J3KTC3|J3KTC3_HUMAN;tr|J3QLC9|J3QLC9_HUMAN;tr|A0A0C4DGL8|A0A0C4DGL8_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ALFVSEEEK"), "tr|E7ETN3|E7ETN3_HUMAN;sp|P00751|CFAB_HUMAN;tr|B4E1Z4|B4E1Z4_HUMAN;tr|H7C5H1|H7C5H1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("DAQYAPGYDK"), "tr|E7ETN3|E7ETN3_HUMAN;sp|P00751|CFAB_HUMAN;tr|B4E1Z4|B4E1Z4_HUMAN;tr|H7C5H1|H7C5H1_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ALFVSEEEK"), "tr|E7ETN3|E7ETN3_HUMAN;sp|P00751|CFAB_HUMAN;tr|B4E1Z4|B4E1Z4_HUMAN;tr|H7C5H1|H7C5H1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("DAQYAPGYDK"), "tr|E7ETN3|E7ETN3_HUMAN;sp|P00751|CFAB_HUMAN;tr|B4E1Z4|B4E1Z4_HUMAN;tr|H7C5H1|H7C5H1_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("LTVAAPPSGGPGFLSIERPDSRPPR"),
 				"sp|P0C0L4|CO4A_HUMAN;tr|A0A0G2JL54|A0A0G2JL54_HUMAN;tr|F5GXS0|F5GXS0_HUMAN;tr|A0A140TA29|A0A140TA29_HUMAN;sp|P0C0L4-2|CO4A_HUMAN;tr|A0A140TA32|A0A140TA32_HUMAN;sp|P0C0L5|CO4B_HUMAN;tr|A0A140TA44|A0A140TA44_HUMAN",
-				0, 0));
+				0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("AAPSVTLFPPSSEELQANK"),
 				"sp|P0CF74|LAC6_HUMAN;tr|A0A075B6L1|A0A075B6L1_HUMAN;sp|P0CG05|LAC2_HUMAN;tr|A0A075B6L0|A0A075B6L0_HUMAN;sp|P0CG06|LAC3_HUMAN;sp|A0M8Q6|LAC7_HUMAN;tr|A0A075B6K9|A0A075B6K9_HUMAN", 0,
-				0));
-		peptides.add(new PercolatorPeptide(getPSMID("LQAEAFQAR"), "sp|P02649|APOE_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("SPDVINGSPISQK"), "sp|P08603|CFAH_HUMAN;tr|Q5TFM2|Q5TFM2_HUMAN;tr|A0A0D9SG88|A0A0D9SG88_HUMAN;sp|P08603-2|CFAH_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LTGSSGFVTDGPGNYK"), "sp|O75882-3|ATRN_HUMAN;sp|O75882|ATRN_HUMAN;sp|O75882-2|ATRN_HUMAN", 0, 0));
+				0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LQAEAFQAR"), "sp|P02649|APOE_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("SPDVINGSPISQK"), "sp|P08603|CFAH_HUMAN;tr|Q5TFM2|Q5TFM2_HUMAN;tr|A0A0D9SG88|A0A0D9SG88_HUMAN;sp|P08603-2|CFAH_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LTGSSGFVTDGPGNYK"), "sp|O75882-3|ATRN_HUMAN;sp|O75882|ATRN_HUMAN;sp|O75882-2|ATRN_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("NVPLPVIAELPPK"),
-				"tr|A0A087WYJ9|A0A087WYJ9_HUMAN;sp|P01871-2|IGHM_HUMAN;tr|A0A1B0GUU9|A0A1B0GUU9_HUMAN;tr|A0A075B6N9|A0A075B6N9_HUMAN;sp|P01871|IGHM_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("AGDTAVYYCAR"), "sp|P01766|HV313_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("SGTASVVCLLNNFYPR"), "sp|P01834|IGKC_HUMAN;tr|A0A075B6H6|A0A075B6H6_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TFYEPGEEITYSCKPGYVSR"), "sp|P02749|APOH_HUMAN;tr|J3QRN2|J3QRN2_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("VFSLQWGEVK"), "tr|E7ETH0|E7ETH0_HUMAN;tr|G3XAM2|G3XAM2_HUMAN;sp|P05156|CFAI_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("QVVAGLNFR"), "sp|P01042|KNG1_HUMAN;sp|P01042-2|KNG1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("HQFLLTGDTQGR"), "tr|M0R009|M0R009_HUMAN;sp|P04217|A1BG_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("VPMMSDPK"), "tr|I3L4N7|I3L4N7_HUMAN;sp|P36955|PEDF_HUMAN;tr|I3L4F9|I3L4F9_HUMAN;tr|I3L107|I3L107_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ILGPLSYSK"), "sp|P51884|LUM_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("SSALDMENFR"), "tr|Q5T985|Q5T985_HUMAN;sp|P19823|ITIH2_HUMAN;tr|Q5T987|Q5T987_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("VYACEVTHQGLSSPVTK"), "sp|P01834|IGKC_HUMAN;tr|A0A075B6H6|A0A075B6H6_HUMAN", 0, 0));
+				"tr|A0A087WYJ9|A0A087WYJ9_HUMAN;sp|P01871-2|IGHM_HUMAN;tr|A0A1B0GUU9|A0A1B0GUU9_HUMAN;tr|A0A075B6N9|A0A075B6N9_HUMAN;sp|P01871|IGHM_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("AGDTAVYYCAR"), "sp|P01766|HV313_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("SGTASVVCLLNNFYPR"), "sp|P01834|IGKC_HUMAN;tr|A0A075B6H6|A0A075B6H6_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TFYEPGEEITYSCKPGYVSR"), "sp|P02749|APOH_HUMAN;tr|J3QRN2|J3QRN2_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("VFSLQWGEVK"), "tr|E7ETH0|E7ETH0_HUMAN;tr|G3XAM2|G3XAM2_HUMAN;sp|P05156|CFAI_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("QVVAGLNFR"), "sp|P01042|KNG1_HUMAN;sp|P01042-2|KNG1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("HQFLLTGDTQGR"), "tr|M0R009|M0R009_HUMAN;sp|P04217|A1BG_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("VPMMSDPK"), "tr|I3L4N7|I3L4N7_HUMAN;sp|P36955|PEDF_HUMAN;tr|I3L4F9|I3L4F9_HUMAN;tr|I3L107|I3L107_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ILGPLSYSK"), "sp|P51884|LUM_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("SSALDMENFR"), "tr|Q5T985|Q5T985_HUMAN;sp|P19823|ITIH2_HUMAN;tr|Q5T987|Q5T987_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("VYACEVTHQGLSSPVTK"), "sp|P01834|IGKC_HUMAN;tr|A0A075B6H6|A0A075B6H6_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("VSVFVPPR"),
-				"tr|A0A087WYJ9|A0A087WYJ9_HUMAN;sp|P01871-2|IGHM_HUMAN;tr|A0A1B0GUU9|A0A1B0GUU9_HUMAN;tr|A0A075B6N9|A0A075B6N9_HUMAN;sp|P04220|MUCB_HUMAN;sp|P01871|IGHM_HUMAN", 0, 0));
+				"tr|A0A087WYJ9|A0A087WYJ9_HUMAN;sp|P01871-2|IGHM_HUMAN;tr|A0A1B0GUU9|A0A1B0GUU9_HUMAN;tr|A0A075B6N9|A0A075B6N9_HUMAN;sp|P04220|MUCB_HUMAN;sp|P01871|IGHM_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("DTLMISR"),
 				"tr|A0A075B6N8|A0A075B6N8_HUMAN;tr|A0A0A0MS08|A0A0A0MS08_HUMAN;sp|P01860|IGHG3_HUMAN;sp|P01859|IGHG2_HUMAN;sp|P01857|IGHG1_HUMAN;tr|A0A0A0MS07|A0A0A0MS07_HUMAN;sp|P01861|IGHG4_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ITCTEEGWSPTPK"), "sp|Q03591|FHR1_HUMAN;tr|B1AKG0|B1AKG0_HUMAN;sp|Q9BXR6|FHR5_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("VASYGVKPR"), "tr|E7ETN3|E7ETN3_HUMAN;tr|A0A0G2JH38|A0A0G2JH38_HUMAN;sp|P00751|CFAB_HUMAN;sp|P00751-2|CFAB_HUMAN;tr|B4E1Z4|B4E1Z4_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LLEVPEGR"), "sp|P09871|C1S_HUMAN;tr|A0A087X232|A0A087X232_HUMAN;tr|F8WCZ6|F8WCZ6_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TFISPIK"), "sp|P01024|CO3_HUMAN;tr|M0QXZ3|M0QXZ3_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LTPYADEFK"), "sp|P06727|APOA4_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ITCTEEGWSPTPK"), "sp|Q03591|FHR1_HUMAN;tr|B1AKG0|B1AKG0_HUMAN;sp|Q9BXR6|FHR5_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("VASYGVKPR"), "tr|E7ETN3|E7ETN3_HUMAN;tr|A0A0G2JH38|A0A0G2JH38_HUMAN;sp|P00751|CFAB_HUMAN;sp|P00751-2|CFAB_HUMAN;tr|B4E1Z4|B4E1Z4_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LLEVPEGR"), "sp|P09871|C1S_HUMAN;tr|A0A087X232|A0A087X232_HUMAN;tr|F8WCZ6|F8WCZ6_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TFISPIK"), "sp|P01024|CO3_HUMAN;tr|M0QXZ3|M0QXZ3_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LTPYADEFK"), "sp|P06727|APOA4_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("ILDDLSPR"),
-				"sp|Q14624-4|ITIH4_HUMAN;sp|Q14624-3|ITIH4_HUMAN;tr|H7C0L5|H7C0L5_HUMAN;sp|Q14624-2|ITIH4_HUMAN;tr|B7ZKJ8|B7ZKJ8_HUMAN;sp|Q14624|ITIH4_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LEDSVTYHCSR"), "tr|E7ETN3|E7ETN3_HUMAN;tr|A0A0G2JH38|A0A0G2JH38_HUMAN;sp|P00751|CFAB_HUMAN;sp|P00751-2|CFAB_HUMAN;tr|B4E1Z4|B4E1Z4_HUMAN", 0, 0));
+				"sp|Q14624-4|ITIH4_HUMAN;sp|Q14624-3|ITIH4_HUMAN;tr|H7C0L5|H7C0L5_HUMAN;sp|Q14624-2|ITIH4_HUMAN;tr|B7ZKJ8|B7ZKJ8_HUMAN;sp|Q14624|ITIH4_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LEDSVTYHCSR"), "tr|E7ETN3|E7ETN3_HUMAN;tr|A0A0G2JH38|A0A0G2JH38_HUMAN;sp|P00751|CFAB_HUMAN;sp|P00751-2|CFAB_HUMAN;tr|B4E1Z4|B4E1Z4_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("NQVSLTCLVK"),
 				"tr|A0A075B6N8|A0A075B6N8_HUMAN;tr|A0A0A0MS08|A0A0A0MS08_HUMAN;sp|P01860|IGHG3_HUMAN;sp|P01859|IGHG2_HUMAN;sp|P01857|IGHG1_HUMAN;tr|A0A0A0MS07|A0A0A0MS07_HUMAN;sp|P01861|IGHG4_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("THLAPYSDELR"), "sp|P02647|APOA1_HUMAN;tr|F8W696|F8W696_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("GMTRPLSTLISSSQSCQYTLDAK"), "tr|A8MUN2|A8MUN2_HUMAN;sp|P04114|APOB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TPEVTCVVVDVSHEDPEVQFK"), "tr|A0A075B6N8|A0A075B6N8_HUMAN;sp|P01860|IGHG3_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("VTAAPQSVCALR"), "sp|P01023|A2MG_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("EVQLVESGGGLVQPGGSLR"), "tr|A0A0B4J2B5|A0A0B4J2B5_HUMAN;tr|S4R460|S4R460_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("VNHVTLSQPK"), "tr|F5H6I0|F5H6I0_HUMAN;tr|H0YLF3|H0YLF3_HUMAN;sp|P61769|B2MG_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("AYKSELEEQLTPVAEETR"), "tr|H0Y7L5|H0Y7L5_HUMAN;tr|E7ERP7|E7ERP7_HUMAN;tr|E9PEV4|E9PEV4_HUMAN;sp|P02649|APOE_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("YTCLPGYVR"), "tr|A6PVY5|A6PVY5_HUMAN;sp|P04003|C4BPA_HUMAN;tr|F2Z2V7|F2Z2V7_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LGNNPVSK"), "sp|P04114|APOB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("NIPGDFECECPEGYR"), "tr|G5E9F8|G5E9F8_HUMAN;sp|P07225|PROS_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("IAYGTQGSSGYSLR"), "tr|E9PBC5|E9PBC5_HUMAN;tr|H0YAC1|H0YAC1_HUMAN;sp|P03952|KLKB1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("KGDTFSCMVGHEALPLAFTQK"), "sp|P01877|IGHA2_HUMAN;tr|A0A0G2JMB2|A0A0G2JMB2_HUMAN;sp|P01876|IGHA1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LAACLEGNCAEGLGTNYR"), "sp|P00734|THRB_HUMAN;tr|C9JV37|C9JV37_HUMAN;tr|E9PIT3|E9PIT3_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("VIGNMGQTMEQLTPELK"), "tr|A8MUN2|A8MUN2_HUMAN;sp|P04114|APOB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("FSAICQGDGTWSPR"), "sp|P04003|C4BPA_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("IWLDNVR"), "sp|O43866|CD5L_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("DASGATFTWTPSSGK"), "sp|P01877|IGHA2_HUMAN;tr|A0A0G2JMB2|A0A0G2JMB2_HUMAN;tr|A0A075B6N7|A0A075B6N7_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("THLAPYSDELR"), "sp|P02647|APOA1_HUMAN;tr|F8W696|F8W696_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("GMTRPLSTLISSSQSCQYTLDAK"), "tr|A8MUN2|A8MUN2_HUMAN;sp|P04114|APOB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TPEVTCVVVDVSHEDPEVQFK"), "tr|A0A075B6N8|A0A075B6N8_HUMAN;sp|P01860|IGHG3_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("VTAAPQSVCALR"), "sp|P01023|A2MG_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("EVQLVESGGGLVQPGGSLR"), "tr|A0A0B4J2B5|A0A0B4J2B5_HUMAN;tr|S4R460|S4R460_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("VNHVTLSQPK"), "tr|F5H6I0|F5H6I0_HUMAN;tr|H0YLF3|H0YLF3_HUMAN;sp|P61769|B2MG_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("AYKSELEEQLTPVAEETR"), "tr|H0Y7L5|H0Y7L5_HUMAN;tr|E7ERP7|E7ERP7_HUMAN;tr|E9PEV4|E9PEV4_HUMAN;sp|P02649|APOE_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("YTCLPGYVR"), "tr|A6PVY5|A6PVY5_HUMAN;sp|P04003|C4BPA_HUMAN;tr|F2Z2V7|F2Z2V7_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LGNNPVSK"), "sp|P04114|APOB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("NIPGDFECECPEGYR"), "tr|G5E9F8|G5E9F8_HUMAN;sp|P07225|PROS_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("IAYGTQGSSGYSLR"), "tr|E9PBC5|E9PBC5_HUMAN;tr|H0YAC1|H0YAC1_HUMAN;sp|P03952|KLKB1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("KGDTFSCMVGHEALPLAFTQK"), "sp|P01877|IGHA2_HUMAN;tr|A0A0G2JMB2|A0A0G2JMB2_HUMAN;sp|P01876|IGHA1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LAACLEGNCAEGLGTNYR"), "sp|P00734|THRB_HUMAN;tr|C9JV37|C9JV37_HUMAN;tr|E9PIT3|E9PIT3_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("VIGNMGQTMEQLTPELK"), "tr|A8MUN2|A8MUN2_HUMAN;sp|P04114|APOB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("FSAICQGDGTWSPR"), "sp|P04003|C4BPA_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("IWLDNVR"), "sp|O43866|CD5L_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("DASGATFTWTPSSGK"), "sp|P01877|IGHA2_HUMAN;tr|A0A0G2JMB2|A0A0G2JMB2_HUMAN;tr|A0A075B6N7|A0A075B6N7_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("NVVFVIDK"),
-				"sp|Q14624-4|ITIH4_HUMAN;sp|Q14624-3|ITIH4_HUMAN;tr|H7C0L5|H7C0L5_HUMAN;sp|Q14624-2|ITIH4_HUMAN;tr|B7ZKJ8|B7ZKJ8_HUMAN;sp|Q14624|ITIH4_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("MKDGLCVPR"), "sp|O95445-2|APOM_HUMAN;sp|O95445|APOM_HUMAN;tr|Q5SRP5|Q5SRP5_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("FQSVFTVTR"), "sp|P02747|C1QC_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("SLGNVIMVCR"), "sp|P08603|CFAH_HUMAN;tr|Q5TFM2|Q5TFM2_HUMAN;tr|A0A0D9SG88|A0A0D9SG88_HUMAN;sp|P08603-2|CFAH_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ALVQQMEQLR"), "sp|P06727|APOA4_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("VQSTITSR"), "tr|Q5T985|Q5T985_HUMAN;sp|P19823|ITIH2_HUMAN;tr|Q5T987|Q5T987_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("FDEFFSEGCAPGSK"), "sp|P02787|TRFE_HUMAN;tr|H7C5E8|H7C5E8_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("NSEEFAAAMSR"), "tr|A8MUN2|A8MUN2_HUMAN;sp|P04114|APOB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LTFGANTR"), "tr|A0A075B708|A0A075B708_HUMAN", 0, 0));
+				"sp|Q14624-4|ITIH4_HUMAN;sp|Q14624-3|ITIH4_HUMAN;tr|H7C0L5|H7C0L5_HUMAN;sp|Q14624-2|ITIH4_HUMAN;tr|B7ZKJ8|B7ZKJ8_HUMAN;sp|Q14624|ITIH4_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("MKDGLCVPR"), "sp|O95445-2|APOM_HUMAN;sp|O95445|APOM_HUMAN;tr|Q5SRP5|Q5SRP5_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("FQSVFTVTR"), "sp|P02747|C1QC_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("SLGNVIMVCR"), "sp|P08603|CFAH_HUMAN;tr|Q5TFM2|Q5TFM2_HUMAN;tr|A0A0D9SG88|A0A0D9SG88_HUMAN;sp|P08603-2|CFAH_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ALVQQMEQLR"), "sp|P06727|APOA4_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("VQSTITSR"), "tr|Q5T985|Q5T985_HUMAN;sp|P19823|ITIH2_HUMAN;tr|Q5T987|Q5T987_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("FDEFFSEGCAPGSK"), "sp|P02787|TRFE_HUMAN;tr|H7C5E8|H7C5E8_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("NSEEFAAAMSR"), "tr|A8MUN2|A8MUN2_HUMAN;sp|P04114|APOB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LTFGANTR"), "tr|A0A075B708|A0A075B708_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("YVMLPVADQDQCIR"),
 				"tr|H3BS21|H3BS21_HUMAN;sp|P00738|HPT_HUMAN;sp|P00738-2|HPT_HUMAN;tr|J3QR68|J3QR68_HUMAN;tr|H0Y300|H0Y300_HUMAN;tr|A0A087WU08|A0A087WU08_HUMAN;tr|J3QLC9|J3QLC9_HUMAN;tr|A0A0C4DGL8|A0A0C4DGL8_HUMAN",
-				0, 0));
+				0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("GLEEELQFSLGSK"),
 				"sp|P0C0L4|CO4A_HUMAN;tr|A0A0G2JL54|A0A0G2JL54_HUMAN;tr|F5GXS0|F5GXS0_HUMAN;tr|A0A140TA49|A0A140TA49_HUMAN;tr|A0A140TA29|A0A140TA29_HUMAN;sp|P0C0L4-2|CO4A_HUMAN;tr|A0A140TA32|A0A140TA32_HUMAN;sp|P0C0L5|CO4B_HUMAN;tr|A0A0G2JPR0|A0A0G2JPR0_HUMAN;tr|A0A140TA44|A0A140TA44_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ATGVLYDYVNK"), "sp|P04114|APOB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("DGWSAQPTCIK"), "sp|P08603|CFAH_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TATSEYQTFFNPR"), "sp|P00734|THRB_HUMAN;tr|C9JV37|C9JV37_HUMAN;tr|E9PIT3|E9PIT3_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("FISLGEACK"), "sp|P01024|CO3_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LYDYCDVPQCAAPSFDCGKPQVEPK"), "sp|P00747|PLMN_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TVAACNLPIVR"), "sp|P02760|AMBP_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ALGISPFHEHAEVVFTANDSGPR"), "sp|P02766|TTHY_HUMAN;tr|A0A087WV45|A0A087WV45_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ATGVLYDYVNK"), "sp|P04114|APOB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("DGWSAQPTCIK"), "sp|P08603|CFAH_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TATSEYQTFFNPR"), "sp|P00734|THRB_HUMAN;tr|C9JV37|C9JV37_HUMAN;tr|E9PIT3|E9PIT3_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("FISLGEACK"), "sp|P01024|CO3_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LYDYCDVPQCAAPSFDCGKPQVEPK"), "sp|P00747|PLMN_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TVAACNLPIVR"), "sp|P02760|AMBP_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ALGISPFHEHAEVVFTANDSGPR"), "sp|P02766|TTHY_HUMAN;tr|A0A087WV45|A0A087WV45_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("ELDESLQVAER"),
-				"sp|P10909-4|CLUS_HUMAN;tr|H0YC35|H0YC35_HUMAN;tr|H0YAS8|H0YAS8_HUMAN;sp|P10909-5|CLUS_HUMAN;sp|P10909|CLUS_HUMAN;sp|P10909-2|CLUS_HUMAN;sp|P10909-3|CLUS_HUMAN", 0, 0));
+				"sp|P10909-4|CLUS_HUMAN;tr|H0YC35|H0YC35_HUMAN;tr|H0YAS8|H0YAS8_HUMAN;sp|P10909-5|CLUS_HUMAN;sp|P10909|CLUS_HUMAN;sp|P10909-2|CLUS_HUMAN;sp|P10909-3|CLUS_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("EGIVEYPR"),
-				"sp|Q92496|FHR4_HUMAN;sp|Q02985-2|FHR3_HUMAN;tr|V9GYX2|V9GYX2_HUMAN;sp|Q02985|FHR3_HUMAN;sp|Q92496-2|FHR4_HUMAN;sp|Q92496-3|FHR4_HUMAN;tr|A0A0C4DH21|A0A0C4DH21_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LAVYQAGAR"), "tr|H0Y7L5|H0Y7L5_HUMAN;tr|E7ERP7|E7ERP7_HUMAN;tr|E9PEV4|E9PEV4_HUMAN;sp|P02649|APOE_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("VGFYESDVMGR"), "sp|P01023|A2MG_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TPENYPNAGLTMNYCR"), "sp|P00747|PLMN_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("SGIECQLWR"), "sp|P00734|THRB_HUMAN;tr|C9JV37|C9JV37_HUMAN;tr|E9PIT3|E9PIT3_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("AADDTWEPFASGK"), "sp|P02766|TTHY_HUMAN;tr|A0A087WT59|A0A087WT59_HUMAN;tr|A0A087WV45|A0A087WV45_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("IGVELTGR"), "sp|P04114|APOB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LTQVEHR"), "sp|P36955|PEDF_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("SIPQVSPVR"), "sp|P15169|CBPN_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ASQSVSSYLAWYQQKPGQAPR"), "sp|P04433|KV311_HUMAN;sp|A0A0A0MRZ8|KVD11_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TGLQEVEVK"), "sp|P01024|CO3_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("WLQGSQELPR"), "sp|P01877|IGHA2_HUMAN;tr|A0A0G2JMB2|A0A0G2JMB2_HUMAN;sp|P01876|IGHA1_HUMAN;tr|A0A075B6N7|A0A075B6N7_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("AAFTECCQAADK"), "tr|A0A0C4DGB6|A0A0C4DGB6_HUMAN;tr|H0YA55|H0YA55_HUMAN;tr|B7WNR0|B7WNR0_HUMAN;sp|P02768|ALBU_HUMAN;tr|D6RHD5|D6RHD5_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ICVGCPR"), "sp|P01042|KNG1_HUMAN;sp|P01042-3|KNG1_HUMAN;sp|P01042-2|KNG1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ESYSGVTLDPR"), "sp|P01031|CO5_HUMAN", 0, 0));
+				"sp|Q92496|FHR4_HUMAN;sp|Q02985-2|FHR3_HUMAN;tr|V9GYX2|V9GYX2_HUMAN;sp|Q02985|FHR3_HUMAN;sp|Q92496-2|FHR4_HUMAN;sp|Q92496-3|FHR4_HUMAN;tr|A0A0C4DH21|A0A0C4DH21_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LAVYQAGAR"), "tr|H0Y7L5|H0Y7L5_HUMAN;tr|E7ERP7|E7ERP7_HUMAN;tr|E9PEV4|E9PEV4_HUMAN;sp|P02649|APOE_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("VGFYESDVMGR"), "sp|P01023|A2MG_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TPENYPNAGLTMNYCR"), "sp|P00747|PLMN_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("SGIECQLWR"), "sp|P00734|THRB_HUMAN;tr|C9JV37|C9JV37_HUMAN;tr|E9PIT3|E9PIT3_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("AADDTWEPFASGK"), "sp|P02766|TTHY_HUMAN;tr|A0A087WT59|A0A087WT59_HUMAN;tr|A0A087WV45|A0A087WV45_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("IGVELTGR"), "sp|P04114|APOB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LTQVEHR"), "sp|P36955|PEDF_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("SIPQVSPVR"), "sp|P15169|CBPN_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ASQSVSSYLAWYQQKPGQAPR"), "sp|P04433|KV311_HUMAN;sp|A0A0A0MRZ8|KVD11_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TGLQEVEVK"), "sp|P01024|CO3_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("WLQGSQELPR"), "sp|P01877|IGHA2_HUMAN;tr|A0A0G2JMB2|A0A0G2JMB2_HUMAN;sp|P01876|IGHA1_HUMAN;tr|A0A075B6N7|A0A075B6N7_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("AAFTECCQAADK"), "tr|A0A0C4DGB6|A0A0C4DGB6_HUMAN;tr|H0YA55|H0YA55_HUMAN;tr|B7WNR0|B7WNR0_HUMAN;sp|P02768|ALBU_HUMAN;tr|D6RHD5|D6RHD5_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ICVGCPR"), "sp|P01042|KNG1_HUMAN;sp|P01042-3|KNG1_HUMAN;sp|P01042-2|KNG1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ESYSGVTLDPR"), "sp|P01031|CO5_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("SHCIAEVENDEMPADLPSLAADFVESK"),
-				"sp|P02768-2|ALBU_HUMAN;tr|A0A0C4DGB6|A0A0C4DGB6_HUMAN;tr|H0YA55|H0YA55_HUMAN;tr|B7WNR0|B7WNR0_HUMAN;tr|C9JKR2|C9JKR2_HUMAN;sp|P02768|ALBU_HUMAN;tr|D6RHD5|D6RHD5_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("GEVQAMLGQSTEELR"), "tr|H0Y7L5|H0Y7L5_HUMAN;tr|E7ERP7|E7ERP7_HUMAN;tr|E9PEV4|E9PEV4_HUMAN;sp|P02649|APOE_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("AGEQVTYTCATYYK"), "sp|P08603|CFAH_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("AVRPGYPK"), "sp|P04004|VTNC_HUMAN", 0, 0));
+				"sp|P02768-2|ALBU_HUMAN;tr|A0A0C4DGB6|A0A0C4DGB6_HUMAN;tr|H0YA55|H0YA55_HUMAN;tr|B7WNR0|B7WNR0_HUMAN;tr|C9JKR2|C9JKR2_HUMAN;sp|P02768|ALBU_HUMAN;tr|D6RHD5|D6RHD5_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("GEVQAMLGQSTEELR"), "tr|H0Y7L5|H0Y7L5_HUMAN;tr|E7ERP7|E7ERP7_HUMAN;tr|E9PEV4|E9PEV4_HUMAN;sp|P02649|APOE_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("AGEQVTYTCATYYK"), "sp|P08603|CFAH_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("AVRPGYPK"), "sp|P04004|VTNC_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("FTCTVTHTDLPSPLK"),
-				"tr|A0A087WYJ9|A0A087WYJ9_HUMAN;sp|P01871-2|IGHM_HUMAN;tr|A0A1B0GUU9|A0A1B0GUU9_HUMAN;tr|A0A075B6N9|A0A075B6N9_HUMAN;sp|P04220|MUCB_HUMAN;sp|P01871|IGHM_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("SVIPSDGPSVACVK"), "tr|F8WCI6|F8WCI6_HUMAN;tr|C9JB55|C9JB55_HUMAN;tr|F8WEK9|F8WEK9_HUMAN;sp|P02787|TRFE_HUMAN", 0, 0));
+				"tr|A0A087WYJ9|A0A087WYJ9_HUMAN;sp|P01871-2|IGHM_HUMAN;tr|A0A1B0GUU9|A0A1B0GUU9_HUMAN;tr|A0A075B6N9|A0A075B6N9_HUMAN;sp|P04220|MUCB_HUMAN;sp|P01871|IGHM_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("SVIPSDGPSVACVK"), "tr|F8WCI6|F8WCI6_HUMAN;tr|C9JB55|C9JB55_HUMAN;tr|F8WEK9|F8WEK9_HUMAN;sp|P02787|TRFE_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("EILSVDCSTNNPSQAK"),
-				"sp|P10909-4|CLUS_HUMAN;tr|H0YC35|H0YC35_HUMAN;sp|P10909-5|CLUS_HUMAN;sp|P10909|CLUS_HUMAN;sp|P10909-2|CLUS_HUMAN;sp|P10909-3|CLUS_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("SCDIPVFMNAR"), "sp|P08603|CFAH_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("EYSGTIASEANTYLNSK"), "sp|P04114|APOB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("WYVDGVEVHNAK"), "tr|A0A075B6N8|A0A075B6N8_HUMAN;sp|P01860|IGHG3_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("FEVQVTVPK"), "sp|P01023|A2MG_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LCDNLSTK"), "sp|P02774|VTDB_HUMAN;sp|P02774-2|VTDB_HUMAN;sp|P02774-3|VTDB_HUMAN;tr|D6RF35|D6RF35_HUMAN;tr|D6RBJ7|D6RBJ7_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("YAYWYQQK"), "sp|A0A075B6K4|LV310_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("GQCLITQSPPYYR"), "sp|Q14520|HABP2_HUMAN;sp|Q14520-2|HABP2_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("RVDTVDPPYPR"), "sp|P04004|VTNC_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("SIAQYWLGCPAPGHL"), "sp|P04004|VTNC_HUMAN", 0, 0));
+				"sp|P10909-4|CLUS_HUMAN;tr|H0YC35|H0YC35_HUMAN;sp|P10909-5|CLUS_HUMAN;sp|P10909|CLUS_HUMAN;sp|P10909-2|CLUS_HUMAN;sp|P10909-3|CLUS_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("SCDIPVFMNAR"), "sp|P08603|CFAH_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("EYSGTIASEANTYLNSK"), "sp|P04114|APOB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("WYVDGVEVHNAK"), "tr|A0A075B6N8|A0A075B6N8_HUMAN;sp|P01860|IGHG3_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("FEVQVTVPK"), "sp|P01023|A2MG_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LCDNLSTK"), "sp|P02774|VTDB_HUMAN;sp|P02774-2|VTDB_HUMAN;sp|P02774-3|VTDB_HUMAN;tr|D6RF35|D6RF35_HUMAN;tr|D6RBJ7|D6RBJ7_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("YAYWYQQK"), "sp|A0A075B6K4|LV310_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("GQCLITQSPPYYR"), "sp|Q14520|HABP2_HUMAN;sp|Q14520-2|HABP2_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("RVDTVDPPYPR"), "sp|P04004|VTNC_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("SIAQYWLGCPAPGHL"), "sp|P04004|VTNC_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("HYEGSTVPEK"),
 				"tr|H3BS21|H3BS21_HUMAN;sp|P00738|HPT_HUMAN;sp|P00738-2|HPT_HUMAN;tr|J3QR68|J3QR68_HUMAN;tr|H0Y300|H0Y300_HUMAN;tr|A0A087WU08|A0A087WU08_HUMAN;tr|J3QLC9|J3QLC9_HUMAN;tr|A0A0C4DGL8|A0A0C4DGL8_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("GTFSQLSELHCDK"), "tr|E9PFT6|E9PFT6_HUMAN;sp|P02042|HBD_HUMAN;tr|E9PEW8|E9PEW8_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("GNVATEISTER"), "tr|A8MUN2|A8MUN2_HUMAN;sp|P04114|APOB_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("GTFSQLSELHCDK"), "tr|E9PFT6|E9PFT6_HUMAN;sp|P02042|HBD_HUMAN;tr|E9PEW8|E9PEW8_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("GNVATEISTER"), "tr|A8MUN2|A8MUN2_HUMAN;sp|P04114|APOB_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("ECCEKPLLEK"),
-				"sp|P02768-2|ALBU_HUMAN;tr|A0A0C4DGB6|A0A0C4DGB6_HUMAN;tr|H0YA55|H0YA55_HUMAN;tr|B7WNR0|B7WNR0_HUMAN;tr|C9JKR2|C9JKR2_HUMAN;sp|P02768|ALBU_HUMAN;tr|D6RHD5|D6RHD5_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("GVNVCQETCTK"), "tr|E9PBC5|E9PBC5_HUMAN;tr|H0YAC1|H0YAC1_HUMAN;sp|P03952|KLKB1_HUMAN", 0, 0));
+				"sp|P02768-2|ALBU_HUMAN;tr|A0A0C4DGB6|A0A0C4DGB6_HUMAN;tr|H0YA55|H0YA55_HUMAN;tr|B7WNR0|B7WNR0_HUMAN;tr|C9JKR2|C9JKR2_HUMAN;sp|P02768|ALBU_HUMAN;tr|D6RHD5|D6RHD5_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("GVNVCQETCTK"), "tr|E9PBC5|E9PBC5_HUMAN;tr|H0YAC1|H0YAC1_HUMAN;sp|P03952|KLKB1_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("LRTEGDGVYTLNNEK"),
 				"tr|H3BS21|H3BS21_HUMAN;tr|H3BMJ7|H3BMJ7_HUMAN;sp|P00738|HPT_HUMAN;sp|P00738-2|HPT_HUMAN;tr|J3KSV1|J3KSV1_HUMAN;tr|J3KRH2|J3KRH2_HUMAN;tr|J3QQI8|J3QQI8_HUMAN;tr|J3QLC9|J3QLC9_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("FYNQVSTPLLR"), "tr|Q5T985|Q5T985_HUMAN;sp|P19823|ITIH2_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("QSSEITR"), "sp|P01023|A2MG_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("AELQCPQPAAR"), "sp|P01024|CO3_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("RQECSIPVCGQDQVTVAMTPR"), "sp|P00734|THRB_HUMAN;tr|C9JV37|C9JV37_HUMAN;tr|E9PIT3|E9PIT3_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TYFPHFDLSHGSAQVK"), "sp|P69905|HBA_HUMAN;tr|G3V1N2|G3V1N2_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("NPNPSAPR"), "sp|P08697|A2AP_HUMAN;sp|P08697-2|A2AP_HUMAN;tr|A0A0G2JPA8|A0A0G2JPA8_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("DSERPSGIPER"), "sp|A0A075B6K0|LV316_HUMAN;sp|P01717|LV325_HUMAN;sp|P01718|LV327_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("VTMTTDTSTSTAYMELR"), "sp|A0A0C4DH31|HV118_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LGPHAGDVEGHLSFLEK"), "sp|P06727|APOA4_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ALYWVNGQVPDGVSK"), "tr|A8MUN2|A8MUN2_HUMAN;sp|P04114|APOB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("KPIWLSQMSCSGR"), "sp|O43866|CD5L_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("FYNQVSTPLLR"), "tr|Q5T985|Q5T985_HUMAN;sp|P19823|ITIH2_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("QSSEITR"), "sp|P01023|A2MG_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("AELQCPQPAAR"), "sp|P01024|CO3_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("RQECSIPVCGQDQVTVAMTPR"), "sp|P00734|THRB_HUMAN;tr|C9JV37|C9JV37_HUMAN;tr|E9PIT3|E9PIT3_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TYFPHFDLSHGSAQVK"), "sp|P69905|HBA_HUMAN;tr|G3V1N2|G3V1N2_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("NPNPSAPR"), "sp|P08697|A2AP_HUMAN;sp|P08697-2|A2AP_HUMAN;tr|A0A0G2JPA8|A0A0G2JPA8_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("DSERPSGIPER"), "sp|A0A075B6K0|LV316_HUMAN;sp|P01717|LV325_HUMAN;sp|P01718|LV327_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("VTMTTDTSTSTAYMELR"), "sp|A0A0C4DH31|HV118_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LGPHAGDVEGHLSFLEK"), "sp|P06727|APOA4_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ALYWVNGQVPDGVSK"), "tr|A8MUN2|A8MUN2_HUMAN;sp|P04114|APOB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("KPIWLSQMSCSGR"), "sp|O43866|CD5L_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("SPVGVQPILNEHTFCAGMSK"),
-				"sp|P00738|HPT_HUMAN;sp|P00738-2|HPT_HUMAN;tr|J3QR68|J3QR68_HUMAN;tr|H0Y300|H0Y300_HUMAN;tr|A0A087WU08|A0A087WU08_HUMAN;tr|J3QLC9|J3QLC9_HUMAN;tr|A0A0C4DGL8|A0A0C4DGL8_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("AFLLTPR"), "sp|O95445-2|APOM_HUMAN;sp|O95445|APOM_HUMAN;tr|Q5SRP5|Q5SRP5_HUMAN", 0, 0));
+				"sp|P00738|HPT_HUMAN;sp|P00738-2|HPT_HUMAN;tr|J3QR68|J3QR68_HUMAN;tr|H0Y300|H0Y300_HUMAN;tr|A0A087WU08|A0A087WU08_HUMAN;tr|J3QLC9|J3QLC9_HUMAN;tr|A0A0C4DGL8|A0A0C4DGL8_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("AFLLTPR"), "sp|O95445-2|APOM_HUMAN;sp|O95445|APOM_HUMAN;tr|Q5SRP5|Q5SRP5_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("FQNALLVR"),
 				"sp|P02768-2|ALBU_HUMAN;sp|P02768-3|ALBU_HUMAN;tr|A0A0C4DGB6|A0A0C4DGB6_HUMAN;tr|H0YA55|H0YA55_HUMAN;tr|B7WNR0|B7WNR0_HUMAN;tr|C9JKR2|C9JKR2_HUMAN;sp|P02768|ALBU_HUMAN;tr|A0A087WWT3|A0A087WWT3_HUMAN;tr|D6RHD5|D6RHD5_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("SAVTALWGK"), "tr|F8W6P5|F8W6P5_HUMAN;tr|A0A0J9YWK4|A0A0J9YWK4_HUMAN;sp|P68871|HBB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("VGEYSLYIGR"), "sp|P02743|SAMP_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TEHPFTVEEFVLPK"), "sp|P01023|A2MG_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ATEHLSTLSEK"), "sp|P02647|APOA1_HUMAN;tr|F8W696|F8W696_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("IADVTSGLIGGEDGR"), "sp|P80108|PHLD_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("SGLSTGWTQLSK"), "tr|M0R009|M0R009_HUMAN;sp|P04217|A1BG_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ASQSVSSNLAWYQQKPGQAPR"), "sp|A0A087WSY6|KVD15_HUMAN;sp|P01624|KV315_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LLPHANEVSQK"), "sp|P06727|APOA4_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("SAVTALWGK"), "tr|F8W6P5|F8W6P5_HUMAN;tr|A0A0J9YWK4|A0A0J9YWK4_HUMAN;sp|P68871|HBB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("VGEYSLYIGR"), "sp|P02743|SAMP_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TEHPFTVEEFVLPK"), "sp|P01023|A2MG_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ATEHLSTLSEK"), "sp|P02647|APOA1_HUMAN;tr|F8W696|F8W696_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("IADVTSGLIGGEDGR"), "sp|P80108|PHLD_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("SGLSTGWTQLSK"), "tr|M0R009|M0R009_HUMAN;sp|P04217|A1BG_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ASQSVSSNLAWYQQKPGQAPR"), "sp|A0A087WSY6|KVD15_HUMAN;sp|P01624|KV315_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LLPHANEVSQK"), "sp|P06727|APOA4_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("ANSFLGEK"),
-				"sp|P0C0L4|CO4A_HUMAN;tr|A0A140TA49|A0A140TA49_HUMAN;tr|A0A140TA29|A0A140TA29_HUMAN;sp|P0C0L4-2|CO4A_HUMAN;tr|A0A140TA32|A0A140TA32_HUMAN;tr|A0A0G2JPR0|A0A0G2JPR0_HUMAN", 0, 0));
+				"sp|P0C0L4|CO4A_HUMAN;tr|A0A140TA49|A0A140TA49_HUMAN;tr|A0A140TA29|A0A140TA29_HUMAN;sp|P0C0L4-2|CO4A_HUMAN;tr|A0A140TA32|A0A140TA32_HUMAN;tr|A0A0G2JPR0|A0A0G2JPR0_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("GQPLSPEK"),
-				"tr|A0A087WYJ9|A0A087WYJ9_HUMAN;sp|P01871-2|IGHM_HUMAN;tr|A0A1B0GUU9|A0A1B0GUU9_HUMAN;tr|A0A075B6N9|A0A075B6N9_HUMAN;sp|P04220|MUCB_HUMAN;sp|P01871|IGHM_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("IAQYYYTFK"), "sp|P05160|F13B_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("YSDASDCHGEDSQAFCEK"), "sp|P01023|A2MG_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("GHMLENHVER"), "tr|H7C0N0|H7C0N0_HUMAN;sp|P19827|ITIH1_HUMAN;sp|P19827-2|ITIH1_HUMAN;sp|P19827-3|ITIH1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("HFQNLGK"), "sp|P43652|AFAM_HUMAN", 0, 0));
+				"tr|A0A087WYJ9|A0A087WYJ9_HUMAN;sp|P01871-2|IGHM_HUMAN;tr|A0A1B0GUU9|A0A1B0GUU9_HUMAN;tr|A0A075B6N9|A0A075B6N9_HUMAN;sp|P04220|MUCB_HUMAN;sp|P01871|IGHM_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("IAQYYYTFK"), "sp|P05160|F13B_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("YSDASDCHGEDSQAFCEK"), "sp|P01023|A2MG_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("GHMLENHVER"), "tr|H7C0N0|H7C0N0_HUMAN;sp|P19827|ITIH1_HUMAN;sp|P19827-2|ITIH1_HUMAN;sp|P19827-3|ITIH1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("HFQNLGK"), "sp|P43652|AFAM_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("LGMFNIQHCK"), "tr|A0A0G2JRN3|A0A0G2JRN3_HUMAN;sp|P01009-2|A1AT_HUMAN;sp|P01009-3|A1AT_HUMAN;sp|P01009|A1AT_HUMAN;tr|A0A024R6I7|A0A024R6I7_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("AQIPILR"), "sp|P04114|APOB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("SVGFHLPSR"), "sp|P04114|APOB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("FRIEDGFSLK"), "sp|P01008|ANT3_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("NMEQFQVSVSVAPNAK"), "sp|Q14624-4|ITIH4_HUMAN;sp|Q14624-3|ITIH4_HUMAN;sp|Q14624-2|ITIH4_HUMAN;tr|B7ZKJ8|B7ZKJ8_HUMAN;sp|Q14624|ITIH4_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("AQIPILR"), "sp|P04114|APOB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("SVGFHLPSR"), "sp|P04114|APOB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("FRIEDGFSLK"), "sp|P01008|ANT3_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("NMEQFQVSVSVAPNAK"), "sp|Q14624-4|ITIH4_HUMAN;sp|Q14624-3|ITIH4_HUMAN;sp|Q14624-2|ITIH4_HUMAN;tr|B7ZKJ8|B7ZKJ8_HUMAN;sp|Q14624|ITIH4_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("KYNELLK"),
-				"sp|P10909-4|CLUS_HUMAN;tr|H0YC35|H0YC35_HUMAN;tr|H0YAS8|H0YAS8_HUMAN;sp|P10909-5|CLUS_HUMAN;sp|P10909|CLUS_HUMAN;sp|P10909-2|CLUS_HUMAN;sp|P10909-3|CLUS_HUMAN", 0, 0));
+				"sp|P10909-4|CLUS_HUMAN;tr|H0YC35|H0YC35_HUMAN;tr|H0YAS8|H0YAS8_HUMAN;sp|P10909-5|CLUS_HUMAN;sp|P10909|CLUS_HUMAN;sp|P10909-2|CLUS_HUMAN;sp|P10909-3|CLUS_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("YIETDPANR"),
-				"tr|A0A0A0MT01|A0A0A0MT01_HUMAN;sp|P06396|GELS_HUMAN;tr|A0A0A0MS51|A0A0A0MS51_HUMAN;sp|P06396-2|GELS_HUMAN;sp|P06396-3|GELS_HUMAN;sp|P06396-4|GELS_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("DSCTLPASAEK"), "sp|P10643|CO7_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("KEDSCQLGYSAGPCMGMTSR"), "sp|P02760|AMBP_HUMAN;tr|S4R471|S4R471_HUMAN", 0, 0));
+				"tr|A0A0A0MT01|A0A0A0MT01_HUMAN;sp|P06396|GELS_HUMAN;tr|A0A0A0MS51|A0A0A0MS51_HUMAN;sp|P06396-2|GELS_HUMAN;sp|P06396-3|GELS_HUMAN;sp|P06396-4|GELS_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("DSCTLPASAEK"), "sp|P10643|CO7_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("KEDSCQLGYSAGPCMGMTSR"), "sp|P02760|AMBP_HUMAN;tr|S4R471|S4R471_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("YGAVFSSR"),
-				"sp|Q92771|DDX12_HUMAN;sp|Q96FC9-4|DDX11_HUMAN;sp|Q96FC9-3|DDX11_HUMAN;sp|A8MPP1|D11L8_HUMAN;sp|Q96FC9|DDX11_HUMAN;sp|Q96FC9-2|DDX11_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LGSLGAACEQTQTEGAK"), "sp|P07357|CO8A_HUMAN", 0, 0));
+				"sp|Q92771|DDX12_HUMAN;sp|Q96FC9-4|DDX11_HUMAN;sp|Q96FC9-3|DDX11_HUMAN;sp|A8MPP1|D11L8_HUMAN;sp|Q96FC9|DDX11_HUMAN;sp|Q96FC9-2|DDX11_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LGSLGAACEQTQTEGAK"), "sp|P07357|CO8A_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("AGFAGDDAPR"),
 				"tr|I3L1U9|I3L1U9_HUMAN;sp|P0CG38|POTEI_HUMAN;sp|A5A3E0|POTEF_HUMAN;tr|A6NL76|A6NL76_HUMAN;sp|P68032|ACTC_HUMAN;tr|I3L4N8|I3L4N8_HUMAN;sp|P62736|ACTA_HUMAN;tr|I3L3I0|I3L3I0_HUMAN;tr|K7EM38|K7EM38_HUMAN;tr|C9JZR7|C9JZR7_HUMAN;tr|J3KT65|J3KT65_HUMAN;tr|F6QUT6|F6QUT6_HUMAN;tr|G5E9R0|G5E9R0_HUMAN;sp|P63267-2|ACTH_HUMAN;tr|C9JFL5|C9JFL5_HUMAN;tr|F8WB63|F8WB63_HUMAN;sp|P68133|ACTS_HUMAN;tr|I3L3R2|I3L3R2_HUMAN;sp|P0CG39|POTEJ_HUMAN;tr|B8ZZJ2|B8ZZJ2_HUMAN;tr|C9JUM1|C9JUM1_HUMAN;tr|E7EVS6|E7EVS6_HUMAN;tr|F6UVQ4|F6UVQ4_HUMAN;sp|P63267|ACTH_HUMAN;sp|P63261|ACTG_HUMAN;tr|C9JTX5|C9JTX5_HUMAN;tr|F8WCH0|F8WCH0_HUMAN;sp|P60709|ACTB_HUMAN;sp|Q6S8J3|POTEE_HUMAN",
-				0, 0));
+				0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("VPQVSTPTLVEVSR"),
 				"sp|P02768-2|ALBU_HUMAN;sp|P02768-3|ALBU_HUMAN;tr|A0A0C4DGB6|A0A0C4DGB6_HUMAN;tr|H0YA55|H0YA55_HUMAN;tr|B7WNR0|B7WNR0_HUMAN;tr|C9JKR2|C9JKR2_HUMAN;sp|P02768|ALBU_HUMAN;tr|A0A087WWT3|A0A087WWT3_HUMAN;tr|D6RHD5|D6RHD5_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("SIDVACHPGYALPK"), "sp|P08603|CFAH_HUMAN;tr|Q5TFM2|Q5TFM2_HUMAN;tr|A0A0D9SG88|A0A0D9SG88_HUMAN;sp|P08603-2|CFAH_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("VYFAGFPR"), "tr|G5E9F8|G5E9F8_HUMAN;sp|P07225|PROS_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ACGACPLWGK"), "sp|P10643|CO7_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("RHPDLSIPELLR"), "sp|P43652|AFAM_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("SIDVACHPGYALPK"), "sp|P08603|CFAH_HUMAN;tr|Q5TFM2|Q5TFM2_HUMAN;tr|A0A0D9SG88|A0A0D9SG88_HUMAN;sp|P08603-2|CFAH_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("VYFAGFPR"), "tr|G5E9F8|G5E9F8_HUMAN;sp|P07225|PROS_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ACGACPLWGK"), "sp|P10643|CO7_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("RHPDLSIPELLR"), "sp|P43652|AFAM_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("LLATLCSAEVCQCAEGK"),
 				"sp|P0C0L4|CO4A_HUMAN;tr|A0A0G2JL54|A0A0G2JL54_HUMAN;tr|F5GXS0|F5GXS0_HUMAN;tr|A0A140TA49|A0A140TA49_HUMAN;tr|A0A140TA29|A0A140TA29_HUMAN;sp|P0C0L4-2|CO4A_HUMAN;tr|A0A140TA32|A0A140TA32_HUMAN;sp|P0C0L5|CO4B_HUMAN;tr|A0A0G2JPR0|A0A0G2JPR0_HUMAN;tr|A0A140TA44|A0A140TA44_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("NNALDFVTK"), "sp|P04114|APOB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ALFVSEEEKK"), "tr|E7ETN3|E7ETN3_HUMAN;sp|P00751|CFAB_HUMAN;tr|B4E1Z4|B4E1Z4_HUMAN;tr|H7C5H1|H7C5H1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("KCSYTEDAQCIDGTIEVPK"), "sp|P02749|APOH_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ASYLDCIR"), "tr|F8WCI6|F8WCI6_HUMAN;tr|C9JB55|C9JB55_HUMAN;tr|F8WEK9|F8WEK9_HUMAN;sp|P02787|TRFE_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("KLTISEQNIQR"), "tr|A8MUN2|A8MUN2_HUMAN;sp|P04114|APOB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("KYLYEIAR"), "tr|A0A0C4DGB6|A0A0C4DGB6_HUMAN;tr|H7C013|H7C013_HUMAN;sp|P02768|ALBU_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("NNALDFVTK"), "sp|P04114|APOB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ALFVSEEEKK"), "tr|E7ETN3|E7ETN3_HUMAN;sp|P00751|CFAB_HUMAN;tr|B4E1Z4|B4E1Z4_HUMAN;tr|H7C5H1|H7C5H1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("KCSYTEDAQCIDGTIEVPK"), "sp|P02749|APOH_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ASYLDCIR"), "tr|F8WCI6|F8WCI6_HUMAN;tr|C9JB55|C9JB55_HUMAN;tr|F8WEK9|F8WEK9_HUMAN;sp|P02787|TRFE_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("KLTISEQNIQR"), "tr|A8MUN2|A8MUN2_HUMAN;sp|P04114|APOB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("KYLYEIAR"), "tr|A0A0C4DGB6|A0A0C4DGB6_HUMAN;tr|H7C013|H7C013_HUMAN;sp|P02768|ALBU_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("AGALNSNDAFVLK"),
-				"tr|A0A0A0MT01|A0A0A0MT01_HUMAN;sp|P06396|GELS_HUMAN;tr|A0A0A0MS51|A0A0A0MS51_HUMAN;sp|P06396-2|GELS_HUMAN;sp|P06396-3|GELS_HUMAN;sp|P06396-4|GELS_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("WGAAPYR"), "sp|Q96PD5|PGRP2_HUMAN;sp|Q96PD5-2|PGRP2_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LVGGDNLCSGR"), "sp|O43866|CD5L_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("IGQDGISTSATTNLK"), "sp|P04114|APOB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("HGGLYHENMR"), "sp|P08603|CFAH_HUMAN;tr|Q5TFM2|Q5TFM2_HUMAN;tr|A0A0D9SG88|A0A0D9SG88_HUMAN;sp|P08603-2|CFAH_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("RLWWLDLK"), "sp|P02790|HEMO_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("SEYQADYESLR"), "sp|P04114|APOB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ISLPESLK"), "sp|P01024|CO3_HUMAN", 0, 0));
+				"tr|A0A0A0MT01|A0A0A0MT01_HUMAN;sp|P06396|GELS_HUMAN;tr|A0A0A0MS51|A0A0A0MS51_HUMAN;sp|P06396-2|GELS_HUMAN;sp|P06396-3|GELS_HUMAN;sp|P06396-4|GELS_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("WGAAPYR"), "sp|Q96PD5|PGRP2_HUMAN;sp|Q96PD5-2|PGRP2_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LVGGDNLCSGR"), "sp|O43866|CD5L_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("IGQDGISTSATTNLK"), "sp|P04114|APOB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("HGGLYHENMR"), "sp|P08603|CFAH_HUMAN;tr|Q5TFM2|Q5TFM2_HUMAN;tr|A0A0D9SG88|A0A0D9SG88_HUMAN;sp|P08603-2|CFAH_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("RLWWLDLK"), "sp|P02790|HEMO_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("SEYQADYESLR"), "sp|P04114|APOB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ISLPESLK"), "sp|P01024|CO3_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("HAFILQDTK"),
 				"sp|P06681-3|CO2_HUMAN;tr|A0A0G2JIE7|A0A0G2JIE7_HUMAN;sp|P06681-2|CO2_HUMAN;sp|P06681|CO2_HUMAN;tr|H0Y3H6|H0Y3H6_HUMAN;tr|A0A0G2JK28|A0A0G2JK28_HUMAN;tr|B4DQI1|B4DQI1_HUMAN;tr|A0A0G2JL69|A0A0G2JL69_HUMAN;tr|B4E1Z4|B4E1Z4_HUMAN;tr|E9PDZ0|E9PDZ0_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("NLAVSQVVHK"), "tr|G3V3A0|G3V3A0_HUMAN;sp|P01011|AACT_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("YGAATFTR"), "sp|P20742-2|PZP_HUMAN;sp|P20742|PZP_HUMAN;sp|P01023|A2MG_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("HTFMGVVSLGSPSGEVSHPR"), "tr|C9JV77|C9JV77_HUMAN;sp|P02765|FETUA_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("HYYIGIIETTWDYASDHGEK"), "tr|D6RE86|D6RE86_HUMAN;tr|E9PFZ2|E9PFZ2_HUMAN;sp|P00450|CERU_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("DRDGNTLTYYR"), "sp|P02748|CO9_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LPTDSELAPR"), "tr|A0A182DWH7|A0A182DWH7_HUMAN;sp|P49908|SEPP1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("EFTPPVQAAYQK"), "sp|P68871|HBB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ERGPEEEHLGILGPVIWAEVGDTIR"), "tr|E9PFZ2|E9PFZ2_HUMAN;sp|P00450|CERU_HUMAN;tr|H7C5R1|H7C5R1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("DLCGCYSVSSVLPGCAEPWNHGK"), "sp|P01876|IGHA1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("RPASPISTIQPK"), "sp|P07360|CO8G_HUMAN;tr|Q5SQ08|Q5SQ08_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LLIYSNNQRPSGVPDR"), "sp|P01700|LV147_HUMAN;sp|P01699|LV144_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("NLAVSQVVHK"), "tr|G3V3A0|G3V3A0_HUMAN;sp|P01011|AACT_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("YGAATFTR"), "sp|P20742-2|PZP_HUMAN;sp|P20742|PZP_HUMAN;sp|P01023|A2MG_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("HTFMGVVSLGSPSGEVSHPR"), "tr|C9JV77|C9JV77_HUMAN;sp|P02765|FETUA_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("HYYIGIIETTWDYASDHGEK"), "tr|D6RE86|D6RE86_HUMAN;tr|E9PFZ2|E9PFZ2_HUMAN;sp|P00450|CERU_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("DRDGNTLTYYR"), "sp|P02748|CO9_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LPTDSELAPR"), "tr|A0A182DWH7|A0A182DWH7_HUMAN;sp|P49908|SEPP1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("EFTPPVQAAYQK"), "sp|P68871|HBB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ERGPEEEHLGILGPVIWAEVGDTIR"), "tr|E9PFZ2|E9PFZ2_HUMAN;sp|P00450|CERU_HUMAN;tr|H7C5R1|H7C5R1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("DLCGCYSVSSVLPGCAEPWNHGK"), "sp|P01876|IGHA1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("RPASPISTIQPK"), "sp|P07360|CO8G_HUMAN;tr|Q5SQ08|Q5SQ08_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LLIYSNNQRPSGVPDR"), "sp|P01700|LV147_HUMAN;sp|P01699|LV144_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("YAASSYLSLTPEQWK"),
 				"sp|P0CF74|LAC6_HUMAN;tr|A0A075B6L1|A0A075B6L1_HUMAN;sp|P0CG05|LAC2_HUMAN;sp|B9A064|IGLL5_HUMAN;tr|A0A0B4J231|A0A0B4J231_HUMAN;tr|A0A075B6K8|A0A075B6K8_HUMAN;tr|A0A075B6L0|A0A075B6L0_HUMAN;sp|P0CG04|LAC1_HUMAN;sp|P0CG06|LAC3_HUMAN;sp|A0M8Q6|LAC7_HUMAN;tr|A0A075B6K9|A0A075B6K9_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("EGDCPVQSGK"), "sp|P01042|KNG1_HUMAN;sp|P01042-3|KNG1_HUMAN;sp|P01042-2|KNG1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TLYSSSPR"), "sp|P05155-2|IC1_HUMAN;tr|H9KV48|H9KV48_HUMAN;tr|E9PGN7|E9PGN7_HUMAN;sp|P05155|IC1_HUMAN;sp|P05155-3|IC1_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("EGDCPVQSGK"), "sp|P01042|KNG1_HUMAN;sp|P01042-3|KNG1_HUMAN;sp|P01042-2|KNG1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TLYSSSPR"), "sp|P05155-2|IC1_HUMAN;tr|H9KV48|H9KV48_HUMAN;tr|E9PGN7|E9PGN7_HUMAN;sp|P05155|IC1_HUMAN;sp|P05155-3|IC1_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("HYEGSTVPEKK"),
-				"sp|P00738|HPT_HUMAN;sp|P00738-2|HPT_HUMAN;tr|J3QR68|J3QR68_HUMAN;tr|H0Y300|H0Y300_HUMAN;tr|A0A087WU08|A0A087WU08_HUMAN;tr|J3QLC9|J3QLC9_HUMAN;tr|A0A0C4DGL8|A0A0C4DGL8_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("IGEIKEETTSHLR"), "sp|P01042-3|KNG1_HUMAN;sp|P01042-2|KNG1_HUMAN", 0, 0));
+				"sp|P00738|HPT_HUMAN;sp|P00738-2|HPT_HUMAN;tr|J3QR68|J3QR68_HUMAN;tr|H0Y300|H0Y300_HUMAN;tr|A0A087WU08|A0A087WU08_HUMAN;tr|J3QLC9|J3QLC9_HUMAN;tr|A0A0C4DGL8|A0A0C4DGL8_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("IGEIKEETTSHLR"), "sp|P01042-3|KNG1_HUMAN;sp|P01042-2|KNG1_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("VVLHPNYSQVDIGLIK"),
 				"tr|H3BS21|H3BS21_HUMAN;sp|P00738|HPT_HUMAN;sp|P00738-2|HPT_HUMAN;tr|J3QR68|J3QR68_HUMAN;tr|H0Y300|H0Y300_HUMAN;tr|A0A087WU08|A0A087WU08_HUMAN;tr|J3QLC9|J3QLC9_HUMAN;tr|A0A0C4DGL8|A0A0C4DGL8_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LSYTCEGGFR"), "sp|P08603|CFAH_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("DKVNSFFSTFK"), "sp|P06727|APOA4_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LVGITSWGEGCAR"), "tr|H0YAC1|H0YAC1_HUMAN;sp|P03952|KLKB1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ADGESCSASMMYQEGK"), "sp|P01008|ANT3_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("SNLDEDIIAEENIVSR"), "sp|P01024|CO3_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("YLGEEYVK"), "sp|P02787|TRFE_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LSYTCEGGFR"), "sp|P08603|CFAH_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("DKVNSFFSTFK"), "sp|P06727|APOA4_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LVGITSWGEGCAR"), "tr|H0YAC1|H0YAC1_HUMAN;sp|P03952|KLKB1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ADGESCSASMMYQEGK"), "sp|P01008|ANT3_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("SNLDEDIIAEENIVSR"), "sp|P01024|CO3_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("YLGEEYVK"), "sp|P02787|TRFE_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("ILGGHLDAK"),
 				"sp|P00738|HPT_HUMAN;sp|P00738-2|HPT_HUMAN;sp|P00739|HPTR_HUMAN;tr|J3QR68|J3QR68_HUMAN;tr|H0Y300|H0Y300_HUMAN;tr|A0A087WU08|A0A087WU08_HUMAN;sp|P00739-2|HPTR_HUMAN;tr|A0A0A0MRD9|A0A0A0MRD9_HUMAN;tr|A0A0C4DGL8|A0A0C4DGL8_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("AGLLRPDYALLGHR"), "sp|Q96PD5|PGRP2_HUMAN;sp|Q96PD5-2|PGRP2_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("AGLLRPDYALLGHR"), "sp|Q96PD5|PGRP2_HUMAN;sp|Q96PD5-2|PGRP2_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("VKSPELQAEAK"),
-				"sp|P02652|APOA2_HUMAN;tr|V9GYM3|V9GYM3_HUMAN;tr|V9GYC1|V9GYC1_HUMAN;tr|V9GYE3|V9GYE3_HUMAN;tr|V9GYG9|V9GYG9_HUMAN;tr|V9GYS1|V9GYS1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("LLIYDASNLETGVPSR"), "sp|P01593|KVD33_HUMAN;sp|P01594|KV133_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("MTVTDQVNCPK"), "tr|C9JF17|C9JF17_HUMAN;sp|P05090|APOD_HUMAN", 0, 0));
+				"sp|P02652|APOA2_HUMAN;tr|V9GYM3|V9GYM3_HUMAN;tr|V9GYC1|V9GYC1_HUMAN;tr|V9GYE3|V9GYE3_HUMAN;tr|V9GYG9|V9GYG9_HUMAN;tr|V9GYS1|V9GYS1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("LLIYDASNLETGVPSR"), "sp|P01593|KVD33_HUMAN;sp|P01594|KV133_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("MTVTDQVNCPK"), "tr|C9JF17|C9JF17_HUMAN;sp|P05090|APOD_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("YICENQDSISSKLK"),
-				"sp|P02768-2|ALBU_HUMAN;tr|A0A0C4DGB6|A0A0C4DGB6_HUMAN;tr|H0YA55|H0YA55_HUMAN;tr|B7WNR0|B7WNR0_HUMAN;tr|C9JKR2|C9JKR2_HUMAN;sp|P02768|ALBU_HUMAN;tr|D6RHD5|D6RHD5_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TLIYSTNTR"), "sp|A0A075B6I0|LV861_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("WSSTSPHRPR"), "sp|P00747|PLMN_HUMAN;tr|Q5TEH5|Q5TEH5_HUMAN;tr|A6PVI2|A6PVI2_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TPALHFK"), "sp|P04114|APOB_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("CCVECPPCPAPPVAGPSVFLFPPKPK"), "sp|P01859|IGHG2_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TGESVEFVCK"), "sp|P08603|CFAH_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("ELLESYIDGR"), "sp|P00734|THRB_HUMAN;tr|E9PIT3|E9PIT3_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("KNAEELK"), "sp|P06727|APOA4_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("AKLEEQAQQIR"), "sp|P02649|APOE_HUMAN", 0, 0));
+				"sp|P02768-2|ALBU_HUMAN;tr|A0A0C4DGB6|A0A0C4DGB6_HUMAN;tr|H0YA55|H0YA55_HUMAN;tr|B7WNR0|B7WNR0_HUMAN;tr|C9JKR2|C9JKR2_HUMAN;sp|P02768|ALBU_HUMAN;tr|D6RHD5|D6RHD5_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TLIYSTNTR"), "sp|A0A075B6I0|LV861_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("WSSTSPHRPR"), "sp|P00747|PLMN_HUMAN;tr|Q5TEH5|Q5TEH5_HUMAN;tr|A6PVI2|A6PVI2_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TPALHFK"), "sp|P04114|APOB_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("CCVECPPCPAPPVAGPSVFLFPPKPK"), "sp|P01859|IGHG2_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TGESVEFVCK"), "sp|P08603|CFAH_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("ELLESYIDGR"), "sp|P00734|THRB_HUMAN;tr|E9PIT3|E9PIT3_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("KNAEELK"), "sp|P06727|APOA4_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("AKLEEQAQQIR"), "sp|P02649|APOE_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("HLVPGAPFLLQALVR"),
 				"sp|P0C0L4|CO4A_HUMAN;tr|A0A0G2JL54|A0A0G2JL54_HUMAN;tr|F5GXS0|F5GXS0_HUMAN;tr|A0A140TA49|A0A140TA49_HUMAN;tr|A0A140TA29|A0A140TA29_HUMAN;sp|P0C0L4-2|CO4A_HUMAN;tr|A0A140TA32|A0A140TA32_HUMAN;sp|P0C0L5|CO4B_HUMAN;tr|A0A0G2JPR0|A0A0G2JPR0_HUMAN;tr|A0A140TA44|A0A140TA44_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("KATVVYQGER"), "sp|P02749|APOH_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("VILGAHQEVNLEPHVQEIEVSR"), "sp|P00747|PLMN_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("KATVVYQGER"), "sp|P02749|APOH_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("VILGAHQEVNLEPHVQEIEVSR"), "sp|P00747|PLMN_HUMAN", 0, 0, aacs));
 		peptides.add(new PercolatorPeptide(getPSMID("MRPSTDTITVMVENSHGLR"),
 				"sp|P0C0L4|CO4A_HUMAN;tr|A0A0G2JL54|A0A0G2JL54_HUMAN;tr|F5GXS0|F5GXS0_HUMAN;tr|A0A140TA49|A0A140TA49_HUMAN;tr|A0A140TA29|A0A140TA29_HUMAN;sp|P0C0L4-2|CO4A_HUMAN;tr|A0A140TA32|A0A140TA32_HUMAN;sp|P0C0L5|CO4B_HUMAN;tr|A0A0G2JPR0|A0A0G2JPR0_HUMAN;tr|A0A140TA44|A0A140TA44_HUMAN",
-				0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("DASGVTFTWTPSSGK"), "sp|P01876|IGHA1_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("TTGGKDEEVVQCLSDGWSSQPTCR"), "sp|P05160|F13B_HUMAN", 0, 0));
-		peptides.add(new PercolatorPeptide(getPSMID("VEPLRAELQEGAR"), "sp|P02647|APOA1_HUMAN;tr|F8W696|F8W696_HUMAN", 0, 0));
+				0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("DASGVTFTWTPSSGK"), "sp|P01876|IGHA1_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("TTGGKDEEVVQCLSDGWSSQPTCR"), "sp|P05160|F13B_HUMAN", 0, 0, aacs));
+		peptides.add(new PercolatorPeptide(getPSMID("VEPLRAELQEGAR"), "sp|P02647|APOA1_HUMAN;tr|F8W696|F8W696_HUMAN", 0, 0, aacs));
 		return peptides;
 	}
 }

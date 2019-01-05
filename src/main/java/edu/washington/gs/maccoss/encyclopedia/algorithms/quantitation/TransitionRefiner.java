@@ -6,12 +6,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
-import gnu.trove.map.hash.TCharDoubleHashMap;
 import org.jfree.chart.ChartPanel;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
@@ -27,6 +26,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class TransitionRefiner {
 	// minimum threshold to call this peak as worth quantifying

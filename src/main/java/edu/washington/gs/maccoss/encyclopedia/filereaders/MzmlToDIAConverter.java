@@ -10,8 +10,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import ch.qos.logback.core.util.TimeUtil;
 import com.sun.istack.Nullable;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.OverlapDeconvoluter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;

@@ -7,8 +7,8 @@ import java.util.Optional;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearInterpolatedFunction;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.RTProbabilityModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedianDouble;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RTProbabilityModel;
 import gnu.trove.list.array.TDoubleArrayList;
 
 public class BrudererRetentionTimeFilter extends AbstractRetentionTimeFilter {

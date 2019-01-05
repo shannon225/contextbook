@@ -7,8 +7,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSMSBlock;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlSAXToMSMSProducer;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;

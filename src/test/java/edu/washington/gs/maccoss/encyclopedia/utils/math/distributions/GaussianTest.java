@@ -4,9 +4,6 @@ import java.util.Arrays;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.SGFilter;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.SGFilterTest;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TFloatArrayList;
 import junit.framework.TestCase;
 

@@ -1,6 +1,12 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
+
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.AlleleVariant;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
@@ -15,8 +21,6 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TCharSet;
 import gnu.trove.set.hash.TCharHashSet;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 public final class DigestionEnzyme {
 	public static final char[] AAs="ACDEFGHIKLMNPQRSTVWY".toCharArray();

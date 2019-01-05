@@ -5,7 +5,6 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
 import java.util.HashMap;
 
 import javax.swing.ImageIcon;
@@ -17,8 +16,8 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
-import edu.washington.gs.maccoss.encyclopedia.utils.VersioningDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
+import edu.washington.gs.maccoss.encyclopedia.utils.VersioningDetector;
 
 public class DIABrowser {
 	public static ImageIcon image=new ImageIcon(DIABrowser.class.getClassLoader().getResource("images/orbi_icon.png"));

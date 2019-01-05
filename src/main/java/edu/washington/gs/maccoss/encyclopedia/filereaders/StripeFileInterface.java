@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.zip.DataFormatException;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 
 public interface StripeFileInterface {
 
