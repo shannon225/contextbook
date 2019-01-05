@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -54,18 +55,14 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import junit.framework.TestCase;
 
 public class SimilarPeptideBinnerTest extends TestCase {
+	
 	public static void main(String[] args) throws Exception {
 		HashMap<String, String> defaults=PecanParameterParser.getDefaultParameters();
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(defaults);
 
-		File diaFile=new File("/Users/searleb/Documents/school/xcordia/hela/122715_bcs_hela_24mz_400_1000.dia");
-		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
-		ArrayList<Range> ranges=new ArrayList<>(stripefile.getRanges().keySet());
-		Collections.sort(ranges);
-
-		//File f=new File("/Users/searleb/Documents/school/uniprot-9606.fasta");
+		File f=new File("/Users/searleb/Documents/school/uniprot-9606.fasta");
 		//File f=new File("/Users/searleb/Documents/school/xcordia/nextprot2017_testPEFF1.0rc25_a.peff");
-		File f=new File("/Users/searleb/Documents/school/xcordia/LCM_identified_protein.peff");
+		//File f=new File("/Users/searleb/Documents/school/xcordia/LCM_identified_protein.peff");
 		InputStream is=new FileInputStream(f);
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), f.getName(), null, true, parameters);
 
@@ -77,22 +74,47 @@ public class SimilarPeptideBinnerTest extends TestCase {
 				targets.add(peptide);
 			}
 		}
+		System.out.println("Number of peptides: "+targets.size());
 
 		int singletons=0;
 		int multiples=0;
+
+		ArrayList<Range> ranges=new ArrayList<>();
+		File[] diaFiles=new File[] {new File("/Users/searleb/Documents/school/xcordia/hela/122715_bcs_hela_24mz_400_1000.dia")};
+		diaFiles=new File[] {new File("/Users/searleb/Documents/school/xcordia/hela_prm/2017dec27_pool_library1.dia"),
+				new File("/Users/searleb/Documents/school/xcordia/hela_prm/2017dec27_pool_library2.dia"),
+				new File("/Users/searleb/Documents/school/xcordia/hela_prm/2017dec27_pool_library3.dia"),
+				new File("/Users/searleb/Documents/school/xcordia/hela_prm/2017dec27_pool_library4.dia"),
+				new File("/Users/searleb/Documents/school/xcordia/hela_prm/2017dec27_pool_library5.dia"),
+				new File("/Users/searleb/Documents/school/xcordia/hela_prm/2017dec27_pool_library6.dia")};
+		diaFiles=new File[] {new File("/Users/searleb/Documents/school/xcordia/hela_prm/2017dec27_normal_dia_6b_rep1.dia")};
+		for (File file : diaFiles) {
+			StripeFileInterface stripefile=StripeFileGenerator.getFile(file, parameters);
+			ranges.addAll(stripefile.getRanges().keySet());
+		}
+		Collections.sort(ranges);
+		System.out.println("Number of ranges: "+ranges.size());
+		
 		for (Range range : ranges) {
+			System.out.print(range.toString());
 			HashSet<FastaPeptideEntry> peptides=XCorDIA.getPeptidesInRange(parameters, targets, range);
+			System.out.print("\tinrange:"+peptides.size());
 			SimilarPeptideBinner binner=new SimilarPeptideBinner();
 			ArrayList<ArrayList<FastaPeptideEntry>> bins=binner.binPeptides(peptides);
-			
+			System.out.print("\ttotal:"+targets.size());
+
+			int localsingletons=0;
+			int localmultiples=0;
 			for (ArrayList<FastaPeptideEntry> list : bins) {
 				if (list.size()>1) {
-					multiples+=list.size();
+					localmultiples+=list.size();
 				} else if (list.size()==1) {
-					singletons++;
+					localsingletons++;
 				}
 			}
-			System.out.println(range+"\tsingle:"+singletons+"\tmultiple:"+multiples+"\t"+targets.size());
+			System.out.println("\tsingle:"+localsingletons+"\tmultiple:"+localmultiples);
+			singletons+=localsingletons;
+			multiples+=localmultiples;
 		}
 		System.out.println("FINAL: single:"+singletons+"\tmultiple:"+multiples+"\t"+targets.size());
 	}

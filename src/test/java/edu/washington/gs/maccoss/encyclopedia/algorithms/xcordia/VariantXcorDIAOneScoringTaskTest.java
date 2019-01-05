@@ -99,15 +99,20 @@ public class VariantXcorDIAOneScoringTaskTest {
 		
 		// WITH FIXED AND VARIABLE MODS
 		PeptideDatabase targets=new PeptideDatabase();
-		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(protein, 35, 36, 0, parameters.getAAConstants(), true);
+		/*ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(protein, 35, 36, 0, parameters.getAAConstants(), true);
 		for (FastaPeptideEntry peptide : sequences) {
 			System.out.println(peptide.getSequence());
 			targets.add(peptide);
-		}
+		}*/
 		/*targets.add(new FastaPeptideEntry("S[+79.966331]APASPTHPGLMSPR"));
 		targets.add(new FastaPeptideEntry("SAPAS[+79.966331]PTHPGLMSPR"));
 		targets.add(new FastaPeptideEntry("SAPASPT[+79.966331]HPGLMSPR"));
 		targets.add(new FastaPeptideEntry("SAPASPTHPGLMS[+79.966331]PR"));*/
+
+		targets.add(new FastaPeptideEntry("INPY[+79.966331]MSSPCHIEMILTEK"));
+		targets.add(new FastaPeptideEntry("INPYMS[+79.966331]SPCHIEMILTEK"));
+		targets.add(new FastaPeptideEntry("INPYMSS[+79.966331]PCHIEMILTEK"));
+		targets.add(new FastaPeptideEntry("INPYMSSPCHIEMILT[+79.966331]EK"));
 		
 		System.out.println("Total unique peptides: "+targets.size());
 
