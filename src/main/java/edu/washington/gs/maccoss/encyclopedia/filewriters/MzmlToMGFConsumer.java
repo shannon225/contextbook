@@ -33,7 +33,7 @@ public class MzmlToMGFConsumer implements Runnable {
 				MSMSBlock block=mzmlBlockQueue.take();
 				if (MSMSBlock.POISON_BLOCK==block) break;
 				
-				for (FragmentScan stripe : block.getStripes()) {
+				for (FragmentScan stripe : block.getFragmentScans()) {
 					byte charge=stripe.getCharge();
 					if (charge==0) continue;
 					

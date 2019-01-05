@@ -346,7 +346,7 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 			}
 			
 			if (spectrumRef==null&&msLevel<=1) {
-				if (parameters.getPrecursorOffsetPPM()!=0.0) {
+				if (parameters!=null&&parameters.getPrecursorOffsetPPM()!=0.0) {
 					double[] deltaArray=General.multiply(massArray, parameters.getPrecursorOffsetPPM()/1000000.0);
 					massArray=General.subtract(massArray, deltaArray);
 				}
@@ -355,14 +355,14 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 			} else {
 				if (spectrumRef==null) spectrumRef="Unknown";
 				
-				if (parameters.getFragmentOffsetPPM()!=0.0) {
+				if (parameters!=null&&parameters.getFragmentOffsetPPM()!=0.0) {
 					double[] deltaArray=General.multiply(massArray, parameters.getFragmentOffsetPPM()/1000000.0);
 					massArray=General.subtract(massArray, deltaArray);
 				}
 				
 				//Issue 3
 				if (isolationWindowTarget==null||isolationWindowLowerOffset==null||isolationWindowUpperOffset==null) {
-					if (parameters.getPrecursorWindowSize()>0f&&selectedIon!=null) {
+					if (parameters!=null&&parameters.getPrecursorWindowSize()>0f&&selectedIon!=null) {
 						isolationWindowTarget=selectedIon;
 						isolationWindowLowerOffset=parameters.getPrecursorWindowSize()/2.0;
 						isolationWindowUpperOffset=parameters.getPrecursorWindowSize()/2.0;
@@ -376,7 +376,7 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 					charge=selectedCharge;
 				}
 				
-				if (parameters.getMinIntensity()>0.0f) {
+				if (parameters!=null&&parameters.getMinIntensity()>0.0f) {
 					ArrayList<Peak> peaks=new ArrayList<>();
 					for (int i=0; i<intensityArray.length; i++) {
 						if (intensityArray[i]>parameters.getMinIntensity()) {
@@ -388,8 +388,9 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 					intensityArray=peakArrays.y;
 				}
 				
+				double precursorIsolationMargin = parameters==null?0.0:parameters.getPrecursorIsolationMargin();
 				try {
-					FragmentScan stripe=new FragmentScan(spectrumName, spectrumRef, spectrumIndex, scanStartTime, ionInjectTime, isolationWindowTarget-isolationWindowLowerOffset+parameters.getPrecursorIsolationMargin(), isolationWindowTarget+isolationWindowUpperOffset-parameters.getPrecursorIsolationMargin(),
+					FragmentScan stripe=new FragmentScan(spectrumName, spectrumRef, spectrumIndex, scanStartTime, ionInjectTime, isolationWindowTarget-isolationWindowLowerOffset+precursorIsolationMargin, isolationWindowTarget+isolationWindowUpperOffset-precursorIsolationMargin,
 							massArray, intensityArray, charge);
 					stripes.add(stripe);
 					
@@ -414,7 +415,7 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 					Logger.errorLine("scanStartTime="+scanStartTime);
 					Logger.errorLine("ionInjectTime="+ionInjectTime);
 					Logger.errorLine("isolationWindowTarget="+isolationWindowTarget);
-					Logger.errorLine("parameters.getPrecursorIsolationMargin()="+parameters.getPrecursorIsolationMargin());
+					Logger.errorLine("parameters.getPrecursorIsolationMargin()="+precursorIsolationMargin);
 					Logger.errorLine("isolationWindowLowerOffset="+isolationWindowLowerOffset);
 					Logger.errorLine("isolationWindowUpperOffset="+isolationWindowUpperOffset);
 					Logger.errorLine("massArray="+massArray);

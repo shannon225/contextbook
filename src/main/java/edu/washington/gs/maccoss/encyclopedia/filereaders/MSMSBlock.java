@@ -16,10 +16,10 @@ public class MSMSBlock {
 		this.stripes.addAll(stripes);
 	}
 	
-	public ArrayList<PrecursorScan> getPrecursors() {
+	public ArrayList<PrecursorScan> getPrecursorScans() {
 		return precursors;
 	}
-	public ArrayList<FragmentScan> getStripes() {
+	public ArrayList<FragmentScan> getFragmentScans() {
 		return stripes;
 	}
 }
