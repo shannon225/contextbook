@@ -27,7 +27,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -288,7 +288,7 @@ public class PeptideQuantExtractor {
 			progress.update(baseMessage, baseProgress);
 			if (!used) continue;
 
-			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), minRetentionTime, maxRetentionTime, false);
+			ArrayList<FragmentScan> stripes=stripefile.getStripes(range.getMiddle(), minRetentionTime, maxRetentionTime, false);
 			Collections.sort(stripes);
 
 			// prepare executor for background

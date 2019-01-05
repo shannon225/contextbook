@@ -4,7 +4,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -70,8 +70,8 @@ public class PecanAuxillaryScorer extends AuxillaryPSMScorer {
 			weightedRawScore=weightedRawScore/sumLibraryMasses;
 		}
 		float spectrumMagnitude;
-		if (spectrum instanceof Stripe) {
-			spectrumMagnitude=((Stripe)spectrum).getIntensityMagnitude();
+		if (spectrum instanceof FragmentScan) {
+			spectrumMagnitude=((FragmentScan)spectrum).getIntensityMagnitude();
 		} else {
 			float magnitude=0.0f;
 			for (float f : spectrum.getIntensityArray()) {

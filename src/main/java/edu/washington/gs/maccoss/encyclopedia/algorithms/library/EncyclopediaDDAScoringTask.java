@@ -12,7 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -23,13 +23,13 @@ public class EncyclopediaDDAScoringTask extends AbstractLibraryScoringTask {
 	// FIXME shouldn't be static (long term)
 	private static final HashMap<String, float[]> isotopeDistributions=new HashMap<String, float[]>();
 	
-	public EncyclopediaDDAScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
+	public EncyclopediaDDAScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 	}
 
 	@Override
 	protected Nothing process() {
-		for (Stripe stripe : super.stripes) {
+		for (FragmentScan stripe : super.stripes) {
 			ArrayList<ScoredIndex> goodHits=new ArrayList<ScoredIndex>();
 			TFloatFloatHashMap map=new TFloatFloatHashMap();
 			for (int i=0; i<super.entries.size(); i++) {

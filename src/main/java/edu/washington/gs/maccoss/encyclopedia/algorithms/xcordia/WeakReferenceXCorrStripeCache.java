@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.WeakReferenceStripeCache;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -31,11 +31,11 @@ public class WeakReferenceXCorrStripeCache extends WeakReferenceStripeCache {
 		super(stripeFile, parameters);
 	}
 
-	protected ArrayList<Stripe> getStripesFromFile(float mz) {
+	protected ArrayList<FragmentScan> getStripesFromFile(float mz) {
 		try {
-			ArrayList<Stripe> stripes=stripeFile.getStripes(mz, -Float.MAX_VALUE, Float.MAX_VALUE, false);
-			ArrayList<Stripe> xcorrStripes=new ArrayList<Stripe>();
-			for (Stripe stripe : stripes) {
+			ArrayList<FragmentScan> stripes=stripeFile.getStripes(mz, -Float.MAX_VALUE, Float.MAX_VALUE, false);
+			ArrayList<FragmentScan> xcorrStripes=new ArrayList<FragmentScan>();
+			for (FragmentScan stripe : stripes) {
 				xcorrStripes.add(new XCorrStripe(stripe, parameters));
 			}
 			Collections.sort(stripes);

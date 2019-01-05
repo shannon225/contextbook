@@ -9,7 +9,7 @@ import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -133,8 +133,8 @@ public class BinnedBackgroundFrequencyCalculator implements BackgroundFrequencyI
 			}
 			if (index<0||index>=binCounters.length) continue;
 			
-			ArrayList<Stripe> stripes=diafile.getStripes(targetMz, -Float.MAX_VALUE, Float.MAX_VALUE, false);
-			for (Stripe stripe : stripes) {
+			ArrayList<FragmentScan> stripes=diafile.getStripes(targetMz, -Float.MAX_VALUE, Float.MAX_VALUE, false);
+			for (FragmentScan stripe : stripes) {
 				double[] ions=stripe.getMassArray();
 
 				numberOfSpectra[index]++;

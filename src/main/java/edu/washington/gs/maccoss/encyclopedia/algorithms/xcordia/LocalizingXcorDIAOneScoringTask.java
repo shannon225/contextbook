@@ -32,7 +32,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRangeSet;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
@@ -58,7 +58,7 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 	private final int movingAverageLength;
 	
 	public LocalizingXcorDIAOneScoringTask(PSMScorer scorer, BackgroundFrequencyInterface background, ArrayList<LibraryEntry> entries, 
-			ArrayList<Stripe> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
+			ArrayList<FragmentScan> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
 			BlockingQueue<ModificationLocalizationData> localizationQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.background=background;
@@ -101,7 +101,7 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 			// perform initial scoring
 			float[] primary=new float[super.stripes.size()];
 			for (int i=0; i<super.stripes.size(); i++) {
-				Stripe stripe=super.stripes.get(i);
+				FragmentScan stripe=super.stripes.get(i);
 				XCorrStripe xcordiaStripe;
 				if (stripe instanceof XCorrStripe) {
 					xcordiaStripe=(XCorrStripe)stripe;
@@ -168,7 +168,7 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 			}
 			EValueCalculator evalueCalculator=new EValueCalculator(map);
 			float evalue=evalueCalculator.getNegLog10EValue(maxXCorr);
-			Stripe stripe = stripes.get(maxXCorrIndex);
+			FragmentScan stripe = stripes.get(maxXCorrIndex);
 			float[] auxScoreArray=scorer.auxScore(xcordiaEntry, stripe, isotopesByEntry.get(xcordiaEntry), precursors);
 
 			FragmentationModel topModel=modelsByEntry.get(xcordiaEntry);
@@ -388,7 +388,7 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 			}
 			EValueCalculator evalueCalculator=new EValueCalculator(map);
 			float evalue=evalueCalculator.getNegLog10EValue(data.xCorr);
-			Stripe stripe = stripes.get(data.spectrumIndex);
+			FragmentScan stripe = stripes.get(data.spectrumIndex);
 			float[] auxScoreArray=scorer.auxScore(xcordiaEntry, stripe, isotopesByEntry.get(xcordiaEntry), precursors);
 			
 			result.addStripe(data.xCorr, General.concatenate(auxScoreArray, data.xCorr, evalue, seedEntries.size()>1?1:0, data.numberOfPeaks, data.sumCorrelation), stripe);
@@ -463,14 +463,14 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 		float[] retentionTimes;
 		TDoubleObjectHashMap<float[]> chromatogramsByTargetMass;
 		public ChromatogramMap(double[] targetMasses, int peakIndex) {
-			List<Stripe> localStripes=stripes.subList(Math.max(0, peakIndex-movingAverageLength), Math.min(stripes.size(), peakIndex+movingAverageLength));
+			List<FragmentScan> localStripes=stripes.subList(Math.max(0, peakIndex-movingAverageLength), Math.min(stripes.size(), peakIndex+movingAverageLength));
 			TFloatArrayList[] chromatograms=new TFloatArrayList[targetMasses.length];
 			for (int i = 0; i < chromatograms.length; i++) {
 				chromatograms[i]=new TFloatArrayList();
 			}
 			
 			TFloatArrayList rtList=new TFloatArrayList();
-			for (Stripe spectrum : localStripes) {
+			for (FragmentScan spectrum : localStripes) {
 				rtList.add(spectrum.getScanStartTime());
 				float[] integratedIntensities=parameters.getFragmentTolerance().getIntegratedIntensities(spectrum.getMassArray(), spectrum.getIntensityArray(), targetMasses);
 				for (int i = 0; i < chromatograms.length; i++) {

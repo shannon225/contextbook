@@ -10,7 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
@@ -25,7 +25,7 @@ import gnu.trove.set.hash.TIntHashSet;
 
 public class PecanOneScoringTask extends AbstractPecanScoringTask {
 
-	public PecanOneScoringTask(PSMPeakScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, TDoubleObjectHashMap<XYPoint>[] background, PrecursorScanMap precursors,
+	public PecanOneScoringTask(PSMPeakScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, TDoubleObjectHashMap<XYPoint>[] background, PrecursorScanMap precursors,
 			int scanAveragingWindow, BlockingQueue<PeptideScoringResult> resultsQueue, PecanSearchParameters parameters) {
 		super(scorer, entries, stripes, background, precursors, scanAveragingWindow, resultsQueue, parameters);
 	}
@@ -60,7 +60,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 			}
 
 			for (int i=0; i<super.stripes.size(); i++) {
-				Stripe stripe=super.stripes.get(i);
+				FragmentScan stripe=super.stripes.get(i);
 				rawRTs[i]=stripe.getScanStartTime();
 
 				// known to be PSMPeakScorer because of constructor
@@ -166,7 +166,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 
 					float[][] auxScores=new float[scanAveragingWindow][];
 					for (int j=0; j<scanAveragingWindow; j++) {
-						Stripe stripe=stripes.get(index+j);
+						FragmentScan stripe=stripes.get(index+j);
 						auxScores[j]=scorer.auxScore(entry, stripe, predictedIsotopeDistribution, precursors);
 					}
 
@@ -217,7 +217,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 					// averaging forward, so current scan is actually the median
 					// for half a window back
 					int medianIndex=index+scanAveragingHalfWindow;
-					Stripe medianStripe=stripes.get(medianIndex);
+					FragmentScan medianStripe=stripes.get(medianIndex);
 					float[] completeAuxArray=General.concatenate(new float[] {numAboveThresholdMatches[index], numMatches[index], midTime[index]}, averageAuxScores,
 							new float[] {fragmentDeltaMassAverage, fragmentDeltaMassVariance, duration, maxIDP, midIDP, precursorPPMVariance, bgsubScores[index],
 									sumZScores[index]/scanAveragingWindow, rank, rawScores[index]});

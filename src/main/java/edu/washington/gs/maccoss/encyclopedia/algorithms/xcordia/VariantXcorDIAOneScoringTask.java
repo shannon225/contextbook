@@ -33,7 +33,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
@@ -54,7 +54,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 	private final PeptideModification localizingModification;
 	
 	public VariantXcorDIAOneScoringTask(PSMScorer scorer, BackgroundFrequencyInterface background, ArrayList<LibraryEntry> entries, 
-			ArrayList<Stripe> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
+			ArrayList<FragmentScan> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
 			BlockingQueue<ModificationLocalizationData> localizationQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.background=background;
@@ -220,7 +220,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 
 			// get next best match at that RT
 			FragmentIon[] bestLocalizingIons=null;
-			Pair<Stripe, Float> bestLocalizedStripe=null;
+			Pair<FragmentScan, Float> bestLocalizedStripe=null;
 			
 			for (Entry<String, Float[]> entry : primaryScores.entrySet()) {
 				String peptideModSeq=entry.getKey();
@@ -237,7 +237,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 					
 					FragmentIon[] localizingIons=ThesaurusOneScoringTask.getUniqueFragmentIons(entryMap.get(bestPeptideModSeq), entryMap.get(peptideModSeq), precursorCharge, parameters);
 					
-					Pair<Stripe, Float> localizedStripe = CASiLOneScoringTask.getBestLocalizationStripe(parameters, dutyCycle, background, bestForm.localizedEntry, localizingIons, stripeSubset);
+					Pair<FragmentScan, Float> localizedStripe = CASiLOneScoringTask.getBestLocalizationStripe(parameters, dutyCycle, background, bestForm.localizedEntry, localizingIons, stripeSubset);
 					//System.out.println("Testing "+bestPeptideModSeq+" ("+bestIndex.x+") vs "+peptideModSeq+" ("+score+"): localization: "+localizedStripe.y);
 					if (bestLocalizedStripe==null||bestLocalizedStripe.y>localizedStripe.y) {
 						// keep the lowest localization scoring form! (the closest to the form we're considering)
@@ -253,12 +253,12 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			}
 			
 			AmbiguousPeptideModSeq ambiPeptideModSeq=AmbiguousPeptideModSeq.getUnambigous(bestPeptideModSeq, localizingModification, parameters.getAAConstants(), "");
-			Triplet<ModificationLocalizationData, Stripe, Range> locData=CASiLOneScoringTask.generateLocalizationData(false, minimumScore, parameters, localizingModification, bestForm.localizedEntry,
+			Triplet<ModificationLocalizationData, FragmentScan, Range> locData=CASiLOneScoringTask.generateLocalizationData(false, minimumScore, parameters, localizingModification, bestForm.localizedEntry,
 					ambiPeptideModSeq, bestLocalizingIons, bestForm.allIons, takenIdentifiedIons, stripeSubset, bestLocalizedStripe);
 			
 			// if localized, then keep and remove from localizedForms
 			ModificationLocalizationData data=locData.x;
-			Stripe apex=locData.y;
+			FragmentScan apex=locData.y;
 			Range peakRange=locData.z.addBuffer(dutyCycle);
 
 			XCorrStripe xcordiaStripe;
@@ -458,7 +458,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 	}
 	
 	FragmentIonBlacklist takenIdentifiedIons=new FragmentIonBlacklist(parameters.getFragmentTolerance()); // not necessary
-	private Pair<ModificationLocalizationData, Integer> getLocalizationData(FastaPeptideEntry peptide, Stripe apex, String peptideModSeq, byte precursorCharge, float minimumScore, float bestLocalizationScore, FragmentIon[] targetIons, FragmentIon[] allIons, ArrayList<Spectrum> stripeSubset) {
+	private Pair<ModificationLocalizationData, Integer> getLocalizationData(FastaPeptideEntry peptide, FragmentScan apex, String peptideModSeq, byte precursorCharge, float minimumScore, float bestLocalizationScore, FragmentIon[] targetIons, FragmentIon[] allIons, ArrayList<Spectrum> stripeSubset) {
 		int targetNumFragments=Math.max(parameters.getMinNumOfQuantitativePeaks(), 3);
 		
 		//Range peakRange=new Range(apex.getScanStartTime(), apex.getScanStartTime());
@@ -558,7 +558,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 	}
 
 	private void finalScoreTimepoint(ScoredTimepoint timepoint) {
-		Stripe stripe=super.stripes.get(timepoint.scoredIndex.y);
+		FragmentScan stripe=super.stripes.get(timepoint.scoredIndex.y);
 		float[] auxScoreArray=scorer.auxScore(timepoint.xcordiaEntry, stripe, timepoint.predictedIsotopeDistribution, precursors);
 		float evalue=timepoint.calculator.getNegLog10EValue(timepoint.scoredIndex.x);
 		if (Float.isNaN(evalue)) {
@@ -574,7 +574,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 		float[] primary=new float[super.stripes.size()];
 		float[] rts=new float[super.stripes.size()];
 		for (int i=0; i<super.stripes.size(); i++) {
-			Stripe stripe=super.stripes.get(i);
+			FragmentScan stripe=super.stripes.get(i);
 			XCorrStripe xcordiaStripe;
 			if (stripe instanceof XCorrStripe) {
 				xcordiaStripe=(XCorrStripe)stripe;
@@ -599,7 +599,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			if (stripe instanceof XCorrStripe) {
 				xcordiaStripe=(XCorrStripe)stripe;
 			} else {
-				xcordiaStripe=new XCorrStripe((Stripe)stripe, parameters);
+				xcordiaStripe=new XCorrStripe((FragmentScan)stripe, parameters);
 			}
 			
 			if (primary[i]==null) { 

@@ -32,7 +32,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -123,9 +123,9 @@ public class VariantXcorDIAOneScoringTaskTest {
 		LinkedBlockingQueue<ModificationLocalizationData> localizationQueue=new LinkedBlockingQueue<ModificationLocalizationData>();
 		for (Range range : ranges) {
 			float dutyCycle=stripefile.getRanges().get(range);
-			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
-			ArrayList<Stripe> xcorStripes=new ArrayList<>();
-			for (Stripe stripe : stripes) {
+			ArrayList<FragmentScan> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+			ArrayList<FragmentScan> xcorStripes=new ArrayList<>();
+			for (FragmentScan stripe : stripes) {
 				xcorStripes.add(new XCorrStripe(stripe, parameters));
 			}
 			

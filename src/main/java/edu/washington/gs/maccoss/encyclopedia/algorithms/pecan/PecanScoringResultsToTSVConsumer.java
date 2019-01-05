@@ -11,7 +11,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -90,18 +90,18 @@ public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsCo
 				float secondScore=0.0f;
 
 				if (result.getGoodStripes().size()>0) {
-					Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
+					Pair<ScoredObject<FragmentScan>, float[]> first=result.getGoodStripes().get(0);
 					firstScore=first.x.x;
 				}
 				if (result.getGoodStripes().size()>1) {
-					Pair<ScoredObject<Stripe>, float[]> second=result.getGoodStripes().get(1);
+					Pair<ScoredObject<FragmentScan>, float[]> second=result.getGoodStripes().get(1);
 					secondScore=second.x.x;
 				}
-				for (Pair<ScoredObject<Stripe>, float[]> goodStripe : result.getGoodStripes()) {
+				for (Pair<ScoredObject<FragmentScan>, float[]> goodStripe : result.getGoodStripes()) {
 					numberProcessed++;
 					
 					float primaryScore=goodStripe.x.x;
-					Stripe stripe=goodStripe.x.y;
+					FragmentScan stripe=goodStripe.x.y;
 					float[] auxScores=goodStripe.y;
 					
 					if (rank<=numberOfPeaksPerPeptide) {

@@ -16,7 +16,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
@@ -29,7 +29,7 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 	private final float dutyCycle;
 	private final Range precursorIsolationRange;
 	
-	public EncyclopediaOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
+	public EncyclopediaOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
 			SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.dutyCycle=dutyCycle;
@@ -60,7 +60,7 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 			
 			float[] primary=new float[super.stripes.size()];
 			for (int i=0; i<super.stripes.size(); i++) {
-				Stripe stripe=super.stripes.get(i);
+				FragmentScan stripe=super.stripes.get(i);
 				primary[i]=eScorer.score(entry, stripe, ions);
 				
 				if (modificationSpecificIons.isPresent()) {
@@ -93,7 +93,7 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 					continue;
 					
 				} else {
-					Stripe stripe=super.stripes.get(index);
+					FragmentScan stripe=super.stripes.get(index);
 					float[] auxScoreArray=auxScorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
 					float evalue=calculator.getNegLog10EValue(score);
 					if (Float.isNaN(evalue)) {

@@ -27,7 +27,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
@@ -210,12 +210,12 @@ public class XCorDIATest extends TestCase {
 		}
 
 		@Override
-		public ArrayList<Stripe> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
+		public ArrayList<FragmentScan> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
 			return getStripes(new Range((float) targetMz - 1f, (float) targetMz + 1f), minRT, maxRT, sqrt);
 		}
 
 		@Override
-		public ArrayList<Stripe> getStripes(Range targetMzRange, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
+		public ArrayList<FragmentScan> getStripes(Range targetMzRange, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
 			double[] masses = new double[] {
 					 147.11285d, // y1 of ACPEPTIDECK (no fixed mod)
 					 329.12785d, // b3 of ACPEPTIDECK (includes fixed mod)
@@ -226,14 +226,14 @@ public class XCorDIATest extends TestCase {
 			Arrays.fill(intens, 1f);
 
 			return Lists.newArrayList(
-					new Stripe("0", "0", 0, 0f, 0f, 400f, 700f, masses, intens),
-					new Stripe("1", "1", 1, 1f, 0f, 400f, 700f, masses, intens),
-					new Stripe("2", "2", 2, 2f, 0f, 400f, 700f, masses, intens),
-					new Stripe("3", "3", 3, 3f, 0f, 400f, 700f, masses, intens),
-					new Stripe("4", "4", 4, 4f, 0f, 400f, 700f, masses, intens),
-					new Stripe("5", "5", 5, 5f, 0f, 400f, 700f, masses, intens),
-					new Stripe("6", "6", 6, 6f, 0f, 400f, 700f, masses, intens),
-					new Stripe("7", "7", 7, 7f, 0f, 400f, 700f, masses, intens)
+					new FragmentScan("0", "0", 0, 0f, 0f, 400f, 700f, masses, intens),
+					new FragmentScan("1", "1", 1, 1f, 0f, 400f, 700f, masses, intens),
+					new FragmentScan("2", "2", 2, 2f, 0f, 400f, 700f, masses, intens),
+					new FragmentScan("3", "3", 3, 3f, 0f, 400f, 700f, masses, intens),
+					new FragmentScan("4", "4", 4, 4f, 0f, 400f, 700f, masses, intens),
+					new FragmentScan("5", "5", 5, 5f, 0f, 400f, 700f, masses, intens),
+					new FragmentScan("6", "6", 6, 6f, 0f, 400f, 700f, masses, intens),
+					new FragmentScan("7", "7", 7, 7f, 0f, 400f, 700f, masses, intens)
 			);
 		}
 

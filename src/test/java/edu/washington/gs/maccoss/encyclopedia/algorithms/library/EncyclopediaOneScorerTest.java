@@ -20,7 +20,7 @@ public class EncyclopediaOneScorerTest extends TestCase {
 		
 		EncyclopediaOneScorer scorer=new EncyclopediaOneScorer(PARAMETERS, null);
 		LibraryEntry entry=getEntry(new double[] {300.0, 1000.01, 1200.0}, new float[] {7, 10, 4});
-		Stripe spectrum=getStripe(new double[] {1000.0, 1000.011, 1000.02, 1000.03, 1000.04, 1000.05}, new float[] {10.0f, 100.0f, 50.0f, 10.0f, 1.0f, 100f});
+		FragmentScan spectrum=getStripe(new double[] {1000.0, 1000.011, 1000.02, 1000.03, 1000.04, 1000.05}, new float[] {10.0f, 100.0f, 50.0f, 10.0f, 1.0f, 100f});
 		FragmentIon[] targets=new FragmentIon[] {
 				new FragmentIon(300, (byte)2, IonType.y),
 				new FragmentIon(1000.01, (byte)4, IonType.y),
@@ -46,7 +46,7 @@ public class EncyclopediaOneScorerTest extends TestCase {
 	public LibraryEntry getEntry(double[] masses, float[] intensities) {
 		return new LibraryEntry("", new HashSet<String>(), 1, (byte)1, "", 1, 1, 1, masses, intensities, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 	}
-	public Stripe getStripe(double[] masses, float[] intensities) {
-		return new Stripe("", "", 1, 1, 0f, 1, 1, masses, intensities);
+	public FragmentScan getStripe(double[] masses, float[] intensities) {
+		return new FragmentScan("", "", 1, 1, 0f, 1, 1, masses, intensities);
 	}
 }

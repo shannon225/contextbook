@@ -13,7 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.Transition
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
@@ -60,7 +60,7 @@ public class SNPLocalizerExample {
 		libentry=libentry.updateRetentionTime(retentionTime);
 		double precursorMz=parameters.getAAConstants().getChargedMass(peptideModSeq, precursorCharge);
 		
-		ArrayList<Stripe> stripes=stripefile.getStripes(precursorMz, 0, Float.MAX_VALUE, false);
+		ArrayList<FragmentScan> stripes=stripefile.getStripes(precursorMz, 0, Float.MAX_VALUE, false);
 		System.out.println(precursorMz+", "+stripes.size());
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptideModSeq, PeptideModification.polymorphism, parameters.getAAConstants());
 		permutations.add("SLDLDSIINAVR");
@@ -98,7 +98,7 @@ public class SNPLocalizerExample {
 		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), libentry.getPrecursorCharge(), false, true);
 		TFloatFloatHashMap primary=new TFloatFloatHashMap();
 		for (int i=0; i<stripes.size(); i++) {
-			Stripe stripe=stripes.get(i);
+			FragmentScan stripe=stripes.get(i);
 			if (stripe.getScanStartTime()>retentionTime-duration&&stripe.getScanStartTime()<retentionTime+duration) {
 				primary.put(stripe.getScanStartTime()/60f, scorer.score(libentry, stripe, ions));
 			}
@@ -151,7 +151,7 @@ public class SNPLocalizerExample {
 		libentry=libentry.updateRetentionTime(retentionTime);
 		double precursorMz=parameters.getAAConstants().getChargedMass(peptideModSeq, precursorCharge);
 		
-		ArrayList<Stripe> stripes=stripefile.getStripes(precursorMz, 0, Float.MAX_VALUE, false);
+		ArrayList<FragmentScan> stripes=stripefile.getStripes(precursorMz, 0, Float.MAX_VALUE, false);
 		System.out.println(precursorMz+", "+stripes.size());
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptideModSeq, PeptideModification.polymorphism, parameters.getAAConstants());
 		//permutations.add("GPGGVWAAEAISDAR"); // 728.8626 M/Z SAA1

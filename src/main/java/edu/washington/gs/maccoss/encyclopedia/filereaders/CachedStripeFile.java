@@ -11,17 +11,17 @@ import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 
 public class CachedStripeFile implements StripeFileInterface {
 	private final File userFile;
 	private final Map<Range, Float> ranges;
 	private final List<PrecursorScan> precursors;
-	private final Map<Range, ? extends List<Stripe>> stripes;
+	private final Map<Range, ? extends List<FragmentScan>> stripes;
 	private final float tic;
 	private final float gradientLength;
 	
-	public CachedStripeFile(File userFile, Map<Range, Float> ranges, List<PrecursorScan> precursors, Map<Range, ? extends List<Stripe>> stripes) {
+	public CachedStripeFile(File userFile, Map<Range, Float> ranges, List<PrecursorScan> precursors, Map<Range, ? extends List<FragmentScan>> stripes) {
 		this.userFile=userFile;
 		this.ranges=ranges;
 		this.precursors=precursors;
@@ -34,8 +34,8 @@ public class CachedStripeFile implements StripeFileInterface {
 		tic=sum;
 		
 		float maxRT=0.0f;
-		for (List<Stripe> stripe : stripes.values()) {
-			for (Stripe scan : stripe) {
+		for (List<FragmentScan> stripe : stripes.values()) {
+			for (FragmentScan scan : stripe) {
 				if (scan.getScanStartTime()>maxRT) {
 					maxRT=scan.getScanStartTime();
 				}
@@ -80,11 +80,11 @@ public class CachedStripeFile implements StripeFileInterface {
 	}
 
 	@Override
-	public ArrayList<Stripe> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
-		for (Entry<Range, ? extends List<Stripe>> entry : stripes.entrySet()) {
+	public ArrayList<FragmentScan> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
+		for (Entry<Range, ? extends List<FragmentScan>> entry : stripes.entrySet()) {
 			if (entry.getKey().contains((float)targetMz)) {
-				ArrayList<Stripe> subset=new ArrayList<Stripe>();
-				for (Stripe scan : entry.getValue()) {
+				ArrayList<FragmentScan> subset=new ArrayList<FragmentScan>();
+				for (FragmentScan scan : entry.getValue()) {
 					if (scan.getScanStartTime()>=minRT&&scan.getScanStartTime()<=maxRT) {
 						if (sqrt) {
 							subset.add(scan.sqrt());
@@ -97,15 +97,15 @@ public class CachedStripeFile implements StripeFileInterface {
 			}
 		}
 		
-		return new ArrayList<Stripe>();
+		return new ArrayList<FragmentScan>();
 	}
 	
 	@Override
-	public ArrayList<Stripe> getStripes(Range targetMzRange, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
-		for (Entry<Range, ? extends List<Stripe>> entry : stripes.entrySet()) {
+	public ArrayList<FragmentScan> getStripes(Range targetMzRange, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
+		for (Entry<Range, ? extends List<FragmentScan>> entry : stripes.entrySet()) {
 			if (targetMzRange.contains(entry.getKey().getMiddle())) {
-				ArrayList<Stripe> subset=new ArrayList<Stripe>();
-				for (Stripe scan : entry.getValue()) {
+				ArrayList<FragmentScan> subset=new ArrayList<FragmentScan>();
+				for (FragmentScan scan : entry.getValue()) {
 					if (scan.getScanStartTime()>=minRT&&scan.getScanStartTime()<=maxRT) {
 						if (sqrt) {
 							subset.add(scan.sqrt());
@@ -118,7 +118,7 @@ public class CachedStripeFile implements StripeFileInterface {
 			}
 		}
 		
-		return new ArrayList<Stripe>();
+		return new ArrayList<FragmentScan>();
 	}
 	
 	@Override

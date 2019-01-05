@@ -46,7 +46,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SimplePeptidePrecursor;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -307,11 +307,11 @@ public class ResultsBrowserPanel extends JPanel {
 			try {
 				float rtRange=parameters.getLocalizingModification().isPresent()?dia.getGradientLength()/20.0f:(3f*parameters.getExpectedPeakWidth());
 				
-				ArrayList<Stripe> stripes=dia.getStripes(entry.getPrecursorMZ(), targetRT-rtRange, targetRT+rtRange, false);
+				ArrayList<FragmentScan> stripes=dia.getStripes(entry.getPrecursorMZ(), targetRT-rtRange, targetRT+rtRange, false);
 				Collections.sort(stripes);
 
 				Float targetRTFloat=targetRT;
-				ArrayList<Spectrum> downcastedSpectra=Stripe.downcastStripeToSpectrum(stripes);
+				ArrayList<Spectrum> downcastedSpectra=FragmentScan.downcastStripeToSpectrum(stripes);
 				HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge(), true), downcastedSpectra, targetRTFloat, GraphType.line);
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>(fragmentTraceMap.values());
 				Collections.sort(traces);

@@ -65,7 +65,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		//permutations.add("DKRPLSGPDVGTPQPAGLAS[+79.966331]GAK");
 		//ArrayList<Stripe> stripes=stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false);
 		//PhosphoLocalizationData multiple=localizer.extractPhosphoForms(psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes);
-		ArrayList<Stripe> stripes=stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false);
+		ArrayList<FragmentScan> stripes=stripefile.getStripes(psmdata.getPrecursorMZ(), 0, Float.MAX_VALUE, false);
 		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=localizer.runDIAPhosphoLocalization(psmdata, stripes, true, true).get().getScoreTraces();
 		//HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=multiple.getTraces();
 		

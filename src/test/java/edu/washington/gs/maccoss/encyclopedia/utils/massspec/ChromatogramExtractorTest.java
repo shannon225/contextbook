@@ -13,7 +13,7 @@ import org.jfree.chart.ChartPanel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
@@ -43,10 +43,10 @@ public class ChromatogramExtractorTest {
 		FragmentIon[] unique1=PhosphoLocalizer.getUniqueFragmentIons(peptideModSeq1, charge, availableModels, parameters);
 		FragmentIon[] unique2=PhosphoLocalizer.getUniqueFragmentIons(peptideModSeq2, charge, availableModels, parameters);
 		
-		ArrayList<Stripe> stripes=stripefile.getStripes(737.858763, 62f*60, 67f*60, false);
+		ArrayList<FragmentScan> stripes=stripefile.getStripes(737.858763, 62f*60, 67f*60, false);
 
 		ArrayList<Spectrum> spectra=new ArrayList<Spectrum>();
-		for (Stripe stripe : stripes) {
+		for (FragmentScan stripe : stripes) {
 			spectra.add(stripe);
 		}
 

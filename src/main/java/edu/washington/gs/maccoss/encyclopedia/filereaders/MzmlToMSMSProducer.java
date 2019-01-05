@@ -8,7 +8,7 @@ import java.util.concurrent.BlockingQueue;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -24,13 +24,13 @@ import uk.ac.ebi.jmzml.model.mzml.Spectrum;
 import uk.ac.ebi.jmzml.xml.io.MzMLObjectIterator;
 import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 
-public class MzmlToDIAProducer implements Runnable {
-	private final BlockingQueue<MzmlBlock> mzmlBlockQueue;
+public class MzmlToMSMSProducer implements MSMSProducer {
+	private final BlockingQueue<MSMSBlock> mzmlBlockQueue;
 	private final MzMLUnmarshaller unmarshaller;
 	private final SearchParameters parameters;
 	private final HashMap<Range, TFloatArrayList> retentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 
-	public MzmlToDIAProducer(MzMLUnmarshaller unmarshaller, BlockingQueue<MzmlBlock> mzmlBlockQueue, SearchParameters parameters) {
+	public MzmlToMSMSProducer(MzMLUnmarshaller unmarshaller, BlockingQueue<MSMSBlock> mzmlBlockQueue, SearchParameters parameters) {
 		this.unmarshaller=unmarshaller;
 		this.mzmlBlockQueue=mzmlBlockQueue;
 		this.parameters=parameters;
@@ -38,6 +38,16 @@ public class MzmlToDIAProducer implements Runnable {
 	
 	public HashMap<Range, TFloatArrayList> getRetentionTimesByStripe() {
 		return retentionTimesByStripe;
+	}
+	
+	@Override
+	public void putBlock(MSMSBlock block) {
+		try {
+			mzmlBlockQueue.put(block);
+		} catch (InterruptedException ie) {
+			Logger.errorLine("Mzml reading interrupted!");
+			Logger.errorException(ie);
+		}
 	}
 
 	@Override
@@ -49,7 +59,7 @@ public class MzmlToDIAProducer implements Runnable {
 		MzMLObjectIterator<Spectrum> spectrumIterator=unmarshaller.unmarshalCollectionFromXpath("/run/spectrumList/spectrum", Spectrum.class);
 
 		ArrayList<PrecursorScan> precursors=new ArrayList<PrecursorScan>();
-		ArrayList<Stripe> stripes=new ArrayList<Stripe>();
+		ArrayList<FragmentScan> stripes=new ArrayList<FragmentScan>();
 		int count=0;
 		int previousReport=0;
 		
@@ -140,9 +150,9 @@ public class MzmlToDIAProducer implements Runnable {
 				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, ionInjectionTime, massArray, intensityArray));
 			} else {
 				
-				float isolationWindowTarget;
-				float isolationWindowLowerOffset;
-				float isolationWindowUpperOffset;
+				double isolationWindowTarget;
+				double isolationWindowLowerOffset;
+				double isolationWindowUpperOffset;
 				
 				/**
 				 * Issue 3: if no isolation window is provided, use the first selected ion as window center
@@ -153,13 +163,13 @@ public class MzmlToDIAProducer implements Runnable {
 					
 					HashMap<String, CVParam> precursorCVParams=asCVMap(selectedIonList.getSelectedIon().get(0).getCvParam());
 					
-					isolationWindowTarget = Float.parseFloat(precursorCVParams.get("MS:1000744").getValue());
+					isolationWindowTarget = Double.parseDouble(precursorCVParams.get("MS:1000744").getValue());
 					isolationWindowLowerOffset = defaultOffset;
 					isolationWindowUpperOffset = defaultOffset;
 					
 				} else {
 					HashMap<String, CVParam> isolationCVParams=asCVMap(p.getIsolationWindow().getCvParam());
-					isolationWindowTarget=Float.parseFloat(isolationCVParams.get("MS:1000827").getValue());
+					isolationWindowTarget=Double.parseDouble(isolationCVParams.get("MS:1000827").getValue());
 					CVParam lowerParam=isolationCVParams.get("MS:1000828");
 					CVParam upperParam=isolationCVParams.get("MS:1000829");
 					
@@ -171,8 +181,8 @@ public class MzmlToDIAProducer implements Runnable {
 						isolationWindowLowerOffset=defaultOffset;
 						isolationWindowUpperOffset=defaultOffset;
 					} else {
-						isolationWindowLowerOffset=Float.parseFloat(lowerParam.getValue());
-						isolationWindowUpperOffset=Float.parseFloat(upperParam.getValue());
+						isolationWindowLowerOffset=Double.parseDouble(lowerParam.getValue());
+						isolationWindowUpperOffset=Double.parseDouble(upperParam.getValue());
 					}
 				}
 
@@ -180,7 +190,7 @@ public class MzmlToDIAProducer implements Runnable {
 					double[] deltaArray=General.multiply(massArray, parameters.getFragmentOffsetPPM()/1000000.0);
 					massArray=General.subtract(massArray, deltaArray);
 				}
-				Stripe stripe=new Stripe(spectrumName, p.getSpectrumRef(), spectrumIndex, scanStartTime, ionInjectionTime, isolationWindowTarget-isolationWindowLowerOffset+(float)parameters.getPrecursorIsolationMargin(), isolationWindowTarget+isolationWindowUpperOffset-(float)parameters.getPrecursorIsolationMargin(), massArray, intensityArray);
+				FragmentScan stripe=new FragmentScan(spectrumName, p.getSpectrumRef(), spectrumIndex, scanStartTime, ionInjectionTime, isolationWindowTarget-isolationWindowLowerOffset+(float)parameters.getPrecursorIsolationMargin(), isolationWindowTarget+isolationWindowUpperOffset-(float)parameters.getPrecursorIsolationMargin(), massArray, intensityArray);
 				stripes.add(stripe);
 				Range range=stripe.getRange();
 				TFloatArrayList stripeRTs=retentionTimesByStripe.get(range);
@@ -191,16 +201,12 @@ public class MzmlToDIAProducer implements Runnable {
 				stripeRTs.add(scanStartTime);
 			}
 
-			try {
-				if (precursors.size()>100||stripes.size()>1000) {
-					mzmlBlockQueue.put(new MzmlBlock(precursors, stripes));
-					precursors.clear();
-					stripes.clear();
-				}
-			} catch (InterruptedException ie) {
-				Logger.errorLine("Mzml reading interrupted!");
-				Logger.errorException(ie);
+			if (precursors.size()>100||stripes.size()>1000) {
+				putBlock(new MSMSBlock(precursors, stripes));
+				precursors.clear();
+				stripes.clear();
 			}
+			
 			int percent=(100*count)/spectrumCount;
 			if (percent>previousReport) {
 				previousReport=percent;
@@ -208,13 +214,9 @@ public class MzmlToDIAProducer implements Runnable {
 			}
 			count++;
 		}
-		try {
-			mzmlBlockQueue.put(new MzmlBlock(precursors, stripes));
-			mzmlBlockQueue.put(MzmlBlock.POISON_BLOCK);			
-		} catch (InterruptedException ie) {
-			Logger.errorLine("Mzml reading interrupted!");
-			Logger.errorException(ie);
-		}
+
+		putBlock(new MSMSBlock(precursors, stripes));
+		putBlock(MSMSBlock.POISON_BLOCK);		
 		} catch (Exception e) {
 			Logger.errorLine("Mzml reading failed!");
 			Logger.errorException(e);

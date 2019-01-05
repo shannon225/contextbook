@@ -20,7 +20,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -45,7 +45,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 	private final BlockingQueue<ModificationLocalizationData> localizationQueue;
 	private final float minimumScore;
 	
-	public ThesaurusOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, 
+	public ThesaurusOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, float dutyCycle, PrecursorScanMap precursors, 
 			PhosphoLocalizer localizer, BlockingQueue<PeptideScoringResult> resultsQueue, BlockingQueue<ModificationLocalizationData> localizationQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.dutyCycle=dutyCycle;
@@ -213,7 +213,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 
 			// get next best match at that RT
 			FragmentIon[] bestLocalizingIons=null;
-			Pair<Stripe, Float> bestLocalizedStripe=null;
+			Pair<FragmentScan, Float> bestLocalizedStripe=null;
 			
 			for (Entry<String, Float[]> entry : primaryScores.entrySet()) {
 				String peptideModSeq=entry.getKey();
@@ -230,7 +230,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 					
 					FragmentIon[] localizingIons=getUniqueFragmentIons(entryMap.get(bestPeptideModSeq), entryMap.get(peptideModSeq), precursorCharge, parameters);
 					
-					Pair<Stripe, Float> localizedStripe = CASiLOneScoringTask.getBestLocalizationStripe(parameters, dutyCycle, localizer.getBackground(), bestForm.localizedEntry, localizingIons, stripeSubset);
+					Pair<FragmentScan, Float> localizedStripe = CASiLOneScoringTask.getBestLocalizationStripe(parameters, dutyCycle, localizer.getBackground(), bestForm.localizedEntry, localizingIons, stripeSubset);
 					//System.out.println("Testing "+bestPeptideModSeq+" ("+bestIndex.x+") vs "+peptideModSeq+" ("+score+"): localization: "+localizedStripe.y);
 					if (bestLocalizedStripe==null||bestLocalizedStripe.y>localizedStripe.y) {
 						// keep the lowest localization scoring form! (the closest to the form we're considering)
@@ -246,12 +246,12 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			}
 			
 			AmbiguousPeptideModSeq ambiPeptideModSeq=AmbiguousPeptideModSeq.getUnambigous(bestPeptideModSeq, parameters.getLocalizingModification().get(), parameters.getAAConstants(), "");
-			Triplet<ModificationLocalizationData, Stripe, Range> locData=CASiLOneScoringTask.generateLocalizationData(false, minimumScore, parameters, localizer.getModification(), bestForm.localizedEntry,
+			Triplet<ModificationLocalizationData, FragmentScan, Range> locData=CASiLOneScoringTask.generateLocalizationData(false, minimumScore, parameters, localizer.getModification(), bestForm.localizedEntry,
 					ambiPeptideModSeq, bestLocalizingIons, bestForm.allIons, takenIdentifiedIons, stripeSubset, bestLocalizedStripe);
 			
 			// if localized, then keep and remove from localizedForms
 			ModificationLocalizationData data=locData.x;
-			Stripe apex=locData.y;
+			FragmentScan apex=locData.y;
 			Range peakRange=locData.z.addBuffer(dutyCycle);
 			float score=((EncyclopediaScorer)scorer).score(bestForm.localizedEntry, apex, bestForm.allIons);
 			boolean replaceBestNonLocalizedResult = bestNonlocalizedResult==null||(score>=bestNonlocalizedResult.getBestScore()&&bestNonlocalizedData.getLocalizationScore()<data.getLocalizationScore());

@@ -8,18 +8,18 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlBlock;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIASAXProducer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.MSMSBlock;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlSAXToMSMSProducer;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 
 public class MzmlToMGFConsumer implements Runnable {
-	private final BlockingQueue<MzmlBlock> mzmlBlockQueue;
+	private final BlockingQueue<MSMSBlock> mzmlBlockQueue;
 	private final File f;
 
-	public MzmlToMGFConsumer(BlockingQueue<MzmlBlock> mzmlBlockQueue, File f) {
+	public MzmlToMGFConsumer(BlockingQueue<MSMSBlock> mzmlBlockQueue, File f) {
 		this.mzmlBlockQueue=mzmlBlockQueue;
 		this.f=f;
 	}
@@ -30,10 +30,10 @@ public class MzmlToMGFConsumer implements Runnable {
 		try {
 			writer=new PrintWriter(f, "UTF-8");
 			while (true) {
-				MzmlBlock block=mzmlBlockQueue.take();
-				if (MzmlBlock.POISON_BLOCK==block) break;
+				MSMSBlock block=mzmlBlockQueue.take();
+				if (MSMSBlock.POISON_BLOCK==block) break;
 				
-				for (Stripe stripe : block.getStripes()) {
+				for (FragmentScan stripe : block.getStripes()) {
 					byte charge=stripe.getCharge();
 					if (charge==0) continue;
 					
@@ -85,8 +85,8 @@ public class MzmlToMGFConsumer implements Runnable {
 	static void convertSAX(File mzMLFile, File mgfFile, SearchParameters parameters) {
 		Logger.logLine("Indexing "+mzMLFile.getName()+" ...");
 
-		BlockingQueue<MzmlBlock> mzmlBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);
-		MzmlToDIASAXProducer producer=new MzmlToDIASAXProducer(mzMLFile, mzmlBlockQueue, parameters);
+		BlockingQueue<MSMSBlock> mzmlBlockQueue=new ArrayBlockingQueue<MSMSBlock>(1);
+		MzmlSAXToMSMSProducer producer=new MzmlSAXToMSMSProducer(mzMLFile, mzmlBlockQueue, parameters);
 
 		Thread[] threads;
 		MzmlToMGFConsumer consumer=new MzmlToMGFConsumer(mzmlBlockQueue, mgfFile);

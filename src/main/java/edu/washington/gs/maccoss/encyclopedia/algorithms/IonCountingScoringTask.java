@@ -7,7 +7,7 @@ import java.util.concurrent.BlockingQueue;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -19,7 +19,7 @@ public class IonCountingScoringTask extends AbstractLibraryScoringTask {
 	private final float dutyCycle;
 	private final int peaksKept=1;
 	
-	public IonCountingScoringTask(PSMPeakScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
+	public IonCountingScoringTask(PSMPeakScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
 			SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.dutyCycle=dutyCycle;
@@ -35,7 +35,7 @@ public class IonCountingScoringTask extends AbstractLibraryScoringTask {
 			TFloatFloatHashMap scoreMap=new TFloatFloatHashMap();
 			float[] primary=new float[super.stripes.size()];
 			for (int i=0; i<super.stripes.size(); i++) {
-				Stripe stripe=super.stripes.get(i);
+				FragmentScan stripe=super.stripes.get(i);
 				double[] masses=stripe.getMassArray();
 				
 				for (double mass : entry.getMassArray()) {
@@ -61,7 +61,7 @@ public class IonCountingScoringTask extends AbstractLibraryScoringTask {
 				float score=goodStripes.get(i).x;
 				int index=goodStripes.get(i).y;
 
-				Stripe stripe=super.stripes.get(index);
+				FragmentScan stripe=super.stripes.get(index);
 				result.addStripe(score, new float[0], stripe);
 				
 				

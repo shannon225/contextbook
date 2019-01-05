@@ -19,7 +19,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -84,9 +84,9 @@ public class PhosphoLocalizer {
 		return background;
 	}
 
-	public Optional<PhosphoLocalizationData> runDIAPhosphoLocalization(PSMData psmdata, ArrayList<Stripe> stripes, boolean tryAllPermutations, boolean buildOutGUIData) {
+	public Optional<PhosphoLocalizationData> runDIAPhosphoLocalization(PSMData psmdata, ArrayList<FragmentScan> stripes, boolean tryAllPermutations, boolean buildOutGUIData) {
 		ArrayList<Spectrum> spectra=new ArrayList<Spectrum>();
-		for (Stripe stripe : stripes) {
+		for (FragmentScan stripe : stripes) {
 			spectra.add(stripe);
 		}
 		return runPhosphoLocalization(psmdata, spectra, tryAllPermutations, buildOutGUIData);
@@ -125,7 +125,7 @@ public class PhosphoLocalizer {
 		return extractPhosphoFormsFromLimitedScans(precursorMZ, precursorCharge, peptideModSeqs, stripes, buildOutGUIData);
 	}
 
-	PhosphoLocalizationData extractPhosphoFormsFromStripes(String originalPeptideModSeq, double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<Stripe> allScansInStripe, boolean buildOutGUIData) {
+	PhosphoLocalizationData extractPhosphoFormsFromStripes(String originalPeptideModSeq, double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, float retentionTime, ArrayList<FragmentScan> allScansInStripe, boolean buildOutGUIData) {
 		float duration=gradientLength/20.0f;
 		ArrayList<Spectrum> stripes=getScanSubsetFromStripes(retentionTime-duration, retentionTime+duration, allScansInStripe);
 		
@@ -712,7 +712,7 @@ public class PhosphoLocalizer {
 		return uniqueIons;
 	}
 	
-	public static ArrayList<Spectrum> getScanSubsetFromStripes(float minRT, float maxRT, ArrayList<Stripe> allScansInStripe) {
+	public static ArrayList<Spectrum> getScanSubsetFromStripes(float minRT, float maxRT, ArrayList<FragmentScan> allScansInStripe) {
 		ArrayList<Spectrum> subset=new ArrayList<Spectrum>();
 		for (Spectrum scan : allScansInStripe) {
 			if (scan.getScanStartTime()>=minRT&&scan.getScanStartTime()<=maxRT) {

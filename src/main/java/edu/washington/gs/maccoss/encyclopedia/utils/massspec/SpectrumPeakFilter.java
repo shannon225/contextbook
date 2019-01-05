@@ -5,7 +5,7 @@ import java.util.Collections;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 
 public class SpectrumPeakFilter {
@@ -16,12 +16,12 @@ public class SpectrumPeakFilter {
 												// (anything over will be placed
 												// in the last bin)
 
-	public static Stripe filterPeaks(Stripe stripe) {
+	public static FragmentScan filterPeaks(FragmentScan stripe) {
 		ArrayList<PeakChromatogram> peaks=PeakChromatogram.fromChromatogramArrays(stripe.getMassArray(), stripe.getIntensityArray(), new float[stripe.getMassArray().length]);
 		peaks=filterPeaks(peaks);
 		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
 
-		return new Stripe(stripe.getSpectrumName(), stripe.getPrecursorName(), stripe.getSpectrumIndex(), stripe.getScanStartTime(), stripe.getIonInjectionTime(), stripe.getIsolationWindowLower(), stripe.getIsolationWindowUpper(),
+		return new FragmentScan(stripe.getSpectrumName(), stripe.getPrecursorName(), stripe.getSpectrumIndex(), stripe.getScanStartTime(), stripe.getIonInjectionTime(), stripe.getIsolationWindowLower(), stripe.getIsolationWindowUpper(),
 				arrays.x, arrays.y, stripe.getCharge());
 	}
 

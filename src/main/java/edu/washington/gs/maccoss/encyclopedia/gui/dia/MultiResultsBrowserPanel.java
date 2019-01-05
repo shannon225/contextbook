@@ -350,9 +350,9 @@ public class MultiResultsBrowserPanel extends JPanel {
 					StripeFileInterface file=files.get(i);
 					Range rangeInSec=quantitativeData.getRtScanRange();
 					Range rangeInMins=new Range(rangeInSec.getStart()/60f, rangeInSec.getStop()/60f);
-					ArrayList<Stripe> stripes=file.getStripes(precursorMz, rangeInSec.getStart()-RT_EXTRACTION_MARGIN_IN_SEC, rangeInSec.getStop()+RT_EXTRACTION_MARGIN_IN_SEC, false);
+					ArrayList<FragmentScan> stripes=file.getStripes(precursorMz, rangeInSec.getStart()-RT_EXTRACTION_MARGIN_IN_SEC, rangeInSec.getStop()+RT_EXTRACTION_MARGIN_IN_SEC, false);
 					
-					ArrayList<Spectrum> downcastedSpectra=Stripe.downcastStripeToSpectrum(stripes);
+					ArrayList<Spectrum> downcastedSpectra=FragmentScan.downcastStripeToSpectrum(stripes);
 
 					HashMap<FragmentIon, XYTrace> targetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), targetIonArray, downcastedSpectra, null,
 							GraphType.boldline);

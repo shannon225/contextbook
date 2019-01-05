@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.AbstractRetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -15,7 +15,7 @@ public class PeptideScoringResult {
 	public static final PeptideScoringResult POISON_RESULT=new PeptideScoringResult(null);
 	
 	private final LibraryEntry entry;
-	private final ArrayList<Pair<ScoredObject<Stripe>, float[]>> goodStripes=new ArrayList<Pair<ScoredObject<Stripe>, float[]>>();
+	private final ArrayList<Pair<ScoredObject<FragmentScan>, float[]>> goodStripes=new ArrayList<Pair<ScoredObject<FragmentScan>, float[]>>();
 	private XYTraceInterface trace=null;
 	
 	public PeptideScoringResult(LibraryEntry entry) {
@@ -30,11 +30,11 @@ public class PeptideScoringResult {
 		boolean bestSet=false;
 		float bestScore=0.0f;
 		float[] bestScores=null;
-		Stripe bestStripe=null;
+		FragmentScan bestStripe=null;
 		
-		for (Pair<ScoredObject<Stripe>, float[]> pair : goodStripes) {
+		for (Pair<ScoredObject<FragmentScan>, float[]> pair : goodStripes) {
 			float score=pair.x.x;
-			Stripe stripe=pair.x.y;
+			FragmentScan stripe=pair.x.y;
 			float[] scores=pair.y;
 			float actualRT=stripe.getScanStartTime()/60f;
 			float modelRT=entry.getRetentionTime()/60f;
@@ -70,13 +70,13 @@ public class PeptideScoringResult {
 		return entry;
 	}
 
-	public void addStripe(float score, float[] auxScoreArray, Stripe stripe) {
-		goodStripes.add(new Pair<ScoredObject<Stripe>, float[]>(new ScoredObject<Stripe>(score, stripe), auxScoreArray));
+	public void addStripe(float score, float[] auxScoreArray, FragmentScan stripe) {
+		goodStripes.add(new Pair<ScoredObject<FragmentScan>, float[]>(new ScoredObject<FragmentScan>(score, stripe), auxScoreArray));
 	}
 	
 	public float getBestScore() {
 		float bestScore=-Float.MAX_VALUE;
-		for (Pair<ScoredObject<Stripe>, float[]> pair : goodStripes) {
+		for (Pair<ScoredObject<FragmentScan>, float[]> pair : goodStripes) {
 			if (pair.x.x>bestScore) {
 				bestScore=pair.x.x;
 			}
@@ -92,7 +92,7 @@ public class PeptideScoringResult {
 		return trace;
 	}
 	
-	public ArrayList<Pair<ScoredObject<Stripe>, float[]>> getGoodStripes() {
+	public ArrayList<Pair<ScoredObject<FragmentScan>, float[]>> getGoodStripes() {
 		return goodStripes;
 	}
 }

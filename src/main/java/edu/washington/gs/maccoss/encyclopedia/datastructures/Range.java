@@ -6,6 +6,9 @@ import java.util.ArrayList;
 public class Range implements Comparable<Range> {
 	private final float start, stop;
 
+	public Range(double start, double stop) {
+		this((float)start, (float)stop);
+	}
 	public Range(float start, float stop) {
 		// ensure that start comes before stop
 		if (start<=stop) {

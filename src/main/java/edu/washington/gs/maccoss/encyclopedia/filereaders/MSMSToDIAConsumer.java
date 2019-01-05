@@ -2,7 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumPeakFilter;
@@ -12,14 +12,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
-public class MzmlToDIAConsumer implements Runnable {
-	private final BlockingQueue<MzmlBlock> mzmlBlockQueue;
+public class MSMSToDIAConsumer implements Runnable {
+	private final BlockingQueue<MSMSBlock> mzmlBlockQueue;
 	private final StripeFile stripeFile;
 	private final SearchParameters parameters;
 
 	private Throwable error;
 
-	public MzmlToDIAConsumer(BlockingQueue<MzmlBlock> mzmlBlockQueue, StripeFile stripeFile, SearchParameters parameters) {
+	public MSMSToDIAConsumer(BlockingQueue<MSMSBlock> mzmlBlockQueue, StripeFile stripeFile, SearchParameters parameters) {
 		this.mzmlBlockQueue=mzmlBlockQueue;
 		this.stripeFile=stripeFile;
 		this.parameters=parameters;
@@ -30,8 +30,8 @@ public class MzmlToDIAConsumer implements Runnable {
 		try {
 			float totalPrecursorTIC=0.0f;
 			while (true) {
-				MzmlBlock block=mzmlBlockQueue.take();
-				if (MzmlBlock.POISON_BLOCK==block) break;
+				MSMSBlock block=mzmlBlockQueue.take();
+				if (MSMSBlock.POISON_BLOCK==block) break;
 
 				for (PrecursorScan precursor : block.getPrecursors()) {
 					totalPrecursorTIC+=precursor.getTIC();
@@ -39,10 +39,10 @@ public class MzmlToDIAConsumer implements Runnable {
 
 				stripeFile.addPrecursor(block.getPrecursors());
 
-				ArrayList<Stripe> stripes=block.getStripes();
+				ArrayList<FragmentScan> stripes=block.getStripes();
 				if (parameters.isFilterPeaklists()) {
-					ArrayList<Stripe> filtered=new ArrayList<>();
-					for (Stripe stripe : stripes) {
+					ArrayList<FragmentScan> filtered=new ArrayList<>();
+					for (FragmentScan stripe : stripes) {
 						filtered.add(SpectrumPeakFilter.filterPeaks(stripe));
 					}
 					stripes=filtered;

@@ -6,8 +6,8 @@ import java.util.LinkedList;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlBlock;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.MSMSBlock;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -16,8 +16,8 @@ import gnu.trove.list.array.TFloatArrayList;
 
 public class OverlapDeconvoluter implements Runnable {
 	private final MassTolerance tolerance;
-	private final BlockingQueue<MzmlBlock> inputQueue;
-	private final BlockingQueue<MzmlBlock> outputQueue;
+	private final BlockingQueue<MSMSBlock> inputQueue;
+	private final BlockingQueue<MSMSBlock> outputQueue;
 	private final HashMap<Range, TFloatArrayList> retentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 	private final HashMap<Range, TFloatArrayList> ionInjectionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 	private final HashMap<Range, TFloatArrayList> truncatedRetentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
@@ -25,7 +25,7 @@ public class OverlapDeconvoluter implements Runnable {
 
 	private Throwable error;
 
-	public OverlapDeconvoluter(MassTolerance tolerance, BlockingQueue<MzmlBlock> inputQueue, BlockingQueue<MzmlBlock> outputQueue) {
+	public OverlapDeconvoluter(MassTolerance tolerance, BlockingQueue<MSMSBlock> inputQueue, BlockingQueue<MSMSBlock> outputQueue) {
 		this.tolerance=tolerance;
 		this.inputQueue=inputQueue;
 		this.outputQueue=outputQueue;
@@ -49,18 +49,18 @@ public class OverlapDeconvoluter implements Runnable {
 		Range maximumRange=null;
 
 		try {
-			LinkedList<Stripe> currentCycle=new LinkedList<Stripe>();
+			LinkedList<FragmentScan> currentCycle=new LinkedList<FragmentScan>();
 			while (true) {
-				MzmlBlock block=inputQueue.take();
-				if (MzmlBlock.POISON_BLOCK==block) {
-					outputQueue.put(MzmlBlock.POISON_BLOCK);
+				MSMSBlock block=inputQueue.take();
+				if (MSMSBlock.POISON_BLOCK==block) {
+					outputQueue.put(MSMSBlock.POISON_BLOCK);
 					// needs to join up here if we start using multiple threads
 					break;
 				}
 				
 				// scan ahead to set up
 				if (cycleStart==null) {
-					STARTUP: for (Stripe stripe : block.getStripes()) {
+					STARTUP: for (FragmentScan stripe : block.getStripes()) {
 						if (cycleStart==null) {
 							cycleStart=block.getStripes().get(0).getRange();
 							minimumRange=cycleStart;
@@ -87,8 +87,8 @@ public class OverlapDeconvoluter implements Runnable {
 					}
 				}
 				
-				ArrayList<Stripe> deconvolutedStripes=new ArrayList<Stripe>();
-				BLOCK: for (Stripe stripe : block.getStripes()) {
+				ArrayList<FragmentScan> deconvolutedStripes=new ArrayList<FragmentScan>();
+				BLOCK: for (FragmentScan stripe : block.getStripes()) {
 					currentCycle.add(stripe);
 					if (currentCycle.size()>doubleCycleLength) {
 						currentCycle.removeFirst();
@@ -96,18 +96,18 @@ public class OverlapDeconvoluter implements Runnable {
 						continue BLOCK;
 					}
 					
-					Stripe earlyLow=null;
-					Stripe earlyHigh=null;
-					Stripe center=null;
-					Stripe lateLow=null;
-					Stripe lateHigh=null;
+					FragmentScan earlyLow=null;
+					FragmentScan earlyHigh=null;
+					FragmentScan center=null;
+					FragmentScan lateLow=null;
+					FragmentScan lateHigh=null;
 
 					Range target=currentCycle.get(0).getRange();
 					float quarterWidth=target.getRange()/4.0f;
 					float lowerTarget=target.getMiddle()-quarterWidth;
 					float upperTarget=target.getMiddle()+quarterWidth;
 					for (int i=1; i<currentCycle.size(); i++) {
-						Stripe current=currentCycle.get(i);
+						FragmentScan current=currentCycle.get(i);
 						Range range=current.getRange();
 						if (range.equals(target)) {
 							center=current;
@@ -130,7 +130,7 @@ public class OverlapDeconvoluter implements Runnable {
 					}
 
 					try {
-						Pair<Stripe, Stripe> pair=deconvolute(earlyLow, earlyHigh, center, lateLow, lateHigh, tolerance);
+						Pair<FragmentScan, FragmentScan> pair=deconvolute(earlyLow, earlyHigh, center, lateLow, lateHigh, tolerance);
 						deconvolutedStripes.add(pair.x);
 						deconvolutedStripes.add(pair.y);
 						
@@ -142,7 +142,7 @@ public class OverlapDeconvoluter implements Runnable {
 					}
 
 				}
-				outputQueue.put(new MzmlBlock(block.getPrecursors(), deconvolutedStripes));
+				outputQueue.put(new MSMSBlock(block.getPrecursors(), deconvolutedStripes));
 			}
 		} catch (InterruptedException ie) {
 			Logger.errorLine("DIA writing interrupted!");
@@ -163,7 +163,7 @@ public class OverlapDeconvoluter implements Runnable {
 		return error;
 	}
 	
-	public void addRetentionTime(Stripe thisStripe) {
+	public void addRetentionTime(FragmentScan thisStripe) {
 		Range range=thisStripe.getRange();
 		Range truncatedRange=new Range((int)range.getStart(), (int)range.getStop()); // to deal with rounding errors
 		TFloatArrayList stripeRTs=truncatedRetentionTimesByStripe.get(truncatedRange);
@@ -180,7 +180,7 @@ public class OverlapDeconvoluter implements Runnable {
 		stripeIITs.add(thisStripe.getIonInjectionTime());
 	}
 	
-	public static Pair<Stripe, Stripe> deconvolute(Stripe earlyLow, Stripe earlyHigh, Stripe center, Stripe lateLow, Stripe lateHigh, MassTolerance tolerance) {
+	public static Pair<FragmentScan, FragmentScan> deconvolute(FragmentScan earlyLow, FragmentScan earlyHigh, FragmentScan center, FragmentScan lateLow, FragmentScan lateHigh, MassTolerance tolerance) {
 		
 		float[] intensities=center.getIntensityArray();
 		double[] masses=center.getMassArray();
@@ -219,22 +219,22 @@ public class OverlapDeconvoluter implements Runnable {
 			}
 		}
 		
-		Stripe lowerStripe=getDeconvolutedStripe(center, lowerRange, lowerPeaks, false);
-		Stripe upperStripe=getDeconvolutedStripe(center, upperRange, upperPeaks, true);
+		FragmentScan lowerStripe=getDeconvolutedStripe(center, lowerRange, lowerPeaks, false);
+		FragmentScan upperStripe=getDeconvolutedStripe(center, upperRange, upperPeaks, true);
 		
-		Pair<Stripe, Stripe> deconvoluted=new Pair<Stripe, Stripe>(lowerStripe, upperStripe);
+		Pair<FragmentScan, FragmentScan> deconvoluted=new Pair<FragmentScan, FragmentScan>(lowerStripe, upperStripe);
 		return deconvoluted;
 	}
 
-	private static Stripe getDeconvolutedStripe(Stripe center, Range lowerRange, ArrayList<Peak> lowerPeaks, boolean useNegativeScanNumber) {
+	private static FragmentScan getDeconvolutedStripe(FragmentScan center, Range lowerRange, ArrayList<Peak> lowerPeaks, boolean useNegativeScanNumber) {
 		Pair<double[], float[]> arrays=Peak.toArrays(lowerPeaks);
 		int scanNumber=useNegativeScanNumber?(Integer.MAX_VALUE-center.getSpectrumIndex()):center.getSpectrumIndex();
 		
-		Stripe lowerStripe=new Stripe(center.getSpectrumName(), center.getPrecursorName(), scanNumber, center.getScanStartTime(), center.getIonInjectionTime(), lowerRange.getStart(), lowerRange.getStop(), arrays.x, arrays.y);
+		FragmentScan lowerStripe=new FragmentScan(center.getSpectrumName(), center.getPrecursorName(), scanNumber, center.getScanStartTime(), center.getIonInjectionTime(), lowerRange.getStart(), lowerRange.getStop(), arrays.x, arrays.y);
 		return lowerStripe;
 	}
 
-	private static float getIntensity(MassTolerance tolerance, double mass, Stripe stripe) {
+	private static float getIntensity(MassTolerance tolerance, double mass, FragmentScan stripe) {
 		// if we're at a boundary, return minimum value. This means if the peak
 		// is not in the other stripe, we get it. Otherwise, they essentially
 		// get the intensity.

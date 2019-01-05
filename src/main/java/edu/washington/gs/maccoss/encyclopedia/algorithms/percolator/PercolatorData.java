@@ -12,7 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -120,7 +120,7 @@ public class PercolatorData {
 					LibraryEntry entry=result.getEntry();
 					float entryTime=filter.getYValue(entry.getRetentionTime());
 					
-					Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
+					Pair<ScoredObject<FragmentScan>, float[]> first=result.getGoodStripes().get(0);
 					float deltaRT=first.x.y.getScanStartTime()/60f-entryTime;
 					deltas.add(deltaRT);					
 				}
@@ -140,7 +140,7 @@ public class PercolatorData {
 				LibraryEntry entry=result.getEntry();
 				float entryTime=filter.getYValue(entry.getRetentionTime());
 
-				Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
+				Pair<ScoredObject<FragmentScan>, float[]> first=result.getGoodStripes().get(0);
 				float deltaRT=first.x.y.getScanStartTime()/60f-entryTime;
 
 				if (deltaRT<=upperThreshold&&deltaRT>=lowerThreshold) {

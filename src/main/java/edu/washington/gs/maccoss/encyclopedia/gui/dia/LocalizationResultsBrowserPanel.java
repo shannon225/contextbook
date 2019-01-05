@@ -37,7 +37,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LocalizedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -285,7 +285,7 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 
 			try {
 				ArrayList<Spectrum> precursors=PrecursorScan.downcast(dia.getPrecursors(minRT-deltaRT, maxRT+deltaRT));
-				ArrayList<Stripe> stripes=dia.getStripes(precursorMZ, minRT-deltaRT, maxRT+deltaRT, false);
+				ArrayList<FragmentScan> stripes=dia.getStripes(precursorMZ, minRT-deltaRT, maxRT+deltaRT, false);
 				
 				XYTraceInterface[] precursorTraces = ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), precursorMZ, precursorCharge, precursors);
 				double maxPrecursor=XYTrace.getMaxY(precursorTraces);

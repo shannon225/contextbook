@@ -31,7 +31,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentComponent;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentId;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentMapTranscoder;
@@ -115,7 +115,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	public static CachedStripeFile cache(StripeFileInterface stripeFile) throws IOException, SQLException, DataFormatException {
 		Logger.logLine("Caching precursors...");
 		ArrayList<PrecursorScan> precursors=stripeFile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
-		HashMap<Range, ArrayList<Stripe>> stripes=new HashMap<Range, ArrayList<Stripe>>();
+		HashMap<Range, ArrayList<FragmentScan>> stripes=new HashMap<Range, ArrayList<FragmentScan>>();
 		final Map<Range, Float> ranges = stripeFile.getRanges();
 		for (Range range : ranges.keySet()) {
 			Logger.logLine("Caching range "+range.toString()+"...");
@@ -433,7 +433,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 
 	private static final int NUMBER_OF_STRIPES_AT_ONCE=10;
-	public void addStripe(ArrayList<Stripe> stripes) throws IOException, SQLException {
+	public void addStripe(ArrayList<FragmentScan> stripes) throws IOException, SQLException {
 		Connection c = getConnection();
 		try {
 			int start=0;
@@ -454,7 +454,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		}
 	}
 
-	private void internalAddStripeToConnection(List<Stripe> stripes, Connection c) throws SQLException, IOException {
+	private void internalAddStripeToConnection(List<FragmentScan> stripes, Connection c) throws SQLException, IOException {
 		StringBuilder sb=new StringBuilder("insert into spectra (SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IonInjectionTime, IsolationWindowLower, IsolationWindowCenter, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray)");
 		sb.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
 		for (int i=1; i<stripes.size(); i++) {
@@ -463,15 +463,15 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		PreparedStatement prep=c.prepareStatement(sb.toString());
 		try {
 			int index=1;
-			for (Stripe stripe : stripes) {
+			for (FragmentScan stripe : stripes) {
 				prep.setString(index++, stripe.getSpectrumName());
 				prep.setString(index++, stripe.getPrecursorName());
 				prep.setInt(index++, stripe.getSpectrumIndex());
 				prep.setFloat(index++, stripe.getScanStartTime());
 				prep.setFloat(index++, stripe.getIonInjectionTime());
-				prep.setFloat(index++, stripe.getIsolationWindowLower());
-				prep.setFloat(index++, stripe.getIsolationWindowCenter());
-				prep.setFloat(index++, stripe.getIsolationWindowUpper());
+				prep.setDouble(index++, stripe.getIsolationWindowLower());
+				prep.setDouble(index++, stripe.getIsolationWindowCenter());
+				prep.setDouble(index++, stripe.getIsolationWindowUpper());
 				byte[] massByteArray=ByteConverter.toByteArray(stripe.getMassArray());
 				prep.setInt(index++, massByteArray.length);
 				prep.setBytes(index++, CompressionUtils.compress(massByteArray));
@@ -490,7 +490,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface#getStripes(double, float, float, boolean)
 	 */
 	@Override
-	public ArrayList<Stripe> getStripes(double targetMz, float minRT, float maxRT, final boolean sqrt) throws IOException, SQLException {
+	public ArrayList<FragmentScan> getStripes(double targetMz, float minRT, float maxRT, final boolean sqrt) throws IOException, SQLException {
 		Connection c = getConnection();
 		try {
 			Statement s=c.createStatement();
@@ -498,7 +498,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, IonInjectionTime from spectra "
 						+"where IsolationWindowLower <= "+targetMz+" and IsolationWindowUpper >= "+targetMz+" and ScanStartTime between "+minRT+" and "+maxRT);
 
-				final Vector<Stripe> stripes=new Vector<Stripe>();
+				final Vector<FragmentScan> stripes=new Vector<FragmentScan>();
 
 				int cores=Runtime.getRuntime().availableProcessors();
 				ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("STRIPE_"+targetMz+"-%d").setDaemon(true).build();
@@ -510,8 +510,8 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 					final String precursorName=rs.getString(2);
 					final int spectrumIndex=rs.getInt(3);
 					final float scanStartTime=rs.getFloat(4);
-					final float isolationWindowLower=rs.getFloat(5);
-					final float isolationWindowUpper=rs.getFloat(6);
+					final double isolationWindowLower=rs.getDouble(5);
+					final double isolationWindowUpper=rs.getDouble(6);
 					final int massEncodedLength=rs.getInt(7);
 					final byte[] massBytes=rs.getBytes(8);
 					final int intensityEncodedLength=rs.getInt(9);
@@ -542,7 +542,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 				} catch (InterruptedException ie) {
 					throw new EncyclopediaException(ie);
 				}
-				return new ArrayList<Stripe>(stripes);
+				return new ArrayList<FragmentScan>(stripes);
 			} finally {
 				s.close();
 			}
@@ -555,7 +555,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface#getStripes(Range, float, float, boolean)
 	 */
 	@Override
-	public ArrayList<Stripe> getStripes(Range targetMzRange, float minRT, float maxRT, final boolean sqrt) throws IOException, SQLException {
+	public ArrayList<FragmentScan> getStripes(Range targetMzRange, float minRT, float maxRT, final boolean sqrt) throws IOException, SQLException {
 		Connection c = getConnection();
 		try {
 			Statement s=c.createStatement();
@@ -563,7 +563,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, IonInjectionTime from spectra "
 						+"where  IsolationWindowLower <= "+targetMzRange.getStop()+" and IsolationWindowUpper >= "+targetMzRange.getStart()+" and ScanStartTime between "+minRT+" and "+maxRT);
 
-				final Vector<Stripe> stripes=new Vector<Stripe>();
+				final Vector<FragmentScan> stripes=new Vector<FragmentScan>();
 
 				int cores=Runtime.getRuntime().availableProcessors();
 				ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("STRIPE_"+targetMzRange.getStart()+"_"+targetMzRange.getStop()+"-%d").setDaemon(true).build();
@@ -607,7 +607,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 				} catch (InterruptedException ie) {
 					throw new EncyclopediaException(ie);
 				}
-				return new ArrayList<Stripe>(stripes);
+				return new ArrayList<FragmentScan>(stripes);
 			} finally {
 				s.close();
 			}
@@ -616,14 +616,14 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		}
 	}
 
-	private Stripe getStripe(boolean sqrt, String spectrumName, String precursorName, int spectrumIndex, Float scanStartTime, Float ionInjectionTime, float isolationWindowLower,
-			float isolationWindowUpper, int massEncodedLength, byte[] massBytes, int intensityEncodedLength, byte[] intensityBytes) throws IOException, DataFormatException {
+	private FragmentScan getStripe(boolean sqrt, String spectrumName, String precursorName, int spectrumIndex, Float scanStartTime, Float ionInjectionTime, double isolationWindowLower,
+			double isolationWindowUpper, int massEncodedLength, byte[] massBytes, int intensityEncodedLength, byte[] intensityBytes) throws IOException, DataFormatException {
 		double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(massBytes, massEncodedLength));
 		float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(intensityBytes, intensityEncodedLength));
 		if (sqrt) {
 			intensityArray=General.protectedSqrt(intensityArray);
 		}
-		return new Stripe(spectrumName, precursorName, spectrumIndex, scanStartTime, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray);
+		return new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray);
 	}
 
 	public Version getVersion() throws IOException, SQLException {

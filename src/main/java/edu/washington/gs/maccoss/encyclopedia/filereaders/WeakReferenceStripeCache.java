@@ -9,7 +9,7 @@ import java.util.LinkedList;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -27,10 +27,10 @@ public class WeakReferenceStripeCache {
 	private final int hardCacheSize;
 	
 	// hardCache is bounded to hardCacheSize
-	private final LinkedList<Pair<Range, ArrayList<Stripe>>> hardCache=new LinkedList<Pair<Range, ArrayList<Stripe>>>();
+	private final LinkedList<Pair<Range, ArrayList<FragmentScan>>> hardCache=new LinkedList<Pair<Range, ArrayList<FragmentScan>>>();
 	
 	// softCache is unbounded and only cleaned up by promotion requests. This means that there needs to be a relatively low number of Ranges in total
-	private final LinkedList<Pair<Range, WeakReference<ArrayList<Stripe>>>> softCache=new LinkedList<Pair<Range, WeakReference<ArrayList<Stripe>>>>();
+	private final LinkedList<Pair<Range, WeakReference<ArrayList<FragmentScan>>>> softCache=new LinkedList<Pair<Range, WeakReference<ArrayList<FragmentScan>>>>();
 
 	private final ArrayList<Range> allRanges=new ArrayList<Range>();
 	protected final StripeFileInterface stripeFile;
@@ -52,10 +52,10 @@ public class WeakReferenceStripeCache {
 		Collections.sort(allRanges);
 	}
 	
-	public ArrayList<Stripe> getStripes(float mz) {
+	public ArrayList<FragmentScan> getStripes(float mz) {
 		// first check hard references
-		Pair<Range, ArrayList<Stripe>> foundHardPair=null;
-		for (Pair<Range, ArrayList<Stripe>> pair : hardCache) {
+		Pair<Range, ArrayList<FragmentScan>> foundHardPair=null;
+		for (Pair<Range, ArrayList<FragmentScan>> pair : hardCache) {
 			if (pair.x.contains(mz)) {
 				foundHardPair=pair;
 				break;
@@ -69,9 +69,9 @@ public class WeakReferenceStripeCache {
 		}
 		
 		// then check soft references
-		Pair<Range, WeakReference<ArrayList<Stripe>>> foundSoftPair=null;
-		ArrayList<Stripe> foundPreviouslySoftStripes=null; // can be null even if foundSoftPair isn't!
-		for (Pair<Range, WeakReference<ArrayList<Stripe>>> pair : softCache) {
+		Pair<Range, WeakReference<ArrayList<FragmentScan>>> foundSoftPair=null;
+		ArrayList<FragmentScan> foundPreviouslySoftStripes=null; // can be null even if foundSoftPair isn't!
+		for (Pair<Range, WeakReference<ArrayList<FragmentScan>>> pair : softCache) {
 			if (pair.x.contains(mz)) {
 				foundPreviouslySoftStripes=pair.y.get();
 				foundSoftPair=pair;
@@ -94,7 +94,7 @@ public class WeakReferenceStripeCache {
 			}
 			if (foundPreviouslySoftRange==null) {
 				// request outside of intended range!
-				return new ArrayList<Stripe>();
+				return new ArrayList<FragmentScan>();
 			}
 		}
 		
@@ -104,17 +104,17 @@ public class WeakReferenceStripeCache {
 		}
 		
 		// insert into hard cache and return
-		hardCache.addFirst(new Pair<Range, ArrayList<Stripe>>(foundPreviouslySoftRange, foundPreviouslySoftStripes));
+		hardCache.addFirst(new Pair<Range, ArrayList<FragmentScan>>(foundPreviouslySoftRange, foundPreviouslySoftStripes));
 		while (hardCache.size()>hardCacheSize) {
-			Pair<Range, ArrayList<Stripe>> previouslyHardPair=hardCache.removeLast();
-			softCache.addFirst(new Pair<Range, WeakReference<ArrayList<Stripe>>>(previouslyHardPair.x, new WeakReference<ArrayList<Stripe>>(previouslyHardPair.y)));
+			Pair<Range, ArrayList<FragmentScan>> previouslyHardPair=hardCache.removeLast();
+			softCache.addFirst(new Pair<Range, WeakReference<ArrayList<FragmentScan>>>(previouslyHardPair.x, new WeakReference<ArrayList<FragmentScan>>(previouslyHardPair.y)));
 		}
 		return foundPreviouslySoftStripes;
 	}
 	
-	protected ArrayList<Stripe> getStripesFromFile(float mz) {
+	protected ArrayList<FragmentScan> getStripesFromFile(float mz) {
 		try {
-			ArrayList<Stripe> stripes=stripeFile.getStripes(mz, -Float.MAX_VALUE, Float.MAX_VALUE, false);
+			ArrayList<FragmentScan> stripes=stripeFile.getStripes(mz, -Float.MAX_VALUE, Float.MAX_VALUE, false);
 			Collections.sort(stripes);
 			return stripes;
 			

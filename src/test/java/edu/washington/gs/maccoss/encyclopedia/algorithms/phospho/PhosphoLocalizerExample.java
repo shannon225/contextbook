@@ -19,7 +19,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
@@ -260,7 +260,7 @@ public class PhosphoLocalizerExample {
 		libentry=libentry.updateRetentionTime(retentionTime);
 		double precursorMz=parameters.getAAConstants().getChargedMass(peptideModSeq, precursorCharge);
 		
-		ArrayList<Stripe> stripes=stripefile.getStripes(precursorMz, 0, Float.MAX_VALUE, false);
+		ArrayList<FragmentScan> stripes=stripefile.getStripes(precursorMz, 0, Float.MAX_VALUE, false);
 		System.out.println(precursorMz+", "+stripes.size());
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptideModSeq, PeptideModification.phosphorylation, parameters.getAAConstants());
 		PhosphoLocalizationData actuallyPhosphoData=localizer.extractPhosphoFormsFromStripes(peptideModSeq, precursorMz, precursorCharge, permutations, retentionTime, stripes, true);
@@ -322,7 +322,7 @@ public class PhosphoLocalizerExample {
 		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), libentry.getPrecursorCharge(), false, true);
 		TFloatFloatHashMap primary=new TFloatFloatHashMap();
 		for (int i=0; i<stripes.size(); i++) {
-			Stripe stripe=stripes.get(i);
+			FragmentScan stripe=stripes.get(i);
 			if (stripe.getScanStartTime()>retentionTime-duration&&stripe.getScanStartTime()<retentionTime+duration) {
 				primary.put(stripe.getScanStartTime()/60f, scorer.score(libentry, stripe, ions));
 			}
@@ -377,9 +377,9 @@ public class PhosphoLocalizerExample {
 		while (!resultsQueue.isEmpty()) {
 			if (!resultsQueue.isEmpty()) {
 				PeptideScoringResult result=resultsQueue.take();
-				ArrayList<Pair<ScoredObject<Stripe>, float[]>> data=result.getGoodStripes();
+				ArrayList<Pair<ScoredObject<FragmentScan>, float[]>> data=result.getGoodStripes();
 				index++;
-				for (Pair<ScoredObject<Stripe>, float[]> pair : data) {
+				for (Pair<ScoredObject<FragmentScan>, float[]> pair : data) {
 					System.out.println(index+") "+result.getEntry().getPeptideModSeq()+"\t"+pair.x.x+"\t("+((pair.x.y.getScanStartTime())/60f)+" minutes)");
 				}
 			} else {

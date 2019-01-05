@@ -17,7 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
@@ -83,8 +83,8 @@ public class ThesaurusTest {
 		}
 		
 		double precursorMz=entries.get(0).getPrecursorMZ();
-		ArrayList<Stripe> stripes=stripefile.getStripes(precursorMz, 0, Float.MAX_VALUE, false);
-		ArrayList<Spectrum> spectra=Stripe.downcastStripeToSpectrum(stripes);
+		ArrayList<FragmentScan> stripes=stripefile.getStripes(precursorMz, 0, Float.MAX_VALUE, false);
+		ArrayList<Spectrum> spectra=FragmentScan.downcastStripeToSpectrum(stripes);
 		for (LibraryEntry entry : entries) {
 			AnnotatedLibraryEntry anEntry=new AnnotatedLibraryEntry(entry, parameters);
 
@@ -144,9 +144,9 @@ public class ThesaurusTest {
 		while (!resultsQueue.isEmpty()) {
 			if (!resultsQueue.isEmpty()) {
 				PeptideScoringResult result=resultsQueue.take();
-				ArrayList<Pair<ScoredObject<Stripe>, float[]>> data=result.getGoodStripes();
+				ArrayList<Pair<ScoredObject<FragmentScan>, float[]>> data=result.getGoodStripes();
 				index++;
-				for (Pair<ScoredObject<Stripe>, float[]> pair : data) {
+				for (Pair<ScoredObject<FragmentScan>, float[]> pair : data) {
 					System.out.println(index+") "+result.getEntry().getPeptideModSeq()+"\t"+pair.x.x+"\t("+((pair.x.y.getScanStartTime())/60f)+" minutes)");
 				}
 			} else {

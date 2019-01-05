@@ -41,7 +41,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
@@ -306,7 +306,7 @@ public class Encyclopedia {
 			float dutyCycle=stripefile.getRanges().get(range);
 			Logger.logLine("Processing "+range+" m/z, ("+dutyCycle+" second duty cycle)");
 			
-			ArrayList<Stripe> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+			ArrayList<FragmentScan> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 			Collections.sort(stripes);
 
 			// prepare executor for background
@@ -340,7 +340,7 @@ public class Encyclopedia {
 					tasks.add(shuffle.getDecoy(parameters));
 				}
 				
-				ArrayList<Stripe> localStripes;
+				ArrayList<FragmentScan> localStripes;
 				if (rtAlignment.isPresent()&&parameters.getRtWindowInMin()>0.0f) {
 					float rtTargetInMin=rtAlignment.get().getYValue(entry.getRetentionTime()/60);
 					localStripes=getScanSubsetFromStripes((rtTargetInMin-parameters.getRtWindowInMin())*60f, (rtTargetInMin+parameters.getRtWindowInMin())*60f, stripes);
@@ -373,9 +373,9 @@ public class Encyclopedia {
 	}
 
 	
-	static ArrayList<Stripe> getScanSubsetFromStripes(float minRT, float maxRT, ArrayList<Stripe> allScansInStripe) {
-		ArrayList<Stripe> subset=new ArrayList<Stripe>();
-		for (Stripe scan : allScansInStripe) {
+	static ArrayList<FragmentScan> getScanSubsetFromStripes(float minRT, float maxRT, ArrayList<FragmentScan> allScansInStripe) {
+		ArrayList<FragmentScan> subset=new ArrayList<FragmentScan>();
+		for (FragmentScan scan : allScansInStripe) {
 			if (scan.getScanStartTime()>=minRT&&scan.getScanStartTime()<=maxRT) {
 				subset.add(scan);
 			}
@@ -456,7 +456,7 @@ public class Encyclopedia {
 					LibraryEntry entry=result.getEntry();
 					float entryTime=entry.getScanStartTime();
 
-					Pair<ScoredObject<Stripe>, float[]> first=result.getGoodStripes().get(0);
+					Pair<ScoredObject<FragmentScan>, float[]> first=result.getGoodStripes().get(0);
 					XYPoint point=new RTRTPoint(entryTime/60.0f, first.x.y.getScanStartTime()/60.0f, entry.isDecoy(), entry.getPeptideModSeq());
 					rtSet.add(point);
 				}

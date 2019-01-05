@@ -7,7 +7,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -20,7 +20,7 @@ public class FragmentationTraceTask extends PeptideScoringTask {
 	
 	private final byte plottingMethod;
 
-	public FragmentationTraceTask(PecanRawScorer scorer, byte plottingMethod, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, AminoAcidConstants aaConstants) {
+	public FragmentationTraceTask(PecanRawScorer scorer, byte plottingMethod, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, PrecursorScanMap precursors, AminoAcidConstants aaConstants) {
 		super(scorer, entries, stripes, precursors, aaConstants);
 		this.plottingMethod=plottingMethod;
 	}
@@ -41,7 +41,7 @@ public class FragmentationTraceTask extends PeptideScoringTask {
 			for (int i=0; i<dataPoints.length; i++) {
 				dataPoints[i]=new ArrayList<XYPoint>();
 			}
-			for (Stripe stripe : super.stripes) {
+			for (FragmentScan stripe : super.stripes) {
 				float rt=stripe.getScanStartTime()/60.0f;
 				
 				if (plottingMethod==PLOT_INTENSITIES) {

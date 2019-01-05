@@ -24,7 +24,7 @@ import com.google.common.collect.ImmutableMultimap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentComponent;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.mzml.InstrumentId;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
@@ -37,9 +37,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
 
-public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
+public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProducer {
 	private final File mzMLFile;
-	private final BlockingQueue<MzmlBlock> mzmlBlockQueue;
+	private final BlockingQueue<MSMSBlock> mzmlBlockQueue;
 	private final SearchParameters parameters;
 	private final HashMap<Range, TFloatArrayList> retentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 	private final HashMap<Range, TFloatArrayList> ionInjectionTimesByStripe=new HashMap<Range, TFloatArrayList>();
@@ -50,7 +50,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 
 	private Throwable error;
 
-	public MzmlToDIASAXProducer(File mzMLFile, BlockingQueue<MzmlBlock> mzmlBlockQueue, SearchParameters parameters) {
+	public MzmlSAXToMSMSProducer(File mzMLFile, BlockingQueue<MSMSBlock> mzmlBlockQueue, SearchParameters parameters) {
 		this.mzMLFile=mzMLFile;
 		this.mzmlBlockQueue=mzmlBlockQueue;
 		this.parameters=parameters;
@@ -86,10 +86,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 
 			// Just for safety, ensure that if we get this far the consumer(s) of the queue will finish
 			// If parse() already put a block, this will never be consumed, but it can't hurt
-			mzmlBlockQueue.put(MzmlBlock.POISON_BLOCK);
-		} catch (InterruptedException ie) {
-			Logger.errorLine("mzML reading interrupted!");
-			Logger.errorException(ie);
+			putBlock(MSMSBlock.POISON_BLOCK);
 		} catch (Throwable t) {
 			Logger.errorLine("mzML reading failed!");
 			Logger.errorException(t);
@@ -111,7 +108,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	}
 
 	private final ArrayList<PrecursorScan> precursors=new ArrayList<PrecursorScan>();
-	private final ArrayList<Stripe> stripes=new ArrayList<Stripe>();
+	private final ArrayList<FragmentScan> stripes=new ArrayList<FragmentScan>();
 
 	private final ArrayList<String> tagList=new ArrayList<String>();
 	private String mzML_ID=null;
@@ -124,9 +121,9 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 
 	private Float scanStartTime=null;
 	private Float ionInjectTime=null;
-	private Float isolationWindowTarget=null;
-	private Float isolationWindowLowerOffset=null;
-	private Float isolationWindowUpperOffset=null;
+	private Double isolationWindowTarget=null;
+	private Double isolationWindowLowerOffset=null;
+	private Double isolationWindowUpperOffset=null;
 
 	private boolean compress=false;
 	private Precision encoding=null;
@@ -136,7 +133,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 	private Float tic=null;
 	private final StringBuilder dataSB=new StringBuilder();
 	
-	private Float selectedIon=null;
+	private Double selectedIon=null;
 	private Byte selectedCharge=null;
 
 	private boolean isSkipSpectrumWithBadEncoding = false;
@@ -210,11 +207,11 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 				
 			} else if ("isolationWindow".equalsIgnoreCase(tagList.get(tagList.size()-1))) {
 				if ("isolation window target m/z".equalsIgnoreCase(attributes.getValue("name"))) {
-					isolationWindowTarget=Float.parseFloat(attributes.getValue("value"));
+					isolationWindowTarget=Double.parseDouble(attributes.getValue("value"));
 				} else if ("isolation window lower offset".equalsIgnoreCase(attributes.getValue("name"))) {
-					isolationWindowLowerOffset=Float.parseFloat(attributes.getValue("value"));
+					isolationWindowLowerOffset=Double.parseDouble(attributes.getValue("value"));
 				} else if ("isolation window upper offset".equalsIgnoreCase(attributes.getValue("name"))) {
-					isolationWindowUpperOffset=Float.parseFloat(attributes.getValue("value"));
+					isolationWindowUpperOffset=Double.parseDouble(attributes.getValue("value"));
 				}
 
 			} else if (tagList.size()>2&&"binaryDataArray".equals(tagList.get(tagList.size()-1))) {
@@ -240,7 +237,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 				
 			} else if ("selectedIon".equalsIgnoreCase(tagList.get(tagList.size()-1))) {
 				if ("selected ion m/z".equalsIgnoreCase(attributes.getValue("name"))) {
-					selectedIon=Float.parseFloat(attributes.getValue("value"));
+					selectedIon=Double.parseDouble(attributes.getValue("value"));
 				} else if ("charge state".equalsIgnoreCase(attributes.getValue("name"))) {
 					selectedCharge=Byte.parseByte(attributes.getValue("value"));
 				}
@@ -367,8 +364,8 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 				if (isolationWindowTarget==null||isolationWindowLowerOffset==null||isolationWindowUpperOffset==null) {
 					if (parameters.getPrecursorWindowSize()>0f&&selectedIon!=null) {
 						isolationWindowTarget=selectedIon;
-						isolationWindowLowerOffset=parameters.getPrecursorWindowSize()/2.0f;
-						isolationWindowUpperOffset=parameters.getPrecursorWindowSize()/2.0f;
+						isolationWindowLowerOffset=parameters.getPrecursorWindowSize()/2.0;
+						isolationWindowUpperOffset=parameters.getPrecursorWindowSize()/2.0;
 					} else {
 						Logger.errorLine("Isolation window information missing without precursor window size supplied!");
 					}
@@ -392,7 +389,7 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 				}
 				
 				try {
-					Stripe stripe=new Stripe(spectrumName, spectrumRef, spectrumIndex, scanStartTime, ionInjectTime, isolationWindowTarget-isolationWindowLowerOffset+(float)parameters.getPrecursorIsolationMargin(), isolationWindowTarget+isolationWindowUpperOffset-(float)parameters.getPrecursorIsolationMargin(),
+					FragmentScan stripe=new FragmentScan(spectrumName, spectrumRef, spectrumIndex, scanStartTime, ionInjectTime, isolationWindowTarget-isolationWindowLowerOffset+parameters.getPrecursorIsolationMargin(), isolationWindowTarget+isolationWindowUpperOffset-parameters.getPrecursorIsolationMargin(),
 							massArray, intensityArray, charge);
 					stripes.add(stripe);
 					
@@ -428,15 +425,10 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 				
 			}
 
-			try {
-				if (precursors.size()>100||stripes.size()>1000) {
-					mzmlBlockQueue.put(new MzmlBlock(precursors, stripes));
-					precursors.clear();
-					stripes.clear();
-				}
-			} catch (InterruptedException ie) {
-				Logger.errorLine("Mzml reading interrupted!");
-				Logger.errorException(ie);
+			if (precursors.size()>100||stripes.size()>1000) {
+				putBlock(new MSMSBlock(precursors, stripes));
+				precursors.clear();
+				stripes.clear();
 			}
 
 			spectrumName=null;
@@ -509,14 +501,19 @@ public class MzmlToDIASAXProducer extends DefaultHandler implements Runnable {
 
 	@Override
 	public void endDocument() throws SAXException {
+		putBlock(new MSMSBlock(precursors, stripes));
+		putBlock(MSMSBlock.POISON_BLOCK);
+		if (numSkippedWithBadEncoding > MAX_BAD_ENCODING_SKIPPED) {
+			throw new EncyclopediaException("Skipped too many spectra as a result of bad binary data encoding! File is invalid.");
+		} else if (numSkippedWithBadEncoding > 0){
+			Logger.errorLine("Skipped " + numSkippedWithBadEncoding + " spectra because of bad binary data encoding.");
+		}
+	}
+	
+	@Override
+	public void putBlock(MSMSBlock block) {
 		try {
-			mzmlBlockQueue.put(new MzmlBlock(precursors, stripes));
-			mzmlBlockQueue.put(MzmlBlock.POISON_BLOCK);
-			if (numSkippedWithBadEncoding > MAX_BAD_ENCODING_SKIPPED) {
-				throw new EncyclopediaException("Skipped too many spectra as a result of bad binary data encoding! File is invalid.");
-			} else if (numSkippedWithBadEncoding > 0){
-				Logger.errorLine("Skipped " + numSkippedWithBadEncoding + " spectra because of bad binary data encoding.");
-			}
+			mzmlBlockQueue.put(block);
 		} catch (InterruptedException ie) {
 			Logger.errorLine("Mzml reading interrupted!");
 			Logger.errorException(ie);

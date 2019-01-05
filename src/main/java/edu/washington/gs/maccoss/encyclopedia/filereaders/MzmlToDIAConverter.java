@@ -91,11 +91,11 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 			StripeFile stripeFile=new StripeFile(isOpenFileInPlace);
 			stripeFile.openFile();
 
-			final BlockingQueue<MzmlBlock> mzmlBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);
-			final MzmlToDIASAXProducer producer=new MzmlToDIASAXProducer(mzMLFile, mzmlBlockQueue, parameters);
+			final BlockingQueue<MSMSBlock> mzmlBlockQueue=new ArrayBlockingQueue<MSMSBlock>(1);
+			final MzmlSAXToMSMSProducer producer=new MzmlSAXToMSMSProducer(mzMLFile, mzmlBlockQueue, parameters);
 
 			@Nullable OverlapDeconvoluter deconvoluter;
-			MzmlToDIAConsumer consumer;
+			MSMSToDIAConsumer consumer;
 
 			final Thread producerThread=new Thread(producer);
 			@Nullable final Thread deconvoluterThread;
@@ -108,11 +108,11 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 			HashMap<Range, TFloatArrayList> ionInjectionTimesByStripe=producer.getIonInjectionTimesByStripe();
 
 			if (parameters.isDeconvoluteOverlappingWindows()) {
-				BlockingQueue<MzmlBlock> deconvolutionBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);
+				BlockingQueue<MSMSBlock> deconvolutionBlockQueue=new ArrayBlockingQueue<MSMSBlock>(1);
 				deconvoluter = new OverlapDeconvoluter(parameters.getFragmentTolerance(), mzmlBlockQueue, deconvolutionBlockQueue);
 				retentionTimesByStripe=deconvoluter.getRetentionTimesByStripe();
 				ionInjectionTimesByStripe=deconvoluter.getIonInjectionTimesByStripe();
-				consumer = new MzmlToDIAConsumer(deconvolutionBlockQueue, stripeFile, parameters);
+				consumer = new MSMSToDIAConsumer(deconvolutionBlockQueue, stripeFile, parameters);
 
 				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
 				deconvoluterThread = new Thread(deconvoluter);
@@ -121,7 +121,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 				deconvoluter = null;
 				deconvoluterThread = null;
 
-				consumer = new MzmlToDIAConsumer(mzmlBlockQueue, stripeFile, parameters);
+				consumer = new MSMSToDIAConsumer(mzmlBlockQueue, stripeFile, parameters);
 
 				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
 				consumerThread = new Thread(consumer);
@@ -241,8 +241,8 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 			MzMLUnmarshaller unmarshaller=new MzMLUnmarshaller(mzMLFile);
 			stripeFile.setFileName(mzMLFile.getName(), unmarshaller.getMzMLId(), mzMLFile.getAbsolutePath());
 
-			BlockingQueue<MzmlBlock> mzmlBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);
-			MzmlToDIAProducer producer=new MzmlToDIAProducer(unmarshaller, mzmlBlockQueue, parameters);
+			BlockingQueue<MSMSBlock> mzmlBlockQueue=new ArrayBlockingQueue<MSMSBlock>(1);
+			MzmlToMSMSProducer producer=new MzmlToMSMSProducer(unmarshaller, mzmlBlockQueue, parameters);
 			
 			// will be populated after we join back up. Since we're not looking
 			// at it until after the join, we're safe to not have to worry about
@@ -251,10 +251,10 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 			Thread[] threads;
 			
 			if (parameters.isDeconvoluteOverlappingWindows()) {
-				BlockingQueue<MzmlBlock> deconvolutionBlockQueue=new ArrayBlockingQueue<MzmlBlock>(1);
+				BlockingQueue<MSMSBlock> deconvolutionBlockQueue=new ArrayBlockingQueue<MSMSBlock>(1);
 				OverlapDeconvoluter deconvoluter=new OverlapDeconvoluter(parameters.getFragmentTolerance(), mzmlBlockQueue, deconvolutionBlockQueue);
 				retentionTimesByStripe=deconvoluter.getRetentionTimesByStripe();
-				MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(deconvolutionBlockQueue, stripeFile, parameters);
+				MSMSToDIAConsumer consumer=new MSMSToDIAConsumer(deconvolutionBlockQueue, stripeFile, parameters);
 
 				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
 				Thread producerThread=new Thread(producer);
@@ -264,7 +264,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 				threads=new Thread[] {producerThread, deconvoluterThread, consumerThread};
 				
 			} else {
-				MzmlToDIAConsumer consumer=new MzmlToDIAConsumer(mzmlBlockQueue, stripeFile, parameters);
+				MSMSToDIAConsumer consumer=new MSMSToDIAConsumer(mzmlBlockQueue, stripeFile, parameters);
 
 				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
 				Thread producerThread=new Thread(producer);

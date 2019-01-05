@@ -28,7 +28,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	private final Optional<PhosphoLocalizer> localizer;
 	private final Optional<PeakLocationInferrerInterface> inferrer;
 	private final String filename;
-	private final ArrayList<Stripe> stripes;
+	private final ArrayList<FragmentScan> stripes;
 	private final boolean limitToQuantifiable;
 
 	private final PSMPeakScorer scorer;
@@ -37,7 +37,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	private final PSMData psmdata;
 	private final ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries; // CAN BE NULL
 
-	public PeptideQuantExtractorTask(String filename, PSMData psmdata, final Optional<PeakLocationInferrerInterface> inferrer, Optional<PhosphoLocalizer> localizer, ArrayList<Stripe> stripes, SearchParameters parameters, boolean limitToQuantifiable) {
+	public PeptideQuantExtractorTask(String filename, PSMData psmdata, final Optional<PeakLocationInferrerInterface> inferrer, Optional<PhosphoLocalizer> localizer, ArrayList<FragmentScan> stripes, SearchParameters parameters, boolean limitToQuantifiable) {
 		this.filename=filename;
 		this.psmdata=psmdata;
 		this.inferrer=inferrer;
@@ -51,7 +51,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		this.limitToQuantifiable=limitToQuantifiable; //library.isPresent();
 	}
 
-	public PeptideQuantExtractorTask(String filename, PSMData psmdata, final Optional<PeakLocationInferrerInterface> inferrer, Optional<PhosphoLocalizer> localizer, ArrayList<Stripe> stripes, SearchParameters parameters, ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries, boolean limitToQuantifiable) {
+	public PeptideQuantExtractorTask(String filename, PSMData psmdata, final Optional<PeakLocationInferrerInterface> inferrer, Optional<PhosphoLocalizer> localizer, ArrayList<FragmentScan> stripes, SearchParameters parameters, ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries, boolean limitToQuantifiable) {
 		this.filename=filename;
 		this.psmdata=psmdata;
 		this.inferrer=inferrer;
@@ -65,9 +65,9 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		this.limitToQuantifiable=limitToQuantifiable; //library.isPresent();
 	}
 	
-	public ArrayList<Stripe> getScanSubset(float minRT, float maxRT) {
-		ArrayList<Stripe> subset=new ArrayList<Stripe>();
-		for (Stripe scan : stripes) {
+	public ArrayList<FragmentScan> getScanSubset(float minRT, float maxRT) {
+		ArrayList<FragmentScan> subset=new ArrayList<FragmentScan>();
+		for (FragmentScan scan : stripes) {
 			if (scan.getScanStartTime()>=minRT&&scan.getScanStartTime()<=maxRT) {
 				subset.add(scan);
 			}
@@ -154,11 +154,11 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 
 	public TransitionRefinementData extractSpectrum(AnnotatedLibraryEntry unitEntry, float duration, boolean limitToQuantifiable, boolean integrateEverything, boolean wasInferred) {
 		// widened to 3x the expected size (+/-1.5) of the peak to make sure we don't miss something by catching just the corner 
-		ArrayList<Stripe> stripes=getScanSubset(unitEntry.getRetentionTime()-duration*1.5f, unitEntry.getRetentionTime()+duration*1.5f);
+		ArrayList<FragmentScan> stripes=getScanSubset(unitEntry.getRetentionTime()-duration*1.5f, unitEntry.getRetentionTime()+duration*1.5f);
 		return quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes, integrateEverything, wasInferred, params.getAAConstants());
 	}
 
-	public static TransitionRefinementData quantifyPeptide(PSMPeakScorer scorer, AnnotatedLibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<Stripe> stripes, boolean integrateEverything, boolean wasInferred, AminoAcidConstants aaConstants) {
+	public static TransitionRefinementData quantifyPeptide(PSMPeakScorer scorer, AnnotatedLibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<FragmentScan> stripes, boolean integrateEverything, boolean wasInferred, AminoAcidConstants aaConstants) {
 		// find the center
 		float bestDelta=Float.MAX_VALUE;
 		PeakScores[] bestScores=null;
@@ -167,7 +167,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		TFloatArrayList retentionTimes=new TFloatArrayList();
 		TFloatArrayList totalIonCurrent=new TFloatArrayList();
 		TFloatArrayList totalIdentifiedIonCurrent=new TFloatArrayList();
-		for (Stripe stripe : stripes) {
+		for (FragmentScan stripe : stripes) {
 			retentionTimes.add(stripe.getScanStartTime());
 			float delta=Math.abs(stripe.getScanStartTime()-unitEntry.getRetentionTime());
 			PeakScores[] eachPeakScores=scorer.getIndividualPeakScores(unitEntry, stripe, false);
@@ -286,7 +286,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		float ticSum=0.0f;
 		float identifiedTicSum=0.0f;
 		for (int i=0; i<stripes.size(); i++) {
-			Stripe stripe=stripes.get(i);
+			FragmentScan stripe=stripes.get(i);
 			if (rtRange.contains(stripe.getScanStartTime())) {
 				identifiedTicSum+=totalIdentifiedIonCurrent.get(i);
 				ticSum+=totalIonCurrent.get(i);

@@ -9,7 +9,7 @@ import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 
 public interface StripeFileInterface {
 
@@ -48,7 +48,7 @@ public interface StripeFileInterface {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	ArrayList<Stripe> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException;
+	ArrayList<FragmentScan> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException;
 
 	/**
 	 * returns DIA scans between RT ranges within target MZ range
@@ -60,7 +60,7 @@ public interface StripeFileInterface {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	ArrayList<Stripe> getStripes(Range targetMzRange, float minRT, float maxRT, final boolean sqrt) throws IOException, SQLException;
+	ArrayList<FragmentScan> getStripes(Range targetMzRange, float minRT, float maxRT, final boolean sqrt) throws IOException, SQLException;
 	
 	/**
 	 * returns total precursor ion current across entire file

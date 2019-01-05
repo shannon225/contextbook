@@ -6,7 +6,7 @@ import java.util.HashMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ThreadableTask;
@@ -18,11 +18,11 @@ public class PeptideScoringTask extends ThreadableTask<HashMap<LibraryEntry, Pep
 	 */
 	protected final PSMScorer scorer;
 	protected final ArrayList<LibraryEntry> entries;
-	protected final ArrayList<Stripe> stripes;
+	protected final ArrayList<FragmentScan> stripes;
 	protected final PrecursorScanMap precursors;
 	protected final AminoAcidConstants aaConstants;
 
-	public PeptideScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<Stripe> stripes, PrecursorScanMap precursors, AminoAcidConstants aaConstants) {
+	public PeptideScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, PrecursorScanMap precursors, AminoAcidConstants aaConstants) {
 		this.scorer=scorer;
 		this.entries=entries;
 		this.stripes=stripes;
@@ -38,7 +38,7 @@ public class PeptideScoringTask extends ThreadableTask<HashMap<LibraryEntry, Pep
 			TFloatFloatHashMap scoreMap=new TFloatFloatHashMap();
 			
 			PeptideScoringResult result=new PeptideScoringResult(entry);
-			for (Stripe stripe : stripes) {
+			for (FragmentScan stripe : stripes) {
 				float score=scorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
 				
 				float rt=stripe.getScanStartTime();

@@ -40,7 +40,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
@@ -295,7 +295,7 @@ public class DIABrowserPanel extends JPanel {
 				HashMap<Comparable, TFloatArrayList> maxIITByRange=new HashMap<>();
 				@SuppressWarnings("rawtypes")
 				HashMap<Comparable, TFloatArrayList> maxIITByRT=new HashMap<>();
-				for (Stripe stripe : dia.getStripes(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), -Float.MAX_VALUE, Float.MAX_VALUE, false)) {
+				for (FragmentScan stripe : dia.getStripes(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), -Float.MAX_VALUE, Float.MAX_VALUE, false)) {
 					scans.add(stripe);
 					
 					float rtInMin=stripe.getScanStartTime()/60f;

@@ -13,7 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
@@ -135,7 +135,7 @@ public class Spectra3dPanelTest {
 		double targetMz=model.getChargedMass(charge);
 		
 		
-		ArrayList<Stripe> stripes=raw.getStripes(targetMz, rtInSecStart-RT_MARGIN, rtInSecStop+RT_MARGIN, false);
+		ArrayList<FragmentScan> stripes=raw.getStripes(targetMz, rtInSecStart-RT_MARGIN, rtInSecStop+RT_MARGIN, false);
 		Collections.sort(stripes);
 		
 		Spectra3dPanel panel=new Spectra3dPanel(stripes, ions, params.getFragmentTolerance());
