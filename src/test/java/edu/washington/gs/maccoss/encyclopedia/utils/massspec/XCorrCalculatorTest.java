@@ -111,12 +111,12 @@ public class XCorrCalculatorTest extends TestCase {
 
 		SparseXCorrSpectrum f=SparseXCorrCalculator.normalize(s, new Range(chargedMz-10.0f, chargedMz+10.0f), false, PARAMETERS);
 		SparseXCorrSpectrum t=SparseXCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", charge, PARAMETERS);
-		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, f, PARAMETERS), "Spectrum", new Dimension(300, 200));
-		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, t, PARAMETERS), "Model", new Dimension(300, 200));
+		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, f, PARAMETERS), "Spectrum", new Dimension(600, 250));
+		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, t, PARAMETERS), "Model", new Dimension(600, 250));
 		f=SparseXCorrCalculator.preprocessSpectrum(f);
-		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, f, PARAMETERS), "PP Spectrum", new Dimension(300, 200));
+		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, f, PARAMETERS), "PP Spectrum", new Dimension(600, 250));
 		t=SparseXCorrCalculator.preprocessSpectrum(t);
-		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, t, PARAMETERS), "PP Model", new Dimension(300, 200));
+		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, t, PARAMETERS), "PP Model", new Dimension(600, 250));
 		
 	}
 	

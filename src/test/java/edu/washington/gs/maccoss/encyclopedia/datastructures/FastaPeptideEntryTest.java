@@ -51,6 +51,14 @@ public class FastaPeptideEntryTest extends TestCase {
 		assertComp(1, d, b);
 		assertComp(-1, d, c);
 	}
+	
+	public void testModStripping() {
+		assertEquals("SSDEENGPPSSPDLDR", new FastaPeptideEntry("S[79.966331]SDEENGPPSSPDLDR").getSequenceWithModsStripped());
+		assertEquals("SSDEENGPPSSPDLDR", new FastaPeptideEntry("SS[79.966331]DEENGPPSSPDLDR").getSequenceWithModsStripped());
+		assertEquals("SSDEENGPPSSPDLDR", new FastaPeptideEntry("SSDEENGPPS[79.966331]SPDLDR").getSequenceWithModsStripped());
+		assertEquals("SSDEENGPPSSPDLDR", new FastaPeptideEntry("SSDEENGPPSS[79.966331]PDLDR").getSequenceWithModsStripped());
+		
+	}
 
 	private static FastaPeptideEntry of(String... accs) {
 		return new FastaPeptideEntry("", Sets.newHashSet(accs), "");

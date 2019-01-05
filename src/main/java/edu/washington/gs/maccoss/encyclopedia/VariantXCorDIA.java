@@ -34,6 +34,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPe
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequencyCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequencyInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.UnitBackgroundFrequencyCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.VariantXCorDIAOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScorer;
@@ -174,6 +175,7 @@ public class VariantXCorDIA {
 			PecanSearchParameters parameters=job.getTaskFactory().getPecanParameters();
 			StripeFileInterface stripefile=StripeFileGenerator.getFile(job.getDiaFile(), job.getParameters());
 			BackgroundFrequencyInterface background=BackgroundFrequencyCalculator.generateBackground(stripefile);
+			//BackgroundFrequencyInterface background=new UnitBackgroundFrequencyCalculator(0.01f); //FIXME REMOVE, TESTING ONLY
 			VariantXCorDIAOneScoringFactory factory=new VariantXCorDIAOneScoringFactory(parameters, background, new LinkedBlockingQueue<ModificationLocalizationData>());
 			job=job.updateTaskFactory(factory);
 		}
@@ -191,7 +193,7 @@ public class VariantXCorDIA {
 					Logger.logLine("Writing elib result library...");
 					ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 					jobs.add(jobData);
-					SearchToBLIB.convert(progress, jobs, elibFile, false, true);
+					SearchToBLIB.convert(progress, jobs, elibFile, false, false);
 				}
 				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(jobData.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 				return;
@@ -243,6 +245,8 @@ public class VariantXCorDIA {
 		Logger.logLine("Reading FASTA peptides...");
 		// add database to proteome
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(jobData.getFastaFile(), parameters);
+		Logger.logLine("Found "+entries.size()+" total proteins...");
+		
 		for (FastaEntryInterface entry : entries) {
 			ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants(), parameters.isRequireVariableMods());
 
@@ -256,11 +260,16 @@ public class VariantXCorDIA {
 				}
 			}
 		}
+		Logger.logLine("Found "+targets.size()+" total peptides from "+entries.size()+" proteins...");
 		
 		// get targeted ranges
+		float minMz=Float.MAX_VALUE;
+		float maxMz=-Float.MAX_VALUE;
 		TDoubleHashSet boundaries=new TDoubleHashSet();
 		ArrayList<Range> ranges=new ArrayList<Range>();
 		for (Range range : stripefile.getRanges().keySet()) {
+			if (range.getStart()<minMz) minMz=range.getStart();
+			if (range.getStop()>maxMz) maxMz=range.getStop();
 			boundaries.add(range.getStart());
 			boundaries.add(range.getStop());
 			if (!parameters.useTargetWindowCenter()||range.contains(parameters.getTargetWindowCenter())) {
@@ -269,7 +278,28 @@ public class VariantXCorDIA {
 				}
 			}
 		}
+
+		for (FastaPeptideEntry peptide : targets.getPeptides()) {
+			String sequence=peptide.getSequence();
+
+			byte expectedCharge=PeptideUtils.getExpectedChargeState(sequence);
+			byte minCharge=(byte)Math.max(parameters.getMinCharge(), expectedCharge-1);
+			byte maxCharge=(byte)Math.min(parameters.getMaxCharge(), expectedCharge+1);
+				
+			boolean keep=false;
+			for (byte charge=minCharge; charge<=maxCharge; charge++) {
+				double mz=parameters.getAAConstants().getChargedMass(sequence, charge);
+				if (mz>minMz&&mz<maxMz) {
+					keep=true;
+					break;
+				}
+			}
+			if (!keep) {
+				targets.remove(sequence);
+			}
+		}
 		Collections.sort(ranges);
+		Logger.logLine("Found "+ranges.size()+" matching ranges, trimmed targets down to "+targets.size()+" peptides...");
 		
 		double[] binBoundaries=boundaries.toArray();
 		boolean[] useBin=new boolean[binBoundaries.length];
@@ -360,6 +390,7 @@ public class VariantXCorDIA {
 
 			SimilarPeptideBinner binner=new SimilarPeptideBinner();
 			ArrayList<ArrayList<FastaPeptideEntry>> bins=binner.binPeptides(allPeptidesInWindow);
+			Logger.logLine("Found "+allPeptidesInWindow.size()+" peptides in "+bins.size()+" peptide groups...");
 
 			HashSet<String> allPeptideSequencesInWindow=new HashSet<>();
 			for (FastaPeptideEntry entry : allPeptidesInWindow) {

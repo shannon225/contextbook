@@ -336,6 +336,7 @@ public class General {
 	}
 	
 	public static float mean(float[] v, int startIndex, int stopIndex) {
+		if (v.length==0) return 0.0f;
 		float sum=0.0f;
 		int count=0;
 		for (int i=startIndex; i<=stopIndex; i++) {

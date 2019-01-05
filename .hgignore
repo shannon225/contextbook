@@ -8,6 +8,7 @@ target/**
 *.orig
 ~$*
 jrat.*
+ddi-ws.log
 
 # IntelliJ settings
 .idea/*

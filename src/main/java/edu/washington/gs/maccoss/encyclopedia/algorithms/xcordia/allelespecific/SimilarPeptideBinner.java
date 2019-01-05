@@ -15,7 +15,7 @@ public class SimilarPeptideBinner {
 			boolean added=false;
 			for (ArrayList<FastaPeptideEntry> arrayList : sets) {
 				for (FastaPeptideEntry fastaPeptideEntry : arrayList) {
-					if (areSimilarEnough(peptide.getSequence(), fastaPeptideEntry.getSequence())) {
+					if (areSimilarEnough(peptide.getSequenceWithModsStripped(), fastaPeptideEntry.getSequenceWithModsStripped())) {
 						added=true;
 						break;
 					}

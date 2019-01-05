@@ -33,6 +33,10 @@ public class PeptideDatabase implements Iterable<FastaPeptideEntry> {
 		}
 	}
 	
+	public void remove(String peptideModSeq) {
+		peptidesBySequence.remove(peptideModSeq);
+	}
+	
 	public ArrayList<FastaPeptideEntry> getPeptides() {
 		ArrayList<FastaPeptideEntry> entries=new ArrayList<FastaPeptideEntry>(peptidesBySequence.values());
 		Collections.sort(entries);

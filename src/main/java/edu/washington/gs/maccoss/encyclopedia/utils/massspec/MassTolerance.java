@@ -214,21 +214,21 @@ public class MassTolerance implements Comparable<MassTolerance> {
 			return tics;
 		}
 		
-		int libraryIndex=0;
+		int targetIndex=0;
 		int spectrumIndex=0;
 		while (true) {
-			double targetMass=targets[libraryIndex];
+			double targetMass=targets[targetIndex];
 			int compare=compareTo(targetMass, masses[spectrumIndex]);
 			if (compare==0) {
-				tics[libraryIndex]+=intensities[spectrumIndex];
+				tics[targetIndex]+=intensities[spectrumIndex];
 				//libraryIndex++; // could match multiple acquired peaks to the same library peak
 				spectrumIndex++;
 			} else if (compare>0) {
 				spectrumIndex++;
 			} else {
-				libraryIndex++;
+				targetIndex++;
 			}
-			if (libraryIndex>=targets.length) break;
+			if (targetIndex>=targets.length) break;
 			if (spectrumIndex>=masses.length) break;
 		}
 		
