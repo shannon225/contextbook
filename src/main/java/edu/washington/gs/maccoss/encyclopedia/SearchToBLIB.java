@@ -342,8 +342,13 @@ public class SearchToBLIB {
 			Optional<PeakLocationInferrerInterface> inferrer;
 			if (alignBetweenFiles) {
 				Logger.logLine("Inferring peak boundaries across files...");
-				inferrer=Optional.of(AlternatePeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides.x, parameters));
-				Logger.logLine("...Finished peak inference.");
+				try {
+					inferrer=Optional.of(AlternatePeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides.x, parameters));
+					Logger.logLine("...Finished peak inference.");
+				} catch (Exception e) {
+					Logger.errorLine("RT alignment between files failed! Perhaps this is to build a chromatogram library and not a quantitative experiment? Attempting to recover without alignment.");
+					inferrer=Optional.empty();
+				}
 			} else {
 				Logger.logLine("No RT alignment between files necessary.");
 				inferrer=Optional.empty();
