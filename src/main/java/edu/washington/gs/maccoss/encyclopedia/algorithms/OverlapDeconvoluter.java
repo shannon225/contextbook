@@ -60,9 +60,9 @@ public class OverlapDeconvoluter implements Runnable {
 				
 				// scan ahead to set up
 				if (cycleStart==null) {
-					STARTUP: for (FragmentScan stripe : block.getStripes()) {
+					STARTUP: for (FragmentScan stripe : block.getFragmentScans()) {
 						if (cycleStart==null) {
-							cycleStart=block.getStripes().get(0).getRange();
+							cycleStart=block.getFragmentScans().get(0).getRange();
 							minimumRange=cycleStart;
 							maximumRange=cycleStart;
 							cycleLength++;
@@ -88,7 +88,7 @@ public class OverlapDeconvoluter implements Runnable {
 				}
 				
 				ArrayList<FragmentScan> deconvolutedStripes=new ArrayList<FragmentScan>();
-				BLOCK: for (FragmentScan stripe : block.getStripes()) {
+				BLOCK: for (FragmentScan stripe : block.getFragmentScans()) {
 					currentCycle.add(stripe);
 					if (currentCycle.size()>doubleCycleLength) {
 						currentCycle.removeFirst();
@@ -142,7 +142,7 @@ public class OverlapDeconvoluter implements Runnable {
 					}
 
 				}
-				outputQueue.put(new MSMSBlock(block.getPrecursors(), deconvolutedStripes));
+				outputQueue.put(new MSMSBlock(block.getPrecursorScans(), deconvolutedStripes));
 			}
 		} catch (InterruptedException ie) {
 			Logger.errorLine("DIA writing interrupted!");
