@@ -50,6 +50,7 @@ public class VersioningDetector {
 			}
 		} catch (Exception e) {
 			Logger.logLine("Sorry, I ran into an error checking for new versions. You should look online at ["+ENCYCLOPEDIA_URL+"] if you need to update your version!");
+			return false; // should update
 		}
 		return true;
 	}
