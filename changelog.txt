@@ -1,0 +1,6 @@
+EncyclopeDIA changelog for user-facing changes:
+
+encyclopedia-0.8.1
+ - Feature: new Window Scheme Wizard for setting up instruments in Help Menu
+ - Feature: added ability to ignore current online version
+ - Bugfix: patched error when trying to export reports on samples without shared peptides (e.g. chromatogram libraries) in BLIB format
