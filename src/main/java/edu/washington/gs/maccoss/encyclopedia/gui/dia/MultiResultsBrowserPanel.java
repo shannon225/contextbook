@@ -86,7 +86,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 	private final JComboBox<Integer> numberOfColumns=new JComboBox<Integer>(new Integer[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 	
 	private final int defaultMinimumNumberOfFragmentsIndex=3;
-	private final int defaultNumberOfColumns=1;
+	private final int defaultNumberOfColumnsIndex=1;
 	
 	public MultiResultsBrowserPanel(SearchParameters parameters) {
 		super(new BorderLayout());
@@ -167,7 +167,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 				}
 			}
 		};
-		numberOfColumns.setSelectedIndex(defaultNumberOfColumns);
+		numberOfColumns.setSelectedIndex(defaultNumberOfColumnsIndex);
 		numberOfColumns.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
