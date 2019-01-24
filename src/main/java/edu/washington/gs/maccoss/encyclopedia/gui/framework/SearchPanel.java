@@ -389,6 +389,15 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(convertMSP);
 
+		JMenuItem convertSpectronaut=new JMenuItem("Convert Spectronaut CSV to Library", convertDBIcon);
+		convertSpectronaut.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertSpectronaut(SearchPanel.this, getVisibleTab().getParameters());
+			}
+		});
+		convertMenu.add(convertSpectronaut);
+
 		JMenuItem convertTraML=new JMenuItem("Convert TraML to Library", convertDBIcon);
 		convertTraML.addActionListener(new ActionListener() {
 			@Override
