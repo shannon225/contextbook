@@ -51,6 +51,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.dia.LocalizationResultsBrowser
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.MultiResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.PeptideExtractingBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.dia.WindowingSchemeWizard;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.AustinsSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.CASiLParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
@@ -80,6 +81,7 @@ public class SearchPanel extends JPanel {
 	private static final ImageIcon peptideBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/peptide_icon.png"));
 	private static final ImageIcon featureBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/feature_icon.png"));
 	private static final ImageIcon helpIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/help_icon.png"));
+	private static final ImageIcon windowSchemeIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/window_scheme_icon.png"));
 	
 	JobProcessorTableModel processorTableModel=new JobProcessorTableModel();
 	
@@ -387,6 +389,15 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(convertMSP);
 
+		JMenuItem convertSpectronaut=new JMenuItem("Convert Spectronaut CSV to Library", convertDBIcon);
+		convertSpectronaut.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertSpectronaut(SearchPanel.this, getVisibleTab().getParameters());
+			}
+		});
+		convertMenu.add(convertSpectronaut);
+
 		JMenuItem convertTraML=new JMenuItem("Convert TraML to Library", convertDBIcon);
 		convertTraML.addActionListener(new ActionListener() {
 			@Override
@@ -458,7 +469,17 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		helpMenu.add(aboutMenuItem);
-		
+
+		helpMenu.addSeparator();
+
+		JMenuItem windowSchemeItem=new JMenuItem("Window Scheme Wizard", windowSchemeIcon);
+		windowSchemeItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				launchWindowingSchemeWizard();
+			}
+		});
+		helpMenu.add(windowSchemeItem);
 		
 		return bar;
 	}
@@ -578,6 +599,16 @@ public class SearchPanel extends JPanel {
 		dialog.setJMenuBar(bar);
 		
 		dialog.getContentPane().add(browser, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(1900, 1030);
+		dialog.setVisible(true);
+	}
+	
+	public void launchWindowingSchemeWizard() {
+		final JFrame dialog=new JFrame("Window Scheme Wizard");
+		
+		dialog.getContentPane().add(new WindowingSchemeWizard(), BorderLayout.CENTER);
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.pack(); 
 		dialog.setSize(1900, 1030);

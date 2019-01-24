@@ -150,7 +150,7 @@ public class WindowingSchemeWizard extends JPanel implements ActionListener, Cha
 		}
 		
 		ScanRangeTracker scanRange=generateScanRangeTracker();
-		ChartPanel structureChart=MzmlStructureCharter.getStructureChart(scanRange);
+		ChartPanel structureChart=MzmlStructureCharter.getStructureChart(scanRange, true);
 		structureChart.restoreAutoBounds();
 		structureSplit.setRightComponent(structureChart);
 		model.updateEntries(scanRange);

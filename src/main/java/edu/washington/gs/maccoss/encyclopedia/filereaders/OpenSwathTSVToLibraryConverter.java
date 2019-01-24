@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -21,7 +20,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMat
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
@@ -40,7 +38,7 @@ public class OpenSwathTSVToLibraryConverter {
 		return convertFromOpenSwathTSV(tsvFile, fastaFile, libraryFile, parameters);
 	}
 	
-	private static String getFromMap(Map<String, String> row, String... options) {
+	public static String getFromMap(Map<String, String> row, String... options) {
 		for (String option : options) {
 			String value=row.get(option);
 			if (value!=null) return value;
@@ -148,7 +146,7 @@ public class OpenSwathTSVToLibraryConverter {
 	public static LibraryFile convertFromOpenSwathTSV(File tsvFile, File fastaFile, File libraryFile, SearchParameters parameters) {
 		AminoAcidConstants aaConstants=parameters.getAAConstants();
 		try {
-			final ArrayList<PeptideEntry> peptides=new ArrayList<PeptideEntry>();
+			final ArrayList<ImmutablePeptideEntry> peptides=new ArrayList<ImmutablePeptideEntry>();
 			TableParserMuscle muscle=new TableParserMuscle() {
 				private PeptideEntry lastPeptide=null;
 				private String lastGroup=null;
@@ -165,9 +163,9 @@ public class OpenSwathTSVToLibraryConverter {
 					float iRT=Float.parseFloat(getFromMap(row, "NormalizedRetentionTime", "RetentionTime", "Tr_recalibrated", "iRT", "RetentionTimeCalculatorScore"));
 					
 					
-					if (lastGroup!=group) {
-						if (lastPeptide!=null) peptides.add(lastPeptide);
-						
+					if (!group.equals(lastGroup)) {
+						if (lastPeptide!=null) peptides.add(new ImmutablePeptideEntry(lastPeptide));
+						lastGroup=group;
 						lastPeptide=new PeptideEntry(peptideModSeq, charge, iRT);
 					}
 					lastPeptide.addPeak(new Peak(productMz, libraryIntensity));
@@ -175,65 +173,68 @@ public class OpenSwathTSVToLibraryConverter {
 				
 				@Override
 				public void cleanup() {
-					if (lastPeptide!=null) peptides.add(lastPeptide);
+					if (lastPeptide!=null) peptides.add(new ImmutablePeptideEntry(lastPeptide));
 				}
 			};
 			
 			TableParser.parseTSV(tsvFile, muscle);
 
-			ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
-			for (PeptideEntry peptide : peptides) {
-				Collections.sort(peptide.peaks);
-				Pair<double[], float[]> peakArrays=Peak.toArrays(peptide.peaks);
-				double precursorMZ=aaConstants.getChargedMass(peptide.peptideModSeq, peptide.charge);
-				HashSet<String> accessions=new HashSet<>();
-				
-				if (fastaFile==null) {
-					accessions.add(PeptideUtils.getPeptideSeq(peptide.peptideModSeq));
-				}
-				
-				LibraryEntry entry=new LibraryEntry(tsvFile.getName(), accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, 0.0f, peakArrays.x, peakArrays.y, aaConstants);
-				entries.add(entry);
-			}
-
-			if (fastaFile!=null) {
-				Logger.logLine("Reading Fasta file "+fastaFile.getName());
-				ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile, parameters);
-			
-				Logger.logLine("Constructing trie from library peptides");
-				PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(entries);
-				trie.addFasta(proteins);
-			}
-
-			int[] counts=new int[21];
-			for (LibraryEntry entry : entries) {
-				int size=Math.min(counts.length-1, entry.getAccessions().size());
-				counts[size]++;
-			}
-			Logger.logLine("Accession count histogram: ");
-			for (int i=0; i<counts.length; i++) {
-				Logger.logLine(i+" Acc\t"+counts[i]+" Counts");
-			}
-
-			if (counts[0]>0) {
-				Logger.errorLine(counts[0]+" library entries can't be linked to proteins! These entries will be dropped.");
-			}
-			
-			LibraryFile library=new LibraryFile();
-			library.openFile();
-			Logger.logLine("Writing library file "+library.getName());
-			library.dropIndices();
-			library.addEntries(entries);
-			library.addProteinsFromEntries(entries);
-			library.createIndices();
-			library.saveAsFile(libraryFile);
-			return library;
+			return processPeptideEntries(tsvFile.getName(), fastaFile, libraryFile, parameters, aaConstants, peptides);
 
 		} catch (Exception e) {
 			Logger.errorLine("Error parsing OpenSwath TSV:");
 			Logger.errorException(e);
 			throw new EncyclopediaException(e);
 		}
+	}
+
+	public static LibraryFile processPeptideEntries(String sourceFile, File fastaFile, File libraryFile, SearchParameters parameters, AminoAcidConstants aaConstants,
+			final ArrayList<ImmutablePeptideEntry> peptides) throws IOException, SQLException {
+		ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
+		for (ImmutablePeptideEntry peptide : peptides) {
+			double precursorMZ=aaConstants.getChargedMass(peptide.peptideModSeq, peptide.charge);
+			HashSet<String> accessions=new HashSet<>();
+			
+			if (fastaFile==null) {
+				accessions.add(PeptideUtils.getPeptideSeq(peptide.peptideModSeq));
+			}
+			
+			LibraryEntry entry=new LibraryEntry(sourceFile, accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, 0.0f, peptide.masses, peptide.intensities, aaConstants);
+			entries.add(entry);
+		}
+
+		if (fastaFile!=null) {
+			Logger.logLine("Reading Fasta file "+fastaFile.getName());
+			ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile, parameters);
+		
+			Logger.logLine("Constructing trie from library peptides");
+			PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(entries);
+			trie.addFasta(proteins);
+		}
+
+		int[] counts=new int[21];
+		for (LibraryEntry entry : entries) {
+			int size=Math.min(counts.length-1, entry.getAccessions().size());
+			counts[size]++;
+		}
+		Logger.logLine("Accession count histogram: ");
+		for (int i=0; i<counts.length; i++) {
+			Logger.logLine(i+" Acc\t"+counts[i]+" Counts");
+		}
+
+		if (counts[0]>0) {
+			Logger.errorLine(counts[0]+" library entries can't be linked to proteins! These entries will be dropped.");
+		}
+		
+		LibraryFile library=new LibraryFile();
+		library.openFile();
+		Logger.logLine("Writing library file "+library.getName());
+		library.dropIndices();
+		library.addEntries(entries);
+		library.addProteinsFromEntries(entries);
+		library.createIndices();
+		library.saveAsFile(libraryFile);
+		return library;
 	}
 
 }

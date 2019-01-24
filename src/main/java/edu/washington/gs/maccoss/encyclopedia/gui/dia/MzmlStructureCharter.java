@@ -63,10 +63,10 @@ public class MzmlStructureCharter {
 			throw new EncyclopediaException("DIA reading SQL error!", sqle);
 		}
 		
-		return getStructureChart(scanTracker);
+		return getStructureChart(scanTracker, false);
 	}
 
-	public static ChartPanel getStructureChart(ScanRangeTracker scanTracker) {
+	public static ChartPanel getStructureChart(ScanRangeTracker scanTracker, boolean isScanNumberInsteadOfRT) {
 		TreeMap<Range, TFloatArrayList> retentionTimesByStripe=new TreeMap<>(scanTracker.getStripeRTsInSecs());
 		TreeMap<Range, TFloatArrayList> retentionTimesByPrecursor=new TreeMap<>(scanTracker.getPrecursorRTsInSecs());
 
@@ -102,7 +102,8 @@ public class MzmlStructureCharter {
 			}
 		}
 
-		ChartPanel panel=Charter.getChart("M/Z", "Retention Time (secs)", false, traces.toArray(new XYTraceInterface[traces.size()]));
+		String yAxis=isScanNumberInsteadOfRT?"Scan Number":"Retention Time (secs)";
+		ChartPanel panel=Charter.getChart("M/Z", yAxis, false, traces.toArray(new XYTraceInterface[traces.size()]));
 		return panel;
 	}
 

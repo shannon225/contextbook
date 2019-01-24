@@ -83,7 +83,10 @@ public class MultiResultsBrowserPanel extends JPanel {
 	private final SearchParameters parameters;
 	private final ChartPanel barChart;
 	private final JComboBox<Integer> minimumNumberOfFragments=new JComboBox<Integer>(new Integer[] {0, 1, 2, 3, 4, 5});
+	private final JComboBox<Integer> numberOfColumns=new JComboBox<Integer>(new Integer[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+	
 	private final int defaultMinimumNumberOfFragmentsIndex=3;
+	private final int defaultNumberOfColumnsIndex=1;
 	
 	public MultiResultsBrowserPanel(SearchParameters parameters) {
 		super(new BorderLayout());
@@ -164,7 +167,14 @@ public class MultiResultsBrowserPanel extends JPanel {
 				}
 			}
 		};
-
+		numberOfColumns.setSelectedIndex(defaultNumberOfColumnsIndex);
+		numberOfColumns.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updateToSelectedPeptide();
+			}
+		});
+		
 		minimumNumberOfFragments.setSelectedIndex(defaultMinimumNumberOfFragmentsIndex);
 		Integer minimumNumberOfTransitions=(Integer)minimumNumberOfFragments.getSelectedItem();
 		peptideModel.filterTable(minimumNumberOfTransitions);
@@ -181,6 +191,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(elibFileChooser);
 		options.add(new LabeledComponent("Minimum # Fragments", minimumNumberOfFragments));
+		options.add(new LabeledComponent("Number of Columns", numberOfColumns));
 		
 		JPanel tablePanel=new JPanel(new GridLayout(0, 1));
 		tablePanel.add(new JScrollPane(sampleTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED));
@@ -301,15 +312,9 @@ public class MultiResultsBrowserPanel extends JPanel {
 		}
 		String[] sampleNames=StringUtils.getUniquePortion(origSampleNames);
 		barChart.setChart(getBarChart(sampleNames, totalTICs).getChart());
-		int cols;
-		if (files.size()<=2) cols=1;
-		else if (files.size()<=4) cols=2;
-		else if (files.size()<=6) cols=3;
-		else if (files.size()<=8) cols=4;
-		else if (files.size()<=10) cols=5;
-		else {
-			cols=6;
-		}
+		int cols=(Integer)numberOfColumns.getSelectedItem();
+		if (files.size()<cols) cols=files.size();
+		
 		JPanel right=new JPanel(new GridLayout(0, cols));
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		double precursorMz=parameters.getAAConstants().getChargedMass(entry.getPeptideModSeq(), entry.getPrecursorCharge());

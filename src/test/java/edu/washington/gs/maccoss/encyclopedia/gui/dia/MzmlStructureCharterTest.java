@@ -38,7 +38,7 @@ public class MzmlStructureCharterTest {
 	}
 
 	public static void launchChart(ScanRangeTracker scanTracker) {
-		ChartPanel panel=MzmlStructureCharter.getStructureChart(scanTracker);
+		ChartPanel panel=MzmlStructureCharter.getStructureChart(scanTracker, false);
 		Charter.launchComponent(panel, "File structure", new Dimension(900, 450));
 	}
 

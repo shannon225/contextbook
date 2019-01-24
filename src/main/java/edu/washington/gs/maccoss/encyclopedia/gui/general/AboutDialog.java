@@ -39,7 +39,7 @@ public class AboutDialog {
 		checkVersion.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				boolean ok=VersioningDetector.checkVersionGUI(program, dialog);
+				boolean ok=VersioningDetector.checkVersionGUI(program, dialog, false, true);
 				if (ok) {
 					JOptionPane.showMessageDialog(dialog, "Congratulations, you're up to date!", "Up to date " + program.toString(),
 							JOptionPane.INFORMATION_MESSAGE, image);

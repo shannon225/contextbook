@@ -1,0 +1,12 @@
+EncyclopeDIA changelog for user-facing changes:
+
+encyclopedia-0.8.1-SNAPSHOT
+ - Feature: added support for converting Spectronaut libraries
+
+encyclopedia-0.8.1
+ - Feature: new Window Scheme Wizard for setting up instruments in Help Menu
+ - Feature: added ability to change the number of chromatogram columns in the multi-elib browser
+ - Feature: added m/z to the table in the multi-elib browser
+ - Feature: added ability to ignore current online version
+ - Feature: don't need to rebuild library files if they already exist for faster demos
+ - Bugfix: patched error when trying to export reports on samples without shared peptides (e.g. chromatogram libraries) in BLIB format

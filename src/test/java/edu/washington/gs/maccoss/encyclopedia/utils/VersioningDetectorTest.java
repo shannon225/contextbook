@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 
 public class VersioningDetectorTest extends TestCase {
 	public void testVersionDetection() {
-		boolean pass=VersioningDetector.checkVersionGUI(ProgramType.EncyclopeDIA, null, true);
+		boolean pass=VersioningDetector.checkVersionGUI(ProgramType.EncyclopeDIA, null, true, false);
 		assertFalse(pass);
 	}
 

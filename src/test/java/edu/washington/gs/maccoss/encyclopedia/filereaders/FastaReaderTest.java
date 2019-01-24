@@ -115,30 +115,63 @@ public class FastaReaderTest extends TestCase {
 		writer.close();
 	}
 	
-	public static void main3(String[] args) {
+	public static void main(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
 		File f=new File("/Users/searleb/Documents/school/uniprot-9606.fasta");
+		PrintWriter writer=new PrintWriter("/Users/searleb/Documents/school/uniprot-9606.csv");
+		
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
 		AminoAcidConstants constants=new AminoAcidConstants();
-		System.out.println("Proteins: "+entries.size());
 		
-		HashSet<String> allPeptides=new HashSet<>();
+		HashSet<String>[] allPeptides=new HashSet[2];
+		for (int i=0; i<allPeptides.length; i++) {
+			allPeptides[i]=new HashSet<>();
+		}
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		for (FastaEntryInterface entry : entries) {
-			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 4, 50, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
+			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 7, 30, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
 			for (FastaPeptideEntry pep : peptides) {
 				for (int pepCharge : new int[] {2, 3}) {
-					double pepMass=constants.getMass(pep.getSequence())+MassConstants.oh2;
+					String seq=pep.getSequence();
+					double pepMass=constants.getMass(seq)+MassConstants.oh2;
 					double pepChargedMass=(pepMass+MassConstants.protonMass*pepCharge)/pepCharge;
 
 					if (pepChargedMass>(400)&&pepChargedMass<(1000)) {
-						allPeptides.add(pep.getSequence());
+						if (seq.indexOf('B')>=0||seq.indexOf('J')>=0||seq.indexOf('O')>=0||seq.indexOf('U')>=0||seq.indexOf('X')>=0||seq.indexOf('Z')>=0||seq.indexOf('*')>=0) {
+							continue;
+						} else {
+							allPeptides[pepCharge-2].add(seq);
+						}
 					}
 				}
 			}
 		}
-		System.out.println("Peptides: "+allPeptides.size());
+		
+		writer.println("modified_sequence,collision_energy,precursor_charge");
+		for (int i=0; i<allPeptides.length; i++) {
+			int charge=i+2;
+			for (String string : allPeptides[i]) {
+				writer.println(string+","+convertNCE(27f, (byte)charge, (byte)2)+","+(charge));
+			}
+		}
+		writer.close();
+	}
+	
+	// http://proteomicsnews.blogspot.com/2014/06/normalized-collision-energy-calculation.html
+	private static float convertNCE(float nce, byte charge, byte defaultCharge) {
+		return nce*getChargeFactor(defaultCharge)/getChargeFactor(charge);
+	}
+
+	private static float getChargeFactor(byte charge) {
+		switch (charge) {
+			case 1: return 1.0f;
+			case 2: return 0.9f;
+			case 3: return 0.85f;
+			case 4: return 0.8f;
+			case 5: return 0.75f;
+			default: return 0.75f;
+		}
 	}
 	
 	public static void main4(String[] args) {
@@ -170,7 +203,7 @@ public class FastaReaderTest extends TestCase {
 		}
 	}
 
-	public static void main(String[] args) {
+	public static void main3(String[] args) {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		AminoAcidConstants aaConstants=parameters.getAAConstants();
 		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");

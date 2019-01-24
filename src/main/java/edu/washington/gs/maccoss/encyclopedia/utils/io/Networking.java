@@ -5,6 +5,8 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import com.itextpdf.text.pdf.codec.Base64;
+
 public class Networking {
 	final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
 	private static final String[] poopAddresses=new String[] {
@@ -17,6 +19,7 @@ public class Networking {
 		try {
 			byte[] mac=getMacAddress();
 			System.out.println(bytesToHex(mac));
+			System.out.println(getUserID());
 		} catch (Exception e) {
 			System.out.println(e);
 		}
@@ -25,7 +28,7 @@ public class Networking {
 	public static String getUserID() {
 		try {
 			byte[] mac=getMacAddress();
-			return bytesToHex(mac);
+			return Base64.encodeBytes(mac);
 
 		} catch (Exception e) {
 			return "unknown";
