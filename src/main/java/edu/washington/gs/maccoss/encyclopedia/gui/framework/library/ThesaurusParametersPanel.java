@@ -16,6 +16,7 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 
@@ -25,6 +26,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringF
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCordiaSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -34,6 +36,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
@@ -43,6 +47,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
+import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
@@ -103,6 +108,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 	private final SpinnerModel percolatorThreshold=new SpinnerNumberModel(0.01, 0.001, 0.1, 0.001);
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
+	private final JTextField additionalCommandLineOptions=new JTextField();
 	private final SearchPanel searchPanel;
 
 	public ThesaurusParametersPanel(SearchPanel searchPanel) {
@@ -137,6 +143,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 		//options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
 		options.add(new LabeledComponent("Minimum Number of Well-Shaped Ions", new JSpinner(minNumOfQuantitativeIons)));
 		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
+		options.add(new LabeledComponent("Additonal Command Line Options", additionalCommandLineOptions));
 
 		this.add(options, BorderLayout.CENTER);
 	}
@@ -241,6 +248,12 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, percolatorThresholdValue, percolatorThresholdValue, (isPercolatorTwo?2:3), 
 				dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, 
 				minNumOfQuantitativeIonsValue, 0.0f, modification, CASiLSearchBreadthType, 0.0f, true, false, false);
+
+		String cmds=additionalCommandLineOptions.getText();
+		HashMap<String, String> params=parameters.toParameterMap();
+		params.putAll(CommandLineParser.parseArguments(cmds.split(" ")));
+		parameters=ThesaurusSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(params));
+		
 		return parameters;
 	}
 	
