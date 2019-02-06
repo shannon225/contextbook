@@ -5,8 +5,8 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusJobDat
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 
-public class CASiLJob extends SearchJob {
-	public CASiLJob(JobProcessor processor, ThesaurusJobData libraryData) {
+public class ThesaurusJob extends SearchJob {
+	public ThesaurusJob(JobProcessor processor, ThesaurusJobData libraryData) {
 		super(processor, libraryData);
 	}
 	

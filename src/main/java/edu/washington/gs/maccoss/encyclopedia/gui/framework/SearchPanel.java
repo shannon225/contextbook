@@ -53,7 +53,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.dia.PeptideExtractingBrowserPa
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.WindowingSchemeWizard;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.AustinsSpecialEncyclopediaPanel;
-import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.CASiLParametersPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.ThesaurusParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.LindsaysSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.MoMosSpecialEncyclopediaPanel;
@@ -125,7 +125,7 @@ public class SearchPanel extends JPanel {
 		}
 		if (ProgramType.Global==program||ProgramType.CASiL==program) {
 			try {
-				CASiLParametersPanel CASiL=new CASiLParametersPanel(this);
+				ThesaurusParametersPanel CASiL=new ThesaurusParametersPanel(this);
 				HashMap<String, String> map=ThesaurusSearchParameters.readPreferences();
 				ThesaurusSearchParameters xcordiaParameters=ThesaurusSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(map));
 				CASiL.setParameters(xcordiaParameters, map.get(Encyclopedia.TARGET_LIBRARY_TAG), map.get(Encyclopedia.BACKGROUND_FASTA_TAG));
@@ -527,7 +527,7 @@ public class SearchPanel extends JPanel {
 	}
 	
 	public void launchElibBrowser() {
-		if (getVisibleTab() instanceof CASiLParametersPanel) {
+		if (getVisibleTab() instanceof ThesaurusParametersPanel) {
 			launchLocalizationBrowser();
 			return;
 		}

@@ -50,7 +50,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassErrorUnitType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
-public class CASiLParametersPanel extends JPanel implements ParametersPanelInterface {
+public class ThesaurusParametersPanel extends JPanel implements ParametersPanelInterface {
 	
 	private static final long serialVersionUID=1L;
 	private static final int numberOfCores=Runtime.getRuntime().availableProcessors();
@@ -105,7 +105,7 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
 	private final SearchPanel searchPanel;
 
-	public CASiLParametersPanel(SearchPanel searchPanel) {
+	public ThesaurusParametersPanel(SearchPanel searchPanel) {
 		super(new BorderLayout());
 		this.searchPanel=searchPanel;
 
@@ -215,7 +215,7 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 		
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
 		ThesaurusJobData job=new ThesaurusJobData(diaFile, library, outputFile, fastaFile, factory);
-		return new CASiLJob(processor, job);
+		return new ThesaurusJob(processor, job);
 	}
 
 	public ThesaurusSearchParameters getParameters() {
