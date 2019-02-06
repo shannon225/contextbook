@@ -28,7 +28,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorEx
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQuantExtractor;
@@ -619,9 +619,9 @@ public class SearchToBLIB {
 		subProgress.update(diaFile.getName()+": Writing Encyclopedia ELIB", 0.99999f);
 		
 		Optional<HashMap<String, ModificationLocalizationData>> localizationData;
-		if (job instanceof CASiLJobData) {
+		if (job instanceof ThesaurusJobData) {
 			Logger.logLine("Reading localization data from disk...");
-			localizationData=Optional.of(LocalizationDataToTSVConsumer.readLocalizationFile(((CASiLJobData)job).getLocalizationFile(), globalPassingPeptides, job.getParameters()));
+			localizationData=Optional.of(LocalizationDataToTSVConsumer.readLocalizationFile(((ThesaurusJobData)job).getLocalizationFile(), globalPassingPeptides, job.getParameters()));
 		} else if (job instanceof VariantXCorDIAJobData) {
 			Logger.logLine("Reading localization data from disk...");
 			localizationData=Optional.of(LocalizationDataToTSVConsumer.readLocalizationFile(((VariantXCorDIAJobData)job).getLocalizationFile(), globalPassingPeptides, job.getParameters()));

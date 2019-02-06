@@ -38,7 +38,7 @@ import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.Pecanpie;
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCordiaSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -126,8 +126,8 @@ public class SearchPanel extends JPanel {
 		if (ProgramType.Global==program||ProgramType.CASiL==program) {
 			try {
 				CASiLParametersPanel CASiL=new CASiLParametersPanel(this);
-				HashMap<String, String> map=CASiLSearchParameters.readPreferences();
-				CASiLSearchParameters xcordiaParameters=CASiLSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(map));
+				HashMap<String, String> map=ThesaurusSearchParameters.readPreferences();
+				ThesaurusSearchParameters xcordiaParameters=ThesaurusSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(map));
 				CASiL.setParameters(xcordiaParameters, map.get(Encyclopedia.TARGET_LIBRARY_TAG), map.get(Encyclopedia.BACKGROUND_FASTA_TAG));
 				optionsTabs.addTab(CASiL.getProgram().toString(), CASiL.getSmallImage(), CASiL, CASiL.getProgramShortDescription());
 			} catch (Exception e) {

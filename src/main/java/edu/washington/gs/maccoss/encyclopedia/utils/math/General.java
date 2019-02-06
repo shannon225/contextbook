@@ -53,6 +53,14 @@ public class General {
 		return f;
 	}
 	
+	public static float[] toFloatArray(int[] a) {
+		float[] f=new float[a.length];
+		for (int i=0; i<f.length; i++) {
+			f[i]=(float)a[i];
+		}
+		return f;
+	}
+	
 	public static double[] toDoubleArray(float[] a) {
 		double[] f=new double[a.length];
 		for (int i=0; i<f.length; i++) {

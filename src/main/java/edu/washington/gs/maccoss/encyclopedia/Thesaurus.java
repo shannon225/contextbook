@@ -30,8 +30,8 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgrou
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLJobData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
@@ -77,7 +77,7 @@ public class Thesaurus {
 			Logger.timelessLogLine("\t-f\tprotein .FASTA database");
 			Logger.timelessLogLine("\t-l\tlibrary .ELIB file");
 			Logger.timelessLogLine("Other Parameters: ");
-			Logger.timelessLogLine("\t-o\toutput report file (default: [input file]"+CASiLJobData.OUTPUT_FILE_SUFFIX+")");
+			Logger.timelessLogLine("\t-o\toutput report file (default: [input file]"+ThesaurusJobData.OUTPUT_FILE_SUFFIX+")");
 			
 			TreeMap<String, String> defaults=new TreeMap<String, String>(SearchParameterParser.getDefaultParameters());
 			int maxWidth=0;
@@ -90,7 +90,7 @@ public class Thesaurus {
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("Thesaurus version "+CASiLOneScoringFactory.version);
+			Logger.logLine("Thesaurus version "+ThesaurusOneScoringFactory.version);
 			System.exit(1);
 			
 		} else {
@@ -109,11 +109,11 @@ public class Thesaurus {
 			if (arguments.containsKey(Encyclopedia.OUTPUT_RESULT_TAG)) {
 				outputFile=new File(arguments.get(Encyclopedia.OUTPUT_RESULT_TAG));
 			} else {
-				outputFile=new File(diaFile.getAbsolutePath()+CASiLJobData.OUTPUT_FILE_SUFFIX);
+				outputFile=new File(diaFile.getAbsolutePath()+ThesaurusJobData.OUTPUT_FILE_SUFFIX);
 			}
 
 			try {
-				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+CASiLJobData.LOG_FILE_SUFFIX));
+				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+ThesaurusJobData.LOG_FILE_SUFFIX));
 				Logger.addRecorder(logRecorder);
 	
 				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
@@ -127,7 +127,7 @@ public class Thesaurus {
 				Logger.logLine("Setting up localization engine...");
 				StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 				PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, parameters.getLocalizingModification().get(), parameters);
-				LibraryScoringFactory factory=new CASiLOneScoringFactory(parameters, localizer, new LinkedBlockingQueue<ModificationLocalizationData>());
+				LibraryScoringFactory factory=new ThesaurusOneScoringFactory(parameters, localizer, new LinkedBlockingQueue<ModificationLocalizationData>());
 				
 				Logger.logLine("Thesaurus version "+factory.getVersion());
 	
@@ -138,7 +138,7 @@ public class Thesaurus {
 				Logger.logLine(parameters.toString());
 
 				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
-				CASiLJobData job=new CASiLJobData(diaFile, library, outputFile, fastaFile, factory);
+				ThesaurusJobData job=new ThesaurusJobData(diaFile, library, outputFile, fastaFile, factory);
 				runSearch(new EmptyProgressIndicator(), job);
 			} catch (Exception e) {
 				Logger.errorLine("Encountered Fatal Error!");
@@ -149,7 +149,7 @@ public class Thesaurus {
 		}
 	}
 
-	public static void runSearch(ProgressIndicator progress, CASiLJobData job) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+	public static void runSearch(ProgressIndicator progress, ThesaurusJobData job) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 
 		if (job.getPercolatorFiles().hasDataAvailable()) {
 			try {
@@ -189,8 +189,8 @@ public class Thesaurus {
 		stripefile.close();
 	}
 
-	public static CASiLJobData checkJob(CASiLJobData job) throws IOException, DataFormatException, SQLException {
-		if (!(job.getTaskFactory() instanceof CASiLOneScoringFactory)) {
+	public static ThesaurusJobData checkJob(ThesaurusJobData job) throws IOException, DataFormatException, SQLException {
+		if (!(job.getTaskFactory() instanceof ThesaurusOneScoringFactory)) {
 			if (!job.getParameters().getLocalizingModification().isPresent()) {
 				AminoAcidConstants constants = job.getParameters().getAAConstants();
 				String message = getRequiredLocalizationMessage(constants.getLocalizationModifications());
@@ -200,19 +200,19 @@ public class Thesaurus {
 			Logger.logLine("Setting up localization engine...");
 			StripeFileInterface stripefile=StripeFileGenerator.getFile(job.getDiaFile(), job.getParameters());
 			PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, job.getParameters().getLocalizingModification().get(), job.getParameters());
-			LibraryScoringFactory factory=new CASiLOneScoringFactory(job.getParameters(), localizer, new LinkedBlockingQueue<ModificationLocalizationData>());
+			LibraryScoringFactory factory=new ThesaurusOneScoringFactory(job.getParameters(), localizer, new LinkedBlockingQueue<ModificationLocalizationData>());
 			job=job.updateTaskFactory(factory);
 		}
 		return job;
 	}
 	
-	public static void runSearch(ProgressIndicator progress, CASiLJobData job, StripeFileInterface stripefile) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+	public static void runSearch(ProgressIndicator progress, ThesaurusJobData job, StripeFileInterface stripefile) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		long startTime=System.currentTimeMillis();
-		if (!(job.getTaskFactory() instanceof CASiLOneScoringFactory)) {
+		if (!(job.getTaskFactory() instanceof ThesaurusOneScoringFactory)) {
 			throw new EncyclopediaException("Sorry, CASiL requires it's own task factory!");
 		}
 		
-		CASiLOneScoringFactory taskFactory=(CASiLOneScoringFactory)job.getTaskFactory();
+		ThesaurusOneScoringFactory taskFactory=(ThesaurusOneScoringFactory)job.getTaskFactory();
 		BlockingQueue<ModificationLocalizationData> localizationQueue=taskFactory.getLocalizationQueue();
 		
 		SearchParameters parameters=taskFactory.getParameters();

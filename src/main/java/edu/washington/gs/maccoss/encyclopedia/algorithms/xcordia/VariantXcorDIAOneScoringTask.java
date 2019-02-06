@@ -16,7 +16,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequencyInterface;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLOneScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.FragmentIonBlacklist;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
@@ -237,7 +236,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 					
 					FragmentIon[] localizingIons=ThesaurusOneScoringTask.getUniqueFragmentIons(entryMap.get(bestPeptideModSeq), entryMap.get(peptideModSeq), precursorCharge, parameters);
 					
-					Pair<FragmentScan, Float> localizedStripe = CASiLOneScoringTask.getBestLocalizationStripe(parameters, dutyCycle, background, bestForm.localizedEntry, localizingIons, stripeSubset);
+					Pair<FragmentScan, Float> localizedStripe = ThesaurusOneScoringTask.getBestLocalizationStripe(parameters, dutyCycle, background, bestForm.localizedEntry, localizingIons, stripeSubset);
 					//System.out.println("Testing "+bestPeptideModSeq+" ("+bestIndex.x+") vs "+peptideModSeq+" ("+score+"): localization: "+localizedStripe.y);
 					if (bestLocalizedStripe==null||bestLocalizedStripe.y>localizedStripe.y) {
 						// keep the lowest localization scoring form! (the closest to the form we're considering)
@@ -249,11 +248,11 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			
 			if (bestLocalizedStripe==null) {
 				bestLocalizingIons=bestForm.allIons;
-				bestLocalizedStripe = CASiLOneScoringTask.getBestLocalizationStripe(parameters, dutyCycle, background, bestForm.localizedEntry, bestLocalizingIons, stripeSubset);
+				bestLocalizedStripe = ThesaurusOneScoringTask.getBestLocalizationStripe(parameters, dutyCycle, background, bestForm.localizedEntry, bestLocalizingIons, stripeSubset);
 			}
 			
 			AmbiguousPeptideModSeq ambiPeptideModSeq=AmbiguousPeptideModSeq.getUnambigous(bestPeptideModSeq, localizingModification, parameters.getAAConstants(), "");
-			Triplet<ModificationLocalizationData, FragmentScan, Range> locData=CASiLOneScoringTask.generateLocalizationData(false, minimumScore, parameters, localizingModification, bestForm.localizedEntry,
+			Triplet<ModificationLocalizationData, FragmentScan, Range> locData=ThesaurusOneScoringTask.generateLocalizationData(false, minimumScore, parameters, localizingModification, bestForm.localizedEntry,
 					ambiPeptideModSeq, bestLocalizingIons, bestForm.allIons, takenIdentifiedIons, stripeSubset, bestLocalizedStripe);
 			
 			// if localized, then keep and remove from localizedForms

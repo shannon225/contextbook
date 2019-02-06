@@ -512,7 +512,7 @@ public class ThesaurusEGFElibParser {
 		TreeMap<String, QuantitationLog> quantLog=new TreeMap<>();
 		TreeMap<String, QuantitationLog> siteSpecificQuantLog=new TreeMap<>();
 		for (File file : f) {
-			if (file.getName().endsWith(CASiLJobData.THESAURUS_REPORT_FILE_SUFFIX)&&!file.getName().startsWith(".")) {
+			if (file.getName().endsWith(ThesaurusJobData.THESAURUS_REPORT_FILE_SUFFIX)&&!file.getName().startsWith(".")) {
 				System.out.println("Parsing "+file.getName()+"...");
 				LibraryFile library=new LibraryFile();
 				library.openFile(file);

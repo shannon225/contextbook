@@ -1,12 +1,12 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.framework.library;
 
 import edu.washington.gs.maccoss.encyclopedia.Thesaurus;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusJobData;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 
 public class CASiLJob extends SearchJob {
-	public CASiLJob(JobProcessor processor, CASiLJobData libraryData) {
+	public CASiLJob(JobProcessor processor, ThesaurusJobData libraryData) {
 		super(processor, libraryData);
 	}
 	
@@ -15,7 +15,7 @@ public class CASiLJob extends SearchJob {
 		Thesaurus.runSearch(getProgressIndicator(), getLibraryData());
 	}
 	
-	public CASiLJobData getLibraryData() {
-		return (CASiLJobData)getSearchData();
+	public ThesaurusJobData getLibraryData() {
+		return (ThesaurusJobData)getSearchData();
 	}
 }

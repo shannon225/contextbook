@@ -23,8 +23,8 @@ import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLJobData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.CASiLSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -205,7 +205,7 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 
 	private static HashMap<File, LibraryInterface> libraries=new HashMap<File, LibraryInterface>();
 	static SearchJob getJob(File diaFile, File libraryFile, File fastaFile, JobProcessor processor, SearchParameters parameters) {
-		File outputFile=new File(diaFile.getAbsolutePath()+CASiLJobData.OUTPUT_FILE_SUFFIX);
+		File outputFile=new File(diaFile.getAbsolutePath()+ThesaurusJobData.OUTPUT_FILE_SUFFIX);
 		
 		LibraryInterface library=libraries.get(libraryFile);
 		if (library==null) {
@@ -214,11 +214,11 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 		}
 		
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
-		CASiLJobData job=new CASiLJobData(diaFile, library, outputFile, fastaFile, factory);
+		ThesaurusJobData job=new ThesaurusJobData(diaFile, library, outputFile, fastaFile, factory);
 		return new CASiLJob(processor, job);
 	}
 
-	public CASiLSearchParameters getParameters() {
+	public ThesaurusSearchParameters getParameters() {
 		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.getAcquisitionType((String)acquisition.getSelectedItem());
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
@@ -237,14 +237,14 @@ public class CASiLParametersPanel extends JPanel implements ParametersPanelInter
 		PeptideModification modification=(PeptideModification)modificationType.getSelectedItem();
 		float percolatorThresholdValue=((Number)percolatorThreshold.getValue()).floatValue();
 		
-		CASiLSearchParameters parameters=new CASiLSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, 
+		ThesaurusSearchParameters parameters=new ThesaurusSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, 
 				fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, percolatorThresholdValue, percolatorThresholdValue, (isPercolatorTwo?2:3), 
 				dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, 
 				minNumOfQuantitativeIonsValue, 0.0f, modification, CASiLSearchBreadthType, 0.0f, true, false, false);
 		return parameters;
 	}
 	
-	public void setParameters(CASiLSearchParameters params, String libraryFileName, String fastaFileName) {
+	public void setParameters(ThesaurusSearchParameters params, String libraryFileName, String fastaFileName) {
 		if (libraryFileName!=null) {
 			File libraryFile=new File(libraryFileName);
 			if (libraryFile.exists()) libraryFileChooser.update(libraryFile);

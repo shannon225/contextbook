@@ -24,13 +24,13 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVCon
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
-public class CASiLOneScoringFactory implements LibraryScoringFactory {
+public class ThesaurusOneScoringFactory implements LibraryScoringFactory {
 	public static final String version="0.4.10";
 	private final SearchParameters parameters;
 	private final PhosphoLocalizer localizer;
 	private final BlockingQueue<ModificationLocalizationData> localizationQueue;
 
-	public CASiLOneScoringFactory(SearchParameters parameters, PhosphoLocalizer localizer, BlockingQueue<ModificationLocalizationData> localizationQueue) {
+	public ThesaurusOneScoringFactory(SearchParameters parameters, PhosphoLocalizer localizer, BlockingQueue<ModificationLocalizationData> localizationQueue) {
 		this.parameters=parameters;
 		this.localizer=localizer;
 		this.localizationQueue=localizationQueue;

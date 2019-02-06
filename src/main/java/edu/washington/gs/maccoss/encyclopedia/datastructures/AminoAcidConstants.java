@@ -182,6 +182,11 @@ public class AminoAcidConstants {
 		return massesByAA.get(aa);
 	}
 	
+	/**
+	 * note, does not add on +19 mass constants
+	 * @param sequence
+	 * @return
+	 */
 	public double getMass(String sequence) {
 		double total=0.0;
 		for (int i=0; i<sequence.length(); i++) {

@@ -115,11 +115,22 @@ public class FastaReaderTest extends TestCase {
 		writer.close();
 	}
 	
+	public static void mainx(String[] args) throws Exception {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		File f=new File("/Users/bsearle/Documents/prosit/hela/uniprot-9606.fasta");
+		
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
+		
+		for (FastaEntryInterface entry : entries) {
+			System.out.println(entry.getSequence().length());
+		}
+	}
+	
 	public static void main(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
-		File f=new File("/Users/searleb/Documents/school/uniprot-9606.fasta");
-		PrintWriter writer=new PrintWriter("/Users/searleb/Documents/school/uniprot-9606.csv");
+		File f=new File("/Users/bsearle/Documents/iarpa/2018_1203/10pFDR_DB/IARPA_20181214_10_pepFDR.fasta");
+		PrintWriter writer=new PrintWriter("/Users/bsearle/Documents/iarpa/2018_1203/10pFDR_DB/IARPA_20181214_10_pepFDR.csv");
 		
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
 		AminoAcidConstants constants=new AminoAcidConstants();
@@ -299,7 +310,7 @@ public class FastaReaderTest extends TestCase {
 				countMet+=getCombinatorial(sequence, 'M');
 				countSTY+=getCombinatorial(sequence, 'S', 'T', 'Y');
 				countQN+=getCombinatorial(sequence, 'Q', 'N');
-				countQN+=getCombinatorial(sequence, 'K', 'R');
+				countKR+=getCombinatorial(sequence, 'K', 'R');
 			}
 		}
 		System.out.println(countBase+"\tcountBase");

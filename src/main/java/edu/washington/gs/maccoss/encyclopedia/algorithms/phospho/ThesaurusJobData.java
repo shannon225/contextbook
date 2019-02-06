@@ -9,17 +9,17 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 
-public class CASiLJobData extends EncyclopediaJobData {
+public class ThesaurusJobData extends EncyclopediaJobData {
 	public static final String LOG_FILE_SUFFIX=".log";
 	public static final String OUTPUT_FILE_SUFFIX=".thesaurus.txt";
 	public static final String FEATURE_FILE_SUFFIX=".thesaurus_features.txt";
 	public static final String THESAURUS_REPORT_FILE_SUFFIX=".thesaurus" + LibraryFile.ELIB;
 
-	public CASiLJobData(File diaFile, LibraryInterface library, File outputFile, File fastaFile, LibraryScoringFactory taskFactory) {
+	public ThesaurusJobData(File diaFile, LibraryInterface library, File outputFile, File fastaFile, LibraryScoringFactory taskFactory) {
 		super(diaFile, getPercolatorExecutionData(outputFile, fastaFile, taskFactory.getParameters()), taskFactory.getParameters(), taskFactory.getVersion(), library, taskFactory);
 	}
 	
-	private CASiLJobData(File diaFile, PercolatorExecutionData percolatorFiles, SearchParameters parameters, String version, LibraryInterface library, LibraryScoringFactory taskFactory) {
+	private ThesaurusJobData(File diaFile, PercolatorExecutionData percolatorFiles, SearchParameters parameters, String version, LibraryInterface library, LibraryScoringFactory taskFactory) {
 		super(diaFile, percolatorFiles, parameters, version, library, taskFactory);
 	}
 
@@ -29,8 +29,8 @@ public class CASiLJobData extends EncyclopediaJobData {
 				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_PROTEIN_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_PROTEIN_FILE_SUFFIX), parameters);
 	}
 
-	public CASiLJobData updateTaskFactory(LibraryScoringFactory taskFactory) {
-		return new CASiLJobData(getDiaFile(), getPercolatorFiles(), getParameters(), getVersion(), getLibrary(), taskFactory);
+	public ThesaurusJobData updateTaskFactory(LibraryScoringFactory taskFactory) {
+		return new ThesaurusJobData(getDiaFile(), getPercolatorFiles(), getParameters(), getVersion(), getLibrary(), taskFactory);
 	}
 	
 	public File getLocalizationFile() {

@@ -17,7 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
-public class CASiLSearchParameters extends SearchParameters {
+public class ThesaurusSearchParameters extends SearchParameters {
 
 	
 	public void savePreferences(File libraryFile, File fastaFile) throws IOException,BackingStoreException {
@@ -45,7 +45,7 @@ public class CASiLSearchParameters extends SearchParameters {
 	
 	
 
-	public CASiLSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin,
+	public ThesaurusSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin,
 			MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme, float percolatorThreshold, float percolatorProteinThreshold, Integer percolatorVersionNumber,
 			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, int numberOfQuantitativePeaks,
 			int minNumOfQuantitativePeaks, float minIntensity, PeptideModification modification, ScoringBreadthType searchType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, boolean filterPeaklists) {
@@ -54,7 +54,7 @@ public class CASiLSearchParameters extends SearchParameters {
 				minIntensity, Optional.of(modification), searchType, getNumberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons, -1.0f, filterPeaklists);
 	}
 
-	public static CASiLSearchParameters convertFromEncyclopeDIA(SearchParameters params) {
+	public static ThesaurusSearchParameters convertFromEncyclopeDIA(SearchParameters params) {
 		PeptideModification mod;
 		if (params.getLocalizingModification().isPresent()) {
 			mod=params.getLocalizingModification().get();
@@ -62,7 +62,7 @@ public class CASiLSearchParameters extends SearchParameters {
 			Logger.logLine("You should specify a localization modification if you're going to apply localization! Using phosphorylation by default.");
 			mod=PeptideModification.phosphorylation;
 		}
-		return new CASiLSearchParameters(params.getAAConstants(), params.getFragType(), params.getPrecursorTolerance(), params.getPrecursorOffsetPPM(), params.getPrecursorIsolationMargin(),
+		return new ThesaurusSearchParameters(params.getAAConstants(), params.getFragType(), params.getPrecursorTolerance(), params.getPrecursorOffsetPPM(), params.getPrecursorIsolationMargin(),
 				params.getFragmentTolerance(), params.getFragmentOffsetPPM(), params.getLibraryFragmentTolerance(), params.getEnzyme(), params.getPercolatorThreshold(), params.getPercolatorProteinThreshold(),
 				params.getPercolatorVersionNumber(), params.getDataAcquisitionType(), params.getNumberOfThreadsUsed(), params.getExpectedPeakWidth(), params.getTargetWindowCenter(),
 				params.getPrecursorWindowSize(), params.getNumberOfQuantitativePeaks(), params.getMinNumOfQuantitativePeaks(), params.getMinIntensity(), mod, params.getScoringBreadthType(),
