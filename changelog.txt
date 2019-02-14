@@ -2,6 +2,7 @@ EncyclopeDIA changelog for user-facing changes:
 
 encyclopedia-0.8.1-SNAPSHOT
  - Feature: added support for converting Spectronaut libraries
+ - Feature: added metadata to elib export indicating if RT alignment was performed
 
 encyclopedia-0.8.1
  - Feature: new Window Scheme Wizard for setting up instruments in Help Menu
