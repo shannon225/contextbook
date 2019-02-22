@@ -547,6 +547,7 @@ public class SearchToBLIB {
 			}
 			
 			HashMap<String, String> parameterMap=parameters.toParameterMap();
+			parameterMap.put("RT align between samples", Boolean.toString(inferrer.isPresent()));
 			for (int i=0; i<pecanJobs.size(); i++) {
 				SearchJobData job=pecanJobs.get(i);
 				parameterMap.put(job.getDiaFile().getName()+" search type", job.getSearchType());
