@@ -255,7 +255,7 @@ public class DIABrowserPanel extends JPanel {
 				maxTIC=0.0f;
 				
 				ArrayList<PrecursorScan> precursors=dia.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
-				int increment=precursors.size()/1000;
+				int increment=Math.max(1, precursors.size()/1000);
 				int scanCount=0;
 				float tic=0.0f;
 				TFloatFloatHashMap precursorIonDistribution=new TFloatFloatHashMap();

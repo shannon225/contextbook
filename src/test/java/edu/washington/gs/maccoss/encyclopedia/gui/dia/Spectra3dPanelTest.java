@@ -40,6 +40,74 @@ public class Spectra3dPanelTest {
 	public static void main(String[] args) throws Exception {
 		SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(16.7), new MassTolerance(16.7), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA, false, true, false);
 
+		File file=new File("/Users/bsearle/Documents/conferences/abrf2019/EMM2-N_30min_1st_POS.mzML");
+		StripeFileInterface raw=StripeFileGenerator.getFile(file, params, true);
+		
+		float rtInSecStart=525;
+		float rtInSecStop=575;
+		
+		ArrayList<PrecursorScan> stripes=raw.getPrecursors(rtInSecStart, rtInSecStop);
+		Collections.sort(stripes);
+		
+		ArrayList<Peak> peaks=new ArrayList<>();
+		for (PrecursorScan precursorScan : stripes) {
+			double[] masses=precursorScan.getMassArray();
+			float[] intensities=precursorScan.getIntensityArray();
+			for (int i=0; i<intensities.length; i++) {
+				if (intensities[i]>100000) {
+					peaks.add(new Peak(masses[i], intensities[i]));
+				}
+			}
+		}
+		Collections.sort(peaks, new PeakIntensityComparator());
+		
+		MassTolerance tolerance=params.getPrecursorTolerance();
+		TDoubleArrayList masses=new TDoubleArrayList();
+		for (int i=peaks.size()-1; i>=0; i--) {
+			double mass=peaks.get(i).mass;
+			if (mass>175) continue;
+			
+			if (masses.size()==0) {
+				masses.add(mass);
+			} else {
+				int index=masses.indexOf(mass);
+				boolean looking=true;
+				if (looking&&index>0&&index<=masses.size()) {
+					if (tolerance.equals(mass, masses.get(index-1))) looking=false;
+				}
+				if (looking&&index>=0&&index<masses.size()) {
+					if (tolerance.equals(mass, masses.get(index))) looking=false;
+				}
+				if (looking&&index>=-1&&index<(masses.size()-1)) {
+					if (tolerance.equals(mass, masses.get(index+1))) looking=false;
+				}
+				if (looking) {
+					masses.add(mass);
+				}
+			}
+		}
+		ArrayList<FragmentIon> ions=new ArrayList<>();
+		int index=1;
+		for (double mass : masses.toArray()) {
+			ions.add(new FragmentIon(mass, (byte)(index), IonType.y));
+			index++;
+		}
+		System.out.println(index+" total peaks");
+		
+		
+		Spectra3dPanel panel=new Spectra3dPanel(stripes, ions.toArray(new FragmentIon[ions.size()]), params.getFragmentTolerance());
+		
+		ChartLauncher.openChart(panel.getChart());
+	}
+
+	/**
+	 * 3d precursor figure
+	 * @param args
+	 * @throws Exception
+	 */
+	public static void main3(String[] args) throws Exception {
+		SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(16.7), new MassTolerance(16.7), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA, false, true, false);
+
 		File file=new File("/Users/searleb/Documents/school/perspective/rawfiles/2017dec27_prm_6b_rep1_180103142426.mzML");
 		StripeFileInterface raw=StripeFileGenerator.getFile(file, params, true);
 		
