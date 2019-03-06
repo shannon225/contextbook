@@ -314,9 +314,89 @@ public class AminoAcidConstants {
 
 				if (tolerance.equals(42.0, modificationMass)) { // acetyl
 					return 42.010565;
-				} else {
-					return modificationMass;
 				}
+				
+				// SILAC
+				if (aa == 'K') {
+					if (tolerance.equals(8.0, modificationMass)) { // SILAC
+						return 8.014199;
+					} else if (tolerance.equals(6.0, modificationMass)) { // SILAC
+						return 6.020129;
+					}
+				}
+				if (aa == 'R') {
+					if (tolerance.equals(10.0, modificationMass)) { // SILAC
+						return 10.008269;
+					} else if (tolerance.equals(4.0, modificationMass)) { // SILAC
+						return 3.988140;
+					} else if (tolerance.equals(5.0, modificationMass)) { // SILAC
+						return 5.028462;
+					} else if (tolerance.equals(6.0, modificationMass)) { // SILAC
+						return 6.020129;
+					} else if (tolerance.equals(11.0, modificationMass)) { // SILAC
+						return 11.032077;
+					}
+				}
+				if (aa == 'A') {
+					if (tolerance.equals(4.0, modificationMass)) { // SILAC
+						return 4.007099;
+					} else if (tolerance.equals(3.0, modificationMass)) { // SILAC
+						return 3.010064;
+					}
+				}
+				if (aa == 'L' || aa == 'I') {
+					if (tolerance.equals(3.0, modificationMass)) { // SILAC
+						return 3.018830;
+					} else if (tolerance.equals(6.0, modificationMass)) { // SILAC
+						return 6.020129;
+					} else if (tolerance.equals(7.0, modificationMass)) { // SILAC
+						return 7.017164;
+					}
+				}
+				if (aa == 'M') {
+					if (tolerance.equals(4.0, modificationMass)) { // SILAC
+						return 4.013419;
+					} else if (tolerance.equals(6.0, modificationMass)) { // SILAC
+						return 6.013809;
+					}
+				}
+				if (aa == 'D') {
+					if (tolerance.equals(5.0, modificationMass)) { // SILAC
+						return 5.010454;
+					}
+				}
+				if (aa == 'P') {
+					if (tolerance.equals(5.0, modificationMass)) { // SILAC
+						return 5.016774;
+					} else if (tolerance.equals(6.0, modificationMass)) { // SILAC
+						return 6.013809;
+					} else if (tolerance.equals(7.0, modificationMass)) { // SILAC
+						return 7.034695;
+					}
+				}
+				if (aa == 'E') {
+					if (tolerance.equals(6.0, modificationMass)) { // SILAC
+						return 6.013809;
+					}
+				}
+				if (aa == 'V') {
+					if (tolerance.equals(6.0, modificationMass)) { // SILAC
+						return 6.013809;
+					}
+				}
+				if (aa == 'Y') {
+					if (tolerance.equals(9.0, modificationMass)) { // SILAC
+						return 9.030193;
+					}
+				}
+				if (aa == 'F') {
+					if (tolerance.equals(9.0, modificationMass)) { // SILAC
+						return 9.030193;
+					}
+				}
+				// END SILAC
+				
+				return modificationMass;
 			});
 		}
 	}
