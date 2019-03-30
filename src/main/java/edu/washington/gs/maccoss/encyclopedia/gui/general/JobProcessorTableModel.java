@@ -76,6 +76,11 @@ public class JobProcessorTableModel extends AbstractTableModel implements JobPro
 		fireTableDataChanged();
 	}
 	
+	public void clearJobs() {
+		queue.clear();
+		fireTableDataChanged();
+	}
+	
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.gui.pecan.JobProcessor#fireJobUpdated(edu.washington.gs.maccoss.encyclopedia.gui.pecan.PecanJob)
 	 */
