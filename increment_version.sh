@@ -12,8 +12,8 @@ fi
 echo "Updating from [${1}] to [${2}]";
 
 mvn versions:set -DnewVersion="${1}"
-hg commit -m "Update to version for release encyclopedia-${1}."
-hg tag "encyclopedia-${1}" # optional
+hg commit -m "Update to version for release xcordia-${1}."
+hg tag "xcordia-${1}" # optional
 mvn clean package;
 mvn versions:set -DnewVersion="${2}-SNAPSHOT"
 hg commit -m "Update to next SNAPSHOT version."

@@ -27,8 +27,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribut
 import gnu.trove.list.array.TFloatArrayList;
 
 public class TwoDimensionalKDE extends Mapper {
+	public static final int DEFAULT_RESULTION = 1000;
 	private static final double BANDWIDTH_TO_STDEV = 2.0*Math.sqrt(2.0*Math.log(2.0));
-	private final int resolution=1000;
+	private final int resolution;
 	private final float[][] twoDimensionalHistogram;
 	
 	private final Range xRange;
@@ -82,6 +83,11 @@ public class TwoDimensionalKDE extends Mapper {
 	}
 
 	public TwoDimensionalKDE(ArrayList<XYPoint> points) {
+		this(points, DEFAULT_RESULTION);
+	}
+	
+	public TwoDimensionalKDE(ArrayList<XYPoint> points, int resolution) {
+		this.resolution=resolution;
 		// first calculate ranges
 		float minX=Float.MAX_VALUE;
 		float minY=Float.MAX_VALUE;
