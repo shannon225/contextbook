@@ -80,15 +80,20 @@ public class PeptideUtils {
 		return getSequence(aas);
 	}
 	
+	/**
+	 * keeps termini in place
+	 * @param aas
+	 * @param enzyme
+	 */
 	public static void reverse(String[] aas, DigestionEnzyme enzyme) {
 		int start=0;
-		if (enzyme.isTargetPostSite(aas[start].charAt(0))) {
+		//if (enzyme.isTargetPostSite(aas[start].charAt(0))) {
 			start++;
-		}
+		//}
 		int stop=aas.length-1;
-		if (enzyme.isTargetPreSite(aas[stop].charAt(0))) {
+		//if (enzyme.isTargetPreSite(aas[stop].charAt(0))) {
 			stop--;
-		}
+		//}
 		
 		while (start<=stop) {
 			String c=aas[start];
@@ -112,7 +117,7 @@ public class PeptideUtils {
 	}
 
 	/**
-	 * generates reliable random shuffle
+	 * keeps termini in place, generates reliable random shuffle
 	 * @param peptide
 	 * @param enzyme
 	 * @return
@@ -125,13 +130,13 @@ public class PeptideUtils {
 	
 	public static void shuffle(String[] aas, int shuffleSeed, DigestionEnzyme enzyme) {
 		int start=0;
-		if (enzyme.isTargetPostSite(aas[start].charAt(0))) {
+		//if (enzyme.isTargetPostSite(aas[start].charAt(0))) {
 			start++;
-		}
+		//}
 		int stop=aas.length-1;
-		if (enzyme.isTargetPreSite(aas[stop].charAt(0))) {
+		//if (enzyme.isTargetPreSite(aas[stop].charAt(0))) {
 			stop--;
-		}
+		//}
 		int diff=(stop)-start;
 		
 		// String.hashCode() is cross-platform consistent
