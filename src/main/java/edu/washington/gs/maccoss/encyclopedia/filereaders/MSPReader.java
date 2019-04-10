@@ -145,7 +145,15 @@ public class MSPReader {
 						Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
 						HashSet<String> accessions=new HashSet<String>();
 						if (accession!=null) accessions.add(accession);
+						
+						if (retentionTime==0.0f) Logger.errorLine("MSP parsing error: expected to find retention time for "+peptideModSeq+" but it was missing."); 
+						if (precursorMZ==0.0) Logger.errorLine("MSP parsing error: expected to find precursor M/Z for "+peptideModSeq+" but it was missing."); 
+						if (precursorCharge==(byte)0) Logger.errorLine("MSP parsing error: expected to find charge for "+peptideModSeq+" but it was missing."); 
 						LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y, aaConstants);
+						retentionTime=0.0f;
+						precursorMZ=0.0;
+						precursorCharge=0;
+						
 						entryList.add(entry);
 						if (entryList.size()%10000==0) {
 							Logger.logLine("Read "+entryList.size()+" entries...");
@@ -166,7 +174,15 @@ public class MSPReader {
 								Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
 								HashSet<String> accessions=new HashSet<String>();
 								if (accession!=null) accessions.add(accession);
+								
+								if (retentionTime==0.0f) Logger.errorLine("MSP parsing error: expected to find retention time for "+peptideModSeq+" but it was missing."); 
+								if (precursorMZ==0.0) Logger.errorLine("MSP parsing error: expected to find precursor M/Z for "+peptideModSeq+" but it was missing."); 
+								if (precursorCharge==(byte)0) Logger.errorLine("MSP parsing error: expected to find charge for "+peptideModSeq+" but it was missing."); 
 								LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y, aaConstants);
+								retentionTime=0.0f;
+								precursorMZ=0.0;
+								precursorCharge=0;
+								
 								entryList.add(entry);
 								if (entryList.size()%10000==0) {
 									Logger.logLine("Read "+entryList.size()+" entries...");
@@ -184,9 +200,18 @@ public class MSPReader {
 					}
 				} else if (eachline.startsWith("FullName: ")) {
 					fullname=eachline.substring(10);
+				} else if (eachline.startsWith("Charge: ")) {
+					precursorCharge=Byte.parseByte(eachline.substring(8));
+				} else if (eachline.startsWith("PrecursorMZ: ")) {
+					precursorMZ=Double.parseDouble(eachline.substring(13));
+				} else if (eachline.startsWith("RetentionTimeMins: ")) {
+					retentionTime=Float.parseFloat(eachline.substring(19))*60f;
 				} else if (eachline.startsWith("Comment: ")) {
 					HashMap<String, String> map=split(eachline);
-					precursorMZ=Double.parseDouble(map.get("Parent"));
+					String precursorMZString = map.get("Parent");
+					if (precursorMZString!=null) {
+						precursorMZ=Double.parseDouble(precursorMZString);
+					}
 					String scoreString=map.get("Unassigned");
 					
 					//Issue 90: If the score is missing, just write "0".
@@ -236,7 +261,7 @@ public class MSPReader {
 					//or attached to the peptide sequence itself e.g. PEPTIDER+2
 					if (map.containsKey("Charge")) {
 						precursorCharge = Byte.parseByte(map.get("Charge"));
-					} else {
+					} else if (precursorCharge!=(byte)0) {
 						String substring = fullname.substring(fullname.lastIndexOf('/')+1);
 						if (substring.indexOf(' ')>0) substring=substring.substring(0, substring.indexOf(' '));
 						precursorCharge=Byte.parseByte(substring);
@@ -248,17 +273,21 @@ public class MSPReader {
 					if (modCount>0) {
 						TIntDoubleHashMap modMap=new TIntDoubleHashMap();
 						while (st.hasMoreTokens()) {
-							StringTokenizer st2=new StringTokenizer(st.nextToken(), ",");
-							int index=Integer.parseInt(st2.nextToken());
-							char aa=st2.nextToken().charAt(0);
-							String mod=st2.nextToken();
-							double mass=getMass(aa, mod);
-							
-							if (modMap.contains(index)) {
-								// shouldn't happen, but just in case
-								modMap.put(index, modMap.get(index)+mass);
-							} else {
-								modMap.put(index, mass);
+							String modString=st.nextToken();
+							StringTokenizer st2=new StringTokenizer(modString, ",");
+							System.err.println(modString);
+							if (st2.countTokens()>2) {
+								int index=Integer.parseInt(st2.nextToken());
+								char aa=st2.nextToken().charAt(0);
+								String mod=st2.nextToken().trim();
+								double mass=getMass(aa, mod);
+								
+								if (modMap.contains(index)) {
+									// shouldn't happen, but just in case
+									modMap.put(index, modMap.get(index)+mass);
+								} else {
+									modMap.put(index, mass);
+								}
 							}
 						}
 						
@@ -288,7 +317,7 @@ public class MSPReader {
 							rtString=rtString.substring(0, rtString.indexOf(','));
 						}
 						retentionTime=Float.parseFloat(rtString);
-					} else {
+					} else if (retentionTime==0.0f) {
 						retentionTime=(float)SSRCalc.getHydrophobicity(peptideModSeq);
 					}
 				}
@@ -297,7 +326,15 @@ public class MSPReader {
 				Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
 				HashSet<String> accessions=new HashSet<String>();
 				if (accession!=null) accessions.add(accession);
+				
+				if (retentionTime==0.0f) Logger.errorLine("MSP parsing error: expected to find retention time for "+peptideModSeq+" but it was missing."); 
+				if (precursorMZ==0.0) Logger.errorLine("MSP parsing error: expected to find precursor M/Z for "+peptideModSeq+" but it was missing."); 
+				if (precursorCharge==(byte)0) Logger.errorLine("MSP parsing error: expected to find charge for "+peptideModSeq+" but it was missing."); 
 				LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y, aaConstants);
+				retentionTime=0.0f;
+				precursorMZ=0.0;
+				precursorCharge=0;
+				
 				entryList.add(entry);
 			}
 			return entryList;
@@ -416,6 +453,8 @@ public class MSPReader {
 			return 39.994915; // +57,-17
 		} else if ("Acetyl".equalsIgnoreCase(mod)) {
 			return 42.010565;
+		} else if ("Deamidated".equalsIgnoreCase(mod)) {
+			return 0.984016;
 		}
 		throw new EncyclopediaException("Unexpected modification ["+mod+"] on ["+aa+"]");
 	}

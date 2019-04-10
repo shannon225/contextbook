@@ -4,6 +4,7 @@ encyclopedia-0.8.1-SNAPSHOT
  - Feature: added support for converting Spectronaut libraries
  - Feature: added metadata to elib export indicating if RT alignment was performed
  - Feature: added command-line options in Walnut GUI
+ - Feature: fixed parsing of MSP files from Progenesis
 
 encyclopedia-0.8.1
  - Feature: new Window Scheme Wizard for setting up instruments in Help Menu
