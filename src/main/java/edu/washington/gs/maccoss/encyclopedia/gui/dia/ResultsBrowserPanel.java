@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -141,6 +143,24 @@ public class ResultsBrowserPanel extends JPanel {
 		};
 		rowSorter=new TableRowSorter<TableModel>(table.getModel());
 		table.setRowSorter(rowSorter);
+		table.addKeyListener(new KeyListener() {
+			@Override
+			public void keyTyped(KeyEvent e) {
+			}
+			@Override
+			public void keyReleased(KeyEvent e) {
+			}
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyChar()=='c'&&e.getModifiers()==5) {
+					int[] selection=table.getSelectedRows();
+					if (selection.length<=0) return;
+					
+					LibraryEntry entry=model.getSelectedRow(table.convertRowIndexToModel(selection[0]));
+					System.out.println(entry.toObjectCreatorString());
+				}
+			}
+		});
 
 		jtfFilter=new JTextField();
 		jtfFilter.getDocument().addDocumentListener(new DocumentListener() {

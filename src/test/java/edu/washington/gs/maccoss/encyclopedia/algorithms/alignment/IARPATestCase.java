@@ -1,27 +1,26 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
 import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.zip.DataFormatException;
+import java.util.Arrays;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
-import gnu.trove.map.hash.TObjectFloatHashMap;
-import gnu.trove.procedure.TObjectFloatProcedure;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
 public class IARPATestCase {
-	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
+	private static final PecanSearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 	
 	private static final File[] files=new File[] {
 			new File("/Users/searleb/Documents/iarpa/individuals/localized_individual_results/XXX_2019_0304_RJ_11_1.dia.elib"),
@@ -65,77 +64,25 @@ public class IARPATestCase {
 	};
 
 	public static void main(String[] args) throws Exception {
-		File userFile = new File("/Users/searleb/Documents/iarpa/individuals/localized_individual_results/library/clib.elib");
-		TObjectFloatHashMap<String> narrow = getRTs(userFile);
+		XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(PARAMETERS);
 		
-		HashSet<String> allPeptides=new HashSet<>();
-		HashMap<File, TObjectFloatHashMap<String>> alignments=new HashMap<>();
-		for (File f : files) {
-			TObjectFloatHashMap<String> alignment = getAlignment(f, narrow);
-			alignments.put(f, alignment);
-			allPeptides.addAll(alignment.keySet());
-		}
+		File fastaFile=new File("/Users/searleb/Documents/iarpa/individuals/localized_individual_results/IARPA_var_plus_fasta_20190325.fasta");
+		File referenceFile = new File("/Users/searleb/Documents/iarpa/individuals/localized_individual_results/library/clib.elib");
+		LibraryFile reference=new LibraryFile();
+		reference.openFile(referenceFile);
+		File globalPercolatorOutputFile=new File("/Users/searleb/Documents/iarpa/individuals/localized_individual_results/2019_quant_reports_concatenated_results.txt");
+		File[] sampleFiles=files;//Arrays.copyOfRange(files, 0, 3); // truncate to 3 files
 
-		System.out.print("peptide");
-		for (File f : files) {
-			System.out.print("\t"+f.getName());			
-		}
-		System.out.println();
-		
-		for (String peptide : allPeptides) {
-			System.out.print(peptide);
-			for (File f : files) {
-				System.out.print("\t");
-				
-				float alignedRT=alignments.get(f).get(peptide);
-				System.out.print(alignedRT);
-			}
-			System.out.println();
-		}
-	}
+		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorOutputFile, PARAMETERS, false);
 
-	private static TObjectFloatHashMap<String> getAlignment(File f, TObjectFloatHashMap<String> narrow)
-			throws IOException, SQLException, DataFormatException {
-		TObjectFloatHashMap<String> wide = getRTs(f);
-		
-		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
-		
-		wide.forEachEntry(new TObjectFloatProcedure<String>() {
-			@Override
-			public boolean execute(String a, float b) {
-				float alt=narrow.get(a);
-				if (narrow.getNoEntryValue()!=alt) {
-					// narrow first, then wide
-					points.add(new XYPoint(alt, b));
-				}
-				return true;
-			}
-		});
-		
-		RetentionTimeAlignmentInterface alignment=RetentionTimeFilter.getFilter(points, "narrow", f.getName(), 10000);
-		
-		TObjectFloatHashMap<String> aligned = new TObjectFloatHashMap<>(); 
-		wide.forEachEntry(new TObjectFloatProcedure<String>() {
-			@Override
-			public boolean execute(String a, float b) {
-				float alt=alignment.getXValue(b);
-				aligned.put(a, alt);
-				return true;
-			}
-		});
-		return aligned;
-	}
-
-	private static TObjectFloatHashMap<String> getRTs(File userFile)
-			throws IOException, SQLException, DataFormatException {
-		LibraryFile lf=new LibraryFile();
-		lf.openFile(userFile);
-		
-		ArrayList<LibraryEntry> entries=lf.getAllEntries(false, PARAMETERS.getAAConstants());
-		TObjectFloatHashMap<String> rtInSec=new TObjectFloatHashMap<>();
-		for (LibraryEntry entry : entries) {
-			rtInSec.put(entry.getPeptideModSeq(), entry.getRetentionTime());
+		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
+		for (File file : sampleFiles) {
+			String absolutePath = file.getAbsolutePath();
+			File dia=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))); // file names are lose extensions
+			XCorDIAJobData job=new XCorDIAJobData(Optional.empty(), dia, fastaFile, factory);
+			jobs.add(job);
 		}
-		return rtInSec;
+		
+		ReferencePeakIntegrator.integrateAllPeptides(Optional.of(globalPercolatorOutputFile), reference, jobs, passingPeptides.x, PARAMETERS, new EmptyProgressIndicator());
 	}
 }

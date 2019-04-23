@@ -20,4 +20,8 @@ public class ChromatogramLibraryEntry extends LibraryEntry implements Chromatogr
 	public float[] getMedianChromatogram() {
 		return medianChromatogram;
 	}
+	
+	public float getDurationInSec() {
+		return range.getRange();
+	}
 }

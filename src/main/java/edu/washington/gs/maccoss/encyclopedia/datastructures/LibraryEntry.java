@@ -156,9 +156,9 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 			if (i>0) sb.append(", ");
 			sb.append(correlationArray[i]+"f");
 		}
-		sb.append("};");
+		sb.append("};\n");
 		
-		sb.append("new LibraryEntry(\""+source+"\", new HashSet<String>(), "+spectrumIndex+", "+precursorMZ+", (byte)"+precursorCharge+", \""+peptideModSeq+"\", "+copies+", "+retentionTime+"f, "+score+"f, massArray, intensityArray, correlationArray);");
+		sb.append("LibraryEntry "+getPeptideSeq()+"=new LibraryEntry(\""+source+"\", new HashSet<String>(), "+spectrumIndex+", "+precursorMZ+", (byte)"+precursorCharge+", \""+peptideModSeq+"\", "+copies+", "+retentionTime+"f, "+score+"f, massArray, intensityArray, correlationArray, aaConstants);");
 		return sb.toString();
 	}
 	

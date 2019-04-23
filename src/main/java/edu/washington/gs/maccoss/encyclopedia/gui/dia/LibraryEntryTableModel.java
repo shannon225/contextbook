@@ -71,5 +71,8 @@ public class LibraryEntryTableModel extends AbstractTableModel {
 		return null;
 	}
 	
-	
+	public String toObjectString(int rowIndex) {
+		LibraryEntry entry=getSelectedRow(rowIndex);
+		return entry.toObjectCreatorString();
+	}
 }
