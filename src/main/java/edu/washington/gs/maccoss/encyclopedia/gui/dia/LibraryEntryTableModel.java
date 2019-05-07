@@ -10,6 +10,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 public class LibraryEntryTableModel extends AbstractTableModel {
 	private static final long serialVersionUID=1L;
 	
+	public final int ticColumnIndex=6;
+	
 	private final String[] columns=new String[] {"#", "Precursor M/Z", "Charge", "Peptide", "Protein", "Retention Time", "TIC", "Score"};
 
 	ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();

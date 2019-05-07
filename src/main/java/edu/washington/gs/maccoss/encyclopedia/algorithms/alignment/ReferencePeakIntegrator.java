@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -36,14 +35,15 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.LimitedQueue;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 import gnu.trove.map.hash.TObjectFloatHashMap;
@@ -65,9 +65,10 @@ public class ReferencePeakIntegrator {
 		this.params=params;
 	}
 	
-	public static void integrateAllPeptides(Optional<File> saveFileSeed, LibraryInterface reference, List<? extends SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params, ProgressIndicator progress) {
+	public static void integrateAllPeptides(File fileToWrite, LibraryInterface reference, List<? extends SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params, ProgressIndicator progress) {
 		ProgressIndicator subProgress=new SubProgressIndicator(progress, 0.1f);
 		ReferencePeakIntegrator integrator;
+
 		try {
 			integrator=buildIntegrator(reference, jobs, passingPeptides, params, subProgress);
 		} catch (IOException ioe) {
@@ -79,77 +80,89 @@ public class ReferencePeakIntegrator {
 		}
 		
 		HashMap<String, RelativePeakIntensityMatrix> matricies=new HashMap<>();
-
-		ArrayList<String> keys=new ArrayList<>();
-		for (SearchJobData job : jobs) {
-			String sampleName=job.getDiaFile().getName();
-			sampleName=sampleName.substring(0, sampleName.lastIndexOf('.')); // file names are lose extensions
-			keys.add(sampleName);
-			try {
-				ArrayList<IntegratedLibraryEntry> results=integrator.integratePeptides(job);
-				for (IntegratedLibraryEntry entry : results) {
-					RelativePeakIntensityMatrix matrix=matricies.get(entry.getPeptideModSeq());
-					if (matrix==null) {
-						LibraryEntry target=integrator.peaksByPeptide.get(entry.getPeptideModSeq());
-						matrix=new RelativePeakIntensityMatrix(params.getFragmentTolerance(), Optional.of(target));
-						matricies.put(entry.getPeptideModSeq(), matrix);
-					}
-					matrix.addPeak(sampleName, entry);
-				}
-				
-				progress.update("Finished processing "+job.getDiaFile().getName(), 0.9f/jobs.size());
-				Logger.logLine("Finished processing "+job.getDiaFile().getName()+", found "+results.size()+" peptides.");
-				
-			} catch (InterruptedException ie) {
-				throw new EncyclopediaException("error using integrator on ["+job.getDiaFile().getName()+"]", ie);
-			} catch (IOException ioe) {
-				throw new EncyclopediaException("error using integrator on ["+job.getDiaFile().getName()+"]", ioe);
-			} catch (SQLException sqle) {
-				throw new EncyclopediaException("error using integrator on ["+job.getDiaFile().getName()+"]", sqle);
-			} catch (DataFormatException dfe) {
-				throw new EncyclopediaException("error using integrator on ["+job.getDiaFile().getName()+"]", dfe);
-			}
-		}
-
-		if (saveFileSeed.isPresent()) {
-			String saveFilePrefix=saveFileSeed.get().getAbsolutePath();
-			File f=new File(saveFilePrefix+".pepquant.txt");
-			try {
-				PrintWriter writer=new PrintWriter(f, "UTF-8");
-				
-				Collections.sort(keys);
-				StringBuilder sb=new StringBuilder("peptide\tnumPeaks");
-				for (String key : keys) {
-					sb.append("\t");
-					sb.append(key);
-				}
-				writer.println(sb);
-				
-				ArrayList<String> sortedPeptides=new ArrayList<>(matricies.keySet());
-				Collections.sort(sortedPeptides);
-				for (String peptideModSeq : sortedPeptides) {
-					RelativePeakIntensityMatrix matrix=matricies.get(peptideModSeq);
-					double[] nBestPeaks=matrix.pickNBestPeaks(params.getNumberOfQuantitativePeaks(), params.getMinNumOfQuantitativePeaks());
 		
-					if (nBestPeaks.length>=params.getMinNumOfQuantitativePeaks()&&nBestPeaks.length>0) {
-						float[] intensities=matrix.integratePeptides(nBestPeaks, keys);
-		
-						sb.setLength(0);
-						sb.append(peptideModSeq);
-						sb.append("\t");
-						sb.append(nBestPeaks.length);
-						
-						for (int i = 0; i < intensities.length; i++) {
-							sb.append("\t");
-							sb.append(intensities[i]);
+
+		try {
+			LibraryFile elib=new LibraryFile();
+			elib.openFile();
+			elib.dropIndices();
+	
+			ArrayList<String> keys=new ArrayList<>();
+			for (SearchJobData job : jobs) {
+				String sampleName=job.getDiaFile().getName();
+				sampleName=sampleName.substring(0, sampleName.lastIndexOf('.')); // file names are lose extensions
+				keys.add(sampleName);
+				try {
+					ArrayList<IntegratedLibraryEntry> results=integrator.integratePeptides(job);
+					elib.addIntegratedEntries(results, Optional.empty(), Optional.empty(), params.getAAConstants());
+					for (IntegratedLibraryEntry entry : results) {
+						RelativePeakIntensityMatrix matrix=matricies.get(entry.getPeptideModSeq());
+						if (matrix==null) {
+							LibraryEntry target=integrator.peaksByPeptide.get(entry.getPeptideModSeq());
+							matrix=new RelativePeakIntensityMatrix(params.getFragmentTolerance(), Optional.of(target));
+							matricies.put(entry.getPeptideModSeq(), matrix);
 						}
-						writer.println(sb);
+						matrix.addPeak(sampleName, entry);
 					}
+					
+					progress.update("Finished processing "+job.getDiaFile().getName(), 0.9f/jobs.size());
+					Logger.logLine("Finished processing "+job.getDiaFile().getName()+", found "+results.size()+" peptides.");
+					
+				} catch (InterruptedException ie) {
+					throw new EncyclopediaException("error using integrator on ["+job.getDiaFile().getName()+"]", ie);
+				} catch (IOException ioe) {
+					throw new EncyclopediaException("error using integrator on ["+job.getDiaFile().getName()+"]", ioe);
+				} catch (SQLException sqle) {
+					throw new EncyclopediaException("error using integrator on ["+job.getDiaFile().getName()+"]", sqle);
+				} catch (DataFormatException dfe) {
+					throw new EncyclopediaException("error using integrator on ["+job.getDiaFile().getName()+"]", dfe);
 				}
-				writer.close();
-			} catch (IOException ioe) {
-				throw new EncyclopediaException("error writing integrator data!", ioe);
 			}
+			
+			elib.addMetadata(params.toParameterMap());
+			elib.setSources(jobs);
+
+			elib.createIndices();
+			elib.saveAsFile(fileToWrite);
+		
+			String saveFilePrefix=fileToWrite.getAbsolutePath();
+			File f=new File(saveFilePrefix+".pepquant.txt");
+			PrintWriter writer=new PrintWriter(f, "UTF-8");
+			
+			Collections.sort(keys);
+			StringBuilder sb=new StringBuilder("peptide\tnumPeaks");
+			for (String key : keys) {
+				sb.append("\t");
+				sb.append(key);
+			}
+			writer.println(sb);
+			
+			ArrayList<String> sortedPeptides=new ArrayList<>(matricies.keySet());
+			Collections.sort(sortedPeptides);
+			for (String peptideModSeq : sortedPeptides) {
+				RelativePeakIntensityMatrix matrix=matricies.get(peptideModSeq);
+				double[] nBestPeaks=matrix.pickNBestPeaks(params.getNumberOfQuantitativePeaks(), params.getMinNumOfQuantitativePeaks());
+	
+				if (nBestPeaks.length>=params.getMinNumOfQuantitativePeaks()&&nBestPeaks.length>0) {
+					float[] intensities=matrix.integratePeptides(nBestPeaks, keys);
+	
+					sb.setLength(0);
+					sb.append(peptideModSeq);
+					sb.append("\t");
+					sb.append(nBestPeaks.length);
+					
+					for (int i = 0; i < intensities.length; i++) {
+						sb.append("\t");
+						sb.append(intensities[i]);
+					}
+					writer.println(sb);
+				}
+			}
+			writer.close();
+		} catch (IOException ioe) {
+			throw new EncyclopediaException("error writing integrator data!", ioe);
+		} catch (SQLException sqle) {
+			throw new EncyclopediaException("error writing integrator data!", sqle);
 		}
 	}
 	
@@ -166,9 +179,12 @@ public class ReferencePeakIntegrator {
 			ranges.add(range);
 		}
 		Collections.sort(ranges);
+		
+		ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("REFERENCE_PEAK_INTEGRATOR-%d").setDaemon(true).build();
+		LimitedQueue<Runnable> workQueue=new LimitedQueue<Runnable>(10000);
+		ExecutorService executor=new ThreadPoolExecutor(params.getNumberOfThreadsUsed(), params.getNumberOfThreadsUsed(), Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
 		for (Range range : ranges) {
-
 			boolean used=false;
 			float minRetentionTime=Float.MAX_VALUE;
 			float maxRetentionTime=-Float.MAX_VALUE;
@@ -188,10 +204,6 @@ public class ReferencePeakIntegrator {
 			Collections.sort(stripes);
 
 			// prepare executor for background
-			ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("STRIPE_"+range.getStart()+"to"+range.getStop()+"-%d").setDaemon(true).build();
-			LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
-			ExecutorService executor=new ThreadPoolExecutor(params.getNumberOfThreadsUsed(), params.getNumberOfThreadsUsed(), Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
-
 			for (PSMData psm : targets) {
 				if (range.contains((float)psm.getPrecursorMZ())) {
 					// convert RTs back to this sample
@@ -199,11 +211,10 @@ public class ReferencePeakIntegrator {
 					executor.submit(new PeptideQuantExtractorTask(filename, rtCorrected, Optional.empty(), Optional.empty(), stripes, params, savedEntries, false));
 				}
 			}
-
-			executor.shutdown();
-			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-			
 		}
+
+		executor.shutdown();
+		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
 		ArrayList<IntegratedLibraryEntry> entryList=new ArrayList<IntegratedLibraryEntry>();
 		for (IntegratedLibraryEntry entry : savedEntries) {

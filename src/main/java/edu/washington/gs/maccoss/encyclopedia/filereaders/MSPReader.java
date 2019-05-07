@@ -275,7 +275,6 @@ public class MSPReader {
 						while (st.hasMoreTokens()) {
 							String modString=st.nextToken();
 							StringTokenizer st2=new StringTokenizer(modString, ",");
-							System.err.println(modString);
 							if (st2.countTokens()>2) {
 								int index=Integer.parseInt(st2.nextToken());
 								char aa=st2.nextToken().charAt(0);

@@ -129,8 +129,11 @@ public class FastaReaderTest extends TestCase {
 	public static void main(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
-		File f=new File("/Users/bsearle/Documents/iarpa/2018_1203/10pFDR_DB/IARPA_20181214_10_pepFDR.fasta");
-		PrintWriter writer=new PrintWriter("/Users/bsearle/Documents/iarpa/2018_1203/10pFDR_DB/IARPA_20181214_10_pepFDR.csv");
+		File f=new File("/Users/bsearle/Documents/prosit/Pfalciparum/PlasmoDB-43_Pfalciparum3D7_AnnotatedProteins_042419.fasta");
+		//File f=new File("/Users/bsearle/Documents/prosit/hela/uniprot_human_25apr2019.fasta");
+
+		PrintWriter writer=new PrintWriter("/Users/bsearle/Documents/prosit/Pfalciparum/43_Pfalciparum3D7_AnnotatedProteins_042419.csv");
+		//PrintWriter writer=new PrintWriter("/Users/bsearle/Documents/prosit/hela/uniprot_human_25apr2019.csv");
 		
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
 		AminoAcidConstants constants=new AminoAcidConstants();
@@ -163,10 +166,11 @@ public class FastaReaderTest extends TestCase {
 		for (int i=0; i<allPeptides.length; i++) {
 			int charge=i+2;
 			for (String string : allPeptides[i]) {
-				writer.println(string+","+convertNCE(27f, (byte)charge, (byte)2)+","+(charge));
+				writer.println(string+","+convertNCE(30f, (byte)charge, (byte)3)+","+(charge));
 			}
 		}
 		writer.close();
+		System.out.println("Finished!");
 	}
 	
 	// http://proteomicsnews.blogspot.com/2014/06/normalized-collision-energy-calculation.html

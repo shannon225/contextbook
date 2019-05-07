@@ -29,6 +29,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
@@ -141,6 +142,10 @@ public class ResultsBrowserPanel extends JPanel {
 				return super.getValueAt(row, column);
 			}
 		};
+
+	    TableColumn col = table.getColumnModel().getColumn(model.ticColumnIndex);
+	    col.setCellRenderer(new TICTableCellRenderer());
+	    
 		rowSorter=new TableRowSorter<TableModel>(table.getModel());
 		table.setRowSorter(rowSorter);
 		table.addKeyListener(new KeyListener() {

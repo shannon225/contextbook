@@ -108,7 +108,6 @@ public class MultiResultsBrowserPanel extends JPanel {
 
 		peptideModel=new MultiPeptideResultsTableModel();
 		peptideTable=new JTable(peptideModel) {
-			private static final long serialVersionUID=1L;
 
 			@Override
 			public Object getValueAt(int row, int column) {
