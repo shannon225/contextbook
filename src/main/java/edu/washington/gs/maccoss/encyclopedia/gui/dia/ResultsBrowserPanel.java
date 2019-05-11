@@ -318,7 +318,13 @@ public class ResultsBrowserPanel extends JPanel {
 			split.setLeftComponent(new JLabel("Select a peptide!"));
 			return;
 		} else if (dia==null) {
-			dataSplit.setLeftComponent(Charter.getChart(new AnnotatedLibraryEntry(entry, parameters)));
+			ChartPanel chart = Charter.getChart(new AnnotatedLibraryEntry(entry, parameters));
+			ChartPanel decoyChart = Charter.getChart(new AnnotatedLibraryEntry(entry.getDecoy(parameters), parameters));
+			JTabbedPane tabs=new JTabbedPane();
+			tabs.addTab("Target", chart);
+			tabs.addTab("Decoy", decoyChart);
+			
+			dataSplit.setLeftComponent(tabs);
 			dataSplit.setRightComponent(new FragmentationTable(entry, entry.getPeptideModSeq(), parameters));
 			split.setRightComponent(dataSplit);
 		} else {

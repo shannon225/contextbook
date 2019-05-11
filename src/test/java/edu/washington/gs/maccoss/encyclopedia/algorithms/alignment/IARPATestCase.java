@@ -2,6 +2,9 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
@@ -70,9 +73,47 @@ public class IARPATestCase {
 		LibraryFile reference=new LibraryFile();
 		reference.openFile(referenceFile);
 		File globalPercolatorOutputFile=new File("/Volumes/searle_ssd/localized_individual_results/2019_quant_reports_concatenated_results.txt");
-		File[] sampleFiles=files;//Arrays.copyOfRange(files, 0, 3); // truncate to 3 files
+		File[] sampleFiles=files;
 
-		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorOutputFile, PARAMETERS, false);
+		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorOutputFile, 0.1f, PARAMETERS.getAAConstants(), false);
+		
+		ArrayList<String> peptideList = new ArrayList<String>(Arrays.asList(new String[] { "NTNIAQK", "AEAEALYQTK", "ELQNAHNGVNQASK", "FGQGVHHAAGQAGNEAGR",
+				"LVWEDTLDK", "VSEALGQGTR", "YFSTTEDYDHEITGLR", "YTQTFTLHANPAVTYIYNWAYGFGWAATIILIGCAFFFCCLPNYEDDLLGNAK",
+				"QVPGFGVADALGNR", "FDAPPEAVAAK", "HGLVATHMLTVR", "AIGGGLSSVGGGSSTIK", "SWNGSVEILK", "DILTIDIGR",
+				"GSGLGAGQGSNGASVK", "GETVSGGNFHGEYPAK", "FPSVSLQEASSFFQR",
+				"AGGSYGFGGAGSGFGFGGGAGIGFGLGGGAGLAGGFGGPGFPVCPPGGIQEVTVNQSLLTPLNLQIDPAIQR", "WELLQQMNVGTR", "YQELQITAGR",
+				"EAGQFGHDIHHTAGQAGK", "QGSSAGSSSSYGQHGSGSR", "GQHSSGSGQSPGHGQR", "YATTAYMPSEEINLVVK", "ELHPVLK", "GILIDTSR",
+				"HSQSGQGQSAGPR", "SALSGHLETVILGLLK", "GTDECAIESIAVAATPIPK", "YGQHGSGSR", "SISVSVAGGALLGR", "DLEAHIDSANK",
+				"DVTVLQNTDGNNNEAWAK", "FQIATVTEK", "AEGPEVDVNLPK", "LISEVDSDGDGEISFQEFLTAAK", "VQYDLQK", "GR",
+				"LISEVDSDGDGEISFQEFLTAAK", "EELGHLQNDMTSLENDK", "IMQVVDEK", "AASSQTPTMCTTTVTVK", "GVALSNVIHK", "ALETVQER",
+				"HSASQEGQDTIR", "QGSSAGSSSSYGQHGSGSR", "EWSTFAVGPGHCLQLHDR", "QQSHQESTR", "VPVDVAYR", "CLDLGSIIAEVR",
+				"VLNDGSVYTAR", "EQLR", "PEPCISLEPR", "LDPEAYGSPCAR", "LVQAR", "DITDTLVAVTISEGAHHLDLR", "VMDVHDGK",
+				"HSGIGHGQASSAVR", "QNLEPLFEQYINNLR", "SSGGSSSVK", "IIPGGIYNADLNDEWVQR", "NTNFAQK", "AEAEALYQIK",
+				"ELQSAHNGVNQASK", "FGQGVHHAAAQAGNEAGR", "LVWEDTLVK", "VSDALGQGTR", "YFSTTEDYNHEITGLR", "YTQTFTLHANR",
+				"QVPGFGAADALGNR", "FDAPPEAVAAK", "HGLVATHTLTVR", "AIGGALSSVGGGSSTIK", "NWNGSVEILK", "DILTIDISR",
+				"GSGLGAGQGTNGASVK", "GETISGGNFHGEYPAK", "FPSVSLQEASSFFR", "AGGSYGFGGAR", "WELLQQMNVDTR", "YQELQIMAGR",
+				"EGGQFGHDIHHTAGQAGK", "QGSSAGSSSSYGPHGSGSR", "GQHSSGSGQSPGHDQR", "YATTAYVPSEEINLVVK", "EFHPVLK", "GILVDTSR",
+				"HSQSGQGQSAGPSTSR", "SALSGHLETLILGLLK", "GTDECAIESVAVAATPIPK", "YGQHGSGSCQSSGHGR", "SISVSVAGGALSGR",
+				"DLEAHVDSANK", "DVTVLQNTDGNNNDAWAK", "FQTATVTEK", "AEDPEVDVNLPK", "LISEVDSDGDGEISFQEFLTAAR", "VQCDLQK",
+				"GHPAVCQPQGR", "LISEVDGDGDGEISFQEFLTAAK", "EELGHLQNDLTSLENDK", "VMQVVDEK", "AASSQTPTMCTTTVTIK",
+				"GVALSNVVHK", "ALETLQER", "HSVSQEGQDTIR", "QGSSAGSSSSCGQHGSGSR", "EWSTFAVGPGHCLQLNDR", "QQSHQESAR",
+				"VPVDVACR", "CLDLGSIIAK", "VLNDGTVYTAR", "EQLQQEQALLEEIER", "PEPSISLEPR", "LDPEAYGAPCAR", "LVQAHNK",
+				"DITDSLVAVTISEGAHHLDLR", "IMDVHDGK", "HAGIGHGQASSAVR", "QNMEPLFEQYINNLR", "SSGGSSSVR",
+				"IILGGIYNADLNDEWVQR" }));
+		Collections.sort(peptideList);
+		ArrayList<PercolatorPeptide> selectedPeptides=new ArrayList<>();
+		for (PercolatorPeptide percolatorPeptide : passingPeptides.x) {
+			if (Collections.binarySearch(peptideList, percolatorPeptide.getPeptideSeq())>=0) {
+				peptideList.remove(percolatorPeptide.getPeptideSeq());
+				selectedPeptides.add(percolatorPeptide);
+				System.out.println("Found "+percolatorPeptide.getPeptideModSeq()+" at Q-value: "+percolatorPeptide.getQValue());
+			}
+		}
+		
+		System.out.println("Could not find "+peptideList.size()+" peptide(s)");
+		for (String missing : peptideList) {
+			System.out.println("Missing: "+missing);
+		}
 
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		for (File file : sampleFiles) {
@@ -82,6 +123,6 @@ public class IARPATestCase {
 			jobs.add(job);
 		}
 		
-		ReferencePeakIntegrator.integrateAllPeptides(new File("/Volumes/searle_ssd/localized_individual_results/2019_referencepeak_quant_reports.elib"), reference, jobs, passingPeptides.x, PARAMETERS, new EmptyProgressIndicator());
+		ReferencePeakIntegrator.integrateAllPeptides(new File("/Volumes/searle_ssd/localized_individual_results/limited_quant_reports.elib"), reference, jobs, selectedPeptides, PARAMETERS, new EmptyProgressIndicator());
 	}
 }
