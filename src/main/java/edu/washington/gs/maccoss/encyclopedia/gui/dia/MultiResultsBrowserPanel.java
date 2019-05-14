@@ -40,7 +40,7 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.axis.ValueAxis;
-import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.plot.CombinedRangeXYPlot;
 import org.jfree.ui.TextAnchor;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.LibraryReportExtractor;
@@ -325,7 +325,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 		boolean simplify=simplifyPlots.isSelected();
 		if (files.size()<cols) cols=files.size();
 		
-		JPanel right=new JPanel(new GridLayout(0, simplify?(cols+1):cols));
+		JPanel right=new JPanel(new GridLayout(0, simplify?1:cols));
 		right.setBackground(Color.WHITE);
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		double precursorMz=parameters.getAAConstants().getChargedMass(entry.getPeptideModSeq(), entry.getPrecursorCharge());
@@ -408,11 +408,11 @@ public class MultiResultsBrowserPanel extends JPanel {
 				globalMaxY=globalMaxY*1.05;
 			}
 
+			CombinedRangeXYPlot parent=null;
 			for (int i=0; i<sampleNames.length; i++) {
 				ArrayList<XYTrace> traces=allTraces.get(i);
 				ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", false, globalMaxY, traces.toArray(new XYTrace[traces.size()]));
 				if (simplify) {
-					
 					fragmentChart.getChart().getXYPlot().clearAnnotations();
 					
 					ValueAxis domainAxis = fragmentChart.getChart().getXYPlot().getDomainAxis();
@@ -421,26 +421,42 @@ public class MultiResultsBrowserPanel extends JPanel {
 					annotation.setTextAnchor(TextAnchor.TOP_LEFT);
 					annotation.setFont(new Font("News Gothic MT", Font.BOLD, 14));
 					fragmentChart.getChart().getXYPlot().addAnnotation(annotation);
-
-					rangeAxis.setAttributedLabel((AttributedString)null);
-					rangeAxis.setLabel(null);
-					rangeAxis.setTickLabelsVisible(false);
-					rangeAxis.setTickMarksVisible(true);
-					rangeAxis.setLabelFont(new Font("News Gothic MT", Font.PLAIN, 12));
 					
 					domainAxis.setLabel(null);
 					domainAxis.setTickLabelFont(new Font("News Gothic MT", Font.PLAIN, 12));
 					
-
 					if (i%cols==0) {
 						// ADD label the domain of the left most plots (FIXME FIND A BETTER WAY TO DO THIS)
+				        parent = new CombinedRangeXYPlot(rangeAxis);
+
+						final ChartPanel chartPanel=new ChartPanel(new JFreeChart(parent), false);
+						chartPanel.getChart().removeLegend();
+						chartPanel.getChart().setBackgroundPaint(Color.white);
+						chartPanel.setMinimumDrawWidth(0);
+						chartPanel.setMinimumDrawHeight(0);
+						chartPanel.setMaximumDrawWidth(Integer.MAX_VALUE);
+						chartPanel.setMaximumDrawHeight(Integer.MAX_VALUE);
+				        right.add(chartPanel);
+				        
+						rangeAxis.setLabelFont(new Font("News Gothic MT", Font.PLAIN, 12));
+					} else {
+						rangeAxis.setAttributedLabel((AttributedString)null);
+						rangeAxis.setLabel(null);
+						rangeAxis.setTickLabelsVisible(false);
+						rangeAxis.setTickMarksVisible(true);
+						rangeAxis.setLabelFont(new Font("News Gothic MT", Font.PLAIN, 12));
+						
+					}
+					
+					if (parent!=null) {
+						parent.add(fragmentChart.getChart().getXYPlot(), 1);
 					}
 				}
 				if (!simplify) {
 					fragmentChart.getChart().setTitle(sampleNames[i]);
+					right.add(fragmentChart);
 				}
 				allPanels.add(fragmentChart);
-				right.add(fragmentChart);
 			}
 	
 			split.setRightComponent(right);
