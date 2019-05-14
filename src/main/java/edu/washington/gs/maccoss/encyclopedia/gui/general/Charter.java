@@ -327,6 +327,10 @@ public class Charter {
 	
 	public static ChartPanel getBarChart(String title, String xAxis, String yAxis, String[] categories, float[] values) {
 		assert (categories.length==values.length);
+
+		final String[] clonedCategories=categories.clone();
+		final float[] clonedValues=values.clone();
+		
 		boolean displayLegend=false;
 
 		DefaultCategoryDataset dataset=new DefaultCategoryDataset();
@@ -372,6 +376,24 @@ public class Charter {
 		} else {
 			chartPanel.getChart().getLegend().setItemFont(font3);
 		}
+		System.out.println("WTH? "+values.length);
+		for (int i = 0; i < values.length; i++) {
+			System.out.println(categories[i]+"\t"+values[i]);
+		}
+		JMenuItem copyItem=new JMenuItem("Copy data values");
+		chartPanel.getPopupMenu().add(copyItem, 2);
+		copyItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				StringBuilder sb=new StringBuilder(yAxis+"\t"+xAxis+"\n");
+				for (int i = 0; i < dataset.getRowCount(); i++) {
+					sb.append(dataset.getRowKey(i)+"\t"+dataset.getValue(i, 0)+"\n");
+				}
+				StringSelection stringSelection = new StringSelection(sb.toString());
+				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+				clipboard.setContents(stringSelection, null);
+			}
+		});
 
 		chartPanel.setMinimumDrawWidth(0);
 		chartPanel.setMinimumDrawHeight(0);
@@ -631,7 +653,6 @@ public class Charter {
 							dataset.addSeries(peakSeries);
 							if (annotations[i]!=null) {
 								Color color=IonType.getColor(annotations[i].type);
-								//Color color=RandomGenerator.randomColor(annotations[i].toString().hashCode());
 								renderer.setSeriesStroke(i, IonType.getStroke(annotations[i].type));
 								renderer.setSeriesPaint(i, color);
 								
@@ -725,6 +746,24 @@ public class Charter {
 		} else {
 			chartPanel.getChart().getLegend().setItemFont(font3);
 		}
+		addCopyDataMenu(xAxis, chartPanel, traces);
+		
+		//rangeAxis.setTickUnit(new NumberTickUnit(20)); 
+		//domainAxis.setTickUnit(new NumberTickUnit(20));
+		//rangeAxis.setRange(0, 135);
+		//domainAxis.setRange(15, 135);
+
+		chartPanel.setMinimumDrawWidth(0);
+		chartPanel.setMinimumDrawHeight(0);
+		chartPanel.setMaximumDrawWidth(Integer.MAX_VALUE);
+		chartPanel.setMaximumDrawHeight(Integer.MAX_VALUE);
+
+		if (maxY>0&&divider>0) numberaxis1.setUpperBound(maxY/divider);
+		return chartPanel;
+	}
+
+	private static void addCopyDataMenu(final String xAxis, final ChartPanel chartPanel,
+			final XYTraceInterface... traces) {
 		JMenuItem copyItem=new JMenuItem("Copy data values");
 		chartPanel.getPopupMenu().add(copyItem, 2);
 		copyItem.addActionListener(new ActionListener() {
@@ -763,19 +802,6 @@ public class Charter {
 				clipboard.setContents(stringSelection, null);
 			}
 		});
-		
-		//rangeAxis.setTickUnit(new NumberTickUnit(20)); 
-		//domainAxis.setTickUnit(new NumberTickUnit(20));
-		//rangeAxis.setRange(0, 135);
-		//domainAxis.setRange(15, 135);
-
-		chartPanel.setMinimumDrawWidth(0);
-		chartPanel.setMinimumDrawHeight(0);
-		chartPanel.setMaximumDrawWidth(Integer.MAX_VALUE);
-		chartPanel.setMaximumDrawHeight(Integer.MAX_VALUE);
-
-		if (maxY>0&&divider>0) numberaxis1.setUpperBound(maxY/divider);
-		return chartPanel;
 	}
 
 }

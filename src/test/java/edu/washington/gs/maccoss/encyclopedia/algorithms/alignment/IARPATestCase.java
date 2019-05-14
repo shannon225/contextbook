@@ -22,9 +22,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
 public class IARPATestCase {
-	private static final PecanSearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
-	
-	private static final File[] files=new File[] {
+	private static final PecanSearchParameters PARAMETERS = new PecanSearchParameters(new AminoAcidConstants(),
+			FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"),
+			false, true, false);
+
+	private static final File[] files = new File[] {
 			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_11_1.dia.elib"),
 			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_12_2.dia.elib"),
 			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_13_3.dia.elib"),
@@ -62,67 +64,76 @@ public class IARPATestCase {
 			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_68_37.dia.elib"),
 			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_69_38.dia.elib"),
 			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_70_39.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_71_40.dia.elib")
-	};
+			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_71_40.dia.elib") };
 
 	public static void main(String[] args) throws Exception {
-		XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(PARAMETERS);
-		
-		File fastaFile=new File("/Volumes/searle_ssd/localized_individual_results/IARPA_var_plus_fasta_20190325.fasta");
-		File referenceFile = new File("/Volumes/searle_ssd/localized_individual_results/library/clib.elib");
-		LibraryFile reference=new LibraryFile();
-		reference.openFile(referenceFile);
-		File globalPercolatorOutputFile=new File("/Volumes/searle_ssd/localized_individual_results/2019_quant_reports_concatenated_results.txt");
-		File[] sampleFiles=files;
+		XCorDIAOneScoringFactory factory = new XCorDIAOneScoringFactory(PARAMETERS);
 
-		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(globalPercolatorOutputFile, 0.1f, PARAMETERS.getAAConstants(), false);
-		
-		ArrayList<String> peptideList = new ArrayList<String>(Arrays.asList(new String[] { "NTNIAQK", "AEAEALYQTK", "ELQNAHNGVNQASK", "FGQGVHHAAGQAGNEAGR",
-				"LVWEDTLDK", "VSEALGQGTR", "YFSTTEDYDHEITGLR", "YTQTFTLHANPAVTYIYNWAYGFGWAATIILIGCAFFFCCLPNYEDDLLGNAK",
-				"QVPGFGVADALGNR", "FDAPPEAVAAK", "HGLVATHMLTVR", "AIGGGLSSVGGGSSTIK", "SWNGSVEILK", "DILTIDIGR",
-				"GSGLGAGQGSNGASVK", "GETVSGGNFHGEYPAK", "FPSVSLQEASSFFQR",
-				"AGGSYGFGGAGSGFGFGGGAGIGFGLGGGAGLAGGFGGPGFPVCPPGGIQEVTVNQSLLTPLNLQIDPAIQR", "WELLQQMNVGTR", "YQELQITAGR",
-				"EAGQFGHDIHHTAGQAGK", "QGSSAGSSSSYGQHGSGSR", "GQHSSGSGQSPGHGQR", "YATTAYMPSEEINLVVK", "ELHPVLK", "GILIDTSR",
-				"HSQSGQGQSAGPR", "SALSGHLETVILGLLK", "GTDECAIESIAVAATPIPK", "YGQHGSGSR", "SISVSVAGGALLGR", "DLEAHIDSANK",
-				"DVTVLQNTDGNNNEAWAK", "FQIATVTEK", "AEGPEVDVNLPK", "LISEVDSDGDGEISFQEFLTAAK", "VQYDLQK", "GR",
-				"LISEVDSDGDGEISFQEFLTAAK", "EELGHLQNDMTSLENDK", "IMQVVDEK", "AASSQTPTMCTTTVTVK", "GVALSNVIHK", "ALETVQER",
-				"HSASQEGQDTIR", "QGSSAGSSSSYGQHGSGSR", "EWSTFAVGPGHCLQLHDR", "QQSHQESTR", "VPVDVAYR", "CLDLGSIIAEVR",
-				"VLNDGSVYTAR", "EQLR", "PEPCISLEPR", "LDPEAYGSPCAR", "LVQAR", "DITDTLVAVTISEGAHHLDLR", "VMDVHDGK",
-				"HSGIGHGQASSAVR", "QNLEPLFEQYINNLR", "SSGGSSSVK", "IIPGGIYNADLNDEWVQR", "NTNFAQK", "AEAEALYQIK",
-				"ELQSAHNGVNQASK", "FGQGVHHAAAQAGNEAGR", "LVWEDTLVK", "VSDALGQGTR", "YFSTTEDYNHEITGLR", "YTQTFTLHANR",
-				"QVPGFGAADALGNR", "FDAPPEAVAAK", "HGLVATHTLTVR", "AIGGALSSVGGGSSTIK", "NWNGSVEILK", "DILTIDISR",
-				"GSGLGAGQGTNGASVK", "GETISGGNFHGEYPAK", "FPSVSLQEASSFFR", "AGGSYGFGGAR", "WELLQQMNVDTR", "YQELQIMAGR",
-				"EGGQFGHDIHHTAGQAGK", "QGSSAGSSSSYGPHGSGSR", "GQHSSGSGQSPGHDQR", "YATTAYVPSEEINLVVK", "EFHPVLK", "GILVDTSR",
-				"HSQSGQGQSAGPSTSR", "SALSGHLETLILGLLK", "GTDECAIESVAVAATPIPK", "YGQHGSGSCQSSGHGR", "SISVSVAGGALSGR",
-				"DLEAHVDSANK", "DVTVLQNTDGNNNDAWAK", "FQTATVTEK", "AEDPEVDVNLPK", "LISEVDSDGDGEISFQEFLTAAR", "VQCDLQK",
-				"GHPAVCQPQGR", "LISEVDGDGDGEISFQEFLTAAK", "EELGHLQNDLTSLENDK", "VMQVVDEK", "AASSQTPTMCTTTVTIK",
-				"GVALSNVVHK", "ALETLQER", "HSVSQEGQDTIR", "QGSSAGSSSSCGQHGSGSR", "EWSTFAVGPGHCLQLNDR", "QQSHQESAR",
-				"VPVDVACR", "CLDLGSIIAK", "VLNDGTVYTAR", "EQLQQEQALLEEIER", "PEPSISLEPR", "LDPEAYGAPCAR", "LVQAHNK",
-				"DITDSLVAVTISEGAHHLDLR", "IMDVHDGK", "HAGIGHGQASSAVR", "QNMEPLFEQYINNLR", "SSGGSSSVR",
-				"IILGGIYNADLNDEWVQR" }));
+		File fastaFile = new File(
+				"/Volumes/searle_ssd/localized_individual_results/IARPA_var_plus_fasta_20190325.fasta");
+		File referenceFile = new File("/Volumes/searle_ssd/localized_individual_results/library/clib.elib");
+		LibraryFile reference = new LibraryFile();
+		reference.openFile(referenceFile);
+		File globalPercolatorOutputFile = new File(
+				"/Volumes/searle_ssd/localized_individual_results/2019_quant_reports_concatenated_results.txt");
+		File[] sampleFiles = files;
+
+		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides = PercolatorReader
+				.getPassingPeptidesFromTSV(globalPercolatorOutputFile, 0.5f, PARAMETERS.getAAConstants(), false);
+
+		ArrayList<String> peptideList = new ArrayList<String>(Arrays.asList(new String[] { "LDPEAYGSPCAR",
+				"LDPEAYGAPCAR", "YTQTFTLHANPAVTYIYNWAYGFGWAATIILIGCAFFFCCLPNYEDDLLGNAK", "YTQTFTLHANR", "VSEALGQGTR",
+				"VSDALGQGTR", "FGQGVHHAAGQAGNEAGR", "FGQGVHHAAAQAGNEAGR", "LVWEDTLDK", "LVWEDTLVK", "NTNIAQK",
+				"NTNFAQK", "YFSTTEDYDHEITGLR", "YFSTTEDYNHEITGLR", "AEAEALYQTK", "AEAEALYQIK", "ELQNAHNGVNQASK",
+				"ELQSAHNGVNQASK", "ALETVQER", "ALETLQER", "FDAPPEAVAAK", "FDAPLEAVAAK", "HGLVATHMLTVR", "HGLVATHTLTVR",
+				"AIGGGLSSVGGGSSTIK", "AIGGALSSVGGGSSTIK", "DILTIDIGR", "DILTIDISR", "SWNGSVEILK", "NWNGSVEILK",
+				"GSGLGAGQGSNGASVK", "GSGLGAGQGTNGASVK", "WELLQQMNVGTR", "WELLQQMNVDTR", "EAGQFGHDIHHTAGQAGK",
+				"EGGQFGHDIHHTAGQAGK", "YQELQITAGR", "YQELQIMAGR",
+				"AGGSYGFGGAGSGFGFGGGAGIGFGLGGGAGLAGGFGGPGFPVCPPGGIQEVTVNQSLLTPLNLQIDPAIQR", "AGGSYGFGGAR",
+				"QVPGFGVADALGNR", "QVPGFGAADALGNR", "GQHSSGSGQSPGHGQR", "GQHSSGSGQSPGHDQR", "HSASQDGQDTIR",
+				"HSAYQDGQDTIR", "QGSSAGSSSSYGQHGSGSR", "QGSSAGSSSSYGPHGSGSR", "GILIDTSR", "GILVDTSR", "HSQSGQGQSAGPR",
+				"HSQSGQGQSAGPSTSR", "SALSGHLETVILGLLK", "SALSGHLETLILGLLK", "ELHPVLK", "EFHPVLK", "YGQHGSGSR",
+				"YGQHGSGSCQSSGHGR", "GTDECAIESIAVAATPIPK", "GTDECAIESVAVAATPIPK", "VPEPCQPK", "IPEPCQPK", "DLEAHIDSANK",
+				"DLEAHVDSANK", "DVTVLQNTDGNNNEAWAK", "DVTVLQNTDGNNNDAWAK", "AEGPEVDVNLPK", "AEDPEVDVNLPK",
+				"LISEVDSDGDGEISFQEFLTAAK", "LISEVDSDGDGEISFQEFLTAAR", "VQYDLQK", "VQCDLQK", "SISVSVAGGALLGR",
+				"SISVSVAGGALSGR", "GETVSGGNFHGEYPAK", "GETISGGNFHGEYPAK", "FQIATVTEK", "FQTATVTEK",
+				"LISEVDSDGDGEISFQEFLTAAK", "LISEVDGDGDGEISFQEFLTAAK", "IMQVVDEK", "VMQVVDEK", "YATTAYMPSEEINLVVK",
+				"YATTAYVPSEEINLVVK", "GVALSNVIHK", "GVALSNVVHK", "TYLISSIPLQGAFNYK", "TYLISSIPLHGAFNYK", "HSASQEGQDTIR",
+				"HSVSQEGQDTIR", "QGSSAGSSSSYGQHGSGSR", "QGSSAGSSSSCGQHGSGSR", "EWSTFAVGPGHCLQLHDR",
+				"EWSTFAVGPGHCLQLNDR", "VPVDVAYR", "VPVDVACR", "QQSHQESTR", "QQSHQESAR", "EELGHLQNDMTSLENDK",
+				"EELGHLQNDLTSLENDK", "CLDLGSIIAEVR", "CLDLGSIIAK", "GR", "GHPAVCQPQGR", "QCADLETAIADAEQR",
+				"QCAELETAIADAEQR", "VLNDGSVYTAR", "VLNDGTVYTAR", "EQLR", "EQLQQEQALLEEIER", "PEPCISLEPR", "PEPSISLEPR",
+				"AASSQTPTMCTTTVTVK", "AASSQTPTMCTTTVTIK", "HSGIGHGQASSAVR", "HAGIGHGQASSAVR", "QGSGSGQSPGHGQR",
+				"QGSGSGQSPGHSQR", "VMDVHDGK", "IMDVHDGK", "DITDTLVAVTISEGAHHLDLR", "DITDSLVAVTISEGAHHLDLR",
+				"FPSVSLQEASSFFQR", "FPSVSLQEASSFFR", "SSGGSSSVK", "SSGGSSSVR", "QNLEPLFEQYINNLR", "QNMEPLFEQYINNLR",
+				"IIPGGIYNADLNDEWVQR", "IILGGIYNADLNDEWVQR" }));
 		Collections.sort(peptideList);
-		ArrayList<PercolatorPeptide> selectedPeptides=new ArrayList<>();
+		ArrayList<PercolatorPeptide> selectedPeptides = new ArrayList<>();
 		for (PercolatorPeptide percolatorPeptide : passingPeptides.x) {
-			if (Collections.binarySearch(peptideList, percolatorPeptide.getPeptideSeq())>=0) {
+			if (Collections.binarySearch(peptideList, percolatorPeptide.getPeptideSeq()) >= 0) {
 				peptideList.remove(percolatorPeptide.getPeptideSeq());
 				selectedPeptides.add(percolatorPeptide);
-				System.out.println("Found "+percolatorPeptide.getPeptideModSeq()+" at Q-value: "+percolatorPeptide.getQValue());
+				System.out.println("Found " + percolatorPeptide.getPeptideModSeq() + " at Q-value: "
+						+ percolatorPeptide.getQValue());
 			}
 		}
-		
-		System.out.println("Could not find "+peptideList.size()+" peptide(s)");
+
+		System.out.println("Could not find " + peptideList.size() + " peptide(s)");
 		for (String missing : peptideList) {
-			System.out.println("Missing: "+missing);
+			System.out.println("Missing: " + missing);
 		}
 
-		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
+		ArrayList<SearchJobData> jobs = new ArrayList<SearchJobData>();
 		for (File file : sampleFiles) {
 			String absolutePath = file.getAbsolutePath();
-			File dia=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))); // file names are lose extensions
-			XCorDIAJobData job=new XCorDIAJobData(Optional.empty(), dia, fastaFile, factory);
+			File dia = new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))); // file names are lose
+																							// extensions
+			XCorDIAJobData job = new XCorDIAJobData(Optional.empty(), dia, fastaFile, factory);
 			jobs.add(job);
 		}
-		
-		ReferencePeakIntegrator.integrateAllPeptides(new File("/Volumes/searle_ssd/localized_individual_results/limited_quant_reports.elib"), reference, jobs, selectedPeptides, PARAMETERS, new EmptyProgressIndicator());
+
+		ReferencePeakIntegrator.integrateAllPeptides(
+				new File("/Volumes/searle_ssd/localized_individual_results/limited_quant_reports.elib"), reference,
+				jobs, selectedPeptides, PARAMETERS, new EmptyProgressIndicator());
 	}
 }
