@@ -200,6 +200,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 		options.add(elibFileChooser);
 		options.add(new LabeledComponent("Minimum # Fragments", minimumNumberOfFragments));
 		options.add(new LabeledComponent("Number of Columns", numberOfColumns));
+		simplifyPlots.setBackground(LabeledComponent.BACKGROUND_COLOR);
 		options.add(simplifyPlots);
 		
 		JPanel tablePanel=new JPanel(new GridLayout(0, 1));
