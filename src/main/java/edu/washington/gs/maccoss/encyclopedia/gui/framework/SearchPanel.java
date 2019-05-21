@@ -411,6 +411,15 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(convertSpectronaut);
 
+		JMenuItem convertMaxquant=new JMenuItem("Convert Maxquant msms.txt to Library", convertDBIcon);
+		convertMaxquant.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertMaxQuantMSMSTXT(SearchPanel.this, getVisibleTab().getParameters());
+			}
+		});
+		convertMenu.add(convertMaxquant);
+
 		JMenuItem convertTraML=new JMenuItem("Convert TraML to Library", convertDBIcon);
 		convertTraML.addActionListener(new ActionListener() {
 			@Override
