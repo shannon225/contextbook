@@ -127,14 +127,16 @@ public class FastaReaderTest extends TestCase {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
-		//File f=new File("/Users/searleb/Documents/projects/phosphopedia/sp_iso_HUMAN_4.9.2015_UP000005640.fasta");
-		File f=new File("/Users/bsearle/Documents/prosit/Pfalciparum/PlasmoDB-43_Pfalciparum3D7_AnnotatedProteins_042419.fasta");
-		//File f=new File("/Users/bsearle/Documents/prosit/hela/uniprot_human_25apr2019.fasta");
-
-		PrintWriter writer=new PrintWriter("/Users/bsearle/Documents/prosit/Pfalciparum/43_Pfalciparum3D7_AnnotatedProteins_042419.csv");
-		//PrintWriter writer=new PrintWriter("/Users/bsearle/Documents/prosit/hela/uniprot_human_25apr2019.csv");
+		//File f=new File("/Users/bsearle/Documents/prosit/Pfalciparum/PlasmoDB-43_Pfalciparum3D7_AnnotatedProteins_042419.fasta");
+		//File f=new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta");
+		//File f=new File("/Volumes/searle_ssd/malaria/uniprot_human_25apr2019.fasta");
+		File f=new File("/Volumes/searle_ssd/malaria/PlasmoDB-43_Pfalciparum3D7_AnnotatedProteins_042419.fasta");
+		int defaultNCE = 30;
+		byte defaultCharge = (byte)3;
 		
+		PrintWriter writer=new PrintWriter(f.getAbsolutePath()+".z"+defaultCharge+"_nce"+defaultNCE+".csv");
+
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
 		AminoAcidConstants constants=new AminoAcidConstants();
 		
@@ -151,7 +153,7 @@ public class FastaReaderTest extends TestCase {
 					double pepMass=constants.getMass(seq)+MassConstants.oh2;
 					double pepChargedMass=(pepMass+MassConstants.protonMass*pepCharge)/pepCharge;
 
-					if (pepChargedMass>(400)&&pepChargedMass<(1000)) {
+					if (pepChargedMass>(396.43)&&pepChargedMass<(1002.70)) {
 						if (seq.indexOf('B')>=0||seq.indexOf('J')>=0||seq.indexOf('O')>=0||seq.indexOf('U')>=0||seq.indexOf('X')>=0||seq.indexOf('Z')>=0||seq.indexOf('*')>=0) {
 							continue;
 						} else {
@@ -166,7 +168,7 @@ public class FastaReaderTest extends TestCase {
 		for (int i=0; i<allPeptides.length; i++) {
 			int charge=i+2;
 			for (String string : allPeptides[i]) {
-				writer.println(string+","+convertNCE(30f, (byte)charge, (byte)3)+","+(charge));
+				writer.println(string+","+convertNCE(defaultNCE, (byte)charge, defaultCharge)+","+(charge));
 			}
 		}
 		writer.close();
