@@ -262,6 +262,7 @@ public class DIABrowserPanel extends JPanel {
 				for (PrecursorScan precursorScan : precursors) {
 					scans.add(precursorScan);
 					tic+=precursorScan.getTIC();
+
 					if (scanCount%increment==0) {
 						tics.add(new XYPoint(precursorScan.getScanStartTime()/60f, tic));
 						if (tic>maxTIC) {

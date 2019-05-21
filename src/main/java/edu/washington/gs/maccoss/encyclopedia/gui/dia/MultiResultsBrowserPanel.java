@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -9,6 +10,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.text.AttributedString;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +19,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 
 import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -34,6 +37,11 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.annotations.XYTextAnnotation;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.plot.CombinedRangeXYPlot;
+import org.jfree.ui.TextAnchor;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
@@ -84,6 +92,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 	private final ChartPanel barChart;
 	private final JComboBox<Integer> minimumNumberOfFragments=new JComboBox<Integer>(new Integer[] {0, 1, 2, 3, 4, 5});
 	private final JComboBox<Integer> numberOfColumns=new JComboBox<Integer>(new Integer[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+	private final JCheckBox simplifyPlots=new JCheckBox("Simplify plots");
 	
 	private final int defaultMinimumNumberOfFragmentsIndex=3;
 	private final int defaultNumberOfColumnsIndex=1;
@@ -191,6 +200,8 @@ public class MultiResultsBrowserPanel extends JPanel {
 		options.add(elibFileChooser);
 		options.add(new LabeledComponent("Minimum # Fragments", minimumNumberOfFragments));
 		options.add(new LabeledComponent("Number of Columns", numberOfColumns));
+		simplifyPlots.setBackground(LabeledComponent.BACKGROUND_COLOR);
+		options.add(simplifyPlots);
 		
 		JPanel tablePanel=new JPanel(new GridLayout(0, 1));
 		tablePanel.add(new JScrollPane(sampleTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED));
@@ -312,9 +323,11 @@ public class MultiResultsBrowserPanel extends JPanel {
 		String[] sampleNames=StringUtils.getUniquePortion(origSampleNames);
 		barChart.setChart(getBarChart(sampleNames, totalTICs).getChart());
 		int cols=(Integer)numberOfColumns.getSelectedItem();
+		boolean simplify=simplifyPlots.isSelected();
 		if (files.size()<cols) cols=files.size();
 		
-		JPanel right=new JPanel(new GridLayout(0, cols));
+		JPanel right=new JPanel(new GridLayout(0, simplify?1:cols));
+		right.setBackground(Color.WHITE);
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		double precursorMz=parameters.getAAConstants().getChargedMass(entry.getPeptideModSeq(), entry.getPrecursorCharge());
 		
@@ -396,12 +409,55 @@ public class MultiResultsBrowserPanel extends JPanel {
 				globalMaxY=globalMaxY*1.05;
 			}
 
+			CombinedRangeXYPlot parent=null;
 			for (int i=0; i<sampleNames.length; i++) {
 				ArrayList<XYTrace> traces=allTraces.get(i);
 				ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", false, globalMaxY, traces.toArray(new XYTrace[traces.size()]));
-				fragmentChart.getChart().setTitle(sampleNames[i]);
+				if (simplify) {
+					fragmentChart.getChart().getXYPlot().clearAnnotations();
+					
+					ValueAxis domainAxis = fragmentChart.getChart().getXYPlot().getDomainAxis();
+					ValueAxis rangeAxis = fragmentChart.getChart().getXYPlot().getRangeAxis();
+					XYTextAnnotation annotation = new XYTextAnnotation(sampleNames[i], domainAxis.getLowerBound(), rangeAxis.getUpperBound());
+					annotation.setTextAnchor(TextAnchor.TOP_LEFT);
+					annotation.setFont(new Font("News Gothic MT", Font.BOLD, 14));
+					fragmentChart.getChart().getXYPlot().addAnnotation(annotation);
+					
+					domainAxis.setLabel(null);
+					domainAxis.setTickLabelFont(new Font("News Gothic MT", Font.PLAIN, 12));
+					
+					if (i%cols==0) {
+						// ADD label the domain of the left most plots (FIXME FIND A BETTER WAY TO DO THIS)
+				        parent = new CombinedRangeXYPlot(rangeAxis);
+
+						final ChartPanel chartPanel=new ChartPanel(new JFreeChart(parent), false);
+						chartPanel.getChart().removeLegend();
+						chartPanel.getChart().setBackgroundPaint(Color.white);
+						chartPanel.setMinimumDrawWidth(0);
+						chartPanel.setMinimumDrawHeight(0);
+						chartPanel.setMaximumDrawWidth(Integer.MAX_VALUE);
+						chartPanel.setMaximumDrawHeight(Integer.MAX_VALUE);
+				        right.add(chartPanel);
+				        
+						rangeAxis.setLabelFont(new Font("News Gothic MT", Font.PLAIN, 12));
+					} else {
+						rangeAxis.setAttributedLabel((AttributedString)null);
+						rangeAxis.setLabel(null);
+						rangeAxis.setTickLabelsVisible(false);
+						rangeAxis.setTickMarksVisible(true);
+						rangeAxis.setLabelFont(new Font("News Gothic MT", Font.PLAIN, 12));
+						
+					}
+					
+					if (parent!=null) {
+						parent.add(fragmentChart.getChart().getXYPlot(), 1);
+					}
+				}
+				if (!simplify) {
+					fragmentChart.getChart().setTitle(sampleNames[i]);
+					right.add(fragmentChart);
+				}
 				allPanels.add(fragmentChart);
-				right.add(fragmentChart);
 			}
 	
 			split.setRightComponent(right);
