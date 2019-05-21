@@ -74,7 +74,7 @@ public class MSPReader {
 			Logger.errorLine(counts[0]+" library entries can't be linked to proteins! These entries will be dropped.");
 		}
 		Logger.logLine("Writing library file "+libraryFile.getName());
-		int batchSize=entries.size()/10;
+		int batchSize=Math.max(1, entries.size()/10);
 		int start=0;
 		int stop=batchSize;
 		while (true) {
@@ -438,6 +438,8 @@ public class MSPReader {
 			return 57.0214635;
 		} else if (aa=='M'&&"Oxidation".equalsIgnoreCase(mod)) {
 			return 	15.994915;
+		} else if (aa=='C'&&"Methylthio".equalsIgnoreCase(mod)) {
+			return 	45.987721;
 		} else if (aa=='E'&&"Pyro_glu".equalsIgnoreCase(mod)) { // note "-" vs "_" (Unimod is crazy)
 			return -18.010565;
 		} else if (aa=='Q'&&"Pyro-glu".equalsIgnoreCase(mod)) { // note "-" vs "_" (Unimod is crazy)
