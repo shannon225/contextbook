@@ -6,6 +6,7 @@ encyclopedia-0.8.2 (May 21, 2019)
  - Feature: added support for converting Spectronaut libraries
  - Feature: added metadata to elib export indicating if RT alignment was performed
  - Feature: added command-line options in Walnut GUI
+ - Feature: added ability to clear jobs in GUI
  - Feature: added Maxquant msms.txt parsing to build DDA spectrum libraries
  - Feature: added simplify GUI option to help make figures with the multi-elib browser
  - Bugfix: fixed parsing of MSP files to work with Progenesis
