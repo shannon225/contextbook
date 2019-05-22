@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -27,6 +29,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
@@ -139,8 +142,30 @@ public class ResultsBrowserPanel extends JPanel {
 				return super.getValueAt(row, column);
 			}
 		};
+
+	    TableColumn col = table.getColumnModel().getColumn(model.ticColumnIndex);
+	    col.setCellRenderer(new TICTableCellRenderer());
+	    
 		rowSorter=new TableRowSorter<TableModel>(table.getModel());
 		table.setRowSorter(rowSorter);
+		table.addKeyListener(new KeyListener() {
+			@Override
+			public void keyTyped(KeyEvent e) {
+			}
+			@Override
+			public void keyReleased(KeyEvent e) {
+			}
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyChar()=='c'&&e.getModifiers()==5) {
+					int[] selection=table.getSelectedRows();
+					if (selection.length<=0) return;
+					
+					LibraryEntry entry=model.getSelectedRow(table.convertRowIndexToModel(selection[0]));
+					System.out.println(entry.toObjectCreatorString());
+				}
+			}
+		});
 
 		jtfFilter=new JTextField();
 		jtfFilter.getDocument().addDocumentListener(new DocumentListener() {
@@ -293,7 +318,13 @@ public class ResultsBrowserPanel extends JPanel {
 			split.setLeftComponent(new JLabel("Select a peptide!"));
 			return;
 		} else if (dia==null) {
-			dataSplit.setLeftComponent(Charter.getChart(new AnnotatedLibraryEntry(entry, parameters)));
+			ChartPanel chart = Charter.getChart(new AnnotatedLibraryEntry(entry, parameters));
+			ChartPanel decoyChart = Charter.getChart(new AnnotatedLibraryEntry(entry.getDecoy(parameters), parameters));
+			JTabbedPane tabs=new JTabbedPane();
+			tabs.addTab("Target", chart);
+			tabs.addTab("Decoy", decoyChart);
+			
+			dataSplit.setLeftComponent(tabs);
 			dataSplit.setRightComponent(new FragmentationTable(entry, entry.getPeptideModSeq(), parameters));
 			split.setRightComponent(dataSplit);
 		} else {

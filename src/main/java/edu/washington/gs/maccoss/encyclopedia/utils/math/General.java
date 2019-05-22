@@ -19,6 +19,34 @@ public class General {
 		return new String(ca);
 	}
 	
+	public static float[] shuffle(float[] a) {
+		int shuffleSeed=a.length;
+		for (int i = 0; i < a.length; i++) {
+			shuffleSeed=(shuffleSeed+Float.floatToIntBits(a[i]))%2147483647;
+		}
+
+		return shuffle(a, a.length, shuffleSeed);
+	}
+
+	public static float[] shuffle(float[] a, int shuffleCount, int shuffleSeed) {
+		a=a.clone();
+		int seed=RandomGenerator.randomInt(shuffleSeed);
+		for (int i=0; i<shuffleCount; i++) {
+			seed=RandomGenerator.randomInt(seed);
+			
+			int index1=Math.abs(seed%a.length);
+			
+			seed=RandomGenerator.randomInt(seed);
+			int index2=Math.abs(seed%a.length);
+			if (index1!=index2) {
+				float c=a[index1];
+				a[index1]=a[index2];
+				a[index2]=c;
+			}
+		}
+		return a;
+	}
+	
 	public static int numberOfOccurances(String s, String target) {
 		int indexOf=s.indexOf(target);
 		int count=0;
@@ -27,6 +55,27 @@ public class General {
 			indexOf=s.indexOf(target, indexOf+target.length());
 		}
 		return count;
+	}
+
+	public static float[][] transposeMatrix(float[][] m) {
+		if (m[0].length==0) {
+			for (int i = 0; i < m.length; i++) {
+				System.out.print("[");
+				for (int j = 0; j < m[i].length; j++) {
+					if (j>0) {
+						System.out.print(", ");
+					}
+					System.out.print(m[i][j]);
+				}
+				System.out.println("]");
+			}
+			throw new ArrayIndexOutOfBoundsException(m[0].length);
+		}
+		float[][] temp = new float[m[0].length][m.length];
+		for (int i = 0; i < m.length; i++)
+			for (int j = 0; j < m[0].length; j++)
+				temp[j][i] = m[i][j];
+		return temp;
 	}
 
 	public static double[][] transposeMatrix(double[][] m) {

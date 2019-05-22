@@ -8,6 +8,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 public class LabeledComponent extends JPanel {
+	public static final Color BACKGROUND_COLOR = Color.WHITE;
 	private static final long serialVersionUID=1L;
 
 	public LabeledComponent(String label, JComponent c) {
@@ -16,7 +17,7 @@ public class LabeledComponent extends JPanel {
 		add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\">"+label+":"), BorderLayout.WEST);
 		add(c, BorderLayout.CENTER);
 		this.setOpaque(true);
-		this.setBackground(Color.WHITE);
+		this.setBackground(BACKGROUND_COLOR);
 	}
 
 }

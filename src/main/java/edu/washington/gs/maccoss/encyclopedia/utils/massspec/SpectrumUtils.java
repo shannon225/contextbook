@@ -3,10 +3,45 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 import java.util.ArrayList;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class SpectrumUtils {
+	public static Spectrum getSimpleSpectrum(String name, double precursorMz, float rtInSec, double[] mass, float[] intensity) {
+		final float tic=General.sum(intensity);
+		return new Spectrum() {
+			@Override
+			public float getTIC() {
+				return tic;
+			}
+			
+			@Override
+			public String getSpectrumName() {
+				return name;
+			}
+			
+			@Override
+			public float getScanStartTime() {
+				return rtInSec;
+			}
+			
+			@Override
+			public double getPrecursorMZ() {
+				return precursorMz;
+			}
+			
+			@Override
+			public double[] getMassArray() {
+				return mass;
+			}
+			
+			@Override
+			public float[] getIntensityArray() {
+				return intensity;
+			}
+		};
+	}
 	public static Spectrum mergeSpectra(ArrayList<Spectrum> spectra, MassTolerance tolerance) {
 		if (spectra.size()>50) {
 			return binnedMergeSpectra(spectra, 0.1f);

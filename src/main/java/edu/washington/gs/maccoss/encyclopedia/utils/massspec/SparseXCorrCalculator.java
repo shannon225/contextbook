@@ -59,7 +59,7 @@ public class SparseXCorrCalculator {
 	
 	public float score(SparseXCorrSpectrum spectrum) {
 		// divide by 1e4 (personal communication with J Eng)
-		return preprocessedSpectrum.dotProduct(spectrum)/1.0e4f;
+		return spectrum.dotProduct(preprocessedSpectrum)/1.0e4f;
 	}
 
 	static float dotProduct(float[] preprocessedSpectrum, float[] spectrum) {

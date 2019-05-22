@@ -29,4 +29,10 @@ public class SearchParametersTest extends TestCase {
 		assertEquals(-1000.0, readParams.getPrecursorOffsetPPM());
 	}
 
+	public void testEntrapmentFDR() {
+		float FDR=0.01f;
+		for (float i = 0.0f; i <= 2.05f; i+=0.1f) {
+			System.out.println(i+"\t"+SearchParameters.getEffectivePercolatorThreshold(0.01f, i)+"\t"+(FDR * (1+i)*(1-(((1+i)-1)*FDR)))+"\t"+(FDR*(1+i)));
+		}
+	}
 }

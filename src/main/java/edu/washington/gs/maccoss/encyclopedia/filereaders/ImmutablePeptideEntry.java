@@ -5,7 +5,7 @@ import java.util.Collections;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 
-public class ImmutablePeptideEntry {
+public class ImmutablePeptideEntry implements Comparable<ImmutablePeptideEntry> {
 	final String peptideModSeq;
 	final float rt;
 	final byte charge;
@@ -21,5 +21,14 @@ public class ImmutablePeptideEntry {
 		Pair<double[], float[]> peakArrays=Peak.toArrays(entry.peaks);
 		masses=peakArrays.x;
 		intensities=peakArrays.y;
+	}
+	
+	@Override
+	public int compareTo(ImmutablePeptideEntry o) {
+		if (o==null) return 1;
+		int c=this.charge-o.charge;
+		if (c!=0) return c;
+		c=this.peptideModSeq.compareTo(o.peptideModSeq);
+		return c;
 	}
 }

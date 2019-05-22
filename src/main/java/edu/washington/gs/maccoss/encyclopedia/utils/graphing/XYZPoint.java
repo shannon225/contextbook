@@ -27,7 +27,7 @@ public class XYZPoint implements PointInterface {
 	}
 
 	/**
-	 * compares on X first then on Y
+	 * compares on X first then on Y. Only try Z if other PointInterface is an XYZPoint
 	 */
 	@Override
 	public int compareTo(PointInterface o) {
@@ -36,6 +36,10 @@ public class XYZPoint implements PointInterface {
 		if (x<o.getX()) return -1;
 		if (y>o.getY()) return 1;
 		if (y<o.getY()) return -1;
+		if (o instanceof XYZPoint) {
+			if (z>((XYZPoint)o).getZ()) return 1;
+			if (z<((XYZPoint)o).getZ()) return -1;
+		}
 		return 0;
 	}
 }

@@ -277,6 +277,19 @@ public class SearchPanel extends JPanel {
 		
 		fileMenu.addSeparator();
 
+		JMenuItem clearJobs=new JMenuItem("Clear Job List");
+		clearJobs.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				clearJobs();
+			}
+		});
+		
+		clearJobs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		fileMenu.add(clearJobs);
+		
+		fileMenu.addSeparator();
+
 		JMenuItem saveELIB=new JMenuItem("Save Quant Reports ELIB", openDBIcon);
 		saveELIB.addActionListener(new ActionListener() {
 			@Override
@@ -397,6 +410,15 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		convertMenu.add(convertSpectronaut);
+
+		JMenuItem convertMaxquant=new JMenuItem("Convert Maxquant msms.txt to Library", convertDBIcon);
+		convertMaxquant.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertMaxQuantMSMSTXT(SearchPanel.this, getVisibleTab().getParameters());
+			}
+		});
+		convertMenu.add(convertMaxquant);
 
 		JMenuItem convertTraML=new JMenuItem("Convert TraML to Library", convertDBIcon);
 		convertTraML.addActionListener(new ActionListener() {
@@ -765,5 +787,9 @@ public class SearchPanel extends JPanel {
 				}
 			}
 		}
+	}
+	
+	public void clearJobs() {
+		processorTableModel.clearJobs();
 	}
 }

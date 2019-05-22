@@ -35,6 +35,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.MaxquantMSMSConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.OpenSwathTSVToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SpectronautCSVToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.TraMLToLibraryConverter;
@@ -474,6 +475,7 @@ public class SearchPanelUtilities {
 		dialog.setSize(500, 200);
 		dialog.setVisible(true);
 	}
+	
 	public static void convertSpectronaut(Component root, SearchParameters params) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		final JDialog dialog=new JDialog(frame, "Convert Spectronaut CSV to Library", true);
@@ -514,6 +516,73 @@ public class SearchPanelUtilities {
 					worker.execute();
 				} else {
 					JOptionPane.showMessageDialog(frame, "You must specify a Spectronaut CSV and a FASTA file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+				}
+			}
+		});
+		buttons.add(okButton);
+		JButton cancelButton=new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+			}
+		});
+		buttons.add(cancelButton);
+		
+		JPanel mainpane=new JPanel(new BorderLayout());
+		mainpane.add(options, BorderLayout.CENTER);
+		mainpane.add(buttons, BorderLayout.SOUTH);
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		
+		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(500, 170);
+		dialog.setVisible(true);
+	}
+
+	public static void convertMaxQuantMSMSTXT(Component root, SearchParameters params) {
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+		final JDialog dialog=new JDialog(frame, "Convert Maxquant msms.txt to Library", true);
+		
+		final FileChooserPanel csvFileChooser=new FileChooserPanel(null, "Maxquant msms.txt", new SimpleFilenameFilter("msms.txt"), true);
+		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);
+
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(csvFileChooser);
+		options.add(fastaFileChooser);
+		
+		JPanel buttons=new JPanel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JButton okButton=new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final File tsvFile=csvFileChooser.getFile();
+				final File fastaFile=fastaFileChooser.getFile();
+				
+				if (tsvFile!=null&&tsvFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
+					dialog.setVisible(false);
+					dialog.dispose();
+					
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Maxquant msms.txt File") {
+						@Override
+						protected Nothing doInBackgroundForReal() throws Exception {
+							File libraryFile=new File(tsvFile.getAbsolutePath().substring(0, tsvFile.getAbsolutePath().lastIndexOf('.'))+LibraryFile.DLIB);
+							MaxquantMSMSConverter.convertFromMSMSTSV(tsvFile, fastaFile, libraryFile, params);
+							Logger.logLine("Finished reading "+tsvFile.getName());
+							return Nothing.NOTHING;
+						}
+
+						@Override
+						protected void doneForReal(Nothing t) {
+						}
+					};
+					worker.execute();
+				} else {
+					JOptionPane.showMessageDialog(frame, "You must specify a Maxquant msms.txt and a FASTA file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
 				}
 			}
 		});

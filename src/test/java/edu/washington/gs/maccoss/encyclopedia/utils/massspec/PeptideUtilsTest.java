@@ -30,21 +30,21 @@ public class PeptideUtilsTest extends TestCase {
 	
 	public void testDecoys() {
 		HashSet<String> backgroundProteome=new HashSet<String>();
-		String seq="LACDEFQFEDCAIR";
+		String seq="LLACDEFQFEDCAIR";
 		backgroundProteome.add(seq);
 		
 		// dumb decoy method sees these as different peptides
-		assertEquals("IACDEFQFEDCALR", PeptideUtils.getDecoy(seq, backgroundProteome, PARAMETERS));
+		assertEquals("LIACDEFQFEDCALR", PeptideUtils.getDecoy(seq, backgroundProteome, PARAMETERS));
 		// but they share too many ions, so actually must shuffle
-		assertEquals("QFIDDACECEFALR", PeptideUtils.getSmartDecoy(seq, (byte)2, backgroundProteome, PARAMETERS));
+		assertEquals("LCAEFCILFAQDEDR", PeptideUtils.getSmartDecoy(seq, (byte)2, backgroundProteome, PARAMETERS));
 		
 
-		assertEquals("QFIDDACECEFALR", PeptideUtils.getSmartDecoy(seq, (byte)3, backgroundProteome, PARAMETERS));
+		assertEquals("LCAEFCILFAQDEDR", PeptideUtils.getSmartDecoy(seq, (byte)3, backgroundProteome, PARAMETERS));
 	}
 
 	public void testReverse() {
 		String s=PeptideUtils.reverse("ABC[+57]DEFGHIJK", PARAMETERS.getEnzyme(), PARAMETERS.getAAConstants());
-		assertEquals("JIHGFEDC[+57.0214635]BAK", s);
+		assertEquals("AJIHGFEDC[+57.0214635]BK", s);
 	}
 	
 	public void testShuffle() {

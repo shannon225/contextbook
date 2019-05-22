@@ -217,6 +217,10 @@ public class SearchParameters {
 	}
 
 	public float getEffectivePercolatorThreshold() {
+		return getEffectivePercolatorThreshold(percolatorThreshold, numberOfExtraDecoyLibrariesSearched);
+	}
+
+	public static float getEffectivePercolatorThreshold(float percolatorThreshold, float numberOfExtraDecoyLibrariesSearched) {
 		// FDR'=FDR * (XD*(1-((XD-1)*FDR)))
 		// where XD is the numberOfDecoyLibrariesSearched
 		// e.g. if XD=1, then FDR'=FDR*(1*(1-((1-1)*FDR)))=FDR*(1*(1-0))=FDR

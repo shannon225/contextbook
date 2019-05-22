@@ -23,18 +23,27 @@ public class PSMData implements PeptidePrecursor {
 	private final boolean inferred;
 
 	public PSMData(HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, float retentionTime, float score, float sortingScore, float duration, boolean inferred, AminoAcidConstants aaConstants) {
+		this(accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, PeptideUtils.getCorrectedMasses(peptideModSeq, aaConstants), retentionTime, score, sortingScore, duration, inferred);
+	}
+	
+	private PSMData(HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, String massCorrectedPeptideModSeq, float retentionTime, float score, float sortingScore, float duration, boolean inferred) {
 		this.accessions=accessions;
 		this.spectrumIndex=spectrumIndex;
 		this.precursorMZ=precursorMZ;
 		this.precursorCharge=precursorCharge;
 		this.peptideModSeq=peptideModSeq;
-		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq, aaConstants);
+		this.massCorrectedPeptideModSeq=massCorrectedPeptideModSeq;
 		this.retentionTime=retentionTime;
 		this.score=score;
 		this.sortingScore=sortingScore;
 		this.duration=duration;
 		this.inferred=inferred;
 	}
+	
+	public PSMData updateRetentionTime(float rtInSec) {
+		return new PSMData(accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, rtInSec, score, sortingScore, duration, inferred);
+	}
+	
 	public boolean wasInferred() {
 		return inferred;
 	}

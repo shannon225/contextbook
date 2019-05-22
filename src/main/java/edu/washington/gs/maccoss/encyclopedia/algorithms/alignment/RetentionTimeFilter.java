@@ -20,6 +20,9 @@ public class RetentionTimeFilter extends AbstractRetentionTimeFilter {
 		return getFilter(rts, RT_STRING, "Retention Time (min)");
 	}
 	public static RetentionTimeFilter getFilter(ArrayList<XYPoint> rts, String xAxis, String yAxis) {
+		return getFilter(rts, xAxis, yAxis, TwoDimensionalKDE.DEFAULT_RESULTION);
+	}
+	public static RetentionTimeFilter getFilter(ArrayList<XYPoint> rts, String xAxis, String yAxis, int resolution) {
 		Function rtWarper;
 		Optional<RTProbabilityModel> model;
 		if (rts.size()>20) {

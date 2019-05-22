@@ -84,7 +84,7 @@ public class DigestionEnzymeTest extends TestCase {
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		AminoAcidConstants aminoAcidConstants = new AminoAcidConstants();
 		String reversed=enzyme.reverseProtein(sequence, aminoAcidConstants);
-		assertEquals("SYASSFLFLLSIFTVWMRFVGRRHADKHAVESRFKFNEEGLDKVHDEFPCQQLYQAFAILVLAKAFETVENVLKDCNEASEDAVCTKDGFLTHLSKLTAVTCLRACCDAMEGYTEKHQLFCENEPEQ", reversed);
+		assertEquals("MSYASSFLFLLSIFTVWRGFVRRDHAKSHAVERFKDFNEEGLKAVHDEFPCQQLYQAFAILVLKLAFETVENVKTDCNEASEDAVCKSDGFLTHLKLLTAVTCREACCDAMEGYTKQQLFCENEPEH", reversed);
 	}
 	
 	public void testFixedMods() {

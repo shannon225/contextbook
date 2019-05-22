@@ -22,7 +22,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import junit.framework.TestCase;
 
 public class PercolatorReaderTest extends TestCase {
-	private static final String REVERSE_PSMID="110415_bcs_hela_starved_DDA.mzML:11.096461:decoyEDIT[+79.966331]PEPR+2";
+	private static final String REVERSE_PSMID="110415_bcs_hela_starved_DDA.mzML:11.096461:decoyPEDIT[+79.966331]PER+2";
 	private static final String FORWARD_PSMID="110415_bcs_hela_starved_DDA.mzML:11.096461:PEPT[+79.966331]IDER+2";
 	
 	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
@@ -70,7 +70,7 @@ public class PercolatorReaderTest extends TestCase {
 
 	public void testGetPeptideSequence() {
 		assertEquals("PEPT[+79.966331]IDER", PercolatorPeptide.getPeptideSequence(FORWARD_PSMID));
-		assertEquals("EDIT[+79.966331]PEPR", PercolatorPeptide.getPeptideSequence(REVERSE_PSMID));
+		assertEquals("PEDIT[+79.966331]PER", PercolatorPeptide.getPeptideSequence(REVERSE_PSMID));
 	}
 	
 	public void testGetCharge() {

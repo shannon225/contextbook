@@ -157,7 +157,7 @@ public class OpenSwathTSVToLibraryConverter {
 					
 					String group=row.get("transition_group_id");
 					String peptideModSeq=parseMods(getFromMap(row, "ModifiedPeptideSequence", "FullUniModPeptideName", "FullPeptideName", "ModifiedSequence", "PeptideSequence", "Sequence", "StrippedSequence"));
-					byte charge=Byte.parseByte("PrecursorCharge");
+					byte charge=Byte.parseByte(row.get("PrecursorCharge"));
 					double productMz=Double.parseDouble(getFromMap(row, "ProductMz", "FragmentMz"));
 					float libraryIntensity=Float.parseFloat(getFromMap(row, "LibraryIntensity", "RelativeFragmentIntensity"));
 					float iRT=Float.parseFloat(getFromMap(row, "NormalizedRetentionTime", "RetentionTime", "Tr_recalibrated", "iRT", "RetentionTimeCalculatorScore"));
