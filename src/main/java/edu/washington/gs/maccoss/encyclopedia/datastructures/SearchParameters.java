@@ -121,7 +121,7 @@ public class SearchParameters {
 		sb.append(" -numberOfQuantitativePeaks "+numberOfQuantitativePeaks+"\n");
 		sb.append(" -minNumOfQuantitativePeaks "+minNumOfQuantitativePeaks+"\n");
 		sb.append(" -quantifyAcrossSamples "+quantifyAcrossSamples+"\n");
-		sb.append(" -getNumberOfExtraDecoyLibrariesSearched "+numberOfExtraDecoyLibrariesSearched+"\n");
+		sb.append(" -numberOfExtraDecoyLibrariesSearched "+numberOfExtraDecoyLibrariesSearched+"\n");
 		sb.append(" -verifyModificationIons "+verifyModificationIons+"\n");
 		sb.append(" -minIntensity "+minIntensity+"\n");
 		if (useTargetWindowCenter()) {
@@ -157,7 +157,7 @@ public class SearchParameters {
 		map.put("-numberOfQuantitativePeaks", numberOfQuantitativePeaks+"");
 		map.put("-minNumOfQuantitativePeaks", minNumOfQuantitativePeaks+"");
 		map.put("-quantifyAcrossSamples", quantifyAcrossSamples+"");
-		map.put("-getNumberOfExtraDecoyLibrariesSearched", numberOfExtraDecoyLibrariesSearched+"");
+		map.put("-numberOfExtraDecoyLibrariesSearched", numberOfExtraDecoyLibrariesSearched+"");
 		map.put("-targetWindowCenter", targetWindowCenter+"");
 		map.put("-scoringBreadthType", getScoringBreadthType().toShortname());
 		map.put("-verifyModificationIons", verifyModificationIons+"");
