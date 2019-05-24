@@ -1,8 +1,8 @@
 EncyclopeDIA changelog for user-facing changes:
 
-encyclopedia-0.8.2-SNAPSHOT
+encyclopedia-0.8.3-SNAPSHOT
 
-encyclopedia-0.8.2 (May 21, 2019)
+encyclopedia-0.8.2 (May 24, 2019)
  - Feature: added support for converting Spectronaut libraries
  - Feature: added metadata to elib export indicating if RT alignment was performed
  - Feature: added command-line options in Walnut GUI
@@ -10,6 +10,7 @@ encyclopedia-0.8.2 (May 21, 2019)
  - Feature: added simplify GUI option to help make figures with the multi-elib browser
  - Bugfix: fixed parsing of MSP files to work with Progenesis
  - Bugfix: updated peptide reversing and randomization to always keep both the n- and c-termini in place. Previously n-termini could be moved
+ - Bugfix: fixed bug where the GUI setting for Target/Decoy Approach wasn't correctly setting the numberOfExtraDecoyLibraries flag
 
 encyclopedia-0.8.1 (Jan 14, 2019)
  - Feature: new Window Scheme Wizard for setting up instruments in Help Menu
