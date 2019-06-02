@@ -1504,7 +1504,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonMassArray blob");
 					}
 
-					if (new Version(0, 1, 10).amIAbove(version)) {
+					if (new Version(0, 1, 10).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
 						if (userFile!=null) {
 							Logger.logLine("Updating library to "+new Version(0, 1, 10));
 						}

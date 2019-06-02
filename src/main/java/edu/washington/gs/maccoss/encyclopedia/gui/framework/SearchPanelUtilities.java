@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.framework;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -24,7 +25,10 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.JTextArea;
+import javax.swing.SpinnerModel;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -38,8 +42,11 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MaxquantMSMSConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.OpenSwathTSVToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SpectronautCSVToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.TraMLToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -49,6 +56,32 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 public class SearchPanelUtilities {
 	private static final ImageIcon convertDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/convertdb.png"));
 	private static final ImageIcon fileAddIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/fileadd.png"));
+
+	public static void preprocessMZMLs(Component root, SearchParameters params) {
+		File[] featureFiles=FileChooserPanel.getFiles(null, "mzML files", new SimpleFilenameFilter(".mzML"), (JFrame)null, true);
+
+		if (featureFiles!=null) {
+			SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading mzML Files") {
+				/**
+				 * FIXME ADD PROGRESS
+				 * @param root
+				 * @param params
+				 */
+				@Override
+				protected Nothing doInBackgroundForReal() throws Exception {
+					for (int i=0; i<featureFiles.length; i++) {
+						System.out.println("Processing "+featureFiles[i]);
+						StripeFileGenerator.getFile(featureFiles[i], params);
+					}
+					return Nothing.NOTHING;
+				}
+				@Override
+				protected void doneForReal(Nothing t) {
+				}
+			};
+			worker.execute();
+		}
+	}
 	
 	public static void convertELIBtoOpenSWATH(Component root, SearchParameters params) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
@@ -309,8 +342,8 @@ public class SearchPanelUtilities {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		final JDialog dialog=new JDialog(frame, "Subset Library", true);
 		
-		final FileChooserPanel elibFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".dlib", ".elib"), true);
-		final FileChooserPanel saveFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".dlib", ".elib"), true, false);
+		final FileChooserPanel elibFileChooser=new FileChooserPanel(null, "Starting Library", new SimpleFilenameFilter(".dlib", ".elib"), true);
+		final FileChooserPanel saveFileChooser=new FileChooserPanel(null, "New Library", new SimpleFilenameFilter(".dlib", ".elib"), true, false);
 		
 		final JTextArea textArea = new JTextArea(25, 80);
 		textArea.setFont(new Font("Monospaced", Font.PLAIN, 10));
@@ -321,6 +354,17 @@ public class SearchPanelUtilities {
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(elibFileChooser);
 		options.add(saveFileChooser);
+
+		final SpinnerModel minRT=new SpinnerNumberModel(0.0, 0.0, 1000.0, 1.0);
+		final SpinnerModel maxRT=new SpinnerNumberModel(1000.0, 0.0, 1000.0, 1.0);
+		JPanel rtRange=new JPanel(new FlowLayout());
+		rtRange.setOpaque(true);
+		rtRange.setBackground(Color.white);
+		rtRange.add(new JSpinner(minRT));
+		rtRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
+		rtRange.add(new JSpinner(maxRT));
+		options.add(new LabeledComponent("Rention Time Range (min)", rtRange));
+		
 		options.add(new JLabel("Subset peptides:", JLabel.LEFT));
 		options.add(scrollPane);
 		
@@ -332,44 +376,34 @@ public class SearchPanelUtilities {
 			public void actionPerformed(ActionEvent e) {
 				final File elibFile=elibFileChooser.getFile();
 				final File saveFile=saveFileChooser.getFile();
-				final String text=textArea.getText();
+
+				final float rtMinSec=60f*((Number)minRT.getValue()).floatValue();
+				final float rtMaxSec=60f*((Number)maxRT.getValue()).floatValue();
 				
-				if (elibFile!=null&&elibFile.exists()&&saveFile!=null&&text!=null&&text.length()>0) {
+				final String text=textArea.getText();
+
+				final HashSet<String> targets=new HashSet<>();
+				if (text!=null&&text.length()>0) {
+					StringTokenizer st=new StringTokenizer(text);
+					while (st.hasMoreTokens()) {
+						targets.add(st.nextToken());
+					}
+				}
+				
+				if (elibFile!=null&&elibFile.exists()&&saveFile!=null) {
 					dialog.setVisible(false);
 					dialog.dispose();
 
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							HashSet<String> targets=new HashSet<>();
-							StringTokenizer st=new StringTokenizer(text);
-							while (st.hasMoreTokens()) {
-								targets.add(st.nextToken());
-							}
 							
 							LibraryFile library=new LibraryFile();
 							library.openFile(elibFile);
 							
-
-							LibraryFile saveLibrary=new LibraryFile();
-							saveLibrary.openFile();
-							
-							ArrayList<LibraryEntry> toWrite=new ArrayList<>();
-							for (LibraryEntry entry : library.getAllEntries(false, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()))) {
-								if (targets.contains(entry.getPeptideSeq())||targets.contains(entry.getPeptideModSeq())) {
-									toWrite.add(entry);
-								}
-							}
-							Logger.logLine("Found "+toWrite.size()+" peptides from "+targets.size()+" target sequences. Writing to ["+saveFile.getAbsolutePath()+"]...");
-							
-							saveLibrary.dropIndices();
-							saveLibrary.addEntries(toWrite);
-							saveLibrary.addProteinsFromEntries(toWrite);
-							saveLibrary.createIndices();
-							saveLibrary.saveAsFile(saveFile);
+							LibraryUtilities.subsetLibrary(saveFile, rtMinSec, rtMaxSec, targets, library);
 							
 							library.close();
-							saveLibrary.close();
 							
 							return Nothing.NOTHING;
 						}

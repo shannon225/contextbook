@@ -20,14 +20,14 @@ public class RetentionTimeFilter extends AbstractRetentionTimeFilter {
 		return getFilter(rts, RT_STRING, "Retention Time (min)");
 	}
 	public static RetentionTimeFilter getFilter(ArrayList<XYPoint> rts, String xAxis, String yAxis) {
-		return getFilter(rts, xAxis, yAxis, TwoDimensionalKDE.DEFAULT_RESULTION);
+		return getFilter(rts, xAxis, yAxis, TwoDimensionalKDE.DEFAULT_RESOLUTION);
 	}
 	public static RetentionTimeFilter getFilter(ArrayList<XYPoint> rts, String xAxis, String yAxis, int resolution) {
 		Function rtWarper;
 		Optional<RTProbabilityModel> model;
 		if (rts.size()>20) {
 			Logger.logLine("Enough data points ("+rts.size()+") to perform KDE alignment.");
-			TwoDimensionalKDE twoDimKDE=new TwoDimensionalKDE(rts);
+			TwoDimensionalKDE twoDimKDE=new TwoDimensionalKDE(rts, resolution);
 			rtWarper=twoDimKDE.trace();
 			model=Optional.of(generateMixtureModel(rts, rtWarper));
 		} else {
