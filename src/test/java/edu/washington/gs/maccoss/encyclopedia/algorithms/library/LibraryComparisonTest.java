@@ -12,41 +12,80 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class LibraryComparisonTest {
 	public static void main(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		
-		//File libraryFile=new File("/Users/searleb/Documents/school/encyclopedia_manuscript/HeLa.elib");
-		File libraryFile=new File("/Users/searleb/Documents/school/encyclopedia_manuscript/22oct2017_hela_serum_timecourse_narrow_library.elib");
+		File[] libraryFilesDDA=new File[] {
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce15.dlib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce18.dlib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce21.dlib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce24.dlib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce27.dlib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce30.dlib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce33.dlib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce36.dlib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce39.dlib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce42.dlib"),
+				new File("/Volumes/searle_ssd/malaria/DDA_yeast_with_iRTs.dlib")
+		};
+		File[] libraryFiles=new File[] {
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce15_clib.elib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce18_clib.elib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce21_clib.elib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce24_clib.elib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce27_clib.elib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce30_clib.elib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce33_clib.elib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce36_clib.elib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce39_clib.elib"),
+				new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta.z2_nce42_clib.elib"),
+				new File("/Volumes/searle_ssd/malaria/DDA_yeast_with_iRTs.dlib")
+		};
+		
+		File diaFile=new File("/Volumes/searle_ssd/malaria/yeast/02may2016_yeast_dia_01.mzML.elib");
+		
+		LibraryFile[] libraries=new LibraryFile[libraryFiles.length];
+		for (int i=0; i<libraries.length; i++) {
+			libraries[i]=new LibraryFile();
+			libraries[i].openFile(libraryFiles[i]);
+		}
+		
 		LibraryFile file=new LibraryFile();
-		file.openFile(libraryFile);
-		ArrayList<LibraryEntry> entries=file.getEntries(new Range(0, 10000), false, parameters.getAAConstants());
-		HashMap<String, LibraryEntry> ddaMap=new HashMap<>();
+		file.openFile(diaFile);
+		ArrayList<LibraryEntry> entries=file.getAllEntries(false, parameters.getAAConstants());
+		
+		System.out.println("Processing "+entries.size());
+		System.out.print("count,peptide,charge,protein");
+		for (int i=0; i<libraries.length; i++) {
+			System.out.print(","+libraryFiles[i].getName());
+		}
+		System.out.println();
+
+		int count=0;
 		for (LibraryEntry entry : entries) {
-			ddaMap.put(getKey(entry), AnnotatedLibraryEntry.getAnnotationsOnly(entry, parameters));
+			count++;
+			StringBuilder sb=new StringBuilder(count+","+entry.getPeptideModSeq()+","+entry.getPrecursorCharge()+","+General.toString(entry.getAccessions().toArray(), ";"));
+
+			boolean skip=false;
+			for (int i=0; i<libraries.length; i++) {
+				if (!skip) {
+					ArrayList<LibraryEntry> candidates=libraries[i].getEntries(entry.getPeptideModSeq(), entry.getPrecursorCharge(), false);
+					if (candidates.size()>0) {
+						AnnotatedLibraryEntry dda=AnnotatedLibraryEntry.getAnnotationsOnly(candidates.get(0), parameters);
+						float correlation=(float)Correlation.getPearsons(entry, dda, parameters.getFragmentTolerance());
+						sb.append(","+correlation);
+					} else {
+						skip=true;
+					}
+				}
+			}
+			if (!skip) {
+				System.out.println(sb.toString());
+			}
 		}
 		file.close();
-		
-		//libraryFile=new File("/Users/searleb/Documents/school/encyclopedia_manuscript/dda_lib_23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.mzML.elib");
-		libraryFile=new File("/Users/searleb/Documents/school/encyclopedia_manuscript/correct_lib_23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.mzML.elib");
-		file=new LibraryFile();
-		file.openFile(libraryFile);
-		entries=file.getEntries(new Range(0, 10000), false, parameters.getAAConstants());
-		
-		MassTolerance tolerance=new MassTolerance(10.0);
-		System.out.println("Pearson Correlation Coefficient\tCharge\tPearson Correlation Coefficient");
-		for (LibraryEntry dia : entries) {
-			LibraryEntry dda=ddaMap.get(getKey(dia));
-			if (dda==null) System.out.println("MISSING "+getKey(dia));
-			
-			float correlation=(float)Correlation.getPearsons(dia, dda, tolerance);
-			System.out.println(correlation+"\t"+dia.getPrecursorCharge()+"\t"+(Math.round(correlation*50f)/50f));
-		}
-	}
-	
-	private static String getKey(LibraryEntry e) {
-		// avoids modification issues
-		return e.getPeptideSeq()+"_"+Math.round(e.getPrecursorMZ());
 	}
 }

@@ -48,7 +48,8 @@ public class MaxquantMSMSConverter {
 						System.err.println("RT ERROR: rt:"+rt+", rtOffset:"+rtOffset);
 					}
 
-					PeptideEntry pep=new PeptideEntry(peptideModSeq, charge, rt+rtOffset);
+					// RTs are in mins
+					PeptideEntry pep=new PeptideEntry(peptideModSeq, charge, (rt+rtOffset)*60f);
 					for (int i = 0; i < masses.length; i++) {
 						pep.addPeak(new Peak(masses[i]+massDeviations[i], intensities[i]));
 					}

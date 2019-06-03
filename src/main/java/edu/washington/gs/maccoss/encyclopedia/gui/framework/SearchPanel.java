@@ -494,6 +494,15 @@ public class SearchPanel extends JPanel {
 
 		helpMenu.addSeparator();
 
+		JMenuItem mzmlPreprocessorItem=new JMenuItem("Preprocess mzMLs");
+		mzmlPreprocessorItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.preprocessMZMLs(helpMenu, getVisibleTab().getParameters());
+			}
+		});
+		helpMenu.add(mzmlPreprocessorItem);
+
 		JMenuItem windowSchemeItem=new JMenuItem("Window Scheme Wizard", windowSchemeIcon);
 		windowSchemeItem.addActionListener(new ActionListener() {
 			@Override
@@ -525,12 +534,12 @@ public class SearchPanel extends JPanel {
 	}
 	
 	public void launchFeatureBrowser() {
-		File featureFile=FileChooserPanel.getFiles(null, "Feature text files", new SimpleFilenameFilter("features.txt"), (JFrame)null, true)[0];
+		File[] featureFiles=FileChooserPanel.getFiles(null, "Feature text files", new SimpleFilenameFilter("features.txt"), (JFrame)null, true);
 
-		if (featureFile!=null&&featureFile.exists()) {
+		if (featureFiles!=null&&featureFiles.length>0&&featureFiles[0].exists()) {
 			final JFrame dialog=new JFrame("Global Feature Browser");
 
-			dialog.getContentPane().add(FeatureGrapher.graphFeatures(featureFile), BorderLayout.CENTER);
+			dialog.getContentPane().add(FeatureGrapher.graphFeatures(featureFiles[0]), BorderLayout.CENTER);
 			dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			dialog.pack(); 
 			dialog.setSize(1900, 1030);

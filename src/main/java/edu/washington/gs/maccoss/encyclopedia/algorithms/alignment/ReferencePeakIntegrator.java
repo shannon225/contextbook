@@ -119,6 +119,7 @@ public class ReferencePeakIntegrator {
 				}
 			}
 			
+			elib.addProteinsFromPercolator(passingPeptides);
 			elib.addMetadata(params.toParameterMap());
 			elib.setSources(jobs);
 
@@ -323,13 +324,13 @@ public class ReferencePeakIntegrator {
 		
 		ArrayList<XYPoint> points = getMatchingPoints(referenceRTInSecs, wideRTInSecs);
 		
-		RetentionTimeAlignmentInterface alignment=RetentionTimeFilter.getFilter(points, "reference", library.getName(), 10000);
+		RetentionTimeAlignmentInterface alignment=RetentionTimeFilter.getFilter(points, "reference", library.getName(), 3000);
 		
 		final List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignmentResults=alignment.plot(points, Optional.ofNullable(saveFileSeed));
 		return new Pair<RetentionTimeAlignmentInterface, List<AlignmentDataPoint>>(alignment, alignmentResults);
 	}
 
-	private static ArrayList<XYPoint> getMatchingPoints(TObjectFloatHashMap<String> reference,
+	public static ArrayList<XYPoint> getMatchingPoints(TObjectFloatHashMap<String> reference,
 			TObjectFloatHashMap<String> wide) {
 		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
 		

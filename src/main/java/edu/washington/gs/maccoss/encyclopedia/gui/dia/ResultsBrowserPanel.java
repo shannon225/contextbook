@@ -82,7 +82,7 @@ public class ResultsBrowserPanel extends JPanel {
 
 	private final FileChooserPanel elibFileChooser;
 	private final FileChooserPanel rawFileChooser;
-	private final JSplitPane dataSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+	private final JSplitPane dataSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane rawSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane peakPickingSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JSplitPane split=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
@@ -313,6 +313,11 @@ public class ResultsBrowserPanel extends JPanel {
 		if (locationPP<=5) {
 			locationPP=400;
 		}
+		int locationData=dataSplit.getDividerLocation();
+		//System.out.println("locationData:"+locationData);
+		if (locationData<=5) {
+			locationData=400;
+		}
 		
 		if (entry==null) {
 			split.setLeftComponent(new JLabel("Select a peptide!"));
@@ -324,9 +329,10 @@ public class ResultsBrowserPanel extends JPanel {
 			tabs.addTab("Target", chart);
 			tabs.addTab("Decoy", decoyChart);
 			
-			dataSplit.setLeftComponent(tabs);
-			dataSplit.setRightComponent(new FragmentationTable(entry, entry.getPeptideModSeq(), parameters));
+			dataSplit.setTopComponent(tabs);
+			dataSplit.setBottomComponent(new FragmentationTable(entry, entry.getPeptideModSeq(), parameters));
 			split.setRightComponent(dataSplit);
+			dataSplit.setDividerLocation(locationData);
 		} else {
 			Logger.logLine("Parsing peptide...");
 			FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());

@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPe
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
@@ -27,55 +28,113 @@ public class IARPATestCase {
 			false, true, false);
 
 	private static final File[] files = new File[] {
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_11_1.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_12_2.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_13_3.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_16_4.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_17_5.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_18_6.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_19_7.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_20_8.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_23_9.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_24_12.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_25_13.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_26_14.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_27_15.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_30_16.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_31_17.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_32_18.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_33_19.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_34_20.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_46_21.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_47_22.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_48_23.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_49_24.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_50_25.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_53_26.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_54_27.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_55_28.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_56_29.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_57_30.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_60_31.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_61_32.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_62_33.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_63_34.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_64_35.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_67_36.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_68_37.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_69_38.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_70_39.dia.elib"),
-			new File("/Volumes/searle_ssd/localized_individual_results/XXX_2019_0304_RJ_71_40.dia.elib") };
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_08_44.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_09_23.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_10_34.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_11_6.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_13_30.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_14_39.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_15_22.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_16_16.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_17_15.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_18_37.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_28_8.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_29_13.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_30_1.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_31_7.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_32_27.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_34_32.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_35_47.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_36_29.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_37_21.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_38_46.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_39_14.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_41_24.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_42_19.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_43_2.mzML.elib"),
+			new File("/Volumes/searle_ssd/iarpa/final_stormy/XXX_2019_0524_RJ_43_31.mzML.elib")};
 
+	private static final File[] files_old = new File[] {
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_11_1.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_12_2.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_13_3.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_16_4.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_17_5.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_18_6.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_19_7.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_20_8.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_23_9.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_24_12.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_25_13.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_26_14.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_27_15.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_30_16.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_31_17.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_32_18.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_33_19.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_34_20.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_46_21.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_47_22.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_48_23.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_49_24.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_50_25.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_53_26.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_54_27.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_55_28.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_56_29.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_57_30.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_60_31.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_61_32.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_62_33.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_63_34.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_64_35.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_67_36.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_68_37.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_69_38.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_70_39.dia.elib"),
+			new File("/Volumes/searle_ssd/UW_proteos/individuals/XXX_2019_0304_RJ_71_40.dia.elib") };
+
+	public static void main2(String[] args) throws Exception {
+		HashMap<String, Pair<Float, LibraryEntry>> bestVersions=new HashMap<>();
+		for (File f : files) {
+			LibraryFile lib = new LibraryFile();
+			lib.openFile(f);
+			for (LibraryEntry entry : lib.getAllEntries(false, PARAMETERS.getAAConstants())) {
+				Pair<Float, LibraryEntry> prev=bestVersions.get(entry.getPeptideModSeq());
+				if (prev==null||prev.x>entry.getScore()) {
+					prev=new Pair<Float, LibraryEntry>(entry.getScore(), entry);
+					bestVersions.put(entry.getPeptideModSeq(), prev);
+				}
+			}
+			lib.close();
+		}
+		File elibFile = new File("/Volumes/searle_ssd/iarpa/searchable.elib");
+		LibraryFile elib = new LibraryFile();
+		elib.openFile();
+		elib.dropIndices();
+		
+		ArrayList<LibraryEntry> entries=new ArrayList<>();
+		for (Pair<Float, LibraryEntry> pair : bestVersions.values()) {
+			entries.add(pair.y);
+		}
+		elib.addEntries(entries);
+		elib.addProteinsFromEntries(entries);
+		elib.addMetadata(PARAMETERS.toParameterMap());
+		elib.createIndices();
+		elib.saveAsFile(elibFile);
+		elib.close();
+	}
+	
 	public static void main(String[] args) throws Exception {
 		XCorDIAOneScoringFactory factory = new XCorDIAOneScoringFactory(PARAMETERS);
 
 		File fastaFile = new File(
-				"/Volumes/searle_ssd/localized_individual_results/IARPA_var_plus_fasta_20190325.fasta");
-		File referenceFile = new File("/Volumes/searle_ssd/localized_individual_results/library/clib.elib");
+				"/Volumes/searle_ssd/UW_proteos/individuals/IARPA_var_plus_fasta_20190325.fasta");
+		File referenceFile = new File("/Volumes/searle_ssd/iarpa/final_stormy/final_stormy_individuals_clib.elib");
 		LibraryFile reference = new LibraryFile();
 		reference.openFile(referenceFile);
 		File globalPercolatorOutputFile = new File(
-				"/Volumes/searle_ssd/localized_individual_results/2019_quant_reports_concatenated_results.txt");
+				"/Volumes/searle_ssd/iarpa/final_stormy/final_stormy_individuals_clib_concatenated_results.txt");
 		File[] sampleFiles = files;
 
 		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides = PercolatorReader
@@ -133,7 +192,7 @@ public class IARPATestCase {
 		}
 
 		ReferencePeakIntegrator.integrateAllPeptides(
-				new File("/Volumes/searle_ssd/localized_individual_results/limited_quant_reports.elib"), reference,
+				new File("/Volumes/searle_ssd/iarpa/final_stormy/limited_quant_reports.elib"), reference,
 				jobs, selectedPeptides, PARAMETERS, new EmptyProgressIndicator());
 	}
 }
