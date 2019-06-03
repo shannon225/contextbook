@@ -261,7 +261,7 @@ public class MSPReader {
 					//or attached to the peptide sequence itself e.g. PEPTIDER+2
 					if (map.containsKey("Charge")) {
 						precursorCharge = Byte.parseByte(map.get("Charge"));
-					} else if (precursorCharge!=(byte)0) {
+					} else if (precursorCharge==(byte)0) {
 						String substring = fullname.substring(fullname.lastIndexOf('/')+1);
 						if (substring.indexOf(' ')>0) substring=substring.substring(0, substring.indexOf(' '));
 						precursorCharge=Byte.parseByte(substring);

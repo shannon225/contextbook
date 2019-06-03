@@ -48,12 +48,16 @@ public class Spectra3dPanel extends JPanel {
 			multiplier=(float)Math.pow(10, Math.floor(Log.log10(maxIntensity)));
 		}
 		
+		System.out.println("test1");
 		this.peaks=generatePeaks(entries, ions, tolerance, multiplier);
+		System.out.println("test2");
 		this.chart=generateChart(multiplier);
+		System.out.println("test3: "+peaks.size()+" peaks");
 		
 		for (AbstractDrawable peak : peaks) {
 			this.chart.getScene().add(peak);	
 		}
+		System.out.println("test4");
 
 //		AWTCameraMouseController mouse=new AWTCameraMouseController();
 //		chart.addController(mouse);
@@ -126,6 +130,7 @@ public class Spectra3dPanel extends JPanel {
 					if (tolerance.equals(ions[j].mass, masses[i])) {
 						//color=colors[j%colors.length];
 						color=Charter3d.getColor(RandomGenerator.randomColor(ions[j].toString().hashCode()));
+						if (((int)ions[j].mass)==150||((int)ions[j].mass)==133) color=Color.BLUE;
 						ion=ions[j];
 					}
 				}

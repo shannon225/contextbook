@@ -24,6 +24,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TFloatArrayList;
 
 public class Spectra3dPanelTest {
 	private static final int RT_MARGIN=0;
@@ -40,15 +41,18 @@ public class Spectra3dPanelTest {
 	public static void main(String[] args) throws Exception {
 		SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(16.7), new MassTolerance(16.7), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA, false, true, false);
 
-		File file=new File("/Users/bsearle/Documents/conferences/abrf2019/EMM2-N_30min_1st_POS.mzML");
+		File file=new File("/Users/bsearle/Documents/conferences/abrf2019/cwt_peakpicked/EMM2-N_30min_1st_POS.mzML");
 		StripeFileInterface raw=StripeFileGenerator.getFile(file, params, true);
 		
-		float rtInSecStart=525;
-		float rtInSecStop=575;
+		float rtInSecStart=520;
+		float rtInSecStop=580;
+		float minMass=0;
+		float maxMass=305;
 		
 		ArrayList<PrecursorScan> stripes=raw.getPrecursors(rtInSecStart, rtInSecStop);
 		Collections.sort(stripes);
 		
+		ArrayList<PrecursorScan> truncatedStripes=new ArrayList<>();
 		ArrayList<Peak> peaks=new ArrayList<>();
 		for (PrecursorScan precursorScan : stripes) {
 			double[] masses=precursorScan.getMassArray();
@@ -58,6 +62,17 @@ public class Spectra3dPanelTest {
 					peaks.add(new Peak(masses[i], intensities[i]));
 				}
 			}
+			TFloatArrayList truncatedIntensities=new TFloatArrayList();
+			TDoubleArrayList truncatedMasses=new TDoubleArrayList();
+			
+			for (int i = 0; i < intensities.length; i++) {
+				if (masses[i]<minMass||masses[i]>maxMass) continue;
+				truncatedIntensities.add(intensities[i]);
+				truncatedMasses.add(masses[i]);
+			}
+			if (truncatedMasses.size()>0) {
+				truncatedStripes.add(new PrecursorScan(precursorScan.getSpectrumName(), precursorScan.getSpectrumIndex(), precursorScan.getScanStartTime(), precursorScan.getIonInjectionTime(), truncatedMasses.toArray(), truncatedIntensities.toArray()));
+			}
 		}
 		Collections.sort(peaks, new PeakIntensityComparator());
 		
@@ -65,7 +80,7 @@ public class Spectra3dPanelTest {
 		TDoubleArrayList masses=new TDoubleArrayList();
 		for (int i=peaks.size()-1; i>=0; i--) {
 			double mass=peaks.get(i).mass;
-			if (mass>175) continue;
+			if (mass<minMass||mass>maxMass) continue;
 			
 			if (masses.size()==0) {
 				masses.add(mass);
@@ -89,13 +104,15 @@ public class Spectra3dPanelTest {
 		ArrayList<FragmentIon> ions=new ArrayList<>();
 		int index=1;
 		for (double mass : masses.toArray()) {
+			System.out.println(mass);
 			ions.add(new FragmentIon(mass, (byte)(index), IonType.y));
 			index++;
 		}
 		System.out.println(index+" total peaks");
 		
 		
-		Spectra3dPanel panel=new Spectra3dPanel(stripes, ions.toArray(new FragmentIon[ions.size()]), params.getFragmentTolerance());
+		Spectra3dPanel panel=new Spectra3dPanel(truncatedStripes, ions.toArray(new FragmentIon[ions.size()]), params.getFragmentTolerance());
+		System.out.println("starting plotting procedure...");
 		
 		ChartLauncher.openChart(panel.getChart());
 	}

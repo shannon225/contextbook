@@ -27,6 +27,8 @@ import gnu.trove.list.array.TFloatArrayList;
 
 public class MzmlStructureCharter {
 
+	private static final int MAXIMUM_NUMBER_OF_SCANS_PER_TYPE = 500;
+
 	public static ChartPanel getStructureChart(File mzMLFile) {
 		HashMap<String, String> paramMap=PecanParameterParser.getDefaultParameters();
 		paramMap.put("-acquisition", "DIA"); // NON-OVERLAPPING!
@@ -71,31 +73,48 @@ public class MzmlStructureCharter {
 		TreeMap<Range, TFloatArrayList> retentionTimesByPrecursor=new TreeMap<>(scanTracker.getPrecursorRTsInSecs());
 
 		float firstScan=Float.MAX_VALUE;
+		float lastScan=0.0f;
 		ArrayList<XYTraceInterface> traces=new ArrayList<>();
 		boolean everyOther=false;
+		int totalAllowableFragments=MAXIMUM_NUMBER_OF_SCANS_PER_TYPE;
 		for (Entry<Range, TFloatArrayList> entry : retentionTimesByStripe.entrySet()) {
 			Range range=entry.getKey();
 			TFloatArrayList rts=entry.getValue();
 			if (rts.size()>0) {
-				if (rts.get(0)<firstScan) firstScan=rts.get(0);
+				totalAllowableFragments--;
+				if (totalAllowableFragments<=0) break;
+				
+				float rt = rts.get(0);
+				if (rt<firstScan) firstScan=rt;
+				if (rt>lastScan) lastScan=rt;
 				everyOther=!everyOther;
 
-				XYTraceInterface trace=new XYTrace(new float[] {range.getStart(), range.getStop()}, new float[] {rts.get(0), rts.get(0)}, GraphType.squaredline, range.toString(), getColor(everyOther), 5.0f);
+				XYTraceInterface trace=new XYTrace(new float[] {range.getStart(), range.getStop()}, new float[] {rt, rt}, GraphType.squaredline, range.toString(), getColor(everyOther), 5.0f);
 				traces.add(trace);
 				if (rts.size()>1) {
-					trace=new XYTrace(new float[] {range.getStart(), range.getStop()}, new float[] {rts.get(1), rts.get(1)}, GraphType.squaredline, range.toString(), getColor(everyOther), 5.0f);
+					float secondRT = rts.get(1);
+					if (secondRT<firstScan) firstScan=secondRT;
+					if (secondRT>lastScan) lastScan=secondRT;
+					trace=new XYTrace(new float[] {range.getStart(), range.getStop()}, new float[] {secondRT, secondRT}, GraphType.squaredline, range.toString(), getColor(everyOther), 5.0f);
 					traces.add(trace);
-					trace=new XYTrace(new float[] {range.getStop(), range.getStop()}, new float[] {rts.get(0), rts.get(1)}, GraphType.dashedline, range.toString(), Color.gray, 1.0f);
+					trace=new XYTrace(new float[] {range.getStop(), range.getStop()}, new float[] {rt, secondRT}, GraphType.dashedline, range.toString(), Color.gray, 1.0f);
 					traces.add(trace);
 				}
 			}
 		}
+		
+		float rtRangeMargin=(lastScan-firstScan)*0.2f;
+		Range rtRange=new Range(firstScan-rtRangeMargin, lastScan+rtRangeMargin);
 
+		int totalAllowablePrecursors=MAXIMUM_NUMBER_OF_SCANS_PER_TYPE;
 		for (Entry<Range, TFloatArrayList> entry : retentionTimesByPrecursor.entrySet()) {
 			Range range=entry.getKey();
 			TFloatArrayList rts=entry.getValue();
 			for (float rt : rts.toArray()) {
-				if (rt>firstScan) {
+				if (rtRange.contains(rt)) {
+					totalAllowablePrecursors--;
+					if (totalAllowablePrecursors<=0) break;
+					
 					XYTraceInterface trace=new XYTrace(new float[] {range.getStart(), range.getStop()}, new float[] {rt, rt}, GraphType.squaredline, range.toString(), Color.LIGHT_GRAY, 5.0f);
 					traces.add(trace);
 				}
