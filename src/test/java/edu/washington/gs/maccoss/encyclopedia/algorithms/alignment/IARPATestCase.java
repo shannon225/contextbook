@@ -16,6 +16,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
+import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
@@ -125,17 +127,29 @@ public class IARPATestCase {
 		elib.close();
 	}
 	
+	public static void runIarpa() throws Exception {
+		File fastaFile = new File("/Volumes/searle_ssd/UW_proteos/individuals/IARPA_var_plus_fasta_20190325.fasta");
+		File referenceFile = new File("/Volumes/searle_ssd/iarpa/final_stormy/final_stormy_individuals_clib.elib");
+		File outputFile=new File("/Volumes/searle_ssd/iarpa/final_stormy/limited_quant_reports.elib");
+		File globalPercolatorOutputFile = new File("/Volumes/searle_ssd/iarpa/final_stormy/final_stormy_individuals_clib_concatenated_results.txt");
+		File inputFileDirectory=new File("/Volumes/searle_ssd/UW_proteos/individuals/");
+		main(new String[] {"-f", fastaFile.getAbsolutePath(), "-r", referenceFile.getAbsolutePath(), "-o", outputFile.getAbsolutePath(), "-p", globalPercolatorOutputFile.getAbsolutePath(), "-i", inputFileDirectory.getAbsolutePath()});
+	}
+	
 	public static void main(String[] args) throws Exception {
 		XCorDIAOneScoringFactory factory = new XCorDIAOneScoringFactory(PARAMETERS);
-
-		File fastaFile = new File(
-				"/Volumes/searle_ssd/UW_proteos/individuals/IARPA_var_plus_fasta_20190325.fasta");
-		File referenceFile = new File("/Volumes/searle_ssd/iarpa/final_stormy/final_stormy_individuals_clib.elib");
+		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
+		
+		File fastaFile=new File(arguments.get("-f"));
+		File referenceFile=new File(arguments.get("-r"));
+		File outputFile=new File(arguments.get("-o"));
+		File inputFileDirectory=new File(arguments.get("-i"));
+		File globalPercolatorOutputFile=new File(arguments.get("-p"));
+		
 		LibraryFile reference = new LibraryFile();
 		reference.openFile(referenceFile);
-		File globalPercolatorOutputFile = new File(
-				"/Volumes/searle_ssd/iarpa/final_stormy/final_stormy_individuals_clib_concatenated_results.txt");
-		File[] sampleFiles = files;
+		
+		File[] sampleFiles = inputFileDirectory.listFiles(new SimpleFilenameFilter(".elib"));
 
 		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides = PercolatorReader
 				.getPassingPeptidesFromTSV(globalPercolatorOutputFile, 0.5f, PARAMETERS.getAAConstants(), false);
@@ -192,7 +206,7 @@ public class IARPATestCase {
 		}
 
 		ReferencePeakIntegrator.integrateAllPeptides(
-				new File("/Volumes/searle_ssd/iarpa/final_stormy/limited_quant_reports.elib"), reference,
+				outputFile, reference,
 				jobs, selectedPeptides, PARAMETERS, new EmptyProgressIndicator());
 	}
 }
