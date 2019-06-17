@@ -7,8 +7,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -18,6 +20,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
@@ -132,11 +135,15 @@ public class IARPATestCase {
 		File referenceFile = new File("/Volumes/searle_ssd/iarpa/final_stormy/final_stormy_individuals_clib.elib");
 		File outputFile=new File("/Volumes/searle_ssd/iarpa/final_stormy/limited_quant_reports.elib");
 		File globalPercolatorOutputFile = new File("/Volumes/searle_ssd/iarpa/final_stormy/final_stormy_individuals_clib_concatenated_results.txt");
-		File inputFileDirectory=new File("/Volumes/searle_ssd/UW_proteos/individuals/");
+		File inputFileDirectory=new File("/Volumes/searle_ssd/iarpa/final_stormy/individuals");
 		main(new String[] {"-f", fastaFile.getAbsolutePath(), "-r", referenceFile.getAbsolutePath(), "-o", outputFile.getAbsolutePath(), "-p", globalPercolatorOutputFile.getAbsolutePath(), "-i", inputFileDirectory.getAbsolutePath()});
 	}
 	
 	public static void main(String[] args) throws Exception {
+		if (args.length==0) {
+			runIarpa();
+			return;
+		}
 		XCorDIAOneScoringFactory factory = new XCorDIAOneScoringFactory(PARAMETERS);
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
 		
@@ -204,9 +211,23 @@ public class IARPATestCase {
 			XCorDIAJobData job = new XCorDIAJobData(Optional.empty(), dia, fastaFile, factory);
 			jobs.add(job);
 		}
+		
+		if (true) System.exit(1);
 
-		ReferencePeakIntegrator.integrateAllPeptides(
+		LibraryFile elib=ReferencePeakIntegrator.integrateAllPeptides(
 				outputFile, reference,
 				jobs, selectedPeptides, PARAMETERS, new EmptyProgressIndicator());
+//		LibraryFile elib=new LibraryFile();
+//		elib.openFile(outputFile);
+
+		elib.addTargetDecoyPeptides(selectedPeptides, new ArrayList<>());
+		elib.addMetadata("pi0", Float.toString(passingPeptides.y));
+		elib.addProteinsFromPercolator(selectedPeptides);
+		
+		Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>> targetDecoyProteins=ParsimonyProteinGrouper.groupProteins(selectedPeptides, new ArrayList<>(), PARAMETERS.getPercolatorProteinThreshold(), PARAMETERS.getAAConstants());
+		Logger.logLine("Writing local target/decoy proteins: "+targetDecoyProteins.x.size()+"/"+targetDecoyProteins.y.size());
+		elib.addTargetDecoyProteins("global", targetDecoyProteins.x, targetDecoyProteins.y);
+		
+		elib.saveFile();
 	}
 }

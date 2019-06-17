@@ -129,10 +129,13 @@ public class FastaReaderTest extends TestCase {
 	public static void main(String[] args) throws Exception {
 		//File f=new File("/Users/bsearle/Documents/prosit/Pfalciparum/PlasmoDB-43_Pfalciparum3D7_AnnotatedProteins_042419.fasta");
 		//File f=new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta");
-		File f=new File("/Volumes/searle_ssd/malaria/uniprot_human_25apr2019.fasta");
+		//File f=new File("/Volumes/searle_ssd/malaria/uniprot_human_25apr2019.fasta");
 		//File f=new File("/Volumes/searle_ssd/malaria/PlasmoDB-43_Pfalciparum3D7_AnnotatedProteins_042419.fasta");
+		//File f=new File("/Users/searleb/Downloads/uniprot-taxonomy_183190.fasta");
+		File f=new File("/Users/searleb/Downloads/2019.05_UP000028761_9555_Papio_anubis_canonical_fixed.fasta");
+		
 		int defaultNCE = 33;
-		byte defaultCharge = (byte)2;
+		byte defaultCharge = (byte)3;
 		
 		PrintWriter writer=new PrintWriter(f.getAbsolutePath()+".z"+defaultCharge+"_nce"+defaultNCE+".csv");
 

@@ -376,10 +376,6 @@ public class Charter {
 		} else {
 			chartPanel.getChart().getLegend().setItemFont(font3);
 		}
-		System.out.println("WTH? "+values.length);
-		for (int i = 0; i < values.length; i++) {
-			System.out.println(categories[i]+"\t"+values[i]);
-		}
 		JMenuItem copyItem=new JMenuItem("Copy data values");
 		chartPanel.getPopupMenu().add(copyItem, 2);
 		copyItem.addActionListener(new ActionListener() {
@@ -586,6 +582,13 @@ public class Charter {
 
 				break;
 
+			case bigpoint:
+				renderer=new XYLineAndShapeRenderer();
+				renderer.setSeriesShape(0, new Ellipse2D.Double(0, 0, 6, 6));
+				((XYLineAndShapeRenderer) renderer).setBaseLinesVisible(false);
+
+				break;
+
 			case point:
 				renderer=new XYLineAndShapeRenderer();
 				renderer.setSeriesShape(0, new Ellipse2D.Double(0, 0, 3, 3));
@@ -628,6 +631,7 @@ public class Charter {
 			case boldline:
 			case squaredline:
 			case dashedline:
+			case bigpoint:
 			case point:
 			case tinypoint:
 				XYSeries series=new XYSeries(trace.getName());

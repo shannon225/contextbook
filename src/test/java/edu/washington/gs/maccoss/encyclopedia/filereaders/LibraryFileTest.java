@@ -15,11 +15,11 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryFileTest {
 	public static void main(String[] args) throws Exception {
-		LibraryInterface ddaLib=BlibToLibraryConverter.getFile(new File("/Users/searleb/Documents/projects/encyclopedia/HumanTotalProteome/libs/HeLa.dlib"));
+		LibraryInterface ddaLib=BlibToLibraryConverter.getFile(new File("/Volumes/searle_ssd/malaria/novo_yeast/libraries/uniprot_yeast_25jan2019.fasta.z2_nce33.dlib"));
 		final ArrayList<LibraryEntry> ddaEntries=ddaLib.getAllEntries(false, new AminoAcidConstants());
 		System.out.println("DDA: "+ddaEntries.size());
 		
-		LibraryInterface diaLib=BlibToLibraryConverter.getFile(new File("/Users/searleb/Documents/projects/encyclopedia/HumanTotalProteome/libs/22oct2017_hela_serum_timecourse_narrow_library.elib"));
+		LibraryInterface diaLib=BlibToLibraryConverter.getFile(new File("/Volumes/searle_ssd/malaria/novo_yeast/DIA_analysis/clibs_vs_predicted/uniprot_yeast_25jan2019.fasta.z2_nce33_clib.elib"));
 		final ArrayList<LibraryEntry> diaEntries=diaLib.getAllEntries(false, new AminoAcidConstants());
 		System.out.println("DIA: "+diaEntries.size());
 		
@@ -44,19 +44,19 @@ public class LibraryFileTest {
 		LibraryFile diaLibraryWithDDARTsAndPeaks=new LibraryFile();
 		diaLibraryWithDDARTsAndPeaks.openFile();
 		diaLibraryWithDDARTsAndPeaks.addEntries(diaEntriesWithDDATimesAndPeaks);
-		diaLibraryWithDDARTsAndPeaks.saveAsFile(new File("/Users/searleb/Documents/projects/encyclopedia/HumanTotalProteome/libs/chromatogramLibraryWithDDATimesAndPeaks.dlib"));
+		diaLibraryWithDDARTsAndPeaks.saveAsFile(new File("/Volumes/searle_ssd/malaria/novo_yeast/DIA_analysis/clibs_vs_predicted/uniprot_yeast_25jan2019.fasta.z2_nce33_clibWithDDATimesAndPeaks.dlib"));
 		diaLibraryWithDDARTsAndPeaks.close();
 
 		LibraryFile diaLibraryWithDDATimes=new LibraryFile();
 		diaLibraryWithDDATimes.openFile();
 		diaLibraryWithDDATimes.addEntries(diaEntriesWithDDATimes);
-		diaLibraryWithDDATimes.saveAsFile(new File("/Users/searleb/Documents/projects/encyclopedia/HumanTotalProteome/libs/chromatogramLibraryWithDDATimes.dlib"));
+		diaLibraryWithDDATimes.saveAsFile(new File("/Volumes/searle_ssd/malaria/novo_yeast/DIA_analysis/clibs_vs_predicted/uniprot_yeast_25jan2019.fasta.z2_nce33_clibWithDDATimes.dlib"));
 		diaLibraryWithDDATimes.close();
 		
 		LibraryFile diaLibraryWithDDAPeaks=new LibraryFile();
 		diaLibraryWithDDAPeaks.openFile();
 		diaLibraryWithDDAPeaks.addEntries(diaEntriesWithDDAPeaks);
-		diaLibraryWithDDAPeaks.saveAsFile(new File("/Users/searleb/Documents/projects/encyclopedia/HumanTotalProteome/libs/chromatogramLibraryWithDDAPeaks.dlib"));
+		diaLibraryWithDDAPeaks.saveAsFile(new File("/Volumes/searle_ssd/malaria/novo_yeast/DIA_analysis/clibs_vs_predicted/uniprot_yeast_25jan2019.fasta.z2_nce33_clibWithDDAPeaks.dlib"));
 		diaLibraryWithDDAPeaks.close();
 	}
 
