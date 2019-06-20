@@ -111,8 +111,8 @@ public class WHOI2DLCTestCase {
 		//File ref=new File("/Users/searleb/Downloads/22oct2017_hela_serum_timecourse_narrow_library.elib");
 		//File twoDLC=new File("/Users/searleb/Downloads/msms.dlib");
 		File ref=new File("/Volumes/searle_ssd/whoi_bats/190513_1D_BATS_336_DCM_DIA_single_5ug.mzML.elib");
-		File twoDLC=new File("/Volumes/searle_ssd/whoi_bats/190513_1D_BATS_336_DCM_2dDDA.dlib");
-		//File twoDLC=new File("/Volumes/searle_ssd/whoi_bats/calibrated_190513_1D_BATS_336_DCM_2dDDA.dlib");
+		//File twoDLC=new File("/Volumes/searle_ssd/whoi_bats/190513_1D_BATS_336_DCM_2dDDA.dlib");
+		File twoDLC=new File("/Volumes/searle_ssd/whoi_bats/calibrated_190513_1D_BATS_336_DCM_2dDDA.dlib");
 		
 		LibraryFile refLib=new LibraryFile();
 		refLib.openFile(ref);

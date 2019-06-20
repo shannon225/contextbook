@@ -19,9 +19,11 @@ import java.util.zip.DataFormatException;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface.AlignmentDataPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQuantExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQuantExtractorTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.RelativePeakIntensityMatrix;
@@ -65,7 +67,7 @@ public class ReferencePeakIntegrator {
 		this.params=params;
 	}
 	
-	public static void integrateAllPeptides(File fileToWrite, LibraryInterface reference, List<? extends SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params, ProgressIndicator progress) {
+	public static LibraryFile integrateAllPeptides(File fileToWrite, LibraryInterface reference, List<? extends SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params, ProgressIndicator progress) {
 		ProgressIndicator subProgress=new SubProgressIndicator(progress, 0.1f);
 		ReferencePeakIntegrator integrator;
 
@@ -160,6 +162,7 @@ public class ReferencePeakIntegrator {
 				}
 			}
 			writer.close();
+			return elib;
 		} catch (IOException ioe) {
 			throw new EncyclopediaException("error writing integrator data!", ioe);
 		} catch (SQLException sqle) {

@@ -30,7 +30,7 @@ public class EncyclopediaElibHeLaYeastMixParser {
 		
 		ArrayList<ProteinGroupInterface> proteinGroups=library.getProteinGroups();
 		System.out.println(proteinGroups.size()+" total protein groups");
-		LibraryReportExtractor.extractMatrix(library, proteinGroups, Optional.of(cvCalculator));
+		LibraryReportExtractor.extractMatrix(library, proteinGroups, false, Optional.of(cvCalculator));
 	}
 
 	public static void loadMap() {

@@ -35,16 +35,36 @@ import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class LibraryReportExtractor {
-	public static void extractMatrix(LibraryFile library, ArrayList<ProteinGroupInterface> proteins) throws IOException, SQLException, DataFormatException {
-		extractMatrix(library, proteins, Optional.ofNullable(null));
+
+	public static void main(String[] args) throws IOException, SQLException, DataFormatException {
+		File file=new File("/Volumes/searle_ssd/malaria/mzmls/pfal_dilution_quant.elib");
+
+		LibraryFile library=new LibraryFile();
+		library.openFile(file);
+		
+		LibraryReportExtractor.extractMatrix(library, false);
 	}
-	public static void extractMatrix(LibraryFile library, ArrayList<ProteinGroupInterface> proteins, Optional<CoefficientOfVariationCalculator> cvCalculator) throws IOException, SQLException, DataFormatException {
+
+	public static void extractMatrix(LibraryFile library, boolean normalizeByTIC) throws IOException, SQLException, DataFormatException {
+		ArrayList<ProteinGroupInterface> proteins=library.getProteinGroups();
+		extractMatrix(library, proteins, normalizeByTIC, Optional.ofNullable(null));
+	}
+	public static void extractMatrix(LibraryFile library, ArrayList<ProteinGroupInterface> proteins, boolean normalizeByTIC) throws IOException, SQLException, DataFormatException {
+		extractMatrix(library, proteins, normalizeByTIC, Optional.ofNullable(null));
+	}
+	public static void extractMatrix(LibraryFile library, ArrayList<ProteinGroupInterface> proteins, boolean normalizeByTIC, Optional<CoefficientOfVariationCalculator> cvCalculator) throws IOException, SQLException, DataFormatException {
 		File stubFile=library.getFile();
 		if (stubFile==null) {
 			throw new EncyclopediaException("Please save .ELIB before trying to read matrix data from it!");
 		}
-		File peptideReportFile=new File(stubFile.getParentFile(), stubFile.getName()+".peptides.txt");
-		File proteinReportFile=new File(stubFile.getParentFile(), stubFile.getName()+".proteins.txt");
+		String tag;
+		if (normalizeByTIC) {
+			tag="";
+		} else {
+			tag="_unormalized";
+		}
+		File peptideReportFile=new File(stubFile.getParentFile(), stubFile.getName()+tag+".peptides.txt");
+		File proteinReportFile=new File(stubFile.getParentFile(), stubFile.getName()+tag+".proteins.txt");
 		
 		Connection c=library.getConnection();
 		try {
@@ -85,14 +105,18 @@ public class LibraryReportExtractor {
 				float averageTIC=0.0f;
 				TObjectFloatHashMap<String> ticBySourceFileMap=new TObjectFloatHashMap<String>();
 				for (String sourceFile : sourceFiles) {
-					float tic=library.getTIC(sourceFile);
-					ticBySourceFileMap.put(sourceFile, tic);
-					averageTIC+=tic;
+					if (normalizeByTIC) {
+						float tic=library.getTIC(sourceFile);
+						ticBySourceFileMap.put(sourceFile, tic);
+						averageTIC+=tic;
+					}
 					
 					peptideWriter.print("\t"+sourceFile);
 					proteinWriter.print("\t"+sourceFile);
 				}
-				averageTIC=averageTIC/sourceFiles.size();
+				if (sourceFiles.size()>0) {
+					averageTIC=averageTIC/sourceFiles.size();
+				}
 				
 				peptideWriter.println();
 				proteinWriter.println();

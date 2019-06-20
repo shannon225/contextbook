@@ -31,7 +31,7 @@ public class EncyclopediaElibParser {
 		
 		ArrayList<ProteinGroupInterface> proteinGroups=library.getProteinGroups();
 		System.out.println(proteinGroups.size()+" total protein groups");
-		LibraryReportExtractor.extractMatrix(library, proteinGroups, Optional.of(cvCalculator));
+		LibraryReportExtractor.extractMatrix(library, proteinGroups, true, Optional.of(cvCalculator));
 	}
 
 	public static void loadMap() {
