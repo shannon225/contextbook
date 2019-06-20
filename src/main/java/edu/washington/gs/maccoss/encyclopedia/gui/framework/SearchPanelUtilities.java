@@ -45,6 +45,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.SpectronautCSVToLibrar
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.TraMLToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
@@ -61,6 +62,12 @@ public class SearchPanelUtilities {
 		File[] featureFiles=FileChooserPanel.getFiles(null, "mzML files", new SimpleFilenameFilter(".mzML"), (JFrame)null, true);
 
 		if (featureFiles!=null) {
+			if (featureFiles.length==1&&featureFiles[0].isDirectory()) {
+				featureFiles=featureFiles[0].listFiles();
+			}
+			
+			final File[] filesToLoad=featureFiles;
+			
 			SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading mzML Files") {
 				/**
 				 * FIXME ADD PROGRESS
@@ -69,9 +76,9 @@ public class SearchPanelUtilities {
 				 */
 				@Override
 				protected Nothing doInBackgroundForReal() throws Exception {
-					for (int i=0; i<featureFiles.length; i++) {
-						System.out.println("Processing "+featureFiles[i]);
-						StripeFileGenerator.getFile(featureFiles[i], params);
+					for (int i=0; i<filesToLoad.length; i++) {
+						System.out.println("Processing "+filesToLoad[i]);
+						StripeFileGenerator.getFile(filesToLoad[i], params);
 					}
 					return Nothing.NOTHING;
 				}
@@ -507,6 +514,92 @@ public class SearchPanelUtilities {
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.pack(); 
 		dialog.setSize(500, 200);
+		dialog.setVisible(true);
+	}
+	
+	public static void convertForProsit(Component root) {
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+		final JDialog dialog=new JDialog(frame, "Convert FASTA to Prosit CSV", true);
+		
+		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);
+
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(fastaFileChooser);
+
+		final SpinnerModel defaultNCESpinner=new SpinnerNumberModel(33, 25, 40, 1);
+		final SpinnerModel defaultChargeSpinner=new SpinnerNumberModel(3, 1, 4, 1);
+		final SpinnerModel minChargeSpinner=new SpinnerNumberModel(2, 1, 4, 1);
+		final SpinnerModel maxChargeSpinner=new SpinnerNumberModel(3, 1, 4, 1);
+		final SpinnerModel maxMissedCleavageSpinner=new SpinnerNumberModel(1, 0, 3, 1);
+
+		options.add(new LabeledComponent("Default NCE", new JSpinner(defaultNCESpinner)));
+		options.add(new LabeledComponent("Default Charge", new JSpinner(defaultChargeSpinner)));
+		
+		JPanel chargeRange=new JPanel(new FlowLayout());
+		chargeRange.setOpaque(true);
+		chargeRange.setBackground(Color.white);
+		chargeRange.add(new JSpinner(minChargeSpinner));
+		chargeRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
+		chargeRange.add(new JSpinner(maxChargeSpinner));
+		options.add(new LabeledComponent("Charge range", chargeRange));
+		options.add(new LabeledComponent("Maximum Missed Cleavage", new JSpinner(maxMissedCleavageSpinner)));
+		
+		JPanel buttons=new JPanel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JButton okButton=new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final File fastaFile=fastaFileChooser.getFile();
+				byte defaultNCE=((Number)defaultNCESpinner.getValue()).byteValue();
+				byte defaultCharge=((Number)defaultChargeSpinner.getValue()).byteValue();
+				int minCharge=((Number)minChargeSpinner.getValue()).byteValue();
+				int maxCharge=((Number)maxChargeSpinner.getValue()).byteValue();
+				int maxMissedCleavages=((Number)maxMissedCleavageSpinner.getValue()).byteValue();
+				
+				if (fastaFile!=null&&fastaFile.exists()) {
+					dialog.setVisible(false);
+					dialog.dispose();
+					
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Creating Prosit CSV File") {
+						@Override
+						protected Nothing doInBackgroundForReal() throws Exception {
+							PrositCSVWriter.writeCSV(fastaFile, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages);
+							Logger.logLine("Finished reading "+fastaFile.getName());
+							return Nothing.NOTHING;
+						}
+
+						@Override
+						protected void doneForReal(Nothing t) {
+						}
+					};
+					worker.execute();
+				} else {
+					JOptionPane.showMessageDialog(frame, "You must specify a FASTA file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+				}
+			}
+		});
+		buttons.add(okButton);
+		JButton cancelButton=new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+			}
+		});
+		buttons.add(cancelButton);
+		
+		JPanel mainpane=new JPanel(new BorderLayout());
+		mainpane.add(options, BorderLayout.CENTER);
+		mainpane.add(buttons, BorderLayout.SOUTH);
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		
+		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(500, 250);
 		dialog.setVisible(true);
 	}
 	

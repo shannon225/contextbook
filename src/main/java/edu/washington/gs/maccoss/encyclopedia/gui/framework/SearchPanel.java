@@ -384,6 +384,17 @@ public class SearchPanel extends JPanel {
 			bar.add(convertMenu);
 		}
 		
+		JMenuItem fastaToProsit=new JMenuItem("Create Prosit CSV from FASTA", convertDBIcon);
+		fastaToProsit.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertForProsit(SearchPanel.this);
+			}
+		});
+		convertMenu.add(fastaToProsit);
+		
+		convertMenu.addSeparator();
+		
 		JMenuItem convertBLIB=new JMenuItem("Convert BLIB to Library", convertDBIcon);
 		convertBLIB.addActionListener(new ActionListener() {
 			@Override
@@ -494,7 +505,7 @@ public class SearchPanel extends JPanel {
 
 		helpMenu.addSeparator();
 
-		JMenuItem mzmlPreprocessorItem=new JMenuItem("Preprocess mzMLs");
+		JMenuItem mzmlPreprocessorItem=new JMenuItem("Preprocess mzMLs", convertDBIcon);
 		mzmlPreprocessorItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
