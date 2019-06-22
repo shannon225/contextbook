@@ -535,9 +535,6 @@ public class SearchPanelUtilities {
 		final SpinnerModel maxMissedCleavageSpinner=new SpinnerNumberModel(1, 0, 3, 1);
 		final SpinnerModel minMzSpinner=new SpinnerNumberModel(396.4, 150.0, 1600.0, 0.1);
 		final SpinnerModel maxMzSpinner=new SpinnerNumberModel(1002.7, 150.0, 1600.0, 0.1);
-
-		options.add(new LabeledComponent("Default NCE", new JSpinner(defaultNCESpinner)));
-		options.add(new LabeledComponent("Default Charge", new JSpinner(defaultChargeSpinner)));
 		
 		JPanel chargeRange=new JPanel(new FlowLayout());
 		chargeRange.setOpaque(true);
@@ -555,6 +552,9 @@ public class SearchPanelUtilities {
 		mzRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
 		mzRange.add(new JSpinner(maxMzSpinner));
 		options.add(new LabeledComponent("m/z range", mzRange));
+
+		options.add(new LabeledComponent("Default NCE", new JSpinner(defaultNCESpinner)));
+		options.add(new LabeledComponent("Default Charge", new JSpinner(defaultChargeSpinner)));
 		
 		JPanel buttons=new JPanel();
 		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
