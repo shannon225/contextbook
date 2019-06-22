@@ -413,7 +413,7 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(convertMSP);
 
-		JMenuItem convertSpectronaut=new JMenuItem("Convert Spectronaut CSV to Library", convertDBIcon);
+		JMenuItem convertSpectronaut=new JMenuItem("Convert Prosit/Spectronaut CSV to Library", convertDBIcon);
 		convertSpectronaut.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
