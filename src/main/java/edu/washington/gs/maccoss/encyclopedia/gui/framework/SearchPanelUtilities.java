@@ -34,6 +34,7 @@ import javax.swing.SwingUtilities;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
@@ -532,6 +533,8 @@ public class SearchPanelUtilities {
 		final SpinnerModel minChargeSpinner=new SpinnerNumberModel(2, 1, 4, 1);
 		final SpinnerModel maxChargeSpinner=new SpinnerNumberModel(3, 1, 4, 1);
 		final SpinnerModel maxMissedCleavageSpinner=new SpinnerNumberModel(1, 0, 3, 1);
+		final SpinnerModel minMzSpinner=new SpinnerNumberModel(396.4, 150.0, 1600.0, 0.1);
+		final SpinnerModel maxMzSpinner=new SpinnerNumberModel(1002.7, 150.0, 1600.0, 0.1);
 
 		options.add(new LabeledComponent("Default NCE", new JSpinner(defaultNCESpinner)));
 		options.add(new LabeledComponent("Default Charge", new JSpinner(defaultChargeSpinner)));
@@ -544,6 +547,14 @@ public class SearchPanelUtilities {
 		chargeRange.add(new JSpinner(maxChargeSpinner));
 		options.add(new LabeledComponent("Charge range", chargeRange));
 		options.add(new LabeledComponent("Maximum Missed Cleavage", new JSpinner(maxMissedCleavageSpinner)));
+
+		JPanel mzRange=new JPanel(new FlowLayout());
+		mzRange.setOpaque(true);
+		mzRange.setBackground(Color.white);
+		mzRange.add(new JSpinner(minMzSpinner));
+		mzRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
+		mzRange.add(new JSpinner(maxMzSpinner));
+		options.add(new LabeledComponent("m/z range", mzRange));
 		
 		JPanel buttons=new JPanel();
 		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -557,6 +568,8 @@ public class SearchPanelUtilities {
 				int minCharge=((Number)minChargeSpinner.getValue()).byteValue();
 				int maxCharge=((Number)maxChargeSpinner.getValue()).byteValue();
 				int maxMissedCleavages=((Number)maxMissedCleavageSpinner.getValue()).byteValue();
+				double minimumMz=((Number)minMzSpinner.getValue()).doubleValue();
+				double maximumMz=((Number)maxMzSpinner.getValue()).doubleValue();
 				
 				if (fastaFile!=null&&fastaFile.exists()) {
 					dialog.setVisible(false);
@@ -565,8 +578,7 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Creating Prosit CSV File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							PrositCSVWriter.writeCSV(fastaFile, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages);
-							Logger.logLine("Finished reading "+fastaFile.getName());
+							PrositCSVWriter.writeCSV(fastaFile, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz));
 							return Nothing.NOTHING;
 						}
 
@@ -599,7 +611,7 @@ public class SearchPanelUtilities {
 		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.pack(); 
-		dialog.setSize(500, 250);
+		dialog.setSize(500, 300);
 		dialog.setVisible(true);
 	}
 	

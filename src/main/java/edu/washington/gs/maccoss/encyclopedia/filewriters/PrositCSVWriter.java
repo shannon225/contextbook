@@ -10,6 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -33,8 +34,10 @@ public class PrositCSVWriter {
 		int minCharge=2;
 		int maxCharge=3;
 		int maxMissedCleavages=1;
+		double minimumMz = 396.43;
+		double maximumMz = 1002.70;
 		
-		writeCSV(fasta, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages);
+		writeCSV(fasta, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz));
 	}
 	
 	public static void writeCSV(File fasta) throws FileNotFoundException {
@@ -43,10 +46,12 @@ public class PrositCSVWriter {
 		int minCharge=2;
 		int maxCharge=3;
 		int maxMissedCleavages=1;
-		writeCSV(fasta, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages);
+		double minimumMz = 396.43;
+		double maximumMz = 1002.70;
+		writeCSV(fasta, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz));
 	}
 
-	public static void writeCSV(File fasta, int defaultNCE, byte defaultCharge, int minCharge, int maxCharge, int maxMissedCleavages) throws FileNotFoundException {
+	public static void writeCSV(File fasta, int defaultNCE, byte defaultCharge, int minCharge, int maxCharge, int maxMissedCleavages, Range mzRange) throws FileNotFoundException {
 		int[] chargeStates = new int[maxCharge-minCharge+1];
 		for (int i = 0; i < chargeStates.length; i++) {
 			chargeStates[i]=i+minCharge;
@@ -74,7 +79,7 @@ public class PrositCSVWriter {
 					double pepMass=constants.getMass(seq)+MassConstants.oh2;
 					double pepChargedMass=(pepMass+MassConstants.protonMass*pepCharge)/pepCharge;
 
-					if (pepChargedMass>(396.43)&&pepChargedMass<(1002.70)) {
+					if (mzRange.contains(pepChargedMass)) {
 						if (seq.indexOf('B')>=0||seq.indexOf('J')>=0||seq.indexOf('O')>=0||seq.indexOf('U')>=0||seq.indexOf('X')>=0||seq.indexOf('Z')>=0||seq.indexOf('*')>=0) {
 							continue;
 						} else {
