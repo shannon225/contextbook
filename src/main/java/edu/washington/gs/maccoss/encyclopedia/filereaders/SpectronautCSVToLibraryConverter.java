@@ -87,14 +87,16 @@ public class SpectronautCSVToLibraryConverter {
 				@Override
 				public void processRow(Map<String, String> row) {
 					String peptideModSeq=OpenSwathTSVToLibraryConverter.getFromMap(row, "ModifiedPeptide");
-					byte charge=Byte.parseByte(OpenSwathTSVToLibraryConverter.getFromMap(row, "PrecursorCharge"));
+					String chargeString=OpenSwathTSVToLibraryConverter.getFromMap(row, "PrecursorCharge");
 					double productMz=Double.parseDouble(OpenSwathTSVToLibraryConverter.getFromMap(row, "FragmentMz"));
 					float libraryIntensity=Float.parseFloat(OpenSwathTSVToLibraryConverter.getFromMap(row, "RelativeIntensity"));
-					float iRT=Float.parseFloat(OpenSwathTSVToLibraryConverter.getFromMap(row, "iRT"));
 
-					String group=peptideModSeq+"_"+charge+"H";
+					String group=peptideModSeq+"_"+chargeString+"H";
 					
 					if (!group.equals(lastGroup)) {
+						byte charge=Byte.parseByte(chargeString);
+						float iRT=Float.parseFloat(OpenSwathTSVToLibraryConverter.getFromMap(row, "iRT"));
+						
 						if (lastPeptide!=null) peptides.add(new ImmutablePeptideEntry(lastPeptide));
 						
 						lastPeptide=new PeptideEntry(parseMods(peptideModSeq), charge, iRT);
