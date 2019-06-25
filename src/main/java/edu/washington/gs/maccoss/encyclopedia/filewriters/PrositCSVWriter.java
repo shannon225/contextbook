@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
@@ -17,27 +18,28 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class PrositCSVWriter {
 
 	public static void main(String[] args) throws Exception {
 		//File f=new File("/Users/bsearle/Documents/prosit/Pfalciparum/PlasmoDB-43_Pfalciparum3D7_AnnotatedProteins_042419.fasta");
-		//File f=new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta");
+		File fasta=new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta");
 		//File f=new File("/Volumes/searle_ssd/malaria/uniprot_human_25apr2019.fasta");
 		//File f=new File("/Volumes/searle_ssd/malaria/PlasmoDB-43_Pfalciparum3D7_AnnotatedProteins_042419.fasta");
 		//File f=new File("/Users/searleb/Downloads/uniprot-taxonomy_183190.fasta");
-		File fasta=new File("/Users/searleb/Downloads/2019.05_UP000028761_9555_Papio_anubis_canonical_fixed.fasta");
+		//File fasta=new File("/Users/searleb/Downloads/2019.05_UP000028761_9555_Papio_anubis_canonical_fixed.fasta");
 		
 		int defaultNCE = 33;
-		byte defaultCharge = (byte)3;
+		byte defaultCharge = (byte)2;
 		int minCharge=2;
 		int maxCharge=3;
 		int maxMissedCleavages=1;
 		double minimumMz = 396.43;
 		double maximumMz = 1002.70;
 		
-		writeCSV(fasta, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz));
+		writeCSV(fasta, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), false);
 	}
 	
 	public static void writeCSV(File fasta) throws FileNotFoundException {
@@ -48,10 +50,10 @@ public class PrositCSVWriter {
 		int maxMissedCleavages=1;
 		double minimumMz = 396.43;
 		double maximumMz = 1002.70;
-		writeCSV(fasta, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz));
+		writeCSV(fasta, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), false);
 	}
 
-	public static void writeCSV(File fasta, int defaultNCE, byte defaultCharge, int minCharge, int maxCharge, int maxMissedCleavages, Range mzRange) throws FileNotFoundException {
+	public static void writeCSV(File fasta, int defaultNCE, byte defaultCharge, int minCharge, int maxCharge, int maxMissedCleavages, Range mzRange, boolean addDecoys) throws FileNotFoundException {
 		int[] chargeStates = new int[maxCharge-minCharge+1];
 		for (int i = 0; i < chargeStates.length; i++) {
 			chargeStates[i]=i+minCharge;
@@ -97,6 +99,10 @@ public class PrositCSVWriter {
 			int charge=i+minCharge;
 			for (String string : allPeptides[i]) {
 				writer.println(string+","+convertNCE(defaultNCE, (byte)charge, defaultCharge)+","+(charge));
+				if (addDecoys) {
+					String reverse=PeptideUtils.reverse(string, enzyme, new AminoAcidConstants());
+					writer.println(reverse+","+convertNCE(defaultNCE, (byte)charge, defaultCharge)+","+(charge));
+				}
 			}
 		}
 		writer.close();
