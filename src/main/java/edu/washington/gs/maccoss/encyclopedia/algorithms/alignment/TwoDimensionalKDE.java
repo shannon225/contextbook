@@ -11,7 +11,6 @@ import org.jzy3d.plot3d.builder.Mapper;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter3d;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
@@ -78,8 +77,7 @@ public class TwoDimensionalKDE extends Mapper {
 			System.out.println((System.currentTimeMillis()-time));
 		}
 
-		Charter3d.plot(filter, filter.getXRange(), filter.getYRange(), filter.getResolution()/5);
-		
+		//Charter3d.plot(filter, filter.getXRange(), filter.getYRange(), filter.getResolution()/5);
 	}
 
 	public TwoDimensionalKDE(ArrayList<XYPoint> points) {
