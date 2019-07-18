@@ -5,33 +5,21 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
-import com.fasterxml.jackson.databind.JsonMappingException.Reference;
+import org.jzy3d.plot3d.builder.Mapper;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface.AlignmentDataPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter3d;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
-import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 import gnu.trove.procedure.TObjectFloatProcedure;
 
@@ -145,7 +133,15 @@ public class WHOI2DLCTestCase {
 		TwoDimensionalKDE kde=new TwoDimensionalKDE(rts, 1000);
 
 		System.out.println("Starting plotting...");
-		Charter3d.plot(kde, kde.getXRange(), kde.getYRange(), kde.getResolution()/5);
+
+		final TwoDimensionalKDE finalFilter=kde;
+		Mapper mapper=new Mapper() {
+			@Override
+			public double f(double arg0, double arg1) {
+				return finalFilter.f(arg0, arg1);
+			}
+		};
+		Charter3d.plot(mapper, kde.getXRange(), kde.getYRange(), kde.getResolution()/5);
 	}
 
 	private static TObjectFloatHashMap<String> getRTs(LibraryFile refLib) throws IOException, SQLException, DataFormatException {

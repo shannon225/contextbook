@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.jzy3d.plot3d.builder.Mapper;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TwoDimensionalKDE;
@@ -31,8 +33,16 @@ public class MedianInterpolatorTest extends TestCase {
 		//rts=getCleanData();
 		RetentionTimeAlignmentInterface filter=RetentionTimeFilter.getFilter(rts);
 		TwoDimensionalKDE kde=new TwoDimensionalKDE(rts);
+
+		final TwoDimensionalKDE finalFilter=kde;
+		Mapper mapper=new Mapper() {
+			@Override
+			public double f(double arg0, double arg1) {
+				return finalFilter.f(arg0, arg1);
+			}
+		};
 		
-		Charter3d.plot(kde, kde.getXRange(), kde.getYRange(), kde.getResolution()/5);
+		Charter3d.plot(mapper, kde.getXRange(), kde.getYRange(), kde.getResolution()/5);
 		//filter.plot(rts, Optional.ofNullable(new File("/Users/searleb/Downloads/blah.txt")));
 	}
 	
