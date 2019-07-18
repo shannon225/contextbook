@@ -4,12 +4,15 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Optional;
@@ -60,7 +63,12 @@ public class SearchPanelUtilities {
 	private static final ImageIcon fileAddIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/fileadd.png"));
 
 	public static void preprocessMZMLs(Component root, SearchParameters params) {
-		File[] featureFiles=FileChooserPanel.getFiles(null, "mzML files", new SimpleFilenameFilter(".mzML"), (JFrame)null, true);
+
+		FileDialog dialog=new FileDialog((JFrame)null, "mzML files", FileDialog.LOAD);
+		dialog.setMultipleMode(true);
+		dialog.setFilenameFilter(new SimpleFilenameFilter(".mzML"));
+		dialog.setVisible(true);
+		File[] featureFiles=dialog.getFiles();
 
 		if (featureFiles!=null) {
 			if (featureFiles.length==1&&featureFiles[0].isDirectory()) {
@@ -292,8 +300,12 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library Files") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
+							File first=files.remove(0);
+							Logger.logLine("Starting with "+first.getName());
+							Files.copy(first.toPath(), saveFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+							
 							LibraryFile saveLibrary=new LibraryFile();
-							saveLibrary.openFile();
+							saveLibrary.openFile(saveFile);
 							saveLibrary.dropIndices();
 							
 							for (File elibFile : files) {
@@ -307,7 +319,7 @@ public class SearchPanelUtilities {
 							}
 							
 							saveLibrary.createIndices();
-							saveLibrary.saveAsFile(saveFile);
+							saveLibrary.saveFile();
 							
 							saveLibrary.close();
 							
@@ -535,9 +547,6 @@ public class SearchPanelUtilities {
 		final SpinnerModel maxMissedCleavageSpinner=new SpinnerNumberModel(1, 0, 3, 1);
 		final SpinnerModel minMzSpinner=new SpinnerNumberModel(396.4, 150.0, 1600.0, 0.1);
 		final SpinnerModel maxMzSpinner=new SpinnerNumberModel(1002.7, 150.0, 1600.0, 0.1);
-
-		options.add(new LabeledComponent("Default NCE", new JSpinner(defaultNCESpinner)));
-		options.add(new LabeledComponent("Default Charge", new JSpinner(defaultChargeSpinner)));
 		
 		JPanel chargeRange=new JPanel(new FlowLayout());
 		chargeRange.setOpaque(true);
@@ -555,6 +564,9 @@ public class SearchPanelUtilities {
 		mzRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
 		mzRange.add(new JSpinner(maxMzSpinner));
 		options.add(new LabeledComponent("m/z range", mzRange));
+
+		options.add(new LabeledComponent("Default NCE", new JSpinner(defaultNCESpinner)));
+		options.add(new LabeledComponent("Default Charge", new JSpinner(defaultChargeSpinner)));
 		
 		JPanel buttons=new JPanel();
 		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -578,7 +590,7 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Creating Prosit CSV File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							PrositCSVWriter.writeCSV(fastaFile, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz));
+							PrositCSVWriter.writeCSV(fastaFile, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), false);
 							return Nothing.NOTHING;
 						}
 
@@ -617,7 +629,7 @@ public class SearchPanelUtilities {
 	
 	public static void convertSpectronaut(Component root, SearchParameters params) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
-		final JDialog dialog=new JDialog(frame, "Convert Spectronaut CSV to Library", true);
+		final JDialog dialog=new JDialog(frame, "Convert Prosit/Spectronaut CSV to Library", true);
 		
 		final FileChooserPanel csvFileChooser=new FileChooserPanel(null, "Spectronaut CSV", new SimpleFilenameFilter(".spectronaut"), true);
 		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);

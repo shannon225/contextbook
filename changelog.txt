@@ -1,6 +1,11 @@
 EncyclopeDIA changelog for user-facing changes:
 
-encyclopedia-0.8.3-SNAPSHOT
+encyclopedia-0.9.1-SNAPSHOT
+
+encyclopedia-0.9.0 (Jun 25, 2019)
+ - Feature: added read/write support for Prosit libraries, including making Prosit input from FASTA databases
+ - Feature: added ability to preprocess mzMLs into DIAs to speed up searches on servers with slow disk access
+ - Bugfix: significantly sped up the Spectronaut library reader
 
 encyclopedia-0.8.2 (May 24, 2019)
  - Feature: added support for converting Spectronaut libraries

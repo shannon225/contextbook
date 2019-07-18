@@ -347,10 +347,6 @@ public class MultiResultsBrowserPanel extends JPanel {
 					TObjectDoubleHashMap<FragmentIon> targetIonObjects=new TObjectDoubleHashMap<FragmentIon>();
 					ArrayList<FragmentIon> offtargetIonObjects=new ArrayList<FragmentIon>();
 					
-					for (int j=0; j<quantitativeData.getMassArray().length; j++) {
-						System.out.println(quantitativeData.getMassArray()[j]+"\t"+quantitativeData.getIntensityArray()[j]);
-					}
-					System.out.println();
 					XYTrace quantitativePeaks=new XYTrace(quantitativeData.getMassArray(), quantitativeData.getIntensityArray(), GraphType.spectrum, origSampleNames[i]);
 					Collections.sort(quantitativePeaks.getPoints());
 					Pair<double[], double[]> peaksArrays=quantitativePeaks.toArrays();
