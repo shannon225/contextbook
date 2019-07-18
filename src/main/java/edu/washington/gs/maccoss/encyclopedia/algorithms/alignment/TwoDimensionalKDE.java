@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.jzy3d.plot3d.builder.Mapper;
-
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -25,7 +23,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.CosineGau
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
 import gnu.trove.list.array.TFloatArrayList;
 
-public class TwoDimensionalKDE extends Mapper {
+public class TwoDimensionalKDE {
 	public static final int DEFAULT_RESOLUTION = 1000;
 	private static final double BANDWIDTH_TO_STDEV = 2.0*Math.sqrt(2.0*Math.log(2.0));
 	private final int resolution;
@@ -77,7 +75,14 @@ public class TwoDimensionalKDE extends Mapper {
 			System.out.println((System.currentTimeMillis()-time));
 		}
 
-		//Charter3d.plot(filter, filter.getXRange(), filter.getYRange(), filter.getResolution()/5);
+//		final TwoDimensionalKDE finalFilter=filter;
+//		Mapper mapper=new Mapper() {
+//			@Override
+//			public double f(double arg0, double arg1) {
+//				return finalFilter.f(arg0, arg1);
+//			}
+//		};
+//		Charter3d.plot(mapper, filter.getXRange(), filter.getYRange(), filter.getResolution()/5);
 	}
 
 	public TwoDimensionalKDE(ArrayList<XYPoint> points) {
@@ -149,7 +154,6 @@ public class TwoDimensionalKDE extends Mapper {
 		return resolution;
 	}
 	
-	@Override
 	public double f(double X, double Y) {
 		int xIndex=xRange.linearInterp((float)X, 0, resolution-1);
 		int yIndex=yRange.linearInterp((float)Y, 0, resolution-1);
