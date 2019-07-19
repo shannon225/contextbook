@@ -141,7 +141,10 @@ public class WHOI2DLCTestCase {
 				return finalFilter.f(arg0, arg1);
 			}
 		};
-		Charter3d.plot(mapper, kde.getXRange(), kde.getYRange(), kde.getResolution()/5);
+		Charter3d.plot(mapper, 
+				new org.jzy3d.maths.Range(finalFilter.getXRange().getStart(), finalFilter.getXRange().getStop()), 
+				new org.jzy3d.maths.Range(finalFilter.getYRange().getStart(), finalFilter.getYRange().getStop()), 
+				kde.getResolution()/5);
 	}
 
 	private static TObjectFloatHashMap<String> getRTs(LibraryFile refLib) throws IOException, SQLException, DataFormatException {

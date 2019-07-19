@@ -82,7 +82,10 @@ public class TwoDimensionalKDE {
 //				return finalFilter.f(arg0, arg1);
 //			}
 //		};
-//		Charter3d.plot(mapper, filter.getXRange(), filter.getYRange(), filter.getResolution()/5);
+//		Charter3d.plot(mapper, 
+//				new org.jzy3d.maths.Range(finalFilter.getXRange().getStart(), finalFilter.getXRange().getStop()), 
+//				new org.jzy3d.maths.Range(finalFilter.getYRange().getStart(), finalFilter.getYRange().getStop()), 
+//				finalFilter.getResolution()/5);
 	}
 
 	public TwoDimensionalKDE(ArrayList<XYPoint> points) {
@@ -141,13 +144,12 @@ public class TwoDimensionalKDE {
 	public float[][] getTwoDimensionalHistogram() {
 		return twoDimensionalHistogram;
 	}
-
-	public org.jzy3d.maths.Range getXRange() {
-		return new org.jzy3d.maths.Range(xRange.getStart(), xRange.getStop());
+	public Range getXRange() {
+		return xRange;
 	}
-
-	public org.jzy3d.maths.Range getYRange() {
-		return new org.jzy3d.maths.Range(yRange.getStart(), yRange.getStop());
+	
+	public Range getYRange() {
+		return yRange;
 	}
 	
 	public int getResolution() {
