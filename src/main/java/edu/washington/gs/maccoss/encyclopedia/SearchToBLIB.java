@@ -38,6 +38,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -59,6 +60,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.VersioningDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
@@ -328,13 +330,23 @@ public class SearchToBLIB {
 			Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides;
 			boolean runningPercolator=true;
 			if (featureFiles.size()==1) {
+				Logger.logLine("Only one file, so no need to re-run Percolator.");
 				// if there's only one file then don't need to re-run percolator
 				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(representativeJob.getPercolatorFiles().getPeptideOutputFile(), parameters, false);
+				runningPercolator=false;
+				
+			} else if (parameters.isDoNotUseGlobalFDR()) {
+				Logger.logLine("Warning, user asked to not use global FDR!");
+				passingPeptides=getPeptidesWithoutGlobalFDR(pecanJobs, parameters).x;
+				runningPercolator=false;
+				
 			} else if (bigPercolatorFile.exists()&&bigPercolatorFile.canRead()&&bigPercolatorDecoyFile.exists()&&bigPercolatorDecoyFile.canRead()) {
+				Logger.logLine("Found previously run global Percolator.");
 				// if we've already run percolator then don't need to re-run percolator
 				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(bigPercolatorFile, parameters, false);
 				runningPercolator=false;
 			} else {
+				Logger.logLine("Running global Percolator analysis.");
 				TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
 				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), bigPercolatorFiles, threshold, parameters.getAAConstants());
 			}
@@ -361,6 +373,9 @@ public class SearchToBLIB {
 					Logger.logLine("Inferring peak boundaries across files...");
 					try {
 						inferrer=Optional.of(AlternatePeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides.x, parameters));
+						for (SearchJobData job : pecanJobs) {
+							System.out.println(job.getDiaFile().getName()+" --> "+inferrer.get().getPreciseRTInSec(job, "QSVEADVNGLR", 0.0f)+", "+inferrer.get().getWarpedRTInSec(job, "QSVEADVNGLR"));
+						}
 						Logger.logLine("...Finished peak inference.");
 					} catch (Exception e) {
 						Logger.errorLine("RT alignment between files failed! Perhaps this is to build a chromatogram library and not a quantitative experiment? Attempting to recover without alignment.");
@@ -385,6 +400,40 @@ public class SearchToBLIB {
 			Logger.errorLine("Error creating concatenated feature file");
 			Logger.errorException(ie);
 		}
+	}
+
+	private static Pair<Pair<ArrayList<PercolatorPeptide>, Float>, Pair<ArrayList<PercolatorPeptide>, Float>> getPeptidesWithoutGlobalFDR(List<? extends SearchJobData> pecanJobs, SearchParameters parameters) {
+		Pair<ArrayList<PercolatorPeptide>, Float> resultDecoyPeptides=new Pair<ArrayList<PercolatorPeptide>, Float>(new ArrayList<>(), -1f);
+		HashMap<String, ScoredObject<PeptidePrecursor>> decoyMap=new HashMap<>();
+		for (SearchJobData job : pecanJobs) {
+			ArrayList<PercolatorPeptide> individualSamplePeptides=PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideDecoyFile(), parameters, false).x;
+			for (PercolatorPeptide peptide : individualSamplePeptides) {
+				ScoredObject<PeptidePrecursor> obj=decoyMap.get(peptide.getPeptideModSeq());
+				if (obj==null||obj.x>peptide.getPosteriorErrorProb()) {
+					decoyMap.put(peptide.getPeptideModSeq(), new ScoredObject<PeptidePrecursor>(peptide.getPosteriorErrorProb(), peptide));
+				}
+			}
+		}
+		for (ScoredObject<PeptidePrecursor> precursor : decoyMap.values()) {
+			resultDecoyPeptides.x.add((PercolatorPeptide)precursor.y);
+		}
+		
+		Pair<ArrayList<PercolatorPeptide>, Float> resultTargetPeptides=new Pair<ArrayList<PercolatorPeptide>, Float>(new ArrayList<>(), -1f);
+		HashMap<String, ScoredObject<PeptidePrecursor>> targetMap=new HashMap<>();
+		for (SearchJobData job : pecanJobs) {
+			ArrayList<PercolatorPeptide> individualSamplePeptides=PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideOutputFile(), parameters, false).x;
+			for (PercolatorPeptide peptide : individualSamplePeptides) {
+				ScoredObject<PeptidePrecursor> obj=targetMap.get(peptide.getPeptideModSeq());
+				if (obj==null||obj.x>peptide.getPosteriorErrorProb()) {
+					targetMap.put(peptide.getPeptideModSeq(), new ScoredObject<PeptidePrecursor>(peptide.getPosteriorErrorProb(), peptide));
+				}
+			}
+		}
+		for (ScoredObject<PeptidePrecursor> precursor : targetMap.values()) {
+			resultTargetPeptides.x.add((PercolatorPeptide)precursor.y);
+		}
+		
+		return new Pair<Pair<ArrayList<PercolatorPeptide>,Float>, Pair<ArrayList<PercolatorPeptide>,Float>>(resultTargetPeptides, resultDecoyPeptides);
 	}
 	
 	static void convertBlib(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File blibFile, Optional<ArrayList<PercolatorPeptide>> passingPeptides, Optional<PeakLocationInferrerInterface> inferrer) {
@@ -522,12 +571,20 @@ public class SearchToBLIB {
 				
 				subProgress.update("Wrote "+globalPassingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 			}
-			
+
+			final PercolatorExecutionData percolatorExecutionData = globalPercolatorFiles.get();
 			ArrayList<PercolatorProteinGroup> proteins=null;
 			if (globalPercolatorFiles.isPresent()) {
-				final PercolatorExecutionData percolatorExecutionData = globalPercolatorFiles.get();
-				Pair<ArrayList<PercolatorPeptide>, Float> targets=PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideOutputFile(), parameters, true);
-				Pair<ArrayList<PercolatorPeptide>, Float> decoys=PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideDecoyFile(), parameters, true);
+				Pair<ArrayList<PercolatorPeptide>, Float> targets=null;
+				Pair<ArrayList<PercolatorPeptide>, Float> decoys=null;
+				if (percolatorExecutionData.getPeptideOutputFile().exists()) {
+					targets=PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideOutputFile(), parameters, true);
+					decoys=PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideDecoyFile(), parameters, true);
+				} else {
+					Pair<Pair<ArrayList<PercolatorPeptide>, Float>, Pair<ArrayList<PercolatorPeptide>, Float>> withoutFDR=getPeptidesWithoutGlobalFDR(pecanJobs, parameters);
+					targets=withoutFDR.x;
+					decoys=withoutFDR.y;
+				}
 				Logger.logLine("Writing global target/decoy peptides: "+targets.x.size()+"/"+decoys.x.size()+", pi0: "+targets.y);
 				elib.addTargetDecoyPeptides(targets.x, decoys.x);
 				elib.addMetadata("pi0", Float.toString(targets.y));

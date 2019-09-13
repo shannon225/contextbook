@@ -125,6 +125,7 @@ public class SearchParameterParser {
 		final boolean verifyModificationIons;
 		final float rtWindowInMin;
         final boolean filterPeaklists;
+        final boolean doNotUseGlobalFDR;
 		
 		String value=parameters.get("-frag");
 		if (value==null) {
@@ -311,9 +312,10 @@ public class SearchParameterParser {
 		quantifyAcrossSamples=SearchParameterParser.getBoolean("-quantifyAcrossSamples", parameters, false);
 		verifyModificationIons=SearchParameterParser.getBoolean("-verifyModificationIons", parameters, true);
         filterPeaklists=SearchParameterParser.getBoolean("-filterPeaklists", parameters, false);
+        doNotUseGlobalFDR=SearchParameterParser.getBoolean("-doNotUseGlobalFDR", parameters, false);
 
 		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorProteinThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
-				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, localizationModification, breadthType, numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons, rtWindowInMin, filterPeaklists);
+				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, localizationModification, breadthType, numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons, rtWindowInMin, filterPeaklists, doNotUseGlobalFDR);
 	}
 
 	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {

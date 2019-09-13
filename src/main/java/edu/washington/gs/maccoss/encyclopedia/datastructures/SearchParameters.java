@@ -46,10 +46,11 @@ public class SearchParameters {
 	protected final boolean verifyModificationIons;
     protected final float rtWindowInMin;
     protected final boolean filterPeaklists;
+    protected final boolean doNotUseGlobalFDR;
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, float percolatorProteinThreshold, Integer percolatorVersionNumber, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
-			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists) {
+			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -77,6 +78,7 @@ public class SearchParameters {
 		this.verifyModificationIons=verifyModificationIons;
         this.rtWindowInMin=rtWindowInMin;
         this.filterPeaklists=filterPeaklists;
+        this.doNotUseGlobalFDR=doNotUseGlobalFDR;
 	}
 	
 	public void savePreferences(File libraryFile, File fastaFile) throws IOException,BackingStoreException {
@@ -304,4 +306,8 @@ public class SearchParameters {
     public boolean isFilterPeaklists() {
         return filterPeaklists;
     }
+    
+    public boolean isDoNotUseGlobalFDR() {
+		return doNotUseGlobalFDR;
+	}
 }

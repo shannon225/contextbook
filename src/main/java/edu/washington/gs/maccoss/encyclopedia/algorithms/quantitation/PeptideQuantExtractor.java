@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -72,7 +73,7 @@ public class PeptideQuantExtractor {
 
 	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, final SearchJobData job, boolean limitToQuantifiable, ArrayList<PercolatorPeptide> globalPassingPSMIDs, ArrayList<PercolatorPeptide> localPassingPSMIDs, final Optional<PeakLocationInferrerInterface> inferrer, StripeFileInterface stripeFile, LibraryInterface searchedLibrary, final SearchParameters parameters) {
 		HashSet<String> passingPeptideSequences=new HashSet<String>();
-		final TObjectByteMap<String> savedPeptides = new TObjectByteHashMap<>(10, 0.5f, NO_ENTRY_CHARGE); // specify the no-entry value to be zero
+		final HashMap<String, PercolatorPeptide> savedPeptides = new HashMap<>();
 		for (PercolatorPeptide psm : globalPassingPSMIDs) {
 			String psmID=psm.getPsmID();
 			boolean isDecoy=PercolatorPeptide.isPSMIDDecoy(psmID);
@@ -80,7 +81,7 @@ public class PeptideQuantExtractor {
 			if (!isDecoy) {
 				String peptideModSeq=PeptideUtils.getCorrectedMasses(PercolatorPeptide.getPeptideSequence(psmID), job.getParameters().getAAConstants());
 				passingPeptideSequences.add(peptideModSeq);
-				savedPeptides.put(peptideModSeq, psm.getPrecursorCharge());
+				savedPeptides.put(peptideModSeq, psm);
 			}
 		}
 		Logger.logLine("Number of global peptides: "+savedPeptides.size()+" vs local peptides: "+localPassingPSMIDs.size());
@@ -108,9 +109,11 @@ public class PeptideQuantExtractor {
 				assert precursorCharge != NO_ENTRY_CHARGE;
 
 				// Only accepted IDs for the correct charge state
-				if (savedPeptides.get(peptideModSeq) == precursorCharge) {
+				PercolatorPeptide targetPeptide=savedPeptides.get(peptideModSeq);
+				if (targetPeptide!=null&&targetPeptide.getPrecursorCharge()==precursorCharge) {
 					boolean isDecoy=PercolatorPeptide.isPSMIDDecoy(psmID);
 					if (!isDecoy) {
+						savedPeptides.remove(peptideModSeq);
 						boolean wasInferred;
 						float retentionTime;// in seconds
 						int scanID;
@@ -214,6 +217,19 @@ public class PeptideQuantExtractor {
 		
 		TableParser.parseTSV(job.getPercolatorFiles().getInputTSV(), muscle);
 
+		
+		for (Entry<String, PercolatorPeptide> entry : savedPeptides.entrySet()) {
+			String peptideModSeq=entry.getKey();
+			PercolatorPeptide percolatorPeptide=entry.getValue();
+			HashSet<String> accessions=PSMData.stringToAccessions(percolatorPeptide.getProteinIDs());
+			float retentionTime=inferrer.get().getWarpedRTInSec(job, peptideModSeq);
+			boolean wasInferred=true;
+			int scanID=-1; // negative scan ID for inferred IDs
+			byte precursorCharge=percolatorPeptide.getPrecursorCharge();
+			double precursorMZ=parameters.getAAConstants().getChargedMass(peptideModSeq, precursorCharge);
+			data.add(new PSMData(accessions, scanID, precursorMZ, precursorCharge, peptideModSeq, retentionTime, 1.0f, -1.0f, parameters.getExpectedPeakWidth(), wasInferred, parameters.getAAConstants()));
+		}
+		
 		try {
 			Logger.logLine("Parsed features and scores for "+data.size()+" peptides.");
 			HashMap<String, PSMData> uniquedData=new HashMap<String, PSMData>();

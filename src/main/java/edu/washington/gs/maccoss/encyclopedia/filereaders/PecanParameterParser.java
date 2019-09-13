@@ -101,6 +101,7 @@ public class PecanParameterParser {
 		final boolean quantifyAcrossSamples;
 		final boolean requireVariableMods;
         final boolean filterPeaklists;
+        final boolean doNotUseGlobalFDR;
 
 		ModificationMassMap variableMods=new ModificationMassMap(parameters.get("-variable"));
 
@@ -248,7 +249,8 @@ public class PecanParameterParser {
 		quantifyAcrossSamples=SearchParameterParser.getBoolean("-quantifyAcrossSamples", parameters, false);
 		requireVariableMods=SearchParameterParser.getBoolean("-requireVariableMods", parameters, false);
         filterPeaklists=SearchParameterParser.getBoolean("-filterPeaklists", parameters, false);
+        doNotUseGlobalFDR=SearchParameterParser.getBoolean("-doNotUseGlobalFDR", parameters, false);
 
-		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, percolatorProteinThreshold, alpha, beta, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, quantifyAcrossSamples, true, requireVariableMods, filterPeaklists);
+		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, percolatorProteinThreshold, alpha, beta, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, quantifyAcrossSamples, true, requireVariableMods, filterPeaklists, doNotUseGlobalFDR);
 	}
 }

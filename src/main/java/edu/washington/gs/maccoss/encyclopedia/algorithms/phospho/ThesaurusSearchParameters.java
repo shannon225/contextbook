@@ -48,10 +48,10 @@ public class ThesaurusSearchParameters extends SearchParameters {
 	public ThesaurusSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin,
 			MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme, float percolatorThreshold, float percolatorProteinThreshold, Integer percolatorVersionNumber,
 			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, int numberOfQuantitativePeaks,
-			int minNumOfQuantitativePeaks, float minIntensity, PeptideModification modification, ScoringBreadthType searchType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, boolean filterPeaklists) {
+			int minNumOfQuantitativePeaks, float minIntensity, PeptideModification modification, ScoringBreadthType searchType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, boolean filterPeaklists, boolean doNotUseGlobalFDR) {
 		super(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorProteinThreshold,
 				percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks,
-				minIntensity, Optional.of(modification), searchType, getNumberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons, -1.0f, filterPeaklists);
+				minIntensity, Optional.of(modification), searchType, getNumberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons, -1.0f, filterPeaklists, doNotUseGlobalFDR);
 	}
 
 	public static ThesaurusSearchParameters convertFromEncyclopeDIA(SearchParameters params) {
@@ -66,7 +66,7 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				params.getFragmentTolerance(), params.getFragmentOffsetPPM(), params.getLibraryFragmentTolerance(), params.getEnzyme(), params.getPercolatorThreshold(), params.getPercolatorProteinThreshold(),
 				params.getPercolatorVersionNumber(), params.getDataAcquisitionType(), params.getNumberOfThreadsUsed(), params.getExpectedPeakWidth(), params.getTargetWindowCenter(),
 				params.getPrecursorWindowSize(), params.getNumberOfQuantitativePeaks(), params.getMinNumOfQuantitativePeaks(), params.getMinIntensity(), mod, params.getScoringBreadthType(),
-				params.getNumberOfExtraDecoyLibrariesSearched(), params.isQuantifySameFragmentsAcrossSamples(), params.isVerifyModificationIons(), params.isFilterPeaklists());
+				params.getNumberOfExtraDecoyLibrariesSearched(), params.isQuantifySameFragmentsAcrossSamples(), params.isVerifyModificationIons(), params.isFilterPeaklists(), params.isDoNotUseGlobalFDR());
 	}
 
 }

@@ -246,11 +246,13 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			if (bestLocalizedStripe==null) {
 				bestLocalizingIons=bestForm.allIons;
 				bestLocalizedStripe = getBestLocalizationStripe(parameters, dutyCycle, localizer.getBackground(), bestForm.localizedEntry, bestLocalizingIons, stripeSubset);
+				if (bestLocalizedStripe==null||bestLocalizedStripe.x==null) continue;
 			}
 			
 			AmbiguousPeptideModSeq ambiPeptideModSeq=AmbiguousPeptideModSeq.getUnambigous(bestPeptideModSeq, parameters.getLocalizingModification().get(), parameters.getAAConstants(), "");
 			Triplet<ModificationLocalizationData, FragmentScan, Range> locData=generateLocalizationData(false, minimumScore, parameters, localizer.getModification(), bestForm.localizedEntry,
 					ambiPeptideModSeq, bestLocalizingIons, bestForm.allIons, takenIdentifiedIons, stripeSubset, bestLocalizedStripe);
+			if (locData==null) continue;
 			
 			// if localized, then keep and remove from localizedForms
 			ModificationLocalizationData data=locData.x;
@@ -569,6 +571,9 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			ArrayList<Spectrum> stripeSubset, Pair<FragmentScan, Float> bestLocalizedStripe) {
 		float bestLocalizationScore=bestLocalizedStripe.y;
 		FragmentScan apex=bestLocalizedStripe.x;
+		if (apex==null) {
+			return null;
+		}
 		//System.out.println("\t"+peptideModSeq.getPeptideAnnotation()+" --> ("+targetIons.length+") "+bestLocalizationScore+" localization score at "+(apex.getScanStartTime()/60f)+" min"); //FIXME 
 		
 		int targetNumFragments=Math.max(parameters.getMinNumOfQuantitativePeaks(), 3);

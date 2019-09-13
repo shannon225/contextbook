@@ -254,6 +254,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			AmbiguousPeptideModSeq ambiPeptideModSeq=AmbiguousPeptideModSeq.getUnambigous(bestPeptideModSeq, localizingModification, parameters.getAAConstants(), "");
 			Triplet<ModificationLocalizationData, FragmentScan, Range> locData=ThesaurusOneScoringTask.generateLocalizationData(false, minimumScore, parameters, localizingModification, bestForm.localizedEntry,
 					ambiPeptideModSeq, bestLocalizingIons, bestForm.allIons, takenIdentifiedIons, stripeSubset, bestLocalizedStripe);
+			if (locData==null) continue;
 			
 			// if localized, then keep and remove from localizedForms
 			ModificationLocalizationData data=locData.x;

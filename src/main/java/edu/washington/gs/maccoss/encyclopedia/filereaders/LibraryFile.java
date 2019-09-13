@@ -311,7 +311,16 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				return Optional.empty();
 			}
 
-			return Optional.ofNullable(sources.iterator().next());
+			Path next=sources.iterator().next();
+			File file=next.toFile();
+			if (file!=null) {
+				if (file.exists()) {
+					return Optional.ofNullable(next);
+				} else if (new File(getFile().getParent(), file.getName()).exists()) {
+					return Optional.ofNullable(new File(getFile().getParent(), file.getName()).toPath());
+				}
+			}
+			return Optional.ofNullable(next);
 		} catch (Exception e) {
 			return Optional.empty();
 		}

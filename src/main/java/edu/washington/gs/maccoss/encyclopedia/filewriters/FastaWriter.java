@@ -24,7 +24,7 @@ public class FastaWriter {
 	public void write(FastaEntryInterface entry) {
 		writer.print('>');
 		writer.println(entry.getAnnotation());
-		writer.println(WordUtils.wrap(entry.getSequence(), 80));
+		writer.println(WordUtils.wrap(entry.getSequence(), 80, System.lineSeparator(), true));
 	}
 	
 	public void close() {

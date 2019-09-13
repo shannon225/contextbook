@@ -264,6 +264,7 @@ public class Thesaurus {
 			progress.update(baseMessage, baseProgress);
 			
 			float dutyCycle=stripefile.getRanges().get(range);
+			if (dutyCycle<=0.1f) dutyCycle=0.1f;	
 			Logger.logLine("Processing "+range+" m/z, ("+dutyCycle+" second duty cycle)");
 			
 			ArrayList<FragmentScan> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);

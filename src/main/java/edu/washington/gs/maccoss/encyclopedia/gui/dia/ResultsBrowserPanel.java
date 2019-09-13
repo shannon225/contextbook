@@ -342,7 +342,7 @@ public class ResultsBrowserPanel extends JPanel {
 			entries.add(unit);
 			
 			try {
-				float rtRange=parameters.getLocalizingModification().isPresent()?dia.getGradientLength()/20.0f:(3f*parameters.getExpectedPeakWidth());
+				float rtRange=parameters.getLocalizingModification().isPresent()?dia.getGradientLength()/20.0f:(5f*parameters.getExpectedPeakWidth());
 				
 				ArrayList<FragmentScan> stripes=dia.getStripes(entry.getPrecursorMZ(), targetRT-rtRange, targetRT+rtRange, false);
 				Collections.sort(stripes);
@@ -350,7 +350,12 @@ public class ResultsBrowserPanel extends JPanel {
 				Float targetRTFloat=targetRT;
 				ArrayList<Spectrum> downcastedSpectra=FragmentScan.downcastStripeToSpectrum(stripes);
 				HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge(), true), downcastedSpectra, targetRTFloat, GraphType.line);
-				ArrayList<XYTrace> traces=new ArrayList<XYTrace>(fragmentTraceMap.values());
+				ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
+				for (Entry<FragmentIon, XYTrace> pair : fragmentTraceMap.entrySet()) {
+					if (pair.getKey().index>1) {
+						traces.add(pair.getValue());
+					}
+				}
 				Collections.sort(traces);
 
 				ArrayList<Spectrum> precursors=PrecursorScan.downcast(dia.getPrecursors(targetRT-rtRange, targetRT+rtRange));

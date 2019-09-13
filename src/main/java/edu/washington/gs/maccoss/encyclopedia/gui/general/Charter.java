@@ -784,14 +784,30 @@ public class Charter {
 				}
 				
 				for (XYTraceInterface trace : traces) {
-					header.append("\t"+xAxis+"\t"+trace.getName());
-					
-					Pair<double[], double[]> pairs=trace.toArrays();
-					for (int i=0; i<rows.length; i++) {
-						if (pairs.x.length>i) {
-							rows[i].append("\t"+pairs.x[i]+"\t"+pairs.y[i]);
-						} else {
-							rows[i].append("\t\t");
+					if (trace instanceof AnnotatedLibraryEntry) {
+						AnnotatedLibraryEntry entry=(AnnotatedLibraryEntry)(Spectrum)trace;
+						FragmentIon[] annotations=entry.getIonAnnotations();
+
+						header.append("\t"+xAxis+"\t"+trace.getName()+"\tannotation");
+						
+						Pair<double[], double[]> pairs=trace.toArrays();
+						for (int i=0; i<rows.length; i++) {
+							if (pairs.x.length>i) {
+								rows[i].append("\t"+pairs.x[i]+"\t"+pairs.y[i]+"\t"+(annotations[i]==null?"":annotations[i].toString()));
+							} else {
+								rows[i].append("\t\t\t");
+							}
+						}
+					} else {
+						header.append("\t"+xAxis+"\t"+trace.getName());
+						
+						Pair<double[], double[]> pairs=trace.toArrays();
+						for (int i=0; i<rows.length; i++) {
+							if (pairs.x.length>i) {
+								rows[i].append("\t"+pairs.x[i]+"\t"+pairs.y[i]);
+							} else {
+								rows[i].append("\t\t");
+							}
 						}
 					}
 				}
