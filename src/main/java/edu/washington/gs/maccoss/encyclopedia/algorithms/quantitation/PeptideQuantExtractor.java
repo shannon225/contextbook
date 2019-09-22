@@ -217,12 +217,17 @@ public class PeptideQuantExtractor {
 		
 		TableParser.parseTSV(job.getPercolatorFiles().getInputTSV(), muscle);
 
-		
+		Logger.logLine("Found additional "+savedPeptides.size()+" globally detected peptides without scores in the individual run. Adding those into the list for re-extraction.");
 		for (Entry<String, PercolatorPeptide> entry : savedPeptides.entrySet()) {
 			String peptideModSeq=entry.getKey();
 			PercolatorPeptide percolatorPeptide=entry.getValue();
 			HashSet<String> accessions=PSMData.stringToAccessions(percolatorPeptide.getProteinIDs());
-			float retentionTime=inferrer.get().getWarpedRTInSec(job, peptideModSeq);
+			float retentionTime;
+			if (inferrer.isPresent()) {
+				retentionTime=inferrer.get().getWarpedRTInSec(job, peptideModSeq);
+			} else {
+				retentionTime=percolatorPeptide.getRT();
+			}
 			boolean wasInferred=true;
 			int scanID=-1; // negative scan ID for inferred IDs
 			byte precursorCharge=percolatorPeptide.getPrecursorCharge();
