@@ -44,39 +44,6 @@ public class PrositCSVWriter {
 		writeCSV(fasta, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), false);
 	}
 	
-	private static HashSet<String> getAllPeptides() {
-		Range mzRange=new Range(396.43, 1002.70);
-		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
-		AminoAcidConstants constants=new AminoAcidConstants();
-		File f=new File("/Volumes/searle_ssd/malaria/hela_specific_database/hela_specific.fasta");
-		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
-		
-		HashSet<String> allPeptides=new HashSet<>();
-		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
-		for (FastaEntryInterface entry : entries) {
-			if (entry.getAccession().indexOf(".variant")>=0) {
-				continue;
-			}
-			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 7, 30, 1, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
-			for (FastaPeptideEntry pep : peptides) {
-				for (int pepCharge : new int[] {2, 3}) {
-					String seq=pep.getSequence();
-					double pepMass=constants.getMass(seq)+MassConstants.oh2;
-					double pepChargedMass=(pepMass+MassConstants.protonMass*pepCharge)/pepCharge;
-
-					if (mzRange.contains(pepChargedMass)) {
-						if (seq.indexOf('B')>=0||seq.indexOf('J')>=0||seq.indexOf('O')>=0||seq.indexOf('U')>=0||seq.indexOf('X')>=0||seq.indexOf('Z')>=0||seq.indexOf('*')>=0) {
-							continue;
-						} else {
-							allPeptides.add(seq);
-						}
-					}
-				}
-			}
-		}
-		return allPeptides;
-	}
-	
 	public static void writeCSV(File fasta) throws FileNotFoundException {
 		int defaultNCE = 33;
 		byte defaultCharge = (byte)3;
@@ -90,14 +57,13 @@ public class PrositCSVWriter {
 	}
 
 	public static void writeCSV(File fasta, DigestionEnzyme enzyme, int defaultNCE, byte defaultCharge, int minCharge, int maxCharge, int maxMissedCleavages, Range mzRange, boolean addDecoys) throws FileNotFoundException {
-		HashSet<String> allpeptides=getAllPeptides();
 		int[] chargeStates = new int[maxCharge-minCharge+1];
 		for (int i = 0; i < chargeStates.length; i++) {
 			chargeStates[i]=i+minCharge;
 			Logger.logLine("Considering charge +"+chargeStates[i]+"H");
 		}
 		
-		String fileName = fasta.getAbsolutePath()+".z"+defaultCharge+"_nce"+defaultNCE+".csv";
+		String fileName = fasta.getAbsolutePath()+"."+enzyme.getPercolatorName()+".z"+defaultCharge+"_nce"+defaultNCE+".csv";
 		PrintWriter writer=new PrintWriter(fileName);
 		Logger.logLine("Starting to build Prosit CSV: "+fileName);
 
@@ -121,7 +87,7 @@ public class PrositCSVWriter {
 					if (mzRange.contains(pepChargedMass)) {
 						if (seq.indexOf('B')>=0||seq.indexOf('J')>=0||seq.indexOf('O')>=0||seq.indexOf('U')>=0||seq.indexOf('X')>=0||seq.indexOf('Z')>=0||seq.indexOf('*')>=0) {
 							continue;
-						} else if (!allpeptides.contains(seq)){
+						} else {
 							allPeptides[pepCharge-chargeStates[0]].add(seq);
 						}
 					}
