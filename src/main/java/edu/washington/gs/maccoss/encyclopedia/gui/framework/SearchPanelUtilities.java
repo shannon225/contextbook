@@ -22,6 +22,7 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -56,6 +57,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class SearchPanelUtilities {
@@ -547,6 +549,7 @@ public class SearchPanelUtilities {
 		final SpinnerModel maxMissedCleavageSpinner=new SpinnerNumberModel(1, 0, 3, 1);
 		final SpinnerModel minMzSpinner=new SpinnerNumberModel(396.4, 150.0, 1600.0, 0.1);
 		final SpinnerModel maxMzSpinner=new SpinnerNumberModel(1002.7, 150.0, 1600.0, 0.1);
+		final JComboBox<String> enzymeBox=new JComboBox<String>(new String[] {"Trypsin", "Glu-C", "Lys-C", "Arg-C", "Asp-N", "Lys-N", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
 		
 		JPanel chargeRange=new JPanel(new FlowLayout());
 		chargeRange.setOpaque(true);
@@ -554,6 +557,7 @@ public class SearchPanelUtilities {
 		chargeRange.add(new JSpinner(minChargeSpinner));
 		chargeRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
 		chargeRange.add(new JSpinner(maxChargeSpinner));
+		options.add(new LabeledComponent("Enzyme", enzymeBox));
 		options.add(new LabeledComponent("Charge range", chargeRange));
 		options.add(new LabeledComponent("Maximum Missed Cleavage", new JSpinner(maxMissedCleavageSpinner)));
 
@@ -582,6 +586,7 @@ public class SearchPanelUtilities {
 				int maxMissedCleavages=((Number)maxMissedCleavageSpinner.getValue()).byteValue();
 				double minimumMz=((Number)minMzSpinner.getValue()).doubleValue();
 				double maximumMz=((Number)maxMzSpinner.getValue()).doubleValue();
+				DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme((String)enzymeBox.getSelectedItem());
 				
 				if (fastaFile!=null&&fastaFile.exists()) {
 					dialog.setVisible(false);
@@ -590,7 +595,7 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Creating Prosit CSV File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							PrositCSVWriter.writeCSV(fastaFile, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), false);
+							PrositCSVWriter.writeCSV(fastaFile, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), false);
 							return Nothing.NOTHING;
 						}
 
@@ -623,7 +628,7 @@ public class SearchPanelUtilities {
 		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.pack(); 
-		dialog.setSize(500, 300);
+		dialog.setSize(500, 350);
 		dialog.setVisible(true);
 	}
 	

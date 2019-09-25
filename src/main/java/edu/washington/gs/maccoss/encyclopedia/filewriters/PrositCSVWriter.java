@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
@@ -40,8 +39,9 @@ public class PrositCSVWriter {
 		int maxMissedCleavages=1;
 		double minimumMz = 396.43;
 		double maximumMz = 1002.70;
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		
-		writeCSV(fasta, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), false);
+		writeCSV(fasta, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), false);
 	}
 	
 	private static HashSet<String> getAllPeptides() {
@@ -85,10 +85,11 @@ public class PrositCSVWriter {
 		int maxMissedCleavages=1;
 		double minimumMz = 396.43;
 		double maximumMz = 1002.70;
-		writeCSV(fasta, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), false);
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+		writeCSV(fasta, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), false);
 	}
 
-	public static void writeCSV(File fasta, int defaultNCE, byte defaultCharge, int minCharge, int maxCharge, int maxMissedCleavages, Range mzRange, boolean addDecoys) throws FileNotFoundException {
+	public static void writeCSV(File fasta, DigestionEnzyme enzyme, int defaultNCE, byte defaultCharge, int minCharge, int maxCharge, int maxMissedCleavages, Range mzRange, boolean addDecoys) throws FileNotFoundException {
 		HashSet<String> allpeptides=getAllPeptides();
 		int[] chargeStates = new int[maxCharge-minCharge+1];
 		for (int i = 0; i < chargeStates.length; i++) {
@@ -109,7 +110,6 @@ public class PrositCSVWriter {
 		for (int i=0; i<allPeptides.length; i++) {
 			allPeptides[i]=new HashSet<>();
 		}
-		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		for (FastaEntryInterface entry : entries) {
 			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 7, 30, maxMissedCleavages, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
 			for (FastaPeptideEntry pep : peptides) {
