@@ -544,8 +544,8 @@ public class SearchPanelUtilities {
 
 		final SpinnerModel defaultNCESpinner=new SpinnerNumberModel(33, 25, 40, 1);
 		final SpinnerModel defaultChargeSpinner=new SpinnerNumberModel(3, 1, 4, 1);
-		final SpinnerModel minChargeSpinner=new SpinnerNumberModel(2, 1, 4, 1);
-		final SpinnerModel maxChargeSpinner=new SpinnerNumberModel(3, 1, 4, 1);
+		final SpinnerModel minChargeSpinner=new SpinnerNumberModel(2, 1, 6, 1);
+		final SpinnerModel maxChargeSpinner=new SpinnerNumberModel(3, 1, 6, 1);
 		final SpinnerModel maxMissedCleavageSpinner=new SpinnerNumberModel(1, 0, 3, 1);
 		final SpinnerModel minMzSpinner=new SpinnerNumberModel(396.4, 150.0, 1600.0, 0.1);
 		final SpinnerModel maxMzSpinner=new SpinnerNumberModel(1002.7, 150.0, 1600.0, 0.1);
@@ -557,7 +557,7 @@ public class SearchPanelUtilities {
 		chargeRange.add(new JSpinner(minChargeSpinner));
 		chargeRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
 		chargeRange.add(new JSpinner(maxChargeSpinner));
-		options.add(new LabeledComponent("Enzyme", enzymeBox));
+		//options.add(new LabeledComponent("Enzyme", enzymeBox)); // FIXME add prosit enzymes
 		options.add(new LabeledComponent("Charge range", chargeRange));
 		options.add(new LabeledComponent("Maximum Missed Cleavage", new JSpinner(maxMissedCleavageSpinner)));
 

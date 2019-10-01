@@ -48,7 +48,7 @@ public class SearchParameterParser {
 		map.put("-percolatorProteinThreshold", "0.01");
 		map.put("-percolatorVersionNumber", Byte.toString(PercolatorExecutor.DEFAULT_VERSION_NUMBER));
 		map.put("-expectedPeakWidth", "25");
-		map.put("-acquisition", DataAcquisitionType.toName(DataAcquisitionType.DIA));
+		map.put("-acquisition", DataAcquisitionType.toString(DataAcquisitionType.DIA));
 		map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
 		map.put("-scoringBreadthType", ScoringBreadthType.ENTIRE_RT_WINDOW.toShortname());
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
