@@ -512,8 +512,7 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 		if (entry instanceof XCorrLibraryEntry) {
 			xcordiaEntry=(XCorrLibraryEntry)entry;
 		} else {
-			FastaPeptideEntry peptide=new FastaPeptideEntry(entry.getSource(), entry.getAccessions(), entry.getPeptideModSeq());
-			xcordiaEntry=XCorrLibraryEntry.generateEntry(false, peptide, entry.getPrecursorCharge(), parameters);
+			xcordiaEntry=XCorrLibraryEntry.generateEntry(false, entry, entry.getPrecursorCharge(), parameters);
 		}
 		xcordiaEntry.init();
 		return xcordiaEntry;

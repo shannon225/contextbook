@@ -4,9 +4,35 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 
 public class SimilarPeptideBinner {
 	public SimilarPeptideBinner() {
+	}
+	
+	public ArrayList<ArrayList<LibraryEntry>> binEntries(Collection<LibraryEntry> peptides) {
+		ArrayList<ArrayList<LibraryEntry>> sets=new ArrayList<>();
+		for (LibraryEntry peptide : peptides) {
+			boolean added=false;
+			for (ArrayList<LibraryEntry> arrayList : sets) {
+				for (LibraryEntry fastaPeptideEntry : arrayList) {
+					if (areSimilarEnough(peptide.getPeptideSeq(), fastaPeptideEntry.getPeptideSeq())) {
+						added=true;
+						break;
+					}
+				}
+				if (added) {
+					arrayList.add(peptide);
+					break;
+				}
+			}
+			if (!added) {
+				ArrayList<LibraryEntry> newSet=new ArrayList<>();
+				newSet.add(peptide);
+				sets.add(newSet);
+			}
+		}
+		return sets;
 	}
 	
 	public ArrayList<ArrayList<FastaPeptideEntry>> binPeptides(Collection<FastaPeptideEntry> peptides) {

@@ -40,6 +40,10 @@ public class VariantXCorDIAOneScoringFactory extends XCorDIAOneScoringFactory {
 	public void setBackground(BackgroundFrequencyInterface background) {
 		this.background=background;
 	}
+	
+	public BackgroundFrequencyInterface getBackground() {
+		return background;
+	}
 
 	@Override
 	public PSMScorer getLibraryScorer(LibraryBackgroundInterface background) {
