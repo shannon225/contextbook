@@ -50,7 +50,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -71,6 +73,7 @@ import gnu.trove.set.hash.TDoubleHashSet;
 
 public class VariantXCorDIA {
 	public static final String TARGET_FASTA_TAG="-t";
+	public static final String TARGET_LIBRARY_TAG="-l";
 	public static final String OUTPUT_RESULT_TAG="-o";
 	public static final String INPUT_DIA_TAG="-i";
 	public static final String BACKGROUND_FASTA_TAG="-f";
@@ -88,7 +91,8 @@ public class VariantXCorDIA {
 			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file");
 			Logger.timelessLogLine("\t-f\tbackground FASTA file");
 			Logger.timelessLogLine("Other Parameters: ");
-			Logger.timelessLogLine("\t-t\ttarget FASTA file (default: background FASTA file)");
+			Logger.timelessLogLine("\t-t\ttarget FASTA file (default: background FASTA file, not used if library specified)");
+			Logger.timelessLogLine("\t-l\ttarget Library file (default: search target FASTA)");
 			Logger.timelessLogLine("\t-tp\ttrue/false target FASTA file contains peptides (default: false)"); 
 			Logger.timelessLogLine("\t-o\toutput report file (default: [input file]"+XCorDIAJobData.OUTPUT_FILE_SUFFIX+")");
 			
@@ -148,15 +152,23 @@ public class VariantXCorDIA {
 				} else {
 					targets=null;
 				}
+
+				LibraryInterface library;
+				if (arguments.containsKey(TARGET_LIBRARY_TAG)) {
+					library=BlibToLibraryConverter.getFile(new File(arguments.get(TARGET_LIBRARY_TAG)));
+				} else {
+					library=null;
+				}
 	
 				Logger.logLine("Parameters:");
 				Logger.logLine(" "+INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());
 				Logger.logLine(" "+BACKGROUND_FASTA_TAG+" "+fastaFile.getAbsolutePath());
 				Logger.logLine(" "+TARGET_FASTA_TAG+" "+arguments.get(TARGET_FASTA_TAG));
+				Logger.logLine(" "+TARGET_LIBRARY_TAG+" "+arguments.get(TARGET_LIBRARY_TAG));
 				Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
 				Logger.logLine(parameters.toString());
 				
-				VariantXCorDIAJobData jobData=new VariantXCorDIAJobData(Optional.ofNullable(targets), diaFile, fastaFile, outputFile, factory);
+				VariantXCorDIAJobData jobData=new VariantXCorDIAJobData(Optional.ofNullable(targets), Optional.ofNullable(library), diaFile, fastaFile, outputFile, factory);
 
 				runPie(new EmptyProgressIndicator(), jobData);
 			} catch (Exception e) {
@@ -384,66 +396,72 @@ public class VariantXCorDIA {
 			
 			executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 			
-			
-			HashSet<FastaPeptideEntry> allPeptidesInWindow=XCorDIA.getPeptidesInRange(parameters, targets, range);
-
-			SimilarPeptideBinner binner=new SimilarPeptideBinner();
-			ArrayList<ArrayList<FastaPeptideEntry>> bins=binner.binPeptides(allPeptidesInWindow);
-			Logger.logLine("Found "+allPeptidesInWindow.size()+" peptides in "+bins.size()+" peptide groups...");
-
-			HashSet<String> allPeptideSequencesInWindow=new HashSet<>();
-			for (FastaPeptideEntry entry : allPeptidesInWindow) {
-				allPeptideSequencesInWindow.add(entry.getSequence());
-			}
-
-			int count=0;
-
-			for (ArrayList<FastaPeptideEntry> bin : bins) {
-				ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
-				count++;
-				for (FastaPeptideEntry peptide : bin) {
+			HashSet<LibraryEntry> allPeptidesInWindow=new HashSet<>();
+			if (jobData.getLibrary().isPresent()) {
+				HashSet<FastaPeptideEntry> allPeptideSequencesInWindow=XCorDIA.getPeptidesInRange(parameters, targets, range);
+				HashSet<String> sequences=new HashSet<>();
+				for (FastaPeptideEntry entry : allPeptideSequencesInWindow) {
+					sequences.add(entry.getSequenceWithModsStripped());
+				}
+				
+				ArrayList<LibraryEntry> libEntries=jobData.getLibrary().get().getEntries(range, true, parameters.getAAConstants());
+				for (LibraryEntry libraryEntry : libEntries) {
+					if (sequences.contains(libraryEntry.getPeptideSeq())) {
+						XCorrLibraryEntry entry=XCorrLibraryEntry.generateEntry(false, libraryEntry, libraryEntry.getPrecursorCharge(), parameters);
+						allPeptidesInWindow.add(entry);
+					}
+				}
+			} else {
+				HashSet<FastaPeptideEntry> allPeptideSequencesInWindow=XCorDIA.getPeptidesInRange(parameters, targets, range);
+				for (FastaPeptideEntry peptide : allPeptideSequencesInWindow) {
 					String sequence=peptide.getSequence();
 	
 					byte expectedCharge=PeptideUtils.getExpectedChargeState(sequence);
 					byte minCharge=(byte)Math.max(parameters.getMinCharge(), expectedCharge-1);
 					byte maxCharge=(byte)Math.min(parameters.getMaxCharge(), expectedCharge+1);
-						
+					
 					for (byte charge=minCharge; charge<=maxCharge; charge++) {
 						double mz=parameters.getAAConstants().getChargedMass(sequence, charge);
 						if (range.contains((float)mz)) {
-							
 							XCorrLibraryEntry entry=XCorrLibraryEntry.generateEntry(false, peptide, charge, parameters);
-							tasks.add(entry);
-							
-							if (!parameters.isDontRunDecoys()) {
-								String smartDecoy=PeptideUtils.getDecoy(sequence, allPeptideSequencesInWindow, parameters);
-								FastaPeptideEntry decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.DECOY_STRING), smartDecoy);
-								XCorrLibraryEntry reventry=XCorrLibraryEntry.generateEntry(true, decoyPeptide, charge, parameters);
-								tasks.add(reventry);
-	
-								float extraDecoys=parameters.getNumberOfExtraDecoyLibrariesSearched();
-								while (extraDecoys>0.0f) {
-									if (extraDecoys<1.0f) {
-										// check percentage
-										float test=RandomGenerator.random(count);
-										if (test>extraDecoys) {
-											break;
-										}
-									}
-									extraDecoys=extraDecoys-1.0f;
-	
-									String shuffledSequence=PeptideUtils.shuffle(sequence, Float.hashCode(extraDecoys), parameters);
-									FastaPeptideEntry shuffledPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.SHUFFLE_STRING), shuffledSequence);
-									reventry=XCorrLibraryEntry.generateEntry(true, shuffledPeptide, charge, parameters);
-									tasks.add(reventry);
-									
-									smartDecoy=PeptideUtils.getDecoy(shuffledSequence, allPeptideSequencesInWindow, parameters);
-									decoyPeptide=new FastaPeptideEntry(peptide.getFilename(), peptide.getFlaggedAccessions(LibraryEntry.DECOY_STRING+LibraryEntry.SHUFFLE_STRING), smartDecoy);
-									reventry=XCorrLibraryEntry.generateEntry(true, decoyPeptide, charge, parameters);
-									tasks.add(reventry);
+							allPeptidesInWindow.add(entry);
+						}
+					}
+				}
+			}
+			
+			
+
+			SimilarPeptideBinner binner=new SimilarPeptideBinner();
+			ArrayList<ArrayList<LibraryEntry>> bins=binner.binEntries(allPeptidesInWindow);
+			Logger.logLine("Found "+allPeptidesInWindow.size()+" peptides in "+bins.size()+" peptide groups...");
+
+			int count=0;
+
+			for (ArrayList<LibraryEntry> bin : bins) {
+				ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
+				count++;
+				for (LibraryEntry entry : bin) {
+					tasks.add(entry);
+					
+					if (!parameters.isDontRunDecoys()) {
+						LibraryEntry decoy=((XCorrLibraryEntry)entry).getDecoy(parameters);
+						tasks.add(decoy);
+
+						float extraDecoys=parameters.getNumberOfExtraDecoyLibrariesSearched();
+						while (extraDecoys>0.0f) {
+							if (extraDecoys<1.0f) {
+								// check percentage
+								float test=RandomGenerator.random(count);
+								if (test>extraDecoys) {
+									break;
 								}
 							}
-	
+							extraDecoys=extraDecoys-1.0f;
+
+							LibraryEntry shuffle=((XCorrLibraryEntry)entry).getShuffle(parameters, Float.hashCode(extraDecoys), false);
+							tasks.add(shuffle);
+							tasks.add(((XCorrLibraryEntry)shuffle).getDecoy(parameters));
 						}
 					}
 				}

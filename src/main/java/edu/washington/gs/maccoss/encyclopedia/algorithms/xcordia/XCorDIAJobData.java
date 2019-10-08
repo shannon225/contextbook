@@ -9,6 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 
 public class XCorDIAJobData extends QuantitativeSearchJobData {
@@ -20,29 +21,31 @@ public class XCorDIAJobData extends QuantitativeSearchJobData {
 
 	private final Optional<ArrayList<FastaPeptideEntry>> targetList;
 	private final File fastaFile;
+	private final Optional<LibraryInterface> library;
 	private final XCorDIAOneScoringFactory taskFactory;
 
 	// gui
-	public XCorDIAJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, XCorDIAOneScoringFactory taskFactory) {
-		this(targetList, diaFile, fastaFile, getPercolatorExecutionData(diaFile, fastaFile, taskFactory.getParameters()), taskFactory);
+	public XCorDIAJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, Optional<LibraryInterface> library, File diaFile, File fastaFile, XCorDIAOneScoringFactory taskFactory) {
+		this(targetList, library, diaFile, fastaFile, getPercolatorExecutionData(diaFile, fastaFile, taskFactory.getParameters()), taskFactory);
 	}
 
 	// command line
-	public XCorDIAJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, File outputFile, XCorDIAOneScoringFactory taskFactory) {
-		this(targetList, diaFile, fastaFile, getPercolatorExecutionData(outputFile, fastaFile, taskFactory.getParameters()), taskFactory);
+	public XCorDIAJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, Optional<LibraryInterface> library, File diaFile, File fastaFile, File outputFile, XCorDIAOneScoringFactory taskFactory) {
+		this(targetList, library, diaFile, fastaFile, getPercolatorExecutionData(outputFile, fastaFile, taskFactory.getParameters()), taskFactory);
 	}
 
 	// internal only
-	private XCorDIAJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, File fastaFile, PercolatorExecutionData percolatorFiles, XCorDIAOneScoringFactory taskFactory) {
-		this(targetList, diaFile, null, fastaFile, percolatorFiles, taskFactory);
+	private XCorDIAJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, Optional<LibraryInterface> library, File diaFile, File fastaFile, PercolatorExecutionData percolatorFiles, XCorDIAOneScoringFactory taskFactory) {
+		this(targetList, library, diaFile, null, fastaFile, percolatorFiles, taskFactory);
 	}
 
 	// used by testing
-	public XCorDIAJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, StripeFileInterface diaFileReader, File fastaFile, PercolatorExecutionData percolatorFiles,
+	public XCorDIAJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, Optional<LibraryInterface> library, File diaFile, StripeFileInterface diaFileReader, File fastaFile, PercolatorExecutionData percolatorFiles,
 			XCorDIAOneScoringFactory taskFactory) {
 		super(diaFile, diaFileReader, percolatorFiles, taskFactory.getParameters(), taskFactory.getVersion());
 
 		this.targetList=targetList;
+		this.library=library;
 		this.fastaFile=fastaFile;
 		this.taskFactory=taskFactory;
 	}
@@ -83,5 +86,8 @@ public class XCorDIAJobData extends QuantitativeSearchJobData {
 	@Override
 	public String getSearchType() {
 		return "XCorDIA";
+	}
+	public Optional<LibraryInterface> getLibrary() {
+		return library;
 	}
 }

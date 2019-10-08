@@ -35,7 +35,10 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
@@ -72,6 +75,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	
 	private final FileChooserPanel backgroundFasta;
 	private final FileChooserPanel targetFasta;
+	private final FileChooserPanel libraryFileChooser;
 	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {DataAcquisitionType.toName(DataAcquisitionType.OVERLAPPING_DIA), DataAcquisitionType.toName(DataAcquisitionType.DIA)});
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Glu-C", "Lys-C", "Arg-C", "Asp-N", "Lys-N", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
 	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "C+125 (NEM)", "None"});
@@ -128,6 +132,8 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		options.add(backgroundFasta);
 		targetFasta=new FileChooserPanel(null, "Target", new SimpleFilenameFilter(".fas", ".fasta", ".peff"), true);
 		options.add(targetFasta);
+		libraryFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), false);
+		options.add(libraryFileChooser);
 		options.add(new LabeledComponent("Target/Decoy Approach", numberOfExtraDecoyLibraries));
 		options.add(new LabeledComponent("Data Acquisition Type", acquisition));
 		options.add(new LabeledComponent("Precursor Window Width (blank=extract from file)", precursorWindowWidth));
@@ -199,7 +205,8 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		if (fastaFile==null) return null;
 		File targetFile=targetFasta.getFile();
 		if (targetFile==null) return null;
-		SearchJob job=getJob(diaFile, fastaFile, targetFile, model, parameters);
+		File libraryFile=libraryFileChooser.getFile();
+		SearchJob job=getJob(diaFile, fastaFile, targetFile, Optional.ofNullable(libraryFile), model, parameters);
 
 		if (job!=null) {
 			model.addJob(job);
@@ -207,7 +214,8 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		return job;
 	}
 
-	static SearchJob getJob(File diaFile, File fastaFile, File targetFile, JobProcessor processor, PecanSearchParameters parameters) {
+	private static HashMap<File, LibraryInterface> libraries=new HashMap<File, LibraryInterface>();
+	static SearchJob getJob(File diaFile, File fastaFile, File targetFile, Optional<File> libraryFile, JobProcessor processor, PecanSearchParameters parameters) {
 		ArrayList<FastaPeptideEntry> targets=null;
 		if (targetFile!=null&&!targetFile.equals(fastaFile)) {
 			Logger.logLine("Reading targets from ["+targetFile.getName()+"]");
@@ -220,6 +228,17 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 					targets.add(peptide);
 				}
 			}
+		}
+		Optional<LibraryInterface> maybeLibrary;
+		if (libraryFile.isPresent()) {
+			LibraryInterface library=libraries.get(libraryFile.get());
+			if (library==null) {
+				library=BlibToLibraryConverter.getFile(libraryFile.get());
+				libraries.put(libraryFile.get(), library);
+			}
+			maybeLibrary=Optional.ofNullable(library);
+		} else {
+			maybeLibrary=Optional.empty();
 		}
 
 		boolean isPeff=false;
@@ -234,9 +253,9 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(parameters);
 		XCorDIAJobData jobData;
 		if (isPeff) {
-			jobData=new VariantXCorDIAJobData(Optional.ofNullable(targets), diaFile, fastaFile, factory);
+			jobData=new VariantXCorDIAJobData(Optional.ofNullable(targets), maybeLibrary, diaFile, fastaFile, factory);
 		} else {
-			jobData=new XCorDIAJobData(Optional.ofNullable(targets), diaFile, fastaFile, factory);
+			jobData=new XCorDIAJobData(Optional.ofNullable(targets), maybeLibrary, diaFile, fastaFile, factory);
 		}
 		return new XCorDIAJob(processor, jobData);
 	}

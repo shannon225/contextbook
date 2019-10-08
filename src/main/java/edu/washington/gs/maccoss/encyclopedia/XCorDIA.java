@@ -44,7 +44,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -89,7 +91,8 @@ public class XCorDIA {
 			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file");
 			Logger.timelessLogLine("\t-f\tbackground FASTA file");
 			Logger.timelessLogLine("Other Parameters: ");
-			Logger.timelessLogLine("\t-t\ttarget FASTA file (default: background FASTA file)");
+			Logger.timelessLogLine("\t-t\ttarget FASTA file (default: background FASTA file, not used if library specified)");
+			Logger.timelessLogLine("\t-l\ttarget Library file (default: search target FASTA)");
 			Logger.timelessLogLine("\t-tp\ttrue/false target FASTA file contains peptides (default: false)"); 
 			Logger.timelessLogLine("\t-o\toutput report file (default: [input file]"+XCorDIAJobData.OUTPUT_FILE_SUFFIX+")");
 			
@@ -150,6 +153,13 @@ public class XCorDIA {
 				} else {
 					targets=null;
 				}
+
+				LibraryInterface library;
+				if (arguments.containsKey("-l")) {
+					library=BlibToLibraryConverter.getFile(new File(arguments.get("-l")));
+				} else {
+					library=null;
+				}
 	
 				Logger.logLine("Parameters:");
 				Logger.logLine(" "+INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());
@@ -158,7 +168,7 @@ public class XCorDIA {
 				Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
 				Logger.logLine(parameters.toString());
 				
-				XCorDIAJobData jobData=new XCorDIAJobData(Optional.ofNullable(targets), diaFile, fastaFile, outputFile, factory);
+				XCorDIAJobData jobData=new XCorDIAJobData(Optional.ofNullable(targets), Optional.ofNullable(library), diaFile, fastaFile, outputFile, factory);
 
 				runPie(new EmptyProgressIndicator(), jobData);
 			} catch (Exception e) {

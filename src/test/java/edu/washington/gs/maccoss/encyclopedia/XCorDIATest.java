@@ -94,6 +94,7 @@ public class XCorDIATest extends TestCase {
 
 		XCorDIAJobData jobData = new XCorDIAJobData(
 				Optional.of(seqs),
+				Optional.empty(),
 				diaFile,
 				new FakeStripeFile(diaFile),
 				fastaFile,

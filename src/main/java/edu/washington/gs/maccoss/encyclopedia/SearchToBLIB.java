@@ -148,6 +148,12 @@ public class SearchToBLIB {
 			} else {
 				targets=null;
 			}
+			LibraryInterface library;
+			if (arguments.containsKey("-l")) {
+				library=BlibToLibraryConverter.getFile(new File(arguments.get("-l")));
+			} else {
+				library=null;
+			}
 			
 			ArrayList<SearchJobData> pecanJobs=new ArrayList<SearchJobData>();
 			if (diaFile.isDirectory()) {
@@ -158,11 +164,11 @@ public class SearchToBLIB {
 				}
 				
 				for (File file : files) {
-					XCorDIAJobData job=new XCorDIAJobData(Optional.ofNullable(targets), file, fastaFile, factory);
+					XCorDIAJobData job=new XCorDIAJobData(Optional.ofNullable(targets), Optional.ofNullable(library), file, fastaFile, factory);
 					pecanJobs.add(job);
 				}
 			} else {
-				XCorDIAJobData job=new XCorDIAJobData(Optional.ofNullable(targets), diaFile, fastaFile, factory);
+				XCorDIAJobData job=new XCorDIAJobData(Optional.ofNullable(targets), Optional.ofNullable(library), diaFile, fastaFile, factory);
 				pecanJobs.add(job);
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
@@ -572,9 +578,9 @@ public class SearchToBLIB {
 				subProgress.update("Wrote "+globalPassingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 			}
 
-			final PercolatorExecutionData percolatorExecutionData = globalPercolatorFiles.get();
 			ArrayList<PercolatorProteinGroup> proteins=null;
 			if (globalPercolatorFiles.isPresent()) {
+				final PercolatorExecutionData percolatorExecutionData = globalPercolatorFiles.get();
 				Pair<ArrayList<PercolatorPeptide>, Float> targets=null;
 				Pair<ArrayList<PercolatorPeptide>, Float> decoys=null;
 				if (percolatorExecutionData.getPeptideOutputFile().exists()) {

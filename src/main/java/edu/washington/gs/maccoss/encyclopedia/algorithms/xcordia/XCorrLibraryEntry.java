@@ -49,6 +49,16 @@ public class XCorrLibraryEntry extends LibraryEntry {
 		return new XCorrLibraryEntry(isDecoy, model.getModifiedSequence(), peptide, precursorCharge, spectrum, params);
 	}
 	
+	@Override
+	public LibraryEntry getDecoy(SearchParameters parameters) {
+		return generateEntry(true, super.getDecoy(parameters), getPrecursorCharge(), parameters);
+	}
+	
+	@Override
+	public LibraryEntry getShuffle(SearchParameters parameters, int shuffleSeed, boolean markAsDecoy) {
+		return generateEntry(markAsDecoy, super.getShuffle(parameters, shuffleSeed, markAsDecoy), getPrecursorCharge(), parameters);
+	}
+	
 	public void init() {
 		if (xcorrSpectrum==null) {
 			this.xcorrSpectrum=new SparseXCorrCalculator(spectrum, params);

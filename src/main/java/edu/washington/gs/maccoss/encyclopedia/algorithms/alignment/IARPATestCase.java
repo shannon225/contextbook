@@ -208,7 +208,7 @@ public class IARPATestCase {
 			String absolutePath = file.getAbsolutePath();
 			File dia = new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))); // file names are lose
 																							// extensions
-			XCorDIAJobData job = new XCorDIAJobData(Optional.empty(), dia, fastaFile, factory);
+			XCorDIAJobData job = new XCorDIAJobData(Optional.empty(), Optional.empty(), dia, fastaFile, factory);
 			jobs.add(job);
 		}
 		
