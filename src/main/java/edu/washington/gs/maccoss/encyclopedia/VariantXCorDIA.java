@@ -405,6 +405,8 @@ public class VariantXCorDIA {
 				}
 				
 				ArrayList<LibraryEntry> libEntries=jobData.getLibrary().get().getEntries(range, true, parameters.getAAConstants());
+				Logger.logLine("Extracting spectra from library, considered "+libEntries.size()+" spectra...");
+				
 				for (LibraryEntry libraryEntry : libEntries) {
 					if (sequences.contains(libraryEntry.getPeptideSeq())) {
 						XCorrLibraryEntry entry=XCorrLibraryEntry.generateEntry(false, libraryEntry, libraryEntry.getPrecursorCharge(), parameters);
@@ -413,6 +415,8 @@ public class VariantXCorDIA {
 				}
 			} else {
 				HashSet<FastaPeptideEntry> allPeptideSequencesInWindow=XCorDIA.getPeptidesInRange(parameters, targets, range);
+				Logger.logLine("Extracting spectra from PEFF, considered "+allPeptideSequencesInWindow.size()+" peptides...");
+				
 				for (FastaPeptideEntry peptide : allPeptideSequencesInWindow) {
 					String sequence=peptide.getSequence();
 	

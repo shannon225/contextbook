@@ -10,7 +10,8 @@ import com.itextpdf.text.pdf.codec.Base64;
 public class Networking {
 	final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
 	private static final String[] poopAddresses=new String[] {
-		"98-90-96-DF-EE-BC",
+		"D8-0F-99-47-86-0F",
+		"28-18-78-D1-71-39",
 		"B8-CA-3A-98-6D-BF",
 		"F8-32-E4-BD-D1-46"
 	};
@@ -40,7 +41,10 @@ public class Networking {
 			byte[] mac=getMacAddress();
 			String address=bytesToHex(mac);
 			for (int i=0; i<poopAddresses.length; i++) {
-				if (poopAddresses[i].equals(address)) return (i+1);
+				if (poopAddresses[i].equals(address)) {
+					if (i==0) return 1;
+					return i;
+				}
 			}
 			return 0;
 		} catch (Exception e) {

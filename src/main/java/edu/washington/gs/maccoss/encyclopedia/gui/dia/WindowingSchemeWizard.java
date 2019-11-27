@@ -9,6 +9,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -77,7 +78,8 @@ public class WindowingSchemeWizard extends JPanel implements ActionListener, Cha
 	}
 
 	// follows indexing in WindowSchemeGenerator
-	private static final String[] WINDOWING_SCHEME_ITEMS=new String[] {"Normal DIA", "Staggered/Overlap DIA", "Variable Width DIA", "Variable Width DIA for Phospho"};
+	private static final String[] WINDOWING_SCHEME_ITEMS=new String[] {"Normal DIA", "Staggered/Overlap DIA", "Variable Width DIA"};
+	private static JCheckBox isPhospho=new JCheckBox();
 	private final SpinnerModel numberOfWindows=new SpinnerNumberModel(25, 1, 200, 1);
 	private final SpinnerModel startMz=new SpinnerNumberModel(400, 1, 2000, 1);
 	private final SpinnerModel stopMz=new SpinnerNumberModel(1000, 1, 2000, 1);
@@ -102,12 +104,14 @@ public class WindowingSchemeWizard extends JPanel implements ActionListener, Cha
 		JSpinner c4=new JSpinner(marginWidth);
 		
 		options.add(new LabeledComponent("Windowing Scheme", windowingScheme));
+		options.add(new LabeledComponent("Phospho Enriched", isPhospho));
 		options.add(new LabeledComponent("Number Of Windows", c1));
 		options.add(new LabeledComponent("Start m/z", c2));
 		options.add(new LabeledComponent("Stop m/z", c3));
 		options.add(new LabeledComponent("Margin Width", c4));
 
 		windowingScheme.addActionListener(this);
+		isPhospho.addActionListener(this);
 		c1.addChangeListener(this);
 		c2.addChangeListener(this);
 		c3.addChangeListener(this);
@@ -149,7 +153,7 @@ public class WindowingSchemeWizard extends JPanel implements ActionListener, Cha
 			tableLocation=200;
 		}
 		
-		ScanRangeTracker scanRange=generateScanRangeTracker();
+		ScanRangeTracker scanRange=generateScanRangeTracker(isPhospho.isSelected());
 		ChartPanel structureChart=MzmlStructureCharter.getStructureChart(scanRange, true);
 		structureChart.restoreAutoBounds();
 		structureSplit.setRightComponent(structureChart);
@@ -159,13 +163,16 @@ public class WindowingSchemeWizard extends JPanel implements ActionListener, Cha
 		tableSplit.setDividerLocation(tableLocation);
 	}
 	
-	public ScanRangeTracker generateScanRangeTracker() {
+	public ScanRangeTracker generateScanRangeTracker(boolean isPhospho) {
 		int start=((Number)startMz.getValue()).intValue();
 		int stop=((Number)stopMz.getValue()).intValue();
 		int numWindows=((Number)numberOfWindows.getValue()).intValue();
 		float margin=((Number)marginWidth.getValue()).floatValue();
 		int windowingSchemeIndex=windowingScheme.getSelectedIndex();
+		if (isPhospho&&windowingSchemeIndex==WindowSchemeGenerator.VARIABLE_WIDTH_DIA) {
+			windowingSchemeIndex=WindowSchemeGenerator.VARIABLE_WIDTH_PHOSPHO_DIA;
+		}
 
-		return WindowSchemeGenerator.generateWindowingScheme(windowingSchemeIndex, start, stop, numWindows, margin);
+		return WindowSchemeGenerator.generateWindowingScheme(windowingSchemeIndex, start, stop, numWindows, margin, isPhospho);
 	}
 }

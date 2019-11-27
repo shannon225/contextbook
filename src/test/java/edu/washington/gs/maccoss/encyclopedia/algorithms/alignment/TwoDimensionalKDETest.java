@@ -2,8 +2,10 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Optional;
 
+import org.jzy3d.plot3d.builder.Mapper;
+
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter3d;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.MedianInterpolatorTest;
 
@@ -24,19 +26,32 @@ public class TwoDimensionalKDETest {
 		//f=new File("/Users/searleb/Downloads/23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.mzML.encyclopedia.txt.rt_fit.txt");
 		//rts=MedianInterpolatorTest.getData(f);
 		//File f=new File("/Users/searleb/Documents/phospho_localization/data/110515_bcs_hela_phospho_starved_20mz_500_900.dia.encyclopedia.txt.rt_fit.txt");
-		File f=new File("/Users/searleb/Documents/chromatogram_library_manuscript/hela_window_size/2018may14_hela_window_size_test_BCS_hela_wide_400_1200_1.mzML.encyclopedia.txt.first.rt_fit.txt");
-		rts=MedianInterpolatorTest.getData(f, 1f);
+		//File f=new File("/Users/searleb/Documents/chromatogram_library_manuscript/hela_window_size/2018may14_hela_window_size_test_BCS_hela_wide_400_1200_1.mzML.encyclopedia.txt.first.rt_fit.txt");
+		//rts=MedianInterpolatorTest.getData(f, 1f);
 		
-		RetentionTimeFilter filter=RetentionTimeFilter.getFilter(rts);
-		filter.plot(rts, Optional.ofNullable((File)null));
+		ArrayList<XYPoint> data=new ArrayList();
+		data.add(rts.get(0));
 		
-		RTFitMixtureModel model=new RTFitMixtureModel(rts, filter.getRtWarper());
+		//RetentionTimeFilter filter=RetentionTimeFilter.getFilter(rts);
+		//filter.plot(rts, Optional.ofNullable((File)null));
+		
+		//RTFitMixtureModel model=new RTFitMixtureModel(rts, filter.getRtWarper());
 		
 		//filter=BrudererRetentionTimeFilter.getFilter(rts);
 		//filter.plot(rts, Optional.ofNullable((File)null));
 		//filter.plot(rts, Optional.ofNullable((File)f));
 		
-		//TwoDimensionalKDE kde=new TwoDimensionalKDE(rts);
-		//Charter3d.plot(kde, kde.getXRange(), kde.getYRange(), kde.getResolution()/5);
+		TwoDimensionalKDE kde=new TwoDimensionalKDE(data);
+
+		Mapper mapper=new Mapper() {
+			@Override
+			public double f(double arg0, double arg1) {
+				return kde.f(arg0, arg1);
+			}
+		};
+		Charter3d.plot(mapper, 
+				new org.jzy3d.maths.Range(kde.getXRange().getStart(), kde.getXRange().getStop()), 
+				new org.jzy3d.maths.Range(kde.getYRange().getStart(), kde.getYRange().getStop()), 
+				kde.getResolution()/5);
 	}
 }

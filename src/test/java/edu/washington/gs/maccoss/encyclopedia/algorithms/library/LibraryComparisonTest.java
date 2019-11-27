@@ -10,9 +10,54 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class LibraryComparisonTest {
 	public static void main(String[] args) throws Exception {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		System.out.println("reading prosit...");
+		File prosit=new File("/Volumes/searle_ssd/malaria/hela_specific_database/HeLa_Database.txt.z2_nce33.dlib");
+		LibraryFile pfile=new LibraryFile();
+		pfile.openFile(prosit);
+		ArrayList<LibraryEntry> entries=pfile.getAllEntries(false, parameters.getAAConstants());
+		TObjectFloatHashMap<String> rtMap=new TObjectFloatHashMap<>();
+		int count=0;
+		for (LibraryEntry entry : entries) {
+			count++;
+			if (count%100000==0) System.out.println(count+"...");
+			rtMap.put(entry.getPeptideModSeq(), entry.getRetentionTime());
+		}
+		pfile.close();
+		
+		System.out.println("reading massive...");
+		File kb=new File("/Volumes/searle_ssd/malaria/MassIVE-KB/LIBRARY_CREATION_AUGMENT_LIBRARY_TEST-82c0124b-download_filtered_sptxt_library-main.dlib");
+		LibraryFile kbfile=new LibraryFile();
+		kbfile.openFile(kb);
+		
+		entries=kbfile.getAllEntries(false, parameters.getAAConstants());
+
+		count=0;
+		ArrayList<LibraryEntry> calibratedEntries=new ArrayList<>();
+		for (LibraryEntry entry : entries) {
+			count++;
+			if (count%100000==0) System.out.println(count+"...");
+			if (rtMap.contains(entry.getPeptideModSeq())) {
+				calibratedEntries.add(entry.updateRetentionTime(rtMap.get(entry.getPeptideModSeq())));
+			}
+		}
+		kbfile.close();
+		
+		System.out.println("writing crosslib...");
+		LibraryFile savefile=new LibraryFile();
+		savefile.openFile();
+		savefile.dropIndices();
+		savefile.addEntries(calibratedEntries);
+		savefile.createIndices();
+		
+		savefile.saveAsFile(new File(kb.getParentFile(), "massive_kb_with_prosit_rts.dlib"));
+		System.out.println("done!");
+	}
+	public static void main2(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 
 //		File[] libraryFilesDDA=new File[] {
@@ -68,10 +113,16 @@ public class LibraryComparisonTest {
 				new File("/Volumes/searle_ssd/malaria/novo_yeast/DIA_analysis/clibs_vs_predicted/uniprot_yeast_25jan2019.fasta.z2_nce42_clib.elib"),
 				new File("/Volumes/searle_ssd/malaria/novo_yeast/DIA_analysis/versus_high_phRP/yeast_hpHRP_dda_tpp.dlib")
 		};
+		File[] libraryFileFromUW=new File[] {
+				//new File("/Volumes/searle_ssd/malaria/novo_yeast/libraries/uniprot_yeast_25jan2019.fasta.z2_nce33.dlib"),
+				new File("/Volumes/searle_ssd/malaria/novo_yeast/DIA_analysis/versus_high_phRP/yeast_hpHRP_dda_tpp.dlib"),
+				//new File("/Users/searleb/Downloads/23aug2017_yeast_timecourse_clib.elib")
+		};
 		
-		File[] libraryFiles=libraryFilesDIA;
+		File[] libraryFiles=libraryFileFromUW;
 		
 		File diaFile=new File("/Volumes/searle_ssd/malaria/novo_yeast/DIA_analysis/raw_files/20190206_LUM1_CPBA_EASY04_060_30_SA_90mingrad_80B_DIA_400_1000_8mzol_15k_20IIT_4e5agc_1633-01_01.mzML.elib");
+		diaFile=new File("/Volumes/searle_ssd/malaria/novo_yeast/DIA_analysis/clibs_vs_predicted/uniprot_yeast_25jan2019.fasta.z2_nce33_clib.elib");
 		
 		LibraryFile[] libraries=new LibraryFile[libraryFiles.length];
 		for (int i=0; i<libraries.length; i++) {
@@ -97,7 +148,7 @@ public class LibraryComparisonTest {
 			count++;
 			StringBuilder sb=new StringBuilder(count+","+entry.getPeptideModSeq()+","+entry.getPrecursorCharge()+","+General.toString(entry.getAccessions().toArray(), ";"));
 
-			boolean skip=Math.random()>0.05f;
+			boolean skip=false;//Math.random()>0.05f;
 			for (int i=0; i<libraries.length; i++) {
 				if (!skip) {
 					ArrayList<LibraryEntry> candidates=libraries[i].getEntries(entry.getPeptideModSeq(), entry.getPrecursorCharge(), false);

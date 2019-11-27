@@ -18,7 +18,8 @@ public class WindowSchemeGenerator {
 	public static final int OVERLAP_DIA=1; 
 	public static final int VARIABLE_WIDTH_DIA=2; 
 	public static final int VARIABLE_WIDTH_PHOSPHO_DIA=3;
-	
+
+	private static final double phosphoMzConstant=0.18;
 	private static final double optimalMzConstant=0.25;
 	private static final double optimalMzIncrement=1.00045475;
 	private static Histogram normalProteome=null;
@@ -33,43 +34,43 @@ public class WindowSchemeGenerator {
 	 * @param margin
 	 * @return
 	 */
-	public static ScanRangeTracker generateWindowingScheme(int windowingSchemeIndex, int start, int stop, int numWindows, float margin) {
+	public static ScanRangeTracker generateWindowingScheme(int windowingSchemeIndex, int start, int stop, int numWindows, float margin, boolean isPhospho) {
 		ScanRangeTracker tracker=new ScanRangeTracker();
 		if (windowingSchemeIndex==NORMAL_DIA) {
 			// normal DIA
 			int increment=(int)Math.ceil((stop-start)/(float)numWindows);
 			for (int i=0; i<numWindows; i++) {
-				float left=getOptimalBoundary(start+increment*i)-margin;
-				float right=getOptimalBoundary(start+increment*(i+1))+margin;
+				float left=getOptimalBoundary(start+increment*i, isPhospho)-margin;
+				float right=getOptimalBoundary(start+increment*(i+1), isPhospho)+margin;
 				tracker.addRange(new Range(left, right), i+1);
 			}
 		} else if (windowingSchemeIndex==OVERLAP_DIA) {
 			// overlap DIA
 			int increment=(int)Math.ceil((stop-start)/(float)numWindows);
 			for (int i=0; i<numWindows; i++) {
-				float left=getOptimalBoundary(start+increment*i)-margin;
-				float right=getOptimalBoundary(start+increment*(i+1))+margin;
+				float left=getOptimalBoundary(start+increment*i, isPhospho)-margin;
+				float right=getOptimalBoundary(start+increment*(i+1), isPhospho)+margin;
 				tracker.addRange(new Range(left, right), i+1);
 			}
 			for (int i=0; i<=numWindows; i++) {
-				float left=getOptimalBoundary(start+increment*(i-0.5f))-margin;
-				float right=getOptimalBoundary(start+increment*(i+0.5f))+margin;
+				float left=getOptimalBoundary(start+increment*(i-0.5f), isPhospho)-margin;
+				float right=getOptimalBoundary(start+increment*(i+0.5f), isPhospho)+margin;
 				tracker.addRange(new Range(left, right), numWindows+i+1);
 			}
 		} else if (windowingSchemeIndex==VARIABLE_WIDTH_DIA) {
 			// variable width normal DIA
 			Histogram hist=getNormalProteome();
-			trackFromHistogram(start, stop, numWindows, margin, tracker, hist);
+			trackFromHistogram(start, stop, numWindows, margin, tracker, hist, isPhospho);
 			
 		} else if (windowingSchemeIndex==VARIABLE_WIDTH_PHOSPHO_DIA) {
 			// variable width phospho DIA
 			Histogram hist=getPhosphoProteome();
-			trackFromHistogram(start, stop, numWindows, margin, tracker, hist);
+			trackFromHistogram(start, stop, numWindows, margin, tracker, hist, isPhospho);
 		}
 		return tracker;
 	}
 
-	private static void trackFromHistogram(int start, int stop, int numWindows, float margin, ScanRangeTracker tracker, Histogram hist) {
+	private static void trackFromHistogram(int start, int stop, int numWindows, float margin, ScanRangeTracker tracker, Histogram hist, boolean isPhospho) {
 		float[] targetPercentiles=new float[numWindows+1];
 		for (int i=0; i<targetPercentiles.length; i++) {
 			targetPercentiles[i]=i/(float)numWindows;
@@ -78,14 +79,18 @@ public class WindowSchemeGenerator {
 		
 		float[] boundaries=hist.getPercentiles(targetPercentiles, start, stop);
 		for (int i=1; i<boundaries.length; i++) {
-			float left=getOptimalBoundary(boundaries[i-1])-margin;
-			float right=getOptimalBoundary(boundaries[i])+margin;
+			float left=getOptimalBoundary(boundaries[i-1], isPhospho)-margin;
+			float right=getOptimalBoundary(boundaries[i], isPhospho)+margin;
 			tracker.addRange(new Range(left, right), i);
 		}
 	}
 	
-	private static float getOptimalBoundary(float nominalMass) {
-		return (float)(Math.ceil(nominalMass/optimalMzIncrement)*optimalMzIncrement+optimalMzConstant);
+	private static float getOptimalBoundary(float nominalMass, boolean isPhospho) {
+		if (isPhospho) {
+			return (float)(Math.ceil(nominalMass/optimalMzIncrement)*optimalMzIncrement+phosphoMzConstant);
+		} else {
+			return (float)(Math.ceil(nominalMass/optimalMzIncrement)*optimalMzIncrement+optimalMzConstant);
+		}
 	}
 
 	public static Histogram getPhosphoProteome() {

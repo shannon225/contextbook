@@ -277,9 +277,21 @@ public class MSPReader {
 							StringTokenizer st2=new StringTokenizer(modString, ",");
 							if (st2.countTokens()>2) {
 								int index=Integer.parseInt(st2.nextToken());
-								char aa=st2.nextToken().charAt(0);
+								String aaString=st2.nextToken();
+								char aa=aaString.charAt(0);
 								String mod=st2.nextToken().trim();
-								double mass=getMass(aa, mod);
+								
+								if (!Character.isUpperCase(aa)) {
+									// MassIVE-KB has bugs in reporting AAs as numbers(?!), so fall back on the index
+									aa=sequence.charAt(index);
+								}
+
+								double mass=0.0;
+								try {
+									mass=getMass(aa, mod);
+								} catch (EncyclopediaException e) {
+									throw new EncyclopediaException(e.getMessage()+" from line ["+eachline+"]");
+								}
 								
 								if (modMap.contains(index)) {
 									// shouldn't happen, but just in case
@@ -440,9 +452,9 @@ public class MSPReader {
 			return 	15.994915;
 		} else if (aa=='C'&&"Methylthio".equalsIgnoreCase(mod)) {
 			return 	45.987721;
-		} else if (aa=='E'&&"Pyro_glu".equalsIgnoreCase(mod)) { // note "-" vs "_" (Unimod is crazy)
+		} else if ((aa=='E'||aa=='Q')&&"Pyro_glu".equalsIgnoreCase(mod)) { // note "-" vs "_" (Unimod is crazy)
 			return -18.010565;
-		} else if (aa=='Q'&&"Pyro-glu".equalsIgnoreCase(mod)) { // note "-" vs "_" (Unimod is crazy)
+		} else if ((aa=='E'||aa=='Q')&&"Pyro-glu".equalsIgnoreCase(mod)) { // note "-" vs "_" (Unimod is crazy)
 			return -17.026549;
 		} else if (aa=='E'&&"Glu->pyro-Glu".equalsIgnoreCase(mod)) {
 			return -18.010565;
@@ -454,7 +466,9 @@ public class MSPReader {
 			return 39.994915; // +57,-17
 		} else if ("Acetyl".equalsIgnoreCase(mod)) {
 			return 42.010565;
-		} else if ("Deamidated".equalsIgnoreCase(mod)) {
+		} else if ("Carbamyl".equalsIgnoreCase(mod)) {
+			return 43.00582;
+		} else if ("Deamidated".equalsIgnoreCase(mod)||"Deamidation".equalsIgnoreCase(mod)) {
 			return 0.984016;
 		}
 		throw new EncyclopediaException("Unexpected modification ["+mod+"] on ["+aa+"]");

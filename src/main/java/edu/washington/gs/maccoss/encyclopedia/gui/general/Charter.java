@@ -787,15 +787,17 @@ public class Charter {
 					if (trace instanceof AnnotatedLibraryEntry) {
 						AnnotatedLibraryEntry entry=(AnnotatedLibraryEntry)(Spectrum)trace;
 						FragmentIon[] annotations=entry.getIonAnnotations();
+						float[] correlations=entry.getCorrelationArray();
+						boolean hasCorrelations=General.max(correlations)>0.0f;
 
-						header.append("\t"+xAxis+"\t"+trace.getName()+"\tannotation");
+						header.append("\t"+xAxis+"\t"+trace.getName()+"\tannotation"+(hasCorrelations?"\tcorrelation":""));
 						
 						Pair<double[], double[]> pairs=trace.toArrays();
 						for (int i=0; i<rows.length; i++) {
 							if (pairs.x.length>i) {
-								rows[i].append("\t"+pairs.x[i]+"\t"+pairs.y[i]+"\t"+(annotations[i]==null?"":annotations[i].toString()));
+								rows[i].append("\t"+pairs.x[i]+"\t"+pairs.y[i]+"\t"+(annotations[i]==null?"":annotations[i].toString())+(hasCorrelations?("\t"+correlations[i]):""));
 							} else {
-								rows[i].append("\t\t\t");
+								rows[i].append("\t\t\t"+(hasCorrelations?"\t":""));
 							}
 						}
 					} else {
