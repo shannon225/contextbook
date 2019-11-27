@@ -16,6 +16,10 @@ public class TableParser {
 		parseTable(f, muscle, "\t");
 	}
 
+	public static void parseSSV(File f, TableParserMuscle muscle) {
+		parseTable(f, muscle, " ");
+	}
+
 	public static void parseTable(File f, TableParserMuscle muscle, String token) {
 
 		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();

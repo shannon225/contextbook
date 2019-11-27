@@ -144,6 +144,10 @@ public class Charter {
 		launchChart(trace, title, new Dimension(1000, 500));
 	}
 
+	public static void launchChart(ChartPanel chart, String title, Dimension dim) {
+		launchComponent(chart, title, dim);
+	}
+
 	public static void launchChart(Spectrum trace, String title, Dimension dim) {
 		launchComponent(getChart(trace, title), title, dim);
 	}

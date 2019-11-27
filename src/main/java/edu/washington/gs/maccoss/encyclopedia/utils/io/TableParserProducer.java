@@ -61,7 +61,7 @@ public class TableParserProducer implements Runnable {
 	public void run() {
 		
 		try {
-			String eachline=in.readLine(); // header
+			String eachline=in.readLine().trim(); // header
 			
 			if (eachline!=null) {
 				List<String> headers=Arrays.asList(eachline.split(delim, -1));
