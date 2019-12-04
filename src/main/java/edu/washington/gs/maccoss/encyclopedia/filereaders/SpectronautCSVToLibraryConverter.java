@@ -86,28 +86,40 @@ public class SpectronautCSVToLibraryConverter {
 				private String lastGroup=null;
 				@Override
 				public void processRow(Map<String, String> row) {
-					String peptideModSeq=OpenSwathTSVToLibraryConverter.getFromMap(row, "ModifiedPeptide");
-					String chargeString=OpenSwathTSVToLibraryConverter.getFromMap(row, "PrecursorCharge");
-					double productMz=Double.parseDouble(OpenSwathTSVToLibraryConverter.getFromMap(row, "FragmentMz"));
-					float libraryIntensity=Float.parseFloat(OpenSwathTSVToLibraryConverter.getFromMap(row, "RelativeIntensity"));
-
-					String group=peptideModSeq+"_"+chargeString+"H";
-					
-					if (!group.equals(lastGroup)) {
-						byte charge=Byte.parseByte(chargeString);
-						float iRT=Float.parseFloat(OpenSwathTSVToLibraryConverter.getFromMap(row, "iRT"));
+					try {
+						String peptideModSeq=OpenSwathTSVToLibraryConverter.getFromMap(row, "ModifiedPeptide");
+						String chargeString=OpenSwathTSVToLibraryConverter.getFromMap(row, "PrecursorCharge");
+						double productMz=Double.parseDouble(OpenSwathTSVToLibraryConverter.getFromMap(row, "FragmentMz"));
+						float libraryIntensity=Float.parseFloat(OpenSwathTSVToLibraryConverter.getFromMap(row, "RelativeIntensity", "RelativeFragmentIntensity"));
+	
+						String group=peptideModSeq+"_"+chargeString+"H";
 						
-						if (lastPeptide!=null) peptides.add(new ImmutablePeptideEntry(lastPeptide));
-						
-						lastPeptide=new PeptideEntry(parseMods(peptideModSeq), charge, iRT);
-						lastGroup=group;
-						
-						if (peptides.size()%10000==0) {
-							Logger.logLine("Read "+peptides.size()+" entries...");
+						if (!group.equals(lastGroup)) {
+							byte charge=Byte.parseByte(chargeString);
+							float iRT=Float.parseFloat(OpenSwathTSVToLibraryConverter.getFromMap(row, "iRT"));
+							
+							if (lastPeptide!=null) peptides.add(new ImmutablePeptideEntry(lastPeptide));
+							
+							lastPeptide=new PeptideEntry(parseMods(peptideModSeq), charge, iRT);
+							lastGroup=group;
+							
+							if (peptides.size()%10000==0) {
+								Logger.logLine("Read "+peptides.size()+" entries...");
+							}
 						}
-					}
-					lastPeptide.addPeak(new Peak(productMz, libraryIntensity));
+						lastPeptide.addPeak(new Peak(productMz, libraryIntensity));
 
+					} catch (Exception e) {
+						Logger.errorLine("Error parsing Spectronaut CSV:");
+						Logger.errorException(e);
+						Logger.errorLine("Spectronaut CSV parsing requires the following columns:\n" +
+								" 1) ModifiedPeptide: ["+OpenSwathTSVToLibraryConverter.getFromMap(row, "ModifiedPeptide")+"]\n" + 
+								" 2) PrecursorCharge: ["+OpenSwathTSVToLibraryConverter.getFromMap(row, "PrecursorCharge")+"]\n" + 
+								" 3) FragmentMz: ["+OpenSwathTSVToLibraryConverter.getFromMap(row, "FragmentMz")+"]\n" + 
+								" 4) RelativeIntensity: ["+OpenSwathTSVToLibraryConverter.getFromMap(row, "RelativeIntensity")+"]\n" + 
+								" 5) iRT: ["+OpenSwathTSVToLibraryConverter.getFromMap(row, "iRT")+"]");
+						throw new EncyclopediaException(e);
+					}
 				}
 				
 				@Override
