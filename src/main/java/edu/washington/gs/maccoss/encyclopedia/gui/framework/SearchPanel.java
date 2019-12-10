@@ -123,7 +123,7 @@ public class SearchPanel extends JPanel {
 				Logger.errorException(e);
 			}
 		}
-		if (ProgramType.Global==program||ProgramType.CASiL==program) {
+		if (ProgramType.Global==program||ProgramType.CASiL==program||ProgramType.EncyclopeDIA==program) {
 			try {
 				ThesaurusParametersPanel CASiL=new ThesaurusParametersPanel(this);
 				HashMap<String, String> map=ThesaurusSearchParameters.readPreferences();

@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
@@ -30,12 +31,13 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgrou
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusJobData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusOneScoringFactory;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoPermuter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -264,6 +266,7 @@ public class Thesaurus {
 		// get stripes
 		int rangesFinished=0;
 		float numberOfTasks=2.0f+ranges.size();
+		int totalTasks=0;
 		for (Range range : ranges) {
 			String baseMessage="Working on "+range+" m/z";
 			float baseIncrement=1.0f/numberOfTasks;
@@ -283,6 +286,7 @@ public class Thesaurus {
 			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 	
 			ArrayList<LibraryEntry> entries=library.getEntries(range, true, parameters.getAAConstants());
+			entries=filterEntriesForPTM(entries, parameters.getLocalizingModification(), parameters.getAAConstants());
 			LibraryBackgroundInterface background=new LibraryBackground(entries);
 			PSMScorer scorer=taskFactory.getLibraryScorer(background);
 			
@@ -307,6 +311,7 @@ public class Thesaurus {
 					tasks.add(entry.getDecoy(parameters));
 				}
 				executor.submit(taskFactory.getScoringTask(scorer, tasks, stripes, range, dutyCycle, precursors, resultsQueue));
+				totalTasks++;
 			}
 			
 			executor.shutdown();
@@ -331,6 +336,9 @@ public class Thesaurus {
 		progress.update("Organizing results", (1.0f+rangesFinished)/numberOfTasks);
 	
 		Logger.logLine("Running Percolator...");
+		if (totalTasks==0) {
+			throw new EncyclopediaException("No peptides found in library with the specified PTM ("+parameters.getLocalizingModification()+")!");
+		}
 		Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface> percolatorResults=Encyclopedia.percolatePeptides(progress, job, stripefile, saveResultsConsumer);
 		if (parameters.getScoringBreadthType().runRecalibration()) {
 			percolatorResults=Encyclopedia.repercolatePeptides(progress, job, stripefile, saveResultsConsumer, percolatorResults.y);
@@ -351,6 +359,19 @@ public class Thesaurus {
 		progress.update("Found "+passingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 		Logger.logLine("Finished analysis! "+writeResultsConsumer.getNumberProcessed()+" total peptides processed, "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 
+	}
+	
+	private static ArrayList<LibraryEntry> filterEntriesForPTM(ArrayList<LibraryEntry> entries, Optional<PeptideModification> optionalptm, AminoAcidConstants aaConstants) {
+		if (!optionalptm.isPresent()) return entries;
+		
+		PeptideModification ptm=optionalptm.get();
+		ArrayList<LibraryEntry> pass=new ArrayList<>();
+		for (LibraryEntry libraryEntry : entries) {
+			if (PhosphoPermuter.hasPTM(libraryEntry.getPeptideModSeq(), ptm, aaConstants)) {
+				pass.add(libraryEntry);
+			}
+		}
+		return pass;
 	}
 
 	private static String getRequiredLocalizationMessage(Collection<PeptideModification> localizationModifications) {

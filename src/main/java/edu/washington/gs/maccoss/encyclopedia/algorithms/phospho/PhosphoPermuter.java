@@ -10,6 +10,44 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.list.array.TIntArrayList;
 
 public class PhosphoPermuter {
+	public static boolean hasPTM(String peptideModSeq, PeptideModification modification, AminoAcidConstants aaConstants) {
+		char[] modifibleAAs=modification.getModifiableAAs();
+		
+		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, aaConstants);
+		String[] aas=model.getAas();
+		
+		TIntArrayList styIndices=new TIntArrayList();
+		StringBuilder sb=new StringBuilder();
+		for (int i=0; i<aas.length; i++) {
+			Pair<Character, Double> aa=FragmentationModel.parseAA(aas[i]);
+			char aaValue=aa.x.charValue();
+			
+			boolean isSTY=false;
+			for (int j=0; j<modifibleAAs.length; j++) {
+				if (modifibleAAs[j]==aaValue) {
+					isSTY=true;
+				}
+			}
+			
+			if (isSTY) {
+				if (aa.y!=null) {
+					if (modification.isModificationMass(aaValue, aa.y)) {
+						return true;
+					} else {
+						// STY with a non-phospho mod, so add as if it were another amino acid and continue
+						sb.append(aas[i]);
+						continue;
+					}
+				}
+				styIndices.add(sb.length());
+				sb.append(aaValue);
+			} else {
+				// non-phospho mods get added as is
+				sb.append(aas[i]);
+			}
+		}
+		return false;
+	}
 	
 	public static ArrayList<String> getPermutations(String peptideModSeq, PeptideModification modification, AminoAcidConstants aaConstants) {
 		String modificationTag=modification.toMassString();

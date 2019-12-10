@@ -8,6 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorEx
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 
 public class ThesaurusJobData extends EncyclopediaJobData {
 	public static final String LOG_FILE_SUFFIX=".log";
@@ -24,9 +25,10 @@ public class ThesaurusJobData extends EncyclopediaJobData {
 	}
 
 	static PercolatorExecutionData getPercolatorExecutionData(File referenceFileLocation, File fasta, SearchParameters parameters) {
-		return new PercolatorExecutionData(new File(getPrefixFromOutput(referenceFileLocation) + FEATURE_FILE_SUFFIX), fasta,
-				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_FILE_SUFFIX), 
-				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_PROTEIN_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_PROTEIN_FILE_SUFFIX), parameters);
+		String prefix = getPrefix(parameters);
+		return new PercolatorExecutionData(new File(getPrefixFromOutput(referenceFileLocation, parameters) + prefix+FEATURE_FILE_SUFFIX), fasta,
+				new File(getPrefixFromOutput(referenceFileLocation, parameters) + prefix+OUTPUT_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation, parameters) + DECOY_FILE_SUFFIX), 
+				new File(getPrefixFromOutput(referenceFileLocation, parameters) + OUTPUT_PROTEIN_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation, parameters) + DECOY_PROTEIN_FILE_SUFFIX), parameters);
 	}
 
 	public ThesaurusJobData updateTaskFactory(LibraryScoringFactory taskFactory) {
@@ -34,20 +36,22 @@ public class ThesaurusJobData extends EncyclopediaJobData {
 	}
 	
 	public File getLocalizationFile() {
-		String absolutePath = getPrefixFromOutput(getPercolatorFiles().getPeptideOutputFile());
+		String absolutePath = getPrefixFromOutput(getPercolatorFiles().getPeptideOutputFile(), getParameters());
 		return new File(absolutePath+".localizations.txt");
 	}
 
 	public File getResultLibrary() {
-		String absolutePath = getPrefixFromOutput(getPercolatorFiles().getPeptideOutputFile());
-		return new File(absolutePath+THESAURUS_REPORT_FILE_SUFFIX);
+		String prefix = getPrefix(getParameters());
+		String absolutePath = getPrefixFromOutput(getPercolatorFiles().getPeptideOutputFile(), getParameters());
+		return new File(absolutePath+prefix+THESAURUS_REPORT_FILE_SUFFIX);
 	}
 
-	static String getPrefixFromOutput(File outputFile) {
+	static String getPrefixFromOutput(File outputFile, SearchParameters parameters) {
 		final String absolutePath = outputFile.getAbsolutePath();
 
-		if (absolutePath.endsWith(OUTPUT_FILE_SUFFIX)) {
-			return absolutePath.substring(0, absolutePath.length() - OUTPUT_FILE_SUFFIX.length());
+		String prefix = getPrefix(parameters);
+		if (absolutePath.endsWith(prefix+OUTPUT_FILE_SUFFIX)) {
+			return absolutePath.substring(0, absolutePath.length() - (prefix.length()+OUTPUT_FILE_SUFFIX.length()));
 		} else {
 			return absolutePath;
 		}
@@ -56,5 +60,13 @@ public class ThesaurusJobData extends EncyclopediaJobData {
 	@Override
 	public String getSearchType() {
 		return "Thesaurus";
+	}
+
+	private static String getPrefix(SearchParameters parameters) {
+		if (!parameters.getLocalizingModification().isPresent()) {
+			throw new EncyclopediaException("Sorry, Thesaurus requires you to specify a localizing PTM!");
+		}
+		String prefix="."+parameters.getLocalizingModification().get().getShortname();
+		return prefix;
 	}
 }
