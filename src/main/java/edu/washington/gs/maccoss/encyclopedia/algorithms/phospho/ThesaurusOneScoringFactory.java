@@ -26,11 +26,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class ThesaurusOneScoringFactory implements LibraryScoringFactory {
 	public static final String version="0.4.10";
-	private final SearchParameters parameters;
+	private final ThesaurusSearchParameters parameters;
 	private final PhosphoLocalizer localizer;
 	private final BlockingQueue<ModificationLocalizationData> localizationQueue;
 
-	public ThesaurusOneScoringFactory(SearchParameters parameters, PhosphoLocalizer localizer, BlockingQueue<ModificationLocalizationData> localizationQueue) {
+	public ThesaurusOneScoringFactory(ThesaurusSearchParameters parameters, PhosphoLocalizer localizer, BlockingQueue<ModificationLocalizationData> localizationQueue) {
 		this.parameters=parameters;
 		this.localizer=localizer;
 		this.localizationQueue=localizationQueue;

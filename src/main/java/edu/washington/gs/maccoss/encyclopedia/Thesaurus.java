@@ -32,6 +32,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringF
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
@@ -116,7 +117,7 @@ public class Thesaurus {
 				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+ThesaurusJobData.LOG_FILE_SUFFIX));
 				Logger.addRecorder(logRecorder);
 	
-				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
+				ThesaurusSearchParameters parameters=ThesaurusSearchParameters.parseParameters(arguments);
 				if (!parameters.getLocalizingModification().isPresent()) {
 					AminoAcidConstants constants = parameters.getAAConstants();
 					String message = getRequiredLocalizationMessage(constants.getLocalizationModifications());
@@ -196,11 +197,17 @@ public class Thesaurus {
 				String message = getRequiredLocalizationMessage(constants.getLocalizationModifications());
 				throw new EncyclopediaException(message);
 			}
+			ThesaurusSearchParameters searchParameters;
+			if (job.getParameters() instanceof ThesaurusSearchParameters) {
+				searchParameters=(ThesaurusSearchParameters)job.getParameters();
+			} else {
+				searchParameters=ThesaurusSearchParameters.convertFromEncyclopeDIA(job.getParameters(), false);
+			}
 
 			Logger.logLine("Setting up localization engine...");
-			StripeFileInterface stripefile=StripeFileGenerator.getFile(job.getDiaFile(), job.getParameters());
-			PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, job.getParameters().getLocalizingModification().get(), job.getParameters());
-			LibraryScoringFactory factory=new ThesaurusOneScoringFactory(job.getParameters(), localizer, new LinkedBlockingQueue<ModificationLocalizationData>());
+			StripeFileInterface stripefile=StripeFileGenerator.getFile(job.getDiaFile(), searchParameters);
+			PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, searchParameters.getLocalizingModification().get(), searchParameters);
+			LibraryScoringFactory factory=new ThesaurusOneScoringFactory(searchParameters, localizer, new LinkedBlockingQueue<ModificationLocalizationData>());
 			job=job.updateTaskFactory(factory);
 		}
 		return job;

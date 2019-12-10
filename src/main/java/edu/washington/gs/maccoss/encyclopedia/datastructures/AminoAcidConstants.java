@@ -65,6 +65,9 @@ public class AminoAcidConstants {
 				PeptideModification.acetylation,
 				PeptideModification.oxidation,
 				PeptideModification.methylation,
+				PeptideModification.dimethylation,
+				PeptideModification.trimethylation,
+				PeptideModification.succinylation,
 				PeptideModification.ubiquitination,
 				PeptideModification.oHexNAc);
 	}
