@@ -356,7 +356,6 @@ public class Pecanpie {
 			// prepare executor for peptides
 			executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 			
-			
 			@SuppressWarnings("unchecked")
 			TDoubleObjectHashMap<TDoubleArrayList>[] backgroundScoreMap=new TDoubleObjectHashMap[parameters.getMaxCharge()];
 			// background separated out by charge state, TODO assumes positive charge! 

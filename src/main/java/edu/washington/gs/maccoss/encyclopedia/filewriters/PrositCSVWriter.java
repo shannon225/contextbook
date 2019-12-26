@@ -1,7 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.filewriters;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -21,8 +23,45 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class PrositCSVWriter {
-
 	public static void main(String[] args) throws Exception {
+		File parent=new File("/Users/searleb/Documents/mak/");
+		File fileName=new File("/Users/searleb/Documents/mak/prosit.csv");
+		
+		float defaultNCE=33.0f;
+		byte defaultCharge=3;
+		byte[] chargeStates=new byte[] {2,3,4};
+		File[] files=new File[] {new File(parent, "metzyme_p2.txt"), new File(parent, "metzyme_p3.txt"), new File(parent, "metzyme_p4.txt")};
+
+		PrintWriter writer=new PrintWriter(fileName);
+		writer.println("modified_sequence,collision_energy,precursor_charge");
+		int total=0;
+		
+		for (int i=0; i<files.length; i++) {
+			byte charge=chargeStates[i];
+			BufferedReader in=new BufferedReader(new FileReader(files[i]));
+
+			String seq;
+			while ((seq=in.readLine())!=null) {
+				if (seq.trim().length()==0) {
+					continue;
+				}
+				
+				if (seq.length()>30||seq.length()<7) continue;
+				if (seq.indexOf('B')>=0||seq.indexOf('J')>=0||seq.indexOf('O')>=0||seq.indexOf('U')>=0||seq.indexOf('X')>=0||seq.indexOf('Z')>=0||seq.indexOf('*')>=0) continue;
+				
+
+				writer.println(seq+","+convertNCE(defaultNCE, (byte)charge, defaultCharge)+","+(charge));
+				total++;
+			}
+			
+			in.close();
+		}
+		
+		writer.close();
+		Logger.logLine("Finished writing "+total+" peptides to Prosit CSV!");
+	}
+
+	public static void main2(String[] args) throws Exception {
 		//File f=new File("/Users/bsearle/Documents/prosit/Pfalciparum/PlasmoDB-43_Pfalciparum3D7_AnnotatedProteins_042419.fasta");
 		File fasta=new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta");
 		//File f=new File("/Volumes/searle_ssd/malaria/uniprot_human_25apr2019.fasta");

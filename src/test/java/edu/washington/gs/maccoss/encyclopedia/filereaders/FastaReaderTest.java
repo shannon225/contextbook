@@ -31,6 +31,31 @@ import gnu.trove.set.hash.TIntHashSet;
 import junit.framework.TestCase;
 
 public class FastaReaderTest extends TestCase {
+	public static void main(String[] args) throws Exception {
+		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
+		File f=new File("/Users/searleb/Downloads/swissprot_reviewed_9606_13dec2019_20379_entries.fasta");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
+		
+		Range[] ranges=new Range[] {new Range(400, 500), new Range(600, 700), new Range(900, 1000)};
+		
+		for (Range range : ranges) {
+			int count=0;
+			for (FastaEntryInterface entry : entries) {
+				ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants(), parameters.isRequireVariableMods());
+	
+				for (FastaPeptideEntry peptide : peptides) {
+					for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
+						double mz=parameters.getAAConstants().getChargedMass(peptide.getSequence(), charge);
+	
+						if (range.contains((float)mz)) {
+							count++;
+						}
+					}
+				}
+			}
+			System.out.println(range+" --> "+count);
+		}
+	}
 	/*public static void main(String[] args) throws IOException, FileNotFoundException {
 		File f=new File("/Users/searleb/Downloads/hg38_6FT.fasta");
 		File out=new File("/Users/searleb/Downloads/hg38_coding.fasta");
