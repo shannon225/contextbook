@@ -123,12 +123,12 @@ public class SearchPanel extends JPanel {
 				Logger.errorException(e);
 			}
 		}
-		if (ProgramType.Global==program||ProgramType.CASiL==program) {
+		if (ProgramType.Global==program||ProgramType.CASiL==program||ProgramType.EncyclopeDIA==program) {
 			try {
 				ThesaurusParametersPanel CASiL=new ThesaurusParametersPanel(this);
 				HashMap<String, String> map=ThesaurusSearchParameters.readPreferences();
-				ThesaurusSearchParameters xcordiaParameters=ThesaurusSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(map));
-				CASiL.setParameters(xcordiaParameters, map.get(Encyclopedia.TARGET_LIBRARY_TAG), map.get(Encyclopedia.BACKGROUND_FASTA_TAG));
+				ThesaurusSearchParameters thesaurusParameters=ThesaurusSearchParameters.parseParameters(map);
+				CASiL.setParameters(thesaurusParameters, map.get(Encyclopedia.TARGET_LIBRARY_TAG), map.get(Encyclopedia.BACKGROUND_FASTA_TAG));
 				optionsTabs.addTab(CASiL.getProgram().toString(), CASiL.getSmallImage(), CASiL, CASiL.getProgramShortDescription());
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");

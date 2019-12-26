@@ -24,11 +24,10 @@ import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusJobData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusSearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCordiaSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
@@ -36,8 +35,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
@@ -244,15 +241,17 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 		PeptideModification modification=(PeptideModification)modificationType.getSelectedItem();
 		float percolatorThresholdValue=((Number)percolatorThreshold.getValue()).floatValue();
 		
+		boolean considerRearrangement=false;
+		
 		ThesaurusSearchParameters parameters=new ThesaurusSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, 
 				fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, percolatorThresholdValue, percolatorThresholdValue, (isPercolatorTwo?2:3), 
 				dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, 
-				minNumOfQuantitativeIonsValue, 0.0f, modification, CASiLSearchBreadthType, 0.0f, true, false, false, false);
+				minNumOfQuantitativeIonsValue, 0.0f, modification, CASiLSearchBreadthType, 0.0f, true, false, false, false, considerRearrangement);
 
 		String cmds=additionalCommandLineOptions.getText();
 		HashMap<String, String> params=parameters.toParameterMap();
 		params.putAll(CommandLineParser.parseArguments(cmds.split(" ")));
-		parameters=ThesaurusSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(params));
+		parameters=ThesaurusSearchParameters.parseParameters(params);
 		
 		return parameters;
 	}

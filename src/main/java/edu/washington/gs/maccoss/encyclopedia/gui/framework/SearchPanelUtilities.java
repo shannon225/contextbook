@@ -636,7 +636,7 @@ public class SearchPanelUtilities {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		final JDialog dialog=new JDialog(frame, "Convert Prosit/Spectronaut CSV to Library", true);
 		
-		final FileChooserPanel csvFileChooser=new FileChooserPanel(null, "Spectronaut CSV", new SimpleFilenameFilter(".spectronaut"), true);
+		final FileChooserPanel csvFileChooser=new FileChooserPanel(null, "Spectronaut CSV", new SimpleFilenameFilter(".spectronaut", ".csv"), true);
 		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);
 
 		JPanel options=new JPanel();

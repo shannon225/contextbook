@@ -9,6 +9,9 @@ public class PeptideModification {
 	public static PeptideModification acetylation     = new PeptideModification("Acetylation (K)", "Acetylation", 42.010565, new double[1], new char[]{'K'});
 	public static PeptideModification oxidation       = new PeptideModification("Oxidation (MW)", "Oxidation", 15.994915, new double[2], new char[]{'M', 'W'});
 	public static PeptideModification methylation     = new PeptideModification("N-Methylation (KR)", "Methylation", 14.015650, new double[2], new char[]{'K', 'R'});
+	public static PeptideModification dimethylation   = new PeptideModification("N-Dimethylation (KR)", "Dimethylation", 28.031300, new double[2], new char[]{'K', 'R'});
+	public static PeptideModification trimethylation  = new PeptideModification("N-Trimethylation (K)", "Trimethylation", 42.046950, new double[1], new char[]{'K'});
+	public static PeptideModification succinylation   = new PeptideModification("Succinylation (K)", "Succinylation", 100.016044, new double[1], new char[]{'K'});
 	public static PeptideModification ubiquitination  = new PeptideModification("Ubiquitination (K)", "Ubiquitination", 114.042927, new double[1], new char[]{'K'});
 	public static PeptideModification oHexNAc         = new PeptideModification("O-HexNAc (ST)", "OHexNAc", 203.079373, new double[]{203.079373, 203.079373}, new char[]{'S', 'T'});
 	public static PeptideModification polymorphism    = new PeptideModification("Nucleotide Polymorphism", "Polymorphism", 0.0, new double["ACDEFGHIKLMNPQRSTVWY".length()], "ACDEFGHIKLMNPQRSTVWY".toCharArray());

@@ -5,8 +5,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
@@ -47,6 +47,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 	private final PeptideModification localizingModification;
 	private final BlockingQueue<ModificationLocalizationData> localizationQueue;
 	private final float minimumScore;
+	private final ThesaurusSearchParameters thesaurusParameters;
 	
 	public ThesaurusOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, float dutyCycle, PrecursorScanMap precursors, 
 			PhosphoLocalizer localizer, BlockingQueue<PeptideScoringResult> resultsQueue, BlockingQueue<ModificationLocalizationData> localizationQueue, SearchParameters parameters) {
@@ -60,6 +61,11 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			this.localizingModification=parameters.getLocalizingModification().get();
 		} else {
 			throw new EncyclopediaException("You must specify a localizing modification before running localization!");
+		}
+		if (parameters instanceof ThesaurusSearchParameters) {
+			this.thesaurusParameters=(ThesaurusSearchParameters)parameters;
+		} else {
+			throw new EncyclopediaException("You must specify a Thesaurus parameters object before running Thesaurus!");
 		}
 	}
 
@@ -132,7 +138,6 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 		HashMap<String, ScoredIndex> bestIndicies=new HashMap<>();
 		TObjectIntHashMap<String> numberOfAttempts=new TObjectIntHashMap<>();
 		
-		boolean first=true;
 		while (unlocalizedIsoforms.size()>0) {
 			Collection<Range> blacklistedScans=blacklistedScanRanges.values();
 			String bestPeptideModSeq=null;
@@ -296,7 +301,9 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 
 			if (data.isLocalized()) {
 				// we've found this peptide so we don't need to keep this section blacklisted
-				blacklistedScanRanges.remove(bestPeptideModSeq);
+				if (thesaurusParameters.isConsiderRearrangement()) {
+					blacklistedScanRanges.remove(bestPeptideModSeq);
+				}
 			} else {
 				if (!blacklistedScanRanges.containsKey(bestPeptideModSeq)) {
 					// if we've already got a better RT peak blacklisted then don't bother with this one

@@ -12,12 +12,14 @@ import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 public class ThesaurusSearchParameters extends SearchParameters {
+	private final boolean considerRearrangement;
 
 	
 	public void savePreferences(File libraryFile, File fastaFile) throws IOException,BackingStoreException {
@@ -42,19 +44,34 @@ public class ThesaurusSearchParameters extends SearchParameters {
 		}
 		return map;
 	}
+
 	
+	public HashMap<String, String> toParameterMap() {
+		HashMap<String, String> map=super.toParameterMap();
+
+        map.put("-considerRearrangement", considerRearrangement+"");
+		return map;
+	}
+	
+	public static ThesaurusSearchParameters parseParameters(HashMap<String, String> map) {
+		SearchParameters params=SearchParameterParser.parseParameters(map);
+		String value=map.get("-considerRearrangement");
+		boolean considerRearrangement=value!=null&&Boolean.getBoolean(value); // only true if not null and "true"
+		return convertFromEncyclopeDIA(params, considerRearrangement);
+	}
 	
 
 	public ThesaurusSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin,
 			MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme, float percolatorThreshold, float percolatorProteinThreshold, Integer percolatorVersionNumber,
 			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, int numberOfQuantitativePeaks,
-			int minNumOfQuantitativePeaks, float minIntensity, PeptideModification modification, ScoringBreadthType searchType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, boolean filterPeaklists, boolean doNotUseGlobalFDR) {
+			int minNumOfQuantitativePeaks, float minIntensity, PeptideModification modification, ScoringBreadthType searchType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, boolean filterPeaklists, boolean doNotUseGlobalFDR, boolean considerRearrangement) {
 		super(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorProteinThreshold,
 				percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks,
 				minIntensity, Optional.of(modification), searchType, getNumberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons, -1.0f, filterPeaklists, doNotUseGlobalFDR);
+		this.considerRearrangement=considerRearrangement;
 	}
 
-	public static ThesaurusSearchParameters convertFromEncyclopeDIA(SearchParameters params) {
+	public static ThesaurusSearchParameters convertFromEncyclopeDIA(SearchParameters params, boolean considerRearrangement) {
 		PeptideModification mod;
 		if (params.getLocalizingModification().isPresent()) {
 			mod=params.getLocalizingModification().get();
@@ -66,7 +83,10 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				params.getFragmentTolerance(), params.getFragmentOffsetPPM(), params.getLibraryFragmentTolerance(), params.getEnzyme(), params.getPercolatorThreshold(), params.getPercolatorProteinThreshold(),
 				params.getPercolatorVersionNumber(), params.getDataAcquisitionType(), params.getNumberOfThreadsUsed(), params.getExpectedPeakWidth(), params.getTargetWindowCenter(),
 				params.getPrecursorWindowSize(), params.getNumberOfQuantitativePeaks(), params.getMinNumOfQuantitativePeaks(), params.getMinIntensity(), mod, params.getScoringBreadthType(),
-				params.getNumberOfExtraDecoyLibrariesSearched(), params.isQuantifySameFragmentsAcrossSamples(), params.isVerifyModificationIons(), params.isFilterPeaklists(), params.isDoNotUseGlobalFDR());
+				params.getNumberOfExtraDecoyLibrariesSearched(), params.isQuantifySameFragmentsAcrossSamples(), params.isVerifyModificationIons(), params.isFilterPeaklists(), params.isDoNotUseGlobalFDR(), considerRearrangement);
 	}
 
+	public boolean isConsiderRearrangement() {
+		return considerRearrangement;
+	}
 }
