@@ -349,13 +349,42 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
-	public void addIntegratedEntries(ArrayList<IntegratedLibraryEntry> entries, Optional<PeakLocationInferrerInterface> inferrer, Optional<HashMap<String, ModificationLocalizationData>> localizationData, AminoAcidConstants aaConstants)
+	public void addIntegratedEntries(ArrayList<IntegratedLibraryEntry> entries, Optional<PeakLocationInferrerInterface> inferrer, Optional<HashMap<String, ModificationLocalizationData>> localizationData, AminoAcidConstants aaConstants, float fdrThreshold)
 			throws IOException, SQLException {
 		// first add normal data
 		HashMap<String, LibraryEntry> repeatsCatcher=new HashMap<String, LibraryEntry>();
 		HashMap<String, String> ptmRepeatsCatcher=new HashMap<String, String>();
 
+        TObjectDoubleHashMap<String> localizationFDRValues=new TObjectDoubleHashMap<>();
+        if (localizationData.isPresent()) {
+            ArrayList<String> peptideModSeqs=new ArrayList<>();
+            TDoubleArrayList pValues=new TDoubleArrayList();
+            for (Entry<String, ModificationLocalizationData> entry : localizationData.get().entrySet()) {
+            		peptideModSeqs.add(entry.getKey());
+                double pvalue=Math.pow(10, -entry.getValue().getLocalizationScore());
+                pValues.add(pvalue);
+            }
+            double[] fdrValues=BenjaminiHochberg.calculateAdjustedPValues(pValues.toArray());
+            for (int i=0; i<fdrValues.length; i++) {
+                localizationFDRValues.put(peptideModSeqs.get(i), fdrValues[i]);
+            }
+        }
+
+		int countSkipped=0;
 		for (IntegratedLibraryEntry entry : entries) {
+			if (localizationData.isPresent()) {
+				if(!localizationFDRValues.contains(entry.getPeptideModSeq())) {
+					System.out.println("Skipping "+entry.getPeptideModSeq()+", +not localized!");
+					countSkipped++;
+					continue;
+				}
+				double fdr=localizationFDRValues.get(entry.getPeptideModSeq());
+				if (fdr>fdrThreshold) {
+					System.out.println("Skipping "+entry.getPeptideModSeq()+", FDR over threshold:"+fdr+"!");
+					countSkipped++;
+					continue;
+				}	
+			}
 			String key=entry.getPeptideModSeq()+"+"+entry.getPrecursorCharge()+","+entry.getSource();
 			LibraryEntry prev=repeatsCatcher.get(key);
 			if (prev==null) {
@@ -368,6 +397,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					repeatsCatcher.put(key, entry);
 				}
 			}
+		}
+		if (countSkipped>0) {
+			Logger.logLine("Skipped "+countSkipped+" peptides that did not pass localization FDR");
 		}
 		ArrayList<LibraryEntry> uniqueEntries=new ArrayList<LibraryEntry>(repeatsCatcher.values());
 		Logger.logLine("Writing "+uniqueEntries.size()+" peptides to entries table...");
@@ -464,21 +496,6 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					Logger.errorLine("Skipped "+numFilteredEntries+" integrated library entries because the RT inferrer could not find any fragment ions.");
 				}
 			}
-
-            TObjectDoubleHashMap<String> localizationFDRValues=new TObjectDoubleHashMap<>();
-            if (localizationData.isPresent()) {
-                ArrayList<String> keys=new ArrayList<>();
-                TDoubleArrayList pValues=new TDoubleArrayList();
-                for (Entry<String, ModificationLocalizationData> entry : localizationData.get().entrySet()) {
-                    keys.add(entry.getKey());
-                    double pvalue=Math.pow(10, -entry.getValue().getLocalizationScore());
-                    pValues.add(pvalue);
-                }
-                double[] fdrValues=BenjaminiHochberg.calculateAdjustedPValues(pValues.toArray());
-                for (int i=0; i<fdrValues.length; i++) {
-                    localizationFDRValues.put(keys.get(i), fdrValues[i]);
-                }
-            }
 
 			int start=0;
 			int stop=NUMBER_OF_PEPTIDE_ENTRIES_AT_ONCE;

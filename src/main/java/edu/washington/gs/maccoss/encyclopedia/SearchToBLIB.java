@@ -379,9 +379,6 @@ public class SearchToBLIB {
 					Logger.logLine("Inferring peak boundaries across files...");
 					try {
 						inferrer=Optional.of(AlternatePeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides.x, parameters));
-						for (SearchJobData job : pecanJobs) {
-							System.out.println(job.getDiaFile().getName()+" --> "+inferrer.get().getPreciseRTInSec(job, "QSVEADVNGLR", 0.0f)+", "+inferrer.get().getWarpedRTInSec(job, "QSVEADVNGLR"));
-						}
 						Logger.logLine("...Finished peak inference.");
 					} catch (Exception e) {
 						Logger.errorLine("RT alignment between files failed! Perhaps this is to build a chromatogram library and not a quantitative experiment? Attempting to recover without alignment.");
@@ -557,7 +554,7 @@ public class SearchToBLIB {
 
 				Logger.logLine(job.getDiaFile().getName()+": Number of global peptides: "+globalPassingPeptides.size()+" vs local peptides: "+localPassingPeptides.x.size());
 				
-				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides.x, inferrer, elib);
+				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides.x, inferrer, elib, pecanJobs.size()>1);
 
 				if ((!globalPercolatorFiles.isPresent())) {
 					if (job.hasBeenRun()) {
@@ -658,7 +655,7 @@ public class SearchToBLIB {
 	/**
 	 * Does not limit to quantifiable! Reports all potential peaks!
 	 */
-	static void convertFileElib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, Optional<PeakLocationInferrerInterface> inferrer, LibraryFile elib) throws IOException, SQLException {
+	static void convertFileElib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, Optional<PeakLocationInferrerInterface> inferrer, LibraryFile elib, boolean combineJobs) throws IOException, SQLException {
 		File diaFile=job.getDiaFile();
 		Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
 		subProgress.update(diaFile.getName()+": Reading Percolator Results", 0.0f);
@@ -683,17 +680,17 @@ public class SearchToBLIB {
 		subProgress.update(diaFile.getName()+": Writing Encyclopedia ELIB", 0.99999f);
 		
 		Optional<HashMap<String, ModificationLocalizationData>> localizationData;
-		if (job instanceof ThesaurusJobData) {
+		if (!combineJobs&&job instanceof ThesaurusJobData) {
 			Logger.logLine("Reading localization data from disk...");
 			localizationData=Optional.of(LocalizationDataToTSVConsumer.readLocalizationFile(((ThesaurusJobData)job).getLocalizationFile(), globalPassingPeptides, job.getParameters()));
-		} else if (job instanceof VariantXCorDIAJobData) {
+		} else if (!combineJobs&&job instanceof VariantXCorDIAJobData) {
 			Logger.logLine("Reading localization data from disk...");
 			localizationData=Optional.of(LocalizationDataToTSVConsumer.readLocalizationFile(((VariantXCorDIAJobData)job).getLocalizationFile(), globalPassingPeptides, job.getParameters()));
 		} else {
 			localizationData=Optional.empty();
 		}
 
-		elib.addIntegratedEntries(libraryEntries, inferrer, localizationData, job.getParameters().getAAConstants());
+		elib.addIntegratedEntries(libraryEntries, inferrer, localizationData, job.getParameters().getAAConstants(), job.getParameters().getPercolatorThreshold());
 		
 		Logger.logLine("Finished writing to Encyclopedia ELIB at "+new Date().toString());
 		subProgress.update(diaFile.getName()+": Finished writing to Encyclopedia ELIB at "+new Date().toString(), 1.0f);

@@ -96,7 +96,7 @@ public class ReferencePeakIntegrator {
 				keys.add(sampleName);
 				try {
 					ArrayList<IntegratedLibraryEntry> results=integrator.integratePeptides(job);
-					elib.addIntegratedEntries(results, Optional.empty(), Optional.empty(), params.getAAConstants());
+					elib.addIntegratedEntries(results, Optional.empty(), Optional.empty(), params.getAAConstants(), params.getPercolatorThreshold());
 					for (IntegratedLibraryEntry entry : results) {
 						RelativePeakIntensityMatrix matrix=matricies.get(entry.getPeptideModSeq());
 						if (matrix==null) {

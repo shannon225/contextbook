@@ -36,8 +36,9 @@ public class ThesaurusJobData extends EncyclopediaJobData {
 	}
 	
 	public File getLocalizationFile() {
+		String prefix = getPrefix(getParameters());
 		String absolutePath = getPrefixFromOutput(getPercolatorFiles().getPeptideOutputFile(), getParameters());
-		return new File(absolutePath+".localizations.txt");
+		return new File(absolutePath+prefix+".localizations.txt");
 	}
 
 	public File getResultLibrary() {
