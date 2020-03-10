@@ -21,12 +21,12 @@ import junit.framework.TestCase;
 
 public class PercolatorExecutorTest extends TestCase {
 	public static void main(String[] args) throws Exception {
-		File fastaFile=new File("/Users/searleb/Documents/vaneyk/19_2_Mouse_Uniprot_DECOY.fasta");
-		File featureFile=new File("/Users/searleb/Documents/vaneyk/full_features.txt");
-		File outputFile=new File("/Users/searleb/Documents/vaneyk/full_concatenated_results.txt");
-		File decoyFile=new File("/Users/searleb/Documents/vaneyk/full_concatenated_decoy.txt");
-		File outputProteinFile=new File("/Users/searleb/Documents/vaneyk/full_concatenated_protein_results.txt");
-		File decoyProteinFile=new File("/Users/searleb/Documents/vaneyk/full_concatenated_protein_decoy.txt");
+		File fastaFile=new File("/Users/searleb/Documents/vaneyk/control/Synthetic_Peptides.fasta");
+		File featureFile=new File("/Users/searleb/Documents/vaneyk/control/only_synthesized_peptides_features.txt");
+		File outputFile=new File("/Users/searleb/Documents/vaneyk/control/only_synthesized_peptides_concatenated_results.txt");
+		File decoyFile=new File("/Users/searleb/Documents/vaneyk/control/only_synthesized_peptides_concatenated_decoy.txt");
+		File outputProteinFile=new File("/Users/searleb/Documents/vaneyk/control/only_synthesized_peptides_concatenated_protein_results.txt");
+		File decoyProteinFile=new File("/Users/searleb/Documents/vaneyk/control/only_synthesized_peptides_concatenated_protein_decoy.txt");
 		PercolatorExecutionData percolatorFiles=new PercolatorExecutionData(featureFile, fastaFile, outputFile, decoyFile, outputProteinFile, decoyProteinFile, SearchParameterParser.getDefaultParametersObject());
 		PercolatorExecutor e=new PercolatorExecutor(getDefaultPercolaterVersion(), percolatorFiles);
 		BlockingQueue<OutputMessage> result=e.start();

@@ -11,10 +11,29 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.Transition
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryFileTest {
+
 	public static void main(String[] args) throws Exception {
+		LibraryInterface lib=BlibToLibraryConverter.getFile(new File("/Volumes/searle_ssd/swaney/uniprot_human_10Feb2020.fasta.asp-n.z3_nce33.dlib"));
+		final ArrayList<LibraryEntry> entries=lib.getEntries(new Range(600, 610), false, new AminoAcidConstants());
+		for (LibraryEntry entry : entries) {
+			float[] intensities=entry.getIntensityArray();
+			float max=General.max(intensities);
+			int count=0;
+			for (float f : intensities) {
+				if (f/max>0.10f) {
+					count++;
+				}
+			}
+			System.out.println(entry.getPeptideSeq().length()+","+count);
+		}
+	}
+	
+	public static void main3(String[] args) throws Exception {
 		LibraryInterface ddaLib=BlibToLibraryConverter.getFile(new File("/Volumes/searle_ssd/malaria/novo_yeast/libraries/uniprot_yeast_25jan2019.fasta.z2_nce33.dlib"));
 		final ArrayList<LibraryEntry> ddaEntries=ddaLib.getAllEntries(false, new AminoAcidConstants());
 		System.out.println("DDA: "+ddaEntries.size());

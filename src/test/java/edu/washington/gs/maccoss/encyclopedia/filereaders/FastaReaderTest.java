@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
@@ -19,6 +21,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
@@ -31,7 +34,54 @@ import gnu.trove.set.hash.TIntHashSet;
 import junit.framework.TestCase;
 
 public class FastaReaderTest extends TestCase {
+
+	/**
+	 * counts the number of accessions per peptide
+	 * @param args
+	 * @throws Exception
+	 */
 	public static void main(String[] args) throws Exception {
+		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
+		File f=new File("/Users/searleb/Downloads/bo_files/dmel-all-translation-r5.57_biognosysiRT_WR.fasta");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
+		
+		Range[] ranges=new Range[] {new Range(350, 1250)};
+		
+		HashMap<String, HashSet<String>> accessions=new HashMap<>();
+		
+		for (Range range : ranges) {
+			for (FastaEntryInterface entry : entries) {
+				ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants(), parameters.isRequireVariableMods());
+	
+				for (FastaPeptideEntry peptide : peptides) {
+					for (byte charge=parameters.getMinCharge(); charge<=parameters.getMaxCharge(); charge++) {
+						double mz=parameters.getAAConstants().getChargedMass(peptide.getSequence(), charge);
+	
+						if (range.contains((float)mz)) {
+							HashSet<String> pepAcc=accessions.get(peptide.getSequence());
+							if (pepAcc==null) {
+								pepAcc=new HashSet<>();
+								accessions.put(peptide.getSequence(), pepAcc);
+							}
+							pepAcc.addAll(peptide.getAccessions());
+						}
+					}
+				}
+			}
+		}
+
+		int[] counts=new int[21];
+		for (HashSet<String> entry : accessions.values()) {
+			int size=Math.min(counts.length-1, entry.size());
+			counts[size]++;
+		}
+		Logger.logLine("Accession count histogram: ");
+		for (int i=0; i<counts.length; i++) {
+			Logger.logLine(i+" Acc\t"+counts[i]+" Counts");
+		}
+	}
+	
+	public static void mainQ(String[] args) throws Exception {
 		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 		File f=new File("/Users/searleb/Downloads/swissprot_reviewed_9606_13dec2019_20379_entries.fasta");
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
