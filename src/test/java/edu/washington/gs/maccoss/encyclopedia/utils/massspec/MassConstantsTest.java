@@ -19,8 +19,8 @@ public class MassConstantsTest extends TestCase {
 		assertTrue(constants.getNeutralLoss('S', 80.1)==0.0);
 		assertTrue(constants.getNeutralLoss('S', 79.966331)>0.0);
 		assertTrue(constants.getNeutralLoss('S', 79.966331+0.00001)>0.0);
-		assertTrue(constants.getNeutralLoss('S', 79.966331+0.0001)==0.0);
+		assertTrue(constants.getNeutralLoss('S', 79.966331+0.001)==0.0);
 		assertTrue(constants.getNeutralLoss('S', 79.966331-0.00001)>0.0);
-		assertTrue(constants.getNeutralLoss('S', 79.966331-0.0001)==0.0);
+		assertTrue(constants.getNeutralLoss('S', 79.966331-0.001)==0.0);
 	}
 }
