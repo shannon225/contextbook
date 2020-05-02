@@ -21,6 +21,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TCharDoubleHashMap;
+import org.apache.commons.lang3.StringUtils;
 
 public class PrositCSVWriter {
 	public static void main(String[] args) throws Exception {
@@ -96,13 +97,22 @@ public class PrositCSVWriter {
 	}
 
 	public static void writeCSV(File fasta, DigestionEnzyme enzyme, int defaultNCE, byte defaultCharge, int minCharge, int maxCharge, int maxMissedCleavages, Range mzRange, boolean addDecoys) throws FileNotFoundException {
+		writeCSV(null, fasta, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, mzRange, addDecoys);
+	}
+
+	public static void writeCSV(String csvFileName, File fasta, DigestionEnzyme enzyme, int defaultNCE, byte defaultCharge, int minCharge, int maxCharge, int maxMissedCleavages, Range mzRange, boolean addDecoys) throws FileNotFoundException {
 		int[] chargeStates = new int[maxCharge-minCharge+1];
 		for (int i = 0; i < chargeStates.length; i++) {
 			chargeStates[i]=i+minCharge;
 			Logger.logLine("Considering charge +"+chargeStates[i]+"H");
 		}
-		
-		String fileName = fasta.getAbsolutePath()+"."+enzyme.getPercolatorName()+".z"+defaultCharge+"_nce"+defaultNCE+".csv";
+		String fileName;
+		if (StringUtils.isBlank(csvFileName)) {
+			fileName = fasta.getAbsolutePath() + "." + enzyme.getPercolatorName() + ".z" + defaultCharge + "_nce" + defaultNCE + ".csv";
+		} else {
+			fileName = csvFileName;
+		}
+
 		PrintWriter writer=new PrintWriter(fileName);
 		Logger.logLine("Starting to build Prosit CSV: "+fileName);
 

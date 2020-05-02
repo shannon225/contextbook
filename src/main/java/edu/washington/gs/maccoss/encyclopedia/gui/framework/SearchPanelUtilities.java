@@ -35,11 +35,7 @@ import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.*;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
@@ -516,13 +512,13 @@ public class SearchPanelUtilities {
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(fastaFileChooser);
 
-		final SpinnerModel defaultNCESpinner=new SpinnerNumberModel(33, 25, 40, 1);
-		final SpinnerModel defaultChargeSpinner=new SpinnerNumberModel(3, 1, 4, 1);
-		final SpinnerModel minChargeSpinner=new SpinnerNumberModel(2, 1, 6, 1);
-		final SpinnerModel maxChargeSpinner=new SpinnerNumberModel(3, 1, 6, 1);
-		final SpinnerModel maxMissedCleavageSpinner=new SpinnerNumberModel(1, 0, 3, 1);
-		final SpinnerModel minMzSpinner=new SpinnerNumberModel(396.4, 150.0, 1600.0, 0.1);
-		final SpinnerModel maxMzSpinner=new SpinnerNumberModel(1002.7, 150.0, 1600.0, 0.1);
+		final SpinnerModel defaultNCESpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_DEFAULT_NCE, FastaToPrositCSVParameters.MIN_DEFAULT_NCE, FastaToPrositCSVParameters.MAX_DEFAULT_NCE, 1);
+		final SpinnerModel defaultChargeSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_DEFAULT_CHARGE, FastaToPrositCSVParameters.MIN_DEFAULT_CHARGE, FastaToPrositCSVParameters.MAX_DEFAULT_CHARGE, 1);
+		final SpinnerModel minChargeSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MIN_CHARGE, FastaToPrositCSVParameters.MIN_CHARGE, FastaToPrositCSVParameters.MAX_CHARGE, 1);
+		final SpinnerModel maxChargeSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MAX_CHARGE, FastaToPrositCSVParameters.MIN_CHARGE, FastaToPrositCSVParameters.MAX_CHARGE, 1);
+		final SpinnerModel maxMissedCleavageSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MAX_MISSED_CLEAVAGE, FastaToPrositCSVParameters.MIN_MAX_MISSED_CLEAVAGE, FastaToPrositCSVParameters.MAX_MAX_MISSED_CLEAVAGE, 1);
+		final SpinnerModel minMzSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MIN_MZ, FastaToPrositCSVParameters.MIN_MZ, FastaToPrositCSVParameters.MAX_MZ, 0.1);
+		final SpinnerModel maxMzSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MAX_MZ, FastaToPrositCSVParameters.MIN_MZ, FastaToPrositCSVParameters.MAX_MZ, 0.1);
 		final JComboBox<String> enzymeBox=new JComboBox<String>(new String[] {"Trypsin", "Glu-C", "Lys-C", "Arg-C", "Asp-N", "Lys-N", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
 		
 		JPanel chargeRange=new JPanel(new FlowLayout());
