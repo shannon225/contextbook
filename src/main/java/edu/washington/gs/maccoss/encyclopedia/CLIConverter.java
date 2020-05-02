@@ -9,11 +9,14 @@ public class CLIConverter {
 		
 		if (arguments.containsKey("-prositcsvtolibrary")) {
 			ConvertPrositCSVToLibrary.main(args);
+		} else if (arguments.containsKey("-libtoblib")) {
+			ConvertLibraryToBlib.main(args);
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("EncyclopeDIA Converter Help");
 			Logger.timelessLogLine("EncyclopeDIA Converter allows to convert files from one format to another.");
 			Logger.timelessLogLine("Available converters: ");
 			Logger.timelessLogLine("\t-prositcsvtolibrary\tConvert Prosit/Spectronaut CSV to library (use -convert -prositcsvtolibrary -h for help)");
+			Logger.timelessLogLine("\t-libtoblib\tConvert library to BLIB (use -convert -libtoblib -h for help)");
 			System.exit(1);
 		}
 	}

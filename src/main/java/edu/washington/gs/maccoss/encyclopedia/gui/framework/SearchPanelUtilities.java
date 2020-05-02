@@ -40,15 +40,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.MaxquantMSMSConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.OpenSwathTSVToLibraryConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.SpectronautCSVToLibraryConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.TraMLToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.*;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
@@ -191,25 +183,7 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							LibraryFile library=new LibraryFile();
-							library.openFile(elibFile);
-							final AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
-							final ArrayList<LibraryEntry> allEntries=library.getAllEntries(false,  aaConstants);
-							Logger.logLine("Found "+allEntries.size()+" entries from "+elibFile.getName()+". Writing to ["+blibFile.getAbsolutePath()+"]...");
-
-							BlibFile blib=new BlibFile();
-							blib.openFile();
-							blib.setUserFile(blibFile);
-							blib.dropIndices();
-							int[] counterTotals=new int[] {0,0,0};
-							
-							counterTotals=blib.addLibrary(allEntries, library.getName(),aaConstants, "ELIB conversion", counterTotals[0], counterTotals[1], counterTotals[2]);
-
-							blib.createIndices();
-							blib.saveFile();
-							blib.close();
-							library.close();
-							Logger.logLine("Finished reading "+blibFile.getName());
+							LibraryToBlibConverter.convert(elibFile, blibFile);
 							return Nothing.NOTHING;
 						}
 						@Override
