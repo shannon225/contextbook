@@ -107,7 +107,7 @@ public class PrositCSVWriter {
 			Logger.logLine("Considering charge +"+chargeStates[i]+"H");
 		}
 		String fileName;
-		if (StringUtils.isBlank(csvFileName)) {
+		if (null==csvFileName||StringUtils.isBlank(csvFileName)) {
 			fileName = fasta.getAbsolutePath() + "." + enzyme.getPercolatorName() + ".z" + defaultCharge + "_nce" + defaultNCE + ".csv";
 		} else {
 			fileName = csvFileName;

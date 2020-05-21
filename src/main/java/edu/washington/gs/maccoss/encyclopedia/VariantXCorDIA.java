@@ -53,9 +53,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.ParsingUtils;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
@@ -137,7 +137,7 @@ public class VariantXCorDIA {
 				ArrayList<FastaPeptideEntry> targets;
 				if (arguments.containsKey(TARGET_FASTA_TAG)) {
 					File targetsFile=new File(arguments.get(TARGET_FASTA_TAG));
-					if (SearchParameterParser.getBoolean("-tp", arguments, false)) {
+					if (ParsingUtils.getBoolean("-tp", arguments, false)) {
 						targets=FastaReader.readPeptideFasta(targetsFile, parameters);
 					} else {
 						targets=new ArrayList<FastaPeptideEntry>();

@@ -48,9 +48,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.ParsingUtils;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
@@ -139,7 +139,7 @@ public class Pecanpie {
 				ArrayList<FastaPeptideEntry> targets;
 				if (arguments.containsKey(TARGET_FASTA_TAG)) {
 					File targetsFile=new File(arguments.get(TARGET_FASTA_TAG));
-					if (SearchParameterParser.getBoolean("-tp", arguments, false)) {
+					if (ParsingUtils.getBoolean("-tp", arguments, false)) {
 						targets=FastaReader.readPeptideFasta(targetsFile, parameters);
 					} else {
 						targets=new ArrayList<FastaPeptideEntry>();

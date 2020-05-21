@@ -1,9 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -21,7 +18,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassErrorUnitType;
@@ -88,7 +84,7 @@ public class SearchParameterParser {
 	}
 	
 	public static SearchParameters parseParameters(File defaultParameters, HashMap<String, String> parameters) {
-		HashMap<String, String> map=readFile(defaultParameters);
+		HashMap<String, String> map=ParsingUtils.readFile(defaultParameters);
 		map.putAll(parameters);
 		return parseParameters(map);
 	}
@@ -250,18 +246,18 @@ public class SearchParameterParser {
 			enzyme=DigestionEnzyme.getEnzyme(value);
 		}
 
-		percolatorThreshold=getFloat("-percolatorThreshold", parameters, 0.01f);
-		percolatorProteinThreshold=getFloat("-percolatorProteinThreshold", parameters, 0.01f);
-		numberOfThreadsUsed=SearchParameterParser.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
-		targetWindowCenter=SearchParameterParser.getFloat("-targetWindowCenter", parameters, -1f);
-		precursorWindowSize=SearchParameterParser.getFloat("-precursorWindowSize", parameters, -1f);
-		expectedPeakWidth=SearchParameterParser.getFloat("-expectedPeakWidth", parameters, 25f);
-		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 5);
-		minNumOfQuantitativePeaks=SearchParameterParser.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
-		minIntensity=SearchParameterParser.getFloat("-minIntensity", parameters, -1.0f);
-		rtWindowInMin=SearchParameterParser.getFloat("-rtWindowInMin", parameters, -1f);
+		percolatorThreshold=ParsingUtils.getFloat("-percolatorThreshold", parameters, 0.01f);
+		percolatorProteinThreshold=ParsingUtils.getFloat("-percolatorProteinThreshold", parameters, 0.01f);
+		numberOfThreadsUsed=ParsingUtils.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
+		targetWindowCenter=ParsingUtils.getFloat("-targetWindowCenter", parameters, -1f);
+		precursorWindowSize=ParsingUtils.getFloat("-precursorWindowSize", parameters, -1f);
+		expectedPeakWidth=ParsingUtils.getFloat("-expectedPeakWidth", parameters, 25f);
+		numberOfQuantitativePeaks=ParsingUtils.getInteger("-numberOfQuantitativePeaks", parameters, 5);
+		minNumOfQuantitativePeaks=ParsingUtils.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
+		minIntensity=ParsingUtils.getFloat("-minIntensity", parameters, -1.0f);
+		rtWindowInMin=ParsingUtils.getFloat("-rtWindowInMin", parameters, -1f);
 		
-		percolatorVersionNumber=SearchParameterParser.getInteger("-percolatorVersionNumber", parameters, 3);
+		percolatorVersionNumber=ParsingUtils.getInteger("-percolatorVersionNumber", parameters, 3);
 		value=parameters.get("-localizationModification");
 		if (value != null) {
 			final String localizationModificationName = value;
@@ -302,95 +298,19 @@ public class SearchParameterParser {
 			breadthType=ScoringBreadthType.ENTIRE_RT_WINDOW;
 		}
 		
-		float tempNumberOfExtraDecoyLibrariesSearched=SearchParameterParser.getFloat("-numberOfExtraDecoyLibrariesSearched", parameters, 0.0f);
+		float tempNumberOfExtraDecoyLibrariesSearched=ParsingUtils.getFloat("-numberOfExtraDecoyLibrariesSearched", parameters, 0.0f);
 		if (tempNumberOfExtraDecoyLibrariesSearched<0.0f) {
 			Logger.errorLine("-numberOfExtraDecoyLibrariesSearched cannot be less than 0%! Using 0% extra decoys.");
 			numberOfExtraDecoyLibrariesSearched=0.0f;
 		} else {
 			numberOfExtraDecoyLibrariesSearched=tempNumberOfExtraDecoyLibrariesSearched;
 		}
-		quantifyAcrossSamples=SearchParameterParser.getBoolean("-quantifyAcrossSamples", parameters, false);
-		verifyModificationIons=SearchParameterParser.getBoolean("-verifyModificationIons", parameters, true);
-        filterPeaklists=SearchParameterParser.getBoolean("-filterPeaklists", parameters, false);
-        doNotUseGlobalFDR=SearchParameterParser.getBoolean("-doNotUseGlobalFDR", parameters, false);
+		quantifyAcrossSamples=ParsingUtils.getBoolean("-quantifyAcrossSamples", parameters, false);
+		verifyModificationIons=ParsingUtils.getBoolean("-verifyModificationIons", parameters, true);
+        filterPeaklists=ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
+        doNotUseGlobalFDR=ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
 
 		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorProteinThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
 				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, localizationModification, breadthType, numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons, rtWindowInMin, filterPeaklists, doNotUseGlobalFDR);
-	}
-
-	public static boolean getBoolean(String parameterName, HashMap<String, String> parameters, boolean defaultValue) {
-		String value=parameters.get(parameterName);
-		if (value==null) {
-			return defaultValue;
-		}
-		if ("false".equalsIgnoreCase(value)) return false;
-		if ("true".equalsIgnoreCase(value)) return true;
-		if ("f".equalsIgnoreCase(value)) return false;
-		if ("t".equalsIgnoreCase(value)) return true;
-		throw new EncyclopediaException("Error parsing "+parameterName+" from ["+value+"]");
-	}
-
-	public static int getInteger(String parameterName, HashMap<String, String> parameters, int defaultValue) {
-		String value=parameters.get(parameterName);
-		if (value==null) {
-			return defaultValue;
-		}
-		try {
-			return Integer.parseInt(value);
-		} catch (NumberFormatException nfe) {
-			throw new EncyclopediaException("Error parsing "+parameterName+" from ["+value+"]", nfe);
-		}
-	}
-
-	public static float getFloat(String parameterName, HashMap<String, String> parameters, float defaultValue) {
-		String value=parameters.get(parameterName);
-		if (value==null) {
-			return defaultValue;
-		}
-		try {
-			return Float.parseFloat(value);
-		} catch (NumberFormatException nfe) {
-			throw new EncyclopediaException("Error parsing "+parameterName+" from ["+value+"]", nfe);
-		}
-	}
-	
-	public static Pair<String, String> parseEntry(String eachline) {
-		String first=eachline.substring(0, eachline.indexOf('=')-1);
-		String second=eachline.substring(eachline.indexOf('=')+1);
-		Pair<String, String> entry=new Pair<String, String>(first, second);
-		return entry;
-	}
-	
-	public static HashMap<String, String> readFile(File f) {
-		try {
-			BufferedReader in=new BufferedReader(new FileReader(f));
-
-			HashMap<String, String> map=new HashMap<String, String>();
-			try {
-				String eachline;
-				while ((eachline=in.readLine())!=null) {
-					if (eachline.trim().length()==0) {
-						continue;
-					}
-					Pair<String, String> entry=parseEntry(eachline);
-					
-					map.put(entry.x, entry.y);
-				}
-				return map;
-
-			} catch (IOException ioe) {
-				throw new EncyclopediaException("Error parsing parameters from ["+f.getAbsolutePath()+"]");
-			} finally {
-				if (in!=null) {
-					try {
-						in.close();
-					} catch (IOException ioe) {
-						ioe.printStackTrace();
-					}
-				}
-			}
-		} catch (IOException ioe) {
-			throw new EncyclopediaException("Error parsing parameters from ["+f.getAbsolutePath()+"]");
-		}
 	}
 }

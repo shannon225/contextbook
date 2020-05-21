@@ -28,8 +28,8 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorEx
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQuantExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
@@ -47,6 +47,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.ParsingUtils;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -126,8 +127,8 @@ public class SearchToBLIB {
 		File diaFile=new File(arguments.get("-i"));
 		File fastaFile=new File(arguments.get("-f"));
 		File outputFile=new File(arguments.get("-o"));
-		boolean alignBetweenFiles=SearchParameterParser.getBoolean("-a", arguments, true);
-		boolean writeBlib=SearchParameterParser.getBoolean("-blib", arguments, false);
+		boolean alignBetweenFiles=ParsingUtils.getBoolean("-a", arguments, true);
+		boolean writeBlib=ParsingUtils.getBoolean("-blib", arguments, false);
 		
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 		XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(parameters);
@@ -188,8 +189,8 @@ public class SearchToBLIB {
 		File diaFile=new File(arguments.get("-i"));
 		File fastaFile=new File(arguments.get("-f"));
 		File outputFile=new File(arguments.get("-o"));
-		boolean alignBetweenFiles=SearchParameterParser.getBoolean("-a", arguments, true);
-		boolean writeBlib=SearchParameterParser.getBoolean("-blib", arguments, false);
+		boolean alignBetweenFiles=ParsingUtils.getBoolean("-a", arguments, true);
+		boolean writeBlib=ParsingUtils.getBoolean("-blib", arguments, false);
 		
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, outputFile);
@@ -245,8 +246,8 @@ public class SearchToBLIB {
 		File fastaFile=new File(arguments.get("-f"));
 		File libraryFile=new File(arguments.get("-l"));
 		File outputFile=new File(arguments.get("-o"));
-		boolean alignBetweenFiles=SearchParameterParser.getBoolean("-a", arguments, true);
-		boolean writeBlib=SearchParameterParser.getBoolean("-blib", arguments, false);
+		boolean alignBetweenFiles=ParsingUtils.getBoolean("-a", arguments, true);
+		boolean writeBlib=ParsingUtils.getBoolean("-blib", arguments, false);
 		
 		SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);

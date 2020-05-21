@@ -61,7 +61,7 @@ public class PecanParameterParser {
 	}
 	
 	public static PecanSearchParameters parseParameters(File defaultParameters, HashMap<String, String> parameters) {
-		HashMap<String, String> map=SearchParameterParser.readFile(defaultParameters);
+		HashMap<String, String> map=ParsingUtils.readFile(defaultParameters);
 		map.putAll(parameters);
 		return parseParameters(map);
 	}
@@ -226,30 +226,30 @@ public class PecanParameterParser {
 			enzyme=DigestionEnzyme.getEnzyme(value);
 		}
 
-		minPeptideLength=SearchParameterParser.getInteger("-minLength", parameters, 5);
-		maxPeptideLength=SearchParameterParser.getInteger("-maxLength", parameters, 100);
-		maxMissedCleavages=SearchParameterParser.getInteger("-maxMissedCleavage", parameters, 1);
-		minCharge=(byte)SearchParameterParser.getInteger("-minCharge", parameters, 2);
-		maxCharge=(byte)SearchParameterParser.getInteger("-maxCharge", parameters, 3);
-		minEluteTime=SearchParameterParser.getInteger("-minEluteTime", parameters, 12);
-		numberOfReportedPeaks=SearchParameterParser.getInteger("-numberOfReportedPeaks", parameters, 1);
-		addDecoysToBackgound=SearchParameterParser.getBoolean("-addDecoysToBackground", parameters, false);
-		dontRunDecoys=SearchParameterParser.getBoolean("-dontRunDecoys", parameters, false);
-		percolatorThreshold=SearchParameterParser.getFloat("-percolatorThreshold", parameters, 0.01f);
-		percolatorProteinThreshold=SearchParameterParser.getFloat("-percolatorProteinThreshold", parameters, 0.01f);
-		alpha=SearchParameterParser.getFloat("-alpha", parameters, 1.8f);
-		beta=SearchParameterParser.getFloat("-beta", parameters, 0.4f);
-		numberOfThreadsUsed=SearchParameterParser.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
-		targetWindowCenter=SearchParameterParser.getFloat("-targetWindowCenter", parameters, -1f);
-		precursorWindowSize=SearchParameterParser.getFloat("-precursorWindowSize", parameters, -1f);
-		numberOfQuantitativePeaks=SearchParameterParser.getInteger("-numberOfQuantitativePeaks", parameters, 5);
-		minNumOfQuantitativePeaks=SearchParameterParser.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
-		minIntensity=SearchParameterParser.getFloat("-minIntensity", parameters, -1.0f);
-		percolatorVersionNumber=SearchParameterParser.getInteger("-percolatorVersionNumber", parameters, 3);
-		quantifyAcrossSamples=SearchParameterParser.getBoolean("-quantifyAcrossSamples", parameters, false);
-		requireVariableMods=SearchParameterParser.getBoolean("-requireVariableMods", parameters, false);
-        filterPeaklists=SearchParameterParser.getBoolean("-filterPeaklists", parameters, false);
-        doNotUseGlobalFDR=SearchParameterParser.getBoolean("-doNotUseGlobalFDR", parameters, false);
+		minPeptideLength=ParsingUtils.getInteger("-minLength", parameters, 5);
+		maxPeptideLength=ParsingUtils.getInteger("-maxLength", parameters, 100);
+		maxMissedCleavages=ParsingUtils.getInteger("-maxMissedCleavage", parameters, 1);
+		minCharge=ParsingUtils.getByte("-minCharge", parameters, (byte)2);
+		maxCharge=ParsingUtils.getByte("-maxCharge", parameters, (byte)3);
+		minEluteTime=ParsingUtils.getInteger("-minEluteTime", parameters, 12);
+		numberOfReportedPeaks=ParsingUtils.getInteger("-numberOfReportedPeaks", parameters, 1);
+		addDecoysToBackgound=ParsingUtils.getBoolean("-addDecoysToBackground", parameters, false);
+		dontRunDecoys=ParsingUtils.getBoolean("-dontRunDecoys", parameters, false);
+		percolatorThreshold=ParsingUtils.getFloat("-percolatorThreshold", parameters, 0.01f);
+		percolatorProteinThreshold=ParsingUtils.getFloat("-percolatorProteinThreshold", parameters, 0.01f);
+		alpha=ParsingUtils.getFloat("-alpha", parameters, 1.8f);
+		beta=ParsingUtils.getFloat("-beta", parameters, 0.4f);
+		numberOfThreadsUsed=ParsingUtils.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
+		targetWindowCenter=ParsingUtils.getFloat("-targetWindowCenter", parameters, -1f);
+		precursorWindowSize=ParsingUtils.getFloat("-precursorWindowSize", parameters, -1f);
+		numberOfQuantitativePeaks=ParsingUtils.getInteger("-numberOfQuantitativePeaks", parameters, 5);
+		minNumOfQuantitativePeaks=ParsingUtils.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
+		minIntensity=ParsingUtils.getFloat("-minIntensity", parameters, -1.0f);
+		percolatorVersionNumber=ParsingUtils.getInteger("-percolatorVersionNumber", parameters, 3);
+		quantifyAcrossSamples=ParsingUtils.getBoolean("-quantifyAcrossSamples", parameters, false);
+		requireVariableMods=ParsingUtils.getBoolean("-requireVariableMods", parameters, false);
+        filterPeaklists=ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
+        doNotUseGlobalFDR=ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
 
 		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, percolatorProteinThreshold, alpha, beta, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, quantifyAcrossSamples, true, requireVariableMods, filterPeaklists, doNotUseGlobalFDR);
 	}

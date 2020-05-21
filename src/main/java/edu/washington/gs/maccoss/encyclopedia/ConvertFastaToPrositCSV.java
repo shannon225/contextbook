@@ -1,18 +1,17 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaToPrositCSVParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaToPrositCSVParametersParser;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
-import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaToPrositCSVParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaToPrositCSVParametersParser;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
+import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class ConvertFastaToPrositCSV {
 	public static void main(String[] args) {
