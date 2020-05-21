@@ -83,7 +83,10 @@ public class Encyclopedia {
 			
 		} else if (arguments.containsKey("-walnut")||arguments.containsKey("-pecan")) {
 			Walnut.main(args);
-			
+
+		} else if (arguments.containsKey("-convert")) {
+			CLIConverter.main(args);
+
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("EncyclopeDIA Help");
 			Logger.timelessLogLine("EncyclopeDIA is a library search engine for DIA data.");
@@ -95,6 +98,7 @@ public class Encyclopedia {
 			Logger.timelessLogLine("Other Programs: ");
 			Logger.timelessLogLine("\t-browser\trun ELIB Browser (use -browser -h for ELIB Browser help)");
 			Logger.timelessLogLine("\t-libexport\trun Library Export (use -libexport -h for Library Export help)");
+			Logger.timelessLogLine("\t-convert\trun files converter (use -convert -h for help)");
 			Logger.timelessLogLine("Other Parameters: ");
 			Logger.timelessLogLine("\t-o\toutput report file (default: [input file]"+EncyclopediaJobData.OUTPUT_FILE_SUFFIX+")");
 			
