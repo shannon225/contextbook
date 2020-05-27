@@ -36,20 +36,39 @@ public class PercolatorExecutor extends ExternalExecutor {
 	public static final String V2_10="v2-10";
 	public static final byte DEFAULT_VERSION_NUMBER=3;
 
-	public static final float PERCOLATOR_DEFAULT_TEST_FDR = 0.01f;
 	/**
-	 * The value that percolator uses to indicate that the training
-	 * set FDR should match the test FDR/peptide FDR threshold
-	 * (which is also the default behavior).
+	 * The default value that Percolator uses for the {@code -t/--testFDR} parameter.
+	 *
+	 * @see SearchParameters#getPercolatorTestThreshold() for more information about
+	 *      this value's use in EncyclopeDIA 0.9.4 and earlier.
+	 */
+	public static final float PERCOLATOR_DEFAULT_TEST_THRESHOLD = 0.01f;
+
+	/**
+	 * The value that Percolator uses for the {@code -F/--trainFDR}
+	 * parameter to indicate that the training set FDR should match
+	 * the test FDR/peptide FDR threshold (the default behavior).
 	 */
 	public static final float PERCOLATOR_TRAINING_THRESHOLD_FALLBACK_VALUE = 0f;
 
+	/**
+	 * The default value that EncyclopeDIA uses for Percolator's
+	 * {@code -N} parameter, which sets the number of PSMs to
+	 * use as the training set.
+	 */
 	public static final int DEFAULT_TRAINING_SET_SIZE = 200000;
 
 	/**
+	 * The default value that EncyclopeDIA uses for Percolator's
+	 * {@code -F/--trainFDR}, which sets the FDR used to select
+	 * positive examples from the training set.
 	 * By default, use the value {@link #PERCOLATOR_TRAINING_THRESHOLD_FALLBACK_VALUE}
 	 * to use Percolator's default, which is to use the same FDR
-	 * as the peptide FDR threshold.
+	 * as the peptide FDR threshold ({@code -t/--testFDR}). Note
+	 * that this fallback may behave in an unexpected way due to
+	 * the way that EncyclopeDIA handles peptide FDR thresholds;
+	 * see {@link SearchParameters#getPercolatorTestThreshold()}
+	 * for more information about the {@code -t/--testFDR} parameter.
 	 */
 	public static final float DEFAULT_TRAINING_THRESHOLD = PERCOLATOR_TRAINING_THRESHOLD_FALLBACK_VALUE;
 
@@ -178,22 +197,14 @@ public class PercolatorExecutor extends ExternalExecutor {
 					"-y",
 					"--no-terminate",
 					"-N", Integer.toString(commandData.getParameters().getPercolatorTrainingSetSize()),
-					// Note that we don't pass an FDR threshold/test FDR (-t/--testFDR) to Percolator; this
-					// means that it will use the default setting (0.01) to evaluate cross-validation results.
-					// Thus we need to reproduce the logic around the training set threshold (-F/--trainFDR)
-					// when it's set to fall back to the test FDR.
-					// Note that unless this search is using 0.01 FDR and no extra decoys, there's some
-					// ambiguity around what the correct value to use is, as there are multiple options:
-					//   - the 0.01 value that will be used for the test FDR
-					//   - the user's specified FDR threshold
-					//   - the effective FDR threshold computed from the number of extra decoys
-					// We choose the first, to match the behavior that would result from omitting
-					// this parameter and leaving all others.
-					"--trainFDR", Float.toString(
-							commandData.getParameters().getPercolatorTrainingSetThreshold() == PERCOLATOR_TRAINING_THRESHOLD_FALLBACK_VALUE
-									? PERCOLATOR_DEFAULT_TEST_FDR                                     // the value that's used by default for --testFDR (-t)
-									: commandData.getParameters().getPercolatorTrainingSetThreshold() // basic case -- just use the user's value for training FDR
-							),
+					// Note that in EncyclopeDIA 0.9.4 and earlier we did not pass an FDR threshold/test
+					// FDR (-t/--testFDR) to Percolator; this meant we always used the default setting (0.01)
+					// to evaluate cross-validation results (but the FDR threshold was applied by EncyclopeDIA
+					// externally, using a correction for the presence of extra decoys).
+					// We now pass this value to Percolator from the search parameters, which simplifies behavior
+					// when the training set threshold (-F/--trainFDR) is set to fall back to the test FDR.
+					"--testFDR", Float.toString(commandData.getParameters().getPercolatorTestThreshold()),
+					"--trainFDR", Float.toString(commandData.getParameters().getPercolatorTrainingSetThreshold()),
 					commandData.getInputTSV().getAbsolutePath()
 			};
 		}

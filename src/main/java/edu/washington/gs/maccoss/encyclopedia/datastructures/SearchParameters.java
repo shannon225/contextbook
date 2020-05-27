@@ -246,10 +246,36 @@ public class SearchParameters {
 		return percolatorVersionNumber;
 	}
 
+	/**
+	 * The value used for the {@code -t/--testFDR} parameter when running
+	 * Percolator, which is used to evaluate the best cross-validation
+	 * result.
+	 *
+	 * Currently always {@link PercolatorExecutor#PERCOLATOR_DEFAULT_TEST_THRESHOLD}
+	 * to match behavior in version 0.9.4 and earlier. Note that this
+	 * differs from the thresholds returned by {@link #getPercolatorThreshold()}
+	 * and {@link #getEffectivePercolatorThreshold()} which are applied
+	 * to Percolator's results after it's been run. This setting will only
+	 * affect the evaluation of cross-validation results, and should not
+	 * change the FDR of accepted results.
+	 */
+	public float getPercolatorTestThreshold() {
+		return PercolatorExecutor.PERCOLATOR_DEFAULT_TEST_THRESHOLD;
+	}
+
+	/**
+	 * The value used for the {@code -N} parameter when running Percolator,
+	 * which sets the number of PSMs to use as the training set.
+	 */
 	public int getPercolatorTrainingSetSize() {
 		return percolatorTrainingSetSize;
 	}
 
+	/**
+	 * The value used for the {@code -F/--trainFDR} parameter when running
+	 * Percolator, which sets the FDR used to select positive examples
+	 * from the training set.
+	 */
 	public float getPercolatorTrainingSetThreshold() {
 		return percolatorTrainingSetThreshold;
 	}
