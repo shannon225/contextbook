@@ -9,6 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorEx
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
@@ -88,6 +89,9 @@ public class PecanParameterParser {
 		final boolean dontRunDecoys;
 		final float percolatorThreshold;
 		final float percolatorProteinThreshold;
+		final int percolatorVersionNumber;
+		final int percolatorTrainingSetSize;
+		final float percolatorTrainingSetThreshold;
 		final float alpha;
 		final float beta;
 		final DataAcquisitionType dataAcquisitionType;
@@ -97,7 +101,6 @@ public class PecanParameterParser {
 		final int numberOfQuantitativePeaks;
 		final int minNumOfQuantitativePeaks;
 		final float minIntensity;
-		final int percolatorVersionNumber;
 		final boolean quantifyAcrossSamples;
 		final boolean requireVariableMods;
         final boolean filterPeaklists;
@@ -235,8 +238,13 @@ public class PecanParameterParser {
 		numberOfReportedPeaks=ParsingUtils.getInteger("-numberOfReportedPeaks", parameters, 1);
 		addDecoysToBackgound=ParsingUtils.getBoolean("-addDecoysToBackground", parameters, false);
 		dontRunDecoys=ParsingUtils.getBoolean("-dontRunDecoys", parameters, false);
+
 		percolatorThreshold=ParsingUtils.getFloat("-percolatorThreshold", parameters, 0.01f);
 		percolatorProteinThreshold=ParsingUtils.getFloat("-percolatorProteinThreshold", parameters, 0.01f);
+		percolatorVersionNumber=ParsingUtils.getInteger("-percolatorVersionNumber", parameters, 3);
+		percolatorTrainingSetSize = ParsingUtils.getInteger(SearchParameters.OPT_PERC_TRAINING_SIZE, parameters, PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE);
+		percolatorTrainingSetThreshold = ParsingUtils.getFloat(SearchParameters.OPT_PERC_TRAINING_THRESH, parameters, PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD);
+
 		alpha=ParsingUtils.getFloat("-alpha", parameters, 1.8f);
 		beta=ParsingUtils.getFloat("-beta", parameters, 0.4f);
 		numberOfThreadsUsed=ParsingUtils.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
@@ -245,12 +253,48 @@ public class PecanParameterParser {
 		numberOfQuantitativePeaks=ParsingUtils.getInteger("-numberOfQuantitativePeaks", parameters, 5);
 		minNumOfQuantitativePeaks=ParsingUtils.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
 		minIntensity=ParsingUtils.getFloat("-minIntensity", parameters, -1.0f);
-		percolatorVersionNumber=ParsingUtils.getInteger("-percolatorVersionNumber", parameters, 3);
 		quantifyAcrossSamples=ParsingUtils.getBoolean("-quantifyAcrossSamples", parameters, false);
 		requireVariableMods=ParsingUtils.getBoolean("-requireVariableMods", parameters, false);
-        filterPeaklists=ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
-        doNotUseGlobalFDR=ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
+		filterPeaklists = ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
+		doNotUseGlobalFDR = ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
 
-		return new PecanSearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, enzyme, minPeptideLength, maxPeptideLength, maxMissedCleavages, minCharge, maxCharge, minEluteTime, numberOfReportedPeaks, addDecoysToBackgound, dontRunDecoys, percolatorThreshold, percolatorProteinThreshold, percolatorVersionNumber, alpha, beta, dataAcquisitionType, numberOfThreadsUsed, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, quantifyAcrossSamples, true, requireVariableMods, filterPeaklists, doNotUseGlobalFDR);
+		return new PecanSearchParameters(
+				aaConstants,
+				fragType,
+				precursorTolerance,
+				precursorOffsetPPM,
+				precursorIsolationMargin,
+				fragmentTolerance,
+				fragmentOffsetPPM,
+				enzyme,
+				minPeptideLength,
+				maxPeptideLength,
+				maxMissedCleavages,
+				minCharge,
+				maxCharge,
+				minEluteTime,
+				numberOfReportedPeaks,
+				addDecoysToBackgound,
+				dontRunDecoys,
+				percolatorThreshold,
+				percolatorProteinThreshold,
+				percolatorVersionNumber,
+				percolatorTrainingSetSize,
+				percolatorTrainingSetThreshold,
+				alpha,
+				beta,
+				dataAcquisitionType,
+				numberOfThreadsUsed,
+				targetWindowCenter,
+				precursorWindowSize,
+				numberOfQuantitativePeaks,
+				minNumOfQuantitativePeaks,
+				minIntensity,
+				quantifyAcrossSamples,
+				true,
+				requireVariableMods,
+				filterPeaklists,
+				doNotUseGlobalFDR
+		);
 	}
 }

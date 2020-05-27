@@ -239,8 +239,31 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		float percolatorThresholdValue=0.01f;
 		
 		boolean isPercolatorTwo=PercolatorExecutor.V2_10.equals(percolatorVersion.getSelectedItem());
-		PecanSearchParameters parameters=new PecanSearchParameters(aaConstants, fragmentation, precursorPPMValue, fragmentPPMValue, digestionEnzyme, isPercolatorTwo?2:3, percolatorThresholdValue, percolatorThresholdValue,
-				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, numberOfExtraDecoyLibrariesValue, true, true, false);
+		PecanSearchParameters parameters=new PecanSearchParameters(
+				aaConstants,
+				fragmentation,
+				precursorPPMValue,
+				fragmentPPMValue,
+				digestionEnzyme,
+				isPercolatorTwo?2:3,
+				percolatorThresholdValue,
+				percolatorThresholdValue,
+				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
+				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,
+				maxMissedCleavageValue,
+				minChargeValue,
+				maxChargeValue,
+				dataAcquisitionType,
+				precursorWindowWidthValue,
+				numberOfJobsValue,
+				numberOfQuantitativeIonsValue,
+				minNumOfQuantitativeIonsValue,
+				minQuantitativeIonNumberValue,
+				numberOfExtraDecoyLibrariesValue,
+				true,
+				true,
+				false
+		);
 
 		String cmds=additionalCommandLineOptions.getText();
 		HashMap<String, String> params=parameters.toParameterMap();

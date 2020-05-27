@@ -283,8 +283,31 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		boolean isPercolatorTwo=PercolatorExecutor.V2_10.equals(percolatorVersion.getSelectedItem());
 		float percolatorThresholdValue=((Number)percolatorThreshold.getValue()).floatValue();
 
-		XCordiaSearchParameters parameters=new XCordiaSearchParameters(aaConstants, fragmentation, precursorPPMValue, fragmentPPMValue, digestionEnzyme, isPercolatorTwo?2:3, percolatorThresholdValue, percolatorThresholdValue,
-				maxMissedCleavageValue, minChargeValue, maxChargeValue, dataAcquisitionType, precursorWindowWidthValue, numberOfJobsValue, numberOfQuantitativeIonsValue, minNumOfQuantitativeIonsValue, minQuantitativeIonNumberValue, numberOfExtraDecoyLibrariesValue, true, true, isRequireVariableMods);
+		XCordiaSearchParameters parameters=new XCordiaSearchParameters(
+				aaConstants,
+				fragmentation,
+				precursorPPMValue,
+				fragmentPPMValue,
+				digestionEnzyme,
+				isPercolatorTwo?2:3,
+				percolatorThresholdValue,
+				percolatorThresholdValue,
+				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
+				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,
+				maxMissedCleavageValue,
+				minChargeValue,
+				maxChargeValue,
+				dataAcquisitionType,
+				precursorWindowWidthValue,
+				numberOfJobsValue,
+				numberOfQuantitativeIonsValue,
+				minNumOfQuantitativeIonsValue,
+				minQuantitativeIonNumberValue,
+				numberOfExtraDecoyLibrariesValue,
+				true,
+				true,
+				isRequireVariableMods
+		);
 
 		String cmds=additionalCommandLineOptions.getText();
 		HashMap<String, String> params=parameters.toParameterMap();
