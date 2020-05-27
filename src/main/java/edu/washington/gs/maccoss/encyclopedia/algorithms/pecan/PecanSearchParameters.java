@@ -55,6 +55,8 @@ public class PecanSearchParameters extends SearchParameters {
 		sb.append(" -dontRunDecoys "+dontRunDecoys+"\n");
 		sb.append(" -percolatorThreshold "+percolatorThreshold+"\n");
 		sb.append(" -percolatorVersionNumber "+percolatorVersionNumber+"\n");
+		sb.append(" ").append(OPT_PERC_TRAINING_SIZE).append(" ").append(percolatorTrainingSetSize).append("\n");
+		sb.append(" ").append(OPT_PERC_TRAINING_THRESH).append(" ").append(percolatorTrainingSetThreshold).append("\n");
 		sb.append(" -acquisition "+DataAcquisitionType.toString(dataAcquisitionType)+"\n");
 		sb.append(" -numberOfThreadsUsed "+numberOfThreadsUsed+"\n");
 		sb.append(" -numberOfQuantitativePeaks "+numberOfQuantitativePeaks+"\n");
@@ -90,6 +92,8 @@ public class PecanSearchParameters extends SearchParameters {
 		map.put("-dontRunDecoys", dontRunDecoys+"");
 		map.put("-percolatorThreshold", percolatorThreshold+"");
 		map.put("-percolatorVersionNumber", percolatorVersionNumber+"");
+		map.put(OPT_PERC_TRAINING_SIZE, percolatorTrainingSetSize + "");
+		map.put(OPT_PERC_TRAINING_THRESH, percolatorTrainingSetThreshold + "");
 		map.put("-acquisition", DataAcquisitionType.toString(dataAcquisitionType));
 		map.put("-numberOfThreadsUsed", numberOfThreadsUsed+"");
 		map.put("-precursorWindowSize", precursorWindowSize+"");

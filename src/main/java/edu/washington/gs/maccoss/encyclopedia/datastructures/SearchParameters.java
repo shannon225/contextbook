@@ -17,8 +17,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 public class SearchParameters {
-	private static final String OPT_PERC_TRAINING_SIZE = "-percolatorTrainingSetSize";
-	private static final String OPT_PERC_TRAINING_THRESH = "-percolatorTrainingFDR";
+	protected static final String OPT_PERC_TRAINING_SIZE = "-percolatorTrainingSetSize";
+	protected static final String OPT_PERC_TRAINING_THRESH = "-percolatorTrainingFDR";
 
 	protected final AminoAcidConstants aaConstants;
 	protected final FragmentationType fragType;
