@@ -93,8 +93,8 @@ public class PecanSearchParameters extends SearchParameters {
 		map.put("-dontRunDecoys", dontRunDecoys+"");
 		map.put("-percolatorThreshold", percolatorThreshold+"");
 		map.put("-percolatorVersionNumber", percolatorVersionNumber+"");
-		map.put(OPT_PERC_TRAINING_SIZE, percolatorTrainingSetSize + "");
-		map.put(OPT_PERC_TRAINING_THRESH, percolatorTrainingSetThreshold + "");
+		map.put(OPT_PERC_TRAINING_SIZE, Integer.toString(percolatorTrainingSetSize));
+		map.put(OPT_PERC_TRAINING_THRESH, Float.toString(percolatorTrainingSetThreshold));
 		map.put("-acquisition", DataAcquisitionType.toString(dataAcquisitionType));
 		map.put("-numberOfThreadsUsed", numberOfThreadsUsed+"");
 		map.put("-precursorWindowSize", precursorWindowSize+"");

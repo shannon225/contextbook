@@ -17,8 +17,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 public class SearchParameters {
-	protected static final String OPT_PERC_TRAINING_SIZE = "-percolatorTrainingSetSize";
-	protected static final String OPT_PERC_TRAINING_THRESH = "-percolatorTrainingFDR";
+	public static final String OPT_PERC_TRAINING_SIZE = "-percolatorTrainingSetSize";
+	public static final String OPT_PERC_TRAINING_THRESH = "-percolatorTrainingFDR";
 
 	protected final AminoAcidConstants aaConstants;
 	protected final FragmentationType fragType;
@@ -161,8 +161,8 @@ public class SearchParameters {
 		map.put("-enzyme", enzyme.getName());
 		map.put("-percolatorThreshold", percolatorThreshold+"");
 		map.put("-percolatorVersionNumber", percolatorVersionNumber+"");
-		map.put(OPT_PERC_TRAINING_SIZE, percolatorTrainingSetSize + "");
-		map.put(OPT_PERC_TRAINING_THRESH, percolatorTrainingSetThreshold + "");
+		map.put(OPT_PERC_TRAINING_SIZE, Integer.toString(percolatorTrainingSetSize));
+		map.put(OPT_PERC_TRAINING_THRESH, Float.toString(percolatorTrainingSetThreshold));
 		map.put("-acquisition", DataAcquisitionType.toString(dataAcquisitionType));
 		map.put("-numberOfThreadsUsed", numberOfThreadsUsed+"");
 		map.put("-expectedPeakWidth", expectedPeakWidth+"");
