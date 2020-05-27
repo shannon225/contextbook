@@ -138,13 +138,30 @@ public class PercolatorExecutor extends ExternalExecutor {
 		File percolator=getPercolator(percolatorVersion);
 
 		if (percolatorVersion==2) {
-			return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(), "-y", commandData.getInputTSV().getAbsolutePath()};
+			return new String[] {
+					percolator.getAbsolutePath(),
+					"--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(),
+					"--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(),
+					"-y",
+					commandData.getInputTSV().getAbsolutePath()
+			};
 		} else {
-			//return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(),
-			//		"-P", LibraryEntry.DECOY_STRING, "-f", getFastaPlusDecoyFile(commandData.getFastaFile(), commandData.getParameters()).getAbsolutePath(), "--results-proteins", commandData.getProteinOutputFile().getAbsolutePath(), "--decoy-results-proteins", commandData.getProteinDecoyFile().getAbsolutePath(), "--protein-enzyme", commandData.getParameters().getEnzyme().getPercolatorName(), "-g",
-			//		"-y", "--no-terminate", "-N", "200000", commandData.getInputTSV().getAbsolutePath()};
-			return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(),
-					"-y", "--no-terminate", "-N", "200000", commandData.getInputTSV().getAbsolutePath()};
+			return new String[] {
+					percolator.getAbsolutePath(),
+					"--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(),
+					"--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(),
+					// Params below removed when Percolator protein FDR calculations were abandoned
+					//"-P", LibraryEntry.DECOY_STRING,
+					//"-f", getFastaPlusDecoyFile(commandData.getFastaFile(), commandData.getParameters()).getAbsolutePath(),
+					//"--results-proteins", commandData.getProteinOutputFile().getAbsolutePath(),
+					//"--decoy-results-proteins", commandData.getProteinDecoyFile().getAbsolutePath(),
+					//"--protein-enzyme", commandData.getParameters().getEnzyme().getPercolatorName(),
+					//"-g",
+					"-y",
+					"--no-terminate",
+					"-N", "200000",
+					commandData.getInputTSV().getAbsolutePath()
+			};
 		}
 	}
 
