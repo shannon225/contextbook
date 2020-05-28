@@ -5,11 +5,11 @@
 		</list>
 	</section>
 	<section name="ResourceNavigator">
-		<item value="Aggregate for window 1537230892812" key="ResourceWorkingSetFilter.STORE_WORKING_SET"/>
-		<item value="1" key="ResourceViewer.STORE_SORT_TYPE"/>
+		<item key="ResourceWorkingSetFilter.STORE_WORKING_SET" value="Aggregate for window 1537230892812"/>
+		<item key="ResourceViewer.STORE_SORT_TYPE" value="1"/>
 	</section>
 	<section name="ChooseWorkspaceDialogSettings">
-		<item value="225" key="DIALOG_Y_ORIGIN"/>
-		<item value="345" key="DIALOG_X_ORIGIN"/>
+		<item key="DIALOG_Y_ORIGIN" value="225"/>
+		<item key="DIALOG_X_ORIGIN" value="345"/>
 	</section>
 </section>

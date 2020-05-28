@@ -28,6 +28,9 @@ public class Main {
 		
 		} else if (arguments.containsKey("-libexport")) {
 			SearchToBLIB.main(args);
+
+		} else if (arguments.containsKey("-convert")) {
+			CLIConverter.main(args);
 			
 		} else if (arguments.containsKey("-pecan")) {
 			Pecanpie.main(args);

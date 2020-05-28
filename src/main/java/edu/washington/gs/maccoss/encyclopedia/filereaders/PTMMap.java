@@ -87,7 +87,7 @@ public class PTMMap {
 		return getPTM(accession).getDeltaMass();
 	}
 	
-	static class PostTranslationalModification {
+	public static class PostTranslationalModification {
 		public static final PostTranslationalModification nothing=new PostTranslationalModification("nothing", 0.0);
 		private final String name;
 		private final double deltaMass;

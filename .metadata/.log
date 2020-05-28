@@ -401,3 +401,44 @@ java.io.InvalidClassException: org.eclipse.m2e.core.internal.project.registry.Ba
 	at org.eclipse.equinox.launcher.Main.invokeFramework(Main.java:656)
 	at org.eclipse.equinox.launcher.Main.basicRun(Main.java:592)
 	at org.eclipse.equinox.launcher.Main.run(Main.java:1498)
+!SESSION 2020-05-27 16:47:08.089 -----------------------------------------------
+eclipse.buildId=4.15.0.I20200305-0155
+java.version=1.8.0_161
+java.vendor=Oracle Corporation
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=en_US
+Framework arguments:  -product org.eclipse.epp.package.java.product
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -product org.eclipse.epp.package.java.product
+
+!ENTRY org.eclipse.core.net 1 0 2020-05-27 16:48:23.689
+!MESSAGE System property http.nonProxyHosts has been set to local|*.local|169.254/16|*.169.254/16 by an external source. This value will be overwritten using the values from the preferences
+
+!ENTRY org.eclipse.e4.ui.workbench 4 0 2020-05-27 16:48:27.955
+!MESSAGE Unable to retrieve the bundle from the URI: bundleclass://org.eclipse.recommenders.news.rcp/org.eclipse.recommenders.internal.news.rcp.toolbar.NewsToolControl
+
+!ENTRY org.eclipse.e4.ui.workbench 2 0 2020-05-27 16:48:28.241
+!MESSAGE Removing PartDescriptorImpl with the "org.eclipse.recommenders.apidocs.rcp.views.apidocs" id and the "Augmented Docs" label.It points to the non available "bundleclass://org.eclipse.ui.workbench/org.eclipse.ui.internal.e4.compatibility.CompatibilityView" class. Bundle might have been uninstalled
+
+!ENTRY org.eclipse.e4.ui.workbench 2 0 2020-05-27 16:48:28.241
+!MESSAGE Removing PartDescriptorImpl with the "org.eclipse.recommenders.models.rcp.views.projectCoordinates" id and the "Project Coordinates" label.It points to the non available "bundleclass://org.eclipse.ui.workbench/org.eclipse.ui.internal.e4.compatibility.CompatibilityView" class. Bundle might have been uninstalled
+
+!ENTRY org.eclipse.e4.ui.workbench 2 0 2020-05-27 16:48:28.242
+!MESSAGE Removing PartDescriptorImpl with the "org.eclipse.recommenders.models.rcp.views.modelRepositories" id and the "Model Repositories" label.It points to the non available "bundleclass://org.eclipse.ui.workbench/org.eclipse.ui.internal.e4.compatibility.CompatibilityView" class. Bundle might have been uninstalled
+
+!ENTRY org.eclipse.e4.ui.workbench 2 0 2020-05-27 16:48:28.246
+!MESSAGE Removing PartDescriptorImpl with the "org.eclipse.recommenders.models.rcp.views.dependencyOverview" id and the "Dependency Overview" label.It points to the non available "bundleclass://org.eclipse.ui.workbench/org.eclipse.ui.internal.e4.compatibility.CompatibilityView" class. Bundle might have been uninstalled
+
+!ENTRY org.eclipse.e4.ui.workbench 2 0 2020-05-27 16:48:28.247
+!MESSAGE Removing PartDescriptorImpl with the "org.eclipse.recommenders.snipmatch.rcp.views.snippets" id and the "Snippets" label.It points to the non available "bundleclass://org.eclipse.ui.workbench/org.eclipse.ui.internal.e4.compatibility.CompatibilityView" class. Bundle might have been uninstalled
+!SESSION 2020-05-27 16:51:00.119 -----------------------------------------------
+eclipse.buildId=4.15.0.I20200305-0155
+java.version=1.8.0_161
+java.vendor=Oracle Corporation
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=en_US
+Framework arguments:  -product org.eclipse.epp.package.java.product -product org.eclipse.epp.package.java.product
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -product org.eclipse.epp.package.java.product -data /Users/searleb/Documents/encyclopedia/encyclopedia -product org.eclipse.epp.package.java.product
+
+!ENTRY org.eclipse.core.net 1 0 2020-05-27 16:51:03.477
+!MESSAGE System property http.nonProxyHosts has been set to local|*.local|169.254/16|*.169.254/16 by an external source. This value will be overwritten using the values from the preferences
+
+!ENTRY org.eclipse.e4.ui.workbench 4 0 2020-05-27 16:51:07.246
+!MESSAGE Unable to retrieve the bundle from the URI: bundleclass://org.eclipse.recommenders.news.rcp/org.eclipse.recommenders.internal.news.rcp.toolbar.NewsToolControl

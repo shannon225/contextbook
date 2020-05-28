@@ -243,10 +243,38 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 		
 		boolean considerRearrangement=false;
 		
-		ThesaurusSearchParameters parameters=new ThesaurusSearchParameters(aaConstants, fragmentation, precursorValue, 0.0, 0.0, 
-				fragmentValue, 0.0, libraryFragmentValue, digestionEnzyme, percolatorThresholdValue, percolatorThresholdValue, (isPercolatorTwo?2:3), 
-				dataAcquisitionType, numberOfJobsValue, 25f, targetWindowCenter, precursorWindowWidthValue, numberOfQuantitativeIonsValue, 
-				minNumOfQuantitativeIonsValue, 0.0f, modification, CASiLSearchBreadthType, 0.0f, true, false, false, false, considerRearrangement);
+		ThesaurusSearchParameters parameters=new ThesaurusSearchParameters(
+				aaConstants,
+				fragmentation,
+				precursorValue,
+				0.0,
+				0.0,
+				fragmentValue,
+				0.0,
+				libraryFragmentValue,
+				digestionEnzyme,
+				percolatorThresholdValue,
+				percolatorThresholdValue,
+				(isPercolatorTwo?2:3),
+				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
+				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,
+				dataAcquisitionType,
+				numberOfJobsValue,
+				25f,
+				targetWindowCenter,
+				precursorWindowWidthValue,
+				numberOfQuantitativeIonsValue,
+				minNumOfQuantitativeIonsValue,
+				0.0f,
+				modification,
+				CASiLSearchBreadthType,
+				0.0f,
+				true,
+				false,
+				false,
+				false,
+				considerRearrangement
+		);
 
 		String cmds=additionalCommandLineOptions.getText();
 		HashMap<String, String> params=parameters.toParameterMap();
