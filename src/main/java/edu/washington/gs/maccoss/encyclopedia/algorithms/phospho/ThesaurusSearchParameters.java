@@ -21,7 +21,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 public class ThesaurusSearchParameters extends SearchParameters {
 	private final boolean considerRearrangement;
 
-	
 	public void savePreferences(File libraryFile, File fastaFile) throws IOException,BackingStoreException {
 		Preferences prefs=Preferences.userRoot().node("CASiL");
 		HashMap<String, String> map=toParameterMap();
@@ -59,15 +58,72 @@ public class ThesaurusSearchParameters extends SearchParameters {
 		boolean considerRearrangement=value!=null&&Boolean.getBoolean(value); // only true if not null and "true"
 		return convertFromEncyclopeDIA(params, considerRearrangement);
 	}
-	
 
-	public ThesaurusSearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin,
-			MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme, float percolatorThreshold, float percolatorProteinThreshold, Integer percolatorVersionNumber,
-			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, int numberOfQuantitativePeaks,
-			int minNumOfQuantitativePeaks, float minIntensity, PeptideModification modification, ScoringBreadthType searchType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, boolean filterPeaklists, boolean doNotUseGlobalFDR, boolean considerRearrangement) {
-		super(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorProteinThreshold,
-				percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth, targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks,
-				minIntensity, Optional.of(modification), searchType, getNumberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons, -1.0f, filterPeaklists, doNotUseGlobalFDR);
+
+	public ThesaurusSearchParameters(
+			AminoAcidConstants aaConstants,
+			FragmentationType fragType,
+			MassTolerance precursorTolerance,
+			double precursorOffsetPPM,
+			double precursorIsolationMargin,
+			MassTolerance fragmentTolerance,
+			double fragmentOffsetPPM,
+			MassTolerance libraryFragmentTolerance,
+			DigestionEnzyme enzyme,
+			float percolatorThreshold,
+			float percolatorProteinThreshold,
+			Integer percolatorVersionNumber,
+			int percolatorTrainingSetSize,
+			float percolatorTrainingSetThreshold,
+			DataAcquisitionType dataAcquisitionType,
+			int numberOfThreadsUsed,
+			float expectedPeakWidth,
+			float targetWindowCenter,
+			float precursorWindowSize,
+			int numberOfQuantitativePeaks,
+			int minNumOfQuantitativePeaks,
+			float minIntensity,
+			PeptideModification modification,
+			ScoringBreadthType searchType,
+			float getNumberOfExtraDecoyLibrariesSearched,
+			boolean quantifyAcrossSamples,
+			boolean verifyModificationIons,
+			boolean filterPeaklists,
+			boolean doNotUseGlobalFDR,
+			boolean considerRearrangement
+	) {
+		super(
+				aaConstants,
+				fragType,
+				precursorTolerance,
+				precursorOffsetPPM,
+				precursorIsolationMargin,
+				fragmentTolerance,
+				fragmentOffsetPPM,
+				libraryFragmentTolerance,
+				enzyme,
+				percolatorThreshold,
+				percolatorProteinThreshold,
+				percolatorVersionNumber,
+				percolatorTrainingSetSize,
+				percolatorTrainingSetThreshold,
+				dataAcquisitionType,
+				numberOfThreadsUsed,
+				expectedPeakWidth,
+				targetWindowCenter,
+				precursorWindowSize,
+				numberOfQuantitativePeaks,
+				minNumOfQuantitativePeaks,
+				minIntensity,
+				Optional.of(modification),
+				searchType,
+				getNumberOfExtraDecoyLibrariesSearched,
+				quantifyAcrossSamples,
+				verifyModificationIons,
+				-1.0f,
+				filterPeaklists,
+				doNotUseGlobalFDR
+		);
 		this.considerRearrangement=considerRearrangement;
 	}
 
@@ -79,11 +135,38 @@ public class ThesaurusSearchParameters extends SearchParameters {
 			Logger.logLine("You should specify a localization modification if you're going to apply localization! Using phosphorylation by default.");
 			mod=PeptideModification.phosphorylation;
 		}
-		return new ThesaurusSearchParameters(params.getAAConstants(), params.getFragType(), params.getPrecursorTolerance(), params.getPrecursorOffsetPPM(), params.getPrecursorIsolationMargin(),
-				params.getFragmentTolerance(), params.getFragmentOffsetPPM(), params.getLibraryFragmentTolerance(), params.getEnzyme(), params.getPercolatorThreshold(), params.getPercolatorProteinThreshold(),
-				params.getPercolatorVersionNumber(), params.getDataAcquisitionType(), params.getNumberOfThreadsUsed(), params.getExpectedPeakWidth(), params.getTargetWindowCenter(),
-				params.getPrecursorWindowSize(), params.getNumberOfQuantitativePeaks(), params.getMinNumOfQuantitativePeaks(), params.getMinIntensity(), mod, params.getScoringBreadthType(),
-				params.getNumberOfExtraDecoyLibrariesSearched(), params.isQuantifySameFragmentsAcrossSamples(), params.isVerifyModificationIons(), params.isFilterPeaklists(), params.isDoNotUseGlobalFDR(), considerRearrangement);
+		return new ThesaurusSearchParameters(
+				params.getAAConstants(),
+				params.getFragType(),
+				params.getPrecursorTolerance(),
+				params.getPrecursorOffsetPPM(),
+				params.getPrecursorIsolationMargin(),
+				params.getFragmentTolerance(),
+				params.getFragmentOffsetPPM(),
+				params.getLibraryFragmentTolerance(),
+				params.getEnzyme(),
+				params.getPercolatorThreshold(),
+				params.getPercolatorProteinThreshold(),
+				params.getPercolatorVersionNumber(),
+				params.getPercolatorTrainingSetSize(),
+				params.getPercolatorTrainingSetThreshold(),
+				params.getDataAcquisitionType(),
+				params.getNumberOfThreadsUsed(),
+				params.getExpectedPeakWidth(),
+				params.getTargetWindowCenter(),
+				params.getPrecursorWindowSize(),
+				params.getNumberOfQuantitativePeaks(),
+				params.getMinNumOfQuantitativePeaks(),
+				params.getMinIntensity(),
+				mod,
+				params.getScoringBreadthType(),
+				params.getNumberOfExtraDecoyLibrariesSearched(),
+				params.isQuantifySameFragmentsAcrossSamples(),
+				params.isVerifyModificationIons(),
+				params.isFilterPeaklists(),
+				params.isDoNotUseGlobalFDR(),
+				considerRearrangement
+		);
 	}
 
 	public boolean isConsiderRearrangement() {

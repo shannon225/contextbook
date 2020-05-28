@@ -35,6 +35,43 @@ public class PercolatorExecutor extends ExternalExecutor {
 	public static final String V3_01="v3-01";
 	public static final String V2_10="v2-10";
 	public static final byte DEFAULT_VERSION_NUMBER=3;
+
+	/**
+	 * The default value that Percolator uses for the {@code -t/--testFDR} parameter.
+	 *
+	 * @see SearchParameters#getPercolatorTestThreshold() for more information about
+	 *      this value's use in EncyclopeDIA 0.9.4 and earlier.
+	 */
+	public static final float PERCOLATOR_DEFAULT_TEST_THRESHOLD = 0.01f;
+
+	/**
+	 * The value that Percolator uses for the {@code -F/--trainFDR}
+	 * parameter to indicate that the training set FDR should match
+	 * the test FDR/peptide FDR threshold (the default behavior).
+	 */
+	public static final float PERCOLATOR_TRAINING_THRESHOLD_FALLBACK_VALUE = 0f;
+
+	/**
+	 * The default value that EncyclopeDIA uses for Percolator's
+	 * {@code -N} parameter, which sets the number of PSMs to
+	 * use as the training set.
+	 */
+	public static final int DEFAULT_TRAINING_SET_SIZE = 200000;
+
+	/**
+	 * The default value that EncyclopeDIA uses for Percolator's
+	 * {@code -F/--trainFDR}, which sets the FDR used to select
+	 * positive examples from the training set.
+	 * By default, use the value {@link #PERCOLATOR_TRAINING_THRESHOLD_FALLBACK_VALUE}
+	 * to use Percolator's default, which is to use the same FDR
+	 * as the peptide FDR threshold ({@code -t/--testFDR}). Note
+	 * that this fallback may behave in an unexpected way due to
+	 * the way that EncyclopeDIA handles peptide FDR thresholds;
+	 * see {@link SearchParameters#getPercolatorTestThreshold()}
+	 * for more information about the {@code -t/--testFDR} parameter.
+	 */
+	public static final float DEFAULT_TRAINING_THRESHOLD = PERCOLATOR_TRAINING_THRESHOLD_FALLBACK_VALUE;
+
 	private static final Pattern PERCOLATOR_VERSION_PATTERN = Pattern.compile("Percolator version (.+),");
 	private static final String SELECTING_PI_0 = "Selecting pi_0=";
 	private static final String ERROR_PREFIX = "Error : ";
@@ -138,13 +175,38 @@ public class PercolatorExecutor extends ExternalExecutor {
 		File percolator=getPercolator(percolatorVersion);
 
 		if (percolatorVersion==2) {
-			return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(), "-y", commandData.getInputTSV().getAbsolutePath()};
+			return new String[] {
+					percolator.getAbsolutePath(),
+					"--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(),
+					"--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(),
+					"-y",
+					commandData.getInputTSV().getAbsolutePath()
+			};
 		} else {
-			//return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(),
-			//		"-P", LibraryEntry.DECOY_STRING, "-f", getFastaPlusDecoyFile(commandData.getFastaFile(), commandData.getParameters()).getAbsolutePath(), "--results-proteins", commandData.getProteinOutputFile().getAbsolutePath(), "--decoy-results-proteins", commandData.getProteinDecoyFile().getAbsolutePath(), "--protein-enzyme", commandData.getParameters().getEnzyme().getPercolatorName(), "-g",
-			//		"-y", "--no-terminate", "-N", "200000", commandData.getInputTSV().getAbsolutePath()};
-			return new String[] {percolator.getAbsolutePath(), "--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(), "--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(),
-					"-y", "--no-terminate", "-N", "200000", commandData.getInputTSV().getAbsolutePath()};
+			return new String[] {
+					percolator.getAbsolutePath(),
+					"--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(),
+					"--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(),
+					// Commented params below removed when Percolator protein FDR calculations were abandoned
+					//"-P", LibraryEntry.DECOY_STRING,
+					//"-f", getFastaPlusDecoyFile(commandData.getFastaFile(), commandData.getParameters()).getAbsolutePath(),
+					//"--results-proteins", commandData.getProteinOutputFile().getAbsolutePath(),
+					//"--decoy-results-proteins", commandData.getProteinDecoyFile().getAbsolutePath(),
+					//"--protein-enzyme", commandData.getParameters().getEnzyme().getPercolatorName(),
+					//"-g",
+					"-y",
+					"--no-terminate",
+					"-N", Integer.toString(commandData.getParameters().getPercolatorTrainingSetSize()),
+					// Note that in EncyclopeDIA 0.9.4 and earlier we did not pass an FDR threshold/test
+					// FDR (-t/--testFDR) to Percolator; this meant we always used the default setting (0.01)
+					// to evaluate cross-validation results (but the FDR threshold was applied by EncyclopeDIA
+					// externally, using a correction for the presence of extra decoys).
+					// We now pass this value to Percolator from the search parameters, which simplifies behavior
+					// when the training set threshold (-F/--trainFDR) is set to fall back to the test FDR.
+					"--testFDR", Float.toString(commandData.getParameters().getPercolatorTestThreshold()),
+					"--trainFDR", Float.toString(commandData.getParameters().getPercolatorTrainingSetThreshold()),
+					commandData.getInputTSV().getAbsolutePath()
+			};
 		}
 	}
 
