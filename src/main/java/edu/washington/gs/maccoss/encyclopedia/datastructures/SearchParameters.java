@@ -17,6 +17,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 public class SearchParameters {
+	public static final String OPT_PERC_TRAINING_SIZE = "-percolatorTrainingSetSize";
+	public static final String OPT_PERC_TRAINING_THRESH = "-percolatorTrainingFDR";
 
 	protected final AminoAcidConstants aaConstants;
 	protected final FragmentationType fragType;
@@ -27,6 +29,8 @@ public class SearchParameters {
 	protected final float percolatorThreshold;
 	protected final float percolatorProteinThreshold;
 	protected final int percolatorVersionNumber;
+	protected final int percolatorTrainingSetSize;
+	protected final float percolatorTrainingSetThreshold;
 	protected final DataAcquisitionType dataAcquisitionType;
 	protected final int numberOfThreadsUsed;	
 	protected final float targetWindowCenter;
@@ -49,7 +53,8 @@ public class SearchParameters {
     protected final boolean doNotUseGlobalFDR;
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
-			float percolatorThreshold, float percolatorProteinThreshold, Integer percolatorVersionNumber, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
+			float percolatorThreshold, float percolatorProteinThreshold, Integer percolatorVersionNumber, int percolatorTrainingSetSize, float percolatorTrainingSetThreshold,
+			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize,
 			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
@@ -63,6 +68,8 @@ public class SearchParameters {
 		this.percolatorThreshold=percolatorThreshold;
 		this.percolatorProteinThreshold=percolatorProteinThreshold;
 		this.percolatorVersionNumber=percolatorVersionNumber==null?PercolatorExecutor.DEFAULT_VERSION_NUMBER:percolatorVersionNumber;
+		this.percolatorTrainingSetSize = percolatorTrainingSetSize;
+		this.percolatorTrainingSetThreshold = percolatorTrainingSetThreshold;
 		this.dataAcquisitionType=dataAcquisitionType;
 		this.numberOfThreadsUsed=numberOfThreadsUsed;
 		this.expectedPeakWidth=expectedPeakWidth;
@@ -116,6 +123,8 @@ public class SearchParameters {
 		sb.append(" -enzyme "+enzyme.getName()+"\n");
 		sb.append(" -percolatorThreshold "+percolatorThreshold+"\n");
 		sb.append(" -percolatorVersionNumber "+percolatorVersionNumber+"\n");
+		sb.append(" ").append(OPT_PERC_TRAINING_SIZE).append(" ").append(percolatorTrainingSetSize).append("\n");
+		sb.append(" ").append(OPT_PERC_TRAINING_THRESH).append(" ").append(percolatorTrainingSetThreshold).append("\n");
 		sb.append(" -acquisition "+DataAcquisitionType.toString(dataAcquisitionType)+"\n");
 		sb.append(" -numberOfThreadsUsed "+numberOfThreadsUsed+"\n");
 		sb.append(" -expectedPeakWidth "+expectedPeakWidth+"\n");
@@ -152,6 +161,8 @@ public class SearchParameters {
 		map.put("-enzyme", enzyme.getName());
 		map.put("-percolatorThreshold", percolatorThreshold+"");
 		map.put("-percolatorVersionNumber", percolatorVersionNumber+"");
+		map.put(OPT_PERC_TRAINING_SIZE, Integer.toString(percolatorTrainingSetSize));
+		map.put(OPT_PERC_TRAINING_THRESH, Float.toString(percolatorTrainingSetThreshold));
 		map.put("-acquisition", DataAcquisitionType.toString(dataAcquisitionType));
 		map.put("-numberOfThreadsUsed", numberOfThreadsUsed+"");
 		map.put("-expectedPeakWidth", expectedPeakWidth+"");
@@ -233,6 +244,40 @@ public class SearchParameters {
 	
 	public int getPercolatorVersionNumber() {
 		return percolatorVersionNumber;
+	}
+
+	/**
+	 * The value used for the {@code -t/--testFDR} parameter when running
+	 * Percolator, which is used to evaluate the best cross-validation
+	 * result.
+	 *
+	 * Currently always {@link PercolatorExecutor#PERCOLATOR_DEFAULT_TEST_THRESHOLD}
+	 * to match behavior in version 0.9.4 and earlier. Note that this
+	 * differs from the thresholds returned by {@link #getPercolatorThreshold()}
+	 * and {@link #getEffectivePercolatorThreshold()} which are applied
+	 * to Percolator's results after it's been run. This setting will only
+	 * affect the evaluation of cross-validation results, and should not
+	 * change the FDR of accepted results.
+	 */
+	public float getPercolatorTestThreshold() {
+		return PercolatorExecutor.PERCOLATOR_DEFAULT_TEST_THRESHOLD;
+	}
+
+	/**
+	 * The value used for the {@code -N} parameter when running Percolator,
+	 * which sets the number of PSMs to use as the training set.
+	 */
+	public int getPercolatorTrainingSetSize() {
+		return percolatorTrainingSetSize;
+	}
+
+	/**
+	 * The value used for the {@code -F/--trainFDR} parameter when running
+	 * Percolator, which sets the FDR used to select positive examples
+	 * from the training set.
+	 */
+	public float getPercolatorTrainingSetThreshold() {
+		return percolatorTrainingSetThreshold;
 	}
 
 	public boolean isDeconvoluteOverlappingWindows() {

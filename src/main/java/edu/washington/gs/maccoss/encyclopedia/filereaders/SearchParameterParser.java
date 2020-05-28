@@ -43,6 +43,8 @@ public class SearchParameterParser {
 		map.put("-percolatorThreshold", "0.01");
 		map.put("-percolatorProteinThreshold", "0.01");
 		map.put("-percolatorVersionNumber", Byte.toString(PercolatorExecutor.DEFAULT_VERSION_NUMBER));
+		map.put(SearchParameters.OPT_PERC_TRAINING_SIZE, Integer.toString(PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE));
+		map.put(SearchParameters.OPT_PERC_TRAINING_THRESH, Float.toString(PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD));
 		map.put("-expectedPeakWidth", "25");
 		map.put("-acquisition", DataAcquisitionType.toString(DataAcquisitionType.DIA));
 		map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
@@ -105,6 +107,9 @@ public class SearchParameterParser {
 		final DigestionEnzyme enzyme;
 		final float percolatorThreshold;
 		final float percolatorProteinThreshold;
+		final int percolatorVersionNumber;
+		final int percolatorTrainingSetSize;
+		final float percolatorTrainingSetThreshold;
 		final DataAcquisitionType dataAcquisitionType;
 		final int numberOfThreadsUsed;
 		final float targetWindowCenter;
@@ -114,7 +119,6 @@ public class SearchParameterParser {
 		final int minNumOfQuantitativePeaks;
 		final float minIntensity;
 		final float numberOfExtraDecoyLibrariesSearched;
-		final int percolatorVersionNumber;
 		final Optional<PeptideModification> localizationModification;
 		final ScoringBreadthType breadthType;
 		final boolean quantifyAcrossSamples;
@@ -248,6 +252,10 @@ public class SearchParameterParser {
 
 		percolatorThreshold=ParsingUtils.getFloat("-percolatorThreshold", parameters, 0.01f);
 		percolatorProteinThreshold=ParsingUtils.getFloat("-percolatorProteinThreshold", parameters, 0.01f);
+		percolatorVersionNumber=ParsingUtils.getInteger("-percolatorVersionNumber", parameters, 3);
+		percolatorTrainingSetSize = ParsingUtils.getInteger(SearchParameters.OPT_PERC_TRAINING_SIZE, parameters, PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE);
+		percolatorTrainingSetThreshold = ParsingUtils.getFloat(SearchParameters.OPT_PERC_TRAINING_THRESH, parameters, PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD);
+
 		numberOfThreadsUsed=ParsingUtils.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
 		targetWindowCenter=ParsingUtils.getFloat("-targetWindowCenter", parameters, -1f);
 		precursorWindowSize=ParsingUtils.getFloat("-precursorWindowSize", parameters, -1f);
@@ -257,7 +265,6 @@ public class SearchParameterParser {
 		minIntensity=ParsingUtils.getFloat("-minIntensity", parameters, -1.0f);
 		rtWindowInMin=ParsingUtils.getFloat("-rtWindowInMin", parameters, -1f);
 		
-		percolatorVersionNumber=ParsingUtils.getInteger("-percolatorVersionNumber", parameters, 3);
 		value=parameters.get("-localizationModification");
 		if (value != null) {
 			final String localizationModificationName = value;
@@ -310,7 +317,37 @@ public class SearchParameterParser {
         filterPeaklists=ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
         doNotUseGlobalFDR=ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
 
-		return new SearchParameters(aaConstants, fragType, precursorTolerance, precursorOffsetPPM, precursorIsolationMargin, fragmentTolerance, fragmentOffsetPPM, libraryFragmentTolerance, enzyme, percolatorThreshold, percolatorProteinThreshold, percolatorVersionNumber, dataAcquisitionType, numberOfThreadsUsed, expectedPeakWidth,
-				targetWindowCenter, precursorWindowSize, numberOfQuantitativePeaks, minNumOfQuantitativePeaks, minIntensity, localizationModification, breadthType, numberOfExtraDecoyLibrariesSearched, quantifyAcrossSamples, verifyModificationIons, rtWindowInMin, filterPeaklists, doNotUseGlobalFDR);
+		return new SearchParameters(
+				aaConstants,
+				fragType,
+				precursorTolerance,
+				precursorOffsetPPM,
+				precursorIsolationMargin,
+				fragmentTolerance,
+				fragmentOffsetPPM,
+				libraryFragmentTolerance,
+				enzyme,
+				percolatorThreshold,
+				percolatorProteinThreshold,
+				percolatorVersionNumber,
+				percolatorTrainingSetSize,
+				percolatorTrainingSetThreshold,
+				dataAcquisitionType,
+				numberOfThreadsUsed,
+				expectedPeakWidth,
+				targetWindowCenter,
+				precursorWindowSize,
+				numberOfQuantitativePeaks,
+				minNumOfQuantitativePeaks,
+				minIntensity,
+				localizationModification,
+				breadthType,
+				numberOfExtraDecoyLibrariesSearched,
+				quantifyAcrossSamples,
+				verifyModificationIons,
+				rtWindowInMin,
+				filterPeaklists,
+				doNotUseGlobalFDR
+		);
 	}
 }
