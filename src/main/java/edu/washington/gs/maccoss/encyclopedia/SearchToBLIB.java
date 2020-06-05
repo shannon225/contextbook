@@ -105,7 +105,7 @@ public class SearchToBLIB {
 			System.exit(1);
 			
 		} else {
-			if (arguments.containsKey("-pecan")) {
+			if (arguments.containsKey("-pecan")||arguments.containsKey("-walnut")) {
 				VersioningDetector.checkVersionCLI(ProgramType.PecanPie);
 				convertPecan(arguments);
 			} else if (arguments.containsKey("-xcordia")) {

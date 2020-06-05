@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.gui.framework;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
@@ -10,7 +11,12 @@ import java.awt.Font;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -35,10 +41,25 @@ import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.*;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaToPrositCSVParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryToBlibConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.MaxquantMSMSConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.OpenSwathTSVToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SpectronautCSVToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.TraMLToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.AboutDialog;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
@@ -506,6 +527,7 @@ public class SearchPanelUtilities {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		final JDialog dialog=new JDialog(frame, "Convert FASTA to Prosit CSV", true);
 		
+		
 		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);
 
 		JPanel options=new JPanel();
@@ -591,6 +613,38 @@ public class SearchPanelUtilities {
 		buttons.add(cancelButton);
 		
 		JPanel mainpane=new JPanel(new BorderLayout());
+		final JLabel text=new JLabel(AboutDialog.citationIcon);
+		text.setText("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\">"+"If you use this feature, please cite <a href=\"https://www.nature.com/articles/s41467-020-15346-1\">Searle et al, 2020</a>");
+		text.setBackground(Color.WHITE);
+		text.setOpaque(true);
+		text.addMouseListener(new MouseListener() {
+			public void mouseClicked(MouseEvent e) {
+			    try {
+			         
+			        Desktop.getDesktop().browse(new URI("https://www.nature.com/articles/s41467-020-15346-1"));
+			         
+			    } catch (IOException | URISyntaxException e1) {
+			        e1.printStackTrace();
+			    }
+			}
+			@Override
+			public void mouseReleased(MouseEvent e) {
+			}
+			
+			@Override
+			public void mousePressed(MouseEvent e) {
+			}
+			
+			@Override
+			public void mouseExited(MouseEvent e) {
+			}
+			
+			@Override
+			public void mouseEntered(MouseEvent e) {
+			}
+		});
+
+		mainpane.add(text, BorderLayout.NORTH);
 		mainpane.add(options, BorderLayout.CENTER);
 		mainpane.add(buttons, BorderLayout.SOUTH);
 		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
