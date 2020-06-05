@@ -54,6 +54,7 @@ public class Main {
 			Logger.timelessLogLine("\t-xcordia\trun XCorDIA (use -xcordia -h for XCorDIA help)");
 			Logger.timelessLogLine("\t-browser\trun ELIB Browser (use -browser -h for ELIB Browser help)");
 			Logger.timelessLogLine("\t-libexport\trun Library Export (use -libexport -h for Library Export help)");
+			Logger.timelessLogLine("\t-convert\trun files converter (use -convert -h for help)");
 			Logger.timelessLogLine("Other Parameters: ");
 			Logger.timelessLogLine("\t-o\toutput report file (default: [input file]"+EncyclopediaJobData.OUTPUT_FILE_SUFFIX+")");
 

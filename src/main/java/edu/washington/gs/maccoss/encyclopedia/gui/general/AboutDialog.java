@@ -27,7 +27,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.VersioningDetector;
 
 public class AboutDialog {
-	private static ImageIcon citationIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/citation.png"));
+	public static ImageIcon citationIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/citation.png"));
 	public static void showAbout(JFrame parent, ProgramType program, ImageIcon image) {
 		final JDialog dialog=new JDialog(parent, "About "+program.toString(), true);
 		

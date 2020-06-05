@@ -8,12 +8,89 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class LibraryComparisonTest {
 	public static void main(String[] args) throws Exception {
+		File[] libraryFilesDIA=new File[] {
+				new File("/Users/searleb/Documents/swaney/CMV_CE_prosit_predictions/uniprot-proteome_up000000938.fasta.chymotrypsin.z3_nce27.dlib"),
+				new File("/Users/searleb/Documents/swaney/CMV_CE_prosit_predictions/uniprot-proteome_up000000938.fasta.chymotrypsin.z3_nce30.dlib"),
+				new File("/Users/searleb/Documents/swaney/CMV_CE_prosit_predictions/uniprot-proteome_up000000938.fasta.chymotrypsin.z3_nce33.dlib"),
+				new File("/Users/searleb/Documents/swaney/CMV_CE_prosit_predictions/uniprot-proteome_up000000938.fasta.chymotrypsin.z3_nce36.dlib"),
+				new File("/Users/searleb/Documents/swaney/CMV_CE_prosit_predictions/uniprot-proteome_up000000938.fasta.chymotrypsin.z3_nce39.dlib"),
+				new File("/Users/searleb/Documents/swaney/CMV_CE_prosit_predictions/uniprot-proteome_up000000938.fasta.glu-c.z3_nce27.dlib"),
+				new File("/Users/searleb/Documents/swaney/CMV_CE_prosit_predictions/uniprot-proteome_up000000938.fasta.glu-c.z3_nce30.dlib"),
+				new File("/Users/searleb/Documents/swaney/CMV_CE_prosit_predictions/uniprot-proteome_up000000938.fasta.glu-c.z3_nce33.dlib"),
+				new File("/Users/searleb/Documents/swaney/CMV_CE_prosit_predictions/uniprot-proteome_up000000938.fasta.glu-c.z3_nce36.dlib"),
+				new File("/Users/searleb/Documents/swaney/CMV_CE_prosit_predictions/uniprot-proteome_up000000938.fasta.glu-c.z3_nce39.dlib"),
+				new File("/Users/searleb/Documents/swaney/CMV_CE_prosit_predictions/uniprot-proteome_up000000938.fasta.trypsin.z3_nce27.dlib"),
+				new File("/Users/searleb/Documents/swaney/CMV_CE_prosit_predictions/uniprot-proteome_up000000938.fasta.trypsin.z3_nce30.dlib"),
+				new File("/Users/searleb/Documents/swaney/CMV_CE_prosit_predictions/uniprot-proteome_up000000938.fasta.trypsin.z3_nce33.dlib"),
+				new File("/Users/searleb/Documents/swaney/CMV_CE_prosit_predictions/uniprot-proteome_up000000938.fasta.trypsin.z3_nce36.dlib"),
+				new File("/Users/searleb/Documents/swaney/CMV_CE_prosit_predictions/uniprot-proteome_up000000938.fasta.trypsin.z3_nce39.dlib")};
+
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		float[][] matrix=new float[libraryFilesDIA.length][];
+		for (int f=0; f<libraryFilesDIA.length; f++) {
+			int[] histogram=new int[21];
+			LibraryFile lib=new LibraryFile();
+			lib.openFile(libraryFilesDIA[f]);
+			TFloatArrayList counts=new TFloatArrayList();
+			for (LibraryEntry entry : lib.getAllEntries(false, parameters.getAAConstants())) {
+				AnnotatedLibraryEntry annotated=new AnnotatedLibraryEntry(entry, parameters);
+				FragmentIon[] ions=annotated.getIonAnnotations();
+				
+				float[] intensities=entry.getIntensityArray();
+				float target=0.25f*General.max(intensities);
+				
+				TFloatArrayList altIntensities=new TFloatArrayList();
+				for (int i=0; i<ions.length; i++) {
+					if (ions[i]!=null) {
+						altIntensities.add(intensities[i]);
+					}
+				}
+				intensities=altIntensities.toArray();
+				
+				
+				int countAboveTarget=0;
+				for (int i=0; i<intensities.length; i++) {
+					if (intensities[i]>target) {
+						countAboveTarget++;
+					}
+				}
+				if (histogram.length<=countAboveTarget) {
+					histogram[histogram.length-1]++;
+				} else {
+					histogram[countAboveTarget]++;
+				}
+				counts.add(countAboveTarget);
+			}
+			float histogramSum=General.sum(histogram);
+			matrix[f]=General.divide(General.toFloatArray(histogram), histogramSum);
+			
+			float[] array=counts.toArray();
+			System.out.println(libraryFilesDIA[f].getName()+" \t"+General.mean(array));
+		}
+
+		System.out.print("n");
+		for (int f=0; f<libraryFilesDIA.length; f++) {
+			System.out.print("\t"+libraryFilesDIA[f].getName());
+		}
+		System.out.println();
+		for (int i=0; i<matrix[0].length; i++) {
+			System.out.print(i);
+			for (int f=0; f<libraryFilesDIA.length; f++) {
+				System.out.print("\t"+matrix[f][i]);
+			}
+			System.out.println();
+		}
+	}
+	
+	public static void main3(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		System.out.println("reading prosit...");
 		File prosit=new File("/Volumes/searle_ssd/malaria/hela_specific_database/HeLa_Database.txt.z2_nce33.dlib");

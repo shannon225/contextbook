@@ -1,6 +1,12 @@
 EncyclopeDIA changelog for user-facing changes:
 
-encyclopedia-0.9.1-SNAPSHOT
+encyclopedia-0.9.6-SNAPSHOT
+
+encyclopedia-0.9.5 (Jun 5, 2020)
+ - Feature: support for phospho windowing boundaries in the Window Scheme Wizard
+ - Feature: support for Prosit and library conversion tools to the command line (-convert)
+ - Feature: added options for passing some training flags to Percolator
+ - Feature: added new flags to search for positional isomers and additional PTMs
 
 encyclopedia-0.9.0 (Jun 25, 2019)
  - Feature: added read/write support for Prosit libraries, including making Prosit input from FASTA databases

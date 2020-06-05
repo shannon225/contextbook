@@ -18,7 +18,7 @@ public class FastaDatabaseReverser {
 
 	public static void main(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
-		File f=new File("/Users/bsearle/Documents/prosit/hela/uniprot-9606.fasta");
+		File f=new File("/Users/searleb/Documents/school/uniprot-9606.fasta");
 		FastaWriter revwriter=new FastaWriter(new File(f.getAbsolutePath()+".rev.fasta"));
 		FastaWriter revprowriter=new FastaWriter(new File(f.getAbsolutePath()+".revpro.fasta"));
 		FastaWriter randprowriter=new FastaWriter(new File(f.getAbsolutePath()+".randpro.fasta"));
@@ -44,7 +44,8 @@ public class FastaDatabaseReverser {
 			TCharArrayList buffer=new TCharArrayList();
 			for (int i = 0; i < sequence.length; i++) {
 				if (enzyme.isTargetPreSite(sequence[i])) {
-					newSequence.append(reverse(buffer.toArray()));
+					newSequence.append(shuffle(buffer.toArray(), seed));
+					seed=RandomGenerator.randomInt(seed);
 					newSequence.append(sequence[i]);
 					buffer.clear();
 				} else {
@@ -56,7 +57,7 @@ public class FastaDatabaseReverser {
 				newSequence.append(buffer.toArray());
 			}
 
-			revwriter.write(new FastaEntry(null, "REV_"+entry.getAccession(), newSequence.toString()));
+			revwriter.write(new FastaEntry(null, "RAND_"+entry.getAccession(), newSequence.toString()));
 			revprowriter.write(new FastaEntry(null, "REVPRO_"+entry.getAccession(), new String(reverse(entry.getSequence().toCharArray()))));
 			randprowriter.write(new FastaEntry(null, "RANDPRO_"+entry.getAccession(), new String(shuffle(entry.getSequence().toCharArray(), seed))));
 			
@@ -107,6 +108,7 @@ public class FastaDatabaseReverser {
 	 * @return
 	 */
 	public static char[] shuffle(char[] aas, int shuffleSeed) {
+		if (aas.length<=1) return aas;
 		int start=0;
 		int stop=aas.length-1;
 		int diff=(stop)-start;
