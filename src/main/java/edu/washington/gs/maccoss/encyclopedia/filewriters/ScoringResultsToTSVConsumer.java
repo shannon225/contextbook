@@ -1,7 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.filewriters;
 
-import com.github.davidmoten.bigsorter.Serializer;
-import com.github.davidmoten.bigsorter.Sorter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.RescoredPeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
@@ -9,110 +7,22 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
-import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
-import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.io.FileUtils;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.Comparator;
+import java.io.File;
 import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 
-public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsumer {
-	private final OS os=OSDetector.getOS();
-
-	private final File outputFile, tmpFile;
-	private final StripeFileInterface diaFile;
-	private final String[] scoreNames;
-	private final BlockingQueue<PeptideScoringResult> resultsQueue;
+public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVConsumer {
 	private final int numberOfPeaksPerPeptide;
 
-	private final PrintWriter writer;
-
-	private volatile int numberProcessed=0;
-
 	public ScoringResultsToTSVConsumer(File outputFile, StripeFileInterface diaFile, String[] scoreNames, BlockingQueue<PeptideScoringResult> resultsQueue, int numberOfPeaksPerPeptide) {
-		this.outputFile = outputFile;
-		this.tmpFile = new File(outputFile.getAbsolutePath() + ".unsorted");
-		this.diaFile=diaFile;
-		this.resultsQueue=resultsQueue;
+		super(outputFile, diaFile, scoreNames, resultsQueue);
 		this.numberOfPeaksPerPeptide=numberOfPeaksPerPeptide;
-		this.scoreNames=scoreNames;
-
-		try {
-			writer=new PrintWriter(this.tmpFile, "UTF-8");
-			System.out.println("Constructing writer for "+ this.tmpFile.getAbsolutePath());
-		} catch (FileNotFoundException e) {
-			throw new EncyclopediaException("Error setting up output file: "+ this.tmpFile.getAbsolutePath(), e);
-		} catch (UnsupportedEncodingException e) {
-			throw new EncyclopediaException("Error setting up output file: "+ this.tmpFile.getAbsolutePath(), e);
-		}
 	}
 
-	public String[] getScoreNames() {
-		return scoreNames;
-	}
-
-	@Override
-	public BlockingQueue<PeptideScoringResult> getResultsQueue() {
-		return resultsQueue;
-	}
-
-	@Override
-	public void close() {
-		writer.flush();
-		writer.close();
-
-		Logger.logLine("Sorting results into "+ this.outputFile.getAbsolutePath());
-
-		try {
-			final Serializer<CSVRecord> serializer = Serializer.csv(
-					CSVFormat
-							.DEFAULT
-							.withDelimiter('\t')
-							.withRecordSeparator(getLineSeparator())
-							.withFirstRecordAsHeader(),
-					StandardCharsets.UTF_8
-			);
-
-			// compare rows on column zero (ID) using lexicographic string ordering
-			final Comparator<CSVRecord> comparator = Comparator.comparing(
-					record -> record.get(0),
-					Comparator.naturalOrder()
-			);
-
-			Sorter
-					.serializer(serializer)
-					.comparator(comparator)
-					.input(this.tmpFile)
-					.output(this.outputFile)
-					.tempDirectory(this.outputFile.getParentFile()) // always sort in the target directory
-					.maxItemsPerFile(100000) // 100k lines per file; this controls memory usage
-					.sort();
-		} catch (UncheckedIOException exception) {
-			Logger.errorLine("Caught IO exception sorting TSV output; failing!");
-			Logger.errorException(exception);
-			throw exception;
-		} finally {
-			// unconditionally remove the unsorted temp file
-			System.out.println("Removing temp file "+ this.tmpFile.getAbsolutePath());
-			FileUtils.deleteQuietly(this.tmpFile);
-		}
-	}
-
-	@Override
-	public int getNumberProcessed() {
-		return numberProcessed;
-	}
-	
 	@Override
 	public void run() {
 		boolean printedHeader=false; 
@@ -148,15 +58,6 @@ public class ScoringResultsToTSVConsumer implements PeptideScoringResultsConsume
 		} catch (InterruptedException ie) {
 			Logger.errorLine("DIA writing interrupted!");
 			Logger.errorException(ie);
-		}
-	}
-
-	private String getLineSeparator() {
-		switch (os) {
-			case MAC:
-				return "\n";
-			default:
-				return System.lineSeparator();
 		}
 	}
 
