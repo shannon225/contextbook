@@ -27,17 +27,15 @@ public abstract class AbstractScoringResultsToTSVConsumer implements PeptideScor
 	protected final File outputFile;
 	protected final File tmpFile;
 	protected final StripeFileInterface diaFile;
-	protected final String[] scoreNames;
 	protected final BlockingQueue<PeptideScoringResult> resultsQueue;
 	protected final PrintWriter writer;
 
 	protected volatile int numberProcessed = 0;
 
-	public AbstractScoringResultsToTSVConsumer(File outputFile, StripeFileInterface diaFile, String[] scoreNames, BlockingQueue<PeptideScoringResult> resultsQueue) {
+	public AbstractScoringResultsToTSVConsumer(File outputFile, StripeFileInterface diaFile, BlockingQueue<PeptideScoringResult> resultsQueue) {
 		this.outputFile = outputFile;
 		this.tmpFile = new File(outputFile.getAbsolutePath() + ".unsorted");
 		this.diaFile = diaFile;
-		this.scoreNames = scoreNames;
 		this.resultsQueue = resultsQueue;
 
 		try {
@@ -50,17 +48,13 @@ public abstract class AbstractScoringResultsToTSVConsumer implements PeptideScor
 		}
 	}
 
-	public String[] getScoreNames() {
-		return scoreNames;
-	}
-
 	@Override
-	public BlockingQueue<PeptideScoringResult> getResultsQueue() {
+	public final BlockingQueue<PeptideScoringResult> getResultsQueue() {
 		return resultsQueue;
 	}
 
 	@Override
-	public void close() {
+	public final void close() {
 		writer.flush();
 		writer.close();
 
@@ -102,7 +96,7 @@ public abstract class AbstractScoringResultsToTSVConsumer implements PeptideScor
 	}
 
 	@Override
-	public int getNumberProcessed() {
+	public final int getNumberProcessed() {
 		return numberProcessed;
 	}
 

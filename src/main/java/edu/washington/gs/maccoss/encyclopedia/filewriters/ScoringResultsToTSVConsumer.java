@@ -16,10 +16,12 @@ import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 
 public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVConsumer {
+	private final String[] scoreNames;
 	private final int numberOfPeaksPerPeptide;
 
 	public ScoringResultsToTSVConsumer(File outputFile, StripeFileInterface diaFile, String[] scoreNames, BlockingQueue<PeptideScoringResult> resultsQueue, int numberOfPeaksPerPeptide) {
-		super(outputFile, diaFile, scoreNames, resultsQueue);
+		super(outputFile, diaFile, resultsQueue);
+		this.scoreNames = scoreNames;
 		this.numberOfPeaksPerPeptide=numberOfPeaksPerPeptide;
 	}
 
@@ -131,5 +133,9 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 			rank++;
 			if (rank>3) break;
 		}
+	}
+
+	public String[] getScoreNames() {
+		return scoreNames;
 	}
 }
