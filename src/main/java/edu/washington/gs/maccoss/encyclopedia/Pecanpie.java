@@ -307,6 +307,15 @@ public class Pecanpie {
 			HashSet<String> backgroundProteomeSet=new HashSet<String>(backgroundProteomeArray);
 			
 			float dutyCycle=stripefile.getRanges().get(range);
+			if (dutyCycle <= 0f) {
+				// A stripe with only one scan will get duty cycle
+				// of zero. This will only happen in the case of a
+				// bad file, or DDA data (where precursor ranges are
+				// typically unique). Note that this doesn't guard
+				// against (positive) infinity or NaN, but if these
+				// values occur it's unclear how to interpret them.
+				continue;
+			}
 			int scanAveragingMargin=Math.round(parameters.getMinEluteTime()/dutyCycle);
 			if (scanAveragingMargin==0) scanAveragingMargin=1;
 			
@@ -317,6 +326,13 @@ public class Pecanpie {
 			
 			ArrayList<FragmentScan> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 			Collections.sort(stripes);
+
+			if (stripes.size() < 3) {
+				// A stripe with very few scans indicates that either
+				// the file is bad, or this is DDA data. Similar to
+				// above, we simply skip this stripe.
+				continue;
+			}
 
 			// prepare executor for background
 			ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("STRIPE_"+range.getStart()+"to"+range.getStop()+"-%d").setDaemon(true).build();
