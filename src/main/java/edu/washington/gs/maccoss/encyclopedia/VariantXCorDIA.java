@@ -354,6 +354,16 @@ public class VariantXCorDIA {
 			}
 			
 			float dutyCycle=stripefile.getRanges().get(range);
+			if (dutyCycle <= 0f) {
+				// A stripe with only one scan will get duty cycle
+				// of zero. This will only happen in the case of a
+				// bad file, or DDA data (where precursor ranges are
+				// typically unique). Note that this doesn't guard
+				// against (positive) infinity or NaN, but if these
+				// values occur it's unclear how to interpret them.
+				continue;
+			}
+
 			Logger.logLine("Processing "+range+" ("+dutyCycle+")");
 
 			// prepare executor
@@ -363,6 +373,13 @@ public class VariantXCorDIA {
 
 			// set up xcorr
 			ArrayList<FragmentScan> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+
+			if (stripes.size() < 3) {
+				// A stripe with very few scans indicates that either
+				// the file is bad, or this is DDA data. Similar to
+				// above, we simply skip this stripe.
+				continue;
+			}
 
 			Logger.logLine("Starting XCorr background calculations for "+stripes.size()+" spectra between "+range+"...");
 			final Vector<FragmentScan> tempStripes=new Vector<FragmentScan>();

@@ -14,11 +14,14 @@ fi
 
 echo "Updating ${program} from [${1}] to [${2}]";
 
+TAG=${program}-${1}
+
 mvn versions:set -DnewVersion="${1}"
-hg commit -m "Update to version for release ${program}-${1}."
-hg tag "${program}-${1}" # optional
+git commit -am "Update to version for release ${program}-${1}."
+git tag "${TAG}" # optional
 mvn clean package;
 mvn versions:set -DnewVersion="${2}-SNAPSHOT"
-hg commit -m "Update to next SNAPSHOT version."
+git commit -am "Update to next SNAPSHOT version."
 
 echo "Finished updating from [${1}] to [${2}]";
+echo "Remember to run \`git push origin --tags\` or \`git push origin ${TAG}\`!"
