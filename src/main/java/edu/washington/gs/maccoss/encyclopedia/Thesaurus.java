@@ -274,12 +274,29 @@ public class Thesaurus {
 			progress.update(baseMessage, baseProgress);
 			
 			float dutyCycle=stripefile.getRanges().get(range);
-			if (dutyCycle<=0.1f) dutyCycle=0.1f;	
+			if (dutyCycle <= 0f) {
+				// A stripe with only one scan will get duty cycle
+				// of zero. This will only happen in the case of a
+				// bad file, or DDA data (where precursor ranges are
+				// typically unique). Note that this doesn't guard
+				// against (positive) infinity or NaN, but if these
+				// values occur it's unclear how to interpret them.
+				continue;
+			} else if (dutyCycle<=0.1f) {
+				dutyCycle=0.1f;
+			}
 			Logger.logLine("Processing "+range+" m/z, ("+dutyCycle+" second duty cycle)");
 			
 			ArrayList<FragmentScan> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 			Collections.sort(stripes);
-	
+
+			if (stripes.size() < 3) {
+				// A stripe with very few scans indicates that either
+				// the file is bad, or this is DDA data. Similar to
+				// above, we simply skip this stripe.
+				continue;
+			}
+
 			// prepare executor for background
 			ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("STRIPE_"+range.getStart()+"to"+range.getStop()+"-%d").setDaemon(true).build();
 			LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
