@@ -76,6 +76,8 @@ public abstract class AbstractScoringResultsToTSVConsumer implements PeptideScor
 					Comparator.naturalOrder()
 			);
 
+			final long start = System.nanoTime();
+
 			Sorter
 					.serializer(serializer)
 					.comparator(comparator)
@@ -84,6 +86,9 @@ public abstract class AbstractScoringResultsToTSVConsumer implements PeptideScor
 					.tempDirectory(this.outputFile.getParentFile()) // always sort in the target directory
 					.maxItemsPerFile(100000) // 100k lines per file; this controls memory usage
 					.sort();
+
+			final long end = System.nanoTime();
+			Logger.logLine(String.format("Sorted feature file in %.02f seconds wall clock time", (end - start) / 1e9));
 		} catch (UncheckedIOException exception) {
 			Logger.errorLine("Caught IO exception sorting TSV output; failing!");
 			Logger.errorException(exception);
