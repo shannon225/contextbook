@@ -59,7 +59,9 @@ public abstract class AbstractScoringResultsToTSVConsumer implements PeptideScor
 		writer.close();
 
 		try {
-			doFileSort(tmpFile, outputFile, getLineSeparator());
+			Logger.logLine("Sorting results into " + outputFile.getAbsolutePath());
+			final long nanos = doFileSort(tmpFile, outputFile, getLineSeparator());
+			Logger.logLine(String.format("Sorted feature file in %.02f seconds wall clock time", nanos / 1e9));
 		} catch (UncheckedIOException exception) {
 			Logger.errorLine("Caught IO exception sorting TSV output; failing!");
 			Logger.errorException(exception);
@@ -71,13 +73,14 @@ public abstract class AbstractScoringResultsToTSVConsumer implements PeptideScor
 		}
 	}
 
-	static void doFileSort(File inputFile, File outputFile, String lineSeparator) throws UncheckedIOException {
-		doFileSort(100000, inputFile, outputFile, lineSeparator); // 100k lines per file; this controls memory usage
+	/**
+	 * @return the elapsed time of sorting, in nanoseconds
+	 */
+	static long doFileSort(File inputFile, File outputFile, String lineSeparator) throws UncheckedIOException {
+		return doFileSort(100000, inputFile, outputFile, lineSeparator); // 100k lines per file; this controls memory usage
 	}
 
-	static void doFileSort(int maxItems, File inputFile, File outputFile, String lineSeparator) throws UncheckedIOException {
-		Logger.logLine("Sorting results into " + outputFile.getAbsolutePath());
-
+	static long doFileSort(int maxItems, File inputFile, File outputFile, String lineSeparator) throws UncheckedIOException {
 		final Serializer<CSVRecord> serializer = Serializer.csv(
 				CSVFormat
 						.DEFAULT
@@ -105,7 +108,8 @@ public abstract class AbstractScoringResultsToTSVConsumer implements PeptideScor
 				.sort();
 
 		final long end = System.nanoTime();
-		Logger.logLine(String.format("Sorted feature file in %.02f seconds wall clock time", (end - start) / 1e9));
+
+		return end - start;
 	}
 
 	@Override
