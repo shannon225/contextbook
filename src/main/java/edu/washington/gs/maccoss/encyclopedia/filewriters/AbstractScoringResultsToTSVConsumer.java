@@ -58,46 +58,50 @@ public abstract class AbstractScoringResultsToTSVConsumer implements PeptideScor
 		writer.flush();
 		writer.close();
 
-		Logger.logLine("Sorting results into " + this.outputFile.getAbsolutePath());
-
 		try {
-			final Serializer<CSVRecord> serializer = Serializer.csv(
-					CSVFormat
-							.DEFAULT
-							.withDelimiter('\t')
-							.withRecordSeparator(getLineSeparator())
-							.withFirstRecordAsHeader(),
-					StandardCharsets.UTF_8
-			);
-
-			// compare rows on column zero (ID) using lexicographic string ordering
-			final Comparator<CSVRecord> comparator = Comparator.comparing(
-					record -> record.get(0),
-					Comparator.naturalOrder()
-			);
-
-			final long start = System.nanoTime();
-
-			Sorter
-					.serializer(serializer)
-					.comparator(comparator)
-					.input(this.tmpFile)
-					.output(this.outputFile)
-					.tempDirectory(this.outputFile.getParentFile()) // always sort in the target directory
-					.maxItemsPerFile(100000) // 100k lines per file; this controls memory usage
-					.sort();
-
-			final long end = System.nanoTime();
-			Logger.logLine(String.format("Sorted feature file in %.02f seconds wall clock time", (end - start) / 1e9));
+			doFileSort(tmpFile, outputFile, getLineSeparator());
 		} catch (UncheckedIOException exception) {
 			Logger.errorLine("Caught IO exception sorting TSV output; failing!");
 			Logger.errorException(exception);
 			throw exception;
 		} finally {
 			// unconditionally remove the unsorted temp file
-			System.out.println("Removing temp file " + this.tmpFile.getAbsolutePath());
-			FileUtils.deleteQuietly(this.tmpFile);
+			System.out.println("Removing temp file " + tmpFile.getAbsolutePath());
+			FileUtils.deleteQuietly(tmpFile);
 		}
+	}
+
+	static void doFileSort(File inputFile, File outputFile, String lineSeparator) throws UncheckedIOException {
+		Logger.logLine("Sorting results into " + outputFile.getAbsolutePath());
+
+		final Serializer<CSVRecord> serializer = Serializer.csv(
+				CSVFormat
+						.DEFAULT
+						.withDelimiter('\t')
+						.withRecordSeparator(lineSeparator)
+						.withFirstRecordAsHeader(),
+				StandardCharsets.UTF_8
+		);
+
+		// compare rows on column zero (ID) using lexicographic string ordering
+		final Comparator<CSVRecord> comparator = Comparator.comparing(
+				record -> record.get(0),
+				Comparator.naturalOrder()
+		);
+
+		final long start = System.nanoTime();
+
+		Sorter
+				.serializer(serializer)
+				.comparator(comparator)
+				.input(inputFile)
+				.output(outputFile)
+				.tempDirectory(outputFile.getParentFile()) // always sort in the target directory
+				.maxItemsPerFile(100000) // 100k lines per file; this controls memory usage
+				.sort();
+
+		final long end = System.nanoTime();
+		Logger.logLine(String.format("Sorted feature file in %.02f seconds wall clock time", (end - start) / 1e9));
 	}
 
 	@Override
