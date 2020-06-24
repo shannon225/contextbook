@@ -72,6 +72,10 @@ public abstract class AbstractScoringResultsToTSVConsumer implements PeptideScor
 	}
 
 	static void doFileSort(File inputFile, File outputFile, String lineSeparator) throws UncheckedIOException {
+		doFileSort(100000, inputFile, outputFile, lineSeparator); // 100k lines per file; this controls memory usage
+	}
+
+	static void doFileSort(int maxItems, File inputFile, File outputFile, String lineSeparator) throws UncheckedIOException {
 		Logger.logLine("Sorting results into " + outputFile.getAbsolutePath());
 
 		final Serializer<CSVRecord> serializer = Serializer.csv(
@@ -97,7 +101,7 @@ public abstract class AbstractScoringResultsToTSVConsumer implements PeptideScor
 				.input(inputFile)
 				.output(outputFile)
 				.tempDirectory(outputFile.getParentFile()) // always sort in the target directory
-				.maxItemsPerFile(100000) // 100k lines per file; this controls memory usage
+				.maxItemsPerFile(maxItems) // this controls memory usage
 				.sort();
 
 		final long end = System.nanoTime();
