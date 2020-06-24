@@ -13,6 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.AbstractScoringResultsToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -21,44 +22,14 @@ import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 
-public class PecanScoringResultsToTSVConsumer implements PeptideScoringResultsConsumer {
-	private final OS os=OSDetector.getOS();
-	
-	private final BlockingQueue<PeptideScoringResult> resultsQueue;
-	private final PrintWriter writer;
-	private volatile int numberProcessed=0;
+public class PecanScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVConsumer {
 	private final int numberOfPeaksPerPeptide;
-	private final StripeFileInterface diaFile;
 
 	public PecanScoringResultsToTSVConsumer(File outputFile, StripeFileInterface diaFile, BlockingQueue<PeptideScoringResult> resultsQueue, int numberOfPeaksPerPeptide) {
-		this.diaFile=diaFile;
-		this.resultsQueue=resultsQueue;
+		super(outputFile, diaFile, resultsQueue);
 		this.numberOfPeaksPerPeptide=numberOfPeaksPerPeptide;
-		try {
-			writer=new PrintWriter(outputFile, "UTF-8");
-		} catch (FileNotFoundException e) {
-			throw new EncyclopediaException("Error setting up output file: "+outputFile.getAbsolutePath(), e);
-		} catch (UnsupportedEncodingException e) {
-			throw new EncyclopediaException("Error setting up output file: "+outputFile.getAbsolutePath(), e);
-		}
-	}
-	
-	@Override
-	public BlockingQueue<PeptideScoringResult> getResultsQueue() {
-		return resultsQueue;
 	}
 
-	@Override
-	public void close() {
-		writer.flush();
-		writer.close();
-	}
-
-	@Override
-	public int getNumberProcessed() {
-		return numberProcessed;
-	}
-	
 	@Override
 	public void run() {
 		boolean printedHeader=false; 
