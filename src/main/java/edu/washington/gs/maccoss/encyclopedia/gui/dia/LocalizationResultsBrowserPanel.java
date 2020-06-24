@@ -55,6 +55,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.AcquiredSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
@@ -285,6 +286,18 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 
 			try {
 				ArrayList<Spectrum> precursors=PrecursorScan.downcast(dia.getPrecursors(minRT-deltaRT, maxRT+deltaRT));
+				ArrayList<Spectrum> trimmedPrecursors=new ArrayList<>();
+				for (Spectrum spectrum : precursors) {
+					if (spectrum instanceof AcquiredSpectrum) {
+						AcquiredSpectrum acquiredSpectrum=(AcquiredSpectrum)spectrum;
+
+						if (precursorMZ>acquiredSpectrum.getIsolationWindowLower()&&precursorMZ<acquiredSpectrum.getIsolationWindowUpper()) {
+							trimmedPrecursors.add(acquiredSpectrum);
+						}
+					}
+				}
+				precursors=trimmedPrecursors;
+				
 				ArrayList<FragmentScan> stripes=dia.getStripes(precursorMZ, minRT-deltaRT, maxRT+deltaRT, false);
 				
 				XYTraceInterface[] precursorTraces = ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), precursorMZ, precursorCharge, precursors);
