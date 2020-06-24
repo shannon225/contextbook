@@ -1,6 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.filewriters;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import junit.framework.TestCase;
@@ -10,7 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class AbstractScoringResultsToTSVConsumerTest extends TestCase {
-	private static final ImmutableList<Integer> SORT_SIZES = ImmutableList.of(30000, 100000, 300000, 1000000, 3000000);
+	private static final ImmutableList<Integer> SORT_SIZES = ImmutableList.of(75000, 100000, 150000, 225000, 350000, 500000);
 
 	public void testSortingPerformanceAndTuning() throws Exception {
 		final ImmutableList.Builder<Path> inputPathsBuilder = ImmutableList.builder();
@@ -33,7 +32,7 @@ public class AbstractScoringResultsToTSVConsumerTest extends TestCase {
 		Logger.logLine(String.format("Read %d paths from test resource file.", inputPaths.size()));
 		Logger.timelessLogLine("");
 
-		Logger.timelessLogLine("file\tsize\t"+ Joiner.on(" (ms)\t").join(SORT_SIZES) + " (ms)");
+		Logger.timelessLogLine("file\tsize\tn_rows\ttime (ms)");
 
 		inputPaths.forEach(this::testSortTuning);
 	}
@@ -43,8 +42,6 @@ public class AbstractScoringResultsToTSVConsumerTest extends TestCase {
 
 		assertTrue(file.exists());
 		assertTrue(file.canRead());
-
-		Logger.log(path.getFileName()+"\t"+file.length());
 
 		final File output;
 		try {
@@ -58,12 +55,16 @@ public class AbstractScoringResultsToTSVConsumerTest extends TestCase {
 		}
 
 		SORT_SIZES.forEach(i -> {
-			final long nanos = AbstractScoringResultsToTSVConsumer.doFileSort(i, file, output, System.lineSeparator());
-			Logger.log("\t" + nanos / 1e6);
+			for (int j = 0; j < 5; j++) {
+				Logger.log(path.getFileName() + "\t" + file.length() + "\t" + i);
 
-			output.delete();
+				final long nanos = AbstractScoringResultsToTSVConsumer.doFileSort(i, file, output, System.lineSeparator());
+
+				Logger.log("\t" + nanos / 1e6);
+				Logger.timelessLogLine("");
+
+				output.delete();
+			}
 		});
-
-		Logger.timelessLogLine("");
 	}
 }
