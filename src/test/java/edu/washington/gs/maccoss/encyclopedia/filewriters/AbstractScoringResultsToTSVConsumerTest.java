@@ -18,7 +18,9 @@ public class AbstractScoringResultsToTSVConsumerTest extends TestCase {
 			try (LineNumberReader reader = new LineNumberReader(new InputStreamReader(is))) {
 				String line;
 				while (null != (line = reader.readLine())) {
-					inputPathsBuilder.add(Paths.get(line));
+					if (!line.matches("\\s+#.*")) { // ignore if first non-whitespace is '#'
+						inputPathsBuilder.add(Paths.get(line));
+					}
 				}
 			}
 		}

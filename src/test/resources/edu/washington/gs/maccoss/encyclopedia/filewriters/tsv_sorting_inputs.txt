@@ -1,0 +1,4 @@
+# Each non-empty line below that doesn't start with a '#'
+# is a file path that will be used for performance testing
+# by AbstractScoringResultsToTSVConsumerTest. Leave
+# empty to disable the test.
