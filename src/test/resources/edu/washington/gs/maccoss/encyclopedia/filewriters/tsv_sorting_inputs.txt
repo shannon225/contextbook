@@ -2,3 +2,10 @@
 # is a file path that will be used for performance testing
 # by AbstractScoringResultsToTSVConsumerTest. Leave
 # empty to disable the test.
+
+#/media/data/sethjust/proteomesoft/bug_13490/FL20190410_65_3-3.dia.features.1k.txt
+#/media/data/sethjust/proteomesoft/bug_13490/FL20190410_65_3-3.dia.features.10k.txt
+/media/data/sethjust/proteomesoft/bug_13490/FL20190410_65_3-3.dia.features.100k.txt
+/media/data/sethjust/proteomesoft/bug_13490/FL20190410_65_3-3.dia.features.500k.txt
+/media/data/sethjust/proteomesoft/bug_13490/FL20190410_65_3-3.dia.features.1000k.txt
+/media/data/sethjust/proteomesoft/bug_13490/FL20190410_65_3-3.dia.features.4187k.txt
