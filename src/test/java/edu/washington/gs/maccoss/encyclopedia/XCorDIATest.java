@@ -226,14 +226,14 @@ public class XCorDIATest extends TestCase {
 			Arrays.fill(intens, 1f);
 
 			return Lists.newArrayList(
-					new FragmentScan("0", "0", 0, 0f, 0f, 400f, 700f, masses, intens),
-					new FragmentScan("1", "1", 1, 1f, 0f, 400f, 700f, masses, intens),
-					new FragmentScan("2", "2", 2, 2f, 0f, 400f, 700f, masses, intens),
-					new FragmentScan("3", "3", 3, 3f, 0f, 400f, 700f, masses, intens),
-					new FragmentScan("4", "4", 4, 4f, 0f, 400f, 700f, masses, intens),
-					new FragmentScan("5", "5", 5, 5f, 0f, 400f, 700f, masses, intens),
-					new FragmentScan("6", "6", 6, 6f, 0f, 400f, 700f, masses, intens),
-					new FragmentScan("7", "7", 7, 7f, 0f, 400f, 700f, masses, intens)
+					new FragmentScan("0", "0", 0, 0f, 0, 0f, 400f, 700f, masses, intens),
+					new FragmentScan("1", "1", 1, 1f, 0, 0f, 400f, 700f, masses, intens),
+					new FragmentScan("2", "2", 2, 2f, 0, 0f, 400f, 700f, masses, intens),
+					new FragmentScan("3", "3", 3, 3f, 0, 0f, 400f, 700f, masses, intens),
+					new FragmentScan("4", "4", 4, 4f, 0, 0f, 400f, 700f, masses, intens),
+					new FragmentScan("5", "5", 5, 5f, 0, 0f, 400f, 700f, masses, intens),
+					new FragmentScan("6", "6", 6, 6f, 0, 0f, 400f, 700f, masses, intens),
+					new FragmentScan("7", "7", 7, 7f, 0, 0f, 400f, 700f, masses, intens)
 			);
 		}
 

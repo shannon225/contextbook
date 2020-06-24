@@ -20,16 +20,18 @@ public class FragmentScan implements Comparable<FragmentScan>, AcquiredSpectrum 
 	private final float ionInjectionTime;
 	private final float tic;
 	private final byte charge;
+	private final int fraction; 
 
-	public FragmentScan(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, Float ionInjectionTime, double isolationWindowLower, double isolationWindowUpper, double[] massArray, float[] intensityArray) {
-		this(spectrumName, precursorName, spectrumIndex, scanStartTime, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray, (byte)0);
+	public FragmentScan(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, int fraction, Float ionInjectionTime, double isolationWindowLower, double isolationWindowUpper, double[] massArray, float[] intensityArray) {
+		this(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray, (byte)0);
 	}
 
-	public FragmentScan(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, Float ionInjectionTime, double isolationWindowLower, double isolationWindowUpper, double[] massArray, float[] intensityArray, byte charge) {
+	public FragmentScan(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, int fraction, Float ionInjectionTime, double isolationWindowLower, double isolationWindowUpper, double[] massArray, float[] intensityArray, byte charge) {
 		this.spectrumName=spectrumName;
 		this.precursorName=precursorName;
 		this.spectrumIndex=spectrumIndex;
 		this.scanStartTime=scanStartTime;
+		this.fraction=fraction;
 		if (ionInjectionTime==null) ionInjectionTime=-1f;
 		this.ionInjectionTime=ionInjectionTime;
 		
@@ -49,8 +51,17 @@ public class FragmentScan implements Comparable<FragmentScan>, AcquiredSpectrum 
 		tic=thisTic;
 	}
 	
+	@Override
+	public int getFraction() {
+		return fraction;
+	}
+	
+	public FragmentScan shallowClone(int fraction, int spectrumIndex) {
+		return new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray, charge);
+	}
+	
 	public FragmentScan sqrt() {
-		return new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, General.protectedSqrt(intensityArray), charge);
+		return new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, General.protectedSqrt(intensityArray), charge);
 	}
 	
 	@Override

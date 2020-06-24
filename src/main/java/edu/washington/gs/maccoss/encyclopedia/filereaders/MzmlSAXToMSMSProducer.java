@@ -49,11 +49,13 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 	private ImmutableList.Builder<InstrumentComponent> instrumentComponentsBuilder = ImmutableList.builder();
 
 	private Throwable error;
+	private int fraction;
 
-	public MzmlSAXToMSMSProducer(File mzMLFile, BlockingQueue<MSMSBlock> mzmlBlockQueue, SearchParameters parameters) {
+	public MzmlSAXToMSMSProducer(File mzMLFile, int fraction, BlockingQueue<MSMSBlock> mzmlBlockQueue, SearchParameters parameters) {
 		this.mzMLFile=mzMLFile;
 		this.mzmlBlockQueue=mzmlBlockQueue;
 		this.parameters=parameters;
+		this.fraction=fraction;
 	}
 
 	public HashMap<Range, TFloatArrayList> getRetentionTimesByStripe() {
@@ -124,6 +126,9 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 	private Double isolationWindowTarget=null;
 	private Double isolationWindowLowerOffset=null;
 	private Double isolationWindowUpperOffset=null;
+
+	private Double scanWindowLowerLimit=null;
+	private Double scanWindowUpperLimit=null;
 
 	private boolean compress=false;
 	private Precision encoding=null;
@@ -212,6 +217,13 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 					isolationWindowLowerOffset=Double.parseDouble(attributes.getValue("value"));
 				} else if ("isolation window upper offset".equalsIgnoreCase(attributes.getValue("name"))) {
 					isolationWindowUpperOffset=Double.parseDouble(attributes.getValue("value"));
+				}
+				
+			} else if ("scanWindow".equalsIgnoreCase(tagList.get(tagList.size()-1))) {
+				if ("scan window lower limit".equalsIgnoreCase(attributes.getValue("name"))) {
+					scanWindowLowerLimit=Double.parseDouble(attributes.getValue("value"));
+				} else if ("scan window upper limit".equalsIgnoreCase(attributes.getValue("name"))) {
+					scanWindowUpperLimit=Double.parseDouble(attributes.getValue("value"));
 				}
 
 			} else if (tagList.size()>2&&"binaryDataArray".equals(tagList.get(tagList.size()-1))) {
@@ -320,6 +332,8 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 				isolationWindowTarget=null;
 				isolationWindowLowerOffset=null;
 				isolationWindowUpperOffset=null;
+				scanWindowLowerLimit=null;
+				scanWindowUpperLimit=null; 
 
 				compress=false;
 				encoding=null;
@@ -350,7 +364,7 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 					double[] deltaArray=General.multiply(massArray, parameters.getPrecursorOffsetPPM()/1000000.0);
 					massArray=General.subtract(massArray, deltaArray);
 				}
-				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, ionInjectTime, massArray, intensityArray, tic));
+				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, fraction, scanWindowLowerLimit, scanWindowUpperLimit, ionInjectTime, massArray, intensityArray, tic));
 
 			} else {
 				if (spectrumRef==null) spectrumRef="Unknown";
@@ -390,7 +404,7 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 				
 				double precursorIsolationMargin = parameters==null?0.0:parameters.getPrecursorIsolationMargin();
 				try {
-					FragmentScan stripe=new FragmentScan(spectrumName, spectrumRef, spectrumIndex, scanStartTime, ionInjectTime, isolationWindowTarget-isolationWindowLowerOffset+precursorIsolationMargin, isolationWindowTarget+isolationWindowUpperOffset-precursorIsolationMargin,
+					FragmentScan stripe=new FragmentScan(spectrumName, spectrumRef, spectrumIndex, scanStartTime, fraction, ionInjectTime, isolationWindowTarget-isolationWindowLowerOffset+precursorIsolationMargin, isolationWindowTarget+isolationWindowUpperOffset-precursorIsolationMargin,
 							massArray, intensityArray, charge);
 					stripes.add(stripe);
 					
@@ -440,6 +454,8 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 			isolationWindowTarget=null;
 			isolationWindowLowerOffset=null;
 			isolationWindowUpperOffset=null;
+			scanWindowLowerLimit=null;
+			scanWindowUpperLimit=null;
 
 			compress=false;
 			encoding=null;

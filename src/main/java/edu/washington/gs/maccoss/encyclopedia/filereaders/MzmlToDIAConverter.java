@@ -92,7 +92,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 			stripeFile.openFile();
 
 			final BlockingQueue<MSMSBlock> mzmlBlockQueue=new ArrayBlockingQueue<MSMSBlock>(1);
-			final MzmlSAXToMSMSProducer producer=new MzmlSAXToMSMSProducer(mzMLFile, mzmlBlockQueue, parameters);
+			final MzmlSAXToMSMSProducer producer=new MzmlSAXToMSMSProducer(mzMLFile, 0, mzmlBlockQueue, parameters);
 
 			@Nullable OverlapDeconvoluter deconvoluter;
 			MSMSToDIAConsumer consumer;
@@ -224,90 +224,6 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 				Logger.errorException(ie);
 				return null;
 			}
-		} catch (IOException ioe) {
-			throw new EncyclopediaException("DIA writing IO error!", ioe);
-		} catch (SQLException sqle) {
-			sqle.printStackTrace();
-			throw new EncyclopediaException("DIA writing SQL error!", sqle);
-		}
-	}
-
-	static StripeFileInterface convertJMZML(File mzMLFile, File diaFile, SearchParameters parameters) {
-		try {
-			Logger.logLine("Indexing "+mzMLFile.getName()+" ...");
-			StripeFile stripeFile=new StripeFile();
-			stripeFile.openFile();
-
-			MzMLUnmarshaller unmarshaller=new MzMLUnmarshaller(mzMLFile);
-			stripeFile.setFileName(mzMLFile.getName(), unmarshaller.getMzMLId(), mzMLFile.getAbsolutePath());
-
-			BlockingQueue<MSMSBlock> mzmlBlockQueue=new ArrayBlockingQueue<MSMSBlock>(1);
-			MzmlToMSMSProducer producer=new MzmlToMSMSProducer(unmarshaller, mzmlBlockQueue, parameters);
-			
-			// will be populated after we join back up. Since we're not looking
-			// at it until after the join, we're safe to not have to worry about
-			// concurrency.
-			HashMap<Range, TFloatArrayList> retentionTimesByStripe=producer.getRetentionTimesByStripe();
-			Thread[] threads;
-			
-			if (parameters.isDeconvoluteOverlappingWindows()) {
-				BlockingQueue<MSMSBlock> deconvolutionBlockQueue=new ArrayBlockingQueue<MSMSBlock>(1);
-				OverlapDeconvoluter deconvoluter=new OverlapDeconvoluter(parameters.getFragmentTolerance(), mzmlBlockQueue, deconvolutionBlockQueue);
-				retentionTimesByStripe=deconvoluter.getRetentionTimesByStripe();
-				MSMSToDIAConsumer consumer=new MSMSToDIAConsumer(deconvolutionBlockQueue, stripeFile, parameters);
-
-				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
-				Thread producerThread=new Thread(producer);
-				Thread deconvoluterThread=new Thread(deconvoluter);
-				Thread consumerThread=new Thread(consumer);
-
-				threads=new Thread[] {producerThread, deconvoluterThread, consumerThread};
-				
-			} else {
-				MSMSToDIAConsumer consumer=new MSMSToDIAConsumer(mzmlBlockQueue, stripeFile, parameters);
-
-				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
-				Thread producerThread=new Thread(producer);
-				Thread consumerThread=new Thread(consumer);
-
-				threads=new Thread[] {producerThread, consumerThread};
-			}
-			
-			for (int i=0; i<threads.length; i++) {
-				threads[i].start();
-			}
-
-			try {
-				for (int i=0; i<threads.length; i++) {
-					threads[i].join();
-				}
-
-				Logger.logLine("Finalizing "+diaFile.getName()+" ...");
-				HashMap<Range, Float> dutyCycleMap=new HashMap<Range, Float>();
-				for (Entry<Range, TFloatArrayList> entry : retentionTimesByStripe.entrySet()) {
-					Range range=entry.getKey();
-					TFloatArrayList rts=entry.getValue();
-					float[] deltas=General.firstDerivative(rts.toArray());
-					float averageDutyCycle=General.mean(deltas);
-					dutyCycleMap.put(range, averageDutyCycle);
-				}
-				stripeFile.setRanges(dutyCycleMap);
-
-				stripeFile.saveAsFile(diaFile);
-				stripeFile.close();
-				
-				stripeFile=new StripeFile();
-				stripeFile.openFile(diaFile);
-				Logger.logLine("Finished writing "+diaFile.getName()+"!");
-
-				return stripeFile;
-
-			} catch (InterruptedException ie) {
-				Logger.errorLine("DIA writing interrupted!");
-				Logger.errorException(ie);
-				return null;
-			}
-
 		} catch (IOException ioe) {
 			throw new EncyclopediaException("DIA writing IO error!", ioe);
 		} catch (SQLException sqle) {

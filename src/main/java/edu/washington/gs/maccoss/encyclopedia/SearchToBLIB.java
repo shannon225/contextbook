@@ -85,7 +85,7 @@ public class SearchToBLIB {
 			Logger.timelessLogLine("\t-a\talign between files (default=true)");
 			Logger.timelessLogLine("\t-blib\twrite .BLIB instead of .ELIB (default=false)");
 			Logger.timelessLogLine("Potentially Required Parameters: ");
-			Logger.timelessLogLine("\t-l\toriginal library .ELIB file (required by EncyclopeDIA Export)");
+			Logger.timelessLogLine("\t-l\toriginal searched library .DLIB or .ELIB file (required by EncyclopeDIA Export)");
 			Logger.timelessLogLine("\t-f\toriginal fasta file (required by Pecan/XCorDIA Export)");
 			Logger.timelessLogLine("\t-t\toriginal target file (optional for Pecan/XCorDIA Export)");
 

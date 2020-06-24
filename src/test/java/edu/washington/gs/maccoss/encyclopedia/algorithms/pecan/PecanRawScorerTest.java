@@ -32,6 +32,6 @@ public class PecanRawScorerTest extends TestCase {
 		return new LibraryEntry("", new HashSet<String>(), 1, (byte)1, "", 1, 1, 1, masses, intensities, aaConstants);
 	}
 	public FragmentScan getStripe(double[] masses, float[] intensities) {
-		return new FragmentScan("", "", 1, 1, 0f, 1, 1, masses, intensities);
+		return new FragmentScan("", "", 1, 1, 0, 0f, 1, 1, masses, intensities);
 	}
 }

@@ -15,7 +15,7 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class LibraryComparisonTest {
-	public static void main(String[] args) throws Exception {
+	public static void main2(String[] args) throws Exception {
 		File[] libraryFilesDIA=new File[] {
 				new File("/Users/searleb/Documents/swaney/CMV_CE_prosit_predictions/uniprot-proteome_up000000938.fasta.chymotrypsin.z3_nce27.dlib"),
 				new File("/Users/searleb/Documents/swaney/CMV_CE_prosit_predictions/uniprot-proteome_up000000938.fasta.chymotrypsin.z3_nce30.dlib"),
@@ -134,7 +134,7 @@ public class LibraryComparisonTest {
 		savefile.saveAsFile(new File(kb.getParentFile(), "massive_kb_with_prosit_rts.dlib"));
 		System.out.println("done!");
 	}
-	public static void main2(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 
 //		File[] libraryFilesDDA=new File[] {
@@ -195,11 +195,16 @@ public class LibraryComparisonTest {
 				new File("/Volumes/searle_ssd/malaria/novo_yeast/DIA_analysis/versus_high_phRP/yeast_hpHRP_dda_tpp.dlib"),
 				//new File("/Users/searleb/Downloads/23aug2017_yeast_timecourse_clib.elib")
 		};
+		File[] libraryFileFromPS=new File[] {
+				new File("/Users/searleb/Downloads/myPrositLib_2019.dlib"),
+				new File("/Users/searleb/Downloads/myPrositLib_2020.dlib"),
+		};
 		
-		File[] libraryFiles=libraryFileFromUW;
+		File[] libraryFiles=libraryFileFromPS;
 		
-		File diaFile=new File("/Volumes/searle_ssd/malaria/novo_yeast/DIA_analysis/raw_files/20190206_LUM1_CPBA_EASY04_060_30_SA_90mingrad_80B_DIA_400_1000_8mzol_15k_20IIT_4e5agc_1633-01_01.mzML.elib");
-		diaFile=new File("/Volumes/searle_ssd/malaria/novo_yeast/DIA_analysis/clibs_vs_predicted/uniprot_yeast_25jan2019.fasta.z2_nce33_clib.elib");
+		File comparisonFile=new File("/Volumes/searle_ssd/malaria/novo_yeast/DIA_analysis/raw_files/20190206_LUM1_CPBA_EASY04_060_30_SA_90mingrad_80B_DIA_400_1000_8mzol_15k_20IIT_4e5agc_1633-01_01.mzML.elib");
+		comparisonFile=new File("/Volumes/searle_ssd/malaria/novo_yeast/DIA_analysis/clibs_vs_predicted/uniprot_yeast_25jan2019.fasta.z2_nce33_clib.elib");
+		comparisonFile=new File("/Users/searleb/Downloads/filtered_mustela_final_merged_with_coronavirus_results.dlib");
 		
 		LibraryFile[] libraries=new LibraryFile[libraryFiles.length];
 		for (int i=0; i<libraries.length; i++) {
@@ -208,7 +213,7 @@ public class LibraryComparisonTest {
 		}
 		
 		LibraryFile file=new LibraryFile();
-		file.openFile(diaFile);
+		file.openFile(comparisonFile);
 		ArrayList<LibraryEntry> entries=file.getAllEntries(false, parameters.getAAConstants());
 		
 		System.out.println("Processing "+entries.size());
@@ -220,6 +225,8 @@ public class LibraryComparisonTest {
 
 		int count=0;
 		for (LibraryEntry entry : entries) {
+			entry=AnnotatedLibraryEntry.getAnnotationsOnly(entry, parameters);
+			
 			if (entry.getMassArray().length<6||General.sum(entry.getIntensityArray())<=0.0f) continue;
 			
 			count++;

@@ -15,17 +15,23 @@ public class PrecursorScan implements AcquiredSpectrum, Comparable<PrecursorScan
 	private final double[] massArray;
 	private final float[] intensityArray;
 	private final float tic;
+	private final int fraction; 
+	private final double isolationWindowLower; 
+	private final double isolationWindowUpper;
 
-	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, Float ionInjectionTime, double[] massArray, float[] intensityArray) {
-		this(spectrumName, spectrumIndex, scanStartTime, null, massArray, intensityArray, null);
+	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, int fraction, double isolationWindowLower, double isolationWindowUpper, Float ionInjectionTime, double[] massArray, float[] intensityArray) {
+		this(spectrumName, spectrumIndex, scanStartTime, fraction, isolationWindowLower, isolationWindowUpper, null, massArray, intensityArray, null);
 	}
 
-	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, Float ionInjectionTime, double[] massArray, float[] intensityArray, Float tic) {
+	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, int fraction, double isolationWindowLower, double isolationWindowUpper, Float ionInjectionTime, double[] massArray, float[] intensityArray, Float tic) {
 		this.spectrumName=spectrumName;
 		this.spectrumIndex=spectrumIndex;
 		this.scanStartTime=scanStartTime;
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
+		this.fraction=fraction;
+		this.isolationWindowLower=isolationWindowLower;
+		this.isolationWindowUpper=isolationWindowUpper;
 
 		if (ionInjectionTime==null) {
 			this.ionInjectionTime=-1f;
@@ -37,6 +43,22 @@ public class PrecursorScan implements AcquiredSpectrum, Comparable<PrecursorScan
 			tic = General.sum(intensityArray);
 		}
 		this.tic=tic;
+	}
+	
+	public PrecursorScan shallowClone(int fraction, int spectrumIndex) {
+		return new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, fraction, isolationWindowLower, isolationWindowUpper, ionInjectionTime, massArray, intensityArray, tic);
+	}
+	
+	@Override
+	public int getFraction() {
+		return fraction;
+	}
+	
+	public double getIsolationWindowLower() {
+		return isolationWindowLower;
+	}
+	public double getIsolationWindowUpper() {
+		return isolationWindowUpper;
 	}
 	
 	@Override

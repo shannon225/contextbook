@@ -53,6 +53,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.AcquiredSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -233,9 +234,9 @@ public class DIABrowserPanel extends JPanel {
 	private XYTrace fragmentIntensityHistogram=null;
 
 	public void updateRaw(final File f) {
-		SwingWorkerProgress<ArrayList<Spectrum>> worker=new SwingWorkerProgress<ArrayList<Spectrum>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Raw File") {
+		SwingWorkerProgress<ArrayList<AcquiredSpectrum>> worker=new SwingWorkerProgress<ArrayList<AcquiredSpectrum>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Raw File") {
 			@Override
-			protected ArrayList<Spectrum> doInBackgroundForReal() throws Exception {
+			protected ArrayList<AcquiredSpectrum> doInBackgroundForReal() throws Exception {
 				for (int i=0; i<primaryTabs.getTabCount(); i++) {
 					if (STRUCTURE_TITLE.equals(primaryTabs.getTitleAt(i))) {
 						primaryTabs.removeTabAt(i);
@@ -250,7 +251,7 @@ public class DIABrowserPanel extends JPanel {
 				
 				dia=StripeFileGenerator.getFile(f, parameters);
 				Logger.logLine("Read "+dia.getOriginalFileName()+", ("+dia.getRanges().size()+" total windows)");
-				ArrayList<Spectrum> scans=new ArrayList<Spectrum>();
+				ArrayList<AcquiredSpectrum> scans=new ArrayList<AcquiredSpectrum>();
 				Collection<XYPoint> tics=new ArrayList<XYPoint>();
 				maxTIC=0.0f;
 				
@@ -346,7 +347,7 @@ public class DIABrowserPanel extends JPanel {
 				return scans;
 			}
 			@Override
-			protected void doneForReal(ArrayList<Spectrum> t) {
+			protected void doneForReal(ArrayList<AcquiredSpectrum> t) {
 				model.updateEntries(t);
 				table.addRowSelectionInterval(0, 0);
 			}
@@ -358,9 +359,9 @@ public class DIABrowserPanel extends JPanel {
 		int[] selection=table.getSelectedRows();
 		if (selection.length<=0) return;
 		
-		ArrayList<Spectrum> entries=new ArrayList<Spectrum>();
+		ArrayList<AcquiredSpectrum> entries=new ArrayList<AcquiredSpectrum>();
 		for (int row : selection) {
-			Spectrum entry=model.getSelectedRow(table.convertRowIndexToModel(row));
+			AcquiredSpectrum entry=model.getSelectedRow(table.convertRowIndexToModel(row));
 			entries.add(entry);
 		}
 		resetScan(entries);
@@ -368,7 +369,7 @@ public class DIABrowserPanel extends JPanel {
 		primaryTabs.setSelectedIndex(0);
 	}
 
-	public void resetScan(ArrayList<Spectrum> entries) {
+	public void resetScan(ArrayList<AcquiredSpectrum> entries) {
 		int location=split.getDividerLocation();
 		//System.out.println("location:"+location);
 		if (location<=5) {
@@ -400,7 +401,7 @@ public class DIABrowserPanel extends JPanel {
 				float rt=spectrum.getScanStartTime()/60f;
 				rtRange=new double[] {rt, rt};
 			} else {
-				spectrum=SpectrumUtils.mergeSpectra(entries, parameters.getFragmentTolerance());
+				spectrum=SpectrumUtils.mergeSpectra(downcast(entries), parameters.getFragmentTolerance());
 				float minRT=Float.MAX_VALUE;
 				float maxRT=-Float.MAX_VALUE;
 				for (Spectrum entry : entries) {
@@ -426,5 +427,9 @@ public class DIABrowserPanel extends JPanel {
 		split.setDividerLocation(location);
 	}
 	
-	
+	private ArrayList<Spectrum> downcast(ArrayList<AcquiredSpectrum> spectra) {
+		ArrayList<Spectrum> ret=new ArrayList<>();
+		ret.addAll(spectra);
+		return ret;
+	}
 }

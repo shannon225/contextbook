@@ -27,18 +27,9 @@ public class PrecursorScanMap {
 	}
 	
 	public Peak[] getIsotopePacket(double mz, float rt, byte charge, MassTolerance tolerance) {
-		int index=Arrays.binarySearch(rts, rt);
-		if (index<0) {
-			// insertion point
-			index=-(index+1);
-			
-			// if we're not at the first bin, choose the previous (precursor) scan
-			if (index>0) index--;
-			if (index>=rts.length) index--;
-		}
-		if (index<0) return new Peak[0];
+		if (rts.length==0) return new Peak[0];
 		
-		PrecursorScan scan=precursors.get(index);
+		PrecursorScan scan=getNearestScan(mz, rt);
 		float[] intensities=scan.getIntensityArray();
 		double[] masses=scan.getMassArray();
 		
@@ -63,5 +54,45 @@ public class PrecursorScanMap {
 			isotopeIntensities[i]=new Peak(bestMz, intensity);
 		}
 		return isotopeIntensities;
+	}
+	
+	private PrecursorScan getNearestScan(double mz, float rt) {
+		int index=Arrays.binarySearch(rts, rt);
+		if (index<0) {
+			// insertion point
+			index=-(index+1);
+		}
+		
+		int upperIndex=index;
+		PrecursorScan scanAbove=null;
+		while (upperIndex<rts.length) {
+			scanAbove=precursors.get(upperIndex);
+
+			if (mz>scanAbove.getIsolationWindowLower()&&mz<scanAbove.getIsolationWindowUpper()) {
+				break;
+			} else {
+				upperIndex++;
+			}
+		}
+		float deltaRTAbove=Math.abs(rt-scanAbove.getScanStartTime());
+		
+		int lowerIndex=index-1;
+		PrecursorScan scanBelow=null;
+		while (lowerIndex>=0) {
+			scanBelow=precursors.get(lowerIndex);
+
+			if (mz>scanBelow.getIsolationWindowLower()&&mz<scanBelow.getIsolationWindowUpper()) {
+				break;
+			} else {
+				lowerIndex--;
+			}
+		}
+		float deltaRTBelow=Math.abs(rt-scanBelow.getScanStartTime());
+		
+		if (deltaRTBelow>deltaRTAbove) {
+			return scanAbove;
+		} else {
+			return scanBelow;
+		}
 	}
 }

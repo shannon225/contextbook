@@ -4,22 +4,22 @@ import java.util.ArrayList;
 
 import javax.swing.table.AbstractTableModel;
 
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.AcquiredSpectrum;
 
 public class DIAScanTableModel extends AbstractTableModel {
 	private static final long serialVersionUID=1L;
 	
 	private final String[] columns=new String[] {"#", "Spectrum Name", "Scan Start Time", "Precursor M/Z"};
 
-	ArrayList<Spectrum> entries=new ArrayList<Spectrum>();
+	ArrayList<AcquiredSpectrum> entries=new ArrayList<AcquiredSpectrum>();
 	
-	public void updateEntries(ArrayList<Spectrum> newEntries) {
+	public void updateEntries(ArrayList<AcquiredSpectrum> newEntries) {
 		entries.clear();
 		entries.addAll(newEntries);
 		fireTableDataChanged();
 	}
 	
-	public Spectrum getSelectedRow(int rowIndex) {
+	public AcquiredSpectrum getSelectedRow(int rowIndex) {
 		return entries.get(rowIndex);
 	}
 
@@ -51,7 +51,7 @@ public class DIAScanTableModel extends AbstractTableModel {
 
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
-		Spectrum entry=getSelectedRow(rowIndex);
+		AcquiredSpectrum entry=getSelectedRow(rowIndex);
 		
 		switch (columnIndex) {
 			case 0: return rowIndex;

@@ -230,7 +230,7 @@ public class OverlapDeconvoluter implements Runnable {
 		Pair<double[], float[]> arrays=Peak.toArrays(lowerPeaks);
 		int scanNumber=useNegativeScanNumber?(Integer.MAX_VALUE-center.getSpectrumIndex()):center.getSpectrumIndex();
 		
-		FragmentScan lowerStripe=new FragmentScan(center.getSpectrumName(), center.getPrecursorName(), scanNumber, center.getScanStartTime(), center.getIonInjectionTime(), lowerRange.getStart(), lowerRange.getStop(), arrays.x, arrays.y);
+		FragmentScan lowerStripe=new FragmentScan(center.getSpectrumName(), center.getPrecursorName(), scanNumber, center.getScanStartTime(), center.getFraction(), center.getIonInjectionTime(), lowerRange.getStart(), lowerRange.getStop(), arrays.x, arrays.y);
 		return lowerStripe;
 	}
 

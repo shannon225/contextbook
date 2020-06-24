@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.GridLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
@@ -68,6 +69,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.AcquiredSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
@@ -342,7 +344,7 @@ public class ResultsBrowserPanel extends JPanel {
 			entries.add(unit);
 			
 			try {
-				float rtRange=parameters.getLocalizingModification().isPresent()?dia.getGradientLength()/20.0f:(5f*parameters.getExpectedPeakWidth());
+				float rtRange=parameters.getLocalizingModification().isPresent()?dia.getGradientLength()/20.0f:(2f*parameters.getExpectedPeakWidth());
 				
 				ArrayList<FragmentScan> stripes=dia.getStripes(entry.getPrecursorMZ(), targetRT-rtRange, targetRT+rtRange, false);
 				Collections.sort(stripes);
@@ -359,13 +361,31 @@ public class ResultsBrowserPanel extends JPanel {
 				Collections.sort(traces);
 
 				ArrayList<Spectrum> precursors=PrecursorScan.downcast(dia.getPrecursors(targetRT-rtRange, targetRT+rtRange));
-				ChartPanel precursorChart=Charter.getChart("Retention Time", "Intensity", true, ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), precursors));
+				ArrayList<Spectrum> trimmedPrecursors=new ArrayList<>();
+				for (Spectrum spectrum : precursors) {
+					if (spectrum instanceof AcquiredSpectrum) {
+						AcquiredSpectrum acquiredSpectrum=(AcquiredSpectrum)spectrum;
+
+						if (entry.getPrecursorMZ()>acquiredSpectrum.getIsolationWindowLower()&&entry.getPrecursorMZ()<acquiredSpectrum.getIsolationWindowUpper()) {
+							trimmedPrecursors.add(acquiredSpectrum);
+						}
+					}
+				}
+				precursors=trimmedPrecursors;
 				
+				ChartPanel precursorChart=Charter.getChart("Retention Time", "Intensity", true, ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), precursors));
 				ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
-				JTabbedPane primaryTabs=new JTabbedPane();
-				primaryTabs.add("Fragments", fragmentChart);
-				primaryTabs.add("Precursors", precursorChart);
-				rawSplit.setTopComponent(primaryTabs);
+				
+
+//				JTabbedPane primaryTabs=new JTabbedPane();
+//				primaryTabs.add("Fragments", fragmentChart);
+//				primaryTabs.add("Precursors", precursorChart);
+				
+				JPanel chromatograms=new JPanel(new GridLayout(0, 1));
+				chromatograms.add(precursorChart);
+				chromatograms.add(fragmentChart);
+				
+				rawSplit.setTopComponent(chromatograms);
 				
 				PSMData psmdata=new PSMData(entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), targetRT, entry.getScore(), 1.0f-entry.getScore(), 2*rtRange, false, parameters.getAAConstants());
 				PeptideQuantExtractorTask quantTask=new PeptideQuantExtractorTask(dia.getOriginalFileName(), psmdata, Optional.empty(), nullableLocalizer, stripes, parameters, false);

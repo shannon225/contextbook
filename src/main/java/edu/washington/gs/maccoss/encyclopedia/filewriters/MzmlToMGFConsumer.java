@@ -86,7 +86,7 @@ public class MzmlToMGFConsumer implements Runnable {
 		Logger.logLine("Indexing "+mzMLFile.getName()+" ...");
 
 		BlockingQueue<MSMSBlock> mzmlBlockQueue=new ArrayBlockingQueue<MSMSBlock>(1);
-		MzmlSAXToMSMSProducer producer=new MzmlSAXToMSMSProducer(mzMLFile, mzmlBlockQueue, parameters);
+		MzmlSAXToMSMSProducer producer=new MzmlSAXToMSMSProducer(mzMLFile, 0, mzmlBlockQueue, parameters);
 
 		Thread[] threads;
 		MzmlToMGFConsumer consumer=new MzmlToMGFConsumer(mzmlBlockQueue, mgfFile);

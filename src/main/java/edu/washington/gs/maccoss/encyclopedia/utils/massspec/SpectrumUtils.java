@@ -56,18 +56,30 @@ public class SpectrumUtils {
 			if (maxMz<mz) maxMz=mz;
 		}
 		float[] bins=new float[(int)Math.ceil(maxMz/binWidth)];
-		if (bins.length==0) return  new PrecursorScan("Combined", 0, 0.0f, null, new double[0], new float[0], 0.0f);
+		if (bins.length==0) return  new PrecursorScan("Combined", 0, 0.0f, 0, 0.0, Double.MAX_VALUE, null, new double[0], new float[0], 0.0f);
 
 		float totalIIT=0.0f;
 		float minRT=Float.MAX_VALUE;
+		
+		boolean gotAcquiredData=false;
 		float tic=0f;
+		int minFraction=Integer.MAX_VALUE;
+		double isolationWindowLower=Double.MAX_VALUE;
+		double isolationWindowUpper=0.0;
+		
 		for (Spectrum spectrum : spectra) {
 			if (spectrum.getScanStartTime()<minRT) minRT=spectrum.getScanStartTime();
 			if (spectrum instanceof AcquiredSpectrum) {
-				float iit=((AcquiredSpectrum)spectrum).getIonInjectionTime();
+				gotAcquiredData=true;
+				AcquiredSpectrum acquiredSpectrum = (AcquiredSpectrum)spectrum;
+				float iit=acquiredSpectrum.getIonInjectionTime();
 				if (iit>0) {
 					totalIIT+=iit;
 				}
+
+				if (acquiredSpectrum.getFraction()<minFraction) minFraction=acquiredSpectrum.getFraction();
+				if (acquiredSpectrum.getIsolationWindowLower()<isolationWindowLower) isolationWindowLower=acquiredSpectrum.getIsolationWindowLower();
+				if (acquiredSpectrum.getIsolationWindowUpper()<isolationWindowUpper) isolationWindowUpper=acquiredSpectrum.getIsolationWindowUpper();
 			}
 			
 			double[] mz=spectrum.getMassArray();
@@ -81,6 +93,12 @@ public class SpectrumUtils {
 			}
 			tic += spectrum.getTIC();
 		}
+		
+		if (!gotAcquiredData) {
+			minFraction=0;
+			isolationWindowLower=0.0;
+			isolationWindowUpper=Double.MAX_VALUE;
+		}
 
 		TDoubleArrayList masses=new TDoubleArrayList();
 		TFloatArrayList intensities=new TFloatArrayList();
@@ -91,7 +109,7 @@ public class SpectrumUtils {
 			}
 		}
 		
-		return new PrecursorScan("Combined", 0, minRT, totalIIT, masses.toArray(), intensities.toArray(), tic);
+		return new PrecursorScan("Combined", 0, minRT, minFraction, isolationWindowLower, isolationWindowUpper, totalIIT, masses.toArray(), intensities.toArray(), tic);
 	}
 	public static Spectrum accurateMergeSpectra(ArrayList<Spectrum> spectra, MassTolerance tolerance) {
 		TDoubleArrayList masses=new TDoubleArrayList();
@@ -99,14 +117,26 @@ public class SpectrumUtils {
 
 		float totalIIT=0.0f;
 		float minRT=Float.MAX_VALUE;
+		
+		boolean gotAcquiredData=false;
 		float tic=0f;
+		int minFraction=Integer.MAX_VALUE;
+		double isolationWindowLower=Double.MAX_VALUE;
+		double isolationWindowUpper=0.0;
+		
 		for (Spectrum spectrum : spectra) {
 			if (spectrum.getScanStartTime()<minRT) minRT=spectrum.getScanStartTime();
 			if (spectrum instanceof AcquiredSpectrum) {
-				float iit=((AcquiredSpectrum)spectrum).getIonInjectionTime();
+				gotAcquiredData=true;
+				AcquiredSpectrum acquiredSpectrum = (AcquiredSpectrum)spectrum;
+				float iit=acquiredSpectrum.getIonInjectionTime();
 				if (iit>0) {
 					totalIIT+=iit;
 				}
+
+				if (acquiredSpectrum.getFraction()<minFraction) minFraction=acquiredSpectrum.getFraction();
+				if (acquiredSpectrum.getIsolationWindowLower()<isolationWindowLower) isolationWindowLower=acquiredSpectrum.getIsolationWindowLower();
+				if (acquiredSpectrum.getIsolationWindowUpper()<isolationWindowUpper) isolationWindowUpper=acquiredSpectrum.getIsolationWindowUpper();
 			}
 			
 			double[] mz=spectrum.getMassArray();
@@ -124,7 +154,14 @@ public class SpectrumUtils {
 			}
 			tic += spectrum.getTIC();
 		}
-		return new PrecursorScan("Combined", 0, minRT, totalIIT, masses.toArray(), intensities.toArray(), tic);
+		
+		if (!gotAcquiredData) {
+			minFraction=0;
+			isolationWindowLower=0.0;
+			isolationWindowUpper=Double.MAX_VALUE;
+		}
+		
+		return new PrecursorScan("Combined", 0, minRT, minFraction, isolationWindowLower, isolationWindowUpper, totalIIT, masses.toArray(), intensities.toArray(), tic);
 	}
 
 	public static int getIndex(TDoubleArrayList peaks, double target, MassTolerance tolerance) {

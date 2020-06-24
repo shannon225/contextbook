@@ -71,7 +71,9 @@ public class Spectra3dPanelTest {
 				truncatedMasses.add(masses[i]);
 			}
 			if (truncatedMasses.size()>0) {
-				truncatedStripes.add(new PrecursorScan(precursorScan.getSpectrumName(), precursorScan.getSpectrumIndex(), precursorScan.getScanStartTime(), precursorScan.getIonInjectionTime(), truncatedMasses.toArray(), truncatedIntensities.toArray()));
+				truncatedStripes.add(new PrecursorScan(precursorScan.getSpectrumName(), precursorScan.getSpectrumIndex(), precursorScan.getScanStartTime(), 
+						precursorScan.getFraction(), precursorScan.getIsolationWindowLower(), precursorScan.getIsolationWindowUpper(), 
+						precursorScan.getIonInjectionTime(), truncatedMasses.toArray(), truncatedIntensities.toArray()));
 			}
 		}
 		Collections.sort(peaks, new PeakIntensityComparator());
