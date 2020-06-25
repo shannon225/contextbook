@@ -74,7 +74,7 @@ public class PrecursorScanMap {
 				upperIndex++;
 			}
 		}
-		float deltaRTAbove=Math.abs(rt-scanAbove.getScanStartTime());
+		float deltaRTAbove=scanAbove==null?Float.MAX_VALUE:Math.abs(rt-scanAbove.getScanStartTime());
 		
 		int lowerIndex=index-1;
 		PrecursorScan scanBelow=null;
@@ -87,7 +87,7 @@ public class PrecursorScanMap {
 				lowerIndex--;
 			}
 		}
-		float deltaRTBelow=Math.abs(rt-scanBelow.getScanStartTime());
+		float deltaRTBelow=scanBelow==null?Float.MAX_VALUE:Math.abs(rt-scanBelow.getScanStartTime());
 		
 		if (deltaRTBelow>deltaRTAbove) {
 			return scanAbove;
