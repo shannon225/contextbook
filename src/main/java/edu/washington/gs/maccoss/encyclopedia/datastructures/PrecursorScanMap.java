@@ -30,6 +30,8 @@ public class PrecursorScanMap {
 		if (rts.length==0) return new Peak[0];
 		
 		PrecursorScan scan=getNearestScan(mz, rt);
+		if (scan==null) return new Peak[0];
+		
 		float[] intensities=scan.getIntensityArray();
 		double[] masses=scan.getMassArray();
 		
