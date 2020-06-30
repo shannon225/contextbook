@@ -31,7 +31,7 @@ public class PeptideUtils {
 		FragmentationModel model=PeptideUtils.getPeptideModel(peptide, parameters.getAAConstants());
 		double[] primaryIons=model.getPrimaryIons(parameters.getFragType(), charge, false);
 		
-		String decoy=reverse(peptide, parameters.getEnzyme(), parameters.getAAConstants());
+		String decoy=reverse(peptide, parameters.getAAConstants());
 		int attempts=0;
 		int maxTries=10;
 		while (attempts<maxTries) {
@@ -60,7 +60,7 @@ public class PeptideUtils {
 	}
 	
 	public static String getDecoy(String peptide, HashSet<String> backgroundProteome, SearchParameters parameters) {
-		String decoy=reverse(peptide, parameters.getEnzyme(), parameters.getAAConstants());
+		String decoy=reverse(peptide, parameters.getAAConstants());
 		int attempts=0;
 		int maxTries=3;
 		while (attempts<maxTries) {
@@ -74,26 +74,19 @@ public class PeptideUtils {
 		return decoy;
 	}
 
-	public static String reverse(String peptide, DigestionEnzyme enzyme, AminoAcidConstants aminoAcidConstants) {
+	public static String reverse(String peptide, AminoAcidConstants aminoAcidConstants) {
 		String[] aas=getAAs(peptide, aminoAcidConstants);
-		reverse(aas, enzyme);
+		reverse(aas);
 		return getSequence(aas);
 	}
 	
 	/**
 	 * keeps termini in place
 	 * @param aas
-	 * @param enzyme
 	 */
-	public static void reverse(String[] aas, DigestionEnzyme enzyme) {
-		int start=0;
-		//if (enzyme.isTargetPostSite(aas[start].charAt(0))) {
-			start++;
-		//}
-		int stop=aas.length-1;
-		//if (enzyme.isTargetPreSite(aas[stop].charAt(0))) {
-			stop--;
-		//}
+	public static void reverse(String[] aas) {
+		int start=1;
+		int stop=aas.length-2;
 		
 		while (start<=stop) {
 			String c=aas[start];

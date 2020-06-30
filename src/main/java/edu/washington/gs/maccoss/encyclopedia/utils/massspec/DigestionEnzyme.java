@@ -267,7 +267,7 @@ public final class DigestionEnzyme {
 				stop++;
 			}
 			String peptide=sequence.substring(start, stop+1);
-			sb.append(PeptideUtils.reverse(peptide, this, aminoAcidConstants));
+			sb.append(PeptideUtils.reverse(peptide, aminoAcidConstants));
 			start=stop+1;
 		}
 		return sb.toString();

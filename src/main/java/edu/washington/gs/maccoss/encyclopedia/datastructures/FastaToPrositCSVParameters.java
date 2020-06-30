@@ -13,10 +13,10 @@ public class FastaToPrositCSVParameters {
 	public static final byte MIN_DEFAULT_CHARGE = 1;
 	public static final byte DEFAULT_DEFAULT_CHARGE = 3;
 
-	public static final int MIN_CHARGE = 1;
-	public static final int MAX_CHARGE = 6;
-	public static final int DEFAULT_MIN_CHARGE = 2;
-	public static final int DEFAULT_MAX_CHARGE = 3;
+	public static final byte MIN_CHARGE = 1;
+	public static final byte MAX_CHARGE = 6;
+	public static final byte DEFAULT_MIN_CHARGE = 2;
+	public static final byte DEFAULT_MAX_CHARGE = 3;
 
 	public static final int MIN_MAX_MISSED_CLEAVAGE = 0;
 	public static final int MAX_MAX_MISSED_CLEAVAGE = 3;
@@ -32,14 +32,14 @@ public class FastaToPrositCSVParameters {
 
 	protected final int defaultNCE;
 	protected final byte defaultCharge;
-	protected final int minCharge;
-	protected final int maxCharge;
+	protected final byte minCharge;
+	protected final byte maxCharge;
 	protected final int maxMissedCleavage;
 	protected final double minMz;
 	protected final double maxMz;
 	protected final DigestionEnzyme enzyme;
 
-	public FastaToPrositCSVParameters(int defaultNCE, byte defaultCharge, int minCharge, int maxCharge,
+	public FastaToPrositCSVParameters(int defaultNCE, byte defaultCharge, byte minCharge, byte maxCharge,
                                       int maxMissedCleavage, double minMz, double maxMz, DigestionEnzyme enzyme) {
 		this.defaultNCE = defaultNCE;
 		this.defaultCharge = defaultCharge;
@@ -85,11 +85,11 @@ public class FastaToPrositCSVParameters {
 		return defaultCharge;
 	}
 
-	public int getMinCharge() {
+	public byte getMinCharge() {
 		return minCharge;
 	}
 
-	public int getMaxCharge() {
+	public byte getMaxCharge() {
 		return maxCharge;
 	}
 

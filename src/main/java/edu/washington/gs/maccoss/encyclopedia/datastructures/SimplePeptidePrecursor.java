@@ -36,4 +36,17 @@ public class SimplePeptidePrecursor implements PeptidePrecursor {
 		if (c!=0) return c;
 		return precursorCharge-o.getPrecursorCharge();
 	}
+	
+	@Override
+	public int hashCode() {
+		return getPeptideModSeq().hashCode()+precursorCharge;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof PeptidePrecursor) {
+			return compareTo((PeptidePrecursor)obj)==0;
+		}
+		return false;
+	}
 }

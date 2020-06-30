@@ -523,7 +523,7 @@ public class SearchPanelUtilities {
 		dialog.setVisible(true);
 	}
 	
-	public static void convertForProsit(Component root) {
+	public static void convertFastaForProsit(Component root) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		final JDialog dialog=new JDialog(frame, "Convert FASTA to Prosit CSV", true);
 		
@@ -573,8 +573,8 @@ public class SearchPanelUtilities {
 				final File fastaFile=fastaFileChooser.getFile();
 				byte defaultNCE=((Number)defaultNCESpinner.getValue()).byteValue();
 				byte defaultCharge=((Number)defaultChargeSpinner.getValue()).byteValue();
-				int minCharge=((Number)minChargeSpinner.getValue()).byteValue();
-				int maxCharge=((Number)maxChargeSpinner.getValue()).byteValue();
+				byte minCharge=((Number)minChargeSpinner.getValue()).byteValue();
+				byte maxCharge=((Number)maxChargeSpinner.getValue()).byteValue();
 				int maxMissedCleavages=((Number)maxMissedCleavageSpinner.getValue()).byteValue();
 				double minimumMz=((Number)minMzSpinner.getValue()).doubleValue();
 				double maximumMz=((Number)maxMzSpinner.getValue()).doubleValue();
@@ -614,7 +614,7 @@ public class SearchPanelUtilities {
 		
 		JPanel mainpane=new JPanel(new BorderLayout());
 		final JLabel text=new JLabel(AboutDialog.citationIcon);
-		text.setText("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\">"+"If you use this feature, please cite <a href=\"https://www.nature.com/articles/s41467-020-15346-1\">Searle et al, 2020</a>");
+		text.setText("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\">"+"This function will <i>in silico</i> digest peptides from your FASTA and create an input file for Prosit. If you use this feature, please cite <a href=\"https://www.nature.com/articles/s41467-020-15346-1\">Searle et al, 2020</a>.");
 		text.setBackground(Color.WHITE);
 		text.setOpaque(true);
 		text.addMouseListener(new MouseListener() {
@@ -653,6 +653,111 @@ public class SearchPanelUtilities {
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.pack(); 
 		dialog.setSize(500, 350);
+		dialog.setVisible(true);
+	}
+	
+	public static void convertLibraryForProsit(Component root) {
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+		final JDialog dialog=new JDialog(frame, "Convert Library to Prosit CSV", true);
+		
+		
+		final FileChooserPanel libraryFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".dlib", ".elib"), true);
+
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(libraryFileChooser);
+
+		final SpinnerModel defaultNCESpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_DEFAULT_NCE, FastaToPrositCSVParameters.MIN_DEFAULT_NCE, FastaToPrositCSVParameters.MAX_DEFAULT_NCE, 1);
+		final SpinnerModel defaultChargeSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_DEFAULT_CHARGE, FastaToPrositCSVParameters.MIN_DEFAULT_CHARGE, FastaToPrositCSVParameters.MAX_DEFAULT_CHARGE, 1);
+		
+		options.add(new LabeledComponent("Default NCE", new JSpinner(defaultNCESpinner)));
+		options.add(new LabeledComponent("Default Charge", new JSpinner(defaultChargeSpinner)));
+		
+		JPanel buttons=new JPanel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JButton okButton=new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final File libraryFile=libraryFileChooser.getFile();
+				byte defaultNCE=((Number)defaultNCESpinner.getValue()).byteValue();
+				byte defaultCharge=((Number)defaultChargeSpinner.getValue()).byteValue();
+				
+				if (libraryFile!=null&&libraryFile.exists()) {
+					dialog.setVisible(false);
+					dialog.dispose();
+					
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Creating Prosit CSV File") {
+						@Override
+						protected Nothing doInBackgroundForReal() throws Exception {
+							LibraryFile library=new LibraryFile();
+							library.openFile(libraryFile);
+							PrositCSVWriter.writeCSV(library, defaultNCE, defaultCharge, false);
+							return Nothing.NOTHING;
+						}
+
+						@Override
+						protected void doneForReal(Nothing t) {
+						}
+					};
+					worker.execute();
+				} else {
+					JOptionPane.showMessageDialog(frame, "You must specify a FASTA file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+				}
+			}
+		});
+		buttons.add(okButton);
+		JButton cancelButton=new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+			}
+		});
+		buttons.add(cancelButton);
+		
+		JPanel mainpane=new JPanel(new BorderLayout());
+		final JLabel text=new JLabel(AboutDialog.citationIcon);
+		text.setText("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\">"+"This function will extract out all peptides and charge states from an EncyclopeDIA library (.DLIB or .ELIB) and create an input file for Prosit. If you use this feature, please cite <a href=\"https://www.nature.com/articles/s41467-020-15346-1\">Searle et al, 2020</a>.");
+		text.setBackground(Color.WHITE);
+		text.setOpaque(true);
+		text.addMouseListener(new MouseListener() {
+			public void mouseClicked(MouseEvent e) {
+			    try {
+			         
+			        Desktop.getDesktop().browse(new URI("https://www.nature.com/articles/s41467-020-15346-1"));
+			         
+			    } catch (IOException | URISyntaxException e1) {
+			        e1.printStackTrace();
+			    }
+			}
+			@Override
+			public void mouseReleased(MouseEvent e) {
+			}
+			
+			@Override
+			public void mousePressed(MouseEvent e) {
+			}
+			
+			@Override
+			public void mouseExited(MouseEvent e) {
+			}
+			
+			@Override
+			public void mouseEntered(MouseEvent e) {
+			}
+		});
+
+		mainpane.add(text, BorderLayout.NORTH);
+		mainpane.add(options, BorderLayout.CENTER);
+		mainpane.add(buttons, BorderLayout.SOUTH);
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		
+		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(500, 250);
 		dialog.setVisible(true);
 	}
 	

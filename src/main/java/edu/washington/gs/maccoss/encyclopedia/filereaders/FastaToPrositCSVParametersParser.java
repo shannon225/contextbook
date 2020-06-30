@@ -15,8 +15,8 @@ public class FastaToPrositCSVParametersParser {
 	public static FastaToPrositCSVParameters parseParameters(HashMap<String, String> parameters) {
 		final int defaultNCE;
 		final byte defaultCharge;
-		final int minCharge;
-		final int maxCharge;
+		final byte minCharge;
+		final byte maxCharge;
 		final int maxMissedCleavage;
 		final double minMz;
 		final double maxMz;
@@ -24,8 +24,8 @@ public class FastaToPrositCSVParametersParser {
 
 		defaultNCE= ParsingUtils.getInteger("-defaultNCE", parameters, FastaToPrositCSVParameters.DEFAULT_DEFAULT_NCE);
 		defaultCharge= ParsingUtils.getByte("-defaultCharge", parameters, FastaToPrositCSVParameters.DEFAULT_DEFAULT_CHARGE);
-		minCharge= ParsingUtils.getInteger("-minCharge", parameters, FastaToPrositCSVParameters.DEFAULT_MIN_CHARGE);
-		maxCharge= ParsingUtils.getInteger("-maxCharge", parameters, FastaToPrositCSVParameters.DEFAULT_MAX_CHARGE);
+		minCharge= ParsingUtils.getByte("-minCharge", parameters, FastaToPrositCSVParameters.DEFAULT_MIN_CHARGE);
+		maxCharge= ParsingUtils.getByte("-maxCharge", parameters, FastaToPrositCSVParameters.DEFAULT_MAX_CHARGE);
 		maxMissedCleavage= ParsingUtils.getInteger("-maxMissedCleavage", parameters, FastaToPrositCSVParameters.DEFAULT_MAX_MISSED_CLEAVAGE);
 		minMz= ParsingUtils.getDouble("-minMz", parameters, FastaToPrositCSVParameters.DEFAULT_MIN_MZ);
 		maxMz= ParsingUtils.getDouble("-maxMz", parameters, FastaToPrositCSVParameters.DEFAULT_MAX_MZ);

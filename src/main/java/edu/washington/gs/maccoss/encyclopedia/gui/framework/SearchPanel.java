@@ -388,10 +388,19 @@ public class SearchPanel extends JPanel {
 		fastaToProsit.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.convertForProsit(SearchPanel.this);
+				SearchPanelUtilities.convertFastaForProsit(SearchPanel.this);
 			}
 		});
 		convertMenu.add(fastaToProsit);
+		
+		JMenuItem libraryToProsit=new JMenuItem("Create Prosit CSV from Library", convertDBIcon);
+		libraryToProsit.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertLibraryForProsit(SearchPanel.this);
+			}
+		});
+		convertMenu.add(libraryToProsit);
 		
 		convertMenu.addSeparator();
 		

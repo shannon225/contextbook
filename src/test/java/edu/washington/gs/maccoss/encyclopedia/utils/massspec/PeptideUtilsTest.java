@@ -43,7 +43,7 @@ public class PeptideUtilsTest extends TestCase {
 	}
 
 	public void testReverse() {
-		String s=PeptideUtils.reverse("ABC[+57]DEFGHIJK", PARAMETERS.getEnzyme(), PARAMETERS.getAAConstants());
+		String s=PeptideUtils.reverse("ABC[+57]DEFGHIJK", PARAMETERS.getAAConstants());
 		assertEquals("AJIHGFEDC[+57.0214635]BK", s);
 	}
 	

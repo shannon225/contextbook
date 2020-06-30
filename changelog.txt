@@ -1,6 +1,7 @@
 EncyclopeDIA changelog for user-facing changes:
 
 encyclopedia-0.9.6-SNAPSHOT
+ - Feature: added ability to create Prosit input files from EncyclopeDIA (DLIB/ELIB) libraries using only the extracted peptides and charge states
 
 encyclopedia-0.9.5 (Jun 5, 2020)
  - Feature: support for phospho windowing boundaries in the Window Scheme Wizard
