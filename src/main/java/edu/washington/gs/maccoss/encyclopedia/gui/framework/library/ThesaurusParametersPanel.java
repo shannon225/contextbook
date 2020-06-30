@@ -89,7 +89,6 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 
 	private final FileChooserPanel backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta"), true);
 	private final FileChooserPanel libraryFileChooser;
-	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {DataAcquisitionType.toName(DataAcquisitionType.OVERLAPPING_DIA), DataAcquisitionType.toName(DataAcquisitionType.DIA)});
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "Pepsin A"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.HCD), FragmentationType.toName(FragmentationType.ETD)});
 	private final JComboBox<String> percolatorVersion=new JComboBox<String>(new String[] {PercolatorExecutor.V3_01, PercolatorExecutor.V2_10});
@@ -129,7 +128,6 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 		options.add(backgroundFasta);
 		options.add(new LabeledComponent("Modification Type", modificationType));
 		options.add(new LabeledComponent("Localization Strategy", searchBreadthType));
-		options.add(new LabeledComponent("Data Acquisition Type", acquisition));
 		options.add(new LabeledComponent("Enzyme", enzyme));
 		options.add(new LabeledComponent("Fragmentation", fragType));
 		options.add(new LabeledComponent("Precursor Mass Tolerance", precursorTolerance));
@@ -223,7 +221,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 	}
 
 	public ThesaurusSearchParameters getParameters() {
-		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.getAcquisitionType((String)acquisition.getSelectedItem());
+		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.DIA;
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
@@ -294,7 +292,6 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 			if (fastaFile.exists()) backgroundFasta.update(fastaFile);
 		}
 		
-		acquisition.setSelectedItem(DataAcquisitionType.toName(params.getDataAcquisitionType()));
 		enzyme.setSelectedItem(params.getEnzyme().getName());
 		fragType.setSelectedItem(FragmentationType.toName(params.getFragType()));
 		

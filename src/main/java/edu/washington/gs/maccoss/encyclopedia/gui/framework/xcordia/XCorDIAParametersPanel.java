@@ -76,7 +76,6 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	private final FileChooserPanel backgroundFasta;
 	private final FileChooserPanel targetFasta;
 	private final FileChooserPanel libraryFileChooser;
-	private final JComboBox<String> acquisition=new JComboBox<String>(new String[] {DataAcquisitionType.toName(DataAcquisitionType.OVERLAPPING_DIA), DataAcquisitionType.toName(DataAcquisitionType.DIA)});
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Glu-C", "Lys-C", "Arg-C", "Asp-N", "Lys-N", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
 	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "C+125 (NEM)", "None"});
 	private final JComboBox<String> variable=new JComboBox<String>(VARIABLE_MODIFICATION_ITEMS);
@@ -135,7 +134,6 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		libraryFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), false);
 		options.add(libraryFileChooser);
 		options.add(new LabeledComponent("Target/Decoy Approach", numberOfExtraDecoyLibraries));
-		options.add(new LabeledComponent("Data Acquisition Type", acquisition));
 		options.add(new LabeledComponent("Precursor Window Width (blank=extract from file)", precursorWindowWidth));
 		options.add(new LabeledComponent("Enzyme", enzyme));
 		options.add(new LabeledComponent("Fixed", fixed));
@@ -261,7 +259,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	}
 
 	public XCordiaSearchParameters getParameters() {
-		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.getAcquisitionType((String)acquisition.getSelectedItem());
+		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.DIA;
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
 		MassTolerance precursorPPMValue=(MassTolerance)precursorTolerance.getSelectedItem();
@@ -326,7 +324,6 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 			File targetFile=new File(targetFileName);
 			if (targetFile.exists()) targetFasta.update(targetFile);
 		}
-		acquisition.setSelectedItem(DataAcquisitionType.toName(params.getDataAcquisitionType()));
 		enzyme.setSelectedItem(params.getEnzyme().getName());
 		fixed.setSelectedItem(AminoAcidConstants.toName(params.getAAConstants()));
 		fragType.setSelectedItem(FragmentationType.toName(params.getFragType()));
