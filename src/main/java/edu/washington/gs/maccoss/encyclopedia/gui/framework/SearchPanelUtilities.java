@@ -561,7 +561,7 @@ public class SearchPanelUtilities {
 		mzRange.add(new JSpinner(maxMzSpinner));
 		options.add(new LabeledComponent("m/z range", mzRange));
 
-		options.add(new LabeledComponent("Default NCE", new JSpinner(defaultNCESpinner)));
+		options.add(new LabeledComponent("Default NCE", "NCE is the Normalized Collision Energy for Thermo Fusion-class instruments. If you use QEs, add 6 to your NCE. If you use ToFs, use NCE=33.", new JSpinner(defaultNCESpinner)));
 		options.add(new LabeledComponent("Default Charge", new JSpinner(defaultChargeSpinner)));
 		
 		JPanel buttons=new JPanel();
@@ -670,7 +670,7 @@ public class SearchPanelUtilities {
 		final SpinnerModel defaultNCESpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_DEFAULT_NCE, FastaToPrositCSVParameters.MIN_DEFAULT_NCE, FastaToPrositCSVParameters.MAX_DEFAULT_NCE, 1);
 		final SpinnerModel defaultChargeSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_DEFAULT_CHARGE, FastaToPrositCSVParameters.MIN_DEFAULT_CHARGE, FastaToPrositCSVParameters.MAX_DEFAULT_CHARGE, 1);
 		
-		options.add(new LabeledComponent("Default NCE", new JSpinner(defaultNCESpinner)));
+		options.add(new LabeledComponent("Default NCE", "NCE is the Normalized Collision Energy for Thermo Fusion-class instruments. If you use QEs, add 6 to your NCE. If you use ToFs, use NCE=33.", new JSpinner(defaultNCESpinner)));
 		options.add(new LabeledComponent("Default Charge", new JSpinner(defaultChargeSpinner)));
 		
 		JPanel buttons=new JPanel();

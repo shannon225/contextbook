@@ -178,8 +178,8 @@ public class PrositCSVWriter {
 	private static String checkCSVName(String csvFileName, File fasta, DigestionEnzyme enzyme, int defaultNCE, byte defaultCharge) {
 		String fileName;
 		if (null==csvFileName||StringUtils.isBlank(csvFileName)) {
-			String enzymeText=enzyme==null?"":enzyme.getPercolatorName();
-			fileName = fasta.getAbsolutePath() + "." + enzymeText + ".z" + defaultCharge + "_nce" + defaultNCE + ".csv";
+			String enzymeText=enzyme==null?"":("."+enzyme.getPercolatorName());
+			fileName = fasta.getAbsolutePath() + enzymeText + ".z" + defaultCharge + "_nce" + defaultNCE + ".csv";
 		} else {
 			fileName = csvFileName;
 		}
@@ -187,17 +187,38 @@ public class PrositCSVWriter {
 	}
 
 	private static int writePrositFile(String fileName, int defaultNCE, byte defaultCharge, boolean addDecoys, HashSet<PeptidePrecursor> allPeptides) throws FileNotFoundException {
-		AminoAcidConstants constants = new AminoAcidConstants();
+		AminoAcidConstants constants = new AminoAcidConstants(); // does not support PTMs
 		PrintWriter writer=new PrintWriter(fileName);
 		int total=0;
+		HashSet<PeptidePrecursor> writtenPeptides=new HashSet<>();
+		
 		writer.println("modified_sequence,collision_energy,precursor_charge");
 		for (PeptidePrecursor peptidePrecursor : allPeptides) {
-			total++;
-			writer.println(peptidePrecursor.getPeptideModSeq()+","+convertNCE(defaultNCE, peptidePrecursor.getPrecursorCharge(), defaultCharge)+","+peptidePrecursor.getPrecursorCharge());
-			if (addDecoys) {
-				String reverse=PeptideUtils.reverse(peptidePrecursor.getPeptideModSeq(), constants);
-				writer.println(reverse+","+convertNCE(defaultNCE, peptidePrecursor.getPrecursorCharge(), defaultCharge)+","+peptidePrecursor.getPrecursorCharge());
+			
+			// Prosit only supports unmodified peptides:
+			String seq = peptidePrecursor.getPeptideSeq();
+			byte precursorCharge = peptidePrecursor.getPrecursorCharge();
+			PeptidePrecursor unmodified=new SimplePeptidePrecursor(seq, precursorCharge, constants);
+			if (writtenPeptides.contains(unmodified)) {
+				continue;
 			}
+			
+			// remove peptides that don't match PROSIT limitations:
+			if (seq.indexOf('B')>=0||seq.indexOf('J')>=0||seq.indexOf('O')>=0||seq.indexOf('U')>=0||seq.indexOf('X')>=0||seq.indexOf('Z')>=0||seq.indexOf('*')>=0) {
+				continue;
+			}
+			if (seq.length()<7||seq.length()>30) {
+				continue;
+			}
+			
+			writtenPeptides.add(unmodified);
+			
+			writer.println(seq+","+convertNCE(defaultNCE, precursorCharge, defaultCharge)+","+precursorCharge);
+			if (addDecoys) {
+				String reverse=PeptideUtils.reverse(seq, constants);
+				writer.println(reverse+","+convertNCE(defaultNCE, precursorCharge, defaultCharge)+","+precursorCharge);
+			}
+			total++;
 		}
 		writer.close();
 		return total;

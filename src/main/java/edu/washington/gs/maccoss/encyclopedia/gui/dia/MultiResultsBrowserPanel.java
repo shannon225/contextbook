@@ -87,6 +87,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 	private final JTable peptideTable;
 	private final TableRowSorter<TableModel> peptideRowSorter;
 	private final JTextField jtfFilter;
+	private final JCheckBox jtfNotFilter=new JCheckBox("NOT");
 	private final MultiPeptideResultsTableModel peptideModel;
 	private final SearchParameters parameters;
 	private final ChartPanel barChart;
@@ -131,29 +132,24 @@ public class MultiResultsBrowserPanel extends JPanel {
 		jtfFilter.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void insertUpdate(DocumentEvent e) {
-				String text=jtfFilter.getText();
-
-				if (text.trim().length()==0) {
-					peptideRowSorter.setRowFilter(null);
-				} else {
-					peptideRowSorter.setRowFilter(RowFilter.regexFilter("(?i)"+text));
-				}
+				updateFilter();
 			}
 
 			@Override
 			public void removeUpdate(DocumentEvent e) {
-				String text=jtfFilter.getText();
-
-				if (text.trim().length()==0) {
-					peptideRowSorter.setRowFilter(null);
-				} else {
-					peptideRowSorter.setRowFilter(RowFilter.regexFilter("(?i)"+text));
-				}
+				updateFilter();
 			}
 
 			@Override
 			public void changedUpdate(DocumentEvent e) {
 				throw new UnsupportedOperationException("Not supported yet.");
+			}
+		});
+		jtfNotFilter.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updateFilter();
 			}
 		});
 
@@ -212,6 +208,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 		JPanel searchPanel=new JPanel(new BorderLayout());
 		searchPanel.add(new JLabel("Search:"), BorderLayout.WEST);
 		searchPanel.add(jtfFilter, BorderLayout.CENTER);
+		searchPanel.add(jtfNotFilter, BorderLayout.EAST);
 
 		JPanel left=new JPanel(new BorderLayout());
 		left.add(options, BorderLayout.NORTH);
@@ -226,6 +223,18 @@ public class MultiResultsBrowserPanel extends JPanel {
 
 		setLayout(new BorderLayout());
 		add(split, BorderLayout.CENTER);
+	}
+
+	private void updateFilter() {
+		String text=jtfFilter.getText();
+
+		if (text.trim().length()==0) {
+			peptideRowSorter.setRowFilter(null);
+		} else if (jtfNotFilter.isSelected()) {
+			peptideRowSorter.setRowFilter(RowFilter.notFilter(RowFilter.regexFilter("(?i)"+text)));
+		} else {
+			peptideRowSorter.setRowFilter(RowFilter.regexFilter("(?i)"+text));
+		}
 	}
 
 	public ChartPanel getBarChart(String[] categories, float[] intensities) {
