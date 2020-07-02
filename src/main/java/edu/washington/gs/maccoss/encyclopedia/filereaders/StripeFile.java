@@ -385,7 +385,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		}
 	}
 
-	private Connection getConnection() throws IOException, SQLException {
+	public Connection getConnection() throws IOException, SQLException {
 		if (isOpenFileInPlace && !userFile.exists()){
 			throw new IllegalStateException("No file to obtain a connection to!");
 		}

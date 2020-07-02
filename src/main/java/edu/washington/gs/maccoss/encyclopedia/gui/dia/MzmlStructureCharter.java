@@ -3,7 +3,10 @@ package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -17,22 +20,88 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlScanRangeTrackerSAXProducer;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class MzmlStructureCharter {
 
 	private static final int MAXIMUM_NUMBER_OF_SCANS_PER_TYPE = 500;
+	
+	public static ChartPanel getStructureChart(StripeFile dia) {
+		try {
+			Connection c=dia.getConnection();
+			try {
+				Statement s=c.createStatement();
+				try {
+					float maxRT=Float.MAX_VALUE;
+					ScanRangeTracker tracker=new ScanRangeTracker();
+					double maxUpper=0.0;
+					double minLower=Float.MAX_VALUE;
+					
+					ResultSet rs=s.executeQuery("select scanstarttime, isolationwindowlower, isolationwindowupper from spectra order by scanstarttime limit 1000");
+					while (rs.next()) {
+						float scanStartTime=rs.getFloat(1);
+						double isolationWindowLower=rs.getDouble(2);
+						double isolationWindowUpper=rs.getDouble(3);
+						if (isolationWindowLower<minLower) minLower=isolationWindowLower;
+						if (isolationWindowUpper>maxUpper) maxUpper=isolationWindowUpper;
+						
+						boolean keepGoing=tracker.addRange(new Range(isolationWindowLower, isolationWindowUpper), scanStartTime);
+						if (!keepGoing) {
+							maxRT=scanStartTime;
+							break;
+						}
+					}
+					
+
+					rs=s.executeQuery("select scanstarttime, isolationwindowlower, isolationwindowupper from precursor where scanstarttime<="+maxRT+" order by scanstarttime");
+					while (rs.next()) {
+						float scanStartTime=rs.getFloat(1);
+						double isolationWindowLower=rs.getDouble(2);
+						double isolationWindowUpper=rs.getDouble(3);
+						if (isolationWindowUpper>1e8) { 
+							isolationWindowLower=minLower;
+							isolationWindowUpper=maxUpper;
+						}
+						tracker.addPrecursor(new Range(isolationWindowLower, isolationWindowUpper), scanStartTime);
+					}
+					
+					return getStructureChart(tracker, false);
+
+				} finally {
+					s.close();
+				}
+			} finally {
+				c.close();
+			}
+			
+		} catch (IOException ioe) {
+			throw new EncyclopediaException("DIA reading IO error!", ioe);
+		} catch (SQLException sqle) {
+			throw new EncyclopediaException("DIA reading SQL error!", sqle);
+		}
+	}
 
 	public static ChartPanel getStructureChart(File mzMLFile) {
 		HashMap<String, String> paramMap=PecanParameterParser.getDefaultParameters();
 		paramMap.put("-acquisition", "DIA"); // NON-OVERLAPPING!
 		SearchParameters parameters=PecanParameterParser.parseParameters(paramMap);
+
+		if (mzMLFile.getName().toLowerCase().endsWith("dia")) {
+			StripeFileInterface dia=StripeFileGenerator.getFile(mzMLFile, parameters);
+			if (dia instanceof StripeFile) {
+				return getStructureChart((StripeFile)dia);
+			}
+		}
+		
 
 		ScanRangeTracker scanTracker=null;
 		try {
