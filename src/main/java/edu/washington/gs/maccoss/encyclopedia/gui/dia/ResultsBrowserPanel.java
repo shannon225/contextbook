@@ -5,6 +5,8 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
@@ -16,6 +18,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 
 import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -91,6 +94,7 @@ public class ResultsBrowserPanel extends JPanel {
 	private final JTable table;
 	private final TableRowSorter<TableModel> rowSorter;
 	private final JTextField jtfFilter;
+	private final JCheckBox jtfNotFilter=new JCheckBox("NOT");
 	private final LibraryEntryTableModel model;
 	private final SearchParameters parameters;
 	private final float minimumScore;
@@ -173,25 +177,12 @@ public class ResultsBrowserPanel extends JPanel {
 		jtfFilter.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void insertUpdate(DocumentEvent e) {
-				String text=jtfFilter.getText();
-
-				System.out.println("FILTER: "+text);
-				if (text.trim().length()==0) {
-					rowSorter.setRowFilter(null);
-				} else {
-					rowSorter.setRowFilter(RowFilter.regexFilter("(?i)"+text));
-				}
+				updateFilter();
 			}
 
 			@Override
 			public void removeUpdate(DocumentEvent e) {
-				String text=jtfFilter.getText();
-
-				if (text.trim().length()==0) {
-					rowSorter.setRowFilter(null);
-				} else {
-					rowSorter.setRowFilter(RowFilter.regexFilter("(?i)"+text));
-				}
+				updateFilter();
 			}
 
 			@Override
@@ -199,11 +190,19 @@ public class ResultsBrowserPanel extends JPanel {
 				throw new UnsupportedOperationException("Not supported yet.");
 			}
 		});
-
+		
+		jtfNotFilter.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updateFilter();
+			}
+		});
 
 		JPanel searchPanel=new JPanel(new BorderLayout());
 		searchPanel.add(new JLabel("Search:"), BorderLayout.WEST);
 		searchPanel.add(jtfFilter, BorderLayout.CENTER);
+		searchPanel.add(jtfNotFilter, BorderLayout.EAST);
 		
 		JPanel left=new JPanel(new BorderLayout());
 		left.add(options, BorderLayout.NORTH);
@@ -224,6 +223,18 @@ public class ResultsBrowserPanel extends JPanel {
 		});
 		
 		add(split, BorderLayout.CENTER);
+	}
+
+	private void updateFilter() {
+		String text=jtfFilter.getText();
+
+		if (text.trim().length()==0) {
+			rowSorter.setRowFilter(null);
+		} else if (jtfNotFilter.isSelected()) {
+			rowSorter.setRowFilter(RowFilter.notFilter(RowFilter.regexFilter("(?i)"+text)));
+		} else {
+			rowSorter.setRowFilter(RowFilter.regexFilter("(?i)"+text));
+		}
 	}
 	
 	public void askForLibrary() {
