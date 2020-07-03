@@ -364,7 +364,7 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 					double[] deltaArray=General.multiply(massArray, parameters.getPrecursorOffsetPPM()/1000000.0);
 					massArray=General.subtract(massArray, deltaArray);
 				}
-				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, fraction, scanWindowLowerLimit, scanWindowUpperLimit, ionInjectTime, massArray, intensityArray, tic));
+				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, fraction, scanWindowLowerLimit, scanWindowUpperLimit, ionInjectTime, checkArray(massArray), checkArray(intensityArray), tic));
 
 			} else {
 				if (spectrumRef==null) spectrumRef="Unknown";
@@ -405,7 +405,7 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 				double precursorIsolationMargin = parameters==null?0.0:parameters.getPrecursorIsolationMargin();
 				try {
 					FragmentScan stripe=new FragmentScan(spectrumName, spectrumRef, spectrumIndex, scanStartTime, fraction, ionInjectTime, isolationWindowTarget-isolationWindowLowerOffset+precursorIsolationMargin, isolationWindowTarget+isolationWindowUpperOffset-precursorIsolationMargin,
-							massArray, intensityArray, charge);
+							checkArray(massArray), checkArray(intensityArray), charge);
 					stripes.add(stripe);
 					
 					Range range=stripe.getRange();
@@ -507,6 +507,34 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 		}
 
 		tagList.remove(tagList.size()-1);
+	}
+	
+	/**
+	 * edits in place but still returns the same array for pipelining
+	 * @param array
+	 * @return
+	 */
+	private float[] checkArray(float[] array) {
+		for (int i = 0; i < array.length; i++) {
+			if (!Float.isFinite(array[i])) {
+				array[i]=0.0f;
+			}
+		}
+		return array;
+	}
+	
+	/**
+	 * edits in place but still returns the same array for pipelining
+	 * @param array
+	 * @return
+	 */
+	private double[] checkArray(double[] array) {
+		for (int i = 0; i < array.length; i++) {
+			if (!Double.isFinite(array[i])) {
+				array[i]=0.0f;
+			}
+		}
+		return array;
 	}
 
 	@Override
