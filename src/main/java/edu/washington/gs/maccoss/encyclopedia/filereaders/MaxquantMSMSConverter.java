@@ -35,10 +35,10 @@ public class MaxquantMSMSConverter {
 					byte charge=Byte.parseByte(row.get("Charge"));
 					float[] intensities=parseFloats(row.get("Intensities").split(";"));
 					double[] masses=parseDoubles(row.get("Masses").split(";"));
-					double[] massDeviations=parseDoubles(row.get("Mass Deviations [Da]").split(";"));
+					double[] massDeviations=parseDoubles(row.get("Mass deviations [Da]").split(";"));
 					
 					float rt=Float.parseFloat(row.get("Retention time"));
-					float rtOffset=Float.parseFloat(row.get("Precursor Apex Offset Time"));
+					float rtOffset=Float.parseFloat(row.get("Precursor apex offset time"));
 					float score=(float)-Log.protectedLog10(Double.parseDouble(row.get("PEP")));
 					
 					if (Float.isNaN(rtOffset)) {
