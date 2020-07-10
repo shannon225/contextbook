@@ -1,14 +1,16 @@
-# This is a sample build configuration for Java (Maven).
-# Check our guides at https://confluence.atlassian.com/x/zd-5Mw for more examples.
-# Only use spaces to indent your .yml configuration.
-# -----
-# You can specify a custom docker image from Docker Hub as your build environment.
-image: maven:3.6.1
+# Based on Bitbucket's sample build configuration for Java (Maven).
+# Check out the guides at https://confluence.atlassian.com/x/zd-5Mw for more examples.
+#
+# IMPORTANT! Only use spaces to indent your .yml configuration!
+
+# Use the most recent maven docker image from Docker Hub as the build environment,
+# specifically using OpenJDK 8.
+image: maven:3.6.3-openjdk-8
 
 pipelines:
   default:
     - step:
         caches:
-          - maven
-        script: # Modify the commands below to build your repository.
+          - maven # predefined; caches ~/.m2/repository
+        script:
           - mvn -B verify # -B batch mode makes Maven less verbose
