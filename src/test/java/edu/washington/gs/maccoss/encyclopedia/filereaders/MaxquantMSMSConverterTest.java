@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
@@ -147,6 +148,20 @@ public class MaxquantMSMSConverterTest extends TestCase {
 		assertNotNull(libraryFile);
 		assertEquals(5, libraryFile.getAllEntries(false, parameters.getAAConstants()).size());
 	}
+
+//	public void testLocalMsmsTxt() throws Exception {
+//		final Path tsv = Paths.get("/media/data/sethjust/proteomesoft/bug_14155/msms.txt");
+//
+//		final LibraryFile libraryFile = MaxquantMSMSConverter.convertFromMSMSTSV(
+//				tsv.toFile(),
+//				fasta.toFile(),
+//				elib.toFile(),
+//				parameters
+//		);
+//
+//		assertNotNull(libraryFile);
+//		assertNotSame(0, libraryFile.getAllEntries(false, parameters.getAAConstants()).size());
+//	}
 
 	public void testBadMsmsTxt() throws Exception {
 		// A copy of msms-new.txt with a single value from a row's "Intensity" column replaced with an empty string
