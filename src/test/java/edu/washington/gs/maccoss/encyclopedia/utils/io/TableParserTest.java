@@ -111,7 +111,7 @@ public class TableParserTest {
 		);
 
 		assertEquals(0, rowCount.get());
-		assertFalse(didCleanup.get());
+		assertTrue(didCleanup.get());
 	}
 
 	@Test(timeout = TIMEOUT, expected = CustomException.class)
