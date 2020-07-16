@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.common.collect.ImmutableList;
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
@@ -131,6 +132,36 @@ public class MaxquantMSMSConverterTest extends TestCase {
 
 		assertNotNull(libraryFile);
 		assertEquals(5, libraryFile.getAllEntries(false, parameters.getAAConstants()).size());
+	}
+
+	public void testBadMsmsTxt() throws Exception {
+		// A copy of msms-new.txt with a single value from a row's "Intensity" column replaced with an empty string
+		final Path tsv = getResourceAsFile("msms-bad.txt", ".msms.txt");
+
+		LibraryFile libraryFile = null;
+		try {
+			libraryFile = MaxquantMSMSConverter.convertFromMSMSTSV(
+					tsv.toFile(),
+					fasta.toFile(),
+					elib.toFile(),
+					parameters
+			);
+			System.err.println("WARNING! Did not encounter an exception parsing problematic file!");
+		} catch (NumberFormatException e) {
+			// swallow expected exception and don't run any assertions
+			return;
+		} catch (Throwable t) {
+			throw new AssertionError("Caught unexpected exception!", t);
+		}
+
+		assertNotNull(libraryFile);
+
+		// If the parsing doesn't fail, it should include all the entries,
+		// or at least all non-erroneous rows (note that the problematic
+		// row is neither the first nor the last in the file).
+		final int entryCount = libraryFile.getAllEntries(false, parameters.getAAConstants()).size();
+
+		assertTrue("Unexpected number of entries: " + entryCount, ImmutableList.of(4,5).contains(entryCount));
 	}
 
 	private static Path getEmptyElib() throws IOException {
