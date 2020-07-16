@@ -98,28 +98,39 @@ public class MaxquantMSMSConverterTest extends TestCase {
 		}
 	}
 
+	private static final SearchParameters parameters = new EncyclopediaParametersPanel(new SearchPanel(ProgramType.EncyclopeDIA)).getParameters();
+
+	private Path fasta;
+	private Path elib;
+
+	@Override
+	protected void setUp() throws Exception {
+
+		fasta = getFasta();
+		elib = getEmptyElib();
+	}
+
+	@Override
+	protected void tearDown() throws Exception {
+		FileUtils.deleteQuietly(fasta.toFile());
+		fasta = null;
+
+		FileUtils.deleteQuietly(elib.toFile());
+		elib = null;
+	}
+
 	public void testNewMsmsTxt() throws Exception {
-		final SearchParameters parameters = new EncyclopediaParametersPanel(new SearchPanel(ProgramType.EncyclopeDIA)).getParameters();
-
 		final Path tsv = getResourceAsFile("msms-new.txt", ".msms.txt");
-		final Path fasta = getFasta();
-		final Path elib = getEmptyElib();
 
-		try {
+		final LibraryFile libraryFile = MaxquantMSMSConverter.convertFromMSMSTSV(
+				tsv.toFile(),
+				fasta.toFile(),
+				elib.toFile(),
+				parameters
+		);
 
-			final LibraryFile libraryFile = MaxquantMSMSConverter.convertFromMSMSTSV(
-					tsv.toFile(),
-					fasta.toFile(),
-					elib.toFile(),
-					parameters
-			);
-
-			assertNotNull(libraryFile);
-			assertEquals(5, libraryFile.getAllEntries(false, parameters.getAAConstants()).size());
-		} finally {
-			FileUtils.deleteQuietly(tsv.toFile());
-			FileUtils.deleteQuietly(elib.toFile());
-		}
+		assertNotNull(libraryFile);
+		assertEquals(5, libraryFile.getAllEntries(false, parameters.getAAConstants()).size());
 	}
 
 	private static Path getEmptyElib() throws IOException {
