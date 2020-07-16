@@ -1,18 +1,29 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import edu.washington.gs.maccoss.encyclopedia.ProgramType;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TObjectFloatHashMap;
+import junit.framework.TestCase;
+import org.apache.commons.io.FileUtils;
 
-public class MaxquantMSMSConverterTest {
+public class MaxquantMSMSConverterTest extends TestCase {
 	public static void main(String[] args) {
 		String[] fileOrder=new String[] {"QE1_24apr2019_BCS_Sample1_DDA_15_0", "QE1_24apr2019_BCS_Sample1_DDA_15_0_2", "QE1_24apr2019_BCS_Sample1_DDA_15_0_3", "QE1_24apr2019_BCS_Sample1_DDA_a_10_5",
 				"QE1_24apr2019_BCS_Sample1_DDA_b_7_8", "QE1_24apr2019_BCS_Sample1_DDA_c_4_15", "QE1_24apr2019_BCS_Sample1_DDA_d_3_27", "QE1_24apr2019_BCS_Sample1_DDA_e_2_41",
@@ -87,4 +98,46 @@ public class MaxquantMSMSConverterTest {
 		}
 	}
 
+	public void testNewMsmsTxt() throws Exception {
+		final SearchParameters parameters = new EncyclopediaParametersPanel(new SearchPanel(ProgramType.EncyclopeDIA)).getParameters();
+
+		final Path tsv = getResourceAsFile("msms-new.txt", ".msms.txt");
+		final Path fasta = getFasta();
+		final Path elib = getEmptyElib();
+
+		try {
+
+			final LibraryFile libraryFile = MaxquantMSMSConverter.convertFromMSMSTSV(
+					tsv.toFile(),
+					fasta.toFile(),
+					elib.toFile(),
+					parameters
+			);
+
+			assertNotNull(libraryFile);
+			assertEquals(5, libraryFile.getAllEntries(false, parameters.getAAConstants()).size());
+		} finally {
+			FileUtils.deleteQuietly(tsv.toFile());
+			FileUtils.deleteQuietly(elib.toFile());
+		}
+	}
+
+	private static Path getEmptyElib() throws IOException {
+		final Path tmp = Files.createTempFile("test_", ".elib");
+		tmp.toFile().deleteOnExit();
+		return tmp;
+	}
+
+	private static Path getFasta() throws IOException {
+		return getResourceAsFile("msms-test.fasta", ".fasta");
+	}
+
+	private static Path getResourceAsFile(String relativeResourceName, String suffix) throws IOException {
+		final Path tsv = Files.createTempFile("test_", suffix);
+		try (InputStream tsvResource = MaxquantMSMSConverterTest.class.getResourceAsStream(relativeResourceName)) {
+			Files.copy(tsvResource, tsv, StandardCopyOption.REPLACE_EXISTING);
+		}
+		tsv.toFile().deleteOnExit();
+		return tsv;
+	}
 }
