@@ -1,15 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.google.common.collect.ImmutableList;
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -26,9 +16,18 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
+
+import static org.junit.Assert.*;
 
 public class MaxquantMSMSConverterTest {
 	private static final long TIMEOUT = 5000L;
@@ -173,7 +172,7 @@ public class MaxquantMSMSConverterTest {
 //		assertNotSame(0, libraryFile.getAllEntries(false, parameters.getAAConstants()).size());
 //	}
 
-	@Test(timeout = TIMEOUT, expected = NumberFormatException.class)
+	@Test(timeout = TIMEOUT, expected = EncyclopediaException.class)
 	public void testBadMsmsTxt() throws Throwable {
 		// A copy of msms-new.txt with a single value from a row's "Intensity" column replaced with an empty string
 		// This will cause an error in parsing that should be detected and passed up to be appropriately handled
@@ -189,12 +188,11 @@ public class MaxquantMSMSConverterTest {
 			);
 			System.err.println("WARNING! Did not encounter an exception parsing problematic file!");
 		} catch (EncyclopediaException e) {
-			if (e.getCause() instanceof NumberFormatException) {
-				// Unwrap expected exception
-				throw e.getCause();
-			} else {
-				throw e;
-			}
+			e.printStackTrace(); // in case the assertion fails
+
+			assertTrue(getRootCause(e) instanceof NumberFormatException);
+
+			throw e;
 		} catch (Throwable t) {
 			throw t;
 		}
@@ -207,6 +205,13 @@ public class MaxquantMSMSConverterTest {
 		final int entryCount = libraryFile.getAllEntries(false, parameters.getAAConstants()).size();
 
 		assertTrue("Unexpected number of entries: " + entryCount, ImmutableList.of(4,5).contains(entryCount));
+	}
+
+	private static Throwable getRootCause(Throwable t) {
+		while (null != t.getCause() && (t instanceof EncyclopediaException || t instanceof ExecutionException)) {
+			t = t.getCause();
+		}
+		return t;
 	}
 
 	private static Path getEmptyElib() throws IOException {

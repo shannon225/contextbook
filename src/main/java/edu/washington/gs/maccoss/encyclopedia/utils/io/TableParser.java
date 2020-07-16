@@ -45,18 +45,12 @@ public class TableParser {
 				try {
 					producerFuture.get();
 				} catch (ExecutionException e) {
-					final Throwable cause = e.getCause();
-					throw cause instanceof EncyclopediaException
-							? (EncyclopediaException) cause
-							: new EncyclopediaException("Error reading tabular file", cause);
+					throw new EncyclopediaException("Error reading tabular file", e);
 				}
 				try {
 					consumerFuture.get();
 				} catch (ExecutionException e) {
-					final Throwable cause = e.getCause();
-					throw cause instanceof EncyclopediaException
-							? (EncyclopediaException) cause
-							: new EncyclopediaException("Error parsing tabular file (" + muscle.getClass().getName() + ")", cause);
+					throw new EncyclopediaException("Error parsing tabular file (" + muscle.getClass().getName() + ")", e);
 				}
 			} catch (InterruptedException e) {
 				throw new EncyclopediaException("Interrupted while parsing tabular file (" + muscle.getClass().getName() + ")", e);

@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -76,7 +77,7 @@ public class TableParserTest {
 		assertTrue(didCleanup.get());
 	}
 
-	@Test(timeout = TIMEOUT, expected = FileNotFoundException.class)
+	@Test(timeout = TIMEOUT, expected = EncyclopediaException.class)
 	public void testNoSuchFile() throws Throwable {
 		Files.delete(tmp); // throws if not deleted
 
@@ -88,10 +89,11 @@ public class TableParserTest {
 					muscle
 			);
 		} catch (EncyclopediaException e) {
-			// We'll get any IO exception wrapped in an EncyclopediaException,
-			// unwrapping it allows us to expect a more specific exception
-			// from this test case.
-			throw e.getCause() == null ? e : e.getCause();
+			e.printStackTrace(); // in case the assertion fails
+
+			assertTrue(e.getCause() instanceof FileNotFoundException);
+
+			throw e;
 		}
 
 		assertEquals(0, rowCount.get());
@@ -114,7 +116,7 @@ public class TableParserTest {
 		assertTrue(didCleanup.get());
 	}
 
-	@Test(timeout = TIMEOUT, expected = CustomException.class)
+	@Test(timeout = TIMEOUT, expected = EncyclopediaException.class)
 	public void testErrorProducing() throws Throwable {
 		assertTrue(Files.exists(tmp));
 
@@ -129,9 +131,11 @@ public class TableParserTest {
 					}
 			);
 		} catch (EncyclopediaException e) {
-			// Unwrapping this allows us to expect a more specific exception
-			// from this test case.
-			throw e.getCause() == null ? e : e.getCause();
+			e.printStackTrace(); // in case the assertion fails
+
+			assertTrue(getRootCause(e) instanceof CustomException);
+
+			throw e;
 		}
 
 		// We can process no lines or one line before the error,
@@ -142,7 +146,7 @@ public class TableParserTest {
 		assertFalse(didCleanup.get());
 	}
 
-	@Test(timeout = TIMEOUT, expected = CustomException.class)
+	@Test(timeout = TIMEOUT, expected = EncyclopediaException.class)
 	public void testErrorConsuming() throws Throwable {
 		Files.write(
 				tmp,
@@ -171,13 +175,22 @@ public class TableParserTest {
 					}
 			);
 		} catch (EncyclopediaException e) {
-			// Unwrapping this allows us to expect a more specific exception
-			// from this test case.
-			throw e.getCause() == null ? e : e.getCause();
+			e.printStackTrace(); // in case the assertion fails
+
+			assertTrue(getRootCause(e) instanceof CustomException);
+
+			throw e;
 		}
 
 		assertTrue(didCleanup.get());
 	}
 
 	static class CustomException extends RuntimeException { }
+
+	private static Throwable getRootCause(Throwable t) {
+		while (null != t.getCause() && (t instanceof EncyclopediaException || t instanceof ExecutionException)) {
+			t = t.getCause();
+		}
+		return t;
+	}
 }
