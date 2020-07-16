@@ -21,11 +21,17 @@ public class TableParser {
 	}
 
 	public static void parseTable(File f, TableParserMuscle muscle, String token) {
-
 		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
 		TableParserProducer producer=new TableParserProducer(blockingQueue, f, token, 1);
-		TableParserConsumer consumer=new TableParserConsumer(blockingQueue, muscle);
 
+		parseTable(muscle, producer);
+	}
+
+	/**
+	 * To support unit testing. Will ALWAYS use a single consumer.
+	 */
+	static void parseTable(TableParserMuscle muscle, TableParserProducer producer) {
+		final TableParserConsumer consumer = new TableParserConsumer(producer.getQueue(), muscle);
 		Thread producerThread=new Thread(producer);
 		Thread consumerThread=new Thread(consumer);
 		producerThread.start();

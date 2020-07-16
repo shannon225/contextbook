@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -57,7 +58,11 @@ public class TableParserProducer implements Runnable {
 		this.numConsumers=numConsumers;
 		this.optionalFile=Optional.empty();
 	}
-	
+
+	public BlockingQueue<Map<String, String>> getQueue() {
+		return blockingQueue;
+	}
+
 	public void run() {
 		
 		try {
