@@ -22,10 +22,18 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TObjectFloatHashMap;
-import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-public class MaxquantMSMSConverterTest extends TestCase {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+public class MaxquantMSMSConverterTest {
+	private static final long TIMEOUT = 5000L;
+
 	public static void main(String[] args) {
 		String[] fileOrder=new String[] {"QE1_24apr2019_BCS_Sample1_DDA_15_0", "QE1_24apr2019_BCS_Sample1_DDA_15_0_2", "QE1_24apr2019_BCS_Sample1_DDA_15_0_3", "QE1_24apr2019_BCS_Sample1_DDA_a_10_5",
 				"QE1_24apr2019_BCS_Sample1_DDA_b_7_8", "QE1_24apr2019_BCS_Sample1_DDA_c_4_15", "QE1_24apr2019_BCS_Sample1_DDA_d_3_27", "QE1_24apr2019_BCS_Sample1_DDA_e_2_41",
@@ -105,14 +113,14 @@ public class MaxquantMSMSConverterTest extends TestCase {
 	private Path fasta;
 	private Path elib;
 
-	@Override
+	@Before
 	protected void setUp() throws Exception {
 
 		fasta = getFasta();
 		elib = getEmptyElib();
 	}
 
-	@Override
+	@After
 	protected void tearDown() throws Exception {
 		FileUtils.deleteQuietly(fasta.toFile());
 		fasta = null;
@@ -121,6 +129,7 @@ public class MaxquantMSMSConverterTest extends TestCase {
 		elib = null;
 	}
 
+	@Test(timeout = TIMEOUT)
 	public void testNewMsmsTxt() throws Exception {
 		final Path tsv = getResourceAsFile("msms-new.txt", ".msms.txt");
 
@@ -135,6 +144,7 @@ public class MaxquantMSMSConverterTest extends TestCase {
 		assertEquals(5, libraryFile.getAllEntries(false, parameters.getAAConstants()).size());
 	}
 
+	@Test(timeout = TIMEOUT)
 	public void testOldMsmsTxt() throws Exception {
 		final Path tsv = getResourceAsFile("msms-old.txt", ".msms.txt");
 
@@ -149,6 +159,7 @@ public class MaxquantMSMSConverterTest extends TestCase {
 		assertEquals(5, libraryFile.getAllEntries(false, parameters.getAAConstants()).size());
 	}
 
+//	@Test(timeout = TIMEOUT)
 //	public void testLocalMsmsTxt() throws Exception {
 //		final Path tsv = Paths.get("/media/data/sethjust/proteomesoft/bug_14155/msms.txt");
 //
@@ -163,6 +174,7 @@ public class MaxquantMSMSConverterTest extends TestCase {
 //		assertNotSame(0, libraryFile.getAllEntries(false, parameters.getAAConstants()).size());
 //	}
 
+	@Test(timeout = TIMEOUT)
 	public void testBadMsmsTxt() throws Exception {
 		// A copy of msms-new.txt with a single value from a row's "Intensity" column replaced with an empty string
 		// This will cause an error in parsing that should be detected and passed up to be appropriately handled
