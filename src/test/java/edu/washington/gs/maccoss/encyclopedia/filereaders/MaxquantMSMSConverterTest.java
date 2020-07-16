@@ -134,6 +134,20 @@ public class MaxquantMSMSConverterTest extends TestCase {
 		assertEquals(5, libraryFile.getAllEntries(false, parameters.getAAConstants()).size());
 	}
 
+	public void testOldMsmsTxt() throws Exception {
+		final Path tsv = getResourceAsFile("msms-old.txt", ".msms.txt");
+
+		final LibraryFile libraryFile = MaxquantMSMSConverter.convertFromMSMSTSV(
+				tsv.toFile(),
+				fasta.toFile(),
+				elib.toFile(),
+				parameters
+		);
+
+		assertNotNull(libraryFile);
+		assertEquals(5, libraryFile.getAllEntries(false, parameters.getAAConstants()).size());
+	}
+
 	public void testBadMsmsTxt() throws Exception {
 		// A copy of msms-new.txt with a single value from a row's "Intensity" column replaced with an empty string
 		final Path tsv = getResourceAsFile("msms-bad.txt", ".msms.txt");
