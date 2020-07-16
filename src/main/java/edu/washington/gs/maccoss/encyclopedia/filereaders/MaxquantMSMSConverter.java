@@ -82,7 +82,9 @@ public class MaxquantMSMSConverter {
 		} catch (Exception e) {
 			Logger.errorLine("Error parsing Maxquant msms.txt:");
 			Logger.errorException(e);
-			throw new EncyclopediaException(e);
+			throw e instanceof EncyclopediaException
+					? (EncyclopediaException) e
+					: new EncyclopediaException(e);
 		}
 	}
 	

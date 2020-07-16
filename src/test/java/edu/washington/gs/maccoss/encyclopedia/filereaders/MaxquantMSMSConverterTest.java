@@ -173,8 +173,8 @@ public class MaxquantMSMSConverterTest {
 //		assertNotSame(0, libraryFile.getAllEntries(false, parameters.getAAConstants()).size());
 //	}
 
-	@Test(timeout = TIMEOUT)
-	public void testBadMsmsTxt() throws Exception {
+	@Test(timeout = TIMEOUT, expected = NumberFormatException.class)
+	public void testBadMsmsTxt() throws Throwable {
 		// A copy of msms-new.txt with a single value from a row's "Intensity" column replaced with an empty string
 		// This will cause an error in parsing that should be detected and passed up to be appropriately handled
 		final Path tsv = getResourceAsFile("msms-bad.txt", ".msms.txt");
@@ -188,11 +188,15 @@ public class MaxquantMSMSConverterTest {
 					parameters
 			);
 			System.err.println("WARNING! Did not encounter an exception parsing problematic file!");
-		} catch (NumberFormatException e) {
-			// swallow expected exception and don't run any assertions
-			return;
+		} catch (EncyclopediaException e) {
+			if (e.getCause() instanceof NumberFormatException) {
+				// Unwrap expected exception
+				throw e.getCause();
+			} else {
+				throw e;
+			}
 		} catch (Throwable t) {
-			throw new AssertionError("Caught unexpected exception!", t);
+			throw t;
 		}
 
 		assertNotNull(libraryFile);

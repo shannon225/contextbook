@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.io;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class TableParserConsumer implements Runnable {
@@ -26,7 +27,7 @@ public class TableParserConsumer implements Runnable {
 				try {
 					muscle.processRow(row);
 				} catch (Exception e) {
-					throw new RuntimeException("Error parsing row " + n, e);
+					throw new EncyclopediaException("Error parsing row " + n, e);
 				}
 			}
 		} catch (InterruptedException ie) {

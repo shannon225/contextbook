@@ -41,6 +41,16 @@ public class TableParserTest {
 	@Before
 	public void setUp() throws Exception {
 		tmp = Files.createTempFile("test_", ".tsv");
+		Files.write(
+				tmp,
+				ImmutableList.of(
+						"A\tB\tC",
+						"a\tb\tc",
+						"a\tb\tc"
+				),
+				StandardCharsets.UTF_8
+		);
+
 		rowCount = new AtomicInteger(0);
 		didCleanup = new AtomicBoolean(false);
 	}
@@ -55,14 +65,14 @@ public class TableParserTest {
 
 	@Test(timeout = TIMEOUT)
 	public void testSimpleMuscle() throws Exception {
-		//TODO: set up file contents
+		assertTrue(Files.exists(tmp));
 
 		TableParser.parseTSV(
 				tmp.toFile(),
 				muscle
 		);
 
-//		assertEquals(, rowCount.get());
+		assertEquals(2, rowCount.get());
 		assertTrue(didCleanup.get());
 	}
 
@@ -93,6 +103,7 @@ public class TableParserTest {
 		Files.write(tmp, new byte[0]);
 
 		assertTrue(Files.exists(tmp));
+		assertEquals(0L, Files.size(tmp));
 
 		TableParser.parseTSV(
 				tmp.toFile(),
@@ -103,29 +114,25 @@ public class TableParserTest {
 		assertFalse(didCleanup.get());
 	}
 
-	@Test(timeout = TIMEOUT, expected = Exception.class) //TODO: assert more specific exception type
-	public void testErrorProducing() throws Exception {
-		Files.write(
-				tmp,
-				ImmutableList.of(
-						"A\tB\tC",
-						"a\tb\tc",
-						"a\tb\tc"
-				),
-				StandardCharsets.UTF_8
-		);
-
+	@Test(timeout = TIMEOUT, expected = CustomException.class)
+	public void testErrorProducing() throws Throwable {
 		assertTrue(Files.exists(tmp));
 
-		TableParser.parseTable(
-				muscle,
-				new TableParserProducer(new LinkedBlockingQueue<>(), tmp.toFile(), "\t", 1) {
-					@Override
-					public void run() {
-						throw new CustomException();
+		try {
+			TableParser.parseTable(
+					muscle,
+					new TableParserProducer(new LinkedBlockingQueue<>(), tmp.toFile(), "\t", 1) {
+						@Override
+						public void run() {
+							throw new CustomException();
+						}
 					}
-				}
-		);
+			);
+		} catch (EncyclopediaException e) {
+			// Unwrapping this allows us to expect a more specific exception
+			// from this test case.
+			throw e.getCause() == null ? e : e.getCause();
+		}
 
 		// We can process no lines or one line before the error,
 		// but it shouldn't be possible to process more.
@@ -135,8 +142,8 @@ public class TableParserTest {
 		assertFalse(didCleanup.get());
 	}
 
-	@Test(timeout = TIMEOUT, expected = Exception.class) //TODO: assert more specific exception type
-	public void testErrorConsuming() throws Exception {
+	@Test(timeout = TIMEOUT, expected = CustomException.class)
+	public void testErrorConsuming() throws Throwable {
 		Files.write(
 				tmp,
 				ImmutableList.of(
@@ -148,20 +155,26 @@ public class TableParserTest {
 
 		assertTrue(Files.exists(tmp));
 
-		TableParser.parseTSV(
-				tmp.toFile(),
-				new TableParserMuscle() {
-					@Override
-					public void processRow(Map<String, String> row) {
-						throw new CustomException();
-					}
+		try {
+			TableParser.parseTSV(
+					tmp.toFile(),
+					new TableParserMuscle() {
+						@Override
+						public void processRow(Map<String, String> row) {
+							throw new CustomException();
+						}
 
-					@Override
-					public void cleanup() {
-						assertTrue(didCleanup.compareAndSet(false, true));
+						@Override
+						public void cleanup() {
+							assertTrue(didCleanup.compareAndSet(false, true));
+						}
 					}
-				}
-		);
+			);
+		} catch (EncyclopediaException e) {
+			// Unwrapping this allows us to expect a more specific exception
+			// from this test case.
+			throw e.getCause() == null ? e : e.getCause();
+		}
 
 		assertTrue(didCleanup.get());
 	}
