@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -116,15 +117,20 @@ public class TableParserTest {
 
 		assertTrue(Files.exists(tmp));
 
-		TableParser.parseTSV(
-				tmp.toFile(),
-				muscle
+		TableParser.parseTable(
+				muscle,
+				new TableParserProducer(new LinkedBlockingQueue<>(), tmp.toFile(), "\t", 1) {
+					@Override
+					public void run() {
+						throw new CustomException();
+					}
+				}
 		);
 
 		// We can process no lines or one line before the error,
 		// but it shouldn't be possible to process more.
 		final int rowCount = this.rowCount.get();
-		assertTrue("Processed unexpected number of rows: " + rowCount, ImmutableList.of(0,1).contains(rowCount));
+		assertEquals("Processed unexpected number of rows", 0, rowCount);
 
 		assertFalse(didCleanup.get());
 	}
