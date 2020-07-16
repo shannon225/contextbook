@@ -165,6 +165,7 @@ public class MaxquantMSMSConverterTest extends TestCase {
 
 	public void testBadMsmsTxt() throws Exception {
 		// A copy of msms-new.txt with a single value from a row's "Intensity" column replaced with an empty string
+		// This will cause an error in parsing that should be detected and passed up to be appropriately handled
 		final Path tsv = getResourceAsFile("msms-bad.txt", ".msms.txt");
 
 		LibraryFile libraryFile = null;
