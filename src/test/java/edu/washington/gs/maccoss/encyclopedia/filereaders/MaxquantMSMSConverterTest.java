@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
@@ -114,14 +113,14 @@ public class MaxquantMSMSConverterTest {
 	private Path elib;
 
 	@Before
-	protected void setUp() throws Exception {
+	public void setUp() throws Exception {
 
 		fasta = getFasta();
 		elib = getEmptyElib();
 	}
 
 	@After
-	protected void tearDown() throws Exception {
+	public void tearDown() throws Exception {
 		FileUtils.deleteQuietly(fasta.toFile());
 		fasta = null;
 
