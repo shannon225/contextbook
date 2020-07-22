@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -8,6 +9,8 @@ import java.util.StringTokenizer;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
+
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 
 public final class FragmentIon implements Comparable<FragmentIon> {
 	private static final String INDEX_DELIMITER = ";";
@@ -118,6 +121,10 @@ public final class FragmentIon implements Comparable<FragmentIon> {
 	@Override
 	public String toString() {
 		return IonType.toString(type, index);
+	}
+	
+	public Color getColor() {
+		return RandomGenerator.randomColor(toString().hashCode());
 	}
 
 	@Override

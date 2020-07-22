@@ -100,6 +100,23 @@ public class Correlation {
 		return getPearsons(rank(x), rank(y));
 	}
 	
+	public static float getSpectralContrastAngle(float[] x, float[] y) {
+		double numerator=0.0;
+		double xSS=0.0;
+		double ySS=0.0;
+		for (int i=0; i<y.length; i++) {
+			numerator+=x[i]*y[i];
+			xSS+=x[i]*x[i];
+			ySS+=y[i]*y[i];
+		}
+		double dotProduct = numerator/(Math.sqrt(xSS*ySS));
+		double acos = Math.acos(dotProduct);
+		return (float)(1.0f-2.0f*acos/Math.PI);
+	}
+
+	public static float getPearsons(float[] x, float[] y) {
+		return (float)getPearsons(General.toDoubleArray(x), General.toDoubleArray(y));
+	}
 	public static double getPearsons(double[] x, double[] y) {
 		
 		double xBar=General.mean(x);

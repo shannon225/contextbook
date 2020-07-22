@@ -43,6 +43,7 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.PaintScale;
 import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.chart.renderer.category.CategoryItemRenderer;
 import org.jfree.chart.renderer.category.StandardBarPainter;
 import org.jfree.chart.renderer.xy.AbstractXYItemRenderer;
 import org.jfree.chart.renderer.xy.XYAreaRenderer;
@@ -328,20 +329,39 @@ public class Charter {
 		BarRenderer.setDefaultBarPainter(new StandardBarPainter());
 		BarRenderer.setDefaultShadowsVisible(false);
 	}
-	
-	public static ChartPanel getBarChart(String title, String xAxis, String yAxis, String[] categories, float[] values) {
-		assert (categories.length==values.length);
 
-		final String[] clonedCategories=categories.clone();
-		final float[] clonedValues=values.clone();
-		
-		boolean displayLegend=false;
+	public static ChartPanel getBarChart(String title, String xAxis, String yAxis, String[] categories, float[] values) {
+		return getBarChart(title, xAxis, yAxis, categories, values, false);
+	}
+	
+	public static ChartPanel getBarChart(String title, String xAxis, String yAxis, String[] categories, float[] values, boolean isStacked) {
+		assert (categories.length==values.length);
 
 		DefaultCategoryDataset dataset=new DefaultCategoryDataset();
 		for (int i=0; i<values.length; i++) {
 			dataset.addValue(values[i], xAxis, categories[i]);
 		}
-		JFreeChart barChart=ChartFactory.createBarChart(title, xAxis, yAxis, dataset, PlotOrientation.VERTICAL, false, true, false);
+		return getBarChart(title, xAxis, yAxis, dataset, isStacked);
+	}
+
+	public static ChartPanel getBarChart(String title, String xAxis, String yAxis, DefaultCategoryDataset dataset, boolean isStacked) {
+		boolean displayLegend=false;
+		
+		JFreeChart barChart;
+		if (isStacked) {
+			barChart=ChartFactory.createStackedBarChart(title, xAxis, yAxis, dataset, PlotOrientation.VERTICAL, displayLegend, true, false);
+			CategoryItemRenderer renderer=barChart.getCategoryPlot().getRenderer();
+			
+			for (int j = 0; j < dataset.getRowCount(); j++) {
+				@SuppressWarnings("rawtypes")
+				Comparable c=dataset.getRowKey(j);
+				if (c instanceof FragmentIon) {
+					renderer.setSeriesPaint(j, ((FragmentIon) c).getColor());
+				}
+			}
+		} else {
+			barChart=ChartFactory.createBarChart(title, xAxis, yAxis, dataset, PlotOrientation.VERTICAL, displayLegend, true, false);
+		}
 
 		CategoryPlot plot=barChart.getCategoryPlot();
 	    ((BarRenderer)plot.getRenderer()).setBarPainter(new StandardBarPainter());

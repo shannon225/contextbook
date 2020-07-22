@@ -679,7 +679,7 @@ public class SearchPanel extends JPanel {
 		openElib.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				browser.askForLibrary();
+				browser.askForResults();
 			}
 		});
 		openElib.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));

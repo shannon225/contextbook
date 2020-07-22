@@ -6,7 +6,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
@@ -18,6 +21,9 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
+import gnu.trove.list.array.TFloatArrayList;
 
 public class StripeFileMerger {
 	private static final String FILENAME_DELIMITER = ";";
@@ -27,39 +33,47 @@ public class StripeFileMerger {
 		paramMap.put("-acquisition", "DIA"); // NON-OVERLAPPING!
 		SearchParameters parameters=PecanParameterParser.parseParameters(paramMap);
 		
-		File dir=new File("/Users/searleb/Downloads/wide_iso");
+//		File dir=new File("/Users/searleb/Downloads/wide_iso");
+//		
+//		merge(new File[] {new File(dir, "Loo_2020_0406_RJ_102_32.mzML"), new File(dir,"Loo_2020_0406_RJ_103_32.mzML")}, 
+//				new File(dir, "combined.dia"), parameters);
 		
-		merge(new File[] {new File(dir, "Loo_2020_0406_RJ_102_32.mzML"), new File(dir,"Loo_2020_0406_RJ_103_32.mzML")}, 
-				new Range[] {new Range(0, 700), new Range(701,1600)}, 
-				new File(dir, "combined.dia"), parameters);
-	}
 
-	public static StripeFile merge(File[] fs, Range[] mzRanges, File newFile, SearchParameters parameters) throws IOException, SQLException, DataFormatException {
-		return merge(fs, Optional.ofNullable(mzRanges), newFile, parameters);
+		File dir=new File("/Volumes/searle_ssd/cobbs/SN606_RIPA/");
+		
+		merge(new File[] {new File(dir, "20200708_BCS_LOOM_COBBS_GPFDIA_SN606_1.mzML"), new File(dir,"20200708_BCS_LOOM_COBBS_GPFDIA_SN606_2.mzML"),
+				new File(dir,"20200708_BCS_LOOM_COBBS_GPFDIA_SN606_3.mzML"), new File(dir,"20200708_BCS_LOOM_COBBS_GPFDIA_SN606_4.mzML"),
+				new File(dir,"20200708_BCS_LOOM_COBBS_GPFDIA_SN606_5.mzML"), new File(dir,"20200708_BCS_LOOM_COBBS_GPFDIA_SN606_6.mzML")}, 
+				new File(dir, "SN606_combined.dia"), parameters);
 	}
-	public static StripeFile merge(File[] fs, Optional<Range[]> mzRanges, File newFile, SearchParameters parameters) throws IOException, SQLException, DataFormatException {
+	public static StripeFile merge(File[] fs, File newFile, SearchParameters parameters) throws IOException, SQLException, DataFormatException {
 		StripeFile stripeFile=new StripeFile();
 		stripeFile.openFile();
 		HashMap<Range, Float> dutyCycleMap=new HashMap<>();
-		StringBuilder nameString=new StringBuilder();
-		StringBuilder pathString=new StringBuilder();
-		
-		Arrays.sort(fs);
 		
 		int scanIndex=0;
 		for (int i = 0; i < fs.length; i++) {
-			Range mzRange;
-			if (mzRanges.isPresent()) {
-				mzRange=mzRanges.get()[i];
-			} else {
-				mzRange=new Range(-Float.MAX_VALUE, Float.MAX_VALUE);
-			}
 			Logger.logLine("Adding "+fs[i].getName()+" to merged file ("+(i+1)+" of "+fs.length+")...");
 			StripeFileInterface thisStripeFile=StripeFileGenerator.getFile(fs[i], parameters);
-			dutyCycleMap.putAll(thisStripeFile.getRanges());
+			Map<Range, Float> ranges = thisStripeFile.getRanges();
+			TFloatArrayList timeBetweenScans=new TFloatArrayList();
+			for (Float time : ranges.values()) {
+				timeBetweenScans.add(time);
+			}
+			float maxTimeForCommon=1.5f*QuickMedian.median(timeBetweenScans.toArray());
+			HashMap<Range, Float> primaryRanges = new HashMap<Range, Float>(ranges);
+			for (Entry<Range, Float> entry : ranges.entrySet()) {
+				if (entry.getValue()>maxTimeForCommon) {
+					primaryRanges.remove(entry.getKey());
+				}
+			}
+			Range mzRange=Range.getWidestRange(new ArrayList<Range>(primaryRanges.keySet()));
+			Logger.logLine("Keeping m/z range of "+mzRange.toString()+"...");
+			
+			dutyCycleMap.putAll(primaryRanges);
 			ArrayList<PrecursorScan> precursors = new ArrayList<>();
 			for (PrecursorScan scan : thisStripeFile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE)) {
-				precursors.add(scan.shallowClone(i, scanIndex++));
+				precursors.add(scan.shallowClone(i, scanIndex++, mzRange));
 			}
 			stripeFile.addPrecursor(precursors);
 			ArrayList<FragmentScan> stripes = new ArrayList<>();
@@ -68,16 +82,11 @@ public class StripeFileMerger {
 			}
 			stripeFile.addStripe(stripes);
 			
-			if (nameString.length()>0) nameString.append(FILENAME_DELIMITER);
-			nameString.append(fs[i].getName());
-			if (pathString.length()>0) pathString.append(FILENAME_DELIMITER);
-			pathString.append(fs[i].getAbsolutePath());
-			
 			thisStripeFile.close();
 		}
 		Logger.logLine("Finished merging, finalizing "+newFile.getName());
 
-		stripeFile.setFileName(nameString.toString(), null, pathString.toString());
+		stripeFile.setFileName(newFile.getName(), null, newFile.getAbsolutePath());
 		stripeFile.setRanges(dutyCycleMap);
 
 		stripeFile.saveAsFile(newFile);

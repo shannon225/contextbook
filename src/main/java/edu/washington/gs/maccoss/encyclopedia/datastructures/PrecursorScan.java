@@ -49,6 +49,20 @@ public class PrecursorScan implements AcquiredSpectrum, Comparable<PrecursorScan
 		return new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, fraction, isolationWindowLower, isolationWindowUpper, ionInjectionTime, massArray, intensityArray, tic);
 	}
 	
+	/**
+	 * clone with potentially narrower isolation window to retarget scan
+	 * @param fraction
+	 * @param spectrumIndex
+	 * @param precursorIsolationWindow
+	 * @return
+	 */
+	public PrecursorScan shallowClone(int fraction, int spectrumIndex, Range precursorIsolationWindow) {
+		double lowerBound=Math.max(precursorIsolationWindow.getStart(), isolationWindowLower);
+		double UpperBound=Math.min(precursorIsolationWindow.getStop(), isolationWindowUpper);
+
+		return new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, fraction, lowerBound, UpperBound, ionInjectionTime, massArray, intensityArray, tic);
+	}
+	
 	@Override
 	public int getFraction() {
 		return fraction;

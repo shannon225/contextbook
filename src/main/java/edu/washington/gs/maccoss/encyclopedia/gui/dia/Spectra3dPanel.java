@@ -129,7 +129,7 @@ public class Spectra3dPanel extends JPanel {
 				for (int j=0; j<ions.length; j++) {
 					if (tolerance.equals(ions[j].mass, masses[i])) {
 						//color=colors[j%colors.length];
-						color=Charter3d.getColor(RandomGenerator.randomColor(ions[j].toString().hashCode()));
+						color=Charter3d.getColor(ions[j].getColor());
 						if (((int)ions[j].mass)==150||((int)ions[j].mass)==133) color=Color.BLUE;
 						ion=ions[j];
 					}

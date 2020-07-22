@@ -11,7 +11,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 
 public class ChromatogramExtractor {
@@ -93,16 +92,16 @@ public class ChromatogramExtractor {
 			XYTrace trace=null;
 			switch (type) {
 			case boldline:
-				trace=new XYTrace(traceData.getValue(), GraphType.line, name, RandomGenerator.randomColor(name.hashCode()), 3.0f);
+				trace=new XYTrace(traceData.getValue(), GraphType.line, name, key.getColor(), 3.0f);
 				break;
 			case line:
-				trace=new XYTrace(traceData.getValue(), GraphType.line, name, RandomGenerator.randomColor(name.hashCode()), 2.0f);
+				trace=new XYTrace(traceData.getValue(), GraphType.line, name, key.getColor(), 2.0f);
 				break;
 			case dashedline:
-				trace=new XYTrace(traceData.getValue(), GraphType.dashedline, name, RandomGenerator.randomColor(name.hashCode()), 1.0f);
+				trace=new XYTrace(traceData.getValue(), GraphType.dashedline, name, key.getColor(), 1.0f);
 				break;
 			default:
-				trace=new XYTrace(traceData.getValue(), GraphType.line, name, RandomGenerator.randomColor(name.hashCode()), 2.0f);
+				trace=new XYTrace(traceData.getValue(), GraphType.line, name, key.getColor(), 2.0f);
 				break;
 			}
 			XYTrace sgSmoothed=SkylineSGFilter.paddedSavitzkyGolaySmooth(trace);

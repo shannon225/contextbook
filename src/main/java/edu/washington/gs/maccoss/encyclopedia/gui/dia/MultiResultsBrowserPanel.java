@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.text.AttributedString;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -25,6 +26,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.RowFilter;
@@ -46,6 +48,8 @@ import org.jfree.ui.TextAnchor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideReportData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -72,6 +76,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
+import jargs.gnu.CmdLineParser.Option;
 
 public class MultiResultsBrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -79,7 +84,10 @@ public class MultiResultsBrowserPanel extends JPanel {
 	private static final int RT_EXTRACTION_MARGIN_IN_SEC=15;
 	
 	private final FileChooserPanel elibFileChooser;
+	private final FileChooserPanel libraryFileChooser;
 	private final JSplitPane split=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+	private final JSplitPane split1=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+	private final JSplitPane split2=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	
 	private final JTable sampleTable;
 	private final TableRowSorter<TableModel> sampleRowSorter;
@@ -91,12 +99,14 @@ public class MultiResultsBrowserPanel extends JPanel {
 	private final MultiPeptideResultsTableModel peptideModel;
 	private final SearchParameters parameters;
 	private final ChartPanel barChart;
+	private final ChartPanel stackedBarChart;
 	private final JComboBox<Integer> minimumNumberOfFragments=new JComboBox<Integer>(new Integer[] {0, 1, 2, 3, 4, 5});
 	private final JComboBox<Integer> numberOfColumns=new JComboBox<Integer>(new Integer[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 	private final JCheckBox simplifyPlots=new JCheckBox("Simplify plots");
 	
 	private final int defaultMinimumNumberOfFragmentsIndex=3;
 	private final int defaultNumberOfColumnsIndex=1;
+	private volatile LibraryFile library; // CAN BE NULL, CAN BE MUTATED!
 	
 	public MultiResultsBrowserPanel(SearchParameters parameters) {
 		super(new BorderLayout());
@@ -160,7 +170,19 @@ public class MultiResultsBrowserPanel extends JPanel {
 			}
 		});
 
-		elibFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), true) {
+		libraryFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), false) {
+			private static final long serialVersionUID=1L;
+
+			@Override
+			public void update(File... filenames) {
+				super.update(filenames);
+				if (filenames!=null&&filenames.length>0&&filenames[0]!=null) {
+					updateLibrary(filenames[0]);
+				}
+			}
+		};
+
+		elibFileChooser=new FileChooserPanel(null, "Results", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), true) {
 			private static final long serialVersionUID=1L;
 
 			@Override
@@ -194,16 +216,24 @@ public class MultiResultsBrowserPanel extends JPanel {
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(elibFileChooser);
+		options.add(libraryFileChooser);
 		options.add(new LabeledComponent("Minimum # Fragments", minimumNumberOfFragments));
 		options.add(new LabeledComponent("Number of Columns", numberOfColumns));
 		simplifyPlots.setBackground(LabeledComponent.BACKGROUND_COLOR);
 		options.add(simplifyPlots);
 		
-		JPanel tablePanel=new JPanel(new GridLayout(0, 1));
-		tablePanel.add(new JScrollPane(sampleTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED));
-		tablePanel.add(new JScrollPane(peptideTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED));
+		split2.setBorder(null); // remove border of nested split so they seem in the same level
+		split1.setTopComponent(new JScrollPane(sampleTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED));
+		split1.setBottomComponent(split2);
+		split2.setTopComponent(new JScrollPane(peptideTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED));
+		
 		barChart=getBarChart(new String[] {}, new float[] {});
-		tablePanel.add(barChart, BorderLayout.SOUTH);
+		stackedBarChart=getBarChart(new String[] {}, new float[] {});
+
+		JTabbedPane barChartTabs=new JTabbedPane();
+		barChartTabs.addTab("Relative Intensities", stackedBarChart);
+		barChartTabs.addTab("Total Intensities", barChart);
+		split2.setBottomComponent(barChartTabs);
 
 		JPanel searchPanel=new JPanel(new BorderLayout());
 		searchPanel.add(new JLabel("Search:"), BorderLayout.WEST);
@@ -212,7 +242,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 
 		JPanel left=new JPanel(new BorderLayout());
 		left.add(options, BorderLayout.NORTH);
-		left.add(tablePanel, BorderLayout.CENTER);
+		left.add(split1, BorderLayout.CENTER);
 		left.add(searchPanel, BorderLayout.SOUTH);
 		
 		
@@ -240,9 +270,60 @@ public class MultiResultsBrowserPanel extends JPanel {
 	public ChartPanel getBarChart(String[] categories, float[] intensities) {
 		return Charter.getBarChart(null, "Sample", "Total Intensity", categories, intensities);
 	}
+	
+	public ChartPanel getStackedBarChart(PeptidePrecursor peptide, String[] categories, Spectrum[] dataArray) {
+		if (library!=null) {
+			try {
+			ArrayList<LibraryEntry> entries=library.getEntries(peptide.getPeptideModSeq(), peptide.getPrecursorCharge(), false);
+			ArrayList<Spectrum> newDataArray=new ArrayList<>();
+			newDataArray.addAll(entries);
+			newDataArray.addAll(Arrays.asList(dataArray));
+			dataArray=newDataArray.toArray(new Spectrum[newDataArray.size()]);
+			
+			ArrayList<String> newCategories=new ArrayList<>();
+			if (entries.size()==1) {
+				newCategories.add("Library");
+			} else if (entries.size()>1) {
+				for (int i = 1; i <= entries.size(); i++) {
+					newCategories.add("Library "+i);
+				}
+			}
+			newCategories.addAll(Arrays.asList(categories));
+			categories=newCategories.toArray(new String[newCategories.size()]);
+			} catch (Exception e) {
+				Logger.errorLine("Error reading library entry!");
+				Logger.errorException(e);
+			}
+		}
+		
+		return FragmentIonConsistencyCharter.getBarChart(peptide, dataArray, categories, parameters);
+	}
 
-	public void askForLibrary() {
+	public void askForResults() {
 		elibFileChooser.askForFiles();
+	}
+	
+	public void updateLibrary(final File f) {
+		SwingWorkerProgress<LibraryFile> worker=new SwingWorkerProgress<LibraryFile>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Library") {
+			@Override
+			protected LibraryFile doInBackgroundForReal() throws Exception {
+				LibraryFile.OPEN_IN_PLACE=true;
+				LibraryInterface ilib=BlibToLibraryConverter.getFile(f);
+				LibraryFile.OPEN_IN_PLACE=false;
+				if (!(ilib instanceof LibraryFile)) {
+					throw new EncyclopediaException("Sorry, can't load this type of library file "+ilib.getClass().getName());
+				}
+				LibraryFile library=(LibraryFile)ilib;
+				return library;
+			}
+			@Override
+			protected void doneForReal(LibraryFile t) {
+				Logger.logLine("Finished loading library, updating GUI");
+				library=t;
+				updateToSelectedPeptide();
+			}
+		};
+		worker.execute();
 	}
 	
 	public void updateTables(final File f) {
@@ -275,31 +356,12 @@ public class MultiResultsBrowserPanel extends JPanel {
 				Logger.logLine("Finished loading data, updating GUI ("+t.x.size()+" files, "+t.y.size()+" peptides)");
 				peptideModel.updateEntries(t.y);
 				sampleModel.updateEntries(t.x);
-			}
-		};
-		worker.execute();
-	}
-	
-	public void updateTables(final File f, final Pair<ArrayList<String>, ArrayList<PeptideReportData>> pair) {
-		SwingWorkerProgress<Pair<ArrayList<StripeFileInterface>, ArrayList<PeptideReportData>>> worker=new SwingWorkerProgress<Pair<ArrayList<StripeFileInterface>, ArrayList<PeptideReportData>>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Library") {
-			@Override
-			protected Pair<ArrayList<StripeFileInterface>, ArrayList<PeptideReportData>> doInBackgroundForReal() throws Exception {
-				ArrayList<String> sampleNames=pair.x;
-				ArrayList<StripeFileInterface> stripeFiles=new ArrayList<StripeFileInterface>();
 
-				for (String sampleName : sampleNames) {
-					Logger.logLine("Trying to load "+sampleName);
-					StripeFileInterface file=StripeFileGenerator.getFile(new File(f.getParentFile(), sampleName), parameters, true);
-					stripeFiles.add(file);
+				System.out.println(split1.getDividerLocation()+", "+split2.getDividerLocation());
+				if (split1.getDividerLocation()<=40||split2.getDividerLocation()<=40) {
+					split2.setDividerLocation(200);
+					split1.setDividerLocation(200);
 				}
-				
-				return new Pair<ArrayList<StripeFileInterface>, ArrayList<PeptideReportData>>(stripeFiles, pair.y);
-			}
-			@Override
-			protected void doneForReal(Pair<ArrayList<StripeFileInterface>, ArrayList<PeptideReportData>> t) {
-				Logger.logLine("Finished loading data, updating GUI ("+t.x.size()+" files, "+t.y.size()+" peptides)");
-				peptideModel.updateEntries(t.y);
-				sampleModel.updateEntries(t.x);
 			}
 		};
 		worker.execute();
@@ -322,15 +384,20 @@ public class MultiResultsBrowserPanel extends JPanel {
 		
 		String[] origSampleNames=new String[files.size()];
 		float[] totalTICs=new float[files.size()];
+		Spectrum[] dataArray=new QuantitativeDIAData[files.size()];
 		for (int i=0; i<origSampleNames.length; i++) {
 			origSampleNames[i]=files.get(i).getOriginalFileName();
-			QuantitativeDIAData quantitativeData=entry.getQuantitativeData(origSampleNames[i]);
-			if (quantitativeData!=null) {
-				totalTICs[i]=quantitativeData.getTIC();
+			dataArray[i]=entry.getQuantitativeData(origSampleNames[i]);
+			if (dataArray[i]!=null) {
+				totalTICs[i]=dataArray[i].getTIC();
 			}
+			System.out.println(origSampleNames[i]+" --> "+dataArray[i]);
 		}
 		String[] sampleNames=StringUtils.getUniquePortion(origSampleNames);
 		barChart.setChart(getBarChart(sampleNames, totalTICs).getChart());
+		
+		stackedBarChart.setChart(getStackedBarChart(entry, sampleNames, dataArray).getChart());
+		
 		int cols=(Integer)numberOfColumns.getSelectedItem();
 		boolean simplify=simplifyPlots.isSelected();
 		if (files.size()<cols) cols=files.size();
