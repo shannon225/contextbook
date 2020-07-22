@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.commandlineinterface.ConvertFastaToPrositCSV;
 import edu.washington.gs.maccoss.encyclopedia.commandlineinterface.ConvertLibraryToBlib;
 import edu.washington.gs.maccoss.encyclopedia.commandlineinterface.ConvertPrositCSVToLibrary;
+import edu.washington.gs.maccoss.encyclopedia.commandlineinterface.MergeDIAFiles;
 import edu.washington.gs.maccoss.encyclopedia.utils.*;
 import java.util.*;
 
@@ -16,6 +17,8 @@ public class CLIConverter {
 			ConvertLibraryToBlib.main(args);
 		} else if (arguments.containsKey("-fastatoprositcsv")) {
 			ConvertFastaToPrositCSV.main(args);
+		} else if (arguments.containsKey("-mergeDIA")) {
+			MergeDIAFiles.main(args);
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("EncyclopeDIA Converter Help");
 			Logger.timelessLogLine("EncyclopeDIA Converter allows to convert files from one format to another.");
@@ -23,6 +26,7 @@ public class CLIConverter {
 			Logger.timelessLogLine("\t-prositcsvtolibrary\tConvert Prosit/Spectronaut CSV to library (use -convert -prositcsvtolibrary -h for help)");
 			Logger.timelessLogLine("\t-libtoblib\tConvert library to BLIB (use -convert -libtoblib -h for help)");
 			Logger.timelessLogLine("\t-fastatoprositcsv\tConvert FASTA to Prosit CSV (use -convert -fastatoprositcsv -h for help)");
+			Logger.timelessLogLine("\t-mergeDIA\tMerge .MZML or .DIA gas-phase fractions (use -convert -mergeDIA -h for help)");
 			System.exit(1);
 		}
 	}
