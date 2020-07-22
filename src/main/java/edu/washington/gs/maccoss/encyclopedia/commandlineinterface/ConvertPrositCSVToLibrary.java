@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia;
+package edu.washington.gs.maccoss.encyclopedia.commandlineinterface;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;

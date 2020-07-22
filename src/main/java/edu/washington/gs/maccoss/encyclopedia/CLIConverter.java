@@ -1,5 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
+import edu.washington.gs.maccoss.encyclopedia.commandlineinterface.ConvertFastaToPrositCSV;
+import edu.washington.gs.maccoss.encyclopedia.commandlineinterface.ConvertLibraryToBlib;
+import edu.washington.gs.maccoss.encyclopedia.commandlineinterface.ConvertPrositCSVToLibrary;
 import edu.washington.gs.maccoss.encyclopedia.utils.*;
 import java.util.*;
 

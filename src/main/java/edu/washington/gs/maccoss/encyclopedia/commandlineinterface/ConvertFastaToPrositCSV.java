@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia;
+package edu.washington.gs.maccoss.encyclopedia.commandlineinterface;
 
 import java.io.File;
 import java.util.HashMap;
