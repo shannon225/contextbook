@@ -1,20 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.io;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.BlockingQueue;
-
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
 
 public class TableParserProducer implements Runnable {
 	public static final HashMap<String, String> POISON_BLOCK=new HashMap<String, String>();
@@ -57,13 +48,21 @@ public class TableParserProducer implements Runnable {
 		this.numConsumers=numConsumers;
 		this.optionalFile=Optional.empty();
 	}
-	
+
+	public BlockingQueue<Map<String, String>> getQueue() {
+		return blockingQueue;
+	}
+
 	public void run() {
 		
 		try {
-			String eachline=in.readLine().trim(); // header
-			
+			// header
+			String eachline = in.readLine();
+
 			if (eachline!=null) {
+				// trim whitespace from the header before splitting out column names
+				eachline = eachline.trim();
+
 				List<String> headers=Arrays.asList(eachline.split(delim, -1));
 
 				while ((eachline=in.readLine())!=null) {
