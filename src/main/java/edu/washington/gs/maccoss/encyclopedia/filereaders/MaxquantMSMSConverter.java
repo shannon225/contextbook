@@ -24,6 +24,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 
 public class MaxquantMSMSConverter {
+	private static final String VALUE_LIST_DELIMITER = ";";
+
 	public static LibraryFile convertFromMSMSTSV(File tsvFile, File fastaFile, File libraryFile, SearchParameters parameters) {
 		AminoAcidConstants aaConstants=parameters.getAAConstants();
 		try {
@@ -33,14 +35,21 @@ public class MaxquantMSMSConverter {
 				public void processRow(Map<String, String> row) {
 					String peptideModSeq=parseMods(row.get("Modified sequence"));
 					byte charge=Byte.parseByte(row.get("Charge"));
-					float[] intensities=parseFloats(row.get("Intensities").split(";"));
-					double[] masses=parseDoubles(row.get("Masses").split(";"));
-					double[] massDeviations=parseDoubles(row.get("Mass Deviations [Da]").split(";"));
-					
+					float[] intensities=parseFloats(row.get("Intensities"));
+					double[] masses=parseDoubles(row.get("Masses"));
+
+					// Compatible with new versions: MaxQuant 1.6.10+
+					// Note that the name changed between 1.6.3 and 1.6.6
+					double[] massDeviations=parseDoubles(row.containsKey("Mass Deviations [Da]") ? row.get("Mass Deviations [Da]") : row.get("Mass deviations [Da]"));
+
 					float rt=Float.parseFloat(row.get("Retention time"));
-					float rtOffset=Float.parseFloat(row.get("Precursor Apex Offset Time"));
+
+					// Compatible with new versions: MaxQuant 1.6.10+
+					// Note that the name changed between 1.6.3 and 1.6.6
+					float rtOffset=Float.parseFloat(row.containsKey("Precursor Apex Offset Time") ? row.get("Precursor Apex Offset Time") : row.get("Precursor apex offset time"));
+
 					float score=(float)-Log.protectedLog10(Double.parseDouble(row.get("PEP")));
-					
+
 					if (Float.isNaN(rtOffset)) {
 						rtOffset=0.0f;
 					}
@@ -73,7 +82,9 @@ public class MaxquantMSMSConverter {
 		} catch (Exception e) {
 			Logger.errorLine("Error parsing Maxquant msms.txt:");
 			Logger.errorException(e);
-			throw new EncyclopediaException(e);
+			throw e instanceof EncyclopediaException
+					? (EncyclopediaException) e
+					: new EncyclopediaException(e);
 		}
 	}
 	
@@ -143,7 +154,17 @@ public class MaxquantMSMSConverter {
 		library.saveAsFile(libraryFile);
 		return library;
 	}
-	
+
+	private static float[] parseFloats(String values) {
+		if (null == values || values.isEmpty()) {
+			return new float[0];
+		} else if (!values.contains(VALUE_LIST_DELIMITER)) {
+			return parseFloats(new String[]{values});
+		} else {
+			return parseFloats(values.split(VALUE_LIST_DELIMITER));
+		}
+	}
+
 	private static float[] parseFloats(String[] values) {
 		float[] f=new float[values.length];
 		for (int i = 0; i < f.length; i++) {
@@ -151,7 +172,17 @@ public class MaxquantMSMSConverter {
 		}
 		return f;
 	}
-	
+
+	private static double[] parseDoubles(String values) {
+		if (null == values || values.isEmpty()) {
+			return new double[0];
+		} else if (!values.contains(VALUE_LIST_DELIMITER)) {
+			return parseDoubles(new String[]{values});
+		} else {
+			return parseDoubles(values.split(VALUE_LIST_DELIMITER));
+		}
+	}
+
 	private static double[] parseDoubles(String[] values) {
 		double[] f=new double[values.length];
 		for (int i = 0; i < f.length; i++) {
