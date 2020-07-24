@@ -1,10 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import com.google.common.collect.ImmutableList;
-import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
-import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
@@ -106,7 +103,7 @@ public class MaxquantMSMSConverterTest {
 		}
 	}
 
-	private static final SearchParameters parameters = new EncyclopediaParametersPanel(new SearchPanel(ProgramType.EncyclopeDIA)).getParameters();
+	private static final SearchParameters parameters = SearchParameterParser.getDefaultParametersObject();
 
 	private Path fasta;
 	private Path elib;
