@@ -1,17 +1,14 @@
 package edu.washington.gs.maccoss.encyclopedia.commandlineinterface;
 
+import java.io.File;
+import java.util.HashMap;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SpectronautCSVToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map.Entry;
-import java.util.TreeMap;
 
 public class ConvertPrositCSVToLibrary {
 	public static void main(String[] args) {
@@ -23,15 +20,6 @@ public class ConvertPrositCSVToLibrary {
 			Logger.timelessLogLine("\t-f\ttaxon .FASTA database");
 			Logger.timelessLogLine("Other Parameters: ");
 			Logger.timelessLogLine("\t-o\toutput .dlib file");
-
-			TreeMap<String, String> defaults=new TreeMap<>(SearchParameterParser.getDefaultParameters());
-			int maxWidth=0;
-			for (String key : defaults.keySet()) {
-				if (key.length()>maxWidth) maxWidth=key.length();
-			}
-			for (Entry<String, String> entry : defaults.entrySet()) {
-				Logger.timelessLogLine("\t"+ General.formatCellToWidth(entry.getKey(), maxWidth)+" (default: "+entry.getValue()+")");
-			}
 		} else {
 			convert(arguments);
 		}
@@ -50,7 +38,7 @@ public class ConvertPrositCSVToLibrary {
 			outputFile = new File(arguments.get("-o"));
 		} else {
 			String absolutePath=csvFile.getAbsolutePath();
-			outputFile = new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+ LibraryFile.DLIB);
+			outputFile = new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
 		}
 
 		SearchParameters parameters= SearchParameterParser.parseParameters(arguments);

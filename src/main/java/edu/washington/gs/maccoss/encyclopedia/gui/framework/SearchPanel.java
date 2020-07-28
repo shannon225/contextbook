@@ -498,6 +498,39 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		convertMenu.add(subsetELIB);
+
+		JMenu dataMenu=new JMenu("Data");
+		dataMenu.setMnemonic(KeyEvent.VK_D);
+		bar.add(dataMenu);
+
+		JMenuItem mzmlPreprocessorItem=new JMenuItem("Preprocess mzMLs", convertDBIcon);
+		mzmlPreprocessorItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.preprocessMZMLs(dataMenu, getVisibleTab().getParameters());
+			}
+		});
+		dataMenu.add(mzmlPreprocessorItem);
+
+		JMenuItem mzmlMergerItem=new JMenuItem("Combine Gas Phase Fractions", convertDBIcon);
+		mzmlMergerItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.combineMZMLs(dataMenu, getVisibleTab().getParameters());
+			}
+		});
+		dataMenu.add(mzmlMergerItem);
+		
+		dataMenu.addSeparator();
+
+		JMenuItem windowSchemeItem=new JMenuItem("Window Scheme Wizard", windowSchemeIcon);
+		windowSchemeItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				launchWindowingSchemeWizard();
+			}
+		});
+		dataMenu.add(windowSchemeItem);
 		
 		JMenu helpMenu=new JMenu("Help");
 		helpMenu.setMnemonic(KeyEvent.VK_H);
@@ -511,26 +544,6 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		helpMenu.add(aboutMenuItem);
-
-		helpMenu.addSeparator();
-
-		JMenuItem mzmlPreprocessorItem=new JMenuItem("Preprocess mzMLs", convertDBIcon);
-		mzmlPreprocessorItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.preprocessMZMLs(helpMenu, getVisibleTab().getParameters());
-			}
-		});
-		helpMenu.add(mzmlPreprocessorItem);
-
-		JMenuItem windowSchemeItem=new JMenuItem("Window Scheme Wizard", windowSchemeIcon);
-		windowSchemeItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				launchWindowingSchemeWizard();
-			}
-		});
-		helpMenu.add(windowSchemeItem);
 		
 		return bar;
 	}

@@ -54,11 +54,13 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryToBlibConverter
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MaxquantMSMSConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.OpenSwathTSVToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SpectronautCSVToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.TraMLToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileMerger;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.AboutDialog;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
@@ -326,6 +328,98 @@ public class SearchPanelUtilities {
 					
 				} else {
 					JOptionPane.showMessageDialog(frame, "You must specify at least one library file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+				}
+			}
+		});
+		buttons.add(okButton);
+		JButton cancelButton=new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+			}
+		});
+		buttons.add(cancelButton);
+		
+		JPanel mainpane=new JPanel(new BorderLayout());
+		mainpane.add(options, BorderLayout.CENTER);
+		mainpane.add(buttons, BorderLayout.SOUTH);
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		
+		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setVisible(true);
+	}
+	
+	public static void combineMZMLs(Component root, SearchParameters parameters) {
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+		final JDialog dialog=new JDialog(frame, "Combine DIA or mzML Gas Phase Fractions", true);
+		
+		final FileChooserPanel saveFileChooser=new FileChooserPanel(null, "DIA File", new SimpleFilenameFilter(".dia"), true, false);
+		
+		final JPanel choosers=new JPanel();
+		choosers.setLayout(new BoxLayout(choosers, BoxLayout.Y_AXIS));
+		choosers.add(new FileChooserPanel(null, "Add GPF DIA/mzML File", new SimpleFilenameFilter(".mzML", ".dia"), false));
+		
+		JPanel organizer=new JPanel(new BorderLayout());
+		organizer.add(choosers, BorderLayout.NORTH);
+		JScrollPane scrollPane = new JScrollPane(organizer); 
+		scrollPane.setPreferredSize(new Dimension(500, 400));
+		JButton addChooserButton=new JButton("Add Additional GPF DIA/mzML Selector", fileAddIcon);
+		addChooserButton.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				choosers.add(new FileChooserPanel(null, "Add GPF DIA/mzML", new SimpleFilenameFilter(".mzML", ".dia"), false), choosers.getComponentCount()-1);
+				choosers.revalidate();
+				choosers.repaint();
+			}
+		});
+
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(scrollPane);
+		options.add(addChooserButton);
+		options.add(saveFileChooser);
+		
+		JPanel buttons=new JPanel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JButton okButton=new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final ArrayList<File> files=new ArrayList<>();
+				for (Component c : choosers.getComponents()) {
+					if (c instanceof FileChooserPanel) {
+						File f=((FileChooserPanel)c).getFile();
+						if (f!=null&&f.exists()) {
+							files.add(f);
+						}
+					}
+				}
+
+				final File saveFile=saveFileChooser.getFile();
+				
+				if (files.size()>0&&saveFile!=null) {
+					dialog.setVisible(false);
+					dialog.dispose();
+					
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library Files") {
+						@Override
+						protected Nothing doInBackgroundForReal() throws Exception {
+							StripeFileMerger.merge(files.toArray(new File[files.size()]), saveFile, parameters);
+							return Nothing.NOTHING;
+						}
+						@Override
+						protected void doneForReal(Nothing t) {
+						}
+					};
+					worker.execute();
+					
+				} else {
+					JOptionPane.showMessageDialog(frame, "You must specify at least one DIA/mzML file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
 				}
 			}
 		});
