@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.commandlineinterface;
+package edu.washington.gs.maccoss.encyclopedia.cli;
 
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryToBlibConverter;
