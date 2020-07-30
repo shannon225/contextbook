@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
+import edu.washington.gs.maccoss.encyclopedia.cli.AdjustLibraryForPTMs;
 import edu.washington.gs.maccoss.encyclopedia.cli.ConvertFastaToPrositCSV;
 import edu.washington.gs.maccoss.encyclopedia.cli.ConvertLibraryToBlib;
 import edu.washington.gs.maccoss.encyclopedia.cli.ConvertPrositCSVToLibrary;
@@ -11,22 +12,25 @@ public class CLIConverter {
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
 		
-		if (arguments.containsKey("-prositcsvtolibrary")) {
+		if (arguments.containsKey("-prositcsvtolibrary")||arguments.containsKey("-prositCSVToLibrary")) {
 			ConvertPrositCSVToLibrary.main(args);
-		} else if (arguments.containsKey("-libtoblib")) {
+		} else if (arguments.containsKey("-libtoblib")||arguments.containsKey("-libraryToBlib")) {
 			ConvertLibraryToBlib.main(args);
-		} else if (arguments.containsKey("-fastatoprositcsv")) {
+		} else if (arguments.containsKey("-fastatoprositcsv")||arguments.containsKey("-fastaToPrositCSV")) {
 			ConvertFastaToPrositCSV.main(args);
 		} else if (arguments.containsKey("-mergeDIA")) {
 			MergeDIAFiles.main(args);
+		} else if (arguments.containsKey("-adjustLibraryForPTMs")) {
+			AdjustLibraryForPTMs.main(args);
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("EncyclopeDIA Converter Help");
 			Logger.timelessLogLine("EncyclopeDIA Converter allows to convert files from one format to another.");
 			Logger.timelessLogLine("Available converters: ");
-			Logger.timelessLogLine("\t-prositcsvtolibrary\tConvert Prosit/Spectronaut CSV to library (use -convert -prositcsvtolibrary -h for help)");
-			Logger.timelessLogLine("\t-libtoblib\tConvert library to BLIB (use -convert -libtoblib -h for help)");
-			Logger.timelessLogLine("\t-fastatoprositcsv\tConvert FASTA to Prosit CSV (use -convert -fastatoprositcsv -h for help)");
+			Logger.timelessLogLine("\t-prositCSVToLibrary\tConvert Prosit/Spectronaut CSV to library (use -convert -prositcsvtolibrary -h for help)");
+			Logger.timelessLogLine("\t-libraryToBlib\tConvert library to BLIB (use -convert -libtoblib -h for help)");
+			Logger.timelessLogLine("\t-fastaToPrositCSV\tConvert FASTA to Prosit CSV (use -convert -fastatoprositcsv -h for help)");
 			Logger.timelessLogLine("\t-mergeDIA\tMerge .MZML or .DIA gas-phase fractions (use -convert -mergeDIA -h for help)");
+			Logger.timelessLogLine("\t-adjustLibraryForPTMs\tadd PTMs (or SILAC masses) to library (use -convert -adjustLibraryForPTMs -h for help)");
 			System.exit(1);
 		}
 	}

@@ -59,7 +59,7 @@ public class FragmentationModel {
 		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, null, minimumMass, false, forQuant);
 	}
 	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double[] targetMasses, double minimumMass, boolean isDecoy, boolean forQuant) {
-		String sequence=getModifiedSequence();
+		String sequence=getPeptideModSeq();
 		double precursorMZ=getChargedMass(precursorCharge);
 		FragmentIon[] ions=getPrimaryIonObjects(params.getFragType(), precursorCharge, forQuant);
 		MassTolerance fragmentTolerance=params.getFragmentTolerance();
@@ -107,11 +107,7 @@ public class FragmentationModel {
 	}
 	
 	public String toString() {
-		StringBuilder sb=new StringBuilder();
-		for (String aa : aas) {
-			sb.append(aa);
-		}
-		return sb.toString();
+		return getPeptideModSeq();
 	}
 	
 	public static Pair<Character, Double> parseAA(String aa) {
@@ -123,7 +119,7 @@ public class FragmentationModel {
 		return new Pair<Character, Double>(c, null);
 	}
 	
-	public String getModifiedSequence() {
+	public String getPeptideModSeq() {
 		StringBuilder sb=new StringBuilder();
 		for (String aa : aas) {
 			sb.append(aa);
@@ -177,13 +173,13 @@ public class FragmentationModel {
 				altNLs[i]=0.0;
 				
 				FragmentationModel altModel=new FragmentationModel(altMasses, altModMasses, altNLs, altAAs);
-				availableModels.put(altModel.getModifiedSequence(), altModel);
+				availableModels.put(altModel.getPeptideModSeq(), altModel);
 			}
 		}
 		
 		if (availableModels.size()==0) return Optional.empty();
 		
-		final String peptideModSeq=getModifiedSequence();
+		final String peptideModSeq=getPeptideModSeq();
 		availableModels.put(peptideModSeq, this);
 		return Optional.of(PhosphoLocalizer.getUniqueFragmentIons(peptideModSeq, precursorCharge, availableModels, type));
 	}

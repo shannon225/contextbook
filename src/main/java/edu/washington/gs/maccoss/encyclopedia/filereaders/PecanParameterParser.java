@@ -45,7 +45,7 @@ public class PecanParameterParser {
 		map.put("-alpha", "1.8");
 		map.put("-beta", "0.4");
 		map.put("-percolatorVersionNumber", Byte.toString(PercolatorExecutor.DEFAULT_VERSION_NUMBER));
-		map.put("-acquisition", "overlapping dia");
+		map.put("-acquisition", DataAcquisitionType.toString(DataAcquisitionType.DIA));
 		map.put("-precursorWindowSize", "-1");
 		map.put("-numberOfThreadsUsed", Integer.toString(Runtime.getRuntime().availableProcessors()));
 		map.put("-numberOfQuantitativePeaks", "5");

@@ -46,7 +46,7 @@ public class XCorrLibraryEntry extends LibraryEntry {
 		Pair<FragmentationModel, SparseXCorrSpectrum> theoreticalSpectrumPair=SparseXCorrCalculator.getTheoreticalSpectrumPair(peptide.getSequence(), precursorCharge, params);
 		FragmentationModel model=theoreticalSpectrumPair.x;
 		SparseXCorrSpectrum spectrum=theoreticalSpectrumPair.y;
-		return new XCorrLibraryEntry(isDecoy, model.getModifiedSequence(), peptide, precursorCharge, spectrum, params);
+		return new XCorrLibraryEntry(isDecoy, model.getPeptideModSeq(), peptide, precursorCharge, spectrum, params);
 	}
 	
 	@Override

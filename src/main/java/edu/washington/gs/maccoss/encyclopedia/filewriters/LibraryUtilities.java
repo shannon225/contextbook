@@ -12,13 +12,44 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.LibraryEntryModifier;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryUtilities {
-	public static void subsetLibrary(final File saveFile, final float rtMinSec, final float rtMaxSec, final HashSet<String> targets, LibraryFile library)
+	public static void modifyLibrary(final File saveFile, TCharDoubleHashMap modMasses, boolean isFixed, LibraryInterface library) throws IOException, SQLException, DataFormatException {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		
+		LibraryFile saveLibrary=new LibraryFile();
+		saveLibrary.openFile();
+		
+		ArrayList<LibraryEntry> toWrite=new ArrayList<>();
+		int count=0;
+		for (LibraryEntry entry : library.getAllEntries(false, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()))) {
+			count++;
+			if (isFixed) {
+				toWrite.add(LibraryEntryModifier.modifyModelAtEverySite(entry, modMasses, false, parameters));
+			} else {
+				toWrite.addAll(LibraryEntryModifier.modifyModelAtEachSite(entry, modMasses, true, parameters));
+			}
+		}
+		Logger.logLine("Created "+toWrite.size()+" peptides from "+count+" target sequences. Writing to ["+saveFile.getAbsolutePath()+"]...");
+		
+		saveLibrary.dropIndices();
+		saveLibrary.addEntries(toWrite);
+		saveLibrary.addProteinsFromEntries(toWrite);
+		saveLibrary.createIndices();
+		saveLibrary.saveAsFile(saveFile);
+		
+		saveLibrary.close();
+	}
+	
+	public static void subsetLibrary(final File saveFile, final float rtMinSec, final float rtMaxSec, final HashSet<String> targets, LibraryInterface library)
 			throws IOException, SQLException, DataFormatException {
 		LibraryFile saveLibrary=new LibraryFile();
 		saveLibrary.openFile();
@@ -45,7 +76,7 @@ public class LibraryUtilities {
 	/*
 	 * FOR MSPLIT-DIA
 	 */
-	public static void libraryToMGF(final File saveFile, LibraryFile library)
+	public static void libraryToMGF(final File saveFile, LibraryInterface library)
 			throws IOException, SQLException, DataFormatException {
 		PrintWriter writer=new PrintWriter(saveFile, "UTF-8");
 		

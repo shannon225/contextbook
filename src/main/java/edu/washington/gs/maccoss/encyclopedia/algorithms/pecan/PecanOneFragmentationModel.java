@@ -55,7 +55,7 @@ public class PecanOneFragmentationModel extends AbstractPecanFragmentationModel 
 		Collections.sort(peaks);
 		Pair<double[], float[]> arrays=Peak.toArrays(peaks);
 		
-		String sequence=getModifiedSequence();
+		String sequence=getPeptideModSeq();
 		double precursorMZ=params.getAAConstants().getChargedMass(sequence, precursorCharge);
 
 		return new PecanLibraryEntry(peptide, precursorMZ, precursorCharge, sequence, 1, 0.0f, 0, arrays.x, arrays.y, isDecoy, euclidianDistance, params.getAAConstants());
