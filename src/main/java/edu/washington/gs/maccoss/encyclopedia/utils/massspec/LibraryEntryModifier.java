@@ -1,13 +1,29 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryEntryModifier {
+	public static void main(String[] args) throws Exception {
+		File inputFile=new File("/Users/searleb/Documents/iarpa/rares/with_semitryptic/iarpa_3clib_detected_prosit.dlib");
+		File outputFile=new File("/Users/searleb/Documents/iarpa/rares/with_semitryptic/silac_iarpa_3clib_detected_prosit.dlib");
+
+		TCharDoubleHashMap ptms=new TCharDoubleHashMap();
+		ptms.put('K',8.014199);
+		ptms.put('R',10.008269);
+		
+		LibraryInterface library=BlibToLibraryConverter.getFile(inputFile);
+		LibraryUtilities.modifyLibrary(outputFile, ptms, true, library);
+	}
+	
 	public static LibraryEntry modifyModelAtEverySite(LibraryEntry entry, TCharDoubleHashMap fixedMods, boolean changePTMs, SearchParameters parameters) {
 		FragmentationModel model=modifyModelAtEverySite(entry.getPeptideModSeq(), fixedMods, changePTMs, parameters);
 		return entry.getEntryFromNewSequence(model.getPeptideModSeq(), entry.getAccessions(), false, parameters).y;
