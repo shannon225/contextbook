@@ -371,6 +371,10 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	public Pair<FragmentationModel, LibraryEntry> getEntryFromNewSequence(String newSequence, HashSet<String> accessions, boolean markAsDecoy, SearchParameters parameters) {
 		FragmentationModel forwardModel=PeptideUtils.getPeptideModel(peptideModSeq, parameters.getAAConstants());
 		FragmentationModel reverseModel=PeptideUtils.getPeptideModel(newSequence, parameters.getAAConstants());
+
+		double oldPrecursorMz=forwardModel.getChargedMass(precursorCharge);
+		double precursorMzError=precursorMZ-oldPrecursorMz;
+		double newPrecursorMz=reverseModel.getChargedMass(precursorCharge)-precursorMzError;
 		
 		ArrayList<FragmentIon> forwardIons=new ArrayList<FragmentIon>();
 		ArrayList<FragmentIon> reverseIons=new ArrayList<FragmentIon>();
@@ -447,9 +451,9 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(reversedPeaks);
 		
 		if (markAsDecoy) {
-			return new Pair<FragmentationModel, LibraryEntry>(reverseModel, new ReverseLibraryEntry(source, accessions, precursorMZ, precursorCharge, newSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z, parameters.getAAConstants()));
+			return new Pair<FragmentationModel, LibraryEntry>(reverseModel, new ReverseLibraryEntry(source, accessions, newPrecursorMz, precursorCharge, newSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z, parameters.getAAConstants()));
 		} else {
-			return new Pair<FragmentationModel, LibraryEntry>(reverseModel, new LibraryEntry(source, accessions, precursorMZ, precursorCharge, newSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z, parameters.getAAConstants()));
+			return new Pair<FragmentationModel, LibraryEntry>(reverseModel, new LibraryEntry(source, accessions, newPrecursorMz, precursorCharge, newSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z, parameters.getAAConstants()));
 		}
 	}
 }
