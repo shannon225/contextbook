@@ -168,7 +168,7 @@
 			</build>
 		</profile>
 		<profile>
-			<!-- build with `mvn -PbuildEncyclopedia ...` to create the phospho executable JAR -->
+			<!-- build with `mvn -PbuildEncyclopedia ...` to create the encyclopedia executable JAR -->
 			<id>buildEncyclopedia</id>
 			<activation>
 				<property>
@@ -260,7 +260,7 @@
 			</build>
 		</profile>
 		<profile>
-			<!-- build with `mvn -PbuildXcordia ...` to create the phospho executable JAR -->
+			<!-- build with `mvn -PbuildXcordia ...` to create the xcordia executable JAR -->
 			<id>buildXcordia</id>
 			<activation>
 				<property>
@@ -306,7 +306,7 @@
 			</build>
 		</profile>
 		<profile>
-			<!-- build with `mvn -PbuildWalnut ...` to create the phospho executable JAR -->
+			<!-- build with `mvn -PbuildWalnut ...` to create the walnut executable JAR -->
 			<id>buildWalnut</id>
 			<activation>
 				<property>
