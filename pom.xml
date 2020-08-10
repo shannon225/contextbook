@@ -120,7 +120,7 @@
 	</build>
 
 	<profiles>
-		<!-- build with `mvn -DbuildJars=true ...` to create ALL executable JARs -->
+		<!-- build with `mvn -DbuildJars ...` to create ALL executable JARs -->
 		<profile>
 			<!-- build with `mvn -PbuildGlobal ...` to create the global executable JAR -->
 			<id>buildGlobal</id>
