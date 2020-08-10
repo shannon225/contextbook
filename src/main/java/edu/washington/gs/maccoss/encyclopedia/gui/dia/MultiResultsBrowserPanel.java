@@ -76,7 +76,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
-import jargs.gnu.CmdLineParser.Option;
 
 public class MultiResultsBrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
