@@ -28,27 +28,32 @@
 		-->
 		<globalTargetName>encyclopedia-${version}-global</globalTargetName>
 		<globalBuildTarget>edu.washington.gs.maccoss.encyclopedia.Main</globalBuildTarget>
-		
+		<buildGlobal>false</buildGlobal>
+
 		<encyclopediaTargetName>encyclopedia-${version}-executable</encyclopediaTargetName>
 		<encyclopediaBuildTarget>edu.washington.gs.maccoss.encyclopedia.Encyclopedia</encyclopediaBuildTarget>
+		<buildEncyclopedia>false</buildEncyclopedia>
 
 		<phosphoTargetName>thesaurus-${version}-executable</phosphoTargetName>
 		<phosphoBuildTarget>edu.washington.gs.maccoss.encyclopedia.Thesaurus</phosphoBuildTarget>
+		<buildPhospho>false</buildPhospho>
 
 		<xcordiaTargetName>xcordia-${version}-executable</xcordiaTargetName>
 		<xcordiaBuildTarget>edu.washington.gs.maccoss.encyclopedia.XCorDIA</xcordiaBuildTarget>
+		<buildXcordia>false</buildXcordia>
 
 		<walnutTargetName>walnut-${version}-executable</walnutTargetName>
 		<walnutBuildTarget>edu.washington.gs.maccoss.encyclopedia.Walnut</walnutBuildTarget>
+		<buildWalnut>false</buildWalnut>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
 	<repositories>
 		<repository>
-	      <id>nexus-ebi-release-repo</id>
-	      <url>http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/</url>
-	 	 </repository>
+		  <id>nexus-ebi-release-repo</id>
+		  <url>http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/</url>
+		 </repository>
 		<repository>
 			<id>ebi-repo</id>
 			<name>The EBI Maven 2 repository</name>
@@ -72,14 +77,14 @@
 			</snapshots>
 		</repository>
 		<repository>
-            <id>genesis-maven2-repository</id>
-            <name>Genesis maven2 repository</name>
-            <url>http://genesis.UGent.be/maven2</url>
-            <layout>default</layout>
-        </repository>
+			<id>genesis-maven2-repository</id>
+			<name>Genesis maven2 repository</name>
+			<url>http://genesis.UGent.be/maven2</url>
+			<layout>default</layout>
+		</repository>
 		<repository>
-		    <id>jitpack.io</id>
-		    <url>https://jitpack.io</url>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
 		</repository>
 	</repositories>
 
@@ -92,138 +97,6 @@
 					<source>1.8</source>
 					<target>1.8</target>
 				</configuration>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>shade-global</id>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<filters>
-						        	<filter>
-						        	    <artifact>*:*</artifact>
-						        	    <excludes>
-						        	        <exclude>META-INF/*.SF</exclude>
-						        	        <exclude>META-INF/*.DSA</exclude>
-						        	        <exclude>META-INF/*.RSA</exclude>
-						       		    </excludes>
-						        	</filter>
-						    	</filters>
-							<finalName>${globalTargetName}</finalName>
-							<transformers>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>${globalBuildTarget}</mainClass>
-								</transformer>
-							</transformers>
-						</configuration>
-					</execution>
-					<execution>
-						<id>shade-phospho</id>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<filters>
-						        	<filter>
-						        	    <artifact>*:*</artifact>
-						        	    <excludes>
-						        	        <exclude>META-INF/*.SF</exclude>
-						        	        <exclude>META-INF/*.DSA</exclude>
-						        	        <exclude>META-INF/*.RSA</exclude>
-						       		    </excludes>
-						        	</filter>
-						    	</filters>
-							<finalName>${phosphoTargetName}</finalName>
-							<transformers>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>${phosphoBuildTarget}</mainClass>
-								</transformer>
-							</transformers>
-						</configuration>
-					</execution>
-					<execution>
-						<id>shade-encyclopedia</id>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<filters>
-						        	<filter>
-						        	    <artifact>*:*</artifact>
-						        	    <excludes>
-						        	        <exclude>META-INF/*.SF</exclude>
-						        	        <exclude>META-INF/*.DSA</exclude>
-						        	        <exclude>META-INF/*.RSA</exclude>
-						       		    </excludes>
-						        	</filter>
-						    	</filters>
-							<finalName>${encyclopediaTargetName}</finalName>
-							<transformers>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>${encyclopediaBuildTarget}</mainClass>
-								</transformer>
-							</transformers>
-						</configuration>
-					</execution>
-					<execution>
-						<id>shade-xcordia</id>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<filters>
-						        	<filter>
-						        	    <artifact>*:*</artifact>
-						        	    <excludes>
-						        	        <exclude>META-INF/*.SF</exclude>
-						        	        <exclude>META-INF/*.DSA</exclude>
-						        	        <exclude>META-INF/*.RSA</exclude>
-						       		    </excludes>
-						        	</filter>
-						    	</filters>
-							<finalName>${xcordiaTargetName}</finalName>
-							<transformers>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>${xcordiaBuildTarget}</mainClass>
-								</transformer>
-							</transformers>
-						</configuration>
-					</execution>
-					<execution>
-						<id>shade-walnut</id>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<filters>
-						        	<filter>
-						        	    <artifact>*:*</artifact>
-						        	    <excludes>
-						        	        <exclude>META-INF/*.SF</exclude>
-						        	        <exclude>META-INF/*.DSA</exclude>
-						        	        <exclude>META-INF/*.RSA</exclude>
-						       		    </excludes>
-						        	</filter>
-						    	</filters>
-							<finalName>${walnutTargetName}</finalName>
-							<transformers>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>${walnutBuildTarget}</mainClass>
-								</transformer>
-							</transformers>
-						</configuration>
-					</execution>
-				</executions>
 			</plugin>
 			<plugin>
 				<!-- Allows us to properly fetch artifact version programmatically in code.
@@ -246,11 +119,245 @@
 		</plugins>
 	</build>
 
-	<dependencies>
+	<profiles>
+		<!-- build with `mvn -Djars=true ...` to create ALL executable JARs -->
+		<profile>
+			<!-- build with `mvn -PbuildGlobal ...` to create the global executable JAR -->
+			<id>buildGlobal</id>
+			<activation>
+				<property>
+					<name>buildJars</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-shade-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>shade-global</id>
+								<phase>package</phase>
+								<goals>
+									<goal>shade</goal>
+								</goals>
+								<configuration>
+									<filters>
+										<filter>
+											<artifact>*:*</artifact>
+											<excludes>
+												<exclude>META-INF/*.SF</exclude>
+												<exclude>META-INF/*.DSA</exclude>
+												<exclude>META-INF/*.RSA</exclude>
+											</excludes>
+										</filter>
+									</filters>
+									<finalName>${globalTargetName}</finalName>
+									<transformers>
+										<transformer
+												implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+											<mainClass>${globalBuildTarget}</mainClass>
+										</transformer>
+									</transformers>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<!-- build with `mvn -PbuildEncyclopedia ...` to create the phospho executable JAR -->
+			<id>buildEncyclopedia</id>
+			<activation>
+				<property>
+					<name>buildJars</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-shade-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>shade-encyclopedia</id>
+								<phase>package</phase>
+								<goals>
+									<goal>shade</goal>
+								</goals>
+								<configuration>
+									<filters>
+										<filter>
+											<artifact>*:*</artifact>
+											<excludes>
+												<exclude>META-INF/*.SF</exclude>
+												<exclude>META-INF/*.DSA</exclude>
+												<exclude>META-INF/*.RSA</exclude>
+											</excludes>
+										</filter>
+									</filters>
+									<finalName>${encyclopediaTargetName}</finalName>
+									<transformers>
+										<transformer
+												implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+											<mainClass>${encyclopediaBuildTarget}</mainClass>
+										</transformer>
+									</transformers>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<!-- build with `mvn -PbuildPhospho ...` to create the phospho executable JAR -->
+			<id>buildPhospho</id>
+			<activation>
+				<property>
+					<name>buildJars</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-shade-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>shade-phospho</id>
+								<phase>package</phase>
+								<goals>
+									<goal>shade</goal>
+								</goals>
+								<configuration>
+									<filters>
+										<filter>
+											<artifact>*:*</artifact>
+											<excludes>
+												<exclude>META-INF/*.SF</exclude>
+												<exclude>META-INF/*.DSA</exclude>
+												<exclude>META-INF/*.RSA</exclude>
+											</excludes>
+										</filter>
+									</filters>
+									<finalName>${phosphoTargetName}</finalName>
+									<transformers>
+										<transformer
+												implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+											<mainClass>${phosphoBuildTarget}</mainClass>
+										</transformer>
+									</transformers>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<!-- build with `mvn -PbuildXcordia ...` to create the phospho executable JAR -->
+			<id>buildXcordia</id>
+			<activation>
+				<property>
+					<name>buildJars</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-shade-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>shade-xcordia</id>
+								<phase>package</phase>
+								<goals>
+									<goal>shade</goal>
+								</goals>
+								<configuration>
+									<filters>
+										<filter>
+											<artifact>*:*</artifact>
+											<excludes>
+												<exclude>META-INF/*.SF</exclude>
+												<exclude>META-INF/*.DSA</exclude>
+												<exclude>META-INF/*.RSA</exclude>
+											</excludes>
+										</filter>
+									</filters>
+									<finalName>${xcordiaTargetName}</finalName>
+									<transformers>
+										<transformer
+												implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+											<mainClass>${xcordiaBuildTarget}</mainClass>
+										</transformer>
+									</transformers>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<!-- build with `mvn -PbuildWalnut ...` to create the phospho executable JAR -->
+			<id>buildWalnut</id>
+			<activation>
+				<property>
+					<name>buildJars</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-shade-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>shade-walnut</id>
+								<phase>package</phase>
+								<goals>
+									<goal>shade</goal>
+								</goals>
+								<configuration>
+									<filters>
+										<filter>
+											<artifact>*:*</artifact>
+											<excludes>
+												<exclude>META-INF/*.SF</exclude>
+												<exclude>META-INF/*.DSA</exclude>
+												<exclude>META-INF/*.RSA</exclude>
+											</excludes>
+										</filter>
+									</filters>
+									<finalName>${walnutTargetName}</finalName>
+									<transformers>
+										<transformer
+												implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+											<mainClass>${walnutBuildTarget}</mainClass>
+										</transformer>
+									</transformers>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
+    <dependencies>
 		<dependency>
-		    <groupId>org.slf4j</groupId>
-		    <artifactId>slf4j-nop</artifactId>
-		    <version>1.7.25</version>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-nop</artifactId>
+			<version>1.7.25</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -264,11 +371,11 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-            <groupId>com.compomics.jtraml</groupId>
-            <artifactId>jtraml-core</artifactId>
-            <version>1.0.5</version>
-            <type>jar</type>
-        </dependency>
+			<groupId>com.compomics.jtraml</groupId>
+			<artifactId>jtraml-core</artifactId>
+			<version>1.0.5</version>
+			<type>jar</type>
+		</dependency>
 		<dependency>
 			<groupId>uk.ac.ebi.pride.utilities</groupId>
 			<artifactId>pride-mod</artifactId>
@@ -300,9 +407,9 @@
 			<version>1.0.19</version>
 		</dependency>
 		<dependency>
-    		<groupId>org.jfree</groupId>
-   	 		<artifactId>jfreesvg</artifactId>
-    		<version>3.2</version>
+			<groupId>org.jfree</groupId>
+			<artifactId>jfreesvg</artifactId>
+			<version>3.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jzy3d</groupId>
