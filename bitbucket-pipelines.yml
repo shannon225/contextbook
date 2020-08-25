@@ -14,3 +14,18 @@ pipelines:
           - maven # predefined; caches ~/.m2/repository
         script:
           - mvn -B verify # -B batch mode makes Maven less verbose
+  tags:
+    # this build only runs on tagged encyclopedia releases
+    encyclopedia-*:
+      - step:
+        caches:
+          - maven # predefined; caches ~/.m2/repository
+        script:
+          # Similar to above, but with encyclopedia executable JAR and ITs
+          - mvn -B package verify -PbuildEncyclopedia -DskipITs=false
+          # Upload file as a download to the repo
+          - pipe: atlassian/bitbucket-upload-file:0.3.0
+            variables:
+              BITBUCKET_USERNAME: $BITBUCKET_USERNAME
+              BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
+              FILENAME: 'target/encyclopedia-*-executable.jar'
