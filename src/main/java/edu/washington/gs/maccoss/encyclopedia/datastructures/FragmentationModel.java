@@ -11,6 +11,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -133,7 +134,7 @@ public class FragmentationModel {
 	 * @return
 	 */
 	public double[] getPrimaryIons(FragmentationType type, byte precursorCharge, boolean forQuant) {
-		FragmentIon[] ions=getPrimaryIonObjects(type, precursorCharge, forQuant);
+		Ion[] ions=getPrimaryIonObjects(type, precursorCharge, forQuant);
 		double[] masses=new double[ions.length];
 		for (int i=0; i<ions.length; i++) {
 			masses[i]=ions[i].getMass();
@@ -237,14 +238,14 @@ public class FragmentationModel {
 		return p2;
 	}
 
-	private static FragmentIon[] concatAndSort(FragmentIon[]... a) {
+	private static FragmentIon[] concatAndSort(Ion[]... a) {
 		int length=0;
-		for (FragmentIon[] ds : a) {
+		for (Ion[] ds : a) {
 			length+=ds.length;
 		}
 		FragmentIon[] c=new FragmentIon[length];
 		int current=0;
-		for (FragmentIon[] ds : a) {
+		for (Ion[] ds : a) {
 			System.arraycopy(ds, 0, c, current, ds.length);
 			current+=ds.length;
 		}

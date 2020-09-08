@@ -16,6 +16,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IndexedIonType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakChromatogram;
@@ -415,7 +416,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		// make sure ion indices line up
 		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
 		for (FragmentIon reverse : reverseIons) {
-			FragmentIon forward=forwardMap.get(new IndexedIonType(reverse));
+			Ion forward=forwardMap.get(new IndexedIonType(reverse));
 			if (forward!=null) {
 				points.add(new XYPoint(forward.getMass(), reverse.getMass()));
 			}

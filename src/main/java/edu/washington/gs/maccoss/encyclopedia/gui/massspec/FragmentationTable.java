@@ -17,6 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 
@@ -81,7 +82,7 @@ public class FragmentationTable extends JPanel {
 		private static final long serialVersionUID=1L;
 		
 		IonType[] types;
-		FragmentIon[][] ions;
+		Ion[][] ions;
 		boolean[][] wasConsidered;
 		boolean[][] wasFound;
 		
@@ -97,11 +98,11 @@ public class FragmentationTable extends JPanel {
 			types=typeSet.toArray(new IonType[typeSet.size()]);
 			Arrays.sort(types);
 			
-			ions=new FragmentIon[maxIonIndex][];
+			ions=new Ion[maxIonIndex][];
 			wasConsidered=new boolean[maxIonIndex][];
 			wasFound=new boolean[maxIonIndex][];
 			for (int i=0; i<ions.length; i++) {
-				ions[i]=new FragmentIon[types.length];
+				ions[i]=new Ion[types.length];
 				wasConsidered[i]=new boolean[types.length];
 				wasFound[i]=new boolean[types.length];
 			}
@@ -149,7 +150,7 @@ public class FragmentationTable extends JPanel {
 			if (columnIndex==0||columnIndex>types.length) return rowIndex+1;
 			columnIndex=columnIndex-1;
 			
-			FragmentIon ion=ions[rowIndex][columnIndex];
+			Ion ion=ions[rowIndex][columnIndex];
 			if (ion==null) return "";
 			
 			String value=MASS_FORMAT.format(ion.getMass());

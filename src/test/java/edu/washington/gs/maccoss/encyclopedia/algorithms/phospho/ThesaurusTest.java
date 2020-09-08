@@ -29,6 +29,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
@@ -111,7 +112,7 @@ public class ThesaurusTest {
 			Charter.launchChart(entry.getPeptideModSeq()+" Retention Time (min)", "Intensity ("+localizingIons.length+")", false, new Dimension(500, 300), chromatograms.values().toArray(new XYTraceInterface[chromatograms.size()]));
 			
 			System.out.println(entry.getPeptideModSeq()+" ("+localizingIons.length+") vs "+bestAlt.getPeptideModSeq());
-			for (FragmentIon fragmentIon : localizingIons) {
+			for (Ion fragmentIon : localizingIons) {
 				System.out.println("\t"+fragmentIon+" ("+fragmentIon.getMass()+")");
 			}
 		}
@@ -158,7 +159,7 @@ public class ThesaurusTest {
 			if (!localizationQueue.isEmpty()) {
 				ModificationLocalizationData data=localizationQueue.take();
 				System.out.println(data.getLocalizationPeptideModSeq().getPeptideAnnotation()+" ("+data.isSiteSpecific()+","+data.isLocalized()+") --> "+data.getLocalizationScore()+"\t"+data.getLocalizingIntensity()+"\t"+data.getTotalIntensity()+"\t"+FragmentIon.toArchiveString(data.getLocalizingIons()));
-				for (FragmentIon ion : data.getLocalizingIons()) {
+				for (Ion ion : data.getLocalizingIons()) {
 					//System.out.println("\t"+ion);
 				}
 			} else {

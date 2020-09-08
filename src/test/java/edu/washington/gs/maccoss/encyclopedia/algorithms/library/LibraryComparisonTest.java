@@ -8,7 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
@@ -42,7 +42,7 @@ public class LibraryComparisonTest {
 			TFloatArrayList counts=new TFloatArrayList();
 			for (LibraryEntry entry : lib.getAllEntries(false, parameters.getAAConstants())) {
 				AnnotatedLibraryEntry annotated=new AnnotatedLibraryEntry(entry, parameters);
-				FragmentIon[] ions=annotated.getIonAnnotations();
+				Ion[] ions=annotated.getIonAnnotations();
 				
 				float[] intensities=entry.getIntensityArray();
 				float target=0.25f*General.max(intensities);

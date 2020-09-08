@@ -8,6 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParame
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TDoubleIntHashMap;
@@ -20,7 +21,7 @@ public class FragmentationModelTest extends TestCase {
 	public void testModifiedFragmentation() {
 		String sequence="A[+42.0]QRHS[+79.96633]DSSLEEK";
 		FragmentationModel model=PeptideUtils.getPeptideModel(sequence, PARAMETERS.getAAConstants());
-		FragmentIon[] ions=model.getPrimaryIonObjects(FragmentationType.CID, (byte)3, false);
+		Ion[] ions=model.getPrimaryIonObjects(FragmentationType.CID, (byte)3, false);
 		for (int i=0; i<ions.length; i++) {
 			System.out.println(ions[i]+"\t"+ions[i].getMass());
 		}

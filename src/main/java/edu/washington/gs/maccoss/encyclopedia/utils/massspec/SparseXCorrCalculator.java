@@ -191,7 +191,7 @@ public class SparseXCorrCalculator {
 		ArrayList<Peak> allPeaks=new ArrayList<Peak>();
 		switch (type) {
 			case HCD:
-				FragmentIon[] yIons=model.getYIons();
+				Ion[] yIons=model.getYIons();
 				allPeaks.addAll(getPeaks(yIons, 0.0, ArrayXCorrCalculator.primaryIonIntensity));
 				if (params.isUseNLsForXCorr()) {
 					allPeaks.addAll(getPeaks(yIons, -MassConstants.nh3, ArrayXCorrCalculator.neutralLossIntensity));
@@ -200,14 +200,14 @@ public class SparseXCorrCalculator {
 				break;
 				
 			case CID:
-				FragmentIon[] yIonsCID=model.getYIons();
+				Ion[] yIonsCID=model.getYIons();
 				allPeaks.addAll(getPeaks(yIonsCID, 0.0, ArrayXCorrCalculator.primaryIonIntensity));
 				if (params.isUseNLsForXCorr()) {
 					allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.nh3, ArrayXCorrCalculator.neutralLossIntensity));
 					allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.oh2, ArrayXCorrCalculator.neutralLossIntensity));
 				}
 				
-				FragmentIon[] bIonsCID=model.getBIons();
+				Ion[] bIonsCID=model.getBIons();
 				allPeaks.addAll(getPeaks(bIonsCID, 0.0, ArrayXCorrCalculator.primaryIonIntensity));
 				if (params.isUseNLsForXCorr()) {
 					allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.nh3, ArrayXCorrCalculator.neutralLossIntensity));
@@ -217,14 +217,14 @@ public class SparseXCorrCalculator {
 				break;
 				
 			case ETD:
-				FragmentIon[] cIonsCID=model.getCIons();
+				Ion[] cIonsCID=model.getCIons();
 				allPeaks.addAll(getPeaks(cIonsCID, 0.0, ArrayXCorrCalculator.primaryIonIntensity));
 				if (params.isUseNLsForXCorr()) {
 					allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.nh3, ArrayXCorrCalculator.neutralLossIntensity));
 					allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.oh2, ArrayXCorrCalculator.neutralLossIntensity));
 				}
 
-				FragmentIon[] zIonsCID=model.getCIons();
+				Ion[] zIonsCID=model.getCIons();
 				allPeaks.addAll(getPeaks(zIonsCID, 0.0, ArrayXCorrCalculator.primaryIonIntensity));
 				allPeaks.addAll(getPeaks(zIonsCID, MassConstants.neutronMass, ArrayXCorrCalculator.primaryIonIntensity)); // z+1
 				if (params.isUseNLsForXCorr()) {
@@ -240,7 +240,7 @@ public class SparseXCorrCalculator {
 		return new Pair<>(model, getIntensityArray(params, allPeaks, model.getChargedMass(precursorCharge), true));
 	}
 	
-	private static ArrayList<Peak> getPeaks(FragmentIon[] ions, double delta, float intensity) {
+	private static ArrayList<Peak> getPeaks(Ion[] ions, double delta, float intensity) {
 		ArrayList<Peak> peaks=new ArrayList<Peak>();
 		for (int i=0; i<ions.length; i++) {
 			peaks.add(new Peak(ions[i].getMass()+delta, intensity));

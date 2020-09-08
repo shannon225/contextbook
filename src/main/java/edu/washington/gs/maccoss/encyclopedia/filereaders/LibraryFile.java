@@ -55,6 +55,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
@@ -694,7 +695,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 		float[] correlationArray=data.getCorrelationArray();
 
-		FragmentIon[] fragmentMassArray=data.getFragmentMassArray();
+		Ion[] fragmentMassArray=data.getFragmentMassArray();
 		float[] deltaMassArray=data.getDeltaMassArray().get();
 		float[] ppmArray=new float[deltaMassArray.length];
 

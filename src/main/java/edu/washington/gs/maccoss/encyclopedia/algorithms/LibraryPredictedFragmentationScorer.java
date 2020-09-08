@@ -6,7 +6,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEnt
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import gnu.trove.list.array.TFloatArrayList;
@@ -47,7 +47,7 @@ public class LibraryPredictedFragmentationScorer extends AuxillaryPSMScorer {
 		
 		if (entry instanceof AnnotatedLibraryEntry) {
 			double[] predicted=entry.getMassArray();
-			FragmentIon[] ions=((AnnotatedLibraryEntry)entry).getIonAnnotations();
+			Ion[] ions=((AnnotatedLibraryEntry)entry).getIonAnnotations();
 			for (int i=0; i<ions.length; i++) {
 				if (ions[i]==null) {
 					names.add(ions[i].toString());

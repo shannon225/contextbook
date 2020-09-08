@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -69,7 +70,7 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 		TFloatArrayList newIntensities=new TFloatArrayList();
 		TFloatArrayList newCorrelations=new TFloatArrayList();
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
-		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), true)) {
+		for (Ion fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), true)) {
 			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.getMass());
 			for (int i=0; i<indicies.length; i++) {
 				newMasses.add(massArray[indicies[i]]);

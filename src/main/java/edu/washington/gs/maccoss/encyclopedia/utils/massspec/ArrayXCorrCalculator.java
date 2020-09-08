@@ -200,7 +200,7 @@ public class ArrayXCorrCalculator {
 		ArrayList<Peak> allPeaks=new ArrayList<Peak>();
 		switch (type) {
 			case HCD:
-				FragmentIon[] yIons=model.getYIons();
+				Ion[] yIons=model.getYIons();
 				allPeaks.addAll(getPeaks(yIons, 0.0, primaryIonIntensity));
 				if (params.isUseNLsForXCorr()) {
 					allPeaks.addAll(getPeaks(yIons, -MassConstants.nh3, neutralLossIntensity));
@@ -209,14 +209,14 @@ public class ArrayXCorrCalculator {
 				break;
 
 			case CID:
-				FragmentIon[] yIonsCID=model.getYIons();
+				Ion[] yIonsCID=model.getYIons();
 				allPeaks.addAll(getPeaks(yIonsCID, 0.0, primaryIonIntensity));
 				if (params.isUseNLsForXCorr()) {
 					allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.nh3, neutralLossIntensity));
 					allPeaks.addAll(getPeaks(yIonsCID, -MassConstants.oh2, neutralLossIntensity));
 				}
 
-				FragmentIon[] bIonsCID=model.getBIons();
+				Ion[] bIonsCID=model.getBIons();
 				allPeaks.addAll(getPeaks(bIonsCID, 0.0, primaryIonIntensity));
 				if (params.isUseNLsForXCorr()) {
 					allPeaks.addAll(getPeaks(bIonsCID, -MassConstants.nh3, neutralLossIntensity));
@@ -226,14 +226,14 @@ public class ArrayXCorrCalculator {
 				break;
 
 			case ETD:
-				FragmentIon[] cIonsCID=model.getCIons();
+				Ion[] cIonsCID=model.getCIons();
 				allPeaks.addAll(getPeaks(cIonsCID, 0.0, primaryIonIntensity));
 				if (params.isUseNLsForXCorr()) {
 					allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.nh3, neutralLossIntensity));
 					allPeaks.addAll(getPeaks(cIonsCID, -MassConstants.oh2, neutralLossIntensity));
 				}
 
-				FragmentIon[] zIonsCID=model.getCIons();
+				Ion[] zIonsCID=model.getCIons();
 				allPeaks.addAll(getPeaks(zIonsCID, 0.0, primaryIonIntensity));
 				allPeaks.addAll(getPeaks(zIonsCID, MassConstants.neutronMass, primaryIonIntensity)); // z+1
 				if (params.isUseNLsForXCorr()) {
@@ -249,7 +249,7 @@ public class ArrayXCorrCalculator {
 		return getIntensityArray(params, allPeaks, massPlusOne, true);
 	}
 	
-	private static ArrayList<Peak> getPeaks(FragmentIon[] ions, double delta, float intensity) {
+	private static ArrayList<Peak> getPeaks(Ion[] ions, double delta, float intensity) {
 		ArrayList<Peak> peaks=new ArrayList<Peak>();
 		for (int i=0; i<ions.length; i++) {
 			peaks.add(new Peak(ions[i].getMass()+delta, intensity));

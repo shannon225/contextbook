@@ -77,6 +77,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -356,7 +357,7 @@ public class Charter {
 				@SuppressWarnings("rawtypes")
 				Comparable c=dataset.getRowKey(j);
 				if (c instanceof FragmentIon) {
-					renderer.setSeriesPaint(j, ((FragmentIon) c).getColor());
+					renderer.setSeriesPaint(j, ((Ion) c).getColor());
 				}
 			}
 		} else {
@@ -810,7 +811,7 @@ public class Charter {
 				for (XYTraceInterface trace : traces) {
 					if (trace instanceof AnnotatedLibraryEntry) {
 						AnnotatedLibraryEntry entry=(AnnotatedLibraryEntry)(Spectrum)trace;
-						FragmentIon[] annotations=entry.getIonAnnotations();
+						Ion[] annotations=entry.getIonAnnotations();
 						float[] correlations=entry.getCorrelationArray();
 						boolean hasCorrelations=General.max(correlations)>0.0f;
 

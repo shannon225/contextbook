@@ -48,6 +48,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -201,7 +202,7 @@ public class SimilarPeptideBinnerTest extends TestCase {
 					ModificationLocalizationData data=localizationQueue.take();
 					String peptideModSeq=data.getLocalizationPeptideModSeq().getPeptideModSeq();
 					float rtInSeconds=data.getRetentionTimeApexInSeconds();
-					FragmentIon[] targetIons=data.getLocalizingIons();
+					Ion[] targetIons=data.getLocalizingIons();
 					
 					System.out.println(peptideModSeq+"("+targetIons.length+")\trt:"+(rtInSeconds/60.0f)+"\tlocalized:"+data.isLocalized()+"(score:"+data.getLocalizationScore()+")");
 					

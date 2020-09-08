@@ -26,6 +26,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -158,7 +159,7 @@ public class PhosphoLocalizerTest extends TestCase {
 			FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
 			entryMap.put(peptideModSeq, model);
 		}
-		FragmentIon[] targets=PhosphoLocalizer.getUniqueFragmentIons(peptideModSeqs.get(0), (byte)3, entryMap, params);
+		Ion[] targets=PhosphoLocalizer.getUniqueFragmentIons(peptideModSeqs.get(0), (byte)3, entryMap, params);
 		assertEquals(0, targets.length);
 		targets=PhosphoLocalizer.getUniqueFragmentIons(peptideModSeqs.get(1), (byte)3, entryMap, params);
 		assertEquals(0, targets.length);
@@ -190,7 +191,7 @@ public class PhosphoLocalizerTest extends TestCase {
 				modelBatch.put(seq, entryMap.get(seq));
 			}
 			System.out.println(targetPeptide+" SIZE: "+modelBatch.size());
-			FragmentIon[] targets=PhosphoLocalizer.getUniqueFragmentIons(targetPeptide, precursorCharge, modelBatch, params);
+			Ion[] targets=PhosphoLocalizer.getUniqueFragmentIons(targetPeptide, precursorCharge, modelBatch, params);
 			System.out.println(targetPeptideName.getPeptideAnnotation()+": "+General.toString(targets));
 			System.out.println(targetPeptideName);
 			System.out.println();
@@ -211,7 +212,7 @@ public class PhosphoLocalizerTest extends TestCase {
 				modelBatch.put(seq, entryMap.get(seq));
 			}
 			System.out.println(targetPeptide+" SIZE: "+modelBatch.size());
-			FragmentIon[] targets=PhosphoLocalizer.getUniqueFragmentIons(targetPeptide, precursorCharge, modelBatch, params);
+			Ion[] targets=PhosphoLocalizer.getUniqueFragmentIons(targetPeptide, precursorCharge, modelBatch, params);
 			System.out.println(targetPeptideName.getPeptideAnnotation()+": "+General.toString(targets));
 			System.out.println(targetPeptideName);
 			System.out.println();
@@ -242,7 +243,7 @@ public class PhosphoLocalizerTest extends TestCase {
 				String seq=peptideModSeqs.get(j);
 				modelBatch.put(seq, entryMap.get(seq));
 			}
-			FragmentIon[] uniqueIons=PhosphoLocalizer.getUniqueFragmentIons(targetPeptide, precursorCharge, modelBatch, params);
+			Ion[] uniqueIons=PhosphoLocalizer.getUniqueFragmentIons(targetPeptide, precursorCharge, modelBatch, params);
 			assertTrue(uniqueIons.length<10);
 		}
 	}
@@ -263,7 +264,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		for (String peptideModSeq : permutations) {
 			FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
 			entryMap.put(peptideModSeq, model);
-			FragmentIon[] ions=model.getPrimaryIonObjects(params.getFragType(), charge, false, true);
+			Ion[] ions=model.getPrimaryIonObjects(params.getFragType(), charge, false, true);
 			//System.out.println(peptideModSeq);
 			for (int i=0; i<ions.length; i++) {
 				//System.out.println(ions[i]+"\t"+ions[i].mass);

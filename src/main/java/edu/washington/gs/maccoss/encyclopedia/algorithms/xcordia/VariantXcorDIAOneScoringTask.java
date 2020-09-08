@@ -37,6 +37,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -315,7 +316,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			}
 
 			//System.out.println("Blocking off "+(peakRange.getStart()/60f)+" to "+(peakRange.getStop()/60f)+" for "+bestPeptideModSeq+" --> "+data.isLocalized()+", "+data.getLocalizationScore());
-			for (FragmentIon target : bestLocalizingIons) {
+			for (Ion target : bestLocalizingIons) {
 				takenIdentifiedIons.addIonToBlacklist(target.getMass(), peakRange);
 			}
 			// null out scores from taken ions

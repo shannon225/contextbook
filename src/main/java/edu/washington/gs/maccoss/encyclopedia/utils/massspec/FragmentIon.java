@@ -12,7 +12,7 @@ import com.google.common.collect.Ordering;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 
-public final class FragmentIon implements Comparable<FragmentIon> {
+public final class FragmentIon implements Comparable<FragmentIon>, Ion {
 	private static final String INDEX_DELIMITER = ";";
 	private static final String ARCHIVE_DELIMITER = "|";
 
@@ -26,6 +26,10 @@ public final class FragmentIon implements Comparable<FragmentIon> {
 		this.type = type;
 	}
 	
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion#getMass()
+	 */
+	@Override
 	public double getMass() {
 		return mass;
 	}
@@ -38,6 +42,10 @@ public final class FragmentIon implements Comparable<FragmentIon> {
 		return type;
 	}
 
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion#getName()
+	 */
+	@Override
 	public String getName() {
 		return IonType.toString(type, index);
 	}
@@ -135,6 +143,10 @@ public final class FragmentIon implements Comparable<FragmentIon> {
 		return getName();
 	}
 	
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion#getColor()
+	 */
+	@Override
 	public Color getColor() {
 		return RandomGenerator.randomColor(toString().hashCode());
 	}

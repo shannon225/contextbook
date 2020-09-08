@@ -30,6 +30,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
@@ -356,7 +357,7 @@ public class PhosphoLocalizer {
 				HashMap<FragmentIon, XYTrace> otherTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), allIonsTypes, stripes, null, GraphType.dashedline);
 				HashMap<FragmentIon, XYTrace> uniqueTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes, null, GraphType.boldline);
 
-				for (FragmentIon ion : uniqueTraces.keySet()) {
+				for (Ion ion : uniqueTraces.keySet()) {
 					otherTraces.remove(ion);
 				}
 
@@ -465,7 +466,7 @@ public class PhosphoLocalizer {
 								localPreviouslyIdentifiedRTsInSec.add(f);
 							}
 						}
-						for (FragmentIon target : allIonsTypes) {
+						for (Ion target : allIonsTypes) {
 							localPreviouslyIdentifiedIons.addIonToBlacklist(target.getMass(), boundaries);
 						}
 					}

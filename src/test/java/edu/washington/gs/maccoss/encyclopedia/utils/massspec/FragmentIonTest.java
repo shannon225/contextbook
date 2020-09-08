@@ -20,7 +20,7 @@ public class FragmentIonTest extends TestCase {
 		
 		String s=FragmentIon.toArchiveString(ions);
 		
-		FragmentIon[] extracted=FragmentIon.fromArchiveString(s);
+		Ion[] extracted=FragmentIon.fromArchiveString(s);
 		assertEquals(ions.length, extracted.length);
 		for (int i=0; i<extracted.length; i++) {
 			assertEquals(ions[i], extracted[i]);
@@ -33,7 +33,7 @@ public class FragmentIonTest extends TestCase {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		
 		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, parameters.getAAConstants());
-		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), charge, true);
+		Ion[] ions=model.getPrimaryIonObjects(parameters.getFragType(), charge, true);
 		assertEquals(22, ions.length);
 
 		Range precursorIsolationRange=new Range(628.535583496094f, 640.541076660156f);

@@ -50,10 +50,10 @@ public class ChromatogramExtractor {
 		return kept.toArray(new XYTrace[kept.size()]);
 	}
 
-	public static HashMap<FragmentIon, XYTrace> extractFragmentChromatograms(MassTolerance tolerance, FragmentIon[] ionTypes, List<? extends Spectrum> stripes, Float targetRTInSec, GraphType type) {
-		HashMap<FragmentIon, XYTrace> kept=new HashMap<FragmentIon, XYTrace>();
+	public static <T extends Ion> HashMap<T, XYTrace> extractFragmentChromatograms(MassTolerance tolerance, T[] ionTypes, List<? extends Spectrum> stripes, Float targetRTInSec, GraphType type) {
+		HashMap<T, XYTrace> kept=new HashMap<T, XYTrace>();
 
-		ArrayList<FragmentIon> centerIonTypes=new ArrayList<FragmentIon>();
+		ArrayList<T> centerIonTypes=new ArrayList<T>();
 		
 		if (targetRTInSec==null) {
 			centerIonTypes.addAll(Arrays.asList(ionTypes));
@@ -70,8 +70,8 @@ public class ChromatogramExtractor {
 			}
 		}
 		
-		HashMap<FragmentIon, ArrayList<XYPoint>> traces=new HashMap<FragmentIon, ArrayList<XYPoint>>();
-		for (FragmentIon centerIon : centerIonTypes) {
+		HashMap<T, ArrayList<XYPoint>> traces=new HashMap<T, ArrayList<XYPoint>>();
+		for (T centerIon : centerIonTypes) {
 			traces.put(centerIon, new ArrayList<XYPoint>());
 		}
 
@@ -79,15 +79,15 @@ public class ChromatogramExtractor {
 			Spectrum spectrum=stripes.get(i);
 			double[] massArray=spectrum.getMassArray();
 			float[] intensityArray=spectrum.getIntensityArray();
-			for (FragmentIon centerIon : centerIonTypes) {
+			for (Ion centerIon : centerIonTypes) {
 				float intensity=tolerance.getIntegratedIntensity(massArray, intensityArray, centerIon.getMass());
 				ArrayList<XYPoint> points=traces.get(centerIon);
 				points.add(new XYPoint(spectrum.getScanStartTime()/60, intensity));
 			}
 		}
 		
-		for (Entry<FragmentIon, ArrayList<XYPoint>> traceData : traces.entrySet()) {
-			FragmentIon key=traceData.getKey();
+		for (Entry<T, ArrayList<XYPoint>> traceData : traces.entrySet()) {
+			T key=traceData.getKey();
 			String name=key.toString();
 			XYTrace trace=null;
 			switch (type) {

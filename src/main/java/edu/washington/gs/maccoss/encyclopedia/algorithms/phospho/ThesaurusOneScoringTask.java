@@ -28,6 +28,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
@@ -153,7 +154,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 				LocalizableForm localizedForm=entry.getValue();
 				
 				LibraryEntry localizedEntry=localizedForm.localizedEntry;
-				FragmentIon[] allIons=localizedForm.allIons;
+				Ion[] allIons=localizedForm.allIons;
 				
 
 				for (int peak=0; peak<globalScans.length; peak++) {
@@ -312,7 +313,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			}
 
 			//System.out.println("Blocking off "+(peakRange.getStart()/60f)+" to "+(peakRange.getStop()/60f)+" for "+bestPeptideModSeq+" --> "+data.isLocalized()+", "+data.getLocalizationScore());
-			for (FragmentIon target : bestLocalizingIons) {
+			for (Ion target : bestLocalizingIons) {
 				takenIdentifiedIons.addIonToBlacklist(target.getMass(), peakRange);
 			}
 			// null out scores from taken ions
@@ -358,7 +359,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 		}
 	}
 
-	public static ScoredIndex updateScores(ArrayList<Spectrum> scans, LibraryEntry localizedEntry, FragmentIon[] allIons, Float[] primary, boolean[] alreadyConsidered, Collection<Range> blacklistedRanges, FragmentIonBlacklist takenIdentifiedIons, SearchParameters parameters) {
+	public static ScoredIndex updateScores(ArrayList<Spectrum> scans, LibraryEntry localizedEntry, Ion[] allIons, Float[] primary, boolean[] alreadyConsidered, Collection<Range> blacklistedRanges, FragmentIonBlacklist takenIdentifiedIons, SearchParameters parameters) {
 		float bestScore=-Float.MAX_VALUE;
 		int bestIndex=0;
 		for (int i=0; i<scans.size(); i++) {
@@ -514,7 +515,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 		return matches;
 	}
 	
-	private static float score(LibraryEntry entry, Spectrum spectrum, FragmentIon[] ions, FragmentIonBlacklist blacklistedIons, SearchParameters parameters) {
+	private static float score(LibraryEntry entry, Spectrum spectrum, Ion[] ions, FragmentIonBlacklist blacklistedIons, SearchParameters parameters) {
 		MassTolerance acquiredTolerance=parameters.getFragmentTolerance();
 		MassTolerance libraryTolerance=parameters.getLibraryFragmentTolerance();
 
@@ -526,7 +527,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 
 		int count=0;
 		float dotProduct=0.0f;
-		for (FragmentIon targetIon : ions) {
+		for (Ion targetIon : ions) {
 			double target=targetIon.getMass();
 			if (blacklistedIons.isBlacklisted(target, spectrum.getScanStartTime())) {
 				continue;

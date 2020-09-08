@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math;
 import java.awt.Color;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import gnu.trove.set.hash.TFloatHashSet;
 import junit.framework.TestCase;
@@ -33,8 +34,8 @@ public class RandomGeneratorTest extends TestCase {
 	}
 	
 	public void testRandomColor() {
-		FragmentIon f1=new FragmentIon(871.0, (byte)4, IonType.y);
-		FragmentIon f2=new FragmentIon(971.1, (byte)4, IonType.y);
+		Ion f1=new FragmentIon(871.0, (byte)4, IonType.y);
+		Ion f2=new FragmentIon(971.1, (byte)4, IonType.y);
 		Color c1=RandomGenerator.randomColor(f1.toString().hashCode());
 		Color c2=RandomGenerator.randomColor(f2.toString().hashCode());
 		
