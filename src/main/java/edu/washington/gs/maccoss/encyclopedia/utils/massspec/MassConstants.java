@@ -7,6 +7,8 @@ public class MassConstants {
 	public static final double carbonMass=12.0000000000000;
 	public static final double oxygenMass=15.9949146195616;
 	public static final double nitrogenMass=14.00307400486;
+	public static final double siliconMass=27.97692653505;
+	public static final double sodiumMass=22.989769282019;
 	public final static double oh2=oxygenMass+2*hydrogenMass;
 	public final static double nh3=nitrogenMass+3*hydrogenMass;
 	public final static double co=carbonMass+oxygenMass;

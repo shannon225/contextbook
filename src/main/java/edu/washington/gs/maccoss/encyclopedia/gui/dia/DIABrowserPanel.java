@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Optional;
 
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
@@ -54,12 +55,17 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.AcquiredSpectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Polymer;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PolymerIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumComparator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import gnu.trove.list.array.TFloatArrayList;
@@ -245,16 +251,25 @@ public class DIABrowserPanel extends JPanel {
 				Logger.logLine("Read "+dia.getOriginalFileName()+", ("+dia.getRanges().size()+" total windows)");
 				ArrayList<AcquiredSpectrum> scans=new ArrayList<AcquiredSpectrum>();
 				Collection<XYPoint> tics=new ArrayList<XYPoint>();
+				Collection<XYPoint> basepeaks=new ArrayList<XYPoint>();
 				maxTIC=0.0f;
 				
 				ArrayList<PrecursorScan> precursors=dia.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
+				
 				int increment=Math.max(1, precursors.size()/1000);
 				int scanCount=0;
 				float tic=0.0f;
 				TFloatFloatHashMap precursorIonDistribution=new TFloatFloatHashMap();
+				double minMZ=Double.MAX_VALUE;
+				double maxMZ=-Double.MAX_VALUE;
+				
 				for (PrecursorScan precursorScan : precursors) {
+					if (precursorScan.getIsolationWindowLower()<minMZ) minMZ=precursorScan.getIsolationWindowLower();
+					if (precursorScan.getIsolationWindowUpper()>maxMZ) maxMZ=precursorScan.getIsolationWindowUpper();
+					
 					scans.add(precursorScan);
 					tic+=precursorScan.getTIC();
+					basepeaks.add(new XYPoint(precursorScan.getScanStartTime()/60f, General.max(precursorScan.getIntensityArray())));
 
 					if (scanCount%increment==0) {
 						tics.add(new XYPoint(precursorScan.getScanStartTime()/60f, tic));
@@ -280,8 +295,13 @@ public class DIABrowserPanel extends JPanel {
 						if (point.x>maxRT) maxRT=(float)point.x;
 					}
 				}
+				XYTrace basepeak=new XYTrace(basepeaks, GraphType.area, "Precursor Basepeak", new Color(255, 0, 0, 50), 2.0f);
 				chromatogram=new XYTrace(tics, GraphType.area, "Precursor TIC");
 				precursorIntensityHistogram=new XYTrace(precursorIonDistribution, GraphType.area, "Log10 Precursor Intensity Distribution");
+				
+				ArrayList<PolymerIon> polymerList=PolymerIon.getAllPolymerProducts(new Range(minMZ, maxMZ));
+				PolymerIon[] polymerIons=polymerList.toArray(new PolymerIon[polymerList.size()]);
+				HashMap<PolymerIon, XYTrace> polymerMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getPrecursorTolerance(), polymerIons, scans, null, GraphType.boldline);
 				
 				TDoubleDoubleHashMap fragmentIonDistribution=new TDoubleDoubleHashMap();
 
@@ -321,11 +341,29 @@ public class DIABrowserPanel extends JPanel {
 				}
 				fragmentIntensityHistogram=new XYTrace(fragmentIonDistribution, GraphType.area, "Log10 Fragment Intensity Distribution");
 				
+				double maxBPThreshold=basepeak.getMaxY()*0.001;
 				
+				ArrayList<XYTrace> polymerTraceList=new ArrayList<XYTrace>();
+				polymerTraceList.add(0, XYTrace.round(basepeak, 3/60f));
+				for (XYTrace trace : polymerMap.values()) {
+					XYPoint maxXY = trace.getMaxXY();
+					if (maxXY.y>maxBPThreshold) {
+						polymerTraceList.add(XYTrace.round(trace, 3/60f));
+						ArrayList<XYPoint> point=new ArrayList<>();
+						point.add(maxXY);
+						polymerTraceList.add(new XYTrace(point, GraphType.text, trace.getName(), trace.getColor(), Optional.ofNullable(null)));
+					}
+				}
+				XYTrace[] array = polymerTraceList.toArray(new XYTrace[polymerTraceList.size()]);
+				final ChartPanel contaminantIntensities=Charter.getChart("Log10 Contaminant Intensity", "Count", false, array);
+				
+				JTabbedPane tabs=new JTabbedPane();
 				final ChartPanel precursorIntensities=Charter.getChart("Log10 Precursor Intensity", "Count", false, precursorIntensityHistogram);
 				final ChartPanel fragmentIntensities=Charter.getChart("Log10 Fragment Intensity", "Count", false, fragmentIntensityHistogram);
-				distributionSplit.setTopComponent(precursorIntensities);
-				distributionSplit.setBottomComponent(fragmentIntensities);
+				tabs.addTab("Precursor Intensity", precursorIntensities);
+				tabs.addTab("Fragment Intensity", fragmentIntensities);
+				distributionSplit.setTopComponent(contaminantIntensities);
+				distributionSplit.setBottomComponent(tabs);
 				distributionSplit.setDividerLocation(400);
 				
 				final ChartPanel iits=Charter.getBoxplotChart(null, "Precursor Isolation Window", "Ion Injection Time (in msec)", maxIITByRange);

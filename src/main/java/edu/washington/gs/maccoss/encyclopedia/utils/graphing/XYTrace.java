@@ -73,39 +73,27 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 	}
 	
 	public XYPoint getMaxXYInRange(Range xrange) {
-		double maxX=-Double.MAX_VALUE;
-		double maxY=-Double.MAX_VALUE;
+		XYPoint max=null;
 		for (XYPoint xy : points) {
 			if (xrange.contains(xy.getX())) {
-				if (xy.y>maxY) {
-					maxY=xy.y;
-					maxX=xy.x;
+				if (max==null||xy.y>max.y) {
+					max=xy;
 				}
 			}
 		}
-		return new XYPoint(maxX, maxY);
+		return max;
 	}
 	
 	public double getMaxYInRange(Range xrange) {
-		double max=-Double.MAX_VALUE;
-		for (XYPoint xy : points) {
-			if (xrange.contains(xy.getX())) {
-				if (xy.y>max) {
-					max=xy.y;
-				}
-			}
-		}
-		return max;
+		return getMaxXYInRange(xrange).y;
+	}
+	
+	public XYPoint getMaxXY() {
+		return getMaxXYInRange(new Range(-Double.MAX_VALUE, Double.MAX_VALUE));
 	}
 	
 	public double getMaxY() {
-		double max=-Double.MAX_VALUE;
-		for (XYPoint xy : points) {
-			if (xy.y>max) {
-				max=xy.y;
-			}
-		}
-		return max;
+		return getMaxXYInRange(new Range(-Double.MAX_VALUE, Double.MAX_VALUE)).y;
 	}
 	
 	public XYTraceInterface rescaleX(float rescaleX) {
@@ -297,5 +285,37 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 			ys.add((float)point.getY());
 		}
 		return new Pair<float[], float[]>(xs.toArray(), ys.toArray());
+	}
+	
+	/**
+	 * takes the average value for each trace, binned by the rounding increment. Does not fill in 0s between increments!
+	 * @param trace
+	 * @param increment
+	 * @return
+	 */
+	public static XYTrace round(XYTrace trace, double increment) {
+		ArrayList<XYPoint> p=new ArrayList<>();
+		double sum=0.0;
+		int count=0;
+		int prevX=-Integer.MAX_VALUE;
+		
+		for (XYPoint point : trace.points) {
+			int x=(int)Math.round(point.x/increment);
+			if (x>prevX) {
+				if (prevX!=-Integer.MAX_VALUE) {
+					p.add(new XYPoint(prevX*increment, sum/count));
+				}
+				sum=point.y;
+				count=1;
+				prevX=x;
+			} else {
+				sum+=point.y;
+				count++;
+			}
+		}
+		if (count>0) { 
+			p.add(new XYPoint(prevX*increment, sum/count));
+		}
+		return new XYTrace(p, trace.type, trace.name, trace.color, trace.thickness);
 	}
 }
