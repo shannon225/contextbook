@@ -16,14 +16,30 @@ public final class FragmentIon implements Comparable<FragmentIon> {
 	private static final String INDEX_DELIMITER = ";";
 	private static final String ARCHIVE_DELIMITER = "|";
 
-	public final double mass;
-	public final byte index;
-	public final IonType type;
+	private final double mass;
+	private final byte index;
+	private final IonType type;
 
 	public FragmentIon(double mass, byte index, IonType type) {
 		this.mass = mass;
 		this.index = index;
 		this.type = type;
+	}
+	
+	public double getMass() {
+		return mass;
+	}
+	
+	public byte getIndex() {
+		return index;
+	}
+
+	public IonType getType() {
+		return type;
+	}
+
+	public String getName() {
+		return IonType.toString(type, index);
 	}
 
 	public static String toArchiveString(FragmentIon[] ions) {
@@ -99,10 +115,6 @@ public final class FragmentIon implements Comparable<FragmentIon> {
 		return new FragmentIon(mass - deltaMass, index, IonType.getNL(type));
 	}
 
-	public IonType getType() {
-		return type;
-	}
-
 	public String toCanonicalIonTypeString() {
 		return IonType.toString(IonType.getCanonicalIonType(type), index);
 	}
@@ -120,7 +132,7 @@ public final class FragmentIon implements Comparable<FragmentIon> {
 
 	@Override
 	public String toString() {
-		return IonType.toString(type, index);
+		return getName();
 	}
 	
 	public Color getColor() {

@@ -34,7 +34,7 @@ public class FragmentationTable extends JPanel {
 		
 		ArrayList<FragmentIon> matched=new ArrayList<FragmentIon>();
 		for (FragmentIon fragmentIon : all) {
-			boolean match=params.getFragmentTolerance().getIndex(massArray, fragmentIon.mass).isPresent();
+			boolean match=params.getFragmentTolerance().getIndex(massArray, fragmentIon.getMass()).isPresent();
 			if (match) {
 				matched.add(fragmentIon);
 			}
@@ -89,9 +89,9 @@ public class FragmentationTable extends JPanel {
 			HashSet<IonType> typeSet=new HashSet<IonType>();
 			int maxIonIndex=0;
 			for (FragmentIon ion : all) {
-				typeSet.add(ion.type);
-				if (maxIonIndex<ion.index) {
-					maxIonIndex=ion.index;
+				typeSet.add(ion.getType());
+				if (maxIonIndex<ion.getIndex()) {
+					maxIonIndex=ion.getIndex();
 				}
 			}
 			types=typeSet.toArray(new IonType[typeSet.size()]);
@@ -107,20 +107,20 @@ public class FragmentationTable extends JPanel {
 			}
 
 			for (FragmentIon ion : all) {
-				int typeIndex=Arrays.binarySearch(types, ion.type);
-				int ionIndex=ion.index-1;
+				int typeIndex=Arrays.binarySearch(types, ion.getType());
+				int ionIndex=ion.getIndex()-1;
 				ions[ionIndex][typeIndex]=ion;
 			}
 
 			for (FragmentIon ion : targets) {
-				int typeIndex=Arrays.binarySearch(types, ion.type);
-				int ionIndex=ion.index-1;
+				int typeIndex=Arrays.binarySearch(types, ion.getType());
+				int ionIndex=ion.getIndex()-1;
 				wasConsidered[ionIndex][typeIndex]=true;
 			}
 
 			for (FragmentIon ion : found) {
-				int typeIndex=Arrays.binarySearch(types, ion.type);
-				int ionIndex=ion.index-1;
+				int typeIndex=Arrays.binarySearch(types, ion.getType());
+				int ionIndex=ion.getIndex()-1;
 				wasFound[ionIndex][typeIndex]=true;
 			}
 		}
@@ -152,7 +152,7 @@ public class FragmentationTable extends JPanel {
 			FragmentIon ion=ions[rowIndex][columnIndex];
 			if (ion==null) return "";
 			
-			String value=MASS_FORMAT.format(ion.mass);
+			String value=MASS_FORMAT.format(ion.getMass());
 			if (wasFound[rowIndex][columnIndex]) {
 				return "<html><b><font color=green>["+value+"]";
 			} else if (wasConsidered[rowIndex][columnIndex]) {

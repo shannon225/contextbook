@@ -63,7 +63,7 @@ public class ChromatogramExtractor {
 			if (bestStripe==null) return kept;
 
 			for (int i=0; i<ionTypes.length; i++) {
-				float intensity=tolerance.getIntegratedIntensity(bestStripe.getMassArray(), bestStripe.getIntensityArray(), ionTypes[i].mass);
+				float intensity=tolerance.getIntegratedIntensity(bestStripe.getMassArray(), bestStripe.getIntensityArray(), ionTypes[i].getMass());
 				if (intensity>0) {
 					centerIonTypes.add(ionTypes[i]);
 				}
@@ -80,7 +80,7 @@ public class ChromatogramExtractor {
 			double[] massArray=spectrum.getMassArray();
 			float[] intensityArray=spectrum.getIntensityArray();
 			for (FragmentIon centerIon : centerIonTypes) {
-				float intensity=tolerance.getIntegratedIntensity(massArray, intensityArray, centerIon.mass);
+				float intensity=tolerance.getIntegratedIntensity(massArray, intensityArray, centerIon.getMass());
 				ArrayList<XYPoint> points=traces.get(centerIon);
 				points.add(new XYPoint(spectrum.getScanStartTime()/60, intensity));
 			}

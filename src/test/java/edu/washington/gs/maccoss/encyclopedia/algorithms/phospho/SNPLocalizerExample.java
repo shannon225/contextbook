@@ -30,8 +30,8 @@ import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class SNPLocalizerExample {
 	
-	public static void main2(String[] args) throws Exception {
-		File diaFile=new File("/Volumes/DataBackup/23aug2017_hela_serum_timecourse/23aug2017_fingerprint_s_dia_002.mzML");
+	public static void main(String[] args) throws Exception {
+		File diaFile=new File("/Users/searleb/Documents/teaching/encyclopedia/quantitative samples/23aug2017_hela_serum_timecourse_wide_1a.dia");
 
 		HashMap<String, String> defaults=SearchParameterParser.getDefaultParameters();
 		defaults.put("-localizationModification", "Phosphorylation");
@@ -44,18 +44,18 @@ public class SNPLocalizerExample {
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 		UnitBackgroundFrequencyCalculator unitBackgroundFrequencyCalculator=new UnitBackgroundFrequencyCalculator(0.01f);
 		BackgroundFrequencyInterface background=unitBackgroundFrequencyCalculator;
-		background=BackgroundFrequencyCalculator.generateBackground(stripefile);
+		//background=BackgroundFrequencyCalculator.generateBackground(stripefile);
 		
 		PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, PeptideModification.polymorphism, background, parameters);
 		
-		String peptideModSeq="SLDLDSIINAVR";
-		float retentionTime=86.5f*60;
+		String peptideModSeq="LTMQNLNDR";
+		float retentionTime=36.5f*60;
 		byte precursorCharge=2;
 
 		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, parameters.getAAConstants());
 		HashSet<String> accessions=new HashSet<>();
 		accessions.add("KRT13");
-		LibraryEntry libentry=model.getUnitSpectrum("23aug2017_fingerprint_p_dia_002", accessions, precursorCharge, retentionTime, parameters);
+		LibraryEntry libentry=model.getUnitSpectrum("23aug2017_hela_serum_timecourse_wide_1a", accessions, precursorCharge, retentionTime, parameters);
 		
 		libentry=libentry.updateRetentionTime(retentionTime);
 		double precursorMz=parameters.getAAConstants().getChargedMass(peptideModSeq, precursorCharge);
@@ -63,8 +63,8 @@ public class SNPLocalizerExample {
 		ArrayList<FragmentScan> stripes=stripefile.getStripes(precursorMz, 0, Float.MAX_VALUE, false);
 		System.out.println(precursorMz+", "+stripes.size());
 		ArrayList<String> permutations=PhosphoPermuter.getPermutations(peptideModSeq, PeptideModification.polymorphism, parameters.getAAConstants());
-		permutations.add("SLDLDSIINAVR");
-		permutations.add("SLDLDSIIDAVR"); 
+		permutations.add("LTMQNLNDR");
+		permutations.add("VTMQNLNDR"); 
 		PhosphoLocalizationData actuallyPhosphoData=localizer.extractPhosphoFormsFromStripes(peptideModSeq, precursorMz, precursorCharge, permutations, retentionTime, stripes, true);
 
 		System.out.println("Just off of localization ions");
@@ -118,7 +118,7 @@ public class SNPLocalizerExample {
 		Charter.launchChart("Retention Time (All Ions)", "Localization Score", true, new Dimension(1000, 400), traces.toArray(new XYTrace[traces.size()]));
 	}
 
-	public static void main(String[] args) throws Exception {
+	public static void main2(String[] args) throws Exception {
 		//File diaFile=new File("/Volumes/BriansSSD/20150908_6BB2_DIA_01.dia ");
 		//File diaFile=new File("/Users/searleb/Documents/school/xcordia_manuscript/demux/20141121_3_4_DIA_1.dia");
 		File diaFile=new File("/Users/searleb/Documents/backup/xcordia_manuscript/xcordia_5p/20141121_3_4_DIA_1.dia");

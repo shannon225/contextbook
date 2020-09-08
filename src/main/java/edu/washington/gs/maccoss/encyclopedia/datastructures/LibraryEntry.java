@@ -417,7 +417,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		for (FragmentIon reverse : reverseIons) {
 			FragmentIon forward=forwardMap.get(new IndexedIonType(reverse));
 			if (forward!=null) {
-				points.add(new XYPoint(forward.mass, reverse.mass));
+				points.add(new XYPoint(forward.getMass(), reverse.getMass()));
 			}
 		}
 

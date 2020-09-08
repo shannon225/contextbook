@@ -680,14 +680,14 @@ public class Charter {
 							peakSeries.add(x[i], y[i]);
 							dataset.addSeries(peakSeries);
 							if (annotations[i]!=null) {
-								Color color=IonType.getColor(annotations[i].type);
-								renderer.setSeriesStroke(i, IonType.getStroke(annotations[i].type));
+								Color color=IonType.getColor(annotations[i].getType());
+								renderer.setSeriesStroke(i, IonType.getStroke(annotations[i].getType()));
 								renderer.setSeriesPaint(i, color);
 								
 								XYTextAnnotation xytextannotation = new XYTextAnnotation(annotations[i].toString(), x[i], y[i]);
 								xytextannotation.setPaint(color);
 								
-								xytextannotation.setFont(IonType.getFont(annotations[i].type));
+								xytextannotation.setFont(IonType.getFont(annotations[i].getType()));
 						        xytextannotation.setTextAnchor(TextAnchor.BOTTOM_CENTER);
 						        plot.addAnnotation(xytextannotation);
 							} else {

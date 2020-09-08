@@ -13,8 +13,8 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryEntryModifier {
 	public static void main(String[] args) throws Exception {
-		File inputFile=new File("/Users/searleb/Documents/iarpa/rares/with_semitryptic/iarpa_3clib_detected_prosit.dlib");
-		File outputFile=new File("/Users/searleb/Documents/iarpa/rares/with_semitryptic/silac_iarpa_3clib_detected_prosit.dlib");
+		File inputFile=new File("/Users/searleb/Downloads/schistosoma_1-4_33_nce.dlib");
+		File outputFile=new File("/Users/searleb/Downloads/silac_schistosoma_1-4_33_nce.dlib");
 
 		TCharDoubleHashMap ptms=new TCharDoubleHashMap();
 		ptms.put('K',8.014199);

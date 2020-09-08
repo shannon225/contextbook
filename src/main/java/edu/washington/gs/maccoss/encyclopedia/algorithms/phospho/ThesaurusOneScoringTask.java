@@ -313,7 +313,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 
 			//System.out.println("Blocking off "+(peakRange.getStart()/60f)+" to "+(peakRange.getStop()/60f)+" for "+bestPeptideModSeq+" --> "+data.isLocalized()+", "+data.getLocalizationScore());
 			for (FragmentIon target : bestLocalizingIons) {
-				takenIdentifiedIons.addIonToBlacklist(target.mass, peakRange);
+				takenIdentifiedIons.addIonToBlacklist(target.getMass(), peakRange);
 			}
 			// null out scores from taken ions
 			for (int i=0; i<scans.size(); i++) {
@@ -527,7 +527,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 		int count=0;
 		float dotProduct=0.0f;
 		for (FragmentIon targetIon : ions) {
-			double target=targetIon.mass;
+			double target=targetIon.getMass();
 			if (blacklistedIons.isBlacklisted(target, spectrum.getScanStartTime())) {
 				continue;
 			}
@@ -638,7 +638,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 						}
 						if (intensities[i]>0.0f) {
 							totalIntensity+=intensities[i];
-							matchingPeaks.add(allIons[i].mass);
+							matchingPeaks.add(allIons[i].getMass());
 						}
 						//System.out.println(localizedEntry.getPeptideModSeq()+", "+numIdentificationPeaks+") "+targetIonSet.contains(allIons[i])+", "+allIons[i].toString()+", "+allIons[i].mass+"\t"+intensities[i]+"\t"+correlations[i]);
 					}

@@ -252,7 +252,7 @@ public class ArrayXCorrCalculator {
 	private static ArrayList<Peak> getPeaks(FragmentIon[] ions, double delta, float intensity) {
 		ArrayList<Peak> peaks=new ArrayList<Peak>();
 		for (int i=0; i<ions.length; i++) {
-			peaks.add(new Peak(ions[i].mass+delta, intensity));
+			peaks.add(new Peak(ions[i].getMass()+delta, intensity));
 		}
 		return peaks;
 	}

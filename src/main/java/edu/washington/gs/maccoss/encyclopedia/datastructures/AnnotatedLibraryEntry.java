@@ -36,7 +36,7 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), true)) {
-			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.mass);
+			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.getMass());
 			for (int i=0; i<indicies.length; i++) {
 				ionAnnotations[indicies[i]]=fragmentIon;
 			}
@@ -53,7 +53,7 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), true)) {
-			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.mass);
+			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.getMass());
 			for (int i=0; i<indicies.length; i++) {
 				ionAnnotations[indicies[i]]=fragmentIon;
 			}
@@ -70,7 +70,7 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 		TFloatArrayList newCorrelations=new TFloatArrayList();
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), true)) {
-			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.mass);
+			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.getMass());
 			for (int i=0; i<indicies.length; i++) {
 				newMasses.add(massArray[indicies[i]]);
 				newIntensities.add(intensityArray[indicies[i]]);

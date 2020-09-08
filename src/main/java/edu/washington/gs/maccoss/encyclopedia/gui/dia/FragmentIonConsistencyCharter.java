@@ -40,7 +40,7 @@ public class FragmentIonConsistencyCharter {
 				
 				float[] annotatedIntensities=new float[primaryIons.length];
 				for (int j = 0; j < primaryIons.length; j++) {
-					int[] indicies=parameters.getFragmentTolerance().getIndicies(masses, primaryIons[j].mass);
+					int[] indicies=parameters.getFragmentTolerance().getIndicies(masses, primaryIons[j].getMass());
 					float totalIntensity=0.0f;
 					for (int k = 0; k < indicies.length; k++) {
 						totalIntensity+=intensities[indicies[k]];

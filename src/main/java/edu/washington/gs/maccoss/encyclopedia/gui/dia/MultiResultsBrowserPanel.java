@@ -430,7 +430,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 					double[] intensities=peaksArrays.y;
 					
 					for (FragmentIon ion : primaryIonObjects) {
-						Optional<Integer> index=parameters.getFragmentTolerance().getIndex(targets, ion.mass);
+						Optional<Integer> index=parameters.getFragmentTolerance().getIndex(targets, ion.getMass());
 						if (index.isPresent()) {
 							targetIonObjects.put(ion, intensities[index.get()]);
 						} else {

@@ -98,7 +98,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				final JFrame f=new JFrame("DIA Browser");
+				final JFrame f=new JFrame("Peptide Browser");
 				f.addWindowListener(new WindowAdapter() {
 					public void windowClosing(WindowEvent e) {
 						System.exit(0);

@@ -13,7 +13,7 @@ public class PeakScores {
 		return target.toString()+"="+score;
 	}
 	public double getTargetMass() {
-		return target.mass;
+		return target.getMass();
 	}
 	
 	public FragmentIon getTarget() {

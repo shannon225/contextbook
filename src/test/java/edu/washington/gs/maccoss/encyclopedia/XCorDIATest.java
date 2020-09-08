@@ -138,7 +138,7 @@ public class XCorDIATest extends TestCase {
 										final FragmentIon[] fragmentIons = PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), NO_MODS)
 												.getPrimaryIonObjects(FragmentationType.HCD, (byte)1, false); // XCorr model only has +1 ions
 										final double[] fragMasses = Arrays.stream(fragmentIons)
-												.mapToDouble(ion -> ion.mass)
+												.mapToDouble(ion -> ion.getMass())
 												.toArray();
 
 										double[] modelMasses=entry.getMassArray();

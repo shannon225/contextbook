@@ -109,9 +109,9 @@ public class OpenSwathTSVToLibraryConverter {
 				
 				for (int i=0; i<ions.length; i++) {
 					if (ions[i]!=null) {
-						Object ProductCharge=new Byte(IonType.getCharge(ions[i].type));
-						Object FragmentIonType=IonType.getType(ions[i].type);
-						Object FragmentIonOrdinal=ions[i].index;
+						Object ProductCharge=new Byte(IonType.getCharge(ions[i].getType()));
+						Object FragmentIonType=IonType.getType(ions[i].getType());
+						Object FragmentIonOrdinal=ions[i].getIndex();
 						Object transition_name=transition_group_id+"_"+FragmentIonType+FragmentIonOrdinal+"+"+PrecursorCharge;
 						Object ProductMz=new Double(masses[i]);
 						Object LibraryIntensity=new Float(intensities[i]);

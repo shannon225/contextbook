@@ -89,7 +89,7 @@ public class EncyclopediaOneScorer implements EncyclopediaScorer {
 		
 		ArrayList<PeakScores> scoredPeaks=new ArrayList<PeakScores>();
 		for (FragmentIon targetIon : ions) {
-			double target=targetIon.mass;
+			double target=targetIon.getMass();
 			
 			int[] predictedIndicies=libraryTolerance.getIndicies(predictedMasses, target);
 			float predictedIntensity=0.0f;
@@ -149,7 +149,7 @@ public class EncyclopediaOneScorer implements EncyclopediaScorer {
 			float maxCorrelation=0.01f;
 			
 			PREDICTED: for (int j=predictedIndex; j<predictedMasses.length; j++) {
-				int compare=libraryTolerance.compareTo(targetIon.mass, predictedMasses[j]);
+				int compare=libraryTolerance.compareTo(targetIon.getMass(), predictedMasses[j]);
 				if (compare<0) {
 					break PREDICTED;
 				} else if (compare==0) {
@@ -169,7 +169,7 @@ public class EncyclopediaOneScorer implements EncyclopediaScorer {
 			float deltaMass=0.0f;
 			if (predictedIntensity>0.0f) {
 				ACQUIRED: for (int j=acquiredIndex; j<acquiredMasses.length; j++) {
-					int compare=libraryTolerance.compareTo(targetIon.mass, acquiredMasses[j]);
+					int compare=libraryTolerance.compareTo(targetIon.getMass(), acquiredMasses[j]);
 					if (compare<0) {
 						break ACQUIRED;
 					} else if (compare==0) {
@@ -177,7 +177,7 @@ public class EncyclopediaOneScorer implements EncyclopediaScorer {
 						
 						if (bestAcquiredIntensity<acquiredIntensities[j]) {
 							bestAcquiredIntensity=acquiredIntensities[j];
-							deltaMass=(float)acquiredTolerance.getDeltaScore(targetIon.mass, acquiredMasses[j]);
+							deltaMass=(float)acquiredTolerance.getDeltaScore(targetIon.getMass(), acquiredMasses[j]);
 						}
 					} else if (compare>0) {
 						acquiredIndex=j+1;

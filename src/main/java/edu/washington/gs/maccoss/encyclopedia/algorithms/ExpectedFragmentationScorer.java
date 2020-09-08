@@ -33,8 +33,8 @@ public class ExpectedFragmentationScorer extends AuxillaryPSMScorer {
 
 		TFloatArrayList ions=new TFloatArrayList();
 		for (FragmentIon ion : modelIons) {
-			if (ion.index<startIonIndex) continue;
-			int[] indicies=tolerance.getIndicies(masses, ion.mass);
+			if (ion.getIndex()<startIonIndex) continue;
+			int[] indicies=tolerance.getIndicies(masses, ion.getMass());
 			float intensity=0.0f;
 			for (int j=0; j<indicies.length; j++) {
 				intensity+=intensities[indicies[j]];
@@ -51,7 +51,7 @@ public class ExpectedFragmentationScorer extends AuxillaryPSMScorer {
 
 		TFloatArrayList ions=new TFloatArrayList();
 		for (FragmentIon ion : modelIons) {
-			if (ion.index<startIonIndex) continue;
+			if (ion.getIndex()<startIonIndex) continue;
 			ions.add(0.0f);
 		}
 		
@@ -65,7 +65,7 @@ public class ExpectedFragmentationScorer extends AuxillaryPSMScorer {
 		
 		ArrayList<String> names=new ArrayList<String>();
 		for (FragmentIon ion : ions) {
-			if (ion.index<startIonIndex) continue;
+			if (ion.getIndex()<startIonIndex) continue;
 			names.add(ion.toString());
 		}
 		return names.toArray(new String[names.size()]);

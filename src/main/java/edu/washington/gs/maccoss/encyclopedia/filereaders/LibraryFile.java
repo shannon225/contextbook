@@ -701,7 +701,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		float bestCorrelation=-1.0f;
 		float bestDeltaMass=10.0f;
 		for (int i=0; i<deltaMassArray.length; i++) {
-			ppmArray[i]=deltaMassArray[i]*1000000.0f/(float) fragmentMassArray[i].mass;
+			ppmArray[i]=deltaMassArray[i]*1000000.0f/(float) fragmentMassArray[i].getMass();
 			if (correlationArray[i]>bestCorrelation) {
 				bestCorrelation=correlationArray[i];
 				bestDeltaMass=ppmArray[i];
@@ -765,7 +765,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 		float bestCorrelation=-1.0f;
 		for (int i=0; i<deltaMassArray.length; i++) {
-			ppmArray[i]=deltaMassArray[i]*1000000.0f/(float) fragmentMassArray[i].mass;
+			ppmArray[i]=deltaMassArray[i]*1000000.0f/(float) fragmentMassArray[i].getMass();
 			if (correlationArray[i]>bestCorrelation) {
 				bestCorrelation=correlationArray[i];
 			}
@@ -778,8 +778,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				fragmentPrep.setString(index++, data.getPeptideSeq());
 				fragmentPrep.setString(index++, sourceFile);
 				fragmentPrep.setString(index++, IonType.toString(fragmentMassArray[i].getType()));
-				fragmentPrep.setInt(index++, fragmentMassArray[i].index);
-				fragmentPrep.setDouble(index++, fragmentMassArray[i].mass);
+				fragmentPrep.setInt(index++, fragmentMassArray[i].getIndex());
+				fragmentPrep.setDouble(index++, fragmentMassArray[i].getMass());
 				fragmentPrep.setFloat(index++, correlationArray[i]);
 				fragmentPrep.setFloat(index++, backgroundArray[i]);
 				fragmentPrep.setFloat(index++, ppmArray[i]);

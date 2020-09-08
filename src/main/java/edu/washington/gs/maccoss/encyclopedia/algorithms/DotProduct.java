@@ -67,7 +67,7 @@ public class DotProduct implements PSMPeakScorer {
 
 		ArrayList<PeakScores> scoredPeaks=new ArrayList<PeakScores>();
 		for (FragmentIon targetIon : ions) {
-			double target=targetIon.mass;
+			double target=targetIon.getMass();
 			
 			int[] predictedIndicies=libraryTolerance.getIndicies(predictedMasses, target);
 			float predictedIntensity=0.0f;

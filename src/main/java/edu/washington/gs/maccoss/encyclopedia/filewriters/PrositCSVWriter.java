@@ -34,6 +34,8 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class PrositCSVWriter {
 	public static void main(String[] args) throws Exception {
+		AminoAcidConstants aaConstants=new AminoAcidConstants();
+		
 		File parent=new File("/Users/searleb/Documents/mak/");
 		File fileName=new File("/Users/searleb/Documents/mak/prosit.csv");
 		
@@ -41,6 +43,7 @@ public class PrositCSVWriter {
 		byte defaultCharge=3;
 		byte[] chargeStates=new byte[] {2,3,4};
 		File[] files=new File[] {new File(parent, "metzyme_p2.txt"), new File(parent, "metzyme_p3.txt"), new File(parent, "metzyme_p4.txt")};
+		files=new File[] {new File(parent, "ProteOMZ_unique_peptides_exclusive-counts_clean_no-DECOY.csv.txt"),new File(parent, "ProteOMZ_unique_peptides_exclusive-counts_clean_no-DECOY.csv.txt"),new File(parent, "ProteOMZ_unique_peptides_exclusive-counts_clean_no-DECOY.csv.txt")};
 
 		PrintWriter writer=new PrintWriter(fileName);
 		writer.println("modified_sequence,collision_energy,precursor_charge");
@@ -59,7 +62,10 @@ public class PrositCSVWriter {
 				if (seq.length()>30||seq.length()<7) continue;
 				if (seq.indexOf('B')>=0||seq.indexOf('J')>=0||seq.indexOf('O')>=0||seq.indexOf('U')>=0||seq.indexOf('X')>=0||seq.indexOf('Z')>=0||seq.indexOf('*')>=0) continue;
 				
-
+				
+				double mz=aaConstants.getChargedMass(seq, charge);
+				if (mz>1002.70||mz<396.43) continue;
+				
 				writer.println(seq+","+convertNCE(defaultNCE, (byte)charge, defaultCharge)+","+(charge));
 				total++;
 			}

@@ -114,7 +114,7 @@ public class PhosphoPermuterTest extends TestCase {
 			FragmentationModel model=PeptideUtils.getPeptideModel(permutations.get(i), parameters.getAAConstants());
 			FragmentIon[] yions=model.getYIons();
 			for (int j=0; j<yions.length; j++) {
-				assertEquals(expected[i][j], yions[j].mass, 0.01);
+				assertEquals(expected[i][j], yions[j].getMass(), 0.01);
 			}
 		}
 	}

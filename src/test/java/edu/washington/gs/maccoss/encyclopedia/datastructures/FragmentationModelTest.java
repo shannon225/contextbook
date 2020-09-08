@@ -22,7 +22,7 @@ public class FragmentationModelTest extends TestCase {
 		FragmentationModel model=PeptideUtils.getPeptideModel(sequence, PARAMETERS.getAAConstants());
 		FragmentIon[] ions=model.getPrimaryIonObjects(FragmentationType.CID, (byte)3, false);
 		for (int i=0; i<ions.length; i++) {
-			System.out.println(ions[i]+"\t"+ions[i].mass);
+			System.out.println(ions[i]+"\t"+ions[i].getMass());
 		}
 	}
 	

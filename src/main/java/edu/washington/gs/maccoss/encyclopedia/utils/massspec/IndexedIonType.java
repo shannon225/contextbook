@@ -8,8 +8,8 @@ public class IndexedIonType {
 		this.type=type;
 	}
 	public IndexedIonType(FragmentIon ion) {
-		this.index=ion.index;
-		this.type=ion.type;
+		this.index=ion.getIndex();
+		this.type=ion.getType();
 	}
 	
 	@Override

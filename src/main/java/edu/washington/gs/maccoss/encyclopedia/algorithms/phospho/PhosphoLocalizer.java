@@ -345,7 +345,7 @@ public class PhosphoLocalizer {
 			Spectrum bestStripe=ChromatogramExtractor.getTargetStripeByRT(stripes, bestRT);
 			if (bestStripe!=null) {
 				for (int i=0; i<targets.length; i++) {
-					float intensity=params.getFragmentTolerance().getIntegratedIntensity(bestStripe.getMassArray(), bestStripe.getIntensityArray(), targets[i].mass);
+					float intensity=params.getFragmentTolerance().getIntegratedIntensity(bestStripe.getMassArray(), bestStripe.getIntensityArray(), targets[i].getMass());
 					if (intensity>0) {
 						identifiedTargets.add(targets[i]);
 					}
@@ -466,7 +466,7 @@ public class PhosphoLocalizer {
 							}
 						}
 						for (FragmentIon target : allIonsTypes) {
-							localPreviouslyIdentifiedIons.addIonToBlacklist(target.mass, boundaries);
+							localPreviouslyIdentifiedIons.addIonToBlacklist(target.getMass(), boundaries);
 						}
 					}
 				}
@@ -508,7 +508,7 @@ public class PhosphoLocalizer {
 			float delta=Math.abs(spectrum.getScanStartTime()-targetRT);
 			float[] integratedIntensities=params.getFragmentTolerance().getIntegratedIntensities(spectrum.getMassArray(), spectrum.getIntensityArray(), FragmentIon.getMasses(targetMasses));
 			for (int i=0; i<integratedIntensities.length; i++) {
-				if (integratedIntensities[i]>0.0f&&blacklistedIons.isBlacklisted(targetMasses[i].mass, spectrum.getScanStartTime())) {
+				if (integratedIntensities[i]>0.0f&&blacklistedIons.isBlacklisted(targetMasses[i].getMass(), spectrum.getScanStartTime())) {
 						//if (blacklistedIons.size()>0) System.out.println("BLACKLISTED! "+blacklistedIons.isBlacklisted(targetMasses[i].mass, spectrum.getScanStartTime())+"\t"+targetMasses[i]+"\t"+spectrum.getScanStartTime()+"\t"+blacklistedIons.size());
 						integratedIntensities[i]=0.0f;
 				}
@@ -594,7 +594,7 @@ public class PhosphoLocalizer {
 			if (correlations[i]>=correlationThreshold) {
 				// grab mz
 				if (keptIntensities.get(i)>0) {
-					mzs.add(keptMasses.get(i).mass);
+					mzs.add(keptMasses.get(i).getMass());
 					intens.add(integrations[i]);
 				}
 			}
@@ -698,7 +698,7 @@ public class PhosphoLocalizer {
 					// this says that an ion i should be removed if any ion from otherUnitEntry is within tolerance of it
 					ions.removeIf(thisUnitIon ->
 							Arrays.stream(otherUnitIons)
-									.anyMatch(otherUnitIon -> params.getFragmentTolerance().equals(thisUnitIon.mass, otherUnitIon.mass))
+									.anyMatch(otherUnitIon -> params.getFragmentTolerance().equals(thisUnitIon.getMass(), otherUnitIon.getMass()))
 					);
 				}
 			}

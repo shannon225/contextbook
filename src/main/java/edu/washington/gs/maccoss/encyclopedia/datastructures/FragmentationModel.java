@@ -73,9 +73,9 @@ public class FragmentationModel {
 		TDoubleArrayList ionsList=new TDoubleArrayList();
 		ArrayList<FragmentIon> annotationList=new ArrayList<FragmentIon>();
 		for (int i=0; i<ions.length; i++) {
-			if (ions[i].mass>=minimumMass) {
-				if (targetMasses==null||fragmentTolerance.getIndex(targetMasses, ions[i].mass).isPresent()) {
-					ionsList.add(ions[i].mass);
+			if (ions[i].getMass()>=minimumMass) {
+				if (targetMasses==null||fragmentTolerance.getIndex(targetMasses, ions[i].getMass()).isPresent()) {
+					ionsList.add(ions[i].getMass());
 					annotationList.add(ions[i]);
 				}
 			}
@@ -136,7 +136,7 @@ public class FragmentationModel {
 		FragmentIon[] ions=getPrimaryIonObjects(type, precursorCharge, forQuant);
 		double[] masses=new double[ions.length];
 		for (int i=0; i<ions.length; i++) {
-			masses[i]=ions[i].mass;
+			masses[i]=ions[i].getMass();
 		}
 		return masses;
 	}
@@ -232,7 +232,7 @@ public class FragmentationModel {
 	public static FragmentIon[] getPlus2s(FragmentIon[] masses) {
 		FragmentIon[] p2=new FragmentIon[masses.length];
 		for (int i=0; i<p2.length; i++) {
-			p2[i]=new FragmentIon((masses[i].mass+MassConstants.protonMass)/2.0, masses[i].index, IonType.getPlus2(masses[i].type));
+			p2[i]=new FragmentIon((masses[i].getMass()+MassConstants.protonMass)/2.0, masses[i].getIndex(), IonType.getPlus2(masses[i].getType()));
 		}
 		return p2;
 	}
@@ -259,7 +259,7 @@ public class FragmentationModel {
 	public FragmentIon[] getCIons(boolean useNeutralLosses) {
 		FragmentIon[] bs=getBIons(useNeutralLosses);
 		for (int i=0; i<bs.length; i++) {
-			bs[i]=new FragmentIon(bs[i].mass+MassConstants.nh3, bs[i].index, IonType.c);
+			bs[i]=new FragmentIon(bs[i].getMass()+MassConstants.nh3, bs[i].getIndex(), IonType.c);
 		}
 		return bs;
 	}
@@ -271,7 +271,7 @@ public class FragmentationModel {
 	public FragmentIon[] getZIons(boolean useNeutralLosses) {
 		FragmentIon[] ys=getYIons(useNeutralLosses);
 		for (int i=0; i<ys.length; i++) {
-			ys[i]=new FragmentIon(ys[i].mass-MassConstants.nh3, ys[i].index, IonType.z);
+			ys[i]=new FragmentIon(ys[i].getMass()-MassConstants.nh3, ys[i].getIndex(), IonType.z);
 		}
 		return ys;
 	}
@@ -283,7 +283,7 @@ public class FragmentationModel {
 	public FragmentIon[] getZp1Ions(boolean useNeutralLosses) {
 		FragmentIon[] ys=getYIons(useNeutralLosses);
 		for (int i=0; i<ys.length; i++) {
-			ys[i]=new FragmentIon(ys[i].mass-MassConstants.nh3+MassConstants.hydrogenMass, ys[i].index, IonType.z1);
+			ys[i]=new FragmentIon(ys[i].getMass()-MassConstants.nh3+MassConstants.hydrogenMass, ys[i].getIndex(), IonType.z1);
 		}
 		return ys;
 	}

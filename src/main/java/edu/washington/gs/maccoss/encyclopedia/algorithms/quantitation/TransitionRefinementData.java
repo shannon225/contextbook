@@ -95,7 +95,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		
 		for (int i=0; i<fragmentMassArray.length; i++) {
 			if (integrationArray[i]>0.0f) {
-				mzs.add(fragmentMassArray[i].mass);
+				mzs.add(fragmentMassArray[i].getMass());
 				intens.add(integrationArray[i]);
 				corrs.add(correlationArray[i]);
 				ionAnnotations.add(fragmentMassArray[i]);
@@ -163,7 +163,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		ArrayList<Peak> intensities=new ArrayList<Peak>();
 		for (int i=0; i<correlationArray.length; i++) {
 			if (correlationArray[i]>=minimumCorrelation) {
-				intensities.add(new Peak(fragmentMassArray[i].mass, integrationArray[i]));
+				intensities.add(new Peak(fragmentMassArray[i].getMass(), integrationArray[i]));
 			}
 		}
 		Collections.sort(intensities);

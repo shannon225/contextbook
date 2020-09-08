@@ -365,7 +365,7 @@ public class ResultsBrowserPanel extends JPanel {
 				HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge(), true), downcastedSpectra, targetRTFloat, GraphType.line);
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
 				for (Entry<FragmentIon, XYTrace> pair : fragmentTraceMap.entrySet()) {
-					if (pair.getKey().index>1) {
+					if (pair.getKey().getIndex()>1) {
 						traces.add(pair.getValue());
 					}
 				}
@@ -447,7 +447,7 @@ public class ResultsBrowserPanel extends JPanel {
 							HashMap<FragmentIon, XYTrace> uniqueFragments=uniqueFragmentIons.get(sequenceKey);
 							HashMap<FragmentIon, XYTrace> otherFragments=new HashMap<FragmentIon, XYTrace>(otherFragmentIons.get(sequenceKey));
 							for (FragmentIon ion : new ArrayList<FragmentIon>(otherFragments.keySet())) {
-								if (ion.index<=1) {
+								if (ion.getIndex()<=1) {
 									//otherFragments.remove(ion);
 								}
 							}

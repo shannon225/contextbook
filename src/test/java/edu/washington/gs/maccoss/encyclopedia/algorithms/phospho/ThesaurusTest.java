@@ -112,7 +112,7 @@ public class ThesaurusTest {
 			
 			System.out.println(entry.getPeptideModSeq()+" ("+localizingIons.length+") vs "+bestAlt.getPeptideModSeq());
 			for (FragmentIon fragmentIon : localizingIons) {
-				System.out.println("\t"+fragmentIon+" ("+fragmentIon.mass+")");
+				System.out.println("\t"+fragmentIon+" ("+fragmentIon.getMass()+")");
 			}
 		}
 
