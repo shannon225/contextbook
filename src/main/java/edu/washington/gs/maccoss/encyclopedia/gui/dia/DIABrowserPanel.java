@@ -73,6 +73,7 @@ import gnu.trove.map.hash.TDoubleDoubleHashMap;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class DIABrowserPanel extends JPanel {
+	private static final float THREE_SECONDS = 3/60f;
 	private static final String STRUCTURE_TITLE="Structure";
 	private static final String INTENSITY_DISTRIBUTION_TITLE="Intensity Distributions";
 	private static final String BOXPLOT_TITLE="Range Statistics";
@@ -244,7 +245,18 @@ public class DIABrowserPanel extends JPanel {
 			@Override
 			protected ArrayList<AcquiredSpectrum> doInBackgroundForReal() throws Exception {
 				ChartPanel structureChart=MzmlStructureCharter.getStructureChart(f);
-				primaryTabs.addTab(STRUCTURE_TITLE, structureChart);
+				boolean found=false;
+				for (int i=0; i<primaryTabs.getTabCount(); i++) {
+					String title=primaryTabs.getTitleAt(i);
+					if (title==STRUCTURE_TITLE) {
+						primaryTabs.setComponentAt(i, structureChart);
+						found=true;
+					}
+				}
+				if (!found) {
+					primaryTabs.addTab(STRUCTURE_TITLE, structureChart);
+				}
+				
 				primaryTabs.setSelectedIndex(primaryTabs.getTabCount()-1);
 				
 				dia=StripeFileGenerator.getFile(f, parameters);
@@ -256,9 +268,6 @@ public class DIABrowserPanel extends JPanel {
 				
 				ArrayList<PrecursorScan> precursors=dia.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
 				
-				int increment=Math.max(1, precursors.size()/1000);
-				int scanCount=0;
-				float tic=0.0f;
 				TFloatFloatHashMap precursorIonDistribution=new TFloatFloatHashMap();
 				double minMZ=Double.MAX_VALUE;
 				double maxMZ=-Double.MAX_VALUE;
@@ -268,17 +277,12 @@ public class DIABrowserPanel extends JPanel {
 					if (precursorScan.getIsolationWindowUpper()>maxMZ) maxMZ=precursorScan.getIsolationWindowUpper();
 					
 					scans.add(precursorScan);
-					tic+=precursorScan.getTIC();
 					basepeaks.add(new XYPoint(precursorScan.getScanStartTime()/60f, General.max(precursorScan.getIntensityArray())));
 
-					if (scanCount%increment==0) {
-						tics.add(new XYPoint(precursorScan.getScanStartTime()/60f, tic));
-						if (tic>maxTIC) {
-							maxTIC=tic;
-						}
-						tic=0;
+					tics.add(new XYPoint(precursorScan.getScanStartTime()/60f, precursorScan.getTIC()));
+					if (precursorScan.getTIC()>maxTIC) {
+						maxTIC=precursorScan.getTIC();
 					}
-					scanCount++;
 					
 					for (float intensity : precursorScan.getIntensityArray()) {
 						float bin=((int)(10.0f*Log.protectedLog10(intensity)))/10.0f;
@@ -296,7 +300,7 @@ public class DIABrowserPanel extends JPanel {
 					}
 				}
 				XYTrace basepeak=new XYTrace(basepeaks, GraphType.area, "Precursor Basepeak", new Color(255, 0, 0, 50), 2.0f);
-				chromatogram=new XYTrace(tics, GraphType.area, "Precursor TIC");
+				chromatogram=XYTrace.round(new XYTrace(tics, GraphType.area, "Precursor TIC"), THREE_SECONDS);
 				precursorIntensityHistogram=new XYTrace(precursorIonDistribution, GraphType.area, "Log10 Precursor Intensity Distribution");
 				
 				ArrayList<PolymerIon> polymerList=PolymerIon.getAllPolymerProducts(new Range(minMZ, maxMZ));
@@ -344,11 +348,11 @@ public class DIABrowserPanel extends JPanel {
 				double maxBPThreshold=basepeak.getMaxY()*0.001;
 				
 				ArrayList<XYTrace> polymerTraceList=new ArrayList<XYTrace>();
-				polymerTraceList.add(0, XYTrace.round(basepeak, 3/60f));
+				polymerTraceList.add(0, XYTrace.round(basepeak, THREE_SECONDS));
 				for (XYTrace trace : polymerMap.values()) {
 					XYPoint maxXY = trace.getMaxXY();
 					if (maxXY.y>maxBPThreshold) {
-						polymerTraceList.add(XYTrace.round(trace, 3/60f));
+						polymerTraceList.add(XYTrace.round(trace, THREE_SECONDS));
 						ArrayList<XYPoint> point=new ArrayList<>();
 						point.add(maxXY);
 						polymerTraceList.add(new XYTrace(point, GraphType.text, trace.getName(), trace.getColor(), Optional.ofNullable(null)));
