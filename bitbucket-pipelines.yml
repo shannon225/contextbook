@@ -37,3 +37,12 @@ pipelines:
                 BITBUCKET_USERNAME: $BITBUCKET_USERNAME
                 BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
                 FILENAME: 'target/encyclopedia-*-executable.jar'
+  custom:
+    # this custom build allows manual triggering of
+    # integration tests on any commit
+    integration-tests:
+      - step:
+          caches:
+            - maven
+          script:
+            - mvn -B verify -DskipITs=false
