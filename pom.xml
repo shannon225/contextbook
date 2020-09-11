@@ -32,19 +32,15 @@
 
 		<encyclopediaTargetName>encyclopedia-${version}-executable</encyclopediaTargetName>
 		<encyclopediaBuildTarget>edu.washington.gs.maccoss.encyclopedia.Encyclopedia</encyclopediaBuildTarget>
-		<buildEncyclopedia>false</buildEncyclopedia>
 
 		<phosphoTargetName>thesaurus-${version}-executable</phosphoTargetName>
 		<phosphoBuildTarget>edu.washington.gs.maccoss.encyclopedia.Thesaurus</phosphoBuildTarget>
-		<buildPhospho>false</buildPhospho>
 
 		<xcordiaTargetName>xcordia-${version}-executable</xcordiaTargetName>
 		<xcordiaBuildTarget>edu.washington.gs.maccoss.encyclopedia.XCorDIA</xcordiaBuildTarget>
-		<buildXcordia>false</buildXcordia>
 
 		<walnutTargetName>walnut-${version}-executable</walnutTargetName>
 		<walnutBuildTarget>edu.washington.gs.maccoss.encyclopedia.Walnut</walnutBuildTarget>
-		<buildWalnut>false</buildWalnut>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
