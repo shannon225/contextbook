@@ -42,6 +42,12 @@
 		<walnutTargetName>walnut-${version}-executable</walnutTargetName>
 		<walnutBuildTarget>edu.washington.gs.maccoss.encyclopedia.Walnut</walnutBuildTarget>
 
+		<!--
+		By default, skip failsafe integration tests.
+		Reenable by running mvn with `-DskipITs=false`
+		-->
+		<skipITs>true</skipITs>
+
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
@@ -122,6 +128,10 @@
 							<goal>integration-test</goal>
 							<goal>verify</goal>
 						</goals>
+						<configuration>
+							<skipITs>${skipITs}</skipITs>
+							<skipTests>false</skipTests> <!-- ignore setting to skip UTs -->
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
