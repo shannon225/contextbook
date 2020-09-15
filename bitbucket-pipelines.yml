@@ -42,6 +42,7 @@ pipelines:
     # integration tests on any commit
     integration-tests:
       - step:
+          name: Build and Test
           caches:
             - maven
           script:
