@@ -361,7 +361,7 @@ public class PhosphoLocalizerExample {
 				break;
 			}
 		}
-		float dutyCycle=stripefile.getRanges().get(range);
+		float dutyCycle=stripefile.getRanges().get(range).getAverageDutyCycle();
 
 		//TransitionRefiner.DISPLAY_PLOTS=true;
 		System.out.println("Based on all ions");

@@ -1,7 +1,10 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
 import java.awt.Color;
+import java.awt.Dimension;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -10,6 +13,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.StringTokenizer;
 import java.util.TreeMap;
 
 import org.jfree.chart.ChartPanel;
@@ -28,12 +32,36 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class MzmlStructureCharter {
 
 	private static final int MAXIMUM_NUMBER_OF_SCANS_PER_TYPE = 500;
+	
+	public static void main(String[] args) throws Exception {
+		File f=new File("/Users/searleb/Downloads/Mass List Table3.csv");
+		ScanRangeTracker tracker=new ScanRangeTracker();
+		
+
+		BufferedReader in=new BufferedReader(new FileReader(f));
+		String eachline;
+		int count=-1;
+		while ((eachline=in.readLine())!=null) {
+			count++;
+			if (count<=0||eachline.trim().length()==0) {
+				continue;
+			}
+			
+			StringTokenizer st=new StringTokenizer(eachline, "-");
+			double start=Double.parseDouble(st.nextToken());
+			double stop=Double.parseDouble(st.nextToken());
+			System.out.println(count+") "+start+" to "+stop);
+			tracker.addRange(new Range(start, stop), count);
+		}
+		in.close();
+		ChartPanel panel=MzmlStructureCharter.getStructureChart(tracker, true);
+		Charter.launchComponent(panel, "File structure", new Dimension(900, 450));
+	}
 	
 	public static ChartPanel getStructureChart(StripeFile dia) {
 		try {

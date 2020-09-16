@@ -17,7 +17,7 @@ public interface StripeFileInterface {
 	 * ranges for dia stripe boundaries
 	 * @return Range: low/high boundaries for stripes, Float value is average time in seconds between cycles 
 	 */
-	Map<Range, Float> getRanges();
+	Map<Range, WindowData> getRanges();
 
 	/**
 	 * opens specific file on disk

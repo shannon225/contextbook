@@ -27,7 +27,7 @@ public class IonAccountingTest {
 	public static void main(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		StripeFileInterface dia=StripeFileGenerator.getFile(new File("/Users/searleb/Documents/teaching/encyclopedia/quantitative samples/23aug2017_hela_serum_timecourse_wide_1a.mzML"), parameters, true);
-		Map<Range, Float> ranges=dia.getRanges();
+		Map<Range, WindowData> ranges=dia.getRanges();
 		
 		LibraryInterface diaLib=BlibToLibraryConverter.getFile(new File("/Users/searleb/Documents/teaching/encyclopedia/quantitative samples/23aug2017_hela_serum_timecourse_wide_1a.mzML.elib"));
 		
@@ -81,7 +81,7 @@ public class IonAccountingTest {
 	public static void main2(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		StripeFileInterface dia=StripeFileGenerator.getFile(new File("/Users/searleb/Documents/teaching/encyclopedia/quantitative samples/23aug2017_hela_serum_timecourse_wide_1a.mzML"), parameters, true);
-		Map<Range, Float> ranges=dia.getRanges();
+		Map<Range, WindowData> ranges=dia.getRanges();
 		
 		LibraryInterface diaLib=BlibToLibraryConverter.getFile(new File("/Users/searleb/Documents/teaching/encyclopedia/quantitative samples/23aug2017_hela_serum_timecourse_wide_1a.mzML.elib"));
 		

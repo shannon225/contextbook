@@ -306,7 +306,7 @@ public class Pecanpie {
 			ArrayList<String> backgroundProteomeArray=backgroundProteomes[index];
 			HashSet<String> backgroundProteomeSet=new HashSet<String>(backgroundProteomeArray);
 			
-			float dutyCycle=stripefile.getRanges().get(range);
+			float dutyCycle=stripefile.getRanges().get(range).getAverageDutyCycle();
 			if (dutyCycle <= 0f) {
 				// A stripe with only one scan will get duty cycle
 				// of zero. This will only happen in the case of a

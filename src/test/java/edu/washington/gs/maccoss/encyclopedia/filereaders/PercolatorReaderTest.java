@@ -85,7 +85,7 @@ public class PercolatorReaderTest extends TestCase {
 
 	private static final StripeFileInterface DUMMY_DIA_FILE = new StripeFileInterface() {
 		@Override
-		public HashMap<Range, Float> getRanges() {
+		public HashMap<Range, WindowData> getRanges() {
 			throw new UnsupportedOperationException();
 		}
 

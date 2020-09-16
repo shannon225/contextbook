@@ -37,6 +37,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.WindowData;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -80,9 +81,9 @@ public class PeptideScoringTaskTest {
 		int cores=PARAMETERS.getNumberOfThreadsUsed();
 
 		// get stripes
-		for (Entry<Range, Float> entry : stripefile.getRanges().entrySet()) {
+		for (Entry<Range, WindowData> entry : stripefile.getRanges().entrySet()) {
 			Range range=entry.getKey();
-			float dutyCycle=entry.getValue();
+			float dutyCycle=entry.getValue().getAverageDutyCycle();
 			int scanAveragingMargin=(int)(PARAMETERS.getMinEluteTime()/dutyCycle/2); // floor
 			
 			System.out.println("Processing "+range+" ("+scanAveragingMargin+")");

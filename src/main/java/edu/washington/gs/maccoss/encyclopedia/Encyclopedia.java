@@ -312,7 +312,7 @@ public class Encyclopedia {
 			float baseProgress=(1.0f+rangesFinished)/numberOfTasks;
 			progress.update(baseMessage, baseProgress);
 			
-			float dutyCycle=stripefile.getRanges().get(range);
+			float dutyCycle=stripefile.getRanges().get(range).getAverageDutyCycle();
 			if (dutyCycle <= 0f) {
 				// A stripe with only one scan will get duty cycle
 				// of zero. This will only happen in the case of a

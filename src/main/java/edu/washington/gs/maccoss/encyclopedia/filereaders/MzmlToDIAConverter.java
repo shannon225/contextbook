@@ -201,13 +201,13 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 				stripeFile.setFileName(mzMLFile.getName(), producer.getMzMLID(), mzMLFile.getAbsolutePath());
 
 				Logger.logLine("Finalizing "+diaFile.getName()+" ...");
-				HashMap<Range, Float> dutyCycleMap=new HashMap<Range, Float>();
+				HashMap<Range, WindowData> dutyCycleMap=new HashMap<Range, WindowData>();
 				for (Entry<Range, TFloatArrayList> entry : retentionTimesByStripe.entrySet()) {
 					Range range=entry.getKey();
 					TFloatArrayList rts=entry.getValue();
 					float[] deltas=General.firstDerivative(rts.toArray());
 					float averageDutyCycle=General.mean(deltas);
-					dutyCycleMap.put(range, averageDutyCycle);
+					dutyCycleMap.put(range, new WindowData(averageDutyCycle, rts.size()));
 				}
 				stripeFile.setRanges(dutyCycleMap);
 

@@ -135,7 +135,7 @@ public class ThesaurusTest {
 				break;
 			}
 		}
-		float dutyCycle=stripefile.getRanges().get(range);
+		float dutyCycle=stripefile.getRanges().get(range).getAverageDutyCycle();
 		EncyclopediaOneScorer scorer=new EncyclopediaOneScorer(parameters, unitbackground);
 		ThesaurusOneScoringTask task=new ThesaurusOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, localizationQueue, parameters);
 		//CASiLOneScoringTask task=new CASiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, localizationQueue, parameters);

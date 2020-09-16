@@ -13,6 +13,7 @@ public class PercolatorExecutionData {
 	private final File proteinOutputFile;
 	private final File proteinDecoyFile;
 	private final SearchParameters parameters;
+	private final boolean useMinMax;
 	private String percolatorExecutableVersion;
 
 	public PercolatorExecutionData(File inputTSV, File fastaFile, File peptideOutputFile, File peptideDecoyFile, File proteinOutputFile, File proteinDecoyFile, SearchParameters parameters) {
@@ -23,6 +24,24 @@ public class PercolatorExecutionData {
 		this.proteinOutputFile=proteinOutputFile;
 		this.proteinDecoyFile=proteinDecoyFile;
 		this.parameters=parameters;
+		this.useMinMax=true;
+	}
+	
+	
+	
+	public PercolatorExecutionData(File inputTSV, File fastaFile, File peptideOutputFile, File peptideDecoyFile, File proteinOutputFile, File proteinDecoyFile, SearchParameters parameters, boolean useMinMax) {
+		this.inputTSV=inputTSV;
+		this.fastaFile=fastaFile;
+		this.peptideOutputFile=peptideOutputFile;
+		this.peptideDecoyFile=peptideDecoyFile;
+		this.proteinOutputFile=proteinOutputFile;
+		this.proteinDecoyFile=proteinDecoyFile;
+		this.parameters=parameters;
+		this.useMinMax=useMinMax;
+	}
+
+	public PercolatorExecutionData getDDAVersion() {
+		return new PercolatorExecutionData(inputTSV, fastaFile, peptideOutputFile, peptideDecoyFile, proteinOutputFile, proteinDecoyFile, parameters, false);
 	}
 	
 	public boolean hasDataAvailable() {
@@ -70,5 +89,9 @@ public class PercolatorExecutionData {
 	}
 	public SearchParameters getParameters() {
 		return parameters;
+	}
+	
+	public boolean isUseMinMax() {
+		return useMinMax;
 	}
 }

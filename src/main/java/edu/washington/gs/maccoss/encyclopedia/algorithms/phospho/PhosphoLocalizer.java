@@ -22,6 +22,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.WindowData;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -135,9 +136,9 @@ public class PhosphoLocalizer {
 
 	public PhosphoLocalizationData extractPhosphoFormsFromLimitedScans(double precursorMZ, byte precursorCharge, ArrayList<String> peptideModSeqs, ArrayList<Spectrum> stripes, boolean buildOutGUIData) {
 		float dutyCycle=1.0f;
-		for (Entry<Range, Float> entry : diaFile.getRanges().entrySet()) {
+		for (Entry<Range, WindowData> entry : diaFile.getRanges().entrySet()) {
 			if (entry.getKey().contains((float)precursorMZ)) {
-				dutyCycle=entry.getValue();
+				dutyCycle=entry.getValue().getAverageDutyCycle();
 				break;
 			}
 		}

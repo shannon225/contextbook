@@ -10,6 +10,7 @@ import javax.swing.table.AbstractTableModel;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.WindowData;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -25,14 +26,14 @@ public class SampleTableModel extends AbstractTableModel {
 	public void updateEntries(ArrayList<StripeFileInterface> newEntries) {
 		entries.clear();
 		for (StripeFileInterface file : newEntries) {
-			Map<Range, Float> ranges=file.getRanges();
+			Map<Range, WindowData> ranges=file.getRanges();
 			
 			TFloatArrayList cycleTimes=new TFloatArrayList();
 			TFloatArrayList rangeWindows=new TFloatArrayList();
 			float min=Float.MAX_VALUE;
 			float max=0.0f;
-			for (Entry<Range, Float> entry : ranges.entrySet()) {
-				cycleTimes.add(entry.getValue());
+			for (Entry<Range, WindowData> entry : ranges.entrySet()) {
+				cycleTimes.add(entry.getValue().getAverageDutyCycle());
 				Range key=entry.getKey();
 				if (key.getStart()<min) {
 					min=key.getStart();

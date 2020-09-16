@@ -179,7 +179,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 					percolator.getAbsolutePath(),
 					"--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(),
 					"--decoy-results-peptides", commandData.getPeptideDecoyFile().getAbsolutePath(),
-					"-y",
+					commandData.isUseMinMax()?"-y":"-Y",
 					commandData.getInputTSV().getAbsolutePath()
 			};
 		} else {
@@ -194,7 +194,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 					//"--decoy-results-proteins", commandData.getProteinDecoyFile().getAbsolutePath(),
 					//"--protein-enzyme", commandData.getParameters().getEnzyme().getPercolatorName(),
 					//"-g",
-					"-y",
+					commandData.isUseMinMax()?"-y":"-Y",
 					"--no-terminate",
 					"-N", Integer.toString(commandData.getParameters().getPercolatorTrainingSetSize()),
 					// Note that in EncyclopeDIA 0.9.4 and earlier we did not pass an FDR threshold/test

@@ -15,13 +15,13 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 
 public class CachedStripeFile implements StripeFileInterface {
 	private final File userFile;
-	private final Map<Range, Float> ranges;
+	private final Map<Range, WindowData> ranges;
 	private final List<PrecursorScan> precursors;
 	private final Map<Range, ? extends List<FragmentScan>> stripes;
 	private final float tic;
 	private final float gradientLength;
 	
-	public CachedStripeFile(File userFile, Map<Range, Float> ranges, List<PrecursorScan> precursors, Map<Range, ? extends List<FragmentScan>> stripes) {
+	public CachedStripeFile(File userFile, Map<Range, WindowData> ranges, List<PrecursorScan> precursors, Map<Range, ? extends List<FragmentScan>> stripes) {
 		this.userFile=userFile;
 		this.ranges=ranges;
 		this.precursors=precursors;
@@ -55,7 +55,7 @@ public class CachedStripeFile implements StripeFileInterface {
 	}
 
 	@Override
-	public Map<Range, Float> getRanges() {
+	public Map<Range, WindowData> getRanges() {
 		return ranges;
 	}
 

@@ -6,6 +6,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -29,7 +30,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class FeatureGrapher {
@@ -66,6 +69,7 @@ public class FeatureGrapher {
 				row.remove("charge2");
 				row.remove("charge3");
 				row.remove("protein");
+				row.remove("pepLength");
 				boolean isTarget=Integer.parseInt(row.remove("TD"))>0;
 				
 				for (Entry<String, String> entry : row.entrySet()) {
@@ -116,6 +120,7 @@ public class FeatureGrapher {
 		}
 
 		TreeMap<String, ChartPanel> panelMap=new TreeMap<String, ChartPanel>();
+		ArrayList<XYTrace> rocTraces=new ArrayList<>();
 		for (String key : targetData.keySet()) {
 			TFloatArrayList targets=targetData.get(key);
 			TFloatArrayList decoys=decoyData.get(key);
@@ -126,8 +131,68 @@ public class FeatureGrapher {
 			traces[1]=new XYTrace(points[1], GraphType.line, "Decoy");
 			
 			panelMap.put(key, Charter.getChart(key, "Count", true, traces));
+
+			if (!key.equals("averageFragmentDeltaMasses")||!key.equals("averageParentDeltaMass")) {
+				rocTraces.add(getRocPlot(key, targets.toArray(), decoys.toArray()));
+			}
 		}
+		panelMap.put(" ROC", Charter.getChart("Q-Value", "Count", true, rocTraces.toArray(new XYTrace[rocTraces.size()])));
 		return Charter.getTabbedChartPane(panelMap);
 	}
 
+	public static XYTrace getRocPlot(String name, float[] targets, float[] decoys) {
+		Arrays.sort(targets);
+		Arrays.sort(decoys);
+		
+		if (name.equals("sumOfSquaredErrors")||name.equals("weightedSumOfSquaredErrors")) {
+			General.multiply(targets, -1f);
+			General.multiply(decoys, -1f);
+		}
+		
+		TDoubleArrayList fdr=new TDoubleArrayList();
+		TDoubleArrayList count=new TDoubleArrayList();
+		
+		int indexTargets=targets.length-1;
+		int indexDecoys=decoys.length-1;
+		
+		int numTargets=0;
+		int numDecoys=0;
+
+		while (true) {
+			if (targets[indexTargets]>decoys[indexDecoys]) {
+				numTargets++;
+				indexTargets--;
+				if (indexTargets<0) break;
+			} else {
+				numDecoys++;
+				indexDecoys--;
+				if (indexDecoys<0) break;
+			}
+			float fdrValue=numTargets>0?numDecoys/(float)numTargets:1.0f;
+			if (fdrValue>1.0f) fdrValue=1.0f;
+			fdr.add(fdrValue);
+			count.add(numTargets);
+		}
+		
+		double bestFDR=1.0;
+
+		for (int i = fdr.size()-1; i >=0; i--) {
+			if (fdr.get(i)>bestFDR) {
+				fdr.set(i, bestFDR);
+			} else {
+				bestFDR=fdr.get(i);
+			}
+		}
+		TDoubleArrayList qvalue=new TDoubleArrayList();
+		TDoubleArrayList qvalueCount=new TDoubleArrayList();
+		for (int next = 1; next < fdr.size(); next++) {
+			int i=next-1;
+			if (fdr.get(i)!=fdr.get(next)) {
+				qvalue.add(fdr.get(i));
+				qvalueCount.add(count.get(i));
+			}
+		}
+		
+		return new XYTrace(qvalue.toArray(), qvalueCount.toArray(), GraphType.line, name);
+	}
 }

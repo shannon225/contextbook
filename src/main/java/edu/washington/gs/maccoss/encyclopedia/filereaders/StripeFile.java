@@ -43,7 +43,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class StripeFile extends SQLFile implements StripeFileInterface {
-	private static final Version MOST_RECENT_VERSION = new Version(0, 3, 0);
+	private static final Version MOST_RECENT_VERSION = new Version(0, 4, 0);
 
 	private static final String UNKNOWN_VALUE="unknown";
 	public static final String FILELOCATION_ATTRIBUTE="filelocation";
@@ -62,7 +62,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	private File tempFile;
 	private boolean isOpen=false;
 
-	private final HashMap<Range, Float> ranges=new HashMap<Range, Float>();
+	private final HashMap<Range, WindowData> ranges=new HashMap<Range, WindowData>();
 
 	private final boolean isOpenFileInPlace;
 
@@ -116,7 +116,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		Logger.logLine("Caching precursors...");
 		ArrayList<PrecursorScan> precursors=stripeFile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
 		HashMap<Range, ArrayList<FragmentScan>> stripes=new HashMap<Range, ArrayList<FragmentScan>>();
-		final Map<Range, Float> ranges = stripeFile.getRanges();
+		final Map<Range, WindowData> ranges = stripeFile.getRanges();
 		for (Range range : ranges.keySet()) {
 			Logger.logLine("Caching range "+range.toString()+"...");
 			stripes.put(range, stripeFile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, false));
@@ -136,11 +136,11 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public HashMap<Range, Float> getRanges() {
-		return (HashMap<Range, Float>)ranges.clone();
+	public HashMap<Range, WindowData> getRanges() {
+		return (HashMap<Range, WindowData>)ranges.clone();
 	}
 
-	public void setRanges(HashMap<Range, Float> ranges) {
+	public void setRanges(HashMap<Range, WindowData> ranges) {
 		this.ranges.clear();
 		this.ranges.putAll(ranges);
 	}
@@ -161,13 +161,14 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		try {
 			Statement s=c.createStatement();
 			try {
-				ResultSet rs=s.executeQuery("select Start, Stop, DutyCycle from Ranges");
+				ResultSet rs=s.executeQuery("select Start, Stop, DutyCycle,NumWindows from Ranges");
 
 				while (rs.next()) {
 					float start=rs.getFloat(1);
 					float stop=rs.getFloat(2);
 					float dutyCycle=rs.getFloat(3);
-					ranges.put(new Range(start, stop), dutyCycle);
+					int numWindows=rs.getInt(4);
+					ranges.put(new Range(start, stop), new WindowData(dutyCycle, numWindows));
 				}
 			} finally {
 				s.close();
@@ -180,19 +181,21 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	public void writeRanges() throws IOException, SQLException {
 		Connection c = getConnection();
 		try {
-			PreparedStatement prep=c.prepareStatement("insert into ranges (Start, Stop, DutyCycle) VALUES (?,?,?)");
+			PreparedStatement prep=c.prepareStatement("insert into ranges (Start, Stop, DutyCycle, NumWindows) VALUES (?,?,?,?)");
 			try {
 				int rangeCount=0;
-				for (Entry<Range, Float> entry : ranges.entrySet()) {
+				for (Entry<Range, WindowData> entry : ranges.entrySet()) {
 					Range range=entry.getKey();
-					Float value=entry.getValue();
-					if (value!=null) {
+					WindowData data=entry.getValue();
+					if (data!=null) {
+						float dutyCycle=data.getAverageDutyCycle();
+						int numWindows=data.getNumberOfMSMS();
 						prep.setFloat(1, range.getStart());
 						prep.setFloat(2, range.getStop());
-						prep.setFloat(3, value);
+						prep.setFloat(3, dutyCycle);
+						prep.setInt(4, numWindows);
 						prep.addBatch();
 						rangeCount++;
-						System.out.println(value+"\t"+range);
 					}
 				}
 				if (rangeCount>0) {
@@ -666,6 +669,9 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 				s.execute("update precursor set fraction=0,IsolationWindowLower=0,IsolationWindowUpper=999999999");
 				s.getConnection().commit();
 			}
+			if (new Version(0, 4, 0).amIAbove(currentVersion)) {
+				s.execute("alter table ranges add column numWindows int");
+			}
 
 	}
 
@@ -730,7 +736,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 				}
 
 				s.execute("create table if not exists metadata ( Key string not null, Value string not null, primary key (Key) )");
-				s.execute("create table if not exists ranges ( Start float not null, Stop float not null, DutyCycle float not null )");
+				s.execute("create table if not exists ranges ( Start float not null, Stop float not null, DutyCycle float not null, NumWindows int )");
 				s.execute("create table if not exists spectra ( Fraction int not null, SpectrumName string not null, PrecursorName string, SpectrumIndex int not null, ScanStartTime float not null, IonInjectionTime float, IsolationWindowLower float not null, IsolationWindowCenter float not null, IsolationWindowUpper float not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, primary key (SpectrumIndex) )");
 				s.execute("create table if not exists precursor ( Fraction int not null, SpectrumName string not null, SpectrumIndex int not null, ScanStartTime float not null, IonInjectionTime float, IsolationWindowLower float not null, IsolationWindowUpper float not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, TIC float, primary key (SpectrumIndex) )");
 

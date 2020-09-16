@@ -119,7 +119,7 @@ public class VariantXcorDIAOneScoringTaskTest {
 		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
 		LinkedBlockingQueue<ModificationLocalizationData> localizationQueue=new LinkedBlockingQueue<ModificationLocalizationData>();
 		for (Range range : ranges) {
-			float dutyCycle=stripefile.getRanges().get(range);
+			float dutyCycle=stripefile.getRanges().get(range).getAverageDutyCycle();
 			ArrayList<FragmentScan> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 			ArrayList<FragmentScan> xcorStripes=new ArrayList<>();
 			for (FragmentScan stripe : stripes) {

@@ -57,6 +57,7 @@ public class SearchParameterParser {
 		map.put("-minIntensity", "-1.0");
 		map.put("-rtWindowInMin", "-1.0");
         map.put("-filterPeaklists", "false");
+        map.put("-numberOfThreadsUsed", Integer.toString(Runtime.getRuntime().availableProcessors()));
 		return map;
 	}
 	

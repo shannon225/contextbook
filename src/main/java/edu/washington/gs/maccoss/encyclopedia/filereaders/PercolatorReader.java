@@ -43,7 +43,12 @@ public class PercolatorReader {
 				
 				// PSMId is the first row, so any non-table data will get put into this column
 				if (psmID.startsWith(PercolatorExecutor.PI_0_TAG)) {
-					pi0[0]=Float.parseFloat(psmID.substring(PercolatorExecutor.PI_0_TAG.length()));
+					String substring = psmID.substring(PercolatorExecutor.PI_0_TAG.length());
+					if ("null".equals(substring)) {
+						pi0[0]=1.0f;
+					} else {
+						pi0[0]=Float.parseFloat(substring);
+					}
 					return;
 				}
 				

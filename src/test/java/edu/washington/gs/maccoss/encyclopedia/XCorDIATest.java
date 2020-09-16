@@ -29,6 +29,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.WindowData;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -195,8 +196,8 @@ public class XCorDIATest extends TestCase {
 		}
 
 		@Override
-		public Map<Range, Float> getRanges() {
-			return ImmutableMap.of(new Range(100f, 1200f), 10f);
+		public Map<Range, WindowData> getRanges() {
+			return ImmutableMap.of(new Range(100f, 1200f), new WindowData(10f, 10));
 		}
 
 		@Override

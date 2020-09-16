@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.Scribe;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
@@ -22,29 +23,34 @@ import gnu.trove.map.hash.TFloatFloatHashMap;
 public class EncyclopediaDDAScoringTask extends AbstractLibraryScoringTask {
 	// FIXME shouldn't be static (long term)
 	private static final HashMap<String, float[]> isotopeDistributions=new HashMap<String, float[]>();
+	EncyclopediaScorer scorerFunction;
 	
 	public EncyclopediaDDAScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
+		scorerFunction=(EncyclopediaScorer)scorer;
 	}
 
 	@Override
 	protected Nothing process() {
-		for (FragmentScan stripe : super.stripes) {
+		for (FragmentScan msms : super.stripes) {
+//			try {System.out.println("SLEEPING"); Thread.sleep(10000);}
+//			catch (Exception e) {}
 			ArrayList<ScoredIndex> goodHits=new ArrayList<ScoredIndex>();
 			TFloatFloatHashMap map=new TFloatFloatHashMap();
 			for (int i=0; i<super.entries.size(); i++) {
 				LibraryEntry entry=super.entries.get(i);
-
-				float[] predictedIsotopeDistribution=getIsotopeDistribution(entry);
-				
-				boolean match=parameters.getPrecursorTolerance().equals(entry.getPrecursorMZ(), stripe.getPrecursorMZ());
-				match=match||parameters.getPrecursorTolerance().equals(entry.getPrecursorMZ()+MassConstants.protonMass, stripe.getPrecursorMZ());
+				boolean match=parameters.getPrecursorTolerance().equals(entry.getPrecursorMZ(), msms.getPrecursorMZ());
+				for (int j = 0; j < Scribe.NUMBER_OF_ISOTOPES_ABOVE_MONOISOTOPIC; j++) {
+					double target = entry.getPrecursorMZ()+(j+1)*MassConstants.neutronMass/entry.getPrecursorCharge();
+					match=match||parameters.getPrecursorTolerance().equals(target, msms.getPrecursorMZ());	
+				}
 				if (match) {
-					float score=scorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
+					float score=scorerFunction.score(entry, msms);
 					goodHits.add(new ScoredIndex(score, i));
 					map.put(i, score);
 				}
 			}
+			if (map.size()==0) continue;
 			
 			EValueCalculator calculator=new EValueCalculator(map);
 			int index=Math.round(calculator.getMaxRT());
@@ -56,13 +62,12 @@ public class EncyclopediaDDAScoringTask extends AbstractLibraryScoringTask {
 			
 			LibraryEntry entry=super.entries.get(index);
 			float[] predictedIsotopeDistribution=getIsotopeDistribution(entry);
-			float[] auxScoreArray=scorer.auxScore(entry, stripe, predictedIsotopeDistribution, precursors);
+			float[] auxScoreArray=scorerFunction.auxScore(entry, msms, predictedIsotopeDistribution, precursors);
 
 			PeptideScoringResult result=new PeptideScoringResult(entry);
-			result.addStripe(score, General.concatenate(auxScoreArray, evalue), stripe);
+			result.addStripe(score, General.concatenate(auxScoreArray, evalue), msms);
 
 			resultsQueue.add(result);
-
 		}
 		return Nothing.NOTHING;
 	}

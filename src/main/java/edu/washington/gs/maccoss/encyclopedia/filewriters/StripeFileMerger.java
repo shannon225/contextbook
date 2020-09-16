@@ -20,6 +20,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.WindowData;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
@@ -49,21 +50,21 @@ public class StripeFileMerger {
 	public static StripeFile merge(File[] fs, File newFile, SearchParameters parameters) throws IOException, SQLException, DataFormatException {
 		StripeFile stripeFile=new StripeFile();
 		stripeFile.openFile();
-		HashMap<Range, Float> dutyCycleMap=new HashMap<>();
+		HashMap<Range, WindowData> dutyCycleMap=new HashMap<>();
 		
 		int scanIndex=0;
 		for (int i = 0; i < fs.length; i++) {
 			Logger.logLine("Adding "+fs[i].getName()+" to merged file ("+(i+1)+" of "+fs.length+")...");
 			StripeFileInterface thisStripeFile=StripeFileGenerator.getFile(fs[i], parameters);
-			Map<Range, Float> ranges = thisStripeFile.getRanges();
+			Map<Range, WindowData> ranges = thisStripeFile.getRanges();
 			TFloatArrayList timeBetweenScans=new TFloatArrayList();
-			for (Float time : ranges.values()) {
-				timeBetweenScans.add(time);
+			for (WindowData time : ranges.values()) {
+				timeBetweenScans.add(time.getAverageDutyCycle());
 			}
 			float maxTimeForCommon=1.5f*QuickMedian.median(timeBetweenScans.toArray());
-			HashMap<Range, Float> primaryRanges = new HashMap<Range, Float>(ranges);
-			for (Entry<Range, Float> entry : ranges.entrySet()) {
-				if (entry.getValue()>maxTimeForCommon) {
+			HashMap<Range, WindowData> primaryRanges = new HashMap<Range, WindowData>(ranges);
+			for (Entry<Range, WindowData> entry : ranges.entrySet()) {
+				if (entry.getValue().getAverageDutyCycle()>maxTimeForCommon) {
 					primaryRanges.remove(entry.getKey());
 				}
 			}
