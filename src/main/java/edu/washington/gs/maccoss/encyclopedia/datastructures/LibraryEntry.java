@@ -101,7 +101,9 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		ArrayList<PeakChromatogram> peaks=new ArrayList<>();
 		int numPeaks=Math.min(massArray.length, correlationArray.length);
 		for (int i=0; i<numPeaks; i++) {
-			peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], correlationArray[i]));
+			if (intensityArray[i]>0) {
+				peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], correlationArray[i]));
+			}
 		}
 		Collections.sort(peaks);
 		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
