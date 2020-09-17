@@ -56,6 +56,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.FileLogRecorder;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.VersioningDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -65,6 +66,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ThreadableTask;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class Scribe {
@@ -213,18 +215,18 @@ public class Scribe {
 	}
 	
 	public static final int NUMBER_OF_ISOTOPES_ABOVE_MONOISOTOPIC=1;
-	private static final int NUMBER_OF_SPECTRA_IN_BATCH=500;
+	private static final int NUMBER_OF_SPECTRA_IN_BATCH=1000;
 	private static final float PERCENT_CONCURRENT_BATCHES_ABOVE_THREADCOUNT=0.5f; // keep 50% jobs waiting ready in the queue
 
 	static SaveResultsConsumer generateFeatureFile(ProgressIndicator progress, EncyclopediaJobData job, StripeFileInterface stripefile) throws IOException, SQLException, DataFormatException, InterruptedException {
 
-		LibraryScoringFactory taskFactory=job.getTaskFactory();
-		SearchParameters parameters=taskFactory.getParameters();
-		LibraryInterface library=job.getLibrary();
+		final LibraryScoringFactory taskFactory=job.getTaskFactory();
+		final SearchParameters parameters=taskFactory.getParameters();
+		final LibraryInterface library=job.getLibrary();
 		File featureFile=getPercolatorData(job).getInputTSV();
 
 		Logger.logLine("Processing precursors scans...");
-		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
+		final PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
 
 		// get targeted ranges
 		TFloatArrayList precursorList=new TFloatArrayList();
@@ -246,7 +248,8 @@ public class Scribe {
 				ranges.add(new Range(start, maxStop));
 				break;
 			} else {
-				index=index+NUMBER_OF_SPECTRA_IN_BATCH;
+				// random is deterministic, but it forces reads to be not be synchronizes
+				index=index+RandomGenerator.randomIndex(NUMBER_OF_SPECTRA_IN_BATCH, index);
 				lastStop=precursorList.get(index);
 				if (lastStop<start) continue;
 
@@ -260,7 +263,7 @@ public class Scribe {
 		int numberOfConcurrentJobs=Math.round(cores*(1f+PERCENT_CONCURRENT_BATCHES_ABOVE_THREADCOUNT));
 		Logger.logLine("Preparing to maintain at most "+numberOfConcurrentJobs+" jobs for "+cores+" threads...");
 		ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("Scribe thread factory").setDaemon(true).build();
-		BlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>(numberOfConcurrentJobs);
+		BlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 		ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
 		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>(), stripefile);
@@ -280,54 +283,72 @@ public class Scribe {
 		float numberOfTasks=2.0f+ranges.size();
 		for (Range range : ranges) {
 			float baseProgress=(1.0f+rangesFinished)/numberOfTasks;
-
-			int count=0;
-			double widerStart=range.getStart()-parameters.getFragmentTolerance().getTolerance(range.getStart());
-			// assumes some +1Hs, so straight number of neutrons above target
-			double targetStop=range.getStop()+MassConstants.neutronMass*NUMBER_OF_ISOTOPES_ABOVE_MONOISOTOPIC;
-			double widerStop=targetStop+parameters.getFragmentTolerance().getTolerance(targetStop);
-			ArrayList<LibraryEntry> entries=library.getEntries(new Range(widerStart, widerStop), true, parameters.getAAConstants());
-			if (entries.size()==0) continue;
 			
-			ArrayList<FragmentScan> stripes=stripefile.getStripes(range, -Float.MAX_VALUE, Float.MAX_VALUE, true);
-			Collections.sort(stripes);
-			
-			String baseMessage="Working on "+range+" m/z ("+stripes.size()+" MS/MS, "+entries.size()+" total entries). Jobs in waiting: "+workQueue.size();
-			progress.update(baseMessage, baseProgress);
-			Logger.logLine(baseMessage);
-			
-			LibraryBackgroundInterface background=new LibraryBackground(entries);
-			PSMScorer scorer=taskFactory.getLibraryScorer(background);
-
-			ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
-			for (LibraryEntry entry : entries) {
-				count++;
-				tasks.add(entry);
-				tasks.add(entry.getDecoy(parameters));
-				
-				float extraDecoys=parameters.getNumberOfExtraDecoyLibrariesSearched();
-				while (extraDecoys>0.0f) {
-					if (extraDecoys<1.0f) {
-						// check percentage
-						float test=RandomGenerator.random(count);
-						if (test>extraDecoys) {
-							break;
-						}
-					}
-					extraDecoys=extraDecoys-1.0f;
-					LibraryEntry shuffle=entry.getShuffle(parameters, Float.hashCode(extraDecoys), false);
-					tasks.add(shuffle);
-					tasks.add(shuffle.getDecoy(parameters));
+			ThreadableTask<Nothing> task=new ThreadableTask<Nothing>() {
+				@Override
+				public String getTaskName() {
+					return range.toString();
 				}
-			}
-			executor.submit(taskFactory.getDDAScoringTask(scorer, tasks, stripes, precursors, resultsQueue));
+				@Override
+				protected Nothing process() {
+					try {
+						int count=0;
+						double widerStart=range.getStart()-parameters.getFragmentTolerance().getTolerance(range.getStart());
+						// assumes some +1Hs, so straight number of neutrons above target
+						double targetStop=range.getStop()+MassConstants.neutronMass*NUMBER_OF_ISOTOPES_ABOVE_MONOISOTOPIC;
+						double widerStop=targetStop+parameters.getFragmentTolerance().getTolerance(targetStop);
+						ArrayList<LibraryEntry> entries=library.getEntries(new Range(widerStart, widerStop), true, parameters.getAAConstants());
+						if (entries.size()==0) return Nothing.NOTHING;
+						
+						ArrayList<FragmentScan> stripes=stripefile.getStripes(range, -Float.MAX_VALUE, Float.MAX_VALUE, true);
+						Collections.sort(stripes);
+						
+						String baseMessage="Working on "+range+" m/z ("+stripes.size()+" MS/MS, "+entries.size()+" total entries). Jobs in waiting: "+workQueue.size();
+						progress.update(baseMessage, baseProgress);
+						Logger.logLine(baseMessage);
+						
+						LibraryBackgroundInterface background=new LibraryBackground(entries);
+						PSMScorer scorer=taskFactory.getLibraryScorer(background);
+			
+						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
+						for (LibraryEntry entry : entries) {
+							count++;
+							tasks.add(entry);
+							tasks.add(entry.getDecoy(parameters));
+							
+							float extraDecoys=parameters.getNumberOfExtraDecoyLibrariesSearched();
+							while (extraDecoys>0.0f) {
+								if (extraDecoys<1.0f) {
+									// check percentage
+									float test=RandomGenerator.random(count);
+									if (test>extraDecoys) {
+										break;
+									}
+								}
+								extraDecoys=extraDecoys-1.0f;
+								LibraryEntry shuffle=entry.getShuffle(parameters, Float.hashCode(extraDecoys), false);
+								tasks.add(shuffle);
+								tasks.add(shuffle.getDecoy(parameters));
+							}
+						}
+						//executor.submit(taskFactory.getDDAScoringTask(scorer, tasks, stripes, precursors, resultsQueue));
+						return taskFactory.getDDAScoringTask(scorer, tasks, stripes, precursors, resultsQueue).call();
+					} catch (IOException ioe) {
+					} catch (SQLException sqle) {
+					} catch (DataFormatException dfe) {
+					}
+			 return Nothing.NOTHING;
+				}
+			};
+			System.err.println("Launched "+range);
+			executor.submit(task);
 			
 			rangesFinished++;
 		}
-		resultsQueue.put(PeptideScoringResult.POISON_RESULT);
-		
 		executor.shutdown();
 		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		
+		resultsQueue.put(PeptideScoringResult.POISON_RESULT);
 
 		consumer1Thread.join();
 		consumer2Thread.join();

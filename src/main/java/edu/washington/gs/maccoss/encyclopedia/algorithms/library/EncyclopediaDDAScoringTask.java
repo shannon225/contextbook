@@ -66,7 +66,6 @@ public class EncyclopediaDDAScoringTask extends AbstractLibraryScoringTask {
 
 			PeptideScoringResult result=new PeptideScoringResult(entry);
 			result.addStripe(score, General.concatenate(auxScoreArray, evalue), msms);
-
 			resultsQueue.add(result);
 		}
 		return Nothing.NOTHING;
