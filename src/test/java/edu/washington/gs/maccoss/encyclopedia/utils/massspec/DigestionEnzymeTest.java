@@ -235,6 +235,14 @@ public class DigestionEnzymeTest extends TestCase {
 		assertEquals(entry.getSequence(), sequences.get(0).getSequence());
 	}
 	
+	public void testCountMissedCleavages() {
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+		assertEquals(1, enzyme.getNumMissedCleavages("DLGEENFKALVLIAFAQYLQQCPFEDHVK"));
+		assertEquals(0, enzyme.getNumMissedCleavages("LVNEVTEFAK"));
+		assertEquals(1, enzyme.getNumMissedCleavages("ALVLIAFAQYLQQCPFEDHVKLVNEVTEFAK"));
+		assertEquals(2, enzyme.getNumMissedCleavages("LVNEVTEFAKALVLIAFAQYLQQCPFEDHVKLVNEVTEFAK"));
+	}
+	
 	public void testMissedCleavages() {
 
 		String bsa=">ALBU_HUMAN Serum albumin OS=Homo sapiens GN=ALB PE=1 SV=2\n"+"MKWVTFISLLFLFSSAYSRGVFRRDAHKSEVAHRFKDLGEENFKALVLIAFAQYLQQCPF\n"

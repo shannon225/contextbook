@@ -338,7 +338,7 @@ public class PhosphoLocalizer {
 			}
 			allVsUniqueList.put(peptideAnnotation, new Pair<TFloatFloatHashMap, TFloatFloatHashMap>(coelutingIonsMap, uniqueRtScoreMap));
 			
-			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap);
+			EValueCalculator uniqueCalculator=new EValueCalculator(uniqueRtScoreMap, 0f, 0.5f);
 			float bestRT=uniqueCalculator.getMaxRT()*60f;
 			float maxRawScore=uniqueCalculator.getMaxRawScore();
 			//System.out.println(targetPeptideAnnotation.getPeptideAnnotation()+" --> "+maxRawScore+" ("+bestRT/60f+")"); //FIXME

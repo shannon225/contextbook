@@ -166,8 +166,8 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 				}
 				map.put(i, xcorrArray[i]);
 			}
-			EValueCalculator evalueCalculator=new EValueCalculator(map);
-			float evalue=evalueCalculator.getNegLog10EValue(maxXCorr);
+			EValueCalculator evalueCalculator=new EValueCalculator(map, 0.1f, 0.1f);
+			float evalue=evalueCalculator.getNegLnEValue(maxXCorr);
 			FragmentScan stripe = stripes.get(maxXCorrIndex);
 			float[] auxScoreArray=scorer.auxScore(xcordiaEntry, stripe, isotopesByEntry.get(xcordiaEntry), precursors);
 
@@ -386,8 +386,8 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 			for (int i=0; i<xcorrArray.length; i++) {
 				map.put(i, xcorrArray[i]);
 			}
-			EValueCalculator evalueCalculator=new EValueCalculator(map);
-			float evalue=evalueCalculator.getNegLog10EValue(data.xCorr);
+			EValueCalculator evalueCalculator=new EValueCalculator(map, 0.1f, 0.1f);
+			float evalue=evalueCalculator.getNegLnEValue(data.xCorr);
 			FragmentScan stripe = stripes.get(data.spectrumIndex);
 			float[] auxScoreArray=scorer.auxScore(xcordiaEntry, stripe, isotopesByEntry.get(xcordiaEntry), precursors);
 			

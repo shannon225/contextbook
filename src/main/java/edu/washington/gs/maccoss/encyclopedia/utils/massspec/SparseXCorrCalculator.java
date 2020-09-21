@@ -258,9 +258,9 @@ public class SparseXCorrCalculator {
 		if (fragmentBinSize>0.5f) {
 			fragmentBinSize=ArrayXCorrCalculator.lowResFragmentBinSize; // if tolerance is >0.25 Da, then jump to 1 Da to make use of the average amino acid mass defect
 			offset=ArrayXCorrCalculator.lowResFragmentBinOffset;
-		} else if (fragmentBinSize<0.01f) {
-			fragmentBinSize=0.01f;
-			offset=0.0;
+		} else if (fragmentBinSize<ArrayXCorrCalculator.highResFragmentBinSize) {
+			fragmentBinSize=ArrayXCorrCalculator.highResFragmentBinSize;
+			offset=ArrayXCorrCalculator.lowResFragmentBinOffset;
 		} else {
 			offset=0.0;
 		}

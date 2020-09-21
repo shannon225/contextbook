@@ -28,15 +28,14 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RTRTPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -82,15 +81,15 @@ public class Scribe {
 			SearchGUIMain.runGUI(ProgramType.EncyclopeDIA);
 
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
-			Logger.logLine("EncyclopeDIA Help");
-			Logger.timelessLogLine("EncyclopeDIA is a library search engine for DIA data.");
+			Logger.logLine("Scribe Help");
+			Logger.timelessLogLine("Scribe is a library search engine for DDA data.");
 			Logger.timelessLogLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
 			Logger.timelessLogLine("Required Parameters: ");
 			Logger.timelessLogLine("\t-i\tinput .DIA or .MZML file");
 			Logger.timelessLogLine("\t-f\tprotein .FASTA database");
-			Logger.timelessLogLine("\t-l\tlibrary .ELIB file");
+			Logger.timelessLogLine("\t-l\tlibrary .DLIB or .ELIB file");
 			Logger.timelessLogLine("Other Parameters: ");
-			Logger.timelessLogLine("\t-o\toutput report file (default: [input file]"+EncyclopediaJobData.OUTPUT_FILE_SUFFIX+")");
+			Logger.timelessLogLine("\t-o\toutput report file (default: [input file]"+ScribeJobData.OUTPUT_FILE_SUFFIX+")");
 			
 			TreeMap<String, String> defaults=new TreeMap<String, String>(SearchParameterParser.getDefaultParameters());
 			int maxWidth=0;
@@ -103,7 +102,7 @@ public class Scribe {
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("Scribe version "+PecanOneScoringFactory.version);
+			Logger.logLine("Scribe version "+ScribeScoringFactory.version);
 			System.exit(1);
 			
 		} else {
@@ -122,15 +121,15 @@ public class Scribe {
 			if (arguments.containsKey(OUTPUT_RESULT_TAG)) {
 				outputFile=new File(arguments.get(OUTPUT_RESULT_TAG));
 			} else {
-				outputFile=new File(diaFile.getAbsolutePath()+EncyclopediaJobData.OUTPUT_FILE_SUFFIX);
+				outputFile=new File(diaFile.getAbsolutePath()+ScribeJobData.OUTPUT_FILE_SUFFIX);
 			}
 
 			try {
-				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+EncyclopediaJobData.LOG_FILE_SUFFIX));
+				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+ScribeJobData.LOG_FILE_SUFFIX));
 				Logger.addRecorder(logRecorder);
 	
 				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
-				LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
+				ScribeScoringFactory factory=new ScribeScoringFactory(parameters);
 				
 				Logger.logLine("Scribe version "+factory.getVersion());
 	
@@ -141,7 +140,7 @@ public class Scribe {
 				Logger.logLine(parameters.toString());
 
 				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
-				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, fastaFile, library, outputFile, factory);
+				ScribeJobData job=new ScribeJobData(diaFile, fastaFile, library, outputFile, factory);
 				runSearch(new EmptyProgressIndicator(), job);
 			} catch (Exception e) {
 				Logger.errorLine("Encountered Fatal Error!");
@@ -152,7 +151,7 @@ public class Scribe {
 		}
 	}
 
-	public static void runSearch(ProgressIndicator progress, EncyclopediaJobData job) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+	public static void runSearch(ProgressIndicator progress, ScribeJobData job) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		if (getPercolatorData(job).hasDataAvailable()) {
 			try {
 				ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(getPercolatorData(job).getPeptideOutputFile(), job.getParameters(), false).x;
@@ -187,7 +186,7 @@ public class Scribe {
 		stripefile.close();
 	}
 		
-	static void runSearch(ProgressIndicator progress, EncyclopediaJobData job, StripeFileInterface stripefile) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
+	static void runSearch(ProgressIndicator progress, ScribeJobData job, StripeFileInterface stripefile) throws IOException, SQLException, DataFormatException, ExecutionException, InterruptedException {
 		long startTime=System.currentTimeMillis();
 		LibraryScoringFactory taskFactory=job.getTaskFactory();
 		SearchParameters parameters=taskFactory.getParameters();
@@ -207,7 +206,7 @@ public class Scribe {
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		jobs.add(job);
 		
-		SearchToBLIB.convertElib(progress, job, elibFile, parameters);
+		//SearchToBLIB.convertElib(progress, job, elibFile, parameters);
 		
 		progress.update("Found "+passingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 		Logger.logLine("Finished analysis! "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
@@ -218,7 +217,7 @@ public class Scribe {
 	private static final int NUMBER_OF_SPECTRA_IN_BATCH=1000;
 	private static final float PERCENT_CONCURRENT_BATCHES_ABOVE_THREADCOUNT=0.5f; // keep 50% jobs waiting ready in the queue
 
-	static SaveResultsConsumer generateFeatureFile(ProgressIndicator progress, EncyclopediaJobData job, StripeFileInterface stripefile) throws IOException, SQLException, DataFormatException, InterruptedException {
+	static SaveResultsConsumer generateFeatureFile(ProgressIndicator progress, ScribeJobData job, StripeFileInterface stripefile) throws IOException, SQLException, DataFormatException, InterruptedException {
 
 		final LibraryScoringFactory taskFactory=job.getTaskFactory();
 		final SearchParameters parameters=taskFactory.getParameters();
@@ -370,7 +369,7 @@ public class Scribe {
 		return subset;
 	}
 
-	public static Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface> percolatePeptides(ProgressIndicator progress, EncyclopediaJobData job, StripeFileInterface stripefile, SaveResultsConsumer saveResultsConsumer) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+	public static Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface> percolatePeptides(ProgressIndicator progress, ScribeJobData job, StripeFileInterface stripefile, SaveResultsConsumer saveResultsConsumer) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		SearchParameters parameters=job.getParameters();
 		
 		try {
@@ -396,11 +395,11 @@ public class Scribe {
 		}
 	}
 
-	private static PercolatorExecutionData getPercolatorData(EncyclopediaJobData job) {
+	private static PercolatorExecutionData getPercolatorData(ScribeJobData job) {
 		return job.getPercolatorFiles().getDDAVersion();
 	}
 	
-	public static Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface> repercolatePeptides(ProgressIndicator progress, EncyclopediaJobData job, StripeFileInterface stripefile, SaveResultsConsumer saveResultsConsumer, RetentionTimeAlignmentInterface filter) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+	public static Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface> repercolatePeptides(ProgressIndicator progress, ScribeJobData job, StripeFileInterface stripefile, SaveResultsConsumer saveResultsConsumer, RetentionTimeAlignmentInterface filter) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		SearchParameters parameters=job.getParameters();
 		
 		try {
@@ -433,7 +432,7 @@ public class Scribe {
 		}
 	}
 
-	public static RetentionTimeAlignmentInterface getRescoringModel(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<PeptideScoringResult> data, EncyclopediaJobData job, boolean finalPass) {
+	public static RetentionTimeAlignmentInterface getRescoringModel(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<PeptideScoringResult> data, ScribeJobData job, boolean finalPass) {
 		HashSet<String> passingSeqs=new HashSet<String>();
 		for (PercolatorPeptide pass : passingPeptides) {
 			passingSeqs.add(PercolatorPeptide.getPeptideData(pass.getPsmID()));

@@ -4,9 +4,19 @@ public class Log {
 	private static final double log10=Math.log(10.0);
 	private static final double log2=Math.log(2.0);
 
+	public static float protectedLn(float v) {
+		if (v<=0) return 0.0f;
+		return (float)(Math.log(v));
+	}
+
 	public static float protectedLog10(float v) {
 		if (v<=0) return 0.0f;
 		return (float)(Math.log(v)/log10);
+	}
+
+	public static double protectedLogLn(double v) {
+		if (v<=0) return 0.0;
+		return Math.log(v);
 	}
 
 	public static double protectedLog10(double v) {
@@ -43,11 +53,13 @@ public class Log {
 		return r;
 	}
 	
-	private static final float[] logInts=getLogInts(1000); 
-	private static float[] getLogInts(int length) {
+	private static final float[] logFacts=getLogFacts(1000); 
+	private static float[] getLogFacts(int length) {
 		float[] logs=new float[length];
-		for (int i=0; i<logs.length; i++) {
-			logs[i]=log10(i+1.0f);
+		float sum=0.0f;
+		for (int i=0; i<logs.length-1; i++) {
+			sum+=log10(i+1.0f);
+			logs[i+1]=sum;
 		}
 		return logs;
 	}
@@ -58,10 +70,6 @@ public class Log {
 	 * @return
 	 */
 	public static float logFactorial(int value) {
-		float sum=0.0f;
-		for (int i=0; i<value; i++) {
-			sum+=logInts[i];
-		}
-		return sum;
+		return logFacts[value];
 	}
 }

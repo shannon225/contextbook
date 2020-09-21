@@ -6,9 +6,11 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPe
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 
 import java.io.File;
@@ -17,12 +19,12 @@ import java.util.concurrent.BlockingQueue;
 
 public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVConsumer {
 	private final String[] scoreNames;
-	private final int numberOfPeaksPerPeptide;
+	private final SearchParameters params;
 
-	public ScoringResultsToTSVConsumer(File outputFile, StripeFileInterface diaFile, String[] scoreNames, BlockingQueue<PeptideScoringResult> resultsQueue, int numberOfPeaksPerPeptide) {
+	public ScoringResultsToTSVConsumer(File outputFile, StripeFileInterface diaFile, String[] scoreNames, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters params) {
 		super(outputFile, diaFile, resultsQueue);
 		this.scoreNames = scoreNames;
-		this.numberOfPeaksPerPeptide=numberOfPeaksPerPeptide;
+		this.params=params;
 	}
 
 	@Override
@@ -34,15 +36,16 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 				
 				if (PeptideScoringResult.POISON_RESULT==result) break;
 				if (!printedHeader) {
-					writer.print("id\tTD\tScanNr\ttopN\tdeltaCN\t");
+					writer.print("id\tTD\tScanNr\t");
 					for (String name : scoreNames) {
 						writer.print(name);
 						writer.print('\t');
 					}
+					
 					if (result instanceof RescoredPeptideScoringResult) {
 						writer.print("deltaRT\t");//discriminantScore\t");
 					}
-					writer.print("pepLength\tcharge2\tcharge3\tprecursorMz\tRTinMin\tsequence\tprotein");
+					writer.print("numMissedCleavage\tpepLength\tcharge2\tcharge3\tprecursorMz\tprecursorMass\tRTinMin\tsequence\tprotein");
 					// Percolator assumes linux line endings on Mac!
 					switch (os) {
 						case MAC:
@@ -67,50 +70,31 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 		LibraryEntry peptide=result.getEntry();
 		int rank=1;
 
-		float firstScore=0.0f;
-		float secondScore=0.0f;
-
-		if (result.getGoodStripes().size()>0) {
-			Pair<ScoredObject<FragmentScan>, float[]> first=result.getGoodStripes().get(0);
-			firstScore=first.x.x;
-		}
-		if (result.getGoodStripes().size()>1) {
-			Pair<ScoredObject<FragmentScan>, float[]> second=result.getGoodStripes().get(1);
-			secondScore=second.x.x;
-		}
-
 		for (Pair<ScoredObject<FragmentScan>, float[]> goodStripe : result.getGoodStripes()) {
 			numberProcessed++;
 
-			float primaryScore=goodStripe.x.x;
 			FragmentScan stripe=goodStripe.x.y;
 			float[] auxScores=goodStripe.y;
 
 
-			if (stripe!=null&&rank<=numberOfPeaksPerPeptide) {
-				float deltaCn;
-				if (!Float.isNaN(firstScore)||!Float.isNaN(primaryScore)||!Float.isNaN(secondScore)||firstScore<=0) {
-					deltaCn=0.0f;
-				} else {
-					deltaCn=Math.min(1.0f, (primaryScore-secondScore)/firstScore); // if secondScore<0 then deltaCn can be >1, so protect against that
-				}
+			if (stripe!=null) {
 				String psmID= PercolatorPeptide.getPSMID(peptide, stripe.getScanStartTime(), diaFile);
 
 				writer.print(psmID);
 				writer.print("\t"+(peptide.isDecoy()?-1:1));
 				writer.print("\t"+stripe.getSpectrumIndex());
-				writer.print("\t"+rank);
-				writer.print("\t"+deltaCn);
 
 				for (int i=0; i<auxScores.length; i++) {
 					writer.print('\t');
 					writer.print(auxScores[i]);
 				}
 
+				writer.print("\t"+params.getEnzyme().getNumMissedCleavages(peptide.getPeptideSeq()));
 				writer.print("\t"+peptide.getPeptideSeq().length());
 				writer.print("\t"+(peptide.getPrecursorCharge()==2?1:0));
 				writer.print("\t"+(peptide.getPrecursorCharge()==3?1:0));
 				writer.print("\t"+peptide.getPrecursorMZ());
+				writer.print("\t"+(peptide.getPrecursorMZ()*peptide.getPrecursorCharge()-MassConstants.protonMass*peptide.getPrecursorCharge()));
 				writer.print("\t"+stripe.getScanStartTime()/60f);
 
 				String sequence="-."+peptide.getPeptideModSeq()+".-";
@@ -131,7 +115,7 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 				}
 			}
 			rank++;
-			if (rank>3) break;
+			if (rank>2) break;
 		}
 	}
 

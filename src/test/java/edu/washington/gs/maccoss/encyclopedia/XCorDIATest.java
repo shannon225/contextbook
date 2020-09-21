@@ -111,7 +111,7 @@ public class XCorDIATest extends TestCase {
 					@Override
 					public PeptideScoringResultsConsumer getResultsConsumer(File outputFile, BlockingQueue<PeptideScoringResult> resultsQueue, StripeFileInterface diaFile) {
 						final ScoringResultsToTSVConsumer resultsConsumer = (ScoringResultsToTSVConsumer) super.getResultsConsumer(outputFile, resultsQueue, diaFile);
-						return new ScoringResultsToTSVConsumer(outputFile, diaFile, resultsConsumer.getScoreNames(), resultsQueue, 1) {
+						return new ScoringResultsToTSVConsumer(outputFile, diaFile, resultsConsumer.getScoreNames(), resultsQueue, parameters) {
 
 							// Contains NO fixed mods
 							private final AminoAcidConstants NO_MODS = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());

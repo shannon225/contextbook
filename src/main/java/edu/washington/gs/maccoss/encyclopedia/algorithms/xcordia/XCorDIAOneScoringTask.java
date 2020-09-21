@@ -99,7 +99,7 @@ public class XCorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			}
 			Collections.sort(goodStripes);
 
-			EValueCalculator calculator=new EValueCalculator(map);
+			EValueCalculator calculator=new EValueCalculator(map, 0.1f, 0.1f);
 
 			TIntHashSet takenScans=new TIntHashSet();
 			int identifiedPeaks=0;
@@ -112,7 +112,7 @@ public class XCorDIAOneScoringTask extends AbstractLibraryScoringTask {
 				} else {
 					FragmentScan stripe=super.stripes.get(index);
 					float[] auxScoreArray=scorer.auxScore(entry, stripe, predictedIsotopeDistribution, precursors);
-					float evalue=calculator.getNegLog10EValue(score);
+					float evalue=calculator.getNegLnEValue(score);
 					if (Float.isNaN(evalue)) {
 						evalue=-1.0f;
 					}

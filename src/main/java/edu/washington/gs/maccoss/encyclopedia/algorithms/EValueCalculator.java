@@ -7,6 +7,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearRegression;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.list.array.TFloatArrayList;
@@ -18,12 +19,18 @@ public class EValueCalculator {
 	
 	private final float m;
 	private final float b;
-	private final float negLog10EValue;
+	private final float neglnEValue;
 
 	private final float maxScore;
 	private final float maxRT;
 	
-	public EValueCalculator(TFloatFloatHashMap scoreMap) {
+	private final float minScore;
+	private final float binSize;
+	
+	public EValueCalculator(TFloatFloatHashMap scoreMap, float minScore, float binSize) {
+		this.minScore=minScore;
+		this.binSize=binSize;
+		
 		final float[] intermediateMaxScores=new float[2];
 		intermediateMaxScores[0]=-Float.MAX_VALUE;
 		intermediateMaxScores[1]=0.0f;
@@ -41,35 +48,57 @@ public class EValueCalculator {
 		
 		scoreMap.forEachEntry(new TFloatFloatProcedure() {
 			public boolean execute(float arg0, float arg1) {
-				int index=getIndex(arg1);
-				if (index>=0) {
-					counts[index]++;
+				if (arg1>=minScore) { // require scores of at least minScore
+					int index=getIndex(arg1);
+					if (index>=0) {
+						counts[index]++;
+					}
 				}
 				return true;
 			}
 		});
 		
-		TFloatArrayList scores=new TFloatArrayList();
-		TFloatArrayList log10Counts=new TFloatArrayList();
-		for (int i = 0; i < counts.length; i++) {
-			if (counts[i]>1) {
-				// don't count singletons, there are a ton and they throw off the extrapolation
-				scores.add(getScore(i));
-				log10Counts.add(Log.log10(counts[i]));
+		int totalCounts=General.sum(counts);
+		int target=Math.round(totalCounts/2f);
+		
+		int targetIndex=0;
+		int currentTotal=0;
+		for (int i = counts.length-1; i>=0; i--) {
+			currentTotal+=counts[i];
+			if (currentTotal>target) {
+				targetIndex=i;
+				break;
 			}
 		}
 		
-		Pair<Float, Float> equation=LinearRegression.getRegression(scores.toArray(), log10Counts.toArray());
+		TFloatArrayList scores=new TFloatArrayList();
+		TFloatArrayList lnCounts=new TFloatArrayList();
+		for (int i = targetIndex; i < counts.length; i++) {
+			if (counts[i]>3) {
+				// don't count singletons, there are a ton and they throw off the extrapolation
+				scores.add(getScore(i));
+				lnCounts.add((float)Math.log(counts[i]));
+				
+				//System.out.println(getScore(i)+"\t"+Math.log(counts[i]));
+			}
+		}
+		
+		Pair<Float, Float> equation=LinearRegression.getRegression(scores.toArray(), lnCounts.toArray());
 		m=equation.x;
 		b=equation.y;
-		negLog10EValue=-(maxScore*m+b);
+		if (m>0) {
+			neglnEValue=-3;
+		} else {
+			float e = -(maxScore*m+b);
+			neglnEValue=e<-3?-3:e;
+		}
 	}
-	public float getNegLog10EValue(float score) {
+	public float getNegLnEValue(float score) {
 		return -(score*m+b);
 	}
 	
-	public float getNegLog10EValue() {
-		return negLog10EValue;
+	public float getNegLnEValue() {
+		return neglnEValue;
 	}
 	public float getB() {
 		return b;
@@ -92,11 +121,11 @@ public class EValueCalculator {
 	 * @return
 	 */
 	private float getScore(int index) {
-		return (index+0.5f)/counts.length*maxScore;
+		return (index+0.5f)*binSize+minScore;
 	}
 	
 	private int getIndex(float intensity) {
-		int index=Math.round(intensity/maxScore*counts.length);
+		int index=Math.round((intensity-minScore)/binSize);
 		if (index>=counts.length) {
 			index=counts.length-1;
 		}
@@ -111,21 +140,21 @@ public class EValueCalculator {
 		ArrayList<XYPoint> points1=new ArrayList<XYPoint>();
 		ArrayList<XYPoint> points2=new ArrayList<XYPoint>();
 		for (int i=0; i<counts.length; i++) {
-			float intensity=(i/(float)counts.length)*maxScore;
-			points1.add(new XYPoint(intensity, Log.protectedLog10(counts[i])));
+			float intensity=getScore(i);
+			points1.add(new XYPoint(intensity, Log.protectedLn(counts[i])));
 			points2.add(new XYPoint(intensity, (intensity*m+b)));
 		}
-		return new XYTraceInterface[] {new XYTrace(points1, GraphType.area, "histogram"), new XYTrace(points2, GraphType.line, "fit")};
+		return new XYTraceInterface[] {new XYTrace(points2, GraphType.line, "fit"), new XYTrace(points1, GraphType.area, "histogram")};
 	}
 	
 	public XYTraceInterface[] toUnloggedTraces() {
 		ArrayList<XYPoint> points1=new ArrayList<XYPoint>();
 		ArrayList<XYPoint> points2=new ArrayList<XYPoint>();
 		for (int i=0; i<counts.length; i++) {
-			float intensity=(i/(float)counts.length)*maxScore;
+			float intensity=getScore(i);
 			points1.add(new XYPoint(intensity, counts[i]));
-			points2.add(new XYPoint(intensity, (intensity*m+b)));
+			points2.add(new XYPoint(intensity, Math.pow(Math.E, (intensity*m+b))));
 		}
-		return new XYTraceInterface[] {new XYTrace(points1, GraphType.area, "histogram"), new XYTrace(points2, GraphType.line, "fit")};
+		return new XYTraceInterface[] {new XYTrace(points2, GraphType.line, "fit"), new XYTrace(points1, GraphType.area, "histogram")};
 	}
 }

@@ -52,10 +52,10 @@ public class EncyclopediaDDAScoringTask extends AbstractLibraryScoringTask {
 			}
 			if (map.size()==0) continue;
 			
-			EValueCalculator calculator=new EValueCalculator(map);
+			EValueCalculator calculator=new EValueCalculator(map, 0f, 0.5f);
 			int index=Math.round(calculator.getMaxRT());
 			float score=calculator.getMaxRawScore();
-			float evalue=calculator.getNegLog10EValue();
+			float evalue=calculator.getNegLnEValue();
 			if (Float.isNaN(evalue)) {
 				evalue=-1.0f;
 			}

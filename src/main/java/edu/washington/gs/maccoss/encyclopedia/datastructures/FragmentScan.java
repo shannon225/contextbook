@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.AcquiredSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TFloatArrayList;
 
 //@Immutable
 public class FragmentScan implements Comparable<FragmentScan>, AcquiredSpectrum {
@@ -62,6 +64,18 @@ public class FragmentScan implements Comparable<FragmentScan>, AcquiredSpectrum 
 	
 	public FragmentScan sqrt() {
 		return new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, General.protectedSqrt(intensityArray), charge);
+	}
+	
+	public FragmentScan trimMasses(Range r) {
+		TFloatArrayList ints=new TFloatArrayList();
+		TDoubleArrayList masses=new TDoubleArrayList();
+		for (int i = 0; i < massArray.length; i++) {
+			if (r.contains(massArray[i])) {
+				ints.add(intensityArray[i]);
+				masses.add(massArray[i]);
+			}
+		}
+		return new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, masses.toArray(), ints.toArray(), charge);
 	}
 	
 	@Override

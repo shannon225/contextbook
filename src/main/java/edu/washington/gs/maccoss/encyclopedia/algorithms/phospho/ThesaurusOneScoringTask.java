@@ -273,10 +273,10 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 				for (int i=0; i<scans.size(); i++) {
 					scoreByRTMap.put(scans.get(i).getScanStartTime(), primaryScoreArray[i]);
 				}
-				EValueCalculator calculator=new EValueCalculator(scoreByRTMap);
+				EValueCalculator calculator=new EValueCalculator(scoreByRTMap, 0f, 0.5f);
 				float[] auxScoreArray=((EncyclopediaScorer)scorer).getAuxScorer().score(bestForm.localizedEntry, apex, predictedIsotopeDistribution, precursors);
 	
-				float evalue=calculator.getNegLog10EValue(score);
+				float evalue=calculator.getNegLnEValue(score);
 				if (Float.isNaN(evalue)) {
 					evalue=-1.0f;
 				}

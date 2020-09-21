@@ -60,6 +60,8 @@ public abstract class AuxillaryPSMScorer {
 			averageAbsPPM=maxPPMError;
 		}
 		
+		int numberMatch=0;
+		float percentBlankOverMono=intensities[1]<=0?1.0f:Math.min(1.0f, intensities[0]/intensities[1]);
 		// precursor idotp
 		intensities=IsotopicDistributionCalculator.normalizeToMax(intensities);
 		float isotopeDotProduct=0.0f; // FINAL SCORE
@@ -67,10 +69,14 @@ public abstract class AuxillaryPSMScorer {
 		float euclideanDistancePredicted=0.0f;
 		for (int i = 0; i < PrecursorScanMap.isotopes.length; i++) {
 			byte isotope=PrecursorScanMap.isotopes[i];
+			euclideanDistanceIntensities+=intensities[i]*intensities[i]; // add -1 into iDotP
+			
 			if (isotope>=0) {
+				if (intensities[i]>0) {
+					numberMatch++;
+				}
 				// intensities[i] contains an extra -1 isotope
 				isotopeDotProduct+=intensities[i]*predictedIsotopeDistribution[isotope];
-				euclideanDistanceIntensities+=intensities[i]*intensities[i];
 				euclideanDistancePredicted+=predictedIsotopeDistribution[isotope]*predictedIsotopeDistribution[isotope];
 			}
 		}
@@ -82,6 +88,6 @@ public abstract class AuxillaryPSMScorer {
 			isotopeDotProduct=0.0f;
 		}
 
-		return new float[] {averageAbsPPM, isotopeDotProduct, averagePPM};
+		return new float[] {averageAbsPPM, isotopeDotProduct, averagePPM, percentBlankOverMono, numberMatch};
 	}
 }

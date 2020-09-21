@@ -13,6 +13,8 @@ public class ArrayXCorrCalculator {
 	// values from personal communication with J. Egertson
 	static final float lowResFragmentBinSize=1.00045475f;
 	static final float lowResFragmentBinOffset=0.4f;
+	static final float highResFragmentBinSize=0.02f;
+	static final float highResFragmentBinOffset=0.0f;
 	
 	// set 50 to be the maximum value, see pp 982 bottom right
 	static float primaryIonIntensity=50.0f;

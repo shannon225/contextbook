@@ -23,7 +23,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 
 public class XCorDIAOneScoringFactory implements LibraryScoringFactory {
 	public static final String version="0.4.10";
-	private final PecanSearchParameters parameters;
+	protected final PecanSearchParameters parameters;
 
 	public XCorDIAOneScoringFactory(PecanSearchParameters parameters) {
 		this.parameters=parameters;
@@ -36,7 +36,7 @@ public class XCorDIAOneScoringFactory implements LibraryScoringFactory {
 
 	@Override
 	public PeptideScoringResultsConsumer getResultsConsumer(File outputFile, BlockingQueue<PeptideScoringResult> resultsQueue, StripeFileInterface diaFile) {
-		return new ScoringResultsToTSVConsumer(outputFile, diaFile, EncyclopediaOneAuxillaryPSMScorer.getScoreNames(false), resultsQueue, 1);
+		return new ScoringResultsToTSVConsumer(outputFile, diaFile, EncyclopediaOneAuxillaryPSMScorer.getScoreNames(false), resultsQueue, parameters);
 	}
 
 	@Override

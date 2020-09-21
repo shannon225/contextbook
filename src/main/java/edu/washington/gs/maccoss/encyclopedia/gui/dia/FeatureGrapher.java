@@ -70,7 +70,11 @@ public class FeatureGrapher {
 				row.remove("charge3");
 				row.remove("protein");
 				row.remove("pepLength");
-				boolean isTarget=Integer.parseInt(row.remove("TD"))>0;
+				String targetDecoy = row.remove("TD");
+				if (targetDecoy==null) {
+					targetDecoy = row.remove("Label");
+				}
+				boolean isTarget=Integer.parseInt(targetDecoy)>0;
 				
 				for (Entry<String, String> entry : row.entrySet()) {
 					String key=entry.getKey();
@@ -141,13 +145,12 @@ public class FeatureGrapher {
 	}
 
 	public static XYTrace getRocPlot(String name, float[] targets, float[] decoys) {
+		if (name.equals("sumOfSquaredErrors")||name.equals("weightedSumOfSquaredErrors")||name.equals("precursorMass")||name.equals("percentBlankOverMono")||name.equals("numMissedCleavage")||name.equals("lnExpect")) {
+			targets=General.multiply(targets, -1f);
+			decoys=General.multiply(decoys, -1f);
+		}
 		Arrays.sort(targets);
 		Arrays.sort(decoys);
-		
-		if (name.equals("sumOfSquaredErrors")||name.equals("weightedSumOfSquaredErrors")) {
-			General.multiply(targets, -1f);
-			General.multiply(decoys, -1f);
-		}
 		
 		TDoubleArrayList fdr=new TDoubleArrayList();
 		TDoubleArrayList count=new TDoubleArrayList();

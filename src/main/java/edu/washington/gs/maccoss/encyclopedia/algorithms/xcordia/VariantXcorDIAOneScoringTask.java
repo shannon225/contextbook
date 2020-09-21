@@ -278,10 +278,10 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 				for (int i=0; i<scans.size(); i++) {
 					scoreByRTMap.put(scans.get(i).getScanStartTime(), primaryScoreArray[i]);
 				}
-				EValueCalculator calculator=new EValueCalculator(scoreByRTMap);
+				EValueCalculator calculator=new EValueCalculator(scoreByRTMap, 0.1f, 0.1f);
 				float[] auxScoreArray=scorer.auxScore(bestForm.localizedEntry, apex, predictedIsotopeDistribution, precursors);
 	
-				float evalue=calculator.getNegLog10EValue(score);
+				float evalue=calculator.getNegLnEValue(score);
 				if (Float.isNaN(evalue)) {
 					evalue=-1.0f;
 				}
@@ -383,7 +383,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			}
 			float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
 			
-			EValueCalculator calculator=new EValueCalculator(map);
+			EValueCalculator calculator=new EValueCalculator(map, 0.1f, 0.1f);
 			int index=Math.round(calculator.getMaxRT()); // rt=index
 			
 			IntRange indexRange = getPeakRange(index);
@@ -561,7 +561,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 	private void finalScoreTimepoint(ScoredTimepoint timepoint) {
 		FragmentScan stripe=super.stripes.get(timepoint.scoredIndex.y);
 		float[] auxScoreArray=scorer.auxScore(timepoint.xcordiaEntry, stripe, timepoint.predictedIsotopeDistribution, precursors);
-		float evalue=timepoint.calculator.getNegLog10EValue(timepoint.scoredIndex.x);
+		float evalue=timepoint.calculator.getNegLnEValue(timepoint.scoredIndex.x);
 		if (Float.isNaN(evalue)) {
 			evalue=-1.0f;
 		}

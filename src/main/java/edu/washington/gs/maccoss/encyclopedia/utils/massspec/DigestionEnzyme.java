@@ -229,6 +229,17 @@ public final class DigestionEnzyme {
 		return false;
 	}
 	
+	public int getNumMissedCleavages(String peptide) {
+		char[] seq=peptide.toCharArray();
+		int count=0;
+		for (int i = 1; i < seq.length; i++) {
+			if (isCutSite(seq[i-1], seq[i])) {
+				count++;
+			}
+		}
+		return count;
+	}
+	
 	/**
 	 * assumes key sequence signatures allow fewer than 10 AAs
 	 * @param pre

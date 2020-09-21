@@ -1,13 +1,14 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
+package edu.washington.gs.maccoss.encyclopedia.algorithms.scribe;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -16,33 +17,34 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVConsumer;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 
-public class EncyclopediaOneScoringFactory implements LibraryScoringFactory {
-	public static final String version="0.4.2";
+public class ScribeScoringFactory implements LibraryScoringFactory {
+	public static final String version="0.0.1";
 	private final SearchParameters parameters;
 
-	public EncyclopediaOneScoringFactory(SearchParameters parameters) {
+	public ScribeScoringFactory(SearchParameters parameters) {
 		this.parameters=parameters;
 	}
 
 	@Override
-	public PSMPeakScorer getLibraryScorer(LibraryBackgroundInterface background) {
-		return new EncyclopediaOneScorer(parameters, background); 
+	public PSMScorer getLibraryScorer(LibraryBackgroundInterface background) {
+		return new ScribeScorer(parameters); 
 	}
 
 	@Override
 	public PeptideScoringResultsConsumer getResultsConsumer(File outputFile, BlockingQueue<PeptideScoringResult> resultsQueue, StripeFileInterface diaFile) {
-		return new ScoringResultsToTSVConsumer(outputFile, diaFile, EncyclopediaOneAuxillaryPSMScorer.getScoreNames(true), resultsQueue, parameters);
+		return new ScoringResultsToTSVConsumer(outputFile, diaFile, ScribeAuxillaryPSMScorer.getScoreNames(), resultsQueue, parameters);
 	}
 
 	@Override
 	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
-		return new EncyclopediaOneScoringTask(scorer, entries, stripes, precursorIsolationRange, dutyCycle, precursors, resultsQueue, parameters);
+		throw new EncyclopediaException("Sorry, DIA scoring for Scribe is not implemented!");
 	}
 	
 	@Override
 	public AbstractLibraryScoringTask getDDAScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
-		return new EncyclopediaDDAScoringTask(scorer, entries, stripes, precursors, resultsQueue, parameters);
+		return new ScribeScoringTask(scorer, entries, stripes, precursors, resultsQueue, parameters);
 	}
 
 	@Override
