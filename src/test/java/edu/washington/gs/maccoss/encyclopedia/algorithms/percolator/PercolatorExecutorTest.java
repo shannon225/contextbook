@@ -91,34 +91,6 @@ public class PercolatorExecutorTest extends TestCase {
 		assertEquals(msg, PercolatorExecutor.getErrorMessage(new OutputMessage(msg, false)));
 	}
 
-	public void testPercolatorExecutor() throws Exception {
-		InputStream is=getClass().getResourceAsStream("/pecan.feature.txt");
-		File featureFile=File.createTempFile("pecan", ".feature");
-		featureFile.deleteOnExit();
-		Files.copy(is, featureFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-		
-		is=getClass().getResourceAsStream("/ecoli-190209-contam_correctNL.fasta");
-		File fastaFile=File.createTempFile("ecoli", ".fasta");
-		fastaFile.deleteOnExit();
-		Files.copy(is, fastaFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-		
-		PercolatorExecutionData percolatorFiles=getPercolatorFiles(featureFile, fastaFile, SearchParameterParser.getDefaultParametersObject());
-
-		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
-
-		Pair<ArrayList<PercolatorPeptide>, Float> origpair=PercolatorExecutor.executePercolatorTSV(getDefaultPercolaterVersion(), percolatorFiles, 0.01f, aaConstants);
-		assertTrue(origpair.x.size()>0);
-		assertTrue(origpair.y>0);
-		
-		Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideOutputFile(), 0.01f, aaConstants, false);
-		assertEquals(origpair.x.size(), pair.x.size());
-		assertEquals(origpair.y, pair.y, 0.001f);
-		
-		Pair<ArrayList<PercolatorPeptide>, Float> decoyPair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideDecoyFile(), 0.01f, aaConstants, true);
-		assertTrue(decoyPair.x.size()>0);
-		assertTrue(decoyPair.x.size()<origpair.x.size()/99f);
-	}
-
 	public static PercolatorExecutionData getPercolatorFiles(File featureFile, File fastaFile, SearchParameters parameters) throws IOException {
 		File outputFile=File.createTempFile("percolator", ".txt");
 		outputFile.deleteOnExit();
@@ -133,7 +105,7 @@ public class PercolatorExecutorTest extends TestCase {
 	}
 
 	//TODO: issue #23: Percolator v3 fails silently with exit code 255 on some Windows machines
-	private static byte getDefaultPercolaterVersion() {
+	static byte getDefaultPercolaterVersion() {
 		switch (OSDetector.getOS()) {
 			case WINDOWS:
 				return 2;
