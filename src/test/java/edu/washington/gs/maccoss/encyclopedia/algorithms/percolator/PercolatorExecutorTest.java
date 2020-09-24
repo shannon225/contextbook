@@ -56,6 +56,19 @@ public class PercolatorExecutorTest extends TestCase {
 		
 	}
 
+	/**
+	 * Used only in {@link #main}.
+	 */
+	static byte getDefaultPercolaterVersion() {
+		switch (OSDetector.getOS()) {
+			case WINDOWS:
+				//TODO: issue #23: Percolator v3 fails silently with exit code 255 on some Windows machines
+				return 2;
+			default:
+				return PercolatorExecutor.DEFAULT_VERSION_NUMBER;
+		}
+	}
+
 	public void testParsePeptideSequence() {
 		String peptideString="-.FNNFINDSLLEGAIDALKR.-";
 		String parsed=PercolatorExecutor.parsePeptideSequence(peptideString);
@@ -102,15 +115,5 @@ public class PercolatorExecutorTest extends TestCase {
 		decoyProteinFile.deleteOnExit();
 		PercolatorExecutionData percolatorFiles=new PercolatorExecutionData(featureFile, fastaFile, outputFile, decoyFile, outputProteinFile, decoyProteinFile, parameters);
 		return percolatorFiles;
-	}
-
-	//TODO: issue #23: Percolator v3 fails silently with exit code 255 on some Windows machines
-	static byte getDefaultPercolaterVersion() {
-		switch (OSDetector.getOS()) {
-			case WINDOWS:
-				return 2;
-			default:
-				return PercolatorExecutor.DEFAULT_VERSION_NUMBER;
-		}
 	}
 }

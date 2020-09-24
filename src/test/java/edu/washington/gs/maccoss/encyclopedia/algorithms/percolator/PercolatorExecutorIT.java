@@ -44,17 +44,38 @@ public class PercolatorExecutorIT {
 		PercolatorExecutionData percolatorFiles=getPercolatorFiles(featureFile, fastaFile, SearchParameterParser.getDefaultParametersObject());
 
 		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+		final float threshold = 0.01f;
 
-		Pair<ArrayList<PercolatorPeptide>, Float> origpair=PercolatorExecutor.executePercolatorTSV(percolatorVersion, percolatorFiles, 0.01f, aaConstants);
+		Pair<ArrayList<PercolatorPeptide>, Float> origpair=PercolatorExecutor.executePercolatorTSV(percolatorVersion, percolatorFiles, threshold, aaConstants);
 		assertTrue(origpair.x.size()>0);
 		assertTrue(origpair.y>0);
 
-		Pair<ArrayList<PercolatorPeptide>, Float> pair= PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideOutputFile(), 0.01f, aaConstants, false);
+		// Check that re-reading the results gives the same data as the return from executing Percolator
+		Pair<ArrayList<PercolatorPeptide>, Float> pair= PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideOutputFile(), threshold, aaConstants, false);
 		assertEquals(origpair.x.size(), pair.x.size());
 		assertEquals(origpair.y, pair.y, 0.001f);
 
-		Pair<ArrayList<PercolatorPeptide>, Float> decoyPair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideDecoyFile(), 0.01f, aaConstants, true);
-		assertTrue(decoyPair.x.size()>0);
-		assertTrue(decoyPair.x.size()<origpair.x.size()/99f);
+		// Check for a sensible pi0
+		final float pi0 = origpair.y;
+		assertTrue("Got invalid pi0 from percolator " + percolatorVersion + " (" + pi0 + ")", 0.1 < pi0 && pi0 < 0.9);
+
+		Pair<ArrayList<PercolatorPeptide>, Float> decoyPair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideDecoyFile(), threshold, aaConstants, true);
+		// assert there was at least one decoy
+		final int nDecoys = decoyPair.x.size();
+		assertTrue(nDecoys > 0);
+
+		// check that the decoys/targets is less than the qvalue threshold
+		final int nTargets = origpair.x.size();
+		final float fdr = pi0 * nDecoys / (float) nTargets;
+		assertTrue(
+				String.format("Result didn't meet threshold! %.03f * %d / %d = %.02f >= %.02f",
+						pi0,
+						nDecoys,
+						nTargets,
+						fdr,
+						threshold
+				),
+				fdr < threshold + 0.001f
+		);
 	}
 }
