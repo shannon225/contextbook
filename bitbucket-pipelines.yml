@@ -9,14 +9,25 @@ image: maven:3.6.3-openjdk-8
 
 pipelines:
   default:
+    # This build runs automatically for all commits
     - step:
         name: Build and Test
         caches:
           - maven # predefined; caches ~/.m2/repository
         script:
           - mvn -B verify # -B batch mode makes Maven less verbose
+  pull-requests:
+    # This build runs automatically for pull requests, running
+    # full tests (including ITs) on the merged branches
+    '**':
+      - step:
+          name: Build and Test
+          caches:
+            - maven
+          script:
+            - mvn -B verify -DskipITs=false
   tags:
-    # this build only runs on tagged encyclopedia releases
+    # This build runs automatically but only on tagged encyclopedia releases
     encyclopedia-*:
       - step:
           name: Build and Test
@@ -38,7 +49,7 @@ pipelines:
                 BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
                 FILENAME: 'target/encyclopedia-*-executable.jar'
   custom:
-    # this custom build allows manual triggering of
+    # This custom build allows manual triggering of
     # integration tests on any commit
     integration-tests:
       - step:
