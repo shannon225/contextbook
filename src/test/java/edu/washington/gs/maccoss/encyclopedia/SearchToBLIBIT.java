@@ -17,8 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.internal.matchers.Null;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
@@ -64,6 +63,7 @@ public class SearchToBLIBIT {
 	@Test
 	public void testConvertMultiSampleElib() throws Exception {
 		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		Files.delete(libFile); // can't exist (we're trying to create it)
 		FileUtils.forceDeleteOnExit(libFile.toFile());
 
 		final List<SearchJobData> jobData = Stream.of("test1", "test2").parallel()
@@ -89,6 +89,7 @@ public class SearchToBLIBIT {
 	@Test
 	public void testConvertMultiSampleBlib() throws Exception {
 		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".blib");
+		Files.delete(libFile); // can't exist (we're trying to create it)
 		FileUtils.forceDeleteOnExit(libFile.toFile());
 
 		final List<SearchJobData> jobData = Stream.of("test1", "test2").parallel()
@@ -120,6 +121,7 @@ public class SearchToBLIBIT {
 		searchParameters = SearchParameterParser.parseParameters(parameterMap);
 
 		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		Files.delete(libFile); // can't exist (we're trying to create it)
 		FileUtils.forceDeleteOnExit(libFile.toFile());
 
 		final List<SearchJobData> jobData = Stream.of("test1", "test2").parallel()
@@ -145,6 +147,7 @@ public class SearchToBLIBIT {
 	@Test
 	public void testConvertSingleSampleElib() throws Exception {
 		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		Files.delete(libFile); // can't exist (we're trying to create it)
 		FileUtils.forceDeleteOnExit(libFile.toFile());
 
 		final List<SearchJobData> jobData = Stream.of("test1")
@@ -170,6 +173,7 @@ public class SearchToBLIBIT {
 	@Test
 	public void testConvertSingleSampleBlib() throws Exception {
 		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".blib");
+		Files.delete(libFile); // can't exist (we're trying to create it)
 		FileUtils.forceDeleteOnExit(libFile.toFile());
 
 		final List<SearchJobData> jobData = Stream.of("test1")
@@ -201,6 +205,7 @@ public class SearchToBLIBIT {
 		searchParameters = SearchParameterParser.parseParameters(parameterMap);
 
 		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		Files.delete(libFile); // can't exist (we're trying to create it)
 		FileUtils.forceDeleteOnExit(libFile.toFile());
 
 		final List<SearchJobData> jobData = Stream.of("test1")
@@ -225,12 +230,29 @@ public class SearchToBLIBIT {
 
 	private EncyclopediaJobData createMockJobData(String name) {
 		try {
+			final Path peptideOutput = Files.createTempFile(tempDir, name, ".peptides.txt");
+			try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(peptideOutput.toFile())))) {
+				pw.println("PSMId\tq-value\tposterior_error_prob\tproteinIds");
+				for (int i = 0; i < NUM_ENTRIES; i++) {
+					// PSMId is sequence+charge
+					pw.print('A' + i);
+					pw.print("+");
+					pw.print(2);
+					pw.print("\t");
+					pw.print(0d); // q-value
+					pw.print("\t");
+					pw.print(0d); // PEP
+					pw.print("\t");
+					pw.println(i); // protein id (can't be empty)
+				}
+			}
+
 			return new EncyclopediaJobData(
 					Files.createTempFile(tempDir, name, ".dia").toFile(), // dia file; must exist
 					new PercolatorExecutionData(
-							Files.createTempFile(tempDir, name, ".features.txt").toFile(), // input tsv //TODO: generate
+							Files.createTempFile(tempDir, name, ".features.txt").toFile(), // input tsv
 							null, // fasta
-							Files.createTempFile(tempDir, name, ".peptides.txt").toFile(), // peptide output
+							peptideOutput.toFile(), // peptide output
 							Files.createTempFile(tempDir, name, ".decoys.txt").toFile(), // decoy output
 							null, // protein output
 							null, // protein decoy
