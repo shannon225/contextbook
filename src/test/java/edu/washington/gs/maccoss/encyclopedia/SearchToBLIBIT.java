@@ -33,16 +33,18 @@ import static org.junit.Assert.assertNotNull;
 public class SearchToBLIBIT {
 	private static final int NUM_ENTRIES = 8;
 
-	private final SearchParameters searchParameters = SearchParameterParser.getDefaultParametersObject();
 	private final ProgressIndicator progress = new EmptyProgressIndicator();
 
 	private boolean previousOpenInPlace;
+	private SearchParameters searchParameters;
 	private Path tempDir;
 
 	@Before
 	public void setUp() throws Exception {
 		previousOpenInPlace = LibraryFile.OPEN_IN_PLACE;
 		LibraryFile.OPEN_IN_PLACE = true; // non-default
+
+		searchParameters = SearchParameterParser.getDefaultParametersObject();
 
 		tempDir = Files.createTempDirectory("SearchToBLIBIT_");
 		FileUtils.forceDeleteOnExit(tempDir.toFile());
@@ -52,13 +54,15 @@ public class SearchToBLIBIT {
 	public void tearDown() throws Exception {
 		LibraryFile.OPEN_IN_PLACE = previousOpenInPlace; // restore default
 
+		searchParameters = null;
+
 		if (null != tempDir) {
 			FileUtils.deleteDirectory(tempDir.toFile());
 		}
 	}
 
 	@Test
-	public void testConvertMultiSampleLibrary() throws Exception {
+	public void testConvertMultiSampleElib() throws Exception {
 		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
 		FileUtils.forceDeleteOnExit(libFile.toFile());
 
@@ -82,11 +86,142 @@ public class SearchToBLIBIT {
 		assertHasPercolatorMetadata(file);
 	}
 
-	//TODO: test multi-sample combination (blib)
-	//TODO: test multi-sample combination (quant)
-	//TODO: test single-sample combination (elib)
-	//TODO: test single-sample combination (blib)
-	//TODO: test single-sample combination (quant)
+	@Test
+	public void testConvertMultiSampleBlib() throws Exception {
+		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".blib");
+		FileUtils.forceDeleteOnExit(libFile.toFile());
+
+		final List<SearchJobData> jobData = Stream.of("test1", "test2").parallel()
+				.map(this::createMockJobData)
+				.collect(Collectors.toList());
+
+		SearchToBLIB.convert(progress,
+				jobData,
+				libFile.toFile(),
+				true, // blib
+				true
+		);
+
+		//TODO: assertions for blib
+//		final LibraryFile file = new LibraryFile();
+//		file.openFile(libFile.toFile());
+//
+//		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
+//		assertEquals(NUM_ENTRIES, numEntries);
+//
+//		assertHasPercolatorMetadata(file);
+	}
+
+	@Test
+	public void testConvertMultiSampleQuant() throws Exception {
+		// create quant parameters
+		final HashMap<String, String> parameterMap = searchParameters.toParameterMap();
+		parameterMap.put("-quantifyAcrossSamples", "true");
+		searchParameters = SearchParameterParser.parseParameters(parameterMap);
+
+		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		FileUtils.forceDeleteOnExit(libFile.toFile());
+
+		final List<SearchJobData> jobData = Stream.of("test1", "test2").parallel()
+				.map(this::createMockJobData)
+				.collect(Collectors.toList());
+
+		SearchToBLIB.convert(progress,
+				jobData,
+				libFile.toFile(),
+				false, // elib
+				true
+		);
+
+		final LibraryFile file = new LibraryFile();
+		file.openFile(libFile.toFile());
+
+		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
+		assertEquals(NUM_ENTRIES, numEntries); //TODO
+
+		assertHasPercolatorMetadata(file);
+	}
+
+	@Test
+	public void testConvertSingleSampleElib() throws Exception {
+		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		FileUtils.forceDeleteOnExit(libFile.toFile());
+
+		final List<SearchJobData> jobData = Stream.of("test1")
+				.map(this::createMockJobData)
+				.collect(Collectors.toList());
+
+		SearchToBLIB.convert(progress,
+				jobData,
+				libFile.toFile(),
+				false, // elib
+				true
+		);
+
+		final LibraryFile file = new LibraryFile();
+		file.openFile(libFile.toFile());
+
+		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
+		assertEquals(NUM_ENTRIES, numEntries); //TODO
+
+		assertHasPercolatorMetadata(file);
+	}
+
+	@Test
+	public void testConvertSingleSampleBlib() throws Exception {
+		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".blib");
+		FileUtils.forceDeleteOnExit(libFile.toFile());
+
+		final List<SearchJobData> jobData = Stream.of("test1")
+				.map(this::createMockJobData)
+				.collect(Collectors.toList());
+
+		SearchToBLIB.convert(progress,
+				jobData,
+				libFile.toFile(),
+				true, // blib
+				true
+		);
+
+		//TODO: assertions for blib
+//		final LibraryFile file = new LibraryFile();
+//		file.openFile(libFile.toFile());
+//
+//		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
+//		assertEquals(NUM_ENTRIES, numEntries);
+//
+//		assertHasPercolatorMetadata(file);
+	}
+
+	@Test
+	public void testConvertSingleSampleQuant() throws Exception {
+		// create quant parameters
+		final HashMap<String, String> parameterMap = searchParameters.toParameterMap();
+		parameterMap.put("-quantifyAcrossSamples", "true");
+		searchParameters = SearchParameterParser.parseParameters(parameterMap);
+
+		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		FileUtils.forceDeleteOnExit(libFile.toFile());
+
+		final List<SearchJobData> jobData = Stream.of("test1")
+				.map(this::createMockJobData)
+				.collect(Collectors.toList());
+
+		SearchToBLIB.convert(progress,
+				jobData,
+				libFile.toFile(),
+				false, // elib
+				true
+		);
+
+		final LibraryFile file = new LibraryFile();
+		file.openFile(libFile.toFile());
+
+		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
+		assertEquals(NUM_ENTRIES, numEntries); //TODO
+
+		assertHasPercolatorMetadata(file);
+	}
 
 	private EncyclopediaJobData createMockJobData(String name) {
 		try {
