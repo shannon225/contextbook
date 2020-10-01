@@ -2,7 +2,6 @@ package edu.washington.gs.maccoss.encyclopedia;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -14,15 +13,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.junit.Assert.*;
 
 public class SearchToBLIBIT {
 	private final SearchParameters searchParameters = SearchParameterParser.getDefaultParametersObject();
@@ -47,23 +44,14 @@ public class SearchToBLIBIT {
 		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
 		FileUtils.forceDeleteOnExit(libFile.toFile());
 
-		final List<SearchJobData> jobData = Stream.of("") //TODO: test data
-				.map(name -> new EncyclopediaJobData(
-						null,
-						new PercolatorExecutionData(
-							//TODO
-						),
-						searchParameters,
-						"SearchToBLIBIT",
-						null,
-						new EncyclopediaOneScoringFactory(searchParameters)
-				))
+		final List<SearchJobData> jobData = Stream.of("test1", "test2").parallel()
+				.map(this::createMockJobData)
 				.collect(Collectors.toList());
 
 		SearchToBLIB.convert(progress,
 				jobData,
 				libFile.toFile(),
-				false,
+				false, // elib
 				true
 		);
 
@@ -76,4 +64,27 @@ public class SearchToBLIBIT {
 	//TODO: test single-sample combination (elib)
 	//TODO: test single-sample combination (blib)
 	//TODO: test single-sample combination (quant)
+
+	private EncyclopediaJobData createMockJobData(String name) {
+		try {
+			return new EncyclopediaJobData(
+					Files.createTempFile(tempDir, name, ".dia").toFile(), // dia file; must exist
+					new PercolatorExecutionData(
+							Files.createTempFile(tempDir, name, ".features.txt").toFile(), // input tsv //TODO: generate
+							null, // fasta
+							Files.createTempFile(tempDir, name, ".peptides.txt").toFile(), // peptide output
+							Files.createTempFile(tempDir, name, ".decoys.txt").toFile(), // decoy output
+							null, // protein output
+							null, // protein decoy
+							searchParameters
+					),
+					searchParameters,
+					"SearchToBLIBIT",
+					null,
+					new EncyclopediaOneScoringFactory(searchParameters)
+			);
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+	}
 }
