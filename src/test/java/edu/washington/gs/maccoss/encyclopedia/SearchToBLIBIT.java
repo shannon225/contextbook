@@ -5,35 +5,53 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOne
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import org.apache.commons.io.FileUtils;
+import org.apache.tools.ant.taskdefs.optional.extension.LibFileSet;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.internal.matchers.Null;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 public class SearchToBLIBIT {
+	private static final int NUM_ENTRIES = 8;
+
 	private final SearchParameters searchParameters = SearchParameterParser.getDefaultParametersObject();
 	private final ProgressIndicator progress = new EmptyProgressIndicator();
+
+	private boolean previousOpenInPlace;
 	private Path tempDir;
 
 	@Before
 	public void setUp() throws Exception {
+		previousOpenInPlace = LibraryFile.OPEN_IN_PLACE;
+		LibraryFile.OPEN_IN_PLACE = true; // non-default
+
 		tempDir = Files.createTempDirectory("SearchToBLIBIT_");
 		FileUtils.forceDeleteOnExit(tempDir.toFile());
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		LibraryFile.OPEN_IN_PLACE = previousOpenInPlace; // restore default
+
 		if (null != tempDir) {
 			FileUtils.deleteDirectory(tempDir.toFile());
 		}
@@ -55,8 +73,13 @@ public class SearchToBLIBIT {
 				true
 		);
 
-		//TODO: assert counts of passing peptides
-		//TODO: assert percolator version, pi0
+		final LibraryFile file = new LibraryFile();
+		file.openFile(libFile.toFile());
+
+		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
+		assertEquals(NUM_ENTRIES, numEntries); //TODO
+
+		assertHasPercolatorMetadata(file);
 	}
 
 	//TODO: test multi-sample combination (blib)
@@ -86,5 +109,15 @@ public class SearchToBLIBIT {
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
+	}
+
+	private void assertHasPercolatorMetadata(LibraryFile file) throws IOException, SQLException {
+		if (null == file) {
+			throw new NullPointerException("Can't run assertions on null LibraryFile!");
+		}
+
+		final HashMap<String, String> metadata = file.getMetadata();
+		assertNotNull(metadata.get(LibraryFile.PERCOLATOR_VERSION));
+		assertNotNull(metadata.get("pi0"));
 	}
 }
