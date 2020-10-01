@@ -235,7 +235,7 @@ public class SearchToBLIBIT {
 				pw.println("PSMId\tq-value\tposterior_error_prob\tproteinIds");
 				for (int i = 0; i < NUM_ENTRIES; i++) {
 					// PSMId is sequence+charge
-					pw.print('A' + i);
+					pw.print((char) ('A' + i));
 					pw.print("+");
 					pw.print(2);
 					pw.print("\t");
