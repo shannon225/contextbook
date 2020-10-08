@@ -9,11 +9,14 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public final class PrositCSVWriterTest {
@@ -82,11 +85,17 @@ public final class PrositCSVWriterTest {
 
 		assertTrue("CSV output didn't exist!", Files.exists(csv));
 		assertTrue("CSV output was empty!", Files.size(csv) > 0);
+
+		try (BufferedReader r = new BufferedReader(new FileReader(csv.toFile()))) {
+			assertEquals("Got more than the expected header line in CSV output",
+					1, r.lines().count()
+			);
+		}
 	}
 
 	//TODO: test elib -> prosit (incl. error states)
 
-	void runElibToCsv(LibraryFile libraryFile, Path csv) throws Exception {
+	static void runElibToCsv(LibraryFile libraryFile, Path csv) throws Exception {
 		PrositCSVWriter.writeCSV(
 				csv.toString(),
 				libraryFile,
@@ -132,12 +141,18 @@ public final class PrositCSVWriterTest {
 			libraryFile.openFile(elib.toFile());
 
 			runElibToCsv(libraryFile, csv);
-
-			assertTrue("CSV output didn't exist!", Files.exists(csv));
-			assertTrue("CSV output was empty!", Files.size(csv) > 0);
 		} finally {
 			// clean up temp file
 			libraryFile.close();
+		}
+
+		assertTrue("CSV output didn't exist!", Files.exists(csv));
+		assertTrue("CSV output was empty!", Files.size(csv) > 0);
+
+		try (BufferedReader r = new BufferedReader(new FileReader(csv.toFile()))) {
+			assertEquals("Got more than the expected header line in CSV output",
+					1, r.lines().count()
+			);
 		}
 	}
 }
