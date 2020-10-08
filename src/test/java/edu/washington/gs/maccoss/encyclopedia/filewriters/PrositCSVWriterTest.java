@@ -2,11 +2,9 @@ package edu.washington.gs.maccoss.encyclopedia.filewriters;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.tests.AbstractFileConverterTest;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
-import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -19,33 +17,18 @@ import java.nio.file.Path;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public final class PrositCSVWriterTest {
+public final class PrositCSVWriterTest extends AbstractFileConverterTest {
 	public static final String NAME = "PrositCSVWriterTest";
 
-	private Path tmpDir;
-	private Path csv;
-
-	@Before
-	public void setUp() throws Exception {
-		tmpDir = Files.createTempDirectory(NAME);
-		FileUtils.forceDeleteOnExit(tmpDir.toFile());
-
-		csv = Files.createTempFile(tmpDir, NAME, ".prosit.csv");
-		Files.delete(csv);
-		FileUtils.forceDeleteOnExit(csv.toFile());
+	@Override
+	protected String getName() {
+		return NAME;
 	}
 
-	@After
-	public void tearDown() throws Exception {
-		if (null != tmpDir) {
-			// recursively delete the whole directory
-			FileUtils.deleteQuietly(tmpDir.toFile());
-			tmpDir = null;
-			csv = null;
-		}
+	@Override
+	protected String getOutputExtension() {
+		return null;
 	}
-
-	//TODO: test fasta -> prosit (incl. error states)
 
 	static void runFastaToCsv(Path fasta, Path csv) throws FileNotFoundException {
 		runFastaToCsv(fasta.toFile(), csv.toFile());
@@ -75,19 +58,19 @@ public final class PrositCSVWriterTest {
 		final Path fasta = Files.createTempFile(tmpDir, NAME, ".fasta");
 		Files.delete(fasta);
 
-		runFastaToCsv(fasta, csv);
+		runFastaToCsv(fasta, out);
 	}
 
 	@Test
 	public void testEmptyFasta() throws Exception {
 		final Path fasta = Files.createTempFile(tmpDir, NAME, ".fasta");
 
-		runFastaToCsv(fasta, csv);
+		runFastaToCsv(fasta, out);
 
-		assertTrue("CSV output didn't exist!", Files.exists(csv));
-		assertTrue("CSV output was empty!", Files.size(csv) > 0);
+		assertTrue("CSV output didn't exist!", Files.exists(out));
+		assertTrue("CSV output was empty!", Files.size(out) > 0);
 
-		try (BufferedReader r = new BufferedReader(new FileReader(csv.toFile()))) {
+		try (BufferedReader r = new BufferedReader(new FileReader(out.toFile()))) {
 			assertEquals("Got more than the expected header line in CSV output",
 					1, r.lines().count()
 			);
@@ -108,7 +91,7 @@ public final class PrositCSVWriterTest {
 
 	@Test(expected = NullPointerException.class)
 	public void testNullElib() throws Exception {
-		runElibToCsv(null, csv);
+		runElibToCsv(null, out);
 	}
 
 	@Test(expected = NullPointerException.class)
@@ -126,7 +109,7 @@ public final class PrositCSVWriterTest {
 	public void testNullElibFile() throws Exception {
 		final LibraryFile libraryFile = new LibraryFile();
 		try {
-			runElibToCsv(libraryFile, csv);
+			runElibToCsv(libraryFile, out);
 		} finally {
 			libraryFile.close();
 		}

@@ -1,42 +1,30 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
+import edu.washington.gs.maccoss.encyclopedia.tests.AbstractFileConverterTest;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.tools.ant.taskdefs.optional.extension.LibFileSet;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Optional;
 
-public class BlibToLibraryConverterTest {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 	public static final String NAME = "BlibToLibraryConverterTest";
 
-	private Path tmpDir;
-	private Path lib;
-
-	@Before
-	public void setUp() throws Exception {
-		tmpDir = Files.createTempDirectory(NAME);
-		FileUtils.forceDeleteOnExit(tmpDir.toFile());
-
-		lib = Files.createTempFile(tmpDir, NAME, "dlib");
-		Files.delete(lib);
-		FileUtils.forceDeleteOnExit(lib.toFile());
+	@Override
+	protected String getName() {
+		return NAME;
 	}
 
-	@After
-	public void tearDown() throws Exception {
-		if (null != tmpDir) {
-			// recursively delete the whole directory
-			FileUtils.deleteQuietly(tmpDir.toFile());
-			tmpDir = null;
-			lib = null;
-		}
+	@Override
+	protected String getOutputExtension() {
+		return LibraryFile.DLIB;
 	}
 
 	@Test(expected = NullPointerException.class)
@@ -46,9 +34,9 @@ public class BlibToLibraryConverterTest {
 
 	@Test(expected = EncyclopediaException.class)
 	public void getFileFromNonexisting() throws Exception {
-		FileUtils.deleteQuietly(lib.toFile());
+		FileUtils.deleteQuietly(out.toFile());
 
-		BlibToLibraryConverter.getFile(lib.toFile());
+		BlibToLibraryConverter.getFile(out.toFile());
 	}
 
 	@Test(expected = EncyclopediaException.class)
@@ -63,12 +51,9 @@ public class BlibToLibraryConverterTest {
 		//TODO: use a real elib instead of a 0-byte file
 		final LibraryInterface library = BlibToLibraryConverter.getFile(Files.createTempFile(tmpDir, NAME, ".elib").toFile());
 		try {
-			Assert.assertNotNull("Got null library from ELIB", library);
+			assertNotNull("Got null library from ELIB", library);
 		} finally {
-			if (library instanceof LibraryFile) {
-				((LibraryFile) library).close();
-				FileUtils.deleteQuietly(((LibraryFile) library).getFile());
-			}
+			cleanupLibrary(library);
 		}
 	}
 
@@ -80,19 +65,55 @@ public class BlibToLibraryConverterTest {
 
 		final LibraryInterface library = BlibToLibraryConverter.getFile(file.toFile());
 		try {
-			Assert.assertNotNull("Got null library from ELIB", library);
+			assertNotNull("Got null library from ELIB", library);
 		} finally {
-			if (library instanceof LibraryFile) {
-				((LibraryFile) library).close();
-				FileUtils.deleteQuietly(((LibraryFile) library).getFile());
-			}
+			cleanupLibrary(library);
 		}
 	}
 
-	//TODO: test dlib
-	//TODO: test existing dlib
+	@Test
+	public void getFileFromDlib() throws Exception {
+		//TODO: use a real dlib instead of a 0-byte file
+		final LibraryInterface library = BlibToLibraryConverter.getFile(out.toFile());
+		try {
+			assertNotNull("Got null library from DLIB", library);
+		} finally {
+			cleanupLibrary(library);
+		}
+	}
 
-	//TODO: test conversion output auto naming (dlib extension)
+	@Test
+	public void getFileWithExistingDlib() throws Exception {
+		//TODO: use a real dlib instead of a 0-byte file
+		final Path file = tmpDir.resolve(FilenameUtils.getBaseName(out.toFile().getName()) + ".txt");
+
+		final LibraryInterface library = BlibToLibraryConverter.getFile(file.toFile());
+		try {
+			assertNotNull("Got null library from DLIB", library);
+		} finally {
+			cleanupLibrary(library);
+		}
+	}
+
+/* TODO
+	@Test
+	public void testConvertOutputFilename() throws Exception {
+		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), fasta.toFile(), SearchParameterParser.getDefaultParametersObject());
+		try {
+			final File file = null; //TODO
+			assertEquals(LibraryFile.DLIB, "." + FilenameUtils.getExtension(file.getName()));
+		} finally {
+			cleanupLibrary(library);
+		}
+	}
+*/
 
 	//TODO: test null/nonexist/empty conversion
+
+	static void cleanupLibrary(LibraryInterface library) {
+		if (library instanceof LibraryFile) {
+			((LibraryFile) library).close();
+			FileUtils.deleteQuietly(((LibraryFile) library).getFile());
+		}
+	}
 }
