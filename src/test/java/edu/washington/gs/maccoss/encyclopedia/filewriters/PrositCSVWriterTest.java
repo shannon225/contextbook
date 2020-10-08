@@ -88,8 +88,6 @@ public final class PrositCSVWriterTest extends AbstractFileConverterTest {
 		}
 	}
 
-	//TODO: test elib -> prosit (incl. error states)
-
 	static void runElibToCsv(LibraryFile libraryFile, Path csv) throws Exception {
 		PrositCSVWriter.writeCSV(
 				csv.toString(),
