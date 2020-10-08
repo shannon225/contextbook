@@ -8,6 +8,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -99,32 +100,51 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 	@Test
 	public void testConvertOutputFilename() throws Exception {
 		final Path blib = EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/empty.blib", tmpDir, NAME, ".blib");
-		final Path fasta = EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/ecoli-190209-contam_correctNL.fasta", tmpDir, NAME, ".fasta");
 
-		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), fasta.toFile(), SearchParameterParser.getDefaultParametersObject());
+		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 		try {
-			assertNotNull(library);
-
-			final File file = ((LibraryFile) library).getFile();
-			assertEquals(LibraryFile.DLIB, "." + FilenameUtils.getExtension(file.getName()));
+			assertValidDlib(library);
 		} finally {
 			cleanupLibrary(library);
 		}
 	}
 
-	@Test
+	@Test(expected = NullPointerException.class)
 	public void testConvertNull() throws Exception {
-		fail("TODO");
+		BlibToLibraryConverter.convert(null, Optional.empty(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 	}
 
-	@Test
+	@Test(expected = EncyclopediaException.class)
 	public void testConvertNonexisting() throws Exception {
-		fail("TODO");
+		final Path blib = Files.createTempFile(tmpDir, NAME, ".blib");
+		Files.delete(blib);
+
+		BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 	}
 
 	@Test
 	public void testConvertEmptyFile() throws Exception {
-		fail("TODO");
+		final Path blib = Files.createTempFile(tmpDir, NAME, ".blib");
+
+		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		try {
+			assertValidDlib(library);
+		} finally {
+			cleanupLibrary(library);
+		}
+	}
+
+	Path getFasta() throws IOException {
+		return EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/ecoli-190209-contam_correctNL.fasta", tmpDir, NAME, ".fasta");
+	}
+
+	static void assertValidDlib(LibraryInterface library) {
+		assertNotNull(library);
+
+		final File file = ((LibraryFile) library).getFile();
+		assertEquals(LibraryFile.DLIB, "." + FilenameUtils.getExtension(file.getName()));
+
+		assertTrue(Files.exists(file.toPath()));
 	}
 
 	static void cleanupLibrary(LibraryInterface library) {
