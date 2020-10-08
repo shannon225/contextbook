@@ -53,12 +53,23 @@ public final class PrositCSVWriterTest extends AbstractFileConverterTest {
 		runFastaToCsv(null, Files.createTempFile(tmpDir, NAME, ".csv").toFile());
 	}
 
-	@Test(expected = FileNotFoundException.class)
+	@Test
 	public void testNonexistFasta() throws Exception {
 		final Path fasta = Files.createTempFile(tmpDir, NAME, ".fasta");
 		Files.delete(fasta);
 
 		runFastaToCsv(fasta, out);
+
+		// This is treated the same as an empty file
+
+		assertTrue("CSV output didn't exist!", Files.exists(out));
+		assertTrue("CSV output was empty!", Files.size(out) > 0);
+
+		try (BufferedReader r = new BufferedReader(new FileReader(out.toFile()))) {
+			assertEquals("Got more than the expected header line in CSV output",
+					1, r.lines().count()
+			);
+		}
 	}
 
 	@Test

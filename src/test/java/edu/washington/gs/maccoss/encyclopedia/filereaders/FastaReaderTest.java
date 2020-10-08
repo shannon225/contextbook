@@ -493,12 +493,11 @@ public class FastaReaderTest extends TestCase {
 			final Path fasta = Files.createTempFile(tmpDir, getName(), ".fasta");
 			Files.delete(fasta);
 
-			try {
-				FastaReader.readFasta(fasta.toFile(), SearchParameterParser.getDefaultParametersObject());
-				fail("Didn't encounter expected exception!");
-			} catch (Exception e) {
-				assertTrue(e instanceof IOException);
-			}
+			final ArrayList<FastaEntryInterface> entries = FastaReader.readFasta(fasta.toFile(), SearchParameterParser.getDefaultParametersObject());
+			assertNotNull(entries);
+			assertEquals("Didn't get zero entries from nonexistent fasta!",
+					0, entries.size()
+			);
 		} finally {
 			FileUtils.deleteQuietly(tmpDir.toFile());
 		}
