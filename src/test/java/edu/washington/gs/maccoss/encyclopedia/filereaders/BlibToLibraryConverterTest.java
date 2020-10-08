@@ -96,14 +96,13 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 		}
 	}
 
-	// also tests that a bare-bones/empty BLIB converts successfully
 	@Test
-	public void testConvertOutputFilename() throws Exception {
+	public void testConvertEmptyBlib() throws Exception {
 		final Path blib = EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/empty.blib", tmpDir, NAME, ".blib");
 
 		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 		try {
-			assertValidDlib(library);
+			assertValidDlib(library); // asserts that the resulting file has DLIB extension
 		} finally {
 			cleanupLibrary(library);
 		}
