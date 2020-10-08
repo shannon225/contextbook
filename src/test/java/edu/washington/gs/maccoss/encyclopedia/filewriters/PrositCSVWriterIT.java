@@ -29,6 +29,7 @@ public final class PrositCSVWriterIT {
 
 		csv = Files.createTempFile(tmpDir, NAME, ".prosit.csv");
 		Files.delete(csv);
+		FileUtils.forceDeleteOnExit(csv.toFile());
 	}
 
 	@After

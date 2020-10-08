@@ -32,6 +32,7 @@ public final class PrositCSVWriterTest {
 
 		csv = Files.createTempFile(tmpDir, NAME, ".prosit.csv");
 		Files.delete(csv);
+		FileUtils.forceDeleteOnExit(csv.toFile());
 	}
 
 	@After
