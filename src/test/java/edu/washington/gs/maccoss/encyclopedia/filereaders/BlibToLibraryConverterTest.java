@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 
 import static org.junit.Assert.*;
@@ -49,8 +50,18 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 
 	@Test
 	public void getFileFromElib() throws Exception {
-		//TODO: use a real elib instead of a 0-byte file
-		final LibraryInterface library = BlibToLibraryConverter.getFile(Files.createTempFile(tmpDir, NAME, ".elib").toFile());
+		final Path elib = Files.createTempFile(tmpDir, NAME, ".elib");
+		{ // set up elib schema
+			final LibraryFile libraryFile = new LibraryFile();
+			try {
+				libraryFile.openFile(elib.toFile());
+				libraryFile.saveFile();
+			} finally {
+				libraryFile.close();
+			}
+		}
+
+		final LibraryInterface library = BlibToLibraryConverter.getFile(elib.toFile());
 		try {
 			assertNotNull("Got null library from ELIB", library);
 		} finally {
@@ -60,9 +71,19 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 
 	@Test
 	public void getFileWithExistingElib() throws Exception {
-		//TODO: use a real elib instead of a 0-byte file
 		final Path elib = Files.createTempFile(tmpDir, NAME, ".elib");
+		{ // set up elib schema
+			final LibraryFile libraryFile = new LibraryFile();
+			try {
+				libraryFile.openFile(elib.toFile());
+				libraryFile.saveFile();
+			} finally {
+				libraryFile.close();
+			}
+		}
+
 		final Path file = tmpDir.resolve(FilenameUtils.getBaseName(elib.toFile().getName()) + ".txt");
+		Files.write(file, new byte[0], StandardOpenOption.CREATE_NEW); // create empty file
 
 		final LibraryInterface library = BlibToLibraryConverter.getFile(file.toFile());
 		try {
@@ -74,7 +95,17 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 
 	@Test
 	public void getFileFromDlib() throws Exception {
-		//TODO: use a real dlib instead of a 0-byte file
+		{ // set up elib schema
+			final LibraryFile libraryFile = new LibraryFile();
+			try {
+				Files.write(out, new byte[0], StandardOpenOption.CREATE_NEW); // create empty file
+				libraryFile.openFile(out.toFile());
+				libraryFile.saveFile();
+			} finally {
+				libraryFile.close();
+			}
+		}
+
 		final LibraryInterface library = BlibToLibraryConverter.getFile(out.toFile());
 		try {
 			assertNotNull("Got null library from DLIB", library);
@@ -85,8 +116,19 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 
 	@Test
 	public void getFileWithExistingDlib() throws Exception {
-		//TODO: use a real dlib instead of a 0-byte file
+		{ // set up elib schema
+			final LibraryFile libraryFile = new LibraryFile();
+			try {
+				Files.write(out, new byte[0], StandardOpenOption.CREATE_NEW); // create empty file
+				libraryFile.openFile(out.toFile());
+				libraryFile.saveFile();
+			} finally {
+				libraryFile.close();
+			}
+		}
+
 		final Path file = tmpDir.resolve(FilenameUtils.getBaseName(out.toFile().getName()) + ".txt");
+		Files.write(file, new byte[0], StandardOpenOption.CREATE_NEW); // create empty file
 
 		final LibraryInterface library = BlibToLibraryConverter.getFile(file.toFile());
 		try {
