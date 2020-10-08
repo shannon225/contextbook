@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import edu.washington.gs.maccoss.encyclopedia.tests.AbstractFileConverterTest;
+import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -11,8 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 	public static final String NAME = "BlibToLibraryConverterTest";
@@ -95,20 +95,37 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 		}
 	}
 
-/* TODO
+	// also tests that a bare-bones/empty BLIB converts successfully
 	@Test
 	public void testConvertOutputFilename() throws Exception {
+		final Path blib = EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/empty.blib", tmpDir, NAME, ".blib");
+		final Path fasta = EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/ecoli-190209-contam_correctNL.fasta", tmpDir, NAME, ".fasta");
+
 		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), fasta.toFile(), SearchParameterParser.getDefaultParametersObject());
 		try {
-			final File file = null; //TODO
+			assertNotNull(library);
+
+			final File file = ((LibraryFile) library).getFile();
 			assertEquals(LibraryFile.DLIB, "." + FilenameUtils.getExtension(file.getName()));
 		} finally {
 			cleanupLibrary(library);
 		}
 	}
-*/
 
-	//TODO: test null/nonexist/empty conversion
+	@Test
+	public void testConvertNull() throws Exception {
+		fail("TODO");
+	}
+
+	@Test
+	public void testConvertNonexisting() throws Exception {
+		fail("TODO");
+	}
+
+	@Test
+	public void testConvertEmptyFile() throws Exception {
+		fail("TODO");
+	}
 
 	static void cleanupLibrary(LibraryInterface library) {
 		if (library instanceof LibraryFile) {
