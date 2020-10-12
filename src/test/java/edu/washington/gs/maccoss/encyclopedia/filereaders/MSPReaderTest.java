@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
@@ -61,7 +62,27 @@ public class MSPReaderTest extends AbstractFileConverterTest {
 		assertEquals(4, entries.size());
 	}
 
-	//TODO: test readMSP()
+	@Test(expected = NullPointerException.class)
+	public void testReadNull() throws Exception {
+		MSPReader.readMSP(null, true);
+	}
+
+	@Test(expected = FileNotFoundException.class)
+	public void testReadNonexisting() throws Exception {
+		final Path msp = Files.createTempFile(tmpDir, NAME, ".msp");
+		Files.delete(msp);
+
+		MSPReader.readMSP(msp.toFile(), true);
+	}
+
+	@Test
+	public void testReadEmptyFile() throws Exception {
+		final Path msp = Files.createTempFile(tmpDir, NAME, ".msp");
+
+		final ArrayList<LibraryEntry> entries = MSPReader.readMSP(msp.toFile(), true);
+
+		assertEquals(0, Objects.requireNonNull(entries).size());
+	}
 
 	@Test(expected = NullPointerException.class)
 	public void testConvertNull() throws Exception {
