@@ -2,18 +2,11 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import edu.washington.gs.maccoss.encyclopedia.tests.AbstractFileConverterTest;
 import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
-
-import static org.junit.Assert.*;
 
 public class BlibToLibraryConverterIT extends AbstractFileConverterTest {
 	public static final String NAME = "BlibToLibraryConverterIT";
@@ -35,9 +28,9 @@ public class BlibToLibraryConverterIT extends AbstractFileConverterTest {
 
 		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 		try {
-			BlibToLibraryConverterTest.assertValidDlib(library); // asserts that the resulting file has DLIB extension
+			EncyclopediaTestUtils.assertValidDlib(library); // asserts that the resulting file has DLIB extension
 		} finally {
-			BlibToLibraryConverterTest.cleanupLibrary(library);
+			EncyclopediaTestUtils.cleanupLibrary(library);
 		}
 	}
 
