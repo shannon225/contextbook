@@ -3,7 +3,6 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.tests.AbstractFileConverterTest;
 import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import org.junit.Test;
 
 import java.io.FileNotFoundException;
@@ -14,7 +13,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
-import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 

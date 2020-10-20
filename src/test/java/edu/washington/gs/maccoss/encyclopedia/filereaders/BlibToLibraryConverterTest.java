@@ -177,5 +177,4 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 	Path getFasta() throws IOException {
 		return EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/ecoli-190209-contam_correctNL.fasta", tmpDir, NAME, ".fasta");
 	}
-
 }

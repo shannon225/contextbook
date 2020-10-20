@@ -1,37 +1,26 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.*;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.map.hash.TCharDoubleHashMap;
+import gnu.trove.set.hash.TIntHashSet;
+import junit.framework.TestCase;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.math3.util.CombinatoricsUtils;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.math3.util.CombinatoricsUtils;
-
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.TCharDoubleHashMap;
-import gnu.trove.set.hash.TIntHashSet;
-import junit.framework.TestCase;
-import org.junit.Test;
 
 public class FastaReaderTest extends TestCase {
 

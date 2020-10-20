@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 
-public class MSPReaderIT extends AbstractFileConverterTest {
-	public static final String NAME = "MSPReaderIT";
+public class SpectronautCSVToLibraryConverterIT extends AbstractFileConverterTest {
+	public static final String NAME = "SpectronautCSVToLibraryConverterIT";
 
 	@Override
 	protected String getName() {
@@ -22,16 +22,13 @@ public class MSPReaderIT extends AbstractFileConverterTest {
 	}
 
 	@Test
-	public void testConvertMspToLibrary() throws Exception {
+	public void testConvertSpectronautCSVToLibrary() throws Exception {
 		// TODO: use an actual resource name instead of a made-up one
-		final Path msp = getResourceAsTempFile(tmpDir, getName(), ".msp", "/edu/washington/gs/maccoss/encyclopedia/testdata/simple.msp");
+		final Path csv = getResourceAsTempFile(tmpDir, getName(), ".csv", "/edu/washington/gs/maccoss/encyclopedia/testdata/simple.csv");
 
-		MSPReader.convertMSP(msp.toFile(), getFasta().toFile(), out.toFile(), SearchParameterParser.getDefaultParametersObject());
-
-		final LibraryFile library = new LibraryFile();
-		library.openFile(out.toFile());
+		final LibraryInterface library = SpectronautCSVToLibraryConverter.convertFromSpectronautCSV(csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 		try {
-			EncyclopediaTestUtils.assertValidDlib(library);
+			EncyclopediaTestUtils.assertValidDlib(library); // asserts that the resulting file has DLIB extension
 		} finally {
 			EncyclopediaTestUtils.cleanupLibrary(library);
 		}
