@@ -1,14 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
@@ -32,6 +31,7 @@ import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 import junit.framework.TestCase;
+import org.junit.Test;
 
 public class FastaReaderTest extends TestCase {
 
@@ -482,6 +482,24 @@ public class FastaReaderTest extends TestCase {
 			if (!(entry instanceof ExtendedFastaEntry)) {
 				throw new Exception("Error occured when reading peff file, each entry should be an ExtendedFastaEntry object");
 			}
+		}
+	}
+
+	public void testReadNonexisting() throws Exception {
+		final Path tmpDir = Files.createTempDirectory(getName());
+		FileUtils.forceDeleteOnExit(tmpDir.toFile());
+
+		try {
+			final Path fasta = Files.createTempFile(tmpDir, getName(), ".fasta");
+			Files.delete(fasta);
+
+			final ArrayList<FastaEntryInterface> entries = FastaReader.readFasta(fasta.toFile(), SearchParameterParser.getDefaultParametersObject());
+			assertNotNull(entries);
+			assertEquals("Didn't get zero entries from nonexistent fasta!",
+					0, entries.size()
+			);
+		} finally {
+			FileUtils.deleteQuietly(tmpDir.toFile());
 		}
 	}
 }
