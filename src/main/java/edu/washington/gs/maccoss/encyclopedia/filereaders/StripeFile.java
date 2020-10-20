@@ -9,7 +9,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +46,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class StripeFile extends SQLFile implements StripeFileInterface {
+	public static final DateFormat m_ISO8601Local = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 	private static final Version MOST_RECENT_VERSION = new Version(0, 4, 0);
 
 	private static final String UNKNOWN_VALUE="unknown";
@@ -52,6 +56,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	public static final String TOTAL_PRECURSOR_TIC_ATTRIBUTE="totalPrecursorTIC";
 	public static final String GRADIENT_LENGTH_ATTRIBUTE="gradientLength";
 	public static final String SOFTWARE_VERSION_PREFIX = "SoftwareVersion_";
+	public static final String RUN_START_TIME = "runStartTime";
 	public static final String SOFTWARE_VERSIONS_DELIMITER = ";";
 	public static final String INSTRUMENT_CONFIGURATIONS = "InstrumentConfigurations";
 
@@ -259,6 +264,10 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 			m.put(INSTRUMENT_CONFIGURATIONS, InstrumentMapTranscoder.encode(instrumentConfigurations));
 			addMetadata(m);
 		}
+	}
+	
+	public void setStartTime(Date startTime) throws IOException, SQLException {
+		addMetadata(RUN_START_TIME, m_ISO8601Local.format(startTime));
 	}
 
 	public void setSoftwareVersions(final Multimap<String, String> softwareAccessionIdToVersion) throws IOException, SQLException {

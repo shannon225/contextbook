@@ -81,7 +81,7 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 					float[] otherScores=score(entry, msms);
 					
 					if (otherScores[0]>0) {
-						float composite=score+otherScores[1];
+						float composite=score;//+otherScores[1];
 						goodHits.add(new ScoredIndex(composite, i));
 						map.put(i, composite);
 					}

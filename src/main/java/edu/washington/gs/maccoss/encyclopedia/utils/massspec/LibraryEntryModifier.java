@@ -13,12 +13,15 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryEntryModifier {
 	public static void main(String[] args) throws Exception {
-		File inputFile=new File("/Users/searleb/Downloads/schistosoma_1-4_33_nce.dlib");
-		File outputFile=new File("/Users/searleb/Downloads/silac_schistosoma_1-4_33_nce.dlib");
+		File inputFile=new File("/Users/searleb/Downloads/EncyclopeDIA_300_1200_ethcd_lib.elib");
+		File outputFile=new File("/Users/searleb/Downloads/silac_EncyclopeDIA_300_1200_ethcd_lib.dlib");
 
 		TCharDoubleHashMap ptms=new TCharDoubleHashMap();
-		ptms.put('K',8.014199);
-		ptms.put('R',10.008269);
+		//ptms.put('K',8.014199);
+		//ptms.put('R',10.008269);
+		
+		//ptms.put('K',4.025107);
+		//ptms.put('R',6.020129);
 		
 		LibraryInterface library=BlibToLibraryConverter.getFile(inputFile);
 		LibraryUtilities.modifyLibrary(outputFile, ptms, true, library);

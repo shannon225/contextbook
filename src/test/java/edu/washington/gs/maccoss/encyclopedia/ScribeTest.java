@@ -9,9 +9,9 @@ public class ScribeTest {
 		File lib=new File(dir, "uniprot_human_25apr2019.fasta.z2_nce33.dlib");
 		File fasta=new File(dir, "uniprot_human_25apr2019.fasta");
 		File[] fs=new File[] {
-				// new File(dir, "FU_2016_0627_17_humanHcdLitms2.mzML"),
+				new File(dir, "FU_2016_0627_17_humanHcdLitms2.mzML"),
 				// new File(dir, "FU_2016_0627_19_humanCidLitms2.mzML"), 
-				new File(dir, "FU_2016_0627_18_humanHcdOrbims2.mzML"), 
+				//new File(dir, "FU_2016_0627_18_humanHcdOrbims2.mzML"), 
 				//new File(dir, "FU_2016_0627_20_humanCidOrbims2.mzML")
 		};
 		
@@ -20,7 +20,8 @@ public class ScribeTest {
 			long startTime=System.currentTimeMillis();
 			String[] scribeArgs=new String[] {
 				"-l", lib.getAbsolutePath(), "-i", fs[i].getAbsolutePath(), "-f", fasta.getAbsolutePath(), 
-				"-ptol", "25", "-ftol", "25"
+				//"-ptol", "25", "-ftol", "25"
+				"-ptol", "25", "-ptolunits", "PPM", "-ftol", "1", "-ftolunits", "AMU"
 			};
 			Scribe.main(scribeArgs);
 			duration[i]=System.currentTimeMillis()-startTime;

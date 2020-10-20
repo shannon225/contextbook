@@ -187,7 +187,10 @@ public class Charter {
 		//Dimension d=new Dimension(792, 612);
 		//Dimension d=new Dimension(600, 450);
 		Dimension d=new Dimension(400, 300);
-		
+		writeAsPDF(chart, f, d);
+	}
+
+	public static void writeAsPDF(JFreeChart chart, File f, Dimension d) {
 		try {
 			// NOTE: this uses itextPDF 4.2, which is LGPL. Do not upgrade to the AGPL version! 
 			Rectangle pagesize=new Rectangle(d.width, d.height);

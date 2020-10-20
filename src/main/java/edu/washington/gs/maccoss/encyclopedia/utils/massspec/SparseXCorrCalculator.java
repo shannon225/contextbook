@@ -260,7 +260,7 @@ public class SparseXCorrCalculator {
 			offset=ArrayXCorrCalculator.lowResFragmentBinOffset;
 		} else if (fragmentBinSize<ArrayXCorrCalculator.highResFragmentBinSize) {
 			fragmentBinSize=ArrayXCorrCalculator.highResFragmentBinSize;
-			offset=ArrayXCorrCalculator.lowResFragmentBinOffset;
+			offset=ArrayXCorrCalculator.highResFragmentBinOffset;
 		} else {
 			offset=0.0;
 		}

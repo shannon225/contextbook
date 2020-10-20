@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import junit.framework.TestCase;
 
 public class LinearRegressionTest extends TestCase {
@@ -19,5 +20,18 @@ public class LinearRegressionTest extends TestCase {
 		LinearRegression r=new LinearRegression(new float[] {0, 1}, new float[] {0, 1});
 		assertEquals(0.0f, r.b);
 		assertEquals(1.0f, r.m);
+		r=new LinearRegression(new float[] {1}, new float[] {1});
+		assertEquals(1f, r.b);
+		assertEquals(0f, r.m);
+	}
+	
+	public void testBoundary2() {
+		LinearRegression r=new LinearRegression(new float[] {0, 1}, new float[] {0, 1}, new XYPoint(0f, 0.1f));
+		assertEquals(0.1f, r.b);
+		assertEquals(0.9f, r.m);
+
+		r=new LinearRegression(new float[] {0, 1}, new float[] {0, 1}, new XYPoint(0.1f, 0.1f));
+		assertEquals(0f, r.b);
+		assertEquals(1f, r.m);
 	}
 }

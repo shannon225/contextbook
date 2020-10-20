@@ -202,6 +202,7 @@ public class OpenSwathTSVToLibraryConverter {
 			LibraryEntry entry=new LibraryEntry(sourceFile, accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, 0.0f, peptide.masses, peptide.intensities, aaConstants);
 			entries.add(entry);
 		}
+		Logger.logLine("Found "+entries.size()+" total peptide entries");
 
 		if (fastaFile!=null) {
 			Logger.logLine("Reading Fasta file "+fastaFile.getName());

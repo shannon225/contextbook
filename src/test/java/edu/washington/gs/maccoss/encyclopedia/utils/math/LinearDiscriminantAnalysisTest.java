@@ -8,7 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import junit.framework.TestCase;
 
-public class LinearDiscriminantAnalysisTest extends TestCase {
+public class LinearDiscriminantAnalysisTest {
 	public static void main(String[] args) {
 		File f=new File("/Users/searleb/Downloads/lda_test.txt");
 		

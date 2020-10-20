@@ -115,9 +115,12 @@ public class SearchParameters {
 		final StringBuilder sb=new StringBuilder();
 		sb.append(" -fixed "+aaConstants.getFixedModString()+"\n");
 		sb.append(" -frag "+FragmentationType.toString(fragType)+"\n");
-		sb.append(" -ptol "+precursorTolerance.getPpmTolerance()+"\n");
-		sb.append(" -ftol "+fragmentTolerance.getPpmTolerance()+"\n");
-		sb.append(" -lftol "+libraryFragmentTolerance.getPpmTolerance()+"\n");
+		sb.append(" -ptol "+precursorTolerance.getToleranceThreshold()+"\n");
+		sb.append(" -ftol "+fragmentTolerance.getToleranceThreshold()+"\n");
+		sb.append(" -lftol "+libraryFragmentTolerance.getToleranceThreshold()+"\n");
+		sb.append(" -ptolunits "+precursorTolerance.getUnits()+"\n");
+		sb.append(" -ftolunits "+fragmentTolerance.getUnits()+"\n");
+		sb.append(" -lftolunits "+libraryFragmentTolerance.getUnits()+"\n");
 		sb.append(" -poffset "+precursorOffsetPPM+"\n");
 		sb.append(" -foffset "+fragmentOffsetPPM+"\n");
 		sb.append(" -enzyme "+enzyme.getName()+"\n");

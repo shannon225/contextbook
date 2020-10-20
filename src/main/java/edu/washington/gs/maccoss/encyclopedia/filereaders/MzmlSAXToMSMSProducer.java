@@ -5,8 +5,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 
@@ -38,6 +42,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProducer {
+	
 	private final File mzMLFile;
 	private final BlockingQueue<MSMSBlock> mzmlBlockQueue;
 	private final SearchParameters parameters;
@@ -108,12 +113,17 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 	public String getMzMLID() {
 		return mzML_ID;
 	}
+	
+	public Date getStartTime() {
+		return startTime;
+	}
 
 	private final ArrayList<PrecursorScan> precursors=new ArrayList<PrecursorScan>();
 	private final ArrayList<FragmentScan> stripes=new ArrayList<FragmentScan>();
 
 	private final ArrayList<String> tagList=new ArrayList<String>();
 	private String mzML_ID=null;
+	private Date startTime=null;
 	private String spectrumName=null;
 	private Integer spectrumIndex=null;
 	private Integer msLevel=null;
@@ -273,6 +283,16 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 			spectrumRef=attributes.getValue("spectrumRef");
 		} else if ("mzML".equalsIgnoreCase(qName)) {
 			mzML_ID=attributes.getValue("id");
+		} else if ("run".equalsIgnoreCase(qName)) {
+			String startTimeStamp=attributes.getValue("startTimeStamp");
+			if (startTimeStamp!=null) {
+				// optional in file
+				try {
+					startTime=StripeFile.m_ISO8601Local.parse(startTimeStamp);
+				} catch (ParseException ioe) {
+					startTime=null;
+				}
+			}
 		} else if ("spectrum".equalsIgnoreCase(qName)) {
 			spectrumName=attributes.getValue("id");
 			spectrumIndex=Integer.parseInt(attributes.getValue("index"));
@@ -286,7 +306,7 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 
 		tagList.add(qName);
 	}
-
+	
 	private void processSpectrumParams(Attributes attributes) {
 		if ("ms level".equalsIgnoreCase(attributes.getValue("name"))) {
 			msLevel=Integer.parseInt(attributes.getValue("value"));
