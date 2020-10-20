@@ -181,7 +181,7 @@ public class PrositCSVWriter {
 	 * @param defaultCharge
 	 * @return
 	 */
-	private static String checkCSVName(String csvFileName, File fasta, DigestionEnzyme enzyme, int defaultNCE, byte defaultCharge) {
+	static String checkCSVName(String csvFileName, File fasta, DigestionEnzyme enzyme, int defaultNCE, byte defaultCharge) {
 		String fileName;
 		if (null==csvFileName||StringUtils.isBlank(csvFileName)) {
 			String enzymeText=enzyme==null?"":("."+enzyme.getPercolatorName());

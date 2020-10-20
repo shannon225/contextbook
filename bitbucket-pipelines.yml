@@ -9,8 +9,52 @@ image: maven:3.6.3-openjdk-8
 
 pipelines:
   default:
+    # This build runs automatically for all commits
     - step:
+        name: Build and Test
         caches:
           - maven # predefined; caches ~/.m2/repository
         script:
           - mvn -B verify # -B batch mode makes Maven less verbose
+  pull-requests:
+    # This build runs automatically for pull requests, running
+    # full tests (including ITs) on the merged branches
+    '**':
+      - step:
+          name: Build and Test
+          caches:
+            - maven
+          script:
+            - mvn -B verify -DskipITs=false
+  tags:
+    # This build runs automatically but only on tagged encyclopedia releases
+    encyclopedia-*:
+      - step:
+          name: Build and Test
+          caches:
+            - maven # predefined; caches ~/.m2/repository
+          script:
+            # Similar to above, but with encyclopedia executable JAR and ITs
+            - mvn -B package verify -PbuildEncyclopedia -DskipITs=false
+          artifacts:
+            # Defines the file(s) to be saved for use in the next step
+            - target/encyclopedia-*-executable.jar
+      - step:
+          name: Deploy
+          script:
+            # Upload file as a download to the repo
+            - pipe: atlassian/bitbucket-upload-file:0.3.0
+              variables:
+                BITBUCKET_USERNAME: $BITBUCKET_USERNAME
+                BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
+                FILENAME: 'target/encyclopedia-*-executable.jar'
+  custom:
+    # This custom build allows manual triggering of
+    # integration tests on any commit
+    integration-tests:
+      - step:
+          name: Build and Test
+          caches:
+            - maven
+          script:
+            - mvn -B verify -DskipITs=false

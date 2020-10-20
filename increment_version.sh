@@ -19,7 +19,7 @@ TAG=${program}-${1}
 mvn versions:set -DnewVersion="${1}"
 git commit -am "Update to version for release ${program}-${1}."
 git tag "${TAG}" # optional
-mvn clean package;
+mvn clean package -DbuildJars;
 mvn versions:set -DnewVersion="${2}-SNAPSHOT"
 git commit -am "Update to next SNAPSHOT version."
 
