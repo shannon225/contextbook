@@ -290,7 +290,7 @@ public class MSPReader {
 								try {
 									mass=getMass(aa, mod);
 								} catch (EncyclopediaException e) {
-									throw new EncyclopediaException(e.getMessage()+" from line ["+eachline+"]");
+									throw new EncyclopediaException(e.getMessage()+" from line ["+eachline+"]", e);
 								}
 								
 								if (modMap.contains(index)) {

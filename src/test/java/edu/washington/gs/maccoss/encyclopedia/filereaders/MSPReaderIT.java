@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 public class MSPReaderIT extends AbstractFileConverterTest {
@@ -27,6 +28,22 @@ public class MSPReaderIT extends AbstractFileConverterTest {
 		final Path msp = getResourceAsTempFile(tmpDir, getName(), ".msp", "/edu/washington/gs/maccoss/encyclopedia/testdata/simple.msp");
 
 		MSPReader.convertMSP(msp.toFile(), getFasta().toFile(), out.toFile(), SearchParameterParser.getDefaultParametersObject());
+
+		final LibraryFile library = new LibraryFile();
+		library.openFile(out.toFile());
+		try {
+			EncyclopediaTestUtils.assertValidDlib(library);
+		} finally {
+			EncyclopediaTestUtils.cleanupLibrary(library);
+		}
+	}
+
+	@Test
+	public void testConvertSpTxtToLibrary() throws Exception {
+		// TODO: use an actual resource name instead of a made-up one
+		final Path sptxt = getResourceAsTempFile(tmpDir, getName(), ".sptxt", "/edu/washington/gs/maccoss/encyclopedia/testdata/simple.sptxt");
+
+		MSPReader.convertMSP(sptxt.toFile(), getFasta().toFile(), out.toFile(), SearchParameterParser.getDefaultParametersObject());
 
 		final LibraryFile library = new LibraryFile();
 		library.openFile(out.toFile());
