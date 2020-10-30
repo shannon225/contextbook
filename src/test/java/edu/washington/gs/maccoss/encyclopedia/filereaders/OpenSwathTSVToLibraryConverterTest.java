@@ -1,0 +1,79 @@
+package edu.washington.gs.maccoss.encyclopedia.filereaders;
+
+import edu.washington.gs.maccoss.encyclopedia.tests.AbstractFileConverterTest;
+import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.StringTokenizer;
+
+import static org.junit.Assert.assertEquals;
+
+public class OpenSwathTSVToLibraryConverterTest extends AbstractFileConverterTest {
+	private static final String NAME = "OpenSwathTSVToLibraryConverterTest";
+
+	@Override
+	protected String getName() {
+		return NAME;
+	}
+
+	@Override
+	protected String getOutputExtension() {
+		return LibraryFile.DLIB;
+	}
+
+	@Test
+	public void testParseMods() {
+		// TPP:    n[43]PEPC[160]PEPM[147]PEPRc[16]
+
+		String seq=OpenSwathTSVToLibraryConverter.parseMods("n[43]PEPC[160]PEPM[147]PEPRc[16]");
+		assertEquals("[43]PEPC[160]PEPM[147]PEPR[16]", seq);
+
+		// Unimod: .(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2) (but no mods)
+		seq=OpenSwathTSVToLibraryConverter.parseMods(".PEPCPEPMPEPR.");
+		assertEquals("PEPCPEPMPEPR", seq);
+
+		// TPP:    n[43]PEPC[160]PEPM[147]PEPRc[16] (but no mods)
+		seq=OpenSwathTSVToLibraryConverter.parseMods("nPEPCPEPMPEPRc");
+		assertEquals("PEPCPEPMPEPR", seq);
+	}
+
+	@Test(expected = EncyclopediaException.class)
+	public void testParseUnimodMods() {
+		// Unimod: .(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)
+
+		OpenSwathTSVToLibraryConverter.parseMods(".(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)");
+	}
+
+	@Test(expected = NullPointerException.class)
+	public void testConvertNull() throws Exception {
+		OpenSwathTSVToLibraryConverter.convertFromOpenSwathTSV(null, getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+	}
+
+	@Test(expected = EncyclopediaException.class)
+	public void testConvertNonexisting() throws Exception {
+		final Path csv = Files.createTempFile(tmpDir, NAME, ".csv");
+		Files.delete(csv);
+
+		OpenSwathTSVToLibraryConverter.convertFromOpenSwathTSV(csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+	}
+
+	@Test
+	public void testConvertEmptyFile() throws Exception {
+		final Path csv = Files.createTempFile(tmpDir, NAME, ".csv");
+
+		final LibraryInterface library = OpenSwathTSVToLibraryConverter.convertFromOpenSwathTSV(csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		try {
+			EncyclopediaTestUtils.assertValidDlib(library);
+		} finally {
+			EncyclopediaTestUtils.cleanupLibrary(library);
+		}
+	}
+
+	Path getFasta() throws IOException {
+		return EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/ecoli-190209-contam_correctNL.fasta", tmpDir, NAME, ".fasta");
+	}
+}

@@ -46,7 +46,7 @@ public class OpenSwathTSVToLibraryConverter {
 		return null;
 	}
 	
-	private static String parseMods(String structuredSequence) {
+	static String parseMods(String structuredSequence) {
 		
 		if (structuredSequence.indexOf('(')>=0) {
 			 // Unimod: .(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)
