@@ -24,7 +24,7 @@ public class SpectronautCSVToLibraryConverterIT extends AbstractFileConverterTes
 	@Test
 	public void testConvertSpectronautCSVToLibrary() throws Exception {
 		// TODO: use an actual resource name instead of a made-up one
-		final Path csv = getResourceAsTempFile(tmpDir, getName(), ".csv", "/edu/washington/gs/maccoss/encyclopedia/testdata/simple.csv");
+		final Path csv = getResourceAsTempFile(tmpDir, getName(), ".csv", "/edu/washington/gs/maccoss/encyclopedia/testdata/simple.spectronaut.csv");
 
 		final LibraryInterface library = SpectronautCSVToLibraryConverter.convertFromSpectronautCSV(csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 		try {

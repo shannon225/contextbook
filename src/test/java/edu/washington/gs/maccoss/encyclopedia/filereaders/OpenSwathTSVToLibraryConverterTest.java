@@ -25,10 +25,20 @@ public class OpenSwathTSVToLibraryConverterTest extends AbstractFileConverterTes
 		return LibraryFile.DLIB;
 	}
 
+	@Test(expected = EncyclopediaException.class)
+	public void testParseUnimodMods() {
+		// The impl doesn't support this form when mods are present:
+		// Unimod: .(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)
+
+		OpenSwathTSVToLibraryConverter.parseMods(".(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)");
+	}
+
 	@Test
 	public void testParseMods() {
-		// TPP:    n[43]PEPC[160]PEPM[147]PEPRc[16]
+		// The comments in the impl list several different example cases:
+		//TODO: verify if the examples here cover the observed formats in real-world files
 
+		// TPP:    n[43]PEPC[160]PEPM[147]PEPRc[16]
 		String seq=OpenSwathTSVToLibraryConverter.parseMods("n[43]PEPC[160]PEPM[147]PEPRc[16]");
 		assertEquals("[43]PEPC[160]PEPM[147]PEPR[16]", seq);
 
@@ -39,13 +49,13 @@ public class OpenSwathTSVToLibraryConverterTest extends AbstractFileConverterTes
 		// TPP:    n[43]PEPC[160]PEPM[147]PEPRc[16] (but no mods)
 		seq=OpenSwathTSVToLibraryConverter.parseMods("nPEPCPEPMPEPRc");
 		assertEquals("PEPCPEPMPEPR", seq);
-	}
 
-	@Test(expected = EncyclopediaException.class)
-	public void testParseUnimodMods() {
-		// Unimod: .(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)
+		// Fall-through case
+		seq=OpenSwathTSVToLibraryConverter.parseMods("[43]PEPC[160]PEPM[147]PEPR[16]");
+		assertEquals("[43]PEPC[160]PEPM[147]PEPR[16]", seq);
 
-		OpenSwathTSVToLibraryConverter.parseMods(".(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)");
+		seq=OpenSwathTSVToLibraryConverter.parseMods("PEPCPEPMPEPR");
+		assertEquals("PEPCPEPMPEPR", seq);
 	}
 
 	@Test(expected = NullPointerException.class)

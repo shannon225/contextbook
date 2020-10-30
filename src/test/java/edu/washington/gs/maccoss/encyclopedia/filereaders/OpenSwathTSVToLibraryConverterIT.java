@@ -23,9 +23,9 @@ public class OpenSwathTSVToLibraryConverterIT extends AbstractFileConverterTest 
 	@Test
 	public void testConvertOpenSwathTSVToLibrary() throws Exception {
 		// TODO: use an actual resource name instead of a made-up one
-		final Path csv = getResourceAsTempFile(tmpDir, getName(), ".csv", "/edu/washington/gs/maccoss/encyclopedia/testdata/simple.csv");
+		final Path tsv = getResourceAsTempFile(tmpDir, getName(), ".tsv", "/edu/washington/gs/maccoss/encyclopedia/testdata/simple.openswath.tsv");
 
-		final LibraryInterface library = OpenSwathTSVToLibraryConverter.convertFromOpenSwathTSV(csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		final LibraryInterface library = OpenSwathTSVToLibraryConverter.convertFromOpenSwathTSV(tsv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library); // asserts that the resulting file has DLIB extension
 		} finally {
