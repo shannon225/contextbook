@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import edu.washington.gs.maccoss.encyclopedia.tests.AbstractFileConverterTest;
+import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import org.junit.Test;
 
@@ -35,10 +36,18 @@ public class LibraryToBlibConverterTest extends AbstractFileConverterTest {
 		LibraryToBlibConverter.convert(elib.toFile(), out.toFile());
 	}
 
-	@Test(expected = EncyclopediaException.class)
+	@Test
 	public void testConvertEmptyFile() throws Exception {
 		final Path elib = Files.createTempFile(tmpDir, NAME, ".elib");
 
 		LibraryToBlibConverter.convert(elib.toFile(), out.toFile());
+
+		final BlibFile blib = new BlibFile();
+		blib.openFile(out.toFile());
+		try {
+			EncyclopediaTestUtils.assertValidBlib(blib);
+		} finally {
+			EncyclopediaTestUtils.cleanupBlib(blib);
+		}
 	}
 }
