@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.tests;
 
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import org.apache.commons.io.FileUtils;
@@ -41,11 +42,25 @@ public abstract class EncyclopediaTestUtils {
 		}
 	}
 
+	public static void cleanupBlib(BlibFile blib) {
+		blib.close();
+		FileUtils.deleteQuietly(blib.getUserFile());
+	}
+
 	public static void assertValidDlib(LibraryInterface library) {
 		assertNotNull(library);
 
 		final File file = ((LibraryFile) library).getFile();
 		assertEquals(LibraryFile.DLIB, "." + FilenameUtils.getExtension(file.getName()));
+
+		assertTrue(Files.exists(file.toPath()));
+	}
+
+	public static void assertValidBlib(BlibFile blib) {
+		assertNotNull(blib);
+
+		final File file = blib.getUserFile();
+		assertEquals(BlibFile.BLIB, "." + FilenameUtils.getExtension(file.getName()));
 
 		assertTrue(Files.exists(file.toPath()));
 	}
