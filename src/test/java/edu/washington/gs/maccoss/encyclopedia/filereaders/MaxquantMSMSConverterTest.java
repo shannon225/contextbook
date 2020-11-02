@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import com.google.common.collect.ImmutableList;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
@@ -222,11 +224,12 @@ public class MaxquantMSMSConverterTest {
 	}
 
 	private static Path getResourceAsFile(String relativeResourceName, String suffix) throws IOException {
-		final Path tsv = Files.createTempFile("test_", suffix);
-		try (InputStream tsvResource = MaxquantMSMSConverterTest.class.getResourceAsStream(relativeResourceName)) {
-			Files.copy(tsvResource, tsv, StandardCopyOption.REPLACE_EXISTING);
-		}
-		tsv.toFile().deleteOnExit();
-		return tsv;
+		return EncyclopediaTestUtils.getResourceAsTempFile(
+				MaxquantMSMSConverter.class,
+				relativeResourceName,
+				Paths.get(System.getProperty("java.io.tmpdir")),
+				"test_",
+				suffix
+		);
 	}
 }

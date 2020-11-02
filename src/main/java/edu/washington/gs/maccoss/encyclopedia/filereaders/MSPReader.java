@@ -290,7 +290,7 @@ public class MSPReader {
 								try {
 									mass=getMass(aa, mod);
 								} catch (EncyclopediaException e) {
-									throw new EncyclopediaException(e.getMessage()+" from line ["+eachline+"]");
+									throw new EncyclopediaException(e.getMessage()+" from line ["+eachline+"]", e);
 								}
 								
 								if (modMap.contains(index)) {
@@ -374,7 +374,7 @@ public class MSPReader {
 	 * @param sequence
 	 * @return
 	 */
-	public static String getModlessSequence(String sequence) {
+	static String getModlessSequence(String sequence) {
 		
 		StringBuilder sb = new StringBuilder();
 		boolean isInMod = false;
@@ -406,7 +406,7 @@ public class MSPReader {
 	 * @param s
 	 * @return
 	 */
-	public static HashMap<String, String> split(String s) {
+	static HashMap<String, String> split(String s) {
 		char[] ca=s.toCharArray();
 		ArrayList<String> strings=new ArrayList<String>();
 		StringBuilder sb=new StringBuilder();
@@ -445,7 +445,7 @@ public class MSPReader {
 	 * @param mod
 	 * @return
 	 */
-	public static double getMass(char aa, String mod) {
+	static double getMass(char aa, String mod) {
 		if (aa=='C'&&"CAM".equals(mod)) {
 			return 57.0214635;
 		} else if (aa=='M'&&"Oxidation".equalsIgnoreCase(mod)) {

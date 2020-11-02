@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 
-public class BlibToLibraryConverterIT extends AbstractFileConverterTest {
-	public static final String NAME = "BlibToLibraryConverterIT";
+public class SpectronautCSVToLibraryConverterIT extends AbstractFileConverterTest {
+	public static final String NAME = "SpectronautCSVToLibraryConverterIT";
 
 	@Override
 	protected String getName() {
@@ -22,11 +22,11 @@ public class BlibToLibraryConverterIT extends AbstractFileConverterTest {
 	}
 
 	@Test
-	public void testConvertBlibToLibrary() throws Exception {
+	public void testConvertSpectronautCSVToLibrary() throws Exception {
 		// TODO: use an actual resource name instead of a made-up one
-		final Path blib = getResourceAsTempFile(tmpDir, getName(), ".blib", "/edu/washington/gs/maccoss/encyclopedia/testdata/simple.blib");
+		final Path csv = getResourceAsTempFile(tmpDir, getName(), ".csv", "/edu/washington/gs/maccoss/encyclopedia/testdata/simple.spectronaut.csv");
 
-		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		final LibraryInterface library = SpectronautCSVToLibraryConverter.convertFromSpectronautCSV(csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library); // asserts that the resulting file has DLIB extension
 		} finally {

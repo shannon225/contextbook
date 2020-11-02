@@ -3,15 +3,19 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.zip.DataFormatException;
 
 public class LibraryToBlibConverter {
 
-	public static void convert(File elibFile, File blibFile) {
+	public static void convert(File elibFile, File blibFile) throws EncyclopediaException {
 		try {
 			LibraryFile library = new LibraryFile();
 			library.openFile(elibFile);
@@ -31,9 +35,10 @@ public class LibraryToBlibConverter {
 			blib.close();
 			library.close();
 			Logger.logLine("Finished reading " + blibFile.getName());
-		} catch (Exception e) {
+		} catch (IOException | SQLException | DataFormatException e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
+			throw new EncyclopediaException("Encountered fatal error converting library", e);
 		}
 	}
 }

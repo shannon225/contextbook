@@ -6,10 +6,9 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Optional;
 
-public class BlibToLibraryConverterIT extends AbstractFileConverterTest {
-	public static final String NAME = "BlibToLibraryConverterIT";
+public class TraMLToLibraryConverterIT extends AbstractFileConverterTest {
+	public static final String NAME = "TraMLToLibraryConverterIT";
 
 	@Override
 	protected String getName() {
@@ -22,13 +21,16 @@ public class BlibToLibraryConverterIT extends AbstractFileConverterTest {
 	}
 
 	@Test
-	public void testConvertBlibToLibrary() throws Exception {
+	public void testConvertMspToLibrary() throws Exception {
 		// TODO: use an actual resource name instead of a made-up one
-		final Path blib = getResourceAsTempFile(tmpDir, getName(), ".blib", "/edu/washington/gs/maccoss/encyclopedia/testdata/simple.blib");
+		final Path traml = getResourceAsTempFile(tmpDir, getName(), ".traml", "/edu/washington/gs/maccoss/encyclopedia/testdata/simple.traml");
 
-		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		TraMLToLibraryConverter.convertTraML(traml.toFile(), getFasta().toFile(), out.toFile(), SearchParameterParser.getDefaultParametersObject());
+
+		final LibraryFile library = new LibraryFile();
+		library.openFile(out.toFile());
 		try {
-			EncyclopediaTestUtils.assertValidDlib(library); // asserts that the resulting file has DLIB extension
+			EncyclopediaTestUtils.assertValidDlib(library);
 		} finally {
 			EncyclopediaTestUtils.cleanupLibrary(library);
 		}

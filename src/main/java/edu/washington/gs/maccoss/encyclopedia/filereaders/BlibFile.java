@@ -69,7 +69,11 @@ public class BlibFile extends SQLFile {
 	public void setUserFile(File userFile) {
 		this.userFile=userFile;
 	}
-	
+
+	public File getUserFile() {
+		return userFile;
+	}
+
 	@SuppressWarnings("resource") // this is properly closed, Eclipse just can't follow the if/else logic
 	public void getCopyEntriesToLibrary(LibraryFile library, Optional<TObjectFloatHashMap<String>> irtMap, File fastaFile, SearchParameters params) throws IOException, SQLException, DataFormatException {
 		Logger.logLine("Reading BLIB file");

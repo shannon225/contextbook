@@ -46,7 +46,7 @@ public class OpenSwathTSVToLibraryConverter {
 		return null;
 	}
 	
-	private static String parseMods(String structuredSequence) {
+	static String parseMods(String structuredSequence) {
 		
 		if (structuredSequence.indexOf('(')>=0) {
 			 // Unimod: .(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)
@@ -58,14 +58,13 @@ public class OpenSwathTSVToLibraryConverter {
 				StringBuilder sb=new StringBuilder(structuredSequence);
 				final int nIndex=structuredSequence.indexOf('n');
 				if (nIndex>=0) sb=sb.deleteCharAt(nIndex);
-				final int cIndex=structuredSequence.indexOf('c');
+				final int cIndex=sb.toString().indexOf('c'); // need to get index in possibly-modified string!
 				if (cIndex>=0) sb=sb.deleteCharAt(cIndex);
 				return sb.toString();
 				
 			} else if (structuredSequence.indexOf('.')>=0) {
 				 // Unimod: .(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2) (but no mods)
 				StringTokenizer st=new StringTokenizer(structuredSequence, ".");
-				st.nextToken();
 				return st.nextToken();
 				
 			} else if (structuredSequence.indexOf('n')>=0) {
