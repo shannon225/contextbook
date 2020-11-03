@@ -1,13 +1,20 @@
 package edu.washington.gs.maccoss.encyclopedia.tests;
 
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.Assume;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+
+import static org.junit.Assert.*;
 
 public abstract class EncyclopediaTestUtils {
 	private EncyclopediaTestUtils() throws IllegalAccessError {
@@ -26,5 +33,35 @@ public abstract class EncyclopediaTestUtils {
 			Assume.assumeNotNull(is); // ignore the test if the resource can't be found
 			Files.copy(is, dest, StandardCopyOption.REPLACE_EXISTING);
 		}
+	}
+
+	public static void cleanupLibrary(LibraryInterface library) {
+		if (library instanceof LibraryFile) {
+			((LibraryFile) library).close();
+			FileUtils.deleteQuietly(((LibraryFile) library).getFile());
+		}
+	}
+
+	public static void cleanupBlib(BlibFile blib) {
+		blib.close();
+		FileUtils.deleteQuietly(blib.getUserFile());
+	}
+
+	public static void assertValidDlib(LibraryInterface library) {
+		assertNotNull(library);
+
+		final File file = ((LibraryFile) library).getFile();
+		assertEquals(LibraryFile.DLIB, "." + FilenameUtils.getExtension(file.getName()));
+
+		assertTrue(Files.exists(file.toPath()));
+	}
+
+	public static void assertValidBlib(BlibFile blib) {
+		assertNotNull(blib);
+
+		final File file = blib.getUserFile();
+		assertEquals(BlibFile.BLIB, "." + FilenameUtils.getExtension(file.getName()));
+
+		assertTrue(Files.exists(file.toPath()));
 	}
 }

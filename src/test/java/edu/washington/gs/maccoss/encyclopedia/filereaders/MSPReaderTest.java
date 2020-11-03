@@ -1,13 +1,35 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.tests.AbstractFileConverterTest;
+import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
+import org.junit.Test;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
 
-public class MSPReaderTest extends TestCase {
+public class MSPReaderTest extends AbstractFileConverterTest {
+	private static final String NAME = "MSPReaderTest";
+
+	@Override
+	protected String getName() {
+		return NAME;
+	}
+
+	@Override
+	protected String getOutputExtension() {
+		return LibraryFile.DLIB;
+	}
+
+	@Test
 	public void testSplit() {
 		String str="Comment: Single Pep=Tryptic Mods=2/6,C,CAM/16,C,CAM Fullname=R.ALGPAGCEADASAPATCAEMR.C/2 "
 				+ "Charge=2 Parent=1053.4561 Se=1(^G1:sc=2.16694e-010) Mz_diff=0ppm Purity=100.0 HCD=44eV "
@@ -31,9 +53,64 @@ public class MSPReaderTest extends TestCase {
 		
 	}
 
+	@Test
 	public void testFastaReader() throws Exception {
 		InputStream is=getClass().getResourceAsStream("/truncated.msp");
 		ArrayList<LibraryEntry> entries=MSPReader.readMSP(is, "truncated.msp", true);
 		assertEquals(4, entries.size());
+	}
+
+	@Test(expected = NullPointerException.class)
+	public void testReadNull() throws Exception {
+		MSPReader.readMSP(null, true);
+	}
+
+	@Test(expected = FileNotFoundException.class)
+	public void testReadNonexisting() throws Exception {
+		final Path msp = Files.createTempFile(tmpDir, NAME, ".msp");
+		Files.delete(msp);
+
+		MSPReader.readMSP(msp.toFile(), true);
+	}
+
+	@Test
+	public void testReadEmptyFile() throws Exception {
+		final Path msp = Files.createTempFile(tmpDir, NAME, ".msp");
+
+		final ArrayList<LibraryEntry> entries = MSPReader.readMSP(msp.toFile(), true);
+
+		assertEquals(0, Objects.requireNonNull(entries).size());
+	}
+
+	@Test(expected = NullPointerException.class)
+	public void testConvertNull() throws Exception {
+		MSPReader.convertMSP(null, getFasta().toFile(), out.toFile(), SearchParameterParser.getDefaultParametersObject());
+	}
+
+	@Test(expected = FileNotFoundException.class)
+	public void testConvertNonexisting() throws Exception {
+		final Path msp = Files.createTempFile(tmpDir, NAME, ".msp");
+		Files.delete(msp);
+
+		MSPReader.convertMSP(msp.toFile(), getFasta().toFile(), out.toFile(), SearchParameterParser.getDefaultParametersObject());
+	}
+
+	@Test
+	public void testConvertEmptyFile() throws Exception {
+		final Path msp = Files.createTempFile(tmpDir, NAME, ".msp");
+
+		MSPReader.convertMSP(msp.toFile(), getFasta().toFile(), out.toFile(), SearchParameterParser.getDefaultParametersObject());
+
+		final LibraryFile library = new LibraryFile();
+		library.openFile(out.toFile());
+		try {
+			EncyclopediaTestUtils.assertValidDlib(library);
+		} finally {
+			EncyclopediaTestUtils.cleanupLibrary(library);
+		}
+	}
+
+	Path getFasta() throws IOException {
+		return EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/ecoli-190209-contam_correctNL.fasta", tmpDir, NAME, ".fasta");
 	}
 }

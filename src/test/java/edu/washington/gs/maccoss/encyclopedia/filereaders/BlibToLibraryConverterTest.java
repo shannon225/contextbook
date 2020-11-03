@@ -7,7 +7,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -65,7 +64,7 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 		try {
 			assertNotNull("Got null library from ELIB", library);
 		} finally {
-			cleanupLibrary(library);
+			EncyclopediaTestUtils.cleanupLibrary(library);
 		}
 	}
 
@@ -89,7 +88,7 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 		try {
 			assertNotNull("Got null library from ELIB", library);
 		} finally {
-			cleanupLibrary(library);
+			EncyclopediaTestUtils.cleanupLibrary(library);
 		}
 	}
 
@@ -110,7 +109,7 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 		try {
 			assertNotNull("Got null library from DLIB", library);
 		} finally {
-			cleanupLibrary(library);
+			EncyclopediaTestUtils.cleanupLibrary(library);
 		}
 	}
 
@@ -134,7 +133,7 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 		try {
 			assertNotNull("Got null library from DLIB", library);
 		} finally {
-			cleanupLibrary(library);
+			EncyclopediaTestUtils.cleanupLibrary(library);
 		}
 	}
 
@@ -144,9 +143,9 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 
 		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 		try {
-			assertValidDlib(library); // asserts that the resulting file has DLIB extension
+			EncyclopediaTestUtils.assertValidDlib(library); // asserts that the resulting file has DLIB extension
 		} finally {
-			cleanupLibrary(library);
+			EncyclopediaTestUtils.cleanupLibrary(library);
 		}
 	}
 
@@ -169,29 +168,13 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 
 		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 		try {
-			assertValidDlib(library);
+			EncyclopediaTestUtils.assertValidDlib(library);
 		} finally {
-			cleanupLibrary(library);
+			EncyclopediaTestUtils.cleanupLibrary(library);
 		}
 	}
 
 	Path getFasta() throws IOException {
 		return EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/ecoli-190209-contam_correctNL.fasta", tmpDir, NAME, ".fasta");
-	}
-
-	static void assertValidDlib(LibraryInterface library) {
-		assertNotNull(library);
-
-		final File file = ((LibraryFile) library).getFile();
-		assertEquals(LibraryFile.DLIB, "." + FilenameUtils.getExtension(file.getName()));
-
-		assertTrue(Files.exists(file.toPath()));
-	}
-
-	static void cleanupLibrary(LibraryInterface library) {
-		if (library instanceof LibraryFile) {
-			((LibraryFile) library).close();
-			FileUtils.deleteQuietly(((LibraryFile) library).getFile());
-		}
 	}
 }

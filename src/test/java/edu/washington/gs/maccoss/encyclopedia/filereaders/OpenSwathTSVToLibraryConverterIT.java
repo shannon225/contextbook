@@ -6,10 +6,9 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Optional;
 
-public class BlibToLibraryConverterIT extends AbstractFileConverterTest {
-	public static final String NAME = "BlibToLibraryConverterIT";
+public class OpenSwathTSVToLibraryConverterIT extends AbstractFileConverterTest {
+	public static final String NAME = "OpenSwathTSVToLibraryConverterIT";
 
 	@Override
 	protected String getName() {
@@ -22,11 +21,11 @@ public class BlibToLibraryConverterIT extends AbstractFileConverterTest {
 	}
 
 	@Test
-	public void testConvertBlibToLibrary() throws Exception {
+	public void testConvertOpenSwathTSVToLibrary() throws Exception {
 		// TODO: use an actual resource name instead of a made-up one
-		final Path blib = getResourceAsTempFile(tmpDir, getName(), ".blib", "/edu/washington/gs/maccoss/encyclopedia/testdata/simple.blib");
+		final Path tsv = getResourceAsTempFile(tmpDir, getName(), ".tsv", "/edu/washington/gs/maccoss/encyclopedia/testdata/simple.openswath.tsv");
 
-		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		final LibraryInterface library = OpenSwathTSVToLibraryConverter.convertFromOpenSwathTSV(tsv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library); // asserts that the resulting file has DLIB extension
 		} finally {
