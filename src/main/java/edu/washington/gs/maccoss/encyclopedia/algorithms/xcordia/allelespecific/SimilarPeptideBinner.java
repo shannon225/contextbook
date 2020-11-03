@@ -62,7 +62,7 @@ public class SimilarPeptideBinner {
 	
 	private static final byte one=1;
 	private static final byte two=2;
-	public boolean areSimilarEnough(String p1, String p2) {
+	public static boolean areSimilarEnough(String p1, String p2) {
 		if (p1.length()==p2.length()) {
 			byte deviantBits=0;
 			for (int i = 0; i < p1.length(); i++) {
@@ -76,7 +76,7 @@ public class SimilarPeptideBinner {
 		return false;
 	}
 	
-	public boolean areSimilar(char a, char b) {
+	public static boolean areSimilar(char a, char b) {
 		if (a==b) return true;
 		if ((a=='I'||a=='L')&&(b=='I'||b=='L')) {
 			return true;

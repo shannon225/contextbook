@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.scribe;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
@@ -11,6 +12,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SparseXCorrCalculator;
@@ -20,9 +23,19 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TCharDoubleHashMap;
+import gnu.trove.procedure.TCharDoubleProcedure;
 
 public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 	private static final int numPeaksUsedInAverage=3;
+	private static final TCharDoubleHashMap targetImmoniumIons=new TCharDoubleHashMap();
+	{
+		targetImmoniumIons.put('H', 110.0718);
+		targetImmoniumIons.put('Y', 136.0762);
+		targetImmoniumIons.put('W', 159.0922);
+		targetImmoniumIons.put('M', 104.0534);
+		targetImmoniumIons.put('F', 120.0813);
+	}
 
 	public ScribeAuxillaryPSMScorer(SearchParameters parameters) {
 		super(parameters);
@@ -41,7 +54,8 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		MassTolerance acquiredTolerance=parameters.getFragmentTolerance();
 		MassTolerance libraryTolerance=parameters.getLibraryFragmentTolerance();
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
-		double[] ions=model.getPrimaryIons(parameters.getFragType(), entry.getPrecursorCharge(), false);
+		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
+		HashMap<IonType, float[]> matchedIonLadders=new HashMap<>();
 		
 		double[] predictedMasses=entry.getMassArray();
 		float[] predictedIntensities=entry.getIntensityArray();
@@ -56,8 +70,9 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		TFloatArrayList predictedTargetIntensities=new TFloatArrayList();
 		TFloatArrayList actualTargetIntensities=new TFloatArrayList();
 		ArrayList<XYPoint> fragmentDeltaMasses=new ArrayList<XYPoint>();
-		for (double target : ions) {
-			int[] predictedIndicies=libraryTolerance.getIndicies(predictedMasses, target);
+		for (FragmentIon target : ions) {
+			double targetMass=target.getMass();
+			int[] predictedIndicies=libraryTolerance.getIndicies(predictedMasses, targetMass);
 			float predictedIntensity=0.0f;
 			float maxCorrelation=0.01f;
 			for (int i=0; i<predictedIndicies.length; i++) {
@@ -70,7 +85,7 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 			}
 			
 			if (predictedIntensity>0) {
-				int[] indicies=acquiredTolerance.getIndicies(acquiredMasses, target);
+				int[] indicies=acquiredTolerance.getIndicies(acquiredMasses, targetMass);
 				float intensity=0.0f;
 				float bestPeakIntensity=0.0f;
 				float deltaMass=0.0f;
@@ -80,21 +95,66 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 					if (acquiredIntensities[indicies[j]]>bestPeakIntensity) {
 						bestPeakIntensity=acquiredIntensities[indicies[j]];
 
-						deltaMass=(float)acquiredTolerance.getDeltaScore(target, acquiredMasses[indicies[j]]);
+						deltaMass=(float)acquiredTolerance.getDeltaScore(targetMass, acquiredMasses[indicies[j]]);
 					}
 				}
 				if (intensity>0) {
 					numberOfMatchingPeaks++;
+					
+					float[] ladder=matchedIonLadders.get(target.getType());
+					if (ladder==null) {
+						ladder=new float[entry.getPeptideSeq().length()];
+						matchedIonLadders.put(target.getType(), ladder);
+					}
+					if (target.getIndex()<=ladder.length) {
+						ladder[target.getIndex()-1]=intensity;
+					}
 				}
 				float peakScore=predictedIntensity*intensity*maxCorrelation;
 				dotProduct+=peakScore;
-				predictedTargets.add(target);
+				predictedTargets.add(targetMass);
 				predictedTargetIntensities.add(predictedIntensity);
 				actualTargetIntensities.add(intensity);
 				
 				fragmentDeltaMasses.add(new XYPoint(intensity, deltaMass));
 			}
 		}
+		
+		int maxLadderLength=0;
+		for (float[] ladder : matchedIonLadders.values()) {
+			int currentLength=0;
+			for (int i = 0; i < ladder.length; i++) {
+				if (ladder[i]>0.0f) {
+					currentLength++;
+				}
+				if (currentLength>maxLadderLength) {
+					maxLadderLength=currentLength;
+				}
+			}
+		}
+		
+		int[] numImmoniumIonsFound=new int[1];
+		targetImmoniumIons.forEachEntry(new TCharDoubleProcedure() {
+			
+			@Override
+			public boolean execute(char aa, double targetMass) {
+				if (entry.getPeptideSeq().indexOf(aa)>=0) {
+					int[] indicies=acquiredTolerance.getIndicies(acquiredMasses, targetMass);
+
+					for (int j=0; j<indicies.length; j++) {
+						if (acquiredIntensities[indicies[j]]>0) {
+							numImmoniumIonsFound[0]++;
+							break;
+						};
+					}
+				}
+				return true;
+			}
+		});
+		
+		float beta=0.075f*maxLadderLength;
+		float rho=0.15f*numImmoniumIonsFound[0];
+		float sp=General.sum(actualTargetIntensities.toArray())*numberOfMatchingPeaks*(1.0f+beta)*(1.0f+rho)/ions.length;
 		
 		float averageFragmentDeltaMasses=0.0f, averageAbsFragDeltaMass=0.0f;
 		if (fragmentDeltaMasses.size()==0) {
@@ -159,13 +219,14 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 			
 		return new float[] {(float)Log.protectedLog10(dotProduct), xTandem, xCorrLib, xCorrModel, Log.protectedLn(1.0f/sumOfSquaredErrors), 
 				numberOfMatchingPeaks, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, 
-				averageAbsPPM, averagePPM, percentBlankOverMono, numberPrecursorMatch};
+				averageAbsPPM, averagePPM, percentBlankOverMono, numberPrecursorMatch, sp, maxLadderLength};
 	}
 
 	public static String[] getScoreNames() {
 		return new String[] {"LogDotProduct", "primary", "xCorrLib", "xCorrModel", "lnInvSumOfSquaredErrors", 
 				"numberOfMatchingPeaks", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", 
-				"averageAbsParentDeltaMass", "averageParentDeltaMass", "percentBlankOverMono", "numberPrecursorMatch", "eValue", "numConsidered"};
+				"averageAbsParentDeltaMass", "averageParentDeltaMass", "percentBlankOverMono", "numberPrecursorMatch", "Sp", "maxLadderLength", 
+				"eValue", "numConsidered", "deltaCn"};
 	}
 	
 	@Override

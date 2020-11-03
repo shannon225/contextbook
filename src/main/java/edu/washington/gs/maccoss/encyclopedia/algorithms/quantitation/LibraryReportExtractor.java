@@ -37,7 +37,7 @@ import gnu.trove.procedure.TObjectFloatProcedure;
 public class LibraryReportExtractor {
 
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException {
-		File file=new File("/Users/searleb/Documents/tutorial/elibs/2018may14_hela_window_size_test_BCS_hela_wide_400_1000_QUANT.elib");
+		File file=new File("/Volumes/WorkingDisk/yeast_curve_wide.elib");
 
 		LibraryFile library=new LibraryFile();
 		library.openFile(file);

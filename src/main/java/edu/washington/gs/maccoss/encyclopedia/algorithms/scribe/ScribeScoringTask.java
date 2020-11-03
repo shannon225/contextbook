@@ -10,6 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.SimilarPeptideBinner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -67,6 +68,9 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 			
 			ArrayList<ScoredIndex> goodHits=new ArrayList<ScoredIndex>();
 			TFloatFloatHashMap map=new TFloatFloatHashMap();
+			float maxXCorr=0.0f;
+			String maxSequence=null;
+			float secondMaxXCorr=0.0f;
 			for (int i=0; i<super.entries.size(); i++) {
 				LibraryEntry entry=super.entries.get(i);
 				boolean match=parameters.getPrecursorTolerance().equals(entry.getPrecursorMZ(), msms.getPrecursorMZ());
@@ -81,9 +85,24 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 					float[] otherScores=score(entry, msms);
 					
 					if (otherScores[0]>0) {
-						float composite=score;//+otherScores[1];
+						float composite=otherScores[1];
 						goodHits.add(new ScoredIndex(composite, i));
 						map.put(i, composite);
+					}
+					
+					if (maxSequence==null) {
+						maxSequence=entry.getPeptideSeq();
+						maxXCorr=score;
+					} else if (score>maxXCorr) {
+						if (!SimilarPeptideBinner.areSimilarEnough(maxSequence, entry.getPeptideSeq())) {
+							secondMaxXCorr=maxXCorr;
+							maxSequence=entry.getPeptideSeq();
+							maxXCorr=score;
+						}
+					} else if (score>secondMaxXCorr) {
+						if (!SimilarPeptideBinner.areSimilarEnough(maxSequence, entry.getPeptideSeq())) {
+							secondMaxXCorr=score;
+						}
 					}
 				}
 			}
@@ -99,6 +118,7 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 			if (Float.isNaN(evalue)||evalue<-3) {
 				evalue=-3.0f;
 			}
+			float deltaCn=(maxXCorr==0.0f||secondMaxXCorr==0.0f)?0.0f:(maxXCorr-secondMaxXCorr)/maxXCorr;
 			
 			LibraryEntry entry=super.entries.get(index);
 				
@@ -111,7 +131,7 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 			}
 
 			PeptideScoringResult result=new PeptideScoringResult(entry);
-			result.addStripe(score, General.concatenate(auxScoreArray, evalue, map.size()), msms);
+			result.addStripe(score, General.concatenate(auxScoreArray, evalue, map.size(), deltaCn), msms);
 			resultsQueue.add(result);
 		}
 		return Nothing.NOTHING;
