@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -268,6 +269,7 @@ public class SearchToBLIB {
 			ArrayList<SearchJobData> pecanJobs=new ArrayList<SearchJobData>();
 			if (diaFile.isDirectory()) {
 				File[] files=diaFile.listFiles(StripeFileGenerator.getFilenameFilter());
+				
 				if (files.length==0) {
 					Logger.errorLine("Your specified input (-i) directory didn't contain any .RAW files!");
 					System.exit(1);
@@ -292,6 +294,10 @@ public class SearchToBLIB {
 		ArrayList<SearchJobData> processedJobs=new ArrayList<SearchJobData>();
 		ArrayList<File> featureFiles=new ArrayList<File>();
 		SearchJobData representativeJob=null;
+		
+		// Sort files in alphabetical order for deterministic Percolator sampling
+		Collections.sort(pecanJobs, (a, b) -> a.getDiaFile().getName().compareTo(b.getDiaFile().getName()));
+		
 		for (int i=0; i<pecanJobs.size(); i++) {
 			SearchJobData job=pecanJobs.get(i);
 			if (!job.hasBeenRun()) {
