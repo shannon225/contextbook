@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.zip.DataFormatException;
 import java.util.Optional;
 
 import javax.swing.BoxLayout;
@@ -44,6 +45,7 @@ import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.CombinedRangeXYPlot;
 import org.jfree.ui.TextAnchor;
+import org.relaxng.datatype.DatatypeException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
@@ -51,6 +53,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideReportData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
@@ -70,11 +73,14 @@ import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.AcquiredSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 public class MultiResultsBrowserPanel extends JPanel {
@@ -102,6 +108,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 	private final JComboBox<Integer> minimumNumberOfFragments=new JComboBox<Integer>(new Integer[] {0, 1, 2, 3, 4, 5});
 	private final JComboBox<Integer> numberOfColumns=new JComboBox<Integer>(new Integer[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 	private final JCheckBox simplifyPlots=new JCheckBox("Simplify plots");
+	private final JCheckBox plotPrecursors=new JCheckBox("Plot Precursors");
 	
 	private final int defaultMinimumNumberOfFragmentsIndex=3;
 	private final int defaultNumberOfColumnsIndex=1;
@@ -218,8 +225,27 @@ public class MultiResultsBrowserPanel extends JPanel {
 		options.add(libraryFileChooser);
 		options.add(new LabeledComponent("Minimum # Fragments", minimumNumberOfFragments));
 		options.add(new LabeledComponent("Number of Columns", numberOfColumns));
+		
+
+		JPanel checkBoxes=new JPanel();
+		checkBoxes.setLayout(new BoxLayout(checkBoxes, BoxLayout.LINE_AXIS));
 		simplifyPlots.setBackground(LabeledComponent.BACKGROUND_COLOR);
-		options.add(simplifyPlots);
+		checkBoxes.add(simplifyPlots);
+		plotPrecursors.setBackground(LabeledComponent.BACKGROUND_COLOR);
+		checkBoxes.add(plotPrecursors);
+		options.add(checkBoxes);
+		simplifyPlots.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updateToSelectedPeptide();
+			}
+		});
+		plotPrecursors.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updateToSelectedPeptide();
+			}
+		});
 		
 		split2.setBorder(null); // remove border of nested split so they seem in the same level
 		split1.setTopComponent(new JScrollPane(sampleTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED));
@@ -405,73 +431,31 @@ public class MultiResultsBrowserPanel extends JPanel {
 		right.setBackground(Color.WHITE);
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		double precursorMz=parameters.getAAConstants().getChargedMass(entry.getPeptideModSeq(), entry.getPrecursorCharge());
+		FragmentIon[] primaryIonObjects=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), true);
+		Logger.logLine("Graphing "+entry.getPeptideModSeq()+" ("+primaryIonObjects.length+")"+"...");
 		
 		try {
-			FragmentIon[] primaryIonObjects=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), true);
-			Logger.logLine("Graphing "+entry.getPeptideModSeq()+" ("+primaryIonObjects.length+")"+"...");
 			
 			double globalMaxY=0.0;
 			ArrayList<ChartPanel> allPanels=new ArrayList<ChartPanel>();
 			
 			ArrayList<ArrayList<XYTrace>> allTraces=new ArrayList<ArrayList<XYTrace>>();
 			for (int i=0; i<origSampleNames.length; i++) {
-				ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
-				QuantitativeDIAData quantitativeData=entry.getQuantitativeData(origSampleNames[i]);
-				
-				if (quantitativeData!=null) {
-					TObjectDoubleHashMap<FragmentIon> targetIonObjects=new TObjectDoubleHashMap<FragmentIon>();
-					ArrayList<FragmentIon> offtargetIonObjects=new ArrayList<FragmentIon>();
-					
-					XYTrace quantitativePeaks=new XYTrace(quantitativeData.getMassArray(), quantitativeData.getIntensityArray(), GraphType.spectrum, origSampleNames[i]);
-					Collections.sort(quantitativePeaks.getPoints());
-					Pair<double[], double[]> peaksArrays=quantitativePeaks.toArrays();
-					double[] targets=peaksArrays.x;
-					double[] intensities=peaksArrays.y;
-					
-					for (FragmentIon ion : primaryIonObjects) {
-						Optional<Integer> index=parameters.getFragmentTolerance().getIndex(targets, ion.getMass());
-						if (index.isPresent()) {
-							targetIonObjects.put(ion, intensities[index.get()]);
-						} else {
-							offtargetIonObjects.add(ion);
-						}
-					}
-					FragmentIon[] targetIonArray=targetIonObjects.keys(new FragmentIon[targetIonObjects.size()]);
-					FragmentIon[] offTargetIonArray=offtargetIonObjects.toArray(new FragmentIon[offtargetIonObjects.size()]);
-					
-					StripeFileInterface file=files.get(i);
-					Range rangeInSec=quantitativeData.getRtScanRange();
-					Range rangeInMins=new Range(rangeInSec.getStart()/60f, rangeInSec.getStop()/60f);
-					ArrayList<FragmentScan> stripes=file.getStripes(precursorMz, rangeInSec.getStart()-RT_EXTRACTION_MARGIN_IN_SEC, rangeInSec.getStop()+RT_EXTRACTION_MARGIN_IN_SEC, false);
-					
-					ArrayList<Spectrum> downcastedSpectra=FragmentScan.downcastStripeToSpectrum(stripes);
+				String sampleName = origSampleNames[i];
+				QuantitativeDIAData quantitativeData=entry.getQuantitativeData(sampleName);
+				StripeFileInterface file=files.get(i);
 
-					HashMap<FragmentIon, XYTrace> targetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), targetIonArray, downcastedSpectra, null,
-							GraphType.boldline);
-					HashMap<FragmentIon, XYTrace> offTargetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), offTargetIonArray, downcastedSpectra,
-							null, GraphType.dashedline);
+				ArrayList<XYTrace> traces;
+				if (quantitativeData==null) {
+					traces=new ArrayList<XYTrace>();
+				} else if (plotPrecursors.isSelected()) {
+					traces=extractPrecursorTraces(sampleName, quantitativeData, file);
+				} else {
+					traces=extractFragmentTraces(primaryIonObjects, sampleName, quantitativeData, file);
+				}
 
-					traces.addAll(targetFragmentTraceMap.values());
-					double maxY=0.0;
-					
-					for (Entry<FragmentIon, XYTrace> ionEntry : targetFragmentTraceMap.entrySet()) {
-						XYTrace trace=ionEntry.getValue();
-						XYPoint xy=trace.getMaxXYInRange(rangeInMins);
-						if (xy.getY()>maxY) {
-							maxY=xy.getY();
-						}
-						double intensity=targetIonObjects.get(ionEntry.getKey());
-						traces.add(new XYTrace(new double[] {xy.x}, new double[] {xy.y}, GraphType.text, trace.getName()+" ("+formatter.format(intensity).toLowerCase()+")"));
-					}
-					
-					globalMaxY=Math.max(globalMaxY, maxY);
-					traces.addAll(offTargetFragmentTraceMap.values());
-					
-					if (traces.size()>0) {
-						// extra 0 point in case there is no data shown (or all 0s)
-						traces.add(new XYTrace(new double[] {rangeInMins.getStart()-Float.MIN_VALUE, rangeInMins.getStart(), rangeInMins.getStop()}, new double[] {0.0, maxY, maxY},
-								GraphType.area, "Boundaries", new Color(102, 204, 255, 50), 4.0f));
-					}
+				for (XYTrace xyTrace : traces) {
+					globalMaxY=Math.max(globalMaxY, xyTrace.getMaxY());
 				}
 				allTraces.add(traces);
 			}
@@ -484,6 +468,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 			for (int i=0; i<sampleNames.length; i++) {
 				ArrayList<XYTrace> traces=allTraces.get(i);
 				ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", false, globalMaxY, traces.toArray(new XYTrace[traces.size()]));
+				
 				if (simplify) {
 					fragmentChart.getChart().getXYPlot().clearAnnotations();
 					
@@ -523,8 +508,8 @@ public class MultiResultsBrowserPanel extends JPanel {
 					if (parent!=null) {
 						parent.add(fragmentChart.getChart().getXYPlot(), 1);
 					}
-				}
-				if (!simplify) {
+				} else {
+					// !simplify
 					fragmentChart.getChart().setTitle(sampleNames[i]);
 					right.add(fragmentChart);
 				}
@@ -532,7 +517,13 @@ public class MultiResultsBrowserPanel extends JPanel {
 			}
 	
 			split.setRightComponent(right);
-			
+
+		} catch (DataFormatException sqle) {
+			Logger.errorLine("Error reading raw files!");
+			Logger.errorException(sqle);
+		} catch (DatatypeException sqle) {
+			Logger.errorLine("Error reading raw files!");
+			Logger.errorException(sqle);
 		} catch (SQLException sqle) {
 			Logger.errorLine("Error reading raw files!");
 			Logger.errorException(sqle);
@@ -543,4 +534,97 @@ public class MultiResultsBrowserPanel extends JPanel {
 		
 		split.setDividerLocation(location);
 	}
+	
+	private ArrayList<XYTrace> extractPrecursorTraces(String sampleName, QuantitativeDIAData quantitativeData, StripeFileInterface file) throws IOException, SQLException, DatatypeException, DataFormatException {
+		Range rangeInSec=quantitativeData.getRtScanRange();
+		float minRTInSec = rangeInSec.getStart()-RT_EXTRACTION_MARGIN_IN_SEC;
+		float maxRTInSec = rangeInSec.getStop()+RT_EXTRACTION_MARGIN_IN_SEC;
+		ArrayList<PrecursorScan> precursors=file.getPrecursors(minRTInSec, maxRTInSec);
+		ArrayList<PrecursorScan> trimmedPrecursors=new ArrayList<>();
+		for (PrecursorScan spectrum : precursors) {
+			if (quantitativeData.getPrecursorMZ()>spectrum.getIsolationWindowLower()&&quantitativeData.getPrecursorMZ()<spectrum.getIsolationWindowUpper()) {
+				trimmedPrecursors.add(spectrum);
+			}
+		}
+		precursors=trimmedPrecursors;
+		XYTraceInterface[] traceArray=ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), quantitativeData.getPrecursorMZ(), quantitativeData.getPrecursorCharge(), precursors);
+
+		double maxY=0.0;
+		for (int i = 0; i < traceArray.length; i++) {
+			maxY=Math.max(maxY, General.max(traceArray[i].toArrays().y));
+		}
+		
+		ArrayList<XYTrace> traces=new ArrayList<>();
+		for (int i = 0; i < traceArray.length; i++) {
+			if (traceArray[i] instanceof XYTrace) {
+				traces.add((XYTrace)traceArray[i]);
+			}
+		}
+		
+		if (traces.size()>0) {
+			// extra 0 point in case there is no data shown (or all 0s)
+			traces.add(new XYTrace(new double[] {rangeInSec.getStart()/60f-Float.MIN_VALUE, rangeInSec.getStart()/60f, rangeInSec.getStop()/60f}, new double[] {0.0, maxY, maxY}, GraphType.area, "Boundaries", new Color(102, 204, 255, 50), 4.0f));
+		}
+		
+		return traces;
+	}
+
+	private ArrayList<XYTrace> extractFragmentTraces(FragmentIon[] primaryIonObjects, String sampleName, QuantitativeDIAData quantitativeData, StripeFileInterface file) throws IOException, SQLException {
+		Pair<ArrayList<XYTrace>, Double> tracesAndMaxY;
+		ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
+		TObjectDoubleHashMap<FragmentIon> targetIonObjects=new TObjectDoubleHashMap<FragmentIon>();
+		ArrayList<FragmentIon> offtargetIonObjects=new ArrayList<FragmentIon>();
+		
+		XYTrace quantitativePeaks=new XYTrace(quantitativeData.getMassArray(), quantitativeData.getIntensityArray(), GraphType.spectrum, sampleName);
+		Collections.sort(quantitativePeaks.getPoints());
+		Pair<double[], double[]> peaksArrays=quantitativePeaks.toArrays();
+		double[] targets=peaksArrays.x;
+		double[] intensities=peaksArrays.y;
+		
+		for (FragmentIon ion : primaryIonObjects) {
+			Optional<Integer> index=parameters.getFragmentTolerance().getIndex(targets, ion.getMass());
+			if (index.isPresent()) {
+				targetIonObjects.put(ion, intensities[index.get()]);
+			} else {
+				offtargetIonObjects.add(ion);
+			}
+		}
+		FragmentIon[] targetIonArray=targetIonObjects.keys(new FragmentIon[targetIonObjects.size()]);
+		FragmentIon[] offTargetIonArray=offtargetIonObjects.toArray(new FragmentIon[offtargetIonObjects.size()]);
+		
+		Range rangeInSec=quantitativeData.getRtScanRange();
+		Range rangeInMins=new Range(rangeInSec.getStart()/60f, rangeInSec.getStop()/60f);
+		ArrayList<FragmentScan> stripes=file.getStripes(quantitativeData.getPrecursorMZ(), rangeInSec.getStart()-RT_EXTRACTION_MARGIN_IN_SEC, rangeInSec.getStop()+RT_EXTRACTION_MARGIN_IN_SEC, false);
+		
+		ArrayList<Spectrum> downcastedSpectra=FragmentScan.downcastStripeToSpectrum(stripes);
+
+		HashMap<FragmentIon, XYTrace> targetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), targetIonArray, downcastedSpectra, null,
+				GraphType.boldline);
+		HashMap<FragmentIon, XYTrace> offTargetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), offTargetIonArray, downcastedSpectra,
+				null, GraphType.dashedline);
+
+		traces.addAll(targetFragmentTraceMap.values());
+		double maxY=0.0;
+		
+		for (Entry<FragmentIon, XYTrace> ionEntry : targetFragmentTraceMap.entrySet()) {
+			XYTrace trace=ionEntry.getValue();
+			XYPoint xy=trace.getMaxXYInRange(rangeInMins);
+			if (xy.getY()>maxY) {
+				maxY=xy.getY();
+			}
+			double intensity=targetIonObjects.get(ionEntry.getKey());
+			traces.add(new XYTrace(new double[] {xy.x}, new double[] {xy.y}, GraphType.text, trace.getName()+" ("+formatter.format(intensity).toLowerCase()+")"));
+		}
+		
+		traces.addAll(offTargetFragmentTraceMap.values());
+		
+		if (traces.size()>0) {
+			// extra 0 point in case there is no data shown (or all 0s)
+			traces.add(new XYTrace(new double[] {rangeInMins.getStart()-Float.MIN_VALUE, rangeInMins.getStart(), rangeInMins.getStop()}, new double[] {0.0, maxY, maxY},
+					GraphType.area, "Boundaries", new Color(102, 204, 255, 50), 4.0f));
+		}
+		
+		return traces;
+	}
+	
 }
