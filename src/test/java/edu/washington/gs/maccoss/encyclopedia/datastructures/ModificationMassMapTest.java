@@ -14,10 +14,10 @@ public class ModificationMassMapTest extends TestCase {
 		assertEquals(8.014199, map.getVariableMod('K'));
 		assertEquals(15.994915, map.getVariableMod('W'));
 
-		assertEquals(ModificationMassMap.MISSING, map.getVariableMod('n'));
+		assertEquals(ModificationMassMap.MISSING, map.getVariableMod(AminoAcidConstants.N_TERM));
 		assertEquals(-17.026549, map.getNTermMod('Q'));
 		assertEquals(-17.026549, map.getNTermMod('C'));
-		assertEquals(ModificationMassMap.MISSING, map.getNTermMod('n'));
+		assertEquals(ModificationMassMap.MISSING, map.getNTermMod(AminoAcidConstants.N_TERM));
 		assertEquals(42.010565, map.getProteinNTermMod('M'));
 		assertEquals(42.010565, map.getProteinNTermMod('Q'));
 		assertEquals("K=8.014199,W=15.994915,a=42.010565,nC=-17.026549,nQ=-17.026549", map.toString());

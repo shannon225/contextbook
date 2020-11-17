@@ -18,6 +18,11 @@ import gnu.trove.procedure.TCharDoubleProcedure;
 public class AminoAcidConstants {
 	public static final char[] AAs="ARNDCEQGHLIKMFPSTWYV".toCharArray();
 	
+	public static final char PROTEIN_C_TERM='z';
+	public static final char PROTEIN_N_TERM='a';
+	public static final char C_TERM='c';
+	public static final char N_TERM='n';
+	
 	// ordered by H C O N S
 	private final TCharDoubleHashMap fixedMods;
 	private final ModificationMassMap variableMods;

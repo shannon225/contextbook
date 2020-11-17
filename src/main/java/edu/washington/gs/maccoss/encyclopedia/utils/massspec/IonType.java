@@ -26,8 +26,8 @@ public enum IonType {
 	private static final String _1_2H_NL="+1+2H-NL";
 	
 	public static final Color oddColor=new Color(26, 148, 49);
-	public static final Color bcColor=new Color(226, 75, 59);
-	public static final Color yzColor=new Color(59, 109, 226);
+	public static final Color bcColor=new Color(59, 109, 226);
+	public static final Color yzColor=new Color(226, 75, 59);
 	public static final Color missingColor=Color.DARK_GRAY;
 	public static final BasicStroke primaryStroke=new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 	public static final BasicStroke secondaryStroke=new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);

@@ -56,9 +56,9 @@ public class OpenSwathTSVToLibraryConverter {
 			if (structuredSequence.indexOf('[')>=0) {
 				 // TPP:    n[43]PEPC[160]PEPM[147]PEPRc[16]
 				StringBuilder sb=new StringBuilder(structuredSequence);
-				final int nIndex=structuredSequence.indexOf('n');
+				final int nIndex=structuredSequence.indexOf(AminoAcidConstants.N_TERM);
 				if (nIndex>=0) sb=sb.deleteCharAt(nIndex);
-				final int cIndex=sb.toString().indexOf('c'); // need to get index in possibly-modified string!
+				final int cIndex=sb.toString().indexOf(AminoAcidConstants.C_TERM); // need to get index in possibly-modified string!
 				if (cIndex>=0) sb=sb.deleteCharAt(cIndex);
 				return sb.toString();
 				
@@ -67,9 +67,9 @@ public class OpenSwathTSVToLibraryConverter {
 				StringTokenizer st=new StringTokenizer(structuredSequence, ".");
 				return st.nextToken();
 				
-			} else if (structuredSequence.indexOf('n')>=0) {
+			} else if (structuredSequence.indexOf(AminoAcidConstants.N_TERM)>=0) {
 				 // TPP:    n[43]PEPC[160]PEPM[147]PEPRc[16] (but no mods)
-				return structuredSequence.replace('n', ' ').replace('c', ' ').trim();
+				return structuredSequence.replace(AminoAcidConstants.N_TERM, ' ').replace(AminoAcidConstants.C_TERM, ' ').trim();
 				
 			} else {
 				return structuredSequence;

@@ -516,8 +516,8 @@ public final class DigestionEnzyme {
 	 */
 	public FastaPeptideEntry adjustForFixed(FastaEntryInterface protein, String peptide, TCharDoubleHashMap fixedMods, Optional<AlleleVariant> maybeVariant) {
 		StringBuilder sb=new StringBuilder();
-		if (fixedMods.contains(ModificationMassMap.N_TERM)) {
-			double mass=fixedMods.get(ModificationMassMap.N_TERM);
+		if (fixedMods.contains(AminoAcidConstants.N_TERM)) {
+			double mass=fixedMods.get(AminoAcidConstants.N_TERM);
 			sb.append('[');
 			sb.append(mass);
 			sb.append(']');
@@ -536,8 +536,8 @@ public final class DigestionEnzyme {
 			}
 		}
 
-		if (fixedMods.contains(ModificationMassMap.C_TERM)) {
-			double mass=fixedMods.get(ModificationMassMap.C_TERM);
+		if (fixedMods.contains(AminoAcidConstants.C_TERM)) {
+			double mass=fixedMods.get(AminoAcidConstants.C_TERM);
 			sb.append('[');
 			sb.append(mass);
 			sb.append(']');

@@ -12,11 +12,6 @@ public class ModificationMassMap {
 	private static final String NO_MODIFICATIONS="-";
 	private static final String MOD_DELIMINATOR=",";
 	private static final String EQUATION_DELIMINATOR="=";
-	
-	public static final char PROTEIN_C_TERM='z';
-	public static final char PROTEIN_N_TERM='a';
-	public static final char C_TERM='c';
-	public static final char N_TERM='n';
 
 	public static final double MISSING=0.0;
 
@@ -45,13 +40,13 @@ public class ModificationMassMap {
 						if (aa.length()==1) {
 							primaryMassMap.put(aa.charAt(0), mass);
 						} else if (aa.length()==2) {
-							if (aa.charAt(0)==N_TERM) {
+							if (aa.charAt(0)==AminoAcidConstants.N_TERM) {
 								ntermToMassMap.put(aa.charAt(1), mass);
-							} else if (aa.charAt(0)==C_TERM) {
+							} else if (aa.charAt(0)==AminoAcidConstants.C_TERM) {
 								ctermToMassMap.put(aa.charAt(1), mass);
-							} else if (aa.charAt(0)==PROTEIN_N_TERM) {
+							} else if (aa.charAt(0)==AminoAcidConstants.PROTEIN_N_TERM) {
 								proNtermToMassMap.put(aa.charAt(1), mass);
-							} else if (aa.charAt(0)==PROTEIN_C_TERM) {
+							} else if (aa.charAt(0)==AminoAcidConstants.PROTEIN_C_TERM) {
 								proCtermToMassMap.put(aa.charAt(1), mass);
 							}
 						} else {
@@ -93,7 +88,7 @@ public class ModificationMassMap {
 			@Override
 			public boolean execute(char arg0, double arg1) {
 				StringBuilder sb=new StringBuilder();
-				sb.append(N_TERM);
+				sb.append(AminoAcidConstants.N_TERM);
 				sb.append(arg0);
 				sb.append(EQUATION_DELIMINATOR);
 				sb.append(arg1);
@@ -105,7 +100,7 @@ public class ModificationMassMap {
 			@Override
 			public boolean execute(char arg0, double arg1) {
 				StringBuilder sb=new StringBuilder();
-				sb.append(C_TERM);
+				sb.append(AminoAcidConstants.C_TERM);
 				sb.append(arg0);
 				sb.append(EQUATION_DELIMINATOR);
 				sb.append(arg1);
@@ -117,7 +112,7 @@ public class ModificationMassMap {
 			@Override
 			public boolean execute(char arg0, double arg1) {
 				StringBuilder sb=new StringBuilder();
-				sb.append(PROTEIN_N_TERM);
+				sb.append(AminoAcidConstants.PROTEIN_N_TERM);
 				sb.append(arg0);
 				sb.append(EQUATION_DELIMINATOR);
 				sb.append(arg1);
@@ -129,7 +124,7 @@ public class ModificationMassMap {
 			@Override
 			public boolean execute(char arg0, double arg1) {
 				StringBuilder sb=new StringBuilder();
-				sb.append(PROTEIN_C_TERM);
+				sb.append(AminoAcidConstants.PROTEIN_C_TERM);
 				sb.append(arg0);
 				sb.append(EQUATION_DELIMINATOR);
 				sb.append(arg1);
@@ -157,7 +152,7 @@ public class ModificationMassMap {
 
 	public double getNTermMod(char c) {
 		if (isEmpty==true) return MISSING;
-		double value=primaryMassMap.get('n');
+		double value=primaryMassMap.get(AminoAcidConstants.N_TERM);
 		if (value!=MISSING) return value;
 
 		return ntermToMassMap.get(c);
@@ -165,7 +160,7 @@ public class ModificationMassMap {
 
 	public double getProteinNTermMod(char c) {
 		if (isEmpty==true) return MISSING;
-		double value=primaryMassMap.get('a');
+		double value=primaryMassMap.get(AminoAcidConstants.PROTEIN_N_TERM);
 		if (value!=MISSING) return value;
 
 		return proNtermToMassMap.get(c);
@@ -173,7 +168,7 @@ public class ModificationMassMap {
 
 	public double getCTermMod(char c) {
 		if (isEmpty==true) return MISSING;
-		double value=primaryMassMap.get('c');
+		double value=primaryMassMap.get(AminoAcidConstants.C_TERM);
 		if (value!=MISSING) return value;
 
 		return ctermToMassMap.get(c);
@@ -181,7 +176,7 @@ public class ModificationMassMap {
 
 	public double getProteinCTermMod(char c) {
 		if (isEmpty==true) return MISSING;
-		double value=primaryMassMap.get('z');
+		double value=primaryMassMap.get(AminoAcidConstants.PROTEIN_C_TERM);
 		if (value!=MISSING) return value;
 
 		return proCtermToMassMap.get(c);

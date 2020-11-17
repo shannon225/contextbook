@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
@@ -22,18 +23,112 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
+import gnu.trove.map.hash.TCharDoubleHashMap;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
+import gnu.trove.procedure.TCharDoubleProcedure;
+import gnu.trove.procedure.TObjectDoubleProcedure;
 
 public class MaxquantMSMSConverter {
 	private static final String VALUE_LIST_DELIMITER = ";";
+	
+	public static void main(String[] args) {
+		File tsvFile=new File("/Users/searleb/Documents/swaney/CID_vs_HCD_enzymes/CombinedLibrarySearch_MQ/CID/txt/msms.txt");
+		File fastaFile=new File("/Users/searleb/Documents/swaney/CID_vs_HCD_enzymes/Uniprot_human_9606_canonical_020320.fasta");
+		File libraryFile=new File("/Users/searleb/Documents/swaney/CID_vs_HCD_enzymes/CombinedLibrarySearch_MQ/CID/txt/msms.dlib");
+		convertFromMSMSTSV(tsvFile, fastaFile, libraryFile, SearchParameterParser.getDefaultParametersObject());
+	}
+	
+	/**
+	 * FIXME FRAGILE! FIGURE OUT HOW THEY REALLY ANNOTATE MODS BEYOND THESE
+	 */
+	public static final TObjectDoubleHashMap<String> modMap=new TObjectDoubleHashMap<>();
+	public static void initPTMs() {
+		modMap.clear();
+		modMap.put("ac", 42.010565);
+		modMap.put("cam", 57.0214635);
+		modMap.put("p", 79.966331);
+		modMap.put("ph", 79.966331);
+		modMap.put("me", 14.015650);
+		modMap.put("ub", 114.042927);
+		modMap.put("ox", 15.994915);
+		modMap.put("Phospho (STY)", 79.966331);
+		modMap.put("Oxidation (M)", 15.994915);
+		modMap.put("Acetyl (Protein N-term)", 42.010565);
+		modMap.put("Acetyl (N-term)", 42.010565);
+		modMap.put("Acetyl (K)", 42.010565);
+		modMap.put("Carbamidomethyl (C)", 57.0214635);
+	}
+	
+	private static TCharDoubleHashMap checkForFixedModsFromMSMS(File tsvFile, SearchParameters parameters) {
+		File summaryFile=new File(tsvFile.getParentFile(), "summary.txt");
+		if (summaryFile.exists()&&summaryFile.isFile()&&summaryFile.canRead()) {
+			TCharDoubleHashMap fixedMods=new TCharDoubleHashMap();
+			TableParserMuscle muscle=new TableParserMuscle() {
+				@Override
+				public void processRow(Map<String, String> row) {
+					String fixedModText=row.get("Fixed modifications");
+					if (fixedModText!=null) {
+						StringTokenizer st=new StringTokenizer(fixedModText, ";");
+						while (st.hasMoreTokens()) {
+							String name=st.nextToken();
+							if (modMap.contains(name)) {
+								double mass=modMap.get(name);
+								
+								int startIndex=name.lastIndexOf('(')+1;
+								String aas=name.substring(startIndex, name.lastIndexOf(')'));
+								
+								for (char aa : aas.toCharArray()) {
+									fixedMods.put(aa, mass);
+								}
+							}
+						}
+					}
+					
+					// we don't do anything with this section of the file -- it's just to add log messages for expected errors
+					String variableModText=row.get("Variable modifications");
+					if (variableModText!=null) {
+						StringTokenizer st=new StringTokenizer(variableModText, ";");
+						while (st.hasMoreTokens()) {
+							String name=st.nextToken();
+							if (!modMap.contains(name)) {
+								Logger.errorLine("Unexpected PTM from MaxQuant: ["+name+"], sorry peptides modified in this way will not be parsed correctly!");
+							}
+						}
+					}
+				}
+				
+				@Override
+				public void cleanup() {
+				}
+			};
+			TableParser.parseTSV(summaryFile, muscle);
+			
+			return fixedMods;
+		} else {
+			Logger.errorLine("Could not find MaxQuant summary file in "+tsvFile.getParentFile().getAbsolutePath()+", proceeding without fixed PTMs.");
+			return parameters.getAAConstants().getFixedMods();
+		}
+	}
 
 	public static LibraryFile convertFromMSMSTSV(File tsvFile, File fastaFile, File libraryFile, SearchParameters parameters) {
+		initPTMs();
+		
+		TCharDoubleHashMap fixedMods=checkForFixedModsFromMSMS(tsvFile, parameters);
+		fixedMods.forEachEntry(new TCharDoubleProcedure() {
+			@Override
+			public boolean execute(char a, double b) {
+				System.out.println("Found: "+a+" --> "+b);
+				return true;
+			}
+		});
+		
 		AminoAcidConstants aaConstants=parameters.getAAConstants();
 		try {
 			final HashMap<String, ScoredObject<ImmutablePeptideEntry>> peptides=new HashMap<>();
 			TableParserMuscle muscle=new TableParserMuscle() {
 				@Override
 				public void processRow(Map<String, String> row) {
-					String peptideModSeq=parseMods(row.get("Modified sequence"));
+					String peptideModSeq=parseMods(row.get("Modified sequence"), fixedMods);
 					byte charge=Byte.parseByte(row.get("Charge"));
 					float[] intensities=parseFloats(row.get("Intensities"));
 					double[] masses=parseDoubles(row.get("Masses"));
@@ -88,21 +183,46 @@ public class MaxquantMSMSConverter {
 		}
 	}
 	
+	private static class StringWrapper {
+		String s;
+		public StringWrapper(String s) {
+			this.s = s;
+		}
+	}
+	
 	/**
-	 * FIXME FRAGILE! FIGURE OUT HOW THEY REALLY ANNOTATE MODS BEYOND THESE
 	 * @param seq
 	 * @return
 	 */
-	public static String parseMods(String seq) {
+	public static String parseMods(String seq, TCharDoubleHashMap fixedMods) {
 		seq=seq.replace("_", "");
-		seq=seq.replace("(ac)", "[42.010565]");
-		seq=seq.replace("(cam)", "[57.0214635]");
-		seq=seq.replace("(p)", "[79.966331]");
-		seq=seq.replace("(ph)", "[79.966331]");
-		seq=seq.replace("(me)", "[14.015650]");
-		seq=seq.replace("(ub)", "[114.042927]");
-		seq=seq.replace("(ox)", "[15.994915]");
-		return seq;
+
+		// forEachEntry is threadsafe, so this is dumb, but necessary to modify the "seq" object
+		final StringWrapper seqWrapper=new StringWrapper(seq);
+		
+		modMap.forEachEntry(new TObjectDoubleProcedure<String>() {
+			@Override
+			public boolean execute(String a, double b) {
+				seqWrapper.s=seqWrapper.s.replace("("+a+")", "["+b+"]");
+				return true;
+			}
+		});
+		
+		// fixed PTMs get added second, after the longer strings get adjusted
+		fixedMods.forEachEntry(new TCharDoubleProcedure() {
+			@Override
+			public boolean execute(char a, double b) {
+				if (a==AminoAcidConstants.N_TERM) {
+					seqWrapper.s="["+b+"]"+seqWrapper.s;
+				} else if (a==AminoAcidConstants.C_TERM) {
+					seqWrapper.s=seqWrapper.s+"["+b+"]";
+				} else {
+					seqWrapper.s=seqWrapper.s.replace(a+"", a+"["+b+"]");
+				}
+				return true;
+			}
+		});
+		return seqWrapper.s;
 	}
 
 	public static LibraryFile processPeptideEntries(String sourceFile, File fastaFile, File libraryFile, SearchParameters parameters, AminoAcidConstants aaConstants,
