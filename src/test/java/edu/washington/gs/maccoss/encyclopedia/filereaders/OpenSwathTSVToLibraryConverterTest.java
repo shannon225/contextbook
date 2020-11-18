@@ -1,16 +1,16 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import edu.washington.gs.maccoss.encyclopedia.tests.AbstractFileConverterTest;
-import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.StringTokenizer;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
+
+import edu.washington.gs.maccoss.encyclopedia.tests.AbstractFileConverterTest;
+import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 
 public class OpenSwathTSVToLibraryConverterTest extends AbstractFileConverterTest {
 	private static final String NAME = "OpenSwathTSVToLibraryConverterTest";
@@ -25,12 +25,9 @@ public class OpenSwathTSVToLibraryConverterTest extends AbstractFileConverterTes
 		return LibraryFile.DLIB;
 	}
 
-	@Test(expected = EncyclopediaException.class)
+	@Test
 	public void testParseUnimodMods() {
-		// The impl doesn't support this form when mods are present:
-		// Unimod: .(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)
-
-		OpenSwathTSVToLibraryConverter.parseMods(".(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)");
+		assertEquals("P[+42.010565]EPC[+57.021464]PEPM[+15.994915]PEPR[-0.984016]", OpenSwathTSVToLibraryConverter.parseMods(".(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)"));
 	}
 
 	@Test

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -18,6 +19,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PTMMap.PostTranslationalModification;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
@@ -28,6 +30,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TCharDoubleHashMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.procedure.TObjectProcedure;
 
 public class OpenSwathTSVToLibraryConverter {
 
@@ -47,11 +51,43 @@ public class OpenSwathTSVToLibraryConverter {
 	}
 	
 	static String parseMods(String structuredSequence) {
-		
 		if (structuredSequence.indexOf('(')>=0) {
-			 // Unimod: .(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)
-			// FIXME Parsing Unimod inside of OpenSwath TSVs isn't supported yet!
-			throw new EncyclopediaException("Parsing Unimod inside of OpenSwath TSVs isn't supported yet!");
+			structuredSequence=structuredSequence.replace(".", "");
+			// Unimod: .(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)
+
+			char[] ca=structuredSequence.toCharArray();
+			
+			ArrayList<String> aas=new ArrayList<String>();
+			for (int i = 0; i < ca.length; i++) {
+				if (ca[i]=='(') {
+					StringBuilder sb=new StringBuilder();
+					i++;
+					while (ca[i]!=')') {
+						sb.append(ca[i]);
+						i++;
+					}
+					if (aas.size()==0) {
+						// handling of n-termini mods assumes you can't have multiple []s in a row
+						i++;
+						aas.add(Character.toString(ca[i]));
+					}
+					
+					PostTranslationalModification ptm=PTMMap.getPTM(sb.toString().toUpperCase());
+					double modificationMass = ptm.getDeltaMass();
+					
+					String aaString=aas.get(aas.size()-1);
+					aas.set(aas.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
+				} else {
+					aas.add(Character.toString(ca[i]));
+				}
+			}
+			
+			StringBuilder sb=new StringBuilder();
+			for (String aa : aas) {
+				sb.append(aa);
+			}
+			return sb.toString();
+			
 		} else {
 			if (structuredSequence.indexOf('[')>=0) {
 				 // TPP:    n[43]PEPC[160]PEPM[147]PEPRc[16]
@@ -145,34 +181,41 @@ public class OpenSwathTSVToLibraryConverter {
 	public static LibraryFile convertFromOpenSwathTSV(File tsvFile, File fastaFile, File libraryFile, SearchParameters parameters) {
 		AminoAcidConstants aaConstants=parameters.getAAConstants();
 		try {
-			final ArrayList<ImmutablePeptideEntry> peptides=new ArrayList<ImmutablePeptideEntry>();
+			final ArrayList<ImmutablePeptideEntry> peptides=new ArrayList<>();
+			final TIntObjectHashMap<PeptideEntry> peptideMap=new TIntObjectHashMap<>();
 			TableParserMuscle muscle=new TableParserMuscle() {
-				private PeptideEntry lastPeptide=null;
-				private String lastGroup=null;
 				@Override
 				public void processRow(Map<String, String> row) {
-					int decoy=Integer.parseInt(row.get("decoy"));
-					if (decoy!=0) return;
+					String decoy=getFromMap(row, "decoy", "Decoy");
+					if (decoy!=null&&Integer.parseInt(decoy)!=0) return;
 					
-					String group=row.get("transition_group_id");
+					int group=Integer.parseInt(getFromMap(row, "transition_group_id", "TransitionGroupId"));
 					String peptideModSeq=parseMods(getFromMap(row, "ModifiedPeptideSequence", "FullUniModPeptideName", "FullPeptideName", "ModifiedSequence", "PeptideSequence", "Sequence", "StrippedSequence"));
 					byte charge=Byte.parseByte(row.get("PrecursorCharge"));
 					double productMz=Double.parseDouble(getFromMap(row, "ProductMz", "FragmentMz"));
 					float libraryIntensity=Float.parseFloat(getFromMap(row, "LibraryIntensity", "RelativeFragmentIntensity"));
 					float iRT=Float.parseFloat(getFromMap(row, "NormalizedRetentionTime", "RetentionTime", "Tr_recalibrated", "iRT", "RetentionTimeCalculatorScore"));
-					
-					
-					if (!group.equals(lastGroup)) {
-						if (lastPeptide!=null) peptides.add(new ImmutablePeptideEntry(lastPeptide));
-						lastGroup=group;
-						lastPeptide=new PeptideEntry(peptideModSeq, charge, iRT);
+
+					PeptideEntry thisPeptide=peptideMap.get(group);
+					if (thisPeptide==null) {
+						thisPeptide=new PeptideEntry(peptideModSeq, charge, iRT);
+						peptideMap.put(group, thisPeptide);
 					}
-					lastPeptide.addPeak(new Peak(productMz, libraryIntensity));
+					
+					if (libraryIntensity>0) {
+						thisPeptide.addPeak(new Peak(productMz, libraryIntensity));
+					}
 				}
 				
 				@Override
 				public void cleanup() {
-					if (lastPeptide!=null) peptides.add(new ImmutablePeptideEntry(lastPeptide));
+					peptideMap.forEachValue(new TObjectProcedure<PeptideEntry>() {
+						@Override
+						public boolean execute(PeptideEntry pep) {
+							peptides.add(new ImmutablePeptideEntry(pep));
+							return true;
+						}
+					});
 				}
 			};
 			

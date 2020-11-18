@@ -450,14 +450,14 @@ public class SearchPanel extends JPanel {
 		convertMenu.add(convertTraML);
 
 		// FIXME NOT QUITE WORKING YET
-//		JMenuItem convertOStsv=new JMenuItem("Convert OpenSWATH tsv to Library", convertDBIcon);
-//		convertOStsv.addActionListener(new ActionListener() {
-//			@Override
-//			public void actionPerformed(ActionEvent e) {
-//				SearchPanelUtilities.convertOpenSwathToELIB(SearchPanel.this, getVisibleTab().getParameters());
-//			}
-//		});
-//		convertMenu.add(convertOStsv);
+		JMenuItem convertOStsv=new JMenuItem("Convert OpenSWATH tsv to Library", convertDBIcon);
+		convertOStsv.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertOpenSwathToELIB(SearchPanel.this, getVisibleTab().getParameters());
+			}
+		});
+		convertMenu.add(convertOStsv);
 		
 		convertMenu.addSeparator();
 		

@@ -62,6 +62,10 @@ public class PTMMap {
 		return ptm;
 	}
 
+	/**
+	 * @param accession Note, requires complete capitalization! "UNIMOD:4" is ok but "UniMod:4" is not!
+	 * @return 
+	 */
 	public static PostTranslationalModification getPTM(String accession) {
 		PostTranslationalModification ptm=cache.get(accession);
 		if (ptm!=null) return ptm;
