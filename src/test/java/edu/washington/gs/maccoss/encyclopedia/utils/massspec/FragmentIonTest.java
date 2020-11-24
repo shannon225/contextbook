@@ -34,6 +34,8 @@ public class FragmentIonTest extends TestCase {
 		
 		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, parameters.getAAConstants());
 		Ion[] ions=model.getPrimaryIonObjects(parameters.getFragType(), charge, true);
+		assertEquals(44, ions.length);
+		ions=model.getPrimaryIonObjects(parameters.getFragType(), charge, false);
 		assertEquals(22, ions.length);
 
 		Range precursorIsolationRange=new Range(628.535583496094f, 640.541076660156f);
@@ -43,6 +45,6 @@ public class FragmentIonTest extends TestCase {
 		precursorIsolationRange=new Range(616.535583496094f, 640.541076660156f);
 		modificationSpecificIons=model.getModificationSpecificIonObjects(precursorIsolationRange, parameters.getFragType(), charge, true);
 		assertTrue(modificationSpecificIons.isPresent());
-		assertEquals(12, modificationSpecificIons.get().length);
+		assertEquals(24, modificationSpecificIons.get().length);
 	}
 }
