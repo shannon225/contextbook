@@ -13,6 +13,11 @@ public class IndexedIonType {
 	}
 	
 	@Override
+	public String toString() {
+		return IonType.toString(type, index);
+	}
+	
+	@Override
 	public boolean equals(Object obj) {
 		if (obj==null||!(obj instanceof IndexedIonType)) return false;
 		IndexedIonType o=(IndexedIonType)obj;

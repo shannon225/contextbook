@@ -93,7 +93,7 @@ public class Thesaurus {
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("Thesaurus version "+ThesaurusOneScoringFactory.version);
+			Logger.logLine("Thesaurus version "+ProgramType.getGlobalVersion().toString());
 			System.exit(1);
 			
 		} else {
@@ -132,7 +132,7 @@ public class Thesaurus {
 				PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, parameters.getLocalizingModification().get(), parameters);
 				LibraryScoringFactory factory=new ThesaurusOneScoringFactory(parameters, localizer, new LinkedBlockingQueue<ModificationLocalizationData>());
 				
-				Logger.logLine("Thesaurus version "+factory.getVersion());
+				Logger.logLine("Thesaurus version "+ProgramType.getGlobalVersion().toString());
 	
 				Logger.logLine("Parameters:");
 				Logger.logLine(" "+Encyclopedia.INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());

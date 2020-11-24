@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -179,6 +178,7 @@ public class OpenSwathTSVToLibraryConverter {
 	}
 
 	public static LibraryFile convertFromOpenSwathTSV(File tsvFile, File fastaFile, File libraryFile, SearchParameters parameters) {
+		String sourceFile = tsvFile.getName();
 		AminoAcidConstants aaConstants=parameters.getAAConstants();
 		try {
 			final ArrayList<ImmutablePeptideEntry> peptides=new ArrayList<>();
@@ -198,7 +198,7 @@ public class OpenSwathTSVToLibraryConverter {
 
 					PeptideEntry thisPeptide=peptideMap.get(group);
 					if (thisPeptide==null) {
-						thisPeptide=new PeptideEntry(peptideModSeq, charge, iRT);
+						thisPeptide=new PeptideEntry(peptideModSeq, charge, iRT, sourceFile);
 						peptideMap.put(group, thisPeptide);
 					}
 					
@@ -221,7 +221,7 @@ public class OpenSwathTSVToLibraryConverter {
 			
 			TableParser.parseTSV(tsvFile, muscle);
 
-			return processPeptideEntries(tsvFile.getName(), fastaFile, libraryFile, parameters, aaConstants, peptides);
+			return processPeptideEntries(sourceFile, fastaFile, libraryFile, parameters, aaConstants, peptides);
 
 		} catch (Exception e) {
 			Logger.errorLine("Error parsing OpenSwath TSV:");
@@ -241,7 +241,7 @@ public class OpenSwathTSVToLibraryConverter {
 				accessions.add(PeptideUtils.getPeptideSeq(peptide.peptideModSeq));
 			}
 			
-			LibraryEntry entry=new LibraryEntry(sourceFile, accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, 0.0f, peptide.masses, peptide.intensities, aaConstants);
+			LibraryEntry entry=new LibraryEntry(peptide.sourceFile, accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, 0.0f, peptide.masses, peptide.intensities, aaConstants);
 			entries.add(entry);
 		}
 		Logger.logLine("Found "+entries.size()+" total peptide entries");

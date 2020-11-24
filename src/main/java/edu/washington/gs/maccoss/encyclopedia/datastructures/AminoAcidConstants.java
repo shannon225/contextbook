@@ -306,6 +306,12 @@ public class AminoAcidConstants {
 					}
 				}
 
+				if (aa == 'N' || aa == 'Q') {
+					if (tolerance.equals(1, modificationMass)) { // deamidation
+						return MassConstants.oh2-MassConstants.nh3;
+					}
+				}
+
 				if (aa == 'Q') {
 					if (tolerance.equals(-17.0, modificationMass)) { // pyro-glu
 						return -17.026549;

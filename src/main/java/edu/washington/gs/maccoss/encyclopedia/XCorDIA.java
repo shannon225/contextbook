@@ -107,7 +107,7 @@ public class XCorDIA {
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("XCorDIA version "+XCorDIAOneScoringFactory.version);
+			Logger.logLine("XCorDIA version "+ProgramType.getGlobalVersion().toString());
 			System.exit(1);
 			
 		} else {
@@ -133,7 +133,7 @@ public class XCorDIA {
 				
 				PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 				XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(parameters);
-				Logger.logLine("XCorDIA version "+factory.getVersion());
+				Logger.logLine("XCorDIA version "+ProgramType.getGlobalVersion().toString());
 	
 				ArrayList<FastaPeptideEntry> targets;
 				if (arguments.containsKey(TARGET_FASTA_TAG)) {

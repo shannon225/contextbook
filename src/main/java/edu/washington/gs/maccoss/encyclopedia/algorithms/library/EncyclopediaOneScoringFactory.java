@@ -18,7 +18,6 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsC
 import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVConsumer;
 
 public class EncyclopediaOneScoringFactory implements LibraryScoringFactory {
-	public static final String version="0.4.2";
 	private final SearchParameters parameters;
 
 	public EncyclopediaOneScoringFactory(SearchParameters parameters) {
@@ -48,10 +47,5 @@ public class EncyclopediaOneScoringFactory implements LibraryScoringFactory {
 	@Override
 	public SearchParameters getParameters() {
 		return parameters;
-	}
-
-	@Override
-	public String getVersion() {
-		return version;
 	}
 }

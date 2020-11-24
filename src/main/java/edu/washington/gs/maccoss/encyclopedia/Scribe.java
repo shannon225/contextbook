@@ -102,7 +102,7 @@ public class Scribe {
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("Scribe version "+ScribeScoringFactory.version);
+			Logger.logLine("Scribe version "+ProgramType.getGlobalVersion().toString());
 			System.exit(1);
 			
 		} else {
@@ -131,7 +131,7 @@ public class Scribe {
 				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 				ScribeScoringFactory factory=new ScribeScoringFactory(parameters);
 				
-				Logger.logLine("Scribe version "+factory.getVersion());
+				Logger.logLine("Scribe version "+ProgramType.getGlobalVersion().toString());
 	
 				Logger.logLine("Parameters:");
 				Logger.logLine(" "+INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());

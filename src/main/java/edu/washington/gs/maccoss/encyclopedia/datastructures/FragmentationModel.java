@@ -191,39 +191,46 @@ public class FragmentationModel {
 	public FragmentIon[] getPrimaryIonObjects(FragmentationType type, byte precursorCharge, boolean useNeutralLosses, boolean forQuant) {
 		switch (type) {
 			case HCD:
+				FragmentIon[] yIonsHCD=getYIons(useNeutralLosses);
 				if (forQuant) {
 					// include B ions too
-					FragmentIon[] yIonsCID=getYIons(useNeutralLosses);
-					FragmentIon[] bIonsCID=getBIons(useNeutralLosses);
-					if (precursorCharge>2) {
-						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), bIonsCID, getPlus2s(bIonsCID));
+					FragmentIon[] bIonsHCD=getBIons(useNeutralLosses);
+					if (precursorCharge>1) {
+						return concatAndSort(yIonsHCD, getPlus2s(yIonsHCD), bIonsHCD, getPlus2s(bIonsHCD));
 					} else {
-						return concatAndSort(bIonsCID, yIonsCID);
+						return concatAndSort(bIonsHCD, yIonsHCD);
 					}
 				} else {
-					FragmentIon[] yIons=getYIons(useNeutralLosses);
 					if (precursorCharge>2) {
-						return concatAndSort(yIons, getPlus2s(yIons));
+						return concatAndSort(yIonsHCD, getPlus2s(yIonsHCD));
 					} else {
-						return yIons;
+						return yIonsHCD;
 					}
 				}
 			case CID:
 				FragmentIon[] yIonsCID=getYIons(useNeutralLosses);
 				FragmentIon[] bIonsCID=getBIons(useNeutralLosses);
-				if (precursorCharge>2) {
-					return concatAndSort(yIonsCID, getPlus2s(yIonsCID), bIonsCID, getPlus2s(bIonsCID));
+				if (forQuant) {
+					if (precursorCharge>1) {
+						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), bIonsCID, getPlus2s(bIonsCID));
+					} else {
+						return concatAndSort(bIonsCID, yIonsCID);
+					}
 				} else {
-					return concatAndSort(bIonsCID, yIonsCID);
+					if (precursorCharge>2) {
+						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), bIonsCID, getPlus2s(bIonsCID));
+					} else {
+						return concatAndSort(bIonsCID, yIonsCID);
+					}
 				}
 			case ETD:
-				FragmentIon[] cIonsCID=getCIons(useNeutralLosses);
-				FragmentIon[] zIonsCID=getZIons(useNeutralLosses);
-				FragmentIon[] zp1IonsCID=getZp1Ions(useNeutralLosses);
-				if (precursorCharge>3) { // one charge gets quenched in fragmentation
-					return concatAndSort(cIonsCID, getPlus2s(cIonsCID), zIonsCID, getPlus2s(zIonsCID), zp1IonsCID, getPlus2s(zp1IonsCID));
+				FragmentIon[] cIonsETD=getCIons(useNeutralLosses);
+				FragmentIon[] zIonsETD=getZIons(useNeutralLosses);
+				FragmentIon[] zp1IonsETD=getZp1Ions(useNeutralLosses);
+				if (precursorCharge>2) { // one charge gets quenched in fragmentation
+					return concatAndSort(cIonsETD, getPlus2s(cIonsETD), zIonsETD, getPlus2s(zIonsETD), zp1IonsETD, getPlus2s(zp1IonsETD));
 				} else {
-					return concatAndSort(cIonsCID, zIonsCID, zp1IonsCID);
+					return concatAndSort(cIonsETD, zIonsETD, zp1IonsETD);
 				}
 			default:
 				throw new EncyclopediaException("Unknown fragmentation type ["+type+"]");

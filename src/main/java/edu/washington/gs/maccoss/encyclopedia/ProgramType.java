@@ -16,6 +16,11 @@ public enum ProgramType {
 	}
 	
 	public Version getVersion() {
+		Version localVersion = getGlobalVersion();
+		return localVersion;
+	}
+
+	public static Version getGlobalVersion() {
 		String version = ProgramType.class.getPackage().getImplementationVersion();
 		Version localVersion=new Version(version);
 		return localVersion;

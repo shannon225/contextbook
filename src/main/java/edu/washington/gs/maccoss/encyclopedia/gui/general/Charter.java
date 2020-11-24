@@ -110,7 +110,7 @@ public class Charter {
 						1136, 1661, 1544, 1620, 1210, 1770, 1297, 2086, 1635, 1117, 1432, 1652, 2143, 3766, 5043, 2124, 54156, 1310, 1240},
 				GraphType.dashedline, "Trace4");
 
-		ChartPanel chart=getChart("M/Z", "Intensity", false, trace, trace2, trace3);
+		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, trace, trace2, trace3);
 		chart=getChart("M/Z", "Intensity", false, trace4);
 		launchChart(chart, "Title!");
 
@@ -248,7 +248,7 @@ public class Charter {
 		}
 	}
 
-	public static ChartPanel getChart(String xAxisName, String yAxisName, boolean displayLegend, XYZTrace dataset) {
+	public static ExtendedChartPanel getChart(String xAxisName, String yAxisName, boolean displayLegend, XYZTrace dataset) {
 		NumberAxis xAxis=new NumberAxis(xAxisName);
 		xAxis.setAutoRangeIncludesZero(false);
 		NumberAxis yAxis=new NumberAxis(yAxisName);
@@ -277,7 +277,7 @@ public class Charter {
 		rangeAxis.setLabelFont(font2);
 		rangeAxis.setTickLabelFont(font);
 
-		ChartPanel chartPanel=new ChartPanel(chart, false);
+		ExtendedChartPanel chartPanel=new ExtendedChartPanel(chart, false, 1.0f);
 		if (!displayLegend) {
 			chartPanel.getChart().removeLegend();
 		} else {
@@ -292,31 +292,31 @@ public class Charter {
 		return chartPanel;
 	}
 
-	public static ChartPanel getChart(LibraryEntry trace) {
-		ChartPanel chart=getChart("M/Z", "Intensity", false, trace);
+	public static ExtendedChartPanel getChart(LibraryEntry trace) {
+		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, trace);
 		chart.getChart().setTitle(trace.getSpectrumName());
 		return chart;
 	}
 
-	public static ChartPanel getChart(Spectrum trace) {
-		ChartPanel chart=getChart("M/Z", "Intensity", false, new XYTrace(trace));
+	public static ExtendedChartPanel getChart(Spectrum trace) {
+		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, new XYTrace(trace));
 		chart.getChart().setTitle(trace.getSpectrumName());
 		return chart;
 	}
 
-	public static ChartPanel getChart(LibraryEntry trace, String title) {
-		ChartPanel chart=getChart("M/Z", "Intensity", false, trace);
+	public static ExtendedChartPanel getChart(LibraryEntry trace, String title) {
+		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, trace);
 		chart.getChart().setTitle(title);
 		return chart;
 	}
 
-	public static ChartPanel getChart(Spectrum trace, String title) {
-		ChartPanel chart=getChart("M/Z", "Intensity", false, new XYTrace(trace));
+	public static ExtendedChartPanel getChart(Spectrum trace, String title) {
+		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, new XYTrace(trace));
 		chart.getChart().setTitle(title);
 		return chart;
 	}
 
-	public static ChartPanel getChart(Distribution dist, Range range) {
+	public static ExtendedChartPanel getChart(Distribution dist, Range range) {
 		int n=100;
 
 		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
@@ -334,11 +334,11 @@ public class Charter {
 		BarRenderer.setDefaultShadowsVisible(false);
 	}
 
-	public static ChartPanel getBarChart(String title, String xAxis, String yAxis, String[] categories, float[] values) {
+	public static ExtendedChartPanel getBarChart(String title, String xAxis, String yAxis, String[] categories, float[] values) {
 		return getBarChart(title, xAxis, yAxis, categories, values, false);
 	}
 	
-	public static ChartPanel getBarChart(String title, String xAxis, String yAxis, String[] categories, float[] values, boolean isStacked) {
+	public static ExtendedChartPanel getBarChart(String title, String xAxis, String yAxis, String[] categories, float[] values, boolean isStacked) {
 		assert (categories.length==values.length);
 
 		DefaultCategoryDataset dataset=new DefaultCategoryDataset();
@@ -348,7 +348,7 @@ public class Charter {
 		return getBarChart(title, xAxis, yAxis, dataset, isStacked);
 	}
 
-	public static ChartPanel getBarChart(String title, String xAxis, String yAxis, DefaultCategoryDataset dataset, boolean isStacked) {
+	public static ExtendedChartPanel getBarChart(String title, String xAxis, String yAxis, DefaultCategoryDataset dataset, boolean isStacked) {
 		boolean displayLegend=false;
 		
 		JFreeChart barChart;
@@ -398,7 +398,7 @@ public class Charter {
 			domainAxis.setTickLabelFont(font);
 		}
 
-		ChartPanel chartPanel=new ChartPanel(chart, false);
+		ExtendedChartPanel chartPanel=new ExtendedChartPanel(chart, false, 1f);
 		if (!displayLegend) {
 			chartPanel.getChart().removeLegend();
 		} else {
@@ -427,7 +427,7 @@ public class Charter {
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	public static ChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, HashMap<Comparable, TFloatArrayList> map) {
+	public static ExtendedChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, HashMap<Comparable, TFloatArrayList> map) {
 		ArrayList<Comparable> keys=new ArrayList<>(map.keySet());
 		Collections.sort(keys);
 		
@@ -441,7 +441,7 @@ public class Charter {
 		return getBoxplotChart(title, xAxisLabel, yAxisLabel, categories, values);
 	}
 	
-	public static ChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, String[] categories, TFloatArrayList[] values) {
+	public static ExtendedChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, String[] categories, TFloatArrayList[] values) {
 		assert (categories.length==values.length);
 		boolean displayLegend=false;
 
@@ -484,7 +484,7 @@ public class Charter {
 			domainAxis.setTickLabelFont(font);
 		}
 
-		ChartPanel chartPanel=new ChartPanel(chart, false);
+		ExtendedChartPanel chartPanel=new ExtendedChartPanel(chart, false, 1f);
 		if (!displayLegend) {
 			chartPanel.getChart().removeLegend();
 		} else {
@@ -498,10 +498,10 @@ public class Charter {
 		return chartPanel;
 	}
 
-	public static ChartPanel getChart(String xAxis, String yAxis, boolean displayLegend, XYTraceInterface... traces) {
+	public static ExtendedChartPanel getChart(String xAxis, String yAxis, boolean displayLegend, XYTraceInterface... traces) {
 		return getChart(xAxis, yAxis, displayLegend, 0.0, traces);
 	}
-	public static ChartPanel getChart(final String xAxis, String yAxis, boolean displayLegend, double maxY, final XYTraceInterface... traces) {
+	public static ExtendedChartPanel getChart(final String xAxis, String yAxis, boolean displayLegend, double maxY, final XYTraceInterface... traces) {
 		boolean scaleToMax=true;
 		if (maxY==0.0) {
 			scaleToMax=false;
@@ -772,7 +772,7 @@ public class Charter {
 			domainAxis.setTickLabelFont(font);
 		}
 
-		final ChartPanel chartPanel=new ChartPanel(chart, false);
+		final ExtendedChartPanel chartPanel=new ExtendedChartPanel(chart, false, divider);
 		if (!displayLegend) {
 			chartPanel.getChart().removeLegend();
 		} else {
@@ -794,7 +794,7 @@ public class Charter {
 		return chartPanel;
 	}
 
-	private static void addCopyDataMenu(final String xAxis, final ChartPanel chartPanel,
+	private static void addCopyDataMenu(final String xAxis, final ExtendedChartPanel chartPanel,
 			final XYTraceInterface... traces) {
 		JMenuItem copyItem=new JMenuItem("Copy data values");
 		chartPanel.getPopupMenu().add(copyItem, 2);

@@ -78,7 +78,8 @@ public class SpectronautCSVToLibraryConverter {
 	public static LibraryFile convertFromSpectronautCSV(File csvFile, File fastaFile, File libraryFile, SearchParameters parameters) {
 		AminoAcidConstants aaConstants=parameters.getAAConstants();
 		try {
-			Logger.logLine("Started parsing entries in "+csvFile.getName()+"...");
+			String sourceFile = csvFile.getName();
+			Logger.logLine("Started parsing entries in "+sourceFile+"...");
 			
 			final ArrayList<ImmutablePeptideEntry> peptides=new ArrayList<ImmutablePeptideEntry>();
 			TableParserMuscle muscle=new TableParserMuscle() {
@@ -100,7 +101,7 @@ public class SpectronautCSVToLibraryConverter {
 							
 							if (lastPeptide!=null) peptides.add(new ImmutablePeptideEntry(lastPeptide));
 							
-							lastPeptide=new PeptideEntry(parseMods(peptideModSeq), charge, iRT);
+							lastPeptide=new PeptideEntry(parseMods(peptideModSeq), charge, iRT, sourceFile);
 							lastGroup=group;
 							
 							if (peptides.size()%10000==0) {
@@ -131,7 +132,7 @@ public class SpectronautCSVToLibraryConverter {
 			TableParser.parseCSV(csvFile, muscle);
 
 			Logger.logLine("Finished parsing, now processing entries...");
-			return OpenSwathTSVToLibraryConverter.processPeptideEntries(csvFile.getName(), fastaFile, libraryFile, parameters, aaConstants, peptides);
+			return OpenSwathTSVToLibraryConverter.processPeptideEntries(sourceFile, fastaFile, libraryFile, parameters, aaConstants, peptides);
 
 		} catch (Exception e) {
 			Logger.errorLine("Error parsing Spectronaut CSV:");

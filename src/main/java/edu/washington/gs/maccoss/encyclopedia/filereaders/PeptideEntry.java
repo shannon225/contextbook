@@ -6,15 +6,17 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 class PeptideEntry {
+	final String sourceFile;
 	final String peptideModSeq;
 	final float rt;
 	final byte charge;
 	final ArrayList<Peak> peaks;
 
-	public PeptideEntry(String peptideModSeq, byte charge, float rt) {
+	public PeptideEntry(String peptideModSeq, byte charge, float rt, String sourceFile) {
 		this.peptideModSeq=peptideModSeq;
 		this.charge=charge;
 		this.rt=rt;
+		this.sourceFile=sourceFile;
 		this.peaks=new ArrayList<>();
 	}
 

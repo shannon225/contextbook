@@ -102,7 +102,7 @@ public class SearchToBLIB {
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("EncyclopeDIA SearchToLIB version "+EncyclopediaOneScoringFactory.version);
+			Logger.logLine("EncyclopeDIA SearchToLIB version "+ProgramType.getGlobalVersion().toString());
 			System.exit(1);
 			
 		} else {
@@ -133,7 +133,7 @@ public class SearchToBLIB {
 		
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 		XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(parameters);
-		Logger.timelessLogLine("SearchToLIB XCorDIA version "+factory.getVersion());
+		Logger.timelessLogLine("SearchToLIB XCorDIA version "+ProgramType.getGlobalVersion().toString());
 
 		Logger.timelessLogLine("Parameters:");
 		Logger.timelessLogLine(" -i "+diaFile.getAbsolutePath());
@@ -195,7 +195,7 @@ public class SearchToBLIB {
 		
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, outputFile);
-		Logger.logLine("SearchToLIB Pecan version "+factory.getVersion());
+		Logger.logLine("SearchToLIB Pecan version "+ProgramType.getGlobalVersion().toString());
 
 		Logger.timelessLogLine("Parameters:");
 		Logger.timelessLogLine(" -i "+diaFile.getAbsolutePath());
@@ -252,7 +252,7 @@ public class SearchToBLIB {
 		
 		SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
-		Logger.timelessLogLine("SearchToLIB EncyclopeDIA version "+factory.getVersion());
+		Logger.timelessLogLine("SearchToLIB EncyclopeDIA version "+ProgramType.getGlobalVersion().toString());
 
 		Logger.timelessLogLine("Parameters:");
 		Logger.timelessLogLine(" -i "+diaFile.getAbsolutePath());

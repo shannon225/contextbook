@@ -51,11 +51,12 @@ public class SearchParameters {
     protected final float rtWindowInMin;
     protected final boolean filterPeaklists;
     protected final boolean doNotUseGlobalFDR;
+    protected final int topNTargetsUsed;
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, float percolatorProteinThreshold, Integer percolatorVersionNumber, int percolatorTrainingSetSize, float percolatorTrainingSetThreshold,
 			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize,
-			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR) {
+			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -77,6 +78,7 @@ public class SearchParameters {
 		this.precursorWindowSize=precursorWindowSize;
 		this.numberOfQuantitativePeaks=numberOfQuantitativePeaks;
 		this.minNumOfQuantitativePeaks=minNumOfQuantitativePeaks;
+		this.topNTargetsUsed=topNTargetsUsed;
 		this.minIntensity=minIntensity;
 		this.CASiLBreadthType=CASiLBreadthType;
 		this.localizingModification=localizingModification;
@@ -134,6 +136,7 @@ public class SearchParameters {
 		sb.append(" -precursorWindowSize "+precursorWindowSize+"\n");
 		sb.append(" -numberOfQuantitativePeaks "+numberOfQuantitativePeaks+"\n");
 		sb.append(" -minNumOfQuantitativePeaks "+minNumOfQuantitativePeaks+"\n");
+		sb.append(" -topNTargetsUsed "+topNTargetsUsed+"\n");
 		sb.append(" -quantifyAcrossSamples "+quantifyAcrossSamples+"\n");
 		sb.append(" -numberOfExtraDecoyLibrariesSearched "+numberOfExtraDecoyLibrariesSearched+"\n");
 		sb.append(" -verifyModificationIons "+verifyModificationIons+"\n");
@@ -172,6 +175,7 @@ public class SearchParameters {
 		map.put("-precursorWindowSize", precursorWindowSize+"");
 		map.put("-numberOfQuantitativePeaks", numberOfQuantitativePeaks+"");
 		map.put("-minNumOfQuantitativePeaks", minNumOfQuantitativePeaks+"");
+		map.put("-topNTargetsUsed",topNTargetsUsed+"");
 		map.put("-quantifyAcrossSamples", quantifyAcrossSamples+"");
 		map.put("-numberOfExtraDecoyLibrariesSearched", numberOfExtraDecoyLibrariesSearched+"");
 		map.put("-targetWindowCenter", targetWindowCenter+"");
@@ -320,6 +324,11 @@ public class SearchParameters {
 			return Integer.MAX_VALUE;
 		}
 	}
+	
+	public int getTopNTargetsUsed() {
+		return topNTargetsUsed;
+	}
+	
 	public int getMinNumOfQuantitativePeaks() {
 		return minNumOfQuantitativePeaks;
 	}

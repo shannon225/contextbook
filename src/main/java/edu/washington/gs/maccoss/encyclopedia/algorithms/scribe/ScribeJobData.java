@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.scribe;
 
 import java.io.File;
 
+import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -39,7 +40,7 @@ public class ScribeJobData extends QuantitativeSearchJobData {
 	// used by testing
 	public ScribeJobData(File diaFile, StripeFileInterface diaFileReader, File fastaFile, LibraryInterface library, PercolatorExecutionData percolatorFiles,
 			ScribeScoringFactory taskFactory) {
-		super(diaFile, diaFileReader, percolatorFiles, taskFactory.getParameters(), taskFactory.getVersion());
+		super(diaFile, diaFileReader, percolatorFiles, taskFactory.getParameters(), ProgramType.getGlobalVersion().toString());
 
 		this.library=library;
 		this.fastaFile=fastaFile;

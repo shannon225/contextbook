@@ -449,7 +449,6 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(convertTraML);
 
-		// FIXME NOT QUITE WORKING YET
 		JMenuItem convertOStsv=new JMenuItem("Convert OpenSWATH tsv to Library", convertDBIcon);
 		convertOStsv.addActionListener(new ActionListener() {
 			@Override
@@ -458,6 +457,15 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		convertMenu.add(convertOStsv);
+
+		JMenuItem convertMS2PIP=new JMenuItem("Convert MS2PIP csv to Library", convertDBIcon);
+		convertMS2PIP.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertMS2PIPToELIB(SearchPanel.this, getVisibleTab().getParameters());
+			}
+		});
+		convertMenu.add(convertMS2PIP);
 		
 		convertMenu.addSeparator();
 		

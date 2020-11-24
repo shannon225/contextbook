@@ -253,6 +253,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 				precursorWindowWidthValue,
 				numberOfQuantitativeIonsValue,
 				minNumOfQuantitativeIonsValue,
+				-1,
 				minIntensity,
 				modificationType,
 				ScoringBreadthType.ENTIRE_RT_WINDOW,

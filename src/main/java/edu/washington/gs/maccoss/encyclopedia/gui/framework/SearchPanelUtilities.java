@@ -51,6 +51,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryToBlibConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.MS2PIPReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MaxquantMSMSConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.OpenSwathTSVToLibraryConverter;
@@ -796,7 +797,7 @@ public class SearchPanelUtilities {
 					};
 					worker.execute();
 				} else {
-					JOptionPane.showMessageDialog(frame, "You must specify a FASTA file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+					JOptionPane.showMessageDialog(frame, "You must specify a library file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
 				}
 			}
 		});
@@ -1118,6 +1119,75 @@ public class SearchPanelUtilities {
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.pack(); 
 		dialog.setSize(500, 170);
+		dialog.setVisible(true);
+	}
+	
+	public static void convertMS2PIPToELIB(Component root, SearchParameters params) {
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+		final JDialog dialog=new JDialog(frame, "Convert MS2PIP to Library", true);
+
+		final FileChooserPanel peprecFileChooser=new FileChooserPanel(null, "MS2PIP Input PEPREC", new SimpleFilenameFilter(".peprec"), true);
+		final FileChooserPanel ms2pipCSVFileChooser=new FileChooserPanel(null, "MS2PIP Result CSV", new SimpleFilenameFilter(".csv"), true);
+		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);
+
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(peprecFileChooser);
+		options.add(ms2pipCSVFileChooser);
+		options.add(fastaFileChooser);
+		
+		JPanel buttons=new JPanel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JButton okButton=new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final File peprecFile=peprecFileChooser.getFile();
+				final File csvReportFile=ms2pipCSVFileChooser.getFile();
+				final File fastaFile=fastaFileChooser.getFile();
+				
+				if (peprecFile!=null&&peprecFile.exists()&&csvReportFile!=null&&csvReportFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
+					dialog.setVisible(false);
+					dialog.dispose();
+					
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading MS2PIP File") {
+						@Override
+						protected Nothing doInBackgroundForReal() throws Exception {
+							MS2PIPReader.convertMS2PIP(peprecFile, csvReportFile, fastaFile, params);
+							Logger.logLine("Finished reading "+csvReportFile.getName());
+							return Nothing.NOTHING;
+						}
+
+						@Override
+						protected void doneForReal(Nothing t) {
+						}
+					};
+					worker.execute();
+				} else {
+					JOptionPane.showMessageDialog(frame, "You must specify a MS2PIP PEPREC and CSV, and a FASTA file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+				}
+			}
+		});
+		buttons.add(okButton);
+		JButton cancelButton=new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+			}
+		});
+		buttons.add(cancelButton);
+		
+		JPanel mainpane=new JPanel(new BorderLayout());
+		mainpane.add(options, BorderLayout.CENTER);
+		mainpane.add(buttons, BorderLayout.SOUTH);
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		
+		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(500, 210);
 		dialog.setVisible(true);
 	}
 	

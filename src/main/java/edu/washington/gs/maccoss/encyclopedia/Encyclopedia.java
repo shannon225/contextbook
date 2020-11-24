@@ -118,7 +118,7 @@ public class Encyclopedia {
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("EncyclopeDIA version "+PecanOneScoringFactory.version);
+			Logger.logLine("EncyclopeDIA version "+ProgramType.getGlobalVersion());
 			System.exit(1);
 			
 		} else {
@@ -147,7 +147,7 @@ public class Encyclopedia {
 				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 				LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
 				
-				Logger.logLine("EncyclopeDIA version "+factory.getVersion());
+				Logger.logLine("EncyclopeDIA version "+ProgramType.getGlobalVersion());
 	
 				Logger.logLine("Parameters:");
 				Logger.logLine(" "+INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());

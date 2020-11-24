@@ -100,6 +100,7 @@ public class PecanParameterParser {
 		final float precursorWindowSize;
 		final int numberOfQuantitativePeaks;
 		final int minNumOfQuantitativePeaks;
+		final int topNTargetsUsed;
 		final float minIntensity;
 		final boolean quantifyAcrossSamples;
 		final boolean requireVariableMods;
@@ -252,6 +253,8 @@ public class PecanParameterParser {
 		precursorWindowSize=ParsingUtils.getFloat("-precursorWindowSize", parameters, -1f);
 		numberOfQuantitativePeaks=ParsingUtils.getInteger("-numberOfQuantitativePeaks", parameters, 5);
 		minNumOfQuantitativePeaks=ParsingUtils.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
+		topNTargetsUsed=ParsingUtils.getInteger("-topNTargetsUsed", parameters, -1);
+		
 		minIntensity=ParsingUtils.getFloat("-minIntensity", parameters, -1.0f);
 		quantifyAcrossSamples=ParsingUtils.getBoolean("-quantifyAcrossSamples", parameters, false);
 		requireVariableMods=ParsingUtils.getBoolean("-requireVariableMods", parameters, false);
@@ -289,6 +292,7 @@ public class PecanParameterParser {
 				precursorWindowSize,
 				numberOfQuantitativePeaks,
 				minNumOfQuantitativePeaks,
+				topNTargetsUsed,
 				minIntensity,
 				quantifyAcrossSamples,
 				true,

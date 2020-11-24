@@ -52,6 +52,7 @@ public class SearchParameterParser {
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
 		map.put("-numberOfQuantitativePeaks", "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
+		map.put("-topNTargetsUsed", "-1");
 		map.put("-minQuantitativeIonNumber", "3");
 		map.put("-verifyModificationIons", "true");
 		map.put("-minIntensity", "-1.0");
@@ -118,6 +119,7 @@ public class SearchParameterParser {
 		final float precursorWindowSize;
 		final int numberOfQuantitativePeaks;
 		final int minNumOfQuantitativePeaks;
+		final int topNTargetsUsed;
 		final float minIntensity;
 		final float numberOfExtraDecoyLibrariesSearched;
 		final Optional<PeptideModification> localizationModification;
@@ -263,6 +265,8 @@ public class SearchParameterParser {
 		expectedPeakWidth=ParsingUtils.getFloat("-expectedPeakWidth", parameters, 25f);
 		numberOfQuantitativePeaks=ParsingUtils.getInteger("-numberOfQuantitativePeaks", parameters, 5);
 		minNumOfQuantitativePeaks=ParsingUtils.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
+		topNTargetsUsed=ParsingUtils.getInteger("-topNTargetsUsed", parameters, -1);
+		
 		minIntensity=ParsingUtils.getFloat("-minIntensity", parameters, -1.0f);
 		rtWindowInMin=ParsingUtils.getFloat("-rtWindowInMin", parameters, -1f);
 		
@@ -340,6 +344,7 @@ public class SearchParameterParser {
 				precursorWindowSize,
 				numberOfQuantitativePeaks,
 				minNumOfQuantitativePeaks,
+				topNTargetsUsed,
 				minIntensity,
 				localizationModification,
 				breadthType,

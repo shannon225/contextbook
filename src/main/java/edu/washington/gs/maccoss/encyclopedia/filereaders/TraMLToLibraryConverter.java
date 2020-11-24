@@ -53,7 +53,8 @@ public class TraMLToLibraryConverter {
 		HashMap<String, PeptideEntry> peptideByID=new HashMap<>();
 
 		try {
-			Logger.logLine("Reading TraML file "+tramlFile.getName()+", this may take a while!");
+			String sourceFile = tramlFile.getName();
+			Logger.logLine("Reading TraML file "+sourceFile+", this may take a while!");
 			
 			traMLParser.parse_file(tramlFile.getCanonicalPath(), logger);
 			TraMLType traML=traMLParser.getTraML();
@@ -75,7 +76,7 @@ public class TraMLToLibraryConverter {
 						}
 					}
 					float rt=getRT(peptideType);
-					peptide=new PeptideEntry(peptideModSeq, charge, rt);
+					peptide=new PeptideEntry(peptideModSeq, charge, rt, sourceFile);
 					peptideByID.put(peptideType.getId(), peptide);
 				}
 
@@ -91,7 +92,9 @@ public class TraMLToLibraryConverter {
 						mass=Double.parseDouble(param.getValue());
 					}
 				}
-				peptide.addPeak(new Peak(mass, intensity));
+				if (intensity>0.0f) {
+					peptide.addPeak(new Peak(mass, intensity));
+				}
 
 			}
 
@@ -107,7 +110,7 @@ public class TraMLToLibraryConverter {
 					accessions.add(PeptideUtils.getPeptideSeq(peptide.peptideModSeq));
 				}
 				
-				LibraryEntry entry=new LibraryEntry(tramlFile.getName(), accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, 0.0f, peakArrays.x, peakArrays.y, aaConstants);
+				LibraryEntry entry=new LibraryEntry(sourceFile, accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, 0.0f, peakArrays.x, peakArrays.y, aaConstants);
 				entries.add(entry);
 			}
 

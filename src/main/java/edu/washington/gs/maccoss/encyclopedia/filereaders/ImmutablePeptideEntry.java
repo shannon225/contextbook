@@ -6,6 +6,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 
 public class ImmutablePeptideEntry implements Comparable<ImmutablePeptideEntry> {
+	final String sourceFile;
 	final String peptideModSeq;
 	final float rt;
 	final byte charge;
@@ -16,6 +17,7 @@ public class ImmutablePeptideEntry implements Comparable<ImmutablePeptideEntry> 
 		peptideModSeq=entry.peptideModSeq;
 		rt=entry.rt;
 		charge=entry.charge;
+		sourceFile=entry.sourceFile;
 		
 		Collections.sort(entry.peaks);
 		Pair<double[], float[]> peakArrays=Peak.toArrays(entry.peaks);

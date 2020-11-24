@@ -22,7 +22,6 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVCon
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 
 public class XCorDIAOneScoringFactory implements LibraryScoringFactory {
-	public static final String version="0.4.10";
 	protected final PecanSearchParameters parameters;
 
 	public XCorDIAOneScoringFactory(PecanSearchParameters parameters) {
@@ -56,10 +55,5 @@ public class XCorDIAOneScoringFactory implements LibraryScoringFactory {
 	
 	public PecanSearchParameters getPecanParameters() {
 		return parameters;
-	}
-
-	@Override
-	public String getVersion() {
-		return version;
 	}
 }

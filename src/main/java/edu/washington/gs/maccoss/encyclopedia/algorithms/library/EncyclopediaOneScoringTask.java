@@ -43,6 +43,10 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 		EncyclopediaScorer eScorer=(EncyclopediaScorer)scorer;
 		int movingAverageLength=Math.round(parameters.getExpectedPeakWidth()/dutyCycle);
 		for (LibraryEntry entry : super.entries) {
+			if (parameters.getTopNTargetsUsed()>0) {
+				entry=entry.trimToNPeaks(parameters.getTopNTargetsUsed(), parameters.getAAConstants());
+			}
+			
 			AuxillaryPSMScorer auxScorer=eScorer.getAuxScorer().getEntryOptimizedScorer(entry);
 			FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 			FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), true);

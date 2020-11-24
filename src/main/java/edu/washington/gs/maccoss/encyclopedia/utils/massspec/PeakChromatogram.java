@@ -15,6 +15,10 @@ public class PeakChromatogram extends Peak {
 		this.correlation=correlation;
 	}
 	
+	public float getCorrelation() {
+		return correlation;
+	}
+	
 	public static Triplet<double[], float[], float[]> toChromatogramArrays(Collection<PeakChromatogram> peaks) {
 		TDoubleArrayList masses=new TDoubleArrayList();
 		TFloatArrayList intensities=new TFloatArrayList();
