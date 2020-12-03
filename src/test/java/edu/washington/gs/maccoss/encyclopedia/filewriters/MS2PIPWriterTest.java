@@ -126,7 +126,6 @@ public class MS2PIPWriterTest extends AbstractFileConverterTest {
 		assertTrue("PEPREC output didn't exist!", Files.exists(out));
 		assertTrue("PEPREC output was empty!", Files.size(out) > 0);
 
-		//TODO: this assertion seems to not match the PEPREC format
 		try (BufferedReader r = new BufferedReader(new FileReader(out.toFile()))) {
 			assertEquals("Got more than the expected header line in PEPREC output",
 					1, r.lines().count()
@@ -143,7 +142,6 @@ public class MS2PIPWriterTest extends AbstractFileConverterTest {
 		assertTrue("PEPREC output didn't exist!", Files.exists(out));
 		assertTrue("PEPREC output was empty!", Files.size(out) > 0);
 
-		//TODO: this assertion seems to not match the PEPREC format
 		try (BufferedReader r = new BufferedReader(new FileReader(out.toFile()))) {
 			assertEquals("Got more than the expected header line in PEPREC output",
 					1, r.lines().count()
@@ -191,7 +189,6 @@ public class MS2PIPWriterTest extends AbstractFileConverterTest {
 		assertTrue("PEPREC output didn't exist!", Files.exists(out));
 		assertTrue("PEPREC output was empty!", Files.size(out) > 0);
 
-		//TODO: this assertion seems to not match the PEPREC format
 		try (BufferedReader r = new BufferedReader(new FileReader(out.toFile()))) {
 			assertEquals("Got more than the expected header line in PEPREC output",
 					1, r.lines().count()
