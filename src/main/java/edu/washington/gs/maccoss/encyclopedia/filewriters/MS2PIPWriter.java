@@ -136,8 +136,12 @@ public class MS2PIPWriter {
 	private static int writePeptides(HashSet<PeptidePrecursor> allPeptides, boolean writeDecoysInstead, PrintWriter writer) {
 		HashSet<String> writtenPeptides=new HashSet<>();
 		HashSet<String> ptmCodes=new HashSet<>();
-		
-		writer.println("spec_id modifications peptide charge");
+
+		if (!writeDecoysInstead) {
+			// Only write the header for non-decoys; if writeDecoysInstead == true
+			// then we've already written non-decoys following a header.
+			writer.println("spec_id modifications peptide charge");
+		}
 		int total=1;
 		EACHPEPTIDE: for (PeptidePrecursor peptidePrecursor : allPeptides) {
 			if (writeDecoysInstead) {
