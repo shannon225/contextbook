@@ -48,18 +48,49 @@ public class MS2PIPWriterTest extends AbstractFileConverterTest {
 		assertEquals("A[0.9840155826305974]PEPTIDEK[15.994915]", seq);
 	}
 
-/*  TODO
 	@Test(expected = NullPointerException.class)
-	public void testCheckPEPRECNameNullElibFile() throws Exception {
+	public void testCheckPEPRECNameNullFile() throws Exception {
 		MS2PIPWriter.checkPEPRECName(
 				null,
 				null,
-				DigestionEnzyme.getEnzyme("trypsin"),
-				50,
-				(byte) 2
+				DigestionEnzyme.getEnzyme("trypsin")
 		);
 	}
-*/
+
+	@Test(expected = NullPointerException.class)
+	public void testCheckPEPRECNameNullFile2() throws Exception {
+		MS2PIPWriter.checkPEPRECName(
+				"",
+				null,
+				DigestionEnzyme.getEnzyme("trypsin")
+		);
+	}
+
+	@Test
+	public void testCheckPEPRECNameNullFile3() throws Exception {
+		final String name = "test.peprec";
+		assertEquals(name,
+				MS2PIPWriter.checkPEPRECName(
+						name,
+						null,
+						DigestionEnzyme.getEnzyme("trypsin")
+				)
+		);
+	}
+
+	@Test
+	public void testCheckPEPRECName() throws Exception {
+		final Path fasta = Files.createTempFile(tmpDir, NAME, ".fasta");
+		Files.delete(fasta);
+
+		assertEquals(fasta.toString() + ".trypsin.peprec",
+				MS2PIPWriter.checkPEPRECName(
+						null,
+						fasta.toFile(),
+						DigestionEnzyme.getEnzyme("trypsin")
+				)
+		);
+	}
 
 	static void runFastaToPeprec(Path fasta, Path peprec) throws FileNotFoundException {
 		runFastaToPeprec(fasta.toFile(), peprec.toFile());
