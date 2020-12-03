@@ -23,10 +23,10 @@ public class MS2PIPReaderIT extends AbstractFileConverterTest {
 	@Test
 	public void testConvertMspToLibrary() throws Exception {
 		// TODO: use an actual resource names instead of made-up ones
-		final Path peps = getResourceAsTempFile(tmpDir, getName(), ".peps", "/edu/washington/gs/maccoss/encyclopedia/testdata/ms2pip/simple.peps");
-		final Path csv = getResourceAsTempFile(tmpDir, getName(), ".peps", "/edu/washington/gs/maccoss/encyclopedia/testdata/ms2pip/simple.csv");
+		final Path peprec = getResourceAsTempFile(tmpDir, getName(), ".peprec", "/edu/washington/gs/maccoss/encyclopedia/testdata/ms2pip/simple.peprec");
+		final Path csv = getResourceAsTempFile(tmpDir, getName(), ".peprec", "/edu/washington/gs/maccoss/encyclopedia/testdata/ms2pip/simple.csv");
 
-		final LibraryFile library = MS2PIPReader.convertMS2PIP(peps.toFile(), csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		final LibraryFile library = MS2PIPReader.convertMS2PIP(peprec.toFile(), csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library);
 		} finally {

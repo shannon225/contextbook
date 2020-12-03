@@ -24,7 +24,7 @@ public class MS2PIPReaderTest extends AbstractFileConverterTest {
 	}
 
 	@Test(expected = NullPointerException.class)
-	public void testConvertNullPeps() throws Exception {
+	public void testConvertNullPeprec() throws Exception {
 		final Path csv = Files.createTempFile(tmpDir, NAME, ".csv");
 		FileUtils.forceDeleteOnExit(csv.toFile());
 
@@ -33,42 +33,42 @@ public class MS2PIPReaderTest extends AbstractFileConverterTest {
 
 	@Test(expected = NullPointerException.class)
 	public void testConvertNullCsv() throws Exception {
-		final Path peps = Files.createTempFile(tmpDir, NAME, ".peps");
-		FileUtils.forceDeleteOnExit(peps.toFile());
+		final Path peprec = Files.createTempFile(tmpDir, NAME, ".peprec");
+		FileUtils.forceDeleteOnExit(peprec.toFile());
 
-		MS2PIPReader.convertMS2PIP(peps.toFile(), null, getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		MS2PIPReader.convertMS2PIP(peprec.toFile(), null, getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 	}
 
 	@Test(expected = EncyclopediaException.class)
-	public void testConvertNonexistingPeps() throws Exception {
-		final Path peps = Files.createTempFile(tmpDir, NAME, ".peps");
-		Files.delete(peps);
+	public void testConvertNonexistingPeprec() throws Exception {
+		final Path peprec = Files.createTempFile(tmpDir, NAME, ".peprec");
+		Files.delete(peprec);
 		final Path csv = Files.createTempFile(tmpDir, NAME, ".csv");
 		FileUtils.forceDeleteOnExit(csv.toFile());
 
-		MS2PIPReader.convertMS2PIP(peps.toFile(), csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		MS2PIPReader.convertMS2PIP(peprec.toFile(), csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 	}
 
 	@Test(expected = EncyclopediaException.class)
 	public void testConvertNonexistingCsv() throws Exception {
-		final Path peps = Files.createTempFile(tmpDir, NAME, ".peps");
-		FileUtils.forceDeleteOnExit(peps.toFile());
+		final Path peprec = Files.createTempFile(tmpDir, NAME, ".peprec");
+		FileUtils.forceDeleteOnExit(peprec.toFile());
 		final Path csv = Files.createTempFile(tmpDir, NAME, ".csv");
 		Files.delete(csv);
 
-		MS2PIPReader.convertMS2PIP(peps.toFile(), csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		MS2PIPReader.convertMS2PIP(peprec.toFile(), csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 	}
 
 	// Succeeds and produces an empty library
 	@Test
 	public void testConvertEmptyFiles() throws Exception {
-		final Path peps = Files.createTempFile(tmpDir, NAME, ".peps");
-		FileUtils.forceDeleteOnExit(peps.toFile());
+		final Path peprec = Files.createTempFile(tmpDir, NAME, ".peprec");
+		FileUtils.forceDeleteOnExit(peprec.toFile());
 		final Path csv = Files.createTempFile(tmpDir, NAME, ".csv");
 		FileUtils.forceDeleteOnExit(csv.toFile());
 
 		// Succeeds
-		final LibraryFile library = MS2PIPReader.convertMS2PIP(peps.toFile(), csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		final LibraryFile library = MS2PIPReader.convertMS2PIP(peprec.toFile(), csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library);
 		} finally {
