@@ -1,33 +1,36 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
+import com.google.common.collect.ImmutableList;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import org.apache.commons.io.FileUtils;
-import org.apache.tools.ant.taskdefs.optional.extension.LibFileSet;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.internal.matchers.Null;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class SearchToBLIBIT {
 	private static final int NUM_ENTRIES = 8;
@@ -150,9 +153,42 @@ public class SearchToBLIBIT {
 		Files.delete(libFile); // can't exist (we're trying to create it)
 		FileUtils.forceDeleteOnExit(libFile.toFile());
 
-		final List<SearchJobData> jobData = Stream.of("test1")
-				.map(this::createMockJobData)
-				.collect(Collectors.toList());
+		//TODO: move to resources
+		final Path dia = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/LongSwath_UPS1_40fm_Ecoli_1ug-rep1.dia");
+		final Path featuresTxt = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/process_run_20201116-1/LongSwath_UPS1_40fm_Ecoli_1ug-rep1.dia.features.txt");
+		final Path fasta = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/ups-protein-standards.fasta");
+		final Path peptideOutput = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/process_run_20201116-1/LongSwath_UPS1_40fm_Ecoli_1ug-rep1.dia.xcordia.txt");
+		final Path decoyOutput = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/process_run_20201116-1/LongSwath_UPS1_40fm_Ecoli_1ug-rep1.dia.xcordia.decoy.txt");
+
+		final List<SearchJobData> jobData = ImmutableList.of(
+				new XCorDIAJobData(
+						Optional.empty(),
+						Optional.empty(),
+						dia.toFile(), // dia file; must exist
+						new StripeFile(true) {{ openFile(dia.toFile()); }},
+						fasta.toFile(),
+						new PercolatorExecutionData(
+								featuresTxt.toFile(), // input tsv
+								fasta.toFile(), // fasta
+								peptideOutput.toFile(), // peptide output
+								decoyOutput.toFile(), // decoy output
+								null, // protein output
+								null, // protein decoy
+								searchParameters
+						),
+						new XCorDIAOneScoringFactory(new PecanSearchParameters(
+								searchParameters.getAAConstants(),
+								searchParameters.getFragType(),
+								searchParameters.getFragmentTolerance(),
+								searchParameters.getPrecursorTolerance(),
+								searchParameters.getEnzyme(),
+								1,
+								searchParameters.isQuantifySameFragmentsAcrossSamples(),
+								false,
+								false
+						))
+				)
+		);
 
 		SearchToBLIB.convert(progress,
 				jobData,
@@ -187,6 +223,7 @@ public class SearchToBLIBIT {
 				true
 		);
 
+		fail("TODO");
 		//TODO: assertions for blib
 //		final LibraryFile file = new LibraryFile();
 //		file.openFile(libFile.toFile());
