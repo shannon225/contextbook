@@ -1,8 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.ImmutableList;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
@@ -20,7 +18,7 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,10 +26,9 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class SearchToBLIBIT {
 	private final ProgressIndicator progress = new EmptyProgressIndicator();
@@ -101,15 +98,7 @@ public class SearchToBLIBIT {
 				true
 		);
 
-		fail("TODO");
-		//TODO: assertions for blib
-//		final LibraryFile file = new LibraryFile();
-//		file.openFile(libFile.toFile());
-//
-//		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
-//		assertEquals(NUM_ENTRIES, numEntries);
-//
-//		assertHasPercolatorMetadata(file);
+		assertValidBlib(libFile);
 	}
 
 	@Test
@@ -183,15 +172,7 @@ public class SearchToBLIBIT {
 				true
 		);
 
-		fail("TODO");
-		//TODO: assertions for blib
-//		final LibraryFile file = new LibraryFile();
-//		file.openFile(libFile.toFile());
-//
-//		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
-//		assertEquals(NUM_ENTRIES, numEntries);
-//
-//		assertHasPercolatorMetadata(file);
+		assertValidBlib(libFile);
 	}
 
 	@Test
@@ -221,6 +202,12 @@ public class SearchToBLIBIT {
 		assertTrue("Result file had no entries", 0 < numEntries);
 
 		assertHasPercolatorMetadata(file);
+	}
+
+	private void assertValidBlib(Path blib) throws IOException {
+		assertTrue("BLIB doesn't exist!", Files.exists(blib));
+
+		assertTrue("BLIB is too short!", 1024L < Files.size(blib));
 	}
 
 	private void assertHasPercolatorMetadata(LibraryFile file) throws IOException, SQLException {
