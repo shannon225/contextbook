@@ -19,6 +19,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,10 +29,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class SearchToBLIBIT {
+	private static final String MOCK_PERCOLATOR_VERSION = "percolator_test_version";
+
 	private final ProgressIndicator progress = new EmptyProgressIndicator();
 
 	private SearchParameters searchParameters;
@@ -155,6 +158,7 @@ public class SearchToBLIBIT {
 		assertTrue("Result file had no entries", 0 < numEntries);
 
 		assertHasPercolatorMetadata(file);
+		assertEquals("Found unexpected Percolator version in output ELIB", MOCK_PERCOLATOR_VERSION, file.getMetadata().get(LibraryFile.PERCOLATOR_VERSION));
 	}
 
 	@Test
@@ -202,6 +206,7 @@ public class SearchToBLIBIT {
 		assertTrue("Result file had no entries", 0 < numEntries);
 
 		assertHasPercolatorMetadata(file);
+		assertEquals("Found unexpected Percolator version in output ELIB", MOCK_PERCOLATOR_VERSION, file.getMetadata().get(LibraryFile.PERCOLATOR_VERSION));
 	}
 
 	private void assertValidBlib(Path blib) throws IOException {
@@ -251,21 +256,35 @@ public class SearchToBLIBIT {
 		final StripeFile diaReader = new StripeFile(true) ;
 		diaReader.openFile(dia.toFile());
 
+		final PercolatorExecutionData percolatorFiles = new PercolatorExecutionData(
+				featuresTxt.toFile(), // input tsv
+				fasta.toFile(), // fasta
+				peptideOutput.toFile(), // peptide output
+				decoyOutput.toFile(), // decoy output
+				null, // protein output
+				null, // protein decoy
+				searchParameters
+		);
+
+		// Set up the state as though we've just generated these files using
+		// Percolator; this has to use reflection because the method is
+		// package-private (to avoid this sort of direct manipulation).
+		try {
+			final Method m = percolatorFiles.getClass()
+					.getDeclaredMethod("setPercolatorExecutableVersion", String.class);
+			m.setAccessible(true);
+			m.invoke(percolatorFiles, MOCK_PERCOLATOR_VERSION);
+		} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+			Assume.assumeNoException("Can't use reflection to set mock Percolator version", e);
+		}
+
 		return new XCorDIAJobData(
 				Optional.empty(),
 				Optional.empty(),
 				dia.toFile(), // dia file; must exist
 				diaReader,
 				fasta.toFile(),
-				new PercolatorExecutionData(
-						featuresTxt.toFile(), // input tsv
-						fasta.toFile(), // fasta
-						peptideOutput.toFile(), // peptide output
-						decoyOutput.toFile(), // decoy output
-						null, // protein output
-						null, // protein decoy
-						searchParameters
-				),
+				percolatorFiles,
 				new XCorDIAOneScoringFactory(new PecanSearchParameters(
 						searchParameters.getAAConstants(),
 						searchParameters.getFragType(),
