@@ -576,6 +576,12 @@ public class SearchToBLIB {
 						Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>> targetDecoyProteins=ParsimonyProteinGrouper.groupProteins(targets.x, decoys.x, parameters.getPercolatorProteinThreshold(), parameters.getAAConstants());
 						Logger.logLine("Writing local target/decoy proteins: "+targetDecoyProteins.x.size()+"/"+targetDecoyProteins.y.size());
 						elib.addTargetDecoyProteins(job.getDiaFile().getName(), targetDecoyProteins.x, targetDecoyProteins.y);
+
+						job.getPercolatorFiles()
+								.getPercolatorExecutableVersion()
+								.ifPresent((ThrowingConsumer<String>) version -> {
+									elib.addMetadata(LibraryFile.PERCOLATOR_VERSION, version);
+								});
 					}
 				}
 				
