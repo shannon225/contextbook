@@ -16,6 +16,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndic
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -77,7 +78,7 @@ public class SearchToBLIBIT {
 		file.openFile(libFile.toFile());
 
 		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
-//		assertEquals(NUM_ENTRIES, numEntries); //TODO
+		assertTrue("Result file had no entries", 0 < numEntries);
 
 		assertHasPercolatorMetadata(file);
 	}
@@ -88,9 +89,10 @@ public class SearchToBLIBIT {
 		Files.delete(libFile); // can't exist (we're trying to create it)
 		FileUtils.forceDeleteOnExit(libFile.toFile());
 
-		final List<SearchJobData> jobData = Stream.of("test1", "test2").parallel()
-				.map(this::createMockJobData)
-				.collect(Collectors.toList());
+		final List<SearchJobData> jobData = ImmutableList.of(
+				getSearchJobDataA(),
+				getSearchJobDataB()
+		);
 
 		SearchToBLIB.convert(progress,
 				jobData,
@@ -99,6 +101,7 @@ public class SearchToBLIBIT {
 				true
 		);
 
+		fail("TODO");
 		//TODO: assertions for blib
 //		final LibraryFile file = new LibraryFile();
 //		file.openFile(libFile.toFile());
@@ -120,9 +123,10 @@ public class SearchToBLIBIT {
 		Files.delete(libFile); // can't exist (we're trying to create it)
 		FileUtils.forceDeleteOnExit(libFile.toFile());
 
-		final List<SearchJobData> jobData = Stream.of("test1", "test2").parallel()
-				.map(this::createMockJobData)
-				.collect(Collectors.toList());
+		final List<SearchJobData> jobData = ImmutableList.of(
+				getSearchJobDataA(),
+				getSearchJobDataB()
+		);
 
 		SearchToBLIB.convert(progress,
 				jobData,
@@ -135,7 +139,7 @@ public class SearchToBLIBIT {
 		file.openFile(libFile.toFile());
 
 		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
-		assertEquals(NUM_ENTRIES, numEntries); //TODO
+		assertTrue("Result file had no entries", 0 < numEntries);
 
 		assertHasPercolatorMetadata(file);
 	}
@@ -159,7 +163,7 @@ public class SearchToBLIBIT {
 		file.openFile(libFile.toFile());
 
 		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
-//		assertEquals(NUM_ENTRIES, numEntries); //TODO
+		assertTrue("Result file had no entries", 0 < numEntries);
 
 		assertHasPercolatorMetadata(file);
 	}
@@ -170,9 +174,7 @@ public class SearchToBLIBIT {
 		Files.delete(libFile); // can't exist (we're trying to create it)
 		FileUtils.forceDeleteOnExit(libFile.toFile());
 
-		final List<SearchJobData> jobData = Stream.of("test1")
-				.map(this::createMockJobData)
-				.collect(Collectors.toList());
+		final List<SearchJobData> jobData = ImmutableList.of(getSearchJobDataA());
 
 		SearchToBLIB.convert(progress,
 				jobData,
@@ -203,9 +205,7 @@ public class SearchToBLIBIT {
 		Files.delete(libFile); // can't exist (we're trying to create it)
 		FileUtils.forceDeleteOnExit(libFile.toFile());
 
-		final List<SearchJobData> jobData = Stream.of("test1")
-				.map(this::createMockJobData)
-				.collect(Collectors.toList());
+		final List<SearchJobData> jobData = ImmutableList.of(getSearchJobDataA());
 
 		SearchToBLIB.convert(progress,
 				jobData,
@@ -218,49 +218,9 @@ public class SearchToBLIBIT {
 		file.openFile(libFile.toFile());
 
 		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
-		assertEquals(NUM_ENTRIES, numEntries); //TODO
+		assertTrue("Result file had no entries", 0 < numEntries);
 
 		assertHasPercolatorMetadata(file);
-	}
-
-	private EncyclopediaJobData createMockJobData(String name) {
-		try {
-			final Path peptideOutput = Files.createTempFile(tempDir, name, ".peptides.txt");
-			try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(peptideOutput.toFile())))) {
-				pw.println("PSMId\tq-value\tposterior_error_prob\tproteinIds");
-				for (int i = 0; i < NUM_ENTRIES; i++) {
-					// PSMId is sequence+charge
-					pw.print((char) ('A' + i));
-					pw.print("+");
-					pw.print(2);
-					pw.print("\t");
-					pw.print(0d); // q-value
-					pw.print("\t");
-					pw.print(0d); // PEP
-					pw.print("\t");
-					pw.println(i); // protein id (can't be empty)
-				}
-			}
-
-			return new EncyclopediaJobData(
-					Files.createTempFile(tempDir, name, ".dia").toFile(), // dia file; must exist
-					new PercolatorExecutionData(
-							Files.createTempFile(tempDir, name, ".features.txt").toFile(), // input tsv
-							null, // fasta
-							peptideOutput.toFile(), // peptide output
-							Files.createTempFile(tempDir, name, ".decoys.txt").toFile(), // decoy output
-							null, // protein output
-							null, // protein decoy
-							searchParameters
-					),
-					searchParameters,
-					"SearchToBLIBIT",
-					null,
-					new EncyclopediaOneScoringFactory(searchParameters)
-			);
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
 	}
 
 	private void assertHasPercolatorMetadata(LibraryFile file) throws IOException, SQLException {
@@ -299,6 +259,8 @@ public class SearchToBLIBIT {
 	}
 
 	private XCorDIAJobData makeXCorDIAJobData(Path dia, Path featuresTxt, Path fasta, Path peptideOutput, Path decoyOutput) throws IOException, SQLException {
+		Assume.assumeTrue(Files.exists(dia));
+
 		final StripeFile diaReader = new StripeFile(true) ;
 		diaReader.openFile(dia.toFile());
 
