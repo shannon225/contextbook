@@ -7,6 +7,8 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.Transition
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import gnu.trove.map.hash.TCharDoubleHashMap;
@@ -107,9 +109,8 @@ public class TransitionRefinerTest {
 		ions.add(new FragmentIon(9, (byte)9, IonType.y));
 		FragmentIon[] fragmentMasses=ions.toArray(new FragmentIon[ions.size()]);
 
-		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
-
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions("EIGNIISDAMK", (byte)2, 70.40955352783203f, fragmentMasses, chromatograms, rts, Optional.ofNullable((float[])null), true, true, aaConstants);
+		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions("EIGNIISDAMK", (byte)2, 70.40955352783203f, fragmentMasses, chromatograms, rts, Optional.ofNullable((float[])null), true, true, params);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		for (int i=0; i<integrations.length; i++) {
@@ -174,9 +175,8 @@ public class TransitionRefinerTest {
 		ions.add(new FragmentIon(8, (byte)8, IonType.y));
 		FragmentIon[] fragmentMasses=ions.toArray(new FragmentIon[ions.size()]);
 
-		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
-
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions("ASVAAQQQEEAR", (byte)2, 46.41716003417969f, fragmentMasses, chromatograms, rts, Optional.ofNullable((float[])null), true, true, aaConstants);
+		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions("ASVAAQQQEEAR", (byte)2, 46.41716003417969f, fragmentMasses, chromatograms, rts, Optional.ofNullable((float[])null), true, true, params);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		for (int i=0; i<integrations.length; i++) {

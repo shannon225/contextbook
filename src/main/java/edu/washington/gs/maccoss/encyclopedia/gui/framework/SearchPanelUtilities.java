@@ -60,6 +60,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.SpectronautCSVToLibrar
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.TraMLToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.MS2PIPWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileMerger;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.AboutDialog;
@@ -751,6 +752,132 @@ public class SearchPanelUtilities {
 		dialog.setVisible(true);
 	}
 	
+	public static void convertFastaForMS2PIP(Component root) {
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+		final JDialog dialog=new JDialog(frame, "Convert FASTA to MS2PIP PEPREC", true);
+		
+		
+		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);
+
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(fastaFileChooser);
+
+		final SpinnerModel minChargeSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MIN_CHARGE, FastaToPrositCSVParameters.MIN_CHARGE, FastaToPrositCSVParameters.MAX_CHARGE, 1);
+		final SpinnerModel maxChargeSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MAX_CHARGE, FastaToPrositCSVParameters.MIN_CHARGE, FastaToPrositCSVParameters.MAX_CHARGE, 1);
+		final SpinnerModel maxMissedCleavageSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MAX_MISSED_CLEAVAGE, FastaToPrositCSVParameters.MIN_MAX_MISSED_CLEAVAGE, FastaToPrositCSVParameters.MAX_MAX_MISSED_CLEAVAGE, 1);
+		final SpinnerModel minMzSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MIN_MZ, FastaToPrositCSVParameters.MIN_MZ, FastaToPrositCSVParameters.MAX_MZ, 0.1);
+		final SpinnerModel maxMzSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MAX_MZ, FastaToPrositCSVParameters.MIN_MZ, FastaToPrositCSVParameters.MAX_MZ, 0.1);
+		final JComboBox<String> enzymeBox=new JComboBox<String>(new String[] {"Trypsin", "Glu-C", "Lys-C", "Arg-C", "Asp-N", "Lys-N", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
+		
+		JPanel chargeRange=new JPanel(new FlowLayout());
+		chargeRange.setOpaque(true);
+		chargeRange.setBackground(Color.white);
+		chargeRange.add(new JSpinner(minChargeSpinner));
+		chargeRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
+		chargeRange.add(new JSpinner(maxChargeSpinner));
+		//options.add(new LabeledComponent("Enzyme", enzymeBox)); // FIXME add prosit enzymes
+		options.add(new LabeledComponent("Charge range", chargeRange));
+		options.add(new LabeledComponent("Maximum Missed Cleavage", new JSpinner(maxMissedCleavageSpinner)));
+
+		JPanel mzRange=new JPanel(new FlowLayout());
+		mzRange.setOpaque(true);
+		mzRange.setBackground(Color.white);
+		mzRange.add(new JSpinner(minMzSpinner));
+		mzRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
+		mzRange.add(new JSpinner(maxMzSpinner));
+		options.add(new LabeledComponent("m/z range", mzRange));
+
+		JPanel buttons=new JPanel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JButton okButton=new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final File fastaFile=fastaFileChooser.getFile();
+				byte minCharge=((Number)minChargeSpinner.getValue()).byteValue();
+				byte maxCharge=((Number)maxChargeSpinner.getValue()).byteValue();
+				int maxMissedCleavages=((Number)maxMissedCleavageSpinner.getValue()).byteValue();
+				double minimumMz=((Number)minMzSpinner.getValue()).doubleValue();
+				double maximumMz=((Number)maxMzSpinner.getValue()).doubleValue();
+				DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme((String)enzymeBox.getSelectedItem());
+				
+				if (fastaFile!=null&&fastaFile.exists()) {
+					dialog.setVisible(false);
+					dialog.dispose();
+					
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Creating MS2PIP PEPREC File") {
+						@Override
+						protected Nothing doInBackgroundForReal() throws Exception {
+							MS2PIPWriter.writeMS2PIP(fastaFile, enzyme, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), false);
+							return Nothing.NOTHING;
+						}
+
+						@Override
+						protected void doneForReal(Nothing t) {
+						}
+					};
+					worker.execute();
+				} else {
+					JOptionPane.showMessageDialog(frame, "You must specify a FASTA file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+				}
+			}
+		});
+		buttons.add(okButton);
+		JButton cancelButton=new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+			}
+		});
+		buttons.add(cancelButton);
+		
+		JPanel mainpane=new JPanel(new BorderLayout());
+		final JLabel text=new JLabel(AboutDialog.citationIcon);
+		text.setText("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\">"+"This function will <i>in silico</i> digest peptides from your FASTA and create an input file for MS2PIP. If you use this feature, please cite <a href=\"https://www.nature.com/articles/s41467-020-15346-1\">Searle et al, 2020</a>.");
+		text.setBackground(Color.WHITE);
+		text.setOpaque(true);
+		text.addMouseListener(new MouseListener() {
+			public void mouseClicked(MouseEvent e) {
+			    try {
+			         
+			        Desktop.getDesktop().browse(new URI("https://www.nature.com/articles/s41467-020-15346-1"));
+			         
+			    } catch (IOException | URISyntaxException e1) {
+			        e1.printStackTrace();
+			    }
+			}
+			@Override
+			public void mouseReleased(MouseEvent e) {
+			}
+			
+			@Override
+			public void mousePressed(MouseEvent e) {
+			}
+			
+			@Override
+			public void mouseExited(MouseEvent e) {
+			}
+			
+			@Override
+			public void mouseEntered(MouseEvent e) {
+			}
+		});
+
+		mainpane.add(text, BorderLayout.NORTH);
+		mainpane.add(options, BorderLayout.CENTER);
+		mainpane.add(buttons, BorderLayout.SOUTH);
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		
+		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(500, 350);
+		dialog.setVisible(true);
+	}
+	
 	public static void convertLibraryForProsit(Component root) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		final JDialog dialog=new JDialog(frame, "Convert Library to Prosit CSV", true);
@@ -815,6 +942,102 @@ public class SearchPanelUtilities {
 		JPanel mainpane=new JPanel(new BorderLayout());
 		final JLabel text=new JLabel(AboutDialog.citationIcon);
 		text.setText("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\">"+"This function will extract out all peptides and charge states from an EncyclopeDIA library (.DLIB or .ELIB) and create an input file for Prosit. If you use this feature, please cite <a href=\"https://www.nature.com/articles/s41467-020-15346-1\">Searle et al, 2020</a>.");
+		text.setBackground(Color.WHITE);
+		text.setOpaque(true);
+		text.addMouseListener(new MouseListener() {
+			public void mouseClicked(MouseEvent e) {
+			    try {
+			         
+			        Desktop.getDesktop().browse(new URI("https://www.nature.com/articles/s41467-020-15346-1"));
+			         
+			    } catch (IOException | URISyntaxException e1) {
+			        e1.printStackTrace();
+			    }
+			}
+			@Override
+			public void mouseReleased(MouseEvent e) {
+			}
+			
+			@Override
+			public void mousePressed(MouseEvent e) {
+			}
+			
+			@Override
+			public void mouseExited(MouseEvent e) {
+			}
+			
+			@Override
+			public void mouseEntered(MouseEvent e) {
+			}
+		});
+
+		mainpane.add(text, BorderLayout.NORTH);
+		mainpane.add(options, BorderLayout.CENTER);
+		mainpane.add(buttons, BorderLayout.SOUTH);
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		
+		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(500, 250);
+		dialog.setVisible(true);
+	}
+	
+	public static void convertLibraryForMS2PIP(Component root) {
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+		final JDialog dialog=new JDialog(frame, "Convert Library to MS2PIP PEPREC", true);
+		
+		
+		final FileChooserPanel libraryFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".dlib", ".elib"), true);
+
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(libraryFileChooser);
+
+		JPanel buttons=new JPanel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JButton okButton=new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final File libraryFile=libraryFileChooser.getFile();
+				if (libraryFile!=null&&libraryFile.exists()) {
+					dialog.setVisible(false);
+					dialog.dispose();
+					
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Creating MS2PIP PEPREC File") {
+						@Override
+						protected Nothing doInBackgroundForReal() throws Exception {
+							LibraryFile library=new LibraryFile();
+							library.openFile(libraryFile);
+							MS2PIPWriter.writeMS2PIP(library, false);
+							return Nothing.NOTHING;
+						}
+
+						@Override
+						protected void doneForReal(Nothing t) {
+						}
+					};
+					worker.execute();
+				} else {
+					JOptionPane.showMessageDialog(frame, "You must specify a library file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+				}
+			}
+		});
+		buttons.add(okButton);
+		JButton cancelButton=new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+			}
+		});
+		buttons.add(cancelButton);
+		
+		JPanel mainpane=new JPanel(new BorderLayout());
+		final JLabel text=new JLabel(AboutDialog.citationIcon);
+		text.setText("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\">"+"This function will extract out all peptides and charge states from an EncyclopeDIA library (.DLIB or .ELIB) and create an input file for MS2PIP. If you use this feature, please cite <a href=\"https://www.nature.com/articles/s41467-020-15346-1\">Searle et al, 2020</a>.");
 		text.setBackground(Color.WHITE);
 		text.setOpaque(true);
 		text.addMouseListener(new MouseListener() {

@@ -14,6 +14,26 @@ public abstract class Polymer {
 			return MassConstants.oh2+n*(MassConstants.carbonMass*2+MassConstants.hydrogenMass*4+MassConstants.oxygenMass)+MassConstants.protonMass;
 		}
 	};
+
+	public static Polymer pegP2=new Polymer() {
+		public String getName() {
+			return "PEG+2H";
+		}
+		public double getMass(int n) {
+			//[C2H4O]nH2O
+			return (MassConstants.oh2+n*(MassConstants.carbonMass*2+MassConstants.hydrogenMass*4+MassConstants.oxygenMass)+2.0*MassConstants.protonMass)/2.0;
+		}
+	};
+
+	public static Polymer pegP3=new Polymer() {
+		public String getName() {
+			return "PEG+3H";
+		}
+		public double getMass(int n) {
+			//[C2H4O]nH2O
+			return (MassConstants.oh2+n*(MassConstants.carbonMass*2+MassConstants.hydrogenMass*4+MassConstants.oxygenMass)+3.0*MassConstants.protonMass)/3.0;
+		}
+	};
 	
 	public static Polymer ppg=new Polymer() {
 		public String getName() {
@@ -144,5 +164,5 @@ public abstract class Polymer {
 					+n*(MassConstants.carbonMass*2+MassConstants.hydrogenMass*4+MassConstants.oxygenMass)+MassConstants.sodiumMass;
 		}
 	};
-	public static Polymer[] polymers=new Polymer[] {peg, ppg, triton, reducedTriton, tritonNa, reducedTritonNa, tritonX101, tritonX101R, polysiloxane, tween20, tween40, tween60, tween80};
+	public static Polymer[] polymers=new Polymer[] {peg, pegP2, pegP3, ppg, triton, reducedTriton, tritonNa, reducedTritonNa, tritonX101, tritonX101R, polysiloxane, tween20, tween40, tween60, tween80};
 }

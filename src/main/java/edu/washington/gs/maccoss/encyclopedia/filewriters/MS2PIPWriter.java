@@ -53,6 +53,10 @@ public class MS2PIPWriter {
 		writeMS2PIP("/Volumes/bcsbluessd/swaney/CID_vs_HCD_enzymes/cid.peprec", library, false);
 	}
 
+	public static void writeMS2PIP(File fasta, DigestionEnzyme enzyme, byte minCharge, byte maxCharge, int maxMissedCleavages, Range mzRange, boolean addDecoys) throws FileNotFoundException {
+		writeMS2PIP(null, fasta, enzyme, minCharge, maxCharge, maxMissedCleavages, mzRange, addDecoys);
+	}
+
 	public static void writeMS2PIP(String csvFileName, File fasta, DigestionEnzyme enzyme, byte minCharge, byte maxCharge, int maxMissedCleavages, Range mzRange, boolean addDecoys) throws FileNotFoundException {
 		String fileName = checkPEPRECName(csvFileName, fasta, enzyme);
 		Logger.logLine("Starting to build MS2PIP PEPREC: "+fileName);
@@ -84,7 +88,10 @@ public class MS2PIPWriter {
 		int total = writePEPRECFile(fileName, addDecoys, allPeptides);
 		Logger.logLine("Finished writing "+total+" peptides to MS2PIP PEPREC!");
 	}
-	
+
+	public static void writeMS2PIP(LibraryFile library, boolean addDecoys) throws FileNotFoundException {
+		writeMS2PIP(null, library, addDecoys);
+	}
 	public static void writeMS2PIP(String csvFileName, LibraryFile library, boolean addDecoys) throws FileNotFoundException {
 		String fileName = checkPEPRECName(csvFileName, library.getFile(), null);
 		Logger.logLine("Starting to build MS2PIP PEPREC: "+fileName);

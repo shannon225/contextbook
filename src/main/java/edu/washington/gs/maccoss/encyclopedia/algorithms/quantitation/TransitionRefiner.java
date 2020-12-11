@@ -12,7 +12,10 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -105,10 +108,9 @@ public class TransitionRefiner {
 		ions.add(new FragmentIon(8, (byte)8, IonType.y));
 		ions.add(new FragmentIon(9, (byte)9, IonType.y));
 		FragmentIon[] fragmentMasses=ions.toArray(new FragmentIon[ions.size()]);
-
-		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
 		
-		TransitionRefinementData data=identifyTransitions("ASVAAQQQEEAR", (byte)2, 30.74576187133789f, fragmentMasses, chromatograms, rts, Optional.ofNullable((float[])null), true, aaConstants);
+		TransitionRefinementData data=identifyTransitions("ASVAAQQQEEAR", (byte)2, 30.74576187133789f, fragmentMasses, chromatograms, rts, Optional.ofNullable((float[])null), true, params);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		for (int i=0; i<integrations.length; i++) {
@@ -117,17 +119,17 @@ public class TransitionRefiner {
 		Charter.launchCharts("TITLE", getChartPanels(data));
 	}
 
-	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, boolean wasInferred, AminoAcidConstants aaConstants) {
-		return identifyTransitions(peptideModSeq, precursorCharge, retentionTimeInSec, fragmentMasses, chromatograms, retentionTimes, Optional.ofNullable((float[])null), wasInferred, false, aaConstants);
+	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, boolean wasInferred, SearchParameters params) {
+		return identifyTransitions(peptideModSeq, precursorCharge, retentionTimeInSec, fragmentMasses, chromatograms, retentionTimes, Optional.ofNullable((float[])null), wasInferred, false, params);
 	}
 
-	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> medianChromatogram, boolean wasInferred, AminoAcidConstants aaConstants) {
-		return identifyTransitions(peptideModSeq, precursorCharge, retentionTimeInSec, fragmentMasses, chromatograms, retentionTimes, medianChromatogram, wasInferred, false, aaConstants);
+	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> medianChromatogram, boolean wasInferred, SearchParameters params) {
+		return identifyTransitions(peptideModSeq, precursorCharge, retentionTimeInSec, fragmentMasses, chromatograms, retentionTimes, medianChromatogram, wasInferred, false, params);
 	}
 
-	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean wasInferred, boolean plot, AminoAcidConstants aaConstants) {
-		if (chromatograms.size()==0) return new TransitionRefinementData(peptideModSeq, precursorCharge, new FragmentIon[0], chromatograms, new float[0], new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]), aaConstants);
-		MedianChromatogramData medianData = extractMedianChromatogram(retentionTimeInSec, chromatograms, retentionTimes, maybeMedianChromatogram, wasInferred);
+	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean wasInferred, boolean plot, SearchParameters params) {
+		if (chromatograms.size()==0) return new TransitionRefinementData(peptideModSeq, precursorCharge, new FragmentIon[0], chromatograms, new float[0], new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]), params.getAAConstants());
+		MedianChromatogramData medianData = extractMedianChromatogram(retentionTimeInSec, chromatograms, retentionTimes, maybeMedianChromatogram, wasInferred, params.getExpectedPeakWidth());
 
 		float medianMean=General.mean(medianData.getMedianChromatogram(), medianData.getIndices().getStart(), medianData.getIndices().getStop());
 		float[] correlationArray=new float[medianData.getNormalizedChromatograms().size()];
@@ -162,27 +164,20 @@ public class TransitionRefiner {
 			Charter.launchCharts(peptideModSeq+" chart", panels);
 		}
 		
-		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, correlationArray, integrationArray, backgroundArray, medianData.getMedianChromatogram(), range, aaConstants);
+		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, correlationArray, integrationArray, backgroundArray, medianData.getMedianChromatogram(), range, params.getAAConstants());
 	}
 
-	public static MedianChromatogramData extractMedianChromatogram(float retentionTimeInSec, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean adjustPeakBoundaries) {
+	public static MedianChromatogramData extractMedianChromatogram(float retentionTimeInSec, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean adjustPeakBoundaries, float expectedPeakWidth) {
 		if (chromatograms.size()==0) return new MedianChromatogramData(new ArrayList<>(), new IntRange(0, 0), new float[0]);
 		
 		ArrayList<float[]> normalizedChromatograms;
 		IntRange indices;
 		float[] medianChromatogram;
 
-		int maxIndex;
 		if (maybeMedianChromatogram.isPresent()&&maybeMedianChromatogram.get().length>0) {
 			// already started with a median chromatogram
 			medianChromatogram=maybeMedianChromatogram.get();
-			maxIndex=0;
-			for (int i=1; i<medianChromatogram.length; i++) {
-				if (medianChromatogram[i]>medianChromatogram[maxIndex]) {
-					maxIndex=i;
-				}
-			}
-			indices=getIndexRange(medianChromatogram, maxIndex);
+			indices=getIndexRange(retentionTimes, medianChromatogram, expectedPeakWidth);
 			normalizedChromatograms=normalizeAndBackgroundSubtract(chromatograms, indices);
 			
 		} else {
@@ -191,7 +186,6 @@ public class TransitionRefiner {
 			
 			// find the maximum point
 			medianChromatogram=new float[chromatograms.get(0).length];
-			maxIndex=0;
 			for (int i=0; i<medianChromatogram.length; i++) {
 				TFloatArrayList list=new TFloatArrayList();
 				for (float[] chromatogram : normalizedChromatograms) {
@@ -204,13 +198,24 @@ public class TransitionRefiner {
 				float[] array=list.toArray();
 				Arrays.sort(array);
 				medianChromatogram[i]=QuickMedian.median(array);
-				if (medianChromatogram[i]>medianChromatogram[maxIndex]) {
-					maxIndex=i;
-				}
 			}
-			IntRange initialIndices=getIndexRange(medianChromatogram, maxIndex);
+			IntRange initialIndices=getIndexRange(retentionTimes, medianChromatogram, expectedPeakWidth);
+
+			if (false) { //FIXME REMOVE TEST CODE
+				String name="TEST"; //peptideModSeq+"p"+data.getPrecursorCharge();
+				System.out.println("ArrayList<XYPoint> "+name+"Points=new ArrayList<>();");
+				XYTrace median=new XYTrace(retentionTimes, medianChromatogram, GraphType.line, "median");
+				for (XYPoint point : median.getPoints()) {
+					System.out.println(name+"Points.add(new XYPoint("+point.x+", "+point.y+"));");
+				}
+				System.out.println("XYTrace "+name+"Trace=new XYTrace("+name+"Points, GraphType.line, \""+name+"\");");
+				System.out.println("Range "+name+"Range=TransitionRefiner.getPeakRange("+name+"Trace, 25f);");
+				System.out.println("XYTrace "+name+"Trimmed="+name+"Trace.trim("+name+"Range).updateColor(Color.green, 4.0f);");
+				System.out.println("Charter.launchChart(\"RT\", \"Intensity\", true, "+name+"Trace, "+name+"Trimmed);");
+			}
 			
 			if (!adjustPeakBoundaries) {
+				
 				Range testRange=new Range(retentionTimes[initialIndices.getStart()], retentionTimes[initialIndices.getStop()]);
 				if (!testRange.contains(retentionTimeInSec)) {
 						// if it wasn't inferred and our boundaries were outside the range, we need to reset the range 
@@ -231,7 +236,7 @@ public class TransitionRefiner {
 						index = retentionTimes.length - 1;
 					}
 
-					initialIndices=getIndexRange(medianChromatogram, index);
+					initialIndices=getIndexRange(retentionTimes, medianChromatogram, index, expectedPeakWidth);
 				}
 				testRange=new Range(retentionTimes[initialIndices.getStart()], retentionTimes[initialIndices.getStop()]);
 			}
@@ -241,7 +246,6 @@ public class TransitionRefiner {
 			
 			// find the maximum point
 			medianChromatogram=new float[chromatograms.get(0).length];
-			maxIndex=0;
 			for (int i=0; i<medianChromatogram.length; i++) {
 				TFloatArrayList list=new TFloatArrayList();
 				for (float[] chromatogram : normalizedChromatograms) {
@@ -254,13 +258,9 @@ public class TransitionRefiner {
 				float[] array=list.toArray();
 				Arrays.sort(array);
 				medianChromatogram[i]=QuickMedian.median(array);
-				if (medianChromatogram[i]>medianChromatogram[maxIndex]) {
-					maxIndex=i;
-				}
 			}
-			indices=getIndexRange(medianChromatogram, maxIndex);
+			indices=getIndexRange(retentionTimes, medianChromatogram, expectedPeakWidth);
 		}
-		
 
 		MedianChromatogramData medianData=new MedianChromatogramData(normalizedChromatograms, indices, medianChromatogram);
 		return medianData;
@@ -394,6 +394,109 @@ public class TransitionRefiner {
 		return intensity;
 	}
 
+	public static Range getPeakRange(XYTrace trace, float expectedPeakWidth) {
+		IntRange indicies=getPeakIndices(trace, expectedPeakWidth);
+		return new Range(trace.getPoints().get(indicies.getStart()).x, trace.getPoints().get(indicies.getStop()).x);
+	}
+	
+	public static IntRange getPeakIndices(XYTrace trace, float expectedPeakWidth) {
+		Pair<double[], double[]> pair=trace.toArrays();
+		float[] x=General.toFloatArray(pair.x);
+		float[] y=General.toFloatArray(pair.y);
+		return getIndexRange(x, y, expectedPeakWidth);
+	}
+	
+	public static IntRange getIndexRange(float[] x, float[] y, float expectedPeakWidth) {
+		int maxIndex=0;
+		float maxY=-Float.MAX_VALUE;
+		for (int i = 0; i < y.length; i++) {
+			if (y[i]>maxY) {
+				maxIndex=i;
+				maxY=y[i];
+			}
+		}
+		return getIndexRange(x, y, maxIndex, expectedPeakWidth);
+	}
+	
+	public static IntRange getIndexRange(float[] x, float[] y, int maxIndex, float expectedPeakWidth) {
+		float fiftyPercentPoint=y[maxIndex]/2.0f;
+		float threshold=y[maxIndex]*0.01f; // 1% of max
+		float rtThreshold=expectedPeakWidth*0.2f; // if we start moving by more than 20% of the expected peakwidth
+		float altRTThreshold=2.1f*QuickMedian.median(General.firstDerivative(x));
+		if (altRTThreshold>rtThreshold) {
+			// allow at least 2 points of deviation!
+			rtThreshold=altRTThreshold;
+		}
+		
+		// left of center (decreasing index)
+		int firstData=maxIndex;
+		int lowestIndex=maxIndex;
+		for (int i=maxIndex-1; i>=0; i--) {
+			// navigate down the slope of the peak:
+			if (y[i]<y[lowestIndex]) {
+				lowestIndex=i;
+			}
+			
+			// if we're more than 10% from the lowest point and we're less than 50% of the max
+			//System.out.println("TEST LEFT 50% "+i+"("+x[i]+") --> "+y[i]+" ("+Math.abs(x[i]-x[lowestIndex])+" > "+rtThreshold+") "+(Math.abs(x[i]-x[lowestIndex])>rtThreshold&&fiftyPercentPoint>y[lowestIndex]));
+			if (Math.abs(x[i]-x[lowestIndex])>rtThreshold&&fiftyPercentPoint>y[lowestIndex]) {
+				firstData=lowestIndex; // switch back to actual lowest point
+				//System.out.println("HIT LEFT 50% "+i+"("+x[i]+") --> "+y[i]+" ("+Math.abs(x[i]-x[lowestIndex])+" > "+rtThreshold+") "+(Math.abs(x[i]-x[lowestIndex])>rtThreshold&&fiftyPercentPoint>y[lowestIndex]));
+				break;
+			}
+			
+			// if we're lower than the previous local minimum, set the new minimum
+			if (y[i]<y[firstData]) {
+				firstData=i;
+			}
+			
+			// create peak boundary if the local minimum is less than 1%
+			if (y[firstData]<threshold) {
+				firstData=i;
+				//System.out.println("HIT LEFT THRESHOLD "+firstData+" --> "+y[firstData]);
+				break;
+			}
+		}
+		
+		// right of center (increasing index)
+		lowestIndex=maxIndex;
+		int lastData=maxIndex;
+		for (int i=maxIndex+1; i<y.length; i++) {
+			// navigate down the slope of the peak:
+			// count the number of consecutive uphill points (count the aggregate, so +1 for increasing, -1 for decreasing)
+			if (y[i]<y[lowestIndex]) {
+				lowestIndex=i;
+			}
+			
+			// if we're more than 10% from the lowest point and we're less than 50% of the max
+			//System.out.println("TEST RIGHT 50% "+i+"("+x[i]+") --> "+y[i]+" ("+Math.abs(x[i]-x[lowestIndex])+" > "+rtThreshold+") "+(Math.abs(x[i]-x[lowestIndex])>rtThreshold&&fiftyPercentPoint>y[lowestIndex]));
+			
+			if (Math.abs(x[i]-x[lowestIndex])>rtThreshold&&fiftyPercentPoint>y[lowestIndex]) {
+				lastData=lowestIndex; // switch back to actual lowest point
+				//System.out.println("HIT RIGHT 50% "+i+"("+x[i]+") --> "+y[i]+" ("+Math.abs(x[i]-x[lowestIndex])+" > "+rtThreshold+") "+(Math.abs(x[i]-x[lowestIndex])>rtThreshold&&fiftyPercentPoint>y[lowestIndex]));
+				break;
+			}
+			
+			// if we're lower than the previous local minimum, set the new minimum
+			if (y[i]<y[lastData]) {
+				lastData=i;
+			}
+			
+			// create peak boundary if the local minimum is less than 1%
+			if (y[lastData]<threshold) {
+				lastData=i;
+				//System.out.println("HIT RIGHT THRESHOLD "+lastData+" --> "+y[lastData]);
+				break;
+			}
+		}
+
+		
+		int startIndex=(firstData<=0)?(0):(firstData);
+		int stopIndex=(lastData>=y.length-1)?(y.length-1):(lastData);
+		IntRange indices=new IntRange(startIndex, stopIndex);
+		return indices;
+	}
+
 	private static IntRange getIndexRange(float[] medianChromatogram, int maxIndex) {
 		float threshold=medianChromatogram[maxIndex]*0.01f; // 1% of max
 		
@@ -465,12 +568,13 @@ public class TransitionRefiner {
 		if (data!=null&&data.getRtArray()!=null&&data.getRtArray().isPresent()) {
 			rts=data.getRtArray().get();
 		}
-		panels.put("unnormalized", getChart(data.getChromatograms(), data.getCorrelationArray(), rts, data.getRange()));
-		
 		XYTrace median = toXYTrace(data.getMedianChromatogram(), rts, "median", null, data.getRange());
+		
 		float max=General.max(data.getMedianChromatogram());
 		XYTrace start=new XYTrace(new float[] {data.getRange().getStart()/60f, data.getRange().getStart()/60f}, new float[] {0, max},GraphType.line, "leftBoundary", Color.black, null);
 		XYTrace stop=new XYTrace(new float[] {data.getRange().getStop()/60f, data.getRange().getStop()/60f}, new float[] {0, max},GraphType.line, "rightBoundary", Color.black, null);
+
+		panels.put("unnormalized", getChart(data.getChromatograms(), data.getCorrelationArray(), rts, data.getRange()));
 		panels.put("median", Charter.getChart("Retention Time (min)", "intensity", false, median, start, stop));
 		return panels;
 	}

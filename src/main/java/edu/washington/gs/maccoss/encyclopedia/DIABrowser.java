@@ -61,6 +61,7 @@ public class DIABrowser {
 				HashMap<String, String> map=SearchParameterParser.getDefaultParameters();
 				map.put("-deconvoluteOverlappingWindows", "true");
 				map.put("-fixed", "");
+				map.put("-expectedPeakWidth", "50");
 				SearchParameters parameters=SearchParameterParser.parseParameters(map);
 
 				ResultsBrowserPanel panel=new ResultsBrowserPanel(parameters);

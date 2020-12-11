@@ -202,6 +202,10 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 			float deltaSquared=delta*delta;
 			sumOfSquaredErrors+=deltaSquared;
 		}
+		
+		if (sumOfSquaredErrors<1e-5f) {
+			sumOfSquaredErrors=1e-5f;
+		}
 
 		float xTandem;
 		if (numberOfMatchingPeaks==0) {

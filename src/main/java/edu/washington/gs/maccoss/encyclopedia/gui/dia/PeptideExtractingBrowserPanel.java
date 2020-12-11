@@ -83,7 +83,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 
 	private final SearchParameters parameters;
 	private final FileChooserPanel diaFile;
-	private final JTextField peptide=new JTextField("YLDGLTAER");
+	private final JTextField peptide=new JTextField("VATVSLPR");
 	private final SpinnerModel charge=new SpinnerNumberModel(2, 1, 5, 1);
 	private final JSplitPane split=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 

@@ -31,7 +31,7 @@ public class MS2PIPReader {
 		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
 		
 		HashMap<String, SimplePeptidePrecursor> precursorCodeMap=readInputFile(peprecFile);
-		
+		Logger.logLine("Found "+precursorCodeMap.size()+" total spectra");
 
 		try {
 			return convertFromMS2PIP(precursorCodeMap, csvReportFile, fastaFile, libraryFile, parameters);
@@ -56,9 +56,13 @@ public class MS2PIPReader {
 						Logger.errorLine("Found missing peptide id: ["+id+"]");
 						return;
 					}
-					float rt=Float.parseFloat(row.get("rt"));
+					String rtString = row.get("rt");
+					float rt=rtString==null?0.0f:Float.parseFloat(rtString);
 					entry=new PeptideEntry(precursor.getPeptideModSeq(), precursor.getPrecursorCharge(), rt, csvReportFile.getName());
 					entriesByCode.put(id, entry);
+					if (entriesByCode.size()%10000==0) {
+						Logger.logLine("Processed "+entriesByCode.size()+" spectra...");
+					}
 				}
 				
 				double mz=Double.parseDouble(row.get("mz")); 
@@ -67,7 +71,9 @@ public class MS2PIPReader {
 					//Logger.errorLine("Found unexpected ion type: ["+indexedIon+"] for peptide ["+id+", "+entry.peptideModSeq+"]");
 				} else {
 					float intensity=Float.parseFloat(row.get("prediction"));
-					entry.addPeak(new Peak(mz, intensity));
+					if (intensity>0) {
+						entry.addPeak(new Peak(mz, intensity));
+					}
 				}
 			}
 
@@ -161,8 +167,6 @@ public class MS2PIPReader {
 				String peptideSequence=row.get("peptide");
 				byte precursorCharge=Byte.parseByte(row.get("charge"));
 
-				
-				
 				SimplePeptidePrecursor peptide=new SimplePeptidePrecursor(MS2PIPWriter.getPeptideModSeq(peptideSequence, ptmCodes), precursorCharge, emptyAAConstants);
 				peptides.put(id, peptide);
 			}

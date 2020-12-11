@@ -402,6 +402,24 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(libraryToProsit);
 		
+		JMenuItem fastaToMS2PIP=new JMenuItem("Create MS2PIP PEPREC from FASTA", convertDBIcon);
+		fastaToMS2PIP.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertFastaForMS2PIP(SearchPanel.this);
+			}
+		});
+		convertMenu.add(fastaToMS2PIP);
+		
+		JMenuItem libraryToMS2PIP=new JMenuItem("Create MS2PIP PEPREC from Library", convertDBIcon);
+		libraryToMS2PIP.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertLibraryForMS2PIP(SearchPanel.this);
+			}
+		});
+		convertMenu.add(libraryToMS2PIP);
+		
 		convertMenu.addSeparator();
 		
 		JMenuItem convertBLIB=new JMenuItem("Convert BLIB to Library", convertDBIcon);

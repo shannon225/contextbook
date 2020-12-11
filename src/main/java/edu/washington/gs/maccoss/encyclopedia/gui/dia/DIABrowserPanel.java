@@ -9,9 +9,11 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Optional;
 
 import javax.swing.BoxLayout;
@@ -33,9 +35,11 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import org.apache.commons.math3.distribution.GumbelDistribution;
 import org.jfree.chart.ChartPanel;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
@@ -57,10 +61,10 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.AcquiredSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Polymer;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakIntensityComparator;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakWithTime;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PolymerIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumComparator;
@@ -68,6 +72,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TDoubleDoubleHashMap;
 import gnu.trove.map.hash.TFloatFloatHashMap;
@@ -239,6 +245,106 @@ public class DIABrowserPanel extends JPanel {
 	private XYTrace chromatogram=null;
 	private XYTrace precursorIntensityHistogram=null;
 	private XYTrace fragmentIntensityHistogram=null;
+	
+	public HashMap<PolymerIon, XYTrace> analyzePrecursorsForPolymers(ArrayList<PrecursorScan> precursors) {
+		double minMZ=Double.MAX_VALUE;
+		double maxMZ=-Double.MAX_VALUE;
+			
+		if (false) {
+			for (PrecursorScan precursorScan : precursors) {
+				double[] massArray = precursorScan.getMassArray();
+				if (massArray[0]<minMZ) minMZ=massArray[0];
+				if (massArray[massArray.length-1]>maxMZ) maxMZ=massArray[massArray.length-1];
+			}
+			
+		} else {
+			TFloatArrayList retentionTimeInSec=new TFloatArrayList();
+			TDoubleArrayList basePeakMasses=new TDoubleArrayList();
+			TFloatArrayList basePeakIntensities=new TFloatArrayList();
+			
+			for (PrecursorScan precursorScan : precursors) {
+				double[] massArray = precursorScan.getMassArray();
+				if (massArray[0]<minMZ) minMZ=massArray[0];
+				if (massArray[massArray.length-1]>maxMZ) maxMZ=massArray[massArray.length-1];
+				
+				float[] intensityArray = precursorScan.getIntensityArray();
+				
+				float basePeakIntensity=0.0f;
+				double basePeakMass=0.0;
+				for (int i = 0; i < intensityArray.length; i++) {
+					if (intensityArray[i]>basePeakIntensity) {
+						basePeakIntensity=intensityArray[i];
+						basePeakMass=massArray[i];
+					}
+				}
+				
+				retentionTimeInSec.add(precursorScan.getScanStartTime());
+				basePeakMasses.add(basePeakMass);
+				basePeakIntensities.add(Log.protectedLog10(basePeakIntensity));
+			}
+			
+			float[] basepeakIntensityArray=basePeakIntensities.toArray();
+			float medianBasepeakIntensity=QuickMedian.median(basepeakIntensityArray.clone());
+			float stdev=General.stdev(basepeakIntensityArray);
+			float beta=stdev*(float)(Math.sqrt(6)/Math.PI);
+			float mu=medianBasepeakIntensity+beta*Log.protectedLn(Log.protectedLn(2.0f));
+			GumbelDistribution dist=new GumbelDistribution(mu, beta);
+			
+			ArrayList<PeakWithTime> intensePeaks=new ArrayList<>();
+			for (int i = 0; i < basepeakIntensityArray.length; i++) {
+				if (dist.cumulativeProbability(basepeakIntensityArray[i])>=0.9) {
+					intensePeaks.add(new PeakWithTime(basePeakMasses.get(i), basepeakIntensityArray[i], retentionTimeInSec.get(i)));
+				}
+			}
+			
+			XYTrace histTrace=new XYTrace(PivotTableGenerator.createPivotTable(basepeakIntensityArray), GraphType.line, "Basepeak distribution");
+			Charter.launchChart("log10 intensity", "frequency", true, histTrace);
+			
+			Collections.sort(intensePeaks, new PeakIntensityComparator());
+			Collections.reverse(intensePeaks);
+	
+			double[] masses=new double[0];
+			ArrayList<PeakWithTime> selectedPeaks=new ArrayList<>();
+			for (PeakWithTime peak : intensePeaks) {
+				if (!parameters.getFragmentTolerance().getIndex(masses, peak.mass).isPresent()) {
+					selectedPeaks.add(peak);
+					masses=PeakWithTime.toRTArrays(selectedPeaks).x;
+					Arrays.sort(masses);
+				}
+			}
+			for (PeakWithTime peak : selectedPeaks) {
+				System.out.println(peak.mass+","+peak.intensity+","+peak.getRtInSec());
+			}
+			
+			TDoubleArrayList deltas=new TDoubleArrayList();
+			for (int i = 0; i < selectedPeaks.size(); i++) {
+				for (int j = i+1; j < selectedPeaks.size(); j++) {
+					deltas.add(Math.abs(selectedPeaks.get(i).mass-selectedPeaks.get(j).mass));
+				}
+			}
+			for (double delta : deltas.toArray()) {
+				//System.out.println(delta);
+			}
+		}
+		
+		Logger.logLine("Searching for polymers from "+minMZ+" to "+maxMZ);
+		
+		ArrayList<PolymerIon> polymerList=PolymerIon.getAllPolymerProducts(new Range(minMZ, maxMZ));
+		PolymerIon[] polymerIons=polymerList.toArray(new PolymerIon[polymerList.size()]);
+		HashMap<PolymerIon, XYTrace> polymerMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getPrecursorTolerance(), polymerIons, precursors, null, GraphType.boldline);
+		
+		HashMap<PolymerIon, XYTrace> trimmedPolymerMap=new HashMap<>();
+		for (Entry<PolymerIon, XYTrace> entry : polymerMap.entrySet()) {
+			PolymerIon key = entry.getKey();
+			XYTrace value = entry.getValue();
+			Range range = TransitionRefiner.getPeakRange(value, parameters.getExpectedPeakWidth());
+			trimmedPolymerMap.put(key, value.trim(range));
+		}
+
+		Logger.logLine("Extracted "+trimmedPolymerMap.size()+" traces...");
+		
+		return trimmedPolymerMap;
+	}
 
 	public void updateRaw(final File f) {
 		SwingWorkerProgress<ArrayList<AcquiredSpectrum>> worker=new SwingWorkerProgress<ArrayList<AcquiredSpectrum>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Raw File") {
@@ -267,25 +373,22 @@ public class DIABrowserPanel extends JPanel {
 				maxTIC=0.0f;
 				
 				ArrayList<PrecursorScan> precursors=dia.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
+				Collections.sort(precursors);
 				
 				TFloatFloatHashMap precursorIonDistribution=new TFloatFloatHashMap();
-				double minMZ=Double.MAX_VALUE;
-				double maxMZ=-Double.MAX_VALUE;
+
 				
 				for (PrecursorScan precursorScan : precursors) {
-					if (precursorScan.getIsolationWindowLower()<minMZ) minMZ=precursorScan.getIsolationWindowLower();
-					if (precursorScan.getIsolationWindowUpper()>maxMZ) maxMZ=precursorScan.getIsolationWindowUpper();
-					
 					scans.add(precursorScan);
-					basepeaks.add(new XYPoint(precursorScan.getScanStartTime()/60f, General.max(precursorScan.getIntensityArray())));
+					float[] intensityArray = precursorScan.getIntensityArray();
+					basepeaks.add(new XYPoint(precursorScan.getScanStartTime()/60f, General.max(intensityArray)));
 
 					tics.add(new XYPoint(precursorScan.getScanStartTime()/60f, precursorScan.getTIC()));
 					if (precursorScan.getTIC()>maxTIC) {
 						maxTIC=precursorScan.getTIC();
 					}
-					
-					for (float intensity : precursorScan.getIntensityArray()) {
-						float bin=((int)(10.0f*Log.protectedLog10(intensity)))/10.0f;
+					for (int i = 0; i < intensityArray.length; i++) {
+						float bin=((int)(10.0f*Log.protectedLog10(intensityArray[i])))/10.0f;
 						precursorIonDistribution.adjustOrPutValue(bin, 1.0f, 1.0f);
 					}
 				}
@@ -303,9 +406,6 @@ public class DIABrowserPanel extends JPanel {
 				chromatogram=XYTrace.round(new XYTrace(tics, GraphType.area, "Precursor TIC"), THREE_SECONDS);
 				precursorIntensityHistogram=new XYTrace(precursorIonDistribution, GraphType.area, "Log10 Precursor Intensity Distribution");
 				
-				ArrayList<PolymerIon> polymerList=PolymerIon.getAllPolymerProducts(new Range(minMZ, maxMZ));
-				PolymerIon[] polymerIons=polymerList.toArray(new PolymerIon[polymerList.size()]);
-				HashMap<PolymerIon, XYTrace> polymerMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getPrecursorTolerance(), polymerIons, scans, null, GraphType.boldline);
 				
 				TDoubleDoubleHashMap fragmentIonDistribution=new TDoubleDoubleHashMap();
 
@@ -344,6 +444,8 @@ public class DIABrowserPanel extends JPanel {
 					}
 				}
 				fragmentIntensityHistogram=new XYTrace(fragmentIonDistribution, GraphType.area, "Log10 Fragment Intensity Distribution");
+				
+				HashMap<PolymerIon, XYTrace> polymerMap=analyzePrecursorsForPolymers(precursors);
 				
 				double maxBPThreshold=basepeak.getMaxY()*0.001;
 				

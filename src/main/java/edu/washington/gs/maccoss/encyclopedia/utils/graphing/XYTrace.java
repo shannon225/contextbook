@@ -193,6 +193,10 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 		this(map, type, name, null, null);
 	}
 	
+	public XYTrace updateColor(Color color, Float thickness) {
+		return new XYTrace(points, type, name, color, thickness);
+	}
+	
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface#getColor()
 	 */
@@ -317,5 +321,17 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 			p.add(new XYPoint(prevX*increment, sum/count));
 		}
 		return new XYTrace(p, trace.type, trace.name, trace.color, trace.thickness);
+	}
+	
+	public XYTrace trim(Range xRange) {
+		ArrayList<XYPoint> p=new ArrayList<>();
+
+		for (XYPoint point : points) {
+			if (xRange.contains(point.x)) {
+				p.add(point);
+			}
+		}
+
+		return new XYTrace(p, type, name, color, thickness);
 	}
 }

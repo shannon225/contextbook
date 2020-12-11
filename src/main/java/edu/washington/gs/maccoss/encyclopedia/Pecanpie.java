@@ -316,7 +316,7 @@ public class Pecanpie {
 				// values occur it's unclear how to interpret them.
 				continue;
 			}
-			int scanAveragingMargin=Math.round(parameters.getMinEluteTime()/dutyCycle);
+			int scanAveragingMargin=Math.round(parameters.getExpectedPeakWidth()/(2*dutyCycle));
 			if (scanAveragingMargin==0) scanAveragingMargin=1;
 			
 			float maxFragmentationMz=(float)Math.ceil(range.getMiddle()/10.0f)*20.0f+50.0f;
