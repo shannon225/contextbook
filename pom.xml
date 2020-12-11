@@ -88,6 +88,13 @@
 			<id>jitpack.io</id>
 			<url>https://jitpack.io</url>
 		</repository>
+		<!--  Attempt to override the repository provided
+		      by the xxindex POM (required for cpdetector).
+		      Using a non-HTTPS URL causes an error. -->
+		<repository>
+			<id>sammoa-group</id>
+			<url>https://maven.nuiton.org/nexus/content/repositories/sammoa-group/</url>
+		</repository>
 	</repositories>
 
 	<build>
