@@ -1,14 +1,16 @@
 EncyclopeDIA changelog for user-facing changes:
 
-encyclopedia-0.9.6-SNAPSHOT
- - Feature: added ability to create Prosit input files from EncyclopeDIA (DLIB/ELIB) libraries using only the extracted peptides and charge states
+encyclopedia-0.9.7-SNAPSHOT
  - Feature: added OpenSwath TSV reader
  - Feature: added MS2PIP reader/writer
  - Feature: added "-topNTargetsUsed" option to limit the number of fragment ions used in a library per peptide
  - Feature: added precursor plotting to multi-elib browser
+ - Bugfix: fixed sorting error causing Percolator irregularities when exporting search results from multiple raw files
+
+encyclopedia-0.9.6 (Jul 24, 2020)
+ - Feature: added ability to create Prosit input files from EncyclopeDIA (DLIB/ELIB) libraries using only the extracted peptides and charge states
  - Bugfix: removed option to demultiplex staggered DIA in the GUI. If you want to use this feature, then use the additional command '-acquisition OVERLAPPINGDIA'. However, we strongly suggest doing this in ProteoWizard instead. 
  - Bugfix: fixed parsing of Inf and NaN values from mass/intensity arrays in mzMLs
- - Bugfix: fixed sorting error causing Percolator irregularities when exporting search results from multiple raw files
 
 encyclopedia-0.9.5 (Jun 5, 2020)
  - Feature: support for phospho windowing boundaries in the Window Scheme Wizard
