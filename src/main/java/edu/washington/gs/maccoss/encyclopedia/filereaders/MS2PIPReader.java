@@ -23,6 +23,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 
+/**
+ * Converter class for producing DLIB files from an MS2PIP
+ * PEPREC and CSV file. See {@link MS2PIPWriter} for a class
+ * that can generate PEPREC files from FASTA or library files.
+ */
 public class MS2PIPReader {
 	private static final AminoAcidConstants emptyAAConstants=new AminoAcidConstants();
 

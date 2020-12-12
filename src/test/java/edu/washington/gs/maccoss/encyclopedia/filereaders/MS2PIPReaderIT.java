@@ -7,8 +7,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class TraMLToLibraryConverterIT extends AbstractFileConverterTest {
-	public static final String NAME = "TraMLToLibraryConverterIT";
+public class MS2PIPReaderIT extends AbstractFileConverterTest {
+	public static final String NAME = "MS2PIPReaderIT";
 
 	@Override
 	protected String getName() {
@@ -22,10 +22,11 @@ public class TraMLToLibraryConverterIT extends AbstractFileConverterTest {
 
 	@Test
 	public void testConvertMspToLibrary() throws Exception {
-		// TODO: use an actual resource name instead of a made-up one
-		final Path traml = getResourceAsTempFile(tmpDir, getName(), ".traml", "/edu/washington/gs/maccoss/encyclopedia/testdata/simple.traml");
+		// TODO: use an actual resource names instead of made-up ones
+		final Path peprec = getResourceAsTempFile(tmpDir, getName(), ".peprec", "/edu/washington/gs/maccoss/encyclopedia/testdata/ms2pip/simple.peprec");
+		final Path csv = getResourceAsTempFile(tmpDir, getName(), ".peprec", "/edu/washington/gs/maccoss/encyclopedia/testdata/ms2pip/simple.csv");
 
-		final LibraryFile library = TraMLToLibraryConverter.convertTraML(traml.toFile(), getFasta().toFile(), out.toFile(), SearchParameterParser.getDefaultParametersObject());
+		final LibraryFile library = MS2PIPReader.convertMS2PIP(peprec.toFile(), csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library);
 		} finally {

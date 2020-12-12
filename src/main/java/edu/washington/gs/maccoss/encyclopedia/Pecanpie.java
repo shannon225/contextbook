@@ -102,6 +102,9 @@ public class Pecanpie {
 			for (Entry<String, String> entry : defaults.entrySet()) {
 				Logger.timelessLogLine("\t"+General.formatCellToWidth(entry.getKey(), maxWidth)+" (default: "+entry.getValue()+")");
 			}
+
+			Logger.timelessLogLine("\t"+Encyclopedia.QUIET_MODE_ARG+"\tsuppress log output to stdout/stderr");
+
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
@@ -129,6 +132,9 @@ public class Pecanpie {
 			File featureFile=new File(PecanJobData.getOutputAbsolutePathPrefix(outputFile.getAbsolutePath())+PecanJobData.FEATURE_FILE_SUFFIX);
 
 			try {
+				if (arguments.containsKey(Encyclopedia.QUIET_MODE_ARG)) {
+					Logger.PRINT_TO_SCREEN = false;
+				}
 				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+EncyclopediaJobData.LOG_FILE_SUFFIX));
 				Logger.addRecorder(logRecorder);
 				

@@ -33,6 +33,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
+/**
+ * Converter class that produces MS2PIP PEPREC files
+ * for a library or FASTA. See {@link edu.washington.gs.maccoss.encyclopedia.filereaders.MS2PIPReader}
+ * for a class that reads these files and the corresponding
+ * MS2PIP CSV output to produce a library.
+ */
 public class MS2PIPWriter {
 	private static final String NO_PTMS_CODE = "-";
 	private static final String PTM_DELIMINATOR = "|";
@@ -137,8 +143,12 @@ public class MS2PIPWriter {
 	private static int writePeptides(HashSet<PeptidePrecursor> allPeptides, boolean writeDecoysInstead, PrintWriter writer) {
 		HashSet<String> writtenPeptides=new HashSet<>();
 		HashSet<String> ptmCodes=new HashSet<>();
-		
-		writer.println("spec_id modifications peptide charge");
+
+		if (!writeDecoysInstead) {
+			// Only write the header for non-decoys; if writeDecoysInstead == true
+			// then we've already written non-decoys following a header.
+			writer.println("spec_id modifications peptide charge");
+		}
 		int total=1;
 		EACHPEPTIDE: for (PeptidePrecursor peptidePrecursor : allPeptides) {
 			if (writeDecoysInstead) {
