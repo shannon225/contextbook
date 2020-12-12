@@ -68,7 +68,8 @@ public class Encyclopedia {
 	public static final String OUTPUT_RESULT_TAG="-o";
 	public static final String INPUT_DIA_TAG="-i";
 	public static final String BACKGROUND_FASTA_TAG="-f";
-	
+	public static final String QUIET_MODE_ARG = "-quiet";
+
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
 		
@@ -115,6 +116,9 @@ public class Encyclopedia {
 			for (Entry<String, String> entry : defaults.entrySet()) {
 				Logger.timelessLogLine("\t"+General.formatCellToWidth(entry.getKey(), maxWidth)+" (default: "+entry.getValue()+")");
 			}
+
+			Logger.timelessLogLine("\t"+QUIET_MODE_ARG+"\tsuppress log output to stdout/stderr");
+
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
@@ -141,6 +145,9 @@ public class Encyclopedia {
 			}
 
 			try {
+				if (arguments.containsKey(QUIET_MODE_ARG)) {
+					Logger.PRINT_TO_SCREEN = false;
+				}
 				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+EncyclopediaJobData.LOG_FILE_SUFFIX));
 				Logger.addRecorder(logRecorder);
 	
