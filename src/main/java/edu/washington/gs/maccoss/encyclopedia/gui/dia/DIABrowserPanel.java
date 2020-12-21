@@ -313,7 +313,7 @@ public class DIABrowserPanel extends JPanel {
 				}
 			}
 			for (PeakWithTime peak : selectedPeaks) {
-				System.out.println(peak.mass+","+peak.intensity+","+peak.getRtInSec());
+				//System.out.println(peak.mass+","+peak.intensity+","+peak.getRtInSec());
 			}
 			
 			TDoubleArrayList deltas=new TDoubleArrayList();
