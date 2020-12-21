@@ -445,7 +445,7 @@ public class MSPReader {
 	 * @param mod
 	 * @return
 	 */
-	static double getMass(char aa, String mod) {
+	public static double getMass(char aa, String mod) {
 		if (aa=='C'&&"CAM".equals(mod)) {
 			return 57.0214635;
 		} else if (aa=='M'&&"Oxidation".equalsIgnoreCase(mod)) {
