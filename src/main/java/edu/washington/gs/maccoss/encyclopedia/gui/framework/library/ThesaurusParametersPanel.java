@@ -211,7 +211,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 		
 		LibraryInterface library=libraries.get(libraryFile);
 		if (library==null) {
-			library=BlibToLibraryConverter.getFile(libraryFile);
+			library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
 			libraries.put(libraryFile, library);
 		}
 		

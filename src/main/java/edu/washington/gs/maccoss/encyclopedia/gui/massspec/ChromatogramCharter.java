@@ -19,8 +19,8 @@ public class ChromatogramCharter {
 		return createChart(precursors, fragments, 0.0, 0.0);
 	}
 	public static ChartPanel createChart(Optional<ArrayList<XYTrace>> precursors, Optional<ArrayList<XYTrace>> fragments, double globalMaxYPrecursor, double globalMaxYFragment) {
-		ExtendedChartPanel fragmentPanel=Charter.getChart("Retention Time (min)", "Fragment", false, globalMaxYFragment, 10, fragments.get().toArray(new XYTrace[0]));
-		ExtendedChartPanel precursorPanel=Charter.getChart("Retention Time (min)", "P", false, globalMaxYPrecursor, 10, precursors.get().toArray(new XYTrace[0]));
+		ExtendedChartPanel fragmentPanel=Charter.getChart("Retention Time (min)", "MS2", false, globalMaxYFragment, 10, fragments.get().toArray(new XYTrace[0]));
+		ExtendedChartPanel precursorPanel=Charter.getChart("Retention Time (min)", "MS1", false, globalMaxYPrecursor, 10, precursors.get().toArray(new XYTrace[0]));
 		precursorPanel.getChart().getXYPlot().getRangeAxis().setInverted(true);
 
 		ValueAxis domainAxis = fragmentPanel.getChart().getXYPlot().getDomainAxis();

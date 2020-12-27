@@ -10,6 +10,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
+import gnu.trove.procedure.TObjectIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
 import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
@@ -23,13 +25,45 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 public class FastaReaderTest extends TestCase {
+	public static void main(String[] args) throws Exception {
+		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
+		File f=new File("/Users/searleb/Documents/iarpa/new_llnl_individual/tne.fasta"); //llnl-vars-20201215.fasta
+		//File f=new File("/Users/searleb/Documents/iarpa/new_llnl_individual/llnl-vars-20201215.fasta"); //
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
+		
+		HashMap<String, FastaEntryInterface> uniqueMap=new HashMap<>();
+		TObjectIntHashMap<String> counter=new TObjectIntHashMap<>();
+		for (FastaEntryInterface entry : entries) {
+			String[] parts=entry.getAccession().split("_");
+			String key;
+			if (parts.length==2) {
+				key=parts[0]+"_"+parts[1];
+				System.out.println(">"+entry.getAnnotation());
+				System.out.println(entry.getSequence());
+			} else {
+				key=parts[0]+"_"+parts[1]+"_"+parts[2];
+				continue;
+			}
+
+			counter.put(key, counter.get(key)+1);
+		}
+		
+		//System.out.println(counter.size());
+//		counter.forEachEntry(new TObjectIntProcedure<String>() {
+//			@Override
+//			public boolean execute(String a, int b) {
+//				System.out.println(b+"\t"+a);
+//				return true;
+//			}
+//		});
+	}
 
 	/**
 	 * counts the number of accessions per peptide
 	 * @param args
 	 * @throws Exception
 	 */
-	public static void main(String[] args) throws Exception {
+	public static void mainA(String[] args) throws Exception {
 		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 		File f=new File("/Users/searleb/Downloads/bo_files/dmel-all-translation-r5.57_biognosysiRT_WR.fasta");
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);

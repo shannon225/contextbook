@@ -145,7 +145,7 @@ public class Scribe {
 				Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
 				Logger.logLine(parameters.toString());
 
-				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
+				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
 				ScribeJobData job=new ScribeJobData(diaFile, fastaFile, library, outputFile, factory);
 				runSearch(new EmptyProgressIndicator(), job);
 			} catch (Exception e) {

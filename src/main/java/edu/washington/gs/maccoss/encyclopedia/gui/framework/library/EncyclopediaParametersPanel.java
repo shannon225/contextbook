@@ -204,7 +204,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		
 		LibraryInterface library=libraries.get(libraryFile);
 		if (library==null) {
-			library=BlibToLibraryConverter.getFile(libraryFile);
+			library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
 			libraries.put(libraryFile, library);
 		}
 		

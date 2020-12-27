@@ -383,11 +383,18 @@ public class MultiResultsBrowserPanel extends JPanel {
 				peptideModel.updateEntries(t.y);
 				sampleModel.updateEntries(t.x);
 
-				System.out.println(split1.getDividerLocation()+", "+split2.getDividerLocation());
 				if (split1.getDividerLocation()<=40||split2.getDividerLocation()<=40) {
 					split2.setDividerLocation(200);
 					split1.setDividerLocation(200);
 				}
+				
+				// roughly 2 rows is a good heuristic for the GUI
+				int numOfSamples=sampleModel.getRows().size();
+				int numExpectedColumns=Math.round(numOfSamples/2.0f);
+				if (numExpectedColumns>5) numExpectedColumns=5; // after 6 columns the plot gets messy
+				
+				// this updates the GUI plots 
+				numberOfColumns.setSelectedIndex(numExpectedColumns);
 			}
 		};
 		worker.execute();

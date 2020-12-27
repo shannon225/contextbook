@@ -161,7 +161,7 @@ public class VariantXCorDIA {
 
 				LibraryInterface library;
 				if (arguments.containsKey(TARGET_LIBRARY_TAG)) {
-					library=BlibToLibraryConverter.getFile(new File(arguments.get(TARGET_LIBRARY_TAG)));
+					library=BlibToLibraryConverter.getFile(new File(arguments.get(TARGET_LIBRARY_TAG)), fastaFile, parameters);
 				} else {
 					library=null;
 				}

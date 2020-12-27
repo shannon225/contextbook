@@ -230,7 +230,7 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 		if (libraryFile.isPresent()) {
 			LibraryInterface library=libraries.get(libraryFile.get());
 			if (library==null) {
-				library=BlibToLibraryConverter.getFile(libraryFile.get());
+				library=BlibToLibraryConverter.getFile(libraryFile.get(), fastaFile, parameters);
 				libraries.put(libraryFile.get(), library);
 			}
 			maybeLibrary=Optional.ofNullable(library);

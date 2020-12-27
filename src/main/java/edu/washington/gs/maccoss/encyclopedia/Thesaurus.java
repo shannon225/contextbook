@@ -146,7 +146,7 @@ public class Thesaurus {
 				Logger.logLine(" "+Encyclopedia.OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
 				Logger.logLine(parameters.toString());
 
-				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
+				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
 				ThesaurusJobData job=new ThesaurusJobData(diaFile, library, outputFile, fastaFile, factory);
 				runSearch(new EmptyProgressIndicator(), job);
 			} catch (Exception e) {

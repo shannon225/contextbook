@@ -6,6 +6,8 @@ import java.sql.SQLException;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
+import org.relaxng.datatype.DatatypeException;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -29,13 +31,38 @@ public class BlibToLibraryConverter {
 	 *                               or if one can but can't be used.
 	 */
 	public static LibraryInterface getFile(File f) {
+		return internalGetLibraryFile(f);
+	}
+	
+	public static LibraryInterface getFile(File f, File fastaFile, SearchParameters parameters) {
+		LibraryFile libraryFile=internalGetLibraryFile(f);
+		try {
+			if (LibraryEntryCleaner.doesLibraryNeedCleaning(libraryFile)) {
+				String name = f.getName();
+				File newLibrary=new File(f.getParentFile(), "cleaned_"+name.substring(0, name.lastIndexOf('.'))+LibraryFile.DLIB);
+				if (newLibrary.exists()) {
+					return getFile(newLibrary);
+				} else {
+					libraryFile=LibraryEntryCleaner.cleanLibrary(true, f, newLibrary, fastaFile, parameters);
+				}
+			};
+		} catch (SQLException sqle) {
+		} catch (IOException ioe) {
+		} catch (DatatypeException dte) {
+		} catch (DataFormatException dfe) {
+		}
+		
+		return libraryFile;
+	}
+
+	private static LibraryFile internalGetLibraryFile(File f) {
 		if (!f.exists() || !f.canRead()) {
 			throw new EncyclopediaException("Can't read file " + f.getAbsolutePath());
 		}
 
 		// first try to read if .ELIB
 		if (f.getName().toLowerCase().endsWith(LibraryFile.ELIB)) {
-			Optional<? extends LibraryInterface> optional = openLibraryFile(f);
+			Optional<LibraryFile> optional = openLibraryFile(f);
 			if (optional.isPresent()) return optional.get();
 		}
 
@@ -43,20 +70,20 @@ public class BlibToLibraryConverter {
 		String absolutePath = f.getAbsolutePath();
 		File libraryFile = new File(absolutePath.substring(0, absolutePath.lastIndexOf('.')) + LibraryFile.ELIB);
 		if (libraryFile.exists() && libraryFile.canRead()) {
-			Optional<? extends LibraryInterface> optional = openLibraryFile(libraryFile);
+			Optional<LibraryFile> optional = openLibraryFile(libraryFile);
 			if (optional.isPresent()) return optional.get();
 		}
 
 		// try to read if .DLIB
 		if (f.getName().toLowerCase().endsWith(LibraryFile.DLIB)) {
-			Optional<? extends LibraryInterface> optional = openLibraryFile(f);
+			Optional<LibraryFile> optional = openLibraryFile(f);
 			if (optional.isPresent()) return optional.get();
 		}
 
 		// then try to change name to .DLIB and read
 		libraryFile = new File(absolutePath.substring(0, absolutePath.lastIndexOf('.')) + LibraryFile.DLIB);
 		if (libraryFile.exists() && libraryFile.canRead()) {
-			Optional<? extends LibraryInterface> optional = openLibraryFile(libraryFile);
+			Optional<LibraryFile> optional = openLibraryFile(libraryFile);
 			if (optional.isPresent()) return optional.get();
 		}
 
