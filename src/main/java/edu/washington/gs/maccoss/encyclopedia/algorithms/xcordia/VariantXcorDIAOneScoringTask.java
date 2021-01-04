@@ -203,7 +203,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 				//peakRange=quantData.getRange();
 				float[] intensities=quantData.getIntegrationArray();
 				float[] correlations=quantData.getCorrelationArray();
-				FragmentIon[] consideredIons=quantData.getFragmentMassArray();
+				FragmentIon[] consideredIons=(FragmentIon[])quantData.getFragmentMassArray();
 				for (int i=0; i<consideredIons.length; i++) {
 					wellShapedIons.add(consideredIons[i]);
 					localizationIntensity+=intensities[i];

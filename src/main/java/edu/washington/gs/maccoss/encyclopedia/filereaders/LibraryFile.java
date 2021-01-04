@@ -760,7 +760,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		float[] integrationArray=data.getIntegrationArray();
 		float[] backgroundArray=data.getBackgroundArray();
 
-		FragmentIon[] fragmentMassArray=data.getFragmentMassArray();
+		Ion[] fragmentMassArray=data.getFragmentMassArray();
 		float[] deltaMassArray=data.getDeltaMassArray().get();
 		float[] ppmArray=new float[deltaMassArray.length];
 

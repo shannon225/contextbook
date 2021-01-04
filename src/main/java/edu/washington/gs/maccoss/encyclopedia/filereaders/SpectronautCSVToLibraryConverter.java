@@ -101,7 +101,7 @@ public class SpectronautCSVToLibraryConverter {
 							
 							if (lastPeptide!=null) peptides.add(new ImmutablePeptideEntry(lastPeptide));
 							
-							lastPeptide=new PeptideEntry(parseMods(peptideModSeq), charge, iRT, sourceFile);
+							lastPeptide=new PeptideEntry(parseMods(peptideModSeq), charge, iRT*60f, sourceFile);
 							lastGroup=group;
 							
 							if (peptides.size()%10000==0) {

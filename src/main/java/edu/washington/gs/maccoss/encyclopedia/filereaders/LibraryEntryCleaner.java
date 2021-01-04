@@ -20,10 +20,18 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class LibraryEntryCleaner {
 	public static void main(String[] args) throws Exception {
-		File originalLibraryFile=new File("/Users/searleb/Documents/iarpa/new_llnl_individual/IARPA_3clib_plus_llnl.trypsin.z3_nce33.dlib");
-		File newLibraryFile=new File("/Users/searleb/Documents/iarpa/new_llnl_individual/uniq_IARPA_3clib_plus_llnl.trypsin.z3_nce33.dlib");
-		File fastaFile=new File("/Users/searleb/Documents/iarpa/new_llnl_individual/IARPA_20201215_plus_ref_vars.fasta");
-		cleanLibrary(true, originalLibraryFile, newLibraryFile, fastaFile, SearchParameterParser.getDefaultParametersObject());
+//		File originalLibraryFile=new File("/Users/searleb/Documents/iarpa/new_llnl_individual/IARPA_3clib_plus_llnl.trypsin.z3_nce33.dlib");
+//		File newLibraryFile=new File("/Users/searleb/Documents/iarpa/new_llnl_individual/uniq_IARPA_3clib_plus_llnl.trypsin.z3_nce33.dlib");
+//		File fastaFile=new File("/Users/searleb/Documents/iarpa/new_llnl_individual/IARPA_20201215_plus_ref_vars.fasta");
+//		
+//		cleanLibrary(true, originalLibraryFile, newLibraryFile, fastaFile, SearchParameterParser.getDefaultParametersObject());
+		
+
+		File fileName=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/barcodes_prosit.dlib");
+		File newFileName=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/ecoli_barcodes_prosit.dlib");
+		File fasta=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/uniprot_ecoli_27dec2020.fasta");
+		
+		cleanLibrary(true, fileName, newFileName, fasta, SearchParameterParser.getDefaultParametersObject());
 	}
 	
 	public static boolean doesLibraryNeedCleaning(LibraryFile libraryFile) throws IOException, SQLException {

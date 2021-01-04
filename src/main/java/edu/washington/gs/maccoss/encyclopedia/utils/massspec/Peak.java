@@ -31,6 +31,13 @@ public class Peak implements PointInterface {
 		return intensity;
 	}
 	
+	public float getIntensity() {
+		return intensity;
+	}
+	public double getMass() {
+		return mass;
+	}
+	
 	/**
 	 * doesn't compare on Y (intensity)
 	 */

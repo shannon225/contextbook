@@ -11,7 +11,7 @@ public class PolymerIon extends PrecursorIon {
 	Polymer p;
 	
 	public PolymerIon(int n, Polymer p) {
-		super(p.getName()+" "+n, p.getMass(n));
+		super(p.getName()+" "+n, p.getMass(n), p.getCharge());
 		this.n = n;
 		this.p = p;
 	}

@@ -395,15 +395,11 @@ public class TransitionRefiner {
 	}
 
 	public static Range getPeakRange(XYTrace trace, float expectedPeakWidth) {
-		IntRange indicies=getPeakIndices(trace, expectedPeakWidth);
-		return new Range(trace.getPoints().get(indicies.getStart()).x, trace.getPoints().get(indicies.getStop()).x);
-	}
-	
-	public static IntRange getPeakIndices(XYTrace trace, float expectedPeakWidth) {
 		Pair<double[], double[]> pair=trace.toArrays();
 		float[] x=General.toFloatArray(pair.x);
 		float[] y=General.toFloatArray(pair.y);
-		return getIndexRange(x, y, expectedPeakWidth);
+		IntRange indicies= getIndexRange(x, y, expectedPeakWidth);
+		return new Range(trace.getPoints().get(indicies.getStart()).x, trace.getPoints().get(indicies.getStop()).x);
 	}
 	
 	public static IntRange getIndexRange(float[] x, float[] y, float expectedPeakWidth) {
@@ -493,71 +489,6 @@ public class TransitionRefiner {
 		
 		int startIndex=(firstData<=0)?(0):(firstData);
 		int stopIndex=(lastData>=y.length-1)?(y.length-1):(lastData);
-		IntRange indices=new IntRange(startIndex, stopIndex);
-		return indices;
-	}
-
-	private static IntRange getIndexRange(float[] medianChromatogram, int maxIndex) {
-		float threshold=medianChromatogram[maxIndex]*0.01f; // 1% of max
-		
-		// left of center (decreasing index)
-		int increasing=0;
-		int firstData=maxIndex;
-		for (int i=maxIndex-1; i>=0; i--) {
-			// navigate down the slope of the peak:
-			// count the number of consecutive uphill points (count the aggregate, so +1 for increasing, -1 for decreasing)
-			if (medianChromatogram[i]>medianChromatogram[firstData]) {
-				increasing++;
-			} else if (increasing>0) {
-				increasing--;
-			}
-			
-			// create peak boundary if we've seen 3 or more consecutively increasing points and we're less than 50% of the max
-			if (increasing>2&&medianChromatogram[maxIndex]/2.0f>medianChromatogram[firstData]) {
-				break;
-			}
-			
-			// if we're lower than the previous local minimum, set the new minimum
-			if (medianChromatogram[i]<medianChromatogram[firstData]) {
-				firstData=i;
-			}
-			
-			// create peak boundary if the local minimum is less than 1%
-			if (medianChromatogram[firstData]<threshold) {
-				break;
-			}
-		}
-		
-		// right of center (increasing index)
-		increasing=0;
-		int lastData=maxIndex;
-		for (int i=maxIndex+1; i<medianChromatogram.length; i++) {
-			// navigate down the slope of the peak:
-			// count the number of consecutive uphill points (count the aggregate, so +1 for increasing, -1 for decreasing)
-			if (medianChromatogram[i]>medianChromatogram[lastData]) {
-				increasing++;
-			} else if (increasing>0) {
-				increasing--;
-			}
-			
-			// create peak boundary if we've seen 3 or more consecutively increasing points and we're less than 50% of the max
-			if (increasing>2&&medianChromatogram[maxIndex]/2.0f>medianChromatogram[lastData]) {
-				break;
-			}
-
-			// if we're lower than the previous local minimum, set the new minimum
-			if (medianChromatogram[i]<medianChromatogram[lastData]) {
-				lastData=i;
-			}
-			
-			// create peak boundary if the local minimum is less than 1%
-			if (medianChromatogram[lastData]<threshold) {
-				break;
-			}
-		}
-		
-		int startIndex=firstData<=0?0:firstData;
-		int stopIndex=lastData>=medianChromatogram.length-1?medianChromatogram.length-1:lastData;
 		IntRange indices=new IntRange(startIndex, stopIndex);
 		return indices;
 	}

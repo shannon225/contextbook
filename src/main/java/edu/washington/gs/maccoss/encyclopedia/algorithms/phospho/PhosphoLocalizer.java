@@ -403,8 +403,8 @@ public class PhosphoLocalizer {
 				int numIdentificationPeaks=0;
 				float[] intensities=quantData.getIntegrationArray();
 				float[] correlations=quantData.getCorrelationArray();
-				FragmentIon[] consideredIons=quantData.getFragmentMassArray();
-				ArrayList<FragmentIon> wellShapedIons=new ArrayList<FragmentIon>();
+				Ion[] consideredIons=quantData.getFragmentMassArray();
+				ArrayList<Ion> wellShapedIons=new ArrayList<Ion>();
 				float localizationIntensity=0.0f;
 				for (int i=0; i<correlations.length; i++) {
 					if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {

@@ -72,6 +72,31 @@ public class PeptideQuantExtractor {
 	}
 
 	public static ArrayList<IntegratedLibraryEntry> parseSearchFeatures(ProgressIndicator progress, final SearchJobData job, boolean limitToQuantifiable, ArrayList<PercolatorPeptide> globalPassingPSMIDs, ArrayList<PercolatorPeptide> localPassingPSMIDs, final Optional<PeakLocationInferrerInterface> inferrer, StripeFileInterface stripeFile, LibraryInterface searchedLibrary, final SearchParameters parameters) {
+		HashMap<String, PSMData> uniquedData = findTargetPSMData(job, globalPassingPSMIDs, localPassingPSMIDs, inferrer,
+				parameters);
+		
+		try {
+			PeptideQuantExtractor extractor=new PeptideQuantExtractor(progress, searchedLibrary, stripeFile, parameters);
+			ArrayList<IntegratedLibraryEntry> extractPeptides=extractor.extractPeptides(uniquedData.values(), inferrer, limitToQuantifiable);
+			
+			Logger.logLine("Attempted extraction for: "+uniquedData.size()+", found "+extractPeptides.size());
+			return extractPeptides;
+		} catch (IOException ioe) {
+			Logger.errorLine("Error processing "+stripeFile.getFile().getName());
+			throw new EncyclopediaException("Error parsing Stripe file", ioe);
+		} catch (SQLException sqle) {
+			Logger.errorLine("Error processing "+stripeFile.getFile().getName());
+			throw new EncyclopediaException("Error parsing Stripe file", sqle);
+		} catch (DataFormatException dfe) {
+			Logger.errorLine("Error processing "+stripeFile.getFile().getName());
+			throw new EncyclopediaException("Error parsing Stripe file", dfe);
+		} catch (InterruptedException ie) {
+			Logger.errorLine("Error processing "+stripeFile.getFile().getName());
+			throw new EncyclopediaException("Error parsing Stripe file", ie);
+		}
+	}
+
+	public static HashMap<String, PSMData> findTargetPSMData(final SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPSMIDs, ArrayList<PercolatorPeptide> localPassingPSMIDs, final Optional<PeakLocationInferrerInterface> inferrer, final SearchParameters parameters) {
 		HashSet<String> passingPeptideSequences=new HashSet<String>();
 		final HashMap<String, PercolatorPeptide> savedPeptides = new HashMap<>();
 		for (PercolatorPeptide psm : globalPassingPSMIDs) {
@@ -234,41 +259,21 @@ public class PeptideQuantExtractor {
 			double precursorMZ=parameters.getAAConstants().getChargedMass(peptideModSeq, precursorCharge);
 			data.add(new PSMData(accessions, scanID, precursorMZ, precursorCharge, peptideModSeq, retentionTime, 1.0f, -1.0f, parameters.getExpectedPeakWidth(), wasInferred, parameters.getAAConstants()));
 		}
-		
-		try {
-			Logger.logLine("Parsed features and scores for "+data.size()+" peptides.");
-			HashMap<String, PSMData> uniquedData=new HashMap<String, PSMData>();
-			for (PSMData psmData : data) {
-				String key=psmData.getPeptideModSeq()+"+"+psmData.getPrecursorCharge();
-				PSMData prev=uniquedData.get(key);
-				if (prev!=null) {
-					if (prev.getSortingScore()<psmData.getSortingScore()) {
-						// good scores are high
-						uniquedData.put(key, psmData);
-					}
-				} else {
+		Logger.logLine("Parsed features and scores for "+data.size()+" peptides.");
+		HashMap<String, PSMData> uniquedData=new HashMap<String, PSMData>();
+		for (PSMData psmData : data) {
+			String key=psmData.getPeptideModSeq()+"+"+psmData.getPrecursorCharge();
+			PSMData prev=uniquedData.get(key);
+			if (prev!=null) {
+				if (prev.getSortingScore()<psmData.getSortingScore()) {
+					// good scores are high
 					uniquedData.put(key, psmData);
 				}
+			} else {
+				uniquedData.put(key, psmData);
 			}
-			
-			PeptideQuantExtractor extractor=new PeptideQuantExtractor(progress, searchedLibrary, stripeFile, parameters);
-			ArrayList<IntegratedLibraryEntry> extractPeptides=extractor.extractPeptides(uniquedData.values(), inferrer, limitToQuantifiable);
-			
-			System.out.println("LENGTH TEST: "+data.size()+"/"+uniquedData.size()+"/"+extractPeptides.size());
-			return extractPeptides;
-		} catch (IOException ioe) {
-			Logger.errorLine("Error processing "+stripeFile.getFile().getName());
-			throw new EncyclopediaException("Error parsing Stripe file", ioe);
-		} catch (SQLException sqle) {
-			Logger.errorLine("Error processing "+stripeFile.getFile().getName());
-			throw new EncyclopediaException("Error parsing Stripe file", sqle);
-		} catch (DataFormatException dfe) {
-			Logger.errorLine("Error processing "+stripeFile.getFile().getName());
-			throw new EncyclopediaException("Error parsing Stripe file", dfe);
-		} catch (InterruptedException ie) {
-			Logger.errorLine("Error processing "+stripeFile.getFile().getName());
-			throw new EncyclopediaException("Error parsing Stripe file", ie);
 		}
+		return uniquedData;
 	}
 	
 	public ArrayList<IntegratedLibraryEntry> extractPeptides(Collection<PSMData> data, final Optional<PeakLocationInferrerInterface> inferrer, boolean limitToQuantifiable) throws IOException, SQLException, DataFormatException, InterruptedException {

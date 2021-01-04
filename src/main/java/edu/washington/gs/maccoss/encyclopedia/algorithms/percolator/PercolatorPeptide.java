@@ -21,6 +21,11 @@ public class PercolatorPeptide implements PeptidePrecursor {
 	private final float qValue;
 	private final float posteriorErrorProb;
 	private final String massCorrectedPeptideModSeq;
+	private final double mz;
+	private final boolean isPSMIDDecoy;
+	private final byte precursorCharge;
+	private final String file;
+	private final float rt;
 	
 	public static final Comparator<PercolatorPeptide> scoreComparator=new Comparator<PercolatorPeptide>() {
 		// lower is better
@@ -38,17 +43,19 @@ public class PercolatorPeptide implements PeptidePrecursor {
 		}
 	};
 
-	@Deprecated
-	public PercolatorPeptide(String psmID, String proteinIDs, float qValue, float posteriorErrorProb) {
-		this(psmID, proteinIDs, qValue, posteriorErrorProb, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
-	}
-
 	public PercolatorPeptide(String psmID, String proteinIDs, float qValue, float posteriorErrorProb, AminoAcidConstants aaConstants) {
 		this.psmID=psmID;
 		this.proteinIDs=proteinIDs;
 		this.qValue=qValue;
 		this.posteriorErrorProb=posteriorErrorProb;
+		
 		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(getPeptideSequence(psmID), aaConstants);
+		this.mz=aaConstants.getChargedMass(massCorrectedPeptideModSeq, getPrecursorCharge());
+		
+		this.isPSMIDDecoy=isPSMIDDecoy(psmID);
+		this.precursorCharge=getCharge(psmID);
+		this.file=getFile(psmID);
+		this.rt=getRT(psmID);
 	}
 	
 	@Override
@@ -102,25 +109,21 @@ public class PercolatorPeptide implements PeptidePrecursor {
 	public float getPosteriorErrorProb() {
 		return posteriorErrorProb;
 	}
-
-	public boolean isPSMIDDecoy() {
-		return isPSMIDDecoy(psmID);
-	}
-
-	public String getLegacyPeptideModSeq() {
-		return getPeptideSequence(psmID);
-	}
-
+	
 	public byte getPrecursorCharge() {
-		return getCharge(psmID);
+		return precursorCharge;
 	}
-
-	public String getFile() {
-		return getFile(psmID);
+	public double getMZ() {
+		return mz;
 	}
-
 	public float getRT() {
-		return getRT(psmID);
+		return rt;
+	}
+	public boolean isPSMIDDecoy() {
+		return isPSMIDDecoy;
+	}
+	public String getFile() {
+		return file;
 	}
 
 	public static String getPSMID(LibraryEntry peptide, float rt, StripeFileInterface diaFile) {

@@ -82,10 +82,10 @@ public final class FragmentIon implements Comparable<FragmentIon>, Ion {
 		return ions.toArray(new FragmentIon[ions.size()]);
 	}
 
-	public static double[] getMasses(FragmentIon[] ions) {
+	public static double[] getMasses(Ion[] ions) {
 		double[] masses = new double[ions.length];
 		for (int i = 0; i < masses.length; i++) {
-			masses[i] = ions[i].mass;
+			masses[i] = ions[i].getMass();
 		}
 		return masses;
 	}
