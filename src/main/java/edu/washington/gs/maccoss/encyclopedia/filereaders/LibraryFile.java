@@ -1005,7 +1005,6 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				for (LibraryEntry entry : entries) {
 					if (entry.getAccessions().size()==0)
 						continue;
-
 					String pepSeq=entry.getPeptideSeq();
 					prep.setDouble(1, entry.getPrecursorMZ());
 					prep.setInt(2, entry.getPrecursorCharge());

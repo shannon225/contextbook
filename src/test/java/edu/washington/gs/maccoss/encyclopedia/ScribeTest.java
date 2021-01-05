@@ -22,7 +22,7 @@ public class ScribeTest {
 		//lib=new File(dir, "uniprot_human_25apr2019.fasta.trypsin.z1-4_nce33.dlib");
 		//lib=new File("/Users/searleb/Documents/dda_library_search/hela/22oct2017_hela_serum_timecourse_narrow_library.elib");
 		//fs=new File[] {new File("/Users/searleb/Documents/dda_library_search/hela/23aug2017_hela_serum_timecourse_pool_dda_001.dia")};
-		lib=new File("/Users/searleb/Documents/dda_library_search/rj_lumos/trypsin_lib.elib");
+		//lib=new File("/Users/searleb/Documents/dda_library_search/rj_lumos/trypsin_lib.elib");
 		
 		long[] duration=new long[fs.length];
 		for (int i = 0; i < fs.length; i++) {
