@@ -30,6 +30,10 @@ public class LibraryEntryCleaner {
 		File fileName=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/barcodes_prosit.dlib");
 		File newFileName=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/ecoli_barcodes_prosit.dlib");
 		File fasta=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/uniprot_ecoli_27dec2020.fasta");
+
+		fileName = new File("/Users/searleb/Documents/cobbs/2020dec30_cobbs/2020dec03_cobbs_cmv_inf_gpfdia_clib.elib");
+		newFileName = new File("/Users/searleb/Documents/cobbs/2020dec30_cobbs/2020dec03_cobbs_cmv_inf_gpfdia_clib_hcmv_only.elib");
+		fasta=new File("/Users/searleb/Documents/cobbs/2020dec30_cobbs/merlin.fasta");
 		
 		cleanLibrary(true, fileName, newFileName, fasta, SearchParameterParser.getDefaultParametersObject());
 	}

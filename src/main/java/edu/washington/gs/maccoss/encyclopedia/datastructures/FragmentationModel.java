@@ -195,13 +195,21 @@ public class FragmentationModel {
 				if (forQuant) {
 					// include B ions too
 					FragmentIon[] bIonsHCD=getBIons(useNeutralLosses);
-					if (precursorCharge>1) {
+					if (precursorCharge>4) { // don't consider +4Hs unless the peptide is +5H
+						return concatAndSort(yIonsHCD, getPlus2s(yIonsHCD), getPlus3s(yIonsHCD), getPlus4s(yIonsHCD), bIonsHCD, getPlus2s(bIonsHCD), getPlus3s(bIonsHCD), getPlus4s(bIonsHCD));
+					} else if (precursorCharge>3) { // don't consider +3Hs unless the peptide is +4H
+						return concatAndSort(yIonsHCD, getPlus2s(yIonsHCD), getPlus3s(yIonsHCD), bIonsHCD, getPlus2s(bIonsHCD), getPlus3s(bIonsHCD));
+					} else if (precursorCharge>1) { // +2Hs are more common, so consider even when the peptide is +2H
 						return concatAndSort(yIonsHCD, getPlus2s(yIonsHCD), bIonsHCD, getPlus2s(bIonsHCD));
 					} else {
 						return concatAndSort(bIonsHCD, yIonsHCD);
 					}
 				} else {
-					if (precursorCharge>2) {
+					if (precursorCharge>4) {
+						return concatAndSort(yIonsHCD, getPlus2s(yIonsHCD), getPlus3s(yIonsHCD), getPlus4s(yIonsHCD));
+					} else if (precursorCharge>3) {
+						return concatAndSort(yIonsHCD, getPlus2s(yIonsHCD), getPlus3s(yIonsHCD));
+					} else if (precursorCharge>2) {
 						return concatAndSort(yIonsHCD, getPlus2s(yIonsHCD));
 					} else {
 						return yIonsHCD;
@@ -211,13 +219,21 @@ public class FragmentationModel {
 				FragmentIon[] yIonsCID=getYIons(useNeutralLosses);
 				FragmentIon[] bIonsCID=getBIons(useNeutralLosses);
 				if (forQuant) {
-					if (precursorCharge>1) {
+					if (precursorCharge>4) { // don't consider +4Hs unless the peptide is +5H
+						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), getPlus3s(yIonsCID), getPlus4s(yIonsCID), bIonsCID, getPlus2s(bIonsCID), getPlus3s(bIonsCID), getPlus4s(bIonsCID));
+					} else if (precursorCharge>3) { // don't consider +3Hs unless the peptide is +4H
+						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), getPlus3s(yIonsCID), bIonsCID, getPlus2s(bIonsCID), getPlus3s(bIonsCID));
+					} else if (precursorCharge>1) { // +2Hs are more common, so consider even when the peptide is +2H
 						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), bIonsCID, getPlus2s(bIonsCID));
 					} else {
 						return concatAndSort(bIonsCID, yIonsCID);
 					}
 				} else {
-					if (precursorCharge>2) {
+					if (precursorCharge>4) {
+						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), getPlus3s(yIonsCID), getPlus4s(yIonsCID), bIonsCID, getPlus2s(bIonsCID), getPlus3s(bIonsCID), getPlus4s(bIonsCID));
+					} else if (precursorCharge>3) {
+						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), getPlus3s(yIonsCID), bIonsCID, getPlus2s(bIonsCID), getPlus3s(bIonsCID));
+					} else if (precursorCharge>2) {
 						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), bIonsCID, getPlus2s(bIonsCID));
 					} else {
 						return concatAndSort(bIonsCID, yIonsCID);
@@ -236,11 +252,20 @@ public class FragmentationModel {
 				throw new EncyclopediaException("Unknown fragmentation type ["+type+"]");
 		}
 	}
-	
+
 	public static FragmentIon[] getPlus2s(FragmentIon[] masses) {
+		return getPlusNs(masses, (byte)2);
+	}
+	public static FragmentIon[] getPlus3s(FragmentIon[] masses) {
+		return getPlusNs(masses, (byte)3);
+	}
+	public static FragmentIon[] getPlus4s(FragmentIon[] masses) {
+		return getPlusNs(masses, (byte)4);
+	}
+	public static FragmentIon[] getPlusNs(FragmentIon[] masses, byte charge) {
 		FragmentIon[] p2=new FragmentIon[masses.length];
 		for (int i=0; i<p2.length; i++) {
-			p2[i]=new FragmentIon((masses[i].getMass()+MassConstants.protonMass)/2.0, masses[i].getIndex(), IonType.getPlus2(masses[i].getType()));
+			p2[i]=new FragmentIon((masses[i].getMass()+(charge-1)*MassConstants.protonMass)/charge, masses[i].getIndex(), IonType.getPlusN(masses[i].getType(), charge));
 		}
 		return p2;
 	}

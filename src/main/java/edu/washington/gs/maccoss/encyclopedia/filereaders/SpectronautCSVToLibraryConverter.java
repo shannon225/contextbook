@@ -128,8 +128,15 @@ public class SpectronautCSVToLibraryConverter {
 					if (lastPeptide!=null) peptides.add(new ImmutablePeptideEntry(lastPeptide));
 				}
 			};
-			
-			TableParser.parseCSV(csvFile, muscle);
+
+			String lower = sourceFile.toLowerCase();
+			boolean isTSV=lower.endsWith(".xls")||lower.endsWith(".txt")||lower.endsWith(".tsv");
+			if (isTSV) {
+				TableParser.parseTSV(csvFile, muscle);
+			} else {
+				// otherwise (e.g. *.spectronaut, etc, parse as CSV)
+				TableParser.parseCSV(csvFile, muscle);
+			}
 
 			Logger.logLine("Finished parsing, now processing entries...");
 			return OpenSwathTSVToLibraryConverter.processPeptideEntries(sourceFile, fastaFile, libraryFile, parameters, aaConstants, peptides);
