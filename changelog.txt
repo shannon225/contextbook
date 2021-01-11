@@ -7,6 +7,8 @@ encyclopedia-0.9.7-SNAPSHOT
  - Feature: added precursor plotting to multi-elib browser as a butterfly plot
  - Bugfix: fixed sorting error causing Percolator irregularities when exporting search results from multiple raw files
  - Bugfix: modified how peak boundary selection works to better respect -expectedPeakWidth
+ - Bugfix: fixed integration boundaries to expand beyond -expectedPeakWidth if necessary
+ - Bugfix: fixed bug failing to integrate valid peptides due to having multiple repeated entries in the same library in rare cases
 
 encyclopedia-0.9.6 (Jul 24, 2020)
  - Feature: added ability to create Prosit input files from EncyclopeDIA (DLIB/ELIB) libraries using only the extracted peptides and charge states

@@ -32,6 +32,9 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class TransitionRefiner {
+	public static final float PERCENT_RT_UPHILL_PEAKWIDTH = 0.2f;
+	public static final float MINIMUM_THRESHOLD_PERCENTAGE = 0.01f;
+
 	// minimum threshold to call this peak as worth quantifying
 	public static final float quantitativeCorrelationThreshold=0.9f;
 	
@@ -416,8 +419,8 @@ public class TransitionRefiner {
 	
 	public static IntRange getIndexRange(float[] x, float[] y, int maxIndex, float expectedPeakWidth) {
 		float fiftyPercentPoint=y[maxIndex]/2.0f;
-		float threshold=y[maxIndex]*0.01f; // 1% of max
-		float rtThreshold=expectedPeakWidth*0.2f; // if we start moving by more than 20% of the expected peakwidth
+		float threshold=y[maxIndex]*MINIMUM_THRESHOLD_PERCENTAGE; // 1% of max
+		float rtThreshold=expectedPeakWidth*PERCENT_RT_UPHILL_PEAKWIDTH; // if we start moving by more than 20% of the expected peakwidth
 		float altRTThreshold=2.1f*QuickMedian.median(General.firstDerivative(x));
 		if (altRTThreshold>rtThreshold) {
 			// allow at least 2 points of deviation!

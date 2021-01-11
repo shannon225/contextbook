@@ -456,8 +456,8 @@ public class MultiResultsBrowserPanel extends JPanel {
 				ArrayList<XYTrace> fragmentTraces;
 				ArrayList<XYTrace> precursorTraces;
 				if (quantitativeData==null) {
-					fragmentTraces=null;
-					precursorTraces=null;
+					fragmentTraces=new ArrayList<>();
+					precursorTraces=new ArrayList<>();
 				} else {
 					precursorTraces=extractPrecursorTraces(sampleName, quantitativeData, file);
 					fragmentTraces=extractFragmentTraces(primaryIonObjects, sampleName, quantitativeData, file);
@@ -469,10 +469,10 @@ public class MultiResultsBrowserPanel extends JPanel {
 							globalMaxYFragment=Math.max(globalMaxYFragment, xyTrace.getMaxY());
 						}
 					}
-					allFragmentTraces.add(fragmentTraces);
 				} else {
 					Logger.logLine("Couldn't extract fragments from "+sampleName+" for "+entry.getPeptideModSeq());
 				}
+				allFragmentTraces.add(fragmentTraces);
 
 				if (precursorTraces!=null) {
 					for (XYTrace xyTrace : precursorTraces) {
@@ -480,10 +480,10 @@ public class MultiResultsBrowserPanel extends JPanel {
 							globalMaxYPrecursor=Math.max(globalMaxYPrecursor, xyTrace.getMaxY());
 						}
 					}
-					allPrecursorTraces.add(precursorTraces);
 				} else {
 					Logger.logLine("Couldn't extract precursors	 from "+sampleName+" for "+entry.getPeptideModSeq());
 				}
+				allPrecursorTraces.add(precursorTraces);
 			}
 
 			globalMaxYFragment=globalMaxYFragment*1.05;

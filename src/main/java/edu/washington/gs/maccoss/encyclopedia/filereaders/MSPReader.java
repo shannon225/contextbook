@@ -58,6 +58,7 @@ public class MSPReader {
 		
 		int[] counts=new int[21];
 		for (LibraryEntry entry : entries) {
+			if (entry.getAccessions().size()==0) entry.getAccessions().add("Unknown"); //FIXME REMOVE
 			int size=Math.min(counts.length-1, entry.getAccessions().size());
 			counts[size]++;
 		}

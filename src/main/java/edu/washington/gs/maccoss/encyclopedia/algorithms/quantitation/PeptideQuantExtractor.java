@@ -138,7 +138,6 @@ public class PeptideQuantExtractor {
 				if (targetPeptide!=null&&targetPeptide.getPrecursorCharge()==precursorCharge) {
 					boolean isDecoy=PercolatorPeptide.isPSMIDDecoy(psmID);
 					if (!isDecoy) {
-						savedPeptides.remove(peptideModSeq);
 						boolean wasInferred;
 						float retentionTime;// in seconds
 						int scanID;
@@ -230,6 +229,8 @@ public class PeptideQuantExtractor {
 
 						String proteinString=row.get("protein");
 						HashSet<String> accessions=PSMData.stringToAccessions(proteinString);
+
+						savedPeptides.remove(peptideModSeq);
 						data.add(new PSMData(accessions, scanID, precursorMZ, precursorCharge, peptideModSeq, retentionTime, score, sortingScore, parameters.getExpectedPeakWidth(), wasInferred, parameters.getAAConstants()));
 					}
 				}
@@ -302,8 +303,8 @@ public class PeptideQuantExtractor {
 			float maxRetentionTime=-Float.MAX_VALUE;
 			for (PSMData psm : data) {
 				if (range.contains((float)psm.getPrecursorMZ())) {
-					minRetentionTime=Math.min(minRetentionTime, psm.getRetentionTime()-psm.getDuration());
-					maxRetentionTime=Math.max(maxRetentionTime, psm.getRetentionTime()+psm.getDuration());
+					minRetentionTime=Math.min(minRetentionTime, psm.getRetentionTime()-10*psm.getDuration());
+					maxRetentionTime=Math.max(maxRetentionTime, psm.getRetentionTime()+10*psm.getDuration());
 					used=true;
 				}
 			}

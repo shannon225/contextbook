@@ -139,6 +139,17 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, newMassArray, newIntensityArray, getUnitArray(newMassArray.length));
 	}
 	
+	/**
+	 * only use for testing
+	 * @param newMassArray
+	 * @param newIntensityArray
+	 * @param newCorrelationArray
+	 * @return
+	 */
+	public LibraryEntry updateMS2(double[] newMassArray, float[] newIntensityArray, float[] newCorrelationArray) {
+		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, newMassArray, newIntensityArray, newCorrelationArray);
+	}
+	
 	public LibraryEntry trimToNPeaks(int n, AminoAcidConstants aaConstants) {
 		ArrayList<PeakChromatogram> peaks=new ArrayList<>();
 		int numPeaks=Math.min(massArray.length, correlationArray.length);
