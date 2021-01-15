@@ -69,6 +69,7 @@ public class AminoAcidConstants {
 				PeptideModification.phosphorylation,
 				PeptideModification.acetylation,
 				PeptideModification.oxidation,
+				PeptideModification.oxidationTyr,
 				PeptideModification.methylation,
 				PeptideModification.dimethylation,
 				PeptideModification.trimethylation,

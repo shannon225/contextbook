@@ -250,39 +250,32 @@ public class DIABrowserPanel extends JPanel {
 		double minMZ=Double.MAX_VALUE;
 		double maxMZ=-Double.MAX_VALUE;
 			
-		if (false) {
-			for (PrecursorScan precursorScan : precursors) {
-				double[] massArray = precursorScan.getMassArray();
-				if (massArray[0]<minMZ) minMZ=massArray[0];
-				if (massArray[massArray.length-1]>maxMZ) maxMZ=massArray[massArray.length-1];
-			}
+		TFloatArrayList retentionTimeInSec=new TFloatArrayList();
+		TDoubleArrayList basePeakMasses=new TDoubleArrayList();
+		TFloatArrayList basePeakIntensities=new TFloatArrayList();
+		
+		for (PrecursorScan precursorScan : precursors) {
+			double[] massArray = precursorScan.getMassArray();
+			if (massArray[0]<minMZ) minMZ=massArray[0];
+			if (massArray[massArray.length-1]>maxMZ) maxMZ=massArray[massArray.length-1];
 			
-		} else {
-			TFloatArrayList retentionTimeInSec=new TFloatArrayList();
-			TDoubleArrayList basePeakMasses=new TDoubleArrayList();
-			TFloatArrayList basePeakIntensities=new TFloatArrayList();
+			float[] intensityArray = precursorScan.getIntensityArray();
 			
-			for (PrecursorScan precursorScan : precursors) {
-				double[] massArray = precursorScan.getMassArray();
-				if (massArray[0]<minMZ) minMZ=massArray[0];
-				if (massArray[massArray.length-1]>maxMZ) maxMZ=massArray[massArray.length-1];
-				
-				float[] intensityArray = precursorScan.getIntensityArray();
-				
-				float basePeakIntensity=0.0f;
-				double basePeakMass=0.0;
-				for (int i = 0; i < intensityArray.length; i++) {
-					if (intensityArray[i]>basePeakIntensity) {
-						basePeakIntensity=intensityArray[i];
-						basePeakMass=massArray[i];
-					}
+			float basePeakIntensity=0.0f;
+			double basePeakMass=0.0;
+			for (int i = 0; i < intensityArray.length; i++) {
+				if (intensityArray[i]>basePeakIntensity) {
+					basePeakIntensity=intensityArray[i];
+					basePeakMass=massArray[i];
 				}
-				
-				retentionTimeInSec.add(precursorScan.getScanStartTime());
-				basePeakMasses.add(basePeakMass);
-				basePeakIntensities.add(Log.protectedLog10(basePeakIntensity));
 			}
 			
+			retentionTimeInSec.add(precursorScan.getScanStartTime());
+			basePeakMasses.add(basePeakMass);
+			basePeakIntensities.add(Log.protectedLog10(basePeakIntensity));
+		}
+
+		if (false) {
 			float[] basepeakIntensityArray=basePeakIntensities.toArray();
 			float medianBasepeakIntensity=QuickMedian.median(basepeakIntensityArray.clone());
 			float stdev=General.stdev(basepeakIntensityArray);

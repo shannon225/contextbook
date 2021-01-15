@@ -109,7 +109,6 @@ public class MultiResultsBrowserPanel extends JPanel {
 	private final JComboBox<Integer> minimumNumberOfFragments=new JComboBox<Integer>(new Integer[] {0, 1, 2, 3, 4, 5});
 	private final JComboBox<Integer> numberOfColumns=new JComboBox<Integer>(new Integer[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 	private final JCheckBox simplifyPlots=new JCheckBox("Simplify plots");
-	private final JCheckBox plotPrecursors=new JCheckBox("Plot Precursors");
 	
 	private final int defaultMinimumNumberOfFragmentsIndex=3;
 	private final int defaultNumberOfColumnsIndex=1;
@@ -232,16 +231,8 @@ public class MultiResultsBrowserPanel extends JPanel {
 		checkBoxes.setLayout(new BoxLayout(checkBoxes, BoxLayout.LINE_AXIS));
 		simplifyPlots.setBackground(LabeledComponent.BACKGROUND_COLOR);
 		checkBoxes.add(simplifyPlots);
-		plotPrecursors.setBackground(LabeledComponent.BACKGROUND_COLOR);
-		checkBoxes.add(plotPrecursors);
 		options.add(checkBoxes);
 		simplifyPlots.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				updateToSelectedPeptide();
-			}
-		});
-		plotPrecursors.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				updateToSelectedPeptide();
