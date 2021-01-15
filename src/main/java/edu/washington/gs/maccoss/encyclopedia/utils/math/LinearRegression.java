@@ -115,30 +115,33 @@ public class LinearRegression implements Function {
 		return new Pair<Float, Float>(m, b);
 	}
 
-	public static Pair<Float, Float> getRegressionWithFixedIntercept(float[] x, float[] y, XYPoint intercept) {
+	public static Pair<Float, Float> getRegressionWithFixedIntercept(float[] x, float[] y, XYPoint forcedPoint) {
 		if (x.length==0) {
 			// nothing
 			return new Pair<Float, Float>(0f, 0f);
 		}
 		if (x.length==1) {
 			// slope of 0, intercept of value
-			float m=(float)((y[0]-intercept.y)/(x[0]-intercept.x));
+			float m=(float)((y[0]-forcedPoint.y)/(x[0]-forcedPoint.x));
 			float b=y[0]-m*x[0];
 			return new Pair<Float, Float>(m, b);
 		}
 		
-		float sumX=0.0f;
+		// first adjust xs and ys to the forcedPoint as the intercept
+		x=General.subtract(x, (float)forcedPoint.x);
+		y=General.subtract(y, (float)forcedPoint.y);
+		
 		float sumXY=0.0f;
 		float sumXX=0.0f;
 
 		for (int i=0; i<y.length; i++) {
-			sumX+=x[i];
 			sumXY+=x[i]*y[i];
 			sumXX+=x[i]*x[i];
 		}
-
-		float m=(sumXY-(float)(intercept.y-intercept.x)*sumX)/sumXX;
-		float b=(float)(intercept.y-(m*intercept.x));
+		
+		// calculate slope going through 0,0 and calculate b from the forcedPoint
+		float m=sumXY/sumXX;
+		float b=(float)(forcedPoint.y-(m*forcedPoint.x));
 		return new Pair<Float, Float>(m, b);
 	}
 }

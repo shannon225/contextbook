@@ -96,7 +96,7 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 				if (takenScans.contains(index)) {
 					continue;
 					
-				} else {
+				} else {	
 					FragmentScan stripe=super.stripes.get(index);
 					float[] auxScoreArray=auxScorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
 					float evalue=calculator.getNegLnEValue(score);
