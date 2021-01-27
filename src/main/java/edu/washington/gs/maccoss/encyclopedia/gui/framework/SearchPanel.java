@@ -554,7 +554,7 @@ public class SearchPanel extends JPanel {
 				SearchPanelUtilities.subsetDIA(SearchPanel.this, getVisibleTab().getParameters());
 			}
 		});
-		dataMenu.add(subsetDIA);
+		//dataMenu.add(subsetDIA);
 		
 		dataMenu.addSeparator();
 
