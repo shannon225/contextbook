@@ -547,6 +547,15 @@ public class SearchPanel extends JPanel {
 		});
 		dataMenu.add(mzmlMergerItem);
 		
+		JMenuItem subsetDIA=new JMenuItem("Create Subset mzML", convertDBIcon);
+		subsetDIA.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.subsetDIA(SearchPanel.this, getVisibleTab().getParameters());
+			}
+		});
+		dataMenu.add(subsetDIA);
+		
 		dataMenu.addSeparator();
 
 		JMenuItem windowSchemeItem=new JMenuItem("Window Scheme Wizard", windowSchemeIcon);

@@ -42,7 +42,7 @@ public class StripeFileTrimmer {
 		
 		HashMap<Range, WindowData> dutyCycleMap=new HashMap<>();
 		for (Entry<Range, WindowData> entry : thisStripeFile.getRanges().entrySet()) {
-			if (entry.getKey().contains(mzRange.getMiddle())) {
+			if (mzRange.contains(entry.getKey().getMiddle())) {
 				dutyCycleMap.put(entry.getKey(), entry.getValue());
 			}
 		}

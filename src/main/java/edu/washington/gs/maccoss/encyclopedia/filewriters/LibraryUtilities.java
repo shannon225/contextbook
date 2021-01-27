@@ -101,14 +101,14 @@ public class LibraryUtilities {
 		}
 	}
 	
-	public static void subsetLibrary(final File saveFile, final float rtMinSec, final float rtMaxSec, final HashSet<String> targets, LibraryInterface library)
+	public static void subsetLibrary(final File saveFile, final float rtMinSec, final float rtMaxSec, final double mzMin, final double mzMax, final HashSet<String> targets, LibraryInterface library)
 			throws IOException, SQLException, DataFormatException {
 		LibraryFile saveLibrary=new LibraryFile();
 		saveLibrary.openFile();
 		
 		ArrayList<LibraryEntry> toWrite=new ArrayList<>();
 		for (LibraryEntry entry : library.getAllEntries(false, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()))) {
-			if (rtMinSec<=entry.getRetentionTime()&&rtMaxSec>=entry.getRetentionTime()) {
+			if (rtMinSec<=entry.getRetentionTime()&&rtMaxSec>=entry.getRetentionTime()&&mzMin<=entry.getPrecursorMZ()&&mzMax>=entry.getPrecursorMZ()) {
 				if (targets.size()==0||(targets.contains(entry.getPeptideSeq())||targets.contains(entry.getPeptideModSeq()))) {
 					toWrite.add(entry);
 				}

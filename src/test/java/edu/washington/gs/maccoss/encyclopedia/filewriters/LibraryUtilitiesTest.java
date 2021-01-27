@@ -72,7 +72,7 @@ public class LibraryUtilitiesTest {
 		for (int i=1; i<timeBoundaries.length; i++) {
 			File saveFile=new File(twoDLC.getParentFile(), "msms_"+Math.round(timeBoundaries[i-1])+"to"+Math.round(timeBoundaries[i])+".dlib");
 			System.out.println("writing "+saveFile.getName());
-			LibraryUtilities.subsetLibrary(saveFile, timeBoundaries[i-1]*60f, timeBoundaries[i]*60f, new HashSet<>(), library);
+			LibraryUtilities.subsetLibrary(saveFile, timeBoundaries[i-1]*60f, timeBoundaries[i]*60f, 0, 100000, new HashSet<>(), library);
 		}
 
 		library.close();
