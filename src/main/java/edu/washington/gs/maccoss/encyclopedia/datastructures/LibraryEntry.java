@@ -31,7 +31,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	public static final String SHUFFLE_STRING="SHUFFLE_";
 	public static final String DECOY_STRING="DECOY_";
 
-	private static final float minimumIntensityThreshold=10.0f*Float.MIN_VALUE;
+	public static final float minimumIntensityThreshold=10.0f*Float.MIN_VALUE;
 	
 	private final String source;
 	private final int spectrumIndex;

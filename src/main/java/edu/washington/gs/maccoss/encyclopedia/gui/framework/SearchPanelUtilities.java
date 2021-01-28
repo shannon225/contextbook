@@ -63,6 +63,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.TraMLToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.MS2PIPWriter;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.MSPWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileMerger;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileTrimmer;
@@ -145,6 +146,72 @@ public class SearchPanelUtilities {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
 							OpenSwathTSVToLibraryConverter.convertToOpenSwathTSV(params, elibFile, tsvFile);
+							return Nothing.NOTHING;
+						}
+						@Override
+						protected void doneForReal(Nothing t) {
+						}
+					};
+					worker.execute();
+				} else {
+					JOptionPane.showMessageDialog(frame, "You must specify an ELIB or DLIB library file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+				}
+			}
+		});
+		buttons.add(okButton);
+		JButton cancelButton=new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+			}
+		});
+		buttons.add(cancelButton);
+		
+		JPanel mainpane=new JPanel(new BorderLayout());
+		mainpane.add(options, BorderLayout.CENTER);
+		mainpane.add(buttons, BorderLayout.SOUTH);
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		
+		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(500, 200);
+		dialog.setVisible(true);
+	}
+	
+	public static void convertELIBtoMSP(Component root, SearchParameters params) {
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+		final JDialog dialog=new JDialog(frame, "Convert Library to NIST MSP", true);
+
+		final FileChooserPanel elibFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".dlib", ".elib"), true, true);
+
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(elibFileChooser);
+		
+		JPanel buttons=new JPanel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JButton okButton=new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final File elibFile=elibFileChooser.getFile();
+				String absolutePath=elibFile.getAbsolutePath();
+				File mspFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+".msp");
+
+				if (elibFile!=null&&elibFile.exists()) {
+					dialog.setVisible(false);
+					dialog.dispose();
+
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library File") {
+						@Override
+						protected Nothing doInBackgroundForReal() throws Exception {
+							LibraryFile library=new LibraryFile();
+							library.openFile(elibFile);
+							MSPWriter.writeMSP(mspFile, library, params);
+							library.close();
 							return Nothing.NOTHING;
 						}
 						@Override
