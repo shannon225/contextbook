@@ -323,11 +323,17 @@ public class MSPReader {
 
 					// uses peptideModSeq so needs to be last
 					String rtString=map.get("RetentionTime");
+					String irtString=map.get("iRT");
 					if (rtString!=null) {
 						if (rtString.indexOf(',')>0) {
 							rtString=rtString.substring(0, rtString.indexOf(','));
 						}
-						retentionTime=Float.parseFloat(rtString);
+						retentionTime=Float.parseFloat(rtString)*60f;
+					} else if (irtString!=null) {
+						if (irtString.indexOf(',')>0) {
+							irtString=irtString.substring(0, irtString.indexOf(','));
+						}
+						retentionTime=Float.parseFloat(irtString)*60f;
 					} else if (retentionTime==0.0f) {
 						retentionTime=(float)SSRCalc.getHydrophobicity(peptideModSeq);
 					}
