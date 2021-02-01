@@ -22,6 +22,45 @@ public class PTMMap {
 		return getPTM(accession).getName();
 	}
 
+	public static PostTranslationalModification getPTM(double delta, String specificity) {
+		String accession=delta+" ("+specificity+")";
+		PostTranslationalModification ptm=cache.get(accession);
+		if (ptm!=null) return ptm;
+		
+		synchronized (modReader) {
+			// check again in case the cache has been populated by the time we get a lock
+			ptm=cache.get(accession); 
+			if (ptm!=null) return ptm;
+
+			Position pos=Specificity.parsePositon(specificity);
+			AminoAcid aa=AminoAcid.NONE;
+			if (pos==Position.NONE) {
+				aa=Specificity.parseAminoAcid(Character.toString(specificity.charAt(0)));
+			}
+			List<PTM> newPTMs=modReader.getPTMListByMonoDeltaMass(delta);
+			//System.out.println(name+"|"+pos+"|"+aa+" --> "+newPTMs.size()+" possible");
+			
+			PTM found=null;
+			ptmloop: for (PTM possible : newPTMs) {
+				for (Specificity spec : possible.getSpecificityCollection()) {
+					//System.out.println(spec.getPosition()+"=="+pos+", "+spec.getName()+"=="+aa);
+					if (spec.getPosition()==pos&&spec.getName()==aa) {
+						found=possible;
+						break ptmloop;
+					}
+				}
+			}
+			if (found==null) {
+				ptm=PostTranslationalModification.nothing;
+				cache.put(accession, PostTranslationalModification.nothing);
+			} else {
+				ptm=new PostTranslationalModification(found);
+				cache.put(accession, ptm);
+			}
+		}
+		return ptm;
+	}
+
 	public static PostTranslationalModification getPTM(String name, String specificity) {
 		String accession=name+" ("+specificity+")";
 		PostTranslationalModification ptm=cache.get(accession);
@@ -38,7 +77,6 @@ public class PTMMap {
 				aa=Specificity.parseAminoAcid(Character.toString(specificity.charAt(0)));
 			}
 			List<PTM> newPTMs=modReader.getPTMListByEqualName(name);
-
 			//System.out.println(name+"|"+pos+"|"+aa+" --> "+newPTMs.size()+" possible");
 			
 			PTM found=null;

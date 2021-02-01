@@ -496,6 +496,15 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(convertELIBtoBLIB);
 		
+		JMenuItem convertELIBtoMSP=new JMenuItem("Convert Library to NIST MSP", convertDBIcon);
+		convertELIBtoMSP.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertELIBtoMSP(SearchPanel.this, getVisibleTab().getParameters());
+			}
+		});
+		convertMenu.add(convertELIBtoMSP);
+		
 		JMenuItem convertELIBtoOpenSWATH=new JMenuItem("Convert Library to OpenSWATH tsv", convertDBIcon);
 		convertELIBtoOpenSWATH.addActionListener(new ActionListener() {
 			@Override
