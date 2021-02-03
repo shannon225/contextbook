@@ -159,9 +159,12 @@ public class SearchParameters {
 		HashMap<String, String> map=new HashMap<String, String>();
 		map.put("-fixed", aaConstants.getFixedModString());
 		map.put("-frag", FragmentationType.toString(fragType));
-		map.put("-ptol", precursorTolerance.getPpmTolerance()+"");
-		map.put("-ftol", fragmentTolerance.getPpmTolerance()+"");
-		map.put("-lftol", libraryFragmentTolerance.getPpmTolerance()+"");
+		map.put("-ptol", precursorTolerance.getToleranceThreshold()+"");
+		map.put("-ftol", fragmentTolerance.getToleranceThreshold()+"");
+		map.put("-lftol", libraryFragmentTolerance.getToleranceThreshold()+"");
+		map.put("-ptolunits", precursorTolerance.getUnits()+"");
+		map.put("-ftolunits", fragmentTolerance.getUnits()+"");
+		map.put("-lftolunits", libraryFragmentTolerance.getUnits()+"");
 		map.put("-poffset", precursorOffsetPPM+"");
 		map.put("-foffset", fragmentOffsetPPM+"");
 		map.put("-enzyme", enzyme.getName());

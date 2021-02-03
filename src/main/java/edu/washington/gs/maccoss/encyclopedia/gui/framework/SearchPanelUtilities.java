@@ -28,6 +28,7 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -186,10 +187,13 @@ public class SearchPanelUtilities {
 		final JDialog dialog=new JDialog(frame, "Convert Library to NIST MSP", true);
 
 		final FileChooserPanel elibFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".dlib", ".elib"), true, true);
+		final JCheckBox filterToKnownIonsBox=new JCheckBox("Filter out unknown ions");
+		filterToKnownIonsBox.setSelected(false);
 
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(elibFileChooser);
+		options.add(filterToKnownIonsBox);
 		
 		JPanel buttons=new JPanel();
 		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -200,6 +204,7 @@ public class SearchPanelUtilities {
 				final File elibFile=elibFileChooser.getFile();
 				String absolutePath=elibFile.getAbsolutePath();
 				File mspFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+".msp");
+				final boolean filterToKnownIons=filterToKnownIonsBox.isSelected();
 
 				if (elibFile!=null&&elibFile.exists()) {
 					dialog.setVisible(false);
@@ -210,7 +215,7 @@ public class SearchPanelUtilities {
 						protected Nothing doInBackgroundForReal() throws Exception {
 							LibraryFile library=new LibraryFile();
 							library.openFile(elibFile);
-							MSPWriter.writeMSP(mspFile, library, params);
+							MSPWriter.writeMSP(mspFile, library, filterToKnownIons, params);
 							library.close();
 							return Nothing.NOTHING;
 						}

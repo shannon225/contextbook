@@ -1,6 +1,8 @@
 EncyclopeDIA changelog for user-facing changes:
 
-encyclopedia-0.9.7-SNAPSHOT
+encyclopedia-1.3.0-SNAPSHOT
+
+encyclopedia-1.2.2 (Feb 2, 2021)
  - Feature: added OpenSwath TSV reader
  - Feature: added MS2PIP reader/writer
  - Feature: added "-topNTargetsUsed" option to limit the number of fragment ions used in a library per peptide
@@ -10,7 +12,11 @@ encyclopedia-0.9.7-SNAPSHOT
  - Bugfix: modified how peak boundary selection works to better respect -expectedPeakWidth
  - Bugfix: fixed integration boundaries to expand beyond -expectedPeakWidth if necessary
  - Bugfix: fixed bug failing to integrate valid peptides due to having multiple repeated entries in the same library in rare cases
+ - Bugfix: increased default Percolator training size to 500,000 to improve stability
+ - Bugfix: added Percolator additional training fields for +1 and +4 precursors
+ - Bugfix: added +3H and +4H fragments for +4H and +5H peptides
  - Bugfix: improved Unimod support for MSP reading
+ - Bugfix: fixed treatment of AMU tolerances in GUI
 
 encyclopedia-0.9.6 (Jul 24, 2020)
  - Feature: added ability to create Prosit input files from EncyclopeDIA (DLIB/ELIB) libraries using only the extracted peptides and charge states

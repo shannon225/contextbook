@@ -24,7 +24,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 public class MSPWriter {
 	public static final DecimalFormat df=new DecimalFormat("0.0000");
     
-	public static void writeMSP(File mspFile, LibraryFile library, SearchParameters parameters) {
+	public static void writeMSP(File mspFile, LibraryFile library, boolean filterForDetectedIons, SearchParameters parameters) {
 		PrintWriter writer=null;
 		try {
 			writer=new PrintWriter(mspFile);
@@ -68,6 +68,9 @@ public class MSPWriter {
 			for (int i = 0; i < masses.length; i++) {
 				if (intensities[i]>LibraryEntry.minimumIntensityThreshold) {
 					String annotation=toAnnotationString(ions[i]);
+					if (filterForDetectedIons&&annotation==null) {
+						continue;
+					}
 					if (annotation==null) {
 						annotation="?";
 					} else {

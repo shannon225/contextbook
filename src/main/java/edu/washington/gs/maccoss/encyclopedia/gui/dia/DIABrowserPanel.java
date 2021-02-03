@@ -454,7 +454,7 @@ public class DIABrowserPanel extends JPanel {
 					}
 				}
 				XYTrace[] array = polymerTraceList.toArray(new XYTrace[polymerTraceList.size()]);
-				final ChartPanel contaminantIntensities=Charter.getChart("Log10 Contaminant Intensity", "Count", false, array);
+				final ChartPanel contaminantIntensities=Charter.getChart("Log10 Basepeak Intensity", "Count", false, array);
 				
 				JTabbedPane tabs=new JTabbedPane();
 				final ChartPanel precursorIntensities=Charter.getChart("Log10 Precursor Intensity", "Count", false, precursorIntensityHistogram);
