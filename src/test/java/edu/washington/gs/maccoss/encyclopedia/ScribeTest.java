@@ -16,8 +16,11 @@ public class ScribeTest {
 		};
 
 		//lib=new File("/Users/searleb/Documents/dda_library_search/rj_lumos/CIDer/uniprot_human_25apr2019.fasta.trypsin_CIDch2_predictions.dlib");
-		//lib=new File("/Users/searleb/Documents/dda_library_search/rj_lumos/CIDer/NIST_CID_whole_human_consensus_final_true_lib.dlib");
-		lib=new File("/Users/searleb/Documents/dda_library_search/rj_lumos/CIDer/NIST_CIDer_all-spectra_DBW201129.dlib");
+		lib=new File("/Users/searleb/Documents/dda_library_search/rj_lumos/CIDer/final_libs/NIST_CID_original__NIST_CID_whole_human_consensus_final_true_lib.dlib");
+		//lib=new File("/Users/searleb/Documents/dda_library_search/rj_lumos/CIDer/NIST_CIDer_all-spectra_DBW201129.dlib");
+		//lib=new File("/Users/searleb/Documents/dda_library_search/rj_lumos/CIDer/final_libs/NIST_HCD_MS2PIP_PREDICTS__DBW201129.dlib_CIDch2_predictions.dlib");
+		//lib=new File("/Users/searleb/Documents/dda_library_search/rj_lumos/CIDer/final_libs/NIST_HCD_CIDer_V2__human_hcd_combined_CIDer_NCE33.dlib");
+		//lib=new File("/Users/searleb/Documents/dda_library_search/proteome_tools/ITMS_CID_35_annotated_2019-11-13.dlib");
 		//lib=new File("/Users/searleb/Documents/dda_library_search/hela/pan_human_library.dlib");
 		//lib=new File(dir, "uniprot_human_25apr2019.fasta.trypsin.z1-4_nce33.dlib");
 		//lib=new File("/Users/searleb/Documents/dda_library_search/hela/22oct2017_hela_serum_timecourse_narrow_library.elib");
@@ -29,8 +32,9 @@ public class ScribeTest {
 			long startTime=System.currentTimeMillis();
 			String[] scribeArgs=new String[] {
 				"-l", lib.getAbsolutePath(), "-i", fs[i].getAbsolutePath(), "-f", fasta.getAbsolutePath(), 
-				"-ptol", "50", "-ftol", "10", "-lftol", "50"
-				//"-ptol", "50", "-ptolunits", "PPM", "-ftol", "1", "-ftolunits", "AMU"
+				//"-ptol", "50", "-ftol", "10", "-lftol", "50"
+				//"-ptol", "50", "-ftol", "10", "-lftol", "500"
+				"-ptol", "50", "-ptolunits", "PPM", "-ftol", "10", "-ftolunits", "PPM", "-lftol", "0.6", "-lftolunits", "AMU"
 			};
 			Scribe.main(scribeArgs);
 			duration[i]=System.currentTimeMillis()-startTime;

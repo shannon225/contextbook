@@ -1,6 +1,8 @@
 EncyclopeDIA changelog for user-facing changes:
 
 encyclopedia-1.3.0-SNAPSHOT
+ - Feature: added mzML preprocessing (including merging gas-phase fractions) to command line
+ - Feature: added OpenSwath library conversion to command line
 
 encyclopedia-1.2.2 (Feb 2, 2021)
  - Feature: added OpenSwath TSV reader
