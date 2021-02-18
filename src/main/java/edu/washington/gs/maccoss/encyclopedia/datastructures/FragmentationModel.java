@@ -263,11 +263,19 @@ public class FragmentationModel {
 		return getPlusNs(masses, (byte)4);
 	}
 	public static FragmentIon[] getPlusNs(FragmentIon[] masses, byte charge) {
-		FragmentIon[] p2=new FragmentIon[masses.length];
-		for (int i=0; i<p2.length; i++) {
-			p2[i]=new FragmentIon((masses[i].getMass()+(charge-1)*MassConstants.protonMass)/charge, masses[i].getIndex(), IonType.getPlusN(masses[i].getType(), charge));
+		ArrayList<FragmentIon> ions=new ArrayList<>();
+		for (int i=0; i<masses.length; i++) {
+			// makes NL ions for +1 and +2, but not for higher than that
+			IonType type;
+			try {
+				type=IonType.getPlusN(masses[i].getType(), charge);
+			} catch (EncyclopediaException e) {
+				// throws exception if impossible iontype (for the model)
+				continue;
+			}
+			ions.add(new FragmentIon((masses[i].getMass()+(charge-1)*MassConstants.protonMass)/charge, masses[i].getIndex(), type));
 		}
-		return p2;
+		return ions.toArray(new FragmentIon[ions.size()]);
 	}
 
 	private static FragmentIon[] concatAndSort(Ion[]... a) {

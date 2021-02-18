@@ -26,7 +26,7 @@ public class PreprocessDIAFiles {
 
 	public static void convert(HashMap<String, String> arguments) {
 		if (!arguments.containsKey("-i")) {
-			Logger.errorLine("You are required to specify a FASTA file (-i)");
+			Logger.errorLine("You are required to specify an mzML file (-i)");
 			System.exit(1);
 		}
 
@@ -49,6 +49,10 @@ public class PreprocessDIAFiles {
 				System.exit(1);
 			}
 		} else {
+			if (arguments.get("-o")==null) {
+				Logger.logLine("When using multiple inputs, you must specify an output file!");
+				System.exit(1);
+			}
 			outputFile=new File(arguments.get("-o"));
 		}
 		

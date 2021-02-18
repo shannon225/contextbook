@@ -166,6 +166,28 @@ public enum IonType {
 		return "unknown";
 	}
 	
+	public static boolean isNeutralLoss(IonType t) {
+		switch (t) {
+		case aNL: return true;
+		case bNL: return true;
+		case cNL: return true;
+		case xNL: return true;
+		case yNL: return true;
+		case zNL: return true;
+		case z1NL: return true;
+
+		case ap2NL: return true;
+		case bp2NL: return true;
+		case cp2NL: return true;
+		case xp2NL: return true;
+		case yp2NL: return true;
+		case zp2NL: return true;
+		case z1p2NL: return true;
+		
+		default: return false;
+		}
+	}
+	
 	public static String getType(IonType t) {
 		switch (t) {
 		case a: return "a";
