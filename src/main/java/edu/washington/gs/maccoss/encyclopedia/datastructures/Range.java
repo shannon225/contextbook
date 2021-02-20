@@ -2,6 +2,8 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.ArrayList;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+
 //@Immutable
 public class Range implements Comparable<Range> {
 	private final float start, stop;
@@ -18,6 +20,9 @@ public class Range implements Comparable<Range> {
 			this.start = stop;
 			this.stop = start;
 		}
+	}
+	public Range(float[] data) {
+		this(General.min(data), General.max(data));
 	}
 	
 	public Range addBuffer(float buffer) {

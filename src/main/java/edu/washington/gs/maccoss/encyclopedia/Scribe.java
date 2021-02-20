@@ -43,6 +43,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -99,10 +100,13 @@ public class Scribe {
 			for (Entry<String, String> entry : defaults.entrySet()) {
 				Logger.timelessLogLine("\t"+General.formatCellToWidth(entry.getKey(), maxWidth)+" (default: "+entry.getValue()+")");
 			}
+
+			Logger.timelessLogLine("\t"+Encyclopedia.QUIET_MODE_ARG+"\tsuppress log output to stdout/stderr");
+
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("Scribe version "+ScribeScoringFactory.version);
+			Logger.logLine("Scribe version "+ProgramType.getGlobalVersion().toString());
 			System.exit(1);
 			
 		} else {
@@ -125,13 +129,16 @@ public class Scribe {
 			}
 
 			try {
+				if (arguments.containsKey(Encyclopedia.QUIET_MODE_ARG)) {
+					Logger.PRINT_TO_SCREEN = false;
+				}
 				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+ScribeJobData.LOG_FILE_SUFFIX));
 				Logger.addRecorder(logRecorder);
 	
 				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 				ScribeScoringFactory factory=new ScribeScoringFactory(parameters);
 				
-				Logger.logLine("Scribe version "+factory.getVersion());
+				Logger.logLine("Scribe version "+ProgramType.getGlobalVersion().toString());
 	
 				Logger.logLine("Parameters:");
 				Logger.logLine(" "+INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());
@@ -139,7 +146,7 @@ public class Scribe {
 				Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
 				Logger.logLine(parameters.toString());
 
-				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
+				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
 				ScribeJobData job=new ScribeJobData(diaFile, fastaFile, library, outputFile, factory);
 				runSearch(new EmptyProgressIndicator(), job);
 			} catch (Exception e) {
@@ -162,8 +169,8 @@ public class Scribe {
 					Logger.logLine("Writing elib result library...");
 					ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 					jobs.add(job);
-					if (true) System.exit(1); // FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME
-					SearchToBLIB.convert(progress, jobs, elibFile, false, false);
+					
+					SearchToBLIB.convertElib(progress, job, elibFile, job.getParameters());
 				}
 				Logger.logLine("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR");
 				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
@@ -175,6 +182,8 @@ public class Scribe {
 				Logger.logLine("Found unexpected exception trying to read old results: ");
 				Logger.logException(e);
 				Logger.logLine("Just going to go ahead and reprocess this file!");
+				Logger.errorLine("ACTUALLY JUST QUITTING FOR DEBUGGING FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME"); // FIXME
+				System.exit(1); // FIXME
 			}
 		}
 		
@@ -203,10 +212,8 @@ public class Scribe {
 		
 		Logger.logLine("Writing elib result library...");
 		File elibFile=job.getResultLibrary();
-		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
-		jobs.add(job);
 		
-		//SearchToBLIB.convertElib(progress, job, elibFile, parameters);
+		SearchToBLIB.convertElib(progress, job, elibFile, parameters);
 		
 		progress.update("Found "+passingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 		Logger.logLine("Finished analysis! "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");

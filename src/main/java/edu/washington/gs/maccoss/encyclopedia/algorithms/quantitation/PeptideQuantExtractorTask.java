@@ -160,12 +160,42 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	}
 
 	public TransitionRefinementData extractSpectrum(AnnotatedLibraryEntry unitEntry, float duration, boolean limitToQuantifiable, boolean integrateEverything, boolean wasInferred) {
-		// widened to 3x the expected size (+/-1.5) of the peak to make sure we don't miss something by catching just the corner 
-		ArrayList<FragmentScan> stripes=getScanSubset(unitEntry.getRetentionTime()-duration*1.5f, unitEntry.getRetentionTime()+duration*1.5f);
-		return quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes, integrateEverything, wasInferred, params.getAAConstants());
+		// widened to 3x the expected size (+/-1.5) of the peak to make sure we don't miss something by catching just the corner
+		float scanStart=unitEntry.getRetentionTime()-duration*1.5f;
+		float scanStop=unitEntry.getRetentionTime()+duration*1.5f;
+		
+		float previousScanStart=Float.MAX_VALUE;
+		float previousScanStop=0f;
+		while (true) {
+			ArrayList<FragmentScan> stripes=getScanSubset(scanStart, scanStop);
+		
+			TransitionRefinementData data = quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes, integrateEverything, wasInferred, params);
+			if (data==null) return null;
+			if (data.getMedianChromatogram().length==0) return null;
+			
+			boolean retry=false;
+			float currentScanStart = stripes.get(0).getScanStartTime();
+			float currentScanStop = stripes.get(stripes.size()-1).getScanStartTime();
+			if (duration>0) {
+				if (data.getMedianChromatogram()[0]>TransitionRefiner.MINIMUM_THRESHOLD_PERCENTAGE&&data.getRange().getStart()==currentScanStart&&previousScanStart!=currentScanStart) {
+					retry=true;
+					scanStart=scanStart-duration;
+					previousScanStart=currentScanStart;
+				}
+				if (data.getMedianChromatogram()[data.getMedianChromatogram().length-1]>TransitionRefiner.MINIMUM_THRESHOLD_PERCENTAGE&&data.getRange().getStop()==currentScanStop&&previousScanStop!=currentScanStop) {
+					retry=true;
+					scanStop=scanStop+duration;
+					previousScanStop=currentScanStop;
+				}
+			}
+			
+			if (!retry) {
+				return data;
+			}
+		}
 	}
 
-	public static TransitionRefinementData quantifyPeptide(PSMPeakScorer scorer, AnnotatedLibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<FragmentScan> stripes, boolean integrateEverything, boolean wasInferred, AminoAcidConstants aaConstants) {
+	public static TransitionRefinementData quantifyPeptide(PSMPeakScorer scorer, AnnotatedLibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<FragmentScan> stripes, boolean integrateEverything, boolean wasInferred, SearchParameters params) {
 		// find the center
 		float bestDelta=Float.MAX_VALUE;
 		PeakScores[] bestScores=null;
@@ -250,7 +280,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		}
 
 		// identify transitions
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions(unitEntry.getPeptideModSeq(), unitEntry.getPrecursorCharge(), unitEntry.getScanStartTime(), fragmentMasses.toArray(new FragmentIon[fragmentMasses.size()]), chromatograms, retentionTimes.toArray(), wasInferred, aaConstants);
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions(unitEntry.getPeptideModSeq(), unitEntry.getPrecursorCharge(), unitEntry.getScanStartTime(), fragmentMasses.toArray(new FragmentIon[fragmentMasses.size()]), chromatograms, retentionTimes.toArray(), wasInferred, params);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		Range rtRange=data.getRange();

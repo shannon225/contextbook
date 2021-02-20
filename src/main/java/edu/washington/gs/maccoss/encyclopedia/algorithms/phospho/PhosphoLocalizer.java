@@ -403,8 +403,8 @@ public class PhosphoLocalizer {
 				int numIdentificationPeaks=0;
 				float[] intensities=quantData.getIntegrationArray();
 				float[] correlations=quantData.getCorrelationArray();
-				FragmentIon[] consideredIons=quantData.getFragmentMassArray();
-				ArrayList<FragmentIon> wellShapedIons=new ArrayList<FragmentIon>();
+				Ion[] consideredIons=quantData.getFragmentMassArray();
+				ArrayList<Ion> wellShapedIons=new ArrayList<Ion>();
 				float localizationIntensity=0.0f;
 				for (int i=0; i<correlations.length; i++) {
 					if (correlations[i]>=TransitionRefiner.identificationCorrelationThreshold) {
@@ -564,7 +564,7 @@ public class PhosphoLocalizer {
 		}
 
 		// identify transitions
-		TransitionRefinementData data=TransitionRefiner.identifyTransitions(peptideModSeq, precursorCharge, targetRT, keptMasses.toArray(new FragmentIon[keptMasses.size()]), chromatograms, retentionTimes.toArray(), medianChromatogram, false, params.getAAConstants());
+		TransitionRefinementData data=TransitionRefiner.identifyTransitions(peptideModSeq, precursorCharge, targetRT, keptMasses.toArray(new FragmentIon[keptMasses.size()]), chromatograms, retentionTimes.toArray(), medianChromatogram, false, params);
 		float[] correlations=data.getCorrelationArray();
 		float[] integrations=data.getIntegrationArray();
 		Range rtRange=data.getRange();

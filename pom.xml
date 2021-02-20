@@ -4,7 +4,7 @@
 
 	<groupId>maccoss</groupId>
 	<artifactId>encyclopedia</artifactId>
-	<version>0.9.7-SNAPSHOT</version>
+	<version>1.3.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>encyclopedia</name>
@@ -87,6 +87,13 @@
 		<repository>
 			<id>jitpack.io</id>
 			<url>https://jitpack.io</url>
+		</repository>
+		<!--  Attempt to override the repository provided
+		      by the xxindex POM (required for cpdetector).
+		      Using a non-HTTPS URL causes an error. -->
+		<repository>
+			<id>sammoa-group</id>
+			<url>https://maven.nuiton.org/nexus/content/repositories/sammoa-group/</url>
 		</repository>
 	</repositories>
 

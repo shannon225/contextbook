@@ -69,6 +69,7 @@ public class AminoAcidConstants {
 				PeptideModification.phosphorylation,
 				PeptideModification.acetylation,
 				PeptideModification.oxidation,
+				PeptideModification.oxidationTyr,
 				PeptideModification.methylation,
 				PeptideModification.dimethylation,
 				PeptideModification.trimethylation,
@@ -303,6 +304,12 @@ public class AminoAcidConstants {
 						return 15.994915;
 					} else if (tolerance.equals(58.0, modificationMass)) { // Ox + acetyl
 						return 42.010565 + 15.994915;
+					}
+				}
+
+				if (aa == 'N' || aa == 'Q') {
+					if (tolerance.equals(1, modificationMass)) { // deamidation
+						return MassConstants.oh2-MassConstants.nh3;
 					}
 				}
 

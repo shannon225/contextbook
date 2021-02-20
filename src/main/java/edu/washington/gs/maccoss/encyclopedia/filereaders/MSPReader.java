@@ -21,6 +21,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PTMMap.PostTranslationalModification;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -259,7 +260,7 @@ public class MSPReader {
 					
 					//Issue 90: The charge may be stored as a separate field in the comment,
 					//or attached to the peptide sequence itself e.g. PEPTIDER+2
-					if (map.containsKey("Charge")) {
+					if (precursorCharge==(byte)0&&map.containsKey("Charge")) {
 						precursorCharge = Byte.parseByte(map.get("Charge"));
 					} else if (precursorCharge==(byte)0) {
 						String substring = fullname.substring(fullname.lastIndexOf('/')+1);
@@ -323,11 +324,17 @@ public class MSPReader {
 
 					// uses peptideModSeq so needs to be last
 					String rtString=map.get("RetentionTime");
+					String irtString=map.get("iRT");
 					if (rtString!=null) {
 						if (rtString.indexOf(',')>0) {
 							rtString=rtString.substring(0, rtString.indexOf(','));
 						}
-						retentionTime=Float.parseFloat(rtString);
+						retentionTime=Float.parseFloat(rtString)*60f;
+					} else if (irtString!=null) {
+						if (irtString.indexOf(',')>0) {
+							irtString=irtString.substring(0, irtString.indexOf(','));
+						}
+						retentionTime=Float.parseFloat(irtString)*60f;
 					} else if (retentionTime==0.0f) {
 						retentionTime=(float)SSRCalc.getHydrophobicity(peptideModSeq);
 					}
@@ -440,12 +447,18 @@ public class MSPReader {
 	}
 	
 	/**
-	 * TODO should consider getting these out of a Unimod database. These are consistent with the NIST libraries as of January 2016
 	 * @param aa
 	 * @param mod
 	 * @return
 	 */
-	static double getMass(char aa, String mod) {
+	public static double getMass(char aa, String mod) {
+		// prefer Unimod if possible
+		PostTranslationalModification ptm=PTMMap.getPTM(mod, Character.toString(aa));
+		if (ptm!=null&&ptm!=PTMMap.PostTranslationalModification.nothing) {
+			return ptm.getDeltaMass();
+		}
+		
+		// fallback on direct lookup
 		if (aa=='C'&&"CAM".equals(mod)) {
 			return 57.0214635;
 		} else if (aa=='M'&&"Oxidation".equalsIgnoreCase(mod)) {

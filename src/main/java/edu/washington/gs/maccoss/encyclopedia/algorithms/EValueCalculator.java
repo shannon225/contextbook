@@ -39,6 +39,10 @@ public class EValueCalculator {
 				if (arg1>intermediateMaxScores[0]) {
 					intermediateMaxScores[0]=arg1;
 					intermediateMaxScores[1]=arg0;
+				} else if (arg1==intermediateMaxScores[0]&&arg0>intermediateMaxScores[1]) {
+					// force a repeatable sort order for exact score matches
+					intermediateMaxScores[0]=arg1;
+					intermediateMaxScores[1]=arg0;
 				}
 				return true;
 			}
@@ -49,7 +53,10 @@ public class EValueCalculator {
 		scoreMap.forEachEntry(new TFloatFloatProcedure() {
 			public boolean execute(float arg0, float arg1) {
 				if (arg1>=minScore) { // require scores of at least minScore
-					int index=getIndex(arg1);
+					int index=Math.round((arg1-minScore)/binSize);
+					if (index>=counts.length) {
+						index=counts.length-1;
+					}
 					if (index>=0) {
 						counts[index]++;
 					}
@@ -122,18 +129,6 @@ public class EValueCalculator {
 	 */
 	private float getScore(int index) {
 		return (index+0.5f)*binSize+minScore;
-	}
-	
-	private int getIndex(float intensity) {
-		int index=Math.round((intensity-minScore)/binSize);
-		if (index>=counts.length) {
-			index=counts.length-1;
-		}
-		if (index<0) {
-			return -1;
-			//throw new EncyclopediaException("No score bins available for scoring system! Empty library spectrum?");
-		}
-		return index;
 	}
 	
 	public XYTraceInterface[] toTraces() {

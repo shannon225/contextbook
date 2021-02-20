@@ -95,7 +95,7 @@ public class VariantXCorDIA {
 			Logger.timelessLogLine("\t-l\ttarget Library file (default: search target FASTA)");
 			Logger.timelessLogLine("\t-tp\ttrue/false target FASTA file contains peptides (default: false)"); 
 			Logger.timelessLogLine("\t-o\toutput report file (default: [input file]"+XCorDIAJobData.OUTPUT_FILE_SUFFIX+")");
-			
+
 			TreeMap<String, String> defaults=new TreeMap<String, String>(PecanParameterParser.getDefaultParameters());
 			int maxWidth=0;
 			for (String key : defaults.keySet()) {
@@ -104,10 +104,13 @@ public class VariantXCorDIA {
 			for (Entry<String, String> entry : defaults.entrySet()) {
 				Logger.timelessLogLine("\t"+General.formatCellToWidth(entry.getKey(), maxWidth)+" (default: "+entry.getValue()+")");
 			}
+
+			Logger.timelessLogLine("\t"+Encyclopedia.QUIET_MODE_ARG+"\tsuppress log output to stdout/stderr");
+
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("XCorDIA version "+XCorDIAOneScoringFactory.version);
+			Logger.logLine("XCorDIA version "+ProgramType.getGlobalVersion().toString());
 			System.exit(1);
 			
 		} else {
@@ -127,12 +130,15 @@ public class VariantXCorDIA {
 			}
 
 			try {
+				if (arguments.containsKey(Encyclopedia.QUIET_MODE_ARG)) {
+					Logger.PRINT_TO_SCREEN = false;
+				}
 				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+EncyclopediaJobData.LOG_FILE_SUFFIX));
 				Logger.addRecorder(logRecorder);
 				
 				PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 				XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(parameters);
-				Logger.logLine("XCorDIA version "+factory.getVersion());
+				Logger.logLine("XCorDIA version "+ProgramType.getGlobalVersion().toString());
 	
 				ArrayList<FastaPeptideEntry> targets;
 				if (arguments.containsKey(TARGET_FASTA_TAG)) {
@@ -155,7 +161,7 @@ public class VariantXCorDIA {
 
 				LibraryInterface library;
 				if (arguments.containsKey(TARGET_LIBRARY_TAG)) {
-					library=BlibToLibraryConverter.getFile(new File(arguments.get(TARGET_LIBRARY_TAG)));
+					library=BlibToLibraryConverter.getFile(new File(arguments.get(TARGET_LIBRARY_TAG)), fastaFile, parameters);
 				} else {
 					library=null;
 				}

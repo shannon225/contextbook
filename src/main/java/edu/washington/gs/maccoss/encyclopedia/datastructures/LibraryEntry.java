@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
@@ -21,6 +22,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakChromatogram;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativePeakIntensityComparator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
@@ -29,7 +31,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	public static final String SHUFFLE_STRING="SHUFFLE_";
 	public static final String DECOY_STRING="DECOY_";
 
-	private static final float minimumIntensityThreshold=10.0f*Float.MIN_VALUE;
+	public static final float minimumIntensityThreshold=10.0f*Float.MIN_VALUE;
 	
 	private final String source;
 	private final int spectrumIndex;
@@ -135,6 +137,45 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	 */
 	public LibraryEntry updateMS2(double[] newMassArray, float[] newIntensityArray) {
 		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, newMassArray, newIntensityArray, getUnitArray(newMassArray.length));
+	}
+	
+	/**
+	 * only use for testing
+	 * @param newMassArray
+	 * @param newIntensityArray
+	 * @param newCorrelationArray
+	 * @return
+	 */
+	public LibraryEntry updateMS2(double[] newMassArray, float[] newIntensityArray, float[] newCorrelationArray) {
+		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, newMassArray, newIntensityArray, newCorrelationArray);
+	}
+	
+	public LibraryEntry trimToNPeaks(int n, AminoAcidConstants aaConstants) {
+		ArrayList<PeakChromatogram> peaks=new ArrayList<>();
+		int numPeaks=Math.min(massArray.length, correlationArray.length);
+		for (int i=0; i<numPeaks; i++) {
+			if (intensityArray[i]>0) {
+				peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], correlationArray[i]));
+			}
+		}
+		Collections.sort(peaks, new QuantitativePeakIntensityComparator()); // sort by intensity (and correlation classes) 
+
+		ArrayList<PeakChromatogram> finalPeaks=new ArrayList<>();
+		for (int i = peaks.size()-1; i>=0; i--) {
+			finalPeaks.add(peaks.get(i));
+			if (finalPeaks.size()>=n) break;
+		}
+		
+		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(finalPeaks);
+		Collections.sort(finalPeaks); // sort by m/z
+		
+		if (this instanceof ReverseLibraryEntry) {
+			return new ReverseLibraryEntry(source, accessions, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, 
+					arrays.x, arrays.y, arrays.z, aaConstants);
+		} else {
+			return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, 
+					arrays.x, arrays.y, arrays.z);
+		}
 	}
 	
 	/**

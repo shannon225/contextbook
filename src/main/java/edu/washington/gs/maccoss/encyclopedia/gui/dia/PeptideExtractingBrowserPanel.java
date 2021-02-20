@@ -29,9 +29,16 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
 
 import org.jfree.chart.ChartPanel;
+import org.jfree.chart.annotations.XYTextAnnotation;
+import org.jfree.chart.event.AxisChangeEvent;
+import org.jfree.chart.event.AxisChangeListener;
+import org.jfree.chart.event.PlotChangeEvent;
+import org.jfree.chart.event.PlotChangeListener;
+import org.jfree.chart.plot.XYPlot;
+
+import com.google.common.util.concurrent.AtomicDouble;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ExpectedFragmentationScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.FragmentationScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.FragmentationTraceTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
@@ -40,6 +47,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParame
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
@@ -51,18 +59,22 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.ExtendedChartPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 
 public class PeptideExtractingBrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -71,7 +83,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 
 	private final SearchParameters parameters;
 	private final FileChooserPanel diaFile;
-	private final JTextField peptide=new JTextField("YLDGLTAER");
+	private final JTextField peptide=new JTextField("VATVSLPR");
 	private final SpinnerModel charge=new SpinnerNumberModel(2, 1, 5, 1);
 	private final JSplitPane split=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
@@ -166,6 +178,9 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 		add(bar, BorderLayout.NORTH);
 		add(split, BorderLayout.CENTER);
 	}
+	
+	volatile double lowerBound=0.0;
+	volatile double upperBound=0.0;
 
 	public void resetPeptide(String peptide, int charge) {
 		if (peptide==null||peptide.length()==0||dia==null) {
@@ -175,7 +190,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 			Logger.logLine("Parsing peptide...");
 			PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaPeptideEntry(peptide), parameters.getAAConstants());
 			ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
-			LibraryEntry entry=model.getUnitSpectrum(dia.getOriginalFileName(), new HashSet<String>(), (byte)charge, 0.0f, parameters);
+			AnnotatedLibraryEntry entry=model.getUnitSpectrum(dia.getOriginalFileName(), new HashSet<String>(), (byte)charge, 0.0f, parameters);
 			entries.add(entry);
 			
 			try {
@@ -184,15 +199,32 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 				HashMap<LibraryEntry, PeptideScoringResult> result=task.call();
 				
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
-				for (Entry<LibraryEntry, PeptideScoringResult> resultEntry : result.entrySet()) {
-					FragmentationScoringResult peptideResult=(FragmentationScoringResult)resultEntry.getValue();
+//				for (Entry<LibraryEntry, PeptideScoringResult> resultEntry : result.entrySet()) {
+//					FragmentationScoringResult peptideResult=(FragmentationScoringResult)resultEntry.getValue();
+//
+//					for (XYTrace trace : peptideResult.getFragmentationTraces()) {
+//						//XYTrace sgSmoothed=SkylineSGFilter.paddedSavitzkyGolaySmooth(trace);
+//						traces.add(trace);
+//					}
+//				}
 
-					for (XYTrace trace : peptideResult.getFragmentationTraces()) {
-						XYTrace sgSmoothed=SkylineSGFilter.paddedSavitzkyGolaySmooth(trace);
-						traces.add(trace);
+
+				HashMap<FragmentIon, XYTrace> targetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), entry.getIonAnnotations(), stripes, null,
+						GraphType.boldline);
+				traces.addAll(targetFragmentTraceMap.values());
+				
+				ExtendedChartPanel chart=Charter.getChart("Retention Time (min)", "Intensity", false, traces.toArray(new XYTrace[traces.size()]));
+				addAnnotations(targetFragmentTraceMap, chart);
+				chart.getChart().getXYPlot().addChangeListener(new PlotChangeListener() {
+					
+					@Override
+					public void plotChanged(PlotChangeEvent event) {
+						
+						synchronized (this) {
+							addAnnotations(targetFragmentTraceMap, chart);
+						}
 					}
-				}
-				ChartPanel chart=Charter.getChart("Retention Time (min)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
+				});
 				split.setTopComponent(chart);
 				
 
@@ -229,6 +261,28 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 						JOptionPane.ERROR_MESSAGE);
 			}
 			Logger.logLine("Finished reading peptide "+peptide);
+		}
+	}
+
+	private void addAnnotations(HashMap<FragmentIon, XYTrace> targetFragmentTraceMap, ExtendedChartPanel chart) {
+
+		XYPlot plot = chart.getChart().getXYPlot();
+		org.jfree.data.Range jfreeRange=plot.getDomainAxis().getRange();
+		if (jfreeRange.getLowerBound()!=lowerBound||jfreeRange.getUpperBound()!=upperBound) {
+			lowerBound=jfreeRange.getLowerBound();
+			upperBound=jfreeRange.getUpperBound();
+			System.out.println("Found: "+lowerBound+" / "+upperBound);
+			
+			Range range=new Range(jfreeRange.getLowerBound(), jfreeRange.getUpperBound());
+			for (Entry<FragmentIon, XYTrace> ionEntry : targetFragmentTraceMap.entrySet()) {
+				FragmentIon ion=ionEntry.getKey();
+				XYTrace trace=ionEntry.getValue();
+				XYPoint xy=trace.getMaxXYInRange(range);
+
+				XYTextAnnotation annotation=new XYTextAnnotation(ion.getName()+" ("+String.format("%.1f", ion.getMass())+" m/z)", xy.x, xy.y/chart.getDivider()*1.01);
+				System.out.println("      "+trace.getName()+" = "+xy.x+" / "+(xy.y/chart.getDivider()));
+				plot.addAnnotation(annotation);
+			}
 		}
 	}
 }

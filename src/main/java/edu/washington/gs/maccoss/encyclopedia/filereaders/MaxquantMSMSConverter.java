@@ -112,15 +112,7 @@ public class MaxquantMSMSConverter {
 
 	public static LibraryFile convertFromMSMSTSV(File tsvFile, File fastaFile, File libraryFile, SearchParameters parameters) {
 		initPTMs();
-		
 		TCharDoubleHashMap fixedMods=checkForFixedModsFromMSMS(tsvFile, parameters);
-		fixedMods.forEachEntry(new TCharDoubleProcedure() {
-			@Override
-			public boolean execute(char a, double b) {
-				System.out.println("Found: "+a+" --> "+b);
-				return true;
-			}
-		});
 		
 		AminoAcidConstants aaConstants=parameters.getAAConstants();
 		try {
@@ -128,6 +120,8 @@ public class MaxquantMSMSConverter {
 			TableParserMuscle muscle=new TableParserMuscle() {
 				@Override
 				public void processRow(Map<String, String> row) {
+					String rawFile=row.get("Raw file");
+					if (rawFile==null) rawFile=tsvFile.getName();
 					String peptideModSeq=parseMods(row.get("Modified sequence"), fixedMods);
 					byte charge=Byte.parseByte(row.get("Charge"));
 					float[] intensities=parseFloats(row.get("Intensities"));
@@ -153,7 +147,7 @@ public class MaxquantMSMSConverter {
 					}
 
 					// RTs are in mins
-					PeptideEntry pep=new PeptideEntry(peptideModSeq, charge, (rt+rtOffset)*60f);
+					PeptideEntry pep=new PeptideEntry(peptideModSeq, charge, (rt+rtOffset)*60f, rawFile);
 					for (int i = 0; i < masses.length; i++) {
 						pep.addPeak(new Peak(masses[i]+massDeviations[i], intensities[i]));
 					}
@@ -237,7 +231,7 @@ public class MaxquantMSMSConverter {
 				accessions.add(PeptideUtils.getPeptideSeq(peptide.peptideModSeq));
 			}
 			
-			LibraryEntry entry=new LibraryEntry(sourceFile, accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, (float)Math.pow(10, -scoredObj.x), peptide.masses, peptide.intensities, aaConstants);
+			LibraryEntry entry=new LibraryEntry(peptide.sourceFile, accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, (float)Math.pow(10, -scoredObj.x), peptide.masses, peptide.intensities, aaConstants);
 			entries.add(entry);
 		}
 

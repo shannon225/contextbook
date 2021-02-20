@@ -31,6 +31,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPe
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.precursor.DDAPrecursorIntegrator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQuantExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
@@ -39,8 +40,10 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
@@ -102,7 +105,7 @@ public class SearchToBLIB {
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("EncyclopeDIA SearchToLIB version "+EncyclopediaOneScoringFactory.version);
+			Logger.logLine("EncyclopeDIA SearchToLIB version "+ProgramType.getGlobalVersion().toString());
 			System.exit(1);
 			
 		} else {
@@ -133,7 +136,7 @@ public class SearchToBLIB {
 		
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 		XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(parameters);
-		Logger.timelessLogLine("SearchToLIB XCorDIA version "+factory.getVersion());
+		Logger.timelessLogLine("SearchToLIB XCorDIA version "+ProgramType.getGlobalVersion().toString());
 
 		Logger.timelessLogLine("Parameters:");
 		Logger.timelessLogLine(" -i "+diaFile.getAbsolutePath());
@@ -195,7 +198,7 @@ public class SearchToBLIB {
 		
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, outputFile);
-		Logger.logLine("SearchToLIB Pecan version "+factory.getVersion());
+		Logger.logLine("SearchToLIB Pecan version "+ProgramType.getGlobalVersion().toString());
 
 		Logger.timelessLogLine("Parameters:");
 		Logger.timelessLogLine(" -i "+diaFile.getAbsolutePath());
@@ -252,7 +255,7 @@ public class SearchToBLIB {
 		
 		SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
-		Logger.timelessLogLine("SearchToLIB EncyclopeDIA version "+factory.getVersion());
+		Logger.timelessLogLine("SearchToLIB EncyclopeDIA version "+ProgramType.getGlobalVersion().toString());
 
 		Logger.timelessLogLine("Parameters:");
 		Logger.timelessLogLine(" -i "+diaFile.getAbsolutePath());
@@ -535,14 +538,16 @@ public class SearchToBLIB {
 	static void convertElib(ProgressIndicator progress, SearchJobData pecanJob, File elibFile, SearchParameters parameters) {
 		ArrayList<SearchJobData> jobs=new ArrayList<>();
 		jobs.add(pecanJob);
+
 		convertElib(progress, jobs, elibFile, Optional.empty(), Optional.empty(), Optional.empty(), parameters);
 	}
+	
 	static void convertElib(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File elibFile, Optional<Pair<ArrayList<PercolatorPeptide>, Float>> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters) {
 		try {
 			LibraryFile elib=new LibraryFile();
 			elib.openFile();
 			elib.dropIndices();
-
+			
 			float increment=1.0f/pecanJobs.size();
 			for (int i=0; i<pecanJobs.size(); i++) {
 				SearchJobData job=pecanJobs.get(i);
@@ -576,6 +581,12 @@ public class SearchToBLIB {
 						Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>> targetDecoyProteins=ParsimonyProteinGrouper.groupProteins(targets.x, decoys.x, parameters.getPercolatorProteinThreshold(), parameters.getAAConstants());
 						Logger.logLine("Writing local target/decoy proteins: "+targetDecoyProteins.x.size()+"/"+targetDecoyProteins.y.size());
 						elib.addTargetDecoyProteins(job.getDiaFile().getName(), targetDecoyProteins.x, targetDecoyProteins.y);
+
+						job.getPercolatorFiles()
+								.getPercolatorExecutableVersion()
+								.ifPresent((ThrowingConsumer<String>) version -> {
+									elib.addMetadata(LibraryFile.PERCOLATOR_VERSION, version);
+								});
 					}
 				}
 				
@@ -624,6 +635,10 @@ public class SearchToBLIB {
 					parameterMap.put(job.getDiaFile().getName()+" fasta", ((PecanJobData)job).getFastaFile().getName());
 					parameterMap.put(job.getDiaFile().getName()+" used narrow target list", Boolean.toString(((PecanJobData)job).getTargetList().isPresent()));
 				} else if (job instanceof XCorDIAJobData) {
+					Optional<LibraryInterface> maybeLibrary = ((XCorDIAJobData)job).getLibrary();
+					if (maybeLibrary.isPresent()) {
+						parameterMap.put(job.getDiaFile().getName()+" library", maybeLibrary.get().getName());
+					}
 					parameterMap.put(job.getDiaFile().getName()+" fasta", ((XCorDIAJobData)job).getFastaFile().getName());
 					parameterMap.put(job.getDiaFile().getName()+" used narrow target list", Boolean.toString(((XCorDIAJobData)job).getTargetList().isPresent()));
 				}
@@ -676,11 +691,17 @@ public class SearchToBLIB {
 
 		inferrer.ifPresent(inf -> elib.addRtAlignment(job, inf));
 
-		LibraryInterface library=null;
-		if (job instanceof EncyclopediaJobData) {
-			library=((EncyclopediaJobData)job).getLibrary();
+		ArrayList<IntegratedLibraryEntry> libraryEntries;
+		if (job instanceof QuantitativeSearchJobData) {
+			LibraryInterface library=null;
+			if (job instanceof EncyclopediaJobData) {
+				library=((EncyclopediaJobData)job).getLibrary();
+			}
+			libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job, false, globalPassingPeptides, localPassingPeptides, inferrer, stripeFile, library, job.getParameters());
+		} else {
+			HashMap<String, PSMData> targetPSMs=PeptideQuantExtractor.findTargetPSMData(job, globalPassingPeptides, localPassingPeptides, inferrer, job.getParameters());
+			libraryEntries=DDAPrecursorIntegrator.integrateSearch(subProgress, targetPSMs, stripeFile, job.getParameters());
 		}
-		ArrayList<IntegratedLibraryEntry> libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job, false, globalPassingPeptides, localPassingPeptides, inferrer, stripeFile, library, job.getParameters());
 		stripeFile.close();
 		
 		Logger.logLine("Writing Encyclopedia ELIB from "+diaFile.getName()+" ("+libraryEntries.size()+" entries)...");
@@ -698,6 +719,7 @@ public class SearchToBLIB {
 		}
 
 		elib.addIntegratedEntries(libraryEntries, inferrer, localizationData, job.getParameters().getAAConstants(), job.getParameters().getPercolatorThreshold());
+		
 		
 		Logger.logLine("Finished writing to Encyclopedia ELIB at "+new Date().toString());
 		subProgress.update(diaFile.getName()+": Finished writing to Encyclopedia ELIB at "+new Date().toString(), 1.0f);

@@ -96,10 +96,16 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 		return getMaxXYInRange(new Range(-Double.MAX_VALUE, Double.MAX_VALUE)).y;
 	}
 	
-	public XYTraceInterface rescaleX(float rescaleX) {
+	public XYTrace rescaleX(float rescaleX) {
 		Pair<double[], double[]> trace=toArrays(points);
 		double[] newx=General.multiply(trace.x, rescaleX);
 		return new XYTrace(newx, trace.y, type, name, color.orElse(null), thickness.orElse(null));
+	}
+	
+	public XYTrace rescaleY(float rescaleY) {
+		Pair<double[], double[]> trace=toArrays(points);
+		double[] newy=General.multiply(trace.y, rescaleY);
+		return new XYTrace(trace.x, newy, type, name, color.orElse(null), thickness.orElse(null));
 	}
 	
 	public XYTrace(double[] x, double[] y, GraphType type, String name, Optional<Color> color, Optional<Float> thickness) {
@@ -191,6 +197,10 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 	}
 	public XYTrace(TFloatFloatHashMap map, GraphType type, String name) {
 		this(map, type, name, null, null);
+	}
+	
+	public XYTrace updateColor(Color color, Float thickness) {
+		return new XYTrace(points, type, name, color, thickness);
 	}
 	
 	/* (non-Javadoc)
@@ -317,5 +327,17 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 			p.add(new XYPoint(prevX*increment, sum/count));
 		}
 		return new XYTrace(p, trace.type, trace.name, trace.color, trace.thickness);
+	}
+	
+	public XYTrace trim(Range xRange) {
+		ArrayList<XYPoint> p=new ArrayList<>();
+
+		for (XYPoint point : points) {
+			if (xRange.contains(point.x)) {
+				p.add(point);
+			}
+		}
+
+		return new XYTrace(p, type, name, color, thickness);
 	}
 }

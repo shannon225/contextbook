@@ -1,35 +1,106 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.*;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.TCharDoubleHashMap;
-import gnu.trove.set.hash.TIntHashSet;
-import junit.framework.TestCase;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.math3.util.CombinatoricsUtils;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.math3.util.CombinatoricsUtils;
+
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.map.hash.TCharDoubleHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
+import gnu.trove.set.hash.TIntHashSet;
+import junit.framework.TestCase;
+
 public class FastaReaderTest extends TestCase {
+	public static void main(String[] args) throws Exception {
+		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
+		
+		LibraryFile library=new LibraryFile();
+		library.openFile(new File ("/Users/searleb/Documents/encyclopedia/small_file/pan_human_library_600to603.dlib"));
+		
+		ArrayList<LibraryEntry> spectra=library.getAllEntries(false, parameters.getAAConstants());
+		HashSet<String> accessions=new HashSet<>();
+		for (LibraryEntry entry : spectra) {
+			accessions.addAll(entry.getAccessions());
+		}
+		
+		File f=new File("/Users/searleb/Documents/school/uniprot-9606.fasta");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
+		FastaWriter writer=new FastaWriter(new File ("/Users/searleb/Documents/encyclopedia/small_file/pan_human_library_600to603.fasta"));
+		for (FastaEntryInterface entry : entries) {
+			if (accessions.contains(entry.getAccession())) {
+				writer.write(entry);
+			}
+		}
+		writer.close();
+	}
+	
+	public static void mainW(String[] args) throws Exception {
+		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
+		File f=new File("/Users/searleb/Documents/iarpa/new_llnl_individual/tne.fasta"); //llnl-vars-20201215.fasta
+		//File f=new File("/Users/searleb/Documents/iarpa/new_llnl_individual/llnl-vars-20201215.fasta"); //
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
+		
+		HashMap<String, FastaEntryInterface> uniqueMap=new HashMap<>();
+		TObjectIntHashMap<String> counter=new TObjectIntHashMap<>();
+		for (FastaEntryInterface entry : entries) {
+			String[] parts=entry.getAccession().split("_");
+			String key;
+			if (parts.length==2) {
+				key=parts[0]+"_"+parts[1];
+				System.out.println(">"+entry.getAnnotation());
+				System.out.println(entry.getSequence());
+			} else {
+				key=parts[0]+"_"+parts[1]+"_"+parts[2];
+				continue;
+			}
+
+			counter.put(key, counter.get(key)+1);
+		}
+		
+		//System.out.println(counter.size());
+//		counter.forEachEntry(new TObjectIntProcedure<String>() {
+//			@Override
+//			public boolean execute(String a, int b) {
+//				System.out.println(b+"\t"+a);
+//				return true;
+//			}
+//		});
+	}
 
 	/**
 	 * counts the number of accessions per peptide
 	 * @param args
 	 * @throws Exception
 	 */
-	public static void main(String[] args) throws Exception {
+	public static void mainA(String[] args) throws Exception {
 		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 		File f=new File("/Users/searleb/Downloads/bo_files/dmel-all-translation-r5.57_biognosysiRT_WR.fasta");
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);

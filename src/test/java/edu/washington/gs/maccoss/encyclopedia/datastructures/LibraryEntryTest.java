@@ -24,7 +24,7 @@ public class LibraryEntryTest extends TestCase {
 				888, 939.41618, 1018.45838, 1036.46894 };
 		float[] intensityArray = new float[] { 1f, 2f, 3f, 4f, 5f, 6f,
 				7f, 8f, 9f, 10f, 11f, 12f, 13f, 14f, 15f, 16f, 17f, 18f, 19f,
-				20f, 21f, 22f, 23f, 24f, 25f };
+				20f, 1f, 22f, 23f, 24f, 2f };
 
 		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 
@@ -39,6 +39,14 @@ public class LibraryEntryTest extends TestCase {
 				1036.46894 };
 		for (int i = 0; i < reverseMasses.length; i++) {
 			assertEquals(expectedReversedMasses[i], reverseMasses[i], 0.1);
+		}
+		
+		LibraryEntry trimmed=entry.trimToNPeaks(6, aaConstants);
+		double[] trimmedMasses=trimmed.getMassArray();
+		double[] expectedTrimmedMasses = new double[] { 779.449849, 810.37359, 862.35727, 888.0, 939.41618,
+				1018.45838 };
+		for (int i = 0; i < trimmedMasses.length; i++) {
+			assertEquals(expectedTrimmedMasses[i], trimmedMasses[i], 0.1);
 		}
 	}
 	public static void main(String[] args) {

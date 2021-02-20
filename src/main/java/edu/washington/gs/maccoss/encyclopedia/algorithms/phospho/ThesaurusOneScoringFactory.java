@@ -25,7 +25,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class ThesaurusOneScoringFactory implements LibraryScoringFactory {
-	public static final String version="0.4.10";
 	private final ThesaurusSearchParameters parameters;
 	private final PhosphoLocalizer localizer;
 	private final BlockingQueue<ModificationLocalizationData> localizationQueue;
@@ -60,11 +59,6 @@ public class ThesaurusOneScoringFactory implements LibraryScoringFactory {
 	@Override
 	public SearchParameters getParameters() {
 		return parameters;
-	}
-
-	@Override
-	public String getVersion() {
-		return version;
 	}
 	
 	public BlockingQueue<ModificationLocalizationData> getLocalizationQueue() {

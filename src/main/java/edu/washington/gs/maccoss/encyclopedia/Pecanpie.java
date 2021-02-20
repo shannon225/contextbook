@@ -102,10 +102,13 @@ public class Pecanpie {
 			for (Entry<String, String> entry : defaults.entrySet()) {
 				Logger.timelessLogLine("\t"+General.formatCellToWidth(entry.getKey(), maxWidth)+" (default: "+entry.getValue()+")");
 			}
+
+			Logger.timelessLogLine("\t"+Encyclopedia.QUIET_MODE_ARG+"\tsuppress log output to stdout/stderr");
+
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("Walnut version "+PecanOneScoringFactory.version);
+			Logger.logLine("Walnut version "+ProgramType.getGlobalVersion().toString());
 			System.exit(1);
 			
 		} else {
@@ -129,12 +132,15 @@ public class Pecanpie {
 			File featureFile=new File(PecanJobData.getOutputAbsolutePathPrefix(outputFile.getAbsolutePath())+PecanJobData.FEATURE_FILE_SUFFIX);
 
 			try {
+				if (arguments.containsKey(Encyclopedia.QUIET_MODE_ARG)) {
+					Logger.PRINT_TO_SCREEN = false;
+				}
 				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+EncyclopediaJobData.LOG_FILE_SUFFIX));
 				Logger.addRecorder(logRecorder);
 				
 				PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 				PecanScoringFactory factory=new PecanOneScoringFactory(parameters, featureFile);
-				Logger.logLine("Walnut version "+factory.getVersion());
+				Logger.logLine("Walnut version "+ProgramType.getGlobalVersion().toString());
 	
 				ArrayList<FastaPeptideEntry> targets;
 				if (arguments.containsKey(TARGET_FASTA_TAG)) {
@@ -316,7 +322,7 @@ public class Pecanpie {
 				// values occur it's unclear how to interpret them.
 				continue;
 			}
-			int scanAveragingMargin=Math.round(parameters.getMinEluteTime()/dutyCycle);
+			int scanAveragingMargin=Math.round(parameters.getExpectedPeakWidth()/(2*dutyCycle));
 			if (scanAveragingMargin==0) scanAveragingMargin=1;
 			
 			float maxFragmentationMz=(float)Math.ceil(range.getMiddle()/10.0f)*20.0f+50.0f;

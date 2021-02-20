@@ -8,6 +8,7 @@ public class PeptideModification {
 	public static PeptideModification phosphorylation = new PeptideModification("Phosphorylation (STY)", "Phosphorylation", 79.966331, new double[]{97.976896, 97.976896, 0.0}, new char[]{'S', 'T', 'Y'});
 	public static PeptideModification acetylation     = new PeptideModification("Acetylation (K)", "Acetylation", 42.010565, new double[1], new char[]{'K'});
 	public static PeptideModification oxidation       = new PeptideModification("Oxidation (MW)", "Oxidation", 15.994915, new double[2], new char[]{'M', 'W'});
+	public static PeptideModification oxidationTyr    = new PeptideModification("Oxidation (Y)", "Oxidation", 15.994915, new double[2], new char[]{'Y'});
 	public static PeptideModification methylation     = new PeptideModification("N-Methylation (KR)", "Methylation", 14.015650, new double[2], new char[]{'K', 'R'});
 	public static PeptideModification dimethylation   = new PeptideModification("N-Dimethylation (KR)", "Dimethylation", 28.031300, new double[2], new char[]{'K', 'R'});
 	public static PeptideModification trimethylation  = new PeptideModification("N-Trimethylation (K)", "Trimethylation", 42.046950, new double[1], new char[]{'K'});

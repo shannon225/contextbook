@@ -760,7 +760,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		float[] integrationArray=data.getIntegrationArray();
 		float[] backgroundArray=data.getBackgroundArray();
 
-		FragmentIon[] fragmentMassArray=data.getFragmentMassArray();
+		Ion[] fragmentMassArray=data.getFragmentMassArray();
 		float[] deltaMassArray=data.getDeltaMassArray().get();
 		float[] ppmArray=new float[deltaMassArray.length];
 
@@ -948,14 +948,43 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try {
 			PreparedStatement proteinPrep=c.prepareStatement("INSERT OR IGNORE INTO peptidetoprotein (PeptideSeq, IsDecoy, ProteinAccession) VALUES (?,?,?)");
 			try {
+				HashMap<String, HashSet<String>> targetAccessionsByPeptide=new HashMap<>();
+				HashMap<String, HashSet<String>> decoyAccessionsByPeptide=new HashMap<>();
+
 				for (LibraryEntry entry : entries) {
-					proteinPrep.setString(1, entry.getPeptideSeq());
-					proteinPrep.setBoolean(2, entry.isDecoy());
-					for (String acc : entry.getAccessions()) {
+					HashMap<String, HashSet<String>> map;
+					if (entry.isDecoy()) {
+						map=decoyAccessionsByPeptide;
+					} else {
+						map=targetAccessionsByPeptide;
+					}
+					
+					HashSet<String> accessions=map.get(entry.getPeptideSeq());
+					if (accessions==null) {
+						accessions=new HashSet<>();
+						map.put(entry.getPeptideSeq(), accessions);
+					}
+					accessions.addAll(entry.getAccessions());
+				}
+				
+				for (Entry<String, HashSet<String>> entry : targetAccessionsByPeptide.entrySet()) {
+					proteinPrep.setString(1, entry.getKey());
+					proteinPrep.setBoolean(2, false);
+					for (String acc : entry.getValue()) {
 						proteinPrep.setString(3, acc);
 						proteinPrep.addBatch();
 					}
 				}
+				
+				for (Entry<String, HashSet<String>> entry : decoyAccessionsByPeptide.entrySet()) {
+					proteinPrep.setString(1, entry.getKey());
+					proteinPrep.setBoolean(2, true);
+					for (String acc : entry.getValue()) {
+						proteinPrep.setString(3, acc);
+						proteinPrep.addBatch();
+					}
+				}
+				
 				proteinPrep.executeBatch();
 
 				c.commit();
@@ -976,7 +1005,6 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				for (LibraryEntry entry : entries) {
 					if (entry.getAccessions().size()==0)
 						continue;
-
 					String pepSeq=entry.getPeptideSeq();
 					prep.setDouble(1, entry.getPrecursorMZ());
 					prep.setInt(2, entry.getPrecursorCharge());

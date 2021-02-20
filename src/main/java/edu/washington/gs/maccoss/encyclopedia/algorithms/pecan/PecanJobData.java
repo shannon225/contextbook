@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
@@ -36,7 +37,7 @@ public class PecanJobData extends QuantitativeSearchJobData {
 
 	public PecanJobData(Optional<ArrayList<FastaPeptideEntry>> targetList, File diaFile, StripeFileInterface diaFileReader, File fastaFile, PercolatorExecutionData percolatorFiles,
 			PecanScoringFactory taskFactory) {
-		super(diaFile, diaFileReader, percolatorFiles, taskFactory.getParameters(), taskFactory.getVersion());
+		super(diaFile, diaFileReader, percolatorFiles, taskFactory.getParameters(), ProgramType.getGlobalVersion().toString());
 
 		this.targetList=targetList;
 		this.fastaFile=fastaFile;

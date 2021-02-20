@@ -191,49 +191,81 @@ public class FragmentationModel {
 	public FragmentIon[] getPrimaryIonObjects(FragmentationType type, byte precursorCharge, boolean useNeutralLosses, boolean forQuant) {
 		switch (type) {
 			case HCD:
+				FragmentIon[] yIonsHCD=getYIons(useNeutralLosses);
 				if (forQuant) {
 					// include B ions too
-					FragmentIon[] yIonsCID=getYIons(useNeutralLosses);
-					FragmentIon[] bIonsCID=getBIons(useNeutralLosses);
-					if (precursorCharge>2) {
-						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), bIonsCID, getPlus2s(bIonsCID));
+					FragmentIon[] bIonsHCD=getBIons(useNeutralLosses);
+					if (precursorCharge>4) { // don't consider +4Hs unless the peptide is +5H
+						return concatAndSort(yIonsHCD, getPlus2s(yIonsHCD), getPlus3s(yIonsHCD), getPlus4s(yIonsHCD), bIonsHCD, getPlus2s(bIonsHCD), getPlus3s(bIonsHCD), getPlus4s(bIonsHCD));
+					} else if (precursorCharge>3) { // don't consider +3Hs unless the peptide is +4H
+						return concatAndSort(yIonsHCD, getPlus2s(yIonsHCD), getPlus3s(yIonsHCD), bIonsHCD, getPlus2s(bIonsHCD), getPlus3s(bIonsHCD));
+					} else if (precursorCharge>1) { // +2Hs are more common, so consider even when the peptide is +2H
+						return concatAndSort(yIonsHCD, getPlus2s(yIonsHCD), bIonsHCD, getPlus2s(bIonsHCD));
 					} else {
-						return concatAndSort(bIonsCID, yIonsCID);
+						return concatAndSort(bIonsHCD, yIonsHCD);
 					}
 				} else {
-					FragmentIon[] yIons=getYIons(useNeutralLosses);
-					if (precursorCharge>2) {
-						return concatAndSort(yIons, getPlus2s(yIons));
+					if (precursorCharge>4) {
+						return concatAndSort(yIonsHCD, getPlus2s(yIonsHCD), getPlus3s(yIonsHCD), getPlus4s(yIonsHCD));
+					} else if (precursorCharge>3) {
+						return concatAndSort(yIonsHCD, getPlus2s(yIonsHCD), getPlus3s(yIonsHCD));
+					} else if (precursorCharge>2) {
+						return concatAndSort(yIonsHCD, getPlus2s(yIonsHCD));
 					} else {
-						return yIons;
+						return yIonsHCD;
 					}
 				}
 			case CID:
 				FragmentIon[] yIonsCID=getYIons(useNeutralLosses);
 				FragmentIon[] bIonsCID=getBIons(useNeutralLosses);
-				if (precursorCharge>2) {
-					return concatAndSort(yIonsCID, getPlus2s(yIonsCID), bIonsCID, getPlus2s(bIonsCID));
+				if (forQuant) {
+					if (precursorCharge>4) { // don't consider +4Hs unless the peptide is +5H
+						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), getPlus3s(yIonsCID), getPlus4s(yIonsCID), bIonsCID, getPlus2s(bIonsCID), getPlus3s(bIonsCID), getPlus4s(bIonsCID));
+					} else if (precursorCharge>3) { // don't consider +3Hs unless the peptide is +4H
+						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), getPlus3s(yIonsCID), bIonsCID, getPlus2s(bIonsCID), getPlus3s(bIonsCID));
+					} else if (precursorCharge>1) { // +2Hs are more common, so consider even when the peptide is +2H
+						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), bIonsCID, getPlus2s(bIonsCID));
+					} else {
+						return concatAndSort(bIonsCID, yIonsCID);
+					}
 				} else {
-					return concatAndSort(bIonsCID, yIonsCID);
+					if (precursorCharge>4) {
+						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), getPlus3s(yIonsCID), getPlus4s(yIonsCID), bIonsCID, getPlus2s(bIonsCID), getPlus3s(bIonsCID), getPlus4s(bIonsCID));
+					} else if (precursorCharge>3) {
+						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), getPlus3s(yIonsCID), bIonsCID, getPlus2s(bIonsCID), getPlus3s(bIonsCID));
+					} else if (precursorCharge>2) {
+						return concatAndSort(yIonsCID, getPlus2s(yIonsCID), bIonsCID, getPlus2s(bIonsCID));
+					} else {
+						return concatAndSort(bIonsCID, yIonsCID);
+					}
 				}
 			case ETD:
-				FragmentIon[] cIonsCID=getCIons(useNeutralLosses);
-				FragmentIon[] zIonsCID=getZIons(useNeutralLosses);
-				FragmentIon[] zp1IonsCID=getZp1Ions(useNeutralLosses);
-				if (precursorCharge>3) { // one charge gets quenched in fragmentation
-					return concatAndSort(cIonsCID, getPlus2s(cIonsCID), zIonsCID, getPlus2s(zIonsCID), zp1IonsCID, getPlus2s(zp1IonsCID));
+				FragmentIon[] cIonsETD=getCIons(useNeutralLosses);
+				FragmentIon[] zIonsETD=getZIons(useNeutralLosses);
+				FragmentIon[] zp1IonsETD=getZp1Ions(useNeutralLosses);
+				if (precursorCharge>2) { // one charge gets quenched in fragmentation
+					return concatAndSort(cIonsETD, getPlus2s(cIonsETD), zIonsETD, getPlus2s(zIonsETD), zp1IonsETD, getPlus2s(zp1IonsETD));
 				} else {
-					return concatAndSort(cIonsCID, zIonsCID, zp1IonsCID);
+					return concatAndSort(cIonsETD, zIonsETD, zp1IonsETD);
 				}
 			default:
 				throw new EncyclopediaException("Unknown fragmentation type ["+type+"]");
 		}
 	}
-	
+
 	public static FragmentIon[] getPlus2s(FragmentIon[] masses) {
+		return getPlusNs(masses, (byte)2);
+	}
+	public static FragmentIon[] getPlus3s(FragmentIon[] masses) {
+		return getPlusNs(masses, (byte)3);
+	}
+	public static FragmentIon[] getPlus4s(FragmentIon[] masses) {
+		return getPlusNs(masses, (byte)4);
+	}
+	public static FragmentIon[] getPlusNs(FragmentIon[] masses, byte charge) {
 		FragmentIon[] p2=new FragmentIon[masses.length];
 		for (int i=0; i<p2.length; i++) {
-			p2[i]=new FragmentIon((masses[i].getMass()+MassConstants.protonMass)/2.0, masses[i].getIndex(), IonType.getPlus2(masses[i].getType()));
+			p2[i]=new FragmentIon((masses[i].getMass()+(charge-1)*MassConstants.protonMass)/charge, masses[i].getIndex(), IonType.getPlusN(masses[i].getType(), charge));
 		}
 		return p2;
 	}

@@ -2,14 +2,15 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.scribe;
 
 import java.io.File;
 
+import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.DDASearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 
-public class ScribeJobData extends QuantitativeSearchJobData {
+public class ScribeJobData extends DDASearchJobData {
 	public static final String LOG_FILE_SUFFIX=".log";
 	public static final String OUTPUT_FILE_SUFFIX=".scribe.txt";
 	public static final String DECOY_FILE_SUFFIX=".scribe.decoy.txt";
@@ -39,7 +40,7 @@ public class ScribeJobData extends QuantitativeSearchJobData {
 	// used by testing
 	public ScribeJobData(File diaFile, StripeFileInterface diaFileReader, File fastaFile, LibraryInterface library, PercolatorExecutionData percolatorFiles,
 			ScribeScoringFactory taskFactory) {
-		super(diaFile, diaFileReader, percolatorFiles, taskFactory.getParameters(), taskFactory.getVersion());
+		super(diaFile, diaFileReader, percolatorFiles, taskFactory.getParameters(), ProgramType.getGlobalVersion().toString());
 
 		this.library=library;
 		this.fastaFile=fastaFile;

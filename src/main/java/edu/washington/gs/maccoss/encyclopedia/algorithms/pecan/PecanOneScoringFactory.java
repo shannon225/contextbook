@@ -18,17 +18,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 
 public class PecanOneScoringFactory implements PecanScoringFactory {
-	public static final String version="0.3.3";
 	private final PecanSearchParameters parameters;
 	private final File featureFile;
 
 	public PecanOneScoringFactory(PecanSearchParameters parameters, File featureFile) {
 		this.parameters=parameters;
 		this.featureFile=featureFile;
-	}
-	
-	public String getVersion() {
-		return version;
 	}
 	
 	@Override

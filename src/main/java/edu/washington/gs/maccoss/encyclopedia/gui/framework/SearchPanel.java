@@ -402,6 +402,24 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(libraryToProsit);
 		
+		JMenuItem fastaToMS2PIP=new JMenuItem("Create MS2PIP PEPREC from FASTA", convertDBIcon);
+		fastaToMS2PIP.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertFastaForMS2PIP(SearchPanel.this);
+			}
+		});
+		convertMenu.add(fastaToMS2PIP);
+		
+		JMenuItem libraryToMS2PIP=new JMenuItem("Create MS2PIP PEPREC from Library", convertDBIcon);
+		libraryToMS2PIP.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertLibraryForMS2PIP(SearchPanel.this);
+			}
+		});
+		convertMenu.add(libraryToMS2PIP);
+		
 		convertMenu.addSeparator();
 		
 		JMenuItem convertBLIB=new JMenuItem("Convert BLIB to Library", convertDBIcon);
@@ -422,7 +440,7 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(convertMSP);
 
-		JMenuItem convertSpectronaut=new JMenuItem("Convert Prosit/Spectronaut CSV to Library", convertDBIcon);
+		JMenuItem convertSpectronaut=new JMenuItem("Convert Prosit/Spectronaut CSV/XLS to Library", convertDBIcon);
 		convertSpectronaut.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -449,7 +467,6 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(convertTraML);
 
-		// FIXME NOT QUITE WORKING YET
 		JMenuItem convertOStsv=new JMenuItem("Convert OpenSWATH tsv to Library", convertDBIcon);
 		convertOStsv.addActionListener(new ActionListener() {
 			@Override
@@ -458,6 +475,15 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		convertMenu.add(convertOStsv);
+
+		JMenuItem convertMS2PIP=new JMenuItem("Convert MS2PIP csv to Library", convertDBIcon);
+		convertMS2PIP.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertMS2PIPToELIB(SearchPanel.this, getVisibleTab().getParameters());
+			}
+		});
+		convertMenu.add(convertMS2PIP);
 		
 		convertMenu.addSeparator();
 		
@@ -469,6 +495,15 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		convertMenu.add(convertELIBtoBLIB);
+		
+		JMenuItem convertELIBtoMSP=new JMenuItem("Convert Library to NIST MSP", convertDBIcon);
+		convertELIBtoMSP.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.convertELIBtoMSP(SearchPanel.this, getVisibleTab().getParameters());
+			}
+		});
+		convertMenu.add(convertELIBtoMSP);
 		
 		JMenuItem convertELIBtoOpenSWATH=new JMenuItem("Convert Library to OpenSWATH tsv", convertDBIcon);
 		convertELIBtoOpenSWATH.addActionListener(new ActionListener() {
@@ -520,6 +555,15 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		dataMenu.add(mzmlMergerItem);
+		
+		JMenuItem subsetDIA=new JMenuItem("Create Subset mzML", convertDBIcon);
+		subsetDIA.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.subsetDIA(SearchPanel.this, getVisibleTab().getParameters());
+			}
+		});
+		//dataMenu.add(subsetDIA);
 		
 		dataMenu.addSeparator();
 

@@ -84,7 +84,7 @@ public class PeptideScoringTaskTest {
 		for (Entry<Range, WindowData> entry : stripefile.getRanges().entrySet()) {
 			Range range=entry.getKey();
 			float dutyCycle=entry.getValue().getAverageDutyCycle();
-			int scanAveragingMargin=(int)(PARAMETERS.getMinEluteTime()/dutyCycle/2); // floor
+			int scanAveragingMargin=(int)(PARAMETERS.getExpectedPeakWidth()/dutyCycle/4); // floor
 			
 			System.out.println("Processing "+range+" ("+scanAveragingMargin+")");
 			

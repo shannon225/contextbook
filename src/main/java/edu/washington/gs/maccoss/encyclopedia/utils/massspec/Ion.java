@@ -9,5 +9,9 @@ public interface Ion {
 	String getName();
 
 	Color getColor();
+	
+	byte getIndex();
+
+	IonType getType();
 
 }

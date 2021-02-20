@@ -56,7 +56,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 	 * {@code -N} parameter, which sets the number of PSMs to
 	 * use as the training set.
 	 */
-	public static final int DEFAULT_TRAINING_SET_SIZE = 200000;
+	public static final int DEFAULT_TRAINING_SET_SIZE = 500000;
 
 	/**
 	 * The default value that EncyclopeDIA uses for Percolator's

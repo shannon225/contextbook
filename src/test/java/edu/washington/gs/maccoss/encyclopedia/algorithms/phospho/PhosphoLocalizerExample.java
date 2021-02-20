@@ -290,7 +290,7 @@ public class PhosphoLocalizerExample {
 			TransitionRefinementData data=actuallyPhosphoData.getPassingForms().get(sequenceKey);
 			
 			System.out.println(sequenceKey+"\t"+data.getApexRT()+"\t"+rt+"\t"+localizationScore);
-			FragmentIon[] ions=data.getFragmentMassArray();
+			FragmentIon[] ions=(FragmentIon[])data.getFragmentMassArray();
 			float[] correlations=data.getCorrelationArray();
 			
 			

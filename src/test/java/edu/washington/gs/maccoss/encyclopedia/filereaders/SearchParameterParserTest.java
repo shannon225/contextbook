@@ -21,7 +21,6 @@ public class SearchParameterParserTest extends TestCase {
 		assertEquals(1, params.getMaxMissedCleavages());
 		assertEquals(2, params.getMinCharge());
 		assertEquals(3, params.getMaxCharge());
-		assertEquals(12, params.getMinEluteTime());
 		assertEquals(1, params.getNumberOfReportedPeaks());
 		assertEquals(false, params.isAddDecoysToBackgound());
 	}
@@ -38,7 +37,7 @@ public class SearchParameterParserTest extends TestCase {
 		map.put("-maxMissedCleavage", "2");
 		map.put("-minCharge", "1");
 		map.put("-maxCharge", "4");
-		map.put("-minEluteTime", "20");
+		map.put("-expectedPeakWidth", "20");
 		map.put("-numberOfReportedPeaks", "3");
 		map.put("-addDecoysToBackground", "true");
 		PecanSearchParameters params=PecanParameterParser.parseParameters(map);
@@ -54,7 +53,7 @@ public class SearchParameterParserTest extends TestCase {
 		assertEquals(2, params.getMaxMissedCleavages());
 		assertEquals(1, params.getMinCharge());
 		assertEquals(4, params.getMaxCharge());
-		assertEquals(20, params.getMinEluteTime());
+		assertEquals(20.0f, params.getExpectedPeakWidth());
 		assertEquals(3, params.getNumberOfReportedPeaks());
 		assertEquals(true, params.isAddDecoysToBackgound());
 	}

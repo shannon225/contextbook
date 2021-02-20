@@ -90,10 +90,13 @@ public class Thesaurus {
 			for (Entry<String, String> entry : defaults.entrySet()) {
 				Logger.timelessLogLine("\t"+General.formatCellToWidth(entry.getKey(), maxWidth)+" (default: "+entry.getValue()+")");
 			}
+
+			Logger.timelessLogLine("\t"+Encyclopedia.QUIET_MODE_ARG+"\tsuppress log output to stdout/stderr");
+
 			System.exit(1);
 			
 		} else if (arguments.containsKey("-v")||arguments.containsKey("-version")||arguments.containsKey("--version")) {
-			Logger.logLine("Thesaurus version "+ThesaurusOneScoringFactory.version);
+			Logger.logLine("Thesaurus version "+ProgramType.getGlobalVersion().toString());
 			System.exit(1);
 			
 		} else {
@@ -116,6 +119,9 @@ public class Thesaurus {
 			}
 
 			try {
+				if (arguments.containsKey(Encyclopedia.QUIET_MODE_ARG)) {
+					Logger.PRINT_TO_SCREEN = false;
+				}
 				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+ThesaurusJobData.LOG_FILE_SUFFIX));
 				Logger.addRecorder(logRecorder);
 	
@@ -132,7 +138,7 @@ public class Thesaurus {
 				PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, parameters.getLocalizingModification().get(), parameters);
 				LibraryScoringFactory factory=new ThesaurusOneScoringFactory(parameters, localizer, new LinkedBlockingQueue<ModificationLocalizationData>());
 				
-				Logger.logLine("Thesaurus version "+factory.getVersion());
+				Logger.logLine("Thesaurus version "+ProgramType.getGlobalVersion().toString());
 	
 				Logger.logLine("Parameters:");
 				Logger.logLine(" "+Encyclopedia.INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());
@@ -140,7 +146,7 @@ public class Thesaurus {
 				Logger.logLine(" "+Encyclopedia.OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
 				Logger.logLine(parameters.toString());
 
-				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
+				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
 				ThesaurusJobData job=new ThesaurusJobData(diaFile, library, outputFile, fastaFile, factory);
 				runSearch(new EmptyProgressIndicator(), job);
 			} catch (Exception e) {

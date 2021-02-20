@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.phospho;
 
 import java.io.File;
 
+import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
@@ -17,7 +18,7 @@ public class ThesaurusJobData extends EncyclopediaJobData {
 	public static final String THESAURUS_REPORT_FILE_SUFFIX=".thesaurus" + LibraryFile.ELIB;
 
 	public ThesaurusJobData(File diaFile, LibraryInterface library, File outputFile, File fastaFile, LibraryScoringFactory taskFactory) {
-		super(diaFile, getPercolatorExecutionData(outputFile, fastaFile, taskFactory.getParameters()), taskFactory.getParameters(), taskFactory.getVersion(), library, taskFactory);
+		super(diaFile, getPercolatorExecutionData(outputFile, fastaFile, taskFactory.getParameters()), taskFactory.getParameters(), ProgramType.getGlobalVersion().toString(), library, taskFactory);
 	}
 	
 	private ThesaurusJobData(File diaFile, PercolatorExecutionData percolatorFiles, SearchParameters parameters, String version, LibraryInterface library, LibraryScoringFactory taskFactory) {

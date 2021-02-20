@@ -9,7 +9,7 @@ import java.util.StringTokenizer;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 
-public class PSMData implements PeptidePrecursor {
+public class PSMData implements PeptidePrecursor, HasRetentionTime {
 	private final int spectrumIndex;
 	private final double precursorMZ;
 	private final byte precursorCharge;
@@ -42,6 +42,11 @@ public class PSMData implements PeptidePrecursor {
 	
 	public PSMData updateRetentionTime(float rtInSec) {
 		return new PSMData(accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, rtInSec, score, sortingScore, duration, inferred);
+	}
+	
+	@Override
+	public float getRetentionTimeInSec() {
+		return retentionTime;
 	}
 	
 	public boolean wasInferred() {

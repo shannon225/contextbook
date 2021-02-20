@@ -34,4 +34,13 @@ public class LinearRegressionTest extends TestCase {
 		assertEquals(0f, r.b);
 		assertEquals(1f, r.m);
 	}
+	
+	public void testRegressionWithFixedIntercept() {
+		float[] x = { -0.6661775f, -0.3309932f, -0.16694789f, 0.0f };
+		float[] y = { -0.98749655f, -0.5642714f, -0.2620367f, 0.0f };
+		
+		Pair<Float, Float> r=LinearRegression.getRegressionWithFixedIntercept(x, y, new XYPoint(-1.0, -2.0628977));
+		assertEquals(2.1858542f, r.x, 000001f);
+		assertEquals(0.1229565f, r.y, 000001f);
+	}
 }

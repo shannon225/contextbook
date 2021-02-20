@@ -92,7 +92,6 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
-	private final SpinnerModel minQuantitativeIonNumber=new SpinnerNumberModel(3, 0, 100, 1);
 	private final SpinnerModel percolatorThreshold=new SpinnerNumberModel(0.01, 0.001, 0.1, 0.001);
 	private final JTextField additionalCommandLineOptions=new JTextField();
 	
@@ -231,7 +230,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		if (libraryFile.isPresent()) {
 			LibraryInterface library=libraries.get(libraryFile.get());
 			if (library==null) {
-				library=BlibToLibraryConverter.getFile(libraryFile.get());
+				library=BlibToLibraryConverter.getFile(libraryFile.get(), fastaFile, parameters);
 				libraries.put(libraryFile.get(), library);
 			}
 			maybeLibrary=Optional.ofNullable(library);
@@ -272,7 +271,6 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
-		int minQuantitativeIonNumberValue=((Integer)minQuantitativeIonNumber.getValue());
 		float numberOfExtraDecoyLibrariesValue=NUMBER_OF_EXTRA_DECOY_VALUES[((Integer)numberOfExtraDecoyLibraries.getSelectedIndex())];
 		ModificationMassMap variableMods=new ModificationMassMap(VARIABLE_MODIFICATION_VALUES[((Integer)variable.getSelectedIndex())]);
 		boolean isRequireVariableMods=IS_REQUIRE_VARIABLE_MODS[((Integer)variable.getSelectedIndex())];
@@ -300,7 +298,8 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 				numberOfJobsValue,
 				numberOfQuantitativeIonsValue,
 				minNumOfQuantitativeIonsValue,
-				minQuantitativeIonNumberValue,
+				-1,
+				0.0f,
 				numberOfExtraDecoyLibrariesValue,
 				true,
 				true,

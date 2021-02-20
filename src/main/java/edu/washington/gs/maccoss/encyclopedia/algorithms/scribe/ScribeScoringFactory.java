@@ -20,7 +20,6 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVCon
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 
 public class ScribeScoringFactory implements LibraryScoringFactory {
-	public static final String version="0.0.1";
 	private final SearchParameters parameters;
 
 	public ScribeScoringFactory(SearchParameters parameters) {
@@ -50,10 +49,5 @@ public class ScribeScoringFactory implements LibraryScoringFactory {
 	@Override
 	public SearchParameters getParameters() {
 		return parameters;
-	}
-
-	@Override
-	public String getVersion() {
-		return version;
 	}
 }

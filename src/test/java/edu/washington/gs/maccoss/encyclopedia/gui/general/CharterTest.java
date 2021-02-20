@@ -49,7 +49,7 @@ public class CharterTest {
 			});
 			
 			System.out.println("Parsed "+hash.size()+" values...");
-			final ChartPanel times=Charter.getBoxplotChart(null, "Retention Time (min)", "Number of MS2s", hash);
+			final ExtendedChartPanel times=Charter.getBoxplotChart(null, "Retention Time (min)", "Number of MS2s", hash);
 			Charter.launchChart(times, "Number of MS2s", new Dimension(500, 200));
 		}
 

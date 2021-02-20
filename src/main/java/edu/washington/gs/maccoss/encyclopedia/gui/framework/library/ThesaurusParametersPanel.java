@@ -211,7 +211,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 		
 		LibraryInterface library=libraries.get(libraryFile);
 		if (library==null) {
-			library=BlibToLibraryConverter.getFile(libraryFile);
+			library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
 			libraries.put(libraryFile, library);
 		}
 		
@@ -263,6 +263,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				precursorWindowWidthValue,
 				numberOfQuantitativeIonsValue,
 				minNumOfQuantitativeIonsValue,
+				-1,
 				0.0f,
 				modification,
 				CASiLSearchBreadthType,

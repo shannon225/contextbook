@@ -36,7 +36,7 @@ public class PecanParameterParser {
 		map.put("-maxMissedCleavage", "1");
 		map.put("-minCharge", "2");
 		map.put("-maxCharge", "3");
-		map.put("-minEluteTime", "12");
+		map.put("-expectedPeakWidth", "25");
 		map.put("-numberOfReportedPeaks", "1");
 		map.put("-addDecoysToBackground", "false");
 		map.put("-dontRunDecoys", "false");
@@ -83,7 +83,7 @@ public class PecanParameterParser {
 		final int maxMissedCleavages;
 		final byte minCharge;
 		final byte maxCharge;
-		final int minEluteTime;
+		final float expectedPeakWidth;
 		final int numberOfReportedPeaks;
 		final boolean addDecoysToBackgound;
 		final boolean dontRunDecoys;
@@ -100,6 +100,7 @@ public class PecanParameterParser {
 		final float precursorWindowSize;
 		final int numberOfQuantitativePeaks;
 		final int minNumOfQuantitativePeaks;
+		final int topNTargetsUsed;
 		final float minIntensity;
 		final boolean quantifyAcrossSamples;
 		final boolean requireVariableMods;
@@ -234,7 +235,7 @@ public class PecanParameterParser {
 		maxMissedCleavages=ParsingUtils.getInteger("-maxMissedCleavage", parameters, 1);
 		minCharge=ParsingUtils.getByte("-minCharge", parameters, (byte)2);
 		maxCharge=ParsingUtils.getByte("-maxCharge", parameters, (byte)3);
-		minEluteTime=ParsingUtils.getInteger("-minEluteTime", parameters, 12);
+		expectedPeakWidth=ParsingUtils.getFloat("-expectedPeakWidth", parameters, 25.0f);
 		numberOfReportedPeaks=ParsingUtils.getInteger("-numberOfReportedPeaks", parameters, 1);
 		addDecoysToBackgound=ParsingUtils.getBoolean("-addDecoysToBackground", parameters, false);
 		dontRunDecoys=ParsingUtils.getBoolean("-dontRunDecoys", parameters, false);
@@ -252,6 +253,8 @@ public class PecanParameterParser {
 		precursorWindowSize=ParsingUtils.getFloat("-precursorWindowSize", parameters, -1f);
 		numberOfQuantitativePeaks=ParsingUtils.getInteger("-numberOfQuantitativePeaks", parameters, 5);
 		minNumOfQuantitativePeaks=ParsingUtils.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
+		topNTargetsUsed=ParsingUtils.getInteger("-topNTargetsUsed", parameters, -1);
+		
 		minIntensity=ParsingUtils.getFloat("-minIntensity", parameters, -1.0f);
 		quantifyAcrossSamples=ParsingUtils.getBoolean("-quantifyAcrossSamples", parameters, false);
 		requireVariableMods=ParsingUtils.getBoolean("-requireVariableMods", parameters, false);
@@ -267,12 +270,12 @@ public class PecanParameterParser {
 				fragmentTolerance,
 				fragmentOffsetPPM,
 				enzyme,
+				expectedPeakWidth,
 				minPeptideLength,
 				maxPeptideLength,
 				maxMissedCleavages,
 				minCharge,
 				maxCharge,
-				minEluteTime,
 				numberOfReportedPeaks,
 				addDecoysToBackgound,
 				dontRunDecoys,
@@ -289,6 +292,7 @@ public class PecanParameterParser {
 				precursorWindowSize,
 				numberOfQuantitativePeaks,
 				minNumOfQuantitativePeaks,
+				topNTargetsUsed,
 				minIntensity,
 				quantifyAcrossSamples,
 				true,

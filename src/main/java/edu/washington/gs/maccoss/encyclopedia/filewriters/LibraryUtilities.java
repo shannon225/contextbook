@@ -5,8 +5,12 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.zip.DataFormatException;
+
+import org.jfree.base.Library;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -49,14 +53,62 @@ public class LibraryUtilities {
 		saveLibrary.close();
 	}
 	
-	public static void subsetLibrary(final File saveFile, final float rtMinSec, final float rtMaxSec, final HashSet<String> targets, LibraryInterface library)
+	public static void extractSampleSpecificLibrary(final File saveFile, String sourceFile, boolean useBestFragmentation, LibraryInterface library) throws IOException, SQLException, DataFormatException {
+		LibraryFile saveLibrary=new LibraryFile();
+		saveLibrary.openFile();
+		
+		HashMap<String, LibraryEntry> targetSource=new HashMap<>();
+		HashMap<String, LibraryEntry> bestSource=new HashMap<>();		
+		for (LibraryEntry entry : library.getAllEntries(false, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()))) {
+			if (entry.getRetentionTime()>=0) {
+				String key=entry.getPeptideModSeq()+"+"+entry.getPrecursorCharge();
+				if (sourceFile.equals(entry.getSource())) {
+					updateEntryIfBetter(targetSource, entry, key);
+				}
+				if (useBestFragmentation) {
+					updateEntryIfBetter(bestSource, entry, key);
+				}
+			}
+		}
+		
+		ArrayList<LibraryEntry> toWrite=new ArrayList<>();
+		for (Entry<String, LibraryEntry> entry : targetSource.entrySet()) {
+			String key=entry.getKey();
+			LibraryEntry targetEntry=entry.getValue();
+			LibraryEntry bestEntry=bestSource.get(key);
+			
+			if (bestEntry!=null&&bestEntry.getScore()<targetEntry.getScore()) {
+				toWrite.add(targetEntry.updateMS2(bestEntry.getMassArray(), bestEntry.getIntensityArray(), bestEntry.getCorrelationArray()));
+			} else {
+				toWrite.add(targetEntry);
+			}
+		}
+		Logger.logLine("Found "+toWrite.size()+" peptides from "+sourceFile+". Writing to ["+saveFile.getAbsolutePath()+"]...");
+		
+		saveLibrary.dropIndices();
+		saveLibrary.addEntries(toWrite);
+		saveLibrary.addProteinsFromEntries(toWrite);
+		saveLibrary.createIndices();
+		saveLibrary.saveAsFile(saveFile);
+		
+		saveLibrary.close();
+	}
+
+	private static void updateEntryIfBetter(HashMap<String, LibraryEntry> targetSource, LibraryEntry entry, String key) {
+		LibraryEntry alt=targetSource.get(key);
+		if (alt==null||alt.getScore()>entry.getScore()) {
+			targetSource.put(key, entry);
+		}
+	}
+	
+	public static void subsetLibrary(final File saveFile, final float rtMinSec, final float rtMaxSec, final double mzMin, final double mzMax, final HashSet<String> targets, LibraryInterface library)
 			throws IOException, SQLException, DataFormatException {
 		LibraryFile saveLibrary=new LibraryFile();
 		saveLibrary.openFile();
 		
 		ArrayList<LibraryEntry> toWrite=new ArrayList<>();
 		for (LibraryEntry entry : library.getAllEntries(false, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()))) {
-			if (rtMinSec<=entry.getRetentionTime()&&rtMaxSec>=entry.getRetentionTime()) {
+			if (rtMinSec<=entry.getRetentionTime()&&rtMaxSec>=entry.getRetentionTime()&&mzMin<=entry.getPrecursorMZ()&&mzMax>=entry.getPrecursorMZ()) {
 				if (targets.size()==0||(targets.contains(entry.getPeptideSeq())||targets.contains(entry.getPeptideModSeq()))) {
 					toWrite.add(entry);
 				}

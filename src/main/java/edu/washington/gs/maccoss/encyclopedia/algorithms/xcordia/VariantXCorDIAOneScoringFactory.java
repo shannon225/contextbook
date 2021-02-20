@@ -23,7 +23,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class VariantXCorDIAOneScoringFactory extends XCorDIAOneScoringFactory {
-	public static final String version="0.1";
 	private BackgroundFrequencyInterface background=null;
 	private final BlockingQueue<ModificationLocalizationData> localizationQueue;
 
@@ -67,10 +66,5 @@ public class VariantXCorDIAOneScoringFactory extends XCorDIAOneScoringFactory {
 	@Override
 	public AbstractLibraryScoringTask getDDAScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
 		throw new EncyclopediaException("Sorry, DDA scoring for XCorDIA is not implemented!");
-	}
-
-	@Override
-	public String getVersion() {
-		return version;
 	}
 }

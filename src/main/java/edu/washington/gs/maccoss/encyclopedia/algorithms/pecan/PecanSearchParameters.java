@@ -26,7 +26,6 @@ public class PecanSearchParameters extends SearchParameters {
 	private final int maxMissedCleavages;
 	private final byte minCharge;
 	private final byte maxCharge;
-	private final int minEluteTime;
 	private final int numberOfReportedPeaks;
 	private final boolean addDecoysToBackgound;
 	private final boolean dontRunDecoys; // only for testing
@@ -50,7 +49,7 @@ public class PecanSearchParameters extends SearchParameters {
 		sb.append(" -maxMissedCleavage "+maxMissedCleavages+"\n");
 		sb.append(" -minCharge "+minCharge+"\n");
 		sb.append(" -maxCharge "+maxCharge+"\n");
-		sb.append(" -minEluteTime "+minEluteTime+"\n");
+		sb.append(" -expectedPeakWidth "+expectedPeakWidth+"\n");
 		sb.append(" -numberOfReportedPeaks "+numberOfReportedPeaks+"\n");
 		sb.append(" -addDecoysToBackground "+addDecoysToBackgound+"\n");
 		sb.append(" -dontRunDecoys "+dontRunDecoys+"\n");
@@ -87,7 +86,7 @@ public class PecanSearchParameters extends SearchParameters {
 		map.put("-maxMissedCleavage", maxMissedCleavages+"");
 		map.put("-minCharge", minCharge+"");
 		map.put("-maxCharge", maxCharge+"");
-		map.put("-minEluteTime", minEluteTime+"");
+		map.put("-expectedPeakWidth", expectedPeakWidth+"");
 		map.put("-numberOfReportedPeaks", numberOfReportedPeaks+"");
 		map.put("-addDecoysToBackground", addDecoysToBackgound+"");
 		map.put("-dontRunDecoys", dontRunDecoys+"");
@@ -140,12 +139,12 @@ public class PecanSearchParameters extends SearchParameters {
 			MassTolerance fragmentTolerance,
 			double fragmentOffsetPPM, 
 			DigestionEnzyme enzyme, 
+			float expectedPeakWidth,
 			int minPeptideLength, 
 			int maxPeptideLength, 
 			int maxMissedCleavages, 
 			byte minCharge, 
 			byte maxCharge, 
-			int minEluteTime,
 			int numberOfReportedPeaks,
 			boolean addDecoysToBackgound,
 			boolean dontRunDecoys,
@@ -162,6 +161,7 @@ public class PecanSearchParameters extends SearchParameters {
 			float precursorWindowSize, 
 			int numberOfQuantitativePeaks, 
 			int minNumOfQuantitativePeaks, 
+			int topNTargetsUsed,
 			float minIntensity, 
 			boolean quantifyAcrossSamples, 
 			boolean verifyModificationIons, 
@@ -184,11 +184,12 @@ public class PecanSearchParameters extends SearchParameters {
 				percolatorTrainingSetThreshold,
 				dataAcquisitionType,
 				numberOfThreadsUsed,
-				minEluteTime*2.0f,
+				expectedPeakWidth,
 				targetWindowCenter,
 				precursorWindowSize,
 				numberOfQuantitativePeaks,
 				minNumOfQuantitativePeaks,
+				topNTargetsUsed,
 				minIntensity,
 				Optional.ofNullable((PeptideModification)null),
 				ScoringBreadthType.ENTIRE_RT_WINDOW,
@@ -204,7 +205,6 @@ public class PecanSearchParameters extends SearchParameters {
 		this.maxMissedCleavages=maxMissedCleavages;
 		this.minCharge=minCharge;
 		this.maxCharge=maxCharge;
-		this.minEluteTime=minEluteTime;
 		this.numberOfReportedPeaks=numberOfReportedPeaks;
 		this.addDecoysToBackgound=addDecoysToBackgound;
 		this.dontRunDecoys=dontRunDecoys;
@@ -231,6 +231,7 @@ public class PecanSearchParameters extends SearchParameters {
 			int numberOfJobs,
 			int numberOfQuantitativePeaks,
 			int minNumOfQuantitativePeaks,
+			int topNTargetsUsed,
 			int minQuantitativeIonNumber,
 			float numberOfExtraDecoyLibrariesSearched,
 			boolean quantifyAcrossSamples,
@@ -259,6 +260,7 @@ public class PecanSearchParameters extends SearchParameters {
 				precursorWindowSize,
 				numberOfQuantitativePeaks,
 				minNumOfQuantitativePeaks,
+				topNTargetsUsed,
 				minQuantitativeIonNumber,
 				Optional.ofNullable((PeptideModification)null),
 				ScoringBreadthType.ENTIRE_RT_WINDOW,
@@ -274,7 +276,6 @@ public class PecanSearchParameters extends SearchParameters {
 		this.maxMissedCleavages=maxMissedCleavages;
 		this.minCharge=minCharge;
 		this.maxCharge=maxCharge;
-		minEluteTime=12;
 		numberOfReportedPeaks=1;
 		addDecoysToBackgound=false;
 		dontRunDecoys=false;
@@ -302,6 +303,7 @@ public class PecanSearchParameters extends SearchParameters {
 			int numberOfJobs,
 			int numberOfQuantitativePeaks,
 			int minNumOfQuantitativePeaks,
+			int topNTargetsUsed,
 			float minIntensity,
 			float numberOfExtraDecoyLibrariesSearched,
 			boolean quantifyAcrossSamples,
@@ -330,6 +332,7 @@ public class PecanSearchParameters extends SearchParameters {
 				precursorWindowSize,
 				numberOfQuantitativePeaks,
 				minNumOfQuantitativePeaks,
+				topNTargetsUsed,
 				minIntensity,
 				Optional.ofNullable((PeptideModification)null),
 				ScoringBreadthType.ENTIRE_RT_WINDOW,
@@ -345,7 +348,6 @@ public class PecanSearchParameters extends SearchParameters {
 		this.maxMissedCleavages=maxMissedCleavages;
 		this.minCharge=minCharge;
 		this.maxCharge=maxCharge;
-		minEluteTime=12;
 		numberOfReportedPeaks=1;
 		addDecoysToBackgound=false;
 		dontRunDecoys=false;
@@ -387,6 +389,7 @@ public class PecanSearchParameters extends SearchParameters {
 				-1f,
 				5,
 				3,
+				-1,
 				-1.0f,
 				Optional.ofNullable((PeptideModification)null),
 				ScoringBreadthType.ENTIRE_RT_WINDOW,
@@ -401,7 +404,6 @@ public class PecanSearchParameters extends SearchParameters {
 		maxMissedCleavages=1;
 		minCharge=2;
 		maxCharge=3;
-		minEluteTime=12;
 		numberOfReportedPeaks=1;
 		addDecoysToBackgound=false;
 		dontRunDecoys=false;
@@ -445,6 +447,7 @@ public class PecanSearchParameters extends SearchParameters {
 				-1f,
 				5,
 				3,
+				-1,
 				-1.0f,
 				Optional.ofNullable((PeptideModification)null),
 				ScoringBreadthType.ENTIRE_RT_WINDOW,
@@ -460,7 +463,6 @@ public class PecanSearchParameters extends SearchParameters {
 		maxMissedCleavages=1;
 		minCharge=2;
 		maxCharge=3;
-		minEluteTime=12;
 		numberOfReportedPeaks=1;
 		addDecoysToBackgound=false;
 		dontRunDecoys=false;
@@ -505,6 +507,7 @@ public class PecanSearchParameters extends SearchParameters {
 				-1f,
 				5,
 				3,
+				-1,
 				-1.0f,
 				Optional.ofNullable((PeptideModification)null),
 				ScoringBreadthType.ENTIRE_RT_WINDOW,
@@ -519,7 +522,6 @@ public class PecanSearchParameters extends SearchParameters {
 		maxPeptideLength=100;
 		minCharge=2;
 		maxCharge=3;
-		minEluteTime=12;
 		numberOfReportedPeaks=1;
 		addDecoysToBackgound=false;
 		dontRunDecoys=false;
@@ -546,10 +548,6 @@ public class PecanSearchParameters extends SearchParameters {
 
 	public byte getMinCharge() {
 		return minCharge;
-	}
-
-	public int getMinEluteTime() {
-		return minEluteTime;
 	}
 
 	public int getNumberOfReportedPeaks() {
