@@ -142,7 +142,15 @@ public class Charter {
 		launchChart(trace, trace.getSpectrumName());
 	}
 
+	public static void launchChart(LibraryEntry trace) {
+		launchChart(trace, trace.getSpectrumName());
+	}
+
 	public static void launchChart(Spectrum trace, String title) {
+		launchChart(trace, title, new Dimension(1000, 500));
+	}
+
+	public static void launchChart(LibraryEntry trace, String title) {
 		launchChart(trace, title, new Dimension(1000, 500));
 	}
 
@@ -298,9 +306,10 @@ public class Charter {
 		return chart;
 	}
 
-	public static ExtendedChartPanel getChart(Spectrum trace) {
-		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, new XYTrace(trace));
-		chart.getChart().setTitle(trace.getSpectrumName());
+	public static ExtendedChartPanel getChart(Spectrum spec) {
+		XYTrace trace=spec instanceof XYTrace?(XYTrace)spec:new XYTrace(spec);
+		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, trace);
+		chart.getChart().setTitle(spec.getSpectrumName());
 		return chart;
 	}
 
@@ -310,8 +319,9 @@ public class Charter {
 		return chart;
 	}
 
-	public static ExtendedChartPanel getChart(Spectrum trace, String title) {
-		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, new XYTrace(trace));
+	public static ExtendedChartPanel getChart(Spectrum spec, String title) {
+		XYTrace trace=spec instanceof XYTrace?(XYTrace)spec:new XYTrace(spec);
+		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, trace);
 		chart.getChart().setTitle(title);
 		return chart;
 	}

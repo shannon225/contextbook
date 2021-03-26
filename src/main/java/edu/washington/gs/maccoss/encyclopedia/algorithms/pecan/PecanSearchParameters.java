@@ -10,6 +10,7 @@ import java.util.prefs.Preferences;
 
 import edu.washington.gs.maccoss.encyclopedia.Pecanpie;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -150,7 +151,7 @@ public class PecanSearchParameters extends SearchParameters {
 			boolean dontRunDecoys,
 			float percolatorThreshold,
 			float percolatorProteinThreshold,
-			Integer percolatorVersionNumber,
+			PercolatorVersion percolatorVersionNumber,
 			int percolatorTrainingSetSize,
 			float percolatorTrainingSetThreshold,
 			float alpha,
@@ -219,7 +220,7 @@ public class PecanSearchParameters extends SearchParameters {
 			MassTolerance precursorTolerance,
 			MassTolerance fragmentTolerance,
 			DigestionEnzyme enzyme,
-			int percolatorVersionNumber,
+			PercolatorVersion percolatorVersionNumber,
 			float percolatorThreshold,
 			int percolatorTrainingSetSize,
 			float percolatorTrainingSetThreshold,
@@ -290,7 +291,7 @@ public class PecanSearchParameters extends SearchParameters {
 			MassTolerance precursorTolerance,
 			MassTolerance fragmentTolerance,
 			DigestionEnzyme enzyme,
-			int percolatorVersionNumber,
+			PercolatorVersion percolatorVersionNumber,
 			float percolatorThreshold,
 			float percolatorProteinThreshold,
 			int percolatorTrainingSetSize,

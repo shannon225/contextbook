@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
@@ -106,6 +107,31 @@ public class Range implements Comparable<Range> {
 		if (stop<o.stop) return -1;
 		return 0;
 	}
+	
+	/**
+	 * sorts on normal compareTo, but equals is inclusive of any range boundary intersection 
+	 */
+	public static Comparator<Range> RANGE_CONTAINS_COMPARATOR=new Comparator<Range>() {
+		@Override
+		public int compare(Range o1, Range o2) {
+			if (o1==null&&o2==null) return 0;
+			if (o1==null) return 1;
+			if (o2==null) return -1;
+			
+			Range smaller, larger;
+			if (o1.getRange()>o2.getRange()) {
+				larger=o1;
+				smaller=o2;
+			} else {
+				smaller=o1;
+				larger=o2;
+			}
+			if (larger.contains(smaller.getStart())||larger.contains(smaller.getStop())) {
+				return 0;
+			}
+			return o1.compareTo(o2);
+		}
+	};
 	
 	public float linearInterp(float X, float minY, float maxY) {
 		float deltaX=getRange();

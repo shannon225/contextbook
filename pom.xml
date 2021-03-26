@@ -381,11 +381,6 @@
 
     <dependencies>
 		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-nop</artifactId>
-			<version>1.7.25</version>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
 			<version>3.6</version>
@@ -476,10 +471,5 @@
 			<artifactId>commons-csv</artifactId>
 			<version>1.8</version>
 		</dependency>
-		<dependency>
-    <groupId>org.apache.logging.log4j</groupId>
-    <artifactId>log4j-core</artifactId>
-    <version>2.13.3</version>
-</dependency>
 	</dependencies>
 </project>

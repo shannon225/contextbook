@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,36 +44,21 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class DilutionCurveFitter {
-	public static void main2(String[] args) {
-		float[] actual = { 4904007.5f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f };
-		float[] actual1 = { 6.97E+07f, 4.91E+07f, 3.30E+07f, 1.30E+07f, 6912003f, 3657516.8f, 1903112.4f, 1318391.9f,
-				1004388.94f, 850045.44f, 728238.9f, 783248.2f, 896711.94f, 1821167f, 753074.9f, 815791.44f, 551736f,
-				461205.78f };
-		float[] actual2 = { 7.51E+08f, 6.84E+08f, 4.71E+08f, 1.90E+08f, 7.61E+07f, 3.21E+07f, 1.41E+07f, 6302937.5f,
-				2250398f, 822441.75f, 316226.5f, 76445.375f, 334517.88f, 232932.92f, 125391.81f, 350727.62f, 62659.035f,
-				582049.1f };
-		float[] actual3 = { 1.86E+08f, 1.18E+08f, 7.06E+07f, 2.55E+07f, 1.10E+07f, 5438610f, 2434809f, 1465797.1f,
-				124579f, 88526.945f, 70484.29f, 82347.805f, 178821.03f, 73077.97f, 196804.2f, 35501.582f, 90738.1f,
-				179157.4f };
-		float[] actual4 = { 3187268f, 1503668.9f, 2976294.5f, 1128567f, 265540.84f, 0f, 0f, 153686.38f, 0f, 0f, 0f,
-				15378.075f, 0f, 0f, 31187.645f, 0f, 0f, 0f };
-		float[] actual5 = { 38458.3f, 9442.072f, 22709.023f, 72533.164f, 72095.195f, 26560.035f, 64255.285f, 38630.027f,
-				27547.662f, 11284.466f, 80122.94f, 6767.3096f, 75323.09f, 50457.87f, 23086.375f, 6274.8247f, 16088.956f,
-				7947.704f };
-		float[] actual6 = { 5255826.5f, 5837896f, 1.08E+08f, 5.33E+07f, 1.84E+07f, 8512274f, 3618325.8f, 1048832f,
-				12722.502f, 240561.34f, 90941.555f, 69434.04f, 81829.24f, 69754.37f, 42788.383f, 6405.014f, 93672.79f,
-				192462.97f, };
+	public static void main(String[] args) {
 		
 		float[] expected = { 1f, 0.68085106f, 0.46666667f, 0.21568628f, 0.1f, 0.04666667f, 0.02156863f, 0.01f,
-				0.00466667f, 0.00215686f, 0.001f, 0.00046667f, 0.00021569f, 0.0001f, 4.67E-05f, 2.16E-05f, 0.00001f,
-				0.000001f };
+				0.00466667f, 0.00215686f, 0.001f, 0.00046667f, 0.00021569f, 0.0001f, 4.67E-05f, 2.16E-05f, 0.00001f};
 		
-		expected = new float[] { 1f, 0.1f, 0.01f, 0.001f, 0.000464195f, 0.000215443f, 0.0001f, 4.64E-05f, 1.00E-05f,
-				1.00E-06f };
-		float[] actual7 = { 1f, 0.065303647f, 0.006984758f, 0.000895221f, 0.000367151f, 0.000143717f, 7.17E-05f,
-				3.79E-05f, 0.000141951f, 7.58E-05f };
+		float[] NLVPMVATVQGQNLK = { 0.000112342f, 6.15181E-05f, 4.9426E-05f, 7.59576E-05f, 0.000100696f, 0.000289449f,
+				0.000366852f, 0.001132867f, 0.002648947f, 0.006877976f, 0.014346113f, 0.036599163f, 0.064522792f,
+				0.187896813f, 0.36849218f, 0.586212575f, 1f };
+		float[] MSSGGGGGDHDHGLSSK = { 0.000111445f, 5.99557E-05f, 5.54356E-05f, 7.87784E-05f, 0.000147337f,
+				0.000401697f, 0.000704036f, 0.001509931f, 0.004140635f, 0.008480151f, 0.020829177f, 0.052199693f,
+				0.109812594f, 0.194237655f, 0.423290952f, 0.738813441f, 1f };
+		
+		float[] actual=General.reverse(MSSGGGGGDHDHGLSSK);
 
-		TFloatArrayList actualList=new TFloatArrayList(actual7);
+		TFloatArrayList actualList=new TFloatArrayList(actual);
 		actualList.reverse();
 		TFloatArrayList expectedList=new TFloatArrayList(expected);
 		expectedList.reverse();
@@ -81,7 +67,7 @@ public class DilutionCurveFitter {
 		Charter.launchChart(panel, "PEPTIDE");
 	}
 	
-	public static void main(String[] args) throws Exception {
+	public static void main2(String[] args) throws Exception {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
 		final File outputDirectory=new File("/Users/searleb/Documents/cobbs/2021jan12_cobbs_ln229/curvefitting/");
 		final File targetDirectory=new File(outputDirectory, "target");
@@ -256,7 +242,8 @@ public class DilutionCurveFitter {
 		int count=0;
 		HashMap<String, ArrayList<FitPeptide>> targetPeptidesByProtein=new HashMap<String, ArrayList<FitPeptide>>();
 		ArrayList<FitPeptide> nontargetedPeptides=new ArrayList<FitPeptide>();
-		for (FitPeptide fit : fitPeptides) {
+		addpeptides:for (FitPeptide fit : fitPeptides) {
+			if (true) break;
 			ArrayList<FitPeptide> list=targetPeptidesByProtein.get(fit.proteinKey);
 			if (list==null) {
 				list=new ArrayList<DilutionCurveFitter.FitPeptide>();
@@ -273,6 +260,7 @@ public class DilutionCurveFitter {
 					for (int i = 0; i < testDensity.length; i++) {
 						if (testDensity[i]>assayMaxDensity) {
 							keep=false;
+							
 							if (!hitMaxDensity) {
 								hitMaxDensity=true;
 								Logger.logLine("First hit of max density at LOQ: "+fit.bestFit.getLOQ());
@@ -344,16 +332,16 @@ public class DilutionCurveFitter {
 		
 	}
 
-	private static void addPeptideToAssay(final PrintWriter assayWriter, LibraryEntry entry, float rtInSec, float windowInMin) {
+	protected static void addPeptideToAssay(final PrintWriter assayWriter, LibraryEntry entry, float rtInSec, float windowInMin) {
 		assayWriter.println(",,(no adduct),"+entry.getPrecursorMZ()+","+entry.getPrecursorCharge()+","+(rtInSec/60f)+","+windowInMin);
 	}
 
-	private static float[] incrementDensity(float scanStartTime, float windowInMin, float[] assayDensity) {
+	protected static float[] incrementDensity(float scanStartTime, float windowInMin, float[] assayDensity) {
 		float[] clone=assayDensity.clone();
 		int start=Math.round(scanStartTime-windowInMin*60f/2f);
 		int stop=Math.round(scanStartTime+windowInMin*60f/2f);
 		for (int i = start; i <= stop; i++) {
-			if (i<clone.length) {
+			if (i<clone.length&&i>=0) {
 				clone[i]++;
 			}
 		}

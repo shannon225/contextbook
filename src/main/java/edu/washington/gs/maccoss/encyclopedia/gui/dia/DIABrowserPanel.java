@@ -256,6 +256,8 @@ public class DIABrowserPanel extends JPanel {
 		
 		for (PrecursorScan precursorScan : precursors) {
 			double[] massArray = precursorScan.getMassArray();
+			if (massArray.length==0) continue;
+			
 			if (massArray[0]<minMZ) minMZ=massArray[0];
 			if (massArray[massArray.length-1]>maxMZ) maxMZ=massArray[massArray.length-1];
 			

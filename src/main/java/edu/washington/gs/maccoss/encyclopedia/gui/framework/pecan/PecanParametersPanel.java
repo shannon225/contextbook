@@ -30,6 +30,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFacto
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
@@ -72,8 +73,8 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "Glu-C", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
 	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "C+125 (NEM)", "None"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.HCD), FragmentationType.toName(FragmentationType.ETD)});
-	private final JComboBox<String> percolatorVersion=new JComboBox<String>(new String[] {PercolatorExecutor.V3_01, PercolatorExecutor.V2_10});
-
+	private final JComboBox<PercolatorVersion> percolatorVersion=new JComboBox<PercolatorVersion>(PercolatorVersion.VALID_VERSIONS);
+	
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance());
 
 	private final JComboBox<MassTolerance> precursorTolerance=new JComboBox<MassTolerance>(EncyclopediaParametersPanel.TOLERANCE_VALUES);
@@ -232,15 +233,15 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
 		float numberOfExtraDecoyLibrariesValue=NUMBER_OF_EXTRA_DECOY_VALUES[((Integer)numberOfExtraDecoyLibraries.getSelectedIndex())];
 		float percolatorThresholdValue=0.01f;
-		
-		boolean isPercolatorTwo=PercolatorExecutor.V2_10.equals(percolatorVersion.getSelectedItem());
+
+		PercolatorVersion percolator=(PercolatorVersion)percolatorVersion.getSelectedItem();
 		PecanSearchParameters parameters=new PecanSearchParameters(
 				aaConstants,
 				fragmentation,
 				precursorPPMValue,
 				fragmentPPMValue,
 				digestionEnzyme,
-				isPercolatorTwo?2:3,
+				percolator,
 				percolatorThresholdValue,
 				percolatorThresholdValue,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
@@ -320,7 +321,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		}
 		numberOfQuantitativeIons.setValue(params.getNumberOfQuantitativePeaks());
 		minNumOfQuantitativeIons.setValue(params.getMinNumOfQuantitativePeaks());
-		percolatorVersion.setSelectedIndex(params.getPercolatorVersionNumber()==2?1:0);
+		percolatorVersion.setSelectedItem(params.getPercolatorVersionNumber());
 	}
 	
 	@Override

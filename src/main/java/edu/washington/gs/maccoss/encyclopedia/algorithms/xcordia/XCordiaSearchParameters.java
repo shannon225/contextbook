@@ -9,6 +9,7 @@ import java.util.prefs.Preferences;
 
 import edu.washington.gs.maccoss.encyclopedia.Pecanpie;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
@@ -60,7 +61,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 			boolean dontRunDecoys,
 			float percolatorThreshold,
 			float percolatorProteinThreshold,
-			Integer percolatorVersionNumber,
+			PercolatorVersion percolatorVersionNumber,
 			int percolatorTrainingSetSize,
 			float percolatorTrainingSetThreshold,
 			float alpha,
@@ -126,7 +127,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 			MassTolerance precursorTolerance,
 			MassTolerance fragmentTolerance,
 			DigestionEnzyme enzyme,
-			int percolatorVersionNumber,
+			PercolatorVersion percolatorVersionNumber,
 			float percolatorThreshold,
 			float percolatorProteinThreshold,
 			int percolatorTrainingSetSize,

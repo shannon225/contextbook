@@ -22,15 +22,20 @@ import static org.junit.Assert.assertTrue;
 public class PercolatorExecutorIT {
 	@Test
 	public void testPercolatorExecutorV2() throws Exception {
-		doPercolatorTest(2);
+		doPercolatorTest(PercolatorVersion.v2p10);
 	}
 
 	@Test
-	public void testPercolatorExecutorV3() throws Exception {
-		doPercolatorTest(3);
+	public void testPercolatorExecutorV3p5() throws Exception {
+		doPercolatorTest(PercolatorVersion.v3p05);
 	}
 
-	protected void doPercolatorTest(int percolatorVersion) throws IOException, InterruptedException {
+	@Test
+	public void testPercolatorExecutorV3p1() throws Exception {
+		doPercolatorTest(PercolatorVersion.v3p01);
+	}
+
+	protected void doPercolatorTest(PercolatorVersion percolatorVersion) throws IOException, InterruptedException {
 		InputStream is=getClass().getResourceAsStream("/pecan.feature.txt");
 		File featureFile=File.createTempFile("pecan", ".feature");
 		featureFile.deleteOnExit();

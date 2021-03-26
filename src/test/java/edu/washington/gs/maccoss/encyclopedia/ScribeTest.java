@@ -5,18 +5,26 @@ import java.io.File;
 public class ScribeTest {
 
 	public static void main(String[] args) {
-		File dir=new File("/Users/searleb/Documents/dda_library_search/rj_lumos");
-		File lib=new File(dir, "uniprot_human_25apr2019.fasta.trypsin.z1-4_nce33.dlib");
-		File fasta=new File(dir, "uniprot_human_25apr2019.fasta");
+
+		File dir=new File("/Users/searleb/Documents/sperm/");
+		File lib=new File(dir, "psap_albumin_prtc.fasta.trypsin.z3_nce33.dlib");
+		File fasta=new File(dir, "psap_albumin_prtc.fasta");
 		File[] fs=new File[] {
-				//new File(dir, "FU_2016_0627_17_humanHcdLitms2.mzML"),
-				// new File(dir, "FU_2016_0627_19_humanCidLitms2.mzML"), 
-				//new File(dir, "FU_2016_0627_18_humanHcdOrbims2.dia"), 
-				new File(dir, "FU_2016_0627_20_humanCidOrbims2.mzML")
+				new File(dir, "2021mar21_sperm_qc_dda.mzML")
 		};
+		
+//		File dir=new File("/Users/searleb/Documents/dda_library_search/rj_lumos");
+//		File lib=new File(dir, "uniprot_human_25apr2019.fasta.trypsin.z1-4_nce33.dlib");
+//		File fasta=new File(dir, "uniprot_human_25apr2019.fasta");
+//		File[] fs=new File[] {
+//				//new File(dir, "FU_2016_0627_17_humanHcdLitms2.mzML"),
+//				// new File(dir, "FU_2016_0627_19_humanCidLitms2.mzML"), 
+//				//new File(dir, "FU_2016_0627_18_humanHcdOrbims2.dia"), 
+//				new File(dir, "FU_2016_0627_20_humanCidOrbims2.mzML")
+//		};
 
 		//lib=new File("/Users/searleb/Documents/dda_library_search/rj_lumos/CIDer/uniprot_human_25apr2019.fasta.trypsin_CIDch2_predictions.dlib");
-		lib=new File("/Users/searleb/Documents/dda_library_search/rj_lumos/CIDer/final_libs/NIST_CID_original__NIST_CID_whole_human_consensus_final_true_lib.dlib");
+		//lib=new File("/Users/searleb/Documents/dda_library_search/rj_lumos/CIDer/final_libs/NIST_CID_original__NIST_CID_whole_human_consensus_final_true_lib.dlib");
 		//lib=new File("/Users/searleb/Documents/dda_library_search/rj_lumos/CIDer/NIST_CIDer_all-spectra_DBW201129.dlib");
 		//lib=new File("/Users/searleb/Documents/dda_library_search/rj_lumos/CIDer/final_libs/NIST_HCD_MS2PIP_PREDICTS__DBW201129.dlib_CIDch2_predictions.dlib");
 		//lib=new File("/Users/searleb/Documents/dda_library_search/rj_lumos/CIDer/final_libs/NIST_HCD_CIDer_V2__human_hcd_combined_CIDer_NCE33.dlib");
@@ -32,9 +40,9 @@ public class ScribeTest {
 			long startTime=System.currentTimeMillis();
 			String[] scribeArgs=new String[] {
 				"-l", lib.getAbsolutePath(), "-i", fs[i].getAbsolutePath(), "-f", fasta.getAbsolutePath(), 
-				//"-ptol", "50", "-ftol", "10", "-lftol", "50"
+				"-ptol", "5000", "-ftol", "10", "-lftol", "50", "-percolatorThreshold", "0.05"
 				//"-ptol", "50", "-ftol", "10", "-lftol", "500"
-				"-ptol", "50", "-ptolunits", "PPM", "-ftol", "10", "-ftolunits", "PPM", "-lftol", "0.6", "-lftolunits", "AMU"
+				//"-ptol", "50", "-ptolunits", "PPM", "-ftol", "10", "-ftolunits", "PPM", "-lftol", "0.6", "-lftolunits", "AMU"
 			};
 			Scribe.main(scribeArgs);
 			duration[i]=System.currentTimeMillis()-startTime;

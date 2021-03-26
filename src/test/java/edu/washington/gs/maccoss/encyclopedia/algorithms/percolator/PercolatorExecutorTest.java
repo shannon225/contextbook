@@ -95,13 +95,13 @@ public class PercolatorExecutorTest extends TestCase {
 	/**
 	 * Used only in {@link #main}.
 	 */
-	static byte getDefaultPercolaterVersion() {
+	static PercolatorVersion getDefaultPercolaterVersion() {
 		switch (OSDetector.getOS()) {
 			case WINDOWS:
 				//TODO: issue #23: Percolator v3 fails silently with exit code 255 on some Windows machines
-				return 2;
+				return PercolatorVersion.v2p10;
 			default:
-				return PercolatorExecutor.DEFAULT_VERSION_NUMBER;
+				return PercolatorVersion.DEFAULT_VERSION;
 		}
 	}
 

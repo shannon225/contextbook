@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -10,11 +11,14 @@ import java.util.prefs.Preferences;
 
 import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import gnu.trove.map.hash.TDoubleObjectHashMap;
+import gnu.trove.map.hash.TFloatObjectHashMap;
 
 public class SearchParameters {
 	public static final String OPT_PERC_TRAINING_SIZE = "-percolatorTrainingSetSize";
@@ -28,7 +32,7 @@ public class SearchParameters {
 	protected final DigestionEnzyme enzyme;
 	protected final float percolatorThreshold;
 	protected final float percolatorProteinThreshold;
-	protected final int percolatorVersionNumber;
+	protected final PercolatorVersion percolatorVersionNumber;
 	protected final int percolatorTrainingSetSize;
 	protected final float percolatorTrainingSetThreshold;
 	protected final DataAcquisitionType dataAcquisitionType;
@@ -52,10 +56,15 @@ public class SearchParameters {
     protected final boolean filterPeaklists;
     protected final boolean doNotUseGlobalFDR;
     protected final int topNTargetsUsed;
+    protected final Optional<ArrayList<Range>> precursorIsolationRanges;
+    
+    public Optional<ArrayList<Range>> getPrecursorIsolationRanges() {
+		return precursorIsolationRanges;
+	}
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
-			float percolatorThreshold, float percolatorProteinThreshold, Integer percolatorVersionNumber, int percolatorTrainingSetSize, float percolatorTrainingSetThreshold,
-			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize,
+			float percolatorThreshold, float percolatorProteinThreshold, PercolatorVersion percolatorVersionNumber, int percolatorTrainingSetSize, float percolatorTrainingSetThreshold,
+			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
 			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
@@ -68,7 +77,7 @@ public class SearchParameters {
 		this.enzyme=enzyme;
 		this.percolatorThreshold=percolatorThreshold;
 		this.percolatorProteinThreshold=percolatorProteinThreshold;
-		this.percolatorVersionNumber=percolatorVersionNumber==null?PercolatorExecutor.DEFAULT_VERSION_NUMBER:percolatorVersionNumber;
+		this.percolatorVersionNumber=percolatorVersionNumber==null?PercolatorVersion.DEFAULT_VERSION:percolatorVersionNumber;
 		this.percolatorTrainingSetSize = percolatorTrainingSetSize;
 		this.percolatorTrainingSetThreshold = percolatorTrainingSetThreshold;
 		this.dataAcquisitionType=dataAcquisitionType;
@@ -88,6 +97,40 @@ public class SearchParameters {
         this.rtWindowInMin=rtWindowInMin;
         this.filterPeaklists=filterPeaklists;
         this.doNotUseGlobalFDR=doNotUseGlobalFDR;
+        
+        ArrayList<Range> ranges=null;
+//        ranges=new ArrayList<>();
+//        ranges.add(new Range(400.4319f,421.44144f));
+//        ranges.add(new Range(421.44144f,440.4501f));
+//        ranges.add(new Range(440.4501f,458.45828f));
+//        ranges.add(new Range(458.45828f,475.466f));
+//        ranges.add(new Range(475.466f,491.4733f));
+//        ranges.add(new Range(491.4733f,508.48102f));
+//        ranges.add(new Range(508.48102f,524.4883f));
+//        ranges.add(new Range(524.4883f,539.4951f));
+//        ranges.add(new Range(539.4951f,554.50195f));
+//        ranges.add(new Range(554.50195f,569.5087f));
+//        ranges.add(new Range(569.5087f,585.51605f));
+//        ranges.add(new Range(585.51605f,600.5228f));
+//        ranges.add(new Range(600.5228f,615.52966f));
+//        ranges.add(new Range(615.52966f,631.5369f));
+//        ranges.add(new Range(631.5369f,647.54425f));
+//        ranges.add(new Range(647.54425f,663.5515f));
+//        ranges.add(new Range(663.5515f,679.5588f));
+//        ranges.add(new Range(679.5588f,696.5665f));
+//        ranges.add(new Range(696.5665f,713.5742f));
+//        ranges.add(new Range(713.5742f,731.5824f));
+//        ranges.add(new Range(731.5824f,751.5915f));
+//        ranges.add(new Range(751.5915f,771.6006f));
+//        ranges.add(new Range(771.6006f,792.61017f));
+//        ranges.add(new Range(792.61017f,814.6202f));
+//        ranges.add(new Range(814.6202f,837.6306f));
+//        ranges.add(new Range(837.6306f,862.64197f));
+//        ranges.add(new Range(862.64197f,891.6552f));
+//        ranges.add(new Range(891.6552f,923.66974f));
+//        ranges.add(new Range(923.66974f,958.68567f));
+//        ranges.add(new Range(958.68567f,1000.69567f));
+        precursorIsolationRanges=Optional.ofNullable(ranges);
 	}
 	
 	public void savePreferences(File libraryFile, File fastaFile) throws IOException,BackingStoreException {
@@ -252,7 +295,7 @@ public class SearchParameters {
 		return percolatorThreshold*(numberOfDecoyLibrariesSearched*(1-((numberOfDecoyLibrariesSearched-1)*percolatorThreshold)));
 	}
 	
-	public int getPercolatorVersionNumber() {
+	public PercolatorVersion getPercolatorVersionNumber() {
 		return percolatorVersionNumber;
 	}
 

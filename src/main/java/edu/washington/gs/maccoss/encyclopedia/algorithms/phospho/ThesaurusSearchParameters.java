@@ -9,6 +9,7 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -72,7 +73,7 @@ public class ThesaurusSearchParameters extends SearchParameters {
 			DigestionEnzyme enzyme,
 			float percolatorThreshold,
 			float percolatorProteinThreshold,
-			Integer percolatorVersionNumber,
+			PercolatorVersion percolatorVersionNumber,
 			int percolatorTrainingSetSize,
 			float percolatorTrainingSetThreshold,
 			DataAcquisitionType dataAcquisitionType,

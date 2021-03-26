@@ -289,31 +289,20 @@ public class MultiResultsBrowserPanel extends JPanel {
 	}
 	
 	public ChartPanel getStackedBarChart(PeptidePrecursor peptide, String[] categories, Spectrum[] dataArray) {
+		Spectrum libraryEntry=null;
 		if (library!=null) {
 			try {
-			ArrayList<LibraryEntry> entries=library.getEntries(peptide.getPeptideModSeq(), peptide.getPrecursorCharge(), false);
-			ArrayList<Spectrum> newDataArray=new ArrayList<>();
-			newDataArray.addAll(entries);
-			newDataArray.addAll(Arrays.asList(dataArray));
-			dataArray=newDataArray.toArray(new Spectrum[newDataArray.size()]);
-			
-			ArrayList<String> newCategories=new ArrayList<>();
-			if (entries.size()==1) {
-				newCategories.add("Library");
-			} else if (entries.size()>1) {
-				for (int i = 1; i <= entries.size(); i++) {
-					newCategories.add("Library "+i);
+				ArrayList<LibraryEntry> entries=library.getEntries(peptide.getPeptideModSeq(), peptide.getPrecursorCharge(), false);
+				if (entries.size()>0) {
+					libraryEntry=entries.get(0);
 				}
-			}
-			newCategories.addAll(Arrays.asList(categories));
-			categories=newCategories.toArray(new String[newCategories.size()]);
 			} catch (Exception e) {
 				Logger.errorLine("Error reading library entry!");
 				Logger.errorException(e);
 			}
 		}
 		
-		return FragmentIonConsistencyCharter.getBarChart(peptide, dataArray, categories, parameters);
+		return FragmentIonConsistencyCharter.getBarChart(peptide, Optional.ofNullable(libraryEntry), dataArray, categories, parameters);
 	}
 
 	public void askForResults() {
