@@ -1,13 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.curve;
 
-import java.awt.Dimension;
-import java.io.File;
-
-import org.jfree.chart.ChartPanel;
-
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import junit.framework.TestCase;
 
 public class DilutionCurveFitterTest extends TestCase {
@@ -25,21 +18,35 @@ public class DilutionCurveFitterTest extends TestCase {
 				3735.28178f, 3735.28178f, 2335.025086f, 2732.224165f, 2732.224165f, 5063.184808f, 6158.256267f,
 				5063.184808f, 6158.256267f, 360.7100301f, 2571.830146f, 5063.184808f, 3365.164021f, 3338.876672f,
 				3338.876672f, 5356.342656f };
+		
+		values=General.divide(values, 60f);
 
-		float[] assayRT=new float[Math.round(110*60)]; // N+W minutes in second increments
+		float[] assayRT=new float[Math.round(110)]; //*60 N+W minutes in second increments
 		for (int i = 0; i < assayRT.length; i++) {
 			assayRT[i]=i/60f;
 		}
 		float[] assayDensity=new float[assayRT.length];
 		
-		float windowInMin=40f;
+		float windowInMin=40f/60f;
 		for (int i = 0; i < values.length; i++) {
 			assayDensity=DilutionCurveFitter.incrementDensity(values[i], windowInMin, assayDensity);
 		}
 		
-		XYTrace trace=new XYTrace(assayRT, assayDensity, GraphType.area, "Scheduling density");
-		ChartPanel panel=Charter.getChart("Retention Time (min)", "Number of Peptides", true, trace);
-		Charter.launchChart(panel, "Assay Density");
+		float[] target = new float[] { 2.0f, 2.0f, 2.0f, 2.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f,
+				8.0f, 9.0f, 9.0f, 9.0f, 10.0f, 10.0f, 11.0f, 11.0f, 11.0f, 11.0f, 12.0f, 12.0f, 12.0f, 14.0f, 13.0f,
+				13.0f, 13.0f, 16.0f, 16.0f, 16.0f, 16.0f, 16.0f, 16.0f, 20.0f, 23.0f, 22.0f, 22.0f, 22.0f, 22.0f, 24.0f,
+				24.0f, 27.0f, 24.0f, 24.0f, 24.0f, 24.0f, 24.0f, 24.0f, 26.0f, 26.0f, 26.0f, 23.0f, 22.0f, 24.0f, 24.0f,
+				23.0f, 23.0f, 22.0f, 22.0f, 22.0f, 22.0f, 24.0f, 24.0f, 24.0f, 22.0f, 22.0f, 26.0f, 26.0f, 23.0f, 23.0f,
+				23.0f, 26.0f, 26.0f, 26.0f, 22.0f, 19.0f, 19.0f, 21.0f, 28.0f, 30.0f, 30.0f, 30.0f, 27.0f, 27.0f, 27.0f,
+				27.0f, 27.0f, 27.0f, 27.0f, 25.0f, 25.0f, 25.0f, 25.0f, 25.0f, 23.0f, 23.0f, 23.0f, 23.0f, 23.0f, 23.0f,
+				23.0f, 23.0f, 20.0f, 20.0f, 20.0f, 20.0f, 20.0f };
+		for (int i = 0; i < assayDensity.length; i++) {
+			assertEquals(target[i], assayDensity[i], 0.5f);
+		}
+		
+		//XYTrace trace=new XYTrace(assayRT, assayDensity, GraphType.area, "Scheduling density");
+		//ChartPanel panel=Charter.getChart("Retention Time (min)", "Number of Peptides", true, trace);
+		//Charter.launchChart(panel, "Assay Density");
 		//Charter.writeAsPDF(panel.getChart(), new File(outputDirectory, "assay_density.pdf"), new Dimension(600, 300));
 	}
 }
