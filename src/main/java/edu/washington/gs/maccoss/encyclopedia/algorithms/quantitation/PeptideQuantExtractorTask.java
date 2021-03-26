@@ -21,6 +21,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEn
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
@@ -88,7 +89,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	}
 
 	@Override
-	protected Nothing process() {
+	protected Nothing process() {		
 		Optional<TransitionRefinementData> spectrum=extractSpectrum(psmdata.getAccessions(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable, inferrer, params.isQuantifySameFragmentsAcrossSamples(), psmdata.wasInferred());
 		Optional<HashMap<String, TransitionRefinementData>> phosphoData=Optional.empty();
 		if (canRunLocalization()) {
@@ -170,8 +171,9 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			ArrayList<FragmentScan> stripes=getScanSubset(scanStart, scanStop);
 		
 			TransitionRefinementData data = quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes, integrateEverything, wasInferred, params);
+
 			if (data==null) return null;
-			if (data.getMedianChromatogram().length==0) return null;
+			if (data.getMedianChromatogram().length==0) return data;
 			
 			boolean retry=false;
 			float currentScanStart = stripes.get(0).getScanStartTime();

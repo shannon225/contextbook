@@ -195,7 +195,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 			}
 		}
 		
-		if (bestIndex<0) return 0.0f;
+		if (bestIndex<0) bestIndex=medianChromatogram.length/2; // if we found no best median, just set to the middle of the array
 		return rtArray.get()[bestIndex];
 	}
 	
