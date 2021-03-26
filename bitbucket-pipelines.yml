@@ -58,3 +58,10 @@ pipelines:
             - maven
           script:
             - mvn -B verify -DskipITs=false
+
+options:
+  # All steps will time out after 15 minutes to avoid
+  # wasting build minutes. If IT execution grows to
+  # exceed this limit, it's best to add relaxed timeouts
+  # to the specific step(s) that run too long.
+  max-time: 15
