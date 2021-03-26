@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
@@ -17,6 +18,7 @@ import com.google.common.collect.Lists;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -71,7 +73,10 @@ public class XCorDIATest extends TestCase {
 	 * make it to our overridden method, and the error is written to the logs.
 	 */
 	public void testFixedModCalculations() throws Exception {
-		PecanSearchParameters parameters=PecanParameterParser.getDefaultParametersObject();
+		HashMap<String, String> paramsMap=PecanParameterParser.getDefaultParameters();
+		paramsMap.put("-percolatorVersionNumber", PercolatorVersion.V3_01);
+		PecanSearchParameters parameters=PecanParameterParser.parseParameters(paramsMap);
+		
 		System.out.println("STARTING PARAMS: "+parameters.getAAConstants().getFixedModString());
 		FastaEntry entry=new FastaEntry("APEPTIDEKACPEPTIDECKMARECYSPEPTIDESK");
 		ArrayList<FastaPeptideEntry> seqs=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants(), false);
