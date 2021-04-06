@@ -778,8 +778,8 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	 */
 	@Override
 	public void close() {
-		if (!isOpenFileInPlace && !tempFile.delete()) {
-			Logger.errorLine("Error deleting temp file!");
+		if (!isOpenFileInPlace && tempFile.exists()&&!tempFile.delete()) {
+			Logger.errorLine("Error deleting temp DIA file!");
 		}
 		isOpen=false;
 	}

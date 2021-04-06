@@ -1707,8 +1707,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public void close() {
-		if (!tempFile.delete()) {
-			Logger.errorLine("Error deleting temp file!");
+		if (tempFile.exists()&&!tempFile.delete()) {
+			Logger.errorLine("Error deleting temp ELIB file!");
 		}
 	}
 

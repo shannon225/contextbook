@@ -49,8 +49,8 @@ public class BlibFile extends SQLFile {
 	}
 
 	public void close() {
-		if (!tempFile.delete()) {
-			Logger.errorLine("Error deleting temp file!");
+		if (tempFile.exists()&&!tempFile.delete()) {
+			Logger.errorLine("Error deleting temp BLIB file!");
 		}
 	}
 
