@@ -160,7 +160,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public void addTIC(StripeFileInterface diaFile) throws IOException, SQLException {
-		String key=SOURCEFILE_TIC_PREFIX+ getOriginalFileName(diaFile);
+		String key=SOURCEFILE_TIC_PREFIX+ diaFile.getOriginalFileName();
 
 		HashMap<String, String> map=new HashMap<String, String>();
 		map.put(key, Float.toString(diaFile.getTIC()));
@@ -169,7 +169,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public float getTIC(StripeFileInterface diaFile) throws IOException, SQLException {
-		return getTIC(getOriginalFileName(diaFile));
+		return getTIC(diaFile.getOriginalFileName());
 	}
 
 	public float getTIC(String originalFileName) throws IOException, SQLException {
@@ -181,21 +181,13 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		return Float.parseFloat(value);
 	}
 
-	private static String getOriginalFileName(SearchJobData job) {
-		return getOriginalFileName(job.getDiaFileReader());
-	}
-
-	private static String getOriginalFileName(StripeFileInterface diaFile) {
-		return diaFile.getOriginalFileName();
-	}
-
 	public void addRtAlignment(SearchJobData job, PeakLocationInferrerInterface inferrer) {
 		Optional.ofNullable(inferrer.getAlignmentData(job))
 				.ifPresent(alignment -> addRtAlignment(job, alignment));
 	}
 
 	public void addRtAlignment(SearchJobData job, List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignment) {
-		final String sourceFile = getOriginalFileName(job);
+		final String sourceFile = job.getDiaFileReader().getOriginalFileName();
 
 		try (Connection c = getConnection()) {
 			c.setAutoCommit(false);
@@ -243,7 +235,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			if (sb.length()>0) {
 				sb.append(SOURCE_FILE_SPLIT);
 			}
-			sb.append(searchJobData.getDiaFile().getAbsolutePath());
+			
+			sb.append(searchJobData.getDiaFileReader().getOriginalFileName());
 
 		}
 		map.put(SOURCEFILE_STRING, sb.toString());

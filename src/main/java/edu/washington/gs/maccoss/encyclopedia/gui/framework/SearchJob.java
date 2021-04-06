@@ -15,7 +15,7 @@ public abstract class SearchJob extends SwingJob {
 
 	@Override
 	public String getJobTitle() {
-		return "Read "+data.getDiaFile().getName();
+		return "Read "+data;//.getDiaFileReader().getOriginalFileName();
 	}
 
 	public SearchJobData getSearchData() {

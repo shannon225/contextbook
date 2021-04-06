@@ -19,15 +19,19 @@ public abstract class AbstractSearchJobData implements SearchJobData {
 		this.parameters=parameters;
 		this.version=version;
 	}
-
-	@Override
-	public File getDiaFile() {
+	
+	protected File getDiaFile() {
 		return diaFile;
+	}
+	
+	@Override
+	public String toString() {
+		return diaFile.getName();
 	}
 
 	@Override
 	public StripeFileInterface getDiaFileReader() {
-		return StripeFileGenerator.getFile(getDiaFile(), getParameters());
+		return StripeFileGenerator.getFile(diaFile, getParameters());
 	}
 	
 	@Override

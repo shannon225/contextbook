@@ -3,14 +3,14 @@ package edu.washington.gs.maccoss.encyclopedia.filewriters;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.zip.DataFormatException;
-
-import org.jfree.base.Library;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -52,6 +52,18 @@ public class LibraryUtilities {
 		
 		saveLibrary.close();
 	}
+	
+	public static void extractSampleSpecificLibraries(final File saveDir, LibraryInterface library) throws IOException, SQLException, DataFormatException {
+		List<Path> sources=library.getSourceFiles();
+		saveDir.mkdirs();
+		for (Path path : sources) {
+			String name=path.getFileName().toString();
+			Logger.logLine("Extracting out spectra associated with ["+name+"]...");
+			File saveFile=new File(saveDir, name+LibraryFile.DLIB);
+			extractSampleSpecificLibrary(saveFile, name, true, library);
+		}
+	}
+		
 	
 	public static void extractSampleSpecificLibrary(final File saveFile, String sourceFile, boolean useBestFragmentation, LibraryInterface library) throws IOException, SQLException, DataFormatException {
 		LibraryFile saveLibrary=new LibraryFile();

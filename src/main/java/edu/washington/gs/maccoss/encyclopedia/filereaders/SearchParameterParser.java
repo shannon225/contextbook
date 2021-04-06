@@ -130,6 +130,7 @@ public class SearchParameterParser {
 		final float rtWindowInMin;
         final boolean filterPeaklists;
         final boolean doNotUseGlobalFDR;
+        final boolean enableAdvancedOptions;
 		
 		String value=parameters.get("-frag");
 		if (value==null) {
@@ -322,6 +323,7 @@ public class SearchParameterParser {
 		verifyModificationIons=ParsingUtils.getBoolean("-verifyModificationIons", parameters, true);
         filterPeaklists=ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
         doNotUseGlobalFDR=ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
+        enableAdvancedOptions=ParsingUtils.getBoolean("-enableAdvancedOptions", parameters, false);
 
 		return new SearchParameters(
 				aaConstants,
@@ -354,7 +356,8 @@ public class SearchParameterParser {
 				verifyModificationIons,
 				rtWindowInMin,
 				filterPeaklists,
-				doNotUseGlobalFDR
+				doNotUseGlobalFDR,
+				enableAdvancedOptions
 		);
 	}
 }

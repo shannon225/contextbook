@@ -249,7 +249,7 @@ public class SearchPanel extends JPanel {
 		this.add(split, BorderLayout.CENTER);
 	}
 	
-	public JMenuBar createMenus(ProgramType program) {
+	public JMenuBar createMenus(ProgramType program, boolean enableAdvancedOptions) {
 		JMenuBar bar=new JMenuBar();
 		JMenu fileMenu=new JMenu("File");
 		fileMenu.setMnemonic(KeyEvent.VK_F);
@@ -546,6 +546,18 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		dataMenu.add(mzmlPreprocessorItem);
+		
+		JMenuItem subsetDIA=new JMenuItem("Create Subset mzML", convertDBIcon);
+		subsetDIA.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.subsetDIA(SearchPanel.this, getVisibleTab().getParameters());
+			}
+		});
+		if (enableAdvancedOptions) {
+			subsetDIA.setText("HIDDEN: "+subsetDIA.getText());
+			dataMenu.add(subsetDIA);
+		}
 
 		JMenuItem mzmlMergerItem=new JMenuItem("Combine Gas Phase Fractions", convertDBIcon);
 		mzmlMergerItem.addActionListener(new ActionListener() {
@@ -555,15 +567,18 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		dataMenu.add(mzmlMergerItem);
-		
-		JMenuItem subsetDIA=new JMenuItem("Create Subset mzML", convertDBIcon);
-		subsetDIA.addActionListener(new ActionListener() {
+
+		JMenuItem elibSeperatorItem=new JMenuItem("Extract Sample-Specific Libraries from ELIB", convertDBIcon);
+		elibSeperatorItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.subsetDIA(SearchPanel.this, getVisibleTab().getParameters());
+				SearchPanelUtilities.extractSampleSpecificDLIBs(dataMenu, getVisibleTab().getParameters());
 			}
 		});
-		//dataMenu.add(subsetDIA);
+		if (enableAdvancedOptions) {
+			elibSeperatorItem.setText("HIDDEN: "+elibSeperatorItem.getText());
+			dataMenu.add(elibSeperatorItem);
+		}
 		
 		dataMenu.addSeparator();
 

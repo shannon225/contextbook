@@ -78,7 +78,8 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 			boolean verifyModificationIons,
 			boolean requireVariableMods,
 			boolean filterPeaklists,
-			boolean doNotUseGlobalFDR
+			boolean doNotUseGlobalFDR,
+			boolean enableAdvancedOptions
 	) {
 		super(
 				aaConstants,
@@ -117,7 +118,8 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				verifyModificationIons,
 				requireVariableMods,
 				filterPeaklists,
-				doNotUseGlobalFDR
+				doNotUseGlobalFDR,
+				enableAdvancedOptions
 		);
 	}
 
@@ -213,7 +215,8 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				params.isVerifyModificationIons(),
 				params.isRequireVariableMods(),
 				params.isFilterPeaklists(),
-				params.isDoNotUseGlobalFDR()
+				params.isDoNotUseGlobalFDR(),
+				params.isEnableAdvancedOptions()
 		);
 	}
 

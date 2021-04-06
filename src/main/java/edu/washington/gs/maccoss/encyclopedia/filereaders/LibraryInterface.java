@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
@@ -20,4 +21,5 @@ public interface LibraryInterface {
 	Range getMinMaxMZ() throws IOException, SQLException;
 	String getName();
 	Optional<Path> getSource(SearchParameters parameters);
+	public List<Path> getSourceFiles() throws IOException, SQLException;
 }

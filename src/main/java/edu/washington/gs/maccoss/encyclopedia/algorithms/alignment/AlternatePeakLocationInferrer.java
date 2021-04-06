@@ -47,12 +47,12 @@ public class AlternatePeakLocationInferrer {
 				max=length;
 				bestJob=entry.getKey();
 			} else if (length==max&&bestJob!=null) {
-				if (bestJob.getDiaFile().getName().compareTo(entry.getKey().getDiaFile().getName())>0) {
+				if (bestJob.getDiaFileReader().getOriginalFileName().compareTo(entry.getKey().getDiaFileReader().getOriginalFileName())>0) {
 					bestJob=entry.getKey();
 				}
 			}
 		}
-		Logger.logLine("Setting "+bestJob.getDiaFile().getName()+" as the seed experiment.");
+		Logger.logLine("Setting "+bestJob.getDiaFileReader().getOriginalFileName()+" as the seed experiment.");
 		TObjectFloatHashMap<String> bestRTInSec=peptideMappings.get(bestJob);
 
 		// construct alignments
@@ -73,7 +73,7 @@ public class AlternatePeakLocationInferrer {
 		int count=0;
 		for (SearchJobData job : pecanJobs) {
 			if (job!=bestJob) {
-				subProgress2.update(job.getDiaFile().getName()+": RT aligning to seed", count/(float) pecanJobs.size());
+				subProgress2.update(job.getDiaFileReader().getOriginalFileName()+": RT aligning to seed", count/(float) pecanJobs.size());
 				count++;
 
 				TObjectFloatHashMap<String> rtInSec=peptideMappings.get(job);
@@ -94,10 +94,10 @@ public class AlternatePeakLocationInferrer {
 					Logger.errorLine("Not enough points ("+points.size()+" out of align:"+rtInSec.size()+" and best:"+bestRTInSec.size()+") to compute regression between samples, still trying anyways.");
 				}
 				
-				RetentionTimeAlignmentInterface alignment=RetentionTimeFilter.getFilter(points, bestJob.getDiaFile().getName(), job.getDiaFile().getName());
+				RetentionTimeAlignmentInterface alignment=RetentionTimeFilter.getFilter(points, bestJob.getDiaFileReader().getOriginalFileName(), job.getDiaFileReader().getOriginalFileName());
 				alignmentMap.put(job, alignment);
 
-				File saveFileSeed = new File(job.getPercolatorFiles().getPeptideOutputFile().getParentFile(), job.getDiaFile().getName());
+				File saveFileSeed = new File(job.getPercolatorFiles().getPeptideOutputFile().getParentFile(), job.getDiaFileReader().getOriginalFileName());
 
 				final List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignmentResults =
 						alignment.plot(points, Optional.ofNullable(saveFileSeed));

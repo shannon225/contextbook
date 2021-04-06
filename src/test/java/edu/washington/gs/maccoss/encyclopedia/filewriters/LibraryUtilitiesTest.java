@@ -15,15 +15,17 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class LibraryUtilitiesTest {
-	public static void main(String[] args) throws Exception {
+	public static void main4(String[] args) throws Exception {
 		File inFile=new File("/Volumes/bcsbluessd/TPAD/combined_library_noquant.elib");
 		File saveFile=new File("/Volumes/bcsbluessd/TPAD/Vpool_combined_library_noquant.dlib");
 		File rtFile=new File("/Volumes/bcsbluessd/TPAD/Vpool_combined_library_quant.dlib");
 
+		// put all RTs into map from Vpool_combined_library_quant.dlib (the extracted RTs from the global quant analysis)
+		AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		LibraryFile library=new LibraryFile();
 		library.openFile(rtFile);
 		TObjectFloatHashMap<String> rtMap=new TObjectFloatHashMap<>();
-		for (LibraryEntry entry : library.getAllEntries(false, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()))) {
+		for (LibraryEntry entry : library.getAllEntries(false, aaConstants)) {
 			String key=entry.getPeptideModSeq()+"+"+entry.getPrecursorCharge();
 			rtMap.put(key, entry.getScanStartTime());
 		}
@@ -32,10 +34,12 @@ public class LibraryUtilitiesTest {
 		library=new LibraryFile();
 		library.openFile(inFile);
 
+		// for each entry in /Volumes/bcsbluessd/TPAD/combined_library_noquant.elib
 		HashMap<String, LibraryEntry> toWrite=new HashMap<>();
-		for (LibraryEntry entry : library.getAllEntries(false, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()))) {
+		for (LibraryEntry entry : library.getAllEntries(false, aaConstants)) {
 			String key=entry.getPeptideModSeq()+"+"+entry.getPrecursorCharge();
 			if (rtMap.contains(key)) {
+				// if we have an RT form the global quant analysis, then update the RT if the combined quant RT is better
 				if (toWrite.containsKey(key)) {
 					if (toWrite.get(key).getScore()>entry.getScore()) {
 						toWrite.put(key, entry.updateRetentionTime(rtMap.get(key)));
@@ -107,12 +111,12 @@ public class LibraryUtilitiesTest {
 		saveLibrary.close();
 	}
 	
-	public static void main4(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
 		File inFile=new File("/Volumes/bcsbluessd/TPAD/combined_library_quant.elib");
-		File saveFile=new File("/Volumes/bcsbluessd/TPAD/Vpool_combined_library_quant.dlib");
+		File saveFile=new File("/Volumes/bcsbluessd/TPAD/libs/");
 		LibraryFile library=new LibraryFile();
 		library.openFile(inFile);
-		LibraryUtilities.extractSampleSpecificLibrary(saveFile, "13Oct2020-Lumos_dlp_TPAD_CSF_DIA_chrlib_4mz_VpoolLib_clib.dia", true, library);
+		LibraryUtilities.extractSampleSpecificLibraries(saveFile, library);
 		library.close();
 	}
 }

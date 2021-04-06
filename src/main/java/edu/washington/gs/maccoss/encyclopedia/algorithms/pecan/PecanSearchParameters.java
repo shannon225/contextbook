@@ -167,7 +167,9 @@ public class PecanSearchParameters extends SearchParameters {
 			boolean quantifyAcrossSamples, 
 			boolean verifyModificationIons, 
 			boolean requireVariableMods, 
-			boolean filterPeaklists, boolean doNotUseGlobalFDR) {
+			boolean filterPeaklists, 
+			boolean doNotUseGlobalFDR, 
+			boolean enableAdvancedOptions) {
 		super(
 				aaConstants,
 				fragType,
@@ -199,7 +201,8 @@ public class PecanSearchParameters extends SearchParameters {
 				verifyModificationIons,
 				-1.0f,
 				filterPeaklists,
-				doNotUseGlobalFDR
+				doNotUseGlobalFDR, 
+				enableAdvancedOptions
 		);
 		this.minPeptideLength=minPeptideLength;
 		this.maxPeptideLength=maxPeptideLength;
@@ -270,6 +273,7 @@ public class PecanSearchParameters extends SearchParameters {
 				verifyModificationIons,
 				-1.0f,
 				false,
+				false, 
 				false
 		);
 		minPeptideLength=5;
@@ -342,6 +346,7 @@ public class PecanSearchParameters extends SearchParameters {
 				verifyModificationIons,
 				-1.0f,
 				false,
+				false, 
 				false
 		);
 		minPeptideLength=5;
@@ -399,6 +404,7 @@ public class PecanSearchParameters extends SearchParameters {
 				verifyModificationIons,
 				-1.0f,
 				false,
+				false, 
 				false);
 		minPeptideLength=5;
 		maxPeptideLength=100;
@@ -457,6 +463,7 @@ public class PecanSearchParameters extends SearchParameters {
 				verifyModificationIons,
 				-1.0f,
 				false,
+				false, 
 				false
 		);
 		minPeptideLength=5;
@@ -517,6 +524,7 @@ public class PecanSearchParameters extends SearchParameters {
 				verifyModificationIons,
 				-1.0f,
 				false,
+				false, 
 				false);
 		this.maxMissedCleavages=maxMissedCleavages;
 		minPeptideLength=5;

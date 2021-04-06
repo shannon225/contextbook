@@ -57,6 +57,7 @@ public class SearchParameters {
     protected final boolean doNotUseGlobalFDR;
     protected final int topNTargetsUsed;
     protected final Optional<ArrayList<Range>> precursorIsolationRanges;
+    protected final boolean enableAdvancedOptions;
     
     public Optional<ArrayList<Range>> getPrecursorIsolationRanges() {
 		return precursorIsolationRanges;
@@ -65,7 +66,7 @@ public class SearchParameters {
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, float percolatorProteinThreshold, PercolatorVersion percolatorVersionNumber, int percolatorTrainingSetSize, float percolatorTrainingSetThreshold,
 			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
-			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR) {
+			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR, boolean enableAdvancedOptions) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -97,6 +98,7 @@ public class SearchParameters {
         this.rtWindowInMin=rtWindowInMin;
         this.filterPeaklists=filterPeaklists;
         this.doNotUseGlobalFDR=doNotUseGlobalFDR;
+        this.enableAdvancedOptions=enableAdvancedOptions;
         
         ArrayList<Range> ranges=null;
 //        ranges=new ArrayList<>();
@@ -412,5 +414,9 @@ public class SearchParameters {
     
     public boolean isDoNotUseGlobalFDR() {
 		return doNotUseGlobalFDR;
+	}
+    
+    public boolean isEnableAdvancedOptions() {
+		return enableAdvancedOptions;
 	}
 }

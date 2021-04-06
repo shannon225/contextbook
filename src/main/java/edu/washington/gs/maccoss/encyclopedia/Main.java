@@ -17,6 +17,9 @@ public class Main {
 		if (arguments.size()==0) {
 			SearchGUIMain.runGUI(ProgramType.Global);
 			
+		} else if (arguments.containsKey(SearchGUIMain.ENABLE_ADVANCED_OPTIONS)) {
+			SearchGUIMain.runGUI(ProgramType.Global, true);
+			
 		} else if (arguments.containsKey("-encyclopedia")) {
 			Encyclopedia.main(args);
 			

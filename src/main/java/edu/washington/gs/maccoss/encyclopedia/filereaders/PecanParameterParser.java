@@ -107,6 +107,7 @@ public class PecanParameterParser {
 		final boolean requireVariableMods;
         final boolean filterPeaklists;
         final boolean doNotUseGlobalFDR;
+        final boolean enableAdvancedOptions;
 
 		ModificationMassMap variableMods=new ModificationMassMap(parameters.get("-variable"));
 
@@ -261,6 +262,7 @@ public class PecanParameterParser {
 		requireVariableMods=ParsingUtils.getBoolean("-requireVariableMods", parameters, false);
 		filterPeaklists = ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
 		doNotUseGlobalFDR = ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
+		enableAdvancedOptions = ParsingUtils.getBoolean("-enableAdvancedOptions", parameters, false);
 
 		return new PecanSearchParameters(
 				aaConstants,
@@ -299,7 +301,8 @@ public class PecanParameterParser {
 				true,
 				requireVariableMods,
 				filterPeaklists,
-				doNotUseGlobalFDR
+				doNotUseGlobalFDR,
+				enableAdvancedOptions
 		);
 	}
 }

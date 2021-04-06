@@ -263,6 +263,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 				true,
 				-1.0f,
 				false,
+				false,
 				false
 		);
 

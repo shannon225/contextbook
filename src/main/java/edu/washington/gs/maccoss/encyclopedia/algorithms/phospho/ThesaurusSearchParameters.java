@@ -92,7 +92,8 @@ public class ThesaurusSearchParameters extends SearchParameters {
 			boolean verifyModificationIons,
 			boolean filterPeaklists,
 			boolean doNotUseGlobalFDR,
-			boolean considerRearrangement
+			boolean considerRearrangement,
+			boolean enableAdvancedOptions
 	) {
 		super(
 				aaConstants,
@@ -125,7 +126,8 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				verifyModificationIons,
 				-1.0f,
 				filterPeaklists,
-				doNotUseGlobalFDR
+				doNotUseGlobalFDR,
+				enableAdvancedOptions
 		);
 		this.considerRearrangement=considerRearrangement;
 	}
@@ -169,7 +171,8 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				params.isVerifyModificationIons(),
 				params.isFilterPeaklists(),
 				params.isDoNotUseGlobalFDR(),
-				considerRearrangement
+				considerRearrangement,
+				params.isEnableAdvancedOptions()
 		);
 	}
 

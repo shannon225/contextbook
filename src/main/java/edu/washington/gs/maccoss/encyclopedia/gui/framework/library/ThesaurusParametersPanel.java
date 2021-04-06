@@ -273,7 +273,8 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				false,
 				false,
 				false,
-				considerRearrangement
+				considerRearrangement,
+				false
 		);
 
 		String cmds=additionalCommandLineOptions.getText();

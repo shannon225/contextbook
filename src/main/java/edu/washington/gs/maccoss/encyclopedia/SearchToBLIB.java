@@ -299,12 +299,12 @@ public class SearchToBLIB {
 		SearchJobData representativeJob=null;
 		
 		// Sort files in alphabetical order for deterministic Percolator sampling
-		Collections.sort(pecanJobs, (a, b) -> a.getDiaFile().getName().compareTo(b.getDiaFile().getName()));
+		Collections.sort(pecanJobs, (a, b) -> a.getDiaFileReader().getOriginalFileName().compareTo(b.getDiaFileReader().getOriginalFileName()));
 		
 		for (int i=0; i<pecanJobs.size(); i++) {
 			SearchJobData job=pecanJobs.get(i);
 			if (!job.hasBeenRun()) {
-				Logger.logLine("Can't find a "+job.getSearchType()+" analysis of "+job.getDiaFile().getName()+", skipping extraction on that file.");
+				Logger.logLine("Can't find a "+job.getSearchType()+" analysis of "+job.getDiaFileReader().getOriginalFileName()+", skipping extraction on that file.");
 				continue;
 			} else {
 				processedJobs.add(job);
@@ -321,13 +321,13 @@ public class SearchToBLIB {
 
 			for (int i=0; i<pecanJobs.size(); i++) {
 				SearchJobData job=pecanJobs.get(i);
-				Logger.errorLine(" Checking raw file "+(i+1)+": "+job.getDiaFile().exists());
+				Logger.errorLine(" Checking raw file "+(i+1)+": "+job.getDiaFileReader().getFile().exists());
 				Logger.errorLine(" Checking feature file "+(i+1)+": "+job.getPercolatorFiles().getInputTSV().exists());
 				Logger.errorLine(" Checking result file "+(i+1)+": "+job.getPercolatorFiles().getPeptideOutputFile().exists());
 			}
 			return;
 		}
-		Logger.logLine("Using "+representativeJob.getDiaFile().getName()+" to extract representative search parameters");
+		Logger.logLine("Using "+representativeJob.getDiaFileReader().getOriginalFileName()+" to extract representative search parameters");
 		SearchParameters parameters=representativeJob.getParameters();
 
 		String filename=libFile.getName();
@@ -498,7 +498,7 @@ public class SearchToBLIB {
 	 * trims to quantifiable peptides! for loading into skyline!
 	 */
 	static int[] convertFileBlib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, int[] counterTotals, Optional<PeakLocationInferrerInterface> inferrer, PrintWriter integrationFileWriter, BlibFile blib) throws IOException, SQLException {
-		final String diaFileName = job.getDiaFile().getName();
+		final String diaFileName = job.getDiaFileReader().getOriginalFileName();
 
 		Logger.logLine("Reading Percolator Results from "+ diaFileName +"...");
 		subProgress.update(diaFileName +": Reading Percolator Results", 0.0f);
@@ -564,7 +564,7 @@ public class SearchToBLIB {
 					globalPassingPeptides=localPassingPeptides.x;
 				}
 
-				Logger.logLine(job.getDiaFile().getName()+": Number of global peptides: "+globalPassingPeptides.size()+" vs local peptides: "+localPassingPeptides.x.size());
+				Logger.logLine(job.getDiaFileReader().getOriginalFileName()+": Number of global peptides: "+globalPassingPeptides.size()+" vs local peptides: "+localPassingPeptides.x.size());
 				
 				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides.x, inferrer, elib, pecanJobs.size()>1);
 
@@ -580,7 +580,7 @@ public class SearchToBLIB {
 						
 						Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>> targetDecoyProteins=ParsimonyProteinGrouper.groupProteins(targets.x, decoys.x, parameters.getPercolatorProteinThreshold(), parameters.getAAConstants());
 						Logger.logLine("Writing local target/decoy proteins: "+targetDecoyProteins.x.size()+"/"+targetDecoyProteins.y.size());
-						elib.addTargetDecoyProteins(job.getDiaFile().getName(), targetDecoyProteins.x, targetDecoyProteins.y);
+						elib.addTargetDecoyProteins(job.getDiaFileReader().getOriginalFileName(), targetDecoyProteins.x, targetDecoyProteins.y);
 
 						job.getPercolatorFiles()
 								.getPercolatorExecutableVersion()
@@ -628,19 +628,19 @@ public class SearchToBLIB {
 			parameterMap.put("RT align between samples", Boolean.toString(inferrer.isPresent()));
 			for (int i=0; i<pecanJobs.size(); i++) {
 				SearchJobData job=pecanJobs.get(i);
-				parameterMap.put(job.getDiaFile().getName()+" search type", job.getSearchType());
+				parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" search type", job.getSearchType());
 				if (job instanceof EncyclopediaJobData) {
-					parameterMap.put(job.getDiaFile().getName()+" library", ((EncyclopediaJobData)job).getLibrary().getName());
+					parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" library", ((EncyclopediaJobData)job).getLibrary().getName());
 				} else if (job instanceof PecanJobData) {
-					parameterMap.put(job.getDiaFile().getName()+" fasta", ((PecanJobData)job).getFastaFile().getName());
-					parameterMap.put(job.getDiaFile().getName()+" used narrow target list", Boolean.toString(((PecanJobData)job).getTargetList().isPresent()));
+					parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" fasta", ((PecanJobData)job).getFastaFile().getName());
+					parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" used narrow target list", Boolean.toString(((PecanJobData)job).getTargetList().isPresent()));
 				} else if (job instanceof XCorDIAJobData) {
 					Optional<LibraryInterface> maybeLibrary = ((XCorDIAJobData)job).getLibrary();
 					if (maybeLibrary.isPresent()) {
-						parameterMap.put(job.getDiaFile().getName()+" library", maybeLibrary.get().getName());
+						parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" library", maybeLibrary.get().getName());
 					}
-					parameterMap.put(job.getDiaFile().getName()+" fasta", ((XCorDIAJobData)job).getFastaFile().getName());
-					parameterMap.put(job.getDiaFile().getName()+" used narrow target list", Boolean.toString(((XCorDIAJobData)job).getTargetList().isPresent()));
+					parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" fasta", ((XCorDIAJobData)job).getFastaFile().getName());
+					parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" used narrow target list", Boolean.toString(((XCorDIAJobData)job).getTargetList().isPresent()));
 				}
 			}
 			elib.addMetadata(parameterMap);
@@ -678,14 +678,14 @@ public class SearchToBLIB {
 	 * Does not limit to quantifiable! Reports all potential peaks!
 	 */
 	static void convertFileElib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, Optional<PeakLocationInferrerInterface> inferrer, LibraryFile elib, boolean combineJobs) throws IOException, SQLException {
-		File diaFile=job.getDiaFile();
-		Logger.logLine("Reading Percolator Results from "+diaFile.getName()+"...");
-		subProgress.update(diaFile.getName()+": Reading Percolator Results", 0.0f);
+		String diaFileName=job.getDiaFileReader().getOriginalFileName();
+		Logger.logLine("Reading Percolator Results from "+diaFileName+"...");
+		subProgress.update(diaFileName+": Reading Percolator Results", 0.0f);
 
 		final StripeFileInterface stripeFile = job.getDiaFileReader();
 
-		Logger.logLine("Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides from "+diaFile.getName()+"...");
-		subProgress.update(diaFile.getName()+": Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides", 0.00001f);
+		Logger.logLine("Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides from "+diaFileName+"...");
+		subProgress.update(diaFileName+": Extracting Spectral Data for "+localPassingPeptides.size()+" Peptides", 0.00001f);
 
 		elib.addTIC(stripeFile);
 
@@ -704,8 +704,8 @@ public class SearchToBLIB {
 		}
 		stripeFile.close();
 		
-		Logger.logLine("Writing Encyclopedia ELIB from "+diaFile.getName()+" ("+libraryEntries.size()+" entries)...");
-		subProgress.update(diaFile.getName()+": Writing Encyclopedia ELIB", 0.99999f);
+		Logger.logLine("Writing Encyclopedia ELIB from "+diaFileName+" ("+libraryEntries.size()+" entries)...");
+		subProgress.update(diaFileName+": Writing Encyclopedia ELIB", 0.99999f);
 		
 		Optional<HashMap<String, ModificationLocalizationData>> localizationData;
 		if (!combineJobs&&job instanceof ThesaurusJobData) {
@@ -722,6 +722,6 @@ public class SearchToBLIB {
 		
 		
 		Logger.logLine("Finished writing to Encyclopedia ELIB at "+new Date().toString());
-		subProgress.update(diaFile.getName()+": Finished writing to Encyclopedia ELIB at "+new Date().toString(), 1.0f);
+		subProgress.update(diaFileName+": Finished writing to Encyclopedia ELIB at "+new Date().toString(), 1.0f);
 	}
 }
