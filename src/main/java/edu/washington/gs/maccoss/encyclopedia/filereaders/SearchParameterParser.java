@@ -323,7 +323,7 @@ public class SearchParameterParser {
 		verifyModificationIons=ParsingUtils.getBoolean("-verifyModificationIons", parameters, true);
         filterPeaklists=ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
         doNotUseGlobalFDR=ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
-        enableAdvancedOptions=ParsingUtils.getBoolean("-enableAdvancedOptions", parameters, false);
+        enableAdvancedOptions=ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
 
 		return new SearchParameters(
 				aaConstants,

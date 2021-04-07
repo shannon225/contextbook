@@ -12,6 +12,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
@@ -23,10 +24,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.VersioningDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
 
 public class SearchGUIMain {
-	public static final String ENABLE_ADVANCED_OPTIONS="-enableAdvancedOptions";
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
-		runGUI(ProgramType.Global, arguments.containsKey(ENABLE_ADVANCED_OPTIONS));
+		runGUI(ProgramType.Global, arguments.containsKey(SearchParameters.ENABLE_ADVANCED_OPTIONS));
 	}
 	
 	public static JFrame runGUI(ProgramType program) {

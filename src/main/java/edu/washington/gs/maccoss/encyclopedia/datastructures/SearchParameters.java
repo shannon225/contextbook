@@ -23,6 +23,7 @@ import gnu.trove.map.hash.TFloatObjectHashMap;
 public class SearchParameters {
 	public static final String OPT_PERC_TRAINING_SIZE = "-percolatorTrainingSetSize";
 	public static final String OPT_PERC_TRAINING_THRESH = "-percolatorTrainingFDR";
+	public static final String ENABLE_ADVANCED_OPTIONS="-enableAdvancedOptions";
 
 	protected final AminoAcidConstants aaConstants;
 	protected final FragmentationType fragType;

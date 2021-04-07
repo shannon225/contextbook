@@ -76,7 +76,7 @@ public class Encyclopedia {
 		if (arguments.size()==0) {
 			SearchGUIMain.runGUI(ProgramType.EncyclopeDIA);
 			
-		} else if (arguments.containsKey(SearchGUIMain.ENABLE_ADVANCED_OPTIONS)) {
+		} else if (arguments.size()==1&&arguments.containsKey(SearchParameters.ENABLE_ADVANCED_OPTIONS)) {
 			SearchGUIMain.runGUI(ProgramType.Global, true);
 			
 		} else if (arguments.containsKey("-browser")) {

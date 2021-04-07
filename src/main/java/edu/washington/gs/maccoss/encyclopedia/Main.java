@@ -5,6 +5,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -17,7 +18,7 @@ public class Main {
 		if (arguments.size()==0) {
 			SearchGUIMain.runGUI(ProgramType.Global);
 			
-		} else if (arguments.containsKey(SearchGUIMain.ENABLE_ADVANCED_OPTIONS)) {
+		} else if (arguments.size()==1&&arguments.containsKey(SearchParameters.ENABLE_ADVANCED_OPTIONS)) {
 			SearchGUIMain.runGUI(ProgramType.Global, true);
 			
 		} else if (arguments.containsKey("-encyclopedia")) {

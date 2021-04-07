@@ -262,7 +262,7 @@ public class PecanParameterParser {
 		requireVariableMods=ParsingUtils.getBoolean("-requireVariableMods", parameters, false);
 		filterPeaklists = ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
 		doNotUseGlobalFDR = ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
-		enableAdvancedOptions = ParsingUtils.getBoolean("-enableAdvancedOptions", parameters, false);
+		enableAdvancedOptions = ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
 
 		return new PecanSearchParameters(
 				aaConstants,
