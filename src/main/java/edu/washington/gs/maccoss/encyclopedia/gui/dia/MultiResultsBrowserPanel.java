@@ -404,7 +404,6 @@ public class MultiResultsBrowserPanel extends JPanel {
 			if (dataArray[i]!=null) {
 				totalTICs[i]=dataArray[i].getTIC();
 			}
-			System.out.println(origSampleNames[i]+" --> "+dataArray[i]);
 		}
 		String[] sampleNames=StringUtils.getUniquePortion(origSampleNames);
 		barChart.setChart(getBarChart(sampleNames, totalTICs).getChart());

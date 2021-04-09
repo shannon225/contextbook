@@ -6,7 +6,7 @@ public enum PercolatorVersion {
 	public static final String V3_05="v3-05";
 	public static final String V3_01="v3-01";
 	public static final String V2_10="v2-10";
-	public static final PercolatorVersion DEFAULT_VERSION=PercolatorVersion.v3p05;
+	public static final PercolatorVersion DEFAULT_VERSION=PercolatorVersion.v3p01;
 	public static final PercolatorVersion[] VALID_VERSIONS=new PercolatorVersion[] {v3p05, v3p01, v2p10};
 
 	public static PercolatorVersion getVersion(String s) {
