@@ -1,8 +1,13 @@
 EncyclopeDIA changelog for user-facing changes:
 
-encyclopedia-1.3.0-SNAPSHOT
+encyclopedia-1.5.0-SNAPSHOT
+encyclopedia-1.4.9 (April 9, 2021)
+ - Feature: added command-line options to test new pre-release features
+ - Feature: added Percolator 3.05, but default is still 3.01 pending additional testing
  - Feature: added mzML preprocessing (including merging gas-phase fractions) to command line
- - Feature: added OpenSwath library conversion to command line
+ - Feature: added OpenSwath library conversion to command line (thanks Konstantin)
+ - Bugfix: forced adding peptide integrations into elibs even if the peptide is not detected in that sample
+ - Bugfix: fixed integration boundaries in elibs even if the peptide is not detected
 
 encyclopedia-1.2.2 (Feb 2, 2021)
  - Feature: added OpenSwath TSV reader
