@@ -1,10 +1,10 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.ImmutableList;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -19,15 +19,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.Assert.*;
 
@@ -230,27 +227,30 @@ public class SearchToBLIBIT {
 
 	private SearchJobData getSearchJobDataA() throws IOException, SQLException {
 		//TODO: move to resources
-		final Path dia = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/LongSwath_UPS1_40fm_Ecoli_1ug-rep1.dia");
-		final Path featuresTxt = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/process_run_20201207-0/LongSwath_UPS1_40fm_Ecoli_1ug-rep1.dia.features.txt");
-		final Path fasta = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/ups-protein-standards.fasta");
-		final Path peptideOutput = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/process_run_20201207-0/LongSwath_UPS1_40fm_Ecoli_1ug-rep1.dia.xcordia.txt");
-		final Path decoyOutput = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/process_run_20201207-0/LongSwath_UPS1_40fm_Ecoli_1ug-rep1.dia.xcordia.decoy.txt");
+		final Path library = Paths.get("/home/sethjust/proteomesoft/uw-contract/small_encyclopedia_test/pan_human_library_600to603.dlib");
+		final Path dia = Paths.get("/home/sethjust/proteomesoft/uw-contract/small_encyclopedia_test/bcs_2020jan16_600to603_hela_clib.dia");
+		final Path featuresTxt = Paths.get("/home/sethjust/proteomesoft/uw-contract/small_encyclopedia_test/bcs_2020jan16_600to603_hela_clib.dia.features.txt");
+		final Path fasta = Paths.get("/home/sethjust/proteomesoft/uw-contract/small_encyclopedia_test/pan_human_library_600to603.fasta");
+		final Path peptideOutput = Paths.get("/home/sethjust/proteomesoft/uw-contract/small_encyclopedia_test/bcs_2020jan16_600to603_hela_clib.dia.encyclopedia.txt");
+		final Path decoyOutput = Paths.get("/home/sethjust/proteomesoft/uw-contract/small_encyclopedia_test/bcs_2020jan16_600to603_hela_clib.dia.encyclopedia.decoy.txt");
 
-		return makeXCorDIAJobData(dia, featuresTxt, fasta, peptideOutput, decoyOutput);
+		return makeJobData(library, dia, featuresTxt, fasta, peptideOutput, decoyOutput);
 	}
 
 	private SearchJobData getSearchJobDataB() throws IOException, SQLException {
-		//TODO: move to resources
-		final Path dia = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/LongSwath_UPS1_40fm_Ecoli_1ug-rep2.dia");
-		final Path featuresTxt = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/process_run_20201207-0/LongSwath_UPS1_40fm_Ecoli_1ug-rep2.dia.features.txt");
-		final Path fasta = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/ups-protein-standards.fasta");
-		final Path peptideOutput = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/process_run_20201207-0/LongSwath_UPS1_40fm_Ecoli_1ug-rep2.dia.xcordia.txt");
-		final Path decoyOutput = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/process_run_20201207-0/LongSwath_UPS1_40fm_Ecoli_1ug-rep2.dia.xcordia.decoy.txt");
-
-		return makeXCorDIAJobData(dia, featuresTxt, fasta, peptideOutput, decoyOutput);
+		Assume.assumeTrue(false); //TODO: get data B!!
+		throw new UnsupportedOperationException("TODO");
+//		//TODO: move to resources
+//		final Path dia = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/LongSwath_UPS1_40fm_Ecoli_1ug-rep2.dia");
+//		final Path featuresTxt = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/process_run_20201207-0/LongSwath_UPS1_40fm_Ecoli_1ug-rep2.dia.features.txt");
+//		final Path fasta = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/ups-protein-standards.fasta");
+//		final Path peptideOutput = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/process_run_20201207-0/LongSwath_UPS1_40fm_Ecoli_1ug-rep2.dia.xcordia.txt");
+//		final Path decoyOutput = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/process_run_20201207-0/LongSwath_UPS1_40fm_Ecoli_1ug-rep2.dia.xcordia.decoy.txt");
+//
+//		return makeXCorDIAJobData(dia, featuresTxt, fasta, peptideOutput, decoyOutput);
 	}
 
-	private XCorDIAJobData makeXCorDIAJobData(Path dia, Path featuresTxt, Path fasta, Path peptideOutput, Path decoyOutput) throws IOException, SQLException {
+	private QuantitativeSearchJobData makeJobData(Path library, Path dia, Path featuresTxt, Path fasta, Path peptideOutput, Path decoyOutput) throws IOException, SQLException {
 		Assume.assumeTrue(Files.exists(dia));
 
 		final StripeFile diaReader = new StripeFile(true) ;
@@ -261,24 +261,14 @@ public class SearchToBLIBIT {
 		// Set up the state as though we've just generated these files using Percolator.
 		percolatorFiles.setPercolatorExecutableVersion(MOCK_PERCOLATOR_VERSION);
 
-		return new XCorDIAJobData(
-				Optional.empty(),
-				Optional.empty(),
+		return new EncyclopediaJobData(
 				dia.toFile(), // dia file; must exist
 				diaReader,
-				fasta.toFile(),
 				percolatorFiles,
-				new XCorDIAOneScoringFactory(new PecanSearchParameters(
-						searchParameters.getAAConstants(),
-						searchParameters.getFragType(),
-						searchParameters.getFragmentTolerance(),
-						searchParameters.getPrecursorTolerance(),
-						searchParameters.getEnzyme(),
-						1,
-						searchParameters.isQuantifySameFragmentsAcrossSamples(),
-						false,
-						false
-				))
+				searchParameters,
+				"TEST",
+				new LibraryFile() {{ openFile(library.toFile()); }},
+				new EncyclopediaOneScoringFactory(searchParameters)
 		);
 	}
 
