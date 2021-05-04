@@ -28,12 +28,15 @@ public class SpectronautCSVToLibraryConverterIT extends AbstractFileConverterTes
 	public void testConvertSpectronautCSVToLibrary() throws Exception {
 		final Path csv = getResourceAsTempFile(tmpDir, getName(), ".csv", "/edu/washington/gs/maccoss/encyclopedia/testdata/coronavirus.abridged.spectronaut");
 
-		final LibraryInterface library = SpectronautCSVToLibraryConverter.convertFromSpectronautCSV(csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		final LibraryFile library = SpectronautCSVToLibraryConverter.convertFromSpectronautCSV(csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+
+		// The library will be closed after conversion, so we must reopen it
+		library.openFile();
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library); // asserts that the resulting file has DLIB extension
 
-			// update if you change the test resource
-			assertEquals("Wrong number of entries", 39, library.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
+			// update if you change the test resource -- grep -Po '_([A-Z]+|\[[^\]]+\])+_' src/test/resources/edu/washington/gs/maccoss/encyclopedia/testdata/coronavirus.abridged.spectronaut | sort | uniq | wc -l
+			assertEquals("Wrong number of entries", 45, library.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
 		} finally {
 			EncyclopediaTestUtils.cleanupLibrary(library);
 		}

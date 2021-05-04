@@ -28,7 +28,10 @@ public class OpenSwathTSVToLibraryConverterIT extends AbstractFileConverterTest 
 		// TODO: none of the peptides in this file are found in the FASTA!
 		final Path tsv = getResourceAsTempFile(tmpDir, getName(), ".tsv", "/edu/washington/gs/maccoss/encyclopedia/testdata/OpenSWATH_SM4_iRT_AssayLibrary.csv");
 
-		final LibraryInterface library = OpenSwathTSVToLibraryConverter.convertFromOpenSwathTSV(tsv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		final LibraryFile library = OpenSwathTSVToLibraryConverter.convertFromOpenSwathTSV(tsv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+
+		// The library will be closed after conversion, so we must reopen it
+		library.openFile();
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library); // asserts that the resulting file has DLIB extension
 

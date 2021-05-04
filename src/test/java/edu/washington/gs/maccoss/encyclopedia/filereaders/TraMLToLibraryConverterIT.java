@@ -29,6 +29,9 @@ public class TraMLToLibraryConverterIT extends AbstractFileConverterTest {
 		final Path traml = getResourceAsTempFile(tmpDir, getName(), ".traml", "/edu/washington/gs/maccoss/encyclopedia/testdata/OpenSWATH_SM4_iRT_AssayLibrary.TraML");
 
 		final LibraryFile library = TraMLToLibraryConverter.convertTraML(traml.toFile(), getFasta().toFile(), out.toFile(), SearchParameterParser.getDefaultParametersObject());
+
+		// The library will be closed after conversion, so we must reopen it
+		library.openFile();
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library);
 
