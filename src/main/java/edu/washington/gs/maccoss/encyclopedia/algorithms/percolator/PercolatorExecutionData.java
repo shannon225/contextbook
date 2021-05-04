@@ -59,9 +59,11 @@ public class PercolatorExecutionData {
 	}
 
 	/**
+	 * This method is {@code protected} to allow access for testing.
+	 *
 	 * @param percolatorExecutableVersion Canonical version of Percolator parsed directly when running the actual executable
 	 */
-	void setPercolatorExecutableVersion(String percolatorExecutableVersion) {
+	protected void setPercolatorExecutableVersion(String percolatorExecutableVersion) {
 		this.percolatorExecutableVersion = percolatorExecutableVersion;
 	}
 

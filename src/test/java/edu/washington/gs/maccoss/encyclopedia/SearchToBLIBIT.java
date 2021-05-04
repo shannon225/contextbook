@@ -256,27 +256,10 @@ public class SearchToBLIBIT {
 		final StripeFile diaReader = new StripeFile(true) ;
 		diaReader.openFile(dia.toFile());
 
-		final PercolatorExecutionData percolatorFiles = new PercolatorExecutionData(
-				featuresTxt.toFile(), // input tsv
-				fasta.toFile(), // fasta
-				peptideOutput.toFile(), // peptide output
-				decoyOutput.toFile(), // decoy output
-				null, // protein output
-				null, // protein decoy
-				searchParameters
-		);
+		final TestPercolatorExecutionData percolatorFiles = new TestPercolatorExecutionData(featuresTxt, fasta, peptideOutput, decoyOutput);
 
-		// Set up the state as though we've just generated these files using
-		// Percolator; this has to use reflection because the method is
-		// package-private (to avoid this sort of direct manipulation).
-		try {
-			final Method m = percolatorFiles.getClass()
-					.getDeclaredMethod("setPercolatorExecutableVersion", String.class);
-			m.setAccessible(true);
-			m.invoke(percolatorFiles, MOCK_PERCOLATOR_VERSION);
-		} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-			Assume.assumeNoException("Can't use reflection to set mock Percolator version", e);
-		}
+		// Set up the state as though we've just generated these files using Percolator.
+		percolatorFiles.setPercolatorExecutableVersion(MOCK_PERCOLATOR_VERSION);
 
 		return new XCorDIAJobData(
 				Optional.empty(),
@@ -297,5 +280,27 @@ public class SearchToBLIBIT {
 						false
 				))
 		);
+	}
+
+	/**
+	 * This subclass allows access to the {@link #setPercolatorExecutableVersion(String)}
+	 */
+	private class TestPercolatorExecutionData extends PercolatorExecutionData {
+		public TestPercolatorExecutionData(Path featuresTxt, Path fasta, Path peptideOutput, Path decoyOutput) {
+			super(
+					featuresTxt.toFile(),
+					fasta.toFile(),
+					peptideOutput.toFile(),
+					decoyOutput.toFile(),
+					null,
+					null,
+					SearchToBLIBIT.this.searchParameters
+			);
+		}
+
+		@Override
+		public void setPercolatorExecutableVersion(String percolatorExecutableVersion) {
+			super.setPercolatorExecutableVersion(percolatorExecutableVersion);
+		}
 	}
 }
