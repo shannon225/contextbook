@@ -471,5 +471,10 @@
 			<artifactId>commons-csv</artifactId>
 			<version>1.8</version>
 		</dependency>
+		<dependency>
+			<groupId>maccoss</groupId>
+			<artifactId>encyclopedia-test-data</artifactId>
+			<version>1-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 </project>

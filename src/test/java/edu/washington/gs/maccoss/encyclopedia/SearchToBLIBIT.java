@@ -10,9 +10,11 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.math3.stat.inference.TestUtils;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -26,6 +28,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 
+import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
 import static org.junit.Assert.*;
 
 public class SearchToBLIBIT {
@@ -227,12 +230,14 @@ public class SearchToBLIBIT {
 
 	private SearchJobData getSearchJobDataA() throws IOException, SQLException {
 		//TODO: move to resources
-		final Path library = Paths.get("/home/sethjust/proteomesoft/uw-contract/small_encyclopedia_test/pan_human_library_600to603.dlib");
-		final Path dia = Paths.get("/home/sethjust/proteomesoft/uw-contract/small_encyclopedia_test/bcs_2020jan16_600to603_hela_clib.dia");
-		final Path featuresTxt = Paths.get("/home/sethjust/proteomesoft/uw-contract/small_encyclopedia_test/bcs_2020jan16_600to603_hela_clib.dia.features.txt");
-		final Path fasta = Paths.get("/home/sethjust/proteomesoft/uw-contract/small_encyclopedia_test/pan_human_library_600to603.fasta");
-		final Path peptideOutput = Paths.get("/home/sethjust/proteomesoft/uw-contract/small_encyclopedia_test/bcs_2020jan16_600to603_hela_clib.dia.encyclopedia.txt");
-		final Path decoyOutput = Paths.get("/home/sethjust/proteomesoft/uw-contract/small_encyclopedia_test/bcs_2020jan16_600to603_hela_clib.dia.encyclopedia.decoy.txt");
+		String name = "SearchToBLIB";
+		final Path tmpDir = Files.createTempDirectory(name);
+		final Path library = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/pan_human_library_600to603.dlib", tmpDir, name, ".elib");
+		final Path dia = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia", tmpDir, name, ".elib");
+		final Path featuresTxt = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia.features.txt", tmpDir, name, ".elib");
+		final Path fasta = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/pan_human_library_600to603.fasta", tmpDir, name, ".elib");
+		final Path peptideOutput = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia.encyclopedia.txt", tmpDir, name, ".elib");
+		final Path decoyOutput = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia.encyclopedia.decoy.txt", tmpDir, name, ".elib");
 
 		return makeJobData(library, dia, featuresTxt, fasta, peptideOutput, decoyOutput);
 	}
@@ -292,5 +297,6 @@ public class SearchToBLIBIT {
 		public void setPercolatorExecutableVersion(String percolatorExecutableVersion) {
 			super.setPercolatorExecutableVersion(percolatorExecutableVersion);
 		}
+
 	}
 }
