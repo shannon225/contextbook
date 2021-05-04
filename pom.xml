@@ -475,6 +475,7 @@
 			<groupId>maccoss</groupId>
 			<artifactId>encyclopedia-test-data</artifactId>
 			<version>1-SNAPSHOT</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>

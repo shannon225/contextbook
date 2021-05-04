@@ -10,11 +10,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
-import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.math3.stat.inference.TestUtils;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -23,7 +21,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
@@ -39,18 +36,50 @@ public class SearchToBLIBIT {
 	private SearchParameters searchParameters;
 	private Path tempDir;
 
+	private Path libraryA;
+	private Path diaA;
+	private Path featuresTxtA;
+	private Path fastaA;
+	private Path peptideOutputA;
+	private Path decoyOutputA;
+
 	@Before
 	public void setUp() throws Exception {
 		searchParameters = SearchParameterParser.getDefaultParametersObject();
-
-		tempDir = Files.createTempDirectory("SearchToBLIBIT_");
+		String name = "SearchToBLIBIT_";
+		tempDir = Files.createTempDirectory(name);
 		FileUtils.forceDeleteOnExit(tempDir.toFile());
+
+		libraryA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/pan_human_library_600to603.dlib", tempDir, name, ".elib");
+		diaA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia", tempDir, name, ".elib");
+		featuresTxtA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia.features.txt", tempDir, name, ".elib");
+		fastaA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/pan_human_library_600to603.fasta", tempDir, name, ".elib");
+		peptideOutputA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia.encyclopedia.txt", tempDir, name, ".elib");
+		decoyOutputA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia.encyclopedia.decoy.txt", tempDir, name, ".elib");
 	}
 
 	@After
 	public void tearDown() throws Exception {
 		searchParameters = null;
 
+		if (null != libraryA) {
+			FileUtils.deleteQuietly(libraryA.toFile());
+		}
+		if (null != diaA) {
+			FileUtils.deleteQuietly(diaA.toFile());
+		}
+		if (null != featuresTxtA) {
+			FileUtils.deleteQuietly(featuresTxtA.toFile());
+		}
+		if (null != fastaA) {
+			FileUtils.deleteQuietly(fastaA.toFile());
+		}
+		if (null != peptideOutputA) {
+			FileUtils.deleteQuietly(peptideOutputA.toFile());
+		}
+		if (null != decoyOutputA) {
+			FileUtils.deleteQuietly(decoyOutputA.toFile());
+		}
 		if (null != tempDir) {
 			FileUtils.deleteDirectory(tempDir.toFile());
 		}
@@ -229,17 +258,7 @@ public class SearchToBLIBIT {
 	}
 
 	private SearchJobData getSearchJobDataA() throws IOException, SQLException {
-		//TODO: move to resources
-		String name = "SearchToBLIB";
-		final Path tmpDir = Files.createTempDirectory(name);
-		final Path library = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/pan_human_library_600to603.dlib", tmpDir, name, ".elib");
-		final Path dia = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia", tmpDir, name, ".elib");
-		final Path featuresTxt = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia.features.txt", tmpDir, name, ".elib");
-		final Path fasta = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/pan_human_library_600to603.fasta", tmpDir, name, ".elib");
-		final Path peptideOutput = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia.encyclopedia.txt", tmpDir, name, ".elib");
-		final Path decoyOutput = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia.encyclopedia.decoy.txt", tmpDir, name, ".elib");
-
-		return makeJobData(library, dia, featuresTxt, fasta, peptideOutput, decoyOutput);
+		return makeJobData(libraryA, diaA, featuresTxtA, fastaA, peptideOutputA, decoyOutputA);
 	}
 
 	private SearchJobData getSearchJobDataB() throws IOException, SQLException {
