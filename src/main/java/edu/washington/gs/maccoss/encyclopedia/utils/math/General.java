@@ -19,6 +19,14 @@ public class General {
 		return new String(ca);
 	}
 	
+	public static float[] reverse(float[] a) {
+		float[] r=new float[a.length];
+		for (int i = 0; i < r.length; i++) {
+			r[a.length-i-1]=a[i];
+		}
+		return r;
+	}
+	
 	public static float[] shuffle(float[] a) {
 		int shuffleSeed=a.length;
 		for (int i = 0; i < a.length; i++) {
@@ -244,6 +252,46 @@ public class General {
 			sb.append(g);
 		}
 		return sb.toString();
+	}
+	
+	public static String toString(float[][][] f, String delim) {
+		if (f==null) return null;
+		
+		StringBuilder sb=new StringBuilder();
+		sb.append("[");
+		for (int i = 0; i < f.length; i++) {
+			float[][] g=f[i];
+			if (i>0) {
+				sb.append("\n");
+			}
+			sb.append("b."+i+") ["+toString(g, delim)+"]");
+		}
+		sb.append("]\n\n");
+		return sb.toString();
+	}
+	
+	public static String toString(float[][][] f) {
+		return toString(f, ",\t");
+	}
+	
+	public static String toString(float[][] f, String delim) {
+		if (f==null) return null;
+		
+		StringBuilder sb=new StringBuilder();
+		sb.append("[");
+		for (int i = 0; i < f.length; i++) {
+			float[] g=f[i];
+			if (i>0) {
+				sb.append("\n");
+			}
+			sb.append("a."+i+") ["+toString(g, delim)+"]");
+		}
+		sb.append("]");
+		return sb.toString();
+	}
+	
+	public static String toString(float[][] f) {
+		return toString(f, ",\t");
 	}
 	
 	public static String toString(float[] f, String delim) {

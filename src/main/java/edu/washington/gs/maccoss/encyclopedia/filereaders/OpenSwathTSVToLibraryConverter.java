@@ -198,7 +198,7 @@ public class OpenSwathTSVToLibraryConverter {
 
 					PeptideEntry thisPeptide=peptideMap.get(group);
 					if (thisPeptide==null) {
-						thisPeptide=new PeptideEntry(peptideModSeq, charge, iRT, sourceFile);
+						thisPeptide=new PeptideEntry(peptideModSeq, charge, iRT*60f, sourceFile);
 						peptideMap.put(group, thisPeptide);
 					}
 					

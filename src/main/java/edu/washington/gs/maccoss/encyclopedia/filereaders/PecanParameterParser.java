@@ -6,6 +6,7 @@ import java.util.StringTokenizer;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
@@ -44,7 +45,7 @@ public class PecanParameterParser {
 		map.put("-percolatorProteinThreshold", "0.01");
 		map.put("-alpha", "1.8");
 		map.put("-beta", "0.4");
-		map.put("-percolatorVersionNumber", Byte.toString(PercolatorExecutor.DEFAULT_VERSION_NUMBER));
+		map.put("-percolatorVersionNumber", PercolatorExecutor.DEFAULT_VERSION_NUMBER.toString());
 		map.put("-acquisition", DataAcquisitionType.toString(DataAcquisitionType.DIA));
 		map.put("-precursorWindowSize", "-1");
 		map.put("-numberOfThreadsUsed", Integer.toString(Runtime.getRuntime().availableProcessors()));
@@ -89,7 +90,7 @@ public class PecanParameterParser {
 		final boolean dontRunDecoys;
 		final float percolatorThreshold;
 		final float percolatorProteinThreshold;
-		final int percolatorVersionNumber;
+		final PercolatorVersion percolatorVersionNumber;
 		final int percolatorTrainingSetSize;
 		final float percolatorTrainingSetThreshold;
 		final float alpha;
@@ -106,6 +107,7 @@ public class PecanParameterParser {
 		final boolean requireVariableMods;
         final boolean filterPeaklists;
         final boolean doNotUseGlobalFDR;
+        final boolean enableAdvancedOptions;
 
 		ModificationMassMap variableMods=new ModificationMassMap(parameters.get("-variable"));
 
@@ -242,7 +244,7 @@ public class PecanParameterParser {
 
 		percolatorThreshold=ParsingUtils.getFloat("-percolatorThreshold", parameters, 0.01f);
 		percolatorProteinThreshold=ParsingUtils.getFloat("-percolatorProteinThreshold", parameters, 0.01f);
-		percolatorVersionNumber=ParsingUtils.getInteger("-percolatorVersionNumber", parameters, 3);
+		percolatorVersionNumber=PercolatorVersion.getVersion(parameters.get("-percolatorVersionNumber"));
 		percolatorTrainingSetSize = ParsingUtils.getInteger(SearchParameters.OPT_PERC_TRAINING_SIZE, parameters, PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE);
 		percolatorTrainingSetThreshold = ParsingUtils.getFloat(SearchParameters.OPT_PERC_TRAINING_THRESH, parameters, PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD);
 
@@ -260,6 +262,7 @@ public class PecanParameterParser {
 		requireVariableMods=ParsingUtils.getBoolean("-requireVariableMods", parameters, false);
 		filterPeaklists = ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
 		doNotUseGlobalFDR = ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
+		enableAdvancedOptions = ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
 
 		return new PecanSearchParameters(
 				aaConstants,
@@ -298,7 +301,8 @@ public class PecanParameterParser {
 				true,
 				requireVariableMods,
 				filterPeaklists,
-				doNotUseGlobalFDR
+				doNotUseGlobalFDR,
+				enableAdvancedOptions
 		);
 	}
 }

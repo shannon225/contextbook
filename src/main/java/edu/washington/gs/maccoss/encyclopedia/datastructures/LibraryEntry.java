@@ -31,7 +31,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	public static final String SHUFFLE_STRING="SHUFFLE_";
 	public static final String DECOY_STRING="DECOY_";
 
-	private static final float minimumIntensityThreshold=10.0f*Float.MIN_VALUE;
+	public static final float minimumIntensityThreshold=10.0f*Float.MIN_VALUE;
 	
 	private final String source;
 	private final int spectrumIndex;
@@ -137,6 +137,17 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	 */
 	public LibraryEntry updateMS2(double[] newMassArray, float[] newIntensityArray) {
 		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, newMassArray, newIntensityArray, getUnitArray(newMassArray.length));
+	}
+	
+	/**
+	 * only use for testing
+	 * @param newMassArray
+	 * @param newIntensityArray
+	 * @param newCorrelationArray
+	 * @return
+	 */
+	public LibraryEntry updateMS2(double[] newMassArray, float[] newIntensityArray, float[] newCorrelationArray) {
+		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, newMassArray, newIntensityArray, newCorrelationArray);
 	}
 	
 	public LibraryEntry trimToNPeaks(int n, AminoAcidConstants aaConstants) {

@@ -160,7 +160,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public void addTIC(StripeFileInterface diaFile) throws IOException, SQLException {
-		String key=SOURCEFILE_TIC_PREFIX+ getOriginalFileName(diaFile);
+		String key=SOURCEFILE_TIC_PREFIX+ diaFile.getOriginalFileName();
 
 		HashMap<String, String> map=new HashMap<String, String>();
 		map.put(key, Float.toString(diaFile.getTIC()));
@@ -169,7 +169,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public float getTIC(StripeFileInterface diaFile) throws IOException, SQLException {
-		return getTIC(getOriginalFileName(diaFile));
+		return getTIC(diaFile.getOriginalFileName());
 	}
 
 	public float getTIC(String originalFileName) throws IOException, SQLException {
@@ -181,21 +181,13 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		return Float.parseFloat(value);
 	}
 
-	private static String getOriginalFileName(SearchJobData job) {
-		return getOriginalFileName(job.getDiaFileReader());
-	}
-
-	private static String getOriginalFileName(StripeFileInterface diaFile) {
-		return diaFile.getOriginalFileName();
-	}
-
 	public void addRtAlignment(SearchJobData job, PeakLocationInferrerInterface inferrer) {
 		Optional.ofNullable(inferrer.getAlignmentData(job))
 				.ifPresent(alignment -> addRtAlignment(job, alignment));
 	}
 
 	public void addRtAlignment(SearchJobData job, List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignment) {
-		final String sourceFile = getOriginalFileName(job);
+		final String sourceFile = job.getDiaFileReader().getOriginalFileName();
 
 		try (Connection c = getConnection()) {
 			c.setAutoCommit(false);
@@ -243,7 +235,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			if (sb.length()>0) {
 				sb.append(SOURCE_FILE_SPLIT);
 			}
-			sb.append(searchJobData.getDiaFile().getAbsolutePath());
+			
+			sb.append(searchJobData.getDiaFileReader().getOriginalFileName());
 
 		}
 		map.put(SOURCEFILE_STRING, sb.toString());
@@ -760,7 +753,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		float[] integrationArray=data.getIntegrationArray();
 		float[] backgroundArray=data.getBackgroundArray();
 
-		FragmentIon[] fragmentMassArray=data.getFragmentMassArray();
+		Ion[] fragmentMassArray=data.getFragmentMassArray();
 		float[] deltaMassArray=data.getDeltaMassArray().get();
 		float[] ppmArray=new float[deltaMassArray.length];
 
@@ -948,14 +941,43 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try {
 			PreparedStatement proteinPrep=c.prepareStatement("INSERT OR IGNORE INTO peptidetoprotein (PeptideSeq, IsDecoy, ProteinAccession) VALUES (?,?,?)");
 			try {
+				HashMap<String, HashSet<String>> targetAccessionsByPeptide=new HashMap<>();
+				HashMap<String, HashSet<String>> decoyAccessionsByPeptide=new HashMap<>();
+
 				for (LibraryEntry entry : entries) {
-					proteinPrep.setString(1, entry.getPeptideSeq());
-					proteinPrep.setBoolean(2, entry.isDecoy());
-					for (String acc : entry.getAccessions()) {
+					HashMap<String, HashSet<String>> map;
+					if (entry.isDecoy()) {
+						map=decoyAccessionsByPeptide;
+					} else {
+						map=targetAccessionsByPeptide;
+					}
+					
+					HashSet<String> accessions=map.get(entry.getPeptideSeq());
+					if (accessions==null) {
+						accessions=new HashSet<>();
+						map.put(entry.getPeptideSeq(), accessions);
+					}
+					accessions.addAll(entry.getAccessions());
+				}
+				
+				for (Entry<String, HashSet<String>> entry : targetAccessionsByPeptide.entrySet()) {
+					proteinPrep.setString(1, entry.getKey());
+					proteinPrep.setBoolean(2, false);
+					for (String acc : entry.getValue()) {
 						proteinPrep.setString(3, acc);
 						proteinPrep.addBatch();
 					}
 				}
+				
+				for (Entry<String, HashSet<String>> entry : decoyAccessionsByPeptide.entrySet()) {
+					proteinPrep.setString(1, entry.getKey());
+					proteinPrep.setBoolean(2, true);
+					for (String acc : entry.getValue()) {
+						proteinPrep.setString(3, acc);
+						proteinPrep.addBatch();
+					}
+				}
+				
 				proteinPrep.executeBatch();
 
 				c.commit();
@@ -976,7 +998,6 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				for (LibraryEntry entry : entries) {
 					if (entry.getAccessions().size()==0)
 						continue;
-
 					String pepSeq=entry.getPeptideSeq();
 					prep.setDouble(1, entry.getPrecursorMZ());
 					prep.setInt(2, entry.getPrecursorCharge());
@@ -1686,8 +1707,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public void close() {
-		if (!tempFile.delete()) {
-			Logger.errorLine("Error deleting temp file!");
+		if (tempFile.exists()&&!tempFile.delete()) {
+			Logger.errorLine("Error deleting temp ELIB file!");
 		}
 	}
 

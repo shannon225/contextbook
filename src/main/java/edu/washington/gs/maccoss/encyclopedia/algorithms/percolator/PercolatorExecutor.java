@@ -32,9 +32,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 
 public class PercolatorExecutor extends ExternalExecutor {
 	public static final String PI_0_TAG="pi_0=";
-	public static final String V3_01="v3-01";
-	public static final String V2_10="v2-10";
-	public static final byte DEFAULT_VERSION_NUMBER=3;
+	public static final PercolatorVersion DEFAULT_VERSION_NUMBER=PercolatorVersion.v3p05;
 
 	/**
 	 * The default value that Percolator uses for the {@code -t/--testFDR} parameter.
@@ -56,7 +54,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 	 * {@code -N} parameter, which sets the number of PSMs to
 	 * use as the training set.
 	 */
-	public static final int DEFAULT_TRAINING_SET_SIZE = 200000;
+	public static final int DEFAULT_TRAINING_SET_SIZE = 500000;
 
 	/**
 	 * The default value that EncyclopeDIA uses for Percolator's
@@ -78,11 +76,11 @@ public class PercolatorExecutor extends ExternalExecutor {
 	private static final String BAD_ALLOCATION = "bad allocation";
 	private static final String EXCEPTION_CAUGHT_PREFIX = "Exception caught: ";
 
-	PercolatorExecutor(int percolatorVersion, PercolatorExecutionData commandData) {
+	PercolatorExecutor(PercolatorVersion percolatorVersion, PercolatorExecutionData commandData) {
 		super(generateCommand(percolatorVersion, commandData));
 	}
 
-	public static Pair<ArrayList<PercolatorPeptide>, Float> executePercolatorTSV(int percolatorVersion, PercolatorExecutionData commandData, float threshold, AminoAcidConstants aaConstants) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+	public static Pair<ArrayList<PercolatorPeptide>, Float> executePercolatorTSV(PercolatorVersion percolatorVersion, PercolatorExecutionData commandData, float threshold, AminoAcidConstants aaConstants) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		PercolatorExecutor e=new PercolatorExecutor(percolatorVersion, commandData);
 		BlockingQueue<OutputMessage> result=e.start();
 
@@ -171,10 +169,10 @@ public class PercolatorExecutor extends ExternalExecutor {
 		return peptideString.substring(peptideString.indexOf('.')+1, peptideString.lastIndexOf('.'));
 	}
 
-	static String[] generateCommand(int percolatorVersion, PercolatorExecutionData commandData) {
+	static String[] generateCommand(PercolatorVersion percolatorVersion, PercolatorExecutionData commandData) {
 		File percolator=getPercolator(percolatorVersion);
 
-		if (percolatorVersion==2) {
+		if (2==percolatorVersion.getMajorVersion()) {
 			return new String[] {
 					percolator.getAbsolutePath(),
 					"--results-peptides", commandData.getPeptideOutputFile().getAbsolutePath(),
@@ -227,22 +225,16 @@ public class PercolatorExecutor extends ExternalExecutor {
 		return fastaPlusDecoy;
 	}
 
-	static File getPercolator(int percolatorVersionNumber) {
-		String percolatorVersion;
-		if (percolatorVersionNumber==2) {
-			percolatorVersion=V2_10;
-		} else {
-			percolatorVersion=V3_01;
-		}
+	static File getPercolator(PercolatorVersion percolatorVersionNumber) {
 
 		try {
-			File percolator=File.createTempFile("Percolator-" + percolatorVersion + "-", ".exe");
+			File percolator=File.createTempFile("Percolator-" + percolatorVersionNumber + "-", ".exe");
 			percolator.deleteOnExit();
 
 			OS os=OSDetector.getOS();
 			switch (os) {
 				case WINDOWS: {
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+percolatorVersion+".exe");
+					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+percolatorVersionNumber+".exe");
 					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
 					percolator.setExecutable(true);
 
@@ -254,13 +246,13 @@ public class PercolatorExecutor extends ExternalExecutor {
 					return percolator;
 				}
 				case MAC: {
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+percolatorVersion+".mac");
+					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+percolatorVersionNumber+".mac");
 					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
 					percolator.setExecutable(true);
 					return percolator;
 				}
 				case LINUX:
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+percolatorVersion+".lin");
+					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+percolatorVersionNumber+".lin");
 					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
 					percolator.setExecutable(true);
 					return percolator;

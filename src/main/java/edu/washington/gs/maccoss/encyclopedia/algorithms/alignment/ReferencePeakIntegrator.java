@@ -91,7 +91,7 @@ public class ReferencePeakIntegrator {
 	
 			ArrayList<String> keys=new ArrayList<>();
 			for (SearchJobData job : jobs) {
-				String sampleName=job.getDiaFile().getName();
+				String sampleName=job.getDiaFileReader().getOriginalFileName();
 				sampleName=sampleName.substring(0, sampleName.lastIndexOf('.')); // file names are lose extensions
 				keys.add(sampleName);
 				try {
@@ -107,17 +107,17 @@ public class ReferencePeakIntegrator {
 						matrix.addPeak(sampleName, entry);
 					}
 					
-					progress.update("Finished processing "+job.getDiaFile().getName(), 0.9f/jobs.size());
-					Logger.logLine("Finished processing "+job.getDiaFile().getName()+", found "+results.size()+" peptides.");
+					progress.update("Finished processing "+job.getDiaFileReader().getOriginalFileName(), 0.9f/jobs.size());
+					Logger.logLine("Finished processing "+job.getDiaFileReader().getOriginalFileName()+", found "+results.size()+" peptides.");
 					
 				} catch (InterruptedException ie) {
-					throw new EncyclopediaException("error using integrator on ["+job.getDiaFile().getName()+"]", ie);
+					throw new EncyclopediaException("error using integrator on ["+job.getDiaFileReader().getOriginalFileName()+"]", ie);
 				} catch (IOException ioe) {
-					throw new EncyclopediaException("error using integrator on ["+job.getDiaFile().getName()+"]", ioe);
+					throw new EncyclopediaException("error using integrator on ["+job.getDiaFileReader().getOriginalFileName()+"]", ioe);
 				} catch (SQLException sqle) {
-					throw new EncyclopediaException("error using integrator on ["+job.getDiaFile().getName()+"]", sqle);
+					throw new EncyclopediaException("error using integrator on ["+job.getDiaFileReader().getOriginalFileName()+"]", sqle);
 				} catch (DataFormatException dfe) {
-					throw new EncyclopediaException("error using integrator on ["+job.getDiaFile().getName()+"]", dfe);
+					throw new EncyclopediaException("error using integrator on ["+job.getDiaFileReader().getOriginalFileName()+"]", dfe);
 				}
 			}
 			
@@ -237,7 +237,7 @@ public class ReferencePeakIntegrator {
 		HashMap<String, SearchJobData> jobsByFile=new HashMap<>();
 		HashMap<SearchJobData, HashMap<String, PercolatorPeptide>> peptidesByFile=new HashMap<>();
 		for (SearchJobData job : jobs) {
-			String name=job.getDiaFile().getName();
+			String name=job.getDiaFileReader().getOriginalFileName();
 			name=name.substring(0, name.lastIndexOf('.')); // file names are lose extensions
 			jobsByFile.put(name, job);
 			peptidesByFile.put(job, new HashMap<String, PercolatorPeptide>());
@@ -259,7 +259,7 @@ public class ReferencePeakIntegrator {
 		TObjectFloatHashMap<String> referenceRTInSecs=getRTs(reference, params);
 
 		for (SearchJobData job : jobs) {
-			progress.update("Aligning "+job.getDiaFile().getName()+" to reference...");
+			progress.update("Aligning "+job.getDiaFileReader().getOriginalFileName()+" to reference...");
 			
 			if (job instanceof QuantitativeSearchJobData) {
 				HashMap<String, PercolatorPeptide> thisSamplesTargets=peptidesByFile.get(job);

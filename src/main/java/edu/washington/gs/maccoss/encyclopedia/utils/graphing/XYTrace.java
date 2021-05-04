@@ -96,10 +96,16 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 		return getMaxXYInRange(new Range(-Double.MAX_VALUE, Double.MAX_VALUE)).y;
 	}
 	
-	public XYTraceInterface rescaleX(float rescaleX) {
+	public XYTrace rescaleX(float rescaleX) {
 		Pair<double[], double[]> trace=toArrays(points);
 		double[] newx=General.multiply(trace.x, rescaleX);
 		return new XYTrace(newx, trace.y, type, name, color.orElse(null), thickness.orElse(null));
+	}
+	
+	public XYTrace rescaleY(float rescaleY) {
+		Pair<double[], double[]> trace=toArrays(points);
+		double[] newy=General.multiply(trace.y, rescaleY);
+		return new XYTrace(trace.x, newy, type, name, color.orElse(null), thickness.orElse(null));
 	}
 	
 	public XYTrace(double[] x, double[] y, GraphType type, String name, Optional<Color> color, Optional<Float> thickness) {

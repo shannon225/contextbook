@@ -10,6 +10,7 @@ import java.util.prefs.Preferences;
 
 import edu.washington.gs.maccoss.encyclopedia.Pecanpie;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -150,7 +151,7 @@ public class PecanSearchParameters extends SearchParameters {
 			boolean dontRunDecoys,
 			float percolatorThreshold,
 			float percolatorProteinThreshold,
-			Integer percolatorVersionNumber,
+			PercolatorVersion percolatorVersionNumber,
 			int percolatorTrainingSetSize,
 			float percolatorTrainingSetThreshold,
 			float alpha,
@@ -166,7 +167,9 @@ public class PecanSearchParameters extends SearchParameters {
 			boolean quantifyAcrossSamples, 
 			boolean verifyModificationIons, 
 			boolean requireVariableMods, 
-			boolean filterPeaklists, boolean doNotUseGlobalFDR) {
+			boolean filterPeaklists, 
+			boolean doNotUseGlobalFDR, 
+			boolean enableAdvancedOptions) {
 		super(
 				aaConstants,
 				fragType,
@@ -198,7 +201,8 @@ public class PecanSearchParameters extends SearchParameters {
 				verifyModificationIons,
 				-1.0f,
 				filterPeaklists,
-				doNotUseGlobalFDR
+				doNotUseGlobalFDR, 
+				enableAdvancedOptions
 		);
 		this.minPeptideLength=minPeptideLength;
 		this.maxPeptideLength=maxPeptideLength;
@@ -219,7 +223,7 @@ public class PecanSearchParameters extends SearchParameters {
 			MassTolerance precursorTolerance,
 			MassTolerance fragmentTolerance,
 			DigestionEnzyme enzyme,
-			int percolatorVersionNumber,
+			PercolatorVersion percolatorVersionNumber,
 			float percolatorThreshold,
 			int percolatorTrainingSetSize,
 			float percolatorTrainingSetThreshold,
@@ -269,6 +273,7 @@ public class PecanSearchParameters extends SearchParameters {
 				verifyModificationIons,
 				-1.0f,
 				false,
+				false, 
 				false
 		);
 		minPeptideLength=5;
@@ -290,7 +295,7 @@ public class PecanSearchParameters extends SearchParameters {
 			MassTolerance precursorTolerance,
 			MassTolerance fragmentTolerance,
 			DigestionEnzyme enzyme,
-			int percolatorVersionNumber,
+			PercolatorVersion percolatorVersionNumber,
 			float percolatorThreshold,
 			float percolatorProteinThreshold,
 			int percolatorTrainingSetSize,
@@ -341,6 +346,7 @@ public class PecanSearchParameters extends SearchParameters {
 				verifyModificationIons,
 				-1.0f,
 				false,
+				false, 
 				false
 		);
 		minPeptideLength=5;
@@ -398,6 +404,7 @@ public class PecanSearchParameters extends SearchParameters {
 				verifyModificationIons,
 				-1.0f,
 				false,
+				false, 
 				false);
 		minPeptideLength=5;
 		maxPeptideLength=100;
@@ -456,6 +463,7 @@ public class PecanSearchParameters extends SearchParameters {
 				verifyModificationIons,
 				-1.0f,
 				false,
+				false, 
 				false
 		);
 		minPeptideLength=5;
@@ -516,6 +524,7 @@ public class PecanSearchParameters extends SearchParameters {
 				verifyModificationIons,
 				-1.0f,
 				false,
+				false, 
 				false);
 		this.maxMissedCleavages=maxMissedCleavages;
 		minPeptideLength=5;

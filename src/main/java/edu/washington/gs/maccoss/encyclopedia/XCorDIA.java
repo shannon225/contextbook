@@ -162,7 +162,7 @@ public class XCorDIA {
 
 				LibraryInterface library;
 				if (arguments.containsKey("-l")) {
-					library=BlibToLibraryConverter.getFile(new File(arguments.get("-l")));
+					library=BlibToLibraryConverter.getFile(new File(arguments.get("-l")), fastaFile, parameters);
 				} else {
 					library=null;
 				}

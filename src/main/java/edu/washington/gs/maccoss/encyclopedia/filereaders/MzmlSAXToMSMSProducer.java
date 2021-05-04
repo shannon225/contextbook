@@ -10,6 +10,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
@@ -400,6 +401,15 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 						isolationWindowTarget=selectedIon;
 						isolationWindowLowerOffset=parameters.getPrecursorWindowSize()/2.0;
 						isolationWindowUpperOffset=parameters.getPrecursorWindowSize()/2.0;
+					} else if (parameters!=null&&parameters.getPrecursorIsolationRanges().isPresent()) {
+						ArrayList<Range> possibleRanges=parameters.getPrecursorIsolationRanges().get();
+						Range key=new Range(selectedIon, selectedIon);
+			    			int nearestIndex=Collections.binarySearch(possibleRanges, key, Range.RANGE_CONTAINS_COMPARATOR);
+			    			if (nearestIndex>=0) {
+			    				Range range=possibleRanges.get(nearestIndex);
+				    			isolationWindowLowerOffset=new Double(isolationWindowTarget-range.getStart());
+							isolationWindowUpperOffset=new Double(range.getStop()-isolationWindowTarget);
+			    			}
 					} else {
 						Logger.errorLine("Isolation window information missing without precursor window size supplied!");
 					}
@@ -447,7 +457,7 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 					Logger.errorLine("spectrumRef="+spectrumRef);
 					Logger.errorLine("spectrumIndex="+spectrumIndex);
 					Logger.errorLine("scanStartTime="+scanStartTime);
-					Logger.errorLine("ionInjectTime="+ionInjectTime);
+					Logger.errorLine("ionInjectTime="+ionInjectTime+" (can be null)");
 					Logger.errorLine("isolationWindowTarget="+isolationWindowTarget);
 					Logger.errorLine("parameters.getPrecursorIsolationMargin()="+precursorIsolationMargin);
 					Logger.errorLine("isolationWindowLowerOffset="+isolationWindowLowerOffset);

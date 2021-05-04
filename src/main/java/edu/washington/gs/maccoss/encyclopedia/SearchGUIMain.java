@@ -5,15 +5,18 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.HashMap;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
+import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
@@ -22,10 +25,15 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
 
 public class SearchGUIMain {
 	public static void main(String[] args) {
-		runGUI(ProgramType.Global);
+		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
+		runGUI(ProgramType.Global, arguments.containsKey(SearchParameters.ENABLE_ADVANCED_OPTIONS));
+	}
+	
+	public static JFrame runGUI(ProgramType program) {
+		return runGUI(program, false);
 	}
 
-	public static JFrame runGUI(ProgramType program) {
+	public static JFrame runGUI(ProgramType program, boolean enableAdvancedOptions) {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {
@@ -105,7 +113,7 @@ public class SearchGUIMain {
 
 		final SearchPanel panel=new SearchPanel(program);
 		f.getContentPane().add(panel, BorderLayout.CENTER);
-		f.setJMenuBar(panel.createMenus(program));
+		f.setJMenuBar(panel.createMenus(program, enableAdvancedOptions));
 
 		f.pack();
 		

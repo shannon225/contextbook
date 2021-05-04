@@ -9,10 +9,21 @@ public class PrecursorIon implements Comparable<PrecursorIon>, Ion {
 
 	private final String annotation;
 	private final double mass;
+	private final byte charge;
+	private final byte isotope;
 
-	public PrecursorIon(String annotation, double mass) {
+	public PrecursorIon(String annotation, double mass, byte charge) {
 		this.annotation = annotation;
 		this.mass = mass;
+		this.charge=charge;
+		this.isotope=0;
+	}
+
+	public PrecursorIon(String annotation, double mass, byte charge, byte isotope) {
+		this.annotation = annotation;
+		this.mass = mass;
+		this.charge=charge;
+		this.isotope=isotope;
 	}
 
 	public double getMass() {
@@ -22,6 +33,24 @@ public class PrecursorIon implements Comparable<PrecursorIon>, Ion {
 	@Override
 	public String getName() {
 		return annotation;
+	}
+	
+	public byte getCharge() {
+		return charge;
+	}
+	
+	public byte getIsotope() {
+		return isotope;
+	}
+	
+	@Override
+	public byte getIndex() {
+		return isotope;
+	}
+	
+	@Override
+	public IonType getType() {
+		return IonType.precursor;
 	}
 
 	@Override

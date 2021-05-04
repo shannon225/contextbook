@@ -24,6 +24,7 @@ import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusJobData;
@@ -91,8 +92,8 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 	private final FileChooserPanel libraryFileChooser;
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "Pepsin A"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.HCD), FragmentationType.toName(FragmentationType.ETD)});
-	private final JComboBox<String> percolatorVersion=new JComboBox<String>(new String[] {PercolatorExecutor.V3_01, PercolatorExecutor.V2_10});
-
+	private final JComboBox<PercolatorVersion> percolatorVersion=new JComboBox<PercolatorVersion>(PercolatorVersion.VALID_VERSIONS);
+	
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance()); // not displayed anymore
 
 	private final JComboBox<MassTolerance> precursorTolerance=new JComboBox<MassTolerance>(TOLERANCE_VALUES);
@@ -211,7 +212,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 		
 		LibraryInterface library=libraries.get(libraryFile);
 		if (library==null) {
-			library=BlibToLibraryConverter.getFile(libraryFile);
+			library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
 			libraries.put(libraryFile, library);
 		}
 		
@@ -231,7 +232,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		Number value=(Number)precursorWindowWidth.getValue();
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
-		boolean isPercolatorTwo=PercolatorExecutor.V2_10.equals(percolatorVersion.getSelectedItem());
+		PercolatorVersion percolator=(PercolatorVersion)percolatorVersion.getSelectedItem();
 		float targetWindowCenter=-1f;
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
@@ -253,7 +254,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				digestionEnzyme,
 				percolatorThresholdValue,
 				percolatorThresholdValue,
-				(isPercolatorTwo?2:3),
+				percolator,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
 				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,
 				dataAcquisitionType,
@@ -272,7 +273,8 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				false,
 				false,
 				false,
-				considerRearrangement
+				considerRearrangement,
+				false
 		);
 
 		String cmds=additionalCommandLineOptions.getText();
@@ -340,7 +342,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 		} else {
 			precursorWindowWidth.setValue(-1);
 		}
-		percolatorVersion.setSelectedIndex(params.getPercolatorVersionNumber()==2?1:0);
+		percolatorVersion.setSelectedItem(params.getPercolatorVersionNumber());
 		numberOfQuantitativeIons.setValue(params.getNumberOfQuantitativePeaks());
 		minNumOfQuantitativeIons.setValue(params.getMinNumOfQuantitativePeaks());
 		percolatorThreshold.setValue(params.getPercolatorThreshold());

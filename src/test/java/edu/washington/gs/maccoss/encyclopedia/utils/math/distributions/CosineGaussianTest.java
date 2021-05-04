@@ -8,6 +8,9 @@ public class CosineGaussianTest extends TestCase {
 	public static void main(String[] args) {
 		CosineGaussian dist=new CosineGaussian(5, 2, 5);
 		Range range=new Range(0, 10);
+		for (int i = 0; i < 10; i++) {
+			System.out.println(dist.getPDF(i));
+		}
 		Charter.launchChart(Charter.getChart(dist, range), "cosine");	
 	}
 	

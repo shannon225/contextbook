@@ -297,7 +297,7 @@ public class TwoDimensionalKDE {
 		Charter.launchChart("X", "Y", false, new XYZTrace("Density", heatData));
 	}
 	
-	public float[][] getStamp(Distribution dist) {
+	public static float[][] getStamp(Distribution dist) {
 		int stampRadius=Math.round(2.0f*(float)dist.getStdev());
 		
 		float[][] stamp=new float[stampRadius*2+1][];

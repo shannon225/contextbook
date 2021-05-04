@@ -32,6 +32,9 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class TransitionRefiner {
+	public static final float PERCENT_RT_UPHILL_PEAKWIDTH = 0.2f;
+	public static final float MINIMUM_THRESHOLD_PERCENTAGE = 0.01f;
+
 	// minimum threshold to call this peak as worth quantifying
 	public static final float quantitativeCorrelationThreshold=0.9f;
 	
@@ -395,15 +398,11 @@ public class TransitionRefiner {
 	}
 
 	public static Range getPeakRange(XYTrace trace, float expectedPeakWidth) {
-		IntRange indicies=getPeakIndices(trace, expectedPeakWidth);
-		return new Range(trace.getPoints().get(indicies.getStart()).x, trace.getPoints().get(indicies.getStop()).x);
-	}
-	
-	public static IntRange getPeakIndices(XYTrace trace, float expectedPeakWidth) {
 		Pair<double[], double[]> pair=trace.toArrays();
 		float[] x=General.toFloatArray(pair.x);
 		float[] y=General.toFloatArray(pair.y);
-		return getIndexRange(x, y, expectedPeakWidth);
+		IntRange indicies= getIndexRange(x, y, expectedPeakWidth);
+		return new Range(trace.getPoints().get(indicies.getStart()).x, trace.getPoints().get(indicies.getStop()).x);
 	}
 	
 	public static IntRange getIndexRange(float[] x, float[] y, float expectedPeakWidth) {
@@ -420,8 +419,8 @@ public class TransitionRefiner {
 	
 	public static IntRange getIndexRange(float[] x, float[] y, int maxIndex, float expectedPeakWidth) {
 		float fiftyPercentPoint=y[maxIndex]/2.0f;
-		float threshold=y[maxIndex]*0.01f; // 1% of max
-		float rtThreshold=expectedPeakWidth*0.2f; // if we start moving by more than 20% of the expected peakwidth
+		float threshold=y[maxIndex]*MINIMUM_THRESHOLD_PERCENTAGE; // 1% of max
+		float rtThreshold=expectedPeakWidth*PERCENT_RT_UPHILL_PEAKWIDTH; // if we start moving by more than 20% of the expected peakwidth
 		float altRTThreshold=2.1f*QuickMedian.median(General.firstDerivative(x));
 		if (altRTThreshold>rtThreshold) {
 			// allow at least 2 points of deviation!
@@ -493,71 +492,6 @@ public class TransitionRefiner {
 		
 		int startIndex=(firstData<=0)?(0):(firstData);
 		int stopIndex=(lastData>=y.length-1)?(y.length-1):(lastData);
-		IntRange indices=new IntRange(startIndex, stopIndex);
-		return indices;
-	}
-
-	private static IntRange getIndexRange(float[] medianChromatogram, int maxIndex) {
-		float threshold=medianChromatogram[maxIndex]*0.01f; // 1% of max
-		
-		// left of center (decreasing index)
-		int increasing=0;
-		int firstData=maxIndex;
-		for (int i=maxIndex-1; i>=0; i--) {
-			// navigate down the slope of the peak:
-			// count the number of consecutive uphill points (count the aggregate, so +1 for increasing, -1 for decreasing)
-			if (medianChromatogram[i]>medianChromatogram[firstData]) {
-				increasing++;
-			} else if (increasing>0) {
-				increasing--;
-			}
-			
-			// create peak boundary if we've seen 3 or more consecutively increasing points and we're less than 50% of the max
-			if (increasing>2&&medianChromatogram[maxIndex]/2.0f>medianChromatogram[firstData]) {
-				break;
-			}
-			
-			// if we're lower than the previous local minimum, set the new minimum
-			if (medianChromatogram[i]<medianChromatogram[firstData]) {
-				firstData=i;
-			}
-			
-			// create peak boundary if the local minimum is less than 1%
-			if (medianChromatogram[firstData]<threshold) {
-				break;
-			}
-		}
-		
-		// right of center (increasing index)
-		increasing=0;
-		int lastData=maxIndex;
-		for (int i=maxIndex+1; i<medianChromatogram.length; i++) {
-			// navigate down the slope of the peak:
-			// count the number of consecutive uphill points (count the aggregate, so +1 for increasing, -1 for decreasing)
-			if (medianChromatogram[i]>medianChromatogram[lastData]) {
-				increasing++;
-			} else if (increasing>0) {
-				increasing--;
-			}
-			
-			// create peak boundary if we've seen 3 or more consecutively increasing points and we're less than 50% of the max
-			if (increasing>2&&medianChromatogram[maxIndex]/2.0f>medianChromatogram[lastData]) {
-				break;
-			}
-
-			// if we're lower than the previous local minimum, set the new minimum
-			if (medianChromatogram[i]<medianChromatogram[lastData]) {
-				lastData=i;
-			}
-			
-			// create peak boundary if the local minimum is less than 1%
-			if (medianChromatogram[lastData]<threshold) {
-				break;
-			}
-		}
-		
-		int startIndex=firstData<=0?0:firstData;
-		int stopIndex=lastData>=medianChromatogram.length-1?medianChromatogram.length-1:lastData;
 		IntRange indices=new IntRange(startIndex, stopIndex);
 		return indices;
 	}

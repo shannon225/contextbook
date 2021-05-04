@@ -10,7 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
  * @since 2:50 PM 9/11/17
  */
 public interface SearchJobData {
-	File getDiaFile();
+	String toString();
 
 	StripeFileInterface getDiaFileReader();
 

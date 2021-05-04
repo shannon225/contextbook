@@ -34,6 +34,31 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class PrositCSVWriter {
 	public static void main(String[] args) throws Exception {
+		File fileName=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/barcodes09_prosit.csv");
+		PrintWriter writer=new PrintWriter(fileName);
+		// removing R, K, M, C, G, F, Y, W, and I
+		char[] aas="ADEHLNQTV".toCharArray();
+		//char[] aas="ADEHLNPQSTVRKMCGFYW".toCharArray();
+		byte nce=33;
+		byte charge=2;
+		writer.println("modified_sequence,collision_energy,precursor_charge");
+		
+		for (int i = 0; i < aas.length; i++) {
+			for (int j = 0; j < aas.length; j++) {
+				for (int k = 0; k < aas.length; k++) {
+					for (int l = 0; l < aas.length; l++) {
+						for (int m = 0; m < aas.length; m++) {
+							String seq=new String(new char[] {'P', 'K', aas[i], aas[j], aas[k], aas[l], aas[m], 'K'});
+							writer.println(seq+","+nce+","+charge);
+						}
+					}
+				}
+			}
+		}
+		writer.close();
+	}
+	
+	public static void main2(String[] args) throws Exception {
 		AminoAcidConstants aaConstants=new AminoAcidConstants();
 		
 		File parent=new File("/Users/searleb/Documents/mak/");
@@ -77,7 +102,7 @@ public class PrositCSVWriter {
 		Logger.logLine("Finished writing "+total+" peptides to Prosit CSV!");
 	}
 
-	public static void main2(String[] args) throws Exception {
+	public static void main3(String[] args) throws Exception {
 		//File f=new File("/Users/bsearle/Documents/prosit/Pfalciparum/PlasmoDB-43_Pfalciparum3D7_AnnotatedProteins_042419.fasta");
 		File fasta=new File("/Volumes/searle_ssd/malaria/uniprot_yeast_25jan2019.fasta");
 		//File f=new File("/Volumes/searle_ssd/malaria/uniprot_human_25apr2019.fasta");

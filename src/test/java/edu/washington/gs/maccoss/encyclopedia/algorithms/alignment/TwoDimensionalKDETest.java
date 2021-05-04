@@ -8,8 +8,11 @@ import org.jzy3d.plot3d.builder.Mapper;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter3d;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.MedianInterpolatorTest;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.CosineGaussian;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
+import junit.framework.TestCase;
 
-public class TwoDimensionalKDETest {
+public class TwoDimensionalKDETest extends TestCase {
 	public static void main(String[] args) {
 		ArrayList<XYPoint> rts=MedianInterpolatorTest.getSyntheticData();
 		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
@@ -18,8 +21,8 @@ public class TwoDimensionalKDETest {
 		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
 		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
 		//rts=MedianInterpolatorTest.getSyntheticData();
-		rts=MedianInterpolatorTest.getPhosphoData();
-		//rts=MedianInterpolatorTest.getCleanData();
+		//rts=MedianInterpolatorTest.getPhosphoData();
+		rts=MedianInterpolatorTest.getCleanData();
 		//rts=new ArrayList<XYPoint>(rts.subList(0, 10000));
 		//System.out.println(rts.size());
 		//File f=new File("/Users/searleb/Downloads/23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.mzML.encyclopedia.txt.first.rt_fit.txt");
@@ -41,7 +44,7 @@ public class TwoDimensionalKDETest {
 		//filter.plot(rts, Optional.ofNullable((File)null));
 		//filter.plot(rts, Optional.ofNullable((File)f));
 		
-		TwoDimensionalKDE kde=new TwoDimensionalKDE(data);
+		TwoDimensionalKDE kde=new TwoDimensionalKDE(data, 1000);
 
 		Mapper mapper=new Mapper() {
 			@Override
@@ -53,5 +56,16 @@ public class TwoDimensionalKDETest {
 				new org.jzy3d.maths.Range(kde.getXRange().getStart(), kde.getXRange().getStop()), 
 				new org.jzy3d.maths.Range(kde.getYRange().getStart(), kde.getYRange().getStop()), 
 				kde.getResolution()/5);
+	}
+	
+	public void testStamp() {
+		Distribution dist=new CosineGaussian(0.0, 5, 10);
+		float[][] stamp=TwoDimensionalKDE.getStamp(dist);
+		for (int i = 0; i < stamp.length; i++) {
+			for (int j = 0; j < stamp[i].length; j++) {
+				assertTrue(stamp[i][j]>=0.0f);
+				assertTrue(stamp[i][j]<1.0f);
+			}
+		}
 	}
 }

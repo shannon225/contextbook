@@ -72,7 +72,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	private final boolean isOpenFileInPlace;
 
 	public StripeFile() throws IOException {
-		this(false);
+		this(true);
 	}
 
 	public StripeFile(boolean isOpenFileInPlace) throws IOException {
@@ -658,30 +658,33 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 
 	protected void applyPatches(Version currentVersion, Statement s) throws IOException, SQLException {
-
-			if (new Version(0, 1, 0).amIAbove(currentVersion)) {
-				s.execute("alter table precursor add column TIC float");
-				s.getConnection().commit();
-				populateTICColumn(s.getConnection());
-			}
-			if (new Version(0, 2, 0).amIAbove(currentVersion)) {
-				s.execute("alter table precursor add column IonInjectionTime float");
-				s.execute("alter table spectra add column IonInjectionTime float");
-				s.getConnection().commit();
-			}
-			if (new Version(0, 3, 0).amIAbove(currentVersion)) {
-				s.execute("alter table spectra add column fraction int");
-				s.execute("alter table precursor add column fraction int");
-				s.execute("alter table precursor add column IsolationWindowLower float");
-				s.execute("alter table precursor add column IsolationWindowUpper float");
-				s.execute("update spectra set fraction=0");
-				s.execute("update precursor set fraction=0,IsolationWindowLower=0,IsolationWindowUpper=999999999");
-				s.getConnection().commit();
-			}
-			if (new Version(0, 4, 0).amIAbove(currentVersion)) {
-				s.execute("alter table ranges add column numWindows int");
-			}
-
+		if (new Version(0, 1, 0).amIAbove(currentVersion)) {
+			Logger.logLine("Updating to DIA file to save TIC data...");
+			s.execute("alter table precursor add column TIC float");
+			s.getConnection().commit();
+			populateTICColumn(s.getConnection());
+		}
+		if (new Version(0, 2, 0).amIAbove(currentVersion)) {
+			Logger.logLine("Updating to DIA file to save IonInjectionTime data...");
+			s.execute("alter table precursor add column IonInjectionTime float");
+			s.execute("alter table spectra add column IonInjectionTime float");
+			s.getConnection().commit();
+		}
+		if (new Version(0, 3, 0).amIAbove(currentVersion)) {
+			Logger.logLine("Updating to DIA file to save fraction and windowing data...");
+			s.execute("alter table spectra add column fraction int");
+			s.execute("alter table precursor add column fraction int");
+			s.execute("alter table precursor add column IsolationWindowLower float");
+			s.execute("alter table precursor add column IsolationWindowUpper float");
+			s.execute("update spectra set fraction=0");
+			s.execute("update precursor set fraction=0,IsolationWindowLower=0,IsolationWindowUpper=999999999");
+			s.getConnection().commit();
+		}
+		if (new Version(0, 4, 0).amIAbove(currentVersion)) {
+			Logger.logLine("Updating to DIA file to save numWindows data...");
+			s.execute("alter table ranges add column numWindows int");
+		}
+		
 	}
 
 	private void populateTICColumn(Connection connection) throws SQLException, IOException {
@@ -764,8 +767,9 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		} finally {
 			c.close();
 		}
+		setFileVersion();
 		if (isOpenFileInPlace) {
-			setFileVersion();
+			saveFile();
 		}
 	}
 
@@ -774,8 +778,8 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	 */
 	@Override
 	public void close() {
-		if (!isOpenFileInPlace && !tempFile.delete()) {
-			Logger.errorLine("Error deleting temp file!");
+		if (!isOpenFileInPlace && tempFile.exists()&&!tempFile.delete()) {
+			Logger.errorLine("Error deleting temp DIA file!");
 		}
 		isOpen=false;
 	}

@@ -250,39 +250,34 @@ public class DIABrowserPanel extends JPanel {
 		double minMZ=Double.MAX_VALUE;
 		double maxMZ=-Double.MAX_VALUE;
 			
-		if (false) {
-			for (PrecursorScan precursorScan : precursors) {
-				double[] massArray = precursorScan.getMassArray();
-				if (massArray[0]<minMZ) minMZ=massArray[0];
-				if (massArray[massArray.length-1]>maxMZ) maxMZ=massArray[massArray.length-1];
-			}
+		TFloatArrayList retentionTimeInSec=new TFloatArrayList();
+		TDoubleArrayList basePeakMasses=new TDoubleArrayList();
+		TFloatArrayList basePeakIntensities=new TFloatArrayList();
+		
+		for (PrecursorScan precursorScan : precursors) {
+			double[] massArray = precursorScan.getMassArray();
+			if (massArray.length==0) continue;
 			
-		} else {
-			TFloatArrayList retentionTimeInSec=new TFloatArrayList();
-			TDoubleArrayList basePeakMasses=new TDoubleArrayList();
-			TFloatArrayList basePeakIntensities=new TFloatArrayList();
+			if (massArray[0]<minMZ) minMZ=massArray[0];
+			if (massArray[massArray.length-1]>maxMZ) maxMZ=massArray[massArray.length-1];
 			
-			for (PrecursorScan precursorScan : precursors) {
-				double[] massArray = precursorScan.getMassArray();
-				if (massArray[0]<minMZ) minMZ=massArray[0];
-				if (massArray[massArray.length-1]>maxMZ) maxMZ=massArray[massArray.length-1];
-				
-				float[] intensityArray = precursorScan.getIntensityArray();
-				
-				float basePeakIntensity=0.0f;
-				double basePeakMass=0.0;
-				for (int i = 0; i < intensityArray.length; i++) {
-					if (intensityArray[i]>basePeakIntensity) {
-						basePeakIntensity=intensityArray[i];
-						basePeakMass=massArray[i];
-					}
+			float[] intensityArray = precursorScan.getIntensityArray();
+			
+			float basePeakIntensity=0.0f;
+			double basePeakMass=0.0;
+			for (int i = 0; i < intensityArray.length; i++) {
+				if (intensityArray[i]>basePeakIntensity) {
+					basePeakIntensity=intensityArray[i];
+					basePeakMass=massArray[i];
 				}
-				
-				retentionTimeInSec.add(precursorScan.getScanStartTime());
-				basePeakMasses.add(basePeakMass);
-				basePeakIntensities.add(Log.protectedLog10(basePeakIntensity));
 			}
 			
+			retentionTimeInSec.add(precursorScan.getScanStartTime());
+			basePeakMasses.add(basePeakMass);
+			basePeakIntensities.add(Log.protectedLog10(basePeakIntensity));
+		}
+
+		if (false) {
 			float[] basepeakIntensityArray=basePeakIntensities.toArray();
 			float medianBasepeakIntensity=QuickMedian.median(basepeakIntensityArray.clone());
 			float stdev=General.stdev(basepeakIntensityArray);
@@ -313,7 +308,7 @@ public class DIABrowserPanel extends JPanel {
 				}
 			}
 			for (PeakWithTime peak : selectedPeaks) {
-				System.out.println(peak.mass+","+peak.intensity+","+peak.getRtInSec());
+				//System.out.println(peak.mass+","+peak.intensity+","+peak.getRtInSec());
 			}
 			
 			TDoubleArrayList deltas=new TDoubleArrayList();
@@ -461,7 +456,7 @@ public class DIABrowserPanel extends JPanel {
 					}
 				}
 				XYTrace[] array = polymerTraceList.toArray(new XYTrace[polymerTraceList.size()]);
-				final ChartPanel contaminantIntensities=Charter.getChart("Log10 Contaminant Intensity", "Count", false, array);
+				final ChartPanel contaminantIntensities=Charter.getChart("Log10 Basepeak Intensity", "Count", false, array);
 				
 				JTabbedPane tabs=new JTabbedPane();
 				final ChartPanel precursorIntensities=Charter.getChart("Log10 Precursor Intensity", "Count", false, precursorIntensityHistogram);

@@ -40,7 +40,7 @@ public abstract class AbstractScoringResultsToTSVConsumer implements PeptideScor
 
 		try {
 			writer = new PrintWriter(this.tmpFile, "UTF-8");
-			System.out.println("Constructing writer for " + this.tmpFile.getAbsolutePath());
+			Logger.logLine("Constructing writer for " + this.tmpFile.getAbsolutePath());
 		} catch (FileNotFoundException e) {
 			throw new EncyclopediaException("Error setting up output file: " + this.tmpFile.getAbsolutePath(), e);
 		} catch (UnsupportedEncodingException e) {
@@ -62,6 +62,7 @@ public abstract class AbstractScoringResultsToTSVConsumer implements PeptideScor
 			Logger.logLine("Sorting results into " + outputFile.getAbsolutePath());
 			final long nanos = doFileSort(tmpFile, outputFile, getLineSeparator());
 			Logger.logLine(String.format("Sorted feature file in %.02f seconds wall clock time", nanos / 1e9));
+			Logger.logLine("File size check: "+tmpFile.length()+" vs "+outputFile.length()+" (diff: "+(tmpFile.length()-outputFile.length())+")");
 		} catch (UncheckedIOException exception) {
 			Logger.errorLine("Caught IO exception sorting TSV output; failing!");
 			Logger.errorException(exception);

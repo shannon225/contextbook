@@ -14,6 +14,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -28,6 +29,7 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -57,12 +59,16 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.MaxquantMSMSConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.OpenSwathTSVToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SpectronautCSVToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.TraMLToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.MS2PIPWriter;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.MSPWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileMerger;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileTrimmer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.AboutDialog;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
@@ -142,6 +148,76 @@ public class SearchPanelUtilities {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
 							OpenSwathTSVToLibraryConverter.convertToOpenSwathTSV(params, elibFile, tsvFile);
+							return Nothing.NOTHING;
+						}
+						@Override
+						protected void doneForReal(Nothing t) {
+						}
+					};
+					worker.execute();
+				} else {
+					JOptionPane.showMessageDialog(frame, "You must specify an ELIB or DLIB library file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+				}
+			}
+		});
+		buttons.add(okButton);
+		JButton cancelButton=new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+			}
+		});
+		buttons.add(cancelButton);
+		
+		JPanel mainpane=new JPanel(new BorderLayout());
+		mainpane.add(options, BorderLayout.CENTER);
+		mainpane.add(buttons, BorderLayout.SOUTH);
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		
+		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(500, 200);
+		dialog.setVisible(true);
+	}
+	
+	public static void convertELIBtoMSP(Component root, SearchParameters params) {
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+		final JDialog dialog=new JDialog(frame, "Convert Library to NIST MSP", true);
+
+		final FileChooserPanel elibFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".dlib", ".elib"), true, true);
+		final JCheckBox filterToKnownIonsBox=new JCheckBox("Filter out unknown ions");
+		filterToKnownIonsBox.setSelected(false);
+
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(elibFileChooser);
+		options.add(filterToKnownIonsBox);
+		
+		JPanel buttons=new JPanel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JButton okButton=new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final File elibFile=elibFileChooser.getFile();
+				String absolutePath=elibFile.getAbsolutePath();
+				File mspFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+".msp");
+				final boolean filterToKnownIons=filterToKnownIonsBox.isSelected();
+
+				if (elibFile!=null&&elibFile.exists()) {
+					dialog.setVisible(false);
+					dialog.dispose();
+
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library File") {
+						@Override
+						protected Nothing doInBackgroundForReal() throws Exception {
+							LibraryFile library=new LibraryFile();
+							library.openFile(elibFile);
+							MSPWriter.writeMSP(mspFile, library, filterToKnownIons, params);
+							library.close();
 							return Nothing.NOTHING;
 						}
 						@Override
@@ -355,6 +431,77 @@ public class SearchPanelUtilities {
 		dialog.setVisible(true);
 	}
 	
+	public static void extractSampleSpecificDLIBs(Component root, SearchParameters parameters) {
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+		final JDialog dialog=new JDialog(frame, "Extact Sample-Specific Libraries from ELIB", true);
+
+		final FileChooserPanel elibFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".elib"), true, true);
+		final FileChooserPanel saveDirFileChooser=new FileChooserPanel(null, "Save Directory", new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				return true;
+			}
+		}, true, false);
+
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(elibFileChooser);
+		options.add(saveDirFileChooser);
+		
+		JPanel buttons=new JPanel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JButton okButton=new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final File saveDir=saveDirFileChooser.getFile();
+				final File elibFile=elibFileChooser.getFile();
+				if (elibFile!=null&&elibFile.exists()&&saveDir!=null) {
+					dialog.setVisible(false);
+					dialog.dispose();
+
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Extracting Library File") {
+						@Override
+						protected Nothing doInBackgroundForReal() throws Exception {
+							LibraryFile library=new LibraryFile();
+							library.openFile(elibFile);
+							LibraryUtilities.extractSampleSpecificLibraries(saveDir, library);
+							
+							return Nothing.NOTHING;
+						}
+						@Override
+						protected void doneForReal(Nothing t) {
+						}
+					};
+					worker.execute();
+				} else {
+					JOptionPane.showMessageDialog(frame, "You must specify an ELIB or DLIB library file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+				}
+			}
+		});
+		buttons.add(okButton);
+		JButton cancelButton=new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+			}
+		});
+		buttons.add(cancelButton);
+		
+		JPanel mainpane=new JPanel(new BorderLayout());
+		mainpane.add(options, BorderLayout.CENTER);
+		mainpane.add(buttons, BorderLayout.SOUTH);
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		
+		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setSize(500, 200);
+		dialog.setVisible(true);
+	}
+	
 	public static void combineMZMLs(Component root, SearchParameters parameters) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		final JDialog dialog=new JDialog(frame, "Combine DIA or mzML Gas Phase Fractions", true);
@@ -447,6 +594,107 @@ public class SearchPanelUtilities {
 		dialog.setVisible(true);
 	}
 	
+	public static void subsetDIA(Component root, SearchParameters params) {
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+		final JDialog dialog=new JDialog(frame, "Subset Raw File", true);
+		
+		final FileChooserPanel diaFileChooser=new FileChooserPanel(null, "Starting Raw File (mzML, DIA)", new SimpleFilenameFilter(".dia", ".mzML"), true);
+		final FileChooserPanel saveFileChooser=new FileChooserPanel(null, "New Raw File (DIA)", new SimpleFilenameFilter(".dia", ".mzML"), true, false);
+		
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(diaFileChooser);
+		options.add(saveFileChooser);
+		
+		final SpinnerModel minRT=new SpinnerNumberModel(0.0, 0.0, 1000.0, 1.0);
+		final SpinnerModel maxRT=new SpinnerNumberModel(1000.0, 0.0, 1000.0, 1.0);
+		JPanel rtRange=new JPanel(new FlowLayout());
+		rtRange.setOpaque(true);
+		rtRange.setBackground(Color.white);
+		rtRange.add(new JSpinner(minRT));
+		rtRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
+		rtRange.add(new JSpinner(maxRT));
+
+		final SpinnerModel minMZ=new SpinnerNumberModel(0.0, 0.0, 1000.0, 1.0);
+		final SpinnerModel maxMZ=new SpinnerNumberModel(10000.0, 0.0, 10000.0, 1.0);
+		JPanel mzRange=new JPanel(new FlowLayout());
+		mzRange.setOpaque(true);
+		mzRange.setBackground(Color.white);
+		mzRange.add(new JSpinner(minMZ));
+		mzRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
+		mzRange.add(new JSpinner(maxMZ));
+
+		options.add(new LabeledComponent("Precursor Range (m/z)", mzRange));
+		options.add(new LabeledComponent("Rention Time Range (min)", rtRange));
+		
+		JPanel buttons=new JPanel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JButton okButton=new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final File diaFile=diaFileChooser.getFile();
+				final File saveFile=saveFileChooser.getFile();
+
+				final double mzMin=((Number)minMZ.getValue()).doubleValue();
+				final double mzMax=((Number)maxMZ.getValue()).doubleValue();
+				if (mzMax<mzMin) {
+					JOptionPane.showMessageDialog(frame, "Precursor m/z maximum must be higher than the minimum!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+					return;
+				}
+
+				final float rtMinSec=60f*((Number)minRT.getValue()).floatValue();
+				final float rtMaxSec=60f*((Number)maxRT.getValue()).floatValue();
+				if (rtMaxSec<rtMinSec) {
+					JOptionPane.showMessageDialog(frame, "Retention time maximum must be higher than the minimum!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+					return;
+				}
+				
+				if (diaFile!=null&&diaFile.exists()&&saveFile!=null) {
+					dialog.setVisible(false);
+					dialog.dispose();
+
+					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library File") {
+						@Override
+						protected Nothing doInBackgroundForReal() throws Exception {
+							StripeFileTrimmer.trim(diaFile, saveFile, new Range(mzMin, mzMax), new Range(rtMinSec, rtMaxSec), params);
+							
+							return Nothing.NOTHING;
+						}
+						@Override
+						protected void doneForReal(Nothing t) {
+						}
+					};
+					worker.execute();
+					
+				} else {
+					JOptionPane.showMessageDialog(frame, "You must specify a raw file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+				}
+			}
+		});
+		buttons.add(okButton);
+		JButton cancelButton=new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+			}
+		});
+		buttons.add(cancelButton);
+		
+		JPanel mainpane=new JPanel(new BorderLayout());
+		mainpane.add(options, BorderLayout.CENTER);
+		mainpane.add(buttons, BorderLayout.SOUTH);
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		
+		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		//dialog.setSize(500, 600);
+		dialog.setVisible(true);
+	}
+	
 	public static void subsetELIB(Component root) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		final JDialog dialog=new JDialog(frame, "Subset Library", true);
@@ -463,7 +711,7 @@ public class SearchPanelUtilities {
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(elibFileChooser);
 		options.add(saveFileChooser);
-
+		
 		final SpinnerModel minRT=new SpinnerNumberModel(0.0, 0.0, 1000.0, 1.0);
 		final SpinnerModel maxRT=new SpinnerNumberModel(1000.0, 0.0, 1000.0, 1.0);
 		JPanel rtRange=new JPanel(new FlowLayout());
@@ -472,6 +720,17 @@ public class SearchPanelUtilities {
 		rtRange.add(new JSpinner(minRT));
 		rtRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
 		rtRange.add(new JSpinner(maxRT));
+
+		final SpinnerModel minMZ=new SpinnerNumberModel(0.0, 0.0, 1000.0, 1.0);
+		final SpinnerModel maxMZ=new SpinnerNumberModel(10000.0, 0.0, 10000.0, 1.0);
+		JPanel mzRange=new JPanel(new FlowLayout());
+		mzRange.setOpaque(true);
+		mzRange.setBackground(Color.white);
+		mzRange.add(new JSpinner(minMZ));
+		mzRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
+		mzRange.add(new JSpinner(maxMZ));
+
+		options.add(new LabeledComponent("Precursor Range (m/z)", mzRange));
 		options.add(new LabeledComponent("Rention Time Range (min)", rtRange));
 		
 		options.add(new JLabel("Subset peptides:", JLabel.LEFT));
@@ -486,8 +745,19 @@ public class SearchPanelUtilities {
 				final File elibFile=elibFileChooser.getFile();
 				final File saveFile=saveFileChooser.getFile();
 
+				final double mzMin=((Number)minMZ.getValue()).doubleValue();
+				final double mzMax=((Number)maxMZ.getValue()).doubleValue();
+				if (mzMax<mzMin) {
+					JOptionPane.showMessageDialog(frame, "Precursor m/z maximum must be higher than the minimum!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+					return;
+				}
+
 				final float rtMinSec=60f*((Number)minRT.getValue()).floatValue();
 				final float rtMaxSec=60f*((Number)maxRT.getValue()).floatValue();
+				if (rtMaxSec<rtMinSec) {
+					JOptionPane.showMessageDialog(frame, "Retention time maximum must be higher than the minimum!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+					return;
+				}
 				
 				final String text=textArea.getText();
 
@@ -510,7 +780,7 @@ public class SearchPanelUtilities {
 							LibraryFile library=new LibraryFile();
 							library.openFile(elibFile);
 							
-							LibraryUtilities.subsetLibrary(saveFile, rtMinSec, rtMaxSec, targets, library);
+							LibraryUtilities.subsetLibrary(saveFile, rtMinSec, rtMaxSec, mzMin, mzMax, targets, library);
 							
 							library.close();
 							
@@ -1083,7 +1353,7 @@ public class SearchPanelUtilities {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		final JDialog dialog=new JDialog(frame, "Convert Prosit/Spectronaut CSV to Library", true);
 		
-		final FileChooserPanel csvFileChooser=new FileChooserPanel(null, "Spectronaut CSV", new SimpleFilenameFilter(".spectronaut", ".csv"), true);
+		final FileChooserPanel csvFileChooser=new FileChooserPanel(null, "Spectronaut CSV/XLS", new SimpleFilenameFilter(".spectronaut", ".csv", ".tsv", ".txt", ".xls"), true);
 		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);
 
 		JPanel options=new JPanel();

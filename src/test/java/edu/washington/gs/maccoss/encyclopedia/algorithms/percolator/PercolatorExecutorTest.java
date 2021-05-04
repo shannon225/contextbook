@@ -21,6 +21,42 @@ import junit.framework.TestCase;
 
 public class PercolatorExecutorTest extends TestCase {
 	public static void main(String[] args) throws Exception {
+		File fastaFile=new File("/Users/searleb/Documents/swaney/CID_vs_HCD_enzymes/Uniprot_human_9606_canonical_020320.fasta");
+		//File featureFile=new File("/Users/searleb/Documents/swaney/CID_vs_HCD_enzymes/mzML/mix1/lu0102558_Mix1_CID_12mz.mzML.features.txt");
+		File featureFile=new File("/Users/searleb/Documents/swaney/CID_vs_HCD_enzymes/mzML/mix1/lu0102558_Mix1_CID_12mz.mzML.features_test.txt");
+		File outputFile=new File("/Users/searleb/Documents/swaney/CID_vs_HCD_enzymes/mzML/mix1/lu0102558_Mix1_CID_12mz.mzML.test_results.txt");
+		File decoyFile=new File("/Users/searleb/Documents/swaney/CID_vs_HCD_enzymes/mzML/mix1/lu0102558_Mix1_CID_12mz.mzML.test_decoy.txt");
+		File outputProteinFile=new File("/Users/searleb/Documents/swaney/CID_vs_HCD_enzymes/mzML/mix1/lu0102558_Mix1_CID_12mz.mzML.test_protein_results.txt");
+		File decoyProteinFile=new File("/Users/searleb/Documents/swaney/CID_vs_HCD_enzymes/mzML/mix1/lu0102558_Mix1_CID_12mz.mzML.test_protein_decoy.txt");
+		PercolatorExecutionData percolatorFiles=new PercolatorExecutionData(featureFile, fastaFile, outputFile, decoyFile, outputProteinFile, decoyProteinFile, SearchParameterParser.getDefaultParametersObject());
+		PercolatorExecutor e=new PercolatorExecutor(getDefaultPercolaterVersion(), percolatorFiles);
+		BlockingQueue<OutputMessage> result=e.start();
+             
+		int outputlines=0;
+
+		while (!e.isFinished()||!result.isEmpty()) {
+			if (!result.isEmpty()) {
+				OutputMessage data=result.take();
+				if (data.isStdOutput()) {
+					outputlines++;
+				} else {
+					System.out.println(data.getMessage());
+				}
+			} else {
+				Thread.sleep(10);
+			}
+		}
+
+		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+
+		System.out.println("total processed: "+outputlines);
+		ArrayList<PercolatorPeptide> peptides=PercolatorReader.getPassingPeptidesFromTSV(outputFile, 0.01f, aaConstants, false).x;
+		System.out.println("Peptides: "+peptides.size());
+		ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(decoyFile, 0.01f, aaConstants, true).x;
+		System.out.println("Decoys: "+decoys.size());
+	}
+	
+	public static void main2(String[] args) throws Exception {
 		File fastaFile=new File("/Users/searleb/Documents/vaneyk/control/Synthetic_Peptides.fasta");
 		File featureFile=new File("/Users/searleb/Documents/vaneyk/control/only_synthesized_peptides_features.txt");
 		File outputFile=new File("/Users/searleb/Documents/vaneyk/control/only_synthesized_peptides_concatenated_results.txt");
@@ -59,13 +95,13 @@ public class PercolatorExecutorTest extends TestCase {
 	/**
 	 * Used only in {@link #main}.
 	 */
-	static byte getDefaultPercolaterVersion() {
+	static PercolatorVersion getDefaultPercolaterVersion() {
 		switch (OSDetector.getOS()) {
 			case WINDOWS:
 				//TODO: issue #23: Percolator v3 fails silently with exit code 255 on some Windows machines
-				return 2;
+				return PercolatorVersion.v2p10;
 			default:
-				return PercolatorExecutor.DEFAULT_VERSION_NUMBER;
+				return PercolatorVersion.DEFAULT_VERSION;
 		}
 	}
 

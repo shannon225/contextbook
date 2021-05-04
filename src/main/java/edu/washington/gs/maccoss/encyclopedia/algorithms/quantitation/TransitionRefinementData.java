@@ -15,13 +15,14 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class TransitionRefinementData implements PeptidePrecursor {
-	private final FragmentIon[] fragmentMassArray; // every considered ion
+	private final Ion[] fragmentMassArray; // every considered ion
 	private final ArrayList<float[]> chromatograms; // every considered ion
 	private final float[] correlationArray; // every considered ion
 	private final float[] integrationArray; // every considered ion
@@ -48,12 +49,11 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	private Optional<ModificationLocalizationData> localizationData;
 	private Optional<HashMap<String, TransitionRefinementData>> modificationQuantData;
 	
-	public TransitionRefinementData(String peptideModSeq, byte precursorCharge, FragmentIon[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range, AminoAcidConstants aaConstants) {
+	public TransitionRefinementData(String peptideModSeq, byte precursorCharge, Ion[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range, AminoAcidConstants aaConstants) {
 		this(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, null, null, null, null, null, null, null, aaConstants);
 	}
 
 	/**
-	 * 
 	 * @param correlationArray
 	 * @param integrationArray
 	 * @param medianChromatogram
@@ -61,7 +61,10 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	 * @param massArray CAN BE NULL
 	 * @param intensityArray CAN BE NULL
 	 */
-	TransitionRefinementData(String peptideModSeq, byte precursorCharge, FragmentIon[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range, float[] deltaMassArray, double[] massArray, float[] intensityArray, float[] rtArray, ModificationLocalizationData localizationData, HashMap<String, TransitionRefinementData> modificationQuantData, Float identifiedTICRatio, AminoAcidConstants aaConstants) {
+	public TransitionRefinementData(String peptideModSeq, byte precursorCharge, Ion[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, 
+			float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Range range, float[] deltaMassArray, double[] massArray, float[] intensityArray, 
+			float[] rtArray, ModificationLocalizationData localizationData, HashMap<String, TransitionRefinementData> modificationQuantData, Float identifiedTICRatio, 
+			AminoAcidConstants aaConstants) {
 		this.peptideModSeq=peptideModSeq;
 		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq, aaConstants);
 		this.precursorCharge=precursorCharge;
@@ -91,7 +94,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		TDoubleArrayList mzs=new TDoubleArrayList();
 		TFloatArrayList intens=new TFloatArrayList();
 		TFloatArrayList corrs=new TFloatArrayList();
-		ArrayList<FragmentIon> ionAnnotations=new ArrayList<FragmentIon>();
+		ArrayList<Ion> ionAnnotations=new ArrayList<Ion>();
 		
 		for (int i=0; i<fragmentMassArray.length; i++) {
 			if (integrationArray[i]>0.0f) {
@@ -192,7 +195,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 			}
 		}
 		
-		if (bestIndex<0) return 0.0f;
+		if (bestIndex<0) bestIndex=medianChromatogram.length/2; // if we found no best median, just set to the middle of the array
 		return rtArray.get()[bestIndex];
 	}
 	
@@ -232,7 +235,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, integrationArray, backgroundArray, medianChromatogram, range, deltaMass, mass, intensity, rts, localizationData.isPresent()?localizationData.get():null, modificationQuantData.isPresent()?modificationQuantData.get():null, identifiedTICRatio, aaConstants);
 	}
 	
-	public FragmentIon[] getFragmentMassArray() {
+	public Ion[] getFragmentMassArray() {
 		return fragmentMassArray;
 	}
 	

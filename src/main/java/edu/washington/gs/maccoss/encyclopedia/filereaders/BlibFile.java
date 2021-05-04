@@ -49,8 +49,8 @@ public class BlibFile extends SQLFile {
 	}
 
 	public void close() {
-		if (!tempFile.delete()) {
-			Logger.errorLine("Error deleting temp file!");
+		if (tempFile.exists()&&!tempFile.delete()) {
+			Logger.errorLine("Error deleting temp BLIB file!");
 		}
 	}
 
@@ -238,7 +238,7 @@ public class BlibFile extends SQLFile {
 	}
 
 	public int[] addLibrary(SearchJobData job, ArrayList<LibraryEntry> entries, int idCounter, int jobCounter, int modCounter) throws IOException, SQLException {
-		String diaFileName=job.getDiaFile().getName();
+		String diaFileName=job.getDiaFileReader().getOriginalFileName();
 		AminoAcidConstants aaConstants=job.getParameters().getAAConstants();
 		String version=job.getVersion();
 		return addLibrary(entries, diaFileName, aaConstants, version, idCounter, jobCounter, modCounter);

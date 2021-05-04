@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.io;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.*;
 
@@ -22,6 +23,25 @@ public class TableParser {
 	public static void parseTable(File f, TableParserMuscle muscle, String token) {
 		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
 		TableParserProducer producer=new TableParserProducer(blockingQueue, f, token, 1);
+
+		parseTable(muscle, producer);
+	}
+	
+	public static void parseCSV(InputStream is, TableParserMuscle muscle) {
+		parseTable(is, muscle, ",");
+	}
+
+	public static void parseTSV(InputStream is, TableParserMuscle muscle) {
+		parseTable(is, muscle, "\t");
+	}
+
+	public static void parseSSV(InputStream is, TableParserMuscle muscle) {
+		parseTable(is, muscle, " ");
+	}
+
+	public static void parseTable(InputStream is, TableParserMuscle muscle, String token) {
+		BlockingQueue<Map<String, String>> blockingQueue=new LinkedBlockingQueue<Map<String, String>>();
+		TableParserProducer producer=new TableParserProducer(blockingQueue, is, token, 1);
 
 		parseTable(muscle, producer);
 	}

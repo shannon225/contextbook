@@ -1,11 +1,29 @@
 EncyclopeDIA changelog for user-facing changes:
 
-encyclopedia-0.9.7-SNAPSHOT
+encyclopedia-1.5.0-SNAPSHOT
+encyclopedia-1.4.9 (April 9, 2021)
+ - Feature: added command-line options to test new pre-release features
+ - Feature: added Percolator 3.05, but default is still 3.01 pending additional testing
+ - Feature: added mzML preprocessing (including merging gas-phase fractions) to command line
+ - Feature: added OpenSwath library conversion to command line (thanks Konstantin)
+ - Bugfix: forced adding peptide integrations into elibs even if the peptide is not detected in that sample
+ - Bugfix: fixed integration boundaries in elibs even if the peptide is not detected
+
+encyclopedia-1.2.2 (Feb 2, 2021)
  - Feature: added OpenSwath TSV reader
  - Feature: added MS2PIP reader/writer
  - Feature: added "-topNTargetsUsed" option to limit the number of fragment ions used in a library per peptide
- - Feature: added precursor plotting to multi-elib browser
+ - Feature: added precursor plotting to multi-elib browser as a butterfly plot
+ - Feature: added MSP export
  - Bugfix: fixed sorting error causing Percolator irregularities when exporting search results from multiple raw files
+ - Bugfix: modified how peak boundary selection works to better respect -expectedPeakWidth
+ - Bugfix: fixed integration boundaries to expand beyond -expectedPeakWidth if necessary
+ - Bugfix: fixed bug failing to integrate valid peptides due to having multiple repeated entries in the same library in rare cases
+ - Bugfix: increased default Percolator training size to 500,000 to improve stability
+ - Bugfix: added Percolator additional training fields for +1 and +4 precursors
+ - Bugfix: added +3H and +4H fragments for +4H and +5H peptides
+ - Bugfix: improved Unimod support for MSP reading
+ - Bugfix: fixed treatment of AMU tolerances in GUI
 
 encyclopedia-0.9.6 (Jul 24, 2020)
  - Feature: added ability to create Prosit input files from EncyclopeDIA (DLIB/ELIB) libraries using only the extracted peptides and charge states

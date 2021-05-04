@@ -1,10 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 
@@ -19,9 +16,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequ
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.FragmentIonBlacklist;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalizer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoPermuter;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusOneScoringTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusOneScoringTask.LocalizableForm;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.VariantFastaPeptideEntry;
@@ -35,9 +29,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -51,7 +43,6 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 	private final BlockingQueue<ModificationLocalizationData> localizationQueue;
 	private final float minimumScore;
 	private final int movingAverageLength;
-	private final PeptideModification localizingModification;
 	
 	public VariantXcorDIAOneScoringTask(PSMScorer scorer, BackgroundFrequencyInterface background, ArrayList<LibraryEntry> entries, 
 			ArrayList<FragmentScan> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
@@ -62,11 +53,6 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 		this.localizationQueue=localizationQueue;
 		this.minimumScore=-Log.log10(parameters.getPercolatorThreshold());
 		this.movingAverageLength=Math.round(parameters.getExpectedPeakWidth()/dutyCycle);
-		if (parameters.getLocalizingModification().isPresent()) {
-			this.localizingModification=parameters.getLocalizingModification().get();
-		} else {
-			this.localizingModification=PeptideModification.polymorphism; 
-		}
 		
 		assert(scorer instanceof XCorDIAOneScorer);
 	}
@@ -88,275 +74,6 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 		processBatch(decoyBatch);
 
 		return Nothing.NOTHING;
-	}
-	
-	private void processPeptide(ArrayList<LibraryEntry> seedEntries) {
-		LibraryEntry firstEntry=seedEntries.get(0);
-		ArrayList<String> peptideModSeqs=PhosphoPermuter.getPermutations(firstEntry.getPeptideModSeq(), localizingModification, parameters.getAAConstants());
-
-		byte precursorCharge=firstEntry.getPrecursorCharge();
-
-		HashMap<String, double[]> ionsByPeptide=new HashMap<>();
-		HashMap<String, FragmentationModel> entryMap=new HashMap<String, FragmentationModel>();
-		for (String peptideModSeq : peptideModSeqs) {
-			FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, parameters.getAAConstants());
-			entryMap.put(peptideModSeq, model);
-			ionsByPeptide.put(peptideModSeq, model.getPrimaryIons(parameters.getFragType(), firstEntry.getPrecursorCharge(), true));
-		}
-
-		HashMap<String, Range> localizedIsoforms=new HashMap<>();
-		HashSet<String> unlocalizedIsoforms=new HashSet<>();
-		HashMap<String, LocalizableForm> allIsoforms=new HashMap<>();
-		HashMap<String, float[]> predictedIsotopeDistributions=new HashMap<>();
-		for (String peptideModSeq : peptideModSeqs) {
-			LocalizableForm form=ThesaurusOneScoringTask.getLocalizedForm(peptideModSeq, firstEntry.getPrecursorCharge(), entryMap, ionsByPeptide, seedEntries, parameters);
-			if (form!=null) {
-				allIsoforms.put(peptideModSeq, form);
-				unlocalizedIsoforms.add(peptideModSeq);
-			}
-
-			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(peptideModSeq, parameters.getAAConstants());
-			predictedIsotopeDistributions.put(peptideModSeq, predictedIsotopeDistribution);
-		}
-
-		@SuppressWarnings("unchecked")
-		ArrayList<Spectrum>[] globalScans=new ArrayList[] {PhosphoLocalizer.getScanSubsetFromStripes(-Float.MAX_VALUE, Float.MAX_VALUE, super.stripes)};
-		@SuppressWarnings("unchecked")
-		HashMap<String, Float[]>[] globalPrimaryScores=new HashMap[globalScans.length]; // scores are re-used unless they fall in the RT range of a previously localized form
-		for (int i=0; i<globalPrimaryScores.length; i++) {
-			globalPrimaryScores[i]=new HashMap<>();
-		}
-		@SuppressWarnings("unchecked")
-		HashMap<String, boolean[]>[] globalAlreadyConsideredScores=new HashMap[globalScans.length];
-		for (int i=0; i<globalAlreadyConsideredScores.length; i++) {
-			globalAlreadyConsideredScores[i]=new HashMap<>();
-		}
-		
-		HashMap<String, Range> blacklistedScanRanges=new HashMap<>();
-		
-		PeptideScoringResult bestNonlocalizedResult=null;
-		ModificationLocalizationData bestNonlocalizedData=null;
-		boolean anyLocalized=false;
-		
-		HashMap<String, ScoredIndex> bestIndicies=new HashMap<>();
-		
-		while (unlocalizedIsoforms.size()>0) {
-			Collection<Range> blacklistedScans=blacklistedScanRanges.values();
-			String bestPeptideModSeq=null;
-			ScoredIndex bestIndex=null;
-			LocalizableForm bestForm=null;
-			ArrayList<Spectrum> scans=null;
-			HashMap<String, Float[]> primaryScores=null; // scores are re-used unless they fall in the RT range of a previously localized form
-			HashMap<String, boolean[]> alreadyConsideredScores=null;
-			
-			// get the highest scoring RT point for all peptide sequences
-			for (Entry<String, LocalizableForm> entry : allIsoforms.entrySet()) {
-				String peptideModSeq=entry.getKey();
-				LocalizableForm localizedForm=entry.getValue();
-				
-				XCorrLibraryEntry localizedEntry=(XCorrLibraryEntry)localizedForm.localizedEntry;
-
-				for (int peak=0; peak<globalScans.length; peak++) {
-					Float[] primary=globalPrimaryScores[peak].get(peptideModSeq);
-					boolean[] alreadyConsidered=globalAlreadyConsideredScores[peak].get(peptideModSeq);
-
-					if (primary==null) {
-						primary=new Float[globalScans[peak].size()];
-						alreadyConsidered=new boolean[primary.length];
-						globalPrimaryScores[peak].put(peptideModSeq, primary);
-						globalAlreadyConsideredScores[peak].put(peptideModSeq, alreadyConsidered);
-					}
-					ScoredIndex score=updateScores(globalScans[peak], localizedEntry, predictedIsotopeDistributions.get(peptideModSeq), primary, alreadyConsidered, blacklistedScans, parameters);
-					
-					ScoredIndex previousBest=bestIndicies.get(peptideModSeq);
-					if (previousBest==null) {
-						previousBest=score;
-						bestIndicies.put(peptideModSeq, score);
-					}
-
-					if (score!=null&&unlocalizedIsoforms.contains(peptideModSeq)&&(bestIndex==null||score.x>bestIndex.x)&&(previousBest.x*ThesaurusOneScoringTask.MAXIMUM_DELTA_FROM_BEST_SCORE<score.x)) {
-						bestIndex=score;
-						bestPeptideModSeq=peptideModSeq;
-						bestForm=localizedForm;
-						
-						scans=globalScans[peak];
-						primaryScores=globalPrimaryScores[peak];
-						alreadyConsideredScores=globalAlreadyConsideredScores[peak];
-					}
-				}
-			}
-			//System.out.println("CHECK: "+bestPeptideModSeq+"\t"+bestIndex.x+"\t"+(scans.get(bestIndex.y).getScanStartTime()/60f)+" (total scans: "+scans.size()+"), attempts:"+numberOfAttempts.get(bestPeptideModSeq)); //FIXME
-			if (bestIndex==null) {
-				// no more good matches
-				break;
-			}
-			ScoredIndex previousScoreIndex=bestIndicies.get(bestPeptideModSeq);
-			if (previousScoreIndex!=null&&previousScoreIndex.x*ThesaurusOneScoringTask.MAXIMUM_DELTA_FROM_BEST_SCORE>=bestIndex.x) {
-				unlocalizedIsoforms.remove(bestPeptideModSeq); // bad score, not worth considering
-				continue;
-			}
-			
-//			if (first) { //FIXME
-//				ArrayList<XYTraceInterface> traces=new ArrayList<>();
-//				for (int peak=0; peak<globalScans.length; peak++) {
-//					float[] rts=new float[scans.size()];
-//					for (int i = 0; i < rts.length; i++) {
-//						rts[i]=globalScans[peak].get(i).getScanStartTime()/60f;
-//					}
-//					for (Entry<String, Float[]> scores : globalPrimaryScores[peak].entrySet()) {
-//						traces.add(new XYTrace(rts, General.toFloatArray(scores.getValue()), GraphType.boldline, seedEntries.get(peak).getPeptideModSeq()+"/"+scores.getKey()));
-//					}
-//				}
-//				Charter.launchChart("RT", "Score", true, traces.toArray(new XYTraceInterface[traces.size()]));
-//				first=false;
-//			}
-			
-			// check localization ions versus that sequence
-			float apexRT=scans.get(bestIndex.y).getScanStartTime();
-			// use stripes here in case we're on the border
-			Range generalPeakArea=new Range(apexRT-parameters.getExpectedPeakWidth(), apexRT+parameters.getExpectedPeakWidth());
-			
-			ArrayList<Spectrum> stripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(generalPeakArea.getStart(), generalPeakArea.getStop(), stripes); 
-
-			// get next best match at that RT
-			FragmentIon[] bestLocalizingIons=null;
-			Pair<FragmentScan, Float> bestLocalizedStripe=null;
-			
-			for (Entry<String, Float[]> entry : primaryScores.entrySet()) {
-				String peptideModSeq=entry.getKey();
-				if (peptideModSeq!=bestPeptideModSeq) {
-					float score=entry.getValue()[bestIndex.y];
-					Range previousLocalization=localizedIsoforms.get(peptideModSeq);
-					// if we've previously localized this peptide 
-					// AND it wasn't at this location 
-					// AND it scores WORSE than the current peptide (i.e. it's not a peptide that's eluting twice)
-					// THEN (and only then) we can confidently say it isn't here, so we can ignore it
-					if (previousLocalization!=null&&!previousLocalization.contains(apexRT)&&score<bestIndex.x) {
-						continue;
-					}
-					
-					FragmentIon[] localizingIons=ThesaurusOneScoringTask.getUniqueFragmentIons(entryMap.get(bestPeptideModSeq), entryMap.get(peptideModSeq), precursorCharge, parameters);
-					
-					Pair<FragmentScan, Float> localizedStripe = ThesaurusOneScoringTask.getBestLocalizationStripe(parameters, dutyCycle, background, bestForm.localizedEntry, localizingIons, stripeSubset);
-					//System.out.println("Testing "+bestPeptideModSeq+" ("+bestIndex.x+") vs "+peptideModSeq+" ("+score+"): localization: "+localizedStripe.y);
-					if (bestLocalizedStripe==null||bestLocalizedStripe.y>localizedStripe.y) {
-						// keep the lowest localization scoring form! (the closest to the form we're considering)
-						bestLocalizedStripe=localizedStripe;
-						bestLocalizingIons=localizingIons;
-					}
-				}
-			}	
-			
-			if (bestLocalizedStripe==null) {
-				bestLocalizingIons=bestForm.allIons;
-				bestLocalizedStripe = ThesaurusOneScoringTask.getBestLocalizationStripe(parameters, dutyCycle, background, bestForm.localizedEntry, bestLocalizingIons, stripeSubset);
-			}
-			
-			AmbiguousPeptideModSeq ambiPeptideModSeq=AmbiguousPeptideModSeq.getUnambigous(bestPeptideModSeq, localizingModification, parameters.getAAConstants(), "");
-			Triplet<ModificationLocalizationData, FragmentScan, Range> locData=ThesaurusOneScoringTask.generateLocalizationData(false, minimumScore, parameters, localizingModification, bestForm.localizedEntry,
-					ambiPeptideModSeq, bestLocalizingIons, bestForm.allIons, takenIdentifiedIons, stripeSubset, bestLocalizedStripe);
-			if (locData==null) continue;
-			
-			// if localized, then keep and remove from localizedForms
-			ModificationLocalizationData data=locData.x;
-			FragmentScan apex=locData.y;
-			Range peakRange=locData.z.addBuffer(dutyCycle);
-
-			XCorrStripe xcordiaStripe;
-			if (apex instanceof XCorrStripe) {
-				xcordiaStripe=(XCorrStripe)apex;
-			} else {
-				xcordiaStripe=new XCorrStripe(apex, parameters);
-			}
-			float[] predictedIsotopeDistribution=predictedIsotopeDistributions.get(bestForm.localizedEntry.getPeptideModSeq());
-			float score=scorer.score(bestForm.localizedEntry, xcordiaStripe, predictedIsotopeDistribution, precursors);
-			boolean replaceBestNonLocalizedResult = bestNonlocalizedResult==null||(score>=bestNonlocalizedResult.getBestScore()&&bestNonlocalizedData.getLocalizationScore()<data.getLocalizationScore());
-			//System.out.println(bestPeptideModSeq+" --> "+apex.getScanStartTime()/60f+" min, loc:"+locData.x.getLocalizationScore()+" vs "+bestLocalizedStripe.y+", score:"+score+" vs "+(bestNonlocalizedResult==null?"null":Float.toString(bestNonlocalizedResult.getBestScore()))+" ("+replaceBestNonLocalizedResult+")");
-			if (replaceBestNonLocalizedResult||data.isLocalized()) {
-				TFloatFloatHashMap scoreByRTMap=new TFloatFloatHashMap();
-				Float[] primaryScoreArray=primaryScores.get(bestPeptideModSeq);
-				for (int i=0; i<scans.size(); i++) {
-					scoreByRTMap.put(scans.get(i).getScanStartTime(), primaryScoreArray[i]);
-				}
-				EValueCalculator calculator=new EValueCalculator(scoreByRTMap, 0.1f, 0.1f);
-				float[] auxScoreArray=scorer.auxScore(bestForm.localizedEntry, apex, predictedIsotopeDistribution, precursors);
-	
-				float evalue=calculator.getNegLnEValue(score);
-				if (Float.isNaN(evalue)) {
-					evalue=-1.0f;
-				}
-
-				PeptideScoringResult result=new PeptideScoringResult(bestForm.localizedEntry);
-				result.addStripe(score, General.concatenate(auxScoreArray, evalue, data.getLocalizationScore(), data.getNumIdentificationPeaks()), apex);
-
-				if (replaceBestNonLocalizedResult) {
-					bestNonlocalizedResult=result;
-					bestNonlocalizedData=data;
-				}
-				
-				if (data.isLocalized()) {
-					anyLocalized=true;
-					resultsQueue.add(result);
-
-					if (!bestForm.localizedEntry.isDecoy()) {
-						// don't bother logging decoys
-						localizationQueue.add(data);
-					}
-				}
-			}
-
-			if (data.isLocalized()) {
-				// we've found this peptide so we don't need to keep this section blacklisted
-				blacklistedScanRanges.remove(bestPeptideModSeq);
-			} else {
-				if (!blacklistedScanRanges.containsKey(bestPeptideModSeq)) {
-					// if we've already got a better RT peak blacklisted then don't bother with this one
-					blacklistedScanRanges.put(bestPeptideModSeq, generalPeakArea);
-				}				
-			}
-
-			//System.out.println("Blocking off "+(peakRange.getStart()/60f)+" to "+(peakRange.getStop()/60f)+" for "+bestPeptideModSeq+" --> "+data.isLocalized()+", "+data.getLocalizationScore());
-			for (Ion target : bestLocalizingIons) {
-				takenIdentifiedIons.addIonToBlacklist(target.getMass(), peakRange);
-			}
-			// null out scores from taken ions
-			for (int i=0; i<scans.size(); i++) {
-				if (peakRange.contains(scans.get(i).getScanStartTime())) {
-					for (Entry<String, Float[]> entry : primaryScores.entrySet()) {
-						String peptideModSeq = entry.getKey();
-						if (peptideModSeq!=bestPeptideModSeq) {
-							if (unlocalizedIsoforms.contains(peptideModSeq)) {// &&entry.getValue()[i]!=THIS_PEPTIDE_IS_NOT_HERE) {
-								entry.getValue()[i]=null;
-							}
-						} else if (!data.isLocalized()) {
-							// if not localized and around the peak shape area
-							alreadyConsideredScores.get(peptideModSeq)[i]=true;
-						}
-					}
-				} else {
-					if (!data.isLocalized()&&generalPeakArea.contains(scans.get(i).getScanStartTime())) {
-						// if not localized and anywhere near the apex
-						alreadyConsideredScores.get(bestPeptideModSeq)[i]=true;
-					}
-				}
-			}
-			
-			if (data.isLocalized()) {
-				localizedIsoforms.put(bestPeptideModSeq, peakRange);
-			}
-
-			// try only one time!
-			unlocalizedIsoforms.remove(bestPeptideModSeq); // should we only do this if we can actually localize the peak?
-		}
-		
-		if (!anyLocalized&&bestNonlocalizedResult!=null) {
-			resultsQueue.add(bestNonlocalizedResult);
-
-			if (!bestNonlocalizedResult.getEntry().isDecoy()) {
-				// don't bother logging decoys
-				localizationQueue.add(bestNonlocalizedData);
-			}
-		}
 	}
 
 	// NOTE: assumes all peptides in entries are related and that decoys are run separately than targets
@@ -486,7 +203,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 				//peakRange=quantData.getRange();
 				float[] intensities=quantData.getIntegrationArray();
 				float[] correlations=quantData.getCorrelationArray();
-				FragmentIon[] consideredIons=quantData.getFragmentMassArray();
+				FragmentIon[] consideredIons=(FragmentIon[])quantData.getFragmentMassArray();
 				for (int i=0; i<consideredIons.length; i++) {
 					wellShapedIons.add(consideredIons[i]);
 					localizationIntensity+=intensities[i];
@@ -587,39 +304,5 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			rts[i]=xcordiaStripe.getScanStartTime();
 		}
 		return primary;
-	}
-	
-
-
-	private ScoredIndex updateScores(ArrayList<Spectrum> scans, XCorrLibraryEntry localizedEntry, float[] predictedIsotopeDistribution, Float[] primary, boolean[] alreadyConsidered, Collection<Range> blacklistedRanges, SearchParameters parameters) {
-		float bestScore=-Float.MAX_VALUE;
-		int bestIndex=0;
-		for (int i=0; i<scans.size(); i++) {
-			Spectrum stripe=scans.get(i);
-			XCorrStripe xcordiaStripe;
-			if (stripe instanceof XCorrStripe) {
-				xcordiaStripe=(XCorrStripe)stripe;
-			} else {
-				xcordiaStripe=new XCorrStripe((FragmentScan)stripe, parameters);
-			}
-			
-			if (primary[i]==null) { 
-				primary[i]=scorer.score(localizedEntry, xcordiaStripe, predictedIsotopeDistribution, precursors);
-			}
-			if ((!alreadyConsidered[i])&&(bestScore<primary[i])) {
-				boolean alreadyTaken=false;
-				for (Range range : blacklistedRanges) {
-					if (range.contains(stripe.getScanStartTime())) {
-						alreadyTaken=true;
-					}
-				}
-				if (!alreadyTaken) {
-					bestIndex=i;
-					bestScore=primary[i];
-				}
-			}
-		}
-		
-		return new ScoredIndex(bestScore, bestIndex);
 	}
 }

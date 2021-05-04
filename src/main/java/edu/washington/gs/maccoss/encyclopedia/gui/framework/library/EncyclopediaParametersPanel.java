@@ -26,6 +26,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJob
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -86,7 +87,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	private final FileChooserPanel libraryFileChooser;
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Glu-C", "Lys-C", "Arg-C", "Asp-N", "Lys-N", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.HCD), FragmentationType.toName(FragmentationType.ETD)});
-	private final JComboBox<String> percolatorVersion=new JComboBox<String>(new String[] {PercolatorExecutor.V3_01, PercolatorExecutor.V2_10});
+	private final JComboBox<PercolatorVersion> percolatorVersion=new JComboBox<PercolatorVersion>(PercolatorVersion.VALID_VERSIONS);
 
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance()); // not displayed anymore
 
@@ -204,7 +205,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		
 		LibraryInterface library=libraries.get(libraryFile);
 		if (library==null) {
-			library=BlibToLibraryConverter.getFile(libraryFile);
+			library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
 			libraries.put(libraryFile, library);
 		}
 		
@@ -224,7 +225,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		Number value=(Number)precursorWindowWidth.getValue();
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
-		boolean isPercolatorTwo=PercolatorExecutor.V2_10.equals(percolatorVersion.getSelectedItem());
+		PercolatorVersion percolator=(PercolatorVersion)percolatorVersion.getSelectedItem();
 		float numberOfExtraDecoyLibrariesValue=NUMBER_OF_EXTRA_DECOY_VALUES[((Integer)numberOfExtraDecoyLibraries.getSelectedIndex())];
 		float targetWindowCenter=-1f;
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
@@ -243,7 +244,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 				digestionEnzyme,
 				0.01f,
 				0.01f,
-				isPercolatorTwo?2:3,
+				percolator,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
 				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,
 				dataAcquisitionType,
@@ -261,6 +262,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 				true,
 				true,
 				-1.0f,
+				false,
 				false,
 				false
 		);
@@ -325,7 +327,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		} else {
 			precursorWindowWidth.setValue(-1);
 		}
-		percolatorVersion.setSelectedIndex(params.getPercolatorVersionNumber()==2?1:0);
+		percolatorVersion.setSelectedItem(params.getPercolatorVersionNumber());
 		int index=Arrays.binarySearch(NUMBER_OF_EXTRA_DECOY_VALUES, params.getNumberOfExtraDecoyLibrariesSearched());
 		if (index>=0) {
 			numberOfExtraDecoyLibraries.setSelectedIndex(index);

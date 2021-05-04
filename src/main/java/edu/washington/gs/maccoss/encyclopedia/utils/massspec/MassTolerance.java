@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 import java.util.Arrays;
 import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import gnu.trove.list.array.TIntArrayList;
 
 //@Immutable
@@ -233,6 +234,51 @@ public class MassTolerance implements Comparable<MassTolerance> {
 		}
 		
 		return tics;
+	}
+	
+	/**
+	 * assumes targets and masses are in sorted order (and intensities follows masses)
+	 * @param masses
+	 * @param intensities
+	 * @param targets
+	 * @return
+	 */
+	public Pair<double[], float[]> getIntegratedIntensitiesAndMasses(double[] masses, float[] intensities, double[] targets) {
+		float[] tics=new float[targets.length];
+		double[] totalMasses=new double[targets.length];
+		
+		if (targets.length==0||masses.length==0) {
+			return new Pair<>(targets, tics);
+		}
+		
+		int libraryIndex=0;
+		int spectrumIndex=0;
+		while (true) {
+			double targetMass=targets[libraryIndex];
+			int compare=compareTo(targetMass, masses[spectrumIndex]);
+			if (compare==0) {
+				tics[libraryIndex]+=intensities[spectrumIndex];
+				totalMasses[libraryIndex]+=masses[spectrumIndex]*intensities[spectrumIndex];
+				//libraryIndex++; // could match multiple acquired peaks to the same library peak
+				spectrumIndex++;
+			} else if (compare>0) {
+				spectrumIndex++;
+			} else {
+				libraryIndex++;
+			}
+			if (libraryIndex>=targets.length) break;
+			if (spectrumIndex>=masses.length) break;
+		}
+		
+		// weighted masses
+		for (int i = 0; i < totalMasses.length; i++) {
+			if (totalMasses[i]==0.0) {
+				totalMasses[i]=targets[i];
+			} else {
+				totalMasses[i]=totalMasses[i]/tics[i];
+			}
+		}
+		return new Pair<>(totalMasses, tics);
 	}
 	
 	/**

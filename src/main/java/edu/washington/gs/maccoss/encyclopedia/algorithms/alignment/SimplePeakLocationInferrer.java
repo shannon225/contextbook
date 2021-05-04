@@ -116,7 +116,7 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 		RetentionTimeAlignmentInterface f=alignmentMap.get(job);
 		Float alignedRTInMin=alignedRTInMinBySequenceMap.get(peptideModSeq);
 		if (alignedRTInMin==null) {
-			Logger.errorLine("Couldn't find retention time for peptide ("+peptideModSeq+") in file ("+job.getDiaFile().getName()+").");
+			Logger.errorLine("Couldn't find retention time for peptide ("+peptideModSeq+") in file ("+job.getDiaFileReader().getOriginalFileName()+").");
 			return -1;
 		}
 		

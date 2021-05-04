@@ -76,6 +76,9 @@ public class Encyclopedia {
 		if (arguments.size()==0) {
 			SearchGUIMain.runGUI(ProgramType.EncyclopeDIA);
 			
+		} else if (arguments.size()==1&&arguments.containsKey(SearchParameters.ENABLE_ADVANCED_OPTIONS)) {
+			SearchGUIMain.runGUI(ProgramType.Global, true);
+			
 		} else if (arguments.containsKey("-browser")) {
 			DIABrowser.main(args);
 		
@@ -162,7 +165,7 @@ public class Encyclopedia {
 				Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
 				Logger.logLine(parameters.toString());
 
-				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
+				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
 				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, fastaFile, library, outputFile, factory);
 				runSearch(new EmptyProgressIndicator(), job);
 			} catch (Exception e) {

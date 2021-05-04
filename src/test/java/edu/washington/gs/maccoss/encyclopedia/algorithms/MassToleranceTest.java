@@ -71,11 +71,15 @@ public class MassToleranceTest extends TestCase {
 		assertEquals(1, AMU_TOLERANCE.compareTo(1000.0, 999.2));
 		assertEquals(0, AMU_TOLERANCE.compareTo(1000.0, 1000.1));
 		assertEquals(0, AMU_TOLERANCE.compareTo(1000.0, 999.9));
+		assertEquals(0, AMU_TOLERANCE.compareTo(1000.0, 1000.4));
+		assertEquals(0, AMU_TOLERANCE.compareTo(1000.0, 999.6));
 
 		assertEquals(0, AMU_TOLERANCE.compareTo(100.0, 100.0));
 		assertEquals(-1, AMU_TOLERANCE.compareTo(100.0, 101.8));
 		assertEquals(1, AMU_TOLERANCE.compareTo(100.0, 99.2));
 		assertEquals(0, AMU_TOLERANCE.compareTo(100.0, 100.1));
 		assertEquals(0, AMU_TOLERANCE.compareTo(100.0, 99.9));
+		assertEquals(0, AMU_TOLERANCE.compareTo(100.0, 100.4));
+		assertEquals(0, AMU_TOLERANCE.compareTo(100.0, 99.6));
 	}
 }

@@ -26,6 +26,7 @@ import javax.swing.SpinnerNumberModel;
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCordiaSearchParameters;
@@ -82,8 +83,9 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.HCD), FragmentationType.toName(FragmentationType.ETD)});
 
 	private final JComboBox<MassTolerance> precursorTolerance=new JComboBox<MassTolerance>(EncyclopediaParametersPanel.TOLERANCE_VALUES);
-	private final JComboBox<MassTolerance> fragmentTolerance=new JComboBox<MassTolerance>(EncyclopediaParametersPanel.TOLERANCE_VALUES);private final JComboBox<String> percolatorVersion=new JComboBox<String>(new String[] {PercolatorExecutor.V3_01, PercolatorExecutor.V2_10});
-
+	private final JComboBox<MassTolerance> fragmentTolerance=new JComboBox<MassTolerance>(EncyclopediaParametersPanel.TOLERANCE_VALUES);
+	private final JComboBox<PercolatorVersion> percolatorVersion=new JComboBox<PercolatorVersion>(PercolatorVersion.VALID_VERSIONS);
+	
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance());
 
 	private final SpinnerModel minCharge=new SpinnerNumberModel(2, 1, 2, 1);
@@ -230,7 +232,7 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 		if (libraryFile.isPresent()) {
 			LibraryInterface library=libraries.get(libraryFile.get());
 			if (library==null) {
-				library=BlibToLibraryConverter.getFile(libraryFile.get());
+				library=BlibToLibraryConverter.getFile(libraryFile.get(), fastaFile, parameters);
 				libraries.put(libraryFile.get(), library);
 			}
 			maybeLibrary=Optional.ofNullable(library);
@@ -276,7 +278,7 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 		boolean isRequireVariableMods=IS_REQUIRE_VARIABLE_MODS[((Integer)variable.getSelectedIndex())];
 		
 		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem(), variableMods);
-		boolean isPercolatorTwo=PercolatorExecutor.V2_10.equals(percolatorVersion.getSelectedItem());
+		PercolatorVersion percolator=(PercolatorVersion)percolatorVersion.getSelectedItem();
 		float percolatorThresholdValue=((Number)percolatorThreshold.getValue()).floatValue();
 
 		XCordiaSearchParameters parameters=new XCordiaSearchParameters(
@@ -285,7 +287,7 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 				precursorPPMValue,
 				fragmentPPMValue,
 				digestionEnzyme,
-				isPercolatorTwo?2:3,
+				percolator,
 				percolatorThresholdValue,
 				percolatorThresholdValue,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
@@ -368,7 +370,7 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 		}
 		numberOfQuantitativeIons.setValue(params.getNumberOfQuantitativePeaks());
 		minNumOfQuantitativeIons.setValue(params.getMinNumOfQuantitativePeaks());
-		percolatorVersion.setSelectedIndex(params.getPercolatorVersionNumber()==2?1:0);
+		percolatorVersion.setSelectedItem(params.getPercolatorVersionNumber());
 		percolatorThreshold.setValue(params.getPercolatorThreshold());
 	}
 	

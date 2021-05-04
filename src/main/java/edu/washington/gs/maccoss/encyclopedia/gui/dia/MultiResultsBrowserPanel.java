@@ -66,6 +66,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
+import edu.washington.gs.maccoss.encyclopedia.gui.massspec.ChromatogramCharter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -108,7 +109,6 @@ public class MultiResultsBrowserPanel extends JPanel {
 	private final JComboBox<Integer> minimumNumberOfFragments=new JComboBox<Integer>(new Integer[] {0, 1, 2, 3, 4, 5});
 	private final JComboBox<Integer> numberOfColumns=new JComboBox<Integer>(new Integer[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 	private final JCheckBox simplifyPlots=new JCheckBox("Simplify plots");
-	private final JCheckBox plotPrecursors=new JCheckBox("Plot Precursors");
 	
 	private final int defaultMinimumNumberOfFragmentsIndex=3;
 	private final int defaultNumberOfColumnsIndex=1;
@@ -231,16 +231,8 @@ public class MultiResultsBrowserPanel extends JPanel {
 		checkBoxes.setLayout(new BoxLayout(checkBoxes, BoxLayout.LINE_AXIS));
 		simplifyPlots.setBackground(LabeledComponent.BACKGROUND_COLOR);
 		checkBoxes.add(simplifyPlots);
-		plotPrecursors.setBackground(LabeledComponent.BACKGROUND_COLOR);
-		checkBoxes.add(plotPrecursors);
 		options.add(checkBoxes);
 		simplifyPlots.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				updateToSelectedPeptide();
-			}
-		});
-		plotPrecursors.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				updateToSelectedPeptide();
@@ -297,31 +289,20 @@ public class MultiResultsBrowserPanel extends JPanel {
 	}
 	
 	public ChartPanel getStackedBarChart(PeptidePrecursor peptide, String[] categories, Spectrum[] dataArray) {
+		Spectrum libraryEntry=null;
 		if (library!=null) {
 			try {
-			ArrayList<LibraryEntry> entries=library.getEntries(peptide.getPeptideModSeq(), peptide.getPrecursorCharge(), false);
-			ArrayList<Spectrum> newDataArray=new ArrayList<>();
-			newDataArray.addAll(entries);
-			newDataArray.addAll(Arrays.asList(dataArray));
-			dataArray=newDataArray.toArray(new Spectrum[newDataArray.size()]);
-			
-			ArrayList<String> newCategories=new ArrayList<>();
-			if (entries.size()==1) {
-				newCategories.add("Library");
-			} else if (entries.size()>1) {
-				for (int i = 1; i <= entries.size(); i++) {
-					newCategories.add("Library "+i);
+				ArrayList<LibraryEntry> entries=library.getEntries(peptide.getPeptideModSeq(), peptide.getPrecursorCharge(), false);
+				if (entries.size()>0) {
+					libraryEntry=entries.get(0);
 				}
-			}
-			newCategories.addAll(Arrays.asList(categories));
-			categories=newCategories.toArray(new String[newCategories.size()]);
 			} catch (Exception e) {
 				Logger.errorLine("Error reading library entry!");
 				Logger.errorException(e);
 			}
 		}
 		
-		return FragmentIonConsistencyCharter.getBarChart(peptide, dataArray, categories, parameters);
+		return FragmentIonConsistencyCharter.getBarChart(peptide, Optional.ofNullable(libraryEntry), dataArray, categories, parameters);
 	}
 
 	public void askForResults() {
@@ -382,11 +363,18 @@ public class MultiResultsBrowserPanel extends JPanel {
 				peptideModel.updateEntries(t.y);
 				sampleModel.updateEntries(t.x);
 
-				System.out.println(split1.getDividerLocation()+", "+split2.getDividerLocation());
 				if (split1.getDividerLocation()<=40||split2.getDividerLocation()<=40) {
 					split2.setDividerLocation(200);
 					split1.setDividerLocation(200);
 				}
+				
+				// roughly 2 rows is a good heuristic for the GUI
+				int numOfSamples=sampleModel.getRows().size();
+				int numExpectedColumns=Math.round(numOfSamples/2.0f);
+				if (numExpectedColumns>5) numExpectedColumns=5; // after 6 columns the plot gets messy
+				
+				// this updates the GUI plots 
+				numberOfColumns.setSelectedIndex(numExpectedColumns);
 			}
 		};
 		worker.execute();
@@ -416,7 +404,6 @@ public class MultiResultsBrowserPanel extends JPanel {
 			if (dataArray[i]!=null) {
 				totalTICs[i]=dataArray[i].getTIC();
 			}
-			System.out.println(origSampleNames[i]+" --> "+dataArray[i]);
 		}
 		String[] sampleNames=StringUtils.getUniquePortion(origSampleNames);
 		barChart.setChart(getBarChart(sampleNames, totalTICs).getChart());
@@ -430,46 +417,62 @@ public class MultiResultsBrowserPanel extends JPanel {
 		JPanel right=new JPanel(new GridLayout(0, simplify?1:cols));
 		right.setBackground(Color.WHITE);
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
-		double precursorMz=parameters.getAAConstants().getChargedMass(entry.getPeptideModSeq(), entry.getPrecursorCharge());
 		FragmentIon[] primaryIonObjects=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), true);
 		Logger.logLine("Graphing "+entry.getPeptideModSeq()+" ("+primaryIonObjects.length+")"+"...");
 		
 		try {
 			
-			double globalMaxY=0.0;
-			ArrayList<ChartPanel> allPanels=new ArrayList<ChartPanel>();
+			double globalMaxYFragment=0.0;
+			double globalMaxYPrecursor=0.0;
 			
-			ArrayList<ArrayList<XYTrace>> allTraces=new ArrayList<ArrayList<XYTrace>>();
+			ArrayList<ArrayList<XYTrace>> allFragmentTraces=new ArrayList<ArrayList<XYTrace>>();
+			ArrayList<ArrayList<XYTrace>> allPrecursorTraces=new ArrayList<ArrayList<XYTrace>>();
 			for (int i=0; i<origSampleNames.length; i++) {
 				String sampleName = origSampleNames[i];
 				QuantitativeDIAData quantitativeData=entry.getQuantitativeData(sampleName);
 				StripeFileInterface file=files.get(i);
 
-				ArrayList<XYTrace> traces;
+				ArrayList<XYTrace> fragmentTraces;
+				ArrayList<XYTrace> precursorTraces;
 				if (quantitativeData==null) {
-					traces=new ArrayList<XYTrace>();
-				} else if (plotPrecursors.isSelected()) {
-					traces=extractPrecursorTraces(sampleName, quantitativeData, file);
+					fragmentTraces=new ArrayList<>();
+					precursorTraces=new ArrayList<>();
 				} else {
-					traces=extractFragmentTraces(primaryIonObjects, sampleName, quantitativeData, file);
+					precursorTraces=extractPrecursorTraces(sampleName, quantitativeData, file);
+					fragmentTraces=extractFragmentTraces(primaryIonObjects, sampleName, quantitativeData, file);
 				}
 
-				for (XYTrace xyTrace : traces) {
-					globalMaxY=Math.max(globalMaxY, xyTrace.getMaxY());
+				if (fragmentTraces!=null) {
+					for (XYTrace xyTrace : fragmentTraces) {
+						if (xyTrace.getType()==GraphType.line) {
+							globalMaxYFragment=Math.max(globalMaxYFragment, xyTrace.getMaxY());
+						}
+					}
+				} else {
+					Logger.logLine("Couldn't extract fragments from "+sampleName+" for "+entry.getPeptideModSeq());
 				}
-				allTraces.add(traces);
+				allFragmentTraces.add(fragmentTraces);
+
+				if (precursorTraces!=null) {
+					for (XYTrace xyTrace : precursorTraces) {
+						if (xyTrace.getType()==GraphType.line) {
+							globalMaxYPrecursor=Math.max(globalMaxYPrecursor, xyTrace.getMaxY());
+						}
+					}
+				} else {
+					Logger.logLine("Couldn't extract precursors	 from "+sampleName+" for "+entry.getPeptideModSeq());
+				}
+				allPrecursorTraces.add(precursorTraces);
 			}
-	
-			if (globalMaxY>0.0) {
-				globalMaxY=globalMaxY*1.05;
-			}
+
+			globalMaxYFragment=globalMaxYFragment*1.05;
+			globalMaxYPrecursor=globalMaxYPrecursor*1.05;
 
 			CombinedRangeXYPlot parent=null;
 			for (int i=0; i<sampleNames.length; i++) {
-				ArrayList<XYTrace> traces=allTraces.get(i);
-				ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", false, globalMaxY, traces.toArray(new XYTrace[traces.size()]));
-				
 				if (simplify) {
+					ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", false, globalMaxYFragment, allFragmentTraces.get(i).toArray(new XYTrace[0]));
+					
 					fragmentChart.getChart().getXYPlot().clearAnnotations();
 					
 					ValueAxis domainAxis = fragmentChart.getChart().getXYPlot().getDomainAxis();
@@ -510,10 +513,12 @@ public class MultiResultsBrowserPanel extends JPanel {
 					}
 				} else {
 					// !simplify
-					fragmentChart.getChart().setTitle(sampleNames[i]);
-					right.add(fragmentChart);
+					ChartPanel panel=ChromatogramCharter.createChart(Optional.ofNullable(allPrecursorTraces.get(i)),
+							Optional.ofNullable(allFragmentTraces.get(i)), globalMaxYPrecursor, 
+							globalMaxYFragment);
+					panel.getChart().setTitle(sampleNames[i]);
+					right.add(panel);
 				}
-				allPanels.add(fragmentChart);
 			}
 	
 			split.setRightComponent(right);
@@ -626,5 +631,5 @@ public class MultiResultsBrowserPanel extends JPanel {
 		
 		return traces;
 	}
-	
+
 }

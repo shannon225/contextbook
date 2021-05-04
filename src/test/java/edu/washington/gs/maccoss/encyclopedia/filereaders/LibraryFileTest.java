@@ -18,19 +18,24 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 public class LibraryFileTest {
 
 	public static void main(String[] args) throws Exception {
-		LibraryInterface lib=BlibToLibraryConverter.getFile(new File("/Volumes/searle_ssd/swaney/uniprot_human_10Feb2020.fasta.asp-n.z3_nce33.dlib"));
-		final ArrayList<LibraryEntry> entries=lib.getEntries(new Range(600, 610), false, new AminoAcidConstants());
+		LibraryInterface lib=BlibToLibraryConverter.getFile(new File("/Volumes/bcsbluessd/kkolotyuk/inputs", "prosit-output-background.dlib"));
+		final ArrayList<LibraryEntry> entries=lib.getEntries(new Range(339, 400), false, new AminoAcidConstants());
+		System.out.println(entries.size());
+		ArrayList<LibraryEntry> selected=new ArrayList<>();
 		for (LibraryEntry entry : entries) {
-			float[] intensities=entry.getIntensityArray();
-			float max=General.max(intensities);
-			int count=0;
-			for (float f : intensities) {
-				if (f/max>0.10f) {
-					count++;
-				}
-			}
-			System.out.println(entry.getPeptideSeq().length()+","+count);
+			//if (entry.getPeptideSeq().startsWith("A")) {
+				selected.add(entry);
+			//}
 		}
+		System.out.println(selected.size());
+		
+		LibraryFile out=new LibraryFile();
+		out.openFile();
+		out.dropIndices();
+		out.addEntries(selected);
+		out.createIndices();
+		out.saveAsFile(new File("/Volumes/bcsbluessd/kkolotyuk/inputs", "selected-prosit-output-background.dlib"));
+		
 	}
 	
 	public static void main3(String[] args) throws Exception {

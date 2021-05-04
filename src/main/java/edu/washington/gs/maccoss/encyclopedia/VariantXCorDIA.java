@@ -161,7 +161,7 @@ public class VariantXCorDIA {
 
 				LibraryInterface library;
 				if (arguments.containsKey(TARGET_LIBRARY_TAG)) {
-					library=BlibToLibraryConverter.getFile(new File(arguments.get(TARGET_LIBRARY_TAG)));
+					library=BlibToLibraryConverter.getFile(new File(arguments.get(TARGET_LIBRARY_TAG)), fastaFile, parameters);
 				} else {
 					library=null;
 				}
@@ -190,7 +190,7 @@ public class VariantXCorDIA {
 		if (!(job.getTaskFactory() instanceof VariantXCorDIAOneScoringFactory)) {
 			Logger.logLine("Setting up localization engine...");
 			PecanSearchParameters parameters=job.getTaskFactory().getPecanParameters();
-			StripeFileInterface stripefile=StripeFileGenerator.getFile(job.getDiaFile(), job.getParameters());
+			StripeFileInterface stripefile=job.getDiaFileReader();
 			BackgroundFrequencyInterface background=BackgroundFrequencyCalculator.generateBackground(stripefile);
 			//BackgroundFrequencyInterface background=new UnitBackgroundFrequencyCalculator(0.01f); //FIXME REMOVE, TESTING ONLY
 			VariantXCorDIAOneScoringFactory factory=new VariantXCorDIAOneScoringFactory(parameters, background, new LinkedBlockingQueue<ModificationLocalizationData>());

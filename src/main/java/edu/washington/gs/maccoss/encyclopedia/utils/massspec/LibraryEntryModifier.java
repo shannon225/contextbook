@@ -13,12 +13,12 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryEntryModifier {
 	public static void main(String[] args) throws Exception {
-		File inputFile=new File("/Users/searleb/Downloads/EncyclopeDIA_300_1200_ethcd_lib.elib");
-		File outputFile=new File("/Users/searleb/Downloads/silac_EncyclopeDIA_300_1200_ethcd_lib.dlib");
+		File inputFile=new File("/Users/searleb/Documents/encyclopedia/bugs/sangtae/spikes.dlib");
+		File outputFile=new File("/Users/searleb/Documents/encyclopedia/bugs/sangtae/silac_spikes.dlib");
 
 		TCharDoubleHashMap ptms=new TCharDoubleHashMap();
-		//ptms.put('K',8.014199);
-		//ptms.put('R',10.008269);
+		ptms.put('K',8.014199);
+		ptms.put('R',10.008269);
 		
 		//ptms.put('K',4.025107);
 		//ptms.put('R',6.020129);

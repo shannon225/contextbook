@@ -10,13 +10,14 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 
 public enum IonType {
 	a,aNL,ap2,ap2NL,
-	b,bNL,bp2,bp2NL,
+	b,bNL,bp2,bp2NL,bp3,bp4,
 	c,cNL,cp2,cp2NL,
 	x,xNL,xp2,xp2NL,
-	y,yNL,yp2,yp2NL,
+	y,yNL,yp2,yp2NL,yp3,yp4,
 	z,zNL,z1,z1NL,zp2,zp2NL,z1p2,z1p2NL,
-	unknown;
+	precursor,unknown;
 	
+	private static final String _PRECURSOR = "p";
 	private static final String _1="+1";
 	private static final String NL="-NL";
 	private static final String _1_NL="+1-NL";
@@ -24,6 +25,8 @@ public enum IonType {
 	private static final String _1_2H="+1+2H";
 	private static final String _2H_NL="+2H-NL";
 	private static final String _1_2H_NL="+1+2H-NL";
+	private static final String _3H="+3H";
+	private static final String _4H="+4H";
 	
 	public static final Color oddColor=new Color(26, 148, 49);
 	public static final Color bcColor=new Color(59, 109, 226);
@@ -67,6 +70,13 @@ public enum IonType {
 		case yp2NL: return "y+2H-NL";
 		case zp2NL: return "z+2H-NL";
 		case z1p2NL: return "z+1+2H-NL";
+		
+		case bp3: return "b+3H";
+		case bp4: return "b+4H";
+		case yp3: return "y+3H";
+		case yp4: return "y+4H";
+		
+		case precursor: return _PRECURSOR;
 		case unknown: return "unknown";
 		}
 		return "unknown";
@@ -103,6 +113,13 @@ public enum IonType {
 		if("z+2H-NL".equals(s)) return zp2NL;
 		if("z+1+2H-NL".equals(s)) return z1p2NL;
 
+		if("b+3H".equals(s)) return bp3;
+		if("b+4H".equals(s)) return bp4;
+		if("y+3H".equals(s)) return yp3;
+		if("y+4H".equals(s)) return yp4;
+		
+		if(_PRECURSOR.equals(s)) return precursor;
+
 		return unknown;
 	}
 	
@@ -137,9 +154,38 @@ public enum IonType {
 		case yp2NL: return "y"+index+_2H_NL;
 		case zp2NL: return "z"+index+_2H_NL;
 		case z1p2NL: return "z"+index+_1_2H_NL;
+		
+		case bp3: return "b"+index+_3H;
+		case bp4: return "b"+index+_4H;
+		case yp3: return "y"+index+_3H;
+		case yp4: return "y"+index+_4H;
+		
+		case precursor: return _PRECURSOR;
 		case unknown: return "unknown";
 		}
 		return "unknown";
+	}
+	
+	public static boolean isNeutralLoss(IonType t) {
+		switch (t) {
+		case aNL: return true;
+		case bNL: return true;
+		case cNL: return true;
+		case xNL: return true;
+		case yNL: return true;
+		case zNL: return true;
+		case z1NL: return true;
+
+		case ap2NL: return true;
+		case bp2NL: return true;
+		case cp2NL: return true;
+		case xp2NL: return true;
+		case yp2NL: return true;
+		case zp2NL: return true;
+		case z1p2NL: return true;
+		
+		default: return false;
+		}
 	}
 	
 	public static String getType(IonType t) {
@@ -173,6 +219,13 @@ public enum IonType {
 		case yp2NL: return "y";
 		case zp2NL: return "z";
 		case z1p2NL: return "z";
+
+		case bp3: return "b";
+		case bp4: return "b";
+		case yp3: return "y";
+		case yp4: return "y";
+		
+		case precursor: return _PRECURSOR;
 		case unknown: return "unknown";
 		}
 		return "unknown";
@@ -181,7 +234,13 @@ public enum IonType {
 	public static Pair<IonType, Byte> fromIndexedString(String s) {
 		byte type;
 		byte index;
-		if (s.endsWith(_1_2H_NL)) {
+		if (s.endsWith(_3H)) {
+			type=8;
+			index=Byte.parseByte(s.substring(1, s.length()-_3H.length()));
+		} else if (s.endsWith(_4H)) {
+			type=9;
+			index=Byte.parseByte(s.substring(1, s.length()-_4H.length()));
+		} else if (s.endsWith(_1_2H_NL)) {
 			type=7;
 			index=Byte.parseByte(s.substring(1, s.length()-_1_2H_NL.length()));
 		} else if (s.endsWith(_2H_NL)) {
@@ -206,8 +265,12 @@ public enum IonType {
 			type=0;
 			index=Byte.parseByte(s.substring(1));
 		}
-		
-		if(s.charAt(0)=='a') {
+
+		if(s.charAt(0)=='p') {
+			switch (type) {
+				case 0: return new Pair<IonType, Byte>(precursor, index); // normal
+			}
+		} else if(s.charAt(0)=='a') {
 			switch (type) {
 				case 0: return new Pair<IonType, Byte>(a, index); // normal
 				case 1: throw new EncyclopediaException("Can't process ion type: "+s); // +1 
@@ -217,6 +280,8 @@ public enum IonType {
 				case 5: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H
 				case 6: return new Pair<IonType, Byte>(ap2NL, index); // +2H neutral loss
 				case 7: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H neutral loss
+				case 8: throw new EncyclopediaException("Can't process ion type: "+s); // +3H neutral loss
+				case 9: throw new EncyclopediaException("Can't process ion type: "+s); // +4H neutral loss
 			}
 		} else if(s.charAt(0)=='b') {
 			switch (type) {
@@ -228,6 +293,8 @@ public enum IonType {
 				case 5: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H
 				case 6: return new Pair<IonType, Byte>(bp2NL, index); // +2H neutral loss
 				case 7: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H neutral loss
+				case 8: return new Pair<IonType, Byte>(bp3, index); // +3H
+				case 9: return new Pair<IonType, Byte>(bp4, index); // +4H
 			}
 		} else if(s.charAt(0)=='c') {
 			switch (type) {
@@ -239,6 +306,8 @@ public enum IonType {
 				case 5: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H
 				case 6: return new Pair<IonType, Byte>(cp2NL, index); // +2H neutral loss
 				case 7: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H neutral loss
+				case 8: throw new EncyclopediaException("Can't process ion type: "+s); // +3H neutral loss
+				case 9: throw new EncyclopediaException("Can't process ion type: "+s); // +4H neutral loss
 			}
 		} else if(s.charAt(0)=='x') {
 			switch (type) {
@@ -250,6 +319,8 @@ public enum IonType {
 				case 5: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H
 				case 6: return new Pair<IonType, Byte>(xp2NL, index); // +2H neutral loss
 				case 7: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H neutral loss
+				case 8: throw new EncyclopediaException("Can't process ion type: "+s); // +3H neutral loss
+				case 9: throw new EncyclopediaException("Can't process ion type: "+s); // +4H neutral loss
 			}
 		} else if(s.charAt(0)=='y') {
 			switch (type) {
@@ -261,6 +332,8 @@ public enum IonType {
 				case 5: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H
 				case 6: return new Pair<IonType, Byte>(yp2NL, index); // +2H neutral loss
 				case 7: throw new EncyclopediaException("Can't process ion type: "+s); // +1+2H neutral loss
+				case 8: return new Pair<IonType, Byte>(yp3, index); // +3H
+				case 9: return new Pair<IonType, Byte>(yp4, index); // +4H
 			}
 		} else if(s.charAt(0)=='z') {
 			switch (type) {
@@ -272,6 +345,8 @@ public enum IonType {
 				case 5: return new Pair<IonType, Byte>(z1p2, index); // +1+2H
 				case 6: return new Pair<IonType, Byte>(zp2NL, index); // +2H neutral loss
 				case 7: return new Pair<IonType, Byte>(z1p2NL, index); // +1+2H neutral loss
+				case 8: throw new EncyclopediaException("Can't process ion type: "+s); // +3H neutral loss
+				case 9: throw new EncyclopediaException("Can't process ion type: "+s); // +4H neutral loss
 			}
 		}
 		
@@ -309,6 +384,13 @@ public enum IonType {
 		case yp2NL: return 2;
 		case zp2NL: return 2;
 		case z1p2NL: return 2;
+		
+		case bp3: return 3;
+		case bp4: return 4;
+		case yp3: return 3;
+		case yp4: return 4;
+		
+		case precursor: return 0;
 		case unknown: return 1;
 		}
 		return 1;
@@ -345,6 +427,13 @@ public enum IonType {
 		case yp2NL: return yzColor;
 		case zp2NL: return yzColor;
 		case z1p2NL: return yzColor;
+		
+		case bp3: return bcColor;
+		case bp4: return bcColor;
+		case yp3: return yzColor;
+		case yp4: return yzColor;
+		
+		case precursor: return oddColor;
 		case unknown: return missingColor;
 		}
 		return missingColor;
@@ -381,6 +470,13 @@ public enum IonType {
 		case yp2NL: return secondaryStroke;
 		case zp2NL: return secondaryStroke;
 		case z1p2NL: return secondaryStroke;
+
+		case bp3: return secondaryStroke;
+		case bp4: return secondaryStroke;
+		case yp3: return secondaryStroke;
+		case yp4: return secondaryStroke;
+		
+		case precursor: return primaryStroke;
 		case unknown: return missingStroke;
 		}
 		return missingStroke;
@@ -417,6 +513,13 @@ public enum IonType {
 		case yp2NL: return secondaryAnnotationFont;
 		case zp2NL: return secondaryAnnotationFont;
 		case z1p2NL: return secondaryAnnotationFont;
+
+		case bp3: return secondaryAnnotationFont;
+		case bp4: return secondaryAnnotationFont;
+		case yp3: return secondaryAnnotationFont;
+		case yp4: return secondaryAnnotationFont;
+		
+		case precursor: return primaryAnnotationFont;
 		case unknown: return missingAnnotationFont;
 		}
 		return missingAnnotationFont;
@@ -453,6 +556,13 @@ public enum IonType {
 		case yp2NL: return y;
 		case zp2NL: return z;
 		case z1p2NL: return z;
+
+		case bp3: return b;
+		case bp4: return b;
+		case yp3: return y;
+		case yp4: return y;
+		
+		case precursor: return precursor;
 		case unknown: return unknown;
 		}
 		return unknown;
@@ -479,6 +589,18 @@ public enum IonType {
 		return t; // already a NL
 	}
 	
+	public static IonType getPlusN(IonType t, byte charge) {
+		switch (charge) {
+		case 1: return t;
+		case 2: return getPlus2(t);
+		case 3: return getPlus3(t);
+		case 4: return getPlus4(t);
+
+		default:
+			throw new EncyclopediaException("Can't make a +N ion for type: "+toString(t)+" at charge "+charge);
+		}
+	}
+	
 	@SuppressWarnings("incomplete-switch")
 	public static IonType getPlus2(IonType t) {
 		switch (t) {
@@ -496,6 +618,24 @@ public enum IonType {
 		case yNL: return yp2NL;
 		case zNL: return zp2NL;
 		case z1NL: return z1p2NL;
+		}
+		throw new EncyclopediaException("Can't make a +2 ion for type: "+toString(t));
+	}
+	
+	@SuppressWarnings("incomplete-switch")
+	public static IonType getPlus3(IonType t) {
+		switch (t) {
+		case b: return bp3;
+		case y: return yp3;
+		}
+		throw new EncyclopediaException("Can't make a +2 ion for type: "+toString(t));
+	}
+	
+	@SuppressWarnings("incomplete-switch")
+	public static IonType getPlus4(IonType t) {
+		switch (t) {
+		case b: return bp4;
+		case y: return yp4;
 		}
 		throw new EncyclopediaException("Can't make a +2 ion for type: "+toString(t));
 	}

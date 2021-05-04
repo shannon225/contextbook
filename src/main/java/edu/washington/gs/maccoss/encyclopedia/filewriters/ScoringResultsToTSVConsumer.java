@@ -45,7 +45,7 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 					if (result instanceof RescoredPeptideScoringResult) {
 						writer.print("deltaRT\t");//discriminantScore\t");
 					}
-					writer.print("numMissedCleavage\tpepLength\tcharge2\tcharge3\tprecursorMz\tprecursorMass\tRTinMin\tsequence\tprotein");
+					writer.print("numMissedCleavage\tpepLength\tcharge1\tcharge2\tcharge3\tcharge4\tprecursorMz\tprecursorMass\tRTinMin\tsequence\tprotein");
 					// Percolator assumes linux line endings on Mac!
 					switch (os) {
 						case MAC:
@@ -91,8 +91,10 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 
 				writer.print("\t"+params.getEnzyme().getNumMissedCleavages(peptide.getPeptideSeq()));
 				writer.print("\t"+peptide.getPeptideSeq().length());
+				writer.print("\t"+(peptide.getPrecursorCharge()==1?1:0));
 				writer.print("\t"+(peptide.getPrecursorCharge()==2?1:0));
 				writer.print("\t"+(peptide.getPrecursorCharge()==3?1:0));
+				writer.print("\t"+(peptide.getPrecursorCharge()>=4?1:0));
 				writer.print("\t"+peptide.getPrecursorMZ());
 				writer.print("\t"+(peptide.getPrecursorMZ()*peptide.getPrecursorCharge()-MassConstants.protonMass*peptide.getPrecursorCharge()));
 				writer.print("\t"+stripe.getScanStartTime()/60f);

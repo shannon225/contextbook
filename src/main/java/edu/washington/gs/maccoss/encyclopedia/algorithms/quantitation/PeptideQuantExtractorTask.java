@@ -21,6 +21,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEn
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
@@ -88,7 +89,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	}
 
 	@Override
-	protected Nothing process() {
+	protected Nothing process() {		
 		Optional<TransitionRefinementData> spectrum=extractSpectrum(psmdata.getAccessions(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable, inferrer, params.isQuantifySameFragmentsAcrossSamples(), psmdata.wasInferred());
 		Optional<HashMap<String, TransitionRefinementData>> phosphoData=Optional.empty();
 		if (canRunLocalization()) {
@@ -160,9 +161,40 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	}
 
 	public TransitionRefinementData extractSpectrum(AnnotatedLibraryEntry unitEntry, float duration, boolean limitToQuantifiable, boolean integrateEverything, boolean wasInferred) {
-		// widened to 3x the expected size (+/-1.5) of the peak to make sure we don't miss something by catching just the corner 
-		ArrayList<FragmentScan> stripes=getScanSubset(unitEntry.getRetentionTime()-duration*1.5f, unitEntry.getRetentionTime()+duration*1.5f);
-		return quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes, integrateEverything, wasInferred, params);
+		// widened to 3x the expected size (+/-1.5) of the peak to make sure we don't miss something by catching just the corner
+		float scanStart=unitEntry.getRetentionTime()-duration*1.5f;
+		float scanStop=unitEntry.getRetentionTime()+duration*1.5f;
+		
+		float previousScanStart=Float.MAX_VALUE;
+		float previousScanStop=0f;
+		while (true) {
+			ArrayList<FragmentScan> stripes=getScanSubset(scanStart, scanStop);
+		
+			TransitionRefinementData data = quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes, integrateEverything, wasInferred, params);
+
+			if (data==null) return null;
+			if (data.getMedianChromatogram().length==0) return data;
+			
+			boolean retry=false;
+			float currentScanStart = stripes.get(0).getScanStartTime();
+			float currentScanStop = stripes.get(stripes.size()-1).getScanStartTime();
+			if (duration>0) {
+				if (data.getMedianChromatogram()[0]>TransitionRefiner.MINIMUM_THRESHOLD_PERCENTAGE&&data.getRange().getStart()==currentScanStart&&previousScanStart!=currentScanStart) {
+					retry=true;
+					scanStart=scanStart-duration;
+					previousScanStart=currentScanStart;
+				}
+				if (data.getMedianChromatogram()[data.getMedianChromatogram().length-1]>TransitionRefiner.MINIMUM_THRESHOLD_PERCENTAGE&&data.getRange().getStop()==currentScanStop&&previousScanStop!=currentScanStop) {
+					retry=true;
+					scanStop=scanStop+duration;
+					previousScanStop=currentScanStop;
+				}
+			}
+			
+			if (!retry) {
+				return data;
+			}
+		}
 	}
 
 	public static TransitionRefinementData quantifyPeptide(PSMPeakScorer scorer, AnnotatedLibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<FragmentScan> stripes, boolean integrateEverything, boolean wasInferred, SearchParameters params) {

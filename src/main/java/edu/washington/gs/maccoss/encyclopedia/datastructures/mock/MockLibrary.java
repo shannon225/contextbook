@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
@@ -77,7 +78,13 @@ public class MockLibrary implements LibraryInterface {
 		return new Range((float)min, (float)max);
 	}
 	
+	@Override
 	public Optional<Path> getSource(SearchParameters parameters) {
 		return Optional.empty();
+	}
+	
+	@Override
+	public List<Path> getSourceFiles() throws IOException, SQLException {
+		return new ArrayList<>();
 	}
 }

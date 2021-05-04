@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import com.google.common.collect.Iterables;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -42,7 +43,7 @@ public class SearchParameterParser {
 		map.put("-enzyme", "trypsin");
 		map.put("-percolatorThreshold", "0.01");
 		map.put("-percolatorProteinThreshold", "0.01");
-		map.put("-percolatorVersionNumber", Byte.toString(PercolatorExecutor.DEFAULT_VERSION_NUMBER));
+		map.put("-percolatorVersionNumber", PercolatorExecutor.DEFAULT_VERSION_NUMBER.toString());
 		map.put(SearchParameters.OPT_PERC_TRAINING_SIZE, Integer.toString(PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE));
 		map.put(SearchParameters.OPT_PERC_TRAINING_THRESH, Float.toString(PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD));
 		map.put("-expectedPeakWidth", "25");
@@ -109,7 +110,7 @@ public class SearchParameterParser {
 		final DigestionEnzyme enzyme;
 		final float percolatorThreshold;
 		final float percolatorProteinThreshold;
-		final int percolatorVersionNumber;
+		final PercolatorVersion percolatorVersionNumber;
 		final int percolatorTrainingSetSize;
 		final float percolatorTrainingSetThreshold;
 		final DataAcquisitionType dataAcquisitionType;
@@ -129,6 +130,7 @@ public class SearchParameterParser {
 		final float rtWindowInMin;
         final boolean filterPeaklists;
         final boolean doNotUseGlobalFDR;
+        final boolean enableAdvancedOptions;
 		
 		String value=parameters.get("-frag");
 		if (value==null) {
@@ -255,7 +257,7 @@ public class SearchParameterParser {
 
 		percolatorThreshold=ParsingUtils.getFloat("-percolatorThreshold", parameters, 0.01f);
 		percolatorProteinThreshold=ParsingUtils.getFloat("-percolatorProteinThreshold", parameters, 0.01f);
-		percolatorVersionNumber=ParsingUtils.getInteger("-percolatorVersionNumber", parameters, 3);
+		percolatorVersionNumber=PercolatorVersion.getVersion(parameters.get("-percolatorVersionNumber"));
 		percolatorTrainingSetSize = ParsingUtils.getInteger(SearchParameters.OPT_PERC_TRAINING_SIZE, parameters, PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE);
 		percolatorTrainingSetThreshold = ParsingUtils.getFloat(SearchParameters.OPT_PERC_TRAINING_THRESH, parameters, PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD);
 
@@ -321,6 +323,7 @@ public class SearchParameterParser {
 		verifyModificationIons=ParsingUtils.getBoolean("-verifyModificationIons", parameters, true);
         filterPeaklists=ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
         doNotUseGlobalFDR=ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
+        enableAdvancedOptions=ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
 
 		return new SearchParameters(
 				aaConstants,
@@ -353,7 +356,8 @@ public class SearchParameterParser {
 				verifyModificationIons,
 				rtWindowInMin,
 				filterPeaklists,
-				doNotUseGlobalFDR
+				doNotUseGlobalFDR,
+				enableAdvancedOptions
 		);
 	}
 }
