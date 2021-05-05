@@ -26,7 +26,7 @@ public class LibraryToBlibConverterIT extends AbstractFileConverterTest {
 
 	@Test
 	public void testConvertElibToLibrary() throws Exception {
-		final Path elib = getResourceAsTempFile(tmpDir, getName(), ".elib", "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia.elib");
+		final Path elib = getResourceAsTempFile(tmpDir, getName(), ".elib", "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia.elib");
 
 		LibraryToBlibConverter.convert(elib.toFile(), out.toFile());
 
@@ -35,7 +35,7 @@ public class LibraryToBlibConverterIT extends AbstractFileConverterTest {
 
 	@Test
 	public void testConvertDlibToLibrary() throws Exception {
-		final Path elib = getResourceAsTempFile(tmpDir, getName(), ".dlib", "/edu/washington/gs/maccoss/encyclopedia/testdata/pan_human_library_600to603.dlib");
+		final Path elib = getResourceAsTempFile(tmpDir, getName(), ".dlib", "/edu/washington/gs/maccoss/encyclopedia/testdata/truncated_pan_human_library.dlib");
 
 		LibraryToBlibConverter.convert(elib.toFile(), out.toFile());
 

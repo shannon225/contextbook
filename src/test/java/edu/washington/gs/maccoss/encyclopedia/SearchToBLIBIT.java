@@ -36,12 +36,18 @@ public class SearchToBLIBIT {
 	private SearchParameters searchParameters;
 	private Path tempDir;
 
-	private Path libraryA;
+	private Path library;
+	private Path fasta;
+
 	private Path diaA;
 	private Path featuresTxtA;
-	private Path fastaA;
 	private Path peptideOutputA;
 	private Path decoyOutputA;
+
+	private Path diaB;
+	private Path featuresTxtB;
+	private Path peptideOutputB;
+	private Path decoyOutputB;
 
 	@Before
 	public void setUp() throws Exception {
@@ -50,38 +56,70 @@ public class SearchToBLIBIT {
 		tempDir = Files.createTempDirectory(name);
 		FileUtils.forceDeleteOnExit(tempDir.toFile());
 
-		libraryA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/pan_human_library_600to603.dlib", tempDir, name, ".dlib");
-		diaA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia", tempDir, name, ".dia");
-		featuresTxtA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia.features.txt", tempDir, name, ".txt");
-		fastaA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/pan_human_library_600to603.fasta", tempDir, name, ".fasta");
-		peptideOutputA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia.encyclopedia.txt", tempDir, name, ".txt");
-		decoyOutputA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia.encyclopedia.decoy.txt", tempDir, name, ".txt");
+		library = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/truncated_pan_human_library.dlib", tempDir, name, ".dlib");
+		fasta = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/uniprot_human_2018.subset.fasta", tempDir, name, ".fasta");
+
+		diaA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia", tempDir, name, ".dia");
+		featuresTxtA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia.features.txt", tempDir, name, ".txt");
+		peptideOutputA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia.encyclopedia.txt", tempDir, name, ".txt");
+		decoyOutputA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia.encyclopedia.decoy.txt", tempDir, name, ".txt");
+
+		diaB = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia", tempDir, name, ".dia");
+		featuresTxtB = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia.features.txt", tempDir, name, ".txt");
+		peptideOutputB = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia.encyclopedia.txt", tempDir, name, ".txt");
+		decoyOutputB = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia.encyclopedia.decoy.txt", tempDir, name, ".txt");
 	}
 
 	@After
 	public void tearDown() throws Exception {
 		searchParameters = null;
 
-		if (null != libraryA) {
-			FileUtils.deleteQuietly(libraryA.toFile());
+		if (null != library) {
+			FileUtils.deleteQuietly(library.toFile());
+			library = null;
 		}
+		if (null != fasta) {
+			FileUtils.deleteQuietly(fasta.toFile());
+			fasta = null;
+		}
+
 		if (null != diaA) {
 			FileUtils.deleteQuietly(diaA.toFile());
+			diaA = null;
 		}
 		if (null != featuresTxtA) {
 			FileUtils.deleteQuietly(featuresTxtA.toFile());
-		}
-		if (null != fastaA) {
-			FileUtils.deleteQuietly(fastaA.toFile());
+			featuresTxtA = null;
 		}
 		if (null != peptideOutputA) {
 			FileUtils.deleteQuietly(peptideOutputA.toFile());
+			peptideOutputA = null;
 		}
 		if (null != decoyOutputA) {
 			FileUtils.deleteQuietly(decoyOutputA.toFile());
+			decoyOutputA = null;
 		}
+
+		if (null != diaB) {
+			FileUtils.deleteQuietly(diaB.toFile());
+			diaB = null;
+		}
+		if (null != featuresTxtB) {
+			FileUtils.deleteQuietly(featuresTxtB.toFile());
+			featuresTxtB = null;
+		}
+		if (null != peptideOutputB) {
+			FileUtils.deleteQuietly(peptideOutputB.toFile());
+			peptideOutputB = null;
+		}
+		if (null != decoyOutputB) {
+			FileUtils.deleteQuietly(decoyOutputB.toFile());
+			decoyOutputB = null;
+		}
+
 		if (null != tempDir) {
 			FileUtils.deleteDirectory(tempDir.toFile());
+			tempDir = null;
 		}
 	}
 
@@ -258,20 +296,11 @@ public class SearchToBLIBIT {
 	}
 
 	private SearchJobData getSearchJobDataA() throws IOException, SQLException {
-		return makeJobData(libraryA, diaA, featuresTxtA, fastaA, peptideOutputA, decoyOutputA);
+		return makeJobData(library, diaA, featuresTxtA, fasta, peptideOutputA, decoyOutputA);
 	}
 
 	private SearchJobData getSearchJobDataB() throws IOException, SQLException {
-		Assume.assumeTrue(false); //TODO: get data B!!
-		throw new UnsupportedOperationException("TODO");
-//		//TODO: move to resources
-//		final Path dia = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/LongSwath_UPS1_40fm_Ecoli_1ug-rep2.dia");
-//		final Path featuresTxt = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/process_run_20201207-0/LongSwath_UPS1_40fm_Ecoli_1ug-rep2.dia.features.txt");
-//		final Path fasta = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/ups-protein-standards.fasta");
-//		final Path peptideOutput = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/process_run_20201207-0/LongSwath_UPS1_40fm_Ecoli_1ug-rep2.dia.xcordia.txt");
-//		final Path decoyOutput = Paths.get("/media/data/sethjust/proteomesoft/xcordia-testing/process_run_20201207-0/LongSwath_UPS1_40fm_Ecoli_1ug-rep2.dia.xcordia.decoy.txt");
-//
-//		return makeXCorDIAJobData(dia, featuresTxt, fasta, peptideOutput, decoyOutput);
+		return makeJobData(library, diaB, featuresTxtB, fasta, peptideOutputB, decoyOutputB);
 	}
 
 	private QuantitativeSearchJobData makeJobData(Path library, Path dia, Path featuresTxt, Path fasta, Path peptideOutput, Path decoyOutput) throws IOException, SQLException {
