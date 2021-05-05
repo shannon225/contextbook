@@ -3,8 +3,11 @@ package edu.washington.gs.maccoss.encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
@@ -18,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class EndToEndIT {
@@ -36,7 +40,7 @@ public class EndToEndIT {
 		tempDir = Files.createTempDirectory(name);
 		FileUtils.forceDeleteOnExit(tempDir.toFile());
 
-		libraryInterface = BlibToLibraryConverter.getFile(getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/pan_human_library_600to603.dlib", tempDir, name, ".elib").toFile());
+		libraryInterface = BlibToLibraryConverter.getFile(getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/truncated_pan_human_library.dlib", tempDir, name, ".elib").toFile());
 		diaFile = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/bcs_2020jan16_600to603_hela_clib.dia", tempDir, name, ".dia").toFile();
 		fastaFile = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/pan_human_library_600to603.fasta", tempDir, name, ".fasta").toFile();
 		libraryScoringFactory = new EncyclopediaOneScoringFactory(parameters);
@@ -67,12 +71,20 @@ public class EndToEndIT {
 	}
 
 	@Test
-	public void testWholePipeline() throws Exception {
+	public void testWholePipelineSingleData() throws Exception {
 		Encyclopedia.runSearch(new EmptyProgressIndicator(),new EncyclopediaJobData(diaFile,fastaFile,libraryInterface,libraryScoringFactory));
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib")));
 
-		File outputFile = FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib");
+		LibraryFile outputFile = new LibraryFile();
+		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib"));
 
-		
+		assertEquals(0,outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
+		assertEquals(0,outputFile.getProteinGroups().size());
+		assertEquals(new Range(600.5,602.5),outputFile.getMinMaxMZ());
+	}
+
+	@Test
+	public void testWholePipelineMultipleData() throws Exception {
+
 	}
 }
