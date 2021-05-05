@@ -27,7 +27,7 @@ public class BlibToLibraryConverterIT extends AbstractFileConverterTest {
 
 	@Test
 	public void testConvertBlibToLibrary() throws Exception {
-		final Path blib = getResourceAsTempFile(tmpDir, getName(), ".blib", "/edu/washington/gs/maccoss/encyclopedia/testdata/YeastDDA_subset.blib");
+		final Path blib = getResourceAsTempFile(tmpDir, getName(), ".blib", "/edu/washington/gs/maccoss/encyclopedia/testdata/2017-07-14-importAQUATransitionList-assay-modAdjustment.blib");
 
 		final LibraryFile library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 
@@ -37,14 +37,13 @@ public class BlibToLibraryConverterIT extends AbstractFileConverterTest {
 			EncyclopediaTestUtils.assertValidDlib(library); // asserts that the resulting file has DLIB extension
 
 			// update if you change the test resource
-			assertEquals("Wrong number of entries", 23, library.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
+			assertEquals("Wrong number of entries", 345, library.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
 		} finally {
 			EncyclopediaTestUtils.cleanupLibrary(library);
 		}
 	}
 
 	Path getFasta() throws IOException {
-		//TODO: this might be a little large
-		return EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/yeast-contam.fasta", tmpDir, NAME, ".fasta");
+		return EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/SGS_AQUAProteins.fasta", tmpDir, NAME, ".fasta");
 	}
 }

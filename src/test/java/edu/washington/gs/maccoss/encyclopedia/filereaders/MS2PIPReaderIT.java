@@ -21,7 +21,7 @@ public class MS2PIPReaderIT extends AbstractFileConverterTest {
 	}
 
 	@Test
-	public void testConvertMspToLibrary() throws Exception {
+	public void testConvertMs2PipToLibrary() throws Exception {
 		// TODO: use an actual resource names instead of made-up ones
 		final Path peprec = getResourceAsTempFile(tmpDir, getName(), ".peprec", "/edu/washington/gs/maccoss/encyclopedia/testdata/ms2pip/simple.peprec");
 		final Path csv = getResourceAsTempFile(tmpDir, getName(), ".csv", "/edu/washington/gs/maccoss/encyclopedia/testdata/ms2pip/simple.csv");

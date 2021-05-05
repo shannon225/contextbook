@@ -26,7 +26,8 @@ public class SpectronautCSVToLibraryConverterIT extends AbstractFileConverterTes
 
 	@Test
 	public void testConvertSpectronautCSVToLibrary() throws Exception {
-		final Path csv = getResourceAsTempFile(tmpDir, getName(), ".csv", "/edu/washington/gs/maccoss/encyclopedia/testdata/coronavirus.abridged.spectronaut");
+		// Note that 81 out of 96 entries are not found in the FASTA from below!
+		final Path csv = getResourceAsTempFile(tmpDir, getName(), ".csv", "/edu/washington/gs/maccoss/encyclopedia/testdata/human.abridged.spectronaut");
 
 		final LibraryFile library = SpectronautCSVToLibraryConverter.convertFromSpectronautCSV(csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 
@@ -36,14 +37,13 @@ public class SpectronautCSVToLibraryConverterIT extends AbstractFileConverterTes
 			EncyclopediaTestUtils.assertValidDlib(library); // asserts that the resulting file has DLIB extension
 
 			// update if you change the test resource -- grep -Po '_([A-Z]+|\[[^\]]+\])+_' src/test/resources/edu/washington/gs/maccoss/encyclopedia/testdata/coronavirus.abridged.spectronaut | sort | uniq | wc -l
-			assertEquals("Wrong number of entries", 45, library.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
+			assertEquals("Wrong number of entries", 96 - 81, library.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
 		} finally {
 			EncyclopediaTestUtils.cleanupLibrary(library);
 		}
 	}
 
 	Path getFasta() throws IOException {
-		//TODO: this is surely too large
-		return EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/2020-02-27_uniprot_organism_coronavirus.fasta", tmpDir, NAME, ".fasta");
+		return EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/uniprot_human_2018.subset.fasta", tmpDir, NAME, ".fasta");
 	}
 }

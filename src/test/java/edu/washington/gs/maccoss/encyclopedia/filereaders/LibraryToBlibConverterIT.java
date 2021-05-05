@@ -30,7 +30,7 @@ public class LibraryToBlibConverterIT extends AbstractFileConverterTest {
 
 		LibraryToBlibConverter.convert(elib.toFile(), out.toFile());
 
-		assertValidWithCount(775); // update if you change the test resource -- SELECT count() FROM Entries;
+		assertValidWithCount(407); // update if you change the test resource -- SELECT count() FROM Entries;
 	}
 
 	@Test
@@ -39,7 +39,7 @@ public class LibraryToBlibConverterIT extends AbstractFileConverterTest {
 
 		LibraryToBlibConverter.convert(elib.toFile(), out.toFile());
 
-		assertValidWithCount(837); // update if you change the test resource -- SELECT count() FROM Entries;
+		assertValidWithCount(4669); // update if you change the test resource -- SELECT count() FROM Entries;
 	}
 
 	private void assertValidWithCount(int count) throws Exception {
