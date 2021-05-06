@@ -49,9 +49,9 @@ public class EndToEndIT {
 	SearchParameters parameters;
 	Path tempDir;
 
-	Range STANDARD_RANGE = new Range(592.5840338877389,604.3740813086648);
-	int MAX_POSSIBLE_PEPTIDES = 4669;
-	int MAX_POSSIBLE_PROTEIN_GROUPS = 6676;
+	static Range STANDARD_RANGE = new Range(592.5840338877389,604.3740813086648);
+	static int MAX_POSSIBLE_PEPTIDES = 4669;
+	static int MAX_POSSIBLE_PROTEIN_GROUPS = 6676;
 
 	@Before
 	public void setUp() throws Exception {
@@ -123,11 +123,7 @@ public class EndToEndIT {
 		LibraryFile outputFile = new LibraryFile();
 		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib"));
 
-		assertTrue(MAX_POSSIBLE_PEPTIDES >= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(400 <= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(MAX_POSSIBLE_PROTEIN_GROUPS >= outputFile.getProteinGroups().size());
-		assertTrue(300 <= outputFile.getProteinGroups().size());
-		assertTrue(STANDARD_RANGE.contains(outputFile.getMinMaxMZ()));
+		assertSanityTest(outputFile,400,300);
 
 		File tempReport = Files.createTempFile(tempDir, "test_",".elib").toFile();
 
@@ -137,11 +133,7 @@ public class EndToEndIT {
 
 		outputFile.openFile(tempReport);
 
-		assertTrue(MAX_POSSIBLE_PEPTIDES >= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(400 <= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(MAX_POSSIBLE_PROTEIN_GROUPS >= outputFile.getProteinGroups().size());
-		assertTrue(300 <= outputFile.getProteinGroups().size());
-		assertTrue(STANDARD_RANGE.contains(outputFile.getMinMaxMZ()));
+		assertSanityTest(outputFile,400,300);
 	}
 
 	@Test
@@ -155,33 +147,21 @@ public class EndToEndIT {
 		LibraryFile outputFile = new LibraryFile();
 		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib"));
 
-		assertTrue(MAX_POSSIBLE_PEPTIDES >= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(400 <= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(MAX_POSSIBLE_PROTEIN_GROUPS >= outputFile.getProteinGroups().size());
-		assertTrue(300 <= outputFile.getProteinGroups().size());
-		assertTrue(STANDARD_RANGE.contains(outputFile.getMinMaxMZ()));
+		assertSanityTest(outputFile,400,300);
 
 		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobDataB);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),FileUtils.getFile(tempDir.toFile(),diaFile2.getName() + ".elib")));
 
 		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile2.getName() + ".elib"));
 
-		assertTrue(MAX_POSSIBLE_PEPTIDES >= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(400 <= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(MAX_POSSIBLE_PROTEIN_GROUPS >= outputFile.getProteinGroups().size());
-		assertTrue(300 <= outputFile.getProteinGroups().size());
-		assertTrue(STANDARD_RANGE.contains(outputFile.getMinMaxMZ()));
+		assertSanityTest(outputFile,400,300);
 
 		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobDataC);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),FileUtils.getFile(tempDir.toFile(),diaFile3.getName() + ".elib")));
 
 		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile3.getName() + ".elib"));
 
-		assertTrue(MAX_POSSIBLE_PROTEIN_GROUPS >= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(400 <= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(MAX_POSSIBLE_PROTEIN_GROUPS >= outputFile.getProteinGroups().size());
-		assertTrue(400 <= outputFile.getProteinGroups().size());
-		assertTrue(STANDARD_RANGE.contains(outputFile.getMinMaxMZ()));
+		assertSanityTest(outputFile,400,400);
 
 		File tempReport = Files.createTempFile(tempDir, "test_",".elib").toFile();
 
@@ -191,11 +171,7 @@ public class EndToEndIT {
 
 		outputFile.openFile(tempReport);
 
-		assertTrue(MAX_POSSIBLE_PEPTIDES >= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(1200 <= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(MAX_POSSIBLE_PROTEIN_GROUPS >= outputFile.getProteinGroups().size());
-		assertTrue(400 <= outputFile.getProteinGroups().size());
-		assertTrue(STANDARD_RANGE.contains(outputFile.getMinMaxMZ()));
+		assertSanityTest(outputFile,1200,400);
 	}
 
 	@Test
@@ -220,10 +196,14 @@ public class EndToEndIT {
 
 		outputFile.openFile(tempReport);
 
+		assertSanityTest(outputFile,1200,400);
+	}
+
+	public static void assertSanityTest(LibraryFile outputFile, int peptideFloor, int proteinFloor) throws Exception {
 		assertTrue(MAX_POSSIBLE_PEPTIDES >= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(1200 <= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
+		assertTrue(peptideFloor <= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
 		assertTrue(MAX_POSSIBLE_PROTEIN_GROUPS >= outputFile.getProteinGroups().size());
-		assertTrue(400 <= outputFile.getProteinGroups().size());
+		assertTrue(proteinFloor <= outputFile.getProteinGroups().size());
 		assertTrue(STANDARD_RANGE.contains(outputFile.getMinMaxMZ()));
 	}
 }
