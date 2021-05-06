@@ -18,7 +18,9 @@ import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,7 +42,10 @@ public class EndToEndIT {
 
 	@Before
 	public void setUp() throws Exception {
-		if (Boolean.getBoolean(System.getProperty("java.awt.headless")) && "1.8".equals(System.getProperty("java.specification.version"))) {
+		if (GraphicsEnvironment.isHeadless() && "1.8".equals(System.getProperty("java.specification.version"))) {
+			LoggerFactory.getLogger(EndToEndIT.class)
+					.info("Disabling assistive technologies to avoid errors in headless build on Java 8!");
+
 			// On JDK 8 running headless we can encounter problems if this is set by the system
 			// installation; by overwriting it we avoid errors with JFreeChart. This is not an
 			// issue on later releases that will better respect the headless flag.
