@@ -22,9 +22,8 @@ public class MS2PIPReaderIT extends AbstractFileConverterTest {
 
 	@Test
 	public void testConvertMs2PipToLibrary() throws Exception {
-		// TODO: use an actual resource names instead of made-up ones
-		final Path peprec = getResourceAsTempFile(tmpDir, getName(), ".peprec", "/edu/washington/gs/maccoss/encyclopedia/testdata/ms2pip/simple.peprec");
-		final Path csv = getResourceAsTempFile(tmpDir, getName(), ".csv", "/edu/washington/gs/maccoss/encyclopedia/testdata/ms2pip/simple.csv");
+		final Path peprec = getResourceAsTempFile(tmpDir, getName(), ".peprec", "/edu/washington/gs/maccoss/encyclopedia/testdata/SGS_AQUAProteins.fasta.trypsin.peprec");
+		final Path csv = getResourceAsTempFile(tmpDir, getName(), ".csv", "/edu/washington/gs/maccoss/encyclopedia/testdata/SGS_AQUAProteins.fasta.trypsin.ms2pip_predictions.csv");
 
 		final LibraryFile library = MS2PIPReader.convertMS2PIP(peprec.toFile(), csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 		try {
