@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
+import com.google.common.collect.ImmutableList;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -46,7 +47,7 @@ public class EndToEndIT {
 
 		libraryInterface = BlibToLibraryConverter.getFile(getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/truncated_pan_human_library.dlib", tempDir, name, ".elib").toFile());
 		diaFile = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia", tempDir, name, ".dia").toFile();
-		fastaFile = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/SGS_AQUAProteins.fasta", tempDir, name, ".fasta").toFile();
+		fastaFile = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/uniprot_human_2018.subset.fasta", tempDir, name, ".fasta").toFile();
 		libraryScoringFactory = new EncyclopediaOneScoringFactory(parameters);
 
 		tableModel = new JobProcessorTableModel();
@@ -78,7 +79,8 @@ public class EndToEndIT {
 
 	@Test
 	public void testWholePipelineSingleData() throws Exception {
-		Encyclopedia.runSearch(new EmptyProgressIndicator(),new EncyclopediaJobData(diaFile,fastaFile,libraryInterface,libraryScoringFactory));
+		EncyclopediaJobData jobDataA = new EncyclopediaJobData(diaFile,fastaFile,libraryInterface,libraryScoringFactory);
+		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobDataA);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib")));
 
 		LibraryFile outputFile = new LibraryFile();
@@ -95,7 +97,7 @@ public class EndToEndIT {
 
 		tempReport.delete();
 		assertNotNull(job);
-		//SearchToBLIB.convert(job.getProgressIndicator(),job);
+		SearchToBLIB.convert(job.getProgressIndicator(), ImmutableList.of(jobDataA),tempReport,false,true);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),tempReport));
 
 		outputFile.openFile(tempReport);
@@ -110,7 +112,10 @@ public class EndToEndIT {
 		File diaFile2 = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia", tempDir, "EndToEnd", ".dia").toFile();
 		File diaFile3 = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_3_600.dia", tempDir, "EndToEnd", ".dia").toFile();
 
-		Encyclopedia.runSearch(new EmptyProgressIndicator(),new EncyclopediaJobData(diaFile,fastaFile,libraryInterface,libraryScoringFactory));
+		EncyclopediaJobData jobDataA = new EncyclopediaJobData(diaFile,fastaFile,libraryInterface,libraryScoringFactory);
+		EncyclopediaJobData jobDataB = new EncyclopediaJobData(diaFile2,fastaFile,libraryInterface,libraryScoringFactory);
+		EncyclopediaJobData jobDataC = new EncyclopediaJobData(diaFile3,fastaFile,libraryInterface,libraryScoringFactory);
+		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobDataA);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib")));
 
 		LibraryFile outputFile = new LibraryFile();
@@ -120,7 +125,7 @@ public class EndToEndIT {
 		assertEquals(348,outputFile.getProteinGroups().size());
 		assertEquals(new Range(592.6138073613809,604.3740813086648),outputFile.getMinMaxMZ());
 
-		Encyclopedia.runSearch(new EmptyProgressIndicator(),new EncyclopediaJobData(diaFile2,fastaFile,libraryInterface,libraryScoringFactory));
+		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobDataB);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),FileUtils.getFile(tempDir.toFile(),diaFile2.getName() + ".elib")));
 
 		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile2.getName() + ".elib"));
@@ -129,7 +134,7 @@ public class EndToEndIT {
 		assertEquals(374,outputFile.getProteinGroups().size());
 		assertEquals(new Range(592.5840338877389,604.3740813086648),outputFile.getMinMaxMZ());
 
-		Encyclopedia.runSearch(new EmptyProgressIndicator(),new EncyclopediaJobData(diaFile3,fastaFile,libraryInterface,libraryScoringFactory));
+		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobDataC);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),FileUtils.getFile(tempDir.toFile(),diaFile3.getName() + ".elib")));
 
 		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile3.getName() + ".elib"));
@@ -137,10 +142,55 @@ public class EndToEndIT {
 		assertEquals(554,outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
 		assertEquals(458,outputFile.getProteinGroups().size());
 		assertEquals(new Range(592.6138073613809,604.3740813086648),outputFile.getMinMaxMZ());
+
+		File tempReport = Files.createTempFile(tempDir, "test_",".elib").toFile();
+
+		SearchToELIBJob job=new SearchToELIBJob(tempReport, false, tableModel);
+		tableModel.addJob(job);
+
+		tempReport.delete();
+		assertNotNull(job);
+		SearchToBLIB.convert(job.getProgressIndicator(), ImmutableList.of(jobDataA,jobDataB,jobDataC),tempReport,false,false);
+		assertTrue(FileUtils.directoryContains(tempDir.toFile(),tempReport));
+
+		outputFile.openFile(tempReport);
+
+		assertEquals(1890,outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
+		assertEquals(481,outputFile.getProteinGroups().size());
+		assertEquals(new Range(592.5840338877389,604.3740813086648),outputFile.getMinMaxMZ());
 	}
 
 	@Test
 	public void testWholePipelineMultipleDataQuant() throws Exception {
+		File diaFile2 = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia", tempDir, "EndToEnd", ".dia").toFile();
+		File diaFile3 = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_3_600.dia", tempDir, "EndToEnd", ".dia").toFile();
 
+		EncyclopediaJobData jobDataA = new EncyclopediaJobData(diaFile,fastaFile,libraryInterface,libraryScoringFactory);
+		EncyclopediaJobData jobDataB = new EncyclopediaJobData(diaFile2,fastaFile,libraryInterface,libraryScoringFactory);
+		EncyclopediaJobData jobDataC = new EncyclopediaJobData(diaFile3,fastaFile,libraryInterface,libraryScoringFactory);
+		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobDataA);
+		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobDataB);
+		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobDataC);
+
+		LibraryFile outputFile = new LibraryFile();
+
+		//the output assertions here would be the same as for testWholePipelineMultipleData, no sense
+		//checking them twice
+
+		File tempReport = Files.createTempFile(tempDir, "test_",".elib").toFile();
+
+		SearchToELIBJob job=new SearchToELIBJob(tempReport, true, tableModel);
+		tableModel.addJob(job);
+
+		tempReport.delete();
+		assertNotNull(job);
+		SearchToBLIB.convert(job.getProgressIndicator(), ImmutableList.of(jobDataA,jobDataB,jobDataC),tempReport,false,true);
+		assertTrue(FileUtils.directoryContains(tempDir.toFile(),tempReport));
+
+		outputFile.openFile(tempReport);
+
+		assertEquals(1716,outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
+		assertEquals(481,outputFile.getProteinGroups().size());
+		assertEquals(new Range(592.5840338877389,604.3740813086648),outputFile.getMinMaxMZ());
 	}
 }
