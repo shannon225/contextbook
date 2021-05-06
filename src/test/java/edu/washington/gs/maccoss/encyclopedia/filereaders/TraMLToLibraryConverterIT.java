@@ -36,13 +36,13 @@ public class TraMLToLibraryConverterIT extends AbstractFileConverterTest {
 			EncyclopediaTestUtils.assertValidDlib(library);
 
 			// update if you change the test resource
-			assertEquals("TODO: Wrong number of entries", -1, library.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
+			assertEquals("TODO: Wrong number of entries", 10, library.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
 		} finally {
 			EncyclopediaTestUtils.cleanupLibrary(library);
 		}
 	}
 
 	Path getFasta() throws IOException {
-		return EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/ecoli-190209-contam_correctNL.fasta", tmpDir, NAME, ".fasta");
+		return EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/OpenSWATH_SM4_iRT_AssayLibrary.fasta", tmpDir, NAME, ".fasta");
 	}
 }
