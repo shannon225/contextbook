@@ -40,6 +40,14 @@ public class EndToEndIT {
 
 	@Before
 	public void setUp() throws Exception {
+		if (Boolean.getBoolean(System.getProperty("java.awt.headless")) && "1.8".equals(System.getProperty("java.specification.version"))) {
+			// On JDK 8 running headless we can encounter problems if this is set by the system
+			// installation; by overwriting it we avoid errors with JFreeChart. This is not an
+			// issue on later releases that will better respect the headless flag.
+			// See https://stackoverflow.com/a/59397731/115714
+			System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
+		}
+
 		parameters = SearchParameterParser.getDefaultParametersObject();
 		String name = "EndToEnd";
 		tempDir = Files.createTempDirectory(name);
