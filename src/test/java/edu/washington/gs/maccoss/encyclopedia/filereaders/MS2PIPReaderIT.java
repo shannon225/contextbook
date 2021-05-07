@@ -1,11 +1,14 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.tests.AbstractFileConverterTest;
 import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
+
+import static org.junit.Assert.assertEquals;
 
 public class MS2PIPReaderIT extends AbstractFileConverterTest {
 	public static final String NAME = "MS2PIPReaderIT";
@@ -28,12 +31,15 @@ public class MS2PIPReaderIT extends AbstractFileConverterTest {
 		final LibraryFile library = MS2PIPReader.convertMS2PIP(peprec.toFile(), csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library);
+
+			// update if you change the test resource -- one less than `wc -l SGS_AQUAProteins.fasta.trypsin.peprec`
+			assertEquals("Wrong number of entries", 874, library.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
 		} finally {
 			EncyclopediaTestUtils.cleanupLibrary(library);
 		}
 	}
 
 	Path getFasta() throws IOException {
-		return EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/ecoli-190209-contam_correctNL.fasta", tmpDir, NAME, ".fasta");
+		return EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/SGS_AQUAProteins.fasta", tmpDir, NAME, ".fasta");
 	}
 }
