@@ -12,12 +12,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
+import java.util.List;
 
-import java.awt.GraphicsEnvironment;
+import java.awt.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
 import static org.junit.Assert.assertTrue;
@@ -171,6 +171,80 @@ public abstract class AbstractEndToEndIT {
 		assertSanityTest(outputFile,getPeptideFloor() * 3,getProteinFloor());
 	}
 
+	@Test
+	public void testSingleDataRegression() throws Exception {
+		SearchJobData jobDataA = makeAndDoJob(diaFile);
+
+		LibraryFile outputFile = new LibraryFile();
+		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib"));
+
+		assertValidBasedOnReference(outputFile,getReferenceSearches()[0]);
+		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA),tempReport,false,true);
+		assertTrue(FileUtils.directoryContains(tempDir.toFile(),tempReport));
+
+		outputFile.openFile(tempReport);
+
+		assertValidBasedOnReference(outputFile,getReferenceSingleQuant());
+	}
+
+	@Test
+	public void testMultipleDataRegression() throws Exception {
+		SearchJobData jobDataA = makeAndDoJob(diaFile);
+		SearchJobData jobDataB = makeAndDoJob(diaFile2);
+		SearchJobData jobDataC = makeAndDoJob(diaFile3);
+
+		LibraryFile outputFile = new LibraryFile();
+		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib"));
+		assertValidBasedOnReference(outputFile,getReferenceSearches()[0]);
+
+		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile2.getName() + ".elib"));
+		assertValidBasedOnReference(outputFile,getReferenceSearches()[1]);
+
+		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile3.getName() + ".elib"));
+		assertValidBasedOnReference(outputFile,getReferenceSearches()[2]);
+
+		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA,jobDataB,jobDataC),tempReport,false,false);
+		outputFile.openFile(tempReport);
+		assertValidBasedOnReference(outputFile,getReferenceMulti());
+	}
+
+	@Test
+	public void testMultipleDataQuantRegression() throws Exception {
+		SearchJobData jobDataA = makeAndDoJob(diaFile);
+		SearchJobData jobDataB = makeAndDoJob(diaFile2);
+		SearchJobData jobDataC = makeAndDoJob(diaFile3);
+
+		LibraryFile outputFile = new LibraryFile();
+		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA,jobDataB,jobDataC),tempReport,false,false);
+		outputFile.openFile(tempReport);
+		assertValidBasedOnReference(outputFile,getReferenceMultiQuant());
+	}
+
+	public static void assertValidBasedOnReference(LibraryFile newFile, LibraryFile reference) throws Exception {
+		List<LibraryEntry> peptides = newFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable());
+		List<LibraryEntry> expectedPeptides = reference.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable());
+
+		System.out.println(peptides.size());
+		System.out.println(expectedPeptides.size());
+
+		assertTrue (peptides.size() > (0.95) * expectedPeptides.size()
+				&& peptides.size() < (1.05) * expectedPeptides.size());
+
+		int peptideMatches = 0;
+
+		for (LibraryEntry entry : peptides) {
+			if (expectedPeptides.stream().anyMatch(e ->
+					e.getPeptideModSeq().equals(entry.getPeptideModSeq())
+					&& (Math.abs(e.getRetentionTime() - entry.getRetentionTime()) < 0.01))){
+				peptideMatches++;
+			}
+		}
+
+		double percentage = peptideMatches / ((double)Math.min(peptides.size(),expectedPeptides.size()));
+
+		assertTrue(percentage > 0.95);
+	}
+
 	public static void assertSanityTest(LibraryFile outputFile, int peptideFloor, int proteinFloor) throws Exception {
 		int peptideCount = outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size();
 		int proteinCount = outputFile.getProteinGroups().size();
@@ -189,4 +263,12 @@ public abstract class AbstractEndToEndIT {
 	public abstract int getPeptideFloor();
 
 	public abstract int getProteinFloor();
+
+	public abstract LibraryFile[] getReferenceSearches() throws Exception;
+
+	public abstract LibraryFile getReferenceSingleQuant() throws Exception;
+
+	public abstract LibraryFile getReferenceMulti() throws Exception;
+
+	public abstract LibraryFile getReferenceMultiQuant() throws Exception;
 }
