@@ -73,7 +73,8 @@ public class OpenSwathTSVToLibraryConverterTest extends AbstractFileConverterTes
 	public void testConvertEmptyFile() throws Exception {
 		final Path csv = Files.createTempFile(tmpDir, NAME, ".csv");
 
-		final LibraryInterface library = OpenSwathTSVToLibraryConverter.convertFromOpenSwathTSV(csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		final LibraryFile library = OpenSwathTSVToLibraryConverter.convertFromOpenSwathTSV(csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		library.openFile();
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library);
 

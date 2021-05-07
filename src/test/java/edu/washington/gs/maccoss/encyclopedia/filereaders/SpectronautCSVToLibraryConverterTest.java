@@ -52,7 +52,8 @@ public class SpectronautCSVToLibraryConverterTest extends AbstractFileConverterT
 	public void testConvertEmptyFile() throws Exception {
 		final Path csv = Files.createTempFile(tmpDir, NAME, ".csv");
 
-		final LibraryInterface library = SpectronautCSVToLibraryConverter.convertFromSpectronautCSV(csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		final LibraryFile library = SpectronautCSVToLibraryConverter.convertFromSpectronautCSV(csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		library.openFile();
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library);
 
