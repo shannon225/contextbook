@@ -46,6 +46,8 @@ public class LibraryToBlibConverterTest extends AbstractFileConverterTest {
 		blib.openFile(out.toFile());
 		try {
 			EncyclopediaTestUtils.assertValidBlib(blib);
+
+			EncyclopediaTestUtils.assertEmptyBlib(blib);
 		} finally {
 			EncyclopediaTestUtils.cleanupBlib(blib);
 		}
