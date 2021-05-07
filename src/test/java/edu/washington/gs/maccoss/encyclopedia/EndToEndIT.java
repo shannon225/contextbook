@@ -199,10 +199,15 @@ public class EndToEndIT {
 	}
 
 	public static void assertSanityTest(LibraryFile outputFile, int peptideFloor, int proteinFloor) throws Exception {
-		assertTrue(MAX_POSSIBLE_PEPTIDES >= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(peptideFloor <= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(MAX_POSSIBLE_PROTEIN_GROUPS >= outputFile.getProteinGroups().size());
-		assertTrue(proteinFloor <= outputFile.getProteinGroups().size());
+		int peptideCount = outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size();
+		int proteinCount = outputFile.getProteinGroups().size();
+
+		System.out.println("Peptides: " + peptideCount);
+		System.out.println("Proteins: " + proteinCount);
+		assertTrue(MAX_POSSIBLE_PEPTIDES >= peptideCount);
+		assertTrue(peptideFloor <= peptideCount);
+		assertTrue(MAX_POSSIBLE_PROTEIN_GROUPS >= proteinCount);
+		assertTrue(proteinFloor <= proteinCount);
 		assertTrue(STANDARD_RANGE.contains(outputFile.getMinMaxMZ()));
 	}
 }
