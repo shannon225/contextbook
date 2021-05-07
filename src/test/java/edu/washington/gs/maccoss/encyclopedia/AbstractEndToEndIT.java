@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.ImmutableList;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -12,10 +13,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
 
-import java.awt.*;
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
 import static org.junit.Assert.assertTrue;
@@ -54,7 +56,7 @@ public abstract class AbstractEndToEndIT {
 		String name = "EndToEnd";
 		tempDir = Files.createTempDirectory(name);
 		FileUtils.forceDeleteOnExit(tempDir.toFile());
-		libraryFile = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/truncated_pan_human_library.dlib", tempDir, name, ".elib").toFile();
+		libraryFile = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/truncated_pan_human_library.dlib", tempDir, name, ".dlib").toFile();
 		libraryInterface = new LibraryFile() {{openFile(libraryFile);}};
 		diaFile = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia", tempDir, name, ".dia").toFile();
 
@@ -170,12 +172,15 @@ public abstract class AbstractEndToEndIT {
 	}
 
 	public static void assertSanityTest(LibraryFile outputFile, int peptideFloor, int proteinFloor) throws Exception {
-		System.out.println("Peptides: " + outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		System.out.println("Proteins: " + outputFile.getProteinGroups().size());
-		assertTrue(MAX_POSSIBLE_PEPTIDES >= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(peptideFloor <= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(MAX_POSSIBLE_PROTEIN_GROUPS >= outputFile.getProteinGroups().size());
-		assertTrue(proteinFloor <= outputFile.getProteinGroups().size());
+		int peptideCount = outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size();
+		int proteinCount = outputFile.getProteinGroups().size();
+
+		System.out.println("Peptides: " + peptideCount);
+		System.out.println("Proteins: " + proteinCount);
+		assertTrue(MAX_POSSIBLE_PEPTIDES >= peptideCount);
+		assertTrue(peptideFloor <= peptideCount);
+		assertTrue(MAX_POSSIBLE_PROTEIN_GROUPS >= proteinCount);
+		assertTrue(proteinFloor <= proteinCount);
 		assertTrue(STANDARD_RANGE.contains(outputFile.getMinMaxMZ()));
 	}
 
