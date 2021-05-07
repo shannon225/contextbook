@@ -1,25 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.ImmutableList;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
-import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchToELIBJob;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
-import gnu.trove.map.hash.TCharDoubleHashMap;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -31,26 +19,25 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
-import java.util.concurrent.ForkJoinPool;
 
+import static edu.washington.gs.maccoss.encyclopedia.EndToEndIT.assertSanityTest;
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
-public class EndToEndIT {
+public class XCorDIAEndToEndIT {
 
 	File diaFile;
 	File diaFile2;
 	File diaFile3;
 
 	File fastaFile;
-	File libraryFile;
-	LibraryFile libraryInterface;
 
 	File tempReport;
 
-	LibraryScoringFactory libraryScoringFactory;
-	SearchParameters parameters;
+	PecanSearchParameters parameters;
 	Path tempDir;
+
+	XCorDIAOneScoringFactory factory;
 
 	static Range STANDARD_RANGE = new Range(592.5840338877389,604.3740813086648);
 	static int MAX_POSSIBLE_PEPTIDES = 4669;
@@ -69,18 +56,16 @@ public class EndToEndIT {
 			System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
 		}
 
-		parameters = SearchParameterParser.getDefaultParametersObject();
+		parameters = PecanParameterParser.getDefaultParametersObject();
+		factory = new XCorDIAOneScoringFactory(parameters);
 		String name = "EndToEnd";
 		tempDir = Files.createTempDirectory(name);
 		FileUtils.forceDeleteOnExit(tempDir.toFile());
-		libraryFile = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/truncated_pan_human_library.dlib", tempDir, name, ".elib").toFile();
-		libraryInterface = new LibraryFile() {{openFile(libraryFile);}};
 		diaFile = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia", tempDir, name, ".dia").toFile();
 
 		diaFile2 = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia", tempDir, "EndToEnd", ".dia").toFile();
 		diaFile3 = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_3_600.dia", tempDir, "EndToEnd", ".dia").toFile();
 		fastaFile = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/uniprot_human_2018.subset.fasta", tempDir, name, ".fasta").toFile();
-		libraryScoringFactory = new EncyclopediaOneScoringFactory(parameters);
 
 		tempReport = Files.createTempFile(tempDir, "test_",".elib").toFile();
 		tempReport.delete();
@@ -89,14 +74,6 @@ public class EndToEndIT {
 	@After
 	public void tearDown() throws Exception {
 		parameters = null;
-		if (null != libraryInterface) {
-			libraryInterface.close();
-			libraryInterface = null;
-		}
-		if (null != libraryFile){
-			FileUtils.deleteQuietly(libraryFile);
-			libraryFile = null;
-		}
 		if (null != diaFile) {
 			FileUtils.deleteQuietly(diaFile);
 			diaFile = null;
@@ -121,14 +98,14 @@ public class EndToEndIT {
 			FileUtils.deleteDirectory(tempDir.toFile());
 			tempDir = null;
 		}
-		libraryScoringFactory = null;
 	}
 
 	@Test
 	public void testWholePipelineSingleData() throws Exception {
-		EncyclopediaJobData jobDataA = new EncyclopediaJobData(diaFile,fastaFile,libraryInterface,libraryScoringFactory);
-		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobDataA);
-		assertTrue(FileUtils.directoryContains(tempDir.toFile(),FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib")));
+		XCorDIAJobData jobDataA=new XCorDIAJobData(Optional.empty(), Optional.empty(), diaFile, fastaFile, new File(diaFile.getAbsolutePath()+XCorDIAJobData.OUTPUT_FILE_SUFFIX), factory);
+
+		XCorDIA.runPie(new EmptyProgressIndicator(), jobDataA);
+		assertTrue(FileUtils.directoryContains(tempDir.toFile(),FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".xcordia.txt")));
 
 		LibraryFile outputFile = new LibraryFile();
 		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib"));
@@ -144,10 +121,10 @@ public class EndToEndIT {
 
 	@Test
 	public void testWholePipelineMultipleData() throws Exception {
-		EncyclopediaJobData jobDataA = new EncyclopediaJobData(diaFile,fastaFile,libraryInterface,libraryScoringFactory);
-		EncyclopediaJobData jobDataB = new EncyclopediaJobData(diaFile2,fastaFile,libraryInterface,libraryScoringFactory);
-		EncyclopediaJobData jobDataC = new EncyclopediaJobData(diaFile3,fastaFile,libraryInterface,libraryScoringFactory);
-		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobDataA);
+		XCorDIAJobData jobDataA=new XCorDIAJobData(Optional.empty(), Optional.empty(), diaFile, fastaFile, new File(diaFile.getAbsolutePath()+XCorDIAJobData.OUTPUT_FILE_SUFFIX), factory);
+		XCorDIAJobData jobDataB=new XCorDIAJobData(Optional.empty(), Optional.empty(), diaFile2, fastaFile, new File(diaFile2.getAbsolutePath()+XCorDIAJobData.OUTPUT_FILE_SUFFIX), factory);
+		XCorDIAJobData jobDataC=new XCorDIAJobData(Optional.empty(), Optional.empty(), diaFile3, fastaFile, new File(diaFile3.getAbsolutePath()+XCorDIAJobData.OUTPUT_FILE_SUFFIX), factory);
+		XCorDIA.runPie(new EmptyProgressIndicator(), jobDataA);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib")));
 
 		LibraryFile outputFile = new LibraryFile();
@@ -155,14 +132,14 @@ public class EndToEndIT {
 
 		assertSanityTest(outputFile,400,300);
 
-		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobDataB);
+		XCorDIA.runPie(new EmptyProgressIndicator(), jobDataB);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),FileUtils.getFile(tempDir.toFile(),diaFile2.getName() + ".elib")));
 
 		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile2.getName() + ".elib"));
 
 		assertSanityTest(outputFile,400,300);
 
-		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobDataC);
+		XCorDIA.runPie(new EmptyProgressIndicator(), jobDataC);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),FileUtils.getFile(tempDir.toFile(),diaFile3.getName() + ".elib")));
 
 		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile3.getName() + ".elib"));
@@ -179,12 +156,13 @@ public class EndToEndIT {
 
 	@Test
 	public void testWholePipelineMultipleDataQuant() throws Exception {
-		EncyclopediaJobData jobDataA = new EncyclopediaJobData(diaFile,fastaFile,libraryInterface,libraryScoringFactory);
-		EncyclopediaJobData jobDataB = new EncyclopediaJobData(diaFile2,fastaFile,libraryInterface,libraryScoringFactory);
-		EncyclopediaJobData jobDataC = new EncyclopediaJobData(diaFile3,fastaFile,libraryInterface,libraryScoringFactory);
-		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobDataA);
-		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobDataB);
-		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobDataC);
+
+		XCorDIAJobData jobDataA=new XCorDIAJobData(Optional.empty(), Optional.empty(), diaFile, fastaFile, new File(diaFile.getAbsolutePath()+XCorDIAJobData.OUTPUT_FILE_SUFFIX), factory);
+		XCorDIAJobData jobDataB=new XCorDIAJobData(Optional.empty(), Optional.empty(), diaFile2, fastaFile, new File(diaFile2.getAbsolutePath()+XCorDIAJobData.OUTPUT_FILE_SUFFIX), factory);
+		XCorDIAJobData jobDataC=new XCorDIAJobData(Optional.empty(), Optional.empty(), diaFile3, fastaFile, new File(diaFile3.getAbsolutePath()+XCorDIAJobData.OUTPUT_FILE_SUFFIX), factory);
+		XCorDIA.runPie(new EmptyProgressIndicator(), jobDataA);
+		XCorDIA.runPie(new EmptyProgressIndicator(),jobDataB);
+		XCorDIA.runPie(new EmptyProgressIndicator(),jobDataC);
 
 		LibraryFile outputFile = new LibraryFile();
 
@@ -198,11 +176,4 @@ public class EndToEndIT {
 		assertSanityTest(outputFile,1200,400);
 	}
 
-	public static void assertSanityTest(LibraryFile outputFile, int peptideFloor, int proteinFloor) throws Exception {
-		assertTrue(MAX_POSSIBLE_PEPTIDES >= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(peptideFloor <= outputFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
-		assertTrue(MAX_POSSIBLE_PROTEIN_GROUPS >= outputFile.getProteinGroups().size());
-		assertTrue(proteinFloor <= outputFile.getProteinGroups().size());
-		assertTrue(STANDARD_RANGE.contains(outputFile.getMinMaxMZ()));
-	}
 }
