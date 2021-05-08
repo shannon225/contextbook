@@ -215,7 +215,7 @@ public abstract class AbstractEndToEndIT {
 		SearchJobData jobDataC = makeAndDoJob(diaFile3);
 
 		LibraryFile outputFile = new LibraryFile();
-		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA,jobDataB,jobDataC),tempReport,false,false);
+		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA,jobDataB,jobDataC),tempReport,false,true);
 		outputFile.openFile(tempReport);
 		assertValidBasedOnReference(outputFile,getReferenceMultiQuant());
 	}
