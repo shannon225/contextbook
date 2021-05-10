@@ -60,7 +60,7 @@ public abstract class AbstractEndToEndIT {
 	static int MAX_POSSIBLE_PROTEIN_GROUPS = 6676;
 
 	@BeforeClass
-	public static void buildReports() throws Exception {
+	public static void setUpClass() throws Exception {
 		if (GraphicsEnvironment.isHeadless() && "1.8".equals(System.getProperty("java.specification.version"))) {
 			LoggerFactory.getLogger(EncyclopediaEndToEndIT.class)
 					.info("Disabling assistive technologies to avoid errors in headless build on Java 8!");
@@ -99,7 +99,7 @@ public abstract class AbstractEndToEndIT {
 	}
 
 	@AfterClass
-	public static void tearDownReports() throws Exception {
+	public static void tearDownClass() throws Exception {
 		tempReport = null;
 		jobDataA = null;
 		jobDataB = null;
@@ -290,4 +290,8 @@ public abstract class AbstractEndToEndIT {
 	public abstract LibraryFile getReferenceMulti() throws Exception;
 
 	public abstract LibraryFile getReferenceMultiQuant() throws Exception;
+
+	protected static void copyJobDataToResultsDirectory(SearchJobData jobData, String resourcePath) {
+		throw new UnsupportedOperationException("TODO");
+	}
 }

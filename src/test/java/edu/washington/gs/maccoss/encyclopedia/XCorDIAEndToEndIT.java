@@ -18,6 +18,12 @@ import java.util.Optional;
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
 
 public class XCorDIAEndToEndIT extends AbstractEndToEndIT{
+	static final String REFERENCE_SEARCH1_RESOURCE = "/edu/washington/gs/maccoss/encyclopedia/reference_data/xcorr_dia_1.elib";
+	static final String REFERENCE_SEARCH2_RESOURCE = "/edu/washington/gs/maccoss/encyclopedia/reference_data/xcorr_dia_2.elib";
+	static final String REFERENCE_SEARCH3_ELIB = "/edu/washington/gs/maccoss/encyclopedia/reference_data/xcorr_dia_3.elib";
+	static final String REFERENCE_SINGLE_QUANT_RESOURCE = "/edu/washington/gs/maccoss/encyclopedia/reference_data/xcorr_single.elib";
+	static final String REFERENCE_MULTI_RESOURCE = "/edu/washington/gs/maccoss/encyclopedia/reference_data/xcorr_multi.elib";
+	static final String REFERENCE_MULTI_QUANT_RESOURCE = "/edu/washington/gs/maccoss/encyclopedia/reference_data/xcorr_multi_quant.elib";
 
 	static PecanSearchParameters parameters;
 	static XCorDIAOneScoringFactory factory;
@@ -31,21 +37,21 @@ public class XCorDIAEndToEndIT extends AbstractEndToEndIT{
 	static int PROTEIN_FLOOR = 400;
 
 	@BeforeClass
-	public static void setParameters() throws Exception {
+	public static void buildReports() throws Exception {
 		parameters = PecanParameterParser.parseParameters(new HashMap<>(ImmutableMap.of(
 				"-percolatorThreshold", "0.25",
 				"-percolatorTrainingFDR","0.25",
 				"-percolatorProteinThreshold","0.25")));
 		factory = new XCorDIAOneScoringFactory(parameters);
-		buildReports();
+		setUpClass();
 		jobDataA = makeAndDoJob(diaFile);
 		jobDataB = makeAndDoJob(diaFile2);
 		jobDataC = makeAndDoJob(diaFile3);
 	}
 
 	@AfterClass
-	public static void tearDownParameters() throws Exception {
-		tearDownReports();
+	public static void tearDownReports() throws Exception {
+		tearDownClass();
 		parameters = null;
 		factory = null;
 	}
@@ -68,34 +74,43 @@ public class XCorDIAEndToEndIT extends AbstractEndToEndIT{
 
 	@Override
 	public LibraryFile[] getReferenceSearches() throws Exception {
-		File referenceSearch1File = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/current_reports/xcorr_dia_1.elib", tempDir, "reference1_", ".elib").toFile();
-		LibraryFile referenceSearch1 = new LibraryFile() {{openFile(referenceSearch1File);}};
+		final File referenceSearch1File = getResourceAsTempFile(getClass(), REFERENCE_SEARCH1_RESOURCE, tempDir, "reference1_", ".elib").toFile();
+		final LibraryFile referenceSearch1 = new LibraryFile();
+		referenceSearch1.openFile(referenceSearch1File);
 
-		File referenceSearch2File = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/current_reports/xcorr_dia_2.elib", tempDir, "reference2_", ".elib").toFile();
-		LibraryFile referenceSearch2 = new LibraryFile() {{openFile(referenceSearch2File);}};
+		final File referenceSearch2File = getResourceAsTempFile(getClass(), REFERENCE_SEARCH2_RESOURCE, tempDir, "reference2_", ".elib").toFile();
+		final LibraryFile referenceSearch2 = new LibraryFile();
+		referenceSearch2.openFile(referenceSearch2File);
 
-		File referenceSearch3File = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/current_reports/xcorr_dia_3.elib", tempDir, "reference3_", ".elib").toFile();
-		LibraryFile referenceSearch3 = new LibraryFile() {{openFile(referenceSearch3File);}};
+		final File referenceSearch3File = getResourceAsTempFile(getClass(), REFERENCE_SEARCH3_ELIB, tempDir, "reference3_", ".elib").toFile();
+		final LibraryFile referenceSearch3 = new LibraryFile();
+		referenceSearch3.openFile(referenceSearch3File);
 
 		return new LibraryFile[] {referenceSearch1,referenceSearch2,referenceSearch3};
 	}
 
 	@Override
 	public LibraryFile getReferenceSingleQuant() throws Exception {
-		File referenceSingleQuant = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/current_reports/xcorr_single.elib", tempDir, "single_", ".elib").toFile();
-		return new LibraryFile() {{openFile(referenceSingleQuant);}};
+		final File referenceSingleQuant = getResourceAsTempFile(getClass(), REFERENCE_SINGLE_QUANT_RESOURCE, tempDir, "single_", ".elib").toFile();
+		final LibraryFile libraryFile = new LibraryFile();
+		libraryFile.openFile(referenceSingleQuant);
+		return libraryFile;
 	}
 
 	@Override
 	public LibraryFile getReferenceMulti() throws Exception {
-		File referenceMulti = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/current_reports/xcorr_multi.elib", tempDir, "multi_", ".elib").toFile();
-		return new LibraryFile() {{openFile(referenceMulti);}};
+		final File referenceMulti = getResourceAsTempFile(getClass(), REFERENCE_MULTI_RESOURCE, tempDir, "multi_", ".elib").toFile();
+		final LibraryFile libraryFile = new LibraryFile();
+		libraryFile.openFile(referenceMulti);
+		return libraryFile;
 	}
 
 	@Override
 	public LibraryFile getReferenceMultiQuant() throws Exception {
-		File referenceMultiQuant = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/current_reports/xcorr_multi_quant.elib", tempDir, "multi_quant_", ".elib").toFile();
-		return new LibraryFile() {{openFile(referenceMultiQuant);}};
+		final File referenceMultiQuant = getResourceAsTempFile(getClass(), REFERENCE_MULTI_QUANT_RESOURCE, tempDir, "multi_quant_", ".elib").toFile();
+		final LibraryFile libraryFile = new LibraryFile();
+		libraryFile.openFile(referenceMultiQuant);
+		return libraryFile;
 	}
 
 }
