@@ -77,20 +77,19 @@ public abstract class AbstractEndToEndIT {
 		diaFile2 = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia", tempDir, "EndToEnd", ".dia").toFile();
 		diaFile3 = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_3_600.dia", tempDir, "EndToEnd", ".dia").toFile();
 		fastaFile = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/uniprot_human_2018.subset.fasta", tempDir, name, ".fasta").toFile();
-
-		tempReport = Files.createTempFile(tempDir, "test_",".elib").toFile();
-		tempReport.delete();
 	}
 
 	@Before
 	public void setUp() throws Exception {
-
+		tempReport = Files.createTempFile(tempDir, "test_",".elib").toFile();
+		tempReport.delete();
 	}
 
 	@After
 	public void tearDown() throws Exception {
 		if (null != tempReport){
 			FileUtils.deleteQuietly(tempReport);
+			tempReport = null;
 		}
 	}
 
