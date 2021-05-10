@@ -22,6 +22,14 @@ public class XCorDIAEndToEndIT extends AbstractEndToEndIT{
 	static PecanSearchParameters parameters;
 	static XCorDIAOneScoringFactory factory;
 
+	/**
+	 * These values are low estimates for the number of peptides
+	 * and protein groups identified by Xcordia with 0.25 training
+	 * set threshold.
+	 */
+	static int PEPTIDE_FLOOR = 400;
+	static int PROTEIN_FLOOR = 400;
+
 	@BeforeClass
 	public static void setParameters() throws Exception {
 		parameters = PecanParameterParser.parseParameters(new HashMap<>(ImmutableMap.of(
@@ -30,6 +38,9 @@ public class XCorDIAEndToEndIT extends AbstractEndToEndIT{
 				"-percolatorProteinThreshold","0.25")));
 		factory = new XCorDIAOneScoringFactory(parameters);
 		buildReports();
+		jobDataA = makeAndDoJob(diaFile);
+		jobDataB = makeAndDoJob(diaFile2);
+		jobDataC = makeAndDoJob(diaFile3);
 	}
 
 	@AfterClass
@@ -39,8 +50,7 @@ public class XCorDIAEndToEndIT extends AbstractEndToEndIT{
 		factory = null;
 	}
 
-	@Override
-	public SearchJobData makeAndDoJob(File dia) throws Exception {
+	public static SearchJobData makeAndDoJob(File dia) throws Exception {
 		XCorDIAJobData jobData=new XCorDIAJobData(Optional.empty(), Optional.empty(), dia, fastaFile, new File(dia.getAbsolutePath()+XCorDIAJobData.OUTPUT_FILE_SUFFIX), factory);
 		XCorDIA.runPie(new EmptyProgressIndicator(), jobData);
 		return jobData;
@@ -48,12 +58,12 @@ public class XCorDIAEndToEndIT extends AbstractEndToEndIT{
 
 	@Override
 	public int getPeptideFloor() {
-		return 50;
+		return PEPTIDE_FLOOR;
 	}
 
 	@Override
 	public int getProteinFloor() {
-		return 50;
+		return PROTEIN_FLOOR;
 	}
 
 	@Override

@@ -42,6 +42,15 @@ public abstract class AbstractEndToEndIT {
 	static Path tempDir;
 
 	static Range STANDARD_RANGE = new Range(592.5840338877389,604.3740813086648);
+
+	static SearchJobData jobDataA;
+	static SearchJobData jobDataB;
+	static SearchJobData jobDataC;
+
+	/**
+	 * These values are the total peptides and proteing groups defined by
+	 * the libraryFile used in the test.
+	 */
 	static int MAX_POSSIBLE_PEPTIDES = 4669;
 	static int MAX_POSSIBLE_PROTEIN_GROUPS = 6676;
 
@@ -88,6 +97,9 @@ public abstract class AbstractEndToEndIT {
 	@AfterClass
 	public static void tearDownReports() throws Exception {
 		tempReport = null;
+		jobDataA = null;
+		jobDataB = null;
+		jobDataC = null;
 		if (null != libraryInterface) {
 			libraryInterface.close();
 			libraryInterface = null;
@@ -120,7 +132,6 @@ public abstract class AbstractEndToEndIT {
 
 	@Test
 	public void testWholePipelineSingleData() throws Exception {
-		SearchJobData jobDataA = makeAndDoJob(diaFile);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib")));
 
 		LibraryFile outputFile = new LibraryFile();
@@ -132,7 +143,6 @@ public abstract class AbstractEndToEndIT {
 
 	@Test
 	public void testWholePipelineSingleDataQuant() throws Exception {
-		SearchJobData jobDataA = makeAndDoJob(diaFile);
 		LibraryFile outputFile = new LibraryFile();
 		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA),tempReport,false,true);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),tempReport));
@@ -146,10 +156,6 @@ public abstract class AbstractEndToEndIT {
 
 	@Test
 	public void testWholePipelineMultipleData() throws Exception {
-		SearchJobData jobDataA = makeAndDoJob(diaFile);
-		SearchJobData jobDataB = makeAndDoJob(diaFile2);
-		SearchJobData jobDataC = makeAndDoJob(diaFile3);
-
 		LibraryFile outputFile = new LibraryFile();
 		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA,jobDataB,jobDataC),tempReport,false,false);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),tempReport));
@@ -163,10 +169,6 @@ public abstract class AbstractEndToEndIT {
 
 	@Test
 	public void testWholePipelineMultipleDataQuant() throws Exception {
-		SearchJobData jobDataA = makeAndDoJob(diaFile);
-		SearchJobData jobDataB = makeAndDoJob(diaFile2);
-		SearchJobData jobDataC = makeAndDoJob(diaFile3);
-
 		LibraryFile outputFile = new LibraryFile();
 		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA,jobDataB,jobDataC),tempReport,false,true);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),tempReport));
@@ -261,8 +263,6 @@ public abstract class AbstractEndToEndIT {
 		assertTrue("Fewer than " + proteinFloor + " protein groups identified in " + outputFile.getName(), proteinFloor <= proteinCount);
 		assertTrue("Peptide identified outside of " + STANDARD_RANGE + " in " + outputFile.getName(), STANDARD_RANGE.contains(outputFile.getMinMaxMZ()));
 	}
-
-	public abstract SearchJobData makeAndDoJob(File dia) throws Exception;
 
 	public abstract int getPeptideFloor();
 

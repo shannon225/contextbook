@@ -20,11 +20,17 @@ public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 	static SearchParameters parameters;
 	static LibraryScoringFactory libraryScoringFactory;
 
+	static int PEPTIDE_FLOOR = 400;
+	static int PROTEIN_FLOOR = 300;
+
 	@BeforeClass
 	public static void setUpParameters() throws Exception {
 		parameters = SearchParameterParser.getDefaultParametersObject();
 		libraryScoringFactory = new EncyclopediaOneScoringFactory(parameters);
 		buildReports();
+		jobDataA = makeAndDoJob(diaFile);
+		jobDataB = makeAndDoJob(diaFile2);
+		jobDataC = makeAndDoJob(diaFile3);
 	}
 
 	@AfterClass
@@ -34,8 +40,7 @@ public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 		libraryScoringFactory = null;
 	}
 
-	@Override
-	public SearchJobData makeAndDoJob(File dia) throws Exception {
+	public static SearchJobData makeAndDoJob(File dia) throws Exception {
 		EncyclopediaJobData jobData = new EncyclopediaJobData(dia,fastaFile,libraryInterface,libraryScoringFactory);
 		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobData);
 		return jobData;
@@ -43,12 +48,12 @@ public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 
 	@Override
 	public int getPeptideFloor() {
-		return 400;
+		return PEPTIDE_FLOOR;
 	}
 
 	@Override
 	public int getProteinFloor() {
-		return 300;
+		return PROTEIN_FLOOR;
 	}
 
 	@Override
