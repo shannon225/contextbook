@@ -9,14 +9,16 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndic
 import org.apache.commons.io.FileUtils;
 import org.junit.*;
 import org.slf4j.LoggerFactory;
-import java.util.Collection;
-import java.util.List;
 
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.Predicate;
 
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
@@ -291,7 +293,19 @@ public abstract class AbstractEndToEndIT {
 
 	public abstract LibraryFile getReferenceMultiQuant() throws Exception;
 
-	protected static void copyJobDataToResultsDirectory(SearchJobData jobData, String resourcePath) {
-		throw new UnsupportedOperationException("TODO");
+	protected static void copyJobDataToResultsDirectory(SearchJobData jobData, String resourcePath) throws IOException {
+		final Path targetDir = Paths.get("target");
+		Assume.assumeTrue(Files.exists(targetDir));
+
+		final Path resultsDir = targetDir.resolve("regression-test-data");
+
+		final Path destination = Paths.get(resultsDir.toString(), resourcePath);
+		Files.createDirectories(destination.getParent()); // ensure all folders under target/ exist
+
+		Files.copy(
+				((QuantitativeSearchJobData) jobData).getResultLibrary().toPath(),
+				destination,
+				StandardCopyOption.REPLACE_EXISTING
+		);
 	}
 }
