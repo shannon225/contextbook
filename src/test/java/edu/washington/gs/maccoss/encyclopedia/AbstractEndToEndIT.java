@@ -23,6 +23,11 @@ import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils
 import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractEndToEndIT {
+	/**
+	 * When making regression checks, what proportion of the reference result's
+	 * RT range must be covered by the current result?
+	 */
+	static final double REQUIRED_PROPORTION_OF_REFERENCE_RT_RANGE = 0.60;
 
 	static File diaFile;
 	static File diaFile2;
@@ -220,16 +225,27 @@ public abstract class AbstractEndToEndIT {
 	private static Predicate<LibraryEntry> isRtMatch(LibraryEntry entry) {
 		Preconditions.checkArgument(entry instanceof ChromatogramLibraryEntry);
 
-		final Range rtRange = ((ChromatogramLibraryEntry) entry).getRtRange();
+		final com.google.common.collect.Range<Float> guavaRange;
+		{
+			final Range rtRange = ((ChromatogramLibraryEntry) entry).getRtRange();
+			guavaRange = com.google.common.collect.Range.closed(rtRange.getStart(), rtRange.getStop());
+		}
 
-		return e2 -> {
-			Preconditions.checkState(e2 instanceof ChromatogramLibraryEntry);
+		return reference -> {
+			Preconditions.checkState(reference instanceof ChromatogramLibraryEntry);
 
-			final Range r2 = ((ChromatogramLibraryEntry) e2).getRtRange();
+			final Range r2 = ((ChromatogramLibraryEntry) reference).getRtRange();
 
-			//TODO: assess degree of overlap
-			return r2.getStart() < rtRange.getStop()
-					&& r2.getStop() > rtRange.getStart();
+			final com.google.common.collect.Range<Float> intersection;
+			intersection = guavaRange.intersection(com.google.common.collect.Range.closed(r2.getStart(), r2.getStop()));
+
+			return
+					intersection.hasLowerBound()
+					&& intersection.hasUpperBound()
+
+					// check that the intersection is at least 60% of the _reference entry_'s width
+					&& intersection.upperEndpoint() - intersection.lowerEndpoint() > REQUIRED_PROPORTION_OF_REFERENCE_RT_RANGE * r2.getRange()
+			;
 		};
 	}
 
