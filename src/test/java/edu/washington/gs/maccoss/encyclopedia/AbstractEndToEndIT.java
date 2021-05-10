@@ -182,28 +182,44 @@ public abstract class AbstractEndToEndIT {
 
 	@Test
 	public void testWholePipelineMultipleData() throws Exception {
-		LibraryFile outputFile = new LibraryFile();
 		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA,jobDataB,jobDataC),tempReport,false,false);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),tempReport));
 
-		outputFile.openFile(tempReport);
+		LibraryFile outputFile = new LibraryFile();
+		try {
+			outputFile.openFile(tempReport);
 
-		assertSanityTest(outputFile,getPeptideFloor() * 3,getProteinFloor());
+			final String referenceResource = getReferenceMultiResource();
 
-		assertValidBasedOnReference(outputFile, getReferenceMultiResource());
+			// Copy the data before checking assertions
+			copyElibToResultsDirectory(tempReport, referenceResource);
+
+			assertSanityTest(outputFile, getPeptideFloor() * 3, getProteinFloor());
+			assertValidBasedOnReference(outputFile, referenceResource);
+		} finally {
+			outputFile.close();
+		}
 	}
 
 	@Test
 	public void testWholePipelineMultipleDataQuant() throws Exception {
-		LibraryFile outputFile = new LibraryFile();
 		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA,jobDataB,jobDataC),tempReport,false,true);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),tempReport));
 
-		outputFile.openFile(tempReport);
+		LibraryFile outputFile = new LibraryFile();
+		try {
+			outputFile.openFile(tempReport);
 
-		assertSanityTest(outputFile,getPeptideFloor() * 3,getProteinFloor());
+			final String referenceResource = getReferenceMultiQuantResource();
 
-		assertValidBasedOnReference(outputFile, getReferenceMultiQuantResource());
+			// Copy the data before checking assertions
+			copyElibToResultsDirectory(tempReport, referenceResource);
+
+			assertSanityTest(outputFile, getPeptideFloor() * 3, getProteinFloor());
+			assertValidBasedOnReference(outputFile, referenceResource);
+		} finally {
+			outputFile.close();
+		}
 	}
 
 	public static void assertValidBasedOnReference(LibraryFile newFile, String referenceResource) throws Exception {
