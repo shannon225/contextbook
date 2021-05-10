@@ -8,8 +8,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 import java.io.File;
 import java.util.HashMap;
@@ -19,22 +19,22 @@ import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils
 
 public class XCorDIAEndToEndIT extends AbstractEndToEndIT{
 
-	PecanSearchParameters parameters;
-	XCorDIAOneScoringFactory factory;
+	static PecanSearchParameters parameters;
+	static XCorDIAOneScoringFactory factory;
 
-	@Before
-	public void setUp() throws Exception {
+	@BeforeClass
+	public static void setParameters() throws Exception {
 		parameters = PecanParameterParser.parseParameters(new HashMap<>(ImmutableMap.of(
 				"-percolatorThreshold", "0.25",
 				"-percolatorTrainingFDR","0.25",
 				"-percolatorProteinThreshold","0.25")));
 		factory = new XCorDIAOneScoringFactory(parameters);
-		super.setUp();
+		buildReports();
 	}
 
-	@After
-	public void tearDown() throws Exception {
-		super.tearDown();
+	@AfterClass
+	public static void tearDownParameters() throws Exception {
+		tearDownReports();
 		parameters = null;
 		factory = null;
 	}

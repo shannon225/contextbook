@@ -8,8 +8,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 import java.io.File;
 
@@ -17,19 +17,19 @@ import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils
 
 public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 
-	SearchParameters parameters;
-	LibraryScoringFactory libraryScoringFactory;
+	static SearchParameters parameters;
+	static LibraryScoringFactory libraryScoringFactory;
 
-	@Before
-	public void setUp() throws Exception {
+	@BeforeClass
+	public static void setUpParameters() throws Exception {
 		parameters = SearchParameterParser.getDefaultParametersObject();
 		libraryScoringFactory = new EncyclopediaOneScoringFactory(parameters);
-		super.setUp();
+		buildReports();
 	}
 
-	@After
-	public void tearDown() throws Exception {
-		super.tearDown();
+	@AfterClass
+	public static void tearDownParameters() throws Exception {
+		tearDownReports();
 		parameters = null;
 		libraryScoringFactory = null;
 	}

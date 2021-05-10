@@ -8,41 +8,38 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.LoggerFactory;
-import java.util.List;
 
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractEndToEndIT {
 
-	File diaFile;
-	File diaFile2;
-	File diaFile3;
+	static File diaFile;
+	static File diaFile2;
+	static File diaFile3;
 
-	File fastaFile;
-	File libraryFile;
-	LibraryFile libraryInterface;
+	static File fastaFile;
+	static File libraryFile;
+	static LibraryFile libraryInterface;
 
-	File tempReport;
+	static File tempReport;
 
-	Path tempDir;
+	static Path tempDir;
 
 	static Range STANDARD_RANGE = new Range(592.5840338877389,604.3740813086648);
 	static int MAX_POSSIBLE_PEPTIDES = 4669;
 	static int MAX_POSSIBLE_PROTEIN_GROUPS = 6676;
 
-	@Before
-	public void setUp() throws Exception {
+	@BeforeClass
+	public static void buildReports() throws Exception {
 		if (GraphicsEnvironment.isHeadless() && "1.8".equals(System.getProperty("java.specification.version"))) {
 			LoggerFactory.getLogger(EncyclopediaEndToEndIT.class)
 					.info("Disabling assistive technologies to avoid errors in headless build on Java 8!");
@@ -57,20 +54,33 @@ public abstract class AbstractEndToEndIT {
 		String name = "EndToEnd";
 		tempDir = Files.createTempDirectory(name);
 		FileUtils.forceDeleteOnExit(tempDir.toFile());
-		libraryFile = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/truncated_pan_human_library.dlib", tempDir, name, ".dlib").toFile();
+		libraryFile = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/truncated_pan_human_library.dlib", tempDir, name, ".dlib").toFile();
 		libraryInterface = new LibraryFile() {{openFile(libraryFile);}};
-		diaFile = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia", tempDir, name, ".dia").toFile();
+		diaFile = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia", tempDir, name, ".dia").toFile();
 
-		diaFile2 = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia", tempDir, "EndToEnd", ".dia").toFile();
-		diaFile3 = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_3_600.dia", tempDir, "EndToEnd", ".dia").toFile();
-		fastaFile = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/uniprot_human_2018.subset.fasta", tempDir, name, ".fasta").toFile();
+		diaFile2 = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia", tempDir, "EndToEnd", ".dia").toFile();
+		diaFile3 = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_3_600.dia", tempDir, "EndToEnd", ".dia").toFile();
+		fastaFile = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/uniprot_human_2018.subset.fasta", tempDir, name, ".fasta").toFile();
 
 		tempReport = Files.createTempFile(tempDir, "test_",".elib").toFile();
 		tempReport.delete();
 	}
 
+	@Before
+	public void setUp() throws Exception {
+
+	}
+
 	@After
 	public void tearDown() throws Exception {
+		if (null != tempReport){
+			FileUtils.deleteQuietly(tempReport);
+		}
+	}
+
+	@AfterClass
+	public static void tearDownReports() throws Exception {
+		tempReport = null;
 		if (null != libraryInterface) {
 			libraryInterface.close();
 			libraryInterface = null;
@@ -95,10 +105,6 @@ public abstract class AbstractEndToEndIT {
 			FileUtils.deleteQuietly(fastaFile);
 			fastaFile = null;
 		}
-		if (null != tempReport){
-			FileUtils.deleteQuietly(tempReport);
-			tempReport = null;
-		}
 		if (null != tempDir) {
 			FileUtils.deleteDirectory(tempDir.toFile());
 			tempDir = null;
@@ -114,12 +120,21 @@ public abstract class AbstractEndToEndIT {
 		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib"));
 
 		assertSanityTest(outputFile,getPeptideFloor(),getProteinFloor());
+		assertValidBasedOnReference(outputFile,getReferenceSearches()[0]);
+	}
+
+	@Test
+	public void testWholePipelineSingleDataQuant() throws Exception {
+		SearchJobData jobDataA = makeAndDoJob(diaFile);
+		LibraryFile outputFile = new LibraryFile();
 		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA),tempReport,false,true);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),tempReport));
 
 		outputFile.openFile(tempReport);
 
 		assertSanityTest(outputFile,getPeptideFloor(),getProteinFloor());
+
+		assertValidBasedOnReference(outputFile,getReferenceSingleQuant());
 	}
 
 	@Test
@@ -127,31 +142,16 @@ public abstract class AbstractEndToEndIT {
 		SearchJobData jobDataA = makeAndDoJob(diaFile);
 		SearchJobData jobDataB = makeAndDoJob(diaFile2);
 		SearchJobData jobDataC = makeAndDoJob(diaFile3);
-		assertTrue(FileUtils.directoryContains(tempDir.toFile(),FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib")));
 
 		LibraryFile outputFile = new LibraryFile();
-		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib"));
-
-		assertSanityTest(outputFile,getPeptideFloor(),getProteinFloor());
-
-		assertTrue(FileUtils.directoryContains(tempDir.toFile(),FileUtils.getFile(tempDir.toFile(),diaFile2.getName() + ".elib")));
-
-		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile2.getName() + ".elib"));
-
-		assertSanityTest(outputFile,getPeptideFloor(),getProteinFloor());
-
-		assertTrue(FileUtils.directoryContains(tempDir.toFile(),FileUtils.getFile(tempDir.toFile(),diaFile3.getName() + ".elib")));
-
-		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile3.getName() + ".elib"));
-
-		assertSanityTest(outputFile,getPeptideFloor(),getProteinFloor());
-
 		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA,jobDataB,jobDataC),tempReport,false,false);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),tempReport));
 
 		outputFile.openFile(tempReport);
 
 		assertSanityTest(outputFile,getPeptideFloor() * 3,getProteinFloor());
+
+		assertValidBasedOnReference(outputFile,getReferenceMulti());
 	}
 
 	@Test
@@ -161,63 +161,13 @@ public abstract class AbstractEndToEndIT {
 		SearchJobData jobDataC = makeAndDoJob(diaFile3);
 
 		LibraryFile outputFile = new LibraryFile();
-
-		//the output assertions here would be the same as for testWholePipelineMultipleData, no sense
-		//checking them twice
 		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA,jobDataB,jobDataC),tempReport,false,true);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),tempReport));
 
 		outputFile.openFile(tempReport);
 
 		assertSanityTest(outputFile,getPeptideFloor() * 3,getProteinFloor());
-	}
 
-	@Test
-	public void testSingleDataRegression() throws Exception {
-		SearchJobData jobDataA = makeAndDoJob(diaFile);
-
-		LibraryFile outputFile = new LibraryFile();
-		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib"));
-
-		assertValidBasedOnReference(outputFile,getReferenceSearches()[0]);
-		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA),tempReport,false,true);
-		assertTrue(FileUtils.directoryContains(tempDir.toFile(),tempReport));
-
-		outputFile.openFile(tempReport);
-
-		assertValidBasedOnReference(outputFile,getReferenceSingleQuant());
-	}
-
-	@Test
-	public void testMultipleDataRegression() throws Exception {
-		SearchJobData jobDataA = makeAndDoJob(diaFile);
-		SearchJobData jobDataB = makeAndDoJob(diaFile2);
-		SearchJobData jobDataC = makeAndDoJob(diaFile3);
-
-		LibraryFile outputFile = new LibraryFile();
-		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib"));
-		assertValidBasedOnReference(outputFile,getReferenceSearches()[0]);
-
-		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile2.getName() + ".elib"));
-		assertValidBasedOnReference(outputFile,getReferenceSearches()[1]);
-
-		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile3.getName() + ".elib"));
-		assertValidBasedOnReference(outputFile,getReferenceSearches()[2]);
-
-		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA,jobDataB,jobDataC),tempReport,false,false);
-		outputFile.openFile(tempReport);
-		assertValidBasedOnReference(outputFile,getReferenceMulti());
-	}
-
-	@Test
-	public void testMultipleDataQuantRegression() throws Exception {
-		SearchJobData jobDataA = makeAndDoJob(diaFile);
-		SearchJobData jobDataB = makeAndDoJob(diaFile2);
-		SearchJobData jobDataC = makeAndDoJob(diaFile3);
-
-		LibraryFile outputFile = new LibraryFile();
-		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA,jobDataB,jobDataC),tempReport,false,true);
-		outputFile.openFile(tempReport);
 		assertValidBasedOnReference(outputFile,getReferenceMultiQuant());
 	}
 
