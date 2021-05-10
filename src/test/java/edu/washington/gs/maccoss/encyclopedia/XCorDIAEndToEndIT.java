@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
+import com.google.common.collect.ImmutableMap;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
@@ -11,6 +12,7 @@ import org.junit.After;
 import org.junit.Before;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Optional;
 
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
@@ -22,47 +24,10 @@ public class XCorDIAEndToEndIT extends AbstractEndToEndIT{
 
 	@Before
 	public void setUp() throws Exception {
-		PecanSearchParameters defaultParameters = PecanParameterParser.getDefaultParametersObject();
-		//we need to write out the whole constructor just to change one parameter :w
-		parameters = new PecanSearchParameters(defaultParameters.getAAConstants(),
-				defaultParameters.getFragType(),
-				defaultParameters.getPrecursorTolerance(),
-				defaultParameters.getPrecursorOffsetPPM(),
-				defaultParameters.getPrecursorIsolationMargin(),
-				defaultParameters.getFragmentTolerance(),
-				defaultParameters.getFragmentOffsetPPM(),
-				defaultParameters.getEnzyme(),
-				defaultParameters.getExpectedPeakWidth(),
-				defaultParameters.getMinPeptideLength(),
-				defaultParameters.getMaxPeptideLength(),
-				defaultParameters.getMaxMissedCleavages(),
-				defaultParameters.getMinCharge(),
-				defaultParameters.getMaxCharge(),
-				defaultParameters.getNumberOfReportedPeaks(),
-				defaultParameters.isAddDecoysToBackgound(),
-				defaultParameters.isDontRunDecoys(),
-				0.25f,
-				0.25f,
-				defaultParameters.getPercolatorVersionNumber(),
-				defaultParameters.getPercolatorTrainingSetSize(),
-				0.25f,
-				defaultParameters.getAlpha(),
-				defaultParameters.getBeta(),
-				defaultParameters.getDataAcquisitionType(),
-				defaultParameters.getNumberOfThreadsUsed(),
-				defaultParameters.getTargetWindowCenter(),
-				defaultParameters.getPrecursorWindowSize(),
-				defaultParameters.getNumberOfQuantitativePeaks(),
-				defaultParameters.getMinNumOfQuantitativePeaks(),
-				defaultParameters.getTopNTargetsUsed(),
-				defaultParameters.getMinIntensity(),
-				defaultParameters.isQuantifySameFragmentsAcrossSamples(),
-				defaultParameters.isVerifyModificationIons(),
-				defaultParameters.isRequireVariableMods(),
-				defaultParameters.isFilterPeaklists(),
-				defaultParameters.isDoNotUseGlobalFDR(),
-				defaultParameters.isEnableAdvancedOptions()
-		);
+		parameters = PecanParameterParser.parseParameters(new HashMap<>(ImmutableMap.of(
+				"-percolatorThreshold", "0.25",
+				"-percolatorTrainingFDR","0.25",
+				"-percolatorProteinThreshold","0.25")));
 		factory = new XCorDIAOneScoringFactory(parameters);
 		super.setUp();
 	}
