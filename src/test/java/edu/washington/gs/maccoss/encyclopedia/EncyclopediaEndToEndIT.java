@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
+import com.google.common.collect.ImmutableList;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -12,6 +13,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import java.io.File;
+import java.util.List;
 
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
 
@@ -50,7 +52,7 @@ public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 		libraryScoringFactory = null;
 	}
 
-	public static SearchJobData makeAndDoJob(File dia) throws Exception {
+	public static EncyclopediaJobData makeAndDoJob(File dia) throws Exception {
 		EncyclopediaJobData jobData = new EncyclopediaJobData(dia,fastaFile,libraryInterface,libraryScoringFactory);
 		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobData);
 		return jobData;
@@ -67,43 +69,26 @@ public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 	}
 
 	@Override
-	public LibraryFile[] getReferenceSearches() throws Exception {
-		final File referenceSearch1File = getResourceAsTempFile(getClass(), REFERENCE_SEARCH1_RESOURCE, tempDir, "reference1_", ".elib").toFile();
-		final LibraryFile referenceSearch1 = new LibraryFile();
-		referenceSearch1.openFile(referenceSearch1File);
-
-		final File referenceSearch2File = getResourceAsTempFile(getClass(), REFERENCE_SEARCH2_RESOURCE, tempDir, "reference2_", ".elib").toFile();
-		final LibraryFile referenceSearch2 = new LibraryFile();
-		referenceSearch2.openFile(referenceSearch2File);
-
-		final File referenceSearch3File = getResourceAsTempFile(getClass(), REFERENCE_SEARCH3_RESOURCE, tempDir, "reference3_", ".elib").toFile();
-		final LibraryFile referenceSearch3 = new LibraryFile();
-		referenceSearch3.openFile(referenceSearch3File);
-
-		return new LibraryFile[] {referenceSearch1,referenceSearch2,referenceSearch3};
+	public List<String> getReferenceSearchResources() throws Exception {
+		return ImmutableList.of(
+				REFERENCE_SEARCH1_RESOURCE,
+				REFERENCE_SEARCH2_RESOURCE,
+				REFERENCE_SEARCH3_RESOURCE
+		);
 	}
 
 	@Override
-	public LibraryFile getReferenceSingleQuant() throws Exception {
-		final File referenceSingleQuant = getResourceAsTempFile(getClass(), REFERENCE_SINGLE_QUANT_RESOURCE, tempDir, "single_", ".elib").toFile();
-		final LibraryFile libraryFile = new LibraryFile();
-		libraryFile.openFile(referenceSingleQuant);
-		return libraryFile;
+	public String getReferenceSingleQuantResource() throws Exception {
+		return REFERENCE_SINGLE_QUANT_RESOURCE;
 	}
 
 	@Override
-	public LibraryFile getReferenceMulti() throws Exception {
-		final File referenceMulti = getResourceAsTempFile(getClass(), REFERENCE_MULTI_RESOURCE, tempDir, "multi_", ".elib").toFile();
-		final LibraryFile libraryFile = new LibraryFile();
-		libraryFile.openFile(referenceMulti);
-		return libraryFile;
+	public String getReferenceMultiResource() throws Exception {
+		return REFERENCE_MULTI_RESOURCE;
 	}
 
 	@Override
-	public LibraryFile getReferenceMultiQuant() throws Exception {
-		final File referenceMultiQuant = getResourceAsTempFile(getClass(), REFERENCE_MULTI_QUANT_RESOURCE, tempDir, "multi_quant_", ".elib").toFile();
-		final LibraryFile libraryFile = new LibraryFile();
-		libraryFile.openFile(referenceMultiQuant);
-		return libraryFile;
+	public String getReferenceMultiQuantResource() throws Exception {
+		return REFERENCE_MULTI_QUANT_RESOURCE;
 	}
 }

@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import org.apache.commons.io.FileUtils;
 import org.junit.*;
@@ -50,9 +51,9 @@ public abstract class AbstractEndToEndIT {
 	static double LOWER_BOUND_PI0_MATCH = 0.75;
 	static double UPPER_BOUND_PI0_MATCH = 1.25;
 
-	static SearchJobData jobDataA;
-	static SearchJobData jobDataB;
-	static SearchJobData jobDataC;
+	static QuantitativeSearchJobData jobDataA;
+	static QuantitativeSearchJobData jobDataB;
+	static QuantitativeSearchJobData jobDataC;
 
 	/**
 	 * These values are the total peptides and proteing groups defined by
@@ -138,26 +139,45 @@ public abstract class AbstractEndToEndIT {
 
 	@Test
 	public void testWholePipelineSingleData() throws Exception {
-		assertTrue(FileUtils.directoryContains(tempDir.toFile(),FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib")));
+		final File resultLibrary = jobDataA.getResultLibrary();
 
-		LibraryFile outputFile = new LibraryFile();
-		outputFile.openFile(FileUtils.getFile(tempDir.toFile(),diaFile.getName() + ".elib"));
+		assertTrue(FileUtils.directoryContains(tempDir.toFile(), resultLibrary));
 
-		assertSanityTest(outputFile,getPeptideFloor(),getProteinFloor());
-		assertValidBasedOnReference(outputFile,getReferenceSearches()[0]);
+		final LibraryFile outputFile = new LibraryFile();
+		try {
+			outputFile.openFile(resultLibrary);
+
+			final String referenceResource = getReferenceSearchResources().get(0);
+
+			// This job's ELIB will already have been copied to the target directory during setup
+
+			assertSanityTest(outputFile, getPeptideFloor(), getProteinFloor());
+			assertValidBasedOnReference(outputFile, referenceResource);
+		} finally {
+			outputFile.close();
+		}
 	}
 
 	@Test
 	public void testWholePipelineSingleDataQuant() throws Exception {
-		LibraryFile outputFile = new LibraryFile();
 		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA),tempReport,false,true);
-		assertTrue(FileUtils.directoryContains(tempDir.toFile(),tempReport));
 
-		outputFile.openFile(tempReport);
+		assertTrue(FileUtils.directoryContains(tempDir.toFile(), tempReport));
 
-		assertSanityTest(outputFile,getPeptideFloor(),getProteinFloor());
+		LibraryFile outputFile = new LibraryFile();
+		try {
+			outputFile.openFile(tempReport);
 
-		assertValidBasedOnReference(outputFile,getReferenceSingleQuant());
+			final String referenceResource = getReferenceSingleQuantResource();
+
+			// Copy the data before checking assertions
+			copyElibToResultsDirectory(tempReport, referenceResource);
+
+			assertSanityTest(outputFile, getPeptideFloor(), getProteinFloor());
+			assertValidBasedOnReference(outputFile, referenceResource);
+		} finally {
+			outputFile.close();
+		}
 	}
 
 	@Test
@@ -170,7 +190,7 @@ public abstract class AbstractEndToEndIT {
 
 		assertSanityTest(outputFile,getPeptideFloor() * 3,getProteinFloor());
 
-		assertValidBasedOnReference(outputFile,getReferenceMulti());
+		assertValidBasedOnReference(outputFile, getReferenceMultiResource());
 	}
 
 	@Test
@@ -183,12 +203,27 @@ public abstract class AbstractEndToEndIT {
 
 		assertSanityTest(outputFile,getPeptideFloor() * 3,getProteinFloor());
 
-		assertValidBasedOnReference(outputFile,getReferenceMultiQuant());
+		assertValidBasedOnReference(outputFile, getReferenceMultiQuantResource());
 	}
 
-	public static void assertValidBasedOnReference(LibraryFile newFile, LibraryFile reference) throws Exception {
-		List<LibraryEntry> peptides = newFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable());
-		List<LibraryEntry> expectedPeptides = reference.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable());
+	public static void assertValidBasedOnReference(LibraryFile newFile, String referenceResource) throws Exception {
+		final List<LibraryEntry> expectedPeptides;
+		final String expectedPi0;
+		{
+			final Path refElib = getResourceAsTempFile(AbstractEndToEndIT.class, referenceResource, tempDir, "reference_", ".elib");
+			final LibraryFile f = new LibraryFile();
+			try {
+				f.openFile(refElib.toFile());
+
+				expectedPeptides = f.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable());
+				expectedPi0 = f.getMetadata().get("pi0");
+			} finally {
+				f.close();
+				FileUtils.deleteQuietly(refElib.toFile());
+			}
+		}
+
+		final List<LibraryEntry> peptides = newFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable());
 
 		assertTrue ("Fewer peptides than expected in " + newFile.getName(), peptides.size() > LOWER_BOUND_PEPTIDE_MATCH * expectedPeptides.size());
 		assertTrue("More peptides than expected in " + newFile.getName(), peptides.size() < UPPER_BOUND_PEPTIDE_MATCH * expectedPeptides.size());
@@ -204,8 +239,8 @@ public abstract class AbstractEndToEndIT {
 
 		assertTrue("Fewer than 95% peptides match reference in " + newFile.getName(), percentage > LOWER_BOUND_PEPTIDE_MATCH);
 
-		assertTrue("pi0 lower than expected in " + newFile.getName(), Double.parseDouble(newFile.getMetadata().get("pi0")) > LOWER_BOUND_PI0_MATCH * (Double.parseDouble(reference.getMetadata().get("pi0"))));
-	    assertTrue("pi0 greater than expected in " + newFile.getName(), Double.parseDouble(newFile.getMetadata().get("pi0")) < UPPER_BOUND_PI0_MATCH * (Double.parseDouble(reference.getMetadata().get("pi0"))));
+		assertTrue("pi0 lower than expected in " + newFile.getName(), Double.parseDouble(newFile.getMetadata().get("pi0")) > LOWER_BOUND_PI0_MATCH * (Double.parseDouble(expectedPi0)));
+	    assertTrue("pi0 greater than expected in " + newFile.getName(), Double.parseDouble(newFile.getMetadata().get("pi0")) < UPPER_BOUND_PI0_MATCH * (Double.parseDouble(expectedPi0)));
 	}
 
 	/**
@@ -285,15 +320,19 @@ public abstract class AbstractEndToEndIT {
 
 	public abstract int getProteinFloor();
 
-	public abstract LibraryFile[] getReferenceSearches() throws Exception;
+	public abstract List<String> getReferenceSearchResources() throws Exception;
 
-	public abstract LibraryFile getReferenceSingleQuant() throws Exception;
+	public abstract String getReferenceSingleQuantResource() throws Exception;
 
-	public abstract LibraryFile getReferenceMulti() throws Exception;
+	public abstract String getReferenceMultiResource() throws Exception;
 
-	public abstract LibraryFile getReferenceMultiQuant() throws Exception;
+	public abstract String getReferenceMultiQuantResource() throws Exception;
 
 	protected static void copyJobDataToResultsDirectory(SearchJobData jobData, String resourcePath) throws IOException {
+		copyElibToResultsDirectory(((QuantitativeSearchJobData) jobData).getResultLibrary(), resourcePath);
+	}
+
+	private static void copyElibToResultsDirectory(File elib, String resourcePath) throws IOException {
 		final Path targetDir = Paths.get("target");
 		Assume.assumeTrue(Files.exists(targetDir));
 
@@ -303,7 +342,7 @@ public abstract class AbstractEndToEndIT {
 		Files.createDirectories(destination.getParent()); // ensure all folders under target/ exist
 
 		Files.copy(
-				((QuantitativeSearchJobData) jobData).getResultLibrary().toPath(),
+				elib.toPath(),
 				destination,
 				StandardCopyOption.REPLACE_EXISTING
 		);
