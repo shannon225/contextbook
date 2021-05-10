@@ -216,11 +216,18 @@ public abstract class AbstractEndToEndIT {
 
 		final ImmutableMultimap<String, LibraryEntry> expectedPeptidesByModSeq = b.build();
 
-		return entry -> expectedPeptidesByModSeq.get(entry.getPeptideModSeq()).stream()
-				.anyMatch(
-						isRtMatch(entry)
-						.and(e -> entry.getSource().equals(e.getSource())) // must be in same file
-				);
+		return entry -> {
+			if (!(entry instanceof ChromatogramLibraryEntry)){
+				//TODO: Figure out why non-ChromatogramLibraryEntry items appear in the library
+				return false;
+			}
+			return expectedPeptidesByModSeq.get(entry.getPeptideModSeq()).stream()
+					.filter( p -> p instanceof ChromatogramLibraryEntry)
+					.anyMatch(
+							isRtMatch(entry)
+									.and(e -> entry.getSource().equals(e.getSource())) // must be in same file
+					);
+		};
 	}
 
 	/**
@@ -241,14 +248,6 @@ public abstract class AbstractEndToEndIT {
 			Preconditions.checkState(reference instanceof ChromatogramLibraryEntry);
 
 			final Range r2 = ((ChromatogramLibraryEntry) reference).getRtRange();
-
-			if (r2.getStart() > 3425 && r2.getStart() < 3426){
-				System.out.println("stop");
-			}
-
-			if (guavaRange.lowerEndpoint() > 3425 && guavaRange.lowerEndpoint() < 3426){
-				System.out.println("stop");
-			}
 
 			final com.google.common.collect.Range<Float> intersection;
 			try {
