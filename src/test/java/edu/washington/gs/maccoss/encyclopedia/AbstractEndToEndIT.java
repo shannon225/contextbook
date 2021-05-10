@@ -242,8 +242,20 @@ public abstract class AbstractEndToEndIT {
 
 			final Range r2 = ((ChromatogramLibraryEntry) reference).getRtRange();
 
+			if (r2.getStart() > 3425 && r2.getStart() < 3426){
+				System.out.println("stop");
+			}
+
+			if (guavaRange.lowerEndpoint() > 3425 && guavaRange.lowerEndpoint() < 3426){
+				System.out.println("stop");
+			}
+
 			final com.google.common.collect.Range<Float> intersection;
-			intersection = guavaRange.intersection(com.google.common.collect.Range.closed(r2.getStart(), r2.getStop()));
+			try {
+				intersection = guavaRange.intersection(com.google.common.collect.Range.closed(r2.getStart(), r2.getStop()));
+			} catch (IllegalArgumentException e){
+				return false;
+			}
 
 			return
 					intersection.hasLowerBound()
