@@ -43,6 +43,11 @@ public abstract class AbstractEndToEndIT {
 
 	static Range STANDARD_RANGE = new Range(592.5840338877389,604.3740813086648);
 
+	static double LOWER_BOUND_PEPTIDE_MATCH = 0.95;
+	static double UPPER_BOUND_PEPTIDE_MATCH = 1.05;
+	static double LOWER_BOUND_PI0_MATCH = 0.75;
+	static double UPPER_BOUND_PI0_MATCH = 1.25;
+
 	static SearchJobData jobDataA;
 	static SearchJobData jobDataB;
 	static SearchJobData jobDataC;
@@ -183,8 +188,8 @@ public abstract class AbstractEndToEndIT {
 		List<LibraryEntry> peptides = newFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable());
 		List<LibraryEntry> expectedPeptides = reference.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable());
 
-		assertTrue ("Fewer peptides than expected in " + newFile.getName(), peptides.size() > (0.95) * expectedPeptides.size());
-		assertTrue("More peptides than expected in " + newFile.getName(), peptides.size() < (1.05) * expectedPeptides.size());
+		assertTrue ("Fewer peptides than expected in " + newFile.getName(), peptides.size() > LOWER_BOUND_PEPTIDE_MATCH * expectedPeptides.size());
+		assertTrue("More peptides than expected in " + newFile.getName(), peptides.size() < UPPER_BOUND_PEPTIDE_MATCH * expectedPeptides.size());
 
 		final long peptideMatches = peptides.stream()
 				.filter(hasPeptideMatch(expectedPeptides))
@@ -195,10 +200,10 @@ public abstract class AbstractEndToEndIT {
 		// the preceding checks for overall number are sufficiently reassuring.
 		double percentage = peptideMatches / ((double) peptides.size());
 
-		assertTrue("Fewer than 95% peptides match reference in " + newFile.getName(), percentage > 0.95);
+		assertTrue("Fewer than 95% peptides match reference in " + newFile.getName(), percentage > LOWER_BOUND_PEPTIDE_MATCH);
 
-		assertTrue("pi0 lower than expected in " + newFile.getName(), Double.parseDouble(newFile.getMetadata().get("pi0")) > (0.75) * (Double.parseDouble(reference.getMetadata().get("pi0"))));
-	    assertTrue("pi0 greater than expected in " + newFile.getName(), Double.parseDouble(newFile.getMetadata().get("pi0")) < (1.25) * (Double.parseDouble(reference.getMetadata().get("pi0"))));
+		assertTrue("pi0 lower than expected in " + newFile.getName(), Double.parseDouble(newFile.getMetadata().get("pi0")) > LOWER_BOUND_PI0_MATCH * (Double.parseDouble(reference.getMetadata().get("pi0"))));
+	    assertTrue("pi0 greater than expected in " + newFile.getName(), Double.parseDouble(newFile.getMetadata().get("pi0")) < UPPER_BOUND_PI0_MATCH * (Double.parseDouble(reference.getMetadata().get("pi0"))));
 	}
 
 	/**
