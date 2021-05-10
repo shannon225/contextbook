@@ -177,8 +177,8 @@ public abstract class AbstractEndToEndIT {
 		List<LibraryEntry> peptides = newFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable());
 		List<LibraryEntry> expectedPeptides = reference.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable());
 
-		assertTrue (peptides.size() > (0.95) * expectedPeptides.size()
-				&& peptides.size() < (1.05) * expectedPeptides.size());
+		assertTrue ("Fewer peptides than expected in " + newFile.getName(), peptides.size() > (0.95) * expectedPeptides.size());
+		assertTrue("More peptides than expected in " + newFile.getName(), peptides.size() < (1.05) * expectedPeptides.size());
 
 		final long peptideMatches = peptides.stream()
 				.filter(hasPeptideMatch(expectedPeptides))
@@ -186,13 +186,13 @@ public abstract class AbstractEndToEndIT {
 
 		// 95% of the peptides we IDed this run should be present in the previous results.
 		// We don't bother checking if 95% of the old results are still present, this and
-		// the precedingchecks for overall number are sufficiently reassuring.
+		// the preceding checks for overall number are sufficiently reassuring.
 		double percentage = peptideMatches / ((double) peptides.size());
 
-		assertTrue(percentage > 0.95);
+		assertTrue("Fewer than 95% peptides match reference in " + newFile.getName(), percentage > 0.95);
 
-		assertTrue(Double.parseDouble(newFile.getMetadata().get("pi0")) > (0.75) * (Double.parseDouble(reference.getMetadata().get("pi0")))
-				&& Double.parseDouble(newFile.getMetadata().get("pi0")) < (1.25) * (Double.parseDouble(reference.getMetadata().get("pi0"))));
+		assertTrue("pi0 lower than expected in " + newFile.getName(), Double.parseDouble(newFile.getMetadata().get("pi0")) > (0.75) * (Double.parseDouble(reference.getMetadata().get("pi0"))));
+	    assertTrue("pi0 greater than expected in " + newFile.getName(), Double.parseDouble(newFile.getMetadata().get("pi0")) < (1.25) * (Double.parseDouble(reference.getMetadata().get("pi0"))));
 	}
 
 	/**
@@ -239,11 +239,11 @@ public abstract class AbstractEndToEndIT {
 
 		System.out.println("Peptides: " + peptideCount);
 		System.out.println("Proteins: " + proteinCount);
-		assertTrue(MAX_POSSIBLE_PEPTIDES >= peptideCount);
-		assertTrue(peptideFloor <= peptideCount);
-		assertTrue(MAX_POSSIBLE_PROTEIN_GROUPS >= proteinCount);
-		assertTrue(proteinFloor <= proteinCount);
-		assertTrue(STANDARD_RANGE.contains(outputFile.getMinMaxMZ()));
+		assertTrue("More than " + MAX_POSSIBLE_PEPTIDES + " peptides identified in " + outputFile.getName(), MAX_POSSIBLE_PEPTIDES >= peptideCount);
+		assertTrue("Fewer than " + peptideFloor + " peptides identified in " + outputFile.getName(), peptideFloor <= peptideCount);
+		assertTrue("More than " + MAX_POSSIBLE_PROTEIN_GROUPS + " protein groups identified in " + outputFile.getName(), MAX_POSSIBLE_PROTEIN_GROUPS >= proteinCount);
+		assertTrue("Fewer than " + proteinFloor + " protein groups identified in " + outputFile.getName(), proteinFloor <= proteinCount);
+		assertTrue("Peptide identified outside of " + STANDARD_RANGE + " in " + outputFile.getName(), STANDARD_RANGE.contains(outputFile.getMinMaxMZ()));
 	}
 
 	public abstract SearchJobData makeAndDoJob(File dia) throws Exception;
