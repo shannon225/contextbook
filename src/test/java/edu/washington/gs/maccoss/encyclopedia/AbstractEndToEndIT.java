@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractEndToEndIT {
@@ -224,9 +225,6 @@ public abstract class AbstractEndToEndIT {
 		List<LibraryEntry> peptides = newFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable());
 		List<LibraryEntry> expectedPeptides = reference.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable());
 
-		System.out.println(peptides.size());
-		System.out.println(expectedPeptides.size());
-
 		assertTrue (peptides.size() > (0.95) * expectedPeptides.size()
 				&& peptides.size() < (1.05) * expectedPeptides.size());
 
@@ -243,6 +241,9 @@ public abstract class AbstractEndToEndIT {
 		double percentage = peptideMatches / ((double)Math.min(peptides.size(),expectedPeptides.size()));
 
 		assertTrue(percentage > 0.95);
+
+		assertTrue(Double.parseDouble(newFile.getMetadata().get("pi0")) > (0.75) * (Double.parseDouble(reference.getMetadata().get("pi0")))
+				&& Double.parseDouble(newFile.getMetadata().get("pi0")) < (1.25) * (Double.parseDouble(reference.getMetadata().get("pi0"))));
 	}
 
 	public static void assertSanityTest(LibraryFile outputFile, int peptideFloor, int proteinFloor) throws Exception {
