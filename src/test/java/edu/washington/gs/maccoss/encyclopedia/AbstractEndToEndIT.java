@@ -1,10 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
+import com.google.common.collect.ImmutableMultimap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import org.apache.commons.io.FileUtils;
@@ -12,12 +11,15 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
 import java.util.List;
 
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.Predicate;
 
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
 import static org.junit.Assert.assertNotNull;
@@ -228,22 +230,57 @@ public abstract class AbstractEndToEndIT {
 		assertTrue (peptides.size() > (0.95) * expectedPeptides.size()
 				&& peptides.size() < (1.05) * expectedPeptides.size());
 
-		int peptideMatches = 0;
+		final long peptideMatches = peptides.stream()
+				.filter(hasPeptideMatch(expectedPeptides))
+				.count();
 
-		for (LibraryEntry entry : peptides) {
-			if (expectedPeptides.stream().anyMatch(e ->
-					e.getPeptideModSeq().equals(entry.getPeptideModSeq())
-					&& (Math.abs(e.getRetentionTime() - entry.getRetentionTime()) < 0.01))){
-				peptideMatches++;
-			}
-		}
-
-		double percentage = peptideMatches / ((double)Math.min(peptides.size(),expectedPeptides.size()));
+		// 95% of the peptides we IDed this run should be present in the previous results.
+		// We don't bother checking if 95% of the old results are still present, this and
+		// the precedingchecks for overall number are sufficiently reassuring.
+		double percentage = peptideMatches / ((double) peptides.size());
 
 		assertTrue(percentage > 0.95);
 
 		assertTrue(Double.parseDouble(newFile.getMetadata().get("pi0")) > (0.75) * (Double.parseDouble(reference.getMetadata().get("pi0")))
 				&& Double.parseDouble(newFile.getMetadata().get("pi0")) < (1.25) * (Double.parseDouble(reference.getMetadata().get("pi0"))));
+	}
+
+	/**
+	 * @return A predicate that returns true if an element of {@code expectedPeptides} has
+	 *         the same source and {@code peptideModSeq}, and satisfies {@link #isRtMatch(LibraryEntry)}.
+	 */
+	private static Predicate<? super LibraryEntry> hasPeptideMatch(Collection<LibraryEntry> expectedPeptides) {
+		final ImmutableMultimap.Builder<String, LibraryEntry> b = ImmutableMultimap.builder();
+		expectedPeptides.forEach(e -> b.put(e.getPeptideModSeq(), e));
+
+		final ImmutableMultimap<String, LibraryEntry> expectedPeptidesByModSeq = b.build();
+
+		return entry -> expectedPeptidesByModSeq.get(entry.getPeptideModSeq()).stream()
+				.anyMatch(
+						isRtMatch(entry)
+						.and(e -> entry.getSource().equals(e.getSource())) // must be in same file
+				);
+	}
+
+	/**
+	 * @return A predicate that returns true if both the given entry and {@code entry}
+	 *         are both {@link ChromatogramLibraryEntry} instances and have sufficiently
+	 *         overlapping RT ranges.
+	 */
+	private static Predicate<LibraryEntry> isRtMatch(LibraryEntry entry) {
+		Preconditions.checkArgument(entry instanceof ChromatogramLibraryEntry);
+
+		final Range rtRange = ((ChromatogramLibraryEntry) entry).getRtRange();
+
+		return e2 -> {
+			Preconditions.checkState(e2 instanceof ChromatogramLibraryEntry);
+
+			final Range r2 = ((ChromatogramLibraryEntry) e2).getRtRange();
+
+			//TODO: assess degree of overlap
+			return r2.getStart() < rtRange.getStop()
+					&& r2.getStop() > rtRange.getStart();
+		};
 	}
 
 	public static void assertSanityTest(LibraryFile outputFile, int peptideFloor, int proteinFloor) throws Exception {
