@@ -49,6 +49,10 @@ public class XCorDIAEndToEndIT extends AbstractEndToEndIT{
 		jobDataA = makeAndDoJob(diaFile);
 		jobDataB = makeAndDoJob(diaFile2);
 		jobDataC = makeAndDoJob(diaFile3);
+
+		copyJobDataToResultsDirectory(jobDataA, REFERENCE_SEARCH1_RESOURCE);
+		copyJobDataToResultsDirectory(jobDataB, REFERENCE_SEARCH2_RESOURCE);
+		copyJobDataToResultsDirectory(jobDataC, REFERENCE_SEARCH3_RESOURCE);
 	}
 
 	@AfterClass

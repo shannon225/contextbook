@@ -78,13 +78,22 @@ public abstract class AbstractEndToEndIT {
 		String name = "EndToEnd";
 		tempDir = Files.createTempDirectory(name);
 		FileUtils.forceDeleteOnExit(tempDir.toFile());
-		libraryFile = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/truncated_pan_human_library.dlib", tempDir, name, ".dlib").toFile();
-		libraryInterface = new LibraryFile() {{openFile(libraryFile);}};
-		diaFile = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia", tempDir, name, ".dia").toFile();
 
-		diaFile2 = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia", tempDir, "EndToEnd", ".dia").toFile();
-		diaFile3 = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_3_600.dia", tempDir, "EndToEnd", ".dia").toFile();
-		fastaFile = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/uniprot_human_2018.subset.fasta", tempDir, name, ".fasta").toFile();
+		try {
+			libraryFile = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/truncated_pan_human_library.dlib", tempDir, name, ".dlib").toFile();
+			libraryInterface = new LibraryFile();
+			libraryInterface.openFile(libraryFile);
+
+			diaFile = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia", tempDir, name, ".dia").toFile();
+			diaFile2 = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia", tempDir, "EndToEnd", ".dia").toFile();
+			diaFile3 = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_3_600.dia", tempDir, "EndToEnd", ".dia").toFile();
+
+			fastaFile = getResourceAsTempFile(AbstractEndToEndIT.class, "/edu/washington/gs/maccoss/encyclopedia/testdata/uniprot_human_2018.subset.fasta", tempDir, name, ".fasta").toFile();
+		} catch (AssumptionViolatedException exception) {
+			LoggerFactory.getLogger(AbstractEndToEndIT.class)
+					.warn("Assumption violated!", exception);
+			throw exception;
+		}
 	}
 
 	@Before
