@@ -377,7 +377,45 @@
 				</plugins>
 			</build>
 		</profile>
-	</profiles>
+		<profile>
+            <!--
+            When running ITs, this profile will activate and package the latest
+            regression test reference results into a JAR that will be attached to
+            the project and deployed.
+            -->
+			<id>buildReferenceData</id>
+			<activation>
+				<property>
+					<name>skipITs</name>
+					<value>false</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-assembly-plugin</artifactId>
+						<version>3.3.0</version>
+						<executions>
+							<execution>
+								<id>assemble-reference-data</id>
+								<phase>verify</phase> <!-- must run after ITs -->
+								<goals>
+									<goal>single</goal>
+								</goals>
+								<configuration>
+								<attach>true</attach>
+								<descriptors>
+									<descriptor>src/reference-data.assembly.xml</descriptor>
+								</descriptors>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>
+			</plugins>
+		</build>
+	</profile>
+</profiles>
 
     <dependencies>
 		<dependency>

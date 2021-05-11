@@ -361,7 +361,7 @@ public abstract class AbstractEndToEndIT {
 		final Path targetDir = Paths.get("target");
 		Assume.assumeTrue(Files.exists(targetDir));
 
-		final Path resultsDir = targetDir.resolve("regression-test-data");
+		final Path resultsDir = targetDir.resolve("reference-data");
 
 		final Path destination = Paths.get(resultsDir.toString(), resourcePath);
 		Files.createDirectories(destination.getParent()); // ensure all folders under target/ exist
