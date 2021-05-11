@@ -48,6 +48,8 @@
 		-->
 		<skipITs>true</skipITs>
 
+		<regressionReferenceVersion>1.5.0-SNAPSHOT</regressionReferenceVersion> <!-- TODO: depend on production version of this dep -->
+
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
@@ -378,12 +380,14 @@
 			</build>
 		</profile>
 		<profile>
-            <!--
-            When running ITs, this profile will activate and package the latest
-            regression test reference results into a JAR that will be attached to
-            the project and deployed.
-            -->
-			<id>buildReferenceData</id>
+			<!--
+			When running ITs, this profile will activate and package the latest
+			regression test results into a JAR that will be attached to the
+			project and deployed. It also will add the necessary dependency
+			on previously-generated reference data to enable the regression
+			test comparisons.
+			-->
+			<id>regressionTest</id>
 			<activation>
 				<property>
 					<name>skipITs</name>
@@ -398,26 +402,35 @@
 						<version>3.3.0</version>
 						<executions>
 							<execution>
-								<id>assemble-reference-data</id>
+								<id>assembleReferenceData</id>
 								<phase>verify</phase> <!-- must run after ITs -->
 								<goals>
 									<goal>single</goal>
 								</goals>
 								<configuration>
-								<attach>true</attach>
-								<descriptors>
-									<descriptor>src/reference-data.assembly.xml</descriptor>
-								</descriptors>
-							</configuration>
-						</execution>
-					</executions>
-				</plugin>
-			</plugins>
-		</build>
-	</profile>
-</profiles>
+									<attach>true</attach>
+									<descriptors>
+										<descriptor>src/reference-data.assembly.xml</descriptor>
+									</descriptors>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+			<dependencies>
+				<dependency>
+					<groupId>maccoss</groupId>
+					<artifactId>encyclopedia</artifactId>
+					<version>${regressionReferenceVersion}</version>
+					<type>jar</type>
+					<classifier>reference-data</classifier>
+				</dependency>
+			</dependencies>
+		</profile>
+	</profiles>
 
-    <dependencies>
+	<dependencies>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
@@ -509,6 +522,7 @@
 			<artifactId>commons-csv</artifactId>
 			<version>1.8</version>
 		</dependency>
+
 		<dependency>
 			<groupId>maccoss</groupId>
 			<artifactId>encyclopedia-test-data</artifactId>
