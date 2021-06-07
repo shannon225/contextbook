@@ -43,7 +43,7 @@ public class SearchParameterParser {
 		map.put("-enzyme", "trypsin");
 		map.put("-percolatorThreshold", "0.01");
 		map.put("-percolatorProteinThreshold", "0.01");
-		map.put("-percolatorVersionNumber", PercolatorExecutor.DEFAULT_VERSION_NUMBER.toString());
+		map.put("-percolatorVersion", PercolatorExecutor.DEFAULT_VERSION_NUMBER.toString());
 		map.put(SearchParameters.OPT_PERC_TRAINING_SIZE, Integer.toString(PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE));
 		map.put(SearchParameters.OPT_PERC_TRAINING_THRESH, Float.toString(PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD));
 		map.put("-expectedPeakWidth", "25");
@@ -257,7 +257,7 @@ public class SearchParameterParser {
 
 		percolatorThreshold=ParsingUtils.getFloat("-percolatorThreshold", parameters, 0.01f);
 		percolatorProteinThreshold=ParsingUtils.getFloat("-percolatorProteinThreshold", parameters, 0.01f);
-		percolatorVersionNumber=PercolatorVersion.getVersion(parameters.get("-percolatorVersionNumber"));
+		percolatorVersionNumber=PercolatorVersion.getVersion(parameters.get("-percolatorVersion"));
 		percolatorTrainingSetSize = ParsingUtils.getInteger(SearchParameters.OPT_PERC_TRAINING_SIZE, parameters, PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE);
 		percolatorTrainingSetThreshold = ParsingUtils.getFloat(SearchParameters.OPT_PERC_TRAINING_THRESH, parameters, PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD);
 

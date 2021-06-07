@@ -1046,7 +1046,7 @@ public class SearchPanelUtilities {
 		chargeRange.add(new JSpinner(minChargeSpinner));
 		chargeRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
 		chargeRange.add(new JSpinner(maxChargeSpinner));
-		//options.add(new LabeledComponent("Enzyme", enzymeBox)); // FIXME add prosit enzymes
+		options.add(new LabeledComponent("Enzyme", enzymeBox)); // FIXME add prosit enzymes
 		options.add(new LabeledComponent("Charge range", chargeRange));
 		options.add(new LabeledComponent("Maximum Missed Cleavage", new JSpinner(maxMissedCleavageSpinner)));
 

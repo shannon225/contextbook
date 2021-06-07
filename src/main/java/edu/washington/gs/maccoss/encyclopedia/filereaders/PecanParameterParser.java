@@ -45,7 +45,7 @@ public class PecanParameterParser {
 		map.put("-percolatorProteinThreshold", "0.01");
 		map.put("-alpha", "1.8");
 		map.put("-beta", "0.4");
-		map.put("-percolatorVersionNumber", PercolatorExecutor.DEFAULT_VERSION_NUMBER.toString());
+		map.put("-percolatorVersion", PercolatorExecutor.DEFAULT_VERSION_NUMBER.toString());
 		map.put("-acquisition", DataAcquisitionType.toString(DataAcquisitionType.DIA));
 		map.put("-precursorWindowSize", "-1");
 		map.put("-numberOfThreadsUsed", Integer.toString(Runtime.getRuntime().availableProcessors()));
@@ -244,7 +244,7 @@ public class PecanParameterParser {
 
 		percolatorThreshold=ParsingUtils.getFloat("-percolatorThreshold", parameters, 0.01f);
 		percolatorProteinThreshold=ParsingUtils.getFloat("-percolatorProteinThreshold", parameters, 0.01f);
-		percolatorVersionNumber=PercolatorVersion.getVersion(parameters.get("-percolatorVersionNumber"));
+		percolatorVersionNumber=PercolatorVersion.getVersion(parameters.get("-percolatorVersion"));
 		percolatorTrainingSetSize = ParsingUtils.getInteger(SearchParameters.OPT_PERC_TRAINING_SIZE, parameters, PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE);
 		percolatorTrainingSetThreshold = ParsingUtils.getFloat(SearchParameters.OPT_PERC_TRAINING_THRESH, parameters, PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD);
 

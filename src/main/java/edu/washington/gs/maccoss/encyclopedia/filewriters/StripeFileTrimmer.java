@@ -34,7 +34,7 @@ public class StripeFileTrimmer {
 		trim(originalFile, newFile, mzRange, rtInSecRange, parameters);
 	}
 	public static StripeFile trim(File originalFile, File newFile, Range mzRange, Range rtInSecRange, SearchParameters parameters) throws IOException, SQLException, DataFormatException {
-		StripeFile stripeFile=new StripeFile();
+		StripeFile stripeFile=new StripeFile(false);
 		stripeFile.openFile();
 		
 		Logger.logLine("Adding "+originalFile+" to selected from (mz:"+mzRange+" and rt:"+rtInSecRange+")...");
@@ -54,7 +54,9 @@ public class StripeFileTrimmer {
 		stripeFile.addPrecursor(precursors);
 		ArrayList<FragmentScan> stripes = new ArrayList<>();
 		for (FragmentScan scan :  thisStripeFile.getStripes(mzRange, rtInSecRange.getStart(), rtInSecRange.getStop(), false)) {
-			stripes.add(scan);
+			if (mzRange.contains(scan.getIsolationWindowLower())&&mzRange.contains(scan.getIsolationWindowUpper())) {
+				stripes.add(scan);	
+			}
 		}
 		stripeFile.addStripe(stripes);
 		

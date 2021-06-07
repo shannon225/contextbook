@@ -48,7 +48,7 @@ public class StripeFileMerger {
 				new File(dir, "SN606_combined.dia"), parameters);
 	}
 	public static StripeFile merge(File[] fs, File newFile, SearchParameters parameters) throws IOException, SQLException, DataFormatException {
-		StripeFile stripeFile=new StripeFile();
+		StripeFile stripeFile=new StripeFile(false);
 		stripeFile.openFile();
 		HashMap<Range, WindowData> dutyCycleMap=new HashMap<>();
 		

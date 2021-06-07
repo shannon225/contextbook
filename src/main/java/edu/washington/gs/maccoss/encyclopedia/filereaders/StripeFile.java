@@ -76,10 +76,6 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 
 	public StripeFile(boolean isOpenFileInPlace) throws IOException {
-		if (!isOpenFileInPlace){
-			tempFile=File.createTempFile("encyclopedia_", DIA_EXTENSION);
-			tempFile.deleteOnExit();
-		}
 		this.isOpenFileInPlace = isOpenFileInPlace;
 	}
 
@@ -218,8 +214,16 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 
 	public void openFile() throws IOException, SQLException {
 		if (isOpenFileInPlace) {
-			tempFile=userFile;
+			if (userFile==null) {
+				tempFile=File.createTempFile("encyclopedia_", DIA_EXTENSION);
+				tempFile.deleteOnExit();
+				userFile=tempFile;
+			} else {
+				tempFile=userFile;
+			}
 		} else {
+			tempFile=File.createTempFile("encyclopedia_", DIA_EXTENSION);
+			tempFile.deleteOnExit();
 			if (userFile!=null) {
 				Files.copy(userFile.toPath(), tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 			}

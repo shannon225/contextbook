@@ -173,7 +173,7 @@ public class SearchParameters {
 		sb.append(" -foffset "+fragmentOffsetPPM+"\n");
 		sb.append(" -enzyme "+enzyme.getName()+"\n");
 		sb.append(" -percolatorThreshold "+percolatorThreshold+"\n");
-		sb.append(" -percolatorVersionNumber "+percolatorVersionNumber+"\n");
+		sb.append(" -percolatorVersion "+percolatorVersionNumber+"\n");
 		sb.append(" ").append(OPT_PERC_TRAINING_SIZE).append(" ").append(percolatorTrainingSetSize).append("\n");
 		sb.append(" ").append(OPT_PERC_TRAINING_THRESH).append(" ").append(percolatorTrainingSetThreshold).append("\n");
 		sb.append(" -acquisition "+DataAcquisitionType.toString(dataAcquisitionType)+"\n");
@@ -215,7 +215,8 @@ public class SearchParameters {
 		map.put("-foffset", fragmentOffsetPPM+"");
 		map.put("-enzyme", enzyme.getName());
 		map.put("-percolatorThreshold", percolatorThreshold+"");
-		map.put("-percolatorVersionNumber", percolatorVersionNumber+"");
+		map.put("-percolatorVersion", percolatorVersionNumber+"");
+		map.put("-percolatorVersionNumber", percolatorVersionNumber.getMajorVersion()+"");
 		map.put(OPT_PERC_TRAINING_SIZE, Integer.toString(percolatorTrainingSetSize));
 		map.put(OPT_PERC_TRAINING_THRESH, Float.toString(percolatorTrainingSetThreshold));
 		map.put("-acquisition", DataAcquisitionType.toString(dataAcquisitionType));

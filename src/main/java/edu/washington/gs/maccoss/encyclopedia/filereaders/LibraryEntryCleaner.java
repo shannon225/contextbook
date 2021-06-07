@@ -27,13 +27,17 @@ public class LibraryEntryCleaner {
 //		cleanLibrary(true, originalLibraryFile, newLibraryFile, fastaFile, SearchParameterParser.getDefaultParametersObject());
 		
 
-		File fileName=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/barcodes_prosit.dlib");
-		File newFileName=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/ecoli_barcodes_prosit.dlib");
-		File fasta=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/uniprot_ecoli_27dec2020.fasta");
+		//File fileName=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/barcodes_prosit.dlib");
+		//File newFileName=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/ecoli_barcodes_prosit.dlib");
+		//File fasta=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/uniprot_ecoli_27dec2020.fasta");
 
-		fileName = new File("/Users/searleb/Documents/cobbs/2020dec30_cobbs/2020dec03_cobbs_cmv_inf_gpfdia_clib.elib");
-		newFileName = new File("/Users/searleb/Documents/cobbs/2020dec30_cobbs/2020dec03_cobbs_cmv_inf_gpfdia_clib_hcmv_only.elib");
-		fasta=new File("/Users/searleb/Documents/cobbs/2020dec30_cobbs/merlin.fasta");
+		//fileName = new File("/Users/searleb/Documents/cobbs/2020dec30_cobbs/2020dec03_cobbs_cmv_inf_gpfdia_clib.elib");
+		//newFileName = new File("/Users/searleb/Documents/cobbs/2020dec30_cobbs/2020dec03_cobbs_cmv_inf_gpfdia_clib_hcmv_only.elib");
+		//fasta=new File("/Users/searleb/Documents/cobbs/2020dec30_cobbs/merlin.fasta");
+		
+		File fileName=new File("/Users/searleb/Documents/iarpa/new_llnl_individual_2/unclean_IARPA_20210401_3clib_plus_llnl.trypsin.z3_nce33.dlib");
+		File newFileName=new File("/Users/searleb/Documents/iarpa/new_llnl_individual_2/clean_IARPA_20210401_3clib_plus_llnl.trypsin.z3_nce33.dlib");
+		File fasta=new File("/Users/searleb/Documents/iarpa/new_llnl_individual_2/IARPA_20210401.fasta_plus_llnl_ref_vars.fasta");
 		
 		cleanLibrary(true, fileName, newFileName, fasta, SearchParameterParser.getDefaultParametersObject());
 	}
@@ -49,7 +53,7 @@ public class LibraryEntryCleaner {
 				Logger.logLine("...found "+count);
 				
 				if (count>1) {
-					Logger.logLine(libraryFile.getName()+" needs to be cleaned!");
+					Logger.logLine(libraryFile.getName()+" does not need to be cleaned!");
 					return false;
 				}
 				rs.close();
@@ -60,6 +64,7 @@ public class LibraryEntryCleaner {
 		} finally {
 			c.close();
 		}
+		Logger.logLine(libraryFile.getName()+" needs to be cleaned!");
 		return true;
 	}
 	
