@@ -1,6 +1,8 @@
 EncyclopeDIA changelog for user-facing changes:
 
 encyclopedia-1.5.0-SNAPSHOT
+ - Feature: added saving and loading of Percolator weights files
+
 encyclopedia-1.4.10 (April 10, 2021)
  - Feature: added command-line options to test new pre-release features
  - Feature: added Percolator 3.05, but default is still 3.01 pending additional testing

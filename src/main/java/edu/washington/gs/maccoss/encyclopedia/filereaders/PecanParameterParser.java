@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.StringTokenizer;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
@@ -107,6 +108,8 @@ public class PecanParameterParser {
 		final boolean requireVariableMods;
         final boolean filterPeaklists;
         final boolean doNotUseGlobalFDR;
+        final Optional<File> percolatorModelFile;
+        final Optional<File> precursorIsolationRangeFile;
         final boolean enableAdvancedOptions;
 
 		ModificationMassMap variableMods=new ModificationMassMap(parameters.get("-variable"));
@@ -232,6 +235,29 @@ public class PecanParameterParser {
 			enzyme=DigestionEnzyme.getEnzyme(value);
 		}
 
+		value=parameters.get("-percolatorModelFile");
+		if (value==null) {
+			percolatorModelFile=Optional.empty();
+		} else {
+			File f=new File(value);
+			if (f.exists()&&f.canRead()) {
+				percolatorModelFile=Optional.of(f);
+			} else {
+				percolatorModelFile=Optional.empty();
+			}
+		}
+		value=parameters.get("-precursorIsolationRangeFile");
+		if (value==null) {
+			precursorIsolationRangeFile=Optional.empty();
+		} else {
+			File f=new File(value);
+			if (f.exists()&&f.canRead()) {
+				precursorIsolationRangeFile=Optional.of(f);
+			} else {
+				precursorIsolationRangeFile=Optional.empty();
+			}
+		}
+
 		minPeptideLength=ParsingUtils.getInteger("-minLength", parameters, 5);
 		maxPeptideLength=ParsingUtils.getInteger("-maxLength", parameters, 100);
 		maxMissedCleavages=ParsingUtils.getInteger("-maxMissedCleavage", parameters, 1);
@@ -302,6 +328,8 @@ public class PecanParameterParser {
 				requireVariableMods,
 				filterPeaklists,
 				doNotUseGlobalFDR,
+				precursorIsolationRangeFile,
+				percolatorModelFile,
 				enableAdvancedOptions
 		);
 	}

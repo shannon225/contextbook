@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -41,6 +42,8 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 		return map;
 	}
 
+	/** used by CLI
+	 */
 	public XCordiaSearchParameters(
 			AminoAcidConstants aaConstants,
 			FragmentationType fragType,
@@ -79,6 +82,8 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 			boolean requireVariableMods,
 			boolean filterPeaklists,
 			boolean doNotUseGlobalFDR,
+			Optional<File> precursorIsolationRangeFile, 
+			Optional<File> percolatorModelFile, 
 			boolean enableAdvancedOptions
 	) {
 		super(
@@ -119,10 +124,14 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				requireVariableMods,
 				filterPeaklists,
 				doNotUseGlobalFDR,
+				precursorIsolationRangeFile,
+				percolatorModelFile,
 				enableAdvancedOptions
 		);
 	}
 
+	/** used by GUI
+	 */
 	public XCordiaSearchParameters(
 			AminoAcidConstants aaConstants,
 			FragmentationType fragType,
@@ -216,6 +225,8 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				params.isRequireVariableMods(),
 				params.isFilterPeaklists(),
 				params.isDoNotUseGlobalFDR(),
+				params.getPrecursorIsolationRangeFile(),
+				params.getPercolatorModelFile(),
 				params.isEnableAdvancedOptions()
 		);
 	}

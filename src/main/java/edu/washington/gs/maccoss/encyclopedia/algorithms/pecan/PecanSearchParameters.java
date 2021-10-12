@@ -67,6 +67,8 @@ public class PecanSearchParameters extends SearchParameters {
 		sb.append(" -quantifyAcrossSamples "+quantifyAcrossSamples+"\n");
 		sb.append(" -minIntensity "+minIntensity+"\n");
 		sb.append(" -requireVariableMods "+requireVariableMods+"\n");
+		sb.append(" -precursorIsolationRangeFile "+(precursorIsolationRangeFile.isPresent()?precursorIsolationRangeFile.get().getAbsolutePath():"none")+"\n");
+		sb.append(" -percolatorModelFile "+(percolatorModelFile.isPresent()?percolatorModelFile.get().getAbsolutePath():"none")+"\n");
 		
 		return sb.toString();
 	}
@@ -106,6 +108,8 @@ public class PecanSearchParameters extends SearchParameters {
 		map.put("-quantifyAcrossSamples", quantifyAcrossSamples+"");
 		map.put("-minIntensity", minIntensity+"");
 		map.put("-requireVariableMods", "false");
+        map.put("-precursorIsolationRangeFile", (precursorIsolationRangeFile.isPresent()?precursorIsolationRangeFile.get().getAbsolutePath():"none"));
+        map.put("-percolatorModelFile", (percolatorModelFile.isPresent()?percolatorModelFile.get().getAbsolutePath():"none"));
 		return map;
 	}
 	
@@ -132,6 +136,8 @@ public class PecanSearchParameters extends SearchParameters {
 		return map;
 	}
 	
+	/** used by CLI
+	 */
 	public PecanSearchParameters(
 			AminoAcidConstants aaConstants, 
 			FragmentationType fragType, 
@@ -170,6 +176,8 @@ public class PecanSearchParameters extends SearchParameters {
 			boolean requireVariableMods, 
 			boolean filterPeaklists, 
 			boolean doNotUseGlobalFDR, 
+			Optional<File> precursorIsolationRangeFile, 
+			Optional<File> percolatorModelFile, 
 			boolean enableAdvancedOptions) {
 		super(
 				aaConstants,
@@ -203,6 +211,8 @@ public class PecanSearchParameters extends SearchParameters {
 				-1.0f,
 				filterPeaklists,
 				doNotUseGlobalFDR, 
+				precursorIsolationRangeFile,
+				percolatorModelFile,
 				enableAdvancedOptions
 		);
 		this.minPeptideLength=minPeptideLength;
@@ -218,78 +228,8 @@ public class PecanSearchParameters extends SearchParameters {
 		this.requireVariableMods=requireVariableMods;
 	}
 
-	public PecanSearchParameters(
-			AminoAcidConstants aaConstants,
-			FragmentationType fragType,
-			MassTolerance precursorTolerance,
-			MassTolerance fragmentTolerance,
-			DigestionEnzyme enzyme,
-			PercolatorVersion percolatorVersionNumber,
-			float percolatorThreshold,
-			int percolatorTrainingSetSize,
-			float percolatorTrainingSetThreshold,
-			int maxMissedCleavages,
-			byte minCharge,
-			byte maxCharge,
-			DataAcquisitionType dataAcquisitionType,
-			float precursorWindowSize,
-			int numberOfJobs,
-			int numberOfQuantitativePeaks,
-			int minNumOfQuantitativePeaks,
-			int topNTargetsUsed,
-			int minQuantitativeIonNumber,
-			float numberOfExtraDecoyLibrariesSearched,
-			boolean quantifyAcrossSamples,
-			boolean verifyModificationIons,
-			boolean requireVariableMods
-	) {
-		super(
-				aaConstants,
-				fragType,
-				precursorTolerance,
-				0.0,
-				0.0,
-				fragmentTolerance,
-				0.0,
-				fragmentTolerance,
-				enzyme,
-				percolatorThreshold,
-				percolatorThreshold,
-				percolatorVersionNumber,
-				percolatorTrainingSetSize,
-				percolatorTrainingSetThreshold,
-				dataAcquisitionType,
-				numberOfJobs,
-				24f,
-				-1f,
-				precursorWindowSize,
-				numberOfQuantitativePeaks,
-				minNumOfQuantitativePeaks,
-				topNTargetsUsed,
-				minQuantitativeIonNumber,
-				Optional.ofNullable((PeptideModification)null),
-				ScoringBreadthType.ENTIRE_RT_WINDOW,
-				numberOfExtraDecoyLibrariesSearched,
-				quantifyAcrossSamples,
-				verifyModificationIons,
-				-1.0f,
-				false,
-				false, 
-				false
-		);
-		minPeptideLength=5;
-		maxPeptideLength=100;
-		this.maxMissedCleavages=maxMissedCleavages;
-		this.minCharge=minCharge;
-		this.maxCharge=maxCharge;
-		numberOfReportedPeaks=1;
-		addDecoysToBackgound=false;
-		dontRunDecoys=false;
-		alpha=1.8f;
-		beta=0.4f;
-		this.requireVariableMods=requireVariableMods;
-	}
-
+	/** used by GUI
+	 */
 	public PecanSearchParameters(
 			AminoAcidConstants aaConstants,
 			FragmentationType fragType,
@@ -348,6 +288,8 @@ public class PecanSearchParameters extends SearchParameters {
 				-1.0f,
 				false,
 				false, 
+				Optional.empty(),
+				Optional.empty(),
 				false
 		);
 		minPeptideLength=5;
@@ -405,7 +347,9 @@ public class PecanSearchParameters extends SearchParameters {
 				verifyModificationIons,
 				-1.0f,
 				false,
-				false, 
+				false,
+				Optional.empty(),
+				Optional.empty(),
 				false);
 		minPeptideLength=5;
 		maxPeptideLength=100;
@@ -465,6 +409,8 @@ public class PecanSearchParameters extends SearchParameters {
 				-1.0f,
 				false,
 				false, 
+				Optional.empty(),
+				Optional.empty(),
 				false
 		);
 		minPeptideLength=5;
@@ -526,6 +472,8 @@ public class PecanSearchParameters extends SearchParameters {
 				-1.0f,
 				false,
 				false, 
+				Optional.empty(),
+				Optional.empty(),
 				false);
 		this.maxMissedCleavages=maxMissedCleavages;
 		minPeptideLength=5;

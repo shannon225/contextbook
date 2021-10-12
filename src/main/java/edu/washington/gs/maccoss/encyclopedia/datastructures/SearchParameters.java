@@ -21,6 +21,7 @@ import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.TFloatObjectHashMap;
 
 public class SearchParameters {
+	private static final String NO_FILE = "none";
 	public static final String OPT_PERC_TRAINING_SIZE = "-percolatorTrainingSetSize";
 	public static final String OPT_PERC_TRAINING_THRESH = "-percolatorTrainingFDR";
 	public static final String ENABLE_ADVANCED_OPTIONS="-enableAdvancedOptions";
@@ -59,6 +60,8 @@ public class SearchParameters {
     protected final int topNTargetsUsed;
     protected final Optional<ArrayList<Range>> precursorIsolationRanges;
     protected final boolean enableAdvancedOptions;
+    protected final Optional<File> precursorIsolationRangeFile;
+    protected final Optional<File> percolatorModelFile;
     
     public Optional<ArrayList<Range>> getPrecursorIsolationRanges() {
 		return precursorIsolationRanges;
@@ -67,7 +70,7 @@ public class SearchParameters {
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, float percolatorProteinThreshold, PercolatorVersion percolatorVersionNumber, int percolatorTrainingSetSize, float percolatorTrainingSetThreshold,
 			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
-			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR, boolean enableAdvancedOptions) {
+			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR, Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean enableAdvancedOptions) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -99,6 +102,8 @@ public class SearchParameters {
         this.rtWindowInMin=rtWindowInMin;
         this.filterPeaklists=filterPeaklists;
         this.doNotUseGlobalFDR=doNotUseGlobalFDR;
+        this.precursorIsolationRangeFile=precursorIsolationRangeFile;
+        this.percolatorModelFile=percolatorModelFile;
         this.enableAdvancedOptions=enableAdvancedOptions;
         
         ArrayList<Range> ranges=null;
@@ -199,6 +204,8 @@ public class SearchParameters {
 		}
 		sb.append(" -rtWindowInMin "+rtWindowInMin+"\n");
         sb.append(" -filterPeaklists "+filterPeaklists+"\n");
+		sb.append(" -precursorIsolationRangeFile "+(precursorIsolationRangeFile.isPresent()?precursorIsolationRangeFile.get().getAbsolutePath():NO_FILE)+"\n");
+		sb.append(" -percolatorModelFile "+(percolatorModelFile.isPresent()?percolatorModelFile.get().getAbsolutePath():NO_FILE)+"\n");
 		return sb.toString();
 	}
 	
@@ -240,6 +247,8 @@ public class SearchParameters {
 		}
 		map.put("-rtWindowInMin", rtWindowInMin+"");
         map.put("-filterPeaklists", filterPeaklists+"");
+        map.put("-precursorIsolationRangeFile", (precursorIsolationRangeFile.isPresent()?precursorIsolationRangeFile.get().getAbsolutePath():NO_FILE));
+        map.put("-percolatorModelFile", (percolatorModelFile.isPresent()?percolatorModelFile.get().getAbsolutePath():NO_FILE));
 		return map;
 	}
 	
@@ -421,5 +430,13 @@ public class SearchParameters {
     
     public boolean isEnableAdvancedOptions() {
 		return enableAdvancedOptions;
+	}
+    
+    public Optional<File> getPercolatorModelFile() {
+		return percolatorModelFile;
+	}
+    
+    public Optional<File> getPrecursorIsolationRangeFile() {
+		return precursorIsolationRangeFile;
 	}
 }

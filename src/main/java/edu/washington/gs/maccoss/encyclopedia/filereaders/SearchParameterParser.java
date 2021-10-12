@@ -131,6 +131,8 @@ public class SearchParameterParser {
         final boolean filterPeaklists;
         final boolean doNotUseGlobalFDR;
         final boolean enableAdvancedOptions;
+        final Optional<File> percolatorModelFile;
+        final Optional<File> precursorIsolationRangeFile;
 		
 		String value=parameters.get("-frag");
 		if (value==null) {
@@ -254,6 +256,29 @@ public class SearchParameterParser {
 		} else {
 			enzyme=DigestionEnzyme.getEnzyme(value);
 		}
+		value=parameters.get("-percolatorModelFile");
+		if (value==null) {
+			percolatorModelFile=Optional.empty();
+		} else {
+			File f=new File(value);
+			if (f.exists()&&f.canRead()) {
+				percolatorModelFile=Optional.of(f);
+			} else {
+				percolatorModelFile=Optional.empty();
+			}
+		}
+		value=parameters.get("-precursorIsolationRangeFile");
+		if (value==null) {
+			precursorIsolationRangeFile=Optional.empty();
+		} else {
+			File f=new File(value);
+			if (f.exists()&&f.canRead()) {
+				precursorIsolationRangeFile=Optional.of(f);
+			} else {
+				precursorIsolationRangeFile=Optional.empty();
+			}
+		}
+		
 
 		percolatorThreshold=ParsingUtils.getFloat("-percolatorThreshold", parameters, 0.01f);
 		percolatorProteinThreshold=ParsingUtils.getFloat("-percolatorProteinThreshold", parameters, 0.01f);
@@ -357,6 +382,8 @@ public class SearchParameterParser {
 				rtWindowInMin,
 				filterPeaklists,
 				doNotUseGlobalFDR,
+				precursorIsolationRangeFile,
+				percolatorModelFile,
 				enableAdvancedOptions
 		);
 	}
