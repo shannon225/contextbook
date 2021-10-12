@@ -183,7 +183,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 		} else {
 			params.add("-Y");
 		}
-		if (commandData.getPercolatorModelFile().isPresent()) {
+		if (commandData.getPercolatorModelFile().isPresent()&&commandData.getPercolatorModelFile().get().canRead()) {
 			params.add("--init-weights"); params.add(commandData.getPercolatorModelFile().get().getAbsolutePath());
 			params.add("--maxiter"); params.add("0");
 		}
