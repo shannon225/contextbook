@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.zip.DataFormatException;
 
 import org.relaxng.datatype.DatatypeException;
@@ -17,6 +18,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 
 public class LibraryEntryCleaner {
 	public static void main(String[] args) throws Exception {
@@ -35,11 +37,26 @@ public class LibraryEntryCleaner {
 		//newFileName = new File("/Users/searleb/Documents/cobbs/2020dec30_cobbs/2020dec03_cobbs_cmv_inf_gpfdia_clib_hcmv_only.elib");
 		//fasta=new File("/Users/searleb/Documents/cobbs/2020dec30_cobbs/merlin.fasta");
 		
-		File fileName=new File("/Users/searleb/Documents/iarpa/new_llnl_individual_2/unclean_IARPA_20210401_3clib_plus_llnl.trypsin.z3_nce33.dlib");
-		File newFileName=new File("/Users/searleb/Documents/iarpa/new_llnl_individual_2/clean_IARPA_20210401_3clib_plus_llnl.trypsin.z3_nce33.dlib");
-		File fasta=new File("/Users/searleb/Documents/iarpa/new_llnl_individual_2/IARPA_20210401.fasta_plus_llnl_ref_vars.fasta");
+		//File fileName=new File("/Users/searleb/Documents/iarpa/new_llnl_individual_2/unclean_IARPA_20210401_3clib_plus_llnl.trypsin.z3_nce33.dlib");
+		//File newFileName=new File("/Users/searleb/Documents/iarpa/new_llnl_individual_2/clean_IARPA_20210401_3clib_plus_llnl.trypsin.z3_nce33.dlib");
+		//File fasta=new File("/Users/searleb/Documents/iarpa/new_llnl_individual_2/IARPA_20210401.fasta_plus_llnl_ref_vars.fasta");
 		
-		cleanLibrary(true, fileName, newFileName, fasta, SearchParameterParser.getDefaultParametersObject());
+//		File fileName=new File("/Users/searleb/Documents/iarpa/IARPA_bone/10p/unclean_bone-refs-vars-Pplus16-20210615.trypsin.z3_nce33.prosit.dlib");
+//		File newFileName=new File("/Users/searleb/Documents/iarpa/IARPA_bone/10p/clean_bone-refs-vars-Pplus16-20210615.trypsin.z3_nce33.prosit.dlib");
+//		File fasta=new File("/Users/searleb/Documents/iarpa/IARPA_bone/10p/bone-refs-vars-20210615.combined.fasta");
+
+		File fileName=new File("/Users/searleb/Documents/phospho/phosphopedia_hcd_combined.dlib");
+		File newFileName=new File("/Users/searleb/Documents/phospho/phosphopedia_hcd_combined_cleaned.dlib");
+		
+		fileName=new File("/Users/searleb/Documents/OSU/damien/hela_raws/HeLa.elib");
+		newFileName=new File("/Users/searleb/Documents/OSU/damien/hela_raws/Villen_HeLa_cleaned.elib");
+		File fasta=new File("/Users/searleb/Documents/phospho/uniprot_human_25apr2019.fasta");
+
+//		File fileName=new File("/Users/searleb/Documents/iarpa/sigsci/unclean_IARPA_20210401_3clib_plus_llnl_and_sigsci.trypsin.z3_nce33.dlib");
+//		File newFileName=new File("/Users/searleb/Documents/iarpa/sigsci/clean_IARPA_20210401_3clib_plus_llnl_and_sigsci.trypsin.z3_nce33.dlib");
+//		File fasta=new File("/Users/searleb/Documents/iarpa/sigsci/IARPA_20210401.fasta_plus_llnl_and_sigsci_ref_vars.fasta");
+		
+		cleanLibrary(true, true, fileName, newFileName, fasta, SearchParameterParser.getDefaultParametersObject());
 	}
 	
 	public static boolean doesLibraryNeedCleaning(LibraryFile libraryFile) throws IOException, SQLException {
@@ -68,7 +85,7 @@ public class LibraryEntryCleaner {
 		return true;
 	}
 	
-	public static LibraryFile cleanLibrary(boolean smallerScoresAreGood, File originalLibraryFile, File newLibraryFile, File fastaFile, SearchParameters parameters) throws IOException, DatatypeException, DataFormatException, SQLException {
+	public static LibraryFile cleanLibrary(boolean smallerScoresAreGood, boolean respectEnzyme, File originalLibraryFile, File newLibraryFile, File fastaFile, SearchParameters parameters) throws IOException, DatatypeException, DataFormatException, SQLException {
 		LibraryFile oldLibrary=new LibraryFile();
 		oldLibrary.openFile(originalLibraryFile);
 		ArrayList<LibraryEntry> originalEntries=oldLibrary.getAllEntries(false, parameters.getAAConstants());
@@ -92,7 +109,8 @@ public class LibraryEntryCleaner {
 			ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile, parameters);
 		
 			Logger.logLine("Constructing trie from library peptides");
-			PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(entries);
+			DigestionEnzyme enzyme = respectEnzyme?parameters.getEnzyme():null;
+			PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(entries, Optional.ofNullable(enzyme));
 			trie.addFasta(proteins);
 		}
 
@@ -100,6 +118,9 @@ public class LibraryEntryCleaner {
 		for (LibraryEntry entry : entries) {
 			int size=Math.min(counts.length-1, entry.getAccessions().size());
 			counts[size]++;
+			if (size==0) {
+				System.out.println(entry.getPeptideSeq());
+			}
 		}
 		Logger.logLine("Accession count histogram: ");
 		for (int i=0; i<counts.length; i++) {

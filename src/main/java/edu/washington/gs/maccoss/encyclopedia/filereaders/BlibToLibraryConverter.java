@@ -43,7 +43,7 @@ public class BlibToLibraryConverter {
 				if (newLibrary.exists()) {
 					return getFile(newLibrary);
 				} else {
-					libraryFile=LibraryEntryCleaner.cleanLibrary(true, f, newLibrary, fastaFile, parameters);
+					libraryFile=LibraryEntryCleaner.cleanLibrary(true, false, f, newLibrary, fastaFile, parameters);
 				}
 			};
 		} catch (SQLException sqle) {

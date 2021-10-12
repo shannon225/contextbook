@@ -2,7 +2,9 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
 public class PeptideProteinCoverageTrie extends PeptideTrie<LibraryEntry> {
@@ -12,6 +14,10 @@ public class PeptideProteinCoverageTrie extends PeptideTrie<LibraryEntry> {
 	
 	public PeptideProteinCoverageTrie(Collection<LibraryEntry> entries) {
 		super(entries);
+	}
+	
+	public PeptideProteinCoverageTrie(Collection<LibraryEntry> entries, Optional<DigestionEnzyme> enzyme) {
+		super(entries, enzyme);
 	}
 
 	@Override

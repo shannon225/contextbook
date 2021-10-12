@@ -345,7 +345,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 		percolatorVersion.setSelectedItem(params.getPercolatorVersionNumber());
 		numberOfQuantitativeIons.setValue(params.getNumberOfQuantitativePeaks());
 		minNumOfQuantitativeIons.setValue(params.getMinNumOfQuantitativePeaks());
-		percolatorThreshold.setValue(params.getPercolatorThreshold());
+		percolatorThreshold.setValue(new Double(params.getPercolatorThreshold()));
 	}
 	
 	@Override

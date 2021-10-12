@@ -28,8 +28,11 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 	}
 
 	public AnnotatedLibraryEntry(LibraryEntry entry, SearchParameters parameters) {
+		this(entry, parameters, false);
+	}
+	public AnnotatedLibraryEntry(LibraryEntry entry, SearchParameters parameters, boolean keepNegativeIntensities) {
 		super(entry.getSource(), entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), entry.getCopies(),
-				entry.getRetentionTime(), entry.getScore(), entry.getMassArray(), entry.getIntensityArray(), entry.getCorrelationArray(), parameters.getAAConstants());
+				entry.getRetentionTime(), entry.getScore(), entry.getMassArray(), entry.getIntensityArray(), entry.getCorrelationArray(), parameters.getAAConstants(), keepNegativeIntensities);
 
 		double[] massArray=entry.getMassArray();
 		this.ionAnnotations=new FragmentIon[massArray.length];

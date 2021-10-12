@@ -1,6 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -78,8 +80,8 @@ public class PercolatorProteinGroup implements ProteinGroupInterface {
 		return Arrays.asList(peptides);
 	}
 
-	public String[] getAccessions() {
-		return accessions;
+	public HashSet<String> getAccessions() {
+		return new HashSet<>(Arrays.asList(accessions));
 	}
 
 	public String[] getPeptides() {

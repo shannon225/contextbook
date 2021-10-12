@@ -39,6 +39,31 @@ import gnu.trove.set.hash.TIntHashSet;
 import junit.framework.TestCase;
 
 public class FastaReaderTest extends TestCase {
+	public static void main(String[] args) throws Exception {
+		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
+		File f=new File("/Users/searleb/Documents/maccoss/barnes/chris_barnes/mus_musculus_reviewed_uniprot.fasta"); 
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
+
+		for (FastaEntryInterface entry : entries) {
+			ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants(), parameters.isRequireVariableMods());
+			for (FastaPeptideEntry peptide : peptides) {
+				for (byte z = 1; z <=4; z++) {
+					double mass=parameters.getAAConstants().getChargedMass(peptide.getSequence(), z);
+					if (mass>642.3&&mass<642.4) {
+						char[] aas=peptide.getSequence().toCharArray();
+						if (aas[2]=='N') {
+						if (aas[3]=='I'||aas[3]=='L') {
+								if (aas[4]=='I'||aas[4]=='L') {
+									System.out.println(peptide.getSequence()+", "+z+", "+mass);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	public static void mainW(String[] args) throws Exception {
 		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 		
@@ -62,7 +87,7 @@ public class FastaReaderTest extends TestCase {
 		writer.close();
 	}
 	
-	public static void main(String[] args) throws Exception {
+	public static void mainT(String[] args) throws Exception {
 		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 		byte charge=6;
 		File f=new File("/Users/searleb/Downloads/20201207_smallLibrary-1.fasta"); 

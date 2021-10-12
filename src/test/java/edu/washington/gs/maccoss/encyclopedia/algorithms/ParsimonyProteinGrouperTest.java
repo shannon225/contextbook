@@ -21,7 +21,7 @@ public class ParsimonyProteinGrouperTest extends TestCase {
 		ArrayList<PercolatorPeptide> targets=PercolatorReader.getPassingPeptidesFromTSV(outputFile, 0.01f, aaConstants, true).x;
 		ArrayList<PercolatorPeptide> decoys=PercolatorReader.getPassingPeptidesFromTSV(decoyFile, 0.01f, aaConstants, true).x;
 		
-		System.out.println("NONE:    "+ParsimonyProteinGrouper.groupProteins(targets, aaConstants).size());
+		System.out.println("NONE:    "+ParsimonyProteinGrouper.groupPercolatorProteins(targets, aaConstants).size());
 		System.out.println("10%FDR:  "+ParsimonyProteinGrouper.groupProteins(targets, decoys, 0.1f, aaConstants).x.size());
 		System.out.println(" 5%FDR:  "+ParsimonyProteinGrouper.groupProteins(targets, decoys, 0.05f, aaConstants).x.size());
 		System.out.println(" 1%FDR:  "+ParsimonyProteinGrouper.groupProteins(targets, decoys, 0.01f, aaConstants).x.size());
@@ -38,7 +38,7 @@ public class ParsimonyProteinGrouperTest extends TestCase {
 			String psmID=PercolatorPeptide.getPSMID("FILE", 0.0f, Optional.empty(), false, RandomGenerator.randomSequence(i), (byte)2);
 			peptides.add(new PercolatorPeptide(psmID, ">"+RandomGenerator.randomSequence(i), 0.0f, 0.0f, aaConstants));
 		}
-		ArrayList<ProteinGroupInterface> proteins=ParsimonyProteinGrouper.groupProteins(peptides, aaConstants);
+		ArrayList<ProteinGroupInterface> proteins=ParsimonyProteinGrouper.groupPercolatorProteins(peptides, aaConstants);
 		assertEquals(randomPeptides, proteins.size());
 		
 		peptides.clear();
@@ -49,7 +49,7 @@ public class ParsimonyProteinGrouperTest extends TestCase {
 			psmID=PercolatorPeptide.getPSMID("FILE", 0.0f, Optional.empty(), false, RandomGenerator.randomSequence(i+10), (byte)2);
 			peptides.add(new PercolatorPeptide(psmID, ">"+accession, 0.0f, 0.0f, aaConstants));
 		}
-		proteins=ParsimonyProteinGrouper.groupProteins(peptides, aaConstants);
+		proteins=ParsimonyProteinGrouper.groupPercolatorProteins(peptides, aaConstants);
 		assertEquals(randomPeptides, proteins.size());
 		
 		for (ProteinGroupInterface proteinGroup : proteins) {
@@ -67,7 +67,7 @@ public class ParsimonyProteinGrouperTest extends TestCase {
 			peptides.add(new PercolatorPeptide(psmID, ">"+accession, 0.0f, 0.0f, aaConstants));
 			peptides.add(new PercolatorPeptide(psmID, ">"+altAccession, 0.0f, 0.0f, aaConstants));
 		}
-		proteins=ParsimonyProteinGrouper.groupProteins(peptides, aaConstants);
+		proteins=ParsimonyProteinGrouper.groupPercolatorProteins(peptides, aaConstants);
 		assertEquals(randomPeptides, proteins.size());
 		
 		for (ProteinGroupInterface proteinGroup : proteins) {

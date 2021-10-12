@@ -49,7 +49,7 @@ public class SearchParameterParser {
 		map.put("-expectedPeakWidth", "25");
 		map.put("-acquisition", DataAcquisitionType.toString(DataAcquisitionType.DIA));
 		map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
-		map.put("-scoringBreadthType", ScoringBreadthType.ENTIRE_RT_WINDOW.toShortname());
+		map.put("-scoringBreadthType", ScoringBreadthType.RECALIBRATED_PEAK_WIDTH.toShortname());
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
 		map.put("-numberOfQuantitativePeaks", "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
@@ -304,12 +304,12 @@ public class SearchParameterParser {
 			try {
 				type=ScoringBreadthType.getType(value);
 			} catch (Exception e) {
-				Logger.errorLine("Falling back to scoring breadth type: "+ScoringBreadthType.ENTIRE_RT_WINDOW.toShortname());
-				type=ScoringBreadthType.ENTIRE_RT_WINDOW;
+				Logger.errorLine("Falling back to scoring breadth type: "+ScoringBreadthType.RECALIBRATED_PEAK_WIDTH.toShortname());
+				type=ScoringBreadthType.RECALIBRATED_PEAK_WIDTH;
 			}
 			breadthType=type;
 		} else {
-			breadthType=ScoringBreadthType.ENTIRE_RT_WINDOW;
+			breadthType=ScoringBreadthType.RECALIBRATED_PEAK_WIDTH;
 		}
 		
 		float tempNumberOfExtraDecoyLibrariesSearched=ParsingUtils.getFloat("-numberOfExtraDecoyLibrariesSearched", parameters, 0.0f);

@@ -329,14 +329,24 @@ public class MSPReader {
 						if (rtString.indexOf(',')>0) {
 							rtString=rtString.substring(0, rtString.indexOf(','));
 						}
-						retentionTime=Float.parseFloat(rtString)*60f;
+						try {
+							retentionTime=Float.parseFloat(rtString)*60f;
+						} catch (NumberFormatException nfe) {
+							Logger.errorLine("MSP parsing error: found invalid RT value: "+rtString+", using 0.0 instead"); 
+							retentionTime=0.0f;
+						}
 					} else if (irtString!=null) {
 						if (irtString.indexOf(',')>0) {
 							irtString=irtString.substring(0, irtString.indexOf(','));
 						}
-						retentionTime=Float.parseFloat(irtString)*60f;
-					} else if (retentionTime==0.0f) {
-						retentionTime=(float)SSRCalc.getHydrophobicity(peptideModSeq);
+						try {
+							retentionTime=Float.parseFloat(irtString)*60f;
+						} catch (NumberFormatException nfe) {
+							Logger.errorLine("MSP parsing error: found invalid RT value: "+irtString+", using 0.0 instead"); 
+							retentionTime=0.0f;
+						}
+					//} else if (retentionTime==0.0f) {
+					//	retentionTime=(float)SSRCalc.getHydrophobicity(peptideModSeq);
 					}
 				}
 			}
@@ -455,7 +465,9 @@ public class MSPReader {
 		// prefer Unimod if possible
 		PostTranslationalModification ptm=PTMMap.getPTM(mod, Character.toString(aa));
 		if (ptm!=null&&ptm!=PTMMap.PostTranslationalModification.nothing) {
-			return ptm.getDeltaMass();
+			if (!mod.equals("TMT")) {
+				return ptm.getDeltaMass();
+			}
 		}
 		
 		// fallback on direct lookup
@@ -483,6 +495,8 @@ public class MSPReader {
 			return 43.00582;
 		} else if ("Deamidated".equalsIgnoreCase(mod)||"Deamidation".equalsIgnoreCase(mod)) {
 			return 0.984016;
+		} else if ("TMT".equalsIgnoreCase(mod)) {
+			return 229.162932;
 		}
 		throw new EncyclopediaException("Unexpected modification ["+mod+"] on ["+aa+"]");
 	}

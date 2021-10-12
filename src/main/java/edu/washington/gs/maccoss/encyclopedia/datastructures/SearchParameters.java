@@ -102,7 +102,7 @@ public class SearchParameters {
         this.enableAdvancedOptions=enableAdvancedOptions;
         
         ArrayList<Range> ranges=null;
-//        ranges=new ArrayList<>();
+        ranges=new ArrayList<>();
 //        ranges.add(new Range(400.4319f,421.44144f));
 //        ranges.add(new Range(421.44144f,440.4501f));
 //        ranges.add(new Range(440.4501f,458.45828f));
@@ -133,6 +133,7 @@ public class SearchParameters {
 //        ranges.add(new Range(891.6552f,923.66974f));
 //        ranges.add(new Range(923.66974f,958.68567f));
 //        ranges.add(new Range(958.68567f,1000.69567f));
+        
         precursorIsolationRanges=Optional.ofNullable(ranges);
 	}
 	

@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.SSRCalc;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -26,6 +27,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEn
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursorWithProteins;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -196,6 +199,7 @@ public class BlibFile extends SQLFile {
 					total++;
 
 					entries.add(new LibraryEntry(sourceFile, new HashSet<String>(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, constants));
+					
 				}
 				if (missing>0) {
 					Logger.logLine("Missing iRT for "+missing+" of "+total+" peptides, using RT in file.");
@@ -213,10 +217,13 @@ public class BlibFile extends SQLFile {
 					int size=Math.min(counts.length-1, entry.getAccessions().size());
 					counts[size]++;
 				}
+				
 				Logger.logLine("Accession count histogram: ");
 				for (int i=0; i<counts.length; i++) {
 					Logger.logLine(i+" Acc\t"+counts[i]+" Counts");
 				}
+				ArrayList<ProteinGroupInterface> proteinGroups=ParsimonyProteinGrouper.groupLibraryEntryProteins(entries, params.getAAConstants());
+				Logger.errorLine(proteinGroups.size()+" distinct protein groups found.");
 
 				if (counts[0]>0) {
 					Logger.errorLine(counts[0]+" library entries can't be linked to proteins! These entries will be dropped.");

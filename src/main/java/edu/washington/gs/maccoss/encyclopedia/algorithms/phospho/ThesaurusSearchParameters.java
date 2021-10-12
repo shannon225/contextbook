@@ -20,7 +20,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 public class ThesaurusSearchParameters extends SearchParameters {
-	private final boolean considerRearrangement;
+	private final boolean considerRearrangement; // default is false
 
 	public void savePreferences(File libraryFile, File fastaFile) throws IOException,BackingStoreException {
 		Preferences prefs=Preferences.userRoot().node("CASiL");

@@ -44,10 +44,12 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LocalizedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SimplePeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -1266,6 +1268,26 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						entry.add(new ChromatogramLibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray,
 								correlationArray, medianChromatogramArray, new Range(rtInSecondsStart, rtInSecondsStop), aaConstants));
 					}
+				}
+
+				return entry;
+			}
+		}
+	}
+
+	public ArrayList<PeptidePrecursor> getAllPeptidePrecursors(AminoAcidConstants aaConstants) throws IOException, SQLException, DataFormatException {
+		try (Connection c=getConnection()) {
+			try (PreparedStatement s=c.prepareStatement("select "+"e.PeptideModSeq, "+"e.PrecursorCharge "+"from "
+					+"entries e "+"left join peptidetoprotein p "+"on "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"group by e.rowid")) {
+
+				ResultSet rs=s.executeQuery();
+
+				ArrayList<PeptidePrecursor> entry=new ArrayList<PeptidePrecursor>();
+				while (rs.next()) {
+					String peptideModSeq=PeptideUtils.getCorrectedMasses(rs.getString(1), aaConstants);
+					byte precursorCharge=(byte) rs.getInt(2);
+					SimplePeptidePrecursor peptide=new SimplePeptidePrecursor(peptideModSeq, precursorCharge, aaConstants);
+					entry.add(peptide);
 				}
 
 				return entry;
