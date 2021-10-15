@@ -34,7 +34,7 @@ public enum PercolatorVersion {
 		case v3p05:
 			return V3_05;
 		default:
-			return V3_05;
+			return DEFAULT_VERSION.toString();
 		}
 	}
 	
@@ -47,7 +47,7 @@ public enum PercolatorVersion {
 		case v3p05:
 			return 3;
 		default:
-			return 3;
+			return DEFAULT_VERSION.getMajorVersion();
 		}
 	}
 }
