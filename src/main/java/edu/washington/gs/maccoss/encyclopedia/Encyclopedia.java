@@ -485,13 +485,13 @@ public class Encyclopedia {
 		HashSet<XYPoint> rtSet=new HashSet<XYPoint>();
 		
 		for (PeptideScoringResult result : data) {
-			if (result.getGoodStripes().size()>0) {
+			if (result.hasScoredResults()) {
 				String peptideModSeq=result.getEntry().getPeptideModSeq();
 				if (passingSeqs.contains(peptideModSeq+"+"+result.getEntry().getPrecursorCharge())) {
 					LibraryEntry entry=result.getEntry();
 					float entryTime=entry.getScanStartTime();
 
-					Pair<ScoredObject<FragmentScan>, float[]> first=result.getGoodStripes().get(0);
+					Pair<ScoredObject<FragmentScan>, float[]> first=result.getScoredMSMS();
 					XYPoint point=new RTRTPoint(entryTime/60.0f, first.x.y.getScanStartTime()/60.0f, entry.isDecoy(), entry.getPeptideModSeq());
 					rtSet.add(point);
 				}

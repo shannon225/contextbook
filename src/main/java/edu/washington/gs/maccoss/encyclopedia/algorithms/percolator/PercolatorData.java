@@ -114,13 +114,13 @@ public class PercolatorData {
 		TFloatArrayList deltas=new TFloatArrayList();
 
 		for (PeptideScoringResult result : data) {
-			if (result.getGoodStripes().size()>0) {
+			if (result.hasScoredResults()) {
 				String peptideModSeq=result.getEntry().getPeptideModSeq();
 				if (passingPSMIDs.contains(peptideModSeq+"+"+result.getEntry().getPrecursorCharge())) {
 					LibraryEntry entry=result.getEntry();
 					float entryTime=filter.getYValue(entry.getRetentionTime());
 					
-					Pair<ScoredObject<FragmentScan>, float[]> first=result.getGoodStripes().get(0);
+					Pair<ScoredObject<FragmentScan>, float[]> first=result.getScoredMSMS();
 					float deltaRT=first.x.y.getScanStartTime()/60f-entryTime;
 					deltas.add(deltaRT);					
 				}
@@ -135,12 +135,12 @@ public class PercolatorData {
 
 		HashSet<String> rtFilteredPSMIDs=new HashSet<String>();
 		for (PeptideScoringResult result : data) {
-			if (result.getGoodStripes().size()>0) {
+			if (result.hasScoredResults()) {
 				String peptideModSeq=result.getEntry().getPeptideModSeq();
 				LibraryEntry entry=result.getEntry();
 				float entryTime=filter.getYValue(entry.getRetentionTime());
 
-				Pair<ScoredObject<FragmentScan>, float[]> first=result.getGoodStripes().get(0);
+				Pair<ScoredObject<FragmentScan>, float[]> first=result.getScoredMSMS();
 				float deltaRT=first.x.y.getScanStartTime()/60f-entryTime;
 
 				if (deltaRT<=upperThreshold&&deltaRT>=lowerThreshold) {

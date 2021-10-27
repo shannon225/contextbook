@@ -377,11 +377,11 @@ public class PhosphoLocalizerExample {
 		while (!resultsQueue.isEmpty()) {
 			if (!resultsQueue.isEmpty()) {
 				PeptideScoringResult result=resultsQueue.take();
-				ArrayList<Pair<ScoredObject<FragmentScan>, float[]>> data=result.getGoodStripes();
+				Pair<ScoredObject<FragmentScan>, float[]> pair=result.getScoredMSMS();
 				index++;
-				for (Pair<ScoredObject<FragmentScan>, float[]> pair : data) {
+				//for (Pair<ScoredObject<FragmentScan>, float[]> pair : data) {
 					System.out.println(index+") "+result.getEntry().getPeptideModSeq()+"\t"+pair.x.x+"\t("+((pair.x.y.getScanStartTime())/60f)+" minutes)");
-				}
+				//}
 			} else {
 				Thread.sleep(10);
 			}

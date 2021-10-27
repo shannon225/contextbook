@@ -70,7 +70,7 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 		LibraryEntry peptide=result.getEntry();
 		int rank=1;
 
-		for (Pair<ScoredObject<FragmentScan>, float[]> goodStripe : result.getGoodStripes()) {
+		for (Pair<ScoredObject<FragmentScan>, float[]> goodStripe : result.getGoodMSMSCandidates()) {
 			numberProcessed++;
 
 			FragmentScan stripe=goodStripe.x.y;

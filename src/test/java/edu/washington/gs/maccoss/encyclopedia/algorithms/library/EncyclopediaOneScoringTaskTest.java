@@ -82,7 +82,7 @@ public class EncyclopediaOneScoringTaskTest {//extends TestCase {
 		PeptideScoringResult poll=resultsQueue.poll();
 		XYTraceInterface trace=poll.getTrace();
 		
-		System.out.println(trace+" --> "+poll.getGoodStripes().get(0).x.x+" --> scan: "+(poll.getGoodStripes().get(0).x.y.getScanStartTime()/60));
+		System.out.println(trace+" --> "+poll.getScoredMSMS().x.x+" --> scan: "+(poll.getScoredMSMS().x.y.getScanStartTime()/60));
 		Charter.launchChart("time", "score", true, trace);
 	}
 }

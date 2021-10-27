@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.AbstractRetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
@@ -10,6 +11,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
+import gnu.trove.list.array.TFloatArrayList;
 
 public class PeptideScoringResult {
 	public static final PeptideScoringResult POISON_RESULT=new PeptideScoringResult(null);
@@ -75,13 +77,28 @@ public class PeptideScoringResult {
 	}
 	
 	public float getBestScore() {
-		float bestScore=-Float.MAX_VALUE;
-		for (Pair<ScoredObject<FragmentScan>, float[]> pair : goodStripes) {
-			if (pair.x.x>bestScore) {
-				bestScore=pair.x.x;
-			}
+		float[] scores=getSortedScores();
+		if (scores.length>0) {
+			return scores[scores.length-1];
 		}
-		return bestScore;
+		return 0.0f;
+	}
+	public float getSecondBestScore() {
+		float[] scores=getSortedScores();
+		if (scores.length>1) {
+			return scores[scores.length-2];
+		}
+		return 0.0f;
+	}
+	
+	private float[] getSortedScores() {
+		TFloatArrayList scores=new TFloatArrayList();
+		for (Pair<ScoredObject<FragmentScan>, float[]> pair : goodStripes) {
+			scores.add(pair.x.x);
+		}
+		float[] sorted=scores.toArray();
+		Arrays.sort(sorted);
+		return sorted;
 	}
 	
 	public void setTrace(XYTraceInterface trace) {
@@ -92,7 +109,15 @@ public class PeptideScoringResult {
 		return trace;
 	}
 	
-	public ArrayList<Pair<ScoredObject<FragmentScan>, float[]>> getGoodStripes() {
+	public boolean hasScoredResults() {
+		return goodStripes.size()>0;
+	}
+	
+	public Pair<ScoredObject<FragmentScan>, float[]> getScoredMSMS() {
+		return goodStripes.get(0);
+	}
+	
+	public ArrayList<Pair<ScoredObject<FragmentScan>, float[]>> getGoodMSMSCandidates() {
 		return goodStripes;
 	}
 }
