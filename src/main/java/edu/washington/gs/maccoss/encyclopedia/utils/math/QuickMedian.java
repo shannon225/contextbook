@@ -17,6 +17,7 @@ public class QuickMedian {
 	 */
 	public static float select(float[] data, float desiredPercentage) {
 		if (data.length==0) return 0.0f;
+		if (data.length==1) return data[0];
 
 		// The exact position of the value we want to select. Note that this might fall between two values.
 		final float pos = (data.length - 1) * desiredPercentage;

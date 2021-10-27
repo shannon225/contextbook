@@ -1,6 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -20,6 +19,70 @@ import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class LibraryRTComparisonTest {
 	public static void main(String[] args) throws Exception {
+		File cidPhosphoFile = new File("/Users/searleb/Documents/phospho/oleg_alignment/CID_phospho_rts.csv");
+		File hcdPhosphoFile = new File("/Users/searleb/Documents/phospho/oleg_alignment/HCD_phospho_rts.csv");
+		File hi2018File = new File("/Users/searleb/Documents/phospho/oleg_alignment/Oleg_10KPHOS_reformatted_DBW211015.txt");
+		File reportFile = new File("/Users/searleb/Documents/phospho/oleg_alignment/phospho_combined_libraries.tsv");
+		
+		TObjectFloatHashMap<String> cidPhospho=getData(cidPhosphoFile, "PeptideModSeq", "rtinmin", ",", 1);
+		TObjectFloatHashMap<String> hcdPhospho=getData(hcdPhosphoFile, "PeptideModSeq", "rtinmin", ",", 1);
+		TObjectFloatHashMap<String> hi2018=getData(hi2018File, "peptide", "hydrophobicity", "\t", 1);
+		
+		ArrayList<XYPoint> cidPhosphoPair=new ArrayList<>();
+		ArrayList<XYPoint>hcdPhosphoPair=new ArrayList<>();
+		hi2018.forEachEntry(new TObjectFloatProcedure<String>() {
+			@Override
+			public boolean execute(String pep, float h) {
+				float b=cidPhospho.get(pep);
+				float p=hcdPhospho.get(pep);
+				
+				if (h!=0.0f&&b!=0.0f) {
+					cidPhosphoPair.add(new RTRTPoint(b, h, false, pep));
+				}
+				if (h!=0.0f&&p!=0.0f) {
+					hcdPhosphoPair.add(new RTRTPoint(p, h, false, pep));
+				}
+				return true;
+			}
+		});
+		
+		FileWriter writer=new FileWriter(reportFile);
+		final PrintWriter out=new PrintWriter(writer);
+		out.println("PeptideModSeq\tHydrophobicity\tType");
+
+		hi2018.forEachEntry(new TObjectFloatProcedure<String>() {
+			@Override
+			public boolean execute(String pep, float h) {
+				out.println(pep+"\t"+h+"\t"+"h18");
+				return true;
+			}
+		});
+		
+		final RetentionTimeFilter cidPhosphoFilter=RetentionTimeFilter.getFilter(cidPhosphoPair);
+		cidPhosphoFilter.plot(cidPhosphoPair, Optional.ofNullable(cidPhosphoFile));
+
+		cidPhospho.forEachEntry(new TObjectFloatProcedure<String>() {
+			@Override
+			public boolean execute(String pep, float b) {
+				out.println(pep+"\t"+cidPhosphoFilter.getYValue(b)+"\t"+"cid");
+				return true;
+			}
+		});
+
+		final RetentionTimeFilter hcdPhosphoFilter=RetentionTimeFilter.getFilter(hcdPhosphoPair);
+		hcdPhosphoFilter.plot(hcdPhosphoPair, Optional.ofNullable(hcdPhosphoFile));
+
+		hcdPhospho.forEachEntry(new TObjectFloatProcedure<String>() {
+			@Override
+			public boolean execute(String pep, float p) {
+				out.println(pep+"\t"+hcdPhosphoFilter.getYValue(p)+"\t"+"hcd");
+				return true;
+			}
+		});
+		
+		out.close();
+	}
+	public static void main2(String[] args) throws Exception {
 		File bruderer2017File = new File("/Users/searleb/Documents/oleg/combined_libs/Bruderer2017_median-iRT_DBW211005.tsv");
 		File proteomeToolsFile = new File("/Users/searleb/Documents/oleg/combined_libs/proteometools_rts_with_ox.csv");
 		File hi2018File = new File("/Users/searleb/Documents/oleg/combined_libs/WHI2018-BRIAN400K.tsv");
@@ -91,6 +154,8 @@ public class LibraryRTComparisonTest {
 			public void processRow(Map<String, String> row) {
 				String pep=row.get(pepHeader);
 				pep=pep.replace("[+57.021464]", "");
+				pep=pep.replace("[79.966331]", "[+79.966331]");
+				
 				
 				String s=row.get(rtHeader);
 				float predicted=Float.parseFloat(s)*multiplier;

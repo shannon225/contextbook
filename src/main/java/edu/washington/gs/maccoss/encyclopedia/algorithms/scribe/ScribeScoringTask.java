@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.scribe;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 
@@ -39,6 +40,8 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 	private final Range fragmentRange=new Range(200, Float.MAX_VALUE); // remove peaks below 200 
 	private static final int minimumNumberOfPeaks = 10;
 	
+	private static final int peaksKept=1;
+	
 	public ScribeScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
 		super(scorer, filterEntriesByScore(entries), stripes, precursors, resultsQueue, parameters);
 		scorerFunction=(ScribeScorer)scorer;
@@ -67,10 +70,11 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 			}
 			
 			ArrayList<ScoredIndex> goodHits=new ArrayList<ScoredIndex>();
-			TFloatFloatHashMap map=new TFloatFloatHashMap();
+			TFloatFloatHashMap map=new TFloatFloatHashMap(); // x=index, y=score
 			float maxXCorr=0.0f;
 			String maxSequence=null;
 			float secondMaxXCorr=0.0f;
+			float[] xcorrs=new float[super.entries.size()];
 			for (int i=0; i<super.entries.size(); i++) {
 				LibraryEntry entry=super.entries.get(i);
 				boolean match=parameters.getPrecursorTolerance().equals(entry.getPrecursorMZ(), msms.getPrecursorMZ());
@@ -82,6 +86,7 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 					SparseXCorrSpectrum xcorrEntry=getXCorrEntry(entry);
 					
 					float score=xcorrMSMS.score(xcorrEntry);
+					xcorrs[i]=score;
 					float[] otherScores=score(entry, msms);
 					
 					if (otherScores[0]>0) {
@@ -112,27 +117,37 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 			}
 			
 			EValueCalculator calculator=new EValueCalculator(map, 0.1f, 0.1f);
-			int index=Math.round(calculator.getMaxRT());
-			float score=calculator.getMaxRawScore();
-			float evalue=calculator.getNegLnEValue();
-			if (Float.isNaN(evalue)||evalue<-3) {
-				evalue=-3.0f;
-			}
-			float deltaCn=(maxXCorr==0.0f||secondMaxXCorr==0.0f)?0.0f:(maxXCorr-secondMaxXCorr)/maxXCorr;
 			
-			LibraryEntry entry=super.entries.get(index);
+			Collections.sort(goodHits);
+			int identifiedPeaks=0;
+			for (int i=goodHits.size()-1; i>=0; i--) {
+				float score=goodHits.get(i).x;
+				int index=goodHits.get(i).y;
+				float evalue=calculator.getNegLnEValue(score);
+				float xcorr=xcorrs[index];
 				
-			float[] predictedIsotopeDistribution=getIsotopeDistribution(entry);
-			float[] auxScoreArray=scorerFunction.auxScore(entry, msms, predictedIsotopeDistribution, precursors);
-			if (auxScoreArray[0]<=0) {
-				// dot product is 0, means no matching b/y peaks in the top scoring model
-				//System.out.println("cut\t"+3);
-				//continue;
-			}
+				float deltaCn=(xcorr==0.0f||secondMaxXCorr==0.0f)?0.0f:(xcorr-secondMaxXCorr)/maxXCorr;
 
-			PeptideScoringResult result=new PeptideScoringResult(entry);
-			result.addStripe(score, General.concatenate(auxScoreArray, evalue, map.size(), deltaCn), msms);
-			resultsQueue.add(result);
+				LibraryEntry entry=super.entries.get(index);
+					
+				float[] predictedIsotopeDistribution=getIsotopeDistribution(entry);
+				float[] auxScoreArray=scorerFunction.auxScore(entry, msms, predictedIsotopeDistribution, precursors);
+				if (auxScoreArray[0]<=0) {
+					// dot product is 0, means no matching b/y peaks in the top scoring model
+					//System.out.println("cut\t"+3);
+					//continue;
+				}
+
+				PeptideScoringResult result=new PeptideScoringResult(entry);
+				result.addStripe(score, General.concatenate(auxScoreArray, evalue, map.size(), deltaCn), msms);
+				
+				if (identifiedPeaks>peaksKept) {
+					// keep N+1 peaks
+					break;
+				}
+				identifiedPeaks++;
+				resultsQueue.add(result);
+			}
 		}
 		return Nothing.NOTHING;
 	}

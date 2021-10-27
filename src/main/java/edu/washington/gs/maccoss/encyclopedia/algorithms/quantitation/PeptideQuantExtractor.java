@@ -263,7 +263,7 @@ public class PeptideQuantExtractor {
 		Logger.logLine("Parsed features and scores for "+data.size()+" peptides.");
 		HashMap<String, PSMData> uniquedData=new HashMap<String, PSMData>();
 		for (PSMData psmData : data) {
-			String key=psmData.getPeptideModSeq()+"+"+psmData.getPrecursorCharge();
+			String key=generateKey(psmData.getPeptideModSeq(), psmData.getPrecursorCharge());
 			PSMData prev=uniquedData.get(key);
 			if (prev!=null) {
 				if (prev.getSortingScore()<psmData.getSortingScore()) {
@@ -275,6 +275,10 @@ public class PeptideQuantExtractor {
 			}
 		}
 		return uniquedData;
+	}
+	
+	public static String generateKey(String peptideModSeq, byte precursorCharge) {
+		return peptideModSeq+"+"+precursorCharge;
 	}
 	
 	public ArrayList<IntegratedLibraryEntry> extractPeptides(Collection<PSMData> data, final Optional<PeakLocationInferrerInterface> inferrer, boolean limitToQuantifiable) throws IOException, SQLException, DataFormatException, InterruptedException {

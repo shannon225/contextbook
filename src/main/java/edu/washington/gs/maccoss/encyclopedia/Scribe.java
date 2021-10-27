@@ -36,6 +36,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorEx
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -43,7 +44,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -135,7 +135,7 @@ public class Scribe {
 				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+ScribeJobData.LOG_FILE_SUFFIX));
 				Logger.addRecorder(logRecorder);
 	
-				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
+				ScribeSearchParameters parameters=ScribeSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(arguments));
 				ScribeScoringFactory factory=new ScribeScoringFactory(parameters);
 				
 				Logger.logLine("Scribe version "+ProgramType.getGlobalVersion().toString());

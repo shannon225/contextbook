@@ -3,7 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 
 public enum ProgramType {
-	EncyclopeDIA("EncyclopeDIA"), PecanPie("Walnut"), XCorDIA("XCorDIA"), CASiL("Thesaurus"), Global("Full EncyclopeDIA");
+	EncyclopeDIA("EncyclopeDIA"), PecanPie("Walnut"), XCorDIA("XCorDIA"), CASiL("Thesaurus"), Scribe("Scribe"), Global("Full EncyclopeDIA");
 	
 	private final String name;
 	private ProgramType(String name) {
@@ -28,21 +28,24 @@ public enum ProgramType {
 
 	public String getCitation() {
 		if (this==ProgramType.CASiL) {
-			return "This is a <a href=http://villenlab.gs.washington.edu/>Villen Lab</a> and <a href=https://sites.google.com/a/uw.edu/maccoss/>MacCoss Lab</a> project from the University of Washington, <a href=http://www.gs.washington.edu/>Department of Genome Sciences</a>. "
-					+ "You can cite this project as Searle BC et al. \"Thesaurus: quantifying phosphoprotein positional isomers.\" <a href=https://doi.org/10.1101/421214>Biorxiv 421214; doi: https://doi.org/10.1101/421214.</a> "
-					+ "For more information please contact Brian Searle (bsearle@systemsbiology.org).";
+			return "This is a <a href=http://villenlab.gs.washington.edu/>Villen Lab</a> and <a href=https://sites.google.com/a/uw.edu/maccoss/>MacCoss Lab</a> project, currently maintained by the <a href=http://searlelab.org/>Searle Lab</a> at The Ohio State University, <a href=https://medicine.osu.edu/departments/biomedical-informatics>Department of Biomedical Informatics</a>. "
+					+ "You can cite this project as Searle BC et al. \"Thesaurus: quantifying phosphoprotein positional isomers.\" <a href=https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7012383/>Nat Methods. 2019 Aug; 16(8): 703–706.</a> "
+					+ "For more information please contact Brian Searle (brian.searle@osumc.edu).";
 		} else if (this==PecanPie) {
-			return "This is a <a href=https://sites.google.com/a/uw.edu/maccoss/>MacCoss Lab</a> project from the University of Washington, <a href=http://www.gs.washington.edu/>Department of Genome Sciences</a>. "
+			return "This is a <a href=https://sites.google.com/a/uw.edu/maccoss/>MacCoss Lab</a> project, currently maintained by the <a href=http://searlelab.org/>Searle Lab</a> at The Ohio State University, <a href=https://medicine.osu.edu/departments/biomedical-informatics>Department of Biomedical Informatics</a>. "
 					+ "This work is based on PECAN, originally published as Ting YS et al. \"PECAN: library-free peptide detection for data-independent acquisition tandem mass spectrometry data.\" <a href=https://doi.org/10.1038/nmeth.4390>Nat Methods. 2017;14:903-908.</a> "
 					+ "You can cite this project as Searle BC et al. \"Chromatogram libraries improve peptide detection and quantification by data independent acquisition mass spectrometry.\" <a href=https://doi.org/10.1038/s41467-018-07454-w>Nat Commun. 2018;9:5128.</a> "
-					+ "For more information please contact Brian Searle (bsearle@systemsbiology.org).";
+					+ "For more information please contact Brian Searle (brian.searle@osumc.edu).";
 		} else if (this==XCorDIA) {
-			return "This is a <a href=https://sites.google.com/a/uw.edu/maccoss/>MacCoss Lab</a> project from the University of Washington, <a href=http://www.gs.washington.edu/>Department of Genome Sciences</a>. "
-					+ "For more information please contact Brian Searle (bsearle@systemsbiology.org).";
+			return "This is a <a href=https://sites.google.com/a/uw.edu/maccoss/>MacCoss Lab</a> project, currently maintained by the <a href=http://searlelab.org/>Searle Lab</a> at The Ohio State University, <a href=https://medicine.osu.edu/departments/biomedical-informatics>Department of Biomedical Informatics</a>. "
+					+ "For more information please contact Brian Searle (brian.searle@osumc.edu).";
+		} else if (this==Scribe) {
+			return "This is a <a href=http://searlelab.org/>Searle Lab</a> project from The Ohio State University, <a href=https://medicine.osu.edu/departments/biomedical-informatics>Department of Biomedical Informatics</a>. "
+					+ "For more information please contact Brian Searle (brian.searle@osumc.edu).";
 		}
-		return "This is a <a href=https://sites.google.com/a/uw.edu/maccoss/>MacCoss Lab</a> project from the University of Washington, <a href=http://www.gs.washington.edu/>Department of Genome Sciences</a>. "
+		return "This is a <a href=https://sites.google.com/a/uw.edu/maccoss/>MacCoss Lab</a> project, currently maintained by the <a href=http://searlelab.org/>Searle Lab</a> at The Ohio State University, <a href=https://medicine.osu.edu/departments/biomedical-informatics>Department of Biomedical Informatics</a>. "
 			+ "You can cite this project as Searle BC et al. \"Chromatogram libraries improve peptide detection and quantification by data independent acquisition mass spectrometry.\" <a href=https://doi.org/10.1038/s41467-018-07454-w>Nat Commun. 2018;9:5128.</a> "
-			+ "For more information please contact Brian Searle (bsearle@systemsbiology.org).";
+			+ "For more information please contact Brian Searle (brian.searle@osumc.edu).";
 	}
 
 	public String getAboutMessage() {
@@ -52,6 +55,8 @@ public enum ProgramType {
 			return "<b>Walnut is just like PECAN, just with more wrinkles and slightly more bitter.";
 		} else if (this==ProgramType.XCorDIA) {
 			return "XCorDIA is XCorr for DIA. Duh.";
+		} else if (this==ProgramType.Scribe) {
+			return "Scribe is a library search engine for DDA data.";
 		} else {
 			return "<b>en·cy·clo·pe·di·a</B>: a book or set of books giving information on many subjects or on many aspects of one subject and typically arranged alphabetically.";
 		}

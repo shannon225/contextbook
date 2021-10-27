@@ -345,6 +345,16 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
+	/**
+	 * if there are repeated integrated peptides, we prefer peptides with higher scores
+	 * @param entries
+	 * @param inferrer
+	 * @param localizationData
+	 * @param aaConstants
+	 * @param fdrThreshold
+	 * @throws IOException
+	 * @throws SQLException
+	 */
 	public void addIntegratedEntries(ArrayList<IntegratedLibraryEntry> entries, Optional<PeakLocationInferrerInterface> inferrer, Optional<HashMap<String, ModificationLocalizationData>> localizationData, AminoAcidConstants aaConstants, float fdrThreshold)
 			throws IOException, SQLException {
 		// first add normal data
@@ -390,6 +400,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				// ("+entry.getScore()+" vs"+prev.getScore()+"), keeping best
 				// scoring. Let Brian know if you see this!");
 				if (entry.getScore()>prev.getScore()) {
+					// prefer peptides with higher scores
 					repeatsCatcher.put(key, entry);
 				}
 			}

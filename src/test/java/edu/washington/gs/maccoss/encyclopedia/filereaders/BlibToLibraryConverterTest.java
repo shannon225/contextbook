@@ -141,7 +141,7 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 	public void testConvertEmptyBlib() throws Exception {
 		final Path blib = EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/empty.blib", tmpDir, NAME, ".blib");
 
-		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), true, SearchParameterParser.getDefaultParametersObject());
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library); // asserts that the resulting file has DLIB extension
 		} finally {
@@ -151,7 +151,7 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 
 	@Test(expected = NullPointerException.class)
 	public void testConvertNull() throws Exception {
-		BlibToLibraryConverter.convert(null, Optional.empty(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		BlibToLibraryConverter.convert(null, Optional.empty(), getFasta().toFile(), true, SearchParameterParser.getDefaultParametersObject());
 	}
 
 	@Test(expected = EncyclopediaException.class)
@@ -159,14 +159,14 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 		final Path blib = Files.createTempFile(tmpDir, NAME, ".blib");
 		Files.delete(blib);
 
-		BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), true, SearchParameterParser.getDefaultParametersObject());
 	}
 
 	@Test
 	public void testConvertEmptyFile() throws Exception {
 		final Path blib = Files.createTempFile(tmpDir, NAME, ".blib");
 
-		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), true, SearchParameterParser.getDefaultParametersObject());
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library);
 		} finally {
