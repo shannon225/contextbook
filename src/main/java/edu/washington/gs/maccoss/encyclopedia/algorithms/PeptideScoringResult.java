@@ -13,8 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import gnu.trove.list.array.TFloatArrayList;
 
-public class PeptideScoringResult {
-	public static final PeptideScoringResult POISON_RESULT=new PeptideScoringResult(null);
+public class PeptideScoringResult extends AbstractScoringResult {
 	
 	private final LibraryEntry entry;
 	private final ArrayList<Pair<ScoredObject<FragmentScan>, float[]>> goodStripes=new ArrayList<Pair<ScoredObject<FragmentScan>, float[]>>();
@@ -24,8 +23,8 @@ public class PeptideScoringResult {
 		this.entry=entry;
 	}
 	
-	public PeptideScoringResult rescore(RetentionTimeAlignmentInterface filter) {
-		PeptideScoringResult newResult=new RescoredPeptideScoringResult(entry);
+	public AbstractScoringResult rescore(RetentionTimeAlignmentInterface filter) {
+		AbstractScoringResult newResult=new RescoredPeptideScoringResult(entry);
 		newResult.setTrace(trace);
 		
 		boolean anyFoundWithRTFilter=false;
@@ -121,3 +120,4 @@ public class PeptideScoringResult {
 		return goodStripes;
 	}
 }
+

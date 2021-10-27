@@ -3,20 +3,20 @@ package edu.washington.gs.maccoss.encyclopedia.filewriters;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class SaveResultsConsumer implements PeptideScoringResultsConsumer {
 	// only written to by one thread
-	private final ArrayList<PeptideScoringResult> savedResults=new ArrayList<PeptideScoringResult>();
-	private final BlockingQueue<PeptideScoringResult> resultsQueue;
+	private final ArrayList<AbstractScoringResult> savedResults=new ArrayList<AbstractScoringResult>();
+	private final BlockingQueue<AbstractScoringResult> resultsQueue;
 
-	public SaveResultsConsumer(BlockingQueue<PeptideScoringResult> resultsQueue) {
+	public SaveResultsConsumer(BlockingQueue<AbstractScoringResult> resultsQueue) {
 		this.resultsQueue=resultsQueue;
 	}
 	
-	public ArrayList<PeptideScoringResult> getSavedResults() {
-		return new ArrayList<PeptideScoringResult>(savedResults);
+	public ArrayList<AbstractScoringResult> getSavedResults() {
+		return new ArrayList<AbstractScoringResult>(savedResults);
 	}
 
 	@Override
@@ -30,7 +30,7 @@ public class SaveResultsConsumer implements PeptideScoringResultsConsumer {
 	}
 
 	@Override
-	public BlockingQueue<PeptideScoringResult> getResultsQueue() {
+	public BlockingQueue<AbstractScoringResult> getResultsQueue() {
 		return resultsQueue;
 	}
 
@@ -38,8 +38,8 @@ public class SaveResultsConsumer implements PeptideScoringResultsConsumer {
 	public void run() {
 		try {
 			while (true) {
-				PeptideScoringResult result=resultsQueue.take();
-				if (PeptideScoringResult.POISON_RESULT==result) break;
+				AbstractScoringResult result=resultsQueue.take();
+				if (AbstractScoringResult.POISON_RESULT==result) break;
 				savedResults.add(result);
 			}
 		} catch (InterruptedException ie) {

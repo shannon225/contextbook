@@ -10,7 +10,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQuantExtractorTask;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
@@ -74,12 +74,12 @@ public class EncyclopediaOneScoringTaskTest {//extends TestCase {
 		
 		ArrayList<FragmentScan> stripes=raw.getStripes(targetMz, 0, Float.MAX_VALUE, false);
 
-		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
+		BlockingQueue<AbstractScoringResult> resultsQueue=new LinkedBlockingQueue<AbstractScoringResult>();
 		EncyclopediaOneScorer scorer=new EncyclopediaOneScorer(parameters, background);
 		EncyclopediaOneScoringTask task=new EncyclopediaOneScoringTask(
 				scorer, targetEntries, stripes, range, dutyCycle, precursors, resultsQueue, parameters);
 		task.process();
-		PeptideScoringResult poll=resultsQueue.poll();
+		AbstractScoringResult poll=resultsQueue.poll();
 		XYTraceInterface trace=poll.getTrace();
 		
 		System.out.println(trace+" --> "+poll.getScoredMSMS().x.x+" --> scan: "+(poll.getScoredMSMS().x.y.getScanStartTime()/60));

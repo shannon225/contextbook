@@ -27,7 +27,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.BackgroundGenerator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.AbstractPecanFragmentationModel;
@@ -287,7 +287,7 @@ public class Pecanpie {
 		ArrayList<String>[] backgroundProteomes=background.y;
 		HashSet<String>[] backgroundDecoys=background.z;
 		
-		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
+		BlockingQueue<AbstractScoringResult> resultsQueue=new LinkedBlockingQueue<AbstractScoringResult>();
 		PeptideScoringResultsConsumer resultsConsumer=taskFactory.getResultsConsumer(resultsQueue, stripefile);
 		Thread consumerThread=new Thread(resultsConsumer);
 		consumerThread.start();
@@ -345,7 +345,7 @@ public class Pecanpie {
 			LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
-			ArrayList<Future<HashMap<LibraryEntry, PeptideScoringResult>>> results=new ArrayList<Future<HashMap<LibraryEntry, PeptideScoringResult>>>();
+			ArrayList<Future<HashMap<LibraryEntry, AbstractScoringResult>>> results=new ArrayList<Future<HashMap<LibraryEntry, AbstractScoringResult>>>();
 
 			int count=0;
 			for (String peptide : backgroundDecoys[index]) {
@@ -361,7 +361,7 @@ public class Pecanpie {
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						tasks.add(randentry);
 
-						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new PeptideScoringTask(backgroundScorer, tasks, stripes, precursors, parameters.getAAConstants()));
+						Future<HashMap<LibraryEntry, AbstractScoringResult>> value=executor.submit(new PeptideScoringTask(backgroundScorer, tasks, stripes, precursors, parameters.getAAConstants()));
 						results.add(value);
 					}
 				}
@@ -385,9 +385,9 @@ public class Pecanpie {
 				backgroundScoreMap[i]=new TDoubleObjectHashMap<TDoubleArrayList>();
 			}
 			
-			for (Future<HashMap<LibraryEntry, PeptideScoringResult>> future : results) {
-				HashMap<LibraryEntry, PeptideScoringResult> result=future.get();
-				for (Entry<LibraryEntry, PeptideScoringResult> resultEntry : result.entrySet()) {
+			for (Future<HashMap<LibraryEntry, AbstractScoringResult>> future : results) {
+				HashMap<LibraryEntry, AbstractScoringResult> result=future.get();
+				for (Entry<LibraryEntry, AbstractScoringResult> resultEntry : result.entrySet()) {
 					byte precursorCharge=resultEntry.getKey().getPrecursorCharge();
 					
 					Pair<double[], double[]> arrays=resultEntry.getValue().getTrace().toArrays();
@@ -490,7 +490,7 @@ public class Pecanpie {
 			
 			rangesFinished++;
 		}
-		resultsQueue.put(PeptideScoringResult.POISON_RESULT);
+		resultsQueue.put(AbstractScoringResult.POISON_RESULT);
 
 		consumerThread.join();
 		resultsConsumer.close();

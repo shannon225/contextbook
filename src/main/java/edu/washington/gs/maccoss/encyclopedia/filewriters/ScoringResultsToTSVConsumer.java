@@ -1,6 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.filewriters;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.RescoredPeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
@@ -21,7 +21,7 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 	private final String[] scoreNames;
 	private final SearchParameters params;
 
-	public ScoringResultsToTSVConsumer(File outputFile, StripeFileInterface diaFile, String[] scoreNames, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters params) {
+	public ScoringResultsToTSVConsumer(File outputFile, StripeFileInterface diaFile, String[] scoreNames, BlockingQueue<AbstractScoringResult> resultsQueue, SearchParameters params) {
 		super(outputFile, diaFile, resultsQueue);
 		this.scoreNames = scoreNames;
 		this.params=params;
@@ -32,9 +32,9 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 		boolean printedHeader=false; 
 		try {
 			while (true) {
-				PeptideScoringResult result=resultsQueue.take();
+				AbstractScoringResult result=resultsQueue.take();
 				
-				if (PeptideScoringResult.POISON_RESULT==result) break;
+				if (AbstractScoringResult.POISON_RESULT==result) break;
 				if (!printedHeader) {
 					writer.print("id\tTD\tScanNr\t");
 					for (String name : scoreNames) {
@@ -66,7 +66,7 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 		}
 	}
 
-	protected void processResult(PeptideScoringResult result) {
+	protected void processResult(AbstractScoringResult result) {
 		LibraryEntry peptide=result.getEntry();
 		int rank=1;
 

@@ -10,6 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringT
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.SimilarPeptideBinner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
@@ -42,7 +43,7 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 	
 	private static final int peaksKept=1;
 	
-	public ScribeScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
+	public ScribeScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, PrecursorScanMap precursors, BlockingQueue<AbstractScoringResult> resultsQueue, SearchParameters parameters) {
 		super(scorer, filterEntriesByScore(entries), stripes, precursors, resultsQueue, parameters);
 		scorerFunction=(ScribeScorer)scorer;
 	}
@@ -138,7 +139,7 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 					//continue;
 				}
 
-				PeptideScoringResult result=new PeptideScoringResult(entry);
+				AbstractScoringResult result=new PeptideScoringResult(entry);
 				result.addStripe(score, General.concatenate(auxScoreArray, evalue, map.size(), deltaCn), msms);
 				
 				if (identifiedPeaks>peaksKept) {

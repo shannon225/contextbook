@@ -16,6 +16,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequencyInterface;
@@ -58,7 +59,7 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 	private final int movingAverageLength;
 	
 	public LocalizingXcorDIAOneScoringTask(PSMScorer scorer, BackgroundFrequencyInterface background, ArrayList<LibraryEntry> entries, 
-			ArrayList<FragmentScan> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
+			ArrayList<FragmentScan> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<AbstractScoringResult> resultsQueue,
 			BlockingQueue<ModificationLocalizationData> localizationQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.background=background;
@@ -153,7 +154,7 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 		// if there's only one peptide then no need to compare against anything
 		if (seedEntries.size()==1) {
 			XCorrLibraryEntry xcordiaEntry=(XCorrLibraryEntry)seedEntries.get(0);
-			PeptideScoringResult result=new PeptideScoringResult(xcordiaEntry);
+			AbstractScoringResult result=new PeptideScoringResult(xcordiaEntry);
 			
 			float[] xcorrArray = scoresByEntry.get(xcordiaEntry);
 			TFloatFloatHashMap map=new TFloatFloatHashMap();
@@ -379,7 +380,7 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 		for (Entry<PeptidePrecursor, ScoreData> entry : scoredPeptides.entrySet()) {
 			XCorrLibraryEntry xcordiaEntry=(XCorrLibraryEntry) entry.getKey();
 			ScoreData data=entry.getValue();
-			PeptideScoringResult result=new PeptideScoringResult(xcordiaEntry);
+			AbstractScoringResult result=new PeptideScoringResult(xcordiaEntry);
 			
 			float[] xcorrArray = scoresByEntry.get(xcordiaEntry);
 			TFloatFloatHashMap map=new TFloatFloatHashMap();

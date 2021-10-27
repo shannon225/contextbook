@@ -6,7 +6,7 @@ import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
@@ -48,12 +48,12 @@ public class PecanOneScoringFactory implements PecanScoringFactory {
 
 	@Override
 	public AbstractPecanScoringTask getScoringTask(PSMPeakScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, TDoubleObjectHashMap<XYPoint>[] background, PrecursorScanMap precursors,
-			int scanAveragingMargin, BlockingQueue<PeptideScoringResult> resultsQueue) {
+			int scanAveragingMargin, BlockingQueue<AbstractScoringResult> resultsQueue) {
 		return new PecanOneScoringTask(scorer, entries, stripes, background, precursors, scanAveragingMargin, resultsQueue, parameters);
 	}
 
 	@Override
-	public PeptideScoringResultsConsumer getResultsConsumer(BlockingQueue<PeptideScoringResult> resultsQueue, StripeFileInterface diaFile) {
+	public PeptideScoringResultsConsumer getResultsConsumer(BlockingQueue<AbstractScoringResult> resultsQueue, StripeFileInterface diaFile) {
 		return new PecanScoringResultsToTSVConsumer(featureFile, diaFile, resultsQueue, parameters.getNumberOfReportedPeaks());
 	}
 }

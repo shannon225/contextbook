@@ -24,7 +24,7 @@ import java.util.zip.DataFormatException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RTRTPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
@@ -301,10 +301,10 @@ public class Encyclopedia {
 		}
 		Collections.sort(ranges);
 
-		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>(), stripefile);
-		SaveResultsConsumer saveResultsConsumer=new SaveResultsConsumer(new LinkedBlockingQueue<PeptideScoringResult>());
+		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<AbstractScoringResult>(), stripefile);
+		SaveResultsConsumer saveResultsConsumer=new SaveResultsConsumer(new LinkedBlockingQueue<AbstractScoringResult>());
 		
-		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
+		BlockingQueue<AbstractScoringResult> resultsQueue=new LinkedBlockingQueue<AbstractScoringResult>();
 		TeeResultsConsumer teeConsumer=new TeeResultsConsumer(resultsQueue, writeResultsConsumer, saveResultsConsumer);
 		Thread consumer1Thread=new Thread(teeConsumer);
 		Thread consumer2Thread=new Thread(writeResultsConsumer);
@@ -396,7 +396,7 @@ public class Encyclopedia {
 			
 			rangesFinished++;
 		}
-		resultsQueue.put(PeptideScoringResult.POISON_RESULT);
+		resultsQueue.put(AbstractScoringResult.POISON_RESULT);
 
 		consumer1Thread.join();
 		consumer2Thread.join();
@@ -432,7 +432,7 @@ public class Encyclopedia {
 				return new Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface>(passingPeptides, null);
 			}
 			
-			ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
+			ArrayList<AbstractScoringResult> data=saveResultsConsumer.getSavedResults();
 			RetentionTimeAlignmentInterface filter=getRescoringModel(passingPeptides, data, job, false);
 			
 			return new Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface>(passingPeptides, filter);
@@ -447,16 +447,16 @@ public class Encyclopedia {
 		SearchParameters parameters=job.getParameters();
 		
 		try {
-			ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
-			PeptideScoringResultsConsumer rescoredResultsConsumer=job.getTaskFactory().getResultsConsumer(job.getPercolatorFiles().getInputTSV(), new LinkedBlockingQueue<PeptideScoringResult>(), stripefile);
+			ArrayList<AbstractScoringResult> data=saveResultsConsumer.getSavedResults();
+			PeptideScoringResultsConsumer rescoredResultsConsumer=job.getTaskFactory().getResultsConsumer(job.getPercolatorFiles().getInputTSV(), new LinkedBlockingQueue<AbstractScoringResult>(), stripefile);
 			Thread finalWriteConsumerThread=new Thread(rescoredResultsConsumer);
 			finalWriteConsumerThread.start();
-			BlockingQueue<PeptideScoringResult> resultList=rescoredResultsConsumer.getResultsQueue();
-			for (PeptideScoringResult result : data) {
-				PeptideScoringResult rescore=result.rescore(filter);
+			BlockingQueue<AbstractScoringResult> resultList=rescoredResultsConsumer.getResultsQueue();
+			for (AbstractScoringResult result : data) {
+				AbstractScoringResult rescore=result.rescore(filter);
 				resultList.add(rescore);
 			}
-			resultList.add(PeptideScoringResult.POISON_RESULT);
+			resultList.add(AbstractScoringResult.POISON_RESULT);
 			finalWriteConsumerThread.join();
 			rescoredResultsConsumer.close();
 	
@@ -476,7 +476,7 @@ public class Encyclopedia {
 		}
 	}
 
-	public static RetentionTimeAlignmentInterface getRescoringModel(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<PeptideScoringResult> data, EncyclopediaJobData job, boolean finalPass) {
+	public static RetentionTimeAlignmentInterface getRescoringModel(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<AbstractScoringResult> data, EncyclopediaJobData job, boolean finalPass) {
 		HashSet<String> passingSeqs=new HashSet<String>();
 		for (PercolatorPeptide pass : passingPeptides) {
 			passingSeqs.add(PercolatorPeptide.getPeptideData(pass.getPsmID()));
@@ -484,7 +484,7 @@ public class Encyclopedia {
 		
 		HashSet<XYPoint> rtSet=new HashSet<XYPoint>();
 		
-		for (PeptideScoringResult result : data) {
+		for (AbstractScoringResult result : data) {
 			if (result.hasScoredResults()) {
 				String peptideModSeq=result.getEntry().getPeptideModSeq();
 				if (passingSeqs.contains(peptideModSeq+"+"+result.getEntry().getPrecursorCharge())) {

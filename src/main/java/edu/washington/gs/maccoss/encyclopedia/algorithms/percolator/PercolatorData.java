@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -101,7 +101,7 @@ public class PercolatorData {
 	}
 
 	
-	public static PercolatorData filterData(PercolatorData perc, ArrayList<PeptideScoringResult> data, RetentionTimeAlignmentInterface filter, SearchParameters parameters) {
+	public static PercolatorData filterData(PercolatorData perc, ArrayList<AbstractScoringResult> data, RetentionTimeAlignmentInterface filter, SearchParameters parameters) {
 		ArrayList<PercolatorPSM> psms=perc.getPsms(); //already reverse sorted
 
 		HashSet<String> passingPSMIDs=new HashSet<String>();
@@ -113,7 +113,7 @@ public class PercolatorData {
 		
 		TFloatArrayList deltas=new TFloatArrayList();
 
-		for (PeptideScoringResult result : data) {
+		for (AbstractScoringResult result : data) {
 			if (result.hasScoredResults()) {
 				String peptideModSeq=result.getEntry().getPeptideModSeq();
 				if (passingPSMIDs.contains(peptideModSeq+"+"+result.getEntry().getPrecursorCharge())) {
@@ -134,7 +134,7 @@ public class PercolatorData {
 		float lowerThreshold=mean-2.0f*stdev;
 
 		HashSet<String> rtFilteredPSMIDs=new HashSet<String>();
-		for (PeptideScoringResult result : data) {
+		for (AbstractScoringResult result : data) {
 			if (result.hasScoredResults()) {
 				String peptideModSeq=result.getEntry().getPeptideModSeq();
 				LibraryEntry entry=result.getEntry();

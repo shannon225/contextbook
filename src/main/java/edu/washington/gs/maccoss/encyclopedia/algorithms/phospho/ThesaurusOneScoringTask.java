@@ -14,6 +14,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
@@ -51,7 +52,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 	private final ThesaurusSearchParameters thesaurusParameters;
 	
 	public ThesaurusOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, float dutyCycle, PrecursorScanMap precursors, 
-			PhosphoLocalizer localizer, BlockingQueue<PeptideScoringResult> resultsQueue, BlockingQueue<ModificationLocalizationData> localizationQueue, SearchParameters parameters) {
+			PhosphoLocalizer localizer, BlockingQueue<AbstractScoringResult> resultsQueue, BlockingQueue<ModificationLocalizationData> localizationQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.dutyCycle=dutyCycle;
 		this.localizer=localizer;
@@ -132,7 +133,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 		HashMap<String, Range> blacklistedScanRanges=new HashMap<>();
 		FragmentIonBlacklist takenIdentifiedIons=new FragmentIonBlacklist(parameters.getFragmentTolerance());
 		
-		PeptideScoringResult bestNonlocalizedResult=null;
+		AbstractScoringResult bestNonlocalizedResult=null;
 		ModificationLocalizationData bestNonlocalizedData=null;
 		boolean anyLocalized=false;
 		
@@ -281,7 +282,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 					evalue=-1.0f;
 				}
 
-				PeptideScoringResult result=new PeptideScoringResult(bestForm.localizedEntry);
+				AbstractScoringResult result=new PeptideScoringResult(bestForm.localizedEntry);
 				result.addStripe(score, General.concatenate(auxScoreArray, evalue, data.getLocalizationScore()), apex);
 
 				if (replaceBestNonLocalizedResult) {

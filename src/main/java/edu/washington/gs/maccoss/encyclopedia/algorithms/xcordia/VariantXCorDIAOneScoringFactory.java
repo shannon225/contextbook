@@ -7,7 +7,7 @@ import java.util.concurrent.BlockingQueue;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneAuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
@@ -50,13 +50,13 @@ public class VariantXCorDIAOneScoringFactory extends XCorDIAOneScoringFactory {
 	}
 
 	@Override
-	public PeptideScoringResultsConsumer getResultsConsumer(File outputFile, BlockingQueue<PeptideScoringResult> resultsQueue, StripeFileInterface diaFile) {
+	public PeptideScoringResultsConsumer getResultsConsumer(File outputFile, BlockingQueue<AbstractScoringResult> resultsQueue, StripeFileInterface diaFile) {
 		//return new ScoringResultsToTSVConsumer(outputFile, diaFile, General.concatenate(EncyclopediaOneAuxillaryPSMScorer.getScoreNames(false), "neededToLocalize", "numberOfWellShapedIons"), resultsQueue, 1);
 		return new ScoringResultsToTSVConsumer(outputFile, diaFile, General.concatenate(EncyclopediaOneAuxillaryPSMScorer.getScoreNames(false), "neededToLocalize", "numberOfWellShapedIons", "ionCountScore"), resultsQueue, parameters);
 	}
 
 	@Override
-	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
+	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<AbstractScoringResult> resultsQueue) {
 		if (background==null) throw new EncyclopediaException("You must initialize background before generating a scoring task!");
 		//return new VariantXcorDIAOneScoringTask(scorer, background, entries, stripes, precursorIsolationRange, dutyCycle, precursors, resultsQueue, localizationQueue, getParameters());
 		return new LocalizingXcorDIAOneScoringTask(scorer, background, entries, stripes, precursorIsolationRange, dutyCycle, precursors, resultsQueue, localizationQueue, getParameters());
@@ -64,7 +64,7 @@ public class VariantXCorDIAOneScoringFactory extends XCorDIAOneScoringFactory {
 	}
 	
 	@Override
-	public AbstractLibraryScoringTask getDDAScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue) {
+	public AbstractLibraryScoringTask getDDAScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, PrecursorScanMap precursors, BlockingQueue<AbstractScoringResult> resultsQueue) {
 		throw new EncyclopediaException("Sorry, DDA scoring for XCorDIA is not implemented!");
 	}
 }

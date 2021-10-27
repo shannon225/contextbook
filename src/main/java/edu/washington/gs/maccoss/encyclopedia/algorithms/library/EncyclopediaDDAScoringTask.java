@@ -9,6 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringT
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -25,7 +26,7 @@ public class EncyclopediaDDAScoringTask extends AbstractLibraryScoringTask {
 	private static final HashMap<String, float[]> isotopeDistributions=new HashMap<String, float[]>();
 	EncyclopediaScorer scorerFunction;
 	
-	public EncyclopediaDDAScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
+	public EncyclopediaDDAScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, PrecursorScanMap precursors, BlockingQueue<AbstractScoringResult> resultsQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		scorerFunction=(EncyclopediaScorer)scorer;
 	}
@@ -64,7 +65,7 @@ public class EncyclopediaDDAScoringTask extends AbstractLibraryScoringTask {
 			float[] predictedIsotopeDistribution=getIsotopeDistribution(entry);
 			float[] auxScoreArray=scorerFunction.auxScore(entry, msms, predictedIsotopeDistribution, precursors);
 
-			PeptideScoringResult result=new PeptideScoringResult(entry);
+			AbstractScoringResult result=new PeptideScoringResult(entry);
 			result.addStripe(score, General.concatenate(auxScoreArray, evalue), msms);
 			resultsQueue.add(result);
 		}

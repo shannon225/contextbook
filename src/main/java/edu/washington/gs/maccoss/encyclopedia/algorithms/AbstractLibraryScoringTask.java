@@ -19,7 +19,7 @@ public abstract class AbstractLibraryScoringTask extends ThreadableTask<Nothing>
 	protected final ArrayList<LibraryEntry> entries;
 	protected final ArrayList<FragmentScan> stripes;
 	protected final PrecursorScanMap precursors;
-	protected final BlockingQueue<PeptideScoringResult> resultsQueue;
+	protected final BlockingQueue<AbstractScoringResult> resultsQueue;
 	protected final SearchParameters parameters;
 
 	/**
@@ -31,7 +31,7 @@ public abstract class AbstractLibraryScoringTask extends ThreadableTask<Nothing>
 	 * @param precursors
 	 * @param scanAveragingMargin
 	 */
-	public AbstractLibraryScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue, SearchParameters parameters) {
+	public AbstractLibraryScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, PrecursorScanMap precursors, BlockingQueue<AbstractScoringResult> resultsQueue, SearchParameters parameters) {
 		this.scorer=scorer;
 		this.entries=entries;
 		this.stripes=stripes;

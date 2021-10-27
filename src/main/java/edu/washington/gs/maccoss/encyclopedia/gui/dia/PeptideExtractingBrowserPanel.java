@@ -40,7 +40,7 @@ import com.google.common.util.concurrent.AtomicDouble;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ExpectedFragmentationScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.FragmentationTraceTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
@@ -196,7 +196,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 			try {
 				ArrayList<FragmentScan> stripes=dia.getStripes(entry.getPrecursorMZ(), 0.0f, Float.MAX_VALUE, false);
 				FragmentationTraceTask task=new FragmentationTraceTask(scorer, FragmentationTraceTask.PLOT_INTENSITIES, entries, stripes, new PrecursorScanMap(new ArrayList<PrecursorScan>()), parameters.getAAConstants());
-				HashMap<LibraryEntry, PeptideScoringResult> result=task.call();
+				HashMap<LibraryEntry, AbstractScoringResult> result=task.call();
 				
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
 //				for (Entry<LibraryEntry, PeptideScoringResult> resultEntry : result.entrySet()) {
@@ -240,11 +240,11 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 				XYTraceInterface ionCounttrace=new XYTrace(newx, trace.y, xytrace.getType(), xytrace.getName(), xytrace.getColor(), xytrace.getThickness());
 				
 				ChartPanel ionCountchart=Charter.getChart("Retention Time (min)", "RawScore", false, ionCounttrace);*/
-				BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
+				BlockingQueue<AbstractScoringResult> resultsQueue=new LinkedBlockingQueue<AbstractScoringResult>();
 				XCorDIAOneScoringTask xcorrTask=new XCorDIAOneScoringTask(new XCorDIAOneScorer(parameters, null), entries, stripes, new Range(0.0f, 0.0f), 2.5f, new PrecursorScanMap(new ArrayList<PrecursorScan>()), resultsQueue, parameters);
 				xcorrTask.call();
 				
-				PeptideScoringResult ionCountResult=resultsQueue.take();
+				AbstractScoringResult ionCountResult=resultsQueue.take();
 				XYTraceInterface xytrace=ionCountResult.getTrace();
 				Pair<double[], double[]> trace=xytrace.toArrays();
 				double[] newx=General.multiply(trace.x, 1.0f/60.0f); // scale to minutes
