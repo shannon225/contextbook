@@ -168,7 +168,7 @@ public class SearchPanel extends JPanel {
 			try {
 				HashMap<String, String> map=ScribeSearchParameters.readPreferences();
 				ScribeSearchParameters scribeParameters=ScribeSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(map));
-				scribe.setParameters(scribeParameters, map.get(Pecanpie.BACKGROUND_FASTA_TAG), map.get(Pecanpie.TARGET_FASTA_TAG));
+				scribe.setParameters(scribeParameters, map.get(Encyclopedia.TARGET_LIBRARY_TAG), map.get(Encyclopedia.BACKGROUND_FASTA_TAG));
 				
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");

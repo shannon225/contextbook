@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.filewriters;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.RescoredPeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.RescoredSpectrumScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -42,7 +43,7 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 						writer.print('\t');
 					}
 					
-					if (result instanceof RescoredPeptideScoringResult) {
+					if (result instanceof RescoredPeptideScoringResult||result instanceof RescoredSpectrumScoringResult) {
 						writer.print("deltaRT\t");//discriminantScore\t");
 					}
 					writer.print("numMissedCleavage\tpepLength\tcharge1\tcharge2\tcharge3\tcharge4\tprecursorMz\tprecursorMass\tRTinMin\tsequence\tprotein");
@@ -67,6 +68,8 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 	}
 
 	protected void processResult(AbstractScoringResult result) {
+		if (!result.hasScoredResults()) return;
+		
 		LibraryEntry peptide=result.getEntry();
 		int rank=1;
 

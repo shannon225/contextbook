@@ -201,7 +201,8 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 		return getProbability(actualRT, delta);
 	}
 
-	private float getDelta(float actualRT, float modelRT) {
+	@Override
+	public float getDelta(float actualRT, float modelRT) {
 		float one=actualRT-getYValue(modelRT);
 		float two=getXValue(actualRT)-modelRT;
 		if (Math.abs(one)<Math.abs(two)) {

@@ -80,7 +80,7 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 	private static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/scribe_icon.png"));
 	private static final String programName="Scribe";
 	private static final String programShortDescription="Scribe Library Search";
-	private static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">Scribe: Library Searching from Data-Dependent Acquisition (DDA) MS/MS Data<br></p></b>"
+	private static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">Scribe: Spectrum-Centric Library Searching for Data-Dependent Acquisition (DDA) MS/MS Data<br></p></b>"
 			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">Scribe extracts peptide fragmentation spectra from MZML files, matches them to spectra in libraries, and calculates various scoring features. These features are interpreted by Percolator to identify peptides.";
 
 	private final FileChooserPanel backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta"), true);

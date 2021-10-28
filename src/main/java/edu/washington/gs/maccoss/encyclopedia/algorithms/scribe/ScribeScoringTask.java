@@ -7,11 +7,11 @@ import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.Scribe;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.SpectrumScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.SimilarPeptideBinner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
@@ -41,7 +41,7 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 	private final Range fragmentRange=new Range(200, Float.MAX_VALUE); // remove peaks below 200 
 	private static final int minimumNumberOfPeaks = 10;
 	
-	private static final int peaksKept=1;
+	private static final int peaksKept=5;
 	
 	public ScribeScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, PrecursorScanMap precursors, BlockingQueue<AbstractScoringResult> resultsQueue, SearchParameters parameters) {
 		super(scorer, filterEntriesByScore(entries), stripes, precursors, resultsQueue, parameters);
@@ -91,7 +91,7 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 					float[] otherScores=score(entry, msms);
 					
 					if (otherScores[0]>0) {
-						float composite=otherScores[1];
+						float composite=otherScores[1]; // "main" score is based on sum of squared errors
 						goodHits.add(new ScoredIndex(composite, i));
 						map.put(i, composite);
 					}
@@ -102,9 +102,9 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 					} else if (score>maxXCorr) {
 						if (!SimilarPeptideBinner.areSimilarEnough(maxSequence, entry.getPeptideSeq())) {
 							secondMaxXCorr=maxXCorr;
-							maxSequence=entry.getPeptideSeq();
-							maxXCorr=score;
 						}
+						maxSequence=entry.getPeptideSeq();
+						maxXCorr=score;
 					} else if (score>secondMaxXCorr) {
 						if (!SimilarPeptideBinner.areSimilarEnough(maxSequence, entry.getPeptideSeq())) {
 							secondMaxXCorr=score;
@@ -112,13 +112,15 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 					}
 				}
 			}
-			if (map.size()==0) {
+			if (map.size()==0||maxXCorr<=0.0f) { // maxXCorr==0 indicates no peaks
 				//System.out.println("cut\t"+2);
 				continue;
 			}
 			
 			EValueCalculator calculator=new EValueCalculator(map, 0.1f, 0.1f);
 			
+
+			SpectrumScoringResult result=new SpectrumScoringResult(msms);
 			Collections.sort(goodHits);
 			int identifiedPeaks=0;
 			for (int i=goodHits.size()-1; i>=0; i--) {
@@ -138,17 +140,15 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 					//System.out.println("cut\t"+3);
 					//continue;
 				}
-
-				AbstractScoringResult result=new PeptideScoringResult(entry);
-				result.addStripe(score, General.concatenate(auxScoreArray, evalue, map.size(), deltaCn), msms);
+				result.addPeptide(score, General.concatenate(auxScoreArray, evalue, map.size(), deltaCn), entry);
 				
 				if (identifiedPeaks>peaksKept) {
 					// keep N+1 peaks
 					break;
 				}
 				identifiedPeaks++;
-				resultsQueue.add(result);
 			}
+			resultsQueue.add(result);
 		}
 		return Nothing.NOTHING;
 	}

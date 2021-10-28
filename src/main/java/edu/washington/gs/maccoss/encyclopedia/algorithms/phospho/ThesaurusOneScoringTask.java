@@ -353,7 +353,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 		if (!anyLocalized&&bestNonlocalizedResult!=null) {
 			resultsQueue.add(bestNonlocalizedResult);
 
-			if (!bestNonlocalizedResult.getEntry().isDecoy()) {
+			if (bestNonlocalizedResult.hasScoredResults()&&!bestNonlocalizedResult.getEntry().isDecoy()) {
 				// don't bother logging decoys
 				localizationQueue.add(bestNonlocalizedData);
 			}

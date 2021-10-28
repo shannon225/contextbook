@@ -54,6 +54,9 @@ public class PecanScoringResultsToTSVConsumer extends AbstractScoringResultsToTS
 					}
 					printedHeader=true;
 				}
+				if (!result.hasScoredResults()) {
+					continue;
+				}
 				LibraryEntry peptide=result.getEntry();
 				int rank=1;
 				

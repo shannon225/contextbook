@@ -113,7 +113,16 @@ public class PeptideScoringResult extends AbstractScoringResult {
 	}
 	
 	public Pair<ScoredObject<FragmentScan>, float[]> getScoredMSMS() {
-		return goodStripes.get(0);
+		float bestScore=-Float.MAX_VALUE;
+		Pair<ScoredObject<FragmentScan>, float[]> bestPair=null;
+		
+		for (Pair<ScoredObject<FragmentScan>, float[]> pair : goodStripes) {
+			if (pair.x.x>bestScore) {
+				bestScore=pair.x.x;
+				bestPair=pair;
+			}
+		}
+		return bestPair;
 	}
 	
 	public ArrayList<Pair<ScoredObject<FragmentScan>, float[]>> getGoodMSMSCandidates() {
