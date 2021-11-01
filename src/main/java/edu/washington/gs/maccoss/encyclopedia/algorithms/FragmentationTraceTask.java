@@ -29,8 +29,8 @@ public class FragmentationTraceTask extends PeptideScoringTask {
 	}
 
 	@Override
-	protected HashMap<LibraryEntry, PeptideScoringResult> process() {
-		HashMap<LibraryEntry, PeptideScoringResult> map=new HashMap<LibraryEntry, PeptideScoringResult>();
+	protected HashMap<LibraryEntry, AbstractScoringResult> process() {
+		HashMap<LibraryEntry, AbstractScoringResult> map=new HashMap<LibraryEntry, AbstractScoringResult>();
 
 		for (LibraryEntry entry : super.entries) {
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), aaConstants);

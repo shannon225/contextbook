@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.StringTokenizer;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
@@ -45,7 +46,7 @@ public class PecanParameterParser {
 		map.put("-percolatorProteinThreshold", "0.01");
 		map.put("-alpha", "1.8");
 		map.put("-beta", "0.4");
-		map.put("-percolatorVersionNumber", PercolatorExecutor.DEFAULT_VERSION_NUMBER.toString());
+		map.put("-percolatorVersion", PercolatorExecutor.DEFAULT_VERSION_NUMBER.toString());
 		map.put("-acquisition", DataAcquisitionType.toString(DataAcquisitionType.DIA));
 		map.put("-precursorWindowSize", "-1");
 		map.put("-numberOfThreadsUsed", Integer.toString(Runtime.getRuntime().availableProcessors()));
@@ -107,6 +108,8 @@ public class PecanParameterParser {
 		final boolean requireVariableMods;
         final boolean filterPeaklists;
         final boolean doNotUseGlobalFDR;
+        final Optional<File> percolatorModelFile;
+        final Optional<File> precursorIsolationRangeFile;
         final boolean enableAdvancedOptions;
 
 		ModificationMassMap variableMods=new ModificationMassMap(parameters.get("-variable"));
@@ -232,6 +235,29 @@ public class PecanParameterParser {
 			enzyme=DigestionEnzyme.getEnzyme(value);
 		}
 
+		value=parameters.get("-percolatorModelFile");
+		if (value==null) {
+			percolatorModelFile=Optional.empty();
+		} else {
+			File f=new File(value);
+			if (f.exists()&&f.canRead()) {
+				percolatorModelFile=Optional.of(f);
+			} else {
+				percolatorModelFile=Optional.empty();
+			}
+		}
+		value=parameters.get("-precursorIsolationRangeFile");
+		if (value==null) {
+			precursorIsolationRangeFile=Optional.empty();
+		} else {
+			File f=new File(value);
+			if (f.exists()&&f.canRead()) {
+				precursorIsolationRangeFile=Optional.of(f);
+			} else {
+				precursorIsolationRangeFile=Optional.empty();
+			}
+		}
+
 		minPeptideLength=ParsingUtils.getInteger("-minLength", parameters, 5);
 		maxPeptideLength=ParsingUtils.getInteger("-maxLength", parameters, 100);
 		maxMissedCleavages=ParsingUtils.getInteger("-maxMissedCleavage", parameters, 1);
@@ -244,7 +270,7 @@ public class PecanParameterParser {
 
 		percolatorThreshold=ParsingUtils.getFloat("-percolatorThreshold", parameters, 0.01f);
 		percolatorProteinThreshold=ParsingUtils.getFloat("-percolatorProteinThreshold", parameters, 0.01f);
-		percolatorVersionNumber=PercolatorVersion.getVersion(parameters.get("-percolatorVersionNumber"));
+		percolatorVersionNumber=PercolatorVersion.getVersion(parameters.get("-percolatorVersion"));
 		percolatorTrainingSetSize = ParsingUtils.getInteger(SearchParameters.OPT_PERC_TRAINING_SIZE, parameters, PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE);
 		percolatorTrainingSetThreshold = ParsingUtils.getFloat(SearchParameters.OPT_PERC_TRAINING_THRESH, parameters, PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD);
 
@@ -302,6 +328,8 @@ public class PecanParameterParser {
 				requireVariableMods,
 				filterPeaklists,
 				doNotUseGlobalFDR,
+				precursorIsolationRangeFile,
+				percolatorModelFile,
 				enableAdvancedOptions
 		);
 	}

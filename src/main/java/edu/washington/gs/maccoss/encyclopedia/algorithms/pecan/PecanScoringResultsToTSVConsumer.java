@@ -7,7 +7,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -25,7 +25,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 public class PecanScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVConsumer {
 	private final int numberOfPeaksPerPeptide;
 
-	public PecanScoringResultsToTSVConsumer(File outputFile, StripeFileInterface diaFile, BlockingQueue<PeptideScoringResult> resultsQueue, int numberOfPeaksPerPeptide) {
+	public PecanScoringResultsToTSVConsumer(File outputFile, StripeFileInterface diaFile, BlockingQueue<AbstractScoringResult> resultsQueue, int numberOfPeaksPerPeptide) {
 		super(outputFile, diaFile, resultsQueue);
 		this.numberOfPeaksPerPeptide=numberOfPeaksPerPeptide;
 	}
@@ -35,8 +35,8 @@ public class PecanScoringResultsToTSVConsumer extends AbstractScoringResultsToTS
 		boolean printedHeader=false; 
 		try {
 			while (true) {
-				PeptideScoringResult result=resultsQueue.take();
-				if (PeptideScoringResult.POISON_RESULT==result) break;
+				AbstractScoringResult result=resultsQueue.take();
+				if (AbstractScoringResult.POISON_RESULT==result) break;
 				if (!printedHeader) {
 					writer.print("id\tTD\tScanNr\ttopN\trank\tpeakZScore\tpeakCalibratedScore\tdeltaSn\t"
 							+ "avgIdotp\tmidIdotp\tpeakScore\tpeakWeightedScore\tNCI\tCIMassErrMean\tCIMassErrVar\tprecursorMassErrMean\t"
@@ -54,21 +54,16 @@ public class PecanScoringResultsToTSVConsumer extends AbstractScoringResultsToTS
 					}
 					printedHeader=true;
 				}
+				if (!result.hasScoredResults()) {
+					continue;
+				}
 				LibraryEntry peptide=result.getEntry();
 				int rank=1;
 				
-				float firstScore=0.0f;
-				float secondScore=0.0f;
+				float firstScore=result.getBestScore();
+				float secondScore=result.getSecondBestScore();
 
-				if (result.getGoodStripes().size()>0) {
-					Pair<ScoredObject<FragmentScan>, float[]> first=result.getGoodStripes().get(0);
-					firstScore=first.x.x;
-				}
-				if (result.getGoodStripes().size()>1) {
-					Pair<ScoredObject<FragmentScan>, float[]> second=result.getGoodStripes().get(1);
-					secondScore=second.x.x;
-				}
-				for (Pair<ScoredObject<FragmentScan>, float[]> goodStripe : result.getGoodStripes()) {
+				for (Pair<ScoredObject<FragmentScan>, float[]> goodStripe : result.getGoodMSMSCandidates()) {
 					numberProcessed++;
 					
 					float primaryScore=goodStripe.x.x;

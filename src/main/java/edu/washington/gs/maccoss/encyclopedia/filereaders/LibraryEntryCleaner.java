@@ -7,16 +7,28 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.zip.DataFormatException;
 
+import org.apache.commons.io.FilenameUtils;
 import org.relaxng.datatype.DatatypeException;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RTRTPoint;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TwoDimensionalKDE;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.IndexedObject;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
+import gnu.trove.list.array.TFloatArrayList;
 
 public class LibraryEntryCleaner {
 	public static void main(String[] args) throws Exception {
@@ -27,15 +39,34 @@ public class LibraryEntryCleaner {
 //		cleanLibrary(true, originalLibraryFile, newLibraryFile, fastaFile, SearchParameterParser.getDefaultParametersObject());
 		
 
-		File fileName=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/barcodes_prosit.dlib");
-		File newFileName=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/ecoli_barcodes_prosit.dlib");
-		File fasta=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/uniprot_ecoli_27dec2020.fasta");
+		//File fileName=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/barcodes_prosit.dlib");
+		//File newFileName=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/ecoli_barcodes_prosit.dlib");
+		//File fasta=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/uniprot_ecoli_27dec2020.fasta");
 
-		fileName = new File("/Users/searleb/Documents/cobbs/2020dec30_cobbs/2020dec03_cobbs_cmv_inf_gpfdia_clib.elib");
-		newFileName = new File("/Users/searleb/Documents/cobbs/2020dec30_cobbs/2020dec03_cobbs_cmv_inf_gpfdia_clib_hcmv_only.elib");
-		fasta=new File("/Users/searleb/Documents/cobbs/2020dec30_cobbs/merlin.fasta");
+		//fileName = new File("/Users/searleb/Documents/cobbs/2020dec30_cobbs/2020dec03_cobbs_cmv_inf_gpfdia_clib.elib");
+		//newFileName = new File("/Users/searleb/Documents/cobbs/2020dec30_cobbs/2020dec03_cobbs_cmv_inf_gpfdia_clib_hcmv_only.elib");
+		//fasta=new File("/Users/searleb/Documents/cobbs/2020dec30_cobbs/merlin.fasta");
 		
-		cleanLibrary(true, fileName, newFileName, fasta, SearchParameterParser.getDefaultParametersObject());
+		//File fileName=new File("/Users/searleb/Documents/iarpa/new_llnl_individual_2/unclean_IARPA_20210401_3clib_plus_llnl.trypsin.z3_nce33.dlib");
+		//File newFileName=new File("/Users/searleb/Documents/iarpa/new_llnl_individual_2/clean_IARPA_20210401_3clib_plus_llnl.trypsin.z3_nce33.dlib");
+		//File fasta=new File("/Users/searleb/Documents/iarpa/new_llnl_individual_2/IARPA_20210401.fasta_plus_llnl_ref_vars.fasta");
+		
+//		File fileName=new File("/Users/searleb/Documents/iarpa/IARPA_bone/10p/unclean_bone-refs-vars-Pplus16-20210615.trypsin.z3_nce33.prosit.dlib");
+//		File newFileName=new File("/Users/searleb/Documents/iarpa/IARPA_bone/10p/clean_bone-refs-vars-Pplus16-20210615.trypsin.z3_nce33.prosit.dlib");
+//		File fasta=new File("/Users/searleb/Documents/iarpa/IARPA_bone/10p/bone-refs-vars-20210615.combined.fasta");
+
+		File fileName=new File("/Users/searleb/Documents/phospho/phosphopedia_hcd_combined.dlib");
+		File newFileName=new File("/Users/searleb/Documents/phospho/phosphopedia_hcd_combined_cleaned.dlib");
+		
+		fileName=new File("/Users/searleb/Documents/OSU/damien/hela_raws/HeLa.elib");
+		newFileName=new File("/Users/searleb/Documents/OSU/damien/hela_raws/Villen_HeLa_cleaned.elib");
+		File fasta=new File("/Users/searleb/Documents/phospho/uniprot_human_25apr2019.fasta");
+
+//		File fileName=new File("/Users/searleb/Documents/iarpa/sigsci/unclean_IARPA_20210401_3clib_plus_llnl_and_sigsci.trypsin.z3_nce33.dlib");
+//		File newFileName=new File("/Users/searleb/Documents/iarpa/sigsci/clean_IARPA_20210401_3clib_plus_llnl_and_sigsci.trypsin.z3_nce33.dlib");
+//		File fasta=new File("/Users/searleb/Documents/iarpa/sigsci/IARPA_20210401.fasta_plus_llnl_and_sigsci_ref_vars.fasta");
+		
+		cleanLibrary(true, true, fileName, newFileName, fasta, SearchParameterParser.getDefaultParametersObject());
 	}
 	
 	public static boolean doesLibraryNeedCleaning(LibraryFile libraryFile) throws IOException, SQLException {
@@ -49,7 +80,7 @@ public class LibraryEntryCleaner {
 				Logger.logLine("...found "+count);
 				
 				if (count>1) {
-					Logger.logLine(libraryFile.getName()+" needs to be cleaned!");
+					Logger.logLine(libraryFile.getName()+" does not need to be cleaned!");
 					return false;
 				}
 				rs.close();
@@ -60,10 +91,11 @@ public class LibraryEntryCleaner {
 		} finally {
 			c.close();
 		}
+		Logger.logLine(libraryFile.getName()+" needs to be cleaned!");
 		return true;
 	}
 	
-	public static LibraryFile cleanLibrary(boolean smallerScoresAreGood, File originalLibraryFile, File newLibraryFile, File fastaFile, SearchParameters parameters) throws IOException, DatatypeException, DataFormatException, SQLException {
+	public static LibraryFile cleanLibrary(boolean smallerScoresAreGood, boolean respectEnzyme, File originalLibraryFile, File newLibraryFile, File fastaFile, SearchParameters parameters) throws IOException, DatatypeException, DataFormatException, SQLException {
 		LibraryFile oldLibrary=new LibraryFile();
 		oldLibrary.openFile(originalLibraryFile);
 		ArrayList<LibraryEntry> originalEntries=oldLibrary.getAllEntries(false, parameters.getAAConstants());
@@ -87,7 +119,8 @@ public class LibraryEntryCleaner {
 			ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile, parameters);
 		
 			Logger.logLine("Constructing trie from library peptides");
-			PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(entries);
+			DigestionEnzyme enzyme = respectEnzyme?parameters.getEnzyme():null;
+			PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(entries, Optional.ofNullable(enzyme));
 			trie.addFasta(proteins);
 		}
 
@@ -95,6 +128,9 @@ public class LibraryEntryCleaner {
 		for (LibraryEntry entry : entries) {
 			int size=Math.min(counts.length-1, entry.getAccessions().size());
 			counts[size]++;
+			if (size==0) {
+				System.out.println(entry.getPeptideSeq());
+			}
 		}
 		Logger.logLine("Accession count histogram: ");
 		for (int i=0; i<counts.length; i++) {
@@ -114,5 +150,108 @@ public class LibraryEntryCleaner {
 		newLibrary.createIndices();
 		newLibrary.saveAsFile(newLibraryFile);
 		return newLibrary;
+	}
+
+	public static ArrayList<LibraryEntry> removeDuplicateEntries(ArrayList<LibraryEntry> originalEntries, boolean higherScoresAreBetter) {
+		HashMap<String, LibraryEntry> entriesByKey=new HashMap<>();
+		for (LibraryEntry entry : originalEntries) {
+			String key=entry.getPeptideModSeq()+"+"+entry.getPrecursorCharge();
+			LibraryEntry alt=entriesByKey.get(key);
+			if (alt==null) {
+				entriesByKey.put(key, entry);
+			} else if (higherScoresAreBetter&&entry.getScore()>alt.getScore()) {
+				entriesByKey.put(key, entry);
+			} else if ((!higherScoresAreBetter)&&entry.getScore()<alt.getScore()) {
+				entriesByKey.put(key, entry);
+			}
+		}
+		ArrayList<LibraryEntry> retEntries=new ArrayList<>(entriesByKey.values());
+		Collections.sort(retEntries);
+		return retEntries;
+	}
+	
+	public static ArrayList<LibraryEntry> correctRTs(HashMap<String, ArrayList<LibraryEntry>> originalEntriesBySourceFile, File libraryFile) {
+		HashMap<String, ArrayList<LibraryEntry>> entriesBySource=new HashMap<>();
+
+		for (Entry<String, ArrayList<LibraryEntry>> originalEntries : originalEntriesBySourceFile.entrySet()) {
+			for (LibraryEntry entry : originalEntries.getValue()) {
+				ArrayList<LibraryEntry> list=entriesBySource.get(originalEntries.getKey());
+				if (list==null) {
+					list=new ArrayList<>();
+					entriesBySource.put(originalEntries.getKey(), list);
+				}
+				list.add(entry);
+			}
+		}
+		
+		ArrayList<IndexedObject<String>> sourcesBySize=new ArrayList<>();
+		for (Entry<String, ArrayList<LibraryEntry>> entry : entriesBySource.entrySet()) {
+			sourcesBySize.add(new IndexedObject<String>(entry.getValue().size(), entry.getKey()));
+		}
+		Collections.sort(sourcesBySize);
+		
+		// get the biggest source of entries
+		IndexedObject<String> startingDataset = sourcesBySize.remove(sourcesBySize.size()-1);
+		ArrayList<LibraryEntry> corrected=new ArrayList<LibraryEntry>(entriesBySource.get(startingDataset.y));
+		Logger.logLine("Starting alignment "+startingDataset+" with "+corrected.size()+" data points");
+		
+		// for each next source (in order)
+		while (sourcesBySize.size()>0) {
+			String source=sourcesBySize.remove(sourcesBySize.size()-1).y;
+			String sourceName=FilenameUtils.getBaseName(source);
+			
+			ArrayList<LibraryEntry> entries = entriesBySource.get(source);
+			RetentionTimeFilter filter=getFilter(corrected, entries, new File(libraryFile.getParent(), sourceName));
+
+			for (LibraryEntry entry : entries) {
+				LibraryEntry adjusted=entry.updateRetentionTime(filter.getXValue(entry.getScanStartTime()));
+				corrected.add(adjusted);
+			}
+		}
+		return corrected;
+	}
+
+	/**
+	 * longer and shorter lists are only for search speed considerations -- it's fine if they're reversed
+	 * @param first preferably the longer list
+	 * @param second preferably the shorter list
+	 * @return
+	 */
+	protected static RetentionTimeFilter getFilter(ArrayList<LibraryEntry> first, ArrayList<LibraryEntry> second, File libraryFile) {
+		HashMap<String, TFloatArrayList> rtsByPeptideModSeqFirst = getRTsBySeq(first);
+		HashMap<String, TFloatArrayList> rtsByPeptideModSeqSecond = getRTsBySeq(second);
+		String secondSource=second.get(0).getSource();
+		
+		return getFilter(rtsByPeptideModSeqFirst, rtsByPeptideModSeqSecond, libraryFile, secondSource);
+	}
+
+	private static RetentionTimeFilter getFilter(HashMap<String, TFloatArrayList> rtsByPeptideModSeqFirst, HashMap<String, TFloatArrayList> rtsByPeptideModSeqSecond, File libraryFile, String secondSource) {
+		ArrayList<XYPoint> points=new ArrayList<>();
+		for (Entry<String, TFloatArrayList> entry : rtsByPeptideModSeqFirst.entrySet()) {
+			TFloatArrayList secondRTs=rtsByPeptideModSeqSecond.get(entry.getKey());
+			if (secondRTs!=null) {
+				points.add(new RTRTPoint(QuickMedian.median(entry.getValue().toArray()), QuickMedian.median(secondRTs.toArray()), false, entry.getKey()));
+			}
+		}
+		
+		Logger.logLine("Adding "+secondSource+" with "+points.size()+" matched data points");
+		RetentionTimeFilter filter = RetentionTimeFilter.getFilter(points, "RT (seconds)", secondSource, TwoDimensionalKDE.HIGHER_RESOLUTION);
+		filter.plot(points, Optional.ofNullable(libraryFile), "Global", secondSource);
+		return filter;
+	}
+
+	protected static HashMap<String, TFloatArrayList> getRTsBySeq(ArrayList<LibraryEntry> list) {
+		HashMap<String, TFloatArrayList> rtsByPeptideModSeq=new HashMap<>();
+		for (LibraryEntry entry : list) {
+			if (entry.isDecoy()) continue; // drop all decoys
+			
+			TFloatArrayList rts=rtsByPeptideModSeq.get(entry.getPeptideModSeq());
+			if (rts==null) {
+				rts=new TFloatArrayList();
+				rtsByPeptideModSeq.put(entry.getPeptideModSeq(), rts);
+			}
+			rts.add(entry.getScanStartTime());
+		}
+		return rtsByPeptideModSeq;
 	}
 }

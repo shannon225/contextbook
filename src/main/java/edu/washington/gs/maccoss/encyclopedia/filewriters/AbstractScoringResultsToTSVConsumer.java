@@ -2,7 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.filewriters;
 
 import com.github.davidmoten.bigsorter.Serializer;
 import com.github.davidmoten.bigsorter.Sorter;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -27,12 +27,12 @@ public abstract class AbstractScoringResultsToTSVConsumer implements PeptideScor
 	protected final File outputFile;
 	protected final File tmpFile;
 	protected final StripeFileInterface diaFile;
-	protected final BlockingQueue<PeptideScoringResult> resultsQueue;
+	protected final BlockingQueue<AbstractScoringResult> resultsQueue;
 	protected final PrintWriter writer;
 
 	protected volatile int numberProcessed = 0;
 
-	public AbstractScoringResultsToTSVConsumer(File outputFile, StripeFileInterface diaFile, BlockingQueue<PeptideScoringResult> resultsQueue) {
+	public AbstractScoringResultsToTSVConsumer(File outputFile, StripeFileInterface diaFile, BlockingQueue<AbstractScoringResult> resultsQueue) {
 		this.outputFile = outputFile;
 		this.tmpFile = new File(outputFile.getAbsolutePath() + ".unsorted");
 		this.diaFile = diaFile;
@@ -49,7 +49,7 @@ public abstract class AbstractScoringResultsToTSVConsumer implements PeptideScor
 	}
 
 	@Override
-	public final BlockingQueue<PeptideScoringResult> getResultsQueue() {
+	public final BlockingQueue<AbstractScoringResult> getResultsQueue() {
 		return resultsQueue;
 	}
 

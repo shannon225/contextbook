@@ -2,17 +2,25 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import gnu.trove.map.hash.TCharObjectHashMap;
 
 public abstract class PeptideTrie <T extends PeptidePrecursor> {
 	TrieNode head=new TrieNode('$');
+	private final Optional<DigestionEnzyme> enzyme;
+	
+	public PeptideTrie(Collection<T> entries) {
+		this(entries, Optional.empty());
+	}
 	
 	/**
 	 * peptide trie stored backwards (so K/R comes first)
 	 * @param entries
 	 */
-	public PeptideTrie(Collection<T> entries) {
+	public PeptideTrie(Collection<T> entries, Optional<DigestionEnzyme> enzyme) {
+		this.enzyme=enzyme;
 		for (T entry : entries) {
 			char[] sequence=entry.getPeptideSeq().toCharArray();
 			
@@ -43,8 +51,14 @@ public abstract class PeptideTrie <T extends PeptidePrecursor> {
 				if (node==null) break;
 				
 				if (node.entries.size()>0) {
-					for (T entry : node.entries) {
-						processMatch(fasta, entry, j);
+					if (j==0||!enzyme.isPresent()||enzyme.get().isCutSite(sequence[j-1], sequence[j])) {
+						// either the beginning of the protein, the enzyme isn't used, or the enzyme indicates a cut site
+						for (T entry : node.entries) {
+							// add fasta protein entry to each peptide entry
+							processMatch(fasta, entry, j);
+						}
+					} else if (enzyme.isPresent()) {
+						System.out.println(sequence[j-1]+","+sequence[j]+"="+node.entries.get(0).getPeptideSeq().charAt(0)+" "+fasta.getAccession());
 					}
 				}
 			}

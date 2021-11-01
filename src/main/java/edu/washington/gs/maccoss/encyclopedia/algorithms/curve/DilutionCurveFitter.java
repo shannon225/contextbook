@@ -32,6 +32,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -55,16 +56,17 @@ public class DilutionCurveFitter {
 		float[] MSSGGGGGDHDHGLSSK = { 0.000111445f, 5.99557E-05f, 5.54356E-05f, 7.87784E-05f, 0.000147337f,
 				0.000401697f, 0.000704036f, 0.001509931f, 0.004140635f, 0.008480151f, 0.020829177f, 0.052199693f,
 				0.109812594f, 0.194237655f, 0.423290952f, 0.738813441f, 1f };
-		
-		float[] actual=General.reverse(MSSGGGGGDHDHGLSSK);
+
+		float[] VVEQVLR = { 1.22E+08f,	9.25E+07f,	6.25E+07f,	2.59E+07f,	1.17E+07f,	3880509.8f,	1127252.9f,	502679.06f,	199795.1f,	112922.164f,	114000.36f,	143237.23f,	66754.23f,	58291.92f,	33680.6f,	33295.54f,	35985.3f };
+		float[] actual=VVEQVLR;//General.reverse(VVEQVLR);
 
 		TFloatArrayList actualList=new TFloatArrayList(actual);
 		actualList.reverse();
 		TFloatArrayList expectedList=new TFloatArrayList(expected);
 		expectedList.reverse();
-		DilutionFit bestFit=process("PEPTIDE", "PROTEIN", expectedList.toArray(), actualList.toArray()).x;
-		ChartPanel panel=graph("PEPTIDE", expectedList.toArray(), actualList.toArray(), bestFit);
-		Charter.launchChart(panel, "PEPTIDE");
+		DilutionFit bestFit=process("NLVPMVATVQGQNLK", "PROTEIN", expectedList.toArray(), actualList.toArray()).x;
+		ChartPanel panel=graph("NLVPMVATVQGQNLK", expectedList.toArray(), actualList.toArray(), bestFit);
+		Charter.launchChart(panel, "NLVPMVATVQGQNLK");
 	}
 	
 	public static void main2(String[] args) throws Exception {
@@ -457,6 +459,19 @@ public class DilutionCurveFitter {
 			// calculate equations
 			Pair<Float, Float> equation=LinearRegression.getRegression(linearX.toArray(), linearY.toArray());
 			fit=new DilutionFit(noiseMean, General.stdev(noise.toArray()), equation.x, equation.y, lastZero, firstNonZero);
+			
+			if (false) { // FIXME
+				float max=Log.log10(General.max(actual));
+				float[] log10Actual = General.subtract(Log.log10(actual), max);
+				float[] log10Expected = Log.log10(expected);
+				XYTrace values=new XYTrace(log10Expected, log10Actual, GraphType.bigpoint, "Values", Color.black, 4f);
+				XYTrace noiseLine=new XYTrace(new float[] {log10Expected[0], log10Expected[expected.length-1]}, new float[] {noiseMean-max, noiseMean-max}, GraphType.dashedline, "Noise", Color.red, 3f);
+				XYTrace fitLine=new XYTrace(new float[] {log10Expected[0], log10Expected[expected.length-1]}, new float[] {log10Expected[0]*equation.x+equation.y-max, log10Expected[expected.length-1]*equation.x+equation.y-max}, GraphType.dashedline, "Fit", Color.blue.brighter(), 3f);
+				XYTrace pivot=new XYTrace(new float[] {log10Expected[crossOver]}, new float[] {log10Actual[crossOver]}, GraphType.bigpoint, "Pivot", Color.GREEN, 4f);
+				ChartPanel panel=Charter.getChart("Expected", "Actual", false, new XYTraceInterface[] {pivot, values, noiseLine, fitLine});
+				Charter.launchComponent(panel, "Iteration "+crossOver, new Dimension(300, 300));
+			}
+			
 			if(crossOver>0&&fit.getLOD()<loggedExpected.get(crossOver-1)) {
 				// if the point where it hits noiseMean is less than the crossOver point, forcing intercept at noiseMean crossOver point
 				equation=LinearRegression.getRegressionWithFixedIntercept(linearX.toArray(), linearY.toArray(), new XYPoint(loggedExpected.get(crossOver), noiseMean));

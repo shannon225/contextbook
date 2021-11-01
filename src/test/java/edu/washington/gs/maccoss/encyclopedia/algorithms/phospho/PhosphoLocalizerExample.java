@@ -9,7 +9,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
@@ -367,7 +367,7 @@ public class PhosphoLocalizerExample {
 		System.out.println("Based on all ions");
 		ArrayList<LibraryEntry> entries=new ArrayList<>();
 		entries.add(libentry);
-		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
+		BlockingQueue<AbstractScoringResult> resultsQueue=new LinkedBlockingQueue<AbstractScoringResult>();
 		BlockingQueue<ModificationLocalizationData> localizationQueue=new LinkedBlockingQueue<ModificationLocalizationData>();
 		ThesaurusOneScoringTask task=new ThesaurusOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, localizationQueue, parameters);
 		//CASiLOneScoringTask task=new CASiLOneScoringTask(scorer, entries, stripes, dutyCycle, precursors, localizer, resultsQueue, localizationQueue, parameters);
@@ -376,12 +376,12 @@ public class PhosphoLocalizerExample {
 		int index=0;
 		while (!resultsQueue.isEmpty()) {
 			if (!resultsQueue.isEmpty()) {
-				PeptideScoringResult result=resultsQueue.take();
-				ArrayList<Pair<ScoredObject<FragmentScan>, float[]>> data=result.getGoodStripes();
+				AbstractScoringResult result=resultsQueue.take();
+				Pair<ScoredObject<FragmentScan>, float[]> pair=result.getScoredMSMS();
 				index++;
-				for (Pair<ScoredObject<FragmentScan>, float[]> pair : data) {
+				//for (Pair<ScoredObject<FragmentScan>, float[]> pair : data) {
 					System.out.println(index+") "+result.getEntry().getPeptideModSeq()+"\t"+pair.x.x+"\t("+((pair.x.y.getScanStartTime())/60f)+" minutes)");
-				}
+				//}
 			} else {
 				Thread.sleep(10);
 			}

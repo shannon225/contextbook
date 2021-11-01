@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
@@ -27,7 +26,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 //@Immutable
-public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterface {
+public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, PeptidePrecursorWithProteins, XYTraceInterface {
 	public static final String SHUFFLE_STRING="SHUFFLE_";
 	public static final String DECOY_STRING="DECOY_";
 
@@ -64,8 +63,11 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, AminoAcidConstants aaConstants) {
 		this(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, getUnitArray(massArray.length), aaConstants);
 	}
-
 	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, AminoAcidConstants aaConstants) {
+		this(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime,
+				score, massArray, intensityArray, correlationArray, aaConstants, false);
+	}
+	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, AminoAcidConstants aaConstants, boolean keepNegativeIntensities) {
 		this(
 				source,
 				accessions,
@@ -79,11 +81,15 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 				score,
 				massArray,
 				intensityArray,
-				correlationArray
+				correlationArray,
+				keepNegativeIntensities
 		);
 	}
 
 	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, String massCorrectedPeptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray) {
+		this(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, false);
+	}
+	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, String massCorrectedPeptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, boolean keepNegativeIntensities) {
 		this.source=source;
 		this.accessions=new HashSet<String>(accessions);
 		this.spectrumIndex=spectrumIndex;
@@ -103,7 +109,7 @@ public class LibraryEntry implements Spectrum, PeptidePrecursor, XYTraceInterfac
 		ArrayList<PeakChromatogram> peaks=new ArrayList<>();
 		int numPeaks=Math.min(massArray.length, correlationArray.length);
 		for (int i=0; i<numPeaks; i++) {
-			if (intensityArray[i]>0) {
+			if (intensityArray[i]>0||keepNegativeIntensities) {
 				peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], correlationArray[i]));
 			}
 		}

@@ -75,6 +75,9 @@ public abstract class SQLFile {
 				if (statement.toLowerCase().indexOf(" "+column.toLowerCase()+" ")>=0) {
 					return true;
 				}
+				if (statement.toLowerCase().indexOf("\n"+column.toLowerCase()+" ")>=0) {
+					return true;
+				}
 			}
 			return false;
 		} finally {

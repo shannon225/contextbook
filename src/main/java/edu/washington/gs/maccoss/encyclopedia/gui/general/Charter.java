@@ -709,21 +709,26 @@ public class Charter {
 								renderer.setSeriesStroke(i, IonType.getStroke(annotations[i].getType()));
 								renderer.setSeriesPaint(i, color);
 								
-								XYTextAnnotation xytextannotation = new XYTextAnnotation(annotations[i].toString(), x[i], y[i]);
-								xytextannotation.setPaint(color);
 								
-								xytextannotation.setFont(IonType.getFont(annotations[i].getType()));
-						        xytextannotation.setTextAnchor(TextAnchor.BOTTOM_CENTER);
-						        plot.addAnnotation(xytextannotation);
+								boolean aboveThreshold=y[i]<0?y[i]<-yThreshold:y[i]>yThreshold;
+								if (IonType.b==annotations[i].getType()||IonType.y==annotations[i].getType()||aboveThreshold) {
+									XYTextAnnotation xytextannotation = new XYTextAnnotation(annotations[i].toString(), x[i], y[i]);
+									xytextannotation.setPaint(color);
+									
+									xytextannotation.setFont(IonType.getFont(annotations[i].getType()));
+							        xytextannotation.setTextAnchor(y[i]<0?TextAnchor.TOP_CENTER:TextAnchor.BOTTOM_CENTER);
+							        plot.addAnnotation(xytextannotation);
+								}
 							} else {
 								renderer.setSeriesStroke(i, IonType.missingStroke);
 								renderer.setSeriesPaint(i, IonType.missingColor);
-								
-								if (y[i]>yThreshold) {
+
+								boolean aboveThreshold=y[i]<0?y[i]<-yThreshold:y[i]>yThreshold;
+								if (aboveThreshold) {
 									XYTextAnnotation xytextannotation = new XYTextAnnotation(MASS_FORMAT.format(x[i]), x[i], y[i]);
 									xytextannotation.setPaint(IonType.missingColor);
 							        xytextannotation.setFont(IonType.primaryAnnotationFont);//missingAnnotationFont);
-							        xytextannotation.setTextAnchor(TextAnchor.BOTTOM_CENTER);
+							        xytextannotation.setTextAnchor(y[i]<0?TextAnchor.TOP_CENTER:TextAnchor.BOTTOM_CENTER);
 							        //plot.addAnnotation(xytextannotation);
 								}
 							}
@@ -743,11 +748,29 @@ public class Charter {
 								XYTextAnnotation xytextannotation = new XYTextAnnotation(MASS_FORMAT.format(x[i]), x[i], y[i]);
 								xytextannotation.setPaint(IonType.missingColor);
 						        xytextannotation.setFont(IonType.missingAnnotationFont);
-						        xytextannotation.setTextAnchor(TextAnchor.BOTTOM_CENTER);
+						        xytextannotation.setTextAnchor(y[i]<0?TextAnchor.TOP_CENTER:TextAnchor.BOTTOM_CENTER);
 						        //plot.addAnnotation(xytextannotation);
 							}
 						}
 					}
+				}
+
+				
+				double maxX=0.0;
+				double minY=0.0;
+				for (int i = 0; i < x.length; i++) {
+					if (x[i]>maxX) maxX=x[i];
+					if (y[i]<minY) minY=y[i];
+				}
+				if (minY<0.0) {
+					// some negative, so plot baseline (+5%)
+					int index=dataset.getSeriesCount();
+					XYSeries peakSeries=new XYSeries(index);
+					peakSeries.add(0, 0);
+					peakSeries.add(maxX*1.05, 0);
+					dataset.addSeries(peakSeries);
+					renderer.setSeriesStroke(index, new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+					renderer.setSeriesPaint(index, Color.GRAY);
 				}
 				break;
 				

@@ -88,13 +88,16 @@ public class SearchGUIMain {
 				Class<?> cls=Class.forName(className);
 
 				// Replace: Application application=Application.getApplication();
+				
 				Object application=cls.newInstance().getClass().getMethod("getApplication").invoke(null);
+				
 
 				// Replace: application.setDockIconImage(image);
 				application.getClass().getMethod("setDockIconImage", java.awt.Image.class).invoke(application, image.getImage());
 				
 			} catch (Exception e) {
-				e.printStackTrace();
+				Logger.errorLine("Error setting Mac-specific properties");
+				Logger.errorException(e);
 			}
 			break;
 

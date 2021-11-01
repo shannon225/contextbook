@@ -39,6 +39,7 @@ import edu.washington.gs.maccoss.encyclopedia.Pecanpie;
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCordiaSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -58,6 +59,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.Encyclopedia
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.LindsaysSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.MoMosSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.pecan.PecanParametersPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.scribe.ScribeParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.xcordia.XCorDIAParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.AboutDialog;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
@@ -160,6 +162,19 @@ public class SearchPanel extends JPanel {
 				Logger.errorException(e);
 			}
 			optionsTabs.addTab(xcordia.getProgram().toString(), xcordia.getSmallImage(), xcordia, xcordia.getProgramShortDescription());
+		}
+		if (ProgramType.Global==program||ProgramType.Scribe==program) {
+			ScribeParametersPanel scribe=new ScribeParametersPanel(this);
+			try {
+				HashMap<String, String> map=ScribeSearchParameters.readPreferences();
+				ScribeSearchParameters scribeParameters=ScribeSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(map));
+				scribe.setParameters(scribeParameters, map.get(Encyclopedia.TARGET_LIBRARY_TAG), map.get(Encyclopedia.BACKGROUND_FASTA_TAG));
+				
+			} catch (Exception e) {
+				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
+				Logger.errorException(e);
+			}
+			optionsTabs.addTab(scribe.getProgram().toString(), scribe.getSmallImage(), scribe, scribe.getProgramShortDescription());
 		}
 
 		LogConsole console=new LogConsole();

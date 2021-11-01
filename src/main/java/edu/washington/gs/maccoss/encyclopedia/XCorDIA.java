@@ -23,7 +23,7 @@ import java.util.zip.DataFormatException;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
@@ -294,7 +294,7 @@ public class XCorDIA {
 			useBin[index]=true;
 		}
 		
-		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
+		BlockingQueue<AbstractScoringResult> resultsQueue=new LinkedBlockingQueue<AbstractScoringResult>();
 		PeptideScoringResultsConsumer resultsConsumer=jobData.getTaskFactory().getResultsConsumer(jobData.getPercolatorFiles().getInputTSV(), resultsQueue, stripefile);
 		Thread consumerThread=new Thread(resultsConsumer);
 		consumerThread.start();
@@ -442,7 +442,7 @@ public class XCorDIA {
 			
 			rangesFinished++;
 		}
-		resultsQueue.put(PeptideScoringResult.POISON_RESULT);
+		resultsQueue.put(AbstractScoringResult.POISON_RESULT);
 
 		consumerThread.join();
 		resultsConsumer.close();

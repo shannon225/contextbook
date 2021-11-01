@@ -43,13 +43,13 @@ public class SearchParameterParser {
 		map.put("-enzyme", "trypsin");
 		map.put("-percolatorThreshold", "0.01");
 		map.put("-percolatorProteinThreshold", "0.01");
-		map.put("-percolatorVersionNumber", PercolatorExecutor.DEFAULT_VERSION_NUMBER.toString());
+		map.put("-percolatorVersion", PercolatorExecutor.DEFAULT_VERSION_NUMBER.toString());
 		map.put(SearchParameters.OPT_PERC_TRAINING_SIZE, Integer.toString(PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE));
 		map.put(SearchParameters.OPT_PERC_TRAINING_THRESH, Float.toString(PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD));
 		map.put("-expectedPeakWidth", "25");
 		map.put("-acquisition", DataAcquisitionType.toString(DataAcquisitionType.DIA));
 		map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
-		map.put("-scoringBreadthType", ScoringBreadthType.ENTIRE_RT_WINDOW.toShortname());
+		map.put("-scoringBreadthType", ScoringBreadthType.RECALIBRATED_PEAK_WIDTH.toShortname());
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
 		map.put("-numberOfQuantitativePeaks", "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
@@ -131,6 +131,8 @@ public class SearchParameterParser {
         final boolean filterPeaklists;
         final boolean doNotUseGlobalFDR;
         final boolean enableAdvancedOptions;
+        final Optional<File> percolatorModelFile;
+        final Optional<File> precursorIsolationRangeFile;
 		
 		String value=parameters.get("-frag");
 		if (value==null) {
@@ -254,10 +256,33 @@ public class SearchParameterParser {
 		} else {
 			enzyme=DigestionEnzyme.getEnzyme(value);
 		}
+		value=parameters.get("-percolatorModelFile");
+		if (value==null) {
+			percolatorModelFile=Optional.empty();
+		} else {
+			File f=new File(value);
+			if (f.exists()&&f.canRead()) {
+				percolatorModelFile=Optional.of(f);
+			} else {
+				percolatorModelFile=Optional.empty();
+			}
+		}
+		value=parameters.get("-precursorIsolationRangeFile");
+		if (value==null) {
+			precursorIsolationRangeFile=Optional.empty();
+		} else {
+			File f=new File(value);
+			if (f.exists()&&f.canRead()) {
+				precursorIsolationRangeFile=Optional.of(f);
+			} else {
+				precursorIsolationRangeFile=Optional.empty();
+			}
+		}
+		
 
 		percolatorThreshold=ParsingUtils.getFloat("-percolatorThreshold", parameters, 0.01f);
 		percolatorProteinThreshold=ParsingUtils.getFloat("-percolatorProteinThreshold", parameters, 0.01f);
-		percolatorVersionNumber=PercolatorVersion.getVersion(parameters.get("-percolatorVersionNumber"));
+		percolatorVersionNumber=PercolatorVersion.getVersion(parameters.get("-percolatorVersion"));
 		percolatorTrainingSetSize = ParsingUtils.getInteger(SearchParameters.OPT_PERC_TRAINING_SIZE, parameters, PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE);
 		percolatorTrainingSetThreshold = ParsingUtils.getFloat(SearchParameters.OPT_PERC_TRAINING_THRESH, parameters, PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD);
 
@@ -304,12 +329,12 @@ public class SearchParameterParser {
 			try {
 				type=ScoringBreadthType.getType(value);
 			} catch (Exception e) {
-				Logger.errorLine("Falling back to scoring breadth type: "+ScoringBreadthType.ENTIRE_RT_WINDOW.toShortname());
-				type=ScoringBreadthType.ENTIRE_RT_WINDOW;
+				Logger.errorLine("Falling back to scoring breadth type: "+ScoringBreadthType.RECALIBRATED_PEAK_WIDTH.toShortname());
+				type=ScoringBreadthType.RECALIBRATED_PEAK_WIDTH;
 			}
 			breadthType=type;
 		} else {
-			breadthType=ScoringBreadthType.ENTIRE_RT_WINDOW;
+			breadthType=ScoringBreadthType.RECALIBRATED_PEAK_WIDTH;
 		}
 		
 		float tempNumberOfExtraDecoyLibrariesSearched=ParsingUtils.getFloat("-numberOfExtraDecoyLibrariesSearched", parameters, 0.0f);
@@ -357,6 +382,8 @@ public class SearchParameterParser {
 				rtWindowInMin,
 				filterPeaklists,
 				doNotUseGlobalFDR,
+				precursorIsolationRangeFile,
+				percolatorModelFile,
 				enableAdvancedOptions
 		);
 	}
