@@ -15,6 +15,7 @@ pipelines:
         caches:
           - maven # predefined; caches ~/.m2/repository
         script:
+          - sudo apt update && sudo apt install -y libgomp1
           - mvn -B verify # -B batch mode makes Maven less verbose
   pull-requests:
     # This build runs automatically for pull requests, running
@@ -25,6 +26,7 @@ pipelines:
           caches:
             - maven
           script:
+            - sudo apt update && sudo apt install -y libgomp1
             - mvn -B verify -DskipITs=false
   tags:
     # This build runs automatically but only on tagged encyclopedia releases
@@ -35,6 +37,7 @@ pipelines:
             - maven # predefined; caches ~/.m2/repository
           script:
             # Similar to above, but with encyclopedia executable JAR and ITs
+            - sudo apt update && sudo apt install -y libgomp1
             - mvn -B package verify -PbuildEncyclopedia -DskipITs=false
           artifacts:
             # Defines the file(s) to be saved for use in the next step
@@ -57,6 +60,7 @@ pipelines:
           caches:
             - maven
           script:
+            - sudo apt update && sudo apt install -y libgomp1
             - mvn -B verify -DskipITs=false
 
 options:
