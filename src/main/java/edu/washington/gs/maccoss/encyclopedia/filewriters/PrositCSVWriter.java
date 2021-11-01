@@ -33,7 +33,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class PrositCSVWriter {
-	public static void main(String[] args) throws Exception {
+	public static void main4(String[] args) throws Exception {
 		File fileName=new File("/Users/searleb/Documents/grants/phosphotau mutagenesis/barcodes09_prosit.csv");
 		PrintWriter writer=new PrintWriter(fileName);
 		// removing R, K, M, C, G, F, Y, W, and I
@@ -124,6 +124,32 @@ public class PrositCSVWriter {
 		writeCSV(fasta, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), false);
 	}
 	
+	public static void main(String[] args) throws Exception {
+		File fastaFile=new File("/Users/searleb/Documents/OSU/cptac_grant/cptac_rodland/refseq_human_hg19_refGene_20170329_protein_add_contaminants.fasta");
+		File libraryFile=new File("/Users/searleb/Documents/OSU/cptac_grant/cptac_rodland/uniprot_human_25apr2019.z3_nce.dlib");
+
+		LibraryFile library=new LibraryFile();
+		library.openFile(libraryFile);
+		ArrayList<PeptidePrecursor> entries=library.getAllPeptidePrecursors(new AminoAcidConstants());
+
+		int defaultNCE = 33;
+		byte defaultCharge = (byte)3;
+		byte minCharge=2;
+		byte maxCharge=3;
+		int maxMissedCleavages=1;
+		double minimumMz = 396.43;
+		double maximumMz = 1002.70;
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+		HashSet<PeptidePrecursor> peptides=getPeptidesFromFASTA(fastaFile, enzyme, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz));
+		int totalPeptides=peptides.size();
+		peptides.removeAll(entries);
+		System.out.println("FOUND previous: "+entries.size()+", new: "+totalPeptides+", after removal: "+peptides.size());
+		
+		String fileName = checkCSVName(null, fastaFile, enzyme, defaultNCE, defaultCharge);
+		int total = writePrositFile(fileName, defaultNCE, defaultCharge, false, peptides);
+		Logger.logLine("Finished writing "+total+" peptides to Prosit CSV!");
+	}
+	
 	public static void writeCSV(File fasta) throws FileNotFoundException {
 		int defaultNCE = 33;
 		byte defaultCharge = (byte)3;
@@ -141,14 +167,26 @@ public class PrositCSVWriter {
 	}
 
 	public static void writeCSV(String csvFileName, File fasta, DigestionEnzyme enzyme, int defaultNCE, byte defaultCharge, byte minCharge, byte maxCharge, int maxMissedCleavages, Range mzRange, boolean addDecoys) throws FileNotFoundException {
+		writeCSV(csvFileName, fasta, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, mzRange, addDecoys, new HashSet<>());
+	}
+	
+	public static void writeCSV(String csvFileName, File fasta, DigestionEnzyme enzyme, int defaultNCE, byte defaultCharge, byte minCharge, byte maxCharge, int maxMissedCleavages, Range mzRange, boolean addDecoys, HashSet<PeptidePrecursor> peptidesToIgnore) throws FileNotFoundException {
 		String fileName = checkCSVName(csvFileName, fasta, enzyme, defaultNCE, defaultCharge);
 		Logger.logLine("Starting to build Prosit CSV: "+fileName);
 
+		HashSet<PeptidePrecursor> allPeptides=getPeptidesFromFASTA(fasta, enzyme, minCharge, maxCharge, maxMissedCleavages, mzRange);
+		
+		allPeptides.removeAll(peptidesToIgnore);
+
+		int total = writePrositFile(fileName, defaultNCE, defaultCharge, addDecoys, allPeptides);
+		Logger.logLine("Finished writing "+total+" peptides to Prosit CSV!");
+	}
+
+	protected static HashSet<PeptidePrecursor>  getPeptidesFromFASTA(File fasta, DigestionEnzyme enzyme, byte minCharge, byte maxCharge, int maxMissedCleavages, Range mzRange) {
+		HashSet<PeptidePrecursor> allPeptides=new HashSet<>();
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(fasta, parameters);
 		AminoAcidConstants aminoAcidConstants = new AminoAcidConstants();
-		
-		HashSet<PeptidePrecursor> allPeptides=new HashSet<>();
 		
 		for (FastaEntryInterface entry : entries) {
 			ArrayList<FastaPeptideEntry> peptidesInProtein=enzyme.digestProtein(entry, 7, 30, maxMissedCleavages, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
@@ -168,9 +206,8 @@ public class PrositCSVWriter {
 				}
 			}
 		}
-
-		int total = writePrositFile(fileName, defaultNCE, defaultCharge, addDecoys, allPeptides);
-		Logger.logLine("Finished writing "+total+" peptides to Prosit CSV!");
+		
+		return allPeptides;
 	}
 
 	public static void writeCSV(LibraryFile library, int defaultNCE, byte defaultCharge, boolean addDecoys) throws FileNotFoundException {
@@ -217,7 +254,7 @@ public class PrositCSVWriter {
 		return fileName;
 	}
 
-	private static int writePrositFile(String fileName, int defaultNCE, byte defaultCharge, boolean addDecoys, HashSet<PeptidePrecursor> allPeptides) throws FileNotFoundException {
+	protected static int writePrositFile(String fileName, int defaultNCE, byte defaultCharge, boolean addDecoys, HashSet<PeptidePrecursor> allPeptides) throws FileNotFoundException {
 		AminoAcidConstants constants = new AminoAcidConstants(); // does not support PTMs
 		PrintWriter writer=new PrintWriter(fileName);
 		int total=0;

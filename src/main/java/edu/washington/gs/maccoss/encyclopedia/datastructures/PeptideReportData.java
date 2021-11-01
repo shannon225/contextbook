@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
@@ -9,7 +10,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class PeptideReportData implements PeptidePrecursor {
-	private final String peptideModSeq;
 	private final String massCorrectedPeptideModSeq;
 	private final byte precursorCharge;
 	private final String accessions;
@@ -18,7 +18,6 @@ public class PeptideReportData implements PeptidePrecursor {
 	volatile private int maxNumOfFragments=0;
 
 	public PeptideReportData(String peptideModSeq, byte precursorCharge, String accessions, AminoAcidConstants aaConstants) {
-		this.peptideModSeq=peptideModSeq;
 		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq, aaConstants);
 		this.precursorCharge=precursorCharge;
 		this.accessions=accessions;
@@ -41,8 +40,12 @@ public class PeptideReportData implements PeptidePrecursor {
 		return precursorCharge;
 	}
 
-	public String getAccessions() {
+	public String getAccessionString() {
 		return accessions;
+	}
+	
+	public HashSet<String> getAccessions() {
+		return PSMData.stringToAccessions(accessions);
 	}
 
 	public QuantitativeDIAData getQuantitativeData(String sourceFile) {

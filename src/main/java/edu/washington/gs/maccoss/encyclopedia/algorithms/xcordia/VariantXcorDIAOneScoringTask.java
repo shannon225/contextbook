@@ -10,6 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequencyInterface;
@@ -45,7 +46,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 	private final int movingAverageLength;
 	
 	public VariantXcorDIAOneScoringTask(PSMScorer scorer, BackgroundFrequencyInterface background, ArrayList<LibraryEntry> entries, 
-			ArrayList<FragmentScan> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
+			ArrayList<FragmentScan> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<AbstractScoringResult> resultsQueue,
 			BlockingQueue<ModificationLocalizationData> localizationQueue, SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.background=background;
@@ -283,7 +284,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			evalue=-1.0f;
 		}
 		
-		PeptideScoringResult result=new PeptideScoringResult(timepoint.xcordiaEntry);
+		AbstractScoringResult result=new PeptideScoringResult(timepoint.xcordiaEntry);
 		result.addStripe(timepoint.scoredIndex.x, General.concatenate(auxScoreArray, timepoint.scoredIndex.x, evalue, timepoint.neededToLocalize?1:0, timepoint.numberOfWellShapedIons), stripe);
 		resultsQueue.add(result);
 	}

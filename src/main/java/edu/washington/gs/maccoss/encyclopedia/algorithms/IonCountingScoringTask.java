@@ -19,7 +19,7 @@ public class IonCountingScoringTask extends AbstractLibraryScoringTask {
 	private final float dutyCycle;
 	private final int peaksKept=1;
 	
-	public IonCountingScoringTask(PSMPeakScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<PeptideScoringResult> resultsQueue,
+	public IonCountingScoringTask(PSMPeakScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<AbstractScoringResult> resultsQueue,
 			SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
 		this.dutyCycle=dutyCycle;
@@ -30,7 +30,7 @@ public class IonCountingScoringTask extends AbstractLibraryScoringTask {
 		MassTolerance tolerance=parameters.getFragmentTolerance();
 		int movingAverageLength=Math.round(parameters.getExpectedPeakWidth()/dutyCycle);
 		for (LibraryEntry entry : super.entries) {
-			PeptideScoringResult result=new PeptideScoringResult(entry);
+			AbstractScoringResult result=new PeptideScoringResult(entry);
 
 			TFloatFloatHashMap scoreMap=new TFloatFloatHashMap();
 			float[] primary=new float[super.stripes.size()];

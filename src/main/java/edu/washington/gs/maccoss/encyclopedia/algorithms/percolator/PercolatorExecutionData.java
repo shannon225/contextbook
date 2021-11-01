@@ -96,4 +96,8 @@ public class PercolatorExecutionData {
 	public boolean isUseMinMax() {
 		return useMinMax;
 	}
+	
+	public Optional<File> getPercolatorModelFile() {
+		return parameters.getPercolatorModelFile();
+	}
 }

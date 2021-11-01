@@ -7,6 +7,7 @@ import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -26,7 +27,7 @@ import gnu.trove.set.hash.TIntHashSet;
 public class PecanOneScoringTask extends AbstractPecanScoringTask {
 
 	public PecanOneScoringTask(PSMPeakScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, TDoubleObjectHashMap<XYPoint>[] background, PrecursorScanMap precursors,
-			int scanAveragingWindow, BlockingQueue<PeptideScoringResult> resultsQueue, PecanSearchParameters parameters) {
+			int scanAveragingWindow, BlockingQueue<AbstractScoringResult> resultsQueue, PecanSearchParameters parameters) {
 		super(scorer, entries, stripes, background, precursors, scanAveragingWindow, resultsQueue, parameters);
 	}
 
@@ -133,7 +134,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 			float[] sortedBGScores=sumBgsubScores.clone();
 			Arrays.sort(sortedBGScores);
 
-			PeptideScoringResult result=new PeptideScoringResult(entry);
+			AbstractScoringResult result=new PeptideScoringResult(entry);
 			TIntHashSet takenScans=new TIntHashSet();
 			int identifiedPeaks=0;
 			for (int i=goodStripes.size()-1; i>=0; i--) {

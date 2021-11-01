@@ -44,10 +44,12 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LocalizedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SimplePeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -343,6 +345,16 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		}
 	}
 
+	/**
+	 * if there are repeated integrated peptides, we prefer peptides with higher scores
+	 * @param entries
+	 * @param inferrer
+	 * @param localizationData
+	 * @param aaConstants
+	 * @param fdrThreshold
+	 * @throws IOException
+	 * @throws SQLException
+	 */
 	public void addIntegratedEntries(ArrayList<IntegratedLibraryEntry> entries, Optional<PeakLocationInferrerInterface> inferrer, Optional<HashMap<String, ModificationLocalizationData>> localizationData, AminoAcidConstants aaConstants, float fdrThreshold)
 			throws IOException, SQLException {
 		// first add normal data
@@ -388,6 +400,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				// ("+entry.getScore()+" vs"+prev.getScore()+"), keeping best
 				// scoring. Let Brian know if you see this!");
 				if (entry.getScore()>prev.getScore()) {
+					// prefer peptides with higher scores
 					repeatsCatcher.put(key, entry);
 				}
 			}
@@ -1266,6 +1279,26 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						entry.add(new ChromatogramLibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray,
 								correlationArray, medianChromatogramArray, new Range(rtInSecondsStart, rtInSecondsStop), aaConstants));
 					}
+				}
+
+				return entry;
+			}
+		}
+	}
+
+	public ArrayList<PeptidePrecursor> getAllPeptidePrecursors(AminoAcidConstants aaConstants) throws IOException, SQLException, DataFormatException {
+		try (Connection c=getConnection()) {
+			try (PreparedStatement s=c.prepareStatement("select "+"e.PeptideModSeq, "+"e.PrecursorCharge "+"from "
+					+"entries e "+"left join peptidetoprotein p "+"on "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"group by e.rowid")) {
+
+				ResultSet rs=s.executeQuery();
+
+				ArrayList<PeptidePrecursor> entry=new ArrayList<PeptidePrecursor>();
+				while (rs.next()) {
+					String peptideModSeq=PeptideUtils.getCorrectedMasses(rs.getString(1), aaConstants);
+					byte precursorCharge=(byte) rs.getInt(2);
+					SimplePeptidePrecursor peptide=new SimplePeptidePrecursor(peptideModSeq, precursorCharge, aaConstants);
+					entry.add(peptide);
 				}
 
 				return entry;

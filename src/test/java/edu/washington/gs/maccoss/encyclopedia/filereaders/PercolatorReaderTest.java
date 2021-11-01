@@ -28,7 +28,7 @@ public class PercolatorReaderTest extends TestCase {
 	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 	
 	public static void main(String[] args) {
-		File f=new File("/Volumes/BriansSSD/nick/110815_bcs_hela_6mz_600_700.mzML.encyclopedia.decoy.txt");
+		File f=new File("/Users/searleb/Documents/damien/dda_library_search/msfragger_hela/perc_results/23aug2017_hela_serum_timecourse_pool_dda_001_percolator_target_psms.tsv");
 		ArrayList<PercolatorPeptide> passingPeptidesFromTSV=PercolatorReader.getPassingPeptidesFromTSV(f, 1.0f, PARAMETERS.getAAConstants(), true).x;
 		System.out.println(passingPeptidesFromTSV.size());
 	}

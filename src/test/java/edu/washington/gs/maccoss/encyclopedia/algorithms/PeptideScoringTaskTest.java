@@ -122,7 +122,7 @@ public class PeptideScoringTaskTest {
 			LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
-			ArrayList<Future<HashMap<LibraryEntry, PeptideScoringResult>>> results=new ArrayList<Future<HashMap<LibraryEntry, PeptideScoringResult>>>();
+			ArrayList<Future<HashMap<LibraryEntry, AbstractScoringResult>>> results=new ArrayList<Future<HashMap<LibraryEntry, AbstractScoringResult>>>();
 			for (String peptide : backgroundProteomeArray) {
 				for (byte charge : charges) {
 					double mz=PARAMETERS.getAAConstants().getChargedMass(peptide, charge);
@@ -133,7 +133,7 @@ public class PeptideScoringTaskTest {
 						ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
 						tasks.add(pecanEntry);
 
-						Future<HashMap<LibraryEntry, PeptideScoringResult>> value=executor.submit(new FragmentationTraceTask(pecanScorer, PLOTTING_METHOD, tasks, stripes, new PrecursorScanMap(new ArrayList<PrecursorScan>()), PARAMETERS.getAAConstants()));
+						Future<HashMap<LibraryEntry, AbstractScoringResult>> value=executor.submit(new FragmentationTraceTask(pecanScorer, PLOTTING_METHOD, tasks, stripes, new PrecursorScanMap(new ArrayList<PrecursorScan>()), PARAMETERS.getAAConstants()));
 						results.add(value);
 					}
 				}
@@ -146,9 +146,9 @@ public class PeptideScoringTaskTest {
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
 			ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
-			for (Future<HashMap<LibraryEntry, PeptideScoringResult>> future : results) {
-				HashMap<LibraryEntry, PeptideScoringResult> result=future.get();
-				for (Entry<LibraryEntry, PeptideScoringResult> resultEntry : result.entrySet()) {
+			for (Future<HashMap<LibraryEntry, AbstractScoringResult>> future : results) {
+				HashMap<LibraryEntry, AbstractScoringResult> result=future.get();
+				for (Entry<LibraryEntry, AbstractScoringResult> resultEntry : result.entrySet()) {
 					//LibraryEntry peptide=resultEntry.getKey();
 					FragmentationScoringResult peptideResult=(FragmentationScoringResult)resultEntry.getValue();
 

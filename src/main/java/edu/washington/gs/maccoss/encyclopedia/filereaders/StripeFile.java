@@ -76,10 +76,6 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 
 	public StripeFile(boolean isOpenFileInPlace) throws IOException {
-		if (!isOpenFileInPlace){
-			tempFile=File.createTempFile("encyclopedia_", DIA_EXTENSION);
-			tempFile.deleteOnExit();
-		}
 		this.isOpenFileInPlace = isOpenFileInPlace;
 	}
 
@@ -218,8 +214,16 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 
 	public void openFile() throws IOException, SQLException {
 		if (isOpenFileInPlace) {
-			tempFile=userFile;
+			if (userFile==null) {
+				tempFile=File.createTempFile("encyclopedia_", DIA_EXTENSION);
+				tempFile.deleteOnExit();
+				userFile=tempFile;
+			} else {
+				tempFile=userFile;
+			}
 		} else {
+			tempFile=File.createTempFile("encyclopedia_", DIA_EXTENSION);
+			tempFile.deleteOnExit();
 			if (userFile!=null) {
 				Files.copy(userFile.toPath(), tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 			}
@@ -754,7 +758,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 
 				s.execute("create index if not exists \"spectra_index_isolation_window_lower\" on \"spectra\" (\"IsolationWindowLower\" ASC)");
 				s.execute("create index if not exists \"spectra_index_isolation_window_upper\" on \"spectra\" (\"IsolationWindowUpper\" ASC)");
-				s.execute("create index if not exists \"spectra_index_scan_start_time\" on \"spectra\" (\"ScanStartTime\" ASC)");
+				s.execute("create index if not exists \"spectra_index_scan_start_time_and_windows\" on \"spectra\" (\"ScanStartTime\",\"IsolationWindowLower\",\"IsolationWindowUpper\" ASC)");
 
 				s.execute("create index if not exists \"precursor_index_isolation_window_lower\" on \"precursor\" (\"IsolationWindowLower\" ASC)");
 				s.execute("create index if not exists \"precursor_index_isolation_window_upper\" on \"precursor\" (\"IsolationWindowUpper\" ASC)");

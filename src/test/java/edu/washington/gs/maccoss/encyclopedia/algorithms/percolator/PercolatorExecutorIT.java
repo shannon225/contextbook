@@ -6,6 +6,8 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import gnu.trove.map.hash.TCharDoubleHashMap;
+
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -25,7 +27,7 @@ public class PercolatorExecutorIT {
 		doPercolatorTest(PercolatorVersion.v2p10);
 	}
 
-	@Test
+	@Ignore
 	public void testPercolatorExecutorV3p5() throws Exception {
 		doPercolatorTest(PercolatorVersion.v3p05);
 	}

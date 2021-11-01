@@ -327,7 +327,7 @@ public class ReferencePeakIntegrator {
 		
 		ArrayList<XYPoint> points = getMatchingPoints(referenceRTInSecs, wideRTInSecs);
 		
-		RetentionTimeAlignmentInterface alignment=RetentionTimeFilter.getFilter(points, "reference", library.getName(), 3000);
+		RetentionTimeAlignmentInterface alignment=RetentionTimeFilter.getFilter(points, "reference", library.getName(), TwoDimensionalKDE.HIGHER_RESOLUTION);
 		
 		final List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignmentResults=alignment.plot(points, Optional.ofNullable(saveFileSeed));
 		return new Pair<RetentionTimeAlignmentInterface, List<AlignmentDataPoint>>(alignment, alignmentResults);

@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.gui.general;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,18 +15,20 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class CharterTest {
-	public static void main(String[] args) {
+	public static void main3(String[] args) {
 		double[] masses = new double[] { 68.6871, 68.7309, 69.0631, 71.0826, 71.7839, 72.0778, 73.0807, 73.5243,
 				74.1006, 82.3521, 82.4109, 84.0695, 85.0655, 86.0933, 86.384, 86.4551, 86.6412, 86.9153, 86.9976,
 				87.0948, 87.1513, 87.2612, 87.3162, 87.4427, 88.1012, 89.0547, 100.077, 101.111, 102.0514, 102.1206,
@@ -330,13 +333,66 @@ public class CharterTest {
 	 * Methionine: http://mona.fiehnlab.ucdavis.edu/spectra/display/CE000452
 	 * @param args
 	 */
-	public static void main3(String[] args) {
+	public static void main6(String[] args) {
 		double[] masses = new double[] { 104.052841, 133.031921, 150.038239, 150.046448, 150.04895, 150.050446,
 				150.051987, 150.054855, 150.058304, 150.063202, 150.065689, 150.067154, 150.069916, 150.074142,
 				299.242279 };
 		float[] intensities = new float[] { 9.029358f, 41.774054f, 0.503758f, 0.418014f, 0.40345f, 0.539593f, 0.682148f,
 				1.009503f, 100f, 0.635989f, 0.550531f, 0.604124f, 0.460001f, 0.433143f, 0.651692f};
+		intensities=General.multiply(intensities, -1);
+		float[] correlations=new float[intensities.length];
 		
-		Charter.launchChart(new LibraryEntry("Massbank", new HashSet<>(), 150.0583, (byte)1, "M", 1, 3791.84f, 0, masses, intensities, new AminoAcidConstants()));
+		LibraryEntry trace = new LibraryEntry("Massbank", new HashSet<>(), 1, 150.0583, (byte)1, "M", "M", 1, 3791.84f, 0, masses, intensities, correlations, true);
+			
+		System.out.println("CHECK: "+General.toString(trace.getIntensityArray()));
+		System.out.println("VS: "+General.toString(intensities));
+		
+		Charter.launchChart(trace);
+	}
+	
+	public static void main(String[] args) throws Exception {
+		File actualFile=new File("/Users/searleb/Documents/maccoss/barnes/chris_barnes/actual_peptides_for_chris_barnes.dlib");
+		File predictedFile=new File("/Users/searleb/Documents/maccoss/barnes/chris_barnes/peptides_for_chris_barnes.dlib");
+		File altpredictedFile=new File("/Users/searleb/Documents/maccoss/barnes/chris_barnes/alt_peptides_for_chris_barnes.dlib");
+		HashMap<String, String> paramMap=SearchParameterParser.getDefaultParameters();
+		paramMap.put("-ftol", "10");
+		paramMap.put("-lftol", "10");
+		SearchParameters params=SearchParameterParser.parseParameters(paramMap);
+		int peptide=1;
+		
+		LibraryFile actualLibrary=new LibraryFile();
+		actualLibrary.openFile(actualFile);
+		LibraryFile predictedLibrary=new LibraryFile();
+		predictedLibrary.openFile(predictedFile);
+		LibraryFile altpredictedLibrary=new LibraryFile();
+		altpredictedLibrary.openFile(altpredictedFile);
+		
+		ArrayList<LibraryEntry> actual=actualLibrary.getAllEntries(false, params.getAAConstants());
+		ArrayList<LibraryEntry> predicted=predictedLibrary.getAllEntries(false, params.getAAConstants());
+		ArrayList<LibraryEntry> altpredicted=altpredictedLibrary.getAllEntries(false, params.getAAConstants());
+		
+
+		Charter.launchChart(new AnnotatedLibraryEntry(actual.get(peptide), params, true), actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
+		Charter.launchChart(new AnnotatedLibraryEntry(getButterfly(actual.get(peptide), predicted.get(peptide)), params, true), actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
+		Charter.launchChart(new AnnotatedLibraryEntry(getButterfly(actual.get(peptide), altpredicted.get(0)), params, true), actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
+	}
+	
+	public static LibraryEntry getButterfly(LibraryEntry top, LibraryEntry bottom) {
+		double[] masses=new double[top.getMassArray().length+bottom.getMassArray().length];
+		System.arraycopy(top.getMassArray(), 0, masses, 0, top.getMassArray().length);
+		System.arraycopy(bottom.getMassArray(), 0, masses, top.getMassArray().length, bottom.getMassArray().length);
+		float[] intensities=new float[top.getIntensityArray().length+bottom.getIntensityArray().length];
+		System.arraycopy(normalize(top.getIntensityArray()), 0, intensities, 0, top.getIntensityArray().length);
+		System.arraycopy(General.multiply(normalize(bottom.getIntensityArray()), -1f), 0, intensities, top.getIntensityArray().length, bottom.getIntensityArray().length);
+		float[] correlations=new float[top.getCorrelationArray().length+bottom.getCorrelationArray().length];
+		System.arraycopy(top.getCorrelationArray(), 0, correlations, 0, top.getCorrelationArray().length);
+		System.arraycopy(bottom.getCorrelationArray(), 0, correlations, top.getCorrelationArray().length, bottom.getCorrelationArray().length);
+
+		LibraryEntry trace = new LibraryEntry(top.getSource(), top.getAccessions(), top.getSpectrumIndex(), top.getPrecursorMZ(), top.getPrecursorCharge(), top.getLegacyPeptideModSeq(), top.getPeptideModSeq(), top.getCopies(), top.getRetentionTime(), top.getScore(), masses, intensities, correlations, true);
+		return trace;
+	}
+
+	private static float[] normalize(float[] intensities) {
+		return General.divide(intensities, General.max(intensities));
 	}
 }

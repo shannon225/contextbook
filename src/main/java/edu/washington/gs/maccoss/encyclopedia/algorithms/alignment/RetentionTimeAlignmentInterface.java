@@ -15,6 +15,8 @@ public interface RetentionTimeAlignmentInterface {
 	float getXValue(float yrt);
 
 	float getProbabilityFitsModel(float actualRT, float modelRT);
+	
+	float getDelta(float actualRT, float modelRT);
 
 	interface AlignmentDataPoint {
 		/**

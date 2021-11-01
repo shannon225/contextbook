@@ -49,9 +49,12 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 	public Function getRtWarper() {
 		return rtWarper;
 	}
-
 	@Override
 	public List<AlignmentDataPoint> plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed) {
+		return plot(rts, saveFileSeed, "library", "actual");
+	}
+
+	public List<AlignmentDataPoint> plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed, String xAxis, String yAxis) {
 		TFloatArrayList rtValues=new TFloatArrayList();
 		TFloatArrayList deltas=new TFloatArrayList();
 		ArrayList<XYPoint> removedRTs=new ArrayList<XYPoint>();
@@ -129,7 +132,7 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 		XYTraceInterface posTrace=new XYTrace(positivePoints, GraphType.line, "Positive", new Color(26, 198, 49, 100), 2.0f);
 		
 		float alpha=Math.min(1.0f, 5000.0f/rts.size());
-		XYTraceInterface median2=new XYTrace(rtWarper.getKnots(), GraphType.line, "Retention Time Fit", new Color(26, 198, 49, 100), 2.0f);
+		XYTraceInterface median2=new XYTrace(rtWarper.getKnots(), GraphType.line, "Retention Time Fit", new Color(26, 198, 49, 100), 4.0f);
 		XYTraceInterface selectedTrace=new XYTrace(selectedRTs, GraphType.tinypoint, "Data Used In Fit", new Color(0f, 0f, 1f, alpha), 1.0f);
 		XYTraceInterface trace=new XYTrace(removedRTs, GraphType.tinypoint, "Data Removed From Fit", new Color(1f, 0f, 0f, alpha), 1.0f);
 
@@ -145,7 +148,7 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 			try {
 				final File file = new File(saveFilePrefix + ".rt_fit.txt");
 				PrintWriter writer=new PrintWriter(file, "UTF-8");
-				writer.println("library\tactual\twarpToActual\tdelta\tfitProb\tisDecoy\tsequence");
+				writer.println(xAxis+"\t"+yAxis+"\twarpTo"+yAxis+"\tdelta\tfitProb\tisDecoy\tsequence");
 				
 				for (int i=0; i<rts.size(); i++) {
 					XYPoint xyPoint=rts.get(i);
@@ -198,7 +201,8 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 		return getProbability(actualRT, delta);
 	}
 
-	private float getDelta(float actualRT, float modelRT) {
+	@Override
+	public float getDelta(float actualRT, float modelRT) {
 		float one=actualRT-getYValue(modelRT);
 		float two=getXValue(actualRT)-modelRT;
 		if (Math.abs(one)<Math.abs(two)) {

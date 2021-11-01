@@ -78,7 +78,7 @@ public class MultiPeptideResultsTableModel extends AbstractTableModel {
 		switch (columnIndex) {
 			case 0: return rowIndex;
 			case 1: return entry.getPeptideModSeq();
-			case 2: return entry.getAccessions();
+			case 2: return entry.getAccessionString();
 			case 3: return entry.getMaxNumOfFragments();
 			case 4: return entry.getAverageRetentionTime()/60f;
 			case 5:

@@ -12,12 +12,18 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.Map.Entry;
 import java.util.zip.DataFormatException;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.SSRCalc;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RTRTPoint;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TwoDimensionalKDE;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
@@ -26,6 +32,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEn
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -33,10 +40,19 @@ import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.IndexedObject;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
+import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TIntFloatHashMap;
+import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
+import gnu.trove.procedure.TIntFloatProcedure;
+import gnu.trove.procedure.TIntIntProcedure;
+import gnu.trove.procedure.TIntObjectProcedure;
 
 public class BlibFile extends SQLFile {
 	public static final String BLIB=".blib";
@@ -83,23 +99,14 @@ public class BlibFile extends SQLFile {
 		try {
 			Statement s=c.createStatement();
 			try {
-				ResultSet rs=s.executeQuery("select RefSpectraID, retentionTime from RetentionTimes where bestSpectrum=1");
-				TIntFloatHashMap rtMap=new TIntFloatHashMap();
-				boolean hasRTs=false;
-				while (rs.next()) {
-					int refSpectraID=rs.getInt(1);
-					float rt=rs.getFloat(2);
-					if (!hasRTs&&rt>0.0f) {
-						hasRTs=true;
-					}
-					rtMap.put(refSpectraID, rt);
-				}
+				TIntFloatHashMap rtMap = getBestRTByPeptideID(s);
+				boolean hasRTs=rtMap!=null;
 				
 				if (!hasRTs&&!irtMap.isPresent()) {
-					rtMap.clear();
+					rtMap=new TIntFloatHashMap();
 					boolean hasRTColumn=doesColumnExist(tempFile, "RefSpectra", "retentionTime");
 					if (hasRTColumn) {
-						rs=s.executeQuery("select id, retentionTime from RefSpectra");
+						ResultSet rs=s.executeQuery("select id, retentionTime from RefSpectra");
 						while (rs.next()) {
 							int refSpectraID=rs.getInt(1);
 							float rt=rs.getFloat(2);
@@ -115,6 +122,7 @@ public class BlibFile extends SQLFile {
 					Logger.errorLine("BLIB doesn't contain retention times! Using SSRCalc 3 hydrophobicities as fallback.");
 				}
 
+				ResultSet rs;
 				boolean hasScore=doesColumnExist(tempFile, "RefSpectra", "score");
 				boolean hasFileID=doesColumnExist(tempFile, "RefSpectra", "fileID");
 				if (hasFileID) {
@@ -180,14 +188,18 @@ public class BlibFile extends SQLFile {
 						}
 					}
 					
-					float retentionTime=rtMap.get(refSpectraID);
+					float retentionTime=Float.NaN; // watch for this empty state
 					if (irtMap.isPresent()) {
 						if (irtMap.get().contains(peptideModSeq)) {
 							retentionTime=irtMap.get().get(peptideModSeq);
 						} else {
 							missing++;
 						}
-					} else if (!hasRTs) {
+					} else if (rtMap!=null) {
+						retentionTime=rtMap.get(refSpectraID);
+					}
+
+					if (Float.isNaN(retentionTime)) { // fix empty state
 						retentionTime=(float)SSRCalc.getHydrophobicity(peptideModSeq);
 					}
 					// RT are usually in minutes, but not always depending on blib version. Warping 
@@ -196,6 +208,7 @@ public class BlibFile extends SQLFile {
 					total++;
 
 					entries.add(new LibraryEntry(sourceFile, new HashSet<String>(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, constants));
+					
 				}
 				if (missing>0) {
 					Logger.logLine("Missing iRT for "+missing+" of "+total+" peptides, using RT in file.");
@@ -213,10 +226,13 @@ public class BlibFile extends SQLFile {
 					int size=Math.min(counts.length-1, entry.getAccessions().size());
 					counts[size]++;
 				}
+				
 				Logger.logLine("Accession count histogram: ");
 				for (int i=0; i<counts.length; i++) {
 					Logger.logLine(i+" Acc\t"+counts[i]+" Counts");
 				}
+				ArrayList<ProteinGroupInterface> proteinGroups=ParsimonyProteinGrouper.groupLibraryEntryProteins(entries, params.getAAConstants());
+				Logger.errorLine(proteinGroups.size()+" distinct protein groups found.");
 
 				if (counts[0]>0) {
 					Logger.errorLine(counts[0]+" library entries can't be linked to proteins! These entries will be dropped.");
@@ -235,6 +251,131 @@ public class BlibFile extends SQLFile {
 			c.close();
 		}
 		
+	}
+
+	/**
+	 * 
+	 * @param s
+	 * @return can return null
+	 * @throws SQLException
+	 */
+	private TIntFloatHashMap getBestRTByPeptideID(Statement s) throws SQLException {
+		ResultSet rs=s.executeQuery("select RefSpectraID,retentionTime,spectrumSourceID,bestSpectrum from RetentionTimes");
+		TIntObjectHashMap<TIntObjectHashMap<TFloatArrayList>> rtDataMapBySampleID=new TIntObjectHashMap<>();
+		TIntIntHashMap bestSourceByPeptideID=new TIntIntHashMap();
+		boolean hasRTs=false;
+		while (rs.next()) {
+			int refSpectraID=rs.getInt(1);
+			float rt=rs.getFloat(2);
+			int spectrumSourceID=rs.getInt(3);
+			int bestSpectrum=rs.getInt(4);
+			if (!hasRTs&&rt>0.0f) {
+				hasRTs=true;
+			}
+			TIntObjectHashMap<TFloatArrayList> rtsByPeptideID=rtDataMapBySampleID.get(spectrumSourceID);
+			if (rtsByPeptideID==null) {
+				rtsByPeptideID=new TIntObjectHashMap<>();
+				rtDataMapBySampleID.put(spectrumSourceID, rtsByPeptideID);
+			}
+			TFloatArrayList list=rtsByPeptideID.get(refSpectraID);
+			if (list==null) {
+				list=new TFloatArrayList();
+				rtsByPeptideID.put(refSpectraID, list);
+			}
+			list.add(rt);
+			
+			if (bestSpectrum==1) {
+				bestSourceByPeptideID.put(refSpectraID, spectrumSourceID);
+			}
+		}
+
+		if (!hasRTs) return null;
+		
+		ArrayList<IndexedObject<Integer>> sourcesBySize=new ArrayList<>();
+		rtDataMapBySampleID.forEachEntry(new TIntObjectProcedure<TIntObjectHashMap<TFloatArrayList>>() {
+			@Override
+			public boolean execute(int a, TIntObjectHashMap<TFloatArrayList> b) {
+				sourcesBySize.add(new IndexedObject<Integer>(b.size(), a));
+				return true;
+			}
+		});
+		Collections.sort(sourcesBySize);
+
+		IndexedObject<Integer> startingDataset = sourcesBySize.remove(sourcesBySize.size()-1);
+		TIntFloatHashMap correctedRTsByPeptideID=calculateMedianRT(rtDataMapBySampleID.get(startingDataset.y));
+		Logger.logLine("Starting alignment "+startingDataset.y+" with "+correctedRTsByPeptideID.size()+" data points");
+		TIntObjectHashMap<RetentionTimeFilter> filtersBySourceFile=new TIntObjectHashMap<>();
+		
+		// for each next source (in order)
+		while (sourcesBySize.size()>0) {
+			int sourceID=sourcesBySize.remove(sourcesBySize.size()-1).y;
+			TIntFloatHashMap nextSample=calculateMedianRT(rtDataMapBySampleID.get(sourceID));
+			RetentionTimeFilter filter=getFilter(correctedRTsByPeptideID, nextSample, sourceID);
+			filtersBySourceFile.put(sourceID, filter);
+			
+			// add peptide if we haven't seen it yet. Perhaps this should median across observations in different sourceFiles?
+			nextSample.forEachEntry(new TIntFloatProcedure() {
+				@Override
+				public boolean execute(int a, float b) {
+					if (!correctedRTsByPeptideID.contains(a)) {
+						correctedRTsByPeptideID.put(a, filter.getXValue(b));
+					}
+					return true;
+				}
+			});
+		}
+		
+		TIntFloatHashMap rtMap=new TIntFloatHashMap();
+		bestSourceByPeptideID.forEachEntry(new TIntIntProcedure() {
+			@Override
+			public boolean execute(int peptideID, int sourceID) {
+				TIntObjectHashMap<TFloatArrayList> rtsByPeptideID=rtDataMapBySampleID.get(sourceID);
+				TFloatArrayList rts=rtsByPeptideID.get(peptideID);
+				float centerRT=QuickMedian.median(rts.toArray());
+				RetentionTimeFilter filter=filtersBySourceFile.get(sourceID);
+				if (filter==null) {
+					rtMap.put(peptideID, centerRT);
+				} else {
+					rtMap.put(peptideID, filter.getXValue(centerRT));
+				}
+				return true;
+			}
+		});
+		return rtMap;
+	}
+	
+	private TIntFloatHashMap calculateMedianRT(TIntObjectHashMap<TFloatArrayList> rtMap) {
+		TIntFloatHashMap newMap=new TIntFloatHashMap();
+		rtMap.forEachEntry(new TIntObjectProcedure<TFloatArrayList>() {
+			@Override
+			public boolean execute(int a, TFloatArrayList b) {
+				newMap.put(a, QuickMedian.median(b.toArray()));
+				return true;
+			}
+		});
+		return newMap;
+	}
+
+	public RetentionTimeFilter getFilter(TIntFloatHashMap rtsByPeptideModSeqFirst, TIntFloatHashMap rtsByPeptideModSeqSecond, int sampleID) {
+		ArrayList<XYPoint> points=new ArrayList<>();
+		rtsByPeptideModSeqFirst.forEachEntry(new TIntFloatProcedure() {
+			@Override
+			public boolean execute(int a, float b) {
+				float secondRT=rtsByPeptideModSeqSecond.get(a);
+				if (secondRT!=rtsByPeptideModSeqSecond.getNoEntryValue()) {
+					points.add(new RTRTPoint(b, secondRT, false, Integer.toString(a)));
+				}
+				return true;
+			}
+		});
+		
+		Logger.logLine("Adding new sample "+sampleID+" with "+rtsByPeptideModSeqSecond.size()+" peptides and "+points.size()+" matched data points");
+		String sampleName = "New_Sample_"+sampleID;
+		RetentionTimeFilter filter = RetentionTimeFilter.getFilter(points, "RT (seconds)", sampleName, TwoDimensionalKDE.HIGHER_RESOLUTION);
+
+		String saveFilePrefix=userFile.getAbsolutePath()+".add."+sampleName;
+		filter.plot(points, Optional.ofNullable(new File(saveFilePrefix)), "Global", sampleName);
+		return filter;
 	}
 
 	public int[] addLibrary(SearchJobData job, ArrayList<LibraryEntry> entries, int idCounter, int jobCounter, int modCounter) throws IOException, SQLException {

@@ -12,7 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ThreadableTask;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
-public class PeptideScoringTask extends ThreadableTask<HashMap<LibraryEntry, PeptideScoringResult>> {
+public class PeptideScoringTask extends ThreadableTask<HashMap<LibraryEntry, AbstractScoringResult>> {
 	/**
 	 * must be immutable!
 	 */
@@ -31,13 +31,13 @@ public class PeptideScoringTask extends ThreadableTask<HashMap<LibraryEntry, Pep
 	}
 
 	@Override
-	protected HashMap<LibraryEntry, PeptideScoringResult> process() {
-		HashMap<LibraryEntry, PeptideScoringResult> map=new HashMap<LibraryEntry, PeptideScoringResult>();
+	protected HashMap<LibraryEntry, AbstractScoringResult> process() {
+		HashMap<LibraryEntry, AbstractScoringResult> map=new HashMap<LibraryEntry, AbstractScoringResult>();
 		for (LibraryEntry entry : entries) {
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), aaConstants);
 			TFloatFloatHashMap scoreMap=new TFloatFloatHashMap();
 			
-			PeptideScoringResult result=new PeptideScoringResult(entry);
+			AbstractScoringResult result=new PeptideScoringResult(entry);
 			for (FragmentScan stripe : stripes) {
 				float score=scorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
 				

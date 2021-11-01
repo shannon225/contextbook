@@ -3,11 +3,13 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
 import org.relaxng.datatype.DatatypeException;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -43,7 +45,7 @@ public class BlibToLibraryConverter {
 				if (newLibrary.exists()) {
 					return getFile(newLibrary);
 				} else {
-					libraryFile=LibraryEntryCleaner.cleanLibrary(true, f, newLibrary, fastaFile, parameters);
+					libraryFile=LibraryEntryCleaner.cleanLibrary(true, false, f, newLibrary, fastaFile, parameters);
 				}
 			};
 		} catch (SQLException sqle) {
@@ -117,17 +119,17 @@ public class BlibToLibraryConverter {
 	 * @return A <emph>closed</emph> {@code LibraryFile} instance pointing to {@code elibFile}
 	 *         containing the results of conversion.
 	 */
-	public static LibraryFile convert(File blibFile, Optional<File> irtFile, File fastaFile, SearchParameters params) {
+	public static LibraryFile convert(File blibFile, Optional<File> irtFile, File fastaFile, boolean higherScoreBetter, SearchParameters params) {
 		String absolutePath = blibFile.getAbsolutePath();
 		File elibFile = new File(absolutePath.substring(0, absolutePath.lastIndexOf('.')) + LibraryFile.DLIB);
-		return convert(blibFile, elibFile, irtFile, fastaFile, params);
+		return convert(blibFile, elibFile, irtFile, fastaFile, higherScoreBetter, params);
 	}
 
 	/**
 	 * @return A <emph>closed</emph> {@code LibraryFile} instance pointing to {@code elibFile}
 	 *         containing the results of conversion.
 	 */
-	static LibraryFile convert(File blibFile, File elibFile, Optional<File> irtFile, File fastaFile, SearchParameters params) {
+	static LibraryFile convert(File blibFile, File elibFile, Optional<File> irtFile, File fastaFile, boolean higherScoreBetter, SearchParameters params) {
 		TObjectFloatHashMap<String> irtMap = null;
 		try {
 			Logger.logLine("Indexing " + blibFile.getName() + " ...");
@@ -141,6 +143,21 @@ public class BlibToLibraryConverter {
 				irtMap = irt.getIRTs();
 			}
 			blib.getCopyEntriesToLibrary(elib, Optional.ofNullable(irtMap), fastaFile, params);
+
+			// if there's no iRT file, then try to adjust the RTs
+//			if (!irtFile.isPresent()) {
+//				ArrayList<LibraryEntry> entries=elib.getAllEntries(false, params.getAAConstants());
+//				entries=LibraryEntryCleaner.correctRTs(entries, elibFile);
+//				entries=LibraryEntryCleaner.removeDuplicateEntries(entries, higherScoreBetter);
+//
+//				LibraryFile elib2 = new LibraryFile();
+//				elib2.openFile();
+//				elib2.dropIndices();
+//				elib2.addEntries(entries);
+//				elib2.addProteinsFromEntries(entries);
+//				elib2.createIndices();
+//				elib=elib2;
+//			}
 			elib.saveAsFile(elibFile);
 			elib.close();
 			return elib;

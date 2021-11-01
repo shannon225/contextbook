@@ -15,11 +15,12 @@ import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.procedure.TFloatFloatProcedure;
 
 public class EValueCalculator {
+	private static final float FAILURE_STATE = -3f; // (a really bad e-value)
+
 	private final int[] counts=new int[100];
 	
 	private final float m;
 	private final float b;
-	private final float neglnEValue;
 
 	private final float maxScore;
 	private final float maxRT;
@@ -93,19 +94,21 @@ public class EValueCalculator {
 		Pair<Float, Float> equation=LinearRegression.getRegression(scores.toArray(), lnCounts.toArray());
 		m=equation.x;
 		b=equation.y;
-		if (m>0) {
-			neglnEValue=-3;
-		} else {
-			float e = -(maxScore*m+b);
-			neglnEValue=e<-3?-3:e;
-		}
 	}
 	public float getNegLnEValue(float score) {
-		return -(score*m+b);
+		if (m>0) return FAILURE_STATE;
+		float e=-(score*m+b);
+		if (Float.isNaN(e)) {
+			return FAILURE_STATE;
+		} else if (e<-3) {
+			return FAILURE_STATE;
+		} else {
+			return e;
+		}
 	}
 	
 	public float getNegLnEValue() {
-		return neglnEValue;
+		return getNegLnEValue(maxScore);
 	}
 	public float getB() {
 		return b;

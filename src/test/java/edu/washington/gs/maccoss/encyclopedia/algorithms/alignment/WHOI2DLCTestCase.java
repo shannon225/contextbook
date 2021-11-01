@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -14,9 +15,13 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParame
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter3d;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -30,13 +35,13 @@ public class WHOI2DLCTestCase {
 	
 	public static void main2(String[] args) throws Exception {
 
-		//File reference=new File("/Users/searleb/Downloads/22oct2017_hela_serum_timecourse_narrow_library.elib");
-		//File twoDLC=new File("/Users/searleb/Downloads/msms.dlib");
-		//File calibratedFile=new File("/Users/searleb/Downloads/msms_calibrated.dlib");
+		File reference=new File("/Users/searleb/Downloads/22oct2017_hela_serum_timecourse_narrow_library.elib");
+		File twoDLC=new File("/Users/searleb/Downloads/msms.dlib");
+		File calibratedFile=new File("/Users/searleb/Downloads/msms_calibrated.dlib");
 		
-		File reference=new File("/Volumes/searle_ssd/whoi_bats/190513_1D_BATS_336_DCM_DIA_single_5ug.mzML.elib");
-		File twoDLC=new File("/Volumes/searle_ssd/whoi_bats/190513_1D_BATS_336_DCM_2dDDA.dlib");
-		File calibratedFile=new File("/Volumes/searle_ssd/whoi_bats/calibrated_190513_1D_BATS_336_DCM_2dDDA.dlib");
+		//File reference=new File("/Volumes/searle_ssd/whoi_bats/190513_1D_BATS_336_DCM_DIA_single_5ug.mzML.elib");
+		//File twoDLC=new File("/Volumes/searle_ssd/whoi_bats/190513_1D_BATS_336_DCM_2dDDA.dlib");
+		//File calibratedFile=new File("/Volumes/searle_ssd/whoi_bats/calibrated_190513_1D_BATS_336_DCM_2dDDA.dlib");
 		
 		LibraryFile referenceLibrary=new LibraryFile();
 		referenceLibrary.openFile(reference);
@@ -96,11 +101,11 @@ public class WHOI2DLCTestCase {
 	}
 
 	public static void main(String[] args) throws Exception {
-		//File ref=new File("/Users/searleb/Downloads/22oct2017_hela_serum_timecourse_narrow_library.elib");
-		//File twoDLC=new File("/Users/searleb/Downloads/msms.dlib");
-		File ref=new File("/Volumes/searle_ssd/whoi_bats/190513_1D_BATS_336_DCM_DIA_single_5ug.mzML.elib");
+		File ref=new File("/Users/searleb/Downloads/22oct2017_hela_serum_timecourse_narrow_library.elib");
+		File twoDLC=new File("/Users/searleb/Downloads/msms.dlib");
+		//File ref=new File("/Volumes/searle_ssd/whoi_bats/190513_1D_BATS_336_DCM_DIA_single_5ug.mzML.elib");
 		//File twoDLC=new File("/Volumes/searle_ssd/whoi_bats/190513_1D_BATS_336_DCM_2dDDA.dlib");
-		File twoDLC=new File("/Volumes/searle_ssd/whoi_bats/calibrated_190513_1D_BATS_336_DCM_2dDDA.dlib");
+		//File twoDLC=new File("/Volumes/searle_ssd/whoi_bats/calibrated_190513_1D_BATS_336_DCM_2dDDA.dlib");
 		
 		LibraryFile refLib=new LibraryFile();
 		refLib.openFile(ref);
@@ -129,6 +134,10 @@ public class WHOI2DLCTestCase {
 //		if (true) System.exit(1);
 
 		Collections.sort(rts);
+		float alpha=Math.min(1.0f, 5000.0f/rts.size());
+		XYTraceInterface trace=new XYTrace(rts, GraphType.tinypoint, "Data Used In Fit", new Color(0f, 0f, 1f, alpha), 1.0f);
+		Charter.writeAsPDF(new File(twoDLC.getAbsolutePath()+".rt_fit.pdf"), "2D Retention Time (min)", "1D Retention Time (min)", false, trace);
+		
 		System.out.println("Starting fitting...");
 		TwoDimensionalKDE kde=new TwoDimensionalKDE(rts, 1000);
 

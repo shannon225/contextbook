@@ -21,8 +21,8 @@ public class TwoDimensionalKDETest extends TestCase {
 		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
 		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
 		//rts=MedianInterpolatorTest.getSyntheticData();
-		//rts=MedianInterpolatorTest.getPhosphoData();
-		rts=MedianInterpolatorTest.getCleanData();
+		rts=MedianInterpolatorTest.getPhosphoData();
+		//rts=MedianInterpolatorTest.getCleanData();
 		//rts=new ArrayList<XYPoint>(rts.subList(0, 10000));
 		//System.out.println(rts.size());
 		//File f=new File("/Users/searleb/Downloads/23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.mzML.encyclopedia.txt.first.rt_fit.txt");
@@ -33,7 +33,7 @@ public class TwoDimensionalKDETest extends TestCase {
 		//rts=MedianInterpolatorTest.getData(f, 1f);
 		
 		ArrayList<XYPoint> data=new ArrayList();
-		data.add(rts.get(0));
+		data=rts;
 		
 		//RetentionTimeFilter filter=RetentionTimeFilter.getFilter(rts);
 		//filter.plot(rts, Optional.ofNullable((File)null));

@@ -24,7 +24,7 @@ import java.util.zip.DataFormatException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RTRTPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
@@ -36,6 +36,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorEx
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -43,7 +44,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -135,7 +135,7 @@ public class Scribe {
 				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+ScribeJobData.LOG_FILE_SUFFIX));
 				Logger.addRecorder(logRecorder);
 	
-				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
+				ScribeSearchParameters parameters=ScribeSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(arguments));
 				ScribeScoringFactory factory=new ScribeScoringFactory(parameters);
 				
 				Logger.logLine("Scribe version "+ProgramType.getGlobalVersion().toString());
@@ -272,10 +272,10 @@ public class Scribe {
 		BlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 		ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
-		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<PeptideScoringResult>(), stripefile);
-		SaveResultsConsumer saveResultsConsumer=new SaveResultsConsumer(new LinkedBlockingQueue<PeptideScoringResult>());
+		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<AbstractScoringResult>(), stripefile);
+		SaveResultsConsumer saveResultsConsumer=new SaveResultsConsumer(new LinkedBlockingQueue<AbstractScoringResult>());
 		
-		BlockingQueue<PeptideScoringResult> resultsQueue=new LinkedBlockingQueue<PeptideScoringResult>();
+		BlockingQueue<AbstractScoringResult> resultsQueue=new LinkedBlockingQueue<AbstractScoringResult>();
 		TeeResultsConsumer teeConsumer=new TeeResultsConsumer(resultsQueue, writeResultsConsumer, saveResultsConsumer);
 		Thread consumer1Thread=new Thread(teeConsumer);
 		Thread consumer2Thread=new Thread(writeResultsConsumer);
@@ -354,7 +354,7 @@ public class Scribe {
 		executor.shutdown();
 		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 		
-		resultsQueue.put(PeptideScoringResult.POISON_RESULT);
+		resultsQueue.put(AbstractScoringResult.POISON_RESULT);
 
 		consumer1Thread.join();
 		consumer2Thread.join();
@@ -390,7 +390,7 @@ public class Scribe {
 				return new Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface>(passingPeptides, null);
 			}
 			
-			ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
+			ArrayList<AbstractScoringResult> data=saveResultsConsumer.getSavedResults();
 			RetentionTimeAlignmentInterface filter=getRescoringModel(passingPeptides, data, job, false);
 			
 			return new Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface>(passingPeptides, filter);
@@ -410,16 +410,20 @@ public class Scribe {
 		SearchParameters parameters=job.getParameters();
 		
 		try {
-			ArrayList<PeptideScoringResult> data=saveResultsConsumer.getSavedResults();
-			PeptideScoringResultsConsumer rescoredResultsConsumer=job.getTaskFactory().getResultsConsumer(getPercolatorData(job).getInputTSV(), new LinkedBlockingQueue<PeptideScoringResult>(), stripefile);
+			ArrayList<AbstractScoringResult> data=saveResultsConsumer.getSavedResults();
+			PeptideScoringResultsConsumer rescoredResultsConsumer=job.getTaskFactory().getResultsConsumer(getPercolatorData(job).getInputTSV(), new LinkedBlockingQueue<AbstractScoringResult>(), stripefile);
 			Thread finalWriteConsumerThread=new Thread(rescoredResultsConsumer);
 			finalWriteConsumerThread.start();
-			BlockingQueue<PeptideScoringResult> resultList=rescoredResultsConsumer.getResultsQueue();
-			for (PeptideScoringResult result : data) {
-				PeptideScoringResult rescore=result.rescore(filter);
+			BlockingQueue<AbstractScoringResult> resultList=rescoredResultsConsumer.getResultsQueue();
+			int rtAdjustedCount=0;
+			for (AbstractScoringResult result : data) {
+				float s=result.getBestScore();
+				AbstractScoringResult rescore=result.rescore(filter);
+				if (s>rescore.getBestScore()) rtAdjustedCount++;
 				resultList.add(rescore);
 			}
-			resultList.add(PeptideScoringResult.POISON_RESULT);
+			Logger.logLine("Updated "+rtAdjustedCount+"/"+data.size()+" PSMs based on retention time fitting.");
+			resultList.add(AbstractScoringResult.POISON_RESULT);
 			finalWriteConsumerThread.join();
 			rescoredResultsConsumer.close();
 	
@@ -439,7 +443,7 @@ public class Scribe {
 		}
 	}
 
-	public static RetentionTimeAlignmentInterface getRescoringModel(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<PeptideScoringResult> data, ScribeJobData job, boolean finalPass) {
+	public static RetentionTimeAlignmentInterface getRescoringModel(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<AbstractScoringResult> data, ScribeJobData job, boolean finalPass) {
 		HashSet<String> passingSeqs=new HashSet<String>();
 		for (PercolatorPeptide pass : passingPeptides) {
 			passingSeqs.add(PercolatorPeptide.getPeptideData(pass.getPsmID()));
@@ -447,14 +451,14 @@ public class Scribe {
 		
 		HashSet<XYPoint> rtSet=new HashSet<XYPoint>();
 		
-		for (PeptideScoringResult result : data) {
-			if (result.getGoodStripes().size()>0) {
+		for (AbstractScoringResult result : data) {
+			if (result.hasScoredResults()) {
 				String peptideModSeq=result.getEntry().getPeptideModSeq();
 				if (passingSeqs.contains(peptideModSeq+"+"+result.getEntry().getPrecursorCharge())) {
 					LibraryEntry entry=result.getEntry();
 					float entryTime=entry.getScanStartTime();
 
-					Pair<ScoredObject<FragmentScan>, float[]> first=result.getGoodStripes().get(0);
+					Pair<ScoredObject<FragmentScan>, float[]> first=result.getScoredMSMS();
 					XYPoint point=new RTRTPoint(entryTime/60.0f, first.x.y.getScanStartTime()/60.0f, entry.isDecoy(), entry.getPeptideModSeq());
 					rtSet.add(point);
 				}

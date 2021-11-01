@@ -15,7 +15,7 @@ public class PercolatorPeptideTest {
 	public static void main(String[] args) {
 		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		ArrayList<PercolatorPeptide> peptides=getPeptides(aaConstants);
-		ArrayList<ProteinGroupInterface> proteins=ParsimonyProteinGrouper.groupProteins(peptides, aaConstants);
+		ArrayList<ProteinGroupInterface> proteins=ParsimonyProteinGrouper.groupPercolatorProteins(peptides, aaConstants);
 		for (ProteinGroupInterface proteinGroup : proteins) {
 			List<String> accessions=proteinGroup.getEquivalentAccessions();
 			String accessionString=PSMData.accessionsToString(accessions);

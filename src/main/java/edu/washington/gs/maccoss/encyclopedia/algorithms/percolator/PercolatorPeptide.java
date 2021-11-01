@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorrLibraryEntry;
@@ -10,12 +11,14 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursorWithProteins;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
-public class PercolatorPeptide implements PeptidePrecursor {
+public class PercolatorPeptide implements PeptidePrecursorWithProteins {
 	private final String psmID;
 	private final String proteinIDs;
 	private final float qValue;
@@ -63,6 +66,11 @@ public class PercolatorPeptide implements PeptidePrecursor {
 		return massCorrectedPeptideModSeq;
 	}
 	
+	@Override
+	public float getScore() {
+		return posteriorErrorProb;
+	}
+	
 	public String getPeptideSeq() {
 		StringBuilder sb=new StringBuilder();
 		for (char c : getPeptideModSeq().toCharArray()) {
@@ -100,6 +108,10 @@ public class PercolatorPeptide implements PeptidePrecursor {
 
 	public String getProteinIDs() {
 		return proteinIDs;
+	}
+	
+	public HashSet<String> getAccessions() {
+		return PSMData.stringToAccessions(getProteinIDs());
 	}
 
 	public float getQValue() {

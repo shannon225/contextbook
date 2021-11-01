@@ -132,34 +132,26 @@ public class MzmlStructureCharter {
 		
 
 		ScanRangeTracker scanTracker=null;
+		Logger.logLine("Indexing "+mzMLFile.getName()+" ...");
+
+		MzmlScanRangeTrackerSAXProducer producer=new MzmlScanRangeTrackerSAXProducer(mzMLFile, parameters);
+		scanTracker=producer.getRetentionTimesByStripe();
+
+		Thread producerThread=new Thread(producer);
+
+		Thread[] threads=new Thread[] {producerThread};
+
+		for (int i=0; i<threads.length; i++) {
+			threads[i].start();
+		}
+
 		try {
-			Logger.logLine("Indexing "+mzMLFile.getName()+" ...");
-			StripeFile stripeFile=new StripeFile();
-			stripeFile.openFile();
-
-			MzmlScanRangeTrackerSAXProducer producer=new MzmlScanRangeTrackerSAXProducer(mzMLFile, parameters);
-			scanTracker=producer.getRetentionTimesByStripe();
-
-			Thread producerThread=new Thread(producer);
-
-			Thread[] threads=new Thread[] {producerThread};
-
 			for (int i=0; i<threads.length; i++) {
-				threads[i].start();
+				threads[i].join();
 			}
-
-			try {
-				for (int i=0; i<threads.length; i++) {
-					threads[i].join();
-				}
-			} catch (InterruptedException ie) {
-				Logger.errorLine("DIA reading interrupted!");
-				Logger.errorException(ie);
-			}
-		} catch (IOException ioe) {
-			throw new EncyclopediaException("DIA reading IO error!", ioe);
-		} catch (SQLException sqle) {
-			throw new EncyclopediaException("DIA reading SQL error!", sqle);
+		} catch (InterruptedException ie) {
+			Logger.errorLine("DIA reading interrupted!");
+			Logger.errorException(ie);
 		}
 		
 		return getStructureChart(scanTracker, false);

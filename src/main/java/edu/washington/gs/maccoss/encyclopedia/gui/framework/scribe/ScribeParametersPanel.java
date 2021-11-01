@@ -2,10 +2,8 @@ package edu.washington.gs.maccoss.encyclopedia.gui.framework.scribe;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.FlowLayout;
 import java.io.File;
 import java.text.NumberFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
@@ -24,27 +22,24 @@ import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCordiaSearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.VariantXCorDIAJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
-import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
@@ -53,51 +48,57 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassErrorUnitType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class ScribeParametersPanel extends JPanel implements ParametersPanelInterface {
+	
 	private static final long serialVersionUID=1L;
 	private static final int numberOfCores=Runtime.getRuntime().availableProcessors();
-	private static final String programShortDescription="XCorDIA Peptide Search";
-	public static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mike_rotate_small_icon.png"));
-	public static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mike_rotate_icon.png"));
-	public static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">XCorDIA: Peptide Detection Directly from Data-Independent Acquisition (DIA) MS/MS Data<br></p></b>"
-			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">XCorDIA detects peptides from MZML files, assigns peaks, and calculates various peak features. These features are interpreted by Percolator to identify peptides.";
-
 	private static final String[] NUMBER_OF_EXTRA_DECOY_ITEMS=new String[] {"Normal Target/Decoy", "+10% Extra Decoys", "+20% Extra Decoys", "+50% Extra Decoys", "+100% Extra Decoys (2x Time)"};
 	private static final float[] NUMBER_OF_EXTRA_DECOY_VALUES=new float[] {0.0f, 0.1f, 0.2f, 0.5f, 1.0f};
 	
-	private static final String[] VARIABLE_MODIFICATION_ITEMS=new String[] {"None", "STY+80 (Phosphorylation enriched)", "STY+80 (Phosphorylation unenriched)", "M+16 (Oxidation unenriched)"};
-	private static final String[] VARIABLE_MODIFICATION_VALUES=new String[] {"-", "S=79.966331,T=79.966331,Y=79.966331", "S=79.966331,T=79.966331,Y=79.966331", "M=15.994915"};
-	private static final boolean[] IS_REQUIRE_VARIABLE_MODS=new boolean[] {false, true, false, false};
+	public static final MassTolerance[] TOLERANCE_VALUES=new MassTolerance[] {
+			new MassTolerance(5.0, MassErrorUnitType.PPM),  //0
+			new MassTolerance(10.0, MassErrorUnitType.PPM), //1
+			new MassTolerance(25.0, MassErrorUnitType.PPM), //2
+			new MassTolerance(50.0, MassErrorUnitType.PPM), //3
+			new MassTolerance(100.0, MassErrorUnitType.PPM),//4
+			new MassTolerance(0.4, MassErrorUnitType.AMU),  //5
+			new MassTolerance(1.0, MassErrorUnitType.AMU),   //6
+			new MassTolerance(15000.0, MassErrorUnitType.RESOLUTION),//7
+			new MassTolerance(17500.0, MassErrorUnitType.RESOLUTION), //8
+			new MassTolerance(30000.0, MassErrorUnitType.RESOLUTION),//9
+			new MassTolerance(35000.0, MassErrorUnitType.RESOLUTION), //10
+			new MassTolerance(60000.0, MassErrorUnitType.RESOLUTION),//11
+	};
 	
-	private final FileChooserPanel backgroundFasta;
-	private final FileChooserPanel targetFasta;
+	private static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/scribe_small_icon.png"));
+	private static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/scribe_icon.png"));
+	private static final String programName="Scribe";
+	private static final String programShortDescription="Scribe Library Search";
+	private static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">Scribe: Spectrum-Centric Library Searching for Data-Dependent Acquisition (DDA) MS/MS Data<br></p></b>"
+			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">Scribe extracts peptide fragmentation spectra from MZML files, matches them to spectra in libraries, and calculates various scoring features. These features are interpreted by Percolator to identify peptides.";
+
+	private final FileChooserPanel backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta"), true);
 	private final FileChooserPanel libraryFileChooser;
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Glu-C", "Lys-C", "Arg-C", "Asp-N", "Lys-N", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
-	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "C+125 (NEM)", "None"});
-	private final JComboBox<String> variable=new JComboBox<String>(VARIABLE_MODIFICATION_ITEMS);
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.HCD), FragmentationType.toName(FragmentationType.ETD)});
-
-	private final JComboBox<MassTolerance> precursorTolerance=new JComboBox<MassTolerance>(EncyclopediaParametersPanel.TOLERANCE_VALUES);
-	private final JComboBox<MassTolerance> fragmentTolerance=new JComboBox<MassTolerance>(EncyclopediaParametersPanel.TOLERANCE_VALUES);
 	private final JComboBox<PercolatorVersion> percolatorVersion=new JComboBox<PercolatorVersion>(PercolatorVersion.VALID_VERSIONS);
-	
-	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance());
 
-	private final SpinnerModel minCharge=new SpinnerNumberModel(2, 1, 2, 1);
-	private final SpinnerModel maxCharge=new SpinnerNumberModel(3, 2, 4, 1);
-	private final SpinnerModel maxMissedCleavage=new SpinnerNumberModel(1, 0, 3, 1);
+	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance()); // not displayed anymore
+
+	private final JComboBox<MassTolerance> precursorTolerance=new JComboBox<MassTolerance>(TOLERANCE_VALUES);
+	private final JComboBox<MassTolerance> fragmentTolerance=new JComboBox<MassTolerance>(TOLERANCE_VALUES);
+	private final JComboBox<MassTolerance> libraryTolerance=new JComboBox<MassTolerance>(TOLERANCE_VALUES);
 	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
-	private final SpinnerModel percolatorThreshold=new SpinnerNumberModel(0.01, 0.001, 0.1, 0.001);
-	private final JTextField additionalCommandLineOptions=new JTextField();
-	
 	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
+	private final JTextField additionalCommandLineOptions=new JTextField();
 
 	private final SearchPanel searchPanel;
 	public ScribeParametersPanel(SearchPanel searchPanel) {
@@ -105,8 +106,8 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 		this.searchPanel=searchPanel;
 
 		JPanel top=new JPanel(new BorderLayout());
-		top.add(new JLabel(image), BorderLayout.WEST);
-		JEditorPane editor=new JEditorPane("text/html", copy);
+		top.add(new JLabel(getImage()), BorderLayout.WEST);
+		JEditorPane editor=new JEditorPane("text/html", getCopy());
 		editor.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		top.add(editor, BorderLayout.CENTER);
 		top.setBackground(Color.white);
@@ -115,70 +116,35 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(new LabeledComponent("<p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Parameters", new JLabel()));
-		
-		backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta", ".peff"), true) {
-			private static final long serialVersionUID=1L;
 
-			@Override
-			public void update(File... filename) {
-				super.update(filename);
-				if (filename!=null&&filename.length>0&&filename[0]!=null) {
-					if (targetFasta.getFile()==null) {
-						targetFasta.update(filename);
-					}
-				}
-			}
-		};
-		options.add(backgroundFasta);
-		targetFasta=new FileChooserPanel(null, "Target", new SimpleFilenameFilter(".fas", ".fasta", ".peff"), true);
-		options.add(targetFasta);
-		libraryFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), false);
+		libraryFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), true);
 		options.add(libraryFileChooser);
+		options.add(backgroundFasta);
 		options.add(new LabeledComponent("Target/Decoy Approach", numberOfExtraDecoyLibraries));
-		options.add(new LabeledComponent("Precursor Window Width (blank=extract from file)", precursorWindowWidth));
 		options.add(new LabeledComponent("Enzyme", enzyme));
-		options.add(new LabeledComponent("Fixed", fixed));
-		options.add(new LabeledComponent("Variable", variable));
 		options.add(new LabeledComponent("Fragmentation", fragType));
 		options.add(new LabeledComponent("Precursor Mass Tolerance", precursorTolerance));
 		options.add(new LabeledComponent("Fragment Mass Tolerance", fragmentTolerance));
-				
-		options.add(new LabeledComponent("Maximum Missed Cleavage", new JSpinner(maxMissedCleavage)));
+		options.add(new LabeledComponent("Library Mass Tolerance", libraryTolerance));
 		options.add(new LabeledComponent("Percolator Version", percolatorVersion));
-		options.add(new LabeledComponent("Percolator FDR threshold", new JSpinner(percolatorThreshold)));
 		options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
 		options.add(new LabeledComponent("Minimum Number of Quantitative Ions", new JSpinner(minNumOfQuantitativeIons)));
 		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
-
-		JPanel chargeRange=new JPanel(new FlowLayout());
-		chargeRange.setOpaque(true);
-		chargeRange.setBackground(Color.white);
-		chargeRange.add(new JSpinner(minCharge));
-		chargeRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
-		chargeRange.add(new JSpinner(maxCharge));
-		options.add(new LabeledComponent("Charge range", chargeRange));
-
 		options.add(new LabeledComponent("Additonal Command Line Options", additionalCommandLineOptions));
 
 		this.add(options, BorderLayout.CENTER);
 	}
 	
-	@Override
-	public void askForSetupFile() {
-		backgroundFasta.askForFiles();
-	}
-
-	@Override
-	public File getBackgroundFastaFile() {
-		return backgroundFasta.getFile();
-	}
-
-	public ProgramType getProgram() {
-		return ProgramType.XCorDIA;
+	public String getProgramName() {
+		return programName;
 	}
 	
 	public String getProgramShortDescription() {
 		return programShortDescription;
+	}
+
+	public ProgramType getProgram() {
+		return ProgramType.Scribe;
 	}
 	
 	public ImageIcon getSmallImage() {
@@ -189,23 +155,44 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 		return image;
 	}
 	
+	public String getCopy() {
+		return copy;
+	}
+	
+	@Override
+	public void askForSetupFile() {
+		libraryFileChooser.askForFiles();
+	}
+
+	@Override
+	public File getBackgroundFastaFile() {
+		return backgroundFasta.getFile();
+	}
+	
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.gui.pecan.ParametersPanelInterface#canLoadData()
+	 */
+	@Override
 	public Optional<String> canLoadData() {
-		if (backgroundFasta.getFile()==null) {
-			return Optional.of("Please load a background FASTA file first!");
-		} else if (targetFasta.getFile()==null) {
-			return Optional.of("Please load a target FASTA file first!");		
+		if (libraryFileChooser.getFile()==null) {
+			return Optional.of("Please load a library file first!");	
+		}
+		if (getBackgroundFastaFile()==null) {
+			return Optional.of("Please load a fasta file first!");	
 		}
 		return Optional.empty();
 	}
 	
+	/* (non-Javadoc)
+	 * @see edu.washington.gs.maccoss.encyclopedia.gui.pecan.ParametersPanelInterface#getJob(java.io.File, edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel)
+	 */
+	@Override
 	public SwingJob getJob(File diaFile, JobProcessorTableModel model) {
-		PecanSearchParameters parameters=getParameters();
-		File fastaFile=backgroundFasta.getFile();
-		if (fastaFile==null) return null;
-		File targetFile=targetFasta.getFile();
-		if (targetFile==null) return null;
+		SearchParameters parameters=getParameters();
 		File libraryFile=libraryFileChooser.getFile();
-		SearchJob job=getJob(diaFile, fastaFile, targetFile, Optional.ofNullable(libraryFile), model, parameters);
+		File fastaFile=getBackgroundFastaFile();
+		if (libraryFile==null) return null;
+		SearchJob job=getJob(diaFile, fastaFile, libraryFile, model, parameters);
 
 		if (job!=null) {
 			model.addJob(job);
@@ -214,125 +201,98 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 	}
 
 	private static HashMap<File, LibraryInterface> libraries=new HashMap<File, LibraryInterface>();
-	static SearchJob getJob(File diaFile, File fastaFile, File targetFile, Optional<File> libraryFile, JobProcessor processor, PecanSearchParameters parameters) {
-		ArrayList<FastaPeptideEntry> targets=null;
-		if (targetFile!=null&&!targetFile.equals(fastaFile)) {
-			Logger.logLine("Reading targets from ["+targetFile.getName()+"]");
-			targets=new ArrayList<FastaPeptideEntry>();
-			
-			ArrayList<FastaEntryInterface> targetProteins=FastaReader.readFasta(targetFile, parameters);
-			for (FastaEntryInterface entry : targetProteins) {
-				ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants(), parameters.isRequireVariableMods());
-				for (FastaPeptideEntry peptide : peptides) {
-					targets.add(peptide);
-				}
-			}
-		}
-		Optional<LibraryInterface> maybeLibrary;
-		if (libraryFile.isPresent()) {
-			LibraryInterface library=libraries.get(libraryFile.get());
-			if (library==null) {
-				library=BlibToLibraryConverter.getFile(libraryFile.get(), fastaFile, parameters);
-				libraries.put(libraryFile.get(), library);
-			}
-			maybeLibrary=Optional.ofNullable(library);
-		} else {
-			maybeLibrary=Optional.empty();
-		}
-
-		boolean isPeff=false;
-		if (targetFile!=null) {
-			if (targetFile.getName().toLowerCase().endsWith(".peff")) {
-				isPeff=true;
-			}
-		} else if (fastaFile!=null&&fastaFile.getName().toLowerCase().endsWith(".peff")) {
-			isPeff=true;
+	static SearchJob getJob(File diaFile, File fastaFile, File libraryFile, JobProcessor processor, SearchParameters parameters) {
+		
+		LibraryInterface library=libraries.get(libraryFile);
+		if (library==null) {
+			library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
+			libraries.put(libraryFile, library);
 		}
 		
-		XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(parameters);
-		XCorDIAJobData jobData;
-		if (isPeff) {
-			jobData=new VariantXCorDIAJobData(Optional.ofNullable(targets), maybeLibrary, diaFile, fastaFile, factory);
-		} else {
-			jobData=new XCorDIAJobData(Optional.ofNullable(targets), maybeLibrary, diaFile, fastaFile, factory);
-		}
-		return new ScribeJob(processor, jobData);
+		ScribeScoringFactory factory=new ScribeScoringFactory(parameters);
+		ScribeJobData job=new ScribeJobData(diaFile, fastaFile, library, factory);
+		return new ScribeJob(processor, job);
 	}
 
-	public XCordiaSearchParameters getParameters() {
+	public ScribeSearchParameters getParameters() {
 		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.DIA;
 		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
+		AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
-		MassTolerance precursorPPMValue=(MassTolerance)precursorTolerance.getSelectedItem();
-		MassTolerance fragmentPPMValue=(MassTolerance)fragmentTolerance.getSelectedItem();
-		byte minChargeValue=((Number)minCharge.getValue()).byteValue();
-		byte maxChargeValue=((Number)maxCharge.getValue()).byteValue();
-		byte maxMissedCleavageValue=((Number)maxMissedCleavage.getValue()).byteValue();
+		MassTolerance precursorValue=(MassTolerance)precursorTolerance.getSelectedItem();
+		MassTolerance fragmentValue=(MassTolerance)fragmentTolerance.getSelectedItem();
+		MassTolerance libraryFragmentValue=(MassTolerance)libraryTolerance.getSelectedItem();
+		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
 		Number value=(Number)precursorWindowWidth.getValue();
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
-		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
+		PercolatorVersion percolator=(PercolatorVersion)percolatorVersion.getSelectedItem();
+		float numberOfExtraDecoyLibrariesValue=NUMBER_OF_EXTRA_DECOY_VALUES[((Integer)numberOfExtraDecoyLibraries.getSelectedIndex())];
+		float targetWindowCenter=-1f;
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
-		float numberOfExtraDecoyLibrariesValue=NUMBER_OF_EXTRA_DECOY_VALUES[((Integer)numberOfExtraDecoyLibraries.getSelectedIndex())];
-		ModificationMassMap variableMods=new ModificationMassMap(VARIABLE_MODIFICATION_VALUES[((Integer)variable.getSelectedIndex())]);
-		boolean isRequireVariableMods=IS_REQUIRE_VARIABLE_MODS[((Integer)variable.getSelectedIndex())];
-		
-		AminoAcidConstants aaConstants=AminoAcidConstants.getConstants((String)fixed.getSelectedItem(), variableMods);
-		PercolatorVersion percolator=(PercolatorVersion)percolatorVersion.getSelectedItem();
-		float percolatorThresholdValue=((Number)percolatorThreshold.getValue()).floatValue();
-
-		XCordiaSearchParameters parameters=new XCordiaSearchParameters(
+		float minIntensity=-1.0f;
+		Optional<PeptideModification> modificationType=Optional.empty();
+		ScribeSearchParameters parameters=new ScribeSearchParameters(
 				aaConstants,
 				fragmentation,
-				precursorPPMValue,
-				fragmentPPMValue,
+				precursorValue,
+				0.0,
+				0.0,
+				fragmentValue,
+				0.0,
+				libraryFragmentValue,
 				digestionEnzyme,
+				0.01f,
+				0.01f,
 				percolator,
-				percolatorThresholdValue,
-				percolatorThresholdValue,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
 				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,
-				maxMissedCleavageValue,
-				minChargeValue,
-				maxChargeValue,
 				dataAcquisitionType,
-				precursorWindowWidthValue,
 				numberOfJobsValue,
+				25f,
+				targetWindowCenter,
+				precursorWindowWidthValue,
 				numberOfQuantitativeIonsValue,
 				minNumOfQuantitativeIonsValue,
 				-1,
-				0.0f,
+				minIntensity,
+				modificationType,
+				ScoringBreadthType.ENTIRE_RT_WINDOW,
 				numberOfExtraDecoyLibrariesValue,
 				true,
 				true,
-				isRequireVariableMods
+				false,
+				false,
+				Optional.empty(),
+				Optional.empty(),
+				false
 		);
 
 		String cmds=additionalCommandLineOptions.getText();
 		HashMap<String, String> params=parameters.toParameterMap();
 		params.putAll(CommandLineParser.parseArguments(cmds.split(" ")));
-		parameters=XCordiaSearchParameters.convertFromPecan(PecanParameterParser.parseParameters(params));
+		parameters=ScribeSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(params));
 		
 		return parameters;
 	}
 	
-	public void setParameters(XCordiaSearchParameters params, String fastaFileName, String targetFileName) {
+	public void setParameters(SearchParameters params, String libraryFileName, String fastaFileName) {
+		if (libraryFileName!=null) {
+			File libraryFile=new File(libraryFileName);
+			if (libraryFile.exists()) libraryFileChooser.update(libraryFile);
+		}
 		if (fastaFileName!=null) {
 			File fastaFile=new File(fastaFileName);
 			if (fastaFile.exists()) backgroundFasta.update(fastaFile);
 		}
-		if (targetFileName!=null) {
-			File targetFile=new File(targetFileName);
-			if (targetFile.exists()) targetFasta.update(targetFile);
-		}
+		
 		enzyme.setSelectedItem(params.getEnzyme().getName());
-		fixed.setSelectedItem(AminoAcidConstants.toName(params.getAAConstants()));
 		fragType.setSelectedItem(FragmentationType.toName(params.getFragType()));
 		
 		boolean gotIt=false;
 		MassTolerance pre=params.getPrecursorTolerance();
-		for (int i=0; i<EncyclopediaParametersPanel.TOLERANCE_VALUES.length; i++) {
-			if (EncyclopediaParametersPanel.TOLERANCE_VALUES[i].equals(pre)) {
+		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
+			if (TOLERANCE_VALUES[i].equals(pre)) {
 				precursorTolerance.setSelectedIndex(i);
 				gotIt=true;
 				break;
@@ -342,42 +302,45 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 		
 		gotIt=false;
 		MassTolerance frag=params.getFragmentTolerance();
-		for (int i=0; i<EncyclopediaParametersPanel.TOLERANCE_VALUES.length; i++) {
-			if (EncyclopediaParametersPanel.TOLERANCE_VALUES[i].equals(frag)) {
+		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
+			if (TOLERANCE_VALUES[i].equals(frag)) {
 				fragmentTolerance.setSelectedIndex(i);
 				gotIt=true;
 				break;
 			}
 		}
 		if (!gotIt) fragmentTolerance.setSelectedIndex(1);
-
-		minCharge.setValue(new Integer(params.getMinCharge()));
-		maxCharge.setValue(new Integer(params.getMaxCharge()));
-		maxMissedCleavage.setValue(params.getMaxMissedCleavages());
+		
+		gotIt=false;
+		MassTolerance lib=params.getLibraryFragmentTolerance();
+		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
+			if (TOLERANCE_VALUES[i].equals(lib)) {
+				libraryTolerance.setSelectedIndex(i);
+				gotIt=true;
+				break;
+			}
+		}
+		if (!gotIt) libraryTolerance.setSelectedIndex(1);
+		
 		numberOfJobs.setValue(params.getNumberOfThreadsUsed());
 		if (params.getPrecursorWindowSize()>0) {
 			precursorWindowWidth.setValue(params.getPrecursorWindowSize());
 		} else {
 			precursorWindowWidth.setValue(-1);
 		}
+		percolatorVersion.setSelectedItem(params.getPercolatorVersionNumber());
 		int index=Arrays.binarySearch(NUMBER_OF_EXTRA_DECOY_VALUES, params.getNumberOfExtraDecoyLibrariesSearched());
 		if (index>=0) {
 			numberOfExtraDecoyLibraries.setSelectedIndex(index);
 		}
-		index=StringUtils.getIndexOf(VARIABLE_MODIFICATION_VALUES, params.getAAConstants().getVariableMods().toString());
-		if (index>=0) {
-			variable.setSelectedIndex(index);
-		}
 		numberOfQuantitativeIons.setValue(params.getNumberOfQuantitativePeaks());
 		minNumOfQuantitativeIons.setValue(params.getMinNumOfQuantitativePeaks());
-		percolatorVersion.setSelectedItem(params.getPercolatorVersionNumber());
-		percolatorThreshold.setValue(params.getPercolatorThreshold());
 	}
 	
 	@Override
 	public void savePreferences() {
 		try {
-			getParameters().savePreferences(backgroundFasta.getFile(), targetFasta.getFile());
+			getParameters().savePreferences(libraryFileChooser.getFile(), backgroundFasta.getFile());
 		} catch (Exception e) {
 			Logger.errorLine("Error writing parameters to disk!");
 			Logger.errorException(e);

@@ -20,7 +20,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 public class ThesaurusSearchParameters extends SearchParameters {
-	private final boolean considerRearrangement;
+	private final boolean considerRearrangement; // default is false
 
 	public void savePreferences(File libraryFile, File fastaFile) throws IOException,BackingStoreException {
 		Preferences prefs=Preferences.userRoot().node("CASiL");
@@ -92,7 +92,9 @@ public class ThesaurusSearchParameters extends SearchParameters {
 			boolean verifyModificationIons,
 			boolean filterPeaklists,
 			boolean doNotUseGlobalFDR,
-			boolean considerRearrangement,
+			boolean considerRearrangement, 
+			Optional<File> precursorIsolationRangeFile, 
+			Optional<File> percolatorModelFile,
 			boolean enableAdvancedOptions
 	) {
 		super(
@@ -127,6 +129,8 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				-1.0f,
 				filterPeaklists,
 				doNotUseGlobalFDR,
+				precursorIsolationRangeFile,
+				percolatorModelFile,
 				enableAdvancedOptions
 		);
 		this.considerRearrangement=considerRearrangement;
@@ -172,6 +176,8 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				params.isFilterPeaklists(),
 				params.isDoNotUseGlobalFDR(),
 				considerRearrangement,
+				params.getPrecursorIsolationRangeFile(),
+				params.getPercolatorModelFile(),
 				params.isEnableAdvancedOptions()
 		);
 	}

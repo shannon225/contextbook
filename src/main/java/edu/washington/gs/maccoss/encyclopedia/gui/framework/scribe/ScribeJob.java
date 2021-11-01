@@ -1,21 +1,21 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.framework.scribe;
 
-import edu.washington.gs.maccoss.encyclopedia.XCorDIA;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
+import edu.washington.gs.maccoss.encyclopedia.Scribe;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeJobData;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 
 public class ScribeJob extends SearchJob {
-	public ScribeJob(JobProcessor processor, XCorDIAJobData pecanData) {
+	public ScribeJob(JobProcessor processor, ScribeJobData pecanData) {
 		super(processor, pecanData);
 	}
 	
 	@Override
 	public void runJob() throws Exception {
-		XCorDIA.runPie(getProgressIndicator(), getXCorDIAData());
+		Scribe.runSearch(getProgressIndicator(), getScribeData());
 	}
 	
-	public XCorDIAJobData getXCorDIAData() {
-		return (XCorDIAJobData)getSearchData();
+	public ScribeJobData getScribeData() {
+		return (ScribeJobData)getSearchData();
 	}
 }

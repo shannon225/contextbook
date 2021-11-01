@@ -8,7 +8,8 @@ import java.util.HashSet;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursorWithProteins;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -16,7 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 
 public class ParsimonyProteinGrouper {
 	public static Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>> groupProteins(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<PercolatorPeptide> passingDecoys, float fdrThreshold, AminoAcidConstants aaConstants) {
-		ArrayList<PercolatorPeptide> allPeptides=new ArrayList<>();
+		ArrayList<PeptidePrecursorWithProteins> allPeptides=new ArrayList<>();
 		allPeptides.addAll(passingPeptides);
 		allPeptides.addAll(passingDecoys);
 		
@@ -62,18 +63,24 @@ public class ParsimonyProteinGrouper {
 		}
 		return new Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>>(keptTargets, keptDecoys);
 	}
-	
-	public static ArrayList<ProteinGroupInterface> groupProteins(ArrayList<PercolatorPeptide> passingPeptides, AminoAcidConstants aaConstants) {
+
+	public static ArrayList<ProteinGroupInterface> groupLibraryEntryProteins(ArrayList<LibraryEntry> passingPeptides, AminoAcidConstants aaConstants) {
+		return groupProteins(new ArrayList<PeptidePrecursorWithProteins>(passingPeptides), aaConstants);
+	}
+	public static ArrayList<ProteinGroupInterface> groupPercolatorProteins(ArrayList<PercolatorPeptide> passingPeptides, AminoAcidConstants aaConstants) {
+		return groupProteins(new ArrayList<PeptidePrecursorWithProteins>(passingPeptides), aaConstants);
+	}
+	public static ArrayList<ProteinGroupInterface> groupProteins(ArrayList<PeptidePrecursorWithProteins> passingPeptides, AminoAcidConstants aaConstants) {
 		HashMap<String, Peptide> peptides=new HashMap<String, ParsimonyProteinGrouper.Peptide>();
 		HashMap<String, Protein> proteins=new HashMap<String, ParsimonyProteinGrouper.Protein>();
 		
-		for (PercolatorPeptide percolatorPeptide : passingPeptides) {
-			String sequence=PeptideUtils.getCorrectedMasses(PercolatorPeptide.getPeptideSequence(percolatorPeptide.getPsmID()), aaConstants);
-			HashSet<String> accessions=PSMData.stringToAccessions(percolatorPeptide.getProteinIDs());
+		for (PeptidePrecursorWithProteins percolatorPeptide : passingPeptides) {
+			String sequence=PeptideUtils.getCorrectedMasses(percolatorPeptide.getPeptideModSeq(), aaConstants);
+			HashSet<String> accessions=percolatorPeptide.getAccessions();
 			
 			Peptide peptide=peptides.get(sequence);
 			if (peptide==null) {
-				peptide=new Peptide(sequence, percolatorPeptide.getPosteriorErrorProb());
+				peptide=new Peptide(sequence, percolatorPeptide.getScore());
 				peptides.put(sequence, peptide);
 			}
 			

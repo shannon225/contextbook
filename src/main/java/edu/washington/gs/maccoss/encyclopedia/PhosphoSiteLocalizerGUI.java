@@ -165,7 +165,7 @@ public class PhosphoSiteLocalizerGUI {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(frame), "Please wait...", "Reading BLIB File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							BlibToLibraryConverter.convert(blibFile, Optional.ofNullable(null), fastaFile, getParameters());
+							BlibToLibraryConverter.convert(blibFile, Optional.ofNullable(null), fastaFile, true, getParameters());
 							Logger.logLine("Finished reading "+blibFile.getName());
 							return Nothing.NOTHING;
 						}

@@ -76,8 +76,8 @@ public class MzmlToMGFConsumer implements Runnable {
 	}
 	
 	public static void main(String[] args) {
-		File mzMLFile=new File("/Users/searleb/Documents/data/tandem-osx-15-12-15-2/bin/110315_bcs_hela_starved_DDA.mzML");
-		File mgfFile=new File("/Users/searleb/Documents/data/tandem-osx-15-12-15-2/bin/110315_bcs_hela_starved_DDA.mgf");
+		File mzMLFile=new File("/Users/searleb/Documents/damien/dda_library_search/hela/23aug2017_hela_serum_timecourse_pool_dda_003.mzML");
+		File mgfFile=new File("/Users/searleb/Documents/damien/dda_library_search/hela/23aug2017_hela_serum_timecourse_pool_dda_003.mgf");
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		convertSAX(mzMLFile, mgfFile, parameters);
 	}

@@ -27,6 +27,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ThreadableTask;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -124,9 +125,19 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 					}
 				}
 			}
+			
+			// a reasonable quant score (in case there are multiples)
+			float[] corr=data.getCorrelationArray();
+			float sum=0.0f;
+			for (int i = 0; i < corr.length; i++) {
+				if (corr[i]>TransitionRefiner.identificationCorrelationThreshold) {
+					// scores anything above the identification threshold on a line to 0
+					sum+=(corr[i]-TransitionRefiner.identificationCorrelationThreshold)/oneMinusThreshold;
+				}
+			}
 					
 			double[] fragmentMassArray=FragmentIon.getMasses(data.getFragmentMassArray());
-			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(filename, psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), fragmentMassArray, data.getIntegrationArray(), data);
+			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(filename, psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), sum, fragmentMassArray, data.getIntegrationArray(), data);
 			if (limitToQuantifiable) {
 				if (entry.getIonCount()<params.getMinNumOfQuantitativePeaks()||entry.getTIC()<1.0f) {
 					return Nothing.NOTHING;
@@ -138,6 +149,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		}
 		return Nothing.NOTHING;
 	}
+	private static final float oneMinusThreshold = 1.0f-TransitionRefiner.identificationCorrelationThreshold;
 
 	private boolean canRunLocalization() {
 		return params.getLocalizingModification().isPresent()&&localizer.isPresent();

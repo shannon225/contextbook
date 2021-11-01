@@ -29,7 +29,7 @@ public class BlibToLibraryConverterIT extends AbstractFileConverterTest {
 	public void testConvertBlibToLibrary() throws Exception {
 		final Path blib = getResourceAsTempFile(tmpDir, getName(), ".blib", "/edu/washington/gs/maccoss/encyclopedia/testdata/2017-07-14-importAQUATransitionList-assay-modAdjustment.blib");
 
-		final LibraryFile library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		final LibraryFile library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), true, SearchParameterParser.getDefaultParametersObject());
 
 		// The library will be closed after conversion, so we must reopen it
 		library.openFile();

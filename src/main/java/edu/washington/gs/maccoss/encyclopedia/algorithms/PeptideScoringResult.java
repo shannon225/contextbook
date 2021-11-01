@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.AbstractRetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
@@ -10,9 +11,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
+import gnu.trove.list.array.TFloatArrayList;
 
-public class PeptideScoringResult {
-	public static final PeptideScoringResult POISON_RESULT=new PeptideScoringResult(null);
+public class PeptideScoringResult extends AbstractScoringResult {
 	
 	private final LibraryEntry entry;
 	private final ArrayList<Pair<ScoredObject<FragmentScan>, float[]>> goodStripes=new ArrayList<Pair<ScoredObject<FragmentScan>, float[]>>();
@@ -22,8 +23,8 @@ public class PeptideScoringResult {
 		this.entry=entry;
 	}
 	
-	public PeptideScoringResult rescore(RetentionTimeAlignmentInterface filter) {
-		PeptideScoringResult newResult=new RescoredPeptideScoringResult(entry);
+	public AbstractScoringResult rescore(RetentionTimeAlignmentInterface filter) {
+		AbstractScoringResult newResult=new RescoredPeptideScoringResult(entry);
 		newResult.setTrace(trace);
 		
 		boolean anyFoundWithRTFilter=false;
@@ -75,13 +76,28 @@ public class PeptideScoringResult {
 	}
 	
 	public float getBestScore() {
-		float bestScore=-Float.MAX_VALUE;
-		for (Pair<ScoredObject<FragmentScan>, float[]> pair : goodStripes) {
-			if (pair.x.x>bestScore) {
-				bestScore=pair.x.x;
-			}
+		float[] scores=getSortedScores();
+		if (scores.length>0) {
+			return scores[scores.length-1];
 		}
-		return bestScore;
+		return 0.0f;
+	}
+	public float getSecondBestScore() {
+		float[] scores=getSortedScores();
+		if (scores.length>1) {
+			return scores[scores.length-2];
+		}
+		return 0.0f;
+	}
+	
+	private float[] getSortedScores() {
+		TFloatArrayList scores=new TFloatArrayList();
+		for (Pair<ScoredObject<FragmentScan>, float[]> pair : goodStripes) {
+			scores.add(pair.x.x);
+		}
+		float[] sorted=scores.toArray();
+		Arrays.sort(sorted);
+		return sorted;
 	}
 	
 	public void setTrace(XYTraceInterface trace) {
@@ -92,7 +108,25 @@ public class PeptideScoringResult {
 		return trace;
 	}
 	
-	public ArrayList<Pair<ScoredObject<FragmentScan>, float[]>> getGoodStripes() {
+	public boolean hasScoredResults() {
+		return goodStripes.size()>0;
+	}
+	
+	public Pair<ScoredObject<FragmentScan>, float[]> getScoredMSMS() {
+		float bestScore=-Float.MAX_VALUE;
+		Pair<ScoredObject<FragmentScan>, float[]> bestPair=null;
+		
+		for (Pair<ScoredObject<FragmentScan>, float[]> pair : goodStripes) {
+			if (pair.x.x>bestScore) {
+				bestScore=pair.x.x;
+				bestPair=pair;
+			}
+		}
+		return bestPair;
+	}
+	
+	public ArrayList<Pair<ScoredObject<FragmentScan>, float[]>> getGoodMSMSCandidates() {
 		return goodStripes;
 	}
 }
+

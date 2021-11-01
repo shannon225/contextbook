@@ -21,6 +21,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.StringTokenizer;
@@ -51,6 +52,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryEntryCleaner;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryToBlibConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MS2PIPReader;
@@ -341,12 +343,18 @@ public class SearchPanelUtilities {
 				choosers.repaint();
 			}
 		});
+		final JCheckBox rtAlignBox=new JCheckBox("RT align samples");
+		final JCheckBox higherScoresAreBetterBox=new JCheckBox("Higher scores are better");
+		rtAlignBox.setSelected(false);
+		higherScoresAreBetterBox.setSelected(false);
 
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(scrollPane);
 		options.add(addChooserButton);
 		options.add(saveFileChooser);
+		options.add(rtAlignBox);
+		options.add(higherScoresAreBetterBox);
 		
 		JPanel buttons=new JPanel();
 		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -365,6 +373,8 @@ public class SearchPanelUtilities {
 				}
 
 				final File saveFile=saveFileChooser.getFile();
+				final boolean higherScoresAreBetter=higherScoresAreBetterBox.isSelected();
+				final boolean rtAlign=rtAlignBox.isSelected();
 				
 				if (files.size()>0&&saveFile!=null) {
 					dialog.setVisible(false);
@@ -373,28 +383,45 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library Files") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							File first=files.remove(0);
-							Logger.logLine("Starting with "+first.getName());
-							Files.copy(first.toPath(), saveFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-							
-							LibraryFile saveLibrary=new LibraryFile();
-							saveLibrary.openFile(saveFile);
-							saveLibrary.dropIndices();
-							
+							HashMap<String, ArrayList<LibraryEntry>> groupedEntries=new HashMap<>();
 							for (File elibFile : files) {
 								LibraryFile library=new LibraryFile();
 								library.openFile(elibFile);
-								final ArrayList<LibraryEntry> allEntries=library.getAllEntries(false,  new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
-								saveLibrary.addEntries(allEntries);
-								saveLibrary.addProteinsFromEntries(allEntries);
-								Logger.logLine("Found "+allEntries.size()+" entries from "+elibFile.getName()+". Writing to ["+saveFile.getAbsolutePath()+"]...");
+								ArrayList<LibraryEntry> localEntries = library.getAllEntries(false,  new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+								//groupedEntries.put(elibFile.getName(), localEntries);
+								for (LibraryEntry entry : localEntries) {
+									ArrayList<LibraryEntry> list=groupedEntries.get(entry.getSource());
+									if (list==null) {
+										list=new ArrayList<>();
+										groupedEntries.put(entry.getSource(), list);
+									}
+									list.add(entry);
+								}
+								Logger.logLine("Found "+localEntries.size()+" entries from "+elibFile.getName());
 								library.close();
 							}
 							
+							ArrayList<LibraryEntry> allEntries;
+							if (rtAlign) {
+								allEntries=LibraryEntryCleaner.correctRTs(groupedEntries, saveFile);
+							} else {
+								allEntries=new ArrayList<>();
+								for (ArrayList<LibraryEntry> list : groupedEntries.values()) {
+									allEntries.addAll(list);
+								}
+							}
+							allEntries=LibraryEntryCleaner.removeDuplicateEntries(allEntries, higherScoresAreBetter);
+
+							LibraryFile saveLibrary=new LibraryFile();
+							saveLibrary.openFile();
+							saveLibrary.dropIndices();
+							saveLibrary.addEntries(allEntries);
+							saveLibrary.addProteinsFromEntries(allEntries);
 							saveLibrary.createIndices();
-							saveLibrary.saveFile();
+							saveLibrary.saveAsFile(saveFile);
 							
 							saveLibrary.close();
+							Logger.logLine("Saved "+saveFile.getName()+", "+allEntries.size()+" total");
 							
 							return Nothing.NOTHING;
 						}
@@ -827,12 +854,15 @@ public class SearchPanelUtilities {
 		final FileChooserPanel blibFileChooser=new FileChooserPanel(null, "BLIB", new SimpleFilenameFilter(".blib"), true);
 		final FileChooserPanel iRTFileChooser=new FileChooserPanel(null, "IRT Database", new SimpleFilenameFilter(".irtdb"), false);
 		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);
+		final JCheckBox higherScoresAreBetterBox=new JCheckBox("Higher scores are better");
+		higherScoresAreBetterBox.setSelected(false);
 
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(blibFileChooser);
 		options.add(iRTFileChooser);
 		options.add(fastaFileChooser);
+		options.add(higherScoresAreBetterBox);
 		
 		JPanel buttons=new JPanel();
 		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -843,6 +873,7 @@ public class SearchPanelUtilities {
 				final File blibFile=blibFileChooser.getFile();
 				final File irtFile=iRTFileChooser.getFile();
 				final File fastaFile=fastaFileChooser.getFile();
+				final boolean higherScoresAreBetter=higherScoresAreBetterBox.isSelected();
 				
 				if (blibFile!=null&&blibFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
 					dialog.setVisible(false);
@@ -851,7 +882,7 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading BLIB File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							BlibToLibraryConverter.convert(blibFile, Optional.ofNullable(irtFile), fastaFile, params);
+							BlibToLibraryConverter.convert(blibFile, Optional.ofNullable(irtFile), fastaFile, higherScoresAreBetter, params);
 							Logger.logLine("Finished reading "+blibFile.getName());
 							return Nothing.NOTHING;
 						}
@@ -885,7 +916,7 @@ public class SearchPanelUtilities {
 		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.pack(); 
-		dialog.setSize(500, 200);
+		dialog.setSize(500, 250);
 		dialog.setVisible(true);
 	}
 	
@@ -1046,7 +1077,7 @@ public class SearchPanelUtilities {
 		chargeRange.add(new JSpinner(minChargeSpinner));
 		chargeRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
 		chargeRange.add(new JSpinner(maxChargeSpinner));
-		//options.add(new LabeledComponent("Enzyme", enzymeBox)); // FIXME add prosit enzymes
+		options.add(new LabeledComponent("Enzyme", enzymeBox)); // FIXME add prosit enzymes
 		options.add(new LabeledComponent("Charge range", chargeRange));
 		options.add(new LabeledComponent("Maximum Missed Cleavage", new JSpinner(maxMissedCleavageSpinner)));
 
