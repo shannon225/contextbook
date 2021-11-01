@@ -129,7 +129,7 @@ public class BlibToLibraryConverter {
 	 * @return A <emph>closed</emph> {@code LibraryFile} instance pointing to {@code elibFile}
 	 *         containing the results of conversion.
 	 */
-	static LibraryFile convert(File blibFile, File elibFile, Optional<File> irtFile, File fastaFile, boolean higherScoreBetter, SearchParameters params) {
+	public static LibraryFile convert(File blibFile, File elibFile, Optional<File> irtFile, File fastaFile, boolean higherScoreBetter, SearchParameters params) {
 		TObjectFloatHashMap<String> irtMap = null;
 		try {
 			Logger.logLine("Indexing " + blibFile.getName() + " ...");
