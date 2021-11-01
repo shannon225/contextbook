@@ -4,6 +4,8 @@ encyclopedia-1.5.0-SNAPSHOT
  - Feature: added saving and loading of Percolator weights files
  - Feature: added "-blibToLib" command line option to convert BLIBs to DLIBs
  - Bugfix: fixed integration boundary errors when multiple windows are used to span the peptide at different retention time blocks
+ - Bugfix: massive speedup if using .mzML or .DIA files with multiple groups of precursorIsolationWindows (e.g. combined GPF-DIA)
+ - Bugfix: update for writing Mac M1 compatible result files (Sqlite update) 
 
 encyclopedia-1.4.10 (April 10, 2021)
  - Feature: added command-line options to test new pre-release features
