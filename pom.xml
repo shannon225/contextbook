@@ -404,9 +404,29 @@
 				</plugins>
 			</build>
 		</profile>
+		<profile>
+			<!--
+			When running ITs, this profile will activate to add the necessary test data dependency.
+			-->
+			<id>integrationTest</id>
+			<activation>
+				<property>
+					<name>skipITs</name>
+					<value>false</value>
+				</property>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>maccoss</groupId>
+					<artifactId>encyclopedia-test-data</artifactId>
+					<version>1-SNAPSHOT</version>
+					<scope>test</scope>
+				</dependency>
+			</dependencies>
+		</profile>
 	</profiles>
 
-    <dependencies>
+	<dependencies>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
@@ -497,12 +517,6 @@
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-csv</artifactId>
 			<version>1.8</version>
-		</dependency>
-		<dependency>
-			<groupId>maccoss</groupId>
-			<artifactId>encyclopedia-test-data</artifactId>
-			<version>1-SNAPSHOT</version>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>
