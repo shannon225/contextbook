@@ -419,6 +419,26 @@
 		</profile>
 		<profile>
 			<!--
+			When running ITs, this profile will activate to add the necessary test data dependency.
+			-->
+			<id>integrationTest</id>
+			<activation>
+				<property>
+					<name>skipITs</name>
+					<value>false</value>
+				</property>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>maccoss</groupId>
+					<artifactId>encyclopedia-test-data</artifactId>
+					<version>1-SNAPSHOT</version>
+					<scope>test</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<!--
 			When running ITs, this profile will activate and package the latest
 			regression test results into a JAR that will be attached to the
 			project and deployed. It also will add the necessary dependency
@@ -559,13 +579,6 @@
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-csv</artifactId>
 			<version>1.8</version>
-		</dependency>
-
-		<dependency>
-			<groupId>maccoss</groupId>
-			<artifactId>encyclopedia-test-data</artifactId>
-			<version>1-SNAPSHOT</version>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>

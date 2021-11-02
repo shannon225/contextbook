@@ -23,6 +23,7 @@ pipelines:
     '**':
       - step:
           name: Build and Test
+          max-time: 30
           caches:
             - maven
           script:
@@ -33,6 +34,7 @@ pipelines:
     encyclopedia-*:
       - step:
           name: Build and Test
+          max-time: 30
           caches:
             - maven # predefined; caches ~/.m2/repository
           script:
@@ -40,7 +42,7 @@ pipelines:
             # We also deploy the resulting attached artifacts, which (importantly)
             # includes the regression test reference data that was generated.
             - apt update && apt install -y libgomp1
-            - mvn -B package verify deploy -PbuildEncyclopedia -DskipITs=false
+            - mvn -B verify deploy -PbuildEncyclopedia -DskipITs=false
           artifacts:
             # Defines the file(s) to be saved for use in the next step
             - target/encyclopedia-*-executable.jar
@@ -59,15 +61,28 @@ pipelines:
     integration-tests:
       - step:
           name: Build and Test
+          max-time: 30
           caches:
             - maven
           script:
             - apt update && apt install -y libgomp1
             - mvn -B verify -DskipITs=false
+    # This custom build allows manual deployment of
+    # Maven artifacts from any commit; this is useful
+    # for regression test data generation and deployment
+    deploy-maven-artifacts:
+      - step:
+          name: Build, Test and Deploy
+          max-time: 30
+          caches:
+            - maven
+          script:
+            - apt update && apt install -y libgomp1
+            - mvn -B verify deploy -DskipITs=false
 
 options:
-  # All steps will time out after 15 minutes to avoid
-  # wasting build minutes. If IT execution grows to
+  # All steps use a default time out after 15 minutes to
+  # avoid wasting build minutes. If IT execution grows to
   # exceed this limit, it's best to add relaxed timeouts
   # to the specific step(s) that run too long.
   max-time: 15
