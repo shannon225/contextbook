@@ -53,6 +53,17 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
+	<distributionManagement>
+		<repository>
+			<id>encyclopedia-maven-repo-releases</id>
+			<url>s3://encyclopedia-maven-repo/release/</url>
+		</repository>
+		<snapshotRepository>
+			<id>encyclopedia-maven-repo-snapshots</id>
+			<url>s3://encyclopedia-maven-repo/snapshot/</url>
+		</snapshotRepository>
+	</distributionManagement>
+
 	<repositories>
 		<repository>
 			<id>encyclopedia-maven-repo-releases</id>

@@ -37,8 +37,10 @@ pipelines:
             - maven # predefined; caches ~/.m2/repository
           script:
             # Similar to above, but with encyclopedia executable JAR and ITs
+            # We also deploy the resulting attached artifacts, which (importantly)
+            # includes the regression test reference data that was generated.
             - apt update && apt install -y libgomp1
-            - mvn -B package verify -PbuildEncyclopedia -DskipITs=false
+            - mvn -B package verify deploy -PbuildEncyclopedia -DskipITs=false
           artifacts:
             # Defines the file(s) to be saved for use in the next step
             - target/encyclopedia-*-executable.jar
