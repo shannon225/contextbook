@@ -270,6 +270,11 @@ public class PrositCSVWriter {
 			if (writtenPeptides.contains(unmodified)) {
 				continue;
 			}
+
+			// Prosit doesn't support charge >6
+			if (precursorCharge<1&&precursorCharge>6) {
+				continue;
+			}
 			
 			// remove peptides that don't match PROSIT limitations:
 			if (seq.indexOf('B')>=0||seq.indexOf('J')>=0||seq.indexOf('O')>=0||seq.indexOf('U')>=0||seq.indexOf('X')>=0||seq.indexOf('Z')>=0||seq.indexOf('*')>=0) {
