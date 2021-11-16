@@ -1,20 +1,16 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.zip.DataFormatException;
-
-import org.relaxng.datatype.DatatypeException;
-
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import gnu.trove.map.hash.TObjectFloatHashMap;
+
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Optional;
+import java.util.zip.DataFormatException;
 
 public class BlibToLibraryConverter {
 
@@ -50,7 +46,6 @@ public class BlibToLibraryConverter {
 			};
 		} catch (SQLException sqle) {
 		} catch (IOException ioe) {
-		} catch (DatatypeException dte) {
 		} catch (DataFormatException dfe) {
 		}
 		
