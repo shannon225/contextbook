@@ -88,6 +88,9 @@ public class Encyclopedia {
 		} else if (arguments.containsKey("-thesaurus")) {
 			Thesaurus.main(args);
 			
+		} else if (arguments.containsKey("-scribe")) {
+			Scribe.main(args);
+			
 		} else if (arguments.containsKey("-walnut")||arguments.containsKey("-pecan")) {
 			Walnut.main(args);
 
