@@ -272,7 +272,7 @@ public class Scribe {
 		BlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
 		ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
 
-		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<AbstractScoringResult>(), stripefile);
+		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<AbstractScoringResult>(), stripefile, library);
 		SaveResultsConsumer saveResultsConsumer=new SaveResultsConsumer(new LinkedBlockingQueue<AbstractScoringResult>());
 		
 		BlockingQueue<AbstractScoringResult> resultsQueue=new LinkedBlockingQueue<AbstractScoringResult>();
@@ -303,7 +303,7 @@ public class Scribe {
 						// assumes some +1Hs, so straight number of neutrons above target
 						double targetStop=range.getStop()+MassConstants.neutronMass*NUMBER_OF_ISOTOPES_ABOVE_MONOISOTOPIC;
 						double widerStop=targetStop+parameters.getFragmentTolerance().getTolerance(targetStop);
-						ArrayList<LibraryEntry> entries=library.getEntries(new Range(widerStart, widerStop), true, parameters.getAAConstants());
+						ArrayList<LibraryEntry> entries=library.getUnlinkedEntries(new Range(widerStart, widerStop), true, parameters.getAAConstants());
 						if (entries.size()==0) return Nothing.NOTHING;
 						
 						ArrayList<FragmentScan> stripes=stripefile.getStripes(range, -Float.MAX_VALUE, Float.MAX_VALUE, true);
@@ -384,6 +384,7 @@ public class Scribe {
 			
 			Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), getPercolatorData(job), parameters.getEffectivePercolatorThreshold(), parameters.getAAConstants());
 			ArrayList<PercolatorPeptide> passingPeptides=pair.x;
+			
 			Logger.logLine("First pass: "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
 			
 			if (!parameters.getScoringBreadthType().runRecalibration()) {
@@ -411,7 +412,7 @@ public class Scribe {
 		
 		try {
 			ArrayList<AbstractScoringResult> data=saveResultsConsumer.getSavedResults();
-			PeptideScoringResultsConsumer rescoredResultsConsumer=job.getTaskFactory().getResultsConsumer(getPercolatorData(job).getInputTSV(), new LinkedBlockingQueue<AbstractScoringResult>(), stripefile);
+			PeptideScoringResultsConsumer rescoredResultsConsumer=job.getTaskFactory().getResultsConsumer(getPercolatorData(job).getInputTSV(), new LinkedBlockingQueue<AbstractScoringResult>(), stripefile, job.getLibrary());
 			Thread finalWriteConsumerThread=new Thread(rescoredResultsConsumer);
 			finalWriteConsumerThread.start();
 			BlockingQueue<AbstractScoringResult> resultList=rescoredResultsConsumer.getResultsQueue();

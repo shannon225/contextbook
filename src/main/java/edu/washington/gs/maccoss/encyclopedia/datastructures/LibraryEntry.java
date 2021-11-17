@@ -175,13 +175,10 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(finalPeaks);
 		Collections.sort(finalPeaks); // sort by m/z
 		
-		if (this instanceof ReverseLibraryEntry) {
-			return new ReverseLibraryEntry(source, accessions, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, 
-					arrays.x, arrays.y, arrays.z, aaConstants);
-		} else {
-			return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, 
-					arrays.x, arrays.y, arrays.z);
-		}
+		double[] trimmedMasses = arrays.x;
+		float[] trimmedIntensities = arrays.y;
+		float[] trimmedCorrelations = arrays.z;
+		return updatePeaks(aaConstants, getPrecursorMZ(), getPeptideModSeq(), trimmedMasses, trimmedIntensities, trimmedCorrelations, false, isDecoy(), isDecoy());
 	}
 	
 	/**
@@ -244,36 +241,6 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 	
 	public HashSet<String> getAccessions() {
 		return accessions;
-	}
-
-	public LibraryEntry toUnitSpectrum() {
-		return toUnitSpectrum(-1);
-	}
-	public LibraryEntry toUnitSpectrum(float rt) {
-		return toUnitSpectrum(-1, rt);
-	}
-	public LibraryEntry toUnitSpectrum(int numPeaks) {
-		return toUnitSpectrum(numPeaks, retentionTime);
-	}
-	public LibraryEntry toUnitSpectrum(int numPeaks, float rt) {
-		float threshold;
-		if (numPeaks<=0) {
-			threshold=minimumIntensityThreshold;
-		} else {
-			float[] intensityArrayClone=intensityArray.clone();
-			Arrays.sort(intensityArrayClone);
-			int i=intensityArrayClone.length-numPeaks;
-			if (i<0) i=0;
-			threshold=intensityArrayClone[i];
-		}
-		
-		float[] unit=new float[intensityArray.length];
-		for (int i=0; i<unit.length; i++) {
-			if (intensityArray[i]>=threshold) {
-				unit[i]=1.0f;
-			}
-		}
-		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, rt, score, massArray, unit, correlationArray);
 	}
 	
 	public float getTIC() {
@@ -399,26 +366,18 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 	public LibraryEntry getShuffle(SearchParameters parameters, int shuffleSeed, boolean markAsDecoy) {
 		return getDecoy(parameters, shuffleSeed, true, markAsDecoy);
 	} 
-	private LibraryEntry getDecoy(SearchParameters parameters, int shuffleSeed, boolean shuffle, boolean markAsDecoy) {
+	protected LibraryEntry getDecoy(SearchParameters parameters, int shuffleSeed, boolean shuffle, boolean markAsDecoy) {
 		String reverseSequence;
 		if (shuffle) {
 			reverseSequence=PeptideUtils.shuffle(peptideModSeq, shuffleSeed, parameters);
 		} else {
 			reverseSequence=PeptideUtils.reverse(peptideModSeq, parameters.getAAConstants());
 		}
-		HashSet<String> revAcc=new HashSet<String>();
-		for (String accession : accessions) {
-			if (shuffle) {
-				revAcc.add(SHUFFLE_STRING+accession);
-			} else {
-				revAcc.add(DECOY_STRING+accession);
-			}
-		}
 		
-		return getEntryFromNewSequence(reverseSequence, revAcc, markAsDecoy, parameters).y;
+		return getEntryFromNewSequence(reverseSequence, shuffle, true, markAsDecoy, parameters).y;
 	}
 
-	public Pair<FragmentationModel, LibraryEntry> getEntryFromNewSequence(String newSequence, HashSet<String> accessions, boolean markAsDecoy, SearchParameters parameters) {
+	public Pair<FragmentationModel, LibraryEntry> getEntryFromNewSequence(String newSequence, boolean isShuffle, boolean isDecoy, boolean markAsDecoy, SearchParameters parameters) {
 		FragmentationModel forwardModel=PeptideUtils.getPeptideModel(peptideModSeq, parameters.getAAConstants());
 		FragmentationModel reverseModel=PeptideUtils.getPeptideModel(newSequence, parameters.getAAConstants());
 
@@ -500,10 +459,33 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 		Collections.sort(reversedPeaks);
 		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(reversedPeaks);
 		
-		if (markAsDecoy) {
-			return new Pair<FragmentationModel, LibraryEntry>(reverseModel, new ReverseLibraryEntry(source, accessions, newPrecursorMz, precursorCharge, newSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z, parameters.getAAConstants()));
+		
+		LibraryEntry updatedEntry=updatePeaks(parameters.getAAConstants(), newPrecursorMz, newSequence, arrays.x, arrays.y, arrays.z, isShuffle, isDecoy, markAsDecoy);
+		
+		return new Pair<FragmentationModel, LibraryEntry>(reverseModel, updatedEntry);
+	}
+
+	protected LibraryEntry updatePeaks(AminoAcidConstants aaConstants, double newPrecursorMz, String newPeptideModSeq, double[] trimmedMasses, float[] trimmedIntensities, float[] trimmedCorrelations, boolean isShuffle, boolean isDecoy, boolean markAsDecoy) {
+		HashSet<String> accessions;
+		if (isShuffle || isDecoy) {
+			accessions = new HashSet<String>();
+			for (String accession : getAccessions()) {
+				if (isShuffle) {
+					accessions.add(SHUFFLE_STRING + accession);
+				} else if (isDecoy) {
+					accessions.add(DECOY_STRING + accession);
+				}
+			}
 		} else {
-			return new Pair<FragmentationModel, LibraryEntry>(reverseModel, new LibraryEntry(source, accessions, newPrecursorMz, precursorCharge, newSequence, copies, retentionTime, score, arrays.x, arrays.y, arrays.z, parameters.getAAConstants()));
+			accessions = getAccessions();
+		}
+		
+		if (markAsDecoy||this instanceof ReverseLibraryEntry) {
+			return new ReverseLibraryEntry(source, accessions, newPrecursorMz, precursorCharge, newPeptideModSeq, copies, retentionTime, score, 
+					trimmedMasses, trimmedIntensities, trimmedCorrelations, aaConstants);
+		} else {
+			return new LibraryEntry(source, accessions, spectrumIndex, newPrecursorMz, precursorCharge, newPeptideModSeq, newPeptideModSeq, copies, retentionTime, score, 
+					trimmedMasses, trimmedIntensities, trimmedCorrelations);
 		}
 	}
 }

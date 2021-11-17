@@ -5,12 +5,16 @@ import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -33,6 +37,23 @@ public class MockLibrary implements LibraryInterface {
 	}
 	public ArrayList<LibraryEntry> getAllEntries(boolean sqrt, AminoAcidConstants aaConstants) throws IOException, SQLException, DataFormatException {
 		return new ArrayList<LibraryEntry>(Arrays.asList(entries));
+	}
+	
+	@Override
+	public HashMap<String, String> getAccessions(Collection<String> peptideSeqs) throws IOException, SQLException, DataFormatException {
+		HashSet<String> set=new HashSet<>(peptideSeqs);
+		HashMap<String, String> accessions=new HashMap<>();
+		for (LibraryEntry entry : entries) {
+			if (set.contains(entry.getPeptideSeq())) {
+				accessions.put(entry.getPeptideSeq(), PSMData.accessionsToString(entry.getAccessions()));
+			}
+		}
+		return accessions;
+	}
+	
+	@Override
+	public ArrayList<LibraryEntry> getUnlinkedEntries(Range precursorMz, boolean sqrt, AminoAcidConstants aaConstants) throws IOException, SQLException, DataFormatException {
+		return getEntries(precursorMz, sqrt, aaConstants);
 	}
 
 	@Override

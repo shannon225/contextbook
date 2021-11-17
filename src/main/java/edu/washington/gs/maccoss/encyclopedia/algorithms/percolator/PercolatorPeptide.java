@@ -10,13 +10,11 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursorWithProteins;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
-import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class PercolatorPeptide implements PeptidePrecursorWithProteins {
 	private final String psmID;
@@ -59,6 +57,27 @@ public class PercolatorPeptide implements PeptidePrecursorWithProteins {
 		this.precursorCharge=getCharge(psmID);
 		this.file=getFile(psmID);
 		this.rt=getRT(psmID);
+	}
+	
+	
+	private PercolatorPeptide(String psmID, String proteinIDs, float qValue, float posteriorErrorProb,
+			String massCorrectedPeptideModSeq, double mz, boolean isPSMIDDecoy, byte precursorCharge, String file,
+			float rt) {
+		this.psmID = psmID;
+		this.proteinIDs = proteinIDs;
+		this.qValue = qValue;
+		this.posteriorErrorProb = posteriorErrorProb;
+		this.massCorrectedPeptideModSeq = massCorrectedPeptideModSeq;
+		this.mz = mz;
+		this.isPSMIDDecoy = isPSMIDDecoy;
+		this.precursorCharge = precursorCharge;
+		this.file = file;
+		this.rt = rt;
+	}
+
+
+	public PercolatorPeptide updateProteins(String proteinIDs) {
+		return new PercolatorPeptide(psmID, proteinIDs, qValue, posteriorErrorProb, massCorrectedPeptideModSeq, mz, isPSMIDDecoy, precursorCharge, file, rt);
 	}
 	
 	@Override

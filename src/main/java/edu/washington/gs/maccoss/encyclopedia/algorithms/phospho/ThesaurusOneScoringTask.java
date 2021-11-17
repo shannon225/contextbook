@@ -493,7 +493,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 			}
 		}
 
-		Pair<FragmentationModel, LibraryEntry> localizedForm=bestRealEntry.getEntryFromNewSequence(peptideModSeq, bestRealEntry.getAccessions(), bestRealEntry.isDecoy(), parameters);
+		Pair<FragmentationModel, LibraryEntry> localizedForm=bestRealEntry.getEntryFromNewSequence(peptideModSeq, false, bestRealEntry.isDecoy(), bestRealEntry.isDecoy(), parameters);
 		return new LocalizableForm(localizedForm.x, localizedForm.y, parameters);
 	}
 	

@@ -337,7 +337,7 @@ public class VariantXCorDIA {
 		File localizationFile=jobData.getLocalizationFile();
 		
 		BlockingQueue<AbstractScoringResult> resultsQueue=new LinkedBlockingQueue<AbstractScoringResult>();
-		PeptideScoringResultsConsumer resultsConsumer=jobData.getTaskFactory().getResultsConsumer(jobData.getPercolatorFiles().getInputTSV(), resultsQueue, stripefile);
+		PeptideScoringResultsConsumer resultsConsumer=jobData.getTaskFactory().getResultsConsumer(jobData.getPercolatorFiles().getInputTSV(), resultsQueue, stripefile, jobData.getLibrary().orElse(null));
 		LocalizationDataToTSVConsumer localizationConsumer=new LocalizationDataToTSVConsumer(localizationFile, localizationQueue);
 		Thread consumerThread=new Thread(resultsConsumer);
 		consumerThread.start();

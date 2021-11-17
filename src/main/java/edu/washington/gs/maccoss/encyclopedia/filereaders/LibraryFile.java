@@ -1215,6 +1215,93 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			c.close();
 		}
 	}
+	
+	public HashMap<String, String> getAccessions(Collection<String> peptideSeqs) throws IOException, SQLException, DataFormatException {
+		HashMap<String, String> accessions=new HashMap<>();
+		
+		try (Connection c = getConnection()) {	
+			try (PreparedStatement s = c.prepareStatement("select group_concat(ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions from peptidetoprotein where peptideseq = ?")) {
+				for (String peptideseq : peptideSeqs) {
+					s.setString(1, peptideseq);
+					ResultSet rs=s.executeQuery();
+					while (rs.next()) {
+						accessions.put(peptideseq, rs.getString(1));
+					}
+				}
+
+			} finally {
+				c.close();
+			}
+		}
+		return accessions;
+	}
+	
+	PreparedStatement accessionsStatement=null;
+	
+	public HashSet<String> getAccessions(String peptideSeq) throws IOException, SQLException, DataFormatException {
+		Connection connection = getConnection();
+		Statement createStatement = connection.createStatement();
+		ResultSet rs=createStatement.executeQuery("select proteinaccession from peptidetoprotein where peptideseq = '"+peptideSeq+"'");
+		HashSet<String> accessions=new HashSet<>();
+		while (rs.next()) {
+			accessions.add(rs.getString(1));
+		}
+		rs.close();
+		createStatement.close();
+		connection.close();
+		return accessions;
+	}
+	
+	@Override
+	public ArrayList<LibraryEntry> getUnlinkedEntries(Range precursorMz, boolean sqrt, AminoAcidConstants aaConstants) throws IOException, SQLException, DataFormatException {
+		try (Connection c = getConnection()) {
+			try (PreparedStatement s = c.prepareStatement("select " 
+					+ "e.PrecursorMZ, " 
+					+ "e.PrecursorCharge, "
+					+ "e.PeptideModSeq, " 
+					+ "e.PeptideSeq, "
+					+ "e.Copies, " 
+					+ "e.RTInSeconds, " 
+					+ "e.Score, " 
+					+ "e.MassEncodedLength, "
+					+ "e.MassArray, " 
+					+ "e.IntensityEncodedLength, " 
+					+ "e.IntensityArray, "
+					+ "e.SourceFile " 
+					+ "from " 
+					+ "entries e "
+					+ "where e.PrecursorMz between ? and ?;")) {
+				s.setFloat(1, precursorMz.getStart());
+				s.setFloat(2, precursorMz.getStop());
+				ResultSet rs=s.executeQuery();
+
+				ArrayList<LibraryEntry> entry=new ArrayList<LibraryEntry>();
+				while (rs.next()) {
+
+					double precursorMZ=rs.getDouble(1);
+					byte precursorCharge=(byte) rs.getInt(2);
+					String peptideModSeq=PeptideUtils.getCorrectedMasses(rs.getString(3), aaConstants);
+					String peptideSeq=rs.getString(4);
+					int copies=rs.getInt(5);
+					float retentionTime=rs.getFloat(6);
+					float score=rs.getFloat(7);
+					int massEncodedLength=rs.getInt(8);
+					double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(9), massEncodedLength));
+					int intensityEncodedLength=rs.getInt(10);
+					float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(11), intensityEncodedLength));
+					if (sqrt) {
+						intensityArray=General.protectedSqrt(intensityArray);
+					}
+					String sourceFile=rs.getString(12);
+					entry.add(new UnlinkedLibraryEntry(sourceFile, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, aaConstants, false, false, false, peptideSeq, this));
+				}
+
+				return entry;
+			} finally {
+				c.close();
+			}
+		}
+	}
 
 	/*
 	 * (non-Javadoc)

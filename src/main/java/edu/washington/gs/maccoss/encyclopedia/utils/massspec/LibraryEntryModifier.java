@@ -44,13 +44,13 @@ public class LibraryEntryModifier {
 	
 	public static LibraryEntry modifyModelAtEverySite(LibraryEntry entry, TCharDoubleHashMap fixedMods, boolean changePTMs, SearchParameters parameters) {
 		FragmentationModel model=modifyModelAtEverySite(entry.getPeptideModSeq(), fixedMods, changePTMs, parameters);
-		return entry.getEntryFromNewSequence(model.getPeptideModSeq(), entry.getAccessions(), false, parameters).y;
+		return entry.getEntryFromNewSequence(model.getPeptideModSeq(), false, false, false, parameters).y;
 	}
 	public static ArrayList<LibraryEntry> modifyModelAtEachSite(LibraryEntry entry, TCharDoubleHashMap fixedMods, boolean changePTMs, SearchParameters parameters) {
 		ArrayList<LibraryEntry> entries=new ArrayList<>();
 		ArrayList<FragmentationModel> models=modifyModelAtEachSite(entry.getPeptideModSeq(), fixedMods, changePTMs, parameters);
 		for (FragmentationModel model : models) {
-			entries.add(entry.getEntryFromNewSequence(model.getPeptideModSeq(), entry.getAccessions(), false, parameters).y);
+			entries.add(entry.getEntryFromNewSequence(model.getPeptideModSeq(), false, false, false, parameters).y);
 		}
 		return entries;
 	}
