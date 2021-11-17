@@ -1,21 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import java.io.File;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.zip.DataFormatException;
-
-import org.apache.commons.io.FilenameUtils;
-import org.relaxng.datatype.DatatypeException;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RTRTPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TwoDimensionalKDE;
@@ -29,6 +13,20 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.IndexedObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import gnu.trove.list.array.TFloatArrayList;
+import org.apache.commons.io.FilenameUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.zip.DataFormatException;
 
 public class LibraryEntryCleaner {
 	public static void main(String[] args) throws Exception {
@@ -95,7 +93,7 @@ public class LibraryEntryCleaner {
 		return true;
 	}
 	
-	public static LibraryFile cleanLibrary(boolean smallerScoresAreGood, boolean respectEnzyme, File originalLibraryFile, File newLibraryFile, File fastaFile, SearchParameters parameters) throws IOException, DatatypeException, DataFormatException, SQLException {
+	public static LibraryFile cleanLibrary(boolean smallerScoresAreGood, boolean respectEnzyme, File originalLibraryFile, File newLibraryFile, File fastaFile, SearchParameters parameters) throws IOException, DataFormatException, SQLException {
 		LibraryFile oldLibrary=new LibraryFile();
 		oldLibrary.openFile(originalLibraryFile);
 		ArrayList<LibraryEntry> originalEntries=oldLibrary.getAllEntries(false, parameters.getAAConstants());
