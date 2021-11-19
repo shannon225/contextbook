@@ -53,7 +53,7 @@ public class PercolatorExecutorIT {
 		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		final float threshold = 0.01f;
 
-		Pair<ArrayList<PercolatorPeptide>, Float> origpair=PercolatorExecutor.executePercolatorTSV(percolatorVersion, percolatorFiles, threshold, aaConstants);
+		Pair<ArrayList<PercolatorPeptide>, Float> origpair=PercolatorExecutor.executePercolatorTSV(percolatorVersion, percolatorFiles, threshold, aaConstants, 1);
 		assertTrue(origpair.x.size()>0);
 		assertTrue(origpair.y>0);
 

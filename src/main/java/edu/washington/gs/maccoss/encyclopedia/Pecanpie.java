@@ -496,7 +496,7 @@ public class Pecanpie {
 		resultsConsumer.close();
 
 		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
-		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), percolatorFiles, parameters.getEffectivePercolatorThreshold(), parameters.getAAConstants()).x;
+		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), percolatorFiles, parameters.getEffectivePercolatorThreshold(), parameters.getAAConstants(), 1).x;
 		stripefile.close();
 		
 		Logger.logLine("Writing elib result library...");

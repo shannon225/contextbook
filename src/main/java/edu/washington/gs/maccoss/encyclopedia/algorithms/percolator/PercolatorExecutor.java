@@ -27,6 +27,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.FileConcatenator;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 
@@ -76,12 +77,12 @@ public class PercolatorExecutor extends ExternalExecutor {
 	private static final String BAD_ALLOCATION = "bad allocation";
 	private static final String EXCEPTION_CAUGHT_PREFIX = "Exception caught: ";
 
-	PercolatorExecutor(PercolatorVersion percolatorVersion, PercolatorExecutionData commandData) {
-		super(generateCommand(percolatorVersion, commandData));
+	PercolatorExecutor(PercolatorVersion percolatorVersion, PercolatorExecutionData commandData, int round) {
+		super(generateCommand(percolatorVersion, commandData, round));
 	}
 
-	public static Pair<ArrayList<PercolatorPeptide>, Float> executePercolatorTSV(PercolatorVersion percolatorVersion, PercolatorExecutionData commandData, float threshold, AminoAcidConstants aaConstants) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
-		PercolatorExecutor e=new PercolatorExecutor(percolatorVersion, commandData);
+	public static Pair<ArrayList<PercolatorPeptide>, Float> executePercolatorTSV(PercolatorVersion percolatorVersion, PercolatorExecutionData commandData, float threshold, AminoAcidConstants aaConstants, int round) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+		PercolatorExecutor e=new PercolatorExecutor(percolatorVersion, commandData, round);
 		BlockingQueue<OutputMessage> result=e.start();
 
 		Float pi0=null;
@@ -123,6 +124,13 @@ public class PercolatorExecutor extends ExternalExecutor {
 
 		try {
 		    Files.write(commandData.getPeptideOutputFile().toPath(), (PI_0_TAG+pi0+System.lineSeparator()).getBytes(), StandardOpenOption.APPEND);
+		    // if round 1, then start the model file over, otherwise append weights to model file
+		    if (round==1) {
+		    		commandData.getWeightsFile(round).renameTo(commandData.getModelFile());
+		    } else {
+		    		FileConcatenator.saveConcatenatedFile(commandData.getModelFile(), commandData.getWeightsFile(round));
+		    		commandData.getWeightsFile(round).delete();
+		    }
 		}catch (IOException ioe) {
 			throw new EncyclopediaException("Error appending to Percolator text file", ioe);
 		}
@@ -169,14 +177,14 @@ public class PercolatorExecutor extends ExternalExecutor {
 		return peptideString.substring(peptideString.indexOf('.')+1, peptideString.lastIndexOf('.'));
 	}
 
-	static String[] generateCommand(PercolatorVersion percolatorVersion, PercolatorExecutionData commandData) {
+	static String[] generateCommand(PercolatorVersion percolatorVersion, PercolatorExecutionData commandData, int round) {
 		File percolator=getPercolator(percolatorVersion);
 
 		ArrayList<String> params=new ArrayList<>();
 		
 		params.add(percolator.getAbsolutePath());
 		params.add("--results-peptides"); params.add(commandData.getPeptideOutputFile().getAbsolutePath());
-		params.add("--weights"); params.add(commandData.getPeptideOutputFile().getAbsolutePath()+".model");
+		params.add("--weights"); params.add(commandData.getWeightsFile(round).getAbsolutePath());
 		params.add("--decoy-results-peptides"); params.add(commandData.getPeptideDecoyFile().getAbsolutePath());
 		if (commandData.isUseMinMax()) {
 			params.add("-y");
@@ -184,8 +192,20 @@ public class PercolatorExecutor extends ExternalExecutor {
 			params.add("-Y");
 		}
 		if (commandData.getPercolatorModelFile().isPresent()&&commandData.getPercolatorModelFile().get().canRead()) {
-			params.add("--init-weights"); params.add(commandData.getPercolatorModelFile().get().getAbsolutePath());
-			params.add("--maxiter"); params.add("0");
+			File modelFile = commandData.getPercolatorModelFile().get();
+			try {
+				int actualRound=Math.min(round, FileConcatenator.getNumberOfSubFiles(modelFile));
+				File model=FileConcatenator.extractFile(modelFile, actualRound);
+				Logger.logLine("Extracting weights from "+modelFile.getName()+" ("+round+","+actualRound+")");
+				if (round!=actualRound) {
+					Logger.errorLine("Couldn't extract specific model for round "+round+", using last model available (round "+actualRound+")");
+				}
+				params.add("--init-weights"); params.add(model.getAbsolutePath());
+				params.add("--maxiter"); params.add("0");
+			} catch (IOException ioe) {
+				Logger.errorLine("Problem extracting Percolator weights from "+modelFile.getName()+". Continuing without using weights...");
+				Logger.errorException(ioe);
+			}
 		}
 		
 		if (percolatorVersion.getMajorVersion()>2) {

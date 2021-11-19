@@ -29,7 +29,7 @@ public class PercolatorExecutorTest extends TestCase {
 		File outputProteinFile=new File("/Users/searleb/Documents/swaney/CID_vs_HCD_enzymes/mzML/mix1/lu0102558_Mix1_CID_12mz.mzML.test_protein_results.txt");
 		File decoyProteinFile=new File("/Users/searleb/Documents/swaney/CID_vs_HCD_enzymes/mzML/mix1/lu0102558_Mix1_CID_12mz.mzML.test_protein_decoy.txt");
 		PercolatorExecutionData percolatorFiles=new PercolatorExecutionData(featureFile, fastaFile, outputFile, decoyFile, outputProteinFile, decoyProteinFile, SearchParameterParser.getDefaultParametersObject());
-		PercolatorExecutor e=new PercolatorExecutor(getDefaultPercolaterVersion(), percolatorFiles);
+		PercolatorExecutor e=new PercolatorExecutor(getDefaultPercolaterVersion(), percolatorFiles, 1);
 		BlockingQueue<OutputMessage> result=e.start();
              
 		int outputlines=0;
@@ -64,7 +64,7 @@ public class PercolatorExecutorTest extends TestCase {
 		File outputProteinFile=new File("/Users/searleb/Documents/vaneyk/control/only_synthesized_peptides_concatenated_protein_results.txt");
 		File decoyProteinFile=new File("/Users/searleb/Documents/vaneyk/control/only_synthesized_peptides_concatenated_protein_decoy.txt");
 		PercolatorExecutionData percolatorFiles=new PercolatorExecutionData(featureFile, fastaFile, outputFile, decoyFile, outputProteinFile, decoyProteinFile, SearchParameterParser.getDefaultParametersObject());
-		PercolatorExecutor e=new PercolatorExecutor(getDefaultPercolaterVersion(), percolatorFiles);
+		PercolatorExecutor e=new PercolatorExecutor(getDefaultPercolaterVersion(), percolatorFiles, 1);
 		BlockingQueue<OutputMessage> result=e.start();
              
 		int outputlines=0;

@@ -58,6 +58,14 @@ public class PercolatorExecutionData {
 		return inputTSV;
 	}
 
+	public File getWeightsFile(int round) {
+		return new File(getPeptideOutputFile().getAbsolutePath()+"."+round+".weights");
+	}
+
+	public File getModelFile() {
+		return new File(getPeptideOutputFile().getAbsolutePath()+".model");
+	}
+
 	/**
 	 * @param percolatorExecutableVersion Canonical version of Percolator parsed directly when running the actual executable
 	 */

@@ -449,7 +449,7 @@ public class XCorDIA {
 		Logger.logLine("Finished generating feature file, analyzed "+resultsConsumer.getNumberProcessed()+" peptides.");
 
 		progress.update("Running Percolator", (1.0f+rangesFinished)/numberOfTasks);
-		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), jobData.getPercolatorFiles(), parameters.getEffectivePercolatorThreshold(), parameters.getAAConstants()).x;
+		ArrayList<PercolatorPeptide> passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), jobData.getPercolatorFiles(), parameters.getEffectivePercolatorThreshold(), parameters.getAAConstants(), 1).x;
 		stripefile.close();
 		
 		Logger.logLine("Writing elib result library...");
