@@ -108,6 +108,7 @@ public class Encyclopedia {
 			Logger.timelessLogLine("Other Programs: ");
 			Logger.timelessLogLine("\t-walnut\trun Walnut FASTA search (use -walnut -h for help)");
 			Logger.timelessLogLine("\t-thesaurus\trun Thesaurus localization search (use -thesaurus -h for help)");
+			Logger.timelessLogLine("\t-scribe\trun Scribe (use -scribe -h for Scribe help)");
 			Logger.timelessLogLine("\t-browser\trun ELIB Browser (use -browser -h for ELIB Browser help)");
 			Logger.timelessLogLine("\t-libexport\trun Library Export (use -libexport -h for Library Export help)");
 			Logger.timelessLogLine("\t-convert\trun files converter (use -convert -h for help)");

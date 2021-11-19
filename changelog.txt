@@ -1,8 +1,11 @@
 EncyclopeDIA changelog for user-facing changes:
 
-encyclopedia-1.5.0-SNAPSHOT
+encyclopedia-1.12.0-SNAPSHOT
+
+encyclopedia-1.11.19 (November 19, 2021)
  - Feature: added saving and loading of Percolator weights files
  - Feature: added "-blibToLib" command line option to convert BLIBs to DLIBs
+ - Feature: removed Percolator 3.05 from GUI, but can still specify through additional command line options
  - Bugfix: fixed integration boundary errors when multiple windows are used to span the peptide at different retention time blocks
  - Bugfix: massive speedup if using .mzML or .DIA files with multiple groups of precursorIsolationWindows (e.g. combined GPF-DIA)
  - Bugfix: update for writing Mac M1 compatible result files (Sqlite update) 
