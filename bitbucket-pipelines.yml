@@ -23,6 +23,7 @@ pipelines:
     '**':
       - step:
           name: Build and Test
+          max-time: 30
           caches:
             - maven
           script:
@@ -33,12 +34,15 @@ pipelines:
     encyclopedia-*:
       - step:
           name: Build and Test
+          max-time: 30
           caches:
             - maven # predefined; caches ~/.m2/repository
           script:
             # Similar to above, but with encyclopedia executable JAR and ITs
+            # We also deploy the resulting attached artifacts, which (importantly)
+            # includes the regression test reference data that was generated.
             - apt update && apt install -y libgomp1
-            - mvn -B package verify -PbuildEncyclopedia -DskipITs=false
+            - mvn -B verify deploy -PbuildEncyclopedia -DskipITs=false
           artifacts:
             # Defines the file(s) to be saved for use in the next step
             - target/encyclopedia-*-executable.jar
@@ -57,15 +61,35 @@ pipelines:
     integration-tests:
       - step:
           name: Build and Test
+          max-time: 30
           caches:
             - maven
           script:
             - apt update && apt install -y libgomp1
             - mvn -B verify -DskipITs=false
+    # This custom build allows manual deployment of
+    # Maven artifacts from any commit; this is useful
+    # for regression test data generation and deployment.
+    # It does NOT build or deploy executable versions
+    # or upload anything to the Bitbucket repository.
+    # Note that this build IGNORES TEST FAILURES on the
+    # assumption that they're the result of regression
+    # failures. It's important to only trigger this
+    # build on well-vetted commits, and to understand
+    # usages of the deployed artifacts.
+    deploy-maven-artifacts:
+      - step:
+          name: Build, Test and Deploy
+          max-time: 30
+          caches:
+            - maven
+          script:
+            - apt update && apt install -y libgomp1
+            - mvn -B verify deploy -DskipITs=false -Dmaven.test.failure.ignore=true
 
 options:
-  # All steps will time out after 15 minutes to avoid
-  # wasting build minutes. If IT execution grows to
+  # All steps use a default time out after 15 minutes to
+  # avoid wasting build minutes. If IT execution grows to
   # exceed this limit, it's best to add relaxed timeouts
   # to the specific step(s) that run too long.
   max-time: 15
