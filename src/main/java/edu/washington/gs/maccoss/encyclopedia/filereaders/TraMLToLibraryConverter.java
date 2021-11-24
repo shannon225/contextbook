@@ -40,12 +40,20 @@ public class TraMLToLibraryConverter {
 		System.out.println(System.currentTimeMillis()-time);
 	}
 
+	/**
+	 * @return A <emph>closed</emph> {@code LibraryFile} instance pointing to {@code elibFile}
+	 *         containing the results of conversion.
+	 */
 	public static LibraryFile convertTraML(File tramlFile, File fastaFile, SearchParameters parameters) {
 		String absolutePath=tramlFile.getAbsolutePath();
 		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
 		return convertTraML(tramlFile, fastaFile, libraryFile, parameters);
 	}
 
+	/**
+	 * @return A <emph>closed</emph> {@code LibraryFile} instance pointing to {@code elibFile}
+	 *         containing the results of conversion.
+	 */
 	public static LibraryFile convertTraML(File tramlFile, File fastaFile, File libraryFile, SearchParameters parameters) {
 		AminoAcidConstants aaConstants=parameters.getAAConstants();
 		TraMLParser traMLParser=new TraMLParser();
@@ -145,6 +153,7 @@ public class TraMLToLibraryConverter {
 			library.addProteinsFromEntries(entries);
 			library.createIndices();
 			library.saveAsFile(libraryFile);
+			library.close();
 			return library;
 
 		} catch (Exception e) {

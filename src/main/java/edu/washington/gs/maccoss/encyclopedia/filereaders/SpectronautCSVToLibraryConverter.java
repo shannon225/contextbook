@@ -67,14 +67,21 @@ public class SpectronautCSVToLibraryConverter {
 		}
 		return sb.toString();
 	}
-	
-	public static LibraryInterface convertFromSpectronautCSV(File csvFile, File fastaFile, SearchParameters parameters) {
+
+	/**
+	 * @return A <emph>closed</emph> {@code LibraryFile} instance pointing to {@code elibFile}
+	 *         containing the results of conversion.
+	 */
+	public static LibraryFile convertFromSpectronautCSV(File csvFile, File fastaFile, SearchParameters parameters) {
 		String absolutePath=csvFile.getAbsolutePath();
 		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
 		return convertFromSpectronautCSV(csvFile, fastaFile, libraryFile, parameters);
 	}
 
-	//FragmentCharge,FragmentNumber,FragmentType,PrecursorCharge,PrecursorMz,RelativeIntensity,iRT,ModifiedPeptide,StrippedPeptide,FragmentLossType,FragmentMz,LabeledPeptide
+	/**
+	 * @return A <emph>closed</emph> {@code LibraryFile} instance pointing to {@code elibFile}
+	 *         containing the results of conversion.
+	 */
 	public static LibraryFile convertFromSpectronautCSV(File csvFile, File fastaFile, File libraryFile, SearchParameters parameters) {
 		AminoAcidConstants aaConstants=parameters.getAAConstants();
 		try {
