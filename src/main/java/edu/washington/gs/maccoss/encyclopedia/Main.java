@@ -17,7 +17,7 @@ public class Main {
 
 	public static void main(String[] args) throws IOException {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
-		if (arguments.containsKey("-c")) {
+		if (arguments.containsKey(ConfigFileParser.CONFIG_FILE_TAG)) {
 			ConfigFileParser.updateArguments(arguments);
 			args = CommandLineParser.unparseArguments(arguments);
 		}

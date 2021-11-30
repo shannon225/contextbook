@@ -21,7 +21,7 @@ public class ConfigFileParserTest extends TestCase {
 	}
 
 	public void testParsing() throws IOException {
-		Path config_path = EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/config.ini", tmpDir, "config", ".ini");
+		Path config_path = EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/config.properties", tmpDir, "config", ".properties");
 
 		String[] args=new String[] {"-q", "xxxxx", "-c", config_path.toString(), "-v"};
 		HashMap<String, String> map=CommandLineParser.parseArguments(args);
