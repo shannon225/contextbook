@@ -9,7 +9,6 @@ public class CommandLineParser {
 		if (args.length==0) {
 			return map;
 		}
-		
 		for (int i=0; i<args.length; i++) {
 			if (i<args.length-1&&!args[i+1].startsWith("-")) {
 				map.put(args[i], args[i+1]);

@@ -364,7 +364,13 @@ public class SearchToBLIB {
 			} else {
 				Logger.logLine("Running global Percolator analysis.");
 				TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
-				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), bigPercolatorFiles, threshold, parameters.getAAConstants(), 1);
+				
+				// delete if exists
+				if (bigPercolatorFiles.getModelFile().exists()) {
+					bigPercolatorFiles.getModelFile().delete();
+				}
+				int modelNumber = Integer.MAX_VALUE; // always use the last model (if reusing a model)
+				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), bigPercolatorFiles, threshold, parameters.getAAConstants(), modelNumber);
 			}
 
 			Logger.logLine("Identified "+passingPeptides.x.size()+" peptides across all files at a "+(threshold*100.0f)+"% FDR threshold.");

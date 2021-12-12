@@ -192,8 +192,8 @@ public class ThesaurusElibParser {
 
 		PeptideModification mod=PeptideModification.phosphorylation;
 		String[] targets=null;//new String[] {"SFSKEVEER", "ILQEKLDQPVSAPPSPR", "HRGSEEDPLLSPVETWK", "RASGQAFELILSPR"};//KGSGDYMPMSPK;//targetPeptides;
-		File[] f=new File("/Users/searleb/Documents/backup/localization_manuscript/mcf7/0.6.3_5p_elibs").listFiles();
-		//File[] f=new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/0.6.3_elibs").listFiles();
+		//File[] f=new File("/Users/searleb/Documents/backup/localization_manuscript/mcf7/0.6.3_5p_elibs").listFiles();
+		File[] f=new File("/Users/searleb/Documents/backup/localization_manuscript/mcf7/0.6.3_elibs").listFiles();
 		
 		//f=new File[] {new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1a.dia.thesaurus.elib")};
 		

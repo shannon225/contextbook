@@ -89,7 +89,7 @@ public class SearchPanelUtilities {
 
 		FileDialog dialog=new FileDialog((JFrame)null, "mzML files", FileDialog.LOAD);
 		dialog.setMultipleMode(true);
-		dialog.setFilenameFilter(new SimpleFilenameFilter(".mzML"));
+		dialog.setFilenameFilter(new SimpleFilenameFilter(".mzML", StripeFile.DIA_EXTENSION));
 		dialog.setVisible(true);
 		File[] featureFiles=dialog.getFiles();
 
@@ -110,7 +110,10 @@ public class SearchPanelUtilities {
 				protected Nothing doInBackgroundForReal() throws Exception {
 					for (int i=0; i<filesToLoad.length; i++) {
 						System.out.println("Processing "+filesToLoad[i]);
-						StripeFileGenerator.getFile(filesToLoad[i], params);
+						StripeFileInterface file=StripeFileGenerator.getFile(filesToLoad[i], params);
+						if (filesToLoad[i].getName().endsWith(StripeFile.DIA_EXTENSION) && file instanceof StripeFile) {
+							((StripeFile)file).saveFile();
+						}
 					}
 					return Nothing.NOTHING;
 				}
