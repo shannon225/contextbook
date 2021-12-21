@@ -54,7 +54,18 @@ public class MSPReaderTest extends AbstractFileConverterTest {
 	}
 
 	@Test
-	public void testFastaReader() throws Exception {
+	public void testUnimodReader() throws Exception {
+		InputStream is=getClass().getResourceAsStream("/unimod.msp");
+		ArrayList<LibraryEntry> entries=MSPReader.readMSP(is, "unimod.msp", true);
+		assertEquals(1, entries.size());
+		LibraryEntry e=entries.get(0);
+		assertEquals("ALGNICYDSHEGR", e.getPeptideSeq());
+		assertEquals(3, e.getPrecursorCharge());
+		assertEquals("ALGNIC[+57.0214635]YDSHEGR", e.getPeptideModSeq());
+	}
+
+	@Test
+	public void testReader() throws Exception {
 		InputStream is=getClass().getResourceAsStream("/truncated.msp");
 		ArrayList<LibraryEntry> entries=MSPReader.readMSP(is, "truncated.msp", true);
 		assertEquals(4, entries.size());
