@@ -178,10 +178,11 @@ public class ThesaurusElibParser {
 		sampleKey.put("22jun2016_mcf7_phospho_6f.mzML", new Coordinate(6, 6));
 	}
 	public static final boolean TOTAL_ANALYSIS=true;
-	
+
+	public static final boolean RT_ANALYSIS=true;
 	public static final boolean MOTIF_ANALYSIS=false;
 	public static final boolean ANOVA_ANALYSIS=false;
-	public static final boolean HEATMAP_ANALYSIS=true;
+	public static final boolean HEATMAP_ANALYSIS=false;
 	public static final boolean MULTIPLE_FORM_ANALYSIS=false;
 	public static final boolean SITE_SPECIFIC_VS_TOTAL_ANALYSIS=false;
 	
@@ -193,7 +194,8 @@ public class ThesaurusElibParser {
 		PeptideModification mod=PeptideModification.phosphorylation;
 		String[] targets=null;//new String[] {"SFSKEVEER", "ILQEKLDQPVSAPPSPR", "HRGSEEDPLLSPVETWK", "RASGQAFELILSPR"};//KGSGDYMPMSPK;//targetPeptides;
 		//File[] f=new File("/Users/searleb/Documents/backup/localization_manuscript/mcf7/0.6.3_5p_elibs").listFiles();
-		File[] f=new File("/Users/searleb/Documents/backup/localization_manuscript/mcf7/0.6.3_elibs").listFiles();
+		//File[] f=new File("/Users/searleb/Documents/backup/localization_manuscript/mcf7/0.6.3_elibs").listFiles();
+		File[] f=new File("/Users/searleb/Documents/phospho/mcf7").listFiles();
 		
 		//f=new File[] {new File("/Users/searleb/Documents/school/localization_manuscript/mcf7/elibs/22jun2016_mcf7_phospho_1a.dia.thesaurus.elib")};
 		
@@ -271,6 +273,44 @@ public class ThesaurusElibParser {
 			}
 			for (String motif : motifs) {
 				System.out.println(motif);
+			}
+		}
+
+		if (RT_ANALYSIS) {
+			System.out.println("PeptideModSeq,PrecursorCharge,numObservations,LocalizationFDR,MaxIntensity,RTInSecMedian,RTInSecIQR");
+			int length=primaryQuantLog==siteSpecificQuantLog?siteSpecificPValues.size():totalPValues.size();
+			for (int pep=0; pep<length; pep++) {
+				// if
+				// (log.motif!=null&&log.motif.matches("R.R..[ST].....")&&adjustedPValues[pep]<0.05)
+				// {
+				
+				String peptide;
+				QuantitationLog log;
+				
+				if (primaryQuantLog==siteSpecificQuantLog) {
+					peptide=siteSpecificPeptides.get(pep);
+					log=siteSpecificQuantLog.get(peptide);
+				} else {
+					peptide=totalPeptides.get(pep);
+					log=totalQuantLog.get(peptide);
+				}
+				float[][] data=log.getData();
+				float maxIntensity=General.max(data);
+
+				int aboveZero=0;
+				for (int i=0; i<data.length; i++) {
+					for (int j = 0; j < data[i].length; j++) {
+						if (data[i][j]>0) {
+							aboveZero++;
+						}
+					}
+				}
+
+				float[] rts=log.rtInSecondsList.toArray();
+				float median=QuickMedian.median(rts);
+				float iqr=QuickMedian.iqr(rts);
+				System.out.println(log.peptideModSeq+","+log.charge+","+aboveZero+","+log.bestLocalizationFDR+","+maxIntensity+","+median+","+iqr);
+				
 			}
 		}
 

@@ -22,7 +22,7 @@ public abstract class SQLFile {
 			return c;
 		} catch (Exception e) {
 			Logger.errorLine(e.getClass().getName()+": "+e.getMessage());
-			throw new IOException("Error reading database file: "+f.getAbsolutePath());
+			throw new IOException("Error reading database file: "+f.getAbsolutePath(), e);
 		}
 	}
 

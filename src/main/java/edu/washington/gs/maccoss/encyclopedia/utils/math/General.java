@@ -636,6 +636,30 @@ public class General {
 		return max;
 	}
 	
+	public static double max(double[][] v) {
+		double max=-Double.MAX_VALUE;
+		for (int i=0; i<v.length; i++) {
+			for (int j = 0; j < v[i].length; j++) {
+				if (v[i][j]>max) {
+					max=v[i][j];
+				}
+			}
+		}
+		return max;
+	}
+	
+	public static float max(float[][] v) {
+		float max=-Float.MAX_VALUE;
+		for (int i=0; i<v.length; i++) {
+			for (int j = 0; j < v[i].length; j++) {
+				if (v[i][j]>max) {
+					max=v[i][j];
+				}
+			}
+		}
+		return max;
+	}
+	
 	public static double min(double[] v) {
 		double min=Double.MAX_VALUE;
 		for (int i=0; i<v.length; i++) {
