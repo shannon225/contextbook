@@ -19,4 +19,6 @@ public interface AbstractDilutionCurveFittingParameters {
 	public String getTargetAccessionNumberKeyword();
 
 	public boolean isRequireAlignmentRT();
+	
+	public boolean isUseLineNoise();
 }

@@ -49,7 +49,7 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class DilutionCurveFitter {
-	public static void main2(String[] args) {
+	public static void main3(String[] args) {
 		
 		float[] expected = { 1f, 0.68085106f, 0.46666667f, 0.21568628f, 0.1f, 0.04666667f, 0.02156863f, 0.01f,
 				0.00466667f, 0.00215686f, 0.001f, 0.00046667f, 0.00021569f, 0.0001f, 4.67E-05f, 2.16E-05f, 0.00001f};
@@ -68,16 +68,34 @@ public class DilutionCurveFitter {
 		actualList.reverse();
 		TFloatArrayList expectedList=new TFloatArrayList(expected);
 		expectedList.reverse();
-		DilutionFit bestFit=process("NLVPMVATVQGQNLK", "PROTEIN", expectedList.toArray(), actualList.toArray()).x;
+		DilutionFit bestFit=process("NLVPMVATVQGQNLK", "PROTEIN", expectedList.toArray(), actualList.toArray(), General.max(actual), true).x;
 		ChartPanel panel=graph("NLVPMVATVQGQNLK", expectedList.toArray(), actualList.toArray(), bestFit);
 		Charter.launchChart(panel, "NLVPMVATVQGQNLK");
 	}
 	
 	public static void main(String[] args) throws Exception {
-		System.out.println(System.getProperty("java.version"));
+		final File outputDirectory=new File("/Users/searleb/Documents/cobbs/2021jan12_cobbs_ln229/figures/prms/curvefitting/");
+		final File targetDirectory=new File(outputDirectory, "target");
+		outputDirectory.mkdirs();
+		targetDirectory.mkdirs();
+		
+		File dataFile=new File("/Users/searleb/Documents/cobbs/2021jan12_cobbs_ln229/figures/prms/final_119_and_248_PRM_peptide_quant_report.csv");
+		File sampleOrganizationFile=new File("/Users/searleb/Documents/cobbs/2021jan12_cobbs_ln229/figures/prms/prm_sample_organization.csv");
+		
+		final ArrayList<ScoredObject<String>> expectedConcentrations = getExpectedConcentrationsFromCSV(sampleOrganizationFile);
+		final float[] expected = adjustForZeroConcentrations(expectedConcentrations);
+
+		final ArrayList<FitPeptide> fitPeptides=fitCurves(outputDirectory, dataFile, expectedConcentrations, expected, "HCMV", true);
+		
+		for (FitPeptide fit : fitPeptides) {
+			ChartPanel panel=graph(fit.peptideModSeq, fit.expectedRelativeIntensities, fit.actualRelativeIntensities, fit.bestFit);
+			Charter.writeAsPDF(panel.getChart(), new File(targetDirectory, fit.peptideModSeq+".pdf"), new Dimension(300, 300));
+		}
+	}
+	
+	public static void main2(String[] args) throws Exception {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
 		final File outputDirectory=new File("/Users/searleb/Documents/cobbs/2021jan12_cobbs_ln229/test/curvefitting_wide_testing/");
-		
 		File dataFile=new File("/Users/searleb/Documents/cobbs/2021jan12_cobbs_ln229/test/2020dec03_cobbs_cmv_inf_quant.elib.peptides.txt");
 		File sampleOrganizationFile=new File("/Users/searleb/Documents/cobbs/2021jan12_cobbs_ln229/test/sample_organization.csv");
 		File libraryFile=new File("/Users/searleb/Documents/cobbs/2021jan12_cobbs_ln229/test/2020dec03_cobbs_cmv_inf_clib.elib");
@@ -141,8 +159,8 @@ public class DilutionCurveFitter {
 		Pair<String[], float[]> anchorData=extractAnchorPeptides(dataFile, fittingParams,
 				libraryEntryByPeptideModSeq, rtAlignment, subRanges, expectedConcentrations);
 
-		final ArrayList<FitPeptide> fitPeptides=fitCurves(outputDirectory, dataFile, libraryEntryByPeptideModSeq, 
-				expectedConcentrations, expected, fittingParams.getTargetAccessionNumberKeyword());
+		final ArrayList<FitPeptide> fitPeptides=fitCurves(outputDirectory, dataFile, 
+				expectedConcentrations, expected, fittingParams.getTargetAccessionNumberKeyword(), fittingParams.isUseLineNoise());
 
 		final String[] bestAnchorPeptideModSeqs=anchorData.x;
 		final float[] bestIntensities=anchorData.y;
@@ -163,10 +181,12 @@ public class DilutionCurveFitter {
 		final float[] bestIntensitiesWithBadCVs=new float[subRanges.size()];
 		Pair<String[], float[]> data=new Pair<String[], float[]>(bestAnchorPeptideModSeqs, bestIntensities);
 
-		TableParser.parseTSV(dataFile, new TableParserMuscle() {
+		TableParserMuscle muscle = new TableParserMuscle() {
 			public void processRow(Map<String, String> row) {
-				String peptide=row.get("Peptide");
-				String protein=row.get("Protein");
+				String peptide=row.get("Peptide"); // from EncyclopeDIA
+				if (peptide==null) peptide=row.get("Peptide Modified Sequence"); // from Skyline
+				String protein=row.get("Protein"); // from EncyclopeDIA
+				if (protein==null) protein=row.get("Protein Name"); // from Skyline
 				
 				LibraryEntry entry=libraryEntryByPeptideModSeq.get(peptide);
 				
@@ -210,30 +230,30 @@ public class DilutionCurveFitter {
 			
 			public void cleanup() {
 			}
-		});
+		};
+		
+		if (dataFile.getName().toLowerCase().endsWith(".csv")) {
+			TableParser.parseCSV(dataFile, muscle);
+		} else {
+			TableParser.parseTSV(dataFile, muscle);
+		}
 
 		return data;
 	}
 
-	private static ArrayList<FitPeptide> fitCurves(final File outputDirectory, File dataFile,
-			final HashMap<String, LibraryEntry> libraryEntryByPeptideModSeq, final ArrayList<ScoredObject<String>> expectedConcentrations,
-			final float[] expected, String requiredAccessionText) throws FileNotFoundException, UnsupportedEncodingException {
+	private static ArrayList<FitPeptide> fitCurves(final File outputDirectory, File dataFile, final ArrayList<ScoredObject<String>> expectedConcentrations,
+			final float[] expected, String requiredAccessionText, boolean useLineNoise) throws FileNotFoundException, UnsupportedEncodingException {
 		final PrintWriter reportWriter=new PrintWriter(new File(outputDirectory, "report.csv"), "UTF-8");
-		reportWriter.println("peptide,protein,lod,loq,r2,m,b");
+		reportWriter.println("peptide,protein,lod,loq,r2,m,b,max");
 
-		final AtomicInteger countMissing=new AtomicInteger(0);
 		final ArrayList<FitPeptide> fitPeptides=new ArrayList<FitPeptide>();
-		TableParser.parseTSV(dataFile, new TableParserMuscle() {
+		TableParserMuscle muscle = new TableParserMuscle() {
 			public void processRow(Map<String, String> row) {
-				String peptide=row.get("Peptide");
-				String protein=row.get("Protein");
+				String peptide=row.get("Peptide"); // from EncyclopeDIA
+				if (peptide==null) peptide=row.get("Peptide Modified Sequence"); // from Skyline
+				String protein=row.get("Protein"); // from EncyclopeDIA
+				if (protein==null) protein=row.get("Protein Name"); // from Skyline
 				
-				LibraryEntry entry=libraryEntryByPeptideModSeq.get(peptide);
-				
-				if (entry==null) {
-					countMissing.incrementAndGet();
-					return;
-				}
 				if (requiredAccessionText!=null&&protein.indexOf(requiredAccessionText)==-1) {
 					return;
 				}
@@ -247,14 +267,15 @@ public class DilutionCurveFitter {
 				
 				float[] actualArray = actual.toArray();
 
-				actualArray=General.divide(actualArray, General.max(actualArray));
-				Pair<DilutionFit, Float> pair=process(peptide, protein, expected, actualArray);
+				float maxMeasuredValue = General.max(actualArray);
+				actualArray=General.divide(actualArray, maxMeasuredValue);
+				Pair<DilutionFit, Float> pair=process(peptide, protein, expected, actualArray, maxMeasuredValue, useLineNoise);
 				DilutionFit bestFit=pair.x;
 
 				float lod=bestFit.getLOD();
 				float loq=bestFit.getLOQ();
 				
-				reportWriter.println(peptide+","+protein+","+lod+","+loq+","+pair.y+","+bestFit.m+","+bestFit.b);
+				reportWriter.println(peptide+","+protein+","+lod+","+loq+","+pair.y+","+bestFit.m+","+bestFit.b+","+bestFit.maxValue);
 				if (Float.isFinite(loq)&&loq<0) {
 					fitPeptides.add(new FitPeptide(peptide, protein, bestFit, expected, actualArray));
 				}
@@ -262,16 +283,19 @@ public class DilutionCurveFitter {
 			
 			public void cleanup() {
 			}
-		});
+		};
+		
+		if (dataFile.getName().toLowerCase().endsWith(".csv")) {
+			TableParser.parseCSV(dataFile, muscle);
+		} else {
+			TableParser.parseTSV(dataFile, muscle);
+		}
 		
 		reportWriter.flush();
 		reportWriter.close();
 		
 		Collections.sort(fitPeptides);
 
-		if (countMissing.get()>0) {
-			Logger.errorLine("Found "+countMissing.toString()+" target peptides with no reference RT! Skipping these for curve fitting!");
-		}
 		Logger.logLine("Fit "+fitPeptides.size()+" total peptides.");
 		
 		return fitPeptides;
@@ -469,7 +493,7 @@ public class DilutionCurveFitter {
 		return expectedConcentrations;
 	}
 	
-	public static Pair<DilutionFit, Float> process(String peptide, String protein, float[] expected, float[] actual) {
+	public static Pair<DilutionFit, Float> process(String peptide, String protein, float[] expected, float[] actual, float maxMeasuredValue, boolean useLineNoise) {
 		TFloatArrayList loggedActual=new TFloatArrayList();
 		TFloatArrayList loggedExpected=new TFloatArrayList();
 
@@ -510,26 +534,43 @@ public class DilutionCurveFitter {
 			// fit everything below the crossover to a single noise value
 			TFloatArrayList noise=new TFloatArrayList();
 			for (int j = 0; j <=crossOver; j++) {
+				// noise only contains non-zero values
 				noise.add(loggedActual.get(j));
 			}
-			float noiseMean = General.mean(noise.toArray());
+			float[] noiseArray = noise.toArray();
+			float noiseMean = General.mean(noiseArray);
+			float noiseMax=General.max(noiseArray);
 			
 			// fit everything after the crossover to a line
 			TFloatArrayList linearX=new TFloatArrayList();
 			TFloatArrayList linearY=new TFloatArrayList();
 			boolean valuesAboveNoise=false;
+			float sumVariance=0;
+			int n=0;
 			for (int j = crossOver+1; j < loggedActual.size(); j++) {
+				n++;
 				linearX.add(loggedExpected.get(j));
 				linearY.add(loggedActual.get(j));
+				float delta=loggedExpected.get(j)-loggedActual.get(j);
+				sumVariance+=delta*delta;
 				if (loggedActual.get(j)<noiseMean) {
 					valuesAboveNoise=true;
 				}
 			}
-			if (valuesAboveNoise) continue;
+			if (valuesAboveNoise||n==0) continue;
+			
+			float linearStdev=(float)Math.sqrt(sumVariance/n);
+			float totalStdev;
+			if (useLineNoise) {
+				totalStdev=Math.max(linearStdev, General.stdev(noiseArray));
+			} else {
+				totalStdev=General.stdev(noiseArray);
+				noiseMax=General.mean(noiseArray);
+			}
 
 			// calculate equations
 			Pair<Float, Float> equation=LinearRegression.getRegression(linearX.toArray(), linearY.toArray());
-			fit=new DilutionFit(noiseMean, General.stdev(noise.toArray()), equation.x, equation.y, lastZero, firstNonZero);
+			fit=new DilutionFit(noiseMean, noiseMax, totalStdev, equation.x, equation.y, lastZero, firstNonZero, maxMeasuredValue);
 			
 			if (false) { // FIXME
 				float max=Log.log10(General.max(actual));
@@ -546,7 +587,7 @@ public class DilutionCurveFitter {
 			if(crossOver>0&&fit.getLOD()<loggedExpected.get(crossOver-1)) {
 				// if the point where it hits noiseMean is less than the crossOver point, forcing intercept at noiseMean crossOver point
 				equation=LinearRegression.getRegressionWithFixedIntercept(linearX.toArray(), linearY.toArray(), new XYPoint(loggedExpected.get(crossOver), noiseMean));
-				fit=new DilutionFit(noiseMean, General.stdev(noise.toArray()), equation.x, equation.y, lastZero, firstNonZero);
+				fit=new DilutionFit(noiseMean, noiseMax, totalStdev, equation.x, equation.y, lastZero, firstNonZero, maxMeasuredValue);
 			}
 			
 			// calculate deviation to find the best fit
@@ -625,7 +666,7 @@ public class DilutionCurveFitter {
 			if (knownRTInSecs.contains(entry.getPeptideModSeq())) {
 				return knownRTInSecs.get(entry.getPeptideModSeq());
 			}
-			System.err.println("HAD TO LOOK UP "+entry.getPeptideModSeq());
+			Logger.errorLine("Potential problem: had to look up "+entry.getPeptideModSeq());
 			return rtAlignment.getYValue(entry.getScanStartTime()/60f)*60f; // deal with sec to min interconversion
 		}
 	}
@@ -657,26 +698,30 @@ public class DilutionCurveFitter {
 	}
 	
 	public static class DilutionFit {
-		private final float noiseValue;
+		private final float noiseMean;
+		private final float noiseMax;
 		private final float noiseStdev;
 		private final float m;
 		private final float b;
 		private final float lastZero;
 		private final float firstNonZero;
+		private final float maxValue;
 		
-		public DilutionFit(float noiseValue, float noiseStdev, float m, float b, float lastZero, float firstNonZero) {
-			this.noiseValue = noiseValue;
+		public DilutionFit(float noiseMean, float noiseMax, float noiseStdev, float m, float b, float lastZero, float firstNonZero, float maxValue) {
+			this.noiseMean = noiseMean;
+			this.noiseMax=noiseMax;
 			this.noiseStdev = noiseStdev;
 			this.m = m;
 			this.b = b;
 			this.lastZero=lastZero;
 			this.firstNonZero=firstNonZero;
+			this.maxValue=maxValue;
 		}
 		
 		public float getPredicted(float x) {
 			float expectedY=m*x+b;
-			if (expectedY<noiseValue) {
-				return noiseValue;
+			if (expectedY<noiseMean) {
+				return noiseMean;
 			}
 			return expectedY;
 		}
@@ -706,12 +751,16 @@ public class DilutionCurveFitter {
 		public float getLOD() {
 			//noiseValue=mx+b
 			if (m==0) return Float.POSITIVE_INFINITY;
-			return Math.max(lastZero, Math.min(0f, (noiseValue-b)/m));
+			return Math.max(lastZero, Math.min(0f, (noiseMax-b)/m));
 		}
 		public float getLOQ() {
 			if (m==0) return Float.POSITIVE_INFINITY;
-			float target=noiseValue+3*noiseStdev;
+			float target=noiseMax+3*noiseStdev;
 			return Math.max(firstNonZero, Math.min(0f, (target-b)/m));
+		}
+		
+		public float getMaxValue() {
+			return maxValue;
 		}
 	}
 }

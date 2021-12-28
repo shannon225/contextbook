@@ -10,6 +10,7 @@ public class DilutionCurveFitting8HzWideParameters implements AbstractDilutionCu
 	final int assayMaxDensity=20;
 	final String targetAccessionNumberKeyword="HCMV";
 	final boolean requireAlignmentRT=true; // turn off for fitting against PRM
+	final boolean useLineNoise=false; // newer versions should set this to "true"
 
 	public float getWindowInMin() {
 		return windowInMin;
@@ -45,5 +46,9 @@ public class DilutionCurveFitting8HzWideParameters implements AbstractDilutionCu
 
 	public boolean isRequireAlignmentRT() {
 		return requireAlignmentRT;
+	}
+
+	public boolean isUseLineNoise() {
+		return useLineNoise;
 	}
 }
