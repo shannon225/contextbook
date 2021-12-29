@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.utils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class CommandLineParser {
@@ -18,6 +19,23 @@ public class CommandLineParser {
 			}
 		}
 		return map;
+	}
+
+	public static String[] unparseArguments(HashMap<String, String> map) {
+		ArrayList<String> args = new ArrayList<String>();
+		if (map.isEmpty()) {
+			return args.toArray(new String[0]);
+		}
+		
+		for (HashMap.Entry<String, String> entry : map.entrySet()) {
+			String key = entry.getKey();
+			String value = entry.getValue();
+			args.add(key);
+			if (value != null) {
+				args.add(value);
+			}
+		}
+		return args.toArray(new String[0]);
 	}
 
 }

@@ -23,4 +23,17 @@ public class CommandLineParserTest extends TestCase {
 		assertEquals("xxxxx", map.get("-i"));
 		assertEquals(null, map.get("-v"));
 	}
+	public void testUnparsing() {
+		String[] expectedArgs=new String[] {"-q", "-i", "xxxxx", "-v"};
+		HashMap<String, String> expectedMap=CommandLineParser.parseArguments(expectedArgs);
+
+		HashMap<String, String> map=new HashMap<String, String>();
+		map.put("-q", null);
+		map.put("-i", "xxxxx");
+		map.put("-v", null);
+		String[] actualArgs = CommandLineParser.unparseArguments(map);
+		HashMap<String, String> actualMap=CommandLineParser.parseArguments(actualArgs);
+		
+		assertTrue(expectedMap.equals(actualMap));
+	}
 }

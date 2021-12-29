@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.tests.AbstractFileConverterTest;
 import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -141,9 +142,12 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 	public void testConvertEmptyBlib() throws Exception {
 		final Path blib = EncyclopediaTestUtils.getResourceAsTempFile(getClass(), "/empty.blib", tmpDir, NAME, ".blib");
 
-		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), true, SearchParameterParser.getDefaultParametersObject());
+		final LibraryFile library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), true, SearchParameterParser.getDefaultParametersObject());
+		library.openFile();
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library); // asserts that the resulting file has DLIB extension
+
+			assertEquals("Wrong number of entries", 0, library.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
 		} finally {
 			EncyclopediaTestUtils.cleanupLibrary(library);
 		}
@@ -166,9 +170,12 @@ public class BlibToLibraryConverterTest extends AbstractFileConverterTest {
 	public void testConvertEmptyFile() throws Exception {
 		final Path blib = Files.createTempFile(tmpDir, NAME, ".blib");
 
-		final LibraryInterface library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), true, SearchParameterParser.getDefaultParametersObject());
+		final LibraryFile library = BlibToLibraryConverter.convert(blib.toFile(), Optional.empty(), getFasta().toFile(), true, SearchParameterParser.getDefaultParametersObject());
+		library.openFile();
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library);
+
+			assertEquals("Wrong number of entries", 0, library.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
 		} finally {
 			EncyclopediaTestUtils.cleanupLibrary(library);
 		}

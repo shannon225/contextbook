@@ -40,8 +40,7 @@ public class MS2PIPWriterIT extends AbstractFileConverterTest {
 
 	@Test
 	public void testSimpleElib() throws Exception {
-		// TODO: use an actual resource name instead of a made-up one
-		final Path elib = getResourceAsTempFile(tmpDir, getName(), ".elib", "/edu/washington/gs/maccoss/encyclopedia/testdata/simple.elib");
+		final Path elib = getResourceAsTempFile(tmpDir, getName(), ".elib", "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia.elib");
 
 		final LibraryFile libraryFile = new LibraryFile();
 		try {

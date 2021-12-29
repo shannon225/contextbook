@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -8,13 +9,19 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJob
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.ConfigFileParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class Main {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
+		if (arguments.containsKey(ConfigFileParser.CONFIG_FILE_TAG)) {
+			ConfigFileParser.updateArguments(arguments);
+			args = CommandLineParser.unparseArguments(arguments);
+		}
+
 		if (arguments.size()==0) {
 			SearchGUIMain.runGUI(ProgramType.Global);
 			

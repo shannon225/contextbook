@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.tests.AbstractFileConverterTest;
 import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
@@ -116,6 +117,8 @@ public class MSPReaderTest extends AbstractFileConverterTest {
 		library.openFile(out.toFile());
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library);
+
+			assertEquals("Wrong number of entries", 0, library.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
 		} finally {
 			EncyclopediaTestUtils.cleanupLibrary(library);
 		}
