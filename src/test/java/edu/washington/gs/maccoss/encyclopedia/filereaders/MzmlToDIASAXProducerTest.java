@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.mockito.Mockito;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 
@@ -57,7 +55,7 @@ public class MzmlToDIASAXProducerTest extends TestCase {
 		File diaFileSaveDestination = new File(mzMLFile.getParentFile(), "test-dia" + StripeFile.DIA_EXTENSION);
 		diaFileSaveDestination.deleteOnExit();
 
-		MzmlToDIAConverter.convertSAX(mzMLFile, diaFileSaveDestination, Mockito.mock(SearchParameters.class), false);
+		MzmlToDIAConverter.convertSAX(mzMLFile, diaFileSaveDestination, SearchParameterParser.getDefaultParametersObject(), false);
 		StripeFile f = new StripeFile();
 		f.openFile(diaFileSaveDestination);
 		HashMap<String, String> metadata = f.getMetadata();
@@ -82,8 +80,7 @@ public class MzmlToDIASAXProducerTest extends TestCase {
 
 		File diaFileSaveDestination = new File(mzMLFile.getParentFile(), "test-dia" + StripeFile.DIA_EXTENSION);
 		diaFileSaveDestination.deleteOnExit();
-
-		MzmlToDIAConverter.convertSAX(mzMLFile, diaFileSaveDestination, Mockito.mock(SearchParameters.class), false);
+		MzmlToDIAConverter.convertSAX(mzMLFile, diaFileSaveDestination, SearchParameterParser.getDefaultParametersObject(), false);
 		StripeFile f = new StripeFile();
 		f.openFile(diaFileSaveDestination);
 		HashMap<String, String> metadata = f.getMetadata();
