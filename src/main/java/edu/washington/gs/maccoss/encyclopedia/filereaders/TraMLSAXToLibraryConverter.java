@@ -23,12 +23,19 @@ public class TraMLSAXToLibraryConverter {
 	}
 
 	public static LibraryFile convertTraML(File tramlFile, File fastaFile, SearchParameters parameters) {
+		if (tramlFile==null||!tramlFile.exists()) {
+			throw new EncyclopediaException("Missing TraML file "+tramlFile.getName());
+		}
 		String absolutePath=tramlFile.getAbsolutePath();
 		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
 		return convertTraML(tramlFile, fastaFile, libraryFile, parameters);
 	}
 	
 	public static LibraryFile convertTraML(File tramlFile, File fastaFile, File libraryFile, SearchParameters parameters) {
+		if (tramlFile==null||!tramlFile.exists()||tramlFile.length()==0) {
+			throw new EncyclopediaException("Missing TraML file "+tramlFile.getName());
+		}
+
 		try {
 			TraMLSAXToLibraryProducer reader=new TraMLSAXToLibraryProducer(tramlFile, parameters);
 			reader.run();

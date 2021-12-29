@@ -7,13 +7,25 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
 
 public class General {
 	public static String formatCellToWidth(String s, int w) {
+		return formatCellToWidth(s, w, true);
+	}
+	public static String formatCellToWidth(String s, int w, boolean leftJustified) {
 		char[] ca=new char[w];
 		for (int i=0; i<ca.length; i++) {
 			ca[i]=' ';
 		}
-		for (int i=0; i<s.length(); i++) {
-			if (i<ca.length-1) {
-				ca[i]=s.charAt(i);
+		if (leftJustified) {
+			for (int i=0; i<s.length(); i++) {
+				if (i<ca.length-1) {
+					ca[i]=s.charAt(i);
+				}
+			}
+		} else {
+			for (int i=0; i<s.length(); i++) {
+				int index=ca.length-1-s.length()+i;
+				if (index>=0&&index<ca.length-1) {
+					ca[index]=s.charAt(i);
+				}
 			}
 		}
 		return new String(ca);

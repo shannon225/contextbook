@@ -24,9 +24,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.ProgressInputStream;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class TraMLSAXToLibraryProducer extends DefaultHandler implements Runnable {
 	private static final float UNSET_RETENTION_TIME=-Float.MAX_VALUE;
+	private static final float UNSET_PEAK_INTENSITY=-Float.MAX_VALUE;
 	private final File tramlFile;
 	private final SearchParameters parameters;
 	private Throwable error;
@@ -86,7 +88,7 @@ public class TraMLSAXToLibraryProducer extends DefaultHandler implements Runnabl
 	private float lastRetentionTime=UNSET_RETENTION_TIME;
 	private ArrayList<ModificationObject> ptms=new ArrayList<>();
 	
-	private float lastIntensity=0.0f;
+	private float lastIntensity=UNSET_PEAK_INTENSITY;
 	private double lastIsolationWindowTarget=0.0;
 	
 	HashMap<String, ArrayList<Peak>> transitions=new HashMap<>();
@@ -94,6 +96,7 @@ public class TraMLSAXToLibraryProducer extends DefaultHandler implements Runnabl
 	
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+		//System.out.println(General.formatCellToWidth("<"+qName+">", tagList.size()*4+qName.length()+3, false));
 		dataSB.setLength(0);
 		if (tagList.size()>0&&"cvParam".equalsIgnoreCase(qName)) {
 			if ("Transition".equalsIgnoreCase(getPreviousElementTag())) {
@@ -138,6 +141,7 @@ public class TraMLSAXToLibraryProducer extends DefaultHandler implements Runnabl
 
 	@Override
 	public void endElement(String uri, String localName, String qName) throws SAXException {
+		//System.out.println(General.formatCellToWidth("</"+qName+">", (tagList.size()-1)*4+qName.length()+4, false));
 		if ("Transition".equalsIgnoreCase(qName)) {
 			if (lastPeptideRef!=null) {
 				ArrayList<Peak> peaks=transitions.get(lastPeptideRef);
@@ -145,11 +149,15 @@ public class TraMLSAXToLibraryProducer extends DefaultHandler implements Runnabl
 					peaks=new ArrayList<>();
 					transitions.put(lastPeptideRef, peaks);
 				}
+				if (lastIntensity==UNSET_PEAK_INTENSITY) {
+					// transition lists don't necessarily have intensities, so this forces there to be something tiny
+					lastIntensity=Float.MIN_VALUE;
+				}
 				peaks.add(new Peak(lastIsolationWindowTarget, lastIntensity));
 			}
 			lastPeptideRef=null;
 			lastIsolationWindowTarget=0.0;
-			lastIntensity=0.0f;
+			lastIntensity=UNSET_PEAK_INTENSITY;
 		} else if ("Peptide".equalsIgnoreCase(qName)) {
 			if (lastPeptideRef!=null) {
 				String peptideModSeq=getPeptideModSeq(lastPeptideSequence, ptms);
@@ -225,6 +233,7 @@ public class TraMLSAXToLibraryProducer extends DefaultHandler implements Runnabl
 	
 	private static String getPeptideModSeq(String sequence, ArrayList<ModificationObject> ptms) {
 		String[] aas=new String[sequence.length()];
+		double[] ptmMasses=new double[aas.length];
 		for (int i=0; i<aas.length; i++) {
 			aas[i]=Character.toString(sequence.charAt(i));
 		}
@@ -232,7 +241,13 @@ public class TraMLSAXToLibraryProducer extends DefaultHandler implements Runnabl
 			Double modMass=ptm.mass;
 			int index=ptm.location-1;
 			if (index==aas.length) index=aas.length-1;
-			aas[index]=aas[index]+"["+(modMass>=0?"+":"")+modMass+"]";
+			if (index<0) index=0;
+			ptmMasses[index]+=modMass;
+		}
+		for (int i = 0; i < aas.length; i++) {
+			if (ptmMasses[i]!=0) {
+				aas[i]=aas[i]+"["+(ptmMasses[i]>=0?"+":"")+ptmMasses[i]+"]";
+			}
 		}
 		StringBuilder sb=new StringBuilder();
 		for (int i=0; i<aas.length; i++) {
