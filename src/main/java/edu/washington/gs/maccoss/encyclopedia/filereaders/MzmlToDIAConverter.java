@@ -20,7 +20,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
-import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 
 public class MzmlToDIAConverter implements StripeFileReaderInterface {
 	public static final String MZML_EXTENSION=".mzml";
