@@ -392,12 +392,6 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.compomics.jtraml</groupId>
-			<artifactId>jtraml-core</artifactId>
-			<version>1.0.5</version>
-			<type>jar</type>
-		</dependency>
-		<dependency>
 			<groupId>uk.ac.ebi.pride.utilities</groupId>
 			<artifactId>pride-mod</artifactId>
 			<version>2.1.9</version>

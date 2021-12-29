@@ -25,7 +25,7 @@ public class TraMLToLibraryConverterIT extends AbstractFileConverterTest {
 		// TODO: use an actual resource name instead of a made-up one
 		final Path traml = getResourceAsTempFile(tmpDir, getName(), ".traml", "/edu/washington/gs/maccoss/encyclopedia/testdata/simple.traml");
 
-		final LibraryFile library = TraMLToLibraryConverter.convertTraML(traml.toFile(), getFasta().toFile(), out.toFile(), SearchParameterParser.getDefaultParametersObject());
+		final LibraryFile library = TraMLSAXToLibraryConverter.convertTraML(traml.toFile(), getFasta().toFile(), out.toFile(), SearchParameterParser.getDefaultParametersObject());
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library);
 		} finally {

@@ -59,12 +59,11 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.MS2PIPReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MaxquantMSMSConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.OpenSwathTSVToLibraryConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SpectronautCSVToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.TraMLToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.TraMLSAXToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.MS2PIPWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.MSPWriter;
@@ -1741,7 +1740,7 @@ public class SearchPanelUtilities {
 				final File fastaFile=fastaFileChooser.getFile();
 				
 				if (tramlFile!=null&&tramlFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
-					if (tramlFile.length()>1024*1024*10) {
+					if (tramlFile.length()>1024*1024*1000) {
 					    int result = JOptionPane.showConfirmDialog(dialog, "This file is "+(tramlFile.length()/1024/1024)+" MB and will take a very long time to convert. Are you sure?",
 					        "Warning: long conversion!", JOptionPane.OK_CANCEL_OPTION);
 					    if (result==JOptionPane.CANCEL_OPTION) return;
@@ -1752,7 +1751,7 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading TraML File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							TraMLToLibraryConverter.convertTraML(tramlFile, fastaFile, params);
+							TraMLSAXToLibraryConverter.convertTraML(tramlFile, fastaFile, params);
 							Logger.logLine("Finished reading "+tramlFile.getName());
 							return Nothing.NOTHING;
 						}

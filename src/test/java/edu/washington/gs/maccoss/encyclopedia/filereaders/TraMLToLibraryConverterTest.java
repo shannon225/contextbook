@@ -24,7 +24,7 @@ public class TraMLToLibraryConverterTest extends AbstractFileConverterTest {
 
 	@Test(expected = NullPointerException.class)
 	public void testConvertNull() throws Exception {
-		TraMLToLibraryConverter.convertTraML(null, getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		TraMLSAXToLibraryConverter.convertTraML(null, getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 	}
 
 	@Test(expected = EncyclopediaException.class)
@@ -32,14 +32,14 @@ public class TraMLToLibraryConverterTest extends AbstractFileConverterTest {
 		final Path traml = Files.createTempFile(tmpDir, NAME, ".traml");
 		Files.delete(traml);
 
-		TraMLToLibraryConverter.convertTraML(traml.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		TraMLSAXToLibraryConverter.convertTraML(traml.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 	}
 
 	@Test(expected = EncyclopediaException.class)
 	public void testConvertEmptyFile() throws Exception {
 		final Path traml = Files.createTempFile(tmpDir, NAME, ".traml");
 
-		TraMLToLibraryConverter.convertTraML(traml.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		TraMLSAXToLibraryConverter.convertTraML(traml.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
 	}
 
 	Path getFasta() throws IOException {
