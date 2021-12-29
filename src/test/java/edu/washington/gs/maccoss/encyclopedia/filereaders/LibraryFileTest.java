@@ -4,20 +4,101 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
+import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryFileTest {
-
+	
 	public static void main(String[] args) throws Exception {
+		float minIntensity = 0.01f;
+		File folder=new File("/Users/searleb/Documents/encyclopedia/Deanna_TPAD2_CSF/CSF_DIA_elibs_forBrian/Individuals");
+		for (String fname : folder.list(new SimpleFilenameFilter(".elib"))) {
+			File f=new File(folder, fname);
+			System.out.println(f.toString());
+			LibraryInterface lib=BlibToLibraryConverter.getFile(f);
+			ArrayList<LibraryEntry> entries=lib.getAllEntries(false, new AminoAcidConstants());
+			TIntArrayList ranges=new TIntArrayList();
+			for (LibraryEntry entry : entries) {
+				if (entry instanceof ChromatogramLibraryEntry) {
+					float[] median=((ChromatogramLibraryEntry) entry).getMedianChromatogram();
+					float max=0;
+					int maxIndex=0;
+					for (int i = 0; i < median.length; i++) {
+						if (max<median[i]) {
+							max=median[i];
+							maxIndex=i;
+						}
+					}
+					int startIndex=maxIndex;
+					for (int j = maxIndex-1; j >= 0; j--) {
+						if (median[j]>minIntensity) {
+							startIndex=j;
+						} else {
+							break;
+						}
+					}
+					int stopIndex=maxIndex;
+					for (int j = maxIndex+1; j < median.length; j++) {
+						if (median[j]>minIntensity) {
+							stopIndex=j;
+						} else {
+							break;
+						}
+					}
+					ranges.add(stopIndex-startIndex);
+				}
+			}
+			int[] rangesArray=ranges.toArray();
+			Arrays.sort(rangesArray);
+			int percent05=rangesArray[Math.round(rangesArray.length*0.05f)];
+			int percent25=rangesArray[Math.round(rangesArray.length*0.25f)];
+			int percent50=rangesArray[Math.round(rangesArray.length*0.50f)];
+			int percent75=rangesArray[Math.round(rangesArray.length*0.75f)];
+			int percent95=rangesArray[Math.round(rangesArray.length*0.95f)];
+			
+			int[] histogram=new int[16];
+			for (int range : rangesArray) {
+				if (range>=histogram.length) {
+					range=histogram.length-1;
+				}
+				histogram[range]++;
+			}
+			
+			int fiveOrBelow=0;
+			int sixToSeven=0;
+			int eightToTen=0;
+			int elevenOrHigher=0;
+			for (int range : rangesArray) {
+				if (range<=5) {
+					fiveOrBelow++;
+				} else if (range<=7) {
+					sixToSeven++;
+				} else if (range<=10) {
+					eightToTen++;
+				} else {
+					elevenOrHigher++;
+				}
+			}
+			
+			//System.out.println(fname+","+percent05+","+percent25+","+percent50+","+percent75+","+percent95);
+			System.out.println(fname+","+fiveOrBelow+","+sixToSeven+","+eightToTen+","+elevenOrHigher);
+		}
+	}
+
+	public static void main4(String[] args) throws Exception {
 		LibraryInterface lib=BlibToLibraryConverter.getFile(new File("/Volumes/bcsbluessd/kkolotyuk/inputs", "prosit-output-background.dlib"));
 		final ArrayList<LibraryEntry> entries=lib.getEntries(new Range(339, 400), false, new AminoAcidConstants());
 		System.out.println(entries.size());

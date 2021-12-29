@@ -110,13 +110,21 @@ public class BlibToLibraryConverter {
 		}
 	}
 
-	public static LibraryInterface convert(File blibFile, Optional<File> irtFile, File fastaFile, boolean higherScoreBetter, SearchParameters params) {
+	/**
+	 * @return A <emph>closed</emph> {@code LibraryFile} instance pointing to {@code elibFile}
+	 *         containing the results of conversion.
+	 */
+	public static LibraryFile convert(File blibFile, Optional<File> irtFile, File fastaFile, boolean higherScoreBetter, SearchParameters params) {
 		String absolutePath = blibFile.getAbsolutePath();
 		File elibFile = new File(absolutePath.substring(0, absolutePath.lastIndexOf('.')) + LibraryFile.DLIB);
 		return convert(blibFile, elibFile, irtFile, fastaFile, higherScoreBetter, params);
 	}
 
-	public static LibraryInterface convert(File blibFile, File elibFile, Optional<File> irtFile, File fastaFile, boolean higherScoreBetter, SearchParameters params) {
+	/**
+	 * @return A <emph>closed</emph> {@code LibraryFile} instance pointing to {@code elibFile}
+	 *         containing the results of conversion.
+	 */
+	public static LibraryFile convert(File blibFile, File elibFile, Optional<File> irtFile, File fastaFile, boolean higherScoreBetter, SearchParameters params) {
 		TObjectFloatHashMap<String> irtMap = null;
 		try {
 			Logger.logLine("Indexing " + blibFile.getName() + " ...");
@@ -130,7 +138,7 @@ public class BlibToLibraryConverter {
 				irtMap = irt.getIRTs();
 			}
 			blib.getCopyEntriesToLibrary(elib, Optional.ofNullable(irtMap), fastaFile, params);
-			
+
 			// if there's no iRT file, then try to adjust the RTs
 //			if (!irtFile.isPresent()) {
 //				ArrayList<LibraryEntry> entries=elib.getAllEntries(false, params.getAAConstants());

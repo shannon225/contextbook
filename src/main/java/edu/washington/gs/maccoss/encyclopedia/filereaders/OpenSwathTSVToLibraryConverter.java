@@ -171,12 +171,20 @@ public class OpenSwathTSVToLibraryConverter {
 		Logger.logLine("Finished reading "+tsvFile.getName());
 	}
 
-	public static LibraryInterface convertFromOpenSwathTSV(File tsvFile, File fastaFile, SearchParameters parameters) {
+	/**
+	 * @return A <emph>closed</emph> {@code LibraryFile} instance pointing to {@code elibFile}
+	 *         containing the results of conversion.
+	 */
+	public static LibraryFile convertFromOpenSwathTSV(File tsvFile, File fastaFile, SearchParameters parameters) {
 		String absolutePath=tsvFile.getAbsolutePath();
 		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
 		return convertFromOpenSwathTSV(tsvFile, fastaFile, libraryFile, parameters);
 	}
 
+	/**
+	 * @return A <emph>closed</emph> {@code LibraryFile} instance pointing to {@code elibFile}
+	 *         containing the results of conversion.
+	 */
 	public static LibraryFile convertFromOpenSwathTSV(File tsvFile, File fastaFile, File libraryFile, SearchParameters parameters) {
 		String sourceFile = tsvFile.getName();
 		AminoAcidConstants aaConstants=parameters.getAAConstants();
@@ -230,6 +238,10 @@ public class OpenSwathTSVToLibraryConverter {
 		}
 	}
 
+	/**
+	 * @return A <emph>closed</emph> {@code LibraryFile} instance pointing to {@code elibFile}
+	 *         containing the results of conversion.
+	 */
 	public static LibraryFile processPeptideEntries(String sourceFile, File fastaFile, File libraryFile, SearchParameters parameters, AminoAcidConstants aaConstants,
 			final ArrayList<ImmutablePeptideEntry> peptides) throws IOException, SQLException {
 		ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
@@ -277,6 +289,7 @@ public class OpenSwathTSVToLibraryConverter {
 		library.addProteinsFromEntries(entries);
 		library.createIndices();
 		library.saveAsFile(libraryFile);
+		library.close();
 		return library;
 	}
 

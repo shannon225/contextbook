@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.tests.AbstractFileConverterTest;
 import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
@@ -54,7 +55,18 @@ public class MSPReaderTest extends AbstractFileConverterTest {
 	}
 
 	@Test
-	public void testFastaReader() throws Exception {
+	public void testUnimodReader() throws Exception {
+		InputStream is=getClass().getResourceAsStream("/unimod.msp");
+		ArrayList<LibraryEntry> entries=MSPReader.readMSP(is, "unimod.msp", true);
+		assertEquals(1, entries.size());
+		LibraryEntry e=entries.get(0);
+		assertEquals("ALGNICYDSHEGR", e.getPeptideSeq());
+		assertEquals(3, e.getPrecursorCharge());
+		assertEquals("ALGNIC[+57.0214635]YDSHEGR", e.getPeptideModSeq());
+	}
+
+	@Test
+	public void testReader() throws Exception {
 		InputStream is=getClass().getResourceAsStream("/truncated.msp");
 		ArrayList<LibraryEntry> entries=MSPReader.readMSP(is, "truncated.msp", true);
 		assertEquals(4, entries.size());
@@ -105,6 +117,8 @@ public class MSPReaderTest extends AbstractFileConverterTest {
 		library.openFile(out.toFile());
 		try {
 			EncyclopediaTestUtils.assertValidDlib(library);
+
+			assertEquals("Wrong number of entries", 0, library.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
 		} finally {
 			EncyclopediaTestUtils.cleanupLibrary(library);
 		}
