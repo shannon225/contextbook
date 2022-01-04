@@ -46,7 +46,7 @@ public abstract class AbstractEndToEndIT {
 	static Range STANDARD_RANGE = new Range(592.5840338877389,604.3740813086648);
 
 	static double LOWER_BOUND_PEPTIDE_MATCH = 0.95;
-	static double UPPER_BOUND_PEPTIDE_MATCH = 1.05;
+	static double UPPER_BOUND_PEPTIDE_MATCH = 1.11;
 	static double LOWER_BOUND_PI0_MATCH = 0.75;
 	static double UPPER_BOUND_PI0_MATCH = 1.25;
 
@@ -261,7 +261,7 @@ public abstract class AbstractEndToEndIT {
 		// the preceding checks for overall number are sufficiently reassuring.
 		double percentage = peptideMatches / ((double) peptides.size());
 
-		assertTrue("Fewer than 95% peptides match reference in " + newFile.getName(), percentage > LOWER_BOUND_PEPTIDE_MATCH);
+		assertTrue("Fewer than 90% peptides match reference in " + newFile.getName(), percentage > (1 / UPPER_BOUND_PEPTIDE_MATCH));
 
 		assertTrue("pi0 lower than expected in " + newFile.getName(), Double.parseDouble(newFile.getMetadata().get("pi0")) > LOWER_BOUND_PI0_MATCH * (Double.parseDouble(expectedPi0)));
 	    assertTrue("pi0 greater than expected in " + newFile.getName(), Double.parseDouble(newFile.getMetadata().get("pi0")) < UPPER_BOUND_PI0_MATCH * (Double.parseDouble(expectedPi0)));
