@@ -54,7 +54,7 @@
 		reference data jar on a successful build. Please double-check
 		the AWS repo and ensure that this JAR exists, and if not, set it
 		to the most recent version. -->
-		<regressionReferenceVersion>1.11.19</regressionReferenceVersion>
+		<regressionReferenceVersion>1.5.0-SNAPSHOT</regressionReferenceVersion>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
