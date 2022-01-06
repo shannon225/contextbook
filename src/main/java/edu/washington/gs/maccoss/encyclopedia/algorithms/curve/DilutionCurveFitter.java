@@ -751,12 +751,16 @@ public class DilutionCurveFitter {
 		public float getLOD() {
 			//noiseValue=mx+b
 			if (m==0) return Float.POSITIVE_INFINITY;
-			return Math.max(lastZero, Math.min(0f, (noiseMax-b)/m));
+			float lod = Math.max(lastZero, Math.min(0f, (noiseMax-b)/m));
+			if (Float.isInfinite(lod)) return 0;
+			return lod;
 		}
 		public float getLOQ() {
 			if (m==0) return Float.POSITIVE_INFINITY;
 			float target=noiseMax+3*noiseStdev;
-			return Math.max(firstNonZero, Math.min(0f, (target-b)/m));
+			float loq = Math.max(firstNonZero, Math.min(0f, (target-b)/m));
+			if (Float.isInfinite(loq)) return 0;
+			return loq;
 		}
 		
 		public float getMaxValue() {
