@@ -9,14 +9,11 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
-import org.jzy3d.plot3d.builder.Mapper;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter3d;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -141,19 +138,19 @@ public class WHOI2DLCTestCase {
 		System.out.println("Starting fitting...");
 		TwoDimensionalKDE kde=new TwoDimensionalKDE(rts, 1000);
 
-		System.out.println("Starting plotting...");
-
-		final TwoDimensionalKDE finalFilter=kde;
-		Mapper mapper=new Mapper() {
-			@Override
-			public double f(double arg0, double arg1) {
-				return finalFilter.f(arg0, arg1);
-			}
-		};
-		Charter3d.plot(mapper, 
-				new org.jzy3d.maths.Range(finalFilter.getXRange().getStart(), finalFilter.getXRange().getStop()), 
-				new org.jzy3d.maths.Range(finalFilter.getYRange().getStart(), finalFilter.getYRange().getStop()), 
-				kde.getResolution()/5);
+//		System.out.println("Starting plotting...");
+//
+//		final TwoDimensionalKDE finalFilter=kde;
+//		Mapper mapper=new Mapper() {
+//			@Override
+//			public double f(double arg0, double arg1) {
+//				return finalFilter.f(arg0, arg1);
+//			}
+//		};
+//		Charter3d.plot(mapper, 
+//				new org.jzy3d.maths.Range(finalFilter.getXRange().getStart(), finalFilter.getXRange().getStop()), 
+//				new org.jzy3d.maths.Range(finalFilter.getYRange().getStart(), finalFilter.getYRange().getStop()), 
+//				kde.getResolution()/5);
 	}
 
 	private static TObjectFloatHashMap<String> getRTs(LibraryFile refLib) throws IOException, SQLException, DataFormatException {

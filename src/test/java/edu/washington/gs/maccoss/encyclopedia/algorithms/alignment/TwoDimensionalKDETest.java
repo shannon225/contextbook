@@ -2,10 +2,8 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Optional;
 
-import org.jzy3d.plot3d.builder.Mapper;
-
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter3d;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.MedianInterpolatorTest;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.CosineGaussian;
@@ -35,8 +33,8 @@ public class TwoDimensionalKDETest extends TestCase {
 		ArrayList<XYPoint> data=new ArrayList();
 		data=rts;
 		
-		//RetentionTimeFilter filter=RetentionTimeFilter.getFilter(rts);
-		//filter.plot(rts, Optional.ofNullable((File)null));
+		RetentionTimeFilter filter=RetentionTimeFilter.getFilter(rts);
+		filter.plot(rts, Optional.ofNullable((File)null));
 		
 		//RTFitMixtureModel model=new RTFitMixtureModel(rts, filter.getRtWarper());
 		
@@ -46,16 +44,16 @@ public class TwoDimensionalKDETest extends TestCase {
 		
 		TwoDimensionalKDE kde=new TwoDimensionalKDE(data, 1000);
 
-		Mapper mapper=new Mapper() {
-			@Override
-			public double f(double arg0, double arg1) {
-				return kde.f(arg0, arg1);
-			}
-		};
-		Charter3d.plot(mapper, 
-				new org.jzy3d.maths.Range(kde.getXRange().getStart(), kde.getXRange().getStop()), 
-				new org.jzy3d.maths.Range(kde.getYRange().getStart(), kde.getYRange().getStop()), 
-				kde.getResolution()/5);
+//		Mapper mapper=new Mapper() {
+//			@Override
+//			public double f(double arg0, double arg1) {
+//				return kde.f(arg0, arg1);
+//			}
+//		};
+//		Charter3d.plot(mapper, 
+//				new org.jzy3d.maths.Range(kde.getXRange().getStart(), kde.getXRange().getStop()), 
+//				new org.jzy3d.maths.Range(kde.getYRange().getStart(), kde.getYRange().getStop()), 
+//				kde.getResolution()/5);
 	}
 	
 	public void testStamp() {

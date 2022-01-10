@@ -15,7 +15,7 @@ import gnu.trove.procedure.TFloatObjectProcedure;
 
 public class StripeFile3DTest {
 	public static void main(String[] args) throws Exception {
-		File diaFile=new File("/Users/searleb/Documents/villen_manuscript/q05498_bs_MCF7_IMAC_DIA_R1.mzML");
+		File diaFile=new File("/Users/searleb/Documents/backup/localization_manuscript/prms/20160718_FU_bcs_4a_PRM.mzML");
 		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, PecanParameterParser.getDefaultParametersObject());
 		
 		ArrayList<PrecursorScan> scans=stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);

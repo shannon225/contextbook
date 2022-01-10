@@ -1,6 +1,7 @@
 EncyclopeDIA changelog for user-facing changes:
 
 encyclopedia-2.0.0-SNAPSHOT
+ - Feature: removed Jzy3D from build, which introduced an old version of Log4J
 
 encyclopedia-1.12.31 (December 31, 2021)
  - Feature: removed Log4J dependency from EncyclopeDIA build
