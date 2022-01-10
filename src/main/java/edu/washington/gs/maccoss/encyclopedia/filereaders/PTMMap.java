@@ -11,6 +11,9 @@ import uk.ac.ebi.pride.utilities.pridemod.model.Specificity.AminoAcid;
 import uk.ac.ebi.pride.utilities.pridemod.model.Specificity.Position;
 
 public class PTMMap {
+	public static void main(String[] args) {
+		System.out.println("Carbamidomethyl="+modReader.getPRIDEModByAccession("UNIMOD:4").getName());
+	}
 	private static final ModReader modReader=ModReader.getInstance();
 	private static final HashMap<String, PostTranslationalModification> cache=new HashMap<>();
 	

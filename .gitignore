@@ -1,3 +1,4 @@
 /target/
 **/.DS_Store
 /catalina.base_IS_UNDEFINED/
+.metadata/**

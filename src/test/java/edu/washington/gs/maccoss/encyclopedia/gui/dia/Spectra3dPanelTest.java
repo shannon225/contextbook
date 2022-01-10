@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
-import org.jzy3d.chart.ChartLauncher;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
@@ -38,7 +36,7 @@ public class Spectra3dPanelTest {
 		}
 	}
 
-	public static void main(String[] args) throws Exception {
+	public static void main4(String[] args) throws Exception {
 		SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(16.7), new MassTolerance(16.7), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA, false, true, false);
 
 		File file=new File("/Users/bsearle/Documents/conferences/abrf2019/cwt_peakpicked/EMM2-N_30min_1st_POS.mzML");
@@ -113,10 +111,10 @@ public class Spectra3dPanelTest {
 		System.out.println(index+" total peaks");
 		
 		
-		Spectra3dPanel panel=new Spectra3dPanel(truncatedStripes, ions.toArray(new FragmentIon[ions.size()]), params.getFragmentTolerance());
-		System.out.println("starting plotting procedure...");
-		
-		ChartLauncher.openChart(panel.getChart());
+//		Spectra3dPanel panel=new Spectra3dPanel(truncatedStripes, ions.toArray(new FragmentIon[ions.size()]), params.getFragmentTolerance());
+//		System.out.println("starting plotting procedure...");
+//		
+//		ChartLauncher.openChart(panel.getChart());
 	}
 
 	/**
@@ -124,7 +122,7 @@ public class Spectra3dPanelTest {
 	 * @param args
 	 * @throws Exception
 	 */
-	public static void main3(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
 		SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(16.7), new MassTolerance(16.7), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA, false, true, false);
 
 		File file=new File("/Users/searleb/Documents/school/perspective/rawfiles/2017dec27_prm_6b_rep1_180103142426.mzML");
@@ -180,9 +178,9 @@ public class Spectra3dPanelTest {
 		System.out.println(index+" total peaks");
 		
 		
-		Spectra3dPanel panel=new Spectra3dPanel(stripes, ions.toArray(new FragmentIon[ions.size()]), params.getFragmentTolerance());
-		
-		ChartLauncher.openChart(panel.getChart());
+//		Spectra3dPanel panel=new Spectra3dPanel(stripes, ions.toArray(new FragmentIon[ions.size()]), params.getFragmentTolerance());
+//		
+//		ChartLauncher.openChart(panel.getChart());
 	}
 
 	public static void main2(String[] args) throws Exception {
@@ -225,8 +223,8 @@ public class Spectra3dPanelTest {
 		ArrayList<FragmentScan> stripes=raw.getStripes(targetMz, rtInSecStart-RT_MARGIN, rtInSecStop+RT_MARGIN, false);
 		Collections.sort(stripes);
 		
-		Spectra3dPanel panel=new Spectra3dPanel(stripes, ions, params.getFragmentTolerance());
-		
-		ChartLauncher.openChart(panel.getChart());
+//		Spectra3dPanel panel=new Spectra3dPanel(stripes, ions, params.getFragmentTolerance());
+//		
+//		ChartLauncher.openChart(panel.getChart());
 	}
 }

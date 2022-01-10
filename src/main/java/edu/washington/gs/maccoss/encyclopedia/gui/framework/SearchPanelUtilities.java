@@ -59,12 +59,11 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.MS2PIPReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MaxquantMSMSConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.OpenSwathTSVToLibraryConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SpectronautCSVToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.TraMLToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.TraMLSAXToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.MS2PIPWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.MSPWriter;
@@ -89,7 +88,7 @@ public class SearchPanelUtilities {
 
 		FileDialog dialog=new FileDialog((JFrame)null, "mzML files", FileDialog.LOAD);
 		dialog.setMultipleMode(true);
-		dialog.setFilenameFilter(new SimpleFilenameFilter(".mzML"));
+		dialog.setFilenameFilter(new SimpleFilenameFilter(".mzML", StripeFile.DIA_EXTENSION));
 		dialog.setVisible(true);
 		File[] featureFiles=dialog.getFiles();
 
@@ -110,7 +109,10 @@ public class SearchPanelUtilities {
 				protected Nothing doInBackgroundForReal() throws Exception {
 					for (int i=0; i<filesToLoad.length; i++) {
 						System.out.println("Processing "+filesToLoad[i]);
-						StripeFileGenerator.getFile(filesToLoad[i], params);
+						StripeFileInterface file=StripeFileGenerator.getFile(filesToLoad[i], params);
+						if (filesToLoad[i].getName().endsWith(StripeFile.DIA_EXTENSION) && file instanceof StripeFile) {
+							((StripeFile)file).saveFile();
+						}
 					}
 					return Nothing.NOTHING;
 				}
@@ -854,15 +856,15 @@ public class SearchPanelUtilities {
 		final FileChooserPanel blibFileChooser=new FileChooserPanel(null, "BLIB", new SimpleFilenameFilter(".blib"), true);
 		final FileChooserPanel iRTFileChooser=new FileChooserPanel(null, "IRT Database", new SimpleFilenameFilter(".irtdb"), false);
 		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);
-		final JCheckBox higherScoresAreBetterBox=new JCheckBox("Higher scores are better");
-		higherScoresAreBetterBox.setSelected(false);
+		//final JCheckBox higherScoresAreBetterBox=new JCheckBox("Higher scores are better");
+		//higherScoresAreBetterBox.setSelected(false);
 
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(blibFileChooser);
 		options.add(iRTFileChooser);
 		options.add(fastaFileChooser);
-		options.add(higherScoresAreBetterBox);
+		//options.add(higherScoresAreBetterBox);
 		
 		JPanel buttons=new JPanel();
 		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -873,7 +875,7 @@ public class SearchPanelUtilities {
 				final File blibFile=blibFileChooser.getFile();
 				final File irtFile=iRTFileChooser.getFile();
 				final File fastaFile=fastaFileChooser.getFile();
-				final boolean higherScoresAreBetter=higherScoresAreBetterBox.isSelected();
+				//final boolean higherScoresAreBetter=higherScoresAreBetterBox.isSelected();
 				
 				if (blibFile!=null&&blibFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
 					dialog.setVisible(false);
@@ -882,7 +884,7 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading BLIB File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							BlibToLibraryConverter.convert(blibFile, Optional.ofNullable(irtFile), fastaFile, higherScoresAreBetter, params);
+							BlibToLibraryConverter.convert(blibFile, Optional.ofNullable(irtFile), fastaFile, false, params);
 							Logger.logLine("Finished reading "+blibFile.getName());
 							return Nothing.NOTHING;
 						}
@@ -1738,7 +1740,7 @@ public class SearchPanelUtilities {
 				final File fastaFile=fastaFileChooser.getFile();
 				
 				if (tramlFile!=null&&tramlFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
-					if (tramlFile.length()>1024*1024*10) {
+					if (tramlFile.length()>1024*1024*1000) {
 					    int result = JOptionPane.showConfirmDialog(dialog, "This file is "+(tramlFile.length()/1024/1024)+" MB and will take a very long time to convert. Are you sure?",
 					        "Warning: long conversion!", JOptionPane.OK_CANCEL_OPTION);
 					    if (result==JOptionPane.CANCEL_OPTION) return;
@@ -1749,7 +1751,7 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading TraML File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							TraMLToLibraryConverter.convertTraML(tramlFile, fastaFile, params);
+							TraMLSAXToLibraryConverter.convertTraML(tramlFile, fastaFile, params);
 							Logger.logLine("Finished reading "+tramlFile.getName());
 							return Nothing.NOTHING;
 						}
