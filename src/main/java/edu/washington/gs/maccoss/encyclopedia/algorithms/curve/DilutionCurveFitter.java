@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.curve;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.io.File;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -21,6 +23,12 @@ import java.util.zip.DataFormatException;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.axis.LogAxis;
 import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.DeviationRenderer;
+import org.jfree.chart.renderer.xy.XYDifferenceRenderer;
+import org.jfree.data.general.Dataset;
+import org.jfree.data.xy.DefaultIntervalXYDataset;
+import org.jfree.data.xy.XYSeriesCollection;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -30,6 +38,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.XYGraphingTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
@@ -244,7 +253,7 @@ public class DilutionCurveFitter {
 	private static ArrayList<FitPeptide> fitCurves(final File outputDirectory, File dataFile, final ArrayList<ScoredObject<String>> expectedConcentrations,
 			final float[] expected, String requiredAccessionText, boolean useLineNoise) throws FileNotFoundException, UnsupportedEncodingException {
 		final PrintWriter reportWriter=new PrintWriter(new File(outputDirectory, "report.csv"), "UTF-8");
-		reportWriter.println("peptide,protein,lod,loq,r2,m,b,max");
+		reportWriter.println("peptide,protein,lod,loq,r2,m,b,noiseStdev,linearStdev,max");
 
 		final ArrayList<FitPeptide> fitPeptides=new ArrayList<FitPeptide>();
 		TableParserMuscle muscle = new TableParserMuscle() {
@@ -271,11 +280,15 @@ public class DilutionCurveFitter {
 				actualArray=General.divide(actualArray, maxMeasuredValue);
 				Pair<DilutionFit, Float> pair=process(peptide, protein, expected, actualArray, maxMeasuredValue, useLineNoise);
 				DilutionFit bestFit=pair.x;
+				if (bestFit==null) {
+					Logger.logLine("Failed to fit "+peptide);
+					return;
+				}
 
 				float lod=bestFit.getLOD();
 				float loq=bestFit.getLOQ();
 				
-				reportWriter.println(peptide+","+protein+","+lod+","+loq+","+pair.y+","+bestFit.m+","+bestFit.b+","+bestFit.maxValue);
+				reportWriter.println(peptide+","+protein+","+lod+","+loq+","+pair.y+","+bestFit.m+","+bestFit.b+","+bestFit.noiseStdev+","+bestFit.linearStdev+","+bestFit.maxValue);
 				if (Float.isFinite(loq)&&loq<0) {
 					fitPeptides.add(new FitPeptide(peptide, protein, bestFit, expected, actualArray));
 				}
@@ -559,18 +572,12 @@ public class DilutionCurveFitter {
 			}
 			if (valuesAboveNoise||n==0) continue;
 			
-			float linearStdev=(float)Math.sqrt(sumVariance/n);
-			float totalStdev;
-			if (useLineNoise) {
-				totalStdev=Math.max(linearStdev, General.stdev(noiseArray));
-			} else {
-				totalStdev=General.stdev(noiseArray);
-				noiseMax=General.mean(noiseArray);
-			}
+			float linearStdev=useLineNoise?(float)Math.sqrt(sumVariance/n):0.0f;
+			float noiseStdev = General.stdev(noiseArray);
 
 			// calculate equations
 			Pair<Float, Float> equation=LinearRegression.getRegression(linearX.toArray(), linearY.toArray());
-			fit=new DilutionFit(noiseMean, noiseMax, totalStdev, equation.x, equation.y, lastZero, firstNonZero, maxMeasuredValue);
+			fit=new DilutionFit(noiseMean, noiseMax, noiseStdev, linearStdev, equation.x, equation.y, lastZero, firstNonZero, maxMeasuredValue);
 			
 			if (false) { // FIXME
 				float max=Log.log10(General.max(actual));
@@ -587,7 +594,7 @@ public class DilutionCurveFitter {
 			if(crossOver>0&&fit.getLOD()<loggedExpected.get(crossOver-1)) {
 				// if the point where it hits noiseMean is less than the crossOver point, forcing intercept at noiseMean crossOver point
 				equation=LinearRegression.getRegressionWithFixedIntercept(linearX.toArray(), linearY.toArray(), new XYPoint(loggedExpected.get(crossOver), noiseMean));
-				fit=new DilutionFit(noiseMean, noiseMax, totalStdev, equation.x, equation.y, lastZero, firstNonZero, maxMeasuredValue);
+				fit=new DilutionFit(noiseMean, noiseMax, noiseStdev, linearStdev, equation.x, equation.y, lastZero, firstNonZero, maxMeasuredValue);
 			}
 			
 			// calculate deviation to find the best fit
@@ -600,7 +607,9 @@ public class DilutionCurveFitter {
 				float residual=actualY-predictedY;
 				rsquared+=residual*residual;
 			}
-			//System.out.println(crossOver+") "+rsquared+" ("+noise.size()+"/"+linearX.size()+") --> m:"+equation.x+", b:"+equation.y+", lastZero:"+lastZero); // FIXME
+//			if (peptide.equals("AGVLGALALGR")) {
+//				System.out.println(crossOver+") "+rsquared+" ("+noise.size()+"/"+linearX.size()+") --> m:"+equation.x+", b:"+equation.y+", lastZero:"+lastZero); // FIXME
+//			}
 			
 			// slope has to be at least 0.5
 			if (fit.m>=0.5f&&rsquared<minRSquared) {
@@ -618,6 +627,10 @@ public class DilutionCurveFitter {
 		
 		float minNonZeroExpected=Float.MAX_VALUE;
 		float minNonZeroActual=Float.MAX_VALUE;
+		TFloatArrayList expectedFound=new TFloatArrayList();
+		TFloatArrayList expectedMissing=new TFloatArrayList();
+		TFloatArrayList actualFound=new TFloatArrayList();
+		TFloatArrayList actualMissing=new TFloatArrayList();
 		for (int i = 0; i < actual.length; i++) {
 			if (actual[i]>0&&expected[i]>0) {
 				if (actual[i]<minNonZeroActual) minNonZeroActual=actual[i];
@@ -626,8 +639,22 @@ public class DilutionCurveFitter {
 		}
 		
 		for (int i = 0; i < actual.length; i++) {
+			if (actual[i]<=0&&expected[i]<=0) {
+				actualMissing.add(minNonZeroActual/10f);
+				expectedMissing.add(minNonZeroExpected/10f);
+			} else if (actual[i]<=0) {
+				actualMissing.add(minNonZeroActual/10f);
+				expectedMissing.add(expected[i]);
+			} else if (expected[i]<=0) {
+				actualMissing.add(actual[i]);
+				expectedMissing.add(minNonZeroExpected/10f);
+			} else {
+				actualFound.add(actual[i]);
+				expectedFound.add(expected[i]);
+			}
 			if (actual[i]<=0) actual[i]=minNonZeroActual/10f;
 			if (expected[i]<=0) expected[i]=minNonZeroExpected/10f;
+
 		}
 		
 		float lod=(float)Math.pow(10, bestFit.getLOD());
@@ -636,12 +663,34 @@ public class DilutionCurveFitter {
 		XYTrace lodTrace=new XYTrace(new float[] {lod, lod}, new float[] {minNonZeroActual, maxActual}, GraphType.line, "LOD="+lod, Color.red, 2f);
 		XYTrace loqTrace=new XYTrace(new float[] {loq, loq}, new float[] {minNonZeroActual, maxActual}, GraphType.line, "LOQ="+loq, Color.cyan, 2f);
 		
-		XYTrace actualTrace=new XYTrace(expected, actual, GraphType.bigpoint, peptide, Color.BLACK, 10f);
-		XYTrace calculatedTrace=new XYTrace(expected, bestFit.getUnloggedPredicted(expected), GraphType.dashedline, "Calculated", Color.gray, 2f);
-		ChartPanel panel=Charter.getChart("Expected", "Actual", true, actualTrace, calculatedTrace, lodTrace, loqTrace);
+		XYTrace actualTrace=new XYTrace(expectedFound.toArray(), actualFound.toArray(), GraphType.bigpoint, peptide, Color.BLACK, 10f);
+		XYTrace actualMissingTrace=new XYTrace(expectedMissing.toArray(), actualMissing.toArray(), GraphType.bighollowpoint, "Missing", Color.BLACK, 10f);
+		ChartPanel panel=Charter.getChart("Expected", "Actual", true, actualTrace, actualMissingTrace, lodTrace, loqTrace);
 		
-		ValueAxis domain=panel.getChart().getXYPlot().getDomainAxis();
-		ValueAxis range=panel.getChart().getXYPlot().getRangeAxis();
+		TFloatArrayList expectedPlusLODList=new TFloatArrayList(expected);
+		expectedPlusLODList.add(lod);
+		expectedPlusLODList.sort();
+		float[] expectedPlusLOD=expectedPlusLODList.toArray();
+		float[] predicted = bestFit.getUnloggedPredicted(expectedPlusLOD);
+		
+		DefaultIntervalXYDataset dataset=new DefaultIntervalXYDataset();
+		float[] expectedLower=bestFit.getUnloggedLowerError(expectedPlusLOD);
+		float[] expectedUpper=bestFit.getUnloggedUpperError(expectedPlusLOD);
+		dataset.addSeries("Calculated", General.toDoubleArray(new float[][] {expectedPlusLOD, expectedPlusLOD, expectedPlusLOD, predicted, expectedLower, expectedUpper}));
+		
+		
+		XYPlot plot = panel.getChart().getXYPlot();
+		int currentCount=plot.getDatasetCount();
+		plot.setDataset(currentCount, dataset);
+		DeviationRenderer renderer = new DeviationRenderer(true, false);
+		renderer.setSeriesFillPaint(0, new Color(255, 255, 0, 125));
+		renderer.setSeriesStroke(0, new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0.0f, new float[] {3.0f, 5.0f}, 0.0f));
+		renderer.setSeriesPaint(0, Color.gray);
+
+		plot.setRenderer(currentCount, renderer);
+		
+		ValueAxis domain=plot.getDomainAxis();
+		ValueAxis range=plot.getRangeAxis();
 		LogAxis newDomain = new LogAxis("Expected");
 		newDomain.setLabelFont(domain.getLabelFont());
 		newDomain.setTickLabelFont(domain.getTickLabelFont());
@@ -649,8 +698,8 @@ public class DilutionCurveFitter {
 		newRange.setLabelFont(range.getLabelFont());
 		newRange.setTickLabelFont(range.getTickLabelFont());
 
-		panel.getChart().getXYPlot().setDomainAxis(newDomain);
-		panel.getChart().getXYPlot().setRangeAxis(newRange);
+		plot.setDomainAxis(newDomain);
+		plot.setRangeAxis(newRange);
 		return panel;
 	}
 
@@ -697,20 +746,24 @@ public class DilutionCurveFitter {
 		}
 	}
 	
+	private static final float NUM_STDEVS_FOR_LOQ=3.0f;
+	
 	public static class DilutionFit {
 		private final float noiseMean;
 		private final float noiseMax;
 		private final float noiseStdev;
+		private final float linearStdev;
 		private final float m;
 		private final float b;
 		private final float lastZero;
 		private final float firstNonZero;
 		private final float maxValue;
 		
-		public DilutionFit(float noiseMean, float noiseMax, float noiseStdev, float m, float b, float lastZero, float firstNonZero, float maxValue) {
+		public DilutionFit(float noiseMean, float noiseMax, float noiseStdev, float linearStdev, float m, float b, float lastZero, float firstNonZero, float maxValue) {
 			this.noiseMean = noiseMean;
 			this.noiseMax=noiseMax;
 			this.noiseStdev = noiseStdev;
+			this.linearStdev=linearStdev;
 			this.m = m;
 			this.b = b;
 			this.lastZero=lastZero;
@@ -720,8 +773,8 @@ public class DilutionCurveFitter {
 		
 		public float getPredicted(float x) {
 			float expectedY=m*x+b;
-			if (expectedY<noiseMean) {
-				return noiseMean;
+			if (expectedY<noiseMax) {
+				return noiseMax;
 			}
 			return expectedY;
 		}
@@ -747,20 +800,59 @@ public class DilutionCurveFitter {
 			}
 			return expectedYs;
 		}
+		public float[] getUnloggedUpperError(float[] xs) {
+			float[] expectedYs=new float[xs.length];
+			for (int i = 0; i < expectedYs.length; i++) {
+				float x=xs[i];
+
+				float loggedX=Log.log10(x);
+				float expectedY=getPredicted(loggedX);
+				if (expectedY>noiseMax) {
+					expectedY+=NUM_STDEVS_FOR_LOQ*linearStdev;
+				} else {
+					// noise level
+					expectedY+=NUM_STDEVS_FOR_LOQ*getStdev();
+				}
+				expectedYs[i]=(float)Math.pow(10, expectedY);
+			}
+			return expectedYs;
+		}
+
+		public float[] getUnloggedLowerError(float[] xs) {
+			float[] expectedYs=new float[xs.length];
+			for (int i = 0; i < expectedYs.length; i++) {
+				float x=xs[i];
+
+				float loggedX=Log.log10(x);
+				float expectedY=getPredicted(loggedX);
+				if (expectedY>noiseMax) {
+					expectedY-=NUM_STDEVS_FOR_LOQ*linearStdev;
+				} else {
+					// noise level
+					expectedY-=NUM_STDEVS_FOR_LOQ*getStdev();
+				}
+				expectedYs[i]=(float)Math.pow(10, expectedY);
+			}
+			return expectedYs;
+		}
 		
 		public float getLOD() {
 			//noiseValue=mx+b
-			if (m==0) return Float.POSITIVE_INFINITY;
+			if (m==0) return 0;
 			float lod = Math.max(lastZero, Math.min(0f, (noiseMax-b)/m));
 			if (Float.isInfinite(lod)) return 0;
 			return lod;
 		}
 		public float getLOQ() {
-			if (m==0) return Float.POSITIVE_INFINITY;
-			float target=noiseMax+3*noiseStdev;
+			if (m==0) return 0;
+			float target=noiseMax+NUM_STDEVS_FOR_LOQ*getStdev();
 			float loq = Math.max(firstNonZero, Math.min(0f, (target-b)/m));
 			if (Float.isInfinite(loq)) return 0;
 			return loq;
+		}
+		
+		public float getStdev() {
+			return Math.max(linearStdev, noiseStdev);
 		}
 		
 		public float getMaxValue() {
