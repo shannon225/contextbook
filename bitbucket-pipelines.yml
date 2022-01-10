@@ -32,29 +32,29 @@ pipelines:
   tags:
     # This build runs automatically but only on tagged encyclopedia releases
     encyclopedia-*:
-      # - step:
-      #     name: Build and Test
-      #     max-time: 30
-      #     caches:
-      #       - maven # predefined; caches ~/.m2/repository
-      #     script:
-      #       # Similar to above, but with encyclopedia executable JAR and ITs
-      #       # We also deploy the resulting attached artifacts, which (importantly)
-      #       # includes the regression test reference data that was generated.
-      #       - apt update && apt install -y libgomp1
-      #       - mvn -B verify deploy -PbuildEncyclopedia -DskipITs=false
-      #     artifacts:
-      #       # Defines the file(s) to be saved for use in the next step
-      #       - target/encyclopedia-*-executable.jar
-      # - step:
-      #     name: Deploy
-      #     script:
-      #       # Upload file as a download to the repo
-      #       - pipe: atlassian/bitbucket-upload-file:0.3.0
-      #         variables:
-      #           BITBUCKET_USERNAME: $BITBUCKET_USERNAME
-      #           BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
-      #           FILENAME: 'target/encyclopedia-*-executable.jar'
+      - step:
+          name: Build and Test
+          max-time: 30
+          caches:
+            - maven # predefined; caches ~/.m2/repository
+          script:
+            # Similar to above, but with encyclopedia executable JAR and ITs
+            # We also deploy the resulting attached artifacts, which (importantly)
+            # includes the regression test reference data that was generated.
+            - apt update && apt install -y libgomp1
+            - mvn -B verify deploy -PbuildEncyclopedia -DskipITs=false
+          artifacts:
+            # Defines the file(s) to be saved for use in the next step
+            - target/encyclopedia-*-executable.jar
+      - step:
+          name: Deploy
+          script:
+            # Upload file as a download to the repo
+            - pipe: atlassian/bitbucket-upload-file:0.3.0
+              variables:
+                BITBUCKET_USERNAME: $BITBUCKET_USERNAME
+                BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
+                FILENAME: 'target/encyclopedia-*-executable.jar'
       - step:
           name: Push to Dockerhub
           script:
