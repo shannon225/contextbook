@@ -856,15 +856,15 @@ public class SearchPanelUtilities {
 		final FileChooserPanel blibFileChooser=new FileChooserPanel(null, "BLIB", new SimpleFilenameFilter(".blib"), true);
 		final FileChooserPanel iRTFileChooser=new FileChooserPanel(null, "IRT Database", new SimpleFilenameFilter(".irtdb"), false);
 		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);
-		final JCheckBox higherScoresAreBetterBox=new JCheckBox("Higher scores are better");
-		higherScoresAreBetterBox.setSelected(false);
+		//final JCheckBox higherScoresAreBetterBox=new JCheckBox("Higher scores are better");
+		//higherScoresAreBetterBox.setSelected(false);
 
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(blibFileChooser);
 		options.add(iRTFileChooser);
 		options.add(fastaFileChooser);
-		options.add(higherScoresAreBetterBox);
+		//options.add(higherScoresAreBetterBox);
 		
 		JPanel buttons=new JPanel();
 		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -875,7 +875,7 @@ public class SearchPanelUtilities {
 				final File blibFile=blibFileChooser.getFile();
 				final File irtFile=iRTFileChooser.getFile();
 				final File fastaFile=fastaFileChooser.getFile();
-				final boolean higherScoresAreBetter=higherScoresAreBetterBox.isSelected();
+				//final boolean higherScoresAreBetter=higherScoresAreBetterBox.isSelected();
 				
 				if (blibFile!=null&&blibFile.exists()&&fastaFile!=null&&fastaFile.exists()) {
 					dialog.setVisible(false);
@@ -884,7 +884,7 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading BLIB File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							BlibToLibraryConverter.convert(blibFile, Optional.ofNullable(irtFile), fastaFile, higherScoresAreBetter, params);
+							BlibToLibraryConverter.convert(blibFile, Optional.ofNullable(irtFile), fastaFile, false, params);
 							Logger.logLine("Finished reading "+blibFile.getName());
 							return Nothing.NOTHING;
 						}

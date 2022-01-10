@@ -1,30 +1,40 @@
-package edu.washington.gs.maccoss.encyclopedia.filereaders;
+package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
-import java.io.File;
 import java.util.ArrayList;
 
+import org.jfree.chart.ChartPanel;
+
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.AcquiredSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.map.hash.TFloatObjectHashMap;
 import gnu.trove.procedure.TFloatFloatProcedure;
 import gnu.trove.procedure.TFloatObjectProcedure;
 
-public class StripeFile3DTest {
-	public static void main(String[] args) throws Exception {
-		File diaFile=new File("/Users/searleb/Documents/backup/localization_manuscript/prms/20160718_FU_bcs_4a_PRM.mzML");
-		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, PecanParameterParser.getDefaultParametersObject());
-		
-		ArrayList<PrecursorScan> scans=stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE);
+public class RawFile3DPanel {
+	public static ChartPanel getPrecursorsPanel(ArrayList<PrecursorScan> precursors) {
+		ArrayList<AcquiredSpectrum> spectra=new ArrayList<>();
+		spectra.addAll(precursors);
+		return getPanelInternal(spectra);
+	}
+	public static ChartPanel getFragmentsPanel(ArrayList<FragmentScan> fragments) {
+		ArrayList<AcquiredSpectrum> spectra=new ArrayList<>();
+		spectra.addAll(fragments);
+		return getPanelInternal(spectra);
+	}
+	private static ChartPanel getPanelInternal(ArrayList<AcquiredSpectrum> precursors) {
+
 		float rtResolution=10f;
 		float mzResolution=10f;
 		
 		final TFloatObjectHashMap<TFloatFloatHashMap> threeDMap=new TFloatObjectHashMap<TFloatFloatHashMap>();
 		
-		for (PrecursorScan scan : scans) {
+		for (AcquiredSpectrum scan : precursors) {
 			final float rt=Math.round(scan.getScanStartTime()/rtResolution)*rtResolution;
 			double[] masses=scan.getMassArray();
 			float[] intensities=scan.getIntensityArray();
@@ -50,7 +60,7 @@ public class StripeFile3DTest {
 					mzSum.forEachEntry(new TFloatFloatProcedure() {
 						@Override
 						public boolean execute(float arg0, float arg1) {
-							points.add(new XYZPoint(rt, arg0, arg1));
+							points.add(new XYZPoint(rt/60f, arg0, arg1));
 							return true;
 						}
 					});
@@ -61,7 +71,7 @@ public class StripeFile3DTest {
 		
 		System.out.println(points.size());
 
-		Charter.launchChart("Retention Time (Seconds)", "M/z", false, new XYZTrace("Intensity", points));
+		return Charter.getChart("Retention Time (min)", "m/z", false, new XYZTrace("Intensity", points));
 	}
 
 }

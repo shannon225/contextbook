@@ -5,15 +5,13 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import org.jzy3d.plot3d.builder.Mapper;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TwoDimensionalKDE;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter3d;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
@@ -34,19 +32,19 @@ public class MedianInterpolatorTest extends TestCase {
 		RetentionTimeAlignmentInterface filter=RetentionTimeFilter.getFilter(rts);
 		TwoDimensionalKDE kde=new TwoDimensionalKDE(rts);
 
-		final TwoDimensionalKDE finalFilter=kde;
-		Mapper mapper=new Mapper() {
-			@Override
-			public double f(double arg0, double arg1) {
-				return finalFilter.f(arg0, arg1);
-			}
-		};
-
-		Charter3d.plot(mapper, 
-				new org.jzy3d.maths.Range(finalFilter.getXRange().getStart(), finalFilter.getXRange().getStop()), 
-				new org.jzy3d.maths.Range(finalFilter.getYRange().getStart(), finalFilter.getYRange().getStop()), 
-				kde.getResolution()/5);
-		//filter.plot(rts, Optional.ofNullable(new File("/Users/searleb/Downloads/blah.txt")));
+//		final TwoDimensionalKDE finalFilter=kde;
+//		Mapper mapper=new Mapper() {
+//			@Override
+//			public double f(double arg0, double arg1) {
+//				return finalFilter.f(arg0, arg1);
+//			}
+//		};
+//
+//		Charter3d.plot(mapper, 
+//				new org.jzy3d.maths.Range(finalFilter.getXRange().getStart(), finalFilter.getXRange().getStop()), 
+//				new org.jzy3d.maths.Range(finalFilter.getYRange().getStart(), finalFilter.getYRange().getStop()), 
+//				kde.getResolution()/5);
+		filter.plot(rts, Optional.ofNullable(new File("/Users/searleb/Downloads/blah.txt")));
 	}
 	
 	public void testInterpolation() throws Exception {

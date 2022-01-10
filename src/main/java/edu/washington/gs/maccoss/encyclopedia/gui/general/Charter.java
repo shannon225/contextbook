@@ -6,6 +6,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.Shape;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -14,6 +15,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.font.TextAttribute;
+import java.awt.geom.Arc2D;
+import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
@@ -102,16 +105,16 @@ public class Charter {
 				644.3249822, 755.3933965, 772.3835602, 852.4461605, 885.4676242, 980.5411235, 998.5516882 }, new double[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, GraphType.spectrum,
 				"Trace3");
 
-		XYTraceInterface trace4=new XYTrace(
+		XYTrace trace4=new XYTrace(
 				new double[] {347.85, 426.35, 551.4, 552.13, 553.31, 553.87, 569.2, 571.3, 621.01, 621.88, 622.21, 637.77, 638.31, 639.15, 640.14, 648.13, 685.4, 703.51, 703.92, 704.61, 705.83,
 						706.33, 735.48, 735.9, 736.43, 755.31, 756.12, 757.03, 770.11, 772.55, 772.93, 774.72, 800.35, 824.93, 825.41, 825.85, 826.13, 826.86, 827.46, 843.2, 852.26, 852.86, 853.71,
 						854.45, 870.63, 872.11, 912.62},
 				new double[] {1713, 1166, 1941, 1890, 1873, 1465, 1151, 1456, 1936, 2725, 1253, 1352, 2858, 1810, 1334, 2466, 1279, 9072, 4986, 5070, 1320, 1220, 1202, 1550, 5121, 2735, 1452, 1084,
 						1136, 1661, 1544, 1620, 1210, 1770, 1297, 2086, 1635, 1117, 1432, 1652, 2143, 3766, 5043, 2124, 54156, 1310, 1240},
-				GraphType.dashedline, "Trace4");
+				GraphType.spectrum, "Trace4");
 
 		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, trace, trace2, trace3);
-		chart=getChart("M/Z", "Intensity", false, trace4);
+		chart=getChart("M/Z", "Intensity", false, trace4, new XYGraphingTrace(trace4, GraphType.point, "Trace4"));
 		launchChart(chart, "Title!");
 
 		// writeAsPDF(chart.getChart(), new
@@ -550,6 +553,25 @@ public class Charter {
 			return new Pair<AttributedString, Double>(yAxisLabel, 1.0);
 		}
 	}
+	
+
+    private static Shape createRingShape(
+        double centerX, double centerY, double outerRadius, double thickness)
+    {
+        Ellipse2D outer = new Ellipse2D.Double(
+            centerX - outerRadius, 
+            centerY - outerRadius,
+            outerRadius + outerRadius, 
+            outerRadius + outerRadius);
+        Ellipse2D inner = new Ellipse2D.Double(
+            centerX - outerRadius + thickness, 
+            centerY - outerRadius + thickness,
+            outerRadius + outerRadius - thickness - thickness, 
+            outerRadius + outerRadius - thickness - thickness);
+        Area area = new Area(outer);
+        area.subtract(new Area(inner));
+        return area;
+    }
 
 	public static ExtendedChartPanel getChart(final String xAxis, String yAxis, boolean displayLegend, double maxY, final XYTraceInterface... traces) {
 		return getChart(xAxis, yAxis, displayLegend, maxY, 16, traces);
@@ -631,30 +653,39 @@ public class Charter {
 
 				break;
 
+			case bighollowpoint:
+				renderer=new XYLineAndShapeRenderer();
+				renderer.setSeriesShape(0, createRingShape(0, 0, 3, 1));
+				
+				((XYLineAndShapeRenderer) renderer).setBaseLinesVisible(false);
+
+				break;
+
 			case bigpoint:
 				renderer=new XYLineAndShapeRenderer();
-				renderer.setSeriesShape(0, new Ellipse2D.Double(0, 0, 6, 6));
+				renderer.setSeriesShape(0, new Ellipse2D.Double(-3, -3, 6, 6));
+				
 				((XYLineAndShapeRenderer) renderer).setBaseLinesVisible(false);
 
 				break;
 
 			case point:
 				renderer=new XYLineAndShapeRenderer();
-				renderer.setSeriesShape(0, new Ellipse2D.Double(0, 0, 3, 3));
+				renderer.setSeriesShape(0, new Ellipse2D.Double(-1.5, -1.5, 3, 3));
 				((XYLineAndShapeRenderer) renderer).setBaseLinesVisible(false);
 
 				break;
 
 			case tinypoint:
 				renderer=new XYLineAndShapeRenderer();
-				renderer.setSeriesShape(0, new Ellipse2D.Double(0, 0, 1, 1));
+				renderer.setSeriesShape(0, new Ellipse2D.Double(-0.5, -0.5, 1, 1));
 				((XYLineAndShapeRenderer) renderer).setBaseLinesVisible(false);
 
 				break;
 
 			case text:
 				renderer=new XYLineAndShapeRenderer();
-				renderer.setSeriesShape(0, new Ellipse2D.Double(0, 0, 1, 1));
+				renderer.setSeriesShape(0, new Ellipse2D.Double(-0.5, -0.5, 1, 1));
 				((XYLineAndShapeRenderer) renderer).setBaseLinesVisible(false);
 
 				break;
@@ -680,6 +711,7 @@ public class Charter {
 			case boldline:
 			case squaredline:
 			case dashedline:
+			case bighollowpoint:
 			case bigpoint:
 			case point:
 			case tinypoint:

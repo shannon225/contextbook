@@ -4,7 +4,7 @@
 
 	<groupId>maccoss</groupId>
 	<artifactId>encyclopedia</artifactId>
-	<version>1.12.0-SNAPSHOT</version>
+	<version>2.0.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>encyclopedia</name>
@@ -48,7 +48,13 @@
 		-->
 		<skipITs>true</skipITs>
 
-		<regressionReferenceVersion>1.5.0-SNAPSHOT</regressionReferenceVersion> <!-- TODO: depend on production version of this dep -->
+		<!--
+		This should point to the latest stable build of EncyclopeDIA.
+		Seth's build configurations should automatically deploy the
+		reference data jar on a successful build. Please double-check
+		the AWS repo and ensure that this JAR exists, and if not, set it
+		to the most recent version. -->
+		<regressionReferenceVersion>1.5.0-SNAPSHOT</regressionReferenceVersion>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -535,11 +541,11 @@
 			<artifactId>jfreesvg</artifactId>
 			<version>3.2</version>
 		</dependency>
-		<dependency>
+<!-- 		<dependency>
 			<groupId>org.jzy3d</groupId>
 			<artifactId>jzy3d-api</artifactId>
 			<version>0.9.1</version>
-		</dependency>
+		</dependency> -->
 		<dependency>
 			<!-- This version (and before) is LGPL. After that it's AGPL. DO NOT UPGRADE! -->
 			<groupId>com.lowagie</groupId>
@@ -551,11 +557,11 @@
 			<artifactId>google-analytics-java</artifactId>
 			<version>2.0.0</version>
 		</dependency>
-		<dependency>
+<!-- 		<dependency>
 			<groupId>com.github.lejon</groupId>
 			<artifactId>T-SNE-Java</artifactId>
 			<version>v2.5.0</version>
-		</dependency>
+		</dependency> -->
 
 		<!-- support for sorting result TSV -->
 		<dependency>

@@ -138,6 +138,14 @@ public class General {
 		return f;
 	}
 	
+	public static double[][] toDoubleArray(float[][] a) {
+		double[][] f=new double[a.length][];
+		for (int i=0; i<f.length; i++) {
+			f[i]=toDoubleArray(a[i]);
+		}
+		return f;
+	}
+	
 	public static boolean equals(int[] a, int[] b) {
 		if (a.length!=b.length) return false;
 		for (int i=0; i<b.length; i++) {
