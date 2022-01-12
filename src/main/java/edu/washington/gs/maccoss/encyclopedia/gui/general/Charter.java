@@ -70,7 +70,7 @@ import com.itextpdf.text.pdf.PdfWriter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Boxplotter.BoxPlotterRenderer;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Boxplotter.CategoryBoxPlotterRenderer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -463,7 +463,7 @@ public class Charter {
 			dataset.add(Boxplotter.calculateBoxAndWhiskerStatistics(values[i].toArray()), xAxisLabel, categories[i]);
 		}
 
-		BoxPlotterRenderer renderer=new BoxPlotterRenderer();
+		CategoryBoxPlotterRenderer renderer=new CategoryBoxPlotterRenderer();
 		CategoryAxis xAxis=new CategoryAxis(xAxisLabel);
 		NumberAxis yAxis=new NumberAxis(yAxisLabel);
 		yAxis.setAutoRangeIncludesZero(false);
@@ -715,11 +715,9 @@ public class Charter {
 			case bigpoint:
 			case point:
 			case tinypoint:
-				XYSeries series=new XYSeries(trace.getName());
+				XYSeries series=new XYSeries(trace.getName(), false);
 				for (int i=0; i<x.length; i++) {
-					if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
-						series.add(x[i], y[i]);
-					}
+					series.add(x[i], y[i]);
 				}
 				dataset.addSeries(series);
 				break;

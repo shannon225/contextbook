@@ -659,12 +659,15 @@ public class DilutionCurveFitter {
 		
 		float lod=(float)Math.pow(10, bestFit.getLOD());
 		float loq=(float)Math.pow(10, bestFit.getLOQ());
-		float maxActual=General.max(actual);
-		XYTrace lodTrace=new XYTrace(new float[] {lod, lod}, new float[] {minNonZeroActual, maxActual}, GraphType.line, "LOD="+lod, Color.red, 2f);
-		XYTrace loqTrace=new XYTrace(new float[] {loq, loq}, new float[] {minNonZeroActual, maxActual}, GraphType.line, "LOQ="+loq, Color.cyan, 2f);
+		float maxExpected=General.max(expected);
+		float minExpected=General.min(expected);
+		
+		XYTrace lodTrace=new XYTrace(new float[] {lod}, new float[] {bestFit.getUnloggedPredicted(lod)}, GraphType.bighollowpoint, "LOD="+lod, Color.gray, 10f);
+		XYTrace loqTrace=new XYTrace(new float[] {minExpected, maxExpected, Float.NaN, loq, loq}, new float[] {loq, loq, Float.NaN, minExpected, maxExpected}, GraphType.dashedline, "LOQ="+loq, Color.red, 2f);
 		
 		XYTrace actualTrace=new XYTrace(expectedFound.toArray(), actualFound.toArray(), GraphType.bigpoint, peptide, Color.BLACK, 10f);
 		XYTrace actualMissingTrace=new XYTrace(expectedMissing.toArray(), actualMissing.toArray(), GraphType.bighollowpoint, "Missing", Color.BLACK, 10f);
+		//XYTrace targetTrace=new XYTrace(new float[] {minExpected,maxExpected}, new float[] {minExpected,maxExpected}, GraphType.dashedline, "Perfect Fit", Color.gray, 2f);
 		ChartPanel panel=Charter.getChart("Expected", "Actual", true, actualTrace, actualMissingTrace, lodTrace, loqTrace);
 		
 		TFloatArrayList expectedPlusLODList=new TFloatArrayList(expected);
@@ -683,7 +686,7 @@ public class DilutionCurveFitter {
 		int currentCount=plot.getDatasetCount();
 		plot.setDataset(currentCount, dataset);
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
-		renderer.setSeriesFillPaint(0, new Color(255, 255, 0, 125));
+		renderer.setSeriesFillPaint(0, new Color(255, 255, 0, 175));
 		renderer.setSeriesStroke(0, new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0.0f, new float[] {3.0f, 5.0f}, 0.0f));
 		renderer.setSeriesPaint(0, Color.gray);
 
@@ -801,17 +804,15 @@ public class DilutionCurveFitter {
 			return expectedYs;
 		}
 		public float[] getUnloggedUpperError(float[] xs) {
+			float loq=getLOQ();
 			float[] expectedYs=new float[xs.length];
 			for (int i = 0; i < expectedYs.length; i++) {
 				float x=xs[i];
 
 				float loggedX=Log.log10(x);
-				float expectedY=getPredicted(loggedX);
-				if (expectedY>noiseMax) {
-					expectedY+=NUM_STDEVS_FOR_LOQ*linearStdev;
-				} else {
-					// noise level
-					expectedY+=NUM_STDEVS_FOR_LOQ*getStdev();
+				float expectedY=getPredicted(loggedX)+NUM_STDEVS_FOR_LOQ*linearStdev;
+				if (expectedY<loq) {
+					expectedY=loq;
 				}
 				expectedYs[i]=(float)Math.pow(10, expectedY);
 			}
