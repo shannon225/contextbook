@@ -6,6 +6,7 @@ encyclopedia-2.0.0-SNAPSHOT
 encyclopedia-1.12.31 (December 31, 2021)
  - Feature: removed Log4J dependency from EncyclopeDIA build
  - Feature: updated TraML parsing to significantly improve speed
+ - Feature: added official Docker image at DockerHub (searlelab/encyclopedia), thanks Rico!
  - Bugfix: updated Percolator weights file loading to maintain both first pass and second pass Percolator analysis, and always respect the last Percolator model used
 
 encyclopedia-1.11.19 (November 19, 2021)
