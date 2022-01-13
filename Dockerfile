@@ -7,7 +7,7 @@ RUN apt-get update && \
 
 WORKDIR /code
 
-ARG VERSION=1.12.31
+ARG VERSION
 ENV VERSION ${VERSION}
 
 RUN wget -O "encyclopedia-$VERSION-executable.jar" "https://bitbucket.org/searleb/encyclopedia/downloads/encyclopedia-$VERSION-executable.jar"

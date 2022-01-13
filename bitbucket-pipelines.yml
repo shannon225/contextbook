@@ -59,7 +59,7 @@ pipelines:
           name: Push to Dockerhub
           script:
             # Get current version number
-            - export VERSION=$(wget -O- -q https://bitbucket.org/searleb/encyclopedia/downloads/current_version.txt)
+            - export VERSION=${BITBUCKET_TAG/encyclopedia-/}
             - export IMAGE_NAME=searlelab/encyclopedia
             - docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
             - docker build -t $IMAGE_NAME:$VERSION --build-arg VERSION=$VERSION .
