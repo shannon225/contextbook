@@ -200,7 +200,12 @@ public class OpenSwathTSVToLibraryConverter {
 				/**
 				 * Used only if the {@code transition_group_id} column is missing.
 				 */
-				String lastPeptideModSeq;
+				String lastPeptideModSeq = null;
+
+				/**
+				 * Used only if the {@code transition_group_id} column is missing.
+				 */
+				byte lastPeptideCharge = -1;
 
 				@Override
 				public void processRow(Map<String, String> row) {
@@ -217,11 +222,12 @@ public class OpenSwathTSVToLibraryConverter {
 
 					final int group;
 					if (null == groupIdString) {
-						// Group IDs not reported; assume we can use peptideModSeq. This requires that
+						// Group IDs not reported; assume we can use peptideModSeq/charge. Requires that
 						// each (peptideModSeq, charge) pair has only a single entry in the file and that
 						// all the fragments for a given pair are reported on consecutive lines.
-						if (null == lastPeptideModSeq || !lastPeptideModSeq.equals(peptideModSeq)) {
+						if (null == lastPeptideModSeq || !lastPeptideModSeq.equals(peptideModSeq) || 0 > lastPeptideCharge || lastPeptideCharge != charge) {
 							lastPeptideModSeq = peptideModSeq;
+							lastPeptideCharge = charge;
 							group = ++peptideCount;
 						} else {
 							group = peptideCount;
