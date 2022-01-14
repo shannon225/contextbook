@@ -138,6 +138,28 @@ public class Boxplotter {
 		Charter.launchChart(chartPanel, "Box-and-Whisker Demo");
 	}
 
+	public static BoxAndWhiskerItem calculateINFProtectedBoxAndWhiskerStatistics(float[] f, float positiveInf, float negativeInf, float nan) {
+		float[] data=f.clone();
+
+		for (int i = 0; i < data.length; i++) {
+			if (Float.isNaN(data[i])) {
+				data[i]=nan;
+			} else if (Float.isInfinite(data[i])) {
+				if (data[i]>0) {
+					data[i]=positiveInf;
+				} else {
+					data[i]=negativeInf;
+				}
+			} else if (data[i]>positiveInf) {
+				data[i]=positiveInf;
+			} else if (data[i]<negativeInf) {
+				data[i]=negativeInf;
+			}
+		}
+		
+		return calculateBoxAndWhiskerStatistics(data);
+	}
+
 	public static BoxAndWhiskerItem calculateBoxAndWhiskerStatistics(float[] f) {
 		float[] data=f.clone();
 		float mean=General.mean(data);
@@ -169,6 +191,18 @@ public class Boxplotter {
 			}
 			minOutlier=Math.min(minOutlier, minRegularValue);
 			maxOutlier=Math.max(maxOutlier, maxRegularValue);
+		}
+		if (minRegularValue==Double.POSITIVE_INFINITY) {
+			minRegularValue=General.min(f);
+		}
+		if (maxRegularValue==Double.NEGATIVE_INFINITY) {
+			maxRegularValue=General.max(f);
+		}
+		if (minOutlier==Double.POSITIVE_INFINITY) {
+			minOutlier=General.min(f);
+		}
+		if (maxOutlier==Double.NEGATIVE_INFINITY) {
+			maxOutlier=General.max(f);
 		}
 
 		return new BoxAndWhiskerItem(Double.valueOf(mean), Double.valueOf(median), Double.valueOf(q1), Double.valueOf(q3), Double.valueOf(minRegularValue), 

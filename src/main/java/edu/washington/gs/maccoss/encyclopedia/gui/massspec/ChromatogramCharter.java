@@ -9,6 +9,7 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.CombinedDomainXYPlot;
+import org.jfree.ui.RectangleInsets;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.ExtendedChartPanel;
@@ -35,7 +36,9 @@ public class ChromatogramCharter {
 		
 		parent.setDomainGridlinesVisible(true);
 		
-		ChartPanel chartPanel=new ChartPanel(new JFreeChart(parent), false);
+		JFreeChart chart = new JFreeChart(parent);
+		chart.setPadding(new RectangleInsets(10, 10, 10, 10));
+		ChartPanel chartPanel=new ChartPanel(chart, false);
 		chartPanel.getChart().removeLegend();
 		chartPanel.getChart().setBackgroundPaint(Color.white);
 		chartPanel.setMinimumDrawWidth(0);
