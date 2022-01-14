@@ -1,6 +1,20 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
 public class QuickMedian {
+	public static void main(String[] args) {
+		float[] data=new float[] {368149,219199,68060,105270};
+		data=General.divide(data, 1000000);
+
+		float median=QuickMedian.select(data, 0.5f);
+		float q1=QuickMedian.select(data, 0.25f);
+		float q3=QuickMedian.select(data, 0.75f);
+		float lowerOutlierThreshold=QuickMedian.select(data, 0.05f);
+		float upperOutlierThreshold=QuickMedian.select(data, 0.95f);
+
+		System.out.println(General.toString(data));
+		System.out.println(General.toString(new float[] {lowerOutlierThreshold, q1, median, q3, upperOutlierThreshold}));
+	}
+	
 	public static float median(float[] data) {
 		return select(data, 0.5f);
 	}

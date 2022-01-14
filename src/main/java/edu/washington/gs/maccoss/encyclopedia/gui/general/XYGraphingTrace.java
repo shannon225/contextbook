@@ -29,11 +29,9 @@ public class XYGraphingTrace extends XYTrace {
 	}
 
 	public XYSeries getSeries() {
-		XYSeries series=new XYSeries(getName());
+		XYSeries series=new XYSeries(getName(), false);
 		for (XYPoint xy : getPoints()) {
-			if (!Double.isNaN(xy.x)&&!Double.isNaN(xy.y)) {
-				series.add(xy.x, xy.y);
-			}
+			series.add(xy.x, xy.y);
 		}
 		return series;
 	}
@@ -80,9 +78,18 @@ public class XYGraphingTrace extends XYTrace {
 
 			break;
 
+		case bighollowpoint:
+			renderer=new XYLineAndShapeRenderer();
+			renderer.setSeriesShape(0, Charter.createRingShape(0, 0, 2.5, 0.75));
+			
+			((XYLineAndShapeRenderer) renderer).setBaseLinesVisible(false);
+
+			break;
+
 		case bigpoint:
 			renderer=new XYLineAndShapeRenderer();
-			renderer.setSeriesShape(0, new Ellipse2D.Double(-3, -3, 6, 6));
+			renderer.setSeriesShape(0, new Ellipse2D.Double(-2.5, -2.5, 5, 5));
+			
 			((XYLineAndShapeRenderer) renderer).setBaseLinesVisible(false);
 
 			break;
@@ -101,6 +108,7 @@ public class XYGraphingTrace extends XYTrace {
 
 			break;
 
+		case uncenteredText:
 		case text:
 			renderer=new XYLineAndShapeRenderer();
 			renderer.setSeriesShape(0, new Ellipse2D.Double(-0.5, -0.5, 1, 1));
