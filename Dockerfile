@@ -1,8 +1,8 @@
-FROM openjdk:8
+FROM openjdk:8-jre-slim
 
 RUN apt-get update && \
     apt-get -y upgrade && \ 
-    apt-get -y install libgomp1 && \
+    apt-get -y install libgomp1 wget && \
     apt-get clean
 
 WORKDIR /code
