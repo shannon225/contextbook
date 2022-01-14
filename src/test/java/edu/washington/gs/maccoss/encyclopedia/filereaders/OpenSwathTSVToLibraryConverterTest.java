@@ -5,8 +5,10 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import org.junit.Test;
 
 import edu.washington.gs.maccoss.encyclopedia.tests.AbstractFileConverterTest;
@@ -79,6 +81,24 @@ public class OpenSwathTSVToLibraryConverterTest extends AbstractFileConverterTes
 			EncyclopediaTestUtils.assertValidDlib(library);
 
 			assertEquals("Wrong number of entries", 0, library.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable()).size());
+		} finally {
+			EncyclopediaTestUtils.cleanupLibrary(library);
+		}
+	}
+
+	@Test
+	public void testConvertWithoutGroupId() throws Exception {
+		final Path csv = getResourceAsTempFile(tmpDir, "test_", ".tsv", "/edu/washington/gs/maccoss/encyclopedia/filereaders/no-group-id.tsv");
+
+		final LibraryFile library = OpenSwathTSVToLibraryConverter.convertFromOpenSwathTSV(csv.toFile(), getFasta().toFile(), SearchParameterParser.getDefaultParametersObject());
+		library.openFile();
+		try {
+			EncyclopediaTestUtils.assertValidDlib(library);
+
+			// Example file contains exactly one peptide
+			final ArrayList<LibraryEntry> allEntries = library.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable());
+			assertEquals("Wrong number of entries", 1, allEntries.size());
+			assertEquals("Wrong number of transitions", 5, allEntries.iterator().next().getMassArray().length);
 		} finally {
 			EncyclopediaTestUtils.cleanupLibrary(library);
 		}
