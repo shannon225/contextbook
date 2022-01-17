@@ -44,18 +44,20 @@ import org.jfree.ui.RectangleEdge;
 import org.jfree.ui.TextAnchor;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class Boxplotter {
-	private static Paint linePaint=Color.DARK_GRAY;
-	private static Stroke lineStroke=new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
-	private static Stroke lightlineStroke=new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+	private static Paint linePaint=Color.BLACK;
+	private static Stroke darklineStroke=new BasicStroke(2.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
+	private static Stroke lineStroke=new BasicStroke(0.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
+	private static Stroke lightlineStroke=new BasicStroke(0.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
 	private static Font lineFont=new Font("News Gothic MT", Font.PLAIN, 10);
 
 	public static void main(String[] args) {
-		XYBoxPlotterRenderer renderer=new XYBoxPlotterRenderer(100);
+		XYBoxPlotterRenderer renderer=new XYBoxPlotterRenderer(100, false);
 
 		final int seriesCount=3;
 		final int categoryCount=4;
@@ -139,6 +141,10 @@ public class Boxplotter {
 	}
 
 	public static BoxAndWhiskerItem calculateINFProtectedBoxAndWhiskerStatistics(float[] f, float positiveInf, float negativeInf, float nan) {
+		return calculateINFProtectedBoxAndWhiskerStatistics(f, positiveInf, negativeInf, nan, false);
+	}
+
+	public static BoxAndWhiskerItem calculateINFProtectedBoxAndWhiskerStatistics(float[] f, float positiveInf, float negativeInf, float nan, boolean isLogarithmic) {
 		float[] data=f.clone();
 
 		for (int i = 0; i < data.length; i++) {
@@ -157,11 +163,17 @@ public class Boxplotter {
 			}
 		}
 		
-		return calculateBoxAndWhiskerStatistics(data);
+		return calculateBoxAndWhiskerStatistics(data, isLogarithmic);
 	}
 
 	public static BoxAndWhiskerItem calculateBoxAndWhiskerStatistics(float[] f) {
+		return calculateBoxAndWhiskerStatistics(f, false);
+	}
+	public static BoxAndWhiskerItem calculateBoxAndWhiskerStatistics(float[] f, boolean isLogarithmic) {
 		float[] data=f.clone();
+		if (isLogarithmic) {
+			data=Log.log10(data);
+		}
 		float mean=General.mean(data);
 		float median=QuickMedian.select(data, 0.5f);
 		float q1=QuickMedian.select(data, 0.25f);
@@ -174,14 +186,22 @@ public class Boxplotter {
 		double minOutlier=Double.POSITIVE_INFINITY;
 		double maxOutlier=Double.NEGATIVE_INFINITY;
 		List<Float> outliers=new ArrayList<Float>();
-		for (float value : f) {
+		for (float value : data) {
 			if (value>upperOutlierThreshold) {
-				outliers.add(value);
+				if (isLogarithmic) {
+					outliers.add((float)Math.pow(10, value));
+				} else {
+					outliers.add(value);
+				}
 				if (value>maxOutlier) {
 					maxOutlier=value;
 				}
 			} else if (value<lowerOutlierThreshold) {
-				outliers.add(value);
+				if (isLogarithmic) {
+					outliers.add((float)Math.pow(10, value));
+				} else {
+					outliers.add(value);
+				}
 				if (value<minOutlier) {
 					minOutlier=value;
 				}
@@ -193,28 +213,36 @@ public class Boxplotter {
 			maxOutlier=Math.max(maxOutlier, maxRegularValue);
 		}
 		if (minRegularValue==Double.POSITIVE_INFINITY) {
-			minRegularValue=General.min(f);
+			minRegularValue=General.min(data);
 		}
 		if (maxRegularValue==Double.NEGATIVE_INFINITY) {
-			maxRegularValue=General.max(f);
+			maxRegularValue=General.max(data);
 		}
 		if (minOutlier==Double.POSITIVE_INFINITY) {
-			minOutlier=General.min(f);
+			minOutlier=General.min(data);
 		}
 		if (maxOutlier==Double.NEGATIVE_INFINITY) {
-			maxOutlier=General.max(f);
+			maxOutlier=General.max(data);
 		}
 
-		return new BoxAndWhiskerItem(Double.valueOf(mean), Double.valueOf(median), Double.valueOf(q1), Double.valueOf(q3), Double.valueOf(minRegularValue), 
-				Double.valueOf(maxRegularValue), Double.valueOf(minOutlier), Double.valueOf(maxOutlier), outliers);
+		if (isLogarithmic) {
+			return new BoxAndWhiskerItem(Double.valueOf(Math.pow(10, mean)), Double.valueOf(Math.pow(10, median)), Double.valueOf(Math.pow(10, q1)), Double.valueOf(Math.pow(10, q3)), Double.valueOf(Math.pow(10, minRegularValue)), 
+					Double.valueOf(Math.pow(10, maxRegularValue)), Double.valueOf(Math.pow(10, minOutlier)), Double.valueOf(Math.pow(10, maxOutlier)), outliers);
+		} else {
+			return new BoxAndWhiskerItem(Double.valueOf(mean), Double.valueOf(median), Double.valueOf(q1), Double.valueOf(q3), Double.valueOf(minRegularValue), 
+					Double.valueOf(maxRegularValue), Double.valueOf(minOutlier), Double.valueOf(maxOutlier), outliers);
+		}
 	}
 	
 	public static class XYBoxPlotterRenderer extends XYBoxAndWhiskerRenderer {
 		private static final long serialVersionUID=1L;
 		private final double barWidth;
-		public XYBoxPlotterRenderer(int barWidth) {
+		private final boolean isLogarithmic;
+		
+		public XYBoxPlotterRenderer(int barWidth, boolean isLogarithmic) {
 			super();
 			this.barWidth=barWidth;
+			this.isLogarithmic=isLogarithmic;
 		}
 
 		public void drawVerticalItem(Graphics2D g2, Rectangle2D dataArea, PlotRenderingInfo info, XYPlot plot,
@@ -228,7 +256,7 @@ public class Boxplotter {
 
 			RectangleEdge rangeAxisEdge=plot.getRangeAxisEdge();
 			Paint itemPaint=getItemPaint(row, column);
-			Shape box=getVerticalItem(g2, dataArea, plot, domainAxis, rangeAxis, BoxAndWhiskerDataInterfaceGenerator.getInterface(bawDataset), row, column, xx, barWidth, rangeAxisEdge, itemPaint);
+			Shape box=getVerticalItem(g2, dataArea, plot, domainAxis, rangeAxis, BoxAndWhiskerDataInterfaceGenerator.getInterface(bawDataset), row, column, xx, barWidth, rangeAxisEdge, itemPaint, isLogarithmic);
 			
 			EntityCollection entities = null;
 	        if (info != null) {
@@ -245,9 +273,15 @@ public class Boxplotter {
 
 	public static class CategoryBoxPlotterRenderer extends BoxAndWhiskerRenderer {
 		private static final long serialVersionUID=1L;
+		private final boolean isLogarithmic;
 
 		public CategoryBoxPlotterRenderer() {
+			this(false);
+		}
+		
+		public CategoryBoxPlotterRenderer(boolean isLogarithmic) {
 			super();
+			this.isLogarithmic=isLogarithmic;
 		}
 
 		@Override
@@ -281,7 +315,7 @@ public class Boxplotter {
 			double barWidth=state.getBarWidth();
 			RectangleEdge rangeAxisEdge=plot.getRangeAxisEdge();
 			Paint itemPaint=getItemPaint(row, column);
-			Shape box=getVerticalItem(g2, dataArea, plot, domainAxis, rangeAxis, BoxAndWhiskerDataInterfaceGenerator.getInterface(bawDataset), row, column, xx, barWidth, rangeAxisEdge, itemPaint);
+			Shape box=getVerticalItem(g2, dataArea, plot, domainAxis, rangeAxis, BoxAndWhiskerDataInterfaceGenerator.getInterface(bawDataset), row, column, xx, barWidth, rangeAxisEdge, itemPaint, isLogarithmic);
 			
 			// collect entity and tool tip information...
 			if (state.getInfo()!=null&&box!=null) {
@@ -295,10 +329,14 @@ public class Boxplotter {
 		
 	}
 	public static Shape getVerticalItem(Graphics2D g2, Rectangle2D dataArea, Plot plot, Axis domainAxis, ValueAxis rangeAxis, BoxAndWhiskerDataInterface bawDataset,
-			int row, int column, double xx, double barWidth, RectangleEdge rangeAxisEdge, Paint itemPaint) {
+			int row, int column, double xx, double barWidth, RectangleEdge rangeAxisEdge, Paint itemPaint, boolean isLogarithmic) {
 
 		double yyOutlier;
-		g2.setPaint(linePaint);
+		Paint localLinePaint=linePaint;
+		if (itemPaint instanceof Color) {
+			//localLinePaint=((Color)itemPaint).darker();
+		}
+		g2.setPaint(localLinePaint);
 		g2.setStroke(lineStroke);
 		g2.setFont(lineFont);
 
@@ -333,14 +371,15 @@ public class Boxplotter {
 			box=new Rectangle2D.Double(xx, Math.min(yyQ1, yyQ3), barWidth, Math.abs(yyQ1-yyQ3));
 			g2.fill(box);
 			g2.setStroke(lineStroke);
-			g2.setPaint(linePaint);
+			g2.setPaint(localLinePaint);
 			g2.draw(box);
 		}
 
-		g2.setPaint(linePaint);
+		g2.setPaint(localLinePaint);
 
 		// draw median...
 		if (yMedian!=null) {
+			g2.setStroke(darklineStroke);
 			double yyMedian=rangeAxis.valueToJava2D(yMedian.doubleValue(), dataArea, rangeAxisEdge);
 			g2.draw(new Line2D.Double(xx, yyMedian, xx+barWidth, yyMedian));
 		}
@@ -352,7 +391,7 @@ public class Boxplotter {
 		g2.setStroke(lightlineStroke);
 
 		// draw outliers
-		double oRadius=barWidth/4; // outlier radius
+		double oRadius=barWidth/3; // outlier radius
 		List outliers=new ArrayList();
 		OutlierListCollection outlierListCollection=new OutlierListCollection();
 
@@ -360,9 +399,11 @@ public class Boxplotter {
 		// a
 		// list If there are any farouts, set the flag on the
 		// OutlierListCollection
-		double fontHeight=(g2.getFontMetrics().getAscent()/(maxAxisValue-minAxisValue))*(rangeAxis.getUpperBound()-rangeAxis.getLowerBound());
-		double minOutlier=rangeAxis.getLowerBound()-fontHeight;
-		double maxOutlier=rangeAxis.getUpperBound()+fontHeight;
+		double upperLogCorrected=isLogarithmic?Log.log10(rangeAxis.getUpperBound()):rangeAxis.getUpperBound();
+		double lowerLogCorrected=isLogarithmic?Log.log10(rangeAxis.getLowerBound()):rangeAxis.getLowerBound();
+		double fontHeight=0;//(g2.getFontMetrics().getAscent()/(maxAxisValue-minAxisValue))*(upperLogCorrected-lowerLogCorrected);
+		double minOutlier=lowerLogCorrected-fontHeight;
+		double maxOutlier=upperLogCorrected+fontHeight;
 		double minRegular=yMin.doubleValue();
 		double maxRegular=yMax.doubleValue();
 		
@@ -382,11 +423,11 @@ public class Boxplotter {
 					belowOutliers++;
 				} else if (outlier>maxRegular) {
 					yyOutlier=rangeAxis.valueToJava2D(outlier, dataArea, rangeAxisEdge);
-					float random=RandomGenerator.random(number.hashCode());
+					float random=0.5f;//RandomGenerator.random(number.hashCode());
 					outliers.add(new Outlier(xx+barWidth/4.0+random*barWidth/2.0, yyOutlier, oRadius));
 				} else if (outlier<minRegular) {
 					yyOutlier=rangeAxis.valueToJava2D(outlier, dataArea, rangeAxisEdge);
-					float random=RandomGenerator.random(number.hashCode());
+					float random=0.5f;//RandomGenerator.random(number.hashCode());
 					outliers.add(new Outlier(xx+barWidth/4.0+random*barWidth/2.0, yyOutlier, oRadius));
 				}
 			}
@@ -402,7 +443,7 @@ public class Boxplotter {
 				Outlier outlier=list.getAveragedOutlier();
 				Point2D point=outlier.getPoint();
 
-				Ellipse2D dot=new Ellipse2D.Double(point.getX()+oRadius/2, point.getY(), oRadius, oRadius);
+				Ellipse2D dot=new Ellipse2D.Double(point.getX()+oRadius/2.0, point.getY()+oRadius/2.0, oRadius, oRadius);
 				g2.draw(dot);
 			}
 			// draw farout indicators

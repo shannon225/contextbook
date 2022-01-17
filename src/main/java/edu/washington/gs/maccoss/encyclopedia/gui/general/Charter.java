@@ -567,7 +567,7 @@ public class Charter {
 	}
 	
 
-    private static Shape createRingShape(
+    public static Shape createRingShape(
         double centerX, double centerY, double outerRadius, double thickness)
     {
         Ellipse2D outer = new Ellipse2D.Double(
@@ -663,7 +663,7 @@ public class Charter {
 
 			case bighollowpoint:
 				renderer=new XYLineAndShapeRenderer();
-				renderer.setSeriesShape(0, createRingShape(0, 0, 3, 1));
+				renderer.setSeriesShape(0, createRingShape(0, 0, 2.5, 0.75));
 				
 				((XYLineAndShapeRenderer) renderer).setBaseLinesVisible(false);
 
@@ -671,7 +671,7 @@ public class Charter {
 
 			case bigpoint:
 				renderer=new XYLineAndShapeRenderer();
-				renderer.setSeriesShape(0, new Ellipse2D.Double(-3, -3, 6, 6));
+				renderer.setSeriesShape(0, new Ellipse2D.Double(-2.5, -2.5, 5, 5));
 				
 				((XYLineAndShapeRenderer) renderer).setBaseLinesVisible(false);
 
@@ -691,6 +691,7 @@ public class Charter {
 
 				break;
 
+			case uncenteredText:
 			case text:
 				renderer=new XYLineAndShapeRenderer();
 				renderer.setSeriesShape(0, new Ellipse2D.Double(-0.5, -0.5, 1, 1));
@@ -811,11 +812,22 @@ public class Charter {
 					renderer.setSeriesPaint(index, Color.GRAY);
 				}
 				break;
-				
+
 			case text:
 				for (int i=0; i<x.length; i++) {
 					if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
 						XYTextAnnotation annotation=new XYTextAnnotation(trace.getName(), x[i], y[i]*1.01);
+						annotation.setFont(font4);
+						plot.addAnnotation(annotation);
+					}
+				}
+				break;
+				
+			case uncenteredText:
+				for (int i=0; i<x.length; i++) {
+					if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
+						XYTextAnnotation annotation=new XYTextAnnotation(trace.getName(), x[i], y[i]*1.01);
+						annotation.setTextAnchor(TextAnchor.TOP_LEFT);
 						annotation.setFont(font4);
 						plot.addAnnotation(annotation);
 					}
