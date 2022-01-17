@@ -1,4 +1,4 @@
-FROM openjdk:11.0-jre-slim
+FROM openjdk:8-jre-slim
 
 RUN apt-get update && \
     apt-get -y upgrade && \ 
