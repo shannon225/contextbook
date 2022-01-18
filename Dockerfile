@@ -14,6 +14,11 @@ WORKDIR /code
 ARG VERSION
 ENV VERSION ${VERSION}
 
+# Copy the executable JAR from the build context to the container.
+# Requires that a correctly-versioned JAR has been built locally.
+# If you encounter an error here running `docker build` check that
+# you've run `mvn package -PbuildEncyclopedia` and specified the
+# correct `--build-arg VERSION`.
 COPY "target/encyclopedia-$VERSION-executable.jar" .
 
 WORKDIR /app
