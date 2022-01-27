@@ -65,6 +65,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndic
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
+import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class DilutionCurveFitter {
 	public static void main3(String[] args) {
@@ -101,9 +102,9 @@ public class DilutionCurveFitter {
 		File sampleOrganizationFile=new File("/Users/searleb/Documents/cobbs/2021jan12_cobbs_ln229/figures/prms/prm_sample_organization.csv");
 
 		
-		Pair<ArrayList<ScoredObject<String>>, Map<String, ArrayList<String>>> concentrationPair=getExpectedConcentrationsFromCSV(sampleOrganizationFile);
+		Pair<ArrayList<ScoredObject<String>>, Map<String, TObjectFloatHashMap<String>>> concentrationPair=getExpectedConcentrationsFromCSV(sampleOrganizationFile);
 		final ArrayList<ScoredObject<String>> expectedConcentrations=concentrationPair.x;
-		final Map<String, ArrayList<String>> unknowns=concentrationPair.y;
+		final Map<String, TObjectFloatHashMap<String>> unknowns=concentrationPair.y;
 		final float[] expected = adjustForZeroConcentrations(expectedConcentrations);
 
 		final ArrayList<FitPeptide> fitPeptides=fitCurves(outputDirectory, dataFile, expectedConcentrations, expected, "HCMV", true);
@@ -176,7 +177,7 @@ public class DilutionCurveFitter {
 		rtInSecRange=new Range(12*60f, 95*60f);
 		final ArrayList<Range> subRanges=rtInSecRange.chunkIntoBins(fittingParams.getNumberOfRTAnchors());
 		
-		Pair<ArrayList<ScoredObject<String>>, Map<String, ArrayList<String>>> concentrationPair= getExpectedConcentrationsFromCSV(sampleOrganizationFile);
+		Pair<ArrayList<ScoredObject<String>>, Map<String, TObjectFloatHashMap<String>>> concentrationPair= getExpectedConcentrationsFromCSV(sampleOrganizationFile);
 		final ArrayList<ScoredObject<String>> expectedConcentrations=concentrationPair.x;
 		
 		final float[] expected = adjustForZeroConcentrations(expectedConcentrations);
@@ -330,7 +331,7 @@ public class DilutionCurveFitter {
 		return fitPeptides;
 	}
 
-	private static HashMap<String, Map<String, TObjectFloatHashMap<String>>> extractUnknowns(File dataFile, final Map<String, ArrayList<String>> unknownSamples, final String requiredAccessionText) throws FileNotFoundException, UnsupportedEncodingException {
+	private static HashMap<String, Map<String, TObjectFloatHashMap<String>>> extractUnknowns(File dataFile, final Map<String, TObjectFloatHashMap<String>> unknownSamples, final String requiredAccessionText) throws FileNotFoundException, UnsupportedEncodingException {
 		final HashMap<String, Map<String, TObjectFloatHashMap<String>>> unknowns=new HashMap<>();
 		if (unknownSamples==null||unknownSamples.size()==0) return unknowns;
 		
@@ -348,20 +349,24 @@ public class DilutionCurveFitter {
 				TreeMap<String, TObjectFloatHashMap<String>> thisPeptideUnknowns=new TreeMap<>();
 				unknowns.put(peptide, thisPeptideUnknowns);
 				
-				for (Entry<String, ArrayList<String>> entry : unknownSamples.entrySet()) {
+				for (Entry<String, TObjectFloatHashMap<String>> entry : unknownSamples.entrySet()) {
 					String group=entry.getKey();
 					TObjectFloatHashMap<String> groupUnknowns=new TObjectFloatHashMap<>();
 					thisPeptideUnknowns.put(group, groupUnknowns);
 
-					for (String column : entry.getValue()) {
-						float concentration;
-						try {
-							concentration=Float.parseFloat(row.get(column));
-						} catch (NumberFormatException nfe) {
-							concentration=0.0f;
+					entry.getValue().forEachEntry(new TObjectFloatProcedure<String>() {
+						@Override
+						public boolean execute(String column, float normalization) {
+							float concentration;
+							try {
+								concentration=Float.parseFloat(row.get(column));
+							} catch (NumberFormatException nfe) {
+								concentration=0.0f;
+							}
+							groupUnknowns.put(column, concentration*normalization);
+							return true;
 						}
-						groupUnknowns.put(column, concentration);
-					}
+					});
 				}
 			}
 			
@@ -555,26 +560,36 @@ public class DilutionCurveFitter {
 		return expected;
 	}
 
-	private static Pair<ArrayList<ScoredObject<String>>, Map<String, ArrayList<String>>> getExpectedConcentrationsFromCSV(File sampleOrganizationFile) {
+	private static Pair<ArrayList<ScoredObject<String>>, Map<String, TObjectFloatHashMap<String>>> getExpectedConcentrationsFromCSV(File sampleOrganizationFile) {
 		final ArrayList<ScoredObject<String>> expectedConcentrations=new ArrayList<ScoredObject<String>>();
-		final TreeMap<String, ArrayList<String>> unknowns=new TreeMap<>();
+		final TreeMap<String, TObjectFloatHashMap<String>> unknowns=new TreeMap<>();
 		
 		System.out.println("Reading "+sampleOrganizationFile.getName()+"...");
 		TableParser.parseCSV(sampleOrganizationFile, new TableParserMuscle() {
 			public void processRow(Map<String, String> row) {
 				String name=row.get("filename");
 				String concentrationString = row.get("concentration");
+				String normalizationString = row.get("normalization");
 				try {
 					float concentration=Float.parseFloat(concentrationString);
 					expectedConcentrations.add(new ScoredObject<String>(concentration, name));
 				} catch (NumberFormatException nfe) {
 					// not a number, so parse as an unknown group
-					ArrayList<String> list=unknowns.get(concentrationString);
+					TObjectFloatHashMap<String> list=unknowns.get(concentrationString);
 					if (list==null) {
-						list=new ArrayList<>();
+						list=new TObjectFloatHashMap<>();
 						unknowns.put(concentrationString, list);
 					}
-					list.add(name);
+					
+					float normalization=1.0f;
+					if (normalizationString!=null&&normalizationString.length()>0) {
+						try {
+							normalization=Float.parseFloat(normalizationString);
+						} catch (NumberFormatException nfe2) {
+							Logger.errorLine("Failed to parse normalization constant from "+name+", defaulting to 1.0");
+						}
+					}
+					list.put(name, normalization);
 				}
 			}
 			
@@ -737,16 +752,17 @@ public class DilutionCurveFitter {
 		
 		float lod=(float)Math.pow(10, bestFit.getLOD());
 		float loq=(float)Math.pow(10, bestFit.getLOQ());
-		float maxExpected=General.max(expected)*10;
-		float minExpected=General.min(expected)/10;
+		float maxExpectedWithMargin=General.max(expected)*10;
+		float minExpected = General.min(expected);
+		float minExpectedWithMargin=minExpected/10;
 
 		float adjustmentForUnknowns=0.0f;
 		if (unknowns.isPresent()) {
-			adjustmentForUnknowns=4000f;
+			adjustmentForUnknowns=10000f;
 		}
 		
 		XYTrace lodTrace=new XYTrace(new float[] {lod}, new float[] {bestFit.getUnloggedPredicted(lod)}, GraphType.bighollowpoint, "LOD="+lod, Color.gray, 10f);
-		XYTrace loqTrace=new XYTrace(new float[] {minExpected, maxExpected*adjustmentForUnknowns, Float.NaN, loq, loq}, new float[] {loq, loq, Float.NaN, minExpected, maxExpected/10}, GraphType.dashedline, "LOQ="+loq, Color.red, 2f);
+		XYTrace loqTrace=new XYTrace(new float[] {minExpected/5, maxExpectedWithMargin*adjustmentForUnknowns, Float.NaN, loq, loq}, new float[] {loq, loq, Float.NaN, minExpectedWithMargin, maxExpectedWithMargin/10}, GraphType.dashedline, "LOQ="+loq, Color.red, 2f);
 		
 		XYTrace actualTrace=new XYTrace(expectedFound.toArray(), actualFound.toArray(), GraphType.bigpoint, peptide, Color.BLACK, 10f);
 		XYTrace actualMissingTrace=new XYTrace(expectedMissing.toArray(), actualMissing.toArray(), GraphType.bighollowpoint, "Missing", Color.BLACK, 10f);
@@ -757,10 +773,11 @@ public class DilutionCurveFitter {
 		int currentCount=plot.getDatasetCount();
 
 		// DRAW BOX PLOT FOR UNKNOWNS
+		int boxItemWidth = 12;
 		int unknownCount=0;
 		TreeMap<Double, String> unknownXLocations=new TreeMap<>();
 		if (unknowns.isPresent()) {
-			float currentXValue=maxExpected/3;
+			float currentXValue=maxExpectedWithMargin/3;
 			Map<String, TObjectFloatHashMap<String>> unknownMap=unknowns.get();
 			for (Entry<String, TObjectFloatHashMap<String>> entry : unknownMap.entrySet()) {
 				TObjectFloatHashMap<String> unknownData=entry.getValue();
@@ -769,12 +786,12 @@ public class DilutionCurveFitter {
 				
 				NumberBoxAndWhiskerXYDataset boxplotDataset=new NumberBoxAndWhiskerXYDataset("Unknowns");
 				float[] values = General.divide(unknownData.values(), bestFit.maxValue);
-				BoxAndWhiskerItem stats = Boxplotter.calculateINFProtectedBoxAndWhiskerStatistics(values, maxExpected*10, minExpected/10, minExpected/10, true);
+				BoxAndWhiskerItem stats = Boxplotter.calculateINFProtectedBoxAndWhiskerStatistics(values, maxExpectedWithMargin, minExpectedWithMargin, minExpectedWithMargin, true);
 				
 				boxplotDataset.add(currentXValue, stats);
 				
 				plot.setDataset(currentCount, boxplotDataset);
-				XYBoxPlotterRenderer boxplotRenderer = new XYBoxPlotterRenderer(10, true);
+				XYBoxPlotterRenderer boxplotRenderer = new XYBoxPlotterRenderer(boxItemWidth, true);
 				boxplotRenderer.setSeriesVisibleInLegend(0, false);
 				boxplotRenderer.setSeriesPaint(0, colors[unknownCount%colors.length]);
 				plot.setRenderer(currentCount, boxplotRenderer);

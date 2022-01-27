@@ -79,7 +79,7 @@ public class Scribe {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
 		
 		if (arguments.size()==0) {
-			SearchGUIMain.runGUI(ProgramType.EncyclopeDIA);
+			SearchGUIMain.runGUI(ProgramType.Scribe);
 
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("Scribe Help");
@@ -110,7 +110,7 @@ public class Scribe {
 			System.exit(1);
 			
 		} else {
-			VersioningDetector.checkVersionCLI(ProgramType.EncyclopeDIA);
+			VersioningDetector.checkVersionCLI(ProgramType.Scribe);
 			
 			if (!arguments.containsKey(INPUT_DIA_TAG)||!arguments.containsKey(TARGET_LIBRARY_TAG)||!arguments.containsKey(BACKGROUND_FASTA_TAG)) {
 				Logger.errorLine("You are required to specify an input file ("+INPUT_DIA_TAG+"), a library file ("+TARGET_LIBRARY_TAG+"), and a fasta file ("+BACKGROUND_FASTA_TAG+")");
