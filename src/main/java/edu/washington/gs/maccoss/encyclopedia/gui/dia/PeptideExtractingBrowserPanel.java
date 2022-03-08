@@ -20,13 +20,22 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.RowFilter;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.annotations.XYTextAnnotation;
@@ -52,10 +61,12 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SimplePeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
@@ -69,12 +80,17 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.AcquiredSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 
 public class PeptideExtractingBrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -85,7 +101,13 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 	private final FileChooserPanel diaFile;
 	private final JTextField peptide=new JTextField("VATVSLPR");
 	private final SpinnerModel charge=new SpinnerNumberModel(2, 1, 5, 1);
-	private final JSplitPane split=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+	private final JSplitPane chromatogramSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+	private final JSplitPane spectrumSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+	private final JSplitPane horizontalSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+	private final JTable table;
+	private final TableRowSorter<TableModel> rowSorter;
+	private final JTextField jtfFilter;
+	private final DIAScanTableModel model;
 
 	private StripeFileInterface dia=null;
 
@@ -145,6 +167,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 						Logger.logLine("Reading file...");
 
 						dia=StripeFileGenerator.getFile(filename[0], PeptideExtractingBrowserPanel.this.parameters);
+						
 						Logger.logLine("Finished reading file.");
 						resetPeptide(peptide.getText(), (Integer) charge.getValue());
 					} catch (Exception e) {
@@ -176,21 +199,143 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 		bar.add(new JPanel());
 
 		add(bar, BorderLayout.NORTH);
-		add(split, BorderLayout.CENTER);
+		
+		model=new DIAScanTableModel();
+		table=new JTable(model) {
+			private static final long serialVersionUID=1L;
+
+			@Override
+			public Object getValueAt(int row, int column) {
+				if (column==0) return row+1;
+				return super.getValueAt(row, column);
+			}
+		};
+		rowSorter=new TableRowSorter<TableModel>(table.getModel());
+		table.setRowSorter(rowSorter);
+		
+		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+			@Override
+			public void valueChanged(ListSelectionEvent e) {
+				updateToSelected();
+			}
+		});
+
+		jtfFilter=new JTextField();
+		jtfFilter.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				String text=jtfFilter.getText();
+
+				System.out.println("FILTER: "+text);
+				if (text.trim().length()==0) {
+					rowSorter.setRowFilter(null);
+				} else {
+					rowSorter.setRowFilter(RowFilter.regexFilter("(?i)"+text));
+				}
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				String text=jtfFilter.getText();
+
+				if (text.trim().length()==0) {
+					rowSorter.setRowFilter(null);
+				} else {
+					rowSorter.setRowFilter(RowFilter.regexFilter("(?i)"+text));
+				}
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				throw new UnsupportedOperationException("Not supported yet.");
+			}
+		});
+
+
+		JPanel searchPanel=new JPanel(new BorderLayout());
+		searchPanel.add(new JLabel("Search:"), BorderLayout.WEST);
+		searchPanel.add(jtfFilter, BorderLayout.CENTER);
+		
+		spectrumSplit.setTopComponent(new JScrollPane(table));
+		
+		horizontalSplit.setLeftComponent(chromatogramSplit);
+		horizontalSplit.setRightComponent(spectrumSplit);
+		add(horizontalSplit, BorderLayout.CENTER);
+	}
+
+
+	public void updateToSelected() {
+		int[] selection=table.getSelectedRows();
+		if (selection.length<=0) return;
+		
+		ArrayList<AcquiredSpectrum> entries=new ArrayList<AcquiredSpectrum>();
+		for (int row : selection) {
+			AcquiredSpectrum entry=model.getSelectedRow(table.convertRowIndexToModel(row));
+			entries.add(entry);
+		}
+		resetScan(entries);
+	}
+
+	public void resetScan(ArrayList<AcquiredSpectrum> entries) {
+		int locationSpectrum=spectrumSplit.getDividerLocation();
+		if (locationSpectrum<=10) {
+			locationSpectrum=getHeight()/2;
+		} else if (locationSpectrum>=getHeight()*.9f) {
+			locationSpectrum=getHeight()/2;
+		}
+		
+		final String peptideModSeq=peptide.getText();
+		final byte precursorCharge=((Integer)charge.getValue()).byteValue();
+		
+		final Spectrum spectrum;
+		if (entries.size()==1) {
+			spectrum=entries.get(0);
+		} else {
+			spectrum=SpectrumUtils.mergeSpectra(downcast(entries), parameters.getFragmentTolerance());
+		}
+		
+		SimplePeptidePrecursor precursor=new SimplePeptidePrecursor(peptideModSeq, precursorCharge, parameters.getAAConstants());
+		AnnotatedLibraryEntry entry=new AnnotatedLibraryEntry(precursor, spectrum, parameters);
+
+		final ChartPanel spectrumChart=Charter.getChart(entry);
+		spectrumSplit.setBottomComponent(spectrumChart);
+
+		spectrumSplit.setDividerLocation(locationSpectrum);
+	}
+	
+	private ArrayList<Spectrum> downcast(ArrayList<AcquiredSpectrum> spectra) {
+		ArrayList<Spectrum> ret=new ArrayList<>();
+		ret.addAll(spectra);
+		return ret;
 	}
 	
 	volatile double lowerBound=0.0;
 	volatile double upperBound=0.0;
 
 	public void resetPeptide(String peptide, int charge) {
+		int location=horizontalSplit.getDividerLocation();
+		if (location<=10) {
+			location=getWidth()/2;
+		}
+		int locationChromatogram=chromatogramSplit.getDividerLocation();
+		if (locationChromatogram<=10) {
+			locationChromatogram=getHeight()/2;
+		}
+		int locationSpectrum=spectrumSplit.getDividerLocation();
+		if (locationSpectrum<=10) {
+			locationSpectrum=getHeight()/2;
+		}
+		
 		if (peptide==null||peptide.length()==0||dia==null) {
-			split.setTopComponent(new JLabel("Select a peptide!"));
-			split.setBottomComponent(new JPanel());
+			chromatogramSplit.setTopComponent(new JLabel("Select a peptide!"));
+			chromatogramSplit.setBottomComponent(new JPanel());
+			spectrumSplit.setTopComponent(new JPanel());
+			spectrumSplit.setBottomComponent(new JPanel());
 		} else {
 			Logger.logLine("Parsing peptide...");
-			PecanOneFragmentationModel model=new PecanOneFragmentationModel(new FastaPeptideEntry(peptide), parameters.getAAConstants());
+			PecanOneFragmentationModel fragModel=new PecanOneFragmentationModel(new FastaPeptideEntry(peptide), parameters.getAAConstants());
 			ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
-			AnnotatedLibraryEntry entry=model.getUnitSpectrum(dia.getOriginalFileName(), new HashSet<String>(), (byte)charge, 0.0f, parameters);
+			AnnotatedLibraryEntry entry=fragModel.getUnitSpectrum(dia.getOriginalFileName(), new HashSet<String>(), (byte)charge, 0.0f, parameters);
 			entries.add(entry);
 			
 			try {
@@ -208,6 +353,13 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 //					}
 //				}
 
+				ArrayList<AcquiredSpectrum> scans=new ArrayList<AcquiredSpectrum>();
+				for (FragmentScan scan : stripes) {
+					scans.add(scan);
+				}
+				model.updateEntries(scans);
+				table.addRowSelectionInterval(0, 0);
+				updateToSelected();
 
 				HashMap<FragmentIon, XYTrace> targetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), entry.getIonAnnotations(), stripes, null,
 						GraphType.boldline);
@@ -225,7 +377,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 						}
 					}
 				});
-				split.setTopComponent(chart);
+				chromatogramSplit.setTopComponent(chart);
 				
 
 				
@@ -252,7 +404,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 				
 				ChartPanel ionCountchart=Charter.getChart("Retention Time (min)", "XCorr", false, ionCounttrace);
 
-				split.setBottomComponent(ionCountchart);
+				chromatogramSplit.setBottomComponent(ionCountchart);
 				
 				
 			} catch (Exception e) {
@@ -262,6 +414,10 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 			}
 			Logger.logLine("Finished reading peptide "+peptide);
 		}
+
+		spectrumSplit.setDividerLocation(locationSpectrum);
+		chromatogramSplit.setDividerLocation(locationChromatogram);
+		horizontalSplit.setDividerLocation(location);
 	}
 
 	private void addAnnotations(HashMap<FragmentIon, XYTrace> targetFragmentTraceMap, ExtendedChartPanel chart) {

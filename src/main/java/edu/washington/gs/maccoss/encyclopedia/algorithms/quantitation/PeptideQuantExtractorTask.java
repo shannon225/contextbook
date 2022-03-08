@@ -250,7 +250,14 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			
 		}
 		if (integrateEverything) {
-			// bestIndividualScores are all at different retention times, but all peaks are present if there is any signal for that transition
+			/*
+			 * integrateEverything == “-quantifyAcrossSamples”
+			 * If “-quantifyAcrossSamples” is false, then bestScores forces the center of the peak to be the closest scan to the RT target, as specified by “unitEntry”. Here, “unitEntry” uses:
+			 * 	1)	the reported RT in that sample if above the 1% FDR threshold, 
+			 * 	2)	or the reported RT if that RT falls on the expected RT alignment line (within 3 standard deviations), 
+			 * 	3)	otherwise it is interpolated from the RT alignment line. 
+			 * If “-quantifyAcrossSamples” is true, then bestIndividualFragmentScores tries to hunt for the optimal RT within the window, based on highest DotProduct. The window is defined by the RT target +/- 1.5*expectedPeakWidth (“-expectedPeakWidth” default is 25 seconds). 
+			 */
 			bestScores=bestIndividualFragmentScores; 
 		}
 		

@@ -385,45 +385,7 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library Files") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							HashMap<String, ArrayList<LibraryEntry>> groupedEntries=new HashMap<>();
-							for (File elibFile : files) {
-								LibraryFile library=new LibraryFile();
-								library.openFile(elibFile);
-								ArrayList<LibraryEntry> localEntries = library.getAllEntries(false,  new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
-								//groupedEntries.put(elibFile.getName(), localEntries);
-								for (LibraryEntry entry : localEntries) {
-									ArrayList<LibraryEntry> list=groupedEntries.get(entry.getSource());
-									if (list==null) {
-										list=new ArrayList<>();
-										groupedEntries.put(entry.getSource(), list);
-									}
-									list.add(entry);
-								}
-								Logger.logLine("Found "+localEntries.size()+" entries from "+elibFile.getName());
-								library.close();
-							}
-							
-							ArrayList<LibraryEntry> allEntries;
-							if (rtAlign) {
-								allEntries=LibraryEntryCleaner.correctRTs(groupedEntries, saveFile);
-							} else {
-								allEntries=new ArrayList<>();
-								for (ArrayList<LibraryEntry> list : groupedEntries.values()) {
-									allEntries.addAll(list);
-								}
-							}
-							allEntries=LibraryEntryCleaner.removeDuplicateEntries(allEntries, higherScoresAreBetter);
-
-							LibraryFile saveLibrary=new LibraryFile();
-							saveLibrary.openFile();
-							saveLibrary.dropIndices();
-							saveLibrary.addEntries(allEntries);
-							saveLibrary.addProteinsFromEntries(allEntries);
-							saveLibrary.createIndices();
-							saveLibrary.saveAsFile(saveFile);
-							
-							saveLibrary.close();
-							Logger.logLine("Saved "+saveFile.getName()+", "+allEntries.size()+" total");
+							LibraryUtilities.mergeLibraries(files, saveFile, rtAlign, higherScoresAreBetter);
 							
 							return Nothing.NOTHING;
 						}

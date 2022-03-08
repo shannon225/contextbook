@@ -42,6 +42,9 @@
 		<walnutTargetName>walnut-${version}-executable</walnutTargetName>
 		<walnutBuildTarget>edu.washington.gs.maccoss.encyclopedia.Walnut</walnutBuildTarget>
 
+		<scribeTargetName>scribe-${version}-executable</scribeTargetName>
+		<scribeBuildTarget>edu.washington.gs.maccoss.encyclopedia.Scribe</scribeBuildTarget>
+
 		<!--
 		By default, skip failsafe integration tests.
 		Reenable by running mvn with `-DskipITs=false`
@@ -414,6 +417,52 @@
 										<transformer
 												implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 											<mainClass>${walnutBuildTarget}</mainClass>
+										</transformer>
+									</transformers>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<!-- build with `mvn -PbuildWalnut ...` to create the walnut executable JAR -->
+			<id>buildScribe</id>
+			<activation>
+				<property>
+					<name>buildJars</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-shade-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>shade-scribe</id>
+								<phase>package</phase>
+								<goals>
+									<goal>shade</goal>
+								</goals>
+								<configuration>
+									<filters>
+										<filter>
+											<artifact>*:*</artifact>
+											<excludes>
+												<exclude>META-INF/*.SF</exclude>
+												<exclude>META-INF/*.DSA</exclude>
+												<exclude>META-INF/*.RSA</exclude>
+											</excludes>
+										</filter>
+									</filters>
+									<finalName>${scribeTargetName}</finalName>
+									<transformers>
+										<transformer
+												implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+											<mainClass>${scribeBuildTarget}</mainClass>
 										</transformer>
 									</transformers>
 								</configuration>

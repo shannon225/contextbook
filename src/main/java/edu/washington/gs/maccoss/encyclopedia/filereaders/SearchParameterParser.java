@@ -344,7 +344,7 @@ public class SearchParameterParser {
 		} else {
 			numberOfExtraDecoyLibrariesSearched=tempNumberOfExtraDecoyLibrariesSearched;
 		}
-		quantifyAcrossSamples=ParsingUtils.getBoolean("-quantifyAcrossSamples", parameters, false);
+		quantifyAcrossSamples=ParsingUtils.getBoolean("-quantifyAcrossSamples", parameters, true); // edited to match GUI, see PeptideQuantExtractorTask line 252
 		verifyModificationIons=ParsingUtils.getBoolean("-verifyModificationIons", parameters, true);
         filterPeaklists=ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
         doNotUseGlobalFDR=ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);

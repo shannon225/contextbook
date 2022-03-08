@@ -24,4 +24,8 @@ public class SimpleFilenameFilter implements FilenameFilter {
 		return false;
 	}
 
+	public boolean accept(String name) {
+		return accept(null, name);
+	}
+
 }

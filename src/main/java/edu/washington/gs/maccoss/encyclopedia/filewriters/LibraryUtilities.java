@@ -17,6 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryEntryCleaner;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -135,6 +136,51 @@ public class LibraryUtilities {
 		saveLibrary.saveAsFile(saveFile);
 		
 		saveLibrary.close();
+	}
+	
+	public static LibraryFile mergeLibraries(ArrayList<File> files, File saveFile, boolean rtAlign, boolean higherScoresAreBetter) throws IOException, SQLException, DataFormatException {
+		HashMap<String, ArrayList<LibraryEntry>> groupedEntries=new HashMap<>();
+		int totalEntries=0;
+		for (File elibFile : files) {
+			LibraryFile library=new LibraryFile();
+			library.openFile(elibFile);
+			ArrayList<LibraryEntry> localEntries = library.getAllEntries(false,  new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+			//groupedEntries.put(elibFile.getName(), localEntries);
+			for (LibraryEntry entry : localEntries) {
+				ArrayList<LibraryEntry> list=groupedEntries.get(entry.getSource());
+				if (list==null) {
+					list=new ArrayList<>();
+					groupedEntries.put(entry.getSource(), list);
+				}
+				list.add(entry);
+				totalEntries++;
+			}
+			Logger.logLine("Found "+localEntries.size()+" entries from "+elibFile.getName()+", "+totalEntries+" total entries from "+groupedEntries.size()+" sources...");
+			library.close();
+		}
+		
+		ArrayList<LibraryEntry> allEntries;
+		if (rtAlign) {
+			allEntries=LibraryEntryCleaner.correctRTs(groupedEntries, saveFile);
+		} else {
+			allEntries=new ArrayList<>();
+			for (ArrayList<LibraryEntry> list : groupedEntries.values()) {
+				allEntries.addAll(list);
+			}
+		}
+		allEntries=LibraryEntryCleaner.removeDuplicateEntries(allEntries, higherScoresAreBetter);
+
+		LibraryFile saveLibrary=new LibraryFile();
+		saveLibrary.openFile();
+		saveLibrary.dropIndices();
+		saveLibrary.addEntries(allEntries);
+		saveLibrary.addProteinsFromEntries(allEntries);
+		saveLibrary.createIndices();
+		saveLibrary.saveAsFile(saveFile);
+		
+		saveLibrary.close();
+		Logger.logLine("Saved "+saveFile.getName()+", "+allEntries.size()+" total");
+		return saveLibrary;
 	}
 	
 	/*
