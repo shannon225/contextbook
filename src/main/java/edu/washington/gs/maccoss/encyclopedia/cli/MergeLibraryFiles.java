@@ -15,6 +15,8 @@ public class MergeLibraryFiles {
 	public static final String deliminator = ":";
 	private static final boolean IS_RT_ALIGN=false;
 	private static final boolean IS_HIGHER_SCORES_ARE_BETTER=false;
+	private static final boolean IS_REMOVE_DUPLICATES=true;
+	
 	public static void main(String[] args) {
 		HashMap<String, String> arguments= CommandLineParser.parseArguments(args);
 		if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
@@ -24,7 +26,8 @@ public class MergeLibraryFiles {
 			Logger.timelessLogLine("Other Parameters: ");
 			Logger.timelessLogLine("\t-o\toutput .DLIB file");
 			Logger.timelessLogLine("\t-rtAlign\t(default: "+IS_RT_ALIGN+")");
-			Logger.timelessLogLine("\t-higherScoresAreBetter\t(default: "+IS_HIGHER_SCORES_ARE_BETTER+")");
+			Logger.timelessLogLine("\t-removeDuplicates\t(default: "+IS_REMOVE_DUPLICATES+")");
+			Logger.timelessLogLine("\t-higherScoresAreBetter\t(default: "+IS_HIGHER_SCORES_ARE_BETTER+"), only used if removeDuplicates=true");
 		} else {
 			convert(arguments);
 		}
@@ -76,11 +79,12 @@ public class MergeLibraryFiles {
 
 		boolean rtAlign=ParsingUtils.getBoolean("-rtAlign", arguments, IS_RT_ALIGN);
 
+		boolean removeDuplicates=ParsingUtils.getBoolean("-removeDuplicates", arguments, IS_REMOVE_DUPLICATES);
 		boolean higherScoresAreBetter=ParsingUtils.getBoolean("-higherScoresAreBetter", arguments, IS_HIGHER_SCORES_ARE_BETTER);
 
 		try {
 			Logger.logLine("Merging "+files.size()+" libraries into "+saveFile.getName());
-			LibraryUtilities.mergeLibraries(files, saveFile, rtAlign, higherScoresAreBetter);
+			LibraryUtilities.mergeLibraries(files, saveFile, rtAlign, removeDuplicates, higherScoresAreBetter);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);

@@ -43,6 +43,8 @@ import javax.swing.JTextArea;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaToPrositCSVParameters;
@@ -346,9 +348,18 @@ public class SearchPanelUtilities {
 			}
 		});
 		final JCheckBox rtAlignBox=new JCheckBox("RT align samples");
+		final JCheckBox removeDuplicatesBox=new JCheckBox("Remove duplicates");
 		final JCheckBox higherScoresAreBetterBox=new JCheckBox("Higher scores are better");
 		rtAlignBox.setSelected(false);
+		removeDuplicatesBox.setSelected(true);
 		higherScoresAreBetterBox.setSelected(false);
+
+		removeDuplicatesBox.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				higherScoresAreBetterBox.setEnabled(removeDuplicatesBox.isSelected());
+			}
+		});
 
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
@@ -356,6 +367,7 @@ public class SearchPanelUtilities {
 		options.add(addChooserButton);
 		options.add(saveFileChooser);
 		options.add(rtAlignBox);
+		options.add(removeDuplicatesBox);
 		options.add(higherScoresAreBetterBox);
 		
 		JPanel buttons=new JPanel();
@@ -377,6 +389,7 @@ public class SearchPanelUtilities {
 				final File saveFile=saveFileChooser.getFile();
 				final boolean higherScoresAreBetter=higherScoresAreBetterBox.isSelected();
 				final boolean rtAlign=rtAlignBox.isSelected();
+				final boolean removeDuplicates=removeDuplicatesBox.isSelected();
 				
 				if (files.size()>0&&saveFile!=null) {
 					dialog.setVisible(false);
@@ -385,7 +398,7 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library Files") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							LibraryUtilities.mergeLibraries(files, saveFile, rtAlign, higherScoresAreBetter);
+							LibraryUtilities.mergeLibraries(files, saveFile, rtAlign, removeDuplicates, higherScoresAreBetter);
 							
 							return Nothing.NOTHING;
 						}

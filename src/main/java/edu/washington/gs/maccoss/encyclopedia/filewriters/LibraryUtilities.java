@@ -138,7 +138,7 @@ public class LibraryUtilities {
 		saveLibrary.close();
 	}
 	
-	public static LibraryFile mergeLibraries(ArrayList<File> files, File saveFile, boolean rtAlign, boolean higherScoresAreBetter) throws IOException, SQLException, DataFormatException {
+	public static LibraryFile mergeLibraries(ArrayList<File> files, File saveFile, boolean rtAlign, boolean removeDuplicates, boolean higherScoresAreBetter) throws IOException, SQLException, DataFormatException {
 		HashMap<String, ArrayList<LibraryEntry>> groupedEntries=new HashMap<>();
 		int totalEntries=0;
 		for (File elibFile : files) {
@@ -168,7 +168,9 @@ public class LibraryUtilities {
 				allEntries.addAll(list);
 			}
 		}
-		allEntries=LibraryEntryCleaner.removeDuplicateEntries(allEntries, higherScoresAreBetter);
+		if (removeDuplicates) {
+			allEntries=LibraryEntryCleaner.removeDuplicateEntries(allEntries, higherScoresAreBetter);
+		}
 
 		LibraryFile saveLibrary=new LibraryFile();
 		saveLibrary.openFile();
