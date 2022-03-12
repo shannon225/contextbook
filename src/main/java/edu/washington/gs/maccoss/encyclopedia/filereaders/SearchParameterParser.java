@@ -54,7 +54,6 @@ public class SearchParameterParser {
 		map.put("-numberOfQuantitativePeaks", "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
 		map.put("-topNTargetsUsed", "-1");
-		map.put("-minQuantitativeIonNumber", "3");
 		map.put("-verifyModificationIons", "true");
 		map.put("-minIntensity", "-1.0");
 		map.put("-rtWindowInMin", "-1.0");
@@ -80,7 +79,6 @@ public class SearchParameterParser {
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
 		map.put("-numberOfQuantitativePeaks", "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
-		map.put("-minQuantitativeIonNumber", "3");
 		return map;
 	}
 	
