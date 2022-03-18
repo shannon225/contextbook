@@ -57,7 +57,7 @@ public class Logger {
 		}
 	}
 
-	private static void writeStacktraceLines(Throwable throwable, PrintStream stream) {
+	static void writeStacktraceLines(Throwable throwable, PrintStream stream) {
 		// Log the timestamp without a linebreak
 		stream.print(format.format(new Date()));
 
