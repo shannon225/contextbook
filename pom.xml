@@ -96,12 +96,12 @@
 		</repository>
 		<repository>
 			<id>nexus-ebi-release-repo</id>
-			<url>http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/</url>
+			<url>https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/</url>
 		</repository>
 		<repository>
 			<id>ebi-repo</id>
 			<name>The EBI Maven 2 repository</name>
-			<url>http://www.ebi.ac.uk/~maven/m2repo</url>
+			<url>https://www.ebi.ac.uk/~maven/m2repo</url>
 			<releases>
 				<enabled>true</enabled>
 			</releases>
@@ -112,7 +112,7 @@
 		<repository>
 			<id>jzy3d-releases</id>
 			<name>Jzy3d Snapshots</name>
-			<url>http://maven.jzy3d.org/releases</url>
+			<url>https://maven.jzy3d.org/releases</url>
 			<releases>
 				<enabled>true</enabled>
 			</releases>
@@ -123,7 +123,7 @@
 		<repository>
 			<id>genesis-maven2-repository</id>
 			<name>Genesis maven2 repository</name>
-			<url>http://genesis.UGent.be/maven2</url>
+			<url>https://genesis.UGent.be/maven2</url>
 			<layout>default</layout>
 		</repository>
 		<repository>
