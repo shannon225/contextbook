@@ -1,6 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
+import com.google.common.collect.Lists;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.FloatPair;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
@@ -8,7 +13,13 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -47,12 +58,28 @@ public class MSMSToDIAConsumerTest {
 	}
 
 	private static class ConsumerRule extends ExternalResource {
+		private static final int NUM_BLOCKS = 1<<14; // 16384
+		private static final int NUM_WINDOWS = 40;
+
+		public static final float PRECURSOR_RANGE_LOWER = 400f;
+		public static final float PRECURSOR_RANGE_UPPER = 1000f;
+
+		private static final List<FloatPair> WINDOWS = generateWindows(NUM_WINDOWS, PRECURSOR_RANGE_LOWER, PRECURSOR_RANGE_UPPER);
+
+		private final Random random = new Random();
+
 		private final TemporaryFolder temporaryFolder;
 
 		private MSMSToDIAConsumer consumer;
 
+		private int scanIndex = 0;
+
 		public ConsumerRule(TemporaryFolder temporaryFolder) {
 			this.temporaryFolder = temporaryFolder;
+		}
+
+		public final MSMSToDIAConsumer getConsumer() {
+			return consumer;
 		}
 
 		@Override
@@ -62,17 +89,110 @@ public class MSMSToDIAConsumerTest {
 			final StripeFile stripeFile = new StripeFile(true);
 			stripeFile.openFile(f);
 
-			final LinkedBlockingQueue<MSMSBlock> queue = new LinkedBlockingQueue<>();
+			final BlockingQueue<MSMSBlock> queue = new LinkedBlockingQueue<>(NUM_BLOCKS + 1);
 
-			// TODO: Populate queue with chunks prior to starting the test
+			generateMsMsBlocks().limit(NUM_BLOCKS).forEach(e -> {
+				try {
+					queue.put(e);
+				} catch (InterruptedException ex) {
+					// Won't happen -- we have the necessary capacity
+					throw new IllegalStateException(ex);
+				}
+			});
 
 			queue.put(MSMSBlock.POISON_BLOCK); // CRITICAL to ensure the consumer exits!
 
 			consumer = new MSMSToDIAConsumer(queue, stripeFile, SearchParameterParser.getDefaultParametersObject());
 		}
 
-		public final MSMSToDIAConsumer getConsumer() {
-			return consumer;
+		private Stream<MSMSBlock> generateMsMsBlocks() {
+			return Stream.generate(this::generateMsMsBlock);
+		}
+
+		private MSMSBlock generateMsMsBlock() {
+			List<PrecursorScan> precursors = generatePrecursors()
+					.limit(MzmlSAXToMSMSProducer.MAX_PRECURSORS_PER_BLOCK)
+					.collect(Collectors.toList());
+
+			List<FragmentScan> stripes = generateStripes()
+					.limit(MzmlSAXToMSMSProducer.MAX_STRIPES_PER_SCAN)
+					.collect(Collectors.toList());
+
+			return new MSMSBlock(
+					precursors,
+					stripes
+			);
+		}
+
+		private Stream<PrecursorScan> generatePrecursors() {
+			return Stream.generate(this::generatePrecursor);
+		}
+
+		private PrecursorScan generatePrecursor() {
+			final int idx = ++scanIndex;
+			final int nPeaks = 10 + random.nextInt(100);
+
+			return new PrecursorScan(
+					"spectrum" + idx,
+					idx,
+					random.nextFloat() * 1000f, // scan start time
+					0, // fraction
+					PRECURSOR_RANGE_LOWER, // isolation lower
+					PRECURSOR_RANGE_UPPER, // isolation upper
+					null, // ion inject time
+					generateMasses(nPeaks, 400f, 1000f),
+					generateIntensities(nPeaks)
+			);
+		}
+
+		private Stream<FragmentScan> generateStripes() {
+			return Stream.generate(() -> this.generateStripe(WINDOWS));
+		}
+
+		private FragmentScan generateStripe(List<FloatPair> windows) {
+			final int idx = ++scanIndex;
+			final int nPeaks = 10 + random.nextInt(100);
+
+			final FloatPair window = windows.get(idx % windows.size());
+
+			return new FragmentScan(
+					"spectrum" + idx,
+					null,
+					idx,
+					random.nextFloat() * 1000f, // scan start time
+					0, // fraction
+					null, // ion inject time
+					window.getOne(),
+					window.getTwo(),
+					generateMasses(nPeaks, 400f, 1000f),
+					generateIntensities(nPeaks)
+			);
+		}
+
+		private double[] generateMasses(int n, double min, double max) {
+			return DoubleStream.generate(() -> min + random.nextDouble() * (max - min))
+					.limit(n)
+					.toArray();
+		}
+
+		private float[] generateIntensities(int n) {
+			return General.toFloatArray(
+					DoubleStream.generate(() -> random.nextDouble() * 1e9)
+							.limit(n)
+							.toArray()
+			);
+		}
+
+		private static List<FloatPair> generateWindows(int numWindows, float min, float max) {
+			final List<FloatPair> result = Lists.newArrayListWithCapacity(numWindows);
+
+			final float width = (max - min) / ((float) numWindows);
+
+			for (int i = 0; i < numWindows; i++) {
+				result.add(new FloatPair(min + i * width, min + (i + 1) * width));
+			}
+
+			return result;
 		}
 	}
 }
