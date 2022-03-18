@@ -58,7 +58,7 @@ public class MSMSToDIAConsumerTest {
 	}
 
 	private static class ConsumerRule extends ExternalResource {
-		private static final int NUM_BLOCKS = 1<<14; // 16384
+		private static final int NUM_BLOCKS = 65536 / (MzmlSAXToMSMSProducer.MAX_PRECURSORS_PER_BLOCK + MzmlSAXToMSMSProducer.MAX_STRIPES_PER_SCAN);
 		private static final int NUM_WINDOWS = 40;
 
 		public static final float PRECURSOR_RANGE_LOWER = 400f;
@@ -91,6 +91,8 @@ public class MSMSToDIAConsumerTest {
 
 			final BlockingQueue<MSMSBlock> queue = new LinkedBlockingQueue<>(NUM_BLOCKS + 1);
 
+			Logger.logLine(String.format("Generating %d blocks of %d precursor and %d fragment scans", NUM_BLOCKS, MzmlSAXToMSMSProducer.MAX_PRECURSORS_PER_BLOCK, MzmlSAXToMSMSProducer.MAX_STRIPES_PER_SCAN));
+
 			generateMsMsBlocks().limit(NUM_BLOCKS).forEach(e -> {
 				try {
 					queue.put(e);
@@ -101,6 +103,8 @@ public class MSMSToDIAConsumerTest {
 			});
 
 			queue.put(MSMSBlock.POISON_BLOCK); // CRITICAL to ensure the consumer exits!
+
+			Logger.logLine("Finished generating mock data");
 
 			consumer = new MSMSToDIAConsumer(queue, stripeFile, SearchParameterParser.getDefaultParametersObject());
 		}
