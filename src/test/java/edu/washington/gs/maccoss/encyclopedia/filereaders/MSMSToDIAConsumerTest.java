@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
@@ -17,12 +18,12 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class MSMSToDIAConsumerTest {
 	TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -38,23 +39,46 @@ public class MSMSToDIAConsumerTest {
 		final MSMSToDIAConsumer consumer = consumerRule.getConsumer();
 		assertNotNull(consumer);
 
+		final Stopwatch stopwatch = Stopwatch.createStarted();
+
 		final Thread thread = new Thread(consumer);
 		try {
 			try {
 				thread.start();
 				thread.join();
 			} finally {
+				// Stop the stopwatch immediately
+				stopwatch.stop();
+
+				// Check that everything actually exited; if not, try to clean up.
 				if (thread.isAlive()) {
 					thread.interrupt();
+					thread.join(1000L);
+
+					if (thread.isAlive()) {
+						Logger.errorLine("Failed to join() worker thread after 1000ms; giving up!");
+						fail("Thread under test never exited!");
+					}
 				}
-				thread.join();
 			}
 		} catch (InterruptedException e) {
 			Logger.errorLine("Test run interrupted! Exiting without cleanup!");
 			Logger.errorException(e);
+
+			fail("Interrupted!");
 		}
 
 		assertFalse(consumer.hadError());
+
+		// TODO: assert that .DIA contents are correct
+
+		// Only log the time here, so we're sure we succeeded
+		Logger.logLine(String.format(
+				"Wrote %d blocks to .DIA in %dms using NUMBER_OF_STRIPES_AT_ONCE = %d",
+				ConsumerRule.NUM_BLOCKS,
+				stopwatch.elapsed(TimeUnit.MILLISECONDS),
+				StripeFile.NUMBER_OF_STRIPES_AT_ONCE
+		));
 	}
 
 	private static class ConsumerRule extends ExternalResource {

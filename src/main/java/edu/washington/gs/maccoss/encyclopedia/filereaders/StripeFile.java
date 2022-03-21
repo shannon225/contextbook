@@ -454,7 +454,8 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		return isOpenFileInPlace;
 	}
 
-	private static final int NUMBER_OF_STRIPES_AT_ONCE=10;
+	static final int NUMBER_OF_STRIPES_AT_ONCE = 10;
+
 	public void addStripe(ArrayList<FragmentScan> stripes) throws IOException, SQLException {
 		Connection c = getConnection();
 		try {
