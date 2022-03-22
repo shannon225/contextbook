@@ -49,13 +49,17 @@ public class MSMSToDIAConsumerTest {
 	@Parameterized.Parameters
 	public static Collection<Object[]> parameters() {
 		return Arrays.asList(new Object[][]{
-				{100, 100},
+//				{100, 100}, // Outrageously slow
 
-				// DEFAULTS
+				// Current defaults
 				{MzmlSAXToMSMSProducer.MAX_PRECURSORS_PER_BLOCK, MzmlSAXToMSMSProducer.MAX_STRIPES_PER_SCAN},
 
+				// Original defaults
+				{100, 1000}, // put this here explicitly in case the default changes
+
+				// Larger sizes
 				{100, 2000},
-				{100, 5000},
+				{100, 5000}, // approx 2x faster than original defaults
 				{1000, 5000},
 				{1000, 10000},
 		});

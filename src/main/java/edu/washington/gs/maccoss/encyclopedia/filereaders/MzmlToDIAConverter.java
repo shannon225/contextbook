@@ -84,6 +84,12 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 		}
 	}
 
+	/**
+	 * @param mzMLFile The mzML to convert.
+	 * @param diaFile The location where the .DIA file will be saved.
+	 * @param parameters Parameters to use during conversion.
+	 * @param isOpenFileInPlace TODO: must be true!
+	 */
 	static StripeFileInterface convertSAX(File mzMLFile, File diaFile, SearchParameters parameters, boolean isOpenFileInPlace) {
 		try {
 			Logger.logLine("Indexing "+mzMLFile.getName()+" ...");
