@@ -16,6 +16,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
@@ -27,8 +29,11 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 
-//@RunWith(Parameterized.class)
+@RunWith(Parameterized.class)
 public class MSMSToDIAConsumerTest {
+	final int blockPrecursors;
+	final int blockStripes;
+
 	final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
 	final ConsumerRule consumerRule;
@@ -36,20 +41,27 @@ public class MSMSToDIAConsumerTest {
 	@Rule
 	public RuleChain rule;
 
-	public MSMSToDIAConsumerTest() {
-		consumerRule = new ConsumerRule();
+	public MSMSToDIAConsumerTest(int blockPrecursors, int blockStripes) {
+		this.blockPrecursors = blockPrecursors;
+		this.blockStripes = blockStripes;
 
+		consumerRule = new ConsumerRule();
 		rule = RuleChain.outerRule(temporaryFolder)
 				.around(consumerRule);
 	}
 
-//	@Parameterized.Parameters
-//	public static Collection<Object[]> parameters() {
-//		return Arrays.asList(new Object[][]{
-//				{100}, // 10 commits per block
-//				{1000}, // EFFECTIVE ORIGINAL SETTING -- 1 commit per block
-//		});
-//	}
+	@Parameterized.Parameters
+	public static Collection<Object[]> parameters() {
+		return Arrays.asList(new Object[][]{
+				{100, 100},
+
+				// DEFAULTS
+				{MzmlSAXToMSMSProducer.MAX_PRECURSORS_PER_BLOCK, MzmlSAXToMSMSProducer.MAX_STRIPES_PER_SCAN},
+
+				{1000, 1000},
+				{1000, 10000},
+		});
+	}
 
 	@Test
 	public void testConsumer() {
@@ -91,14 +103,16 @@ public class MSMSToDIAConsumerTest {
 
 		// Only log the time here, so we're sure we succeeded
 		Logger.logLine(String.format(
-				"Wrote %d blocks to .DIA in %dms",
-				ConsumerRule.NUM_BLOCKS,
-				stopwatch.elapsed(TimeUnit.MILLISECONDS)
+				"Wrote %d blocks to .DIA in %dms (%d MS1, %d MS2 per block)",
+				consumerRule.NUM_BLOCKS,
+				stopwatch.elapsed(TimeUnit.MILLISECONDS),
+				blockPrecursors,
+				blockStripes
 		));
 	}
 
 	private class ConsumerRule extends ExternalResource {
-		private static final int NUM_BLOCKS = 65536 / (MzmlSAXToMSMSProducer.MAX_PRECURSORS_PER_BLOCK + MzmlSAXToMSMSProducer.MAX_STRIPES_PER_SCAN);
+		private final int NUM_BLOCKS = 65536 / (blockPrecursors + blockStripes);
 		private static final int NUM_WINDOWS = 40;
 
 		public static final float PRECURSOR_RANGE_LOWER = 400f;
@@ -127,7 +141,7 @@ public class MSMSToDIAConsumerTest {
 
 			final BlockingQueue<MSMSBlock> queue = new LinkedBlockingQueue<>(NUM_BLOCKS + 1);
 
-			Logger.logLine(String.format("Generating %d blocks of %d precursor and %d fragment scans", NUM_BLOCKS, MzmlSAXToMSMSProducer.MAX_PRECURSORS_PER_BLOCK, MzmlSAXToMSMSProducer.MAX_STRIPES_PER_SCAN));
+			Logger.logLine(String.format("Generating %d blocks of %d precursor and %d fragment scans", NUM_BLOCKS, blockPrecursors, blockStripes));
 
 			generateMsMsBlocks().limit(NUM_BLOCKS).forEach(e -> {
 				try {
@@ -156,11 +170,11 @@ public class MSMSToDIAConsumerTest {
 
 		private MSMSBlock generateMsMsBlock() {
 			List<PrecursorScan> precursors = generatePrecursors()
-					.limit(MzmlSAXToMSMSProducer.MAX_PRECURSORS_PER_BLOCK)
+					.limit(blockPrecursors)
 					.collect(Collectors.toList());
 
 			List<FragmentScan> stripes = generateStripes()
-					.limit(MzmlSAXToMSMSProducer.MAX_STRIPES_PER_SCAN)
+					.limit(blockStripes)
 					.collect(Collectors.toList());
 
 			return new MSMSBlock(
