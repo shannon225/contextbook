@@ -16,14 +16,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
@@ -58,7 +54,9 @@ public class MSMSToDIAConsumerTest {
 				// DEFAULTS
 				{MzmlSAXToMSMSProducer.MAX_PRECURSORS_PER_BLOCK, MzmlSAXToMSMSProducer.MAX_STRIPES_PER_SCAN},
 
-				{1000, 1000},
+				{100, 2000},
+				{100, 5000},
+				{1000, 5000},
 				{1000, 10000},
 		});
 	}
@@ -103,8 +101,8 @@ public class MSMSToDIAConsumerTest {
 
 		// Only log the time here, so we're sure we succeeded
 		Logger.logLine(String.format(
-				"Wrote %d blocks to .DIA in %dms (%d MS1, %d MS2 per block)",
-				consumerRule.NUM_BLOCKS,
+				"Wrote %d blocks to .DIA in %dms (up to %d MS1 or %d MS2 per block)",
+				consumerRule.numBlocks,
 				stopwatch.elapsed(TimeUnit.MILLISECONDS),
 				blockPrecursors,
 				blockStripes
@@ -112,7 +110,7 @@ public class MSMSToDIAConsumerTest {
 	}
 
 	private class ConsumerRule extends ExternalResource {
-		private final int NUM_BLOCKS = 65536 / (blockPrecursors + blockStripes);
+		private static final int NUM_SCANS = 65536;
 		private static final int NUM_WINDOWS = 40;
 
 		public static final float PRECURSOR_RANGE_LOWER = 400f;
@@ -128,6 +126,8 @@ public class MSMSToDIAConsumerTest {
 
 		private int scanIndex = 0;
 
+		int numBlocks;
+
 		public final MSMSToDIAConsumer getConsumer() {
 			return consumer;
 		}
@@ -139,11 +139,47 @@ public class MSMSToDIAConsumerTest {
 			stripeFile = new StripeFile(true);
 			stripeFile.openFile(f);
 
-			final BlockingQueue<MSMSBlock> queue = new LinkedBlockingQueue<>(NUM_BLOCKS + 1);
+			Logger.logLine(String.format("Generating %d scans", NUM_SCANS));
 
-			Logger.logLine(String.format("Generating %d blocks of %d precursor and %d fragment scans", NUM_BLOCKS, blockPrecursors, blockStripes));
+			final Iterator<PrecursorScan> precursorStream = generatePrecursors().iterator();
+			final Iterator<FragmentScan> stripeStream = generateStripes().iterator();
 
-			generateMsMsBlocks().limit(NUM_BLOCKS).forEach(e -> {
+			final ArrayList<MSMSBlock> blocks = Lists.newArrayList();
+			ArrayList<PrecursorScan> precursors = Lists.newArrayList();
+			ArrayList<FragmentScan> fragments = Lists.newArrayList();
+			int nPrecursors = 0;
+			int nStripes = 0;
+			for (int i = 0; i < NUM_SCANS; i++) {
+				if (i % NUM_WINDOWS == 0) {
+					precursors.add(precursorStream.next());
+					nPrecursors += 1;
+				}
+				if (precursors.size() >= blockPrecursors) {
+					blocks.add(new MSMSBlock(precursors, fragments));
+					precursors = Lists.newArrayList();
+					fragments = Lists.newArrayList();
+				}
+
+				fragments.add(stripeStream.next());
+				nStripes += 1;
+
+				if (fragments.size() >= blockStripes) {
+					blocks.add(new MSMSBlock(precursors, fragments));
+					precursors = Lists.newArrayList();
+					fragments = Lists.newArrayList();
+				}
+			}
+			if (precursors.size() + fragments.size() > 0) {
+				blocks.add(new MSMSBlock(precursors, fragments));
+			}
+
+			numBlocks = blocks.size();
+
+			Logger.logLine(String.format("Generated %d blocks of up to %d precursor or %d fragment scans", numBlocks, blockPrecursors, blockStripes));
+			Logger.logLine(String.format("Average block sizes: %.02f MS1, %.02f MS2", nPrecursors / ((float) numBlocks), nStripes / ((float) numBlocks)));
+
+			final BlockingQueue<MSMSBlock> queue = new LinkedBlockingQueue<>(numBlocks + 1);
+			blocks.forEach(e -> {
 				try {
 					queue.put(e);
 				} catch (InterruptedException ex) {
@@ -162,25 +198,6 @@ public class MSMSToDIAConsumerTest {
 		@Override
 		protected void after() {
 			stripeFile.close();
-		}
-
-		private Stream<MSMSBlock> generateMsMsBlocks() {
-			return Stream.generate(this::generateMsMsBlock);
-		}
-
-		private MSMSBlock generateMsMsBlock() {
-			List<PrecursorScan> precursors = generatePrecursors()
-					.limit(blockPrecursors)
-					.collect(Collectors.toList());
-
-			List<FragmentScan> stripes = generateStripes()
-					.limit(blockStripes)
-					.collect(Collectors.toList());
-
-			return new MSMSBlock(
-					precursors,
-					stripes
-			);
 		}
 
 		private Stream<PrecursorScan> generatePrecursors() {

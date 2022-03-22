@@ -368,6 +368,9 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		}
 	}
 
+	/**
+	 * Add the given block of precursor scans to the file using a single prepared statement and commit.
+	 */
 	public void addPrecursor(ArrayList<PrecursorScan> precursors) throws IOException, SQLException {
 		Connection c = getConnection();
 		try {
@@ -454,6 +457,9 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		return isOpenFileInPlace;
 	}
 
+	/**
+	 * Add the given block of fragment scans to the file using a single prepared statement and commit.
+	 */
 	public void addStripe(ArrayList<FragmentScan> stripes) throws IOException, SQLException {
 		try (Connection c = getConnection()) {
 			try (PreparedStatement prep = c.prepareStatement("insert into spectra (SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, Fraction, IonInjectionTime, IsolationWindowLower, IsolationWindowCenter, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray)" + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")) {
