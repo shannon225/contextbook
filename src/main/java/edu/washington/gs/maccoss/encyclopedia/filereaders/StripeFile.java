@@ -467,57 +467,52 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 
 	public void addStripe(ArrayList<FragmentScan> stripes) throws IOException, SQLException {
-		Connection c = getConnection();
-		try {
-			int start=0;
-			int stop=numberOfStripesPerCommit;
-			while (stop<stripes.size()) {
-				internalAddStripeToConnection(stripes.subList(start, stop), c);
-				start=stop;
-				stop=stop+numberOfStripesPerCommit;
-			}
-			if (start<stripes.size()) {
-				internalAddStripeToConnection(stripes.subList(start, stripes.size()), c);
-			}
+		try (Connection c = getConnection()) {
+			try (PreparedStatement prep = c.prepareStatement("insert into spectra (SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, Fraction, IonInjectionTime, IsolationWindowLower, IsolationWindowCenter, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray)" + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")) {
+				// handle commits manually
+				c.setAutoCommit(false);
 
-			c.commit();
-
-		} finally {
-			c.close();
+				int start = 0;
+				int stop = numberOfStripesPerCommit;
+				int commitCount = 0;
+				while (stop < stripes.size()) {
+					internalAddStripeToStatement(stripes.subList(start, stop), prep);
+					c.commit();
+					commitCount += 1;
+					start = stop;
+					stop = stop + numberOfStripesPerCommit;
+				}
+				if (start < stripes.size()) {
+					internalAddStripeToStatement(stripes.subList(start, stripes.size()), prep);
+					c.commit();
+					commitCount += 1;
+				}
+				Logger.logLine(String.format("Wrote %d stripes with %d commits", stripes.size(), commitCount));
+			}
 		}
 	}
 
-	private void internalAddStripeToConnection(List<FragmentScan> stripes, Connection c) throws SQLException, IOException {
-		StringBuilder sb=new StringBuilder("insert into spectra (SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, Fraction, IonInjectionTime, IsolationWindowLower, IsolationWindowCenter, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray)");
-		sb.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
-		for (int i=1; i<stripes.size(); i++) {
-			sb.append(", (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+	private void internalAddStripeToStatement(List<FragmentScan> stripes, PreparedStatement prep) throws SQLException, IOException {
+		for (FragmentScan stripe : stripes) {
+			int index = 1;
+			prep.setString(index++, stripe.getSpectrumName());
+			prep.setString(index++, stripe.getPrecursorName());
+			prep.setInt(index++, stripe.getSpectrumIndex());
+			prep.setFloat(index++, stripe.getScanStartTime());
+			prep.setInt(index++, stripe.getFraction());
+			prep.setFloat(index++, stripe.getIonInjectionTime());
+			prep.setDouble(index++, stripe.getIsolationWindowLower());
+			prep.setDouble(index++, stripe.getIsolationWindowCenter());
+			prep.setDouble(index++, stripe.getIsolationWindowUpper());
+			byte[] massByteArray = ByteConverter.toByteArray(stripe.getMassArray());
+			prep.setInt(index++, massByteArray.length);
+			prep.setBytes(index++, CompressionUtils.compress(massByteArray));
+			byte[] intensityByteArray = ByteConverter.toByteArray(stripe.getIntensityArray());
+			prep.setInt(index++, intensityByteArray.length);
+			prep.setBytes(index++, CompressionUtils.compress(intensityByteArray));
+			prep.addBatch();
 		}
-		PreparedStatement prep=c.prepareStatement(sb.toString());
-		try {
-			int index=1;
-			for (FragmentScan stripe : stripes) {
-				prep.setString(index++, stripe.getSpectrumName());
-				prep.setString(index++, stripe.getPrecursorName());
-				prep.setInt(index++, stripe.getSpectrumIndex());
-				prep.setFloat(index++, stripe.getScanStartTime());
-				prep.setInt(index++, stripe.getFraction());
-				prep.setFloat(index++, stripe.getIonInjectionTime());
-				prep.setDouble(index++, stripe.getIsolationWindowLower());
-				prep.setDouble(index++, stripe.getIsolationWindowCenter());
-				prep.setDouble(index++, stripe.getIsolationWindowUpper());
-				byte[] massByteArray=ByteConverter.toByteArray(stripe.getMassArray());
-				prep.setInt(index++, massByteArray.length);
-				prep.setBytes(index++, CompressionUtils.compress(massByteArray));
-				byte[] intensityByteArray=ByteConverter.toByteArray(stripe.getIntensityArray());
-				prep.setInt(index++, intensityByteArray.length);
-				prep.setBytes(index++, CompressionUtils.compress(intensityByteArray));
-			}
-			prep.execute();
-			prep.close();
-		} finally {
-			prep.close();
-		}
+		prep.executeBatch();
 	}
 
 	/* (non-Javadoc)
