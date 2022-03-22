@@ -12,8 +12,13 @@ import org.junit.Test;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.kohsuke.rngom.digested.DDataPattern;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
@@ -25,6 +30,7 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 
+@RunWith(Parameterized.class)
 public class MSMSToDIAConsumerTest {
 	TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -33,6 +39,22 @@ public class MSMSToDIAConsumerTest {
 	@Rule
 	public RuleChain rule = RuleChain.outerRule(temporaryFolder)
 			.around(consumerRule);
+
+	@Parameterized.Parameters
+	public static Collection<Object[]> parameters() {
+		return Arrays.asList(new Object[][]{
+				{1},
+				{5},
+				{10}, // ORIGINAL SETTING
+				{32},
+				{64},
+				{128},
+				{256}
+		});
+	}
+
+	@Parameterized.Parameter
+	public int numberOfStripesPerCommit;
 
 	@Test
 	public void testConsumer() {
@@ -74,10 +96,10 @@ public class MSMSToDIAConsumerTest {
 
 		// Only log the time here, so we're sure we succeeded
 		Logger.logLine(String.format(
-				"Wrote %d blocks to .DIA in %dms using NUMBER_OF_STRIPES_AT_ONCE = %d",
+				"Wrote %d blocks to .DIA in %dms using numberOfStripesPerCommit = %d",
 				ConsumerRule.NUM_BLOCKS,
 				stopwatch.elapsed(TimeUnit.MILLISECONDS),
-				StripeFile.NUMBER_OF_STRIPES_AT_ONCE
+				numberOfStripesPerCommit
 		));
 	}
 

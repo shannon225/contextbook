@@ -62,6 +62,8 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 
 	public static final String DIA_EXTENSION=".dia";
 
+	static final int DEFAULT_NUMBER_OF_STRIPES_PER_COMMIT = 10;
+
 	private File userFile=null;
 	private volatile String originalFileName=null;
 	private File tempFile;
@@ -71,12 +73,22 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 
 	private final boolean isOpenFileInPlace;
 
+	private final int numberOfStripesPerCommit;
+
 	public StripeFile() throws IOException {
 		this(true);
 	}
 
 	public StripeFile(boolean isOpenFileInPlace) throws IOException {
+		this(isOpenFileInPlace, DEFAULT_NUMBER_OF_STRIPES_PER_COMMIT);
+	}
+
+	/**
+	 * For benchmarking; in normal usage the default should be preferred!
+	 */
+	StripeFile(boolean isOpenFileInPlace, int numberOfStripesPerCommit) throws IOException {
 		this.isOpenFileInPlace = isOpenFileInPlace;
+		this.numberOfStripesPerCommit = numberOfStripesPerCommit;
 	}
 
 	/**
@@ -454,17 +466,15 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		return isOpenFileInPlace;
 	}
 
-	static final int NUMBER_OF_STRIPES_AT_ONCE = 10;
-
 	public void addStripe(ArrayList<FragmentScan> stripes) throws IOException, SQLException {
 		Connection c = getConnection();
 		try {
 			int start=0;
-			int stop=NUMBER_OF_STRIPES_AT_ONCE;
+			int stop=numberOfStripesPerCommit;
 			while (stop<stripes.size()) {
 				internalAddStripeToConnection(stripes.subList(start, stop), c);
 				start=stop;
-				stop=stop+NUMBER_OF_STRIPES_AT_ONCE;
+				stop=stop+numberOfStripesPerCommit;
 			}
 			if (start<stripes.size()) {
 				internalAddStripeToConnection(stripes.subList(start, stripes.size()), c);
