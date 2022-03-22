@@ -62,8 +62,6 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 
 	public static final String DIA_EXTENSION=".dia";
 
-	static final int DEFAULT_NUMBER_OF_STRIPES_PER_COMMIT = 10;
-
 	private File userFile=null;
 	private volatile String originalFileName=null;
 	private File tempFile;
@@ -73,22 +71,12 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 
 	private final boolean isOpenFileInPlace;
 
-	private final int numberOfStripesPerCommit;
-
 	public StripeFile() throws IOException {
 		this(true);
 	}
 
 	public StripeFile(boolean isOpenFileInPlace) throws IOException {
-		this(isOpenFileInPlace, DEFAULT_NUMBER_OF_STRIPES_PER_COMMIT);
-	}
-
-	/**
-	 * For benchmarking; in normal usage the default should be preferred!
-	 */
-	StripeFile(boolean isOpenFileInPlace, int numberOfStripesPerCommit) throws IOException {
 		this.isOpenFileInPlace = isOpenFileInPlace;
-		this.numberOfStripesPerCommit = numberOfStripesPerCommit;
 	}
 
 	/**
@@ -472,22 +460,9 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 				// handle commits manually
 				c.setAutoCommit(false);
 
-				int start = 0;
-				int stop = numberOfStripesPerCommit;
-				int commitCount = 0;
-				while (stop < stripes.size()) {
-					internalAddStripeToStatement(stripes.subList(start, stop), prep);
-					c.commit();
-					commitCount += 1;
-					start = stop;
-					stop = stop + numberOfStripesPerCommit;
-				}
-				if (start < stripes.size()) {
-					internalAddStripeToStatement(stripes.subList(start, stripes.size()), prep);
-					c.commit();
-					commitCount += 1;
-				}
-				Logger.logLine(String.format("Wrote %d stripes with %d commits", stripes.size(), commitCount));
+				internalAddStripeToStatement(stripes, prep);
+
+				c.commit();
 			}
 		}
 	}

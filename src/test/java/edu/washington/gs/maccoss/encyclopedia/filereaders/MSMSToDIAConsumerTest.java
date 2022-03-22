@@ -14,11 +14,8 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.kohsuke.rngom.digested.DDataPattern;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
@@ -30,33 +27,29 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 
-@RunWith(Parameterized.class)
+//@RunWith(Parameterized.class)
 public class MSMSToDIAConsumerTest {
 	final TemporaryFolder temporaryFolder = new TemporaryFolder();
-
-	final int numberOfStripesPerCommit;
 
 	final ConsumerRule consumerRule;
 
 	@Rule
 	public RuleChain rule;
 
-	public MSMSToDIAConsumerTest(int numberOfStripesPerCommit) {
-		this.numberOfStripesPerCommit = numberOfStripesPerCommit;
-
+	public MSMSToDIAConsumerTest() {
 		consumerRule = new ConsumerRule();
 
 		rule = RuleChain.outerRule(temporaryFolder)
 				.around(consumerRule);
 	}
 
-	@Parameterized.Parameters
-	public static Collection<Object[]> parameters() {
-		return Arrays.asList(new Object[][]{
-				{100}, // 10 commits per block
-				{1000}, // EFFECTIVE ORIGINAL SETTING -- 1 commit per block
-		});
-	}
+//	@Parameterized.Parameters
+//	public static Collection<Object[]> parameters() {
+//		return Arrays.asList(new Object[][]{
+//				{100}, // 10 commits per block
+//				{1000}, // EFFECTIVE ORIGINAL SETTING -- 1 commit per block
+//		});
+//	}
 
 	@Test
 	public void testConsumer() {
@@ -98,10 +91,9 @@ public class MSMSToDIAConsumerTest {
 
 		// Only log the time here, so we're sure we succeeded
 		Logger.logLine(String.format(
-				"Wrote %d blocks to .DIA in %dms using numberOfStripesPerCommit = %d",
+				"Wrote %d blocks to .DIA in %dms",
 				ConsumerRule.NUM_BLOCKS,
-				stopwatch.elapsed(TimeUnit.MILLISECONDS),
-				numberOfStripesPerCommit
+				stopwatch.elapsed(TimeUnit.MILLISECONDS)
 		));
 	}
 
@@ -130,7 +122,7 @@ public class MSMSToDIAConsumerTest {
 		protected void before() throws Throwable {
 			final File f = temporaryFolder.newFile();
 
-			stripeFile = new StripeFile(true, numberOfStripesPerCommit);
+			stripeFile = new StripeFile(true);
 			stripeFile.openFile(f);
 
 			final BlockingQueue<MSMSBlock> queue = new LinkedBlockingQueue<>(NUM_BLOCKS + 1);
