@@ -53,11 +53,8 @@ public class MSMSToDIAConsumerTest {
 	@Parameterized.Parameters
 	public static Collection<Object[]> parameters() {
 		return Arrays.asList(new Object[][]{
-				{1},
-				{10}, // ORIGINAL SETTING
-				{100},
-				{1000},
-				{10000},
+				{100}, // 10 commits per block
+				{1000}, // EFFECTIVE ORIGINAL SETTING -- 1 commit per block
 		});
 	}
 
