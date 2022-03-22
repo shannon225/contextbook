@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.*;
 
 public class MzmlToDIAConverterTest {
-	private static final int[] QUEUE_CAPACITIES = { 1, 4, 16, 64 };
+	private static final int[] QUEUE_CAPACITIES = { MzmlToDIAConverter.DEFAULT_QUEUE_CAPACITY };
 
 	@Rule
 	public TemporaryFolder temporaryFolder = new TemporaryFolder();

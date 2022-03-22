@@ -24,7 +24,7 @@ import gnu.trove.list.array.TFloatArrayList;
 public class MzmlToDIAConverter implements StripeFileReaderInterface {
 	public static final String MZML_EXTENSION=".mzml";
 
-	private static final int DEFAULT_QUEUE_CAPACITY = 1;
+	static final int DEFAULT_QUEUE_CAPACITY = 2;
 
 	public static void main(String[] args) throws IOException {
 		boolean copy=false;
