@@ -16,6 +16,8 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.*;
 
 public class MzmlToDIAConverterTest {
+	private static final int[] QUEUE_CAPACITIES = { 1, 4, 16, 64 };
+
 	@Rule
 	public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -54,13 +56,20 @@ public class MzmlToDIAConverterTest {
 	}
 
 	private void benchConversion(Path mzmlPath) {
+		for (int cap : QUEUE_CAPACITIES) {
+			benchConversion(mzmlPath, cap);
+		}
+	}
+
+	private void benchConversion(Path mzmlPath, int queueCapacity) {
 		final Stopwatch stopwatch = Stopwatch.createStarted();
 		try {
 			MzmlToDIAConverter.convertSAX(
 					mzmlPath.toFile(),
 					temporaryFolder.newFile(),
 					SearchParameterParser.getDefaultParametersObject(),
-					false // crashes with true!!
+					false, // crashes with true!!
+					queueCapacity
 			);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
