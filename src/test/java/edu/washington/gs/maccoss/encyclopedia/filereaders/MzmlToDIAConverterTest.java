@@ -43,12 +43,11 @@ public class MzmlToDIAConverterTest {
 		Logger.logLine(String.format("Read %d paths from test resource file.", inputPaths.size()));
 		Logger.timelessLogLine("");
 
-		Logger.timelessLogLine("file\tsize (MiB)\ttime (ms)");
-
 		final boolean origPrint = Logger.PRINT_TO_SCREEN;
 		try {
 			Logger.PRINT_TO_SCREEN = false;
 
+			System.out.println("file\tsize (MiB)\tqueueCapacity\ttime (ms)");
 			inputPaths.forEach(this::benchConversion);
 		} finally {
 			Logger.PRINT_TO_SCREEN = origPrint;
@@ -77,20 +76,16 @@ public class MzmlToDIAConverterTest {
 			stopwatch.stop();
 		}
 
-		final boolean origPrint = Logger.PRINT_TO_SCREEN;
 		try {
-			Logger.PRINT_TO_SCREEN = true;
-
-			Logger.timelessLogLine(String.format(
-					"%s\t%.02f\t%d",
+			System.out.println(String.format(
+					"%s\t%.02f\t%d\t%d",
 					mzmlPath.getFileName().toString(),
 					Files.size(mzmlPath) / ((float) 1024*1024),
+					queueCapacity,
 					stopwatch.elapsed(TimeUnit.MILLISECONDS))
 			);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
-		} finally {
-			Logger.PRINT_TO_SCREEN = origPrint;
 		}
 	}
 }
