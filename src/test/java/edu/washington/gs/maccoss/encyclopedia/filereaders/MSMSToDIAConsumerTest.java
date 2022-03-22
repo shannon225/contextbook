@@ -32,29 +32,34 @@ import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class MSMSToDIAConsumerTest {
-	TemporaryFolder temporaryFolder = new TemporaryFolder();
+	final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-	ConsumerRule consumerRule = new ConsumerRule(temporaryFolder);
+	final int numberOfStripesPerCommit;
+
+	final ConsumerRule consumerRule;
 
 	@Rule
-	public RuleChain rule = RuleChain.outerRule(temporaryFolder)
-			.around(consumerRule);
+	public RuleChain rule;
+
+	public MSMSToDIAConsumerTest(int numberOfStripesPerCommit) {
+		this.numberOfStripesPerCommit = numberOfStripesPerCommit;
+
+		consumerRule = new ConsumerRule();
+
+		rule = RuleChain.outerRule(temporaryFolder)
+				.around(consumerRule);
+	}
 
 	@Parameterized.Parameters
 	public static Collection<Object[]> parameters() {
 		return Arrays.asList(new Object[][]{
 				{1},
-				{5},
 				{10}, // ORIGINAL SETTING
-				{32},
-				{64},
-				{128},
-				{256}
+				{100},
+				{1000},
+				{10000},
 		});
 	}
-
-	@Parameterized.Parameter
-	public int numberOfStripesPerCommit;
 
 	@Test
 	public void testConsumer() {
@@ -103,26 +108,22 @@ public class MSMSToDIAConsumerTest {
 		));
 	}
 
-	private static class ConsumerRule extends ExternalResource {
+	private class ConsumerRule extends ExternalResource {
 		private static final int NUM_BLOCKS = 65536 / (MzmlSAXToMSMSProducer.MAX_PRECURSORS_PER_BLOCK + MzmlSAXToMSMSProducer.MAX_STRIPES_PER_SCAN);
 		private static final int NUM_WINDOWS = 40;
 
 		public static final float PRECURSOR_RANGE_LOWER = 400f;
 		public static final float PRECURSOR_RANGE_UPPER = 1000f;
 
-		private static final List<FloatPair> WINDOWS = generateWindows(NUM_WINDOWS, PRECURSOR_RANGE_LOWER, PRECURSOR_RANGE_UPPER);
+		private final List<FloatPair> WINDOWS = generateWindows(NUM_WINDOWS, PRECURSOR_RANGE_LOWER, PRECURSOR_RANGE_UPPER);
 
 		private final Random random = new Random();
 
-		private final TemporaryFolder temporaryFolder;
+		private StripeFile stripeFile;
 
 		private MSMSToDIAConsumer consumer;
 
 		private int scanIndex = 0;
-
-		public ConsumerRule(TemporaryFolder temporaryFolder) {
-			this.temporaryFolder = temporaryFolder;
-		}
 
 		public final MSMSToDIAConsumer getConsumer() {
 			return consumer;
@@ -132,7 +133,7 @@ public class MSMSToDIAConsumerTest {
 		protected void before() throws Throwable {
 			final File f = temporaryFolder.newFile();
 
-			final StripeFile stripeFile = new StripeFile(true);
+			stripeFile = new StripeFile(true, numberOfStripesPerCommit);
 			stripeFile.openFile(f);
 
 			final BlockingQueue<MSMSBlock> queue = new LinkedBlockingQueue<>(NUM_BLOCKS + 1);
@@ -153,6 +154,11 @@ public class MSMSToDIAConsumerTest {
 			Logger.logLine("Finished generating mock data");
 
 			consumer = new MSMSToDIAConsumer(queue, stripeFile, SearchParameterParser.getDefaultParametersObject());
+		}
+
+		@Override
+		protected void after() {
+			stripeFile.close();
 		}
 
 		private Stream<MSMSBlock> generateMsMsBlocks() {
@@ -233,7 +239,7 @@ public class MSMSToDIAConsumerTest {
 			);
 		}
 
-		private static List<FloatPair> generateWindows(int numWindows, float min, float max) {
+		private List<FloatPair> generateWindows(int numWindows, float min, float max) {
 			final List<FloatPair> result = Lists.newArrayListWithCapacity(numWindows);
 
 			final float width = (max - min) / ((float) numWindows);

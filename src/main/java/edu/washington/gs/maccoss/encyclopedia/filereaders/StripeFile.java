@@ -467,23 +467,21 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 
 	public void addStripe(ArrayList<FragmentScan> stripes) throws IOException, SQLException {
-		Connection c = getConnection();
-		try {
-			int start=0;
-			int stop=numberOfStripesPerCommit;
-			while (stop<stripes.size()) {
+		try (Connection c = getConnection()) {
+			int start = 0;
+			int stop = numberOfStripesPerCommit;
+			while (stop < stripes.size()) {
 				internalAddStripeToConnection(stripes.subList(start, stop), c);
-				start=stop;
-				stop=stop+numberOfStripesPerCommit;
+				start = stop;
+				stop = stop + numberOfStripesPerCommit;
 			}
-			if (start<stripes.size()) {
+			if (start < stripes.size()) {
 				internalAddStripeToConnection(stripes.subList(start, stripes.size()), c);
 			}
 
 			c.commit();
 
-		} finally {
-			c.close();
+			Logger.logLine(String.format("Wrote %d stripes with 1 commit", stripes.size()));
 		}
 	}
 
