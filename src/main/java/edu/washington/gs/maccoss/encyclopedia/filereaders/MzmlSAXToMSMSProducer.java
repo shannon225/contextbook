@@ -43,7 +43,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProducer {
-	
+	public static final int MAX_PRECURSORS_PER_BLOCK = 100;
+	public static final int MAX_STRIPES_PER_SCAN = 1000;
+
 	private final File mzMLFile;
 	private final BlockingQueue<MSMSBlock> mzmlBlockQueue;
 	private final SearchParameters parameters;
@@ -470,7 +472,7 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 				
 			}
 
-			if (precursors.size()>100||stripes.size()>1000) {
+			if (precursors.size()>MAX_PRECURSORS_PER_BLOCK ||stripes.size()>MAX_STRIPES_PER_SCAN) {
 				putBlock(new MSMSBlock(precursors, stripes));
 				precursors.clear();
 				stripes.clear();
