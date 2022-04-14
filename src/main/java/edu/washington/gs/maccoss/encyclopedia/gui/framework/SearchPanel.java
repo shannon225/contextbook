@@ -163,7 +163,7 @@ public class SearchPanel extends JPanel {
 			}
 			optionsTabs.addTab(xcordia.getProgram().toString(), xcordia.getSmallImage(), xcordia, xcordia.getProgramShortDescription());
 		}
-		if ((false&&ProgramType.Global==program)||ProgramType.Scribe==program) {
+		if ((ProgramType.Global==program)||ProgramType.Scribe==program) {
 			ScribeParametersPanel scribe=new ScribeParametersPanel(this);
 			try {
 				HashMap<String, String> map=ScribeSearchParameters.readPreferences();
@@ -899,7 +899,11 @@ public class SearchPanel extends JPanel {
 			if (dialog.getFiles()!=null) {
 				for (File file : dialog.getFiles()) {
 					Logger.logLine("Adding mzML import to queue for ["+file.getAbsolutePath()+"]");
-					getVisibleTab().getJob(file, processorTableModel);
+					try {
+						getVisibleTab().getJob(file, processorTableModel);
+					} catch (Exception e) {
+						JOptionPane.showMessageDialog(frame, e);
+					}
 				}
 			}
 		}

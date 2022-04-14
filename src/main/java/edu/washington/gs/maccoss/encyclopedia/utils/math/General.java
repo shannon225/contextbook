@@ -224,6 +224,25 @@ public class General {
 		return toString(i, ",");
 	}
 	
+	public static String toString(boolean[] i, String delim) {
+		StringBuilder sb=new StringBuilder();
+		for (boolean g : i) {
+			if (sb.length()>0) {
+				sb.append(delim);
+			}
+			if (g) {
+				sb.append('T');
+			} else {
+				sb.append('F');
+			}
+		}
+		return sb.toString();
+	}
+	
+	public static String toString(boolean[] i) {
+		return toString(i, ",");
+	}
+	
 	public static String toString(@SuppressWarnings("rawtypes") List i) {
 		StringBuilder sb=new StringBuilder();
 		for (Object g : i) {
