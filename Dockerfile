@@ -1,8 +1,4 @@
-# Base image is a full OpenJDK 11 JRE. We use the "11" tag to allow minor
-# or patch level updates to the base image as new versions are available.
-# Specifying `-bullseye` ensures that we will continue to use images based
-# on the expected version of Debian.
-FROM openjdk:11-jre-bullseye
+FROM openjdk:8-jre
 
 RUN apt-get update && \
     apt-get -y upgrade && \ 

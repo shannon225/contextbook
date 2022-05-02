@@ -358,7 +358,10 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 					scans.add(scan);
 				}
 				model.updateEntries(scans);
-				table.addRowSelectionInterval(0, 0);
+				if (scans.size()>0) {
+					table.addRowSelectionInterval(0, 0);
+				} else {
+				}
 				updateToSelected();
 
 				HashMap<FragmentIon, XYTrace> targetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), entry.getIonAnnotations(), stripes, null,
@@ -421,7 +424,6 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 	}
 
 	private void addAnnotations(HashMap<FragmentIon, XYTrace> targetFragmentTraceMap, ExtendedChartPanel chart) {
-
 		XYPlot plot = chart.getChart().getXYPlot();
 		org.jfree.data.Range jfreeRange=plot.getDomainAxis().getRange();
 		if (jfreeRange.getLowerBound()!=lowerBound||jfreeRange.getUpperBound()!=upperBound) {
@@ -435,9 +437,11 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 				XYTrace trace=ionEntry.getValue();
 				XYPoint xy=trace.getMaxXYInRange(range);
 
-				XYTextAnnotation annotation=new XYTextAnnotation(ion.getName()+" ("+String.format("%.1f", ion.getMass())+" m/z)", xy.x, xy.y/chart.getDivider()*1.01);
-				System.out.println("      "+trace.getName()+" = "+xy.x+" / "+(xy.y/chart.getDivider()));
-				plot.addAnnotation(annotation);
+				if (xy!=null) {
+					XYTextAnnotation annotation=new XYTextAnnotation(ion.getName()+" ("+String.format("%.1f", ion.getMass())+" m/z)", xy.x, xy.y/chart.getDivider()*1.01);
+					System.out.println("      "+trace.getName()+" = "+xy.x+" / "+(xy.y/chart.getDivider()));
+					plot.addAnnotation(annotation);
+				}
 			}
 		}
 	}

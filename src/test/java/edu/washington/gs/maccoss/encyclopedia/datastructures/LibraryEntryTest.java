@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.awt.Dimension;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -81,8 +82,9 @@ public class LibraryEntryTest extends TestCase {
 				1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
 				1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
 				1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+		boolean[] quantifiedIons=new boolean[correlationArray.length]; Arrays.fill(quantifiedIons, true);
 		LibraryEntry entry=new LibraryEntry("VillenJ_Exactive_HumanPhosphoproteome.blib", new HashSet<String>(), 1, 641.280032, (byte) 3, "NTPS[+79.966331]QHSHSIQHSPER", 2, 33.986168f, 2.04E-4f, massArray, intensityArray,
-				correlationArray, parameters.getAAConstants());
+				correlationArray, quantifiedIons, parameters.getAAConstants());
 		
 		AnnotatedLibraryEntry annotated=new AnnotatedLibraryEntry(entry, parameters);
 		for (int ion=0; ion<annotated.getIonAnnotations().length; ion++) {

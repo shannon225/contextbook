@@ -15,11 +15,11 @@ public class LocalizedLibraryEntry extends ChromatogramLibraryEntry {
 
 	public LocalizedLibraryEntry(String sourceFile, HashSet<String> accessions, int spectrumIndex, double precursorMZ,
 			byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score,
-			double[] massArray, float[] intensityArray, float[] correlationArray, float[] medianChromatogram,
+			double[] massArray, float[] intensityArray, float[] correlationArray, boolean[] quantitativeIonsArray, float[] medianChromatogram,
 			Range range, AmbiguousPeptideModSeq peptideAnnotation, float localizationScore, FragmentIon[] localizationIons,
 			int numberOfModifiableResidues, int numberOfModifications, boolean isFullyLocalized, AminoAcidConstants aaConstants) {
 		super(sourceFile, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime,
-				score, massArray, intensityArray, correlationArray, medianChromatogram, range, aaConstants);
+				score, massArray, intensityArray, correlationArray, quantitativeIonsArray, medianChromatogram, range, aaConstants);
 		this.peptideAnnotation = peptideAnnotation;
 		this.localizationScore = localizationScore;
 		this.localizationIons = localizationIons;

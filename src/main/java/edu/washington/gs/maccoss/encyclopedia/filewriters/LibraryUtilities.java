@@ -91,7 +91,7 @@ public class LibraryUtilities {
 			LibraryEntry bestEntry=bestSource.get(key);
 			
 			if (bestEntry!=null&&bestEntry.getScore()<targetEntry.getScore()) {
-				toWrite.add(targetEntry.updateMS2(bestEntry.getMassArray(), bestEntry.getIntensityArray(), bestEntry.getCorrelationArray()));
+				toWrite.add(targetEntry.updateMS2(bestEntry.getMassArray(), bestEntry.getIntensityArray(), bestEntry.getCorrelationArray(), bestEntry.getQuantifiedIonsArray()));
 			} else {
 				toWrite.add(targetEntry);
 			}

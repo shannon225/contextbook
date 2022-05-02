@@ -6,6 +6,7 @@ import java.util.Collections;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.utils.Quadruplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 
 public class SpectrumPeakFilter {
@@ -17,21 +18,21 @@ public class SpectrumPeakFilter {
 												// in the last bin)
 
 	public static FragmentScan filterPeaks(FragmentScan stripe) {
-		ArrayList<PeakChromatogram> peaks=PeakChromatogram.fromChromatogramArrays(stripe.getMassArray(), stripe.getIntensityArray(), new float[stripe.getMassArray().length]);
+		ArrayList<PeakChromatogram> peaks=PeakChromatogram.fromChromatogramArrays(stripe.getMassArray(), stripe.getIntensityArray(), new float[stripe.getMassArray().length], new boolean[stripe.getMassArray().length]);
 		peaks=filterPeaks(peaks);
-		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
+		Quadruplet<double[], float[], float[], boolean[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
 
 		return new FragmentScan(stripe.getSpectrumName(), stripe.getPrecursorName(), stripe.getSpectrumIndex(), stripe.getScanStartTime(), stripe.getFraction(), stripe.getIonInjectionTime(), stripe.getIsolationWindowLower(), stripe.getIsolationWindowUpper(),
 				arrays.x, arrays.y, stripe.getCharge());
 	}
 
 	public static LibraryEntry filterPeaks(LibraryEntry entry, AminoAcidConstants aaConstants) {
-		ArrayList<PeakChromatogram> peaks=PeakChromatogram.fromChromatogramArrays(entry.getMassArray(), entry.getIntensityArray(), entry.getCorrelationArray());
+		ArrayList<PeakChromatogram> peaks=PeakChromatogram.fromChromatogramArrays(entry.getMassArray(), entry.getIntensityArray(), entry.getCorrelationArray(), entry.getQuantifiedIonsArray());
 		peaks=filterPeaks(peaks);
-		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
+		Quadruplet<double[], float[], float[], boolean[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
 
 		return new LibraryEntry(entry.getSource(), entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), entry.getCopies(),
-				entry.getRetentionTime(), entry.getScore(), arrays.x, arrays.y, arrays.z, aaConstants);
+				entry.getRetentionTime(), entry.getScore(), arrays.x, arrays.y, arrays.z, arrays.w, aaConstants);
 	}
 
 	public static ArrayList<PeakChromatogram> filterPeaks(ArrayList<PeakChromatogram> peaks) {

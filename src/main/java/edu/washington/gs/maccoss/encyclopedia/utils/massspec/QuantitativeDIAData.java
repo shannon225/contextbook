@@ -6,6 +6,7 @@ import java.util.Collections;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.utils.Quadruplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
@@ -30,10 +31,10 @@ public class QuantitativeDIAData implements PeptidePrecursor, Spectrum {
 		ArrayList<PeakChromatogram> peaks=new ArrayList<>();
 		int numPeaks=massArray.length;
 		for (int i=0; i<numPeaks; i++) {
-			peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], 0.0f));
+			peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], 0.0f, false));
 		}
 		Collections.sort(peaks);
-		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
+		Quadruplet<double[], float[], float[], boolean[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
 		this.massArray=arrays.x;
 		this.intensityArray=arrays.y;
 		

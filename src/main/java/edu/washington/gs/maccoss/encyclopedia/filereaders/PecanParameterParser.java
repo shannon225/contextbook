@@ -52,7 +52,6 @@ public class PecanParameterParser {
 		map.put("-numberOfThreadsUsed", Integer.toString(Runtime.getRuntime().availableProcessors()));
 		map.put("-numberOfQuantitativePeaks", "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
-		map.put("-minQuantitativeIonNumber", "3");
 		map.put("-minIntensity", "-1.0");
 		map.put("-requireVariableMods", "false");
         map.put("-filterPeaklists", "false");

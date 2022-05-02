@@ -899,7 +899,11 @@ public class SearchPanel extends JPanel {
 			if (dialog.getFiles()!=null) {
 				for (File file : dialog.getFiles()) {
 					Logger.logLine("Adding mzML import to queue for ["+file.getAbsolutePath()+"]");
-					getVisibleTab().getJob(file, processorTableModel);
+					try {
+						getVisibleTab().getJob(file, processorTableModel);
+					} catch (Exception e) {
+						JOptionPane.showMessageDialog(frame, e);
+					}
 				}
 			}
 		}

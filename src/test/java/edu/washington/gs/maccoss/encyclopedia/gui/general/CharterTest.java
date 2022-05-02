@@ -341,8 +341,9 @@ public class CharterTest {
 				1.009503f, 100f, 0.635989f, 0.550531f, 0.604124f, 0.460001f, 0.433143f, 0.651692f};
 		intensities=General.multiply(intensities, -1);
 		float[] correlations=new float[intensities.length];
+		boolean[] quantifiedIons=new boolean[intensities.length];
 		
-		LibraryEntry trace = new LibraryEntry("Massbank", new HashSet<>(), 1, 150.0583, (byte)1, "M", "M", 1, 3791.84f, 0, masses, intensities, correlations, true);
+		LibraryEntry trace = new LibraryEntry("Massbank", new HashSet<>(), 1, 150.0583, (byte)1, "M", "M", 1, 3791.84f, 0, masses, intensities, correlations, quantifiedIons, true);
 			
 		System.out.println("CHECK: "+General.toString(trace.getIntensityArray()));
 		System.out.println("VS: "+General.toString(intensities));
@@ -387,8 +388,11 @@ public class CharterTest {
 		float[] correlations=new float[top.getCorrelationArray().length+bottom.getCorrelationArray().length];
 		System.arraycopy(top.getCorrelationArray(), 0, correlations, 0, top.getCorrelationArray().length);
 		System.arraycopy(bottom.getCorrelationArray(), 0, correlations, top.getCorrelationArray().length, bottom.getCorrelationArray().length);
-
-		LibraryEntry trace = new LibraryEntry(top.getSource(), top.getAccessions(), top.getSpectrumIndex(), top.getPrecursorMZ(), top.getPrecursorCharge(), top.getLegacyPeptideModSeq(), top.getPeptideModSeq(), top.getCopies(), top.getRetentionTime(), top.getScore(), masses, intensities, correlations, true);
+		boolean[] quantifiedIons=new boolean[top.getQuantifiedIonsArray().length+bottom.getQuantifiedIonsArray().length];
+		System.arraycopy(top.getQuantifiedIonsArray(), 0, quantifiedIons, 0, top.getQuantifiedIonsArray().length);
+		System.arraycopy(bottom.getQuantifiedIonsArray(), 0, quantifiedIons, top.getQuantifiedIonsArray().length, bottom.getQuantifiedIonsArray().length);
+		
+		LibraryEntry trace = new LibraryEntry(top.getSource(), top.getAccessions(), top.getSpectrumIndex(), top.getPrecursorMZ(), top.getPrecursorCharge(), top.getLegacyPeptideModSeq(), top.getPeptideModSeq(), top.getCopies(), top.getRetentionTime(), top.getScore(), masses, intensities, correlations, quantifiedIons, true);
 		return trace;
 	}
 
