@@ -122,7 +122,7 @@ public class LibraryUtilities {
 		ArrayList<LibraryEntry> toWrite=new ArrayList<>();
 		for (LibraryEntry entry : library.getAllEntries(false, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()))) {
 			if (rtMinSec<=entry.getRetentionTime()&&rtMaxSec>=entry.getRetentionTime()&&mzMin<=entry.getPrecursorMZ()&&mzMax>=entry.getPrecursorMZ()) {
-				if (targets.size()==0||(targets.contains(entry.getPeptideSeq())||targets.contains(entry.getPeptideModSeq()))) {
+				if (matchesKeyword(targets, entry)) {
 					toWrite.add(entry);
 				}
 			}
@@ -136,6 +136,17 @@ public class LibraryUtilities {
 		saveLibrary.saveAsFile(saveFile);
 		
 		saveLibrary.close();
+	}
+	
+	private static boolean matchesKeyword(HashSet<String> targets, LibraryEntry entry) {
+		if (targets.size()==0) return true;
+		if (targets.contains(entry.getPeptideSeq())) return true;
+		if (targets.contains(entry.getPeptideModSeq())) return true;
+		
+		for (String accession : entry.getAccessions()) {
+			if (targets.contains(accession)) return true;
+		}
+		return false;
 	}
 	
 	public static LibraryFile mergeLibraries(ArrayList<File> files, File saveFile, boolean rtAlign, boolean removeDuplicates, boolean higherScoresAreBetter) throws IOException, SQLException, DataFormatException {
