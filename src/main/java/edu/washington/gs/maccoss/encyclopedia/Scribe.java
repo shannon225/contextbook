@@ -303,7 +303,7 @@ public class Scribe {
 						// assumes some +1Hs, so straight number of neutrons above target
 						double targetStop=range.getStop()+MassConstants.neutronMass*NUMBER_OF_ISOTOPES_ABOVE_MONOISOTOPIC;
 						double widerStop=targetStop+parameters.getFragmentTolerance().getTolerance(targetStop);
-						ArrayList<LibraryEntry> entries=library.getUnlinkedEntries(new Range(widerStart, widerStop), true, parameters.getAAConstants());
+						ArrayList<LibraryEntry> entries=library.getEntries(new Range(widerStart, widerStop), true, parameters.getAAConstants());
 						if (entries.size()==0) return Nothing.NOTHING;
 						
 						ArrayList<FragmentScan> stripes=stripefile.getStripes(range, -Float.MAX_VALUE, Float.MAX_VALUE, true);

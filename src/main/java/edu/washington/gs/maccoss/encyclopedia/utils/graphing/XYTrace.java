@@ -199,6 +199,10 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 		this(map, type, name, null, null);
 	}
 	
+	public XYTrace updateType(GraphType type, Optional<Float> thickness) {
+		return new XYTrace(points, type, name, color, thickness);
+	}
+	
 	public XYTrace updateColor(Color color, Float thickness) {
 		return new XYTrace(points, type, name, color, thickness);
 	}

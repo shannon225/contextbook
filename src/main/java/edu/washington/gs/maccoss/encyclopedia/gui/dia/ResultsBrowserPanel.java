@@ -357,6 +357,9 @@ public class ResultsBrowserPanel extends JPanel {
 			entries.add(unit);
 			
 			try {
+				double[] massArray=entry.getMassArray();
+				boolean[] quantifiedIonsArray=entry.getQuantifiedIonsArray();
+				
 				float rtRange=parameters.getLocalizingModification().isPresent()?dia.getGradientLength()/20.0f:(2f*parameters.getExpectedPeakWidth());
 				
 				ArrayList<FragmentScan> stripes=dia.getStripes(entry.getPrecursorMZ(), targetRT-rtRange, targetRT+rtRange, false);
@@ -368,7 +371,12 @@ public class ResultsBrowserPanel extends JPanel {
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
 				for (Entry<FragmentIon, XYTrace> pair : fragmentTraceMap.entrySet()) {
 					if (pair.getKey().getIndex()>1) {
-						traces.add(pair.getValue());
+						Optional<Integer> index = parameters.getFragmentTolerance().getIndex(massArray, pair.getKey().getMass());
+						if (index.isPresent()&&quantifiedIonsArray[index.get()]) {
+							traces.add(pair.getValue());
+						} else {
+							traces.add(pair.getValue().updateType(GraphType.dashedline, Optional.of(1.0f)));
+						}
 					}
 				}
 				Collections.sort(traces);
@@ -541,6 +549,7 @@ public class ResultsBrowserPanel extends JPanel {
 				e.printStackTrace();
 			}
 			Logger.logLine("Finished reading peptide "+entry.getSpectrumName()+" (rt="+ targetRT+")");
+			System.out.println(General.toString(entry.getQuantifiedIonsArray()));
 		}
 		split.setDividerLocation(location);
 	}
