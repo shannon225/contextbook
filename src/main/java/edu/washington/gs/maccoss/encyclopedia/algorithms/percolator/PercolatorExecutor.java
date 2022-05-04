@@ -33,7 +33,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 
 public class PercolatorExecutor extends ExternalExecutor {
 	public static final String PI_0_TAG="pi_0=";
-	public static final PercolatorVersion DEFAULT_VERSION_NUMBER=PercolatorVersion.v3p05;
+	public static final PercolatorVersion DEFAULT_VERSION_NUMBER=PercolatorVersion.v3p01;
 
 	/**
 	 * The default value that Percolator uses for the {@code -t/--testFDR} parameter.

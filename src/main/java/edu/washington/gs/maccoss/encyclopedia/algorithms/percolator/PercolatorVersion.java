@@ -15,7 +15,7 @@ public enum PercolatorVersion {
 		if (V3_01.equals(s)) return v3p01;
 		if (V3_05.equals(s)) return v3p05;
 		if ("2".equals(s)) return v2p10;
-		if ("3".equals(s)) return v3p05;
+		if ("3".equals(s)) return v3p01;
 		if ("2.10".equals(s)) return v2p10;
 		if ("3.1".equals(s)) return v3p01;
 		if ("3.5".equals(s)) return v3p05;
