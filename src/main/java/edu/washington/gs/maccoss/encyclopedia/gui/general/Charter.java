@@ -4,7 +4,9 @@ import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FileDialog;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.Toolkit;
@@ -22,6 +24,7 @@ import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.text.AttributedString;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -76,6 +79,7 @@ import com.itextpdf.text.pdf.PdfWriter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Boxplotter.CategoryBoxPlotterRenderer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -874,6 +878,7 @@ public class Charter {
 			chartPanel.getChart().getLegend().setItemFont(font3);
 		}
 		addCopyDataMenu(xAxis, chartPanel, traces);
+		addSaveAsDlib(chartPanel, traces);
 		
 		//rangeAxis.setTickUnit(new NumberTickUnit(20)); 
 		//domainAxis.setTickUnit(new NumberTickUnit(20));
@@ -945,6 +950,63 @@ public class Charter {
 				StringSelection stringSelection = new StringSelection(sb.toString());
 				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 				clipboard.setContents(stringSelection, null);
+			}
+		});
+	}
+	
+	private static void addSaveAsDlib(final ExtendedChartPanel chartPanel, final XYTraceInterface... traces) {
+
+		final ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
+		for (XYTraceInterface trace : traces) {
+			if (trace instanceof AnnotatedLibraryEntry) {
+				AnnotatedLibraryEntry entry=(AnnotatedLibraryEntry)trace;
+				
+				entries.add(entry);
+			}
+		}
+		// don't bother continuing if we don't have any annotated spectra
+		if (entries.size()==0) {
+			return;
+		}
+
+		JMenuItem saveLibItem=new JMenuItem("Append to library...");
+		chartPanel.getPopupMenu().add(saveLibItem, 5);
+		saveLibItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				FileDialog dialog=new FileDialog((Frame)null, "Select a new or existing library file", FileDialog.SAVE);
+				dialog.setFilenameFilter(new SimpleFilenameFilter(LibraryFile.DLIB));
+				dialog.setVisible(true);
+				File[] fs=dialog.getFiles();
+				try {
+					LibraryFile library=new LibraryFile();
+					if (fs!=null&&fs.length>0&&fs[0]!=null) {
+						if (fs[0].exists()&&fs[0].canRead()) {
+							library.openFile(fs[0]);
+							
+						} else {
+							if (!fs[0].getName().toLowerCase().endsWith(LibraryFile.DLIB)) {
+								File newFile=new File(fs[0].getAbsolutePath()+LibraryFile.DLIB);
+								fs[0]=newFile;
+							}
+							library.openFile();
+						}
+
+						library.addEntries(entries, false);
+						library.addProteinsFromEntries(entries);
+						library.createIndices();
+	
+						library.saveAsFile(fs[0]);
+						library.close();
+					}
+				
+				} catch (SQLException sqle) {
+					Logger.errorLine("Found SQL error adding data to library file...");
+					Logger.errorException(sqle);
+				} catch (IOException ioe) {
+					Logger.errorLine("Found IO error adding data to library file...");
+					Logger.errorException(ioe);
+				}
 			}
 		});
 	}

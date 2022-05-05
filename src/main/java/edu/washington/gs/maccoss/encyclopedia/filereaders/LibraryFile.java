@@ -1006,13 +1006,16 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public void addEntries(ArrayList<LibraryEntry> entries) throws IOException, SQLException {
+		this.addEntries(entries, true);
+	}
+	public void addEntries(ArrayList<LibraryEntry> entries, boolean requireAccessions) throws IOException, SQLException {
 		Connection c=getConnection();
 		try {
 			PreparedStatement prep=c.prepareStatement(
 					"INSERT INTO entries (PrecursorMZ, PrecursorCharge, PeptideModSeq, PeptideSeq, Copies, RTInSeconds, Score, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, CorrelationEncodedLength, CorrelationArray, QuantifiedIonsArray, RTInSecondsStart, RTInSecondsStop, MedianChromatogramEncodedLength, MedianChromatogramArray, SourceFile) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 			try {
 				for (LibraryEntry entry : entries) {
-					if (entry.getAccessions().size()==0)
+					if (requireAccessions&&entry.getAccessions().size()==0)
 						continue;
 					String pepSeq=entry.getPeptideSeq();
 					prep.setDouble(1, entry.getPrecursorMZ());
