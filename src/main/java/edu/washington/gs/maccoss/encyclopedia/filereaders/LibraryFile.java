@@ -1752,12 +1752,17 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						s.execute("ALTER TABLE peptidetoprotein ADD COLUMN isDecoy boolean");
 					}
 
-
 					if (new Version(0, 1, 15).amIAbove(version)&&version.amIAbove(new Version(0, 0, 9))) {
 						if (userFile!=null) {
 							Logger.logLine("Updating library to "+new Version(0, 1, 15));
 						}
 						s.execute("ALTER TABLE entries ADD COLUMN QuantifiedIonsArray blob");
+					}
+					
+					try {
+						setFileVersion();
+					} catch (SQLException sqle) {
+						Logger.errorLine("Error trying to set library file version, library is locked for writing");
 					}
 				}
 
