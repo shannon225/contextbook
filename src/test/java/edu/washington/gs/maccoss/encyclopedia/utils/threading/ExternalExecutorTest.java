@@ -45,11 +45,12 @@ public class ExternalExecutorTest {
 		Assume.assumeThat(OSDetector.getOS(), new IsNot<>(new IsEqual<>(OSDetector.OS.WINDOWS)));
 
 		// Build a random test string
-		final int n = new Random().nextInt(100);
+		final int n = Math.max(1, new Random().nextInt(100)); // must at least have one line!
 		final StringBuilder sb = new StringBuilder();
 		for (int i = n; i --> 0;) {
 			sb.append(i);
 			if (i > 0) {
+				// Don't add newline after last line.
 				sb.append("\n");
 			}
 		}

@@ -18,12 +18,16 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
 public class ExternalExecutor {
 	private final String[] cmdAndArgs;
 	private volatile Process p;
+	private volatile Thread stdoutThread, stderrThread;
 
 	public ExternalExecutor(String[] cmdAndArgs) {
 		this.cmdAndArgs=cmdAndArgs;
 	}
 
 	public BlockingQueue<OutputMessage> start() throws IOException {
+		if (null != p) {
+			throw new IllegalStateException("You can not start() an executor twice!");
+		}
 		final BlockingQueue<OutputMessage> queue=new LinkedBlockingQueue<OutputMessage>();
 
 		ImmutableList.Builder<String> cmdBuilder = ImmutableList.builder();
@@ -42,7 +46,7 @@ public class ExternalExecutor {
 		p = new ProcessBuilder(cmd).start();
 
 		// Note: both these threads should terminate by exiting the loop once the process completes
-		new Thread(new Runnable() {
+		stdoutThread = new Thread(new Runnable() {
 			public void run() {
 				BufferedReader input=new BufferedReader(new InputStreamReader(p.getInputStream()));
 				String line=null;
@@ -55,9 +59,10 @@ public class ExternalExecutor {
 					e.printStackTrace();
 				}
 			}
-		}).start();
+		});
+		stdoutThread.start();
 
-		new Thread(new Runnable() {
+		stderrThread = new Thread(new Runnable() {
 			public void run() {
 				BufferedReader input=new BufferedReader(new InputStreamReader(p.getErrorStream()));
 				String line=null;
@@ -70,13 +75,14 @@ public class ExternalExecutor {
 					e.printStackTrace();
 				}
 			}
-		}).start();
+		});
+		stderrThread.start();
 
 		return queue;
 	}
 
 	public boolean isFinished() {
-		return !p.isAlive();
+		return !p.isAlive() && !stdoutThread.isAlive() && !stderrThread.isAlive();
 	}
 
 	/**
