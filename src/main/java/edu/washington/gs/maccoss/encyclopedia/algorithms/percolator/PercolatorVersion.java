@@ -110,5 +110,12 @@ public interface PercolatorVersion {
 				throw new EncyclopediaException("Unexpected exception finding Percolator", ioe);
 			}
 		}
+
+		static void loadLibraryFile(File percolator, String target) throws IOException {
+			File file=new File(percolator.getParentFile(), target);
+			file.deleteOnExit();
+			InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/"+target);
+			Files.copy(is, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		}
 	}
 }
