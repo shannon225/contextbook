@@ -33,7 +33,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 
 public class PercolatorExecutor extends ExternalExecutor {
 	public static final String PI_0_TAG="pi_0=";
-	public static final PercolatorVersion DEFAULT_VERSION_NUMBER=PercolatorVersion.v3p01;
+
+	/**
+	 * Instead use {@link PercolatorVersion#DEFAULT_VERSION}.
+	 */
+	@Deprecated
+	public static final PercolatorVersion DEFAULT_VERSION_NUMBER=PercolatorVersion.DEFAULT_VERSION;
 
 	/**
 	 * The default value that Percolator uses for the {@code -t/--testFDR} parameter.

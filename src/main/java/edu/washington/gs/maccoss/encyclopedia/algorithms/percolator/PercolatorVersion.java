@@ -5,7 +5,7 @@ public interface PercolatorVersion {
 	PercolatorVersion v3p01 = InternalPercolatorVersion.v2p10;
 	PercolatorVersion v3p05 = InternalPercolatorVersion.v2p10;
 
-	PercolatorVersion DEFAULT_VERSION = PercolatorVersion.v3p01;
+	PercolatorVersion DEFAULT_VERSION = PercolatorVersion.v3p05;
 
 	PercolatorVersion[] VALID_VERSIONS = new PercolatorVersion[]{v3p01, v2p10};
 
@@ -14,7 +14,7 @@ public interface PercolatorVersion {
 	String V2_10 = "v2-10";
 
 	static PercolatorVersion getVersion(String s) {
-		if (s == null || s.length() == 0) return v3p05;
+		if (s == null || s.length() == 0) return DEFAULT_VERSION;
 		if (V2_10.equals(s)) return v2p10;
 		if (V3_01.equals(s)) return v3p01;
 		if (V3_05.equals(s)) return v3p05;
@@ -25,7 +25,7 @@ public interface PercolatorVersion {
 		if ("3.5".equals(s)) return v3p05;
 		if ("3.01".equals(s)) return v3p01;
 		if ("3.05".equals(s)) return v3p05;
-		return v3p05;
+		return DEFAULT_VERSION;
 	}
 
 	int getMajorVersion();
