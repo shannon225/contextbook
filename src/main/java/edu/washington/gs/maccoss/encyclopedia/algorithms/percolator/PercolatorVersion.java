@@ -11,8 +11,8 @@ import java.nio.file.StandardCopyOption;
 
 public interface PercolatorVersion {
 	PercolatorVersion v2p10 = InternalPercolatorVersion.v2p10;
-	PercolatorVersion v3p01 = InternalPercolatorVersion.v2p10;
-	PercolatorVersion v3p05 = InternalPercolatorVersion.v2p10;
+	PercolatorVersion v3p01 = InternalPercolatorVersion.v3p01;
+	PercolatorVersion v3p05 = InternalPercolatorVersion.v3p05;
 
 	PercolatorVersion DEFAULT_VERSION = PercolatorVersion.v3p05;
 
