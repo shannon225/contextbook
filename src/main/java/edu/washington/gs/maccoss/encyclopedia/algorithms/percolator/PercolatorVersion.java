@@ -22,6 +22,8 @@ public interface PercolatorVersion {
 	String V3_01 = "v3-01";
 	String V2_10 = "v2-10";
 
+	int UNKNOWN_MAJOR_VERSION = -1;
+
 	static PercolatorVersion getVersion(String s) {
 		if (s == null || s.length() == 0) return DEFAULT_VERSION;
 		if (V2_10.equals(s)) return v2p10;
