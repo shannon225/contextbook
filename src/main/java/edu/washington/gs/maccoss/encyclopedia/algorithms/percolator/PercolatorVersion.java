@@ -1,5 +1,14 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+
 public interface PercolatorVersion {
 	PercolatorVersion v2p10 = InternalPercolatorVersion.v2p10;
 	PercolatorVersion v3p01 = InternalPercolatorVersion.v2p10;
@@ -30,6 +39,11 @@ public interface PercolatorVersion {
 
 	int getMajorVersion();
 
+	/**
+	 * Get the local executable file for this version of Percolator, possibly after copying it to temp.
+	 */
+	File getPercolator();
+
 	enum InternalPercolatorVersion implements PercolatorVersion {
 		v2p10, v3p01, v3p05;
 
@@ -56,6 +70,44 @@ public interface PercolatorVersion {
 				case v3p05:
 				default:
 					return 3;
+			}
+		}
+
+		@Override
+		public File getPercolator() {
+			try {
+				File percolator = File.createTempFile("Percolator-" + this + "-", ".exe");
+				percolator.deleteOnExit();
+
+				OSDetector.OS os = OSDetector.getOS();
+				switch (os) {
+					case WINDOWS: {
+						InputStream is = PercolatorExecutor.class.getResourceAsStream("/bin/percolator-" + this + ".exe");
+						Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
+						percolator.setExecutable(true);
+
+						// not necessary for the crux version of percolator
+						//loadLibraryFile(percolator, "xerces-c_3_1.dll");
+						//loadLibraryFile(percolator, "msvcr120.dll");
+						//loadLibraryFile(percolator, "msvcp120.dll");
+
+						return percolator;
+					}
+					case MAC: {
+						InputStream is = PercolatorExecutor.class.getResourceAsStream("/bin/percolator-" + this + ".mac");
+						Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
+						percolator.setExecutable(true);
+						return percolator;
+					}
+					case LINUX:
+						InputStream is = PercolatorExecutor.class.getResourceAsStream("/bin/percolator-" + this + ".lin");
+						Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
+						percolator.setExecutable(true);
+						return percolator;
+				}
+				throw new EncyclopediaException("Sorry, Percolator for " + OSDetector.getOSName(os) + " is not set up yet!");
+			} catch (IOException ioe) {
+				throw new EncyclopediaException("Unexpected exception finding Percolator", ioe);
 			}
 		}
 	}

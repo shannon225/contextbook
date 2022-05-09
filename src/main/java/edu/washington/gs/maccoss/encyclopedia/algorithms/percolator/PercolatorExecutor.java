@@ -24,8 +24,6 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
-import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.FileConcatenator;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
@@ -183,7 +181,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 	}
 
 	static String[] generateCommand(PercolatorVersion percolatorVersion, PercolatorExecutionData commandData, int round) {
-		File percolator=getPercolator(percolatorVersion);
+		File percolator = percolatorVersion.getPercolator();
 
 		ArrayList<String> params=new ArrayList<>();
 		
@@ -239,44 +237,6 @@ public class PercolatorExecutor extends ExternalExecutor {
 		writer.close();
 
 		return fastaPlusDecoy;
-	}
-
-	static File getPercolator(PercolatorVersion percolatorVersionNumber) {
-
-		try {
-			File percolator=File.createTempFile("Percolator-" + percolatorVersionNumber + "-", ".exe");
-			percolator.deleteOnExit();
-
-			OS os=OSDetector.getOS();
-			switch (os) {
-				case WINDOWS: {
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+percolatorVersionNumber+".exe");
-					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
-					percolator.setExecutable(true);
-
-					// not necessary for the crux version of percolator
-					//loadLibraryFile(percolator, "xerces-c_3_1.dll");
-					//loadLibraryFile(percolator, "msvcr120.dll");
-					//loadLibraryFile(percolator, "msvcp120.dll");
-
-					return percolator;
-				}
-				case MAC: {
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+percolatorVersionNumber+".mac");
-					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
-					percolator.setExecutable(true);
-					return percolator;
-				}
-				case LINUX:
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+percolatorVersionNumber+".lin");
-					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
-					percolator.setExecutable(true);
-					return percolator;
-			}
-			throw new EncyclopediaException("Sorry, Percolator for "+OSDetector.getOSName(os)+" is not set up yet!");
-		} catch (IOException ioe) {
-			throw new EncyclopediaException("Unexpected exception finding Percolator", ioe);
-		}
 	}
 
 	static void loadLibraryFile(File percolator, String target) throws IOException {
