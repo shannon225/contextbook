@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Base class for non-builtin Percolator versions.
+ */
 public abstract class ExternalPercolator implements PercolatorVersion {
 	// anchored only at start, so suffixes are ignored
 	private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+)(?:\\.(\\d+)(?:\\.(\\d+))?)?");
