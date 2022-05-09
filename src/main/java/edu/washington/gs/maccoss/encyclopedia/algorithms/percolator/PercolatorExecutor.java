@@ -11,6 +11,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -170,7 +171,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 		}
 	}
 
-	private static void checkResult(PercolatorExecutor e) throws EncyclopediaException {
+	private static void checkResult(ExternalExecutor e) throws EncyclopediaException {
 		if (0 != e.getResultCode()) {
 			throw new EncyclopediaException("Percolator exited with non-zero status: " + e.getResultCode());
 		}
@@ -237,5 +238,44 @@ public class PercolatorExecutor extends ExternalExecutor {
 		writer.close();
 
 		return fastaPlusDecoy;
+	}
+
+	public static String checkPercolatorVersion(PercolatorVersion version) throws IOException, InterruptedException {
+		final ExternalExecutor executor = new ExternalExecutor(new String[] {
+				version.getPercolator().getAbsolutePath(), "--help"
+		});
+
+		final BlockingQueue<OutputMessage> result=executor.start();
+
+		String errorMessage=null;
+		Optional<String> percolatorExecutableVersion = Optional.empty();
+		while (!executor.isFinished()||!result.isEmpty()) {
+			if (!result.isEmpty()) {
+				OutputMessage data=result.take();
+				if (true || !data.isStdOutput()) {
+					if (!percolatorExecutableVersion.isPresent()) {
+						String message = data.getMessage();
+						percolatorExecutableVersion = getPercolatorVersionFromOutput(message);
+					}
+
+					Logger.logLine(data.getMessage());
+					errorMessage = getErrorMessage(data);
+				}
+			} else {
+				Thread.sleep(10);
+			}
+		}
+
+		if (errorMessage!=null) {
+			throw new EncyclopediaException(errorMessage);
+		}
+
+		checkResult(executor);
+
+		if (!percolatorExecutableVersion.isPresent()) {
+			throw new IllegalStateException("Did not find Percolator version!");
+		}
+
+		return percolatorExecutableVersion.get();
 	}
 }
