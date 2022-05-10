@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 
 import java.io.File;
@@ -43,6 +44,8 @@ public interface PercolatorVersion {
 		if (null != parsedAsFile) {
 			return parsedAsFile;
 		}
+
+		Logger.errorLine("Could not parse Percolator version \"" + s + "\"; falling back to " + DEFAULT_VERSION);
 
 		return DEFAULT_VERSION;
 	}

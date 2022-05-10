@@ -37,4 +37,9 @@ public class LocalPercolator extends ExternalPercolator {
 	public File getPercolator() {
 		return exe.toFile();
 	}
+
+	@Override
+	public String toString() {
+		return exe.toAbsolutePath().toString();
+	}
 }
