@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 public interface PercolatorVersion {
@@ -36,7 +38,32 @@ public interface PercolatorVersion {
 		if ("3.5".equals(s)) return v3p05;
 		if ("3.01".equals(s)) return v3p01;
 		if ("3.05".equals(s)) return v3p05;
+
+		final PercolatorVersion parsedAsFile = parseFilePath(s);
+		if (null != parsedAsFile) {
+			return parsedAsFile;
+		}
+
 		return DEFAULT_VERSION;
+	}
+
+	/**
+	 * Check if the given string is a valid filepath, and if so,
+	 * return a {@link LocalPercolator} instance that will use it.
+	 *
+	 * @return a suitable {@code PercolatorVersion}, or {@code null}
+	 */
+	static PercolatorVersion parseFilePath(String s) {
+		if (null == s || s.isEmpty()) {
+			return null;
+		}
+
+		final Path parsed = Paths.get(s);
+		if (Files.exists(parsed)) {
+			return new LocalPercolator(parsed);
+		}
+
+		return null;
 	}
 
 	int getMajorVersion();
