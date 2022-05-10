@@ -5,6 +5,8 @@ import org.junit.AssumptionViolatedException;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.net.URI;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -24,7 +26,6 @@ public class PercolatorVersionTest {
 		assertEquals(PercolatorVersion.v3p05.getMajorVersion(), parsed.getMajorVersion());
 	}
 
-	@Ignore //TODO: local URI
 	@Test
 	public void testParsePercolatorLocalURI() throws Exception {
 		PercolatorVersion parsed = PercolatorVersion.getVersion(PercolatorVersion.v2p10.getPercolator().toURI().toString());

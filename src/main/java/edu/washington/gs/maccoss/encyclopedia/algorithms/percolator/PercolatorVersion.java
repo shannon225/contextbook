@@ -7,6 +7,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,6 +47,11 @@ public interface PercolatorVersion {
 			return parsedAsFile;
 		}
 
+		final PercolatorVersion parsedAsUri = parseUri(s);
+		if (null != parsedAsUri) {
+			return parsedAsUri;
+		}
+
 		Logger.errorLine("Could not parse Percolator version \"" + s + "\"; falling back to " + DEFAULT_VERSION);
 
 		return DEFAULT_VERSION;
@@ -64,6 +71,33 @@ public interface PercolatorVersion {
 		final Path parsed = Paths.get(s);
 		if (Files.exists(parsed)) {
 			return new LocalPercolator(parsed);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Check if the given string is a valid URI, and if so,
+	 * return a suitable {@code PercolatorVersion} instance that will use it.
+	 *
+	 * @return a suitable {@code PercolatorVersion}, or {@code null}
+	 */
+	static PercolatorVersion parseUri(String s) {
+		if (null == s || s.isEmpty()) {
+			return null;
+		}
+
+		final URI parsed;
+		try {
+			parsed = new URI(s);
+		} catch (URISyntaxException e) {
+			// Don't bother logging here; the caller will log if the entire
+			// parsing process fails.
+			return null;
+		}
+
+		if ("file".equals(parsed.getScheme())) {
+			return new LocalPercolator(Paths.get(parsed.getPath()));
 		}
 
 		return null;
