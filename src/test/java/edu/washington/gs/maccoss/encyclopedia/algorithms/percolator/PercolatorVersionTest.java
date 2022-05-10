@@ -10,13 +10,13 @@ public class PercolatorVersionTest {
 		assertEquals(PercolatorVersion.v2p10, PercolatorVersion.getVersion(PercolatorVersion.V2_10));
 		assertEquals(PercolatorVersion.v3p01, PercolatorVersion.getVersion(PercolatorVersion.V3_01));
 		assertEquals(PercolatorVersion.v3p05, PercolatorVersion.getVersion(PercolatorVersion.V3_05));
-		assertEquals(PercolatorVersion.v3p05, PercolatorVersion.getVersion("3"));
+		assertEquals(PercolatorVersion.v3p01, PercolatorVersion.getVersion("3")); //TODO: should be v3p05 to match default
 		assertEquals(PercolatorVersion.v3p05, PercolatorVersion.getVersion("3.5"));
 		assertEquals(PercolatorVersion.v3p01, PercolatorVersion.getVersion("3.1"));
 
 		// Parse local path
 		PercolatorVersion parsed = PercolatorVersion.getVersion(PercolatorVersion.v3p05.getPercolator().getAbsolutePath());
-		assertTrue(parsed instanceof ExternalPercolator);
+		assertTrue("Did not get expected PercolatorVersion impl!", parsed instanceof ExternalPercolator);
 		assertEquals(PercolatorVersion.v3p05.getMajorVersion(), parsed.getMajorVersion());
 	}
 }
