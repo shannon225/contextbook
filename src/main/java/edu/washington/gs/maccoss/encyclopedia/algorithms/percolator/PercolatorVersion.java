@@ -19,7 +19,18 @@ public interface PercolatorVersion {
 	PercolatorVersion v3p01 = InternalPercolatorVersion.v3p01;
 	PercolatorVersion v3p05 = InternalPercolatorVersion.v3p05;
 
-	PercolatorVersion DEFAULT_VERSION = PercolatorVersion.v3p05;
+	/**
+	 * By default, use version 3. Until we default to Percolator 4,
+	 * don't change this definition and instead update {@link #DEFAULT_VERSION_3}.
+	 */
+	PercolatorVersion DEFAULT_VERSION = PercolatorVersion.DEFAULT_VERSION_3;
+
+	/**
+	 * The version of Percolator 3 that should be used by default,
+	 * e.g. when running with `-percolatorVersion 3`. Currently 3.01
+	 * due to issues observed with 3.05.
+	 */
+	PercolatorVersion DEFAULT_VERSION_3 = PercolatorVersion.v3p01;
 
 	PercolatorVersion[] VALID_VERSIONS = new PercolatorVersion[]{v3p01, v2p10};
 
@@ -35,7 +46,7 @@ public interface PercolatorVersion {
 		if (V3_01.equals(s)) return v3p01;
 		if (V3_05.equals(s)) return v3p05;
 		if ("2".equals(s)) return v2p10;
-		if ("3".equals(s)) return v3p01;
+		if ("3".equals(s)) return DEFAULT_VERSION_3;
 		if ("2.10".equals(s)) return v2p10;
 		if ("3.1".equals(s)) return v3p01;
 		if ("3.5".equals(s)) return v3p05;
