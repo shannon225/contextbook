@@ -45,14 +45,14 @@ public class LibraryReportExtractor {
 		LibraryReportExtractor.extractMatrix(library, true);
 	}
 
-	public static void extractMatrix(LibraryFile library, boolean normalizeByTIC) throws IOException, SQLException, DataFormatException {
+	public static File extractMatrix(LibraryFile library, boolean normalizeByTIC) throws IOException, SQLException, DataFormatException {
 		ArrayList<ProteinGroupInterface> proteins=library.getProteinGroups();
-		extractMatrix(library, proteins, normalizeByTIC, Optional.ofNullable(null));
+		return extractMatrix(library, proteins, normalizeByTIC, Optional.ofNullable(null));
 	}
-	public static void extractMatrix(LibraryFile library, ArrayList<ProteinGroupInterface> proteins, boolean normalizeByTIC) throws IOException, SQLException, DataFormatException {
-		extractMatrix(library, proteins, normalizeByTIC, Optional.ofNullable(null));
+	public static File extractMatrix(LibraryFile library, ArrayList<ProteinGroupInterface> proteins, boolean normalizeByTIC) throws IOException, SQLException, DataFormatException {
+		return extractMatrix(library, proteins, normalizeByTIC, Optional.ofNullable(null));
 	}
-	public static void extractMatrix(LibraryFile library, ArrayList<ProteinGroupInterface> proteins, boolean normalizeByTIC, Optional<CoefficientOfVariationCalculator> cvCalculator) throws IOException, SQLException, DataFormatException {
+	public static File extractMatrix(LibraryFile library, ArrayList<ProteinGroupInterface> proteins, boolean normalizeByTIC, Optional<CoefficientOfVariationCalculator> cvCalculator) throws IOException, SQLException, DataFormatException {
 		File stubFile=library.getFile();
 		if (stubFile==null) {
 			throw new EncyclopediaException("Please save .ELIB before trying to read matrix data from it!");
@@ -363,6 +363,7 @@ public class LibraryReportExtractor {
 		} finally {
 			c.close();
 		}
+		return proteinReportFile;
 	}
 
 	public static Pair<ArrayList<String>, ArrayList<PeptideReportData>> extractMatrix(LibraryFile library, AminoAcidConstants aaConstants) throws IOException, SQLException, DataFormatException {

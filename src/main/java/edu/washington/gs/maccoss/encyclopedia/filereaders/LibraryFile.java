@@ -348,7 +348,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	/**
-	 * if there are repeated integrated peptides, we prefer peptides with higher scores
+	 * if there are repeated integrated peptides, we prefer peptides with higher integration scores
 	 * @param entries
 	 * @param inferrer
 	 * @param localizationData
@@ -397,11 +397,11 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			LibraryEntry prev=repeatsCatcher.get(key);
 			if (prev==null) {
 				repeatsCatcher.put(key, entry);
-			} else {
+			} else if (prev instanceof IntegratedLibraryEntry) {
 				// Logger.errorLine("Found collision writing elib: "+key+"
 				// ("+entry.getScore()+" vs"+prev.getScore()+"), keeping best
 				// scoring. Let Brian know if you see this!");
-				if (entry.getScore()>prev.getScore()) {
+				if (entry.getIntegrationScore()>((IntegratedLibraryEntry)prev).getIntegrationScore()) {
 					// prefer peptides with higher scores
 					repeatsCatcher.put(key, entry);
 				}
