@@ -38,10 +38,10 @@ public class PecanScoringResultsToTSVConsumer extends AbstractScoringResultsToTS
 				AbstractScoringResult result=resultsQueue.take();
 				if (AbstractScoringResult.POISON_RESULT==result) break;
 				if (!printedHeader) {
-					writer.print("id\tTD\tScanNr\ttopN\trank\tpeakZScore\tpeakCalibratedScore\tdeltaSn\t"
+					writer.print("id\tLabel\tScanNr\ttopN\trank\tpeakZScore\tpeakCalibratedScore\tdeltaSn\t"
 							+ "avgIdotp\tmidIdotp\tpeakScore\tpeakWeightedScore\tNCI\tCIMassErrMean\tCIMassErrVar\tprecursorMassErrMean\t"
 							+ "precursorMassErrVar\tpeakSimilarity\tsampledTimes\tmidTime\tspectraNorm\t"
-							+ "pepLength\tcharge2\tcharge3\tprecursorMz\tsequence\tprotein");
+							+ "pepLength\tcharge2\tcharge3\tprecursorMz\tsequence\tProteins");
 					// Percolator assumes linux line endings on Mac!
 					switch (os) {
 						case MAC:
@@ -133,7 +133,7 @@ public class PecanScoringResultsToTSVConsumer extends AbstractScoringResultsToTS
 						writer.print("\t"+sequence);
 						
 						HashSet<String> accessions=peptide.getAccessions();
-						writer.print("\t"+PSMData.accessionsToString(accessions));
+						writer.print("\t"+PSMData.accessionsToString(accessions, "\t"));
 
 						// Percolator assumes linux line endings on Mac!
 						switch (os) {
