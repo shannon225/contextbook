@@ -8,6 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
+import org.junit.Assume;
 import org.junit.AssumptionViolatedException;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -42,7 +43,6 @@ public class PercolatorExecutorIT {
 	}
 
 	@Test
-	@Ignore
 	public void testPercolatorExecutorV3p6() throws Exception {
 		String uri;
 		switch (OSDetector.getOS()) {
@@ -50,16 +50,16 @@ public class PercolatorExecutorIT {
 				uri = "https://github.com/percolator/percolator/releases/download/rel-3-06/percolator-v3-06.exe";
 				break;
 			case MAC:
-				uri = "file:///usr/local/bin/percolator"; //TODO
-				break;
-			case LINUX:
-//				uri = "";
+//				uri = "file:///usr/local/bin/percolator"; //TODO
 //				break;
+			case LINUX:
+				uri = null; //TODO
+				break;
 			default:
 				throw new AssumptionViolatedException("Can't run test without recognizing the OS!");
 		}
 
-		assertNotNull(uri);
+		Assume.assumeNotNull(uri);
 
 		doPercolatorTest(new RemotePercolator(new URI(uri)));
 	}
