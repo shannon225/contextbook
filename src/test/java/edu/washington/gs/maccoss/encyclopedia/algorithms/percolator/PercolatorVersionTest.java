@@ -39,13 +39,13 @@ public class PercolatorVersionTest {
 		String uri;
 		switch (OSDetector.getOS()) {
 			case WINDOWS:
-				uri = "https://bitbucket.org/searleb/encyclopedia/raw/f61d871cacb9bc3a54791cc929bd90d2b86e11ae/src/main/resources/bin/percolator-v3-01.exe";
+				uri = "https://bitbucket.org/searleb/encyclopedia/raw/encyclopedia-1.12.31/src/main/resources/bin/percolator-v3-01.exe";
 				break;
 			case MAC:
-				uri = "https://bitbucket.org/searleb/encyclopedia/raw/f61d871cacb9bc3a54791cc929bd90d2b86e11ae/src/main/resources/bin/percolator-v3-01.mac";
+				uri = "https://bitbucket.org/searleb/encyclopedia/raw/encyclopedia-1.12.31/src/main/resources/bin/percolator-v3-01.mac";
 				break;
 			case LINUX:
-				uri = "https://bitbucket.org/searleb/encyclopedia/raw/f61d871cacb9bc3a54791cc929bd90d2b86e11ae/src/main/resources/bin/percolator-v3-01.lin";
+				uri = "https://bitbucket.org/searleb/encyclopedia/raw/encyclopedia-1.12.31/src/main/resources/bin/percolator-v3-01.lin";
 				break;
 			default:
 				throw new AssumptionViolatedException("Can't run test without recognizing the OS!");
@@ -53,6 +53,7 @@ public class PercolatorVersionTest {
 
 		PercolatorVersion parsed = PercolatorVersion.getVersion(uri);
 		assertTrue("Did not get expected PercolatorVersion impl!", parsed instanceof ExternalPercolator);
-		assertEquals("3.01", parsed.getMajorVersion());
+		assertEquals(3, parsed.getMajorVersion());
+		assertEquals("3.01", PercolatorExecutor.checkPercolatorVersion(parsed));
 	}
 }

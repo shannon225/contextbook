@@ -1,13 +1,17 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
 
+import com.google.common.collect.ImmutableSet;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.PosixFilePermission;
 
 /**
  * {@link PercolatorVersion} implementation that runs a binary from
@@ -19,6 +23,8 @@ import java.nio.file.StandardCopyOption;
 public class RemotePercolator extends LocalPercolator {
 	private final URI uri;
 
+	private boolean didDownload = false;
+
 	/**
 	 * Instantiate a {@code PercolatorVersion} that will run the binary at the specified
 	 * URI. Note that the location is not downloaded immediately, but instead only downloaded
@@ -28,26 +34,37 @@ public class RemotePercolator extends LocalPercolator {
 	 * @throws IOException if an I/O error occurs setting up the necessary temporary path
 	 */
 	public RemotePercolator(URI uri) throws IOException {
-		super(Files.createTempFile("Percolator-", ".exe"));
+		super(setupTempFile());
 		this.uri = uri;
+	}
 
-		final File tmpFile = getFile();
-
-		assert null != tmpFile;
-		assert !Files.exists(tmpFile.toPath());
+	private static Path setupTempFile() throws IOException {
+		final Path tmpFile = Files.createTempFile("Percolator-", ".exe");
 
 		// Ensure the JVM will clean up the file (eventually).
 		// Super method just returns this instance's file.
-		tmpFile.deleteOnExit();
+		tmpFile.toFile().deleteOnExit();
+
+		final boolean setEx = tmpFile.toFile().setExecutable(true);
+
+		assert setEx; // This line runs only during tests, or if java's invoked with -ea
+
+		return tmpFile;
 	}
 
 	private File getFile() {
 		return super.getPercolator();
 	}
 
-	private final void downloadPercolator() throws IOException {
+	private void downloadPercolator() throws IOException {
+		final Path path = getFile().toPath();
+
 		try (InputStream is = uri.toURL().openStream()) {
-			Files.copy(is, getFile().toPath(), StandardCopyOption.REPLACE_EXISTING);
+			Files.copy(is, path, StandardCopyOption.REPLACE_EXISTING);
+		}
+
+		if (!path.toFile().setExecutable(true)) {
+			throw new IOException("Could not set executable flag on downloaded Percolator!");
 		}
 	}
 
@@ -56,12 +73,13 @@ public class RemotePercolator extends LocalPercolator {
 		final File tmpFile = getFile();
 
 		// Check if the file's already been downloaded.
-		if (!Files.exists(tmpFile.toPath())) {
+		if (!didDownload) {
 			try {
 				downloadPercolator();
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
 			}
+			didDownload = true; // only set if we succeeded; in rare cases this could lead to repeated retries!
 		}
 
 		return tmpFile;

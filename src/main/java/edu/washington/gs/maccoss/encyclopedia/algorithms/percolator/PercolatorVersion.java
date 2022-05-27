@@ -7,6 +7,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -111,7 +112,12 @@ public interface PercolatorVersion {
 			return new LocalPercolator(Paths.get(parsed.getPath()));
 		}
 
-		return null;
+		try {
+			return new RemotePercolator(parsed);
+		} catch (IOException | UncheckedIOException e) {
+			Logger.errorLine("Unable to set up ExternalPercolator instance for URI! Giving up.");
+			return null;
+		}
 	}
 
 	int getMajorVersion();
