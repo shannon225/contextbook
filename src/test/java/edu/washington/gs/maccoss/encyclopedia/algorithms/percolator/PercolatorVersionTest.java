@@ -7,10 +7,18 @@ import org.junit.Test;
 
 import java.net.URI;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class PercolatorVersionTest {
+	@Test
+	public void testDefaults() throws Exception {
+		assertNotNull(PercolatorVersion.DEFAULT_VERSION);
+		assertNotNull(PercolatorVersion.DEFAULT_VERSION_3);
+		assertNotNull(PercolatorVersion.v2p10);
+		assertNotNull(PercolatorVersion.v3p01);
+		assertNotNull(PercolatorVersion.v3p05);
+	}
+
 	@Test
 	public void testParsePercolator() throws Exception {
 		assertEquals(PercolatorVersion.v2p10, PercolatorVersion.getVersion(PercolatorVersion.V2_10));
