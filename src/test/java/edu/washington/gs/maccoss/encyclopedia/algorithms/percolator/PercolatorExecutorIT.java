@@ -4,20 +4,24 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
+import org.junit.AssumptionViolatedException;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 
 import static edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutorTest.getPercolatorFiles;
+import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -27,14 +31,37 @@ public class PercolatorExecutorIT {
 		doPercolatorTest(PercolatorVersion.v2p10);
 	}
 
-	@Ignore
+	@Test
+	public void testPercolatorExecutorV3p1() throws Exception {
+		doPercolatorTest(PercolatorVersion.v3p01);
+	}
+
+	@Test
 	public void testPercolatorExecutorV3p5() throws Exception {
 		doPercolatorTest(PercolatorVersion.v3p05);
 	}
 
 	@Test
-	public void testPercolatorExecutorV3p1() throws Exception {
-		doPercolatorTest(PercolatorVersion.v3p01);
+	@Ignore
+	public void testPercolatorExecutorV3p6() throws Exception {
+		String uri;
+		switch (OSDetector.getOS()) {
+			case WINDOWS:
+				uri = "https://github.com/percolator/percolator/releases/download/rel-3-06/percolator-v3-06.exe";
+				break;
+			case MAC:
+				uri = "file:///usr/local/bin/percolator"; //TODO
+				break;
+			case LINUX:
+//				uri = "";
+//				break;
+			default:
+				throw new AssumptionViolatedException("Can't run test without recognizing the OS!");
+		}
+
+		assertNotNull(uri);
+
+		doPercolatorTest(new RemotePercolator(new URI(uri)));
 	}
 
 	protected void doPercolatorTest(PercolatorVersion percolatorVersion) throws IOException, InterruptedException {
