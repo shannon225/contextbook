@@ -16,7 +16,7 @@ public class PercolatorVersionTest {
 		assertEquals(PercolatorVersion.v2p10, PercolatorVersion.getVersion(PercolatorVersion.V2_10));
 		assertEquals(PercolatorVersion.v3p01, PercolatorVersion.getVersion(PercolatorVersion.V3_01));
 		assertEquals(PercolatorVersion.v3p05, PercolatorVersion.getVersion(PercolatorVersion.V3_05));
-		assertEquals(PercolatorVersion.v3p01, PercolatorVersion.getVersion("3")); //TODO: should be v3p05 to match default
+		assertEquals(PercolatorVersion.v3p01, PercolatorVersion.getVersion("3"));
 		assertEquals(PercolatorVersion.v3p05, PercolatorVersion.getVersion("3.5"));
 		assertEquals(PercolatorVersion.v3p01, PercolatorVersion.getVersion("3.1"));
 
@@ -30,10 +30,10 @@ public class PercolatorVersionTest {
 	public void testParsePercolatorLocalURI() throws Exception {
 		PercolatorVersion parsed = PercolatorVersion.getVersion(PercolatorVersion.v2p10.getPercolator().toURI().toString());
 		assertTrue("Did not get expected PercolatorVersion impl!", parsed instanceof LocalPercolator);
+		assertTrue("Got unexpected PercolatorVersion impl for local URI!", !(parsed instanceof RemotePercolator));
 		assertEquals(PercolatorVersion.v2p10.getMajorVersion(), parsed.getMajorVersion());
 	}
 
-	@Ignore //TODO: remote URI
 	@Test
 	public void testParsePercolatorURI() throws Exception {
 		String uri;
