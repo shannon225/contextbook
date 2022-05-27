@@ -62,6 +62,6 @@ public class PercolatorVersionTest {
 		PercolatorVersion parsed = PercolatorVersion.getVersion(uri);
 		assertTrue("Did not get expected PercolatorVersion impl!", parsed instanceof ExternalPercolator);
 		assertEquals(3, parsed.getMajorVersion());
-		assertEquals("3.01", PercolatorExecutor.checkPercolatorVersion(parsed));
+		assertEquals("3.01.nightly-13-655e4c7", PercolatorExecutor.checkPercolatorVersion(parsed));
 	}
 }
