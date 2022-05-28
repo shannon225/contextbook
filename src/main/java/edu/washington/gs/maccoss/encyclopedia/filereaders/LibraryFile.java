@@ -1214,7 +1214,6 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	 * @see edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface#
 	 * getEntries(edu.washington.gs.maccoss.encyclopedia.datastructures.Range)
 	 */
-	@Override
 	public Range getMinMaxMZ() throws IOException, SQLException {
 		Connection c=getConnection();
 		try {
@@ -1273,7 +1272,6 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		return accessions;
 	}
 	
-	@Override
 	public ArrayList<LibraryEntry> getUnlinkedEntries(Range precursorMz, boolean sqrt, AminoAcidConstants aaConstants) throws IOException, SQLException, DataFormatException {
 		try (Connection c = getConnection()) {
 			try (PreparedStatement s = c.prepareStatement("select " 
