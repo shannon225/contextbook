@@ -256,10 +256,16 @@ public class PercolatorExecutor extends ExternalExecutor {
 					if (!percolatorExecutableVersion.isPresent()) {
 						String message = data.getMessage();
 						percolatorExecutableVersion = getPercolatorVersionFromOutput(message);
+
+						if (percolatorExecutableVersion.isPresent()) {
+							Logger.logLine(data.getMessage());
+						}
 					}
 
-					Logger.logLine(data.getMessage());
 					errorMessage = getErrorMessage(data);
+					if (null != errorMessage) {
+						Logger.errorLine(data.getMessage());
+					}
 				}
 			} else {
 				Thread.sleep(10);

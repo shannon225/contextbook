@@ -7,6 +7,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -20,17 +21,19 @@ public interface PercolatorVersion {
 	PercolatorVersion v3p05 = InternalPercolatorVersion.v3p05;
 
 	/**
-	 * By default, use version 3. Until we default to Percolator 4,
-	 * don't change this definition and instead update {@link #DEFAULT_VERSION_3}.
-	 */
-	PercolatorVersion DEFAULT_VERSION = PercolatorVersion.DEFAULT_VERSION_3;
-
-	/**
 	 * The version of Percolator 3 that should be used by default,
 	 * e.g. when running with `-percolatorVersion 3`. Currently 3.01
 	 * due to issues observed with 3.05.
 	 */
 	PercolatorVersion DEFAULT_VERSION_3 = PercolatorVersion.v3p01;
+
+	/**
+	 * By default, use version 3. Until we default to Percolator 4,
+	 * don't change this definition and instead update {@link #DEFAULT_VERSION_3}.
+	 *
+	 * Note: declaration must follow {@link #DEFAULT_VERSION_3} to avoid NPE!!
+	 */
+	PercolatorVersion DEFAULT_VERSION = PercolatorVersion.DEFAULT_VERSION_3;
 
 	PercolatorVersion[] VALID_VERSIONS = new PercolatorVersion[]{v3p01, v2p10};
 
@@ -111,7 +114,12 @@ public interface PercolatorVersion {
 			return new LocalPercolator(Paths.get(parsed.getPath()));
 		}
 
-		return null;
+		try {
+			return new RemotePercolator(parsed);
+		} catch (IOException | UncheckedIOException e) {
+			Logger.errorLine("Unable to set up ExternalPercolator instance for URI! Giving up.");
+			return null;
+		}
 	}
 
 	int getMajorVersion();
