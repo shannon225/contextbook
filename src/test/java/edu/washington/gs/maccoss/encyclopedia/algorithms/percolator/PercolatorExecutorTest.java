@@ -156,7 +156,7 @@ public class PercolatorExecutorTest extends TestCase {
 	public void testCheckPercolatorVersion() throws Exception {
 		// These version strings match the currently-shipped Linux executables
 		assertEquals("3.05.0", PercolatorExecutor.checkPercolatorVersion(PercolatorVersion.v3p05));
-		assertEquals("3.01.nightly-13-655e4c7", PercolatorExecutor.checkPercolatorVersion(PercolatorVersion.v3p01));
+		assertTrue(PercolatorExecutor.checkPercolatorVersion(PercolatorVersion.v3p01).startsWith("3.01"));
 		assertEquals("2.09", PercolatorExecutor.checkPercolatorVersion(PercolatorVersion.v2p10));
 	}
 }
