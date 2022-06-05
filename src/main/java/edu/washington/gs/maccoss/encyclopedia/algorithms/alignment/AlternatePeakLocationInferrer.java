@@ -118,6 +118,19 @@ public class AlternatePeakLocationInferrer {
 		return new SimplePeakLocationInferrer(alignmentMap, alignmentDataMap, alignedRTInMinBySequenceMap, bestIons, params);
 	}
 
+	/**
+	 * Requires only the {@code jobs}' {@link QuantitativeSearchJobData#getResultLibrary()}
+	 *
+	 * TODO: calculate alignments in parallel
+	 *
+	 * @param progress TODO: tick progress
+	 *
+	 * @return a pair of:
+	 *         - A table giving the rt in seconds for peptides in each file, with job and modseq as keys.
+	 *           Only passing peptides will be included, and only from jobs with an entry for the peptide.
+	 *         - A map from modseq to the best (quantitative) ions for the peptide (across all files),
+	 *           as decided by {@link CorrelationPeakFrequencyCalculator}.
+	 */
 	static Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> getArchetypals(ProgressIndicator progress, List<? extends SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
 		int numberOfQuantitativePeaks=params.getEffectiveNumberOfQuantitativePeaks();
 		MassTolerance fragmentTolerance=params.getFragmentTolerance();
