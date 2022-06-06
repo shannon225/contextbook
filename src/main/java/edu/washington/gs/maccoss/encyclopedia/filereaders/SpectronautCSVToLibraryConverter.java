@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class SpectronautCSVToLibraryConverter {
 
@@ -126,6 +127,7 @@ public class SpectronautCSVToLibraryConverter {
 								" 3) FragmentMz: ["+OpenSwathTSVToLibraryConverter.getFromMap(row, "FragmentMz")+"]\n" + 
 								" 4) RelativeIntensity: ["+OpenSwathTSVToLibraryConverter.getFromMap(row, "RelativeIntensity")+"]\n" + 
 								" 5) iRT: ["+OpenSwathTSVToLibraryConverter.getFromMap(row, "iRT")+"]");
+						Logger.errorLine("Other headers: "+General.toString(new ArrayList<String>(row.keySet())));
 						throw new EncyclopediaException(e);
 					}
 				}
