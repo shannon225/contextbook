@@ -23,7 +23,7 @@ public class LoggerLog implements Log {
 
 	@Override
 	public boolean isDebugEnabled() {
-		return true;
+		return false;
 	}
 
 	@Override
