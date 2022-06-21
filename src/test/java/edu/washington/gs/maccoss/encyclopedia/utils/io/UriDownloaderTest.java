@@ -1,11 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.io;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
-import org.junit.Assume;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import org.junit.*;
 import org.junit.rules.TemporaryFolder;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 
 import java.net.URI;
 import java.net.URLConnection;
@@ -64,6 +66,44 @@ public class UriDownloaderTest {
 		conn.connect();
 
 		final long size = conn.getContentLength();
+
+		final Path destination = tmpDir.newFile().toPath();
+		Files.deleteIfExists(destination);
+
+		UriDownloader.downloadFromUri(uri, destination);
+
+		assertTrue(Files.exists(destination));
+		assertEquals(size, Files.size(destination));
+	}
+
+	@Test
+	@Ignore
+	public void downloadFromS3Uri() throws Exception {
+		final URI uri = new URI("s3://bucket/key"); //TODO: test S3 URI
+
+		final String bucket, key;
+		bucket = uri.getHost();
+		key = uri.getPath().substring(1); // Strip leading slash
+
+		final S3Client s3Client = S3Client.builder().build();
+		final HeadObjectRequest headObjectRequest =
+				HeadObjectRequest.builder()
+						.bucket(bucket)
+						.key(key)
+						.build();
+
+		final HeadObjectResponse headObjectResponse;
+		try {
+			headObjectResponse = s3Client.headObject(headObjectRequest);
+		} catch (SdkClientException e) {
+			// Just ignore this test because we can't access the URI.
+			// Most common cause will be lack of credentials, but if we
+			// can't access the URI (e.g. wrong account or doesn't exist)
+			// we should also ignore the test.
+			throw new AssumptionViolatedException("Could not access S3 URI", e);
+		}
+
+		final long size = headObjectResponse.contentLength();
 
 		final Path destination = tmpDir.newFile().toPath();
 		Files.deleteIfExists(destination);
