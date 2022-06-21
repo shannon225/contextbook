@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.io;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -81,9 +82,8 @@ public class UriDownloaderTest {
 	public void downloadFromS3Uri() throws Exception {
 		final URI uri = new URI("s3://bucket/key"); //TODO: test S3 URI
 
-		final String bucket, key;
-		bucket = uri.getHost();
-		key = uri.getPath().substring(1); // Strip leading slash
+		final Pair<String, String> pair = UriDownloader.parseS3Uri(uri);
+		final String bucket = pair.x, key = pair.y;
 
 		final S3Client s3Client = S3Client.builder().build();
 		final HeadObjectRequest headObjectRequest =
