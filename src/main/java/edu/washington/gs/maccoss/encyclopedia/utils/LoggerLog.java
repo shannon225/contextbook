@@ -5,6 +5,10 @@ import org.apache.commons.logging.Log;
 import java.util.Objects;
 
 public class LoggerLog implements Log {
+	public LoggerLog(String ignored) {
+		// Required constructor
+	}
+
 	@Override
 	public boolean isTraceEnabled() {
 		return false;
@@ -12,7 +16,7 @@ public class LoggerLog implements Log {
 
 	@Override
 	public boolean isDebugEnabled() {
-		return false;
+		return true;
 	}
 
 	@Override

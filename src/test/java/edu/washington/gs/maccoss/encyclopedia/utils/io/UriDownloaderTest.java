@@ -100,7 +100,11 @@ public class UriDownloaderTest {
 			// Most common cause will be lack of credentials, but if we
 			// can't access the URI (e.g. wrong account or doesn't exist)
 			// we should also ignore the test.
-			throw new AssumptionViolatedException("Could not access S3 URI", e);
+
+			// Log the issue for clarity
+			Logger.errorLine("Skipping S3 download test: " + e.getMessage());
+
+			throw new AssumptionViolatedException("Skipping S3 download test", e);
 		}
 
 		final long size = headObjectResponse.contentLength();
