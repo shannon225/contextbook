@@ -4,6 +4,13 @@ import org.apache.commons.logging.Log;
 
 import java.util.Objects;
 
+/**
+ * Java Commons Logging {@code Log} implementation that directs
+ * log statements to the built-in {@link Logger} class. Works in
+ * conjunction with config from {@code commons-logging.properties}
+ * and maven dependency setup to direct various calls to logging
+ * facades (JCL/SLF4J) to a single impl.
+ */
 public class LoggerLog implements Log {
 	public LoggerLog(String ignored) {
 		// Required constructor
