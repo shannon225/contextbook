@@ -2,6 +2,8 @@ package edu.washington.gs.maccoss.encyclopedia.utils.io;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import org.apache.commons.lang3.NotImplementedException;
+import software.amazon.awssdk.transfer.s3.FileDownload;
+import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +24,7 @@ public class UriDownloader {
 	 *     <li>HTTP/S</li>
 	 *     <li>FTP</li>
 	 *     <li>Local file ({@code file://})</li>
-	 *     <li>AWS S3 ({@code s3://})</li> -- TODO
+	 *     <li>AWS S3 ({@code s3://})</li>
 	 * </ul>
 	 */
 	public static void downloadFromUri(URI uri, Path destination) throws IOException {
@@ -41,7 +43,14 @@ public class UriDownloader {
 	 * Download the specified S3 object to the given destination.
 	 */
 	public static void downloadFromS3(String bucket, String key, Path destination) {
-		throw new NotImplementedException("TODO"); //TODO
+		final S3TransferManager transferManager = S3TransferManager.create();
+
+		final FileDownload download = transferManager.downloadFile(
+				b -> b.destination(destination)
+						.getObjectRequest(r -> r.bucket(bucket).key(key))
+		);
+
+		download.completionFuture().join();
 	}
 
 	/**
