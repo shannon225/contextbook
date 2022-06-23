@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -26,6 +27,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.BenjaminiHochberg;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -34,6 +36,8 @@ public class EncyclopediaElibPancreatitisParser {
 	public static String[] sampleNames=new String[] {"CP", "AP", "Cont 1", "Cont 2", "Frac"};
 	public static int[] tests=new int[] {0, 1};
 	public static int[] controls=new int[] {2, 3, 4};
+	//public static int[] tests=new int[] {4};
+	//public static int[] controls=new int[] {2, 3};
 	public static HashMap<String, SampleCoordinate> sampleKey=new HashMap<>();
 
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException {
@@ -41,6 +45,7 @@ public class EncyclopediaElibPancreatitisParser {
 		
 		File file=new File("/Users/searle.30/Documents/CCIC/maisam/032922_pancreatitis_grant_dataset/032922_pancreatitis_120_quant_reports.elib");
 		File stub=new File(file.getParent(), "pancreatitis_120_boxplots");
+		//File stub=new File(file.getParent(), "fracture_120_boxplots");
 		FileUtils.deleteDirectory(stub);
 		
 		stub.mkdirs();
@@ -63,6 +68,7 @@ public class EncyclopediaElibPancreatitisParser {
 		ArrayList<String> accessions=new ArrayList<String>();
 		TDoubleArrayList pvalues=new TDoubleArrayList();
 		ArrayList<TFloatArrayList[]> datasets=new ArrayList<TFloatArrayList[]>();
+		ArrayList<TDoubleArrayList[]> loggeddatasets=new ArrayList<TDoubleArrayList[]>();
 		
 		TableParser.parseTSV(proteinReportFile, new TableParserMuscle() {
 			
@@ -78,12 +84,7 @@ public class EncyclopediaElibPancreatitisParser {
 				for (Entry<String, SampleCoordinate> entry : sampleKey.entrySet()) {
 					String value=row.get(entry.getKey());
 					float rawIntensity=Float.parseFloat(value);
-					float intensity=rawIntensity;
-					if (intensity>1000) {
-						intensity=Log.log10(intensity);
-					} else {
-						intensity=3;
-					}
+					float intensity=(float)log2(rawIntensity);
 					data[entry.getValue().getSampleIndex()].add(intensity);
 					rawdata[entry.getValue().getSampleIndex()].add(rawIntensity);
 				}
@@ -96,6 +97,7 @@ public class EncyclopediaElibPancreatitisParser {
 				accessions.add(proteinAccession);
 				pvalues.add(TestUtils.oneWayAnovaPValue(dataset));
 				datasets.add(rawdata);
+				loggeddatasets.add(data);
 			}
 			
 			@Override
@@ -111,25 +113,36 @@ public class EncyclopediaElibPancreatitisParser {
 			
 			TFloatArrayList[] rawdata=datasets.get(i);
 			
+			TDoubleArrayList[] loggedrawdata=loggeddatasets.get(i);
+			
 			double[] worstPValues=new double[tests.length];
 			byte[] direction=new byte[tests.length];
+			double[] greatestDistance=new double[tests.length];
+			Arrays.fill(greatestDistance, -Double.MAX_VALUE);
+			double[] smallestDistance=new double[tests.length];
+			Arrays.fill(smallestDistance, Double.MAX_VALUE);
 			for (int t=0; t<tests.length; t++) {
 				int testIndex=tests[t];
 
 				TFloatArrayList test=rawdata[testIndex];
-				float avgTest=General.mean(test.toArray());
+				float avgTest=QuickMedian.median(test.toArray());
+				double log10AvgTest=log2(avgTest);
 				
 				for (int j=0; j<controls.length; j++) {
 					int controlIndex=controls[j];
-					double pvalue=TestUtils.tTest(log10(General.toDoubleArray(test.toArray())), log10(General.toDoubleArray(rawdata[controlIndex].toArray())));
+					double pvalue=TestUtils.tTest(log2(General.toDoubleArray(test.toArray())), log2(General.toDoubleArray(rawdata[controlIndex].toArray())));
 					worstPValues[t]=Math.max(worstPValues[t], pvalue);
-					float avgControl=General.mean(rawdata[controlIndex].toArray());
+					float avgControl=QuickMedian.median(rawdata[controlIndex].toArray());
 					byte localDirection;
 					if (avgTest>avgControl) {
 						localDirection=1; 
 					} else {
 						localDirection=-1;
 					}
+
+					double distance=log10AvgTest-log2(avgControl);
+					if (distance>greatestDistance[t]) greatestDistance[t]=distance;
+					if (distance<smallestDistance[t]) smallestDistance[t]=distance;
 					
 					if (direction[t]==0) {
 						direction[t]=localDirection;
@@ -144,17 +157,21 @@ public class EncyclopediaElibPancreatitisParser {
 					String accession=accessions.get(i).split(";")[0];
 					
 					String adjective="Flat";
+					double shortestDistance=0;
 					if (direction[j]==-1) {
 						adjective="Down";
+						shortestDistance=greatestDistance[j];
 					} else if (direction[j]==1) {
 						adjective="Up";
+						shortestDistance=smallestDistance[j];
 					} else if (direction[j]==-2) {
 						// mixed
 						continue;
 					}
 					
-					System.out.println(sampleNames[tests[j]]+"\t"+adjective+"\t"+accession+"\t"+fdrs[i]+"\t"+worstPValues[j]);	
-					ExtendedChartPanel panel=Charter.getBoxplotChart(accession, "", "Intensity", sampleNames, rawdata);
+					System.out.println(sampleNames[tests[j]]+"\t"+adjective+"\t"+accession+"\t"+fdrs[i]+"\t"+worstPValues[j]+"\t"+shortestDistance);	
+					ExtendedChartPanel panel=Charter.getBoxplotChart(accession, "", "Log10 Intensity", sampleNames, loggedrawdata);
+					
 					File f=new File(testDirs[j], accession+".pdf");
 					Charter.writeAsPDF(panel.getChart(), f, new Dimension(250, 150));
 					
@@ -163,16 +180,19 @@ public class EncyclopediaElibPancreatitisParser {
 		}
 	}
 
-	public static double[] log10(double[] v) {
+	public static double[] log2(double[] v) {
 		double[] r=new double[v.length];
 		for (int i=0; i<r.length; i++) {
-			if (v[i]>1000) {
-				r[i]=Log.log10(v[i]);
-			} else {
-				r[i]=3;
-			}
+			r[i]=log2(v[i]);
 		}
 		return r;
+	}
+	public static double log2(double v) {
+		if (v>1000) {
+			return Log.log2(v);
+		} else {
+			return 3;
+		}
 	}
 
 	public static void loadMap() {
