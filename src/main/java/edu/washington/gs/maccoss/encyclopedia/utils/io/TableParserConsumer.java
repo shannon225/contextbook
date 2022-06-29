@@ -27,6 +27,7 @@ public class TableParserConsumer implements Runnable {
 				try {
 					muscle.processRow(row);
 				} catch (Exception e) {
+					Logger.errorLine("Exception found parsing table (row="+n+"): "+e.getMessage());
 					throw new EncyclopediaException("Error parsing row " + n, e);
 				}
 			}
