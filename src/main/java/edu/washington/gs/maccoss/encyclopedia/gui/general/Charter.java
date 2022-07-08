@@ -30,6 +30,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -95,6 +96,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class Charter {
@@ -468,6 +470,13 @@ public class Charter {
 			values[i]=map.get(key);
 		}
 		return getBoxplotChart(title, xAxisLabel, yAxisLabel, categories, values);
+	}
+	public static ExtendedChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, String[] categories, TDoubleArrayList[] values) {
+		TFloatArrayList[] floatValues=new TFloatArrayList[values.length];
+		for (int i = 0; i < floatValues.length; i++) {
+			floatValues[i]=new TFloatArrayList(General.toFloatArray(values[i].toArray()));
+		}
+		return getBoxplotChart(title, xAxisLabel, yAxisLabel, categories, floatValues);
 	}
 	
 	public static ExtendedChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, String[] categories, TFloatArrayList[] values) {

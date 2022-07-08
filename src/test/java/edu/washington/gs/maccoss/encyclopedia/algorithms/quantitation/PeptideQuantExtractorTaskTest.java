@@ -6,14 +6,17 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import junit.framework.TestCase;
 
-public class PeptideQuantExtractorTaskTest {//extends TestCase {
+public class PeptideQuantExtractorTaskTest extends TestCase {
 	public static void main(String[] args) throws Exception {
 		File f=new File("/Users/searleb/Documents/encyclopedia/bugs/failed_integration/2020dec03_cobbs_cmv_inf_gpfdia_05_3.dia");
 		StripeFile raw=new StripeFile(true);
@@ -39,5 +42,18 @@ public class PeptideQuantExtractorTaskTest {//extends TestCase {
 		task.process();
 		IntegratedLibraryEntry poll=savedEntries.poll();
 		System.out.println(poll);
+	}
+	
+	public void testQuantifyPeptide() {
+		PSMPeakScorer scorer;
+		AnnotatedLibraryEntry unitEntry;
+		boolean limitToQuantifiable=false;
+		ArrayList<FragmentScan> stripes;
+		boolean integrateEverything;
+		boolean wasInferred;
+		SearchParameters params;
+		
+
+		//TransitionRefinementData data = PeptideQuantExtractorTask.quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes, integrateEverything, wasInferred, params);
 	}
 }
