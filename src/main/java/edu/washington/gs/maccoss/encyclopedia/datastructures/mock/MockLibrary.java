@@ -64,16 +64,6 @@ public class MockLibrary implements LibraryInterface {
 		}
 		return returnables;
 	}
-	
-//	@Override
-//	public HashMap<PeptidePrecursor, ArrayList<LibraryEntry>> getEntries(ArrayList<PeptidePrecursor> entries, boolean sqrt) throws IOException, SQLException, DataFormatException {
-//		HashMap<PeptidePrecursor, ArrayList<LibraryEntry>> map=new HashMap<PeptidePrecursor, ArrayList<LibraryEntry>>();
-//		for (PeptidePrecursor peptidePrecursor : entries) {
-//			ArrayList<LibraryEntry> results=getEntries(peptidePrecursor.getPeptideModSeq(),  peptidePrecursor.getPrecursorCharge(), sqrt);
-//			map.put(peptidePrecursor, results);
-//		}
-//		return map;
-//	}
 
 	@Override
 	public ArrayList<LibraryEntry> getEntries(Range precursorMz, boolean sqrt, AminoAcidConstants aaConstants) throws IOException, SQLException, DataFormatException {
