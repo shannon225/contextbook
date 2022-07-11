@@ -353,14 +353,15 @@ public class SearchToBLIB {
 			boolean foundLibrary=false;
 			if ((!runningPercolator)&&libFile.exists()&&libFile.canRead()) {
 				// didn't have to run percolator, so check if we can read the lib file
+				final LibraryFile lib=new LibraryFile();
 				try {
-					LibraryFile lib=new LibraryFile();
 					lib.openFile(libFile);
 					Logger.logLine("Found library file and tested for reading. It seems ok so proceeding with that file!");
 					foundLibrary=true;
-					
 				} catch (Exception e) {
 					Logger.logLine("Found library file and tested for reading. Reading failed, so overwriting!");
+				} finally {
+					lib.close();
 				}
 			}
 			
