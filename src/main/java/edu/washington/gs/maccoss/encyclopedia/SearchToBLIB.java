@@ -106,7 +106,9 @@ public class SearchToBLIB {
 		File outputFile=new File(arguments.get("-o"));
 		boolean alignBetweenFiles=ParsingUtils.getBoolean("-a", arguments, true);
 		boolean writeBlib=ParsingUtils.getBoolean("-blib", arguments, false);
-		
+
+		final OutputFormat outputFormat = writeBlib ? OutputFormat.BLIB : OutputFormat.ELIB;
+
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 		XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(parameters);
 		Logger.timelessLogLine("SearchToLIB XCorDIA version "+ProgramType.getGlobalVersion().toString());
@@ -150,7 +152,7 @@ public class SearchToBLIB {
 				pecanJobs.add(job);
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
+			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
@@ -168,7 +170,9 @@ public class SearchToBLIB {
 		File outputFile=new File(arguments.get("-o"));
 		boolean alignBetweenFiles=ParsingUtils.getBoolean("-a", arguments, true);
 		boolean writeBlib=ParsingUtils.getBoolean("-blib", arguments, false);
-		
+
+		final OutputFormat outputFormat = writeBlib ? OutputFormat.BLIB : OutputFormat.ELIB;
+
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, outputFile);
 		Logger.logLine("SearchToLIB Pecan version "+ProgramType.getGlobalVersion().toString());
@@ -206,7 +210,7 @@ public class SearchToBLIB {
 				pecanJobs.add(job);
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
+			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
@@ -225,7 +229,9 @@ public class SearchToBLIB {
 		File outputFile=new File(arguments.get("-o"));
 		boolean alignBetweenFiles=ParsingUtils.getBoolean("-a", arguments, true);
 		boolean writeBlib=ParsingUtils.getBoolean("-blib", arguments, false);
-		
+
+		final OutputFormat outputFormat = writeBlib ? OutputFormat.BLIB : OutputFormat.ELIB;
+
 		SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
 		Logger.timelessLogLine("SearchToLIB EncyclopeDIA version "+ProgramType.getGlobalVersion().toString());
@@ -259,14 +265,95 @@ public class SearchToBLIB {
 				pecanJobs.add(job);
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
+			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
 		}
 	}
-	
+
+	public enum OutputFormat {
+		/**
+		 * Write to the ELIB format. If {@code inferrer} is present, the resulting file will be a "quantitative" ELIB,
+		 * using the precomputed top-N transitions for quantification and inferred (aligned) RTs when the peptide was
+		 * not detected in the initial single-file search. Additionally, quantitative matrices for peptides and proteins
+		 * will be written.
+		 *
+		 * All passing peptides will be included.
+		 *
+		 * {@code globalPercolatorPeptides} should be provided if converting more than a single search, but should otherwise be empty.
+		 */
+		ELIB {
+			@Override
+			void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters) {
+				convertElib(progress, jobs, outputFile, Optional.of(passingPeptides), globalPercolatorFiles, inferrer, parameters);
+			}
+		},
+
+		/**
+		 * Write to the BLIB format, suitable for use with Skyline. Only quantifiable peptides will be written from each
+		 * search. Additionally, a TSV "integration" file will be written with details of the peptides included in the library.
+		 */
+		BLIB {
+			@Override
+			void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters) {
+				convertBlib(progress, jobs, outputFile, Optional.of(passingPeptides.x), inferrer);
+			}
+		};
+
+		/**
+		 * Write results to the given location in this format. Typically this method should only be called from
+		 * {@link SearchToBLIB#convert(ProgressIndicator, List, File, OutputFormat, boolean)} which will handle either
+		 * reading or computing the necessary information for a group of samples.
+		 *
+		 * Will also compute and output related information in some cases, depending on the format.
+		 *
+		 * @param progress A progress indicator that will be used during the conversion process
+		 * @param jobs The jobs whose results should be included in the output file
+		 * @param outputFile The location where the new library will be created (will be overwritten if it exists)
+		 * @param passingPeptides The results of running Percolator to determine the list of peptides that will be
+		 *                        included, as returned by {@link PercolatorReader#getPassingPeptidesFromTSV}
+		 * @param globalPercolatorFiles Used by some formats to get additional information when Percolator has been run on
+		 *                              results from multiple input files
+		 * @param inferrer If aligning between files, the inferrer which provides RT alignment and consistent, refined transitions
+		 * @param parameters The parameters that should be used during conversion and (in some cases) written to the output file
+		 */
+		abstract void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters);
+	}
+
+	/**
+	 * Legacy form of {@link #convert(ProgressIndicator, List, File, OutputFormat, boolean)} which supports only
+	 * ELIB and BLIB formats.
+	 *
+	 * @see #convert(ProgressIndicator, List, File, OutputFormat, boolean)
+	 *
+	 * @deprecated it's better to directly specify the desired output format with an enum constant
+	 */
+	@Deprecated
 	public static void convert(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File libFile, boolean writeBlib, boolean alignBetweenFiles) {
+		convert(
+				progress,
+				pecanJobs,
+				libFile,
+				writeBlib ? OutputFormat.BLIB : OutputFormat.ELIB,
+				alignBetweenFiles
+		);
+	}
+
+	/**
+	 * For the given previously-run single-file searches (jobs), gather or compute the necessary information to create
+	 * a combined output in the given format. This handles the core jobs of (if necessary) running Percolator, reading
+	 * Percolator results to determine the set of global passing peptides, performing retention time alignment and
+	 * transition refinement (if {@code alignBetweenFiles} is true), and writing results to the given output file, which
+	 * may involve additional work like quantifying peptides in each single file.
+	 *
+	 * @param progress A progress indicator that will be used during the conversion process
+	 * @param pecanJobs The jobs whose results should be included in the output file
+	 * @param libFile The location where the new library will be created (will be overwritten if it exists)
+	 * @param outputFormat The format which should be written
+	 * @param alignBetweenFiles If RT alignment
+	 */
+	public static void convert(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File libFile, OutputFormat outputFormat, boolean alignBetweenFiles) {
 		ArrayList<SearchJobData> processedJobs=new ArrayList<SearchJobData>();
 		ArrayList<File> featureFiles=new ArrayList<File>();
 		SearchJobData representativeJob=null;
@@ -380,12 +467,8 @@ public class SearchToBLIB {
 					Logger.logLine("No RT alignment between files necessary.");
 					inferrer=Optional.empty();
 				}
-				
-				if (writeBlib) {
-					convertBlib(progress, pecanJobs, libFile, Optional.of(passingPeptides.x), inferrer);
-				} else {
-					convertElib(progress, pecanJobs, libFile, Optional.of(passingPeptides), Optional.ofNullable(featureFiles.size()==1?null:bigPercolatorFiles), inferrer, parameters);
-				}
+
+				outputFormat.convert(progress, pecanJobs, libFile, passingPeptides, Optional.ofNullable(featureFiles.size() == 1 ? null : bigPercolatorFiles), inferrer, parameters);
 			}
 			progress.update(passingPeptides.x.size()+" peptides identified at "+(threshold*100.0f)+"% FDR", 1.0f);
 		} catch (IOException ioe) {
