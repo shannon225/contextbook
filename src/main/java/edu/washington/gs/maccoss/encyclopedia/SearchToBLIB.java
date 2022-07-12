@@ -227,10 +227,28 @@ public class SearchToBLIB {
 		File fastaFile=new File(arguments.get("-f"));
 		File libraryFile=new File(arguments.get("-l"));
 		File outputFile=new File(arguments.get("-o"));
-		boolean alignBetweenFiles=ParsingUtils.getBoolean("-a", arguments, true);
-		boolean writeBlib=ParsingUtils.getBoolean("-blib", arguments, false);
 
-		final OutputFormat outputFormat = writeBlib ? OutputFormat.BLIB : OutputFormat.ELIB;
+		final boolean alignBetweenFiles=ParsingUtils.getBoolean("-a", arguments, true);
+		final boolean writeBlib=ParsingUtils.getBoolean("-blib", arguments, false);
+		final boolean alignOnly = ParsingUtils.getBoolean("-alignOnly", arguments, false);
+
+		final OutputFormat outputFormat;
+
+		if (alignOnly) {
+			if (!alignBetweenFiles) {
+				Logger.errorLine("-alignOnly requires alignment to be enabled; try running with `-a true`");
+				System.exit(1);
+			}
+
+			if (writeBlib) {
+				Logger.errorLine("-alignOnly requires ELIB output; try running with `-blib false`");
+				System.exit(1);
+			}
+
+			outputFormat = OutputFormat.ALIB;
+		} else {
+			outputFormat = writeBlib ? OutputFormat.BLIB : OutputFormat.ELIB;
+		}
 
 		SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
@@ -287,6 +305,24 @@ public class SearchToBLIB {
 			@Override
 			void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters) {
 				convertElib(progress, jobs, outputFile, Optional.of(passingPeptides), globalPercolatorFiles, inferrer, parameters);
+			}
+		},
+
+		/**
+		 * Write results to the ALIB format, which records the passing peptides, RT alignment, and refined transitions
+		 * for the experiment to a library file without performing any additional work. The resulting file can then be
+		 * used to quantify the same targets in later separate runs of one (or more) sample(s).
+		 *
+		 * Note that {@code inferrer} must be present to support this export type.
+		 */
+		ALIB {
+			@Override
+			void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters) {
+				if (!inferrer.isPresent()) {
+					throw new IllegalArgumentException("Unable to export ALIB without RT alignment and transition refinment!");
+				}
+
+				throw new UnsupportedOperationException("TODO: implement ALIB conversion");
 			}
 		},
 
