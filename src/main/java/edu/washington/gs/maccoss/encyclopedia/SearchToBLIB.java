@@ -261,6 +261,7 @@ public class SearchToBLIB {
 		Logger.timelessLogLine(" -o "+outputFile.getAbsolutePath());
 		Logger.timelessLogLine(" -a "+alignBetweenFiles);
 		Logger.timelessLogLine(" -blib "+writeBlib);
+		Logger.timelessLogLine(" -alignOnly " + alignOnly);
 		Logger.timelessLogLine(parameters.toString());
 
 		try {
