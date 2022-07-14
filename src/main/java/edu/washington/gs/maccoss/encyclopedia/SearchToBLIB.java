@@ -36,6 +36,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
@@ -326,14 +327,10 @@ public class SearchToBLIB {
 			@Override
 			void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters) {
 				if (!inferrer.isPresent()) {
-					throw new IllegalArgumentException("Unable to export alignment-only library without RT alignment and transition refinment!");
+					throw new IllegalArgumentException("Unable to export alignment-only library without RT alignment and transition refinement!");
 				}
 
-				if (!parameters.isQuantifySameFragmentsAcrossSamples()) {
-					throw new IllegalArgumentException("Unable to export alignment-only library without -quantifyAcrossSamples!");
-				}
-
-				throw new UnsupportedOperationException("TODO: implement alignment-only library conversion");
+				convertAlib(progress, jobs, outputFile, passingPeptides, globalPercolatorFiles, inferrer.get(), parameters);
 			}
 		},
 
@@ -835,5 +832,106 @@ public class SearchToBLIB {
 
 		Logger.logLine("Finished writing to Encyclopedia ELIB at "+new Date().toString());
 		subProgress.update(diaFileName+": Finished writing to Encyclopedia ELIB at "+new Date().toString(), 1.0f);
+	}
+
+	private static void convertAlib(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, PeakLocationInferrerInterface inferrer, SearchParameters parameters) {
+		if (Objects.requireNonNull(jobs, "No jobs provided").isEmpty()) {
+			throw new IllegalArgumentException("No jobs provided");
+		}
+
+		if (!parameters.isQuantifySameFragmentsAcrossSamples()) {
+			throw new IllegalArgumentException("Unable to export alignment-only library without -quantifyAcrossSamples!");
+		}
+
+		if (!globalPercolatorFiles.isPresent()) {
+			if (jobs.size() == 1) {
+				globalPercolatorFiles = Optional.of(jobs.iterator().next().getPercolatorFiles());
+			} else {
+				throw new IllegalArgumentException("Global percolator files must be provided for more than one job!");
+			}
+		}
+
+		try {
+			final LibraryFile elib = new LibraryFile();
+			try {
+				elib.openFile();
+				elib.dropIndices();
+
+				float increment = 1.0f / jobs.size();
+				for (int i = 0; i < jobs.size(); i++) {
+					final SearchJobData job = jobs.get(i);
+
+					final ProgressIndicator subProgress = new SubProgressIndicator(progress, increment);
+
+					if (!job.hasBeenRun()) {
+						subProgress.update("Skipping incomplete job: " + job.getDiaFileReader().getOriginalFileName(), 1f);
+						continue;
+					}
+
+					elib.addRtAlignment(job, inferrer);
+
+					subProgress.update("Wrote "+passingPeptides.x.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+				}
+
+				final PercolatorExecutionData percolatorExecutionData = globalPercolatorFiles.get();
+				if (!percolatorExecutionData.getPeptideOutputFile().exists()) {
+					throw new IllegalArgumentException("Could not read Percolator results!", new FileNotFoundException(percolatorExecutionData.getPeptideOutputFile().getAbsolutePath()));
+				}
+
+				final Pair<ArrayList<PercolatorPeptide>, Float> targets, decoys;
+				targets = PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideOutputFile(), parameters, true);
+				decoys = PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideDecoyFile(), parameters, true);
+
+				//TODO: prior to writing entries, ensure they contain only the refined transitions
+
+				Logger.logLine("Writing global target/decoy peptides: " + targets.x.size() + "/" + decoys.x.size() + ", pi0: " + targets.y);
+				elib.addTargetDecoyPeptides(targets.x, decoys.x);
+				elib.addMetadata("pi0", Float.toString(targets.y));
+				elib.addProteinsFromPercolator(targets.x);
+				elib.addProteinsFromPercolator(decoys.x);
+
+				Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>> targetDecoyProteins = ParsimonyProteinGrouper.groupProteins(targets.x, decoys.x, parameters.getPercolatorProteinThreshold(), parameters.getAAConstants());
+				Logger.logLine("Writing global target/decoy proteins: " + targetDecoyProteins.x.size() + "/" + targetDecoyProteins.y.size());
+				elib.addTargetDecoyProteins("global", targetDecoyProteins.x, targetDecoyProteins.y);
+
+				percolatorExecutionData
+						.getPercolatorExecutableVersion()
+						.ifPresent((ThrowingConsumer<String>) version -> {
+							elib.addMetadata(LibraryFile.PERCOLATOR_VERSION, version);
+						});
+
+				final HashMap<String, String> parameterMap = parameters.toParameterMap();
+				parameterMap.put("RT align between samples", Boolean.toString(true)); // required for ALIB
+				for (int i = 0; i < jobs.size(); i++) {
+					final SearchJobData job = jobs.get(i);
+					parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " search type", job.getSearchType());
+					if (job instanceof EncyclopediaJobData) {
+						parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " library", ((EncyclopediaJobData) job).getLibrary().getName());
+					} else if (job instanceof PecanJobData) {
+						parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " fasta", ((PecanJobData) job).getFastaFile().getName());
+						parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " used narrow target list", Boolean.toString(((PecanJobData) job).getTargetList().isPresent()));
+					} else if (job instanceof XCorDIAJobData) {
+						Optional<LibraryInterface> maybeLibrary = ((XCorDIAJobData) job).getLibrary();
+						if (maybeLibrary.isPresent()) {
+							parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " library", maybeLibrary.get().getName());
+						}
+						parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " fasta", ((XCorDIAJobData) job).getFastaFile().getName());
+						parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " used narrow target list", Boolean.toString(((XCorDIAJobData) job).getTargetList().isPresent()));
+					}
+				}
+				elib.addMetadata(parameterMap);
+
+				elib.setSources(jobs);
+
+				elib.createIndices();
+				elib.saveAsFile(outputFile);
+			} finally {
+				elib.close();
+			}
+		} catch (IOException | SQLException ioe) {
+			Logger.errorLine("Error creating ELIB file");
+			Logger.errorException(ioe);
+			throw new EncyclopediaException("Error creating ELIB file", ioe);
+		}
 	}
 }
