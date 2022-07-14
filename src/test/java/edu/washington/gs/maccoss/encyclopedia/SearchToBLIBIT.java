@@ -233,6 +233,8 @@ public class SearchToBLIBIT {
 		assertTrue("Result file had no entries", 0 < numEntries);
 
 		assertHasPercolatorMetadata(file);
+
+		//TODO: other assertions specific to this output format
 	}
 
 	@Test

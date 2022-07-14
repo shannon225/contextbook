@@ -17,6 +17,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
@@ -231,29 +234,46 @@ public abstract class AbstractEndToEndIT {
 	}
 
 	@Test
-	public void testWholePipelineMultipleDataAlignOnly() throws Exception {
+	public void testWholePipelineMultipleDataAlignOnlyQuantWorkflow() throws Exception {
+		// Generate the alignment-only output
 		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA, jobDataB, jobDataC), tempReport, SearchToBLIB.OutputFormat.ALIB, true);
-		assertTrue(FileUtils.directoryContains(tempDir.toFile(),tempReport));
 
-		LibraryFile outputFile = new LibraryFile();
+		assertTrue("Output was created?", FileUtils.directoryContains(tempDir.toFile(), tempReport));
+
+		// Perform some quick checks on the alignment-only results
+		final LibraryFile outputFile = new LibraryFile();
+		final int numAlignedPeptides;
 		try {
 			outputFile.openFile(tempReport);
 
-			final String referenceResource = getReferenceMultiAlignmentResource();
-			if (null != referenceResource && null != getClass().getResource(referenceResource)) {
-				// Copy the data before checking assertions
-				copyElibToResultsDirectory(tempReport, referenceResource);
+			assertSanityTest(outputFile, getPeptideFloor(), getProteinFloor());
 
-				assertSanityTest(outputFile, getPeptideFloor(), 0);
-
-				assertValidBasedOnReference(outputFile, referenceResource);
-			} else {
-				// Without a reference just sanity check
-				assertSanityTest(outputFile, getPeptideFloor(), 0);
+			try (Connection c = outputFile.getConnection()) {
+				try (Statement s = c.createStatement()) {
+					numAlignedPeptides = s.executeQuery("SELECT count() FROM entries").getInt(1);
+				}
 			}
 		} finally {
 			outputFile.close();
 		}
+
+		//TODO: execute at least one quantification step
+
+		// Finally, compare the quant results to the reference results for the "normal" quant workflow.
+		// Note that we don't save the results for this alternative workflow at all, we expect that we should get
+		// identical results to the "normal" workflow.
+		// Perform some quick checks on the alignment-only results
+//		final LibraryFile quantFile = new LibraryFile();
+//		try {
+//			quantFile.openFile(tempReport); //TODO: use quant results
+//
+//			assertSanityTest(quantFile, numAlignedPeptides, getProteinFloor());
+//
+//			//TODO: check that this works as expected for the subset
+//			assertValidBasedOnReference(quantFile, getReferenceMultiQuantResource());
+//		} finally {
+//			quantFile.close();
+//		}
 	}
 
 	public static void assertValidBasedOnReference(LibraryFile newFile, String referenceResource) throws Exception {
@@ -376,10 +396,6 @@ public abstract class AbstractEndToEndIT {
 	public abstract String getReferenceMultiResource() throws Exception;
 
 	public abstract String getReferenceMultiQuantResource() throws Exception;
-
-	public String getReferenceMultiAlignmentResource() throws Exception {
-		return null;
-	};
 
 	protected static void copyJobDataToResultsDirectory(SearchJobData jobData, String resourcePath) throws IOException {
 		copyElibToResultsDirectory(((QuantitativeSearchJobData) jobData).getResultLibrary(), resourcePath);
