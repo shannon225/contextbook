@@ -232,6 +232,8 @@ public class SearchToBLIB {
 		final boolean writeBlib=ParsingUtils.getBoolean("-blib", arguments, false);
 		final boolean alignOnly = ParsingUtils.getBoolean("-alignOnly", arguments, false);
 
+		final SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
+
 		final OutputFormat outputFormat;
 
 		if (alignOnly) {
@@ -245,12 +247,16 @@ public class SearchToBLIB {
 				System.exit(1);
 			}
 
+			if (!parameters.isQuantifySameFragmentsAcrossSamples()) {
+				Logger.errorLine("-alignOnly requires -quantifyAcrossSamples true");
+				System.exit(1);
+			}
+
 			outputFormat = OutputFormat.ALIB;
 		} else {
 			outputFormat = writeBlib ? OutputFormat.BLIB : OutputFormat.ELIB;
 		}
 
-		SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
 		Logger.timelessLogLine("SearchToLIB EncyclopeDIA version "+ProgramType.getGlobalVersion().toString());
 
@@ -310,9 +316,9 @@ public class SearchToBLIB {
 		},
 
 		/**
-		 * Write results to the ALIB format, which records the passing peptides, RT alignment, and refined transitions
-		 * for the experiment to a library file without performing any additional work. The resulting file can then be
-		 * used to quantify the same targets in later separate runs of one (or more) sample(s).
+		 * Write results to the "alignment-only library" format, which records the passing peptides, RT alignment, and
+		 * refined transitions for the experiment to a library file without performing any additional work. The resulting
+		 * file can then be used to quantify the same targets in later separate runs of one (or more) sample(s).
 		 *
 		 * Note that {@code inferrer} must be present to support this export type.
 		 */
@@ -320,10 +326,14 @@ public class SearchToBLIB {
 			@Override
 			void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters) {
 				if (!inferrer.isPresent()) {
-					throw new IllegalArgumentException("Unable to export ALIB without RT alignment and transition refinment!");
+					throw new IllegalArgumentException("Unable to export alignment-only library without RT alignment and transition refinment!");
 				}
 
-				throw new UnsupportedOperationException("TODO: implement ALIB conversion");
+				if (!parameters.isQuantifySameFragmentsAcrossSamples()) {
+					throw new IllegalArgumentException("Unable to export alignment-only library without -quantifyAcrossSamples!");
+				}
+
+				throw new UnsupportedOperationException("TODO: implement alignment-only library conversion");
 			}
 		},
 

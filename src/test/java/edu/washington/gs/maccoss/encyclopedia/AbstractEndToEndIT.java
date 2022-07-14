@@ -230,6 +230,32 @@ public abstract class AbstractEndToEndIT {
 		}
 	}
 
+	@Test
+	public void testWholePipelineMultipleDataAlignOnly() throws Exception {
+		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA, jobDataB, jobDataC), tempReport, SearchToBLIB.OutputFormat.ALIB, true);
+		assertTrue(FileUtils.directoryContains(tempDir.toFile(),tempReport));
+
+		LibraryFile outputFile = new LibraryFile();
+		try {
+			outputFile.openFile(tempReport);
+
+			final String referenceResource = getReferenceMultiAlignmentResource();
+			if (null != referenceResource && null != getClass().getResource(referenceResource)) {
+				// Copy the data before checking assertions
+				copyElibToResultsDirectory(tempReport, referenceResource);
+
+				assertSanityTest(outputFile, getPeptideFloor(), 0);
+
+				assertValidBasedOnReference(outputFile, referenceResource);
+			} else {
+				// Without a reference just sanity check
+				assertSanityTest(outputFile, getPeptideFloor(), 0);
+			}
+		} finally {
+			outputFile.close();
+		}
+	}
+
 	public static void assertValidBasedOnReference(LibraryFile newFile, String referenceResource) throws Exception {
 		final List<LibraryEntry> expectedPeptides;
 		final String expectedPi0;
@@ -350,6 +376,10 @@ public abstract class AbstractEndToEndIT {
 	public abstract String getReferenceMultiResource() throws Exception;
 
 	public abstract String getReferenceMultiQuantResource() throws Exception;
+
+	public String getReferenceMultiAlignmentResource() throws Exception {
+		return null;
+	};
 
 	protected static void copyJobDataToResultsDirectory(SearchJobData jobData, String resourcePath) throws IOException {
 		copyElibToResultsDirectory(((QuantitativeSearchJobData) jobData).getResultLibrary(), resourcePath);

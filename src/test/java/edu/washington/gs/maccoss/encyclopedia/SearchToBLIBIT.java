@@ -204,6 +204,38 @@ public class SearchToBLIBIT {
 	}
 
 	@Test
+	public void testConvertMultiSampleAlignOnly() throws Exception {
+		// create quant parameters
+		final HashMap<String, String> parameterMap = searchParameters.toParameterMap();
+		parameterMap.put("-quantifyAcrossSamples", "true");
+		searchParameters = SearchParameterParser.parseParameters(parameterMap);
+
+		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		Files.delete(libFile); // can't exist (we're trying to create it)
+		FileUtils.forceDeleteOnExit(libFile.toFile());
+
+		final List<SearchJobData> jobData = ImmutableList.of(
+				getSearchJobDataA(),
+				getSearchJobDataB()
+		);
+
+		SearchToBLIB.convert(progress,
+				jobData,
+				libFile.toFile(),
+				SearchToBLIB.OutputFormat.ALIB,
+				true
+		);
+
+		final LibraryFile file = new LibraryFile();
+		file.openFile(libFile.toFile());
+
+		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
+		assertTrue("Result file had no entries", 0 < numEntries);
+
+		assertHasPercolatorMetadata(file);
+	}
+
+	@Test
 	public void testConvertSingleSampleElib() throws Exception {
 		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
 		Files.delete(libFile); // can't exist (we're trying to create it)
