@@ -707,7 +707,7 @@ public class SearchToBLIB {
 				proteins = writePercolatorToElib(elib, globalPercolatorFiles.get(), pecanJobs, parameters);
 			}
 
-			writeElibMetadata(pecanJobs, parameters, elib, inferrer.isPresent());
+			writeElibMetadata(elib, pecanJobs, parameters, inferrer.isPresent());
 
 			elib.createIndices();
 			elib.saveAsFile(elibFile);
@@ -862,7 +862,7 @@ public class SearchToBLIB {
 		return targetDecoyProteins.x;
 	}
 
-	private static void writeElibMetadata(List<? extends SearchJobData> jobs, SearchParameters parameters, LibraryFile elib, boolean align) throws IOException, SQLException {
+	private static void writeElibMetadata(LibraryFile elib, List<? extends SearchJobData> jobs, SearchParameters parameters, boolean align) throws IOException, SQLException {
 		final HashMap<String, String> parameterMap = parameters.toParameterMap();
 		parameterMap.put("RT align between samples", Boolean.toString(align));
 		for (int i = 0; i < jobs.size(); i++) {
@@ -933,7 +933,7 @@ public class SearchToBLIB {
 
 				writePercolatorToElib(elib, percolatorExecutionData, parameters);
 
-				writeElibMetadata(jobs, parameters, elib, true); // align is required for ALIB
+				writeElibMetadata(elib, jobs, parameters, true); // align is required for ALIB
 
 				elib.createIndices();
 				elib.saveAsFile(outputFile);
