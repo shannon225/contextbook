@@ -704,60 +704,14 @@ public class SearchToBLIB {
 
 			ArrayList<PercolatorProteinGroup> proteins=null;
 			if (globalPercolatorFiles.isPresent()) {
-				final PercolatorExecutionData percolatorExecutionData = globalPercolatorFiles.get();
-				Pair<ArrayList<PercolatorPeptide>, Float> targets=null;
-				Pair<ArrayList<PercolatorPeptide>, Float> decoys=null;
-				if (percolatorExecutionData.getPeptideOutputFile().exists()) {
-					targets=PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideOutputFile(), parameters, true);
-					decoys=PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideDecoyFile(), parameters, true);
-				} else {
-					Pair<Pair<ArrayList<PercolatorPeptide>, Float>, Pair<ArrayList<PercolatorPeptide>, Float>> withoutFDR=getPeptidesWithoutGlobalFDR(pecanJobs, parameters);
-					targets=withoutFDR.x;
-					decoys=withoutFDR.y;
-				}
-				Logger.logLine("Writing global target/decoy peptides: "+targets.x.size()+"/"+decoys.x.size()+", pi0: "+targets.y);
-				elib.addTargetDecoyPeptides(targets.x, decoys.x);
-				elib.addMetadata("pi0", Float.toString(targets.y));
-				elib.addProteinsFromPercolator(targets.x);
-				elib.addProteinsFromPercolator(decoys.x);
-
-				Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>> targetDecoyProteins=ParsimonyProteinGrouper.groupProteins(targets.x, decoys.x, parameters.getPercolatorProteinThreshold(), parameters.getAAConstants());
-				Logger.logLine("Writing global target/decoy proteins: "+targetDecoyProteins.x.size()+"/"+targetDecoyProteins.y.size());
-				elib.addTargetDecoyProteins("global", targetDecoyProteins.x, targetDecoyProteins.y);
-				proteins=targetDecoyProteins.x;
-
-				percolatorExecutionData
-						.getPercolatorExecutableVersion()
-						.ifPresent((ThrowingConsumer<String>) version -> {
-							elib.addMetadata(LibraryFile.PERCOLATOR_VERSION, version);
-						});
+				proteins = writePercolatorToElib(elib, globalPercolatorFiles.get(), pecanJobs, parameters);
 			}
-			
-			HashMap<String, String> parameterMap=parameters.toParameterMap();
-			parameterMap.put("RT align between samples", Boolean.toString(inferrer.isPresent()));
-			for (int i=0; i<pecanJobs.size(); i++) {
-				SearchJobData job=pecanJobs.get(i);
-				parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" search type", job.getSearchType());
-				if (job instanceof EncyclopediaJobData) {
-					parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" library", ((EncyclopediaJobData)job).getLibrary().getName());
-				} else if (job instanceof PecanJobData) {
-					parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" fasta", ((PecanJobData)job).getFastaFile().getName());
-					parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" used narrow target list", Boolean.toString(((PecanJobData)job).getTargetList().isPresent()));
-				} else if (job instanceof XCorDIAJobData) {
-					Optional<LibraryInterface> maybeLibrary = ((XCorDIAJobData)job).getLibrary();
-					if (maybeLibrary.isPresent()) {
-						parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" library", maybeLibrary.get().getName());
-					}
-					parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" fasta", ((XCorDIAJobData)job).getFastaFile().getName());
-					parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" used narrow target list", Boolean.toString(((XCorDIAJobData)job).getTargetList().isPresent()));
-				}
-			}
-			elib.addMetadata(parameterMap);
-			elib.setSources(pecanJobs);
+
+			writeElibMetadata(pecanJobs, parameters, elib, inferrer.isPresent());
 
 			elib.createIndices();
 			elib.saveAsFile(elibFile);
-			
+
 			if (proteins!=null) {
 				if (inferrer.isPresent()) {
 					try {
@@ -771,9 +725,8 @@ public class SearchToBLIB {
 					}
 				}
 			}
-			
+
 			elib.close();
-			
 		} catch (IOException ioe) {
 			Logger.errorLine("Error creating BLIB file");
 			Logger.errorException(ioe);
@@ -834,6 +787,106 @@ public class SearchToBLIB {
 		subProgress.update(diaFileName+": Finished writing to Encyclopedia ELIB at "+new Date().toString(), 1.0f);
 	}
 
+	/**
+	 * Read the set of passing peptides from Percolator and write them to the ELIB with associated metadata.
+	 * Perform protein inference and write protein scores/q-values/PEPs to the ELIB.
+	 *
+	 * @param elib The (open) ELIB where results will be written.
+	 * @param percolatorExecutionData Used to read the list of passing peptides and associated scores/metadata. If the
+	 *                                global results file doesn't exist this will be ignored and the calculation will
+	 *                                fall back to use {@code jobs}.
+	 * @param jobs Ignored, unless global Percolator results don't exist, in which case the passing peptides are read
+	 *             directly from these jobs, without global FDR control.
+	 * @return The inferred set of protein groups.
+	 */
+	private static ArrayList<PercolatorProteinGroup> writePercolatorToElib(LibraryFile elib, PercolatorExecutionData percolatorExecutionData, List<? extends SearchJobData> jobs, SearchParameters parameters) throws IOException, SQLException {
+		return writePercolatorToElib(elib, percolatorExecutionData, Optional.of(jobs), parameters);
+	}
+
+	/**
+	 * Read the set of passing peptides from Percolator and write them to the ELIB with associated metadata.
+	 * Perform protein inference and write protein scores/q-values/PEPs to the ELIB.
+	 *
+	 * @param elib The (open) ELIB where results will be written.
+	 * @param percolatorExecutionData Used to read the list of passing peptides and associated scores/metadata.
+	 * @return The inferred set of protein groups.
+	 */
+	private static ArrayList<PercolatorProteinGroup> writePercolatorToElib(LibraryFile elib, PercolatorExecutionData percolatorExecutionData, SearchParameters parameters) throws IOException, SQLException {
+		return writePercolatorToElib(elib, percolatorExecutionData, Optional.empty(), parameters);
+	}
+
+	/**
+	 * Read the set of passing peptides from Percolator and write them to the ELIB with associated metadata.
+	 * Perform protein inference and write protein scores/q-values/PEPs to the ELIB.
+	 *
+	 * @param elib The (open) ELIB where results will be written.
+	 * @param percolatorExecutionData Used to read the list of passing peptides and associated scores/metadata. If the
+	 *                                global results file doesn't exist this will be ignored and the calculation will
+	 *                                fall back to use {@code jobs}.
+	 * @param jobs Ignored, unless global Percolator results don't exist, in which case the passing peptides are read
+	 *             directly from these jobs, without global FDR control. An exception will be raised if this fallback
+	 *             is necessary but {@code jobs} is not present.
+	 * @return The inferred set of protein groups.
+	 */
+	private static ArrayList<PercolatorProteinGroup> writePercolatorToElib(LibraryFile elib, PercolatorExecutionData percolatorExecutionData, Optional<List<? extends SearchJobData>> jobs, SearchParameters parameters) throws IOException, SQLException {
+		Pair<ArrayList<PercolatorPeptide>, Float> targets=null;
+		Pair<ArrayList<PercolatorPeptide>, Float> decoys=null;
+		if (percolatorExecutionData.getPeptideOutputFile().exists()) {
+			targets=PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideOutputFile(), parameters, true);
+			decoys=PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideDecoyFile(), parameters, true);
+		} else if (jobs.isPresent()) {
+			Pair<Pair<ArrayList<PercolatorPeptide>, Float>, Pair<ArrayList<PercolatorPeptide>, Float>> withoutFDR=getPeptidesWithoutGlobalFDR(jobs.get(), parameters);
+			targets=withoutFDR.x;
+			decoys=withoutFDR.y;
+		} else {
+			throw new IllegalStateException("Unable to get passing peptides: no global Percolator results file or individual jobs!");
+		}
+
+		Logger.logLine("Writing global target/decoy peptides: "+targets.x.size()+"/"+decoys.x.size()+", pi0: "+targets.y);
+		elib.addTargetDecoyPeptides(targets.x, decoys.x);
+		elib.addMetadata("pi0", Float.toString(targets.y));
+		elib.addProteinsFromPercolator(targets.x);
+		elib.addProteinsFromPercolator(decoys.x);
+
+		Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>> targetDecoyProteins=ParsimonyProteinGrouper.groupProteins(targets.x, decoys.x, parameters.getPercolatorProteinThreshold(), parameters.getAAConstants());
+
+		Logger.logLine("Writing global target/decoy proteins: "+targetDecoyProteins.x.size()+"/"+targetDecoyProteins.y.size());
+		elib.addTargetDecoyProteins("global", targetDecoyProteins.x, targetDecoyProteins.y);
+
+		percolatorExecutionData
+				.getPercolatorExecutableVersion()
+				.ifPresent((ThrowingConsumer<String>) version -> {
+					elib.addMetadata(LibraryFile.PERCOLATOR_VERSION, version);
+				});
+
+		return targetDecoyProteins.x;
+	}
+
+	private static void writeElibMetadata(List<? extends SearchJobData> jobs, SearchParameters parameters, LibraryFile elib, boolean align) throws IOException, SQLException {
+		final HashMap<String, String> parameterMap = parameters.toParameterMap();
+		parameterMap.put("RT align between samples", Boolean.toString(align));
+		for (int i = 0; i < jobs.size(); i++) {
+			final SearchJobData job = jobs.get(i);
+			parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " search type", job.getSearchType());
+			if (job instanceof EncyclopediaJobData) {
+				parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " library", ((EncyclopediaJobData) job).getLibrary().getName());
+			} else if (job instanceof PecanJobData) {
+				parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " fasta", ((PecanJobData) job).getFastaFile().getName());
+				parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " used narrow target list", Boolean.toString(((PecanJobData) job).getTargetList().isPresent()));
+			} else if (job instanceof XCorDIAJobData) {
+				Optional<LibraryInterface> maybeLibrary = ((XCorDIAJobData) job).getLibrary();
+				if (maybeLibrary.isPresent()) {
+					parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " library", maybeLibrary.get().getName());
+				}
+				parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " fasta", ((XCorDIAJobData) job).getFastaFile().getName());
+				parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " used narrow target list", Boolean.toString(((XCorDIAJobData) job).getTargetList().isPresent()));
+			}
+		}
+		elib.addMetadata(parameterMap);
+
+		elib.setSources(jobs);
+	}
+
 	private static void convertAlib(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, PeakLocationInferrerInterface inferrer, SearchParameters parameters) {
 		if (Objects.requireNonNull(jobs, "No jobs provided").isEmpty()) {
 			throw new IllegalArgumentException("No jobs provided");
@@ -878,50 +931,9 @@ public class SearchToBLIB {
 					throw new IllegalArgumentException("Could not read Percolator results!", new FileNotFoundException(percolatorExecutionData.getPeptideOutputFile().getAbsolutePath()));
 				}
 
-				final Pair<ArrayList<PercolatorPeptide>, Float> targets, decoys;
-				targets = PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideOutputFile(), parameters, true);
-				decoys = PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideDecoyFile(), parameters, true);
+				writePercolatorToElib(elib, percolatorExecutionData, parameters);
 
-				//TODO: prior to writing entries, ensure they contain only the refined transitions
-
-				Logger.logLine("Writing global target/decoy peptides: " + targets.x.size() + "/" + decoys.x.size() + ", pi0: " + targets.y);
-				elib.addTargetDecoyPeptides(targets.x, decoys.x);
-				elib.addMetadata("pi0", Float.toString(targets.y));
-				elib.addProteinsFromPercolator(targets.x);
-				elib.addProteinsFromPercolator(decoys.x);
-
-				Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>> targetDecoyProteins = ParsimonyProteinGrouper.groupProteins(targets.x, decoys.x, parameters.getPercolatorProteinThreshold(), parameters.getAAConstants());
-				Logger.logLine("Writing global target/decoy proteins: " + targetDecoyProteins.x.size() + "/" + targetDecoyProteins.y.size());
-				elib.addTargetDecoyProteins("global", targetDecoyProteins.x, targetDecoyProteins.y);
-
-				percolatorExecutionData
-						.getPercolatorExecutableVersion()
-						.ifPresent((ThrowingConsumer<String>) version -> {
-							elib.addMetadata(LibraryFile.PERCOLATOR_VERSION, version);
-						});
-
-				final HashMap<String, String> parameterMap = parameters.toParameterMap();
-				parameterMap.put("RT align between samples", Boolean.toString(true)); // required for ALIB
-				for (int i = 0; i < jobs.size(); i++) {
-					final SearchJobData job = jobs.get(i);
-					parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " search type", job.getSearchType());
-					if (job instanceof EncyclopediaJobData) {
-						parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " library", ((EncyclopediaJobData) job).getLibrary().getName());
-					} else if (job instanceof PecanJobData) {
-						parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " fasta", ((PecanJobData) job).getFastaFile().getName());
-						parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " used narrow target list", Boolean.toString(((PecanJobData) job).getTargetList().isPresent()));
-					} else if (job instanceof XCorDIAJobData) {
-						Optional<LibraryInterface> maybeLibrary = ((XCorDIAJobData) job).getLibrary();
-						if (maybeLibrary.isPresent()) {
-							parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " library", maybeLibrary.get().getName());
-						}
-						parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " fasta", ((XCorDIAJobData) job).getFastaFile().getName());
-						parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " used narrow target list", Boolean.toString(((XCorDIAJobData) job).getTargetList().isPresent()));
-					}
-				}
-				elib.addMetadata(parameterMap);
-
-				elib.setSources(jobs);
+				writeElibMetadata(jobs, parameters, elib, true); // align is required for ALIB
 
 				elib.createIndices();
 				elib.saveAsFile(outputFile);
