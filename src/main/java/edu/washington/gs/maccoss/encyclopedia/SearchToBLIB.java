@@ -35,6 +35,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndic
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 
+import javax.swing.text.html.Option;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -291,7 +292,14 @@ public class SearchToBLIB {
 				pecanJobs.add(job);
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles);
+
+			if (arguments.containsKey("-alignmentFrom")) {
+				//TODO: compute passing peptides, inferrer
+
+				convertElibQuantOnly(new EmptyProgressIndicator(), pecanJobs, outputFile, Optional.of(passingPeptides), inferrer, parameters);
+			} else {
+				convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles);
+			}
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
@@ -944,6 +952,59 @@ public class SearchToBLIB {
 			Logger.errorLine("Error creating ELIB file");
 			Logger.errorException(ioe);
 			throw new EncyclopediaException("Error creating ELIB file", ioe);
+		}
+	}
+
+	static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File elibFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, PeakLocationInferrerInterface inferrer, SearchParameters parameters) {
+		try {
+			LibraryFile elib=new LibraryFile();
+			elib.openFile();
+			elib.dropIndices();
+
+			float increment=1.0f/pecanJobs.size();
+			for (int i=0; i<pecanJobs.size(); i++) {
+				SearchJobData job = pecanJobs.get(i);
+				if (!job.hasBeenRun()) {
+					Logger.errorLine("Unable to process " + job.getDiaFileReader().getOriginalFileName() + " because its results are missing. Continuing.");
+					continue;
+				}
+				ProgressIndicator subProgress = new SubProgressIndicator(progress, increment);
+
+				ArrayList<PercolatorPeptide> globalPassingPeptides = passingPeptides.x;
+				Pair<ArrayList<PercolatorPeptide>, Float> localPassingPeptides = PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideOutputFile(), pecanJobs.get(i).getParameters(), false);
+
+				Logger.logLine(job.getDiaFileReader().getOriginalFileName() + ": Number of global peptides: " + globalPassingPeptides.size() + " vs local peptides: " + localPassingPeptides.x.size());
+
+				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides.x, Optional.of(inferrer), elib, pecanJobs.size() > 1);
+			}
+
+			//TODO: get proteins as argument
+			ArrayList<PercolatorProteinGroup> proteins=null;
+
+			writeElibMetadata(elib, pecanJobs, parameters, true);
+
+			elib.createIndices();
+			elib.saveAsFile(elibFile);
+
+			Objects.requireNonNull(proteins, "Unable to proceed without previously-computed protein groups!");
+
+			try {
+				ArrayList<ProteinGroupInterface> proteinGroups=new ArrayList<>();
+				for (ProteinGroupInterface pg : proteins) {
+					proteinGroups.add(pg);
+				}
+				LibraryReportExtractor.extractMatrix(elib, proteinGroups, true);
+			} catch (DataFormatException e) {
+				Logger.errorException(e);
+			}
+
+			elib.close();
+		} catch (IOException ioe) {
+			Logger.errorLine("Error creating BLIB file");
+			Logger.errorException(ioe);
+		} catch (SQLException sqle) {
+			Logger.errorLine("Error creating BLIB file");
+			Logger.errorException(sqle);
 		}
 	}
 }
