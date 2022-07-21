@@ -30,10 +30,11 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class EncyclopediaElibTCellParser {
-	private static final float pvalueThreshold = 0.05f;
+	private static final float fdrThreshold = 0.01f;
+	private static final float pvalueThreshold = 0.001f;
 	public static String[] sampleNames=new String[] {"Naive", "Acute D3", "Chronic D3", "Chronic D7"};
-	public static int[] tests=new int[] {1, 2, 3};
-	public static int[] controls=new int[] {0};
+	public static int[] tests=new int[] {3};
+	public static int[] controls=new int[] {0, 1};
 	public static HashMap<String, SampleCoordinate> sampleKey=new HashMap<>();
 
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException {
@@ -41,7 +42,7 @@ public class EncyclopediaElibTCellParser {
 		
 		File file=new File("/Users/searleb/Documents/OSU/projects/yi/051622/dia/051622_Mouse_Tcell_DIA_quant_reports.elib");
 		File proteinReportFile=new File("/Users/searleb/Documents/OSU/projects/yi/051622/dia/051622_Mouse_Tcell_DIA_quant_reports.elib.proteins.txt");
-		File stub=new File(file.getParent(), "tcell_boxplots");
+		File stub=new File(file.getParent(), "day7_specific_boxplots");
 		FileUtils.deleteDirectory(stub);
 		
 		stub.mkdirs();
@@ -102,7 +103,7 @@ public class EncyclopediaElibTCellParser {
 		
 		double[] fdrs=BenjaminiHochberg.calculateAdjustedPValues(pvalues.toArray());
 		for (int i = 0; i < fdrs.length; i++) {
-			if (fdrs[i]>pvalueThreshold) {
+			if (fdrs[i]>fdrThreshold) {
 				continue;
 			}
 			
