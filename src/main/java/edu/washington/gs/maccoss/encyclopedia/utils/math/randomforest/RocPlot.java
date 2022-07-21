@@ -10,6 +10,10 @@ public class RocPlot {
 		fprs.add(0.0f);
 		tprs.add(0.0f);
 	}
+	
+	public int size() {
+		return fprs.size();
+	}
 
 	/**
 	 * assumes adding in order of fpr
