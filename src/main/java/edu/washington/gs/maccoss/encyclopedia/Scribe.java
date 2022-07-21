@@ -287,7 +287,7 @@ public class Scribe {
 		// get stripes
 		int rangesFinished=0;
 		float numberOfTasks=2.0f+ranges.size();
-		for (Range range : ranges) {
+		for (Range range : ranges) { // ranges are in order
 			float baseProgress=(1.0f+rangesFinished)/numberOfTasks;
 			
 			ThreadableTask<Nothing> task=new ThreadableTask<Nothing>() {
