@@ -919,6 +919,18 @@ public class SearchToBLIB {
 				elib.openFile();
 				elib.dropIndices();
 
+				final PercolatorExecutionData percolatorExecutionData = globalPercolatorFiles.get();
+				if (!percolatorExecutionData.getPeptideOutputFile().exists()) {
+					throw new IllegalArgumentException("Could not read Percolator results!", new FileNotFoundException(percolatorExecutionData.getPeptideOutputFile().getAbsolutePath()));
+				}
+
+				// Perform protein inference and write peptide/protein scores, metadata to ELIB
+				writePercolatorToElib(elib, percolatorExecutionData, parameters);
+
+				// Now compute and write the set of entries that to capture the alignment/transition refinement
+				elib.addEntries(getAlignmentEntries(passingPeptides.x, inferrer));
+
+				// Write each job's alignment to the ELIB
 				float increment = 1.0f / jobs.size();
 				for (int i = 0; i < jobs.size(); i++) {
 					final SearchJobData job = jobs.get(i);
@@ -932,17 +944,8 @@ public class SearchToBLIB {
 
 					elib.addRtAlignment(job, inferrer);
 
-//					elib.addEntries(job.getR); //TODO: write entries for passing peptides from this job
-
-//					subProgress.update("Wrote "+passingPeptides.x.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
+					subProgress.update("Done writing alignment for job " + job.getDiaFileReader().getOriginalFileName(), 1f);
 				}
-
-				final PercolatorExecutionData percolatorExecutionData = globalPercolatorFiles.get();
-				if (!percolatorExecutionData.getPeptideOutputFile().exists()) {
-					throw new IllegalArgumentException("Could not read Percolator results!", new FileNotFoundException(percolatorExecutionData.getPeptideOutputFile().getAbsolutePath()));
-				}
-
-				writePercolatorToElib(elib, percolatorExecutionData, parameters);
 
 				writeElibMetadata(elib, jobs, parameters, true); // align is required for ALIB
 
@@ -956,6 +959,21 @@ public class SearchToBLIB {
 			Logger.errorException(ioe);
 			throw new EncyclopediaException("Error creating ELIB file", ioe);
 		}
+	}
+
+	/**
+	 * Compute the set of entries to be written to an alignment-only ELIB (ALIB).
+	 *
+	 * @see OutputFormat#ALIB
+	 *
+	 * @param passingPeptides The set of passing peptide IDs from Percolator
+	 * @param inferrer The retention time alignment and transition refinement results for the experiment. Importantly,
+	 *                 all entries will include only the quantitative ions from this inferrer.
+	 *
+	 * @return A set of entries suitable for insertion in the ELIB (ALIB) file.
+	 */
+	private static ArrayList<LibraryEntry> getAlignmentEntries(List<? extends PeptidePrecursorWithProteins> passingPeptides, PeakLocationInferrerInterface inferrer) {
+		throw new UnsupportedOperationException("TODO"); //TODO
 	}
 
 	static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File elibFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, PeakLocationInferrerInterface inferrer, SearchParameters parameters) {
