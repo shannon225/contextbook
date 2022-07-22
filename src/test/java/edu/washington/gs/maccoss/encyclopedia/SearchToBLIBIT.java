@@ -18,6 +18,7 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,11 +41,13 @@ public class SearchToBLIBIT {
 	private Path fasta;
 
 	private Path diaA;
+	private Path elibA;
 	private Path featuresTxtA;
 	private Path peptideOutputA;
 	private Path decoyOutputA;
 
 	private Path diaB;
+	private Path elibB;
 	private Path featuresTxtB;
 	private Path peptideOutputB;
 	private Path decoyOutputB;
@@ -60,11 +63,13 @@ public class SearchToBLIBIT {
 		fasta = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/uniprot_human_2018.subset.fasta", tempDir, name, ".fasta");
 
 		diaA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia", tempDir, name, ".dia");
+		elibA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia.elib", tempDir, name, ".elib");
 		featuresTxtA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia.features.txt", tempDir, name, ".txt");
 		peptideOutputA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia.encyclopedia.txt", tempDir, name, ".txt");
 		decoyOutputA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia.encyclopedia.decoy.txt", tempDir, name, ".txt");
 
 		diaB = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia", tempDir, name, ".dia");
+		elibB = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia.elib", tempDir, name, ".elib");
 		featuresTxtB = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia.features.txt", tempDir, name, ".txt");
 		peptideOutputB = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia.encyclopedia.txt", tempDir, name, ".txt");
 		decoyOutputB = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia.encyclopedia.decoy.txt", tempDir, name, ".txt");
@@ -330,14 +335,14 @@ public class SearchToBLIBIT {
 	}
 
 	private SearchJobData getSearchJobDataA() throws IOException, SQLException {
-		return makeJobData(library, diaA, featuresTxtA, fasta, peptideOutputA, decoyOutputA);
+		return makeJobData(library, diaA, featuresTxtA, fasta, peptideOutputA, decoyOutputA, elibA);
 	}
 
 	private SearchJobData getSearchJobDataB() throws IOException, SQLException {
-		return makeJobData(library, diaB, featuresTxtB, fasta, peptideOutputB, decoyOutputB);
+		return makeJobData(library, diaB, featuresTxtB, fasta, peptideOutputB, decoyOutputB, elibB);
 	}
 
-	private QuantitativeSearchJobData makeJobData(Path library, Path dia, Path featuresTxt, Path fasta, Path peptideOutput, Path decoyOutput) throws IOException, SQLException {
+	private QuantitativeSearchJobData makeJobData(Path library, Path dia, Path featuresTxt, Path fasta, Path peptideOutput, Path decoyOutput, Path resultsElib) throws IOException, SQLException {
 		Assume.assumeTrue(Files.exists(dia));
 
 		final StripeFile diaReader = new StripeFile(true) ;
@@ -356,7 +361,13 @@ public class SearchToBLIBIT {
 				"TEST",
 				new LibraryFile() {{ openFile(library.toFile()); }},
 				new EncyclopediaOneScoringFactory(searchParameters)
-		);
+		) {
+			@Override
+			public File getResultLibrary() {
+				// Must ensure we grab the right temp file instead of using path munging
+				return resultsElib.toFile();
+			}
+		};
 	}
 
 	/**

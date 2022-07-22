@@ -18,7 +18,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Collection;
 import java.util.List;
@@ -235,6 +234,8 @@ public abstract class AbstractEndToEndIT {
 
 	@Test
 	public void testWholePipelineMultipleDataAlignOnlyQuantWorkflow() throws Exception {
+		Assume.assumeTrue("Test requires quantitative search parameters", jobDataA.getParameters().isQuantifySameFragmentsAcrossSamples());
+
 		// Generate the alignment-only output
 		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA, jobDataB, jobDataC), tempReport, SearchToBLIB.OutputFormat.ALIB, true);
 
