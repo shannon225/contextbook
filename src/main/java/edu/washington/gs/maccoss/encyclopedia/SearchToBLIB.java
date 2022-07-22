@@ -5,6 +5,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizatio
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.AlternatePeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -295,8 +296,10 @@ public class SearchToBLIB {
 
 			if (arguments.containsKey("-alignmentFrom")) {
 				//TODO: compute passing peptides, inferrer
+				final Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides = null;
+				final PeakLocationInferrerInterface inferrer = null;
 
-				convertElibQuantOnly(new EmptyProgressIndicator(), pecanJobs, outputFile, Optional.of(passingPeptides), inferrer, parameters);
+				convertElibQuantOnly(new EmptyProgressIndicator(), pecanJobs, outputFile, passingPeptides, inferrer, parameters);
 			} else {
 				convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles);
 			}
