@@ -1,16 +1,19 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 
 public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
@@ -29,7 +32,11 @@ public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 
 	@BeforeClass
 	public static void buildReports() throws Exception {
-		parameters = SearchParameterParser.getDefaultParametersObject();
+		parameters = SearchParameterParser.parseParameters(new HashMap<>(ImmutableMap.of(
+				"-percolatorVersion", "3.5" // Required for this test to work; with 3.01 (default) we don't
+				                            // detect any peptides. This test previously only passed due to a bug
+				                            // in defining defaults that resulted in the use of 3.5.
+		)));
 		libraryScoringFactory = new EncyclopediaOneScoringFactory(parameters);
 		setUpClass();
 		jobDataA = makeAndDoJob(diaFile);
