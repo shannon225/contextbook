@@ -37,6 +37,9 @@ public class XCorDIAEndToEndIT extends AbstractEndToEndIT{
 	@BeforeClass
 	public static void buildReports() throws Exception {
 		parameters = PecanParameterParser.parseParameters(new HashMap<>(ImmutableMap.of(
+				"-percolatorVersion", "3.5", // Required for this test to work; with 3.01 (default) we don't
+				                             // detect any peptides. This test previously only passed due to a bug
+				                             // in defining defaults that resulted in the use of 3.5.
 				"-percolatorThreshold", "0.25",
 				"-percolatorTrainingFDR","0.25",
 				"-percolatorProteinThreshold","0.25")));
