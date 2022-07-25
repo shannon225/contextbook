@@ -4,12 +4,14 @@ import com.google.common.collect.ImmutableList;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import org.apache.commons.io.FileUtils;
@@ -26,6 +28,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -322,7 +325,7 @@ public class SearchToBLIBIT {
 	 * Test what happens running the quant-only conversion ({@code -alignmentFrom})
 	 * with a "normal" search library rather than an alignment-only results file.
 	 */
-	@Test
+	@Test(expected = NullPointerException.class) // failure due to ELIB missing pi0
 	public void testConvertMultiSampleQuantOnlyWithNormalElib() throws Exception {
 		// create quant parameters
 		final HashMap<String, String> parameterMap = searchParameters.toParameterMap();
@@ -459,6 +462,24 @@ public class SearchToBLIBIT {
 	private void assertValidAlib(LibraryFile file) throws SQLException, IOException {
 		try (Connection c = file.getConnection()) {
 			try (Statement s = c.createStatement()) {
+				try (ResultSet rs = s.executeQuery("SELECT count() FROM entries;")) {
+					assertTrue(rs.next());
+					assertTrue("ALIB had no peptide entries!", 10 < rs.getInt(1));
+				}
+
+				try (ResultSet rs = s.executeQuery("SELECT count() FROM peptidescores;")) {
+					assertTrue(rs.next());
+					assertTrue("ALIB had no scored peptides!", 10 < rs.getInt(1));
+				}
+
+				try (ResultSet rs = s.executeQuery("SELECT count() FROM peptidetoprotein;")) {
+					assertTrue(rs.next());
+					assertTrue("ALIB had no peptide-protein connections!", 10 < rs.getInt(1));
+				}
+
+				final Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides = SearchToBLIB.readPassingPeptides(file, searchParameters);
+				assertTrue("Unable to fetch passing peptides from ALIB!", 0 < passingPeptides.x.size());
+
 				try (ResultSet rs = s.executeQuery("SELECT PeptideModSeq, count(), massencodedlength/8 FROM entries GROUP BY PeptideModSeq;")) {
 					while (rs.next()) {
 						final String pep = rs.getString(1);

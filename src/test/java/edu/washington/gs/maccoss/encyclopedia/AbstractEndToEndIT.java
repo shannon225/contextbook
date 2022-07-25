@@ -276,7 +276,7 @@ public abstract class AbstractEndToEndIT {
 		try {
 			quantFile.openFile(quantReport.toFile());
 
-			assertSanityTest(quantFile, numAlignedPeptides, getProteinFloor());
+			assertSanityTest(quantFile, getPeptideFloor(), 0); // not all might be quanted; no proteins are written
 
 			//TODO: check that this works as expected for the subset
 			assertValidBasedOnReference(quantFile, getReferenceMultiQuantResource());
