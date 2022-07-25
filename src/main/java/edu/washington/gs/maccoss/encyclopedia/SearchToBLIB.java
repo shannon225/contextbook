@@ -1,12 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.TreeMultimap;
+import com.google.common.collect.Maps;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.AlternatePeakLocationInferrer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.*;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface.AlignmentDataPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -29,6 +28,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.
 import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.*;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -1063,7 +1063,7 @@ public class SearchToBLIB {
 				passingPeptides = readPassingPeptides(alignmentFile, parameters);
 				proteins = readPassingProteins(alignmentFile, passingPeptides.x);
 
-				inferrer = readInferrer(alignmentFile, passingPeptides, jobs);
+				inferrer = readInferrer(alignmentFile, jobs, parameters);
 			} finally {
 				alignmentFile.close();
 			}
@@ -1163,14 +1163,78 @@ public class SearchToBLIB {
 	 * Read the RT alignment and transition refinement results from an "alignment-only" ELIB (ALIB).
 	 *
 	 * @param alignmentFile an open ALIB library
-	 * @param passingPeptides the set of passing peptides from the library (see {@link #readPassingPeptides(LibraryFile)})
 	 * @param jobs the set of files to which the RT alignment results shoudl be limited. May be null or empty to indicate "all".
 	 *
 	 * @return an appropriate {@code PeakLocationInferrerInterface} that can be used for quantification of some or all
 	 *         jobs recorded in the ALIB.
 	 */
-	private static PeakLocationInferrerInterface readInferrer(LibraryFile alignmentFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, List<? extends SearchJobData> jobs) {
-		throw new UnsupportedOperationException("TODO: readInferrer"); //TODO
+	private static PeakLocationInferrerInterface readInferrer(LibraryFile alignmentFile, List<? extends SearchJobData> jobs, SearchParameters parameters) throws IOException, SQLException {
+		final HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap = Maps.newHashMap();
+		final HashMap<SearchJobData, List<AlignmentDataPoint>> alignmentDataMap = Maps.newHashMap();
+		final HashMap<String, Float> alignedRTInMinBySequenceMap = Maps.newHashMap();
+		final HashMap<String, double[]> bestIons = Maps.newHashMap();
+
+		try (Connection c = alignmentFile.getConnection()) {
+			// Read alignment for each job
+			for (SearchJobData job : jobs) {
+				final List<AlignmentDataPoint> aligmentData = Lists.newArrayList();
+				try (PreparedStatement ps = c.prepareStatement(
+						"SELECT Library, Actual, Predicted, Delta, Probability, Decoy, PeptideModSeq" +
+						"FROM retentiontimes;"
+				)) {
+					try (ResultSet rs = ps.executeQuery()) {
+						while (rs.next()) {
+							aligmentData.add(AlignmentDataPoint.of(
+									rs.getFloat(1), // lib
+									rs.getFloat(2), // actual
+									rs.getFloat(3), // predicted
+									rs.getFloat(4), // delta
+									rs.getFloat(5), // prob
+									rs.getBoolean(6), // decoy
+									rs.getString(7) // modseq
+							));
+						}
+					}
+				}
+				alignmentDataMap.put(job, aligmentData);
+
+				// Matches AlternatePeakLocationInferrer
+				final ArrayList<XYPoint> alignmentPoints = aligmentData.stream()
+						.map(p -> new XYPoint(p.getLibrary()/60f, p.getActual()/60f))
+						.collect(Collectors.toCollection(ArrayList::new));
+
+				RetentionTimeAlignmentInterface alignment = RetentionTimeFilter.getFilter(alignmentPoints);
+				alignmentMap.put(job, alignment);
+			}
+
+			// Read RT, ions from entries table
+			try (PreparedStatement ps = c.prepareStatement(
+					"SELECT" +
+					" e.PeptideModSeq," +
+					" e.RTInSeconds," +
+					" e.MassArray," +
+					" e.MassEncodedLength" +
+					" FROM entries;"
+			)) {
+				try (ResultSet rs = ps.executeQuery()) {
+					while (rs.next()) {
+						final String modSeq = rs.getString(1);
+						alignedRTInMinBySequenceMap.put(modSeq, rs.getFloat(2));
+						bestIons.put(modSeq, ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(3), rs.getInt(4))));
+					}
+				} catch (DataFormatException e) {
+					throw new EncyclopediaException("Invalid mass encoding!", e);
+				}
+			}
+		}
+
+		return new SimplePeakLocationInferrer(
+				alignmentMap,
+				alignmentDataMap,
+				alignedRTInMinBySequenceMap,
+				bestIons,
+				parameters
+		);
 	}
 
 	/**

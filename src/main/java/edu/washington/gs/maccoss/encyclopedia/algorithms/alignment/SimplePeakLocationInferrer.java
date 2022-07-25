@@ -29,7 +29,7 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 	private final HashMap<String, double[]> bestIons;
 	private final SearchParameters params;
 
-	SimplePeakLocationInferrer(HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap, HashMap<SearchJobData, List<RetentionTimeAlignmentInterface.AlignmentDataPoint>> alignmentDataMap, HashMap<String, Float> alignedRTInMinBySequenceMap, HashMap<String, double[]> bestIons, SearchParameters params) {
+	public SimplePeakLocationInferrer(HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap, HashMap<SearchJobData, List<RetentionTimeAlignmentInterface.AlignmentDataPoint>> alignmentDataMap, HashMap<String, Float> alignedRTInMinBySequenceMap, HashMap<String, double[]> bestIons, SearchParameters params) {
 		this.alignmentMap=alignmentMap;
 		this.alignmentDataMap = alignmentDataMap;
 		this.alignedRTInMinBySequenceMap=alignedRTInMinBySequenceMap;
