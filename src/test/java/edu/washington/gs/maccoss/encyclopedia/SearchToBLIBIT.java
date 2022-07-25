@@ -232,14 +232,88 @@ public class SearchToBLIBIT {
 		);
 
 		final LibraryFile file = new LibraryFile();
-		file.openFile(libFile.toFile());
+		try {
+			file.openFile(libFile.toFile());
 
-		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
-		assertTrue("Result file had no entries", 0 < numEntries);
+			final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
+			assertTrue("Result file had no entries", 0 < numEntries);
 
-		assertHasPercolatorMetadata(file);
+			assertHasPercolatorMetadata(file);
 
-		//TODO: other assertions specific to this output format
+			//TODO: other assertions specific to this output format
+		} finally {
+			file.close();
+		}
+	}
+
+	/**
+	 * Test what happens running the quant-only conversion ({@code -alignmentFrom})
+	 * with a "normal" search library rather than an alignment-only results file.
+	 */
+	@Test
+	public void testConvertMultiSampleQuantOnly() throws Exception {
+		// create quant parameters
+		final HashMap<String, String> parameterMap = searchParameters.toParameterMap();
+		parameterMap.put("-quantifyAcrossSamples", "true");
+		searchParameters = SearchParameterParser.parseParameters(parameterMap);
+
+		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		Files.delete(libFile); // can't exist (we're trying to create it)
+		FileUtils.forceDeleteOnExit(libFile.toFile());
+
+		final Path quantFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		Files.delete(quantFile); // can't exist (we're trying to create it)
+		FileUtils.forceDeleteOnExit(quantFile.toFile());
+
+		final List<SearchJobData> jobData = ImmutableList.of(
+				getSearchJobDataA(),
+				getSearchJobDataB()
+		);
+
+		SearchToBLIB.convert(progress,
+				jobData,
+				libFile.toFile(),
+				SearchToBLIB.OutputFormat.ALIB,
+				true
+		);
+
+		final LibraryFile file = new LibraryFile();
+		try {
+			file.openFile(libFile.toFile());
+
+			final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
+			assertTrue("Result file had no entries", 0 < numEntries);
+
+			assertHasPercolatorMetadata(file);
+
+			//TODO: other assertions specific to this output format
+		} catch (AssertionError e) {
+			Assume.assumeNoException("Test setup failed: unable to produce valid alignment-only results", e);
+		} finally {
+			file.close();
+		}
+
+		SearchToBLIB.convertElibQuantOnly(progress,
+				jobData,
+				quantFile.toFile(),
+				// Read alignment from the input (search) library
+				((LibraryFile) ((EncyclopediaJobData) jobData.iterator().next()).getLibrary()).getFile(),
+				searchParameters
+		);
+
+		final LibraryFile quantLib = new LibraryFile();
+		try {
+			quantLib.openFile(quantFile.toFile());
+
+			final int numEntries = quantLib.getAllEntries(false, searchParameters.getAAConstants()).size();
+			assertTrue("Result file had no entries", 0 < numEntries);
+
+			assertHasPercolatorMetadata(quantLib);
+
+			//TODO: other assertions specific to this output format
+		} finally {
+			quantLib.close();
+		}
 	}
 
 	/**
@@ -270,14 +344,18 @@ public class SearchToBLIBIT {
 		);
 
 		final LibraryFile file = new LibraryFile();
-		file.openFile(libFile.toFile());
+		try {
+			file.openFile(libFile.toFile());
 
-		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
-		assertTrue("Result file had no entries", 0 < numEntries);
+			final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
+			assertTrue("Result file had no entries", 0 < numEntries);
 
-		assertHasPercolatorMetadata(file);
+			assertHasPercolatorMetadata(file);
 
-		//TODO: other assertions specific to this output format
+			//TODO: other assertions specific to this output format
+		} finally {
+			file.close();
+		}
 	}
 
 	@Test
