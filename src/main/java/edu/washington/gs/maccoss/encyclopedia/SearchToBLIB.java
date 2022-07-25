@@ -1012,6 +1012,14 @@ public class SearchToBLIB {
 			warpedRTInSec = -1f;
 		}
 
+		double[] masses = inferrer.getTopNBestIons(peptide.getPeptideModSeq(), peptide.getPrecursorCharge());
+		if (null == masses) {
+			masses = new double[0];
+		}
+
+		final float[] intensities = new float[masses.length];
+		Arrays.fill(intensities, 1f);
+
 		return new LibraryEntry(
 				"global",
 				peptide.getAccessions(),
@@ -1022,8 +1030,8 @@ public class SearchToBLIB {
 				0,
 				warpedRTInSec,
 				peptide.getScore(),
-				inferrer.getTopNBestIons(peptide.getPeptideModSeq(), peptide.getPrecursorCharge()),
-				null,
+				masses,
+				intensities,
 				parameters.getAAConstants()
 		);
 	}
