@@ -18,6 +18,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Collection;
 import java.util.List;
@@ -260,10 +262,11 @@ public abstract class AbstractEndToEndIT {
 		}
 
 		// Now we execute the quant step for just one raw file
+		final ImmutableList<QuantitativeSearchJobData> quantJobData = ImmutableList.of(jobDataA);
 		final Path quantReport = Files.createTempFile(tempDir, "test_", ".elib");
 		SearchToBLIB.convertElibQuantOnly(
 				new EmptyProgressIndicator(),
-				ImmutableList.of(jobDataA),
+				quantJobData,
 				quantReport.toFile(),
 				tempReport,
 				jobDataA.getParameters()
@@ -278,8 +281,8 @@ public abstract class AbstractEndToEndIT {
 
 			assertSanityTest(quantFile, getPeptideFloor(), 0); // not all might be quanted; no proteins are written
 
-			//TODO: check that this works as expected for the subset
-			assertValidBasedOnReference(quantFile, getReferenceMultiQuantResource());
+			// This only checks a subset of the reference, based on the provided job data
+			assertValidBasedOnReference(quantJobData, quantFile, getReferenceMultiQuantResource());
 		} finally {
 			quantFile.close();
 		}
@@ -327,7 +330,59 @@ public abstract class AbstractEndToEndIT {
 		}
 
 		assertTrue("pi0 lower than expected in " + newFile.getName(), Double.parseDouble(newFile.getMetadata().get("pi0")) > LOWER_BOUND_PI0_MATCH * (Double.parseDouble(expectedPi0)));
-	    assertTrue("pi0 greater than expected in " + newFile.getName(), Double.parseDouble(newFile.getMetadata().get("pi0")) < UPPER_BOUND_PI0_MATCH * (Double.parseDouble(expectedPi0)));
+		assertTrue("pi0 greater than expected in " + newFile.getName(), Double.parseDouble(newFile.getMetadata().get("pi0")) < UPPER_BOUND_PI0_MATCH * (Double.parseDouble(expectedPi0)));
+	}
+
+	/**
+	 * Check that the results for the given jobs match the given reference. More targeted version of {@link #assertValidBasedOnReference(LibraryFile, String)}.
+	 */
+	private void assertValidBasedOnReference(Collection<? extends QuantitativeSearchJobData> jobs, LibraryFile quantFile, String referenceResource) throws Exception {
+		final Path refElib = getResourceAsTempFile(AbstractEndToEndIT.class, referenceResource, tempDir, "reference_", ".elib");
+		try (Connection c = quantFile.getConnection()) {
+			try (PreparedStatement s = c.prepareStatement("ATTACH ? AS ref;")) {
+				s.setString(1, refElib.toAbsolutePath().toString());
+
+				s.execute();
+			}
+
+			//TODO: modify this to allow for fuzzy matching and/or different ion selection
+			try (PreparedStatement s = c.prepareStatement("SELECT q.peptidemodseq, q.rtinsecondscenter, rq.rtinsecondscenter, q.totalintensity, rq.totalintensity FROM peptidequants q LEFT JOIN ref.peptidequants rq USING (PeptideModSeq, PrecursorCharge, SourceFile) WHERE SourceFile = ?;")) {
+				for (QuantitativeSearchJobData job : jobs) {
+					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+
+					try (ResultSet rs = s.executeQuery()) {
+						while (rs.next()) {
+							assertEquals(
+									String.format("rt mismatch: %s in %s: (%.02f, %.02f) vs. (%.02f, %.02f)",
+											rs.getString(1),
+											job.getDiaFileReader().getOriginalFileName(),
+											rs.getFloat(2),
+											rs.getFloat(4),
+											rs.getFloat(3),
+											rs.getFloat(5)
+									),
+									rs.getFloat(2),
+									rs.getFloat(3),
+									0.00001
+							);
+							assertEquals(
+									String.format("intensity mismatch for %s in %s: (%.02f, %.02f) vs. (%.02f, %.02f)",
+											rs.getString(1),
+											job.getDiaFileReader().getOriginalFileName(),
+											rs.getFloat(2),
+											rs.getFloat(3),
+											rs.getFloat(4),
+											rs.getFloat(5)
+									),
+									rs.getFloat(4),
+									rs.getFloat(5),
+									0.00001
+							);
+						}
+					}
+				}
+			}
+		}
 	}
 
 	/**
