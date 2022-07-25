@@ -42,6 +42,7 @@ import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
 public class SearchToBLIB {
@@ -948,7 +949,7 @@ public class SearchToBLIB {
 				writePercolatorToElib(elib, percolatorExecutionData, parameters);
 
 				// Now compute and write the set of entries that to capture the alignment/transition refinement
-				elib.addEntries(getAlignmentEntries(passingPeptides.x, inferrer));
+				elib.addEntries(getAlignmentEntries(passingPeptides.x, inferrer, parameters));
 
 				// Write each job's alignment to the ELIB
 				float increment = 1.0f / jobs.size();
@@ -984,6 +985,10 @@ public class SearchToBLIB {
 	/**
 	 * Compute the set of entries to be written to an alignment-only ELIB (ALIB).
 	 *
+	 * This consists of one entry per item of {@code passingPeptides}, with the corresponding aligned RT.
+	 * Each entry's set of peaks will be determined by the quantitative peaks returned from {@code inferrer}
+	 * for that peptide.
+	 *
 	 * @see OutputFormat#ALIB
 	 *
 	 * @param passingPeptides The set of passing peptide IDs from Percolator
@@ -992,8 +997,35 @@ public class SearchToBLIB {
 	 *
 	 * @return A set of entries suitable for insertion in the ELIB (ALIB) file.
 	 */
-	private static ArrayList<LibraryEntry> getAlignmentEntries(List<? extends PeptidePrecursorWithProteins> passingPeptides, PeakLocationInferrerInterface inferrer) {
-		throw new UnsupportedOperationException("TODO"); //TODO
+	private static ArrayList<LibraryEntry> getAlignmentEntries(List<? extends PeptidePrecursorWithProteins> passingPeptides, PeakLocationInferrerInterface inferrer, SearchParameters parameters) {
+		return passingPeptides.stream()
+				.map(p -> toAlignmentEntry(p, inferrer, parameters))
+				.collect(Collectors.toCollection(ArrayList::new));
+	}
+
+	private static LibraryEntry toAlignmentEntry(PeptidePrecursorWithProteins peptide, PeakLocationInferrerInterface inferrer, SearchParameters parameters) {
+		float warpedRTInSec;
+		try {
+			// We want the aligned ("seed") RT, not the time in any specific sample, so we pass a "bogus" job. TODO: BIG RISK (NPE, interface abuse)
+			warpedRTInSec = inferrer.getWarpedRTInSec(null, peptide.getPeptideModSeq());
+		} catch (NullPointerException e) {
+			warpedRTInSec = -1f;
+		}
+
+		return new LibraryEntry(
+				"global",
+				peptide.getAccessions(),
+				-1,
+				parameters.getAAConstants().getChargedMass(peptide.getPeptideModSeq(), peptide.getPrecursorCharge()),
+				peptide.getPrecursorCharge(),
+				peptide.getPeptideModSeq(),
+				0,
+				warpedRTInSec,
+				peptide.getScore(),
+				inferrer.getTopNBestIons(peptide.getPeptideModSeq(), peptide.getPrecursorCharge()),
+				null,
+				parameters.getAAConstants()
+		);
 	}
 
 	/**
@@ -1034,7 +1066,7 @@ public class SearchToBLIB {
 	 * @param alignmentFile an open ALIB library
 	 */
 	private static Pair<ArrayList<PercolatorPeptide>, Float> readPassingPeptides(LibraryFile alignmentFile) {
-		throw new UnsupportedOperationException("TODO"); //TODO
+		throw new UnsupportedOperationException("TODO: readPassingPeptides()"); //TODO
 	}
 
 	/**
@@ -1043,7 +1075,7 @@ public class SearchToBLIB {
 	 * @param alignmentFile an open ALIB library
 	 */
 	private static ArrayList<PercolatorProteinGroup> readPassingProteins(LibraryFile alignmentFile) {
-		throw new UnsupportedOperationException("TODO"); //TODO
+		throw new UnsupportedOperationException("TODO: readPassingProteins"); //TODO
 	}
 
 	/**
@@ -1057,7 +1089,7 @@ public class SearchToBLIB {
 	 *         jobs recorded in the ALIB.
 	 */
 	private static PeakLocationInferrerInterface readInferrer(LibraryFile alignmentFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, List<? extends SearchJobData> jobs) {
-		throw new UnsupportedOperationException("TODO"); //TODO
+		throw new UnsupportedOperationException("TODO: readInferrer"); //TODO
 	}
 
 	/**
