@@ -1005,12 +1005,59 @@ public class SearchToBLIB {
 	 * @param parameters the parameters to use for quant (should match those used for the initial alignment exactly!)
 	 */
 	static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> jobs, File elibFile, File alignmentElib, SearchParameters parameters) {
-		//TODO: compute passing peptides, inferrer, proteins
-		final Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides = null;
-		final PeakLocationInferrerInterface inferrer = null;
-		final ArrayList<PercolatorProteinGroup> proteins = null;
+		final Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides;
+		final PeakLocationInferrerInterface inferrer;
+		final ArrayList<PercolatorProteinGroup> proteins;
+
+		try {
+			final LibraryFile alignmentFile = new LibraryFile();
+			try {
+				alignmentFile.openFile(alignmentElib);
+
+				passingPeptides = readPassingPeptides(alignmentFile);
+				proteins = readPassingProteins(alignmentFile);
+
+				inferrer = readInferrer(alignmentFile, passingPeptides, jobs);
+			} finally {
+				alignmentFile.close();
+			}
+		} catch (IOException | SQLException e) {
+			throw new EncyclopediaException("Unable to read alignment results", e);
+		}
 
 		convertElibQuantOnly(progress, jobs, elibFile, passingPeptides, inferrer, proteins, parameters);
+	}
+
+	/**
+	 * Read the set of passing peptides from an "alignment-only" ELIB (ALIB).
+	 *
+	 * @param alignmentFile an open ALIB library
+	 */
+	private static Pair<ArrayList<PercolatorPeptide>, Float> readPassingPeptides(LibraryFile alignmentFile) {
+		throw new UnsupportedOperationException("TODO"); //TODO
+	}
+
+	/**
+	 * Read the set of passing proteins from an "alignment-only" ELIB (ALIB).
+	 *
+	 * @param alignmentFile an open ALIB library
+	 */
+	private static ArrayList<PercolatorProteinGroup> readPassingProteins(LibraryFile alignmentFile) {
+		throw new UnsupportedOperationException("TODO"); //TODO
+	}
+
+	/**
+	 * Read the RT alignment and transition refinement results from an "alignment-only" ELIB (ALIB).
+	 *
+	 * @param alignmentFile an open ALIB library
+	 * @param passingPeptides the set of passing peptides from the library (see {@link #readPassingPeptides(LibraryFile)})
+	 * @param jobs the set of files to which the RT alignment results shoudl be limited. May be null or empty to indicate "all".
+	 *
+	 * @return an appropriate {@code PeakLocationInferrerInterface} that can be used for quantification of some or all
+	 *         jobs recorded in the ALIB.
+	 */
+	private static PeakLocationInferrerInterface readInferrer(LibraryFile alignmentFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, List<? extends SearchJobData> jobs) {
+		throw new UnsupportedOperationException("TODO"); //TODO
 	}
 
 	/**
@@ -1018,7 +1065,8 @@ public class SearchToBLIB {
 	 *
 	 * TODO: eventually this method should be combined with {@link #convertElib(ProgressIndicator, List, File, Optional, Optional, Optional, SearchParameters)},
 	 *       likely by modifying that method to call this one
-	 *  @param jobs one or more jobs that should be quantified
+	 *
+	 * @param jobs one or more jobs that should be quantified
 	 * @param elibFile the location where the results should be written in ELIB format (quantitative)
 	 * @param passingPeptides the previously-computed set of passing peptides
 	 * @param inferrer the previously-computed RT alignment and transition refinement
