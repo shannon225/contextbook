@@ -1079,27 +1079,35 @@ public class SearchToBLIB {
 	 *
 	 * @param alignmentFile an open ALIB library
 	 */
-	private static Pair<ArrayList<PercolatorPeptide>, Float> readPassingPeptides(LibraryFile alignmentFile, SearchParameters parameters) throws IOException, SQLException {
+	static Pair<ArrayList<PercolatorPeptide>, Float> readPassingPeptides(LibraryFile alignmentFile, SearchParameters parameters) throws IOException, SQLException {
 		final ArrayList<PercolatorPeptide> passingPeptides = Lists.newArrayList();
 		float pi0 = Float.parseFloat(alignmentFile.getMetadata().get("pi0"));
 
 		final String query = "SELECT" +
-				" e.peptidemodseq, e.precursorcharge," +
+				" e.sourcefile, e.rtinseconds, max(p.isdecoy), e.peptidemodseq, e.precursorcharge," +
 				" group_concat(p.proteinaccession, ';')," +
 				" s.qvalue, s.posteriorerrorprobability" +
 				" FROM entries e" +
-				" JOIN peptidescores s USING (peptidemodseq, precursorcharge, sourcefile)" +
-				" JOIN peptidetoprotein p USING (peptideseq);";
+				" JOIN peptidescores s USING (peptidemodseq, precursorcharge)" + // assume single rows per (modseq, z)
+				" JOIN peptidetoprotein p USING (peptideseq)" +
+				" GROUP BY peptidemodseq, precursorcharge;";
 
 		try (Connection c = alignmentFile.getConnection()) {
 			try (PreparedStatement ps = c.prepareStatement(query)) {
 				try (ResultSet rs = ps.executeQuery()) {
 					while (rs.next()) {
 						passingPeptides.add(new PercolatorPeptide(
-								rs.getString(1) + "+" + rs.getInt(2),  // psmid + charge
-								rs.getString(3), // proteinids
-								rs.getFloat(4),  // qvalue
-								rs.getFloat(5),  // PEP
+								PercolatorPeptide.getPSMID(
+										rs.getString(1), // sourcefile
+										rs.getFloat(2), // rt
+										Optional.empty(),
+										rs.getBoolean(3), // decoy
+										rs.getString(4), // peptidemodseq
+										rs.getByte(5) // charge
+								),
+								rs.getString(6), // proteinids
+								rs.getFloat(7),  // qvalue
+								rs.getFloat(8),  // PEP
 								parameters.getAAConstants()
 						));
 					}
@@ -1123,7 +1131,8 @@ public class SearchToBLIB {
 				" group_concat(p.peptideseq, ';')," +
 				" s.QValue, s.MinimumPeptidePEP" +
 				" FROM proteinscores s" +
-				" JOIN peptidetoprotein p USING (proteinaccession);";
+				" JOIN peptidetoprotein p USING (proteinaccession)" +
+				" GROUP BY proteinaccession;";
 
 		try (Connection c = alignmentFile.getConnection()) {
 			try (PreparedStatement ps = c.prepareStatement(query)) {
@@ -1177,13 +1186,15 @@ public class SearchToBLIB {
 		final HashMap<String, double[]> bestIons = Maps.newHashMap();
 
 		try (Connection c = alignmentFile.getConnection()) {
-			// Read alignment for each job
-			for (SearchJobData job : jobs) {
-				final List<AlignmentDataPoint> aligmentData = Lists.newArrayList();
-				try (PreparedStatement ps = c.prepareStatement(
-						"SELECT Library, Actual, Predicted, Delta, Probability, Decoy, PeptideModSeq" +
-						" FROM retentiontimes;"
-				)) {
+			try (PreparedStatement ps = c.prepareStatement(
+					"SELECT Library, Actual, Predicted, Delta, Probability, Decoy, PeptideModSeq" +
+							" FROM retentiontimes WHERE sourcefile = ?;"
+			)) {
+				// Read alignment for each job
+				for (SearchJobData job : jobs) {
+					final List<AlignmentDataPoint> aligmentData = Lists.newArrayList();
+
+					ps.setString(1, job.getDiaFileReader().getOriginalFileName());
 					try (ResultSet rs = ps.executeQuery()) {
 						while (rs.next()) {
 							aligmentData.add(AlignmentDataPoint.of(
@@ -1197,16 +1208,16 @@ public class SearchToBLIB {
 							));
 						}
 					}
+					alignmentDataMap.put(job, aligmentData);
+
+					// Matches AlternatePeakLocationInferrer
+					final ArrayList<XYPoint> alignmentPoints = aligmentData.stream()
+							.map(p -> new XYPoint(p.getLibrary() / 60f, p.getActual() / 60f))
+							.collect(Collectors.toCollection(ArrayList::new));
+
+					RetentionTimeAlignmentInterface alignment = RetentionTimeFilter.getFilter(alignmentPoints);
+					alignmentMap.put(job, alignment);
 				}
-				alignmentDataMap.put(job, aligmentData);
-
-				// Matches AlternatePeakLocationInferrer
-				final ArrayList<XYPoint> alignmentPoints = aligmentData.stream()
-						.map(p -> new XYPoint(p.getLibrary()/60f, p.getActual()/60f))
-						.collect(Collectors.toCollection(ArrayList::new));
-
-				RetentionTimeAlignmentInterface alignment = RetentionTimeFilter.getFilter(alignmentPoints);
-				alignmentMap.put(job, alignment);
 			}
 
 			// Read RT, ions from entries table
@@ -1253,6 +1264,10 @@ public class SearchToBLIB {
 	 * @param parameters the parameters to use for quant (should match those used for the initial alignment exactly!)
 	 */
 	static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> jobs, File elibFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, PeakLocationInferrerInterface inferrer, ArrayList<PercolatorProteinGroup> proteins, SearchParameters parameters) {
+		if (null == passingPeptides || null == passingPeptides.x || passingPeptides.x.size() < 1) {
+			throw new IllegalArgumentException("Can't extract quantities for zero peptides!");
+		}
+
 		try {
 			LibraryFile elib=new LibraryFile();
 			elib.openFile();
