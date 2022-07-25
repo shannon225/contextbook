@@ -293,12 +293,11 @@ public class SearchToBLIB {
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
 
 			if (arguments.containsKey("-alignmentFrom")) {
-				//TODO: compute passing peptides, inferrer
-				final Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides = null;
-				final PeakLocationInferrerInterface inferrer = null;
+				// Sub-program: quantify from previously-computed alignment/transition refinement
 
-				convertElibQuantOnly(new EmptyProgressIndicator(), pecanJobs, outputFile, passingPeptides, inferrer, parameters);
+				convertElibQuantOnly(new EmptyProgressIndicator(), pecanJobs, outputFile, new File(arguments.get("-alignmentFrom")), parameters);
 			} else {
+				// Main program: convert to appropriate format
 				convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles);
 			}
 		} catch (Exception e) {
@@ -724,11 +723,7 @@ public class SearchToBLIB {
 			if (proteins!=null) {
 				if (inferrer.isPresent()) {
 					try {
-						ArrayList<ProteinGroupInterface> proteinGroups=new ArrayList<>();
-						for (ProteinGroupInterface pg : proteins) {
-							proteinGroups.add(pg);
-						}
-						LibraryReportExtractor.extractMatrix(elib, proteinGroups, true);
+						LibraryReportExtractor.extractMatrix(elib, proteins, true);
 					} catch (DataFormatException e) {
 						Logger.errorException(e);
 					}
@@ -976,15 +971,44 @@ public class SearchToBLIB {
 		throw new UnsupportedOperationException("TODO"); //TODO
 	}
 
-	static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File elibFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, PeakLocationInferrerInterface inferrer, SearchParameters parameters) {
+	/**
+	 * Quantify peptides for one or more files, based on previously-computed alignment and transition refinement.
+	 *
+	 * @param jobs one or more jobs that should be quantified
+	 * @param elibFile the location where the results should be written in ELIB format (quantitative)
+	 * @param alignmentElib the location from which previously-computed "alignment-only" results should be read
+	 * @param parameters the parameters to use for quant (should match those used for the initial alignment exactly!)
+	 */
+	static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> jobs, File elibFile, File alignmentElib, SearchParameters parameters) {
+		//TODO: compute passing peptides, inferrer, proteins
+		final Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides = null;
+		final PeakLocationInferrerInterface inferrer = null;
+		final ArrayList<PercolatorProteinGroup> proteins = null;
+
+		convertElibQuantOnly(progress, jobs, elibFile, passingPeptides, inferrer, proteins, parameters);
+	}
+
+	/**
+	 * Quantify peptides for one or more files, based on previously-computed alignment and transition refinement.
+	 *
+	 * TODO: eventually this method should be combined with {@link #convertElib(ProgressIndicator, List, File, Optional, Optional, Optional, SearchParameters)},
+	 *       likely by modifying that method to call this one
+	 *  @param jobs one or more jobs that should be quantified
+	 * @param elibFile the location where the results should be written in ELIB format (quantitative)
+	 * @param passingPeptides the previously-computed set of passing peptides
+	 * @param inferrer the previously-computed RT alignment and transition refinement
+	 * @param proteins the previously-computed set of scored and grouped proteins
+	 * @param parameters the parameters to use for quant (should match those used for the initial alignment exactly!)
+	 */
+	static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> jobs, File elibFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, PeakLocationInferrerInterface inferrer, ArrayList<PercolatorProteinGroup> proteins, SearchParameters parameters) {
 		try {
 			LibraryFile elib=new LibraryFile();
 			elib.openFile();
 			elib.dropIndices();
 
-			float increment=1.0f/pecanJobs.size();
-			for (int i=0; i<pecanJobs.size(); i++) {
-				SearchJobData job = pecanJobs.get(i);
+			float increment=1.0f/jobs.size();
+			for (int i=0; i<jobs.size(); i++) {
+				SearchJobData job = jobs.get(i);
 				if (!job.hasBeenRun()) {
 					Logger.errorLine("Unable to process " + job.getDiaFileReader().getOriginalFileName() + " because its results are missing. Continuing.");
 					continue;
@@ -992,17 +1016,14 @@ public class SearchToBLIB {
 				ProgressIndicator subProgress = new SubProgressIndicator(progress, increment);
 
 				ArrayList<PercolatorPeptide> globalPassingPeptides = passingPeptides.x;
-				Pair<ArrayList<PercolatorPeptide>, Float> localPassingPeptides = PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideOutputFile(), pecanJobs.get(i).getParameters(), false);
+				Pair<ArrayList<PercolatorPeptide>, Float> localPassingPeptides = PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideOutputFile(), jobs.get(i).getParameters(), false);
 
 				Logger.logLine(job.getDiaFileReader().getOriginalFileName() + ": Number of global peptides: " + globalPassingPeptides.size() + " vs local peptides: " + localPassingPeptides.x.size());
 
-				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides.x, Optional.of(inferrer), elib, pecanJobs.size() > 1);
+				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides.x, Optional.of(inferrer), elib, jobs.size() > 1);
 			}
 
-			//TODO: get proteins as argument
-			ArrayList<PercolatorProteinGroup> proteins=null;
-
-			writeElibMetadata(elib, pecanJobs, parameters, true);
+			writeElibMetadata(elib, jobs, parameters, true);
 
 			elib.createIndices();
 			elib.saveAsFile(elibFile);
@@ -1010,11 +1031,7 @@ public class SearchToBLIB {
 			Objects.requireNonNull(proteins, "Unable to proceed without previously-computed protein groups!");
 
 			try {
-				ArrayList<ProteinGroupInterface> proteinGroups=new ArrayList<>();
-				for (ProteinGroupInterface pg : proteins) {
-					proteinGroups.add(pg);
-				}
-				LibraryReportExtractor.extractMatrix(elib, proteinGroups, true);
+				LibraryReportExtractor.extractMatrix(elib, proteins, true);
 			} catch (DataFormatException e) {
 				Logger.errorException(e);
 			}

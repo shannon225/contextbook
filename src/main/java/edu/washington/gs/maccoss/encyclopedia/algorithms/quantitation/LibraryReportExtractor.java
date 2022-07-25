@@ -1,5 +1,14 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.utils.*;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.map.hash.TObjectFloatHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
+import gnu.trove.procedure.TObjectFloatProcedure;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -7,32 +16,9 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.TreeMap;
 import java.util.zip.DataFormatException;
-
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideReportData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupQuantifier;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
-import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import gnu.trove.map.hash.TObjectFloatHashMap;
-import gnu.trove.map.hash.TObjectIntHashMap;
-import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class LibraryReportExtractor {
 
@@ -49,10 +35,10 @@ public class LibraryReportExtractor {
 		ArrayList<ProteinGroupInterface> proteins=library.getProteinGroups();
 		return extractMatrix(library, proteins, normalizeByTIC, Optional.ofNullable(null));
 	}
-	public static File extractMatrix(LibraryFile library, ArrayList<ProteinGroupInterface> proteins, boolean normalizeByTIC) throws IOException, SQLException, DataFormatException {
+	public static File extractMatrix(LibraryFile library, List<? extends ProteinGroupInterface> proteins, boolean normalizeByTIC) throws IOException, SQLException, DataFormatException {
 		return extractMatrix(library, proteins, normalizeByTIC, Optional.ofNullable(null));
 	}
-	public static File extractMatrix(LibraryFile library, ArrayList<ProteinGroupInterface> proteins, boolean normalizeByTIC, Optional<CoefficientOfVariationCalculator> cvCalculator) throws IOException, SQLException, DataFormatException {
+	public static File extractMatrix(LibraryFile library, List<? extends ProteinGroupInterface> proteins, boolean normalizeByTIC, Optional<CoefficientOfVariationCalculator> cvCalculator) throws IOException, SQLException, DataFormatException {
 		File stubFile=library.getFile();
 		if (stubFile==null) {
 			throw new EncyclopediaException("Please save .ELIB before trying to read matrix data from it!");

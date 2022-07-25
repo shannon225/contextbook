@@ -264,7 +264,6 @@ public abstract class AbstractEndToEndIT {
 		// Finally, compare the quant results to the reference results for the "normal" quant workflow.
 		// Note that we don't save the results for this alternative workflow at all, we expect that we should get
 		// identical results to the "normal" workflow.
-		// Perform some quick checks on the alignment-only results
 //		final LibraryFile quantFile = new LibraryFile();
 //		try {
 //			quantFile.openFile(tempReport); //TODO: use quant results
