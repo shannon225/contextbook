@@ -242,6 +242,44 @@ public class SearchToBLIBIT {
 		//TODO: other assertions specific to this output format
 	}
 
+	/**
+	 * Test what happens running the quant-only conversion ({@code -alignmentFrom})
+	 * with a "normal" search library rather than an alignment-only results file.
+	 */
+	@Test
+	public void testConvertMultiSampleQuantOnlyWithNormalElib() throws Exception {
+		// create quant parameters
+		final HashMap<String, String> parameterMap = searchParameters.toParameterMap();
+		parameterMap.put("-quantifyAcrossSamples", "true");
+		searchParameters = SearchParameterParser.parseParameters(parameterMap);
+
+		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		Files.delete(libFile); // can't exist (we're trying to create it)
+		FileUtils.forceDeleteOnExit(libFile.toFile());
+
+		final List<SearchJobData> jobData = ImmutableList.of(
+				getSearchJobDataA()
+		);
+
+		SearchToBLIB.convertElibQuantOnly(progress,
+				jobData,
+				libFile.toFile(),
+				// Read alignment from the input (search) library
+				((LibraryFile) ((EncyclopediaJobData) jobData.iterator().next()).getLibrary()).getFile(),
+				searchParameters
+		);
+
+		final LibraryFile file = new LibraryFile();
+		file.openFile(libFile.toFile());
+
+		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
+		assertTrue("Result file had no entries", 0 < numEntries);
+
+		assertHasPercolatorMetadata(file);
+
+		//TODO: other assertions specific to this output format
+	}
+
 	@Test
 	public void testConvertSingleSampleElib() throws Exception {
 		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");

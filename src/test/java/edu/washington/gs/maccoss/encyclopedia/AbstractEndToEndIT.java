@@ -259,22 +259,30 @@ public abstract class AbstractEndToEndIT {
 			outputFile.close();
 		}
 
-		//TODO: execute at least one quantification step
+		// Now we execute the quant step for just one raw file
+		final Path quantReport = Files.createTempFile(tempDir, "test_", ".elib");
+		SearchToBLIB.convertElibQuantOnly(
+				new EmptyProgressIndicator(),
+				ImmutableList.of(jobDataA),
+				quantReport.toFile(),
+				tempReport,
+				jobDataA.getParameters()
+		);
 
 		// Finally, compare the quant results to the reference results for the "normal" quant workflow.
 		// Note that we don't save the results for this alternative workflow at all, we expect that we should get
 		// identical results to the "normal" workflow.
-//		final LibraryFile quantFile = new LibraryFile();
-//		try {
-//			quantFile.openFile(tempReport); //TODO: use quant results
-//
-//			assertSanityTest(quantFile, numAlignedPeptides, getProteinFloor());
-//
-//			//TODO: check that this works as expected for the subset
-//			assertValidBasedOnReference(quantFile, getReferenceMultiQuantResource());
-//		} finally {
-//			quantFile.close();
-//		}
+		final LibraryFile quantFile = new LibraryFile();
+		try {
+			quantFile.openFile(quantReport.toFile());
+
+			assertSanityTest(quantFile, numAlignedPeptides, getProteinFloor());
+
+			//TODO: check that this works as expected for the subset
+			assertValidBasedOnReference(quantFile, getReferenceMultiQuantResource());
+		} finally {
+			quantFile.close();
+		}
 	}
 
 	public static void assertValidBasedOnReference(LibraryFile newFile, String referenceResource) throws Exception {
