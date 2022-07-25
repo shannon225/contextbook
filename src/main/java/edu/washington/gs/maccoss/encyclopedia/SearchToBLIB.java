@@ -237,14 +237,11 @@ public class SearchToBLIB {
 
 		final OutputFormat outputFormat;
 
-		if (alignOnly) {
+		if (!alignOnly) {
+			outputFormat = writeBlib ? OutputFormat.BLIB : OutputFormat.ELIB;
+		} else {
 			if (!alignBetweenFiles) {
 				Logger.errorLine("-alignOnly requires alignment to be enabled; try running with `-a true`");
-				System.exit(1);
-			}
-
-			if (writeBlib) {
-				Logger.errorLine("-alignOnly requires ELIB output; try running with `-blib false`");
 				System.exit(1);
 			}
 
@@ -253,9 +250,17 @@ public class SearchToBLIB {
 				System.exit(1);
 			}
 
+			if (writeBlib) {
+				Logger.errorLine("-alignOnly requires ELIB output; try running with `-blib false`");
+				System.exit(1);
+			}
+
+			if (arguments.containsKey("-alignmentFrom")) {
+				Logger.errorLine("Error: -alignOnly and -alignmentFrom are incompatible");
+				System.exit(1);
+			}
+
 			outputFormat = OutputFormat.ALIB;
-		} else {
-			outputFormat = writeBlib ? OutputFormat.BLIB : OutputFormat.ELIB;
 		}
 
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
@@ -292,13 +297,33 @@ public class SearchToBLIB {
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
 
-			if (arguments.containsKey("-alignmentFrom")) {
-				// Sub-program: quantify from previously-computed alignment/transition refinement
-
-				convertElibQuantOnly(new EmptyProgressIndicator(), pecanJobs, outputFile, new File(arguments.get("-alignmentFrom")), parameters);
-			} else {
+			if (!arguments.containsKey("-alignmentFrom")) {
 				// Main program: convert to appropriate format
 				convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles);
+			} else {
+				// Sub-program: quantify from previously-computed alignment/transition refinement
+
+				if (!alignBetweenFiles) {
+					Logger.errorLine("-alignmentFrom requires alignment to be enabled; try running with `-a true`");
+					System.exit(1);
+				}
+
+				if (!parameters.isQuantifySameFragmentsAcrossSamples()) {
+					Logger.errorLine("-alignmentFrom requires -quantifyAcrossSamples true");
+					System.exit(1);
+				}
+
+				if (writeBlib) {
+					Logger.errorLine("-alignmentFrom requires ELIB output; try running with `-blib false`");
+					System.exit(1);
+				}
+
+				if (alignOnly) {
+					Logger.errorLine("Error: -alignOnly and -alignmentFrom are incompatible");
+					System.exit(1);
+				}
+
+				convertElibQuantOnly(new EmptyProgressIndicator(), pecanJobs, outputFile, new File(arguments.get("-alignmentFrom")), parameters);
 			}
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
