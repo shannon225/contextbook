@@ -303,10 +303,14 @@ public class SearchToBLIBIT {
 		try {
 			quantLib.openFile(quantFile.toFile());
 
-			final int numEntries = quantLib.getAllEntries(false, searchParameters.getAAConstants()).size();
-			assertTrue("Result file had no entries", 0 < numEntries);
-
-			assertHasPercolatorMetadata(quantLib);
+			try (Connection c = quantLib.getConnection()) {
+				try (Statement s = c.createStatement()) {
+					try (ResultSet rs = s.executeQuery("SELECT count() FROM peptidequants;")) {
+						assertTrue(rs.next());
+						assertTrue("Result file had no quants", rs.getInt(1) > 0);
+					}
+				}
+			}
 
 			//TODO: other assertions specific to this output format
 		} finally {
@@ -345,10 +349,14 @@ public class SearchToBLIBIT {
 		try {
 			file.openFile(libFile.toFile());
 
-			final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
-			assertTrue("Result file had no entries", 0 < numEntries);
-
-			assertHasPercolatorMetadata(file);
+			try (Connection c = file.getConnection()) {
+				try (Statement s = c.createStatement()) {
+					try (ResultSet rs = s.executeQuery("SELECT count() FROM peptidequants;")) {
+						assertTrue(rs.next());
+						assertTrue("Result file had no quants", rs.getInt(1) > 0);
+					}
+				}
+			}
 
 			//TODO: other assertions specific to this output format
 		} finally {
