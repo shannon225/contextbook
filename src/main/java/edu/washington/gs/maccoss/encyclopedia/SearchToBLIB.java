@@ -1,6 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.TreeMultimap;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.AlternatePeakLocationInferrer;
@@ -39,9 +41,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
@@ -1054,8 +1060,8 @@ public class SearchToBLIB {
 			try {
 				alignmentFile.openFile(alignmentElib);
 
-				passingPeptides = readPassingPeptides(alignmentFile);
-				proteins = readPassingProteins(alignmentFile);
+				passingPeptides = readPassingPeptides(alignmentFile, parameters);
+				proteins = readPassingProteins(alignmentFile, passingPeptides.x);
 
 				inferrer = readInferrer(alignmentFile, passingPeptides, jobs);
 			} finally {
@@ -1073,8 +1079,34 @@ public class SearchToBLIB {
 	 *
 	 * @param alignmentFile an open ALIB library
 	 */
-	private static Pair<ArrayList<PercolatorPeptide>, Float> readPassingPeptides(LibraryFile alignmentFile) {
-		throw new UnsupportedOperationException("TODO: readPassingPeptides()"); //TODO
+	private static Pair<ArrayList<PercolatorPeptide>, Float> readPassingPeptides(LibraryFile alignmentFile, SearchParameters parameters) throws IOException, SQLException {
+		final ArrayList<PercolatorPeptide> passingPeptides = Lists.newArrayList();
+		float pi0 = Float.parseFloat(alignmentFile.getMetadata().get("pi0"));
+
+		final String query = "SELECT" +
+				" e.rowid," +
+				" group_concat(p2p.proteinaccession, ';')" +
+				" s.qvalue, s.posteriorerrorprobability" +
+				" FROM entries e" +
+				" JOIN peptidescores s USING (peptidemodseq, precursorcharge, sourcefile);";
+
+		try (Connection c = alignmentFile.getConnection()) {
+			try (PreparedStatement ps = c.prepareStatement(query)) {
+				try (ResultSet rs = ps.executeQuery()) {
+					while (rs.next()) {
+						passingPeptides.add(new PercolatorPeptide(
+								rs.getInt(1) + "",  // psmid
+								rs.getString(2), // proteinids
+								rs.getFloat(3),  // qvalue
+								rs.getFloat(4),  // PEP
+								parameters.getAAConstants()
+						));
+					}
+				}
+			}
+		}
+
+		return new Pair<>(passingPeptides, pi0);
 	}
 
 	/**
@@ -1082,8 +1114,49 @@ public class SearchToBLIB {
 	 *
 	 * @param alignmentFile an open ALIB library
 	 */
-	private static ArrayList<PercolatorProteinGroup> readPassingProteins(LibraryFile alignmentFile) {
-		throw new UnsupportedOperationException("TODO: readPassingProteins"); //TODO
+	private static ArrayList<PercolatorProteinGroup> readPassingProteins(LibraryFile alignmentFile, List<? extends PercolatorPeptide> passingPeptides) throws IOException, SQLException {
+		final ArrayList<PercolatorProteinGroup> passingProteins = Lists.newArrayList();
+
+		final String query = "SELECT" +
+				" group_concat(p.proteinaccession, ';')," +
+				" group_concat(p.peptideseq" +
+				" FROM proteinscores s" +
+				" JOIN peptidetoprotein p USING (proteinaccession);";
+
+		try (Connection c = alignmentFile.getConnection()) {
+			try (PreparedStatement ps = c.prepareStatement(query)) {
+				try (ResultSet rs = ps.executeQuery()) {
+					final Map<String, List<String>> modseqCache = new TreeMap<>();
+
+					while (rs.next()) {
+						final String[] peptideSequences = rs.getString(2).split(";");
+
+						final List<String> peptideModSeqs = Lists.newArrayListWithCapacity(peptideSequences.length);
+						for (String seq : peptideSequences) {
+							final List<String> modSeqs = modseqCache.computeIfAbsent(seq, toModSeqs(passingPeptides));
+
+							peptideModSeqs.addAll(modSeqs);
+						}
+
+						passingProteins.add(new PercolatorProteinGroup(
+								rs.getString(1).split(";"),
+								peptideModSeqs.toArray(new String[0]),
+								rs.getFloat(3),
+								rs.getFloat(4)
+						));
+					}
+				}
+			}
+		}
+
+		return passingProteins;
+	}
+
+	private static Function<String, List<String>> toModSeqs(List<? extends PercolatorPeptide> passingPeptides) {
+		return seq -> passingPeptides.stream()
+				.filter(p -> Objects.equals(seq, p.getPeptideSeq()))
+				.map(PercolatorPeptide::getPeptideModSeq)
+				.collect(Collectors.toList());
 	}
 
 	/**
