@@ -22,7 +22,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.List;
 
@@ -238,17 +241,15 @@ public class SearchToBLIBIT {
 			final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
 			assertTrue("Result file had no entries", 0 < numEntries);
 
-			assertHasPercolatorMetadata(file);
-
-			//TODO: other assertions specific to this output format
+			assertValidAlib(file);
 		} finally {
 			file.close();
 		}
 	}
 
 	/**
-	 * Test what happens running the quant-only conversion ({@code -alignmentFrom})
-	 * with a "normal" search library rather than an alignment-only results file.
+	 * Test what happens running the quant-only conversion ({@code -alignmentFrom}).
+	 * This is essentially an extension of the method above.
 	 */
 	@Test
 	public void testConvertMultiSampleQuantOnly() throws Exception {
@@ -284,9 +285,7 @@ public class SearchToBLIBIT {
 			final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
 			assertTrue("Result file had no entries", 0 < numEntries);
 
-			assertHasPercolatorMetadata(file);
-
-			//TODO: other assertions specific to this output format
+			assertValidAlib(file);
 		} catch (AssertionError e) {
 			Assume.assumeNoException("Test setup failed: unable to produce valid alignment-only results", e);
 		} finally {
@@ -296,8 +295,7 @@ public class SearchToBLIBIT {
 		SearchToBLIB.convertElibQuantOnly(progress,
 				jobData,
 				quantFile.toFile(),
-				// Read alignment from the input (search) library
-				((LibraryFile) ((EncyclopediaJobData) jobData.iterator().next()).getLibrary()).getFile(),
+				libFile.toFile(),
 				searchParameters
 		);
 
@@ -448,6 +446,30 @@ public class SearchToBLIBIT {
 
 		assertNotNull(metadata.get(LibraryFile.PERCOLATOR_VERSION));
 		assertNotNull(metadata.get("pi0"));
+	}
+
+	private void assertValidAlib(LibraryFile file) throws SQLException, IOException {
+		try (Connection c = file.getConnection()) {
+			try (Statement s = c.createStatement()) {
+				try (ResultSet rs = s.executeQuery("SELECT PeptideModSeq, count(), massencodedlength/8 FROM entries GROUP BY PeptideModSeq;")) {
+					while (rs.next()) {
+						final String pep = rs.getString(1);
+						final int nEntries = rs.getInt(2);
+						final int nIons = rs.getInt(3);
+
+						assertEquals(pep + " had wrong number of entries: " + nEntries, 1, nEntries);
+
+						// Note that these entries aren't filtered  for the min number of quant ions;
+						// that filter happens during quantification.
+						assertTrue(pep + " had unexpected number of quant fragments: " + nIons,
+								nIons >= 0 || nIons <= searchParameters.getNumberOfQuantitativePeaks()
+						);
+					}
+				}
+			}
+		}
+
+		assertHasPercolatorMetadata(file);
 	}
 
 	private SearchJobData getSearchJobDataA() throws IOException, SQLException {
