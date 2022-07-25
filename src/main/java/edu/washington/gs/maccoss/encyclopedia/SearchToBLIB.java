@@ -1084,21 +1084,22 @@ public class SearchToBLIB {
 		float pi0 = Float.parseFloat(alignmentFile.getMetadata().get("pi0"));
 
 		final String query = "SELECT" +
-				" e.rowid," +
-				" group_concat(p2p.proteinaccession, ';')" +
+				" e.peptidemodseq, e.precursorcharge," +
+				" group_concat(p.proteinaccession, ';')," +
 				" s.qvalue, s.posteriorerrorprobability" +
 				" FROM entries e" +
-				" JOIN peptidescores s USING (peptidemodseq, precursorcharge, sourcefile);";
+				" JOIN peptidescores s USING (peptidemodseq, precursorcharge, sourcefile)" +
+				" JOIN peptidetoprotein p USING (peptideseq);";
 
 		try (Connection c = alignmentFile.getConnection()) {
 			try (PreparedStatement ps = c.prepareStatement(query)) {
 				try (ResultSet rs = ps.executeQuery()) {
 					while (rs.next()) {
 						passingPeptides.add(new PercolatorPeptide(
-								rs.getInt(1) + "",  // psmid
-								rs.getString(2), // proteinids
-								rs.getFloat(3),  // qvalue
-								rs.getFloat(4),  // PEP
+								rs.getString(1) + "+" + rs.getInt(2),  // psmid + charge
+								rs.getString(3), // proteinids
+								rs.getFloat(4),  // qvalue
+								rs.getFloat(5),  // PEP
 								parameters.getAAConstants()
 						));
 					}
@@ -1119,7 +1120,8 @@ public class SearchToBLIB {
 
 		final String query = "SELECT" +
 				" group_concat(p.proteinaccession, ';')," +
-				" group_concat(p.peptideseq" +
+				" group_concat(p.peptideseq, ';')," +
+				" s.QValue, s.MinimumPeptidePEP" +
 				" FROM proteinscores s" +
 				" JOIN peptidetoprotein p USING (proteinaccession);";
 
@@ -1180,7 +1182,7 @@ public class SearchToBLIB {
 				final List<AlignmentDataPoint> aligmentData = Lists.newArrayList();
 				try (PreparedStatement ps = c.prepareStatement(
 						"SELECT Library, Actual, Predicted, Delta, Probability, Decoy, PeptideModSeq" +
-						"FROM retentiontimes;"
+						" FROM retentiontimes;"
 				)) {
 					try (ResultSet rs = ps.executeQuery()) {
 						while (rs.next()) {
@@ -1214,7 +1216,7 @@ public class SearchToBLIB {
 					" e.RTInSeconds," +
 					" e.MassArray," +
 					" e.MassEncodedLength" +
-					" FROM entries;"
+					" FROM entries e;"
 			)) {
 				try (ResultSet rs = ps.executeQuery()) {
 					while (rs.next()) {
