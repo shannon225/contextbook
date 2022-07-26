@@ -5,6 +5,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
+import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import org.apache.commons.io.FileUtils;
 import org.junit.*;
@@ -21,13 +24,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public abstract class AbstractEndToEndIT {
 	/**
@@ -216,7 +219,7 @@ public abstract class AbstractEndToEndIT {
 
 	@Test
 	public void testWholePipelineMultipleDataQuant() throws Exception {
-		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA,jobDataB,jobDataC),tempReport,false,true);
+		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA,jobDataB,jobDataC), tempReport,false,true);
 		assertTrue(FileUtils.directoryContains(tempDir.toFile(),tempReport));
 
 		LibraryFile outputFile = new LibraryFile();
@@ -240,7 +243,8 @@ public abstract class AbstractEndToEndIT {
 		Assume.assumeTrue("Test requires quantitative search parameters", jobDataA.getParameters().isQuantifySameFragmentsAcrossSamples());
 
 		// Generate the alignment-only output
-		SearchToBLIB.convert(new EmptyProgressIndicator(), ImmutableList.of(jobDataA, jobDataB, jobDataC), tempReport, SearchToBLIB.OutputFormat.ALIB, true);
+		final ImmutableList<QuantitativeSearchJobData> jobData = ImmutableList.of(jobDataA, jobDataB, jobDataC);
+		SearchToBLIB.convert(new EmptyProgressIndicator(), jobData, tempReport, SearchToBLIB.OutputFormat.ALIB, true);
 
 		assertTrue("Output was created?", FileUtils.directoryContains(tempDir.toFile(), tempReport));
 
@@ -272,17 +276,31 @@ public abstract class AbstractEndToEndIT {
 				jobDataA.getParameters()
 		);
 
-		// Finally, compare the quant results to the reference results for the "normal" quant workflow.
-		// Note that we don't save the results for this alternative workflow at all, we expect that we should get
-		// identical results to the "normal" workflow.
+		// Now we run the same search with the normal single-step align-and-quant workflow as a reference comparison
+		final Path standardQuantReport = Files.createTempFile(tempDir, "test_", ".elib");
+		try {
+			SearchToBLIB.convert(
+					new EmptyProgressIndicator(),
+					jobData,
+					standardQuantReport.toFile(),
+					SearchToBLIB.OutputFormat.ELIB,
+					true
+			);
+		} catch (Exception e) {
+			Assume.assumeNoException("Unable to generate reference results", e);
+		}
+
 		final LibraryFile quantFile = new LibraryFile();
 		try {
 			quantFile.openFile(quantReport.toFile());
 
 			assertSanityTest(quantFile, getPeptideFloor(), 0); // not all might be quanted; no proteins are written
 
-			// This only checks a subset of the reference, based on the provided job data
-			assertValidBasedOnReference(quantJobData, quantFile, getReferenceMultiQuantResource());
+			assertJobResultsMatch(quantJobData, quantFile, standardQuantReport);
+
+			// This only checks a subset of the reference, based on the provided job data.
+			// Commented out because fuzzy comparison here is hard.
+//			assertValidBasedOnReference(quantJobData, quantFile, getReferenceMultiQuantResource());
 		} finally {
 			quantFile.close();
 		}
@@ -336,8 +354,7 @@ public abstract class AbstractEndToEndIT {
 	/**
 	 * Check that the results for the given jobs match the given reference. More targeted version of {@link #assertValidBasedOnReference(LibraryFile, String)}.
 	 */
-	private void assertValidBasedOnReference(Collection<? extends QuantitativeSearchJobData> jobs, LibraryFile quantFile, String referenceResource) throws Exception {
-		final Path refElib = getResourceAsTempFile(AbstractEndToEndIT.class, referenceResource, tempDir, "reference_", ".elib");
+	private void assertJobResultsMatch(Collection<? extends QuantitativeSearchJobData> jobs, LibraryFile quantFile, Path refElib) throws Exception {
 		try (Connection c = quantFile.getConnection()) {
 			try (PreparedStatement s = c.prepareStatement("ATTACH ? AS ref;")) {
 				s.setString(1, refElib.toAbsolutePath().toString());
@@ -345,38 +362,97 @@ public abstract class AbstractEndToEndIT {
 				s.execute();
 			}
 
-			//TODO: modify this to allow for fuzzy matching and/or different ion selection
-			try (PreparedStatement s = c.prepareStatement("SELECT q.peptidemodseq, q.rtinsecondscenter, rq.rtinsecondscenter, q.totalintensity, rq.totalintensity FROM peptidequants q LEFT JOIN ref.peptidequants rq USING (PeptideModSeq, PrecursorCharge, SourceFile) WHERE SourceFile = ?;")) {
+			final double epsilon = 0.00001;
+
+			try (PreparedStatement s = c.prepareStatement(
+					"SELECT count()" +
+					" FROM peptidequants q" +
+					" LEFT JOIN ref.peptidequants rq USING (PeptideModSeq, PrecursorCharge, SourceFile)" +
+					" WHERE SourceFile = ?" +
+					" AND (" +
+							" abs(q.rtinsecondscenter - rq.rtinsecondscenter) > ?" +
+							" OR abs(q.totalintensity - rq.totalintensity) > ?" +
+					");"
+			)) {
+				for (QuantitativeSearchJobData job : jobs) {
+					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+					s.setDouble(2, epsilon);
+
+					try (ResultSet rs = s.executeQuery()) {
+						assertTrue(rs.next());
+
+						final int numMismatch = rs.getInt(1);
+
+						Logger.logLine(String.format("Found %d mismatched peptides for %s", numMismatch, job.getDiaFileReader().getOriginalFileName()));
+//						assertEquals(0, numMismatch);
+					}
+				}
+			}
+
+			try (PreparedStatement s = c.prepareStatement(
+					"SELECT" +
+					" q.peptidemodseq," +
+					" q.rtinsecondscenter," +
+					" q.totalintensity," +
+					" q.quantionmassarray," +
+					" q.quantionmasslength," +
+					" rq.rtinsecondscenter," +
+					" rq.totalintensity," +
+					" rq.quantionmassarray," +
+					" rq.quantionmasslength" +
+					" FROM peptidequants q" +
+					" LEFT JOIN ref.peptidequants rq USING (PeptideModSeq, PrecursorCharge, SourceFile)" +
+					" WHERE SourceFile = ?;"
+			)) {
 				for (QuantitativeSearchJobData job : jobs) {
 					s.setString(1, job.getDiaFileReader().getOriginalFileName());
 
 					try (ResultSet rs = s.executeQuery()) {
 						while (rs.next()) {
+							final String pep = rs.getString(1);
+							final float rt = rs.getFloat(2);
+							final float inten = rs.getFloat(3);
+							final double[] ions = ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(4), rs.getInt(5)));
+							final float refRt = rs.getFloat(6);
+							final float refInten = rs.getFloat(7);
+							final double[] refIons = ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), rs.getInt(9)));
+
 							assertEquals(
 									String.format("rt mismatch: %s in %s: (%.02f, %.02f) vs. (%.02f, %.02f)",
-											rs.getString(1),
+											pep,
 											job.getDiaFileReader().getOriginalFileName(),
-											rs.getFloat(2),
-											rs.getFloat(4),
-											rs.getFloat(3),
-											rs.getFloat(5)
+											rt,
+											inten,
+											refRt,
+											refInten
 									),
-									rs.getFloat(2),
-									rs.getFloat(3),
-									0.00001
+									rt,
+									refRt,
+									epsilon
 							);
 							assertEquals(
 									String.format("intensity mismatch for %s in %s: (%.02f, %.02f) vs. (%.02f, %.02f)",
-											rs.getString(1),
+											pep,
 											job.getDiaFileReader().getOriginalFileName(),
-											rs.getFloat(2),
-											rs.getFloat(3),
-											rs.getFloat(4),
-											rs.getFloat(5)
+											rt,
+											refRt,
+											inten,
+											refInten
 									),
-									rs.getFloat(4),
-									rs.getFloat(5),
-									0.00001
+									inten,
+									refInten,
+									epsilon
+							);
+							assertArrayEquals(
+									String.format("ions mismatch for %s in %s: %s vs. %s",
+											pep,
+											job.getDiaFileReader().getOriginalFileName(),
+											Arrays.toString(ions),
+											Arrays.toString(ions)
+									),
+									ions,
+									refIons,
+									epsilon
 							);
 						}
 					}
@@ -488,5 +564,9 @@ public abstract class AbstractEndToEndIT {
 				destination,
 				StandardCopyOption.REPLACE_EXISTING
 		);
+	}
+
+	private static Path getElibFromResultsDirectory(String resourcePath) {
+		return Paths.get("target", "reference-data", resourcePath);
 	}
 }
