@@ -98,30 +98,14 @@ public interface RetentionTimeAlignmentInterface {
 				}
 
 				@Override
-				public int hashCode() {
-					return Objects.hash(getLibrary(), getActual(), getPredictedActual(), getPeptideModSeq());
-				}
-
-				@Override
-				public boolean equals(Object obj) {
-					if (!(obj instanceof AlignmentDataPoint)) {
-						return false;
-					}
-
-					final AlignmentDataPoint o = (AlignmentDataPoint) obj;
-
-					return 0 == ComparisonChain.start()
-							.compare(getLibrary(), o.getLibrary())
-							.compare(getActual(), o.getActual())
-							.compare(getPredictedActual(), o.getPredictedActual())
-							.compare(getDelta(), o.getDelta())
-							.compare(getProbability(), o.getProbability())
-							.result();
-				}
-
-				@Override
 				public String toString() {
-					return String.format("(%.02f, %.02f)", getLibrary(), getActual());
+					return String.format("(%.02f, %.02f, %.02f, %.02f, %s)",
+							getLibrary(),
+							getActual(),
+							getPredictedActual(),
+							getProbability(),
+							getPeptideModSeq()
+					);
 				}
 			};
 		}

@@ -1197,11 +1197,13 @@ public class SearchToBLIB {
 					ps.setString(1, job.getDiaFileReader().getOriginalFileName());
 					try (ResultSet rs = ps.executeQuery()) {
 						while (rs.next()) {
+							// Must be in _minutes_ to match AlternatePeakLocationInferrer; the values have
+							// been converted to seconds when written to the `retentiontimes` table.
 							aligmentData.add(AlignmentDataPoint.of(
-									rs.getFloat(1), // lib
-									rs.getFloat(2), // actual
-									rs.getFloat(3), // predicted
-									rs.getFloat(4), // delta
+									rs.getFloat(1) / 60f, // lib
+									rs.getFloat(2) / 60f, // actual
+									rs.getFloat(3) / 60f, // predicted
+									rs.getFloat(4) / 60f, // delta
 									rs.getFloat(5), // prob
 									rs.getBoolean(6), // decoy
 									rs.getString(7) // modseq
@@ -1210,9 +1212,10 @@ public class SearchToBLIB {
 					}
 					alignmentDataMap.put(job, aligmentData);
 
-					// Matches AlternatePeakLocationInferrer
+					// Must be in _minutes_ to match AlternatePeakLocationInferrer, but these values are already
+					// in minutes when we read them from `retentiontimes`.
 					final ArrayList<XYPoint> alignmentPoints = aligmentData.stream()
-							.map(p -> new XYPoint(p.getLibrary() / 60f, p.getActual() / 60f))
+							.map(p -> new XYPoint(p.getLibrary(), p.getActual()))
 							.collect(Collectors.toCollection(ArrayList::new));
 
 					RetentionTimeAlignmentInterface alignment = RetentionTimeFilter.getFilter(alignmentPoints);

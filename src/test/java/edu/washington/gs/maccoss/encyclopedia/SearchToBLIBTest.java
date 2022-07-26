@@ -1,12 +1,10 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.SimplePeakLocationInferrer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface.AlignmentDataPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -14,20 +12,18 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.WindowData;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
-import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.zip.DataFormatException;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertArrayEquals;
 
 public class SearchToBLIBTest {
 	@Test
@@ -51,13 +47,24 @@ public class SearchToBLIBTest {
 	}
 
 	private static void assertSameRtWarping(PeakLocationInferrerInterface expected, PeakLocationInferrerInterface actual, SearchJobData job) {
-		final List<RetentionTimeAlignmentInterface.AlignmentDataPoint> sortExpected = Lists.newArrayList(expected.getAlignmentData(job));
-		final List<RetentionTimeAlignmentInterface.AlignmentDataPoint> sortActual = Lists.newArrayList(actual.getAlignmentData(job));
+		final List<AlignmentDataPoint> sortExpected = Lists.newArrayList(expected.getAlignmentData(job));
+		final List<AlignmentDataPoint> sortActual = Lists.newArrayList(actual.getAlignmentData(job));
 
-		Collections.sort(sortExpected, Comparator.comparing(RetentionTimeAlignmentInterface.AlignmentDataPoint::getLibrary));
-		Collections.sort(sortActual, Comparator.comparing(RetentionTimeAlignmentInterface.AlignmentDataPoint::getLibrary));
+		Collections.sort(sortExpected, Comparator.comparing(AlignmentDataPoint::getLibrary));
+		Collections.sort(sortActual, Comparator.comparing(AlignmentDataPoint::getLibrary));
 
-		assertEquals(sortExpected, sortActual);
+		for (ToDoubleFunction<AlignmentDataPoint> fn : ImmutableList.<ToDoubleFunction<AlignmentDataPoint>>of(
+				AlignmentDataPoint::getLibrary,
+				AlignmentDataPoint::getActual,
+				AlignmentDataPoint::getPredictedActual,
+				AlignmentDataPoint::getProbability
+		)) {
+			assertArrayEquals(
+					sortExpected.stream().mapToDouble(fn).toArray(),
+					sortActual.stream().mapToDouble(fn).toArray(),
+					0.0001
+			);
+		}
 	}
 
 	private static SearchJobData mockJob(SearchParameters parameters) {
@@ -136,7 +143,7 @@ public class SearchToBLIBTest {
 
 	private static PeakLocationInferrerInterface mockInferrer(SearchJobData... jobs) {
 		return new PeakLocationInferrerInterface() {
-			private final Map<SearchJobData, List<RetentionTimeAlignmentInterface.AlignmentDataPoint>> dataMap;
+			private final Map<SearchJobData, List<AlignmentDataPoint>> dataMap;
 			{
 				dataMap = Maps.newHashMap();
 				for (SearchJobData job : jobs) {
@@ -165,27 +172,27 @@ public class SearchToBLIBTest {
 			}
 
 			@Override
-			public List<RetentionTimeAlignmentInterface.AlignmentDataPoint> getAlignmentData(SearchJobData job) {
+			public List<AlignmentDataPoint> getAlignmentData(SearchJobData job) {
 				return dataMap.get(job);
 			}
 		};
 	}
 
-	private static List<RetentionTimeAlignmentInterface.AlignmentDataPoint> mockAlignmentData() {
+	private static List<AlignmentDataPoint> mockAlignmentData() {
 		return Stream.generate(SearchToBLIBTest::mockAlignmentPoint)
 				.limit(250)
 				.collect(Collectors.toList());
 	}
 
 	private static final Random random = new Random();
-	private static RetentionTimeAlignmentInterface.AlignmentDataPoint mockAlignmentPoint() {
+	private static AlignmentDataPoint mockAlignmentPoint() {
 		final float lib = 100 * random.nextFloat() + 1;
 		final float pred = 5 * lib - 100;
 		final float delta = (1 - random.nextFloat()) * 5;
 		final float actual = pred + delta;
 		final float prob = 1f;
 
-		return RetentionTimeAlignmentInterface.AlignmentDataPoint.of(
+		return AlignmentDataPoint.of(
 				lib,
 				actual,
 				pred,
