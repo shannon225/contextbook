@@ -1,13 +1,33 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.SimplePeakLocationInferrer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.WindowData;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import java.util.zip.DataFormatException;
+
+import static org.junit.Assert.assertEquals;
 
 public class SearchToBLIBTest {
 	@Test
@@ -24,21 +44,155 @@ public class SearchToBLIBTest {
 
 			final PeakLocationInferrerInterface read = SearchToBLIB.readInferrer(file, ImmutableList.of(job), parameters);
 
-			assertSameRtWarping(inferrer, read);
+			assertSameRtWarping(inferrer, read, job);
 		} finally {
 			file.close();
 		}
 	}
 
-	private SearchJobData mockJob(SearchParameters parameters) {
-		return null; //TODO
+	private static void assertSameRtWarping(PeakLocationInferrerInterface expected, PeakLocationInferrerInterface actual, SearchJobData job) {
+		final List<RetentionTimeAlignmentInterface.AlignmentDataPoint> sortExpected = Lists.newArrayList(expected.getAlignmentData(job));
+		final List<RetentionTimeAlignmentInterface.AlignmentDataPoint> sortActual = Lists.newArrayList(actual.getAlignmentData(job));
+
+		Collections.sort(sortExpected, Comparator.comparing(RetentionTimeAlignmentInterface.AlignmentDataPoint::getLibrary));
+		Collections.sort(sortActual, Comparator.comparing(RetentionTimeAlignmentInterface.AlignmentDataPoint::getLibrary));
+
+		assertEquals(sortExpected, sortActual);
 	}
 
-	private PeakLocationInferrerInterface mockInferrer(SearchJobData... jobs) {
-		return null; //TODO
+	private static SearchJobData mockJob(SearchParameters parameters) {
+		return new QuantitativeSearchJobData(null, null, null, parameters, "test") {
+			@Override
+			public File getResultLibrary() {
+				return null;
+			}
+
+			@Override
+			public String getSearchType() {
+				return "test";
+			}
+
+			@Override
+			public StripeFileInterface getDiaFileReader() {
+				return new StripeFileInterface() {
+					@Override
+					public Map<Range, WindowData> getRanges() {
+						throw new UnsupportedOperationException("Not mocked");
+					}
+
+					@Override
+					public void openFile(File userFile) throws IOException, SQLException {
+
+					}
+
+					@Override
+					public ArrayList<PrecursorScan> getPrecursors(float minRT, float maxRT) throws IOException, SQLException, DataFormatException {
+						throw new UnsupportedOperationException("Not mocked");
+					}
+
+					@Override
+					public ArrayList<FragmentScan> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
+						throw new UnsupportedOperationException("Not mocked");
+					}
+
+					@Override
+					public ArrayList<FragmentScan> getStripes(Range targetMzRange, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
+						throw new UnsupportedOperationException("Not mocked");
+					}
+
+					@Override
+					public float getTIC() throws IOException, SQLException {
+						throw new UnsupportedOperationException("Not mocked");
+					}
+
+					@Override
+					public float getGradientLength() throws IOException, SQLException {
+						throw new UnsupportedOperationException("Not mocked");
+					}
+
+					@Override
+					public void close() {
+
+					}
+
+					@Override
+					public boolean isOpen() {
+						throw new UnsupportedOperationException("Not mocked");
+					}
+
+					@Override
+					public File getFile() {
+						throw new UnsupportedOperationException("Not mocked");
+					}
+
+					@Override
+					public String getOriginalFileName() {
+						return "test_file";
+					}
+				};
+			}
+		};
 	}
 
-	private void assertSameRtWarping(PeakLocationInferrerInterface expected, PeakLocationInferrerInterface actual) {
-		Assume.assumeTrue("TODO: implement assertions", false); //TODO
+	private static PeakLocationInferrerInterface mockInferrer(SearchJobData... jobs) {
+		return new PeakLocationInferrerInterface() {
+			private final Map<SearchJobData, List<RetentionTimeAlignmentInterface.AlignmentDataPoint>> dataMap;
+			{
+				dataMap = Maps.newHashMap();
+				for (SearchJobData job : jobs) {
+					dataMap.put(job, mockAlignmentData());
+				}
+			}
+
+			@Override
+			public Optional<QuantitativeDIAData> getQuantitativeData(TransitionRefinementData data) {
+				throw new UnsupportedOperationException("Not mocked");
+			}
+
+			@Override
+			public double[] getTopNBestIons(String peptideModSeq, byte precursorCharge) {
+				throw new UnsupportedOperationException("Not mocked");
+			}
+
+			@Override
+			public float getPreciseRTInSec(SearchJobData job, String peptideModSeq, float detectedRTInSec) {
+				throw new UnsupportedOperationException("Not mocked");
+			}
+
+			@Override
+			public float getWarpedRTInSec(SearchJobData job, String peptideModSeq) {
+				throw new UnsupportedOperationException("Not mocked");
+			}
+
+			@Override
+			public List<RetentionTimeAlignmentInterface.AlignmentDataPoint> getAlignmentData(SearchJobData job) {
+				return dataMap.get(job);
+			}
+		};
+	}
+
+	private static List<RetentionTimeAlignmentInterface.AlignmentDataPoint> mockAlignmentData() {
+		return Stream.generate(SearchToBLIBTest::mockAlignmentPoint)
+				.limit(250)
+				.collect(Collectors.toList());
+	}
+
+	private static final Random random = new Random();
+	private static RetentionTimeAlignmentInterface.AlignmentDataPoint mockAlignmentPoint() {
+		final float lib = 100 * random.nextFloat() + 1;
+		final float pred = 5 * lib - 100;
+		final float delta = (1 - random.nextFloat()) * 5;
+		final float actual = pred + delta;
+		final float prob = 1f;
+
+		return RetentionTimeAlignmentInterface.AlignmentDataPoint.of(
+				lib,
+				actual,
+				pred,
+				delta,
+				prob,
+				false,
+				"fakePep"
+		);
 	}
 }

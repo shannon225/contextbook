@@ -3,8 +3,10 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
+import com.google.common.collect.ComparisonChain;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 
 public interface RetentionTimeAlignmentInterface {
@@ -93,6 +95,33 @@ public interface RetentionTimeAlignmentInterface {
 				@Override
 				public String getPeptideModSeq() {
 					return peptideModSeq;
+				}
+
+				@Override
+				public int hashCode() {
+					return Objects.hash(getLibrary(), getActual(), getPredictedActual(), getPeptideModSeq());
+				}
+
+				@Override
+				public boolean equals(Object obj) {
+					if (!(obj instanceof AlignmentDataPoint)) {
+						return false;
+					}
+
+					final AlignmentDataPoint o = (AlignmentDataPoint) obj;
+
+					return 0 == ComparisonChain.start()
+							.compare(getLibrary(), o.getLibrary())
+							.compare(getActual(), o.getActual())
+							.compare(getPredictedActual(), o.getPredictedActual())
+							.compare(getDelta(), o.getDelta())
+							.compare(getProbability(), o.getProbability())
+							.result();
+				}
+
+				@Override
+				public String toString() {
+					return String.format("(%.02f, %.02f)", getLibrary(), getActual());
 				}
 			};
 		}
