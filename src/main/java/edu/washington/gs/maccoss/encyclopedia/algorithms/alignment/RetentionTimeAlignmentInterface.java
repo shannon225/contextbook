@@ -10,7 +10,7 @@ import com.google.common.collect.ComparisonChain;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 
 public interface RetentionTimeAlignmentInterface {
-	List<AlignmentDataPoint> plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed);
+	List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed);
 
 	float getYValue(float xrt);
 

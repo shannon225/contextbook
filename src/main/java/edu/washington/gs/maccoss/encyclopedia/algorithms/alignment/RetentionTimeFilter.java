@@ -1,9 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Optional;
-
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
@@ -15,14 +11,19 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Gaussian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.UnitDistribution;
 import gnu.trove.list.array.TFloatArrayList;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
 public class RetentionTimeFilter extends AbstractRetentionTimeFilter {
-	public static RetentionTimeFilter getFilter(ArrayList<XYPoint> rts) {
+	public static RetentionTimeFilter getFilter(List<XYPoint> rts) {
 		return getFilter(rts, RT_STRING, "Retention Time (min)");
 	}
-	public static RetentionTimeFilter getFilter(ArrayList<XYPoint> rts, String xAxis, String yAxis) {
+	public static RetentionTimeFilter getFilter(List<XYPoint> rts, String xAxis, String yAxis) {
 		return getFilter(rts, xAxis, yAxis, TwoDimensionalKDE.DEFAULT_RESOLUTION);
 	}
-	public static RetentionTimeFilter getFilter(ArrayList<XYPoint> rts, String xAxis, String yAxis, int resolution) {
+	public static RetentionTimeFilter getFilter(List<XYPoint> rts, String xAxis, String yAxis, int resolution) {
 		Function rtWarper;
 		Optional<RTProbabilityModel> model;
 		if (rts.size()>20) {
@@ -48,7 +49,7 @@ public class RetentionTimeFilter extends AbstractRetentionTimeFilter {
 		super(rtWarper, model, xAxis, yAxis);
 	}
 
-	public static ProphetMixtureModel generateMixtureModel(ArrayList<XYPoint> rts, Function warper) {
+	public static ProphetMixtureModel generateMixtureModel(List<XYPoint> rts, Function warper) {
 		TFloatArrayList deltas=new TFloatArrayList();
 		float min=Float.MAX_VALUE;
 		float max=-Float.MAX_VALUE;

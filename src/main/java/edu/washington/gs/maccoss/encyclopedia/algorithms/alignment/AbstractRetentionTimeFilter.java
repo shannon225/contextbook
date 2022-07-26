@@ -50,11 +50,11 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 		return rtWarper;
 	}
 	@Override
-	public List<AlignmentDataPoint> plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed) {
+	public List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed) {
 		return plot(rts, saveFileSeed, "library", "actual");
 	}
 
-	public List<AlignmentDataPoint> plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed, String xAxis, String yAxis) {
+	public List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed, String xAxis, String yAxis) {
 		TFloatArrayList rtValues=new TFloatArrayList();
 		TFloatArrayList deltas=new TFloatArrayList();
 		ArrayList<XYPoint> removedRTs=new ArrayList<XYPoint>();

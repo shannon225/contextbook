@@ -5,17 +5,21 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface.AlignmentDataPoint;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.WindowData;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.function.ToDoubleFunction;
@@ -24,6 +28,7 @@ import java.util.stream.Stream;
 import java.util.zip.DataFormatException;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assume.assumeFalse;
 
 public class SearchToBLIBTest {
 	@Test
@@ -141,13 +146,21 @@ public class SearchToBLIBTest {
 		};
 	}
 
-	private static PeakLocationInferrerInterface mockInferrer(SearchJobData... jobs) {
+	private static PeakLocationInferrerInterface mockInferrer(SearchJobData... jobs) throws IOException {
 		return new PeakLocationInferrerInterface() {
 			private final Map<SearchJobData, List<AlignmentDataPoint>> dataMap;
 			{
 				dataMap = Maps.newHashMap();
 				for (SearchJobData job : jobs) {
-					dataMap.put(job, mockAlignmentData());
+					final List<XYPoint> points = mockAlignmentInput();
+					final RetentionTimeFilter alignment = RetentionTimeFilter.getFilter(points);
+
+					// Generating this data requires writing results to a file due to an old hack.
+					final List<AlignmentDataPoint> alignmentData = alignment.plot(points, Optional.of(Files.createTempFile("test_", ".fake").toFile()), "library", "actual");
+
+					assumeFalse(alignmentData.isEmpty());
+
+					dataMap.put(job, alignmentData);
 				}
 			}
 
@@ -178,28 +191,27 @@ public class SearchToBLIBTest {
 		};
 	}
 
-	private static List<AlignmentDataPoint> mockAlignmentData() {
-		return Stream.generate(SearchToBLIBTest::mockAlignmentPoint)
+	private static List<XYPoint> mockAlignmentInput() {
+		return Stream.generate(SearchToBLIBTest::mockDataPoint)
 				.limit(250)
 				.collect(Collectors.toList());
 	}
 
 	private static final Random random = new Random();
-	private static AlignmentDataPoint mockAlignmentPoint() {
+	private static XYPoint mockDataPoint() {
 		final float lib = 100 * random.nextFloat() + 1;
-		final float pred = 5 * lib - 100;
-		final float delta = (1 - random.nextFloat()) * 5;
-		final float actual = pred + delta;
-		final float prob = 1f;
 
-		return AlignmentDataPoint.of(
-				lib,
-				actual,
-				pred,
-				delta,
-				prob,
-				false,
-				"fakePep"
-		);
+		final float delta;
+		if (random.nextBoolean()) {
+			// true match
+			delta = 1 - random.nextFloat();
+		} else {
+			// false match
+			delta = 10 * (1 - random.nextFloat());
+		}
+
+		final float actual = lib + delta;
+
+		return new XYPoint(lib, actual);
 	}
 }

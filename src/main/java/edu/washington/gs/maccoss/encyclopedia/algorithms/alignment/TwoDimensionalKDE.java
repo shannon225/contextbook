@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -93,7 +94,7 @@ public class TwoDimensionalKDE {
 		this(points, DEFAULT_RESOLUTION);
 	}
 	
-	public TwoDimensionalKDE(ArrayList<XYPoint> points, int resolution) {
+	public TwoDimensionalKDE(List<XYPoint> points, int resolution) {
 		this.resolution=resolution;
 		// first calculate ranges
 		float minX=Float.MAX_VALUE;
