@@ -1123,7 +1123,7 @@ public class SearchToBLIB {
 	 *
 	 * @param alignmentFile an open ALIB library
 	 */
-	private static ArrayList<PercolatorProteinGroup> readPassingProteins(LibraryFile alignmentFile, List<? extends PercolatorPeptide> passingPeptides) throws IOException, SQLException {
+	static ArrayList<PercolatorProteinGroup> readPassingProteins(LibraryFile alignmentFile, List<? extends PercolatorPeptide> passingPeptides) throws IOException, SQLException {
 		final ArrayList<PercolatorProteinGroup> passingProteins = Lists.newArrayList();
 
 		final String query = "SELECT" +
@@ -1163,7 +1163,7 @@ public class SearchToBLIB {
 		return passingProteins;
 	}
 
-	private static Function<String, List<String>> toModSeqs(List<? extends PercolatorPeptide> passingPeptides) {
+	static Function<String, List<String>> toModSeqs(List<? extends PercolatorPeptide> passingPeptides) {
 		return seq -> passingPeptides.stream()
 				.filter(p -> Objects.equals(seq, p.getPeptideSeq()))
 				.map(PercolatorPeptide::getPeptideModSeq)
@@ -1179,7 +1179,7 @@ public class SearchToBLIB {
 	 * @return an appropriate {@code PeakLocationInferrerInterface} that can be used for quantification of some or all
 	 *         jobs recorded in the ALIB.
 	 */
-	private static PeakLocationInferrerInterface readInferrer(LibraryFile alignmentFile, List<? extends SearchJobData> jobs, SearchParameters parameters) throws IOException, SQLException {
+	static PeakLocationInferrerInterface readInferrer(LibraryFile alignmentFile, List<? extends SearchJobData> jobs, SearchParameters parameters) throws IOException, SQLException {
 		final HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap = Maps.newHashMap();
 		final HashMap<SearchJobData, List<AlignmentDataPoint>> alignmentDataMap = Maps.newHashMap();
 		final HashMap<String, Float> alignedRTInMinBySequenceMap = Maps.newHashMap();
