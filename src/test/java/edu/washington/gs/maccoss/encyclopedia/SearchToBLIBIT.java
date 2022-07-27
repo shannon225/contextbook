@@ -24,10 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -244,7 +241,7 @@ public class SearchToBLIBIT {
 			final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
 			assertTrue("Result file had no entries", 0 < numEntries);
 
-			assertValidAlib(file);
+			assertValidAlib(file, jobData);
 		} finally {
 			file.close();
 		}
@@ -252,7 +249,8 @@ public class SearchToBLIBIT {
 
 	/**
 	 * Test what happens running the quant-only conversion ({@code -alignmentFrom}).
-	 * This is essentially an extension of the method above.
+	 * This is essentially an extension of the method above, as we generate the alignment-only
+	 * file, then separately quantify a single file.
 	 */
 	@Test
 	public void testConvertMultiSampleQuantOnly() throws Exception {
@@ -288,7 +286,7 @@ public class SearchToBLIBIT {
 			final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
 			assertTrue("Result file had no entries", 0 < numEntries);
 
-			assertValidAlib(file);
+			assertValidAlib(file, jobData);
 		} catch (AssertionError e) {
 			Assume.assumeNoException("Test setup failed: unable to produce valid alignment-only results", e);
 		} finally {
@@ -296,7 +294,8 @@ public class SearchToBLIBIT {
 		}
 
 		SearchToBLIB.convertElibQuantOnly(progress,
-				jobData,
+//				jobData.subList(0, 1), // only the first job -- SUCCEEDS (this is the "seed" file)
+				jobData.subList(1, 2), // only the second job -- more difficult b/c RT alignment is involved
 				quantFile.toFile(),
 				libFile.toFile(),
 				searchParameters
@@ -459,7 +458,14 @@ public class SearchToBLIBIT {
 		assertNotNull(metadata.get("pi0"));
 	}
 
-	private void assertValidAlib(LibraryFile file) throws SQLException, IOException {
+	/**
+	 * Check that the file appears to be a valid and correctly-written ALIB.
+	 *
+	 * @param jobData jobs to check for in the output
+	 *
+	 * @see SearchToBLIB.OutputFormat#ALIB
+	 */
+	private void assertValidAlib(LibraryFile file, List<SearchJobData> jobData) throws SQLException, IOException {
 		try (Connection c = file.getConnection()) {
 			try (Statement s = c.createStatement()) {
 				try (ResultSet rs = s.executeQuery("SELECT count() FROM entries;")) {
@@ -492,6 +498,24 @@ public class SearchToBLIBIT {
 						// that filter happens during quantification.
 						assertTrue(pep + " had unexpected number of quant fragments: " + nIons,
 								nIons >= 0 || nIons <= searchParameters.getNumberOfQuantitativePeaks()
+						);
+					}
+				}
+			}
+
+			try (PreparedStatement ps = c.prepareStatement(
+					"SELECT count() FROM retentiontimes WHERE sourcefile = ?;"
+			)) {
+				for (SearchJobData job : jobData) {
+					ps.setString(1, job.getDiaFileReader().getOriginalFileName());
+
+					try (ResultSet rs = ps.executeQuery()) {
+						assertTrue(rs.next());
+
+						final int nRtPoints = rs.getInt(1);
+
+						assertTrue("Not enough RT points for " + job.getDiaFileReader().getOriginalFileName() + ": " + nRtPoints,
+								nRtPoints > 10
 						);
 					}
 				}
