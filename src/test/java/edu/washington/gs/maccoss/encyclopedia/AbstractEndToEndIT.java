@@ -453,14 +453,14 @@ public abstract class AbstractEndToEndIT {
 
 			// Check for quantified peptides not quantified in reference
 			try (PreparedStatement s = c.prepareStatement(
-					"SELECT count()" +
-							" FROM peptidequants q" +
-							" WHERE q.sourcefile = ?" +
-							" AND NOT EXISTS (" +
-							" SELECT 1 FROM ref.peptidequants rq" +
-							" WHERE rq.peptidemodseq=q.peptidemodseq AND rq.precursorcharge=q.precursorcharge AND rq.sourcefile=q.sourcefile" +
-							" LIMIT 1" +
-							");"
+					"SELECT count(), peptidemodseq" +
+					" FROM peptidequants q" +
+					" WHERE q.sourcefile = ?" +
+					" AND NOT EXISTS (" +
+					" SELECT 1 FROM ref.peptidequants rq" +
+					" WHERE rq.peptidemodseq=q.peptidemodseq AND rq.precursorcharge=q.precursorcharge AND rq.sourcefile=q.sourcefile" +
+					" LIMIT 1" +
+					");"
 			)) {
 				for (QuantitativeSearchJobData job : jobs) {
 					s.setString(1, job.getDiaFileReader().getOriginalFileName());
@@ -470,7 +470,11 @@ public abstract class AbstractEndToEndIT {
 
 						final int numMissingRef = rs.getInt(1);
 
-						Logger.logLine(String.format("Found %d peptides not quantified in reference for %s", numMissingRef, job.getDiaFileReader().getOriginalFileName()));
+						Logger.logLine(String.format("Found %d peptides not quantified in reference for %s, e.g. %s",
+								numMissingRef,
+								job.getDiaFileReader().getOriginalFileName(),
+								rs.getString(2)
+						));
 						assertEquals(0, numMissingRef);
 					}
 				}
@@ -478,14 +482,14 @@ public abstract class AbstractEndToEndIT {
 
 			// Check for reference peptides not quantified
 			try (PreparedStatement s = c.prepareStatement(
-					"SELECT count()" +
-							" FROM ref.peptidequants q" +
-							" WHERE q.sourcefile = ?" +
-							" AND NOT EXISTS (" +
-							" SELECT 1 FROM peptidequants rq" +
-							" WHERE rq.peptidemodseq=q.peptidemodseq AND rq.precursorcharge=q.precursorcharge AND rq.sourcefile=q.sourcefile" +
-							" LIMIT 1" +
-							");"
+					"SELECT count(), q.peptidemodseq" +
+					" FROM ref.peptidequants q" +
+					" WHERE q.sourcefile = ?" +
+					" AND NOT EXISTS (" +
+					" SELECT 1 FROM peptidequants rq" +
+					" WHERE rq.peptidemodseq=q.peptidemodseq AND rq.precursorcharge=q.precursorcharge AND rq.sourcefile=q.sourcefile" +
+					" LIMIT 1" +
+					");"
 			)) {
 				for (QuantitativeSearchJobData job : jobs) {
 					s.setString(1, job.getDiaFileReader().getOriginalFileName());
@@ -495,14 +499,18 @@ public abstract class AbstractEndToEndIT {
 
 						final int numMissingQuant = rs.getInt(1);
 
-						Logger.logLine(String.format("Found %d reference peptides not quantified for %s", numMissingQuant, job.getDiaFileReader().getOriginalFileName()));
+						Logger.logLine(String.format("Found %d reference peptides not quantified for %s, e.g. %s",
+								numMissingQuant,
+								job.getDiaFileReader().getOriginalFileName(),
+								rs.getString(2)
+						));
 						assertEquals(0, numMissingQuant);
 					}
 				}
 			}
 
 			try (PreparedStatement s = c.prepareStatement(
-					"SELECT count()" +
+					"SELECT count(), peptidemodseq" +
 					" FROM peptidequants q" +
 					" LEFT JOIN ref.peptidequants rq USING (PeptideModSeq, PrecursorCharge, SourceFile)" +
 					" WHERE SourceFile = ?" +
@@ -521,7 +529,11 @@ public abstract class AbstractEndToEndIT {
 
 						final int numMismatch = rs.getInt(1);
 
-						Logger.logLine(String.format("Found %d mismatched peptides for %s", numMismatch, job.getDiaFileReader().getOriginalFileName()));
+						Logger.logLine(String.format("Found %d mismatched peptides for %s, e.g. %s",
+								numMismatch,
+								job.getDiaFileReader().getOriginalFileName(),
+								rs.getString(2)
+						));
 //						assertEquals(0, numMismatch);
 					}
 				}
