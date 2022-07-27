@@ -366,6 +366,54 @@ public abstract class AbstractEndToEndIT {
 
 			try (PreparedStatement s = c.prepareStatement(
 					"SELECT count()" +
+					" FROM retentiontimes" +
+					" WHERE SourceFile = ?;"
+			)) {
+				for (QuantitativeSearchJobData job : jobs) {
+					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+
+					try (ResultSet rs = s.executeQuery()) {
+						assertTrue(rs.next());
+
+						final int numRts = rs.getInt(1);
+
+						Logger.logLine(String.format("Found %d RTs for %s in quant ELIB", numRts, job.getDiaFileReader().getOriginalFileName()));
+						assertNotEquals(0, numRts);
+					}
+				}
+			}
+
+			try (PreparedStatement s = c.prepareStatement(
+					"SELECT t.peptidemodseq, t.predicted, r.predicted" +
+					" FROM retentiontimes t" +
+					" LEFT JOIN ref.retentiontimes r USING (peptidemodseq, sourcefile)" +
+					" WHERE SourceFile = ?" +
+					" AND (" +
+							" abs(t.predicted - r.predicted) > ?" +
+							" OR abs(t.predicted - r.predicted) > ?" +
+					");"
+			)) {
+				for (QuantitativeSearchJobData job : jobs) {
+					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+					s.setDouble(2, epsilon);
+					s.setDouble(3, epsilon);
+
+					try (ResultSet rs = s.executeQuery()) {
+						while (rs.next()) {
+							throw new AssertionError(String.format(
+									"%s in %s: expected %.02f, got %.02f",
+									rs.getString(1),
+									job.getDiaFileReader().getOriginalFileName(),
+									rs.getFloat(3),
+									rs.getFloat(2)
+							));
+						}
+					}
+				}
+			}
+
+			try (PreparedStatement s = c.prepareStatement(
+					"SELECT count()" +
 					" FROM peptidequants q" +
 					" LEFT JOIN ref.peptidequants rq USING (PeptideModSeq, PrecursorCharge, SourceFile)" +
 					" WHERE SourceFile = ?" +
@@ -377,6 +425,7 @@ public abstract class AbstractEndToEndIT {
 				for (QuantitativeSearchJobData job : jobs) {
 					s.setString(1, job.getDiaFileReader().getOriginalFileName());
 					s.setDouble(2, epsilon);
+					s.setDouble(3, epsilon);
 
 					try (ResultSet rs = s.executeQuery()) {
 						assertTrue(rs.next());
@@ -418,40 +467,40 @@ public abstract class AbstractEndToEndIT {
 							final double[] refIons = ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), rs.getInt(9)));
 
 							assertEquals(
-									String.format("rt mismatch: %s in %s: (%.02f, %.02f) vs. (%.02f, %.02f)",
+									String.format("rt mismatch: %s in %s: expected (%.02f, %.02f), got (%.02f, %.02f)",
 											pep,
 											job.getDiaFileReader().getOriginalFileName(),
-											rt,
-											inten,
 											refRt,
-											refInten
+											refInten,
+											rt,
+											inten
 									),
-									rt,
 									refRt,
-									epsilon
-							);
-							assertEquals(
-									String.format("intensity mismatch for %s in %s: (%.02f, %.02f) vs. (%.02f, %.02f)",
-											pep,
-											job.getDiaFileReader().getOriginalFileName(),
-											rt,
-											refRt,
-											inten,
-											refInten
-									),
-									inten,
-									refInten,
+									rt,
 									epsilon
 							);
 							assertArrayEquals(
-									String.format("ions mismatch for %s in %s: %s vs. %s",
+									String.format("ions mismatch for %s in %s: expected %s, got %s",
 											pep,
 											job.getDiaFileReader().getOriginalFileName(),
-											Arrays.toString(ions),
+											Arrays.toString(refIons),
 											Arrays.toString(ions)
 									),
-									ions,
 									refIons,
+									ions,
+									epsilon
+							);
+							assertEquals(
+									String.format("intensity mismatch for %s in %s: expected (%.02f, %.02f), got (%.02f, %.02f)",
+											pep,
+											job.getDiaFileReader().getOriginalFileName(),
+											refRt,
+											refInten,
+											rt,
+											inten
+									),
+									refInten,
+									inten,
 									epsilon
 							);
 						}
