@@ -1,17 +1,14 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
 
-import com.google.common.collect.ImmutableSet;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.UriDownloader;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.PosixFilePermission;
 
 /**
  * {@link PercolatorVersion} implementation that runs a binary from
@@ -59,9 +56,7 @@ public class RemotePercolator extends LocalPercolator {
 	private void downloadPercolator() throws IOException {
 		final Path path = getFile().toPath();
 
-		try (InputStream is = uri.toURL().openStream()) {
-			Files.copy(is, path, StandardCopyOption.REPLACE_EXISTING);
-		}
+		UriDownloader.downloadFromUri(uri, path);
 
 		if (!path.toFile().setExecutable(true)) {
 			throw new IOException("Could not set executable flag on downloaded Percolator!");
