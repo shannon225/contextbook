@@ -131,7 +131,7 @@ public class PSMData implements PeptidePrecursorWithProteins, HasRetentionTime {
 	public static String accessionsToString(Collection<String> accessions) {
 		return accessionsToString(accessions, ACCESSION_TOKEN);
 	}
-	public static String accessionsToString(Collection<String> accessions, String deliminator) {
+	public static String accessionsToString(Collection<String> accessions, String delimiter) {
 		if (accessions.size()==0) return "";
 		if (accessions.size()==1) return accessions.iterator().next();
 
@@ -139,7 +139,7 @@ public class PSMData implements PeptidePrecursorWithProteins, HasRetentionTime {
 		ArrayList<String> accessionList=new ArrayList<String>(accessions);
 		Collections.sort(accessionList);
 		for (String string : accessionList) {
-			if (sb.length()>0) sb.append(ACCESSION_TOKEN);
+			if (sb.length()>0) sb.append(delimiter);
 			sb.append(string);
 		}
 		return sb.toString();
