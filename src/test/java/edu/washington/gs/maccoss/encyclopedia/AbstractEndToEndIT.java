@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Sets;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
@@ -27,6 +28,7 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
@@ -240,10 +242,25 @@ public abstract class AbstractEndToEndIT {
 
 	@Test
 	public void testWholePipelineMultipleDataAlignOnlyQuantWorkflow() throws Exception {
-		Assume.assumeTrue("Test requires quantitative search parameters", jobDataA.getParameters().isQuantifySameFragmentsAcrossSamples());
+		final ImmutableList<QuantitativeSearchJobData> jobData = ImmutableList.of(jobDataA, jobDataB, jobDataC);
+
+		Assume.assumeTrue("Test requires quantitative search parameters", jobData.iterator().next().getParameters().isQuantifySameFragmentsAcrossSamples());
+
+		// First, run search with the normal single-step align-and-quant workflow as a reference comparison
+		final Path standardQuantReport = Files.createTempFile(tempDir, "test_", ".elib");
+		try {
+			SearchToBLIB.convert(
+					new EmptyProgressIndicator(),
+					jobData,
+					standardQuantReport.toFile(),
+					SearchToBLIB.OutputFormat.ELIB,
+					true
+			);
+		} catch (Exception e) {
+			Assume.assumeNoException("Unable to generate reference results", e);
+		}
 
 		// Generate the alignment-only output
-		final ImmutableList<QuantitativeSearchJobData> jobData = ImmutableList.of(jobDataA, jobDataB, jobDataC);
 		SearchToBLIB.convert(new EmptyProgressIndicator(), jobData, tempReport, SearchToBLIB.OutputFormat.ALIB, true);
 
 		assertTrue("Output was created?", FileUtils.directoryContains(tempDir.toFile(), tempReport));
@@ -265,30 +282,17 @@ public abstract class AbstractEndToEndIT {
 			outputFile.close();
 		}
 
-		// Now we execute the quant step for just one raw file
-		final ImmutableList<QuantitativeSearchJobData> quantJobData = ImmutableList.of(jobDataA);
+		// Now we execute the quant step for two of the three jobs: the "seed" job and a non-seed, as RT alignment
+		// differs between the two types of job.
+		final ImmutableList<QuantitativeSearchJobData> quantJobData = jobData.subList(1, 3);
 		final Path quantReport = Files.createTempFile(tempDir, "test_", ".elib");
 		SearchToBLIB.convertElibQuantOnly(
 				new EmptyProgressIndicator(),
 				quantJobData,
 				quantReport.toFile(),
 				tempReport,
-				jobDataA.getParameters()
+				quantJobData.iterator().next().getParameters()
 		);
-
-		// Now we run the same search with the normal single-step align-and-quant workflow as a reference comparison
-		final Path standardQuantReport = Files.createTempFile(tempDir, "test_", ".elib");
-		try {
-			SearchToBLIB.convert(
-					new EmptyProgressIndicator(),
-					jobData,
-					standardQuantReport.toFile(),
-					SearchToBLIB.OutputFormat.ELIB,
-					true
-			);
-		} catch (Exception e) {
-			Assume.assumeNoException("Unable to generate reference results", e);
-		}
 
 		final LibraryFile quantFile = new LibraryFile();
 		try {
@@ -296,11 +300,44 @@ public abstract class AbstractEndToEndIT {
 
 			assertSanityTest(quantFile, getPeptideFloor(), 0); // not all might be quanted; no proteins are written
 
+			// Check that both of the jobs have exactly the same results as run with the single-shot workflow.
 			assertJobResultsMatch(quantJobData, quantFile, standardQuantReport);
 
-			// This only checks a subset of the reference, based on the provided job data.
-			// Commented out because fuzzy comparison here is hard.
-//			assertValidBasedOnReference(quantJobData, quantFile, getReferenceMultiQuantResource());
+			// This doesn't check just the quanted subset, so commented out for now.
+			// Not that important because we've already made the stricter assertion that
+			// this workflow matches the results of the default single-shot quant workflow.
+//			assertValidBasedOnReference(quantFile, getReferenceMultiQuantResource());
+
+			// Check that the non-quantified job(s) don't have results
+			try (Connection c = quantFile.getConnection()) {
+				try (PreparedStatement ps = c.prepareStatement(
+						"SELECT count(), 'quants'" +
+						" FROM peptidequants" +
+						" WHERE sourcefile=?" +
+						" UNION SELECT count(), 'rts'" +
+						" FROM retentiontimes" +
+						" WHERE sourcefile=?" +
+						";"
+				)) {
+					final Set<SearchJobData> nonquantJobs = Sets.newHashSet(jobData);
+					nonquantJobs.removeAll(quantJobData);
+
+					for (SearchJobData job : nonquantJobs) {
+						ps.setString(1, job.getDiaFileReader().getOriginalFileName());
+						ps.setString(2, job.getDiaFileReader().getOriginalFileName());
+
+						try (ResultSet rs = ps.executeQuery()) {
+							assertTrue(rs.next());
+
+							assertEquals("Too many " + rs.getString(2) + " for " + job.getDiaFileReader().getOriginalFileName() + ": " + rs.getInt(1),
+									0,
+									rs.getInt(1)
+							);
+						}
+					}
+
+				}
+			}
 		} finally {
 			quantFile.close();
 		}
@@ -364,25 +401,27 @@ public abstract class AbstractEndToEndIT {
 
 			final double epsilon = 0.00001;
 
-			try (PreparedStatement s = c.prepareStatement(
-					"SELECT count()" +
-					" FROM retentiontimes" +
-					" WHERE SourceFile = ?;"
-			)) {
-				for (QuantitativeSearchJobData job : jobs) {
-					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+			// Note: "seed" job will have no RT points, so this is commented
+//			try (PreparedStatement s = c.prepareStatement(
+//					"SELECT count()" +
+//					" FROM retentiontimes" +
+//					" WHERE SourceFile = ?;"
+//			)) {
+//				for (QuantitativeSearchJobData job : jobs) {
+//					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+//
+//					try (ResultSet rs = s.executeQuery()) {
+//						assertTrue(rs.next());
+//
+//						final int numRts = rs.getInt(1);
+//
+//						Logger.logLine(String.format("Found %d RTs for %s in quant ELIB", numRts, job.getDiaFileReader().getOriginalFileName()));
+//						assertNotEquals(0, numRts);
+//					}
+//				}
+//			}
 
-					try (ResultSet rs = s.executeQuery()) {
-						assertTrue(rs.next());
-
-						final int numRts = rs.getInt(1);
-
-						Logger.logLine(String.format("Found %d RTs for %s in quant ELIB", numRts, job.getDiaFileReader().getOriginalFileName()));
-						assertNotEquals(0, numRts);
-					}
-				}
-			}
-
+			// Check that the job's RT alignment data is the same (it should just be straight copied through)
 			try (PreparedStatement s = c.prepareStatement(
 					"SELECT t.peptidemodseq, t.predicted, r.predicted" +
 					" FROM retentiontimes t" +
@@ -408,6 +447,56 @@ public abstract class AbstractEndToEndIT {
 									rs.getFloat(2)
 							));
 						}
+					}
+				}
+			}
+
+			// Check for quantified peptides not quantified in reference
+			try (PreparedStatement s = c.prepareStatement(
+					"SELECT count()" +
+							" FROM peptidequants q" +
+							" WHERE q.sourcefile = ?" +
+							" AND NOT EXISTS (" +
+							" SELECT 1 FROM ref.peptidequants rq" +
+							" WHERE rq.peptidemodseq=q.peptidemodseq AND rq.precursorcharge=q.precursorcharge AND rq.sourcefile=q.sourcefile" +
+							" LIMIT 1" +
+							");"
+			)) {
+				for (QuantitativeSearchJobData job : jobs) {
+					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+
+					try (ResultSet rs = s.executeQuery()) {
+						assertTrue(rs.next());
+
+						final int numMissingRef = rs.getInt(1);
+
+						Logger.logLine(String.format("Found %d peptides not quantified in reference for %s", numMissingRef, job.getDiaFileReader().getOriginalFileName()));
+						assertEquals(0, numMissingRef);
+					}
+				}
+			}
+
+			// Check for reference peptides not quantified
+			try (PreparedStatement s = c.prepareStatement(
+					"SELECT count()" +
+							" FROM ref.peptidequants q" +
+							" WHERE q.sourcefile = ?" +
+							" AND NOT EXISTS (" +
+							" SELECT 1 FROM peptidequants rq" +
+							" WHERE rq.peptidemodseq=q.peptidemodseq AND rq.precursorcharge=q.precursorcharge AND rq.sourcefile=q.sourcefile" +
+							" LIMIT 1" +
+							");"
+			)) {
+				for (QuantitativeSearchJobData job : jobs) {
+					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+
+					try (ResultSet rs = s.executeQuery()) {
+						assertTrue(rs.next());
+
+						final int numMissingQuant = rs.getInt(1);
+
+						Logger.logLine(String.format("Found %d reference peptides not quantified for %s", numMissingQuant, job.getDiaFileReader().getOriginalFileName()));
+						assertEquals(0, numMissingQuant);
 					}
 				}
 			}
