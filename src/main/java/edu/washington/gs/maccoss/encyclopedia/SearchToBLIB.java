@@ -965,7 +965,9 @@ public class SearchToBLIB {
 					final ProgressIndicator subProgress = new SubProgressIndicator(progress, increment);
 
 					if (!job.hasBeenRun()) {
-						subProgress.update("Skipping incomplete job: " + job.getDiaFileReader().getOriginalFileName(), 1f);
+						final String msg = "Skipping incomplete job: " + job.getDiaFileReader().getOriginalFileName();
+						subProgress.update(msg, 1f);
+						Logger.errorLine(msg);
 						continue;
 					}
 

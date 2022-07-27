@@ -196,6 +196,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try (Connection c = getConnection()) {
 			c.setAutoCommit(false);
 
+			int total = 0;
 			try (PreparedStatement s = c.prepareStatement(
 					"INSERT INTO retentiontimes (SourceFile, Library, Actual, Predicted, Delta, Probability, Decoy, PeptideModSeq) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 			)) {
@@ -217,18 +218,23 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					s.addBatch();
 
 					if (i % 8192 == 0) {
-						s.executeBatch();
-						s.clearBatch();
+						total += General.sum(s.executeBatch());
 					}
 				}
-				s.executeBatch();
+				total += General.sum(s.executeBatch());
 			} catch (SQLException e) {
+				Logger.errorLine("Error writing RT alignment to ELIB; skipping.");
+				Logger.errorException(e);
+
 				c.rollback();
+				return;
 			} finally {
+				Logger.logLine(String.format("Wrote %d RT alignment points for %s", total, sourceFile));
 				c.commit();
 			}
 		} catch (SQLException | IOException e) {
-			e.printStackTrace();
+			Logger.errorLine("Unable to write RT alignment to ELIB; skipping.");
+			Logger.errorException(e);
 		}
 	}
 
