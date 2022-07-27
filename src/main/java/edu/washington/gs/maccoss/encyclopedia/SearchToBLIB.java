@@ -1215,6 +1215,12 @@ public class SearchToBLIB {
 
 					Logger.logLine(job.getDiaFileReader().getOriginalFileName() + " alignment points: read " + alignmentData.size() );
 
+					if (alignmentData.isEmpty()) {
+						// "Seed" experiment won't have alignment points and shouldn't be populated in the map.
+						Logger.logLine("Assuming job " + job.getDiaFileReader().getOriginalFileName() + " is the seed; using 1-1 RT mapping.");
+						continue;
+					}
+
 					alignmentDataMap.put(job, alignmentData);
 
 					final RetentionTimeAlignmentInterface alignment;

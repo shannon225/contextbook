@@ -506,6 +506,7 @@ public class SearchToBLIBIT {
 			try (PreparedStatement ps = c.prepareStatement(
 					"SELECT count() FROM retentiontimes WHERE sourcefile = ?;"
 			)) {
+				boolean foundSeed = false;
 				for (SearchJobData job : jobData) {
 					ps.setString(1, job.getDiaFileReader().getOriginalFileName());
 
@@ -514,9 +515,10 @@ public class SearchToBLIBIT {
 
 						final int nRtPoints = rs.getInt(1);
 
-						assertTrue("Not enough RT points for " + job.getDiaFileReader().getOriginalFileName() + ": " + nRtPoints,
-								nRtPoints > 10
-						);
+						if (nRtPoints < 10) {
+							assertFalse("Already found seed job! Not enough RT points (" + nRtPoints + ") for " + job.getDiaFileReader().getOriginalFileName(), foundSeed);
+							foundSeed = true;
+						}
 					}
 				}
 			}
