@@ -10,6 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
 public class MergeLibraryFiles {
 	public static final String deliminator = ":";
@@ -84,7 +85,7 @@ public class MergeLibraryFiles {
 
 		try {
 			Logger.logLine("Merging "+files.size()+" libraries into "+saveFile.getName());
-			LibraryUtilities.mergeLibraries(files, saveFile, rtAlign, removeDuplicates, higherScoresAreBetter);
+			LibraryUtilities.mergeLibraries(new EmptyProgressIndicator(false), files, saveFile, rtAlign, removeDuplicates, higherScoresAreBetter);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);

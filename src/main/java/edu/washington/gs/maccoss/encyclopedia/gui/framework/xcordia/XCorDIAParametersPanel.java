@@ -292,6 +292,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 				percolatorThresholdValue,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
 				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,
+				PercolatorExecutor.DEFAULT_TRAINING_ITERATIONS,
 				maxMissedCleavageValue,
 				minChargeValue,
 				maxChargeValue,

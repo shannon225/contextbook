@@ -93,6 +93,7 @@ public class PecanParameterParser {
 		final PercolatorVersion percolatorVersionNumber;
 		final int percolatorTrainingSetSize;
 		final float percolatorTrainingSetThreshold;
+		final int percolatorTrainingIterations;
 		final float alpha;
 		final float beta;
 		final DataAcquisitionType dataAcquisitionType;
@@ -272,6 +273,7 @@ public class PecanParameterParser {
 		percolatorVersionNumber=PercolatorVersion.getVersion(parameters.get("-percolatorVersion"));
 		percolatorTrainingSetSize = ParsingUtils.getInteger(SearchParameters.OPT_PERC_TRAINING_SIZE, parameters, PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE);
 		percolatorTrainingSetThreshold = ParsingUtils.getFloat(SearchParameters.OPT_PERC_TRAINING_THRESH, parameters, PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD);
+		percolatorTrainingIterations= ParsingUtils.getInteger("-percolatorTrainingIterations", parameters, PercolatorExecutor.DEFAULT_TRAINING_ITERATIONS);
 
 		alpha=ParsingUtils.getFloat("-alpha", parameters, 1.8f);
 		beta=ParsingUtils.getFloat("-beta", parameters, 0.4f);
@@ -312,6 +314,7 @@ public class PecanParameterParser {
 				percolatorVersionNumber,
 				percolatorTrainingSetSize,
 				percolatorTrainingSetThreshold,
+				percolatorTrainingIterations,
 				alpha,
 				beta,
 				dataAcquisitionType,

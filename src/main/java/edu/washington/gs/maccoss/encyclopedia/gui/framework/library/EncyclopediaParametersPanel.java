@@ -24,6 +24,7 @@ import javax.swing.SpinnerNumberModel;
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
@@ -60,6 +61,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	private static final int numberOfCores=Runtime.getRuntime().availableProcessors();
 	private static final String[] NUMBER_OF_EXTRA_DECOY_ITEMS=new String[] {"Normal Target/Decoy", "+10% Extra Decoys", "+20% Extra Decoys", "+50% Extra Decoys", "+100% Extra Decoys (2x Time)"};
 	private static final float[] NUMBER_OF_EXTRA_DECOY_VALUES=new float[] {0.0f, 0.1f, 0.2f, 0.5f, 1.0f};
+	private static final boolean USE_LEGACY_SCORING_SYSTEM=true;
 	
 	public static final MassTolerance[] TOLERANCE_VALUES=new MassTolerance[] {
 			new MassTolerance(5.0, MassErrorUnitType.PPM),  //0
@@ -208,8 +210,13 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 			library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
 			libraries.put(libraryFile, library);
 		}
-		
-		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
+
+		LibraryScoringFactory factory;
+		if (USE_LEGACY_SCORING_SYSTEM) {
+			factory=new EncyclopediaOneScoringFactory(parameters);
+		} else {
+			factory=new EncyclopediaTwoScoringFactory(parameters);
+		}
 		EncyclopediaJobData job=new EncyclopediaJobData(diaFile, fastaFile, library, factory);
 		return new EncyclopediaJob(processor, job);
 	}
@@ -247,6 +254,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 				percolator,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
 				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,
+				PercolatorExecutor.DEFAULT_TRAINING_ITERATIONS,
 				dataAcquisitionType,
 				numberOfJobsValue,
 				25f,

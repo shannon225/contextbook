@@ -117,6 +117,22 @@ public class Correlation {
 	public static float getPearsons(float[] x, float[] y) {
 		return (float)getPearsons(General.toDoubleArray(x), General.toDoubleArray(y));
 	}
+
+	public static double getPearsons(float[] x, float[] y, int startIndex, int stopIndex) {
+		return (float)getPearsons(General.toDoubleArray(x), General.toDoubleArray(y), startIndex, stopIndex);
+	}
+
+	// untested!
+	public static double getPearsons(double[] x, double[] y, int startIndex, int stopIndex) {
+		if (startIndex<0) startIndex=0;
+		if (stopIndex>=x.length) stopIndex=x.length-1;
+		int range = stopIndex-startIndex;
+		double[] xx=new double[range];
+		double[] yy=new double[range];
+		System.arraycopy(x, startIndex, xx, 0, range);
+		System.arraycopy(y, startIndex, yy, 0, range);
+		return getPearsons(xx, yy);
+	}
 	public static double getPearsons(double[] x, double[] y) {
 		
 		double xBar=General.mean(x);

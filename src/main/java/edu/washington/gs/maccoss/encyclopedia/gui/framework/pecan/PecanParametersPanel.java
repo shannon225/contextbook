@@ -246,6 +246,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 				percolatorThresholdValue,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
 				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,
+				PercolatorExecutor.DEFAULT_TRAINING_ITERATIONS,
 				maxMissedCleavageValue,
 				minChargeValue,
 				maxChargeValue,

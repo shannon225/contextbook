@@ -74,6 +74,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 	 * for more information about the {@code -t/--testFDR} parameter.
 	 */
 	public static final float DEFAULT_TRAINING_THRESHOLD = PERCOLATOR_TRAINING_THRESHOLD_FALLBACK_VALUE;
+	public static final int DEFAULT_TRAINING_ITERATIONS = 10;
 
 	private static final Pattern PERCOLATOR_VERSION_PATTERN = Pattern.compile("Percolator version (.+),");
 	private static final String SELECTING_PI_0 = "Selecting pi_0=";
@@ -209,7 +210,10 @@ public class PercolatorExecutor extends ExternalExecutor {
 			} catch (IOException ioe) {
 				Logger.errorLine("Problem extracting Percolator weights from "+modelFile.getName()+". Continuing without using weights...");
 				Logger.errorException(ioe);
+				params.add("--maxiter"); params.add(Integer.toString(commandData.getParameters().getPercolatorTrainingIterations()));
 			}
+		} else {
+			params.add("--maxiter"); params.add(Integer.toString(commandData.getParameters().getPercolatorTrainingIterations()));
 		}
 		
 		if (percolatorVersion.getMajorVersion()>2) {
