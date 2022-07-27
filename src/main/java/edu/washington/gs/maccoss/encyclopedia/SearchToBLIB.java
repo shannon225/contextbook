@@ -1192,14 +1192,14 @@ public class SearchToBLIB {
 			)) {
 				// Read alignment for each job
 				for (SearchJobData job : jobs) {
-					final List<AlignmentDataPoint> aligmentData = Lists.newArrayList();
+					final List<AlignmentDataPoint> alignmentData = Lists.newArrayList();
 
 					ps.setString(1, job.getDiaFileReader().getOriginalFileName());
 					try (ResultSet rs = ps.executeQuery()) {
 						while (rs.next()) {
 							// Must be in _minutes_ to match AlternatePeakLocationInferrer; the values have
 							// been converted to seconds when written to the `retentiontimes` table.
-							aligmentData.add(AlignmentDataPoint.of(
+							alignmentData.add(AlignmentDataPoint.of(
 									rs.getFloat(1) / 60f, // lib
 									rs.getFloat(2) / 60f, // actual
 									rs.getFloat(3) / 60f, // predicted
@@ -1210,15 +1210,77 @@ public class SearchToBLIB {
 							));
 						}
 					}
-					alignmentDataMap.put(job, aligmentData);
 
-					// Must be in _minutes_ to match AlternatePeakLocationInferrer, but these values are already
-					// in minutes when we read them from `retentiontimes`.
-					final ArrayList<XYPoint> alignmentPoints = aligmentData.stream()
-							.map(p -> new XYPoint(p.getLibrary(), p.getActual()))
-							.collect(Collectors.toCollection(ArrayList::new));
+					Logger.logLine(job.getDiaFileReader().getOriginalFileName() + " alignment points: read " + alignmentData.size() );
 
-					RetentionTimeAlignmentInterface alignment = RetentionTimeFilter.getFilter(alignmentPoints);
+					alignmentDataMap.put(job, alignmentData);
+
+					final RetentionTimeAlignmentInterface alignment;
+
+					if (false) {
+						// Try to recompute the alignment from the recorded points. This is a big risk, 'cause we
+						// don't enforce that the computed probabilities and deltas match the original!
+						final ArrayList<XYPoint> alignmentPoints = alignmentData.stream()
+								// RTs must be in _minutes_ to match AlternatePeakLocationInferrer, but these values are
+								// already in minutes when we read them from `retentiontimes`.
+								.map(p -> new XYPoint(p.getLibrary(), p.getActual()))
+								.collect(Collectors.toCollection(ArrayList::new));
+						alignment = RetentionTimeFilter.getFilter(alignmentPoints);
+					} else {
+						// Use a straightforward reimplementation based on the exact data.
+
+						alignment = new RetentionTimeAlignmentInterface() {
+							@Override
+							public List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed) {
+								return alignmentData;
+							}
+
+							@Override
+							public float getYValue(float xrt) {
+								return alignmentData.stream()
+										.map(p -> new Pair<>(Math.abs(p.getLibrary() - xrt), p))
+										.min(Comparator.comparingDouble(p -> p.x))
+										.orElseThrow(() -> new IllegalStateException("No such alignment point with library RT " + xrt))
+										.y.getPredictedActual(); // return predicted RT (y)
+							}
+
+							@Override
+							public float getXValue(float yrt) {
+								return alignmentData.stream()
+										.map(p -> new Pair<>(Math.abs(p.getActual() - yrt), p))
+										.min(Comparator.comparingDouble(p -> p.x))
+										.orElseThrow(() -> new IllegalStateException("No such alignment point with actual RT " + yrt))
+										.y.getLibrary(); // return library RT (x)
+							}
+
+							@Override
+							public float getProbabilityFitsModel(float actualRT, float modelRT) {
+								final float delta = getDelta(actualRT, modelRT);
+
+								return alignmentData.stream()
+										.map(p -> new Pair<>(Math.abs(p.getDelta() - delta), p))
+										.min(Comparator.comparingDouble(p -> p.x))
+										.orElseThrow(() -> new IllegalStateException("No such alignment point with delta " + delta))
+										.y.getProbability();
+							}
+
+							@Override
+							public float getDelta(float actualRT, float modelRT) {
+								// quick-n-dirty -- require exact match
+								for (AlignmentDataPoint p : alignmentData) {
+									if (
+											Math.abs(actualRT - p.getActual()) < 1e-3
+											&& Math.abs(modelRT - p.getPredictedActual()) < 1e-3
+									) {
+										return p.getDelta();
+									}
+								}
+
+								throw new IllegalStateException("No such alignment point with actual/model RT " + actualRT + " / " + modelRT);
+							}
+						};
+					}
+
 					alignmentMap.put(job, alignment);
 				}
 			}
