@@ -35,6 +35,11 @@ public class ThesaurusOneScoringFactory implements LibraryScoringFactory {
 		this.localizer=localizer;
 		this.localizationQueue=localizationQueue;
 	}
+	
+	@Override
+	public String getName() {
+		return "Thesaurus 1.X Scoring System";
+	}
 
 	@Override
 	public PSMPeakScorer getLibraryScorer(LibraryBackgroundInterface background) {

@@ -11,6 +11,8 @@ import gnu.trove.list.array.TFloatArrayList;
 
 //@Immutable
 public class PrecursorScanMap {
+	public static final int monoisotopicIndex=1;
+	public static final int plusOneIndex=2;
 	public static final byte[] isotopes=new byte[] {-1, 0, 1, 2};
 	
 	private final float[] rts;

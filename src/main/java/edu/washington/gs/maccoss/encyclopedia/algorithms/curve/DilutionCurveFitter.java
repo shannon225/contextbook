@@ -419,6 +419,7 @@ public class DilutionCurveFitter {
 		int count=0;
 		HashMap<String, ArrayList<FitPeptide>> targetPeptidesByProtein=new HashMap<String, ArrayList<FitPeptide>>();
 		ArrayList<FitPeptide> nontargetedPeptides=new ArrayList<FitPeptide>();
+		// assumes fitPeptides are sorted
 		addpeptides:for (FitPeptide fit : fitPeptides) {
 			ArrayList<FitPeptide> list=targetPeptidesByProtein.get(fit.proteinKey);
 			if (list==null) {
@@ -494,7 +495,7 @@ public class DilutionCurveFitter {
 		return targetEntries;
 	}
 
-	private static void writeLibraryEntries(SearchParameters params, final File exportLibraryFile,
+	static void writeLibraryEntries(SearchParameters params, final File exportLibraryFile,
 			ArrayList<LibraryEntry> targetEntries) throws IOException, SQLException {
 		LibraryFile exportLibrary=new LibraryFile();
 		exportLibrary.openFile();
@@ -507,7 +508,7 @@ public class DilutionCurveFitter {
 		exportLibrary.close();
 	}
 
-	private static void writeSchedulingGraph(final File outputDirectory, float[] assayRT, float[] assayDensity) {
+	static void writeSchedulingGraph(final File outputDirectory, float[] assayRT, float[] assayDensity) {
 		XYTrace trace=new XYTrace(assayRT, assayDensity, GraphType.area, "Scheduling density");
 		ChartPanel panel=Charter.getChart("Retention Time (min)", "Number of Peptides", true, trace);
 		Charter.writeAsPDF(panel.getChart(), new File(outputDirectory, "assay_density.pdf"), new Dimension(600, 300));
@@ -529,7 +530,7 @@ public class DilutionCurveFitter {
 		return clone;
 	}
     
-	private static HashMap<String, LibraryEntry> getLibraryData(SearchParameters params, File rtAlignFile) throws IOException, SQLException, DataFormatException {
+	static HashMap<String, LibraryEntry> getLibraryData(SearchParameters params, File rtAlignFile) throws IOException, SQLException, DataFormatException {
 		LibraryFile rtAlignLibrary=new LibraryFile();
 		rtAlignLibrary.openFile(rtAlignFile);
 		ArrayList<LibraryEntry> entries=rtAlignLibrary.getAllEntries(false, params.getAAConstants());

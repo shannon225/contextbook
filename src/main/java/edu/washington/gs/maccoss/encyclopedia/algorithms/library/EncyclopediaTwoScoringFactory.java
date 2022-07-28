@@ -1,16 +1,13 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia;
+package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneAuxillaryPSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -20,46 +17,41 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVConsumer;
-import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 
-public class XCorDIAOneScoringFactory implements LibraryScoringFactory {
-	protected final PecanSearchParameters parameters;
+public class EncyclopediaTwoScoringFactory implements LibraryScoringFactory {
+	private final SearchParameters parameters;
 
-	public XCorDIAOneScoringFactory(PecanSearchParameters parameters) {
+	public EncyclopediaTwoScoringFactory(SearchParameters parameters) {
 		this.parameters=parameters;
 	}
 	
 	@Override
 	public String getName() {
-		return "XCorDIA 1.X Scoring System";
+		return "EncyclopeDIA 2.X Scoring System";
 	}
 
 	@Override
-	public PSMScorer getLibraryScorer(LibraryBackgroundInterface background) {
-		return new XCorDIAOneScorer(parameters, background); 
+	public PSMPeakScorer getLibraryScorer(LibraryBackgroundInterface background) {
+		return new EncyclopediaTwoScorer(parameters, background); 
 	}
 
 	@Override
 	public PeptideScoringResultsConsumer getResultsConsumer(File outputFile, BlockingQueue<AbstractScoringResult> resultsQueue, StripeFileInterface diaFile, LibraryInterface library) {
-		return new ScoringResultsToTSVConsumer(outputFile, diaFile, EncyclopediaOneAuxillaryPSMScorer.getScoreNames(false), resultsQueue, parameters);
+		return new ScoringResultsToTSVConsumer(outputFile, diaFile, EncyclopediaTwoAuxillaryPSMScorer.getScoreNames(true), resultsQueue, parameters);
 	}
 
 	@Override
 	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<AbstractScoringResult> resultsQueue) {
-		return new XCorDIAOneScoringTask(scorer, entries, stripes, precursorIsolationRange, dutyCycle, precursors, resultsQueue, parameters);
+		return new EncyclopediaTwoScoringTask(scorer, entries, stripes, precursorIsolationRange, dutyCycle, precursors, resultsQueue, parameters);
 	}
 	
 	@Override
 	public AbstractLibraryScoringTask getDDAScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, PrecursorScanMap precursors, BlockingQueue<AbstractScoringResult> resultsQueue) {
-		throw new EncyclopediaException("Sorry, DDA scoring for XCorDIA is not implemented!");
+		return new EncyclopediaDDAScoringTask(scorer, entries, stripes, precursors, resultsQueue, parameters);
 	}
 
 	@Override
 	public SearchParameters getParameters() {
-		return parameters;
-	}
-	
-	public PecanSearchParameters getPecanParameters() {
 		return parameters;
 	}
 }

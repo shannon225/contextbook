@@ -3,7 +3,6 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EncyclopediaAuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -21,7 +20,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
-public class EncyclopediaOneAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMScorer {
+public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMScorer {
 	private static final int numPeaksUsedInAverage=3;
 	
 	private final boolean runXCorr;
@@ -29,7 +28,7 @@ public class EncyclopediaOneAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 	private final SparseXCorrCalculator librarySparseCalculator;
 	private final SparseXCorrCalculator sparseModelCalculator;
 
-	public EncyclopediaOneAuxillaryPSMScorer(SearchParameters parameters, LibraryBackgroundInterface background, boolean runXCorr) {
+	public EncyclopediaTwoAuxillaryPSMScorer(SearchParameters parameters, LibraryBackgroundInterface background, boolean runXCorr) {
 		super(parameters);
 		this.background=background;
 		this.runXCorr=runXCorr;
@@ -39,7 +38,7 @@ public class EncyclopediaOneAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 	
 	
 	
-	private EncyclopediaOneAuxillaryPSMScorer(SearchParameters parameters, LibraryBackgroundInterface background, boolean runXCorr, SparseXCorrCalculator librarySparseCalculator, SparseXCorrCalculator sparseModelCalculator) {
+	private EncyclopediaTwoAuxillaryPSMScorer(SearchParameters parameters, LibraryBackgroundInterface background, boolean runXCorr, SparseXCorrCalculator librarySparseCalculator, SparseXCorrCalculator sparseModelCalculator) {
 		super(parameters);
 		this.runXCorr=runXCorr;
 		this.background=background;
@@ -51,7 +50,7 @@ public class EncyclopediaOneAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 	public EncyclopediaAuxillaryPSMScorer getEntryOptimizedScorer(LibraryEntry entry) {
 		SparseXCorrCalculator librarySparse=new SparseXCorrCalculator(entry, new Range((float)entry.getPrecursorMZ()-10f, (float)entry.getPrecursorMZ()+10f), parameters);
 		SparseXCorrCalculator sparseModel=new SparseXCorrCalculator(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters);
-		return new EncyclopediaOneAuxillaryPSMScorer(parameters, background, runXCorr, librarySparse, sparseModel);
+		return new EncyclopediaTwoAuxillaryPSMScorer(parameters, background, runXCorr, librarySparse, sparseModel);
 	}
 	
 	@Override
@@ -207,10 +206,13 @@ public class EncyclopediaOneAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 	}
 
 	public static String[] getScoreNames(boolean runXCorr) {
+		// extra scores at the beginning
 		if (runXCorr) {
-			return new String[] {"primary", "xCorrLib", "xCorrModel", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "eValue"};
+			return new String[] {"e2Score", "evalue", "correlationToGaussian", "correlationToPrecursor", "correlationToPlusOne", "isIntegratedSignal", "isIntegratedPrecursor", "numPeaksWithGoodCorrelation", "numPeaksWithGreatCorrelation", 
+					"primary", "xCorrLib", "xCorrModel", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass"};
 		} else {
-			return new String[] {"primary", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "xCorrModel", "eValue"};
+			return new String[] {"e2Score", "evalue", "correlationToGaussian", "correlationToPrecursor", "correlationToPlusOne", "isIntegratedSignal", "isIntegratedPrecursor", "numPeaksWithGoodCorrelation", "numPeaksWithGreatCorrelation", 
+					"primary", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "xCorrModel"};
 		}
 	}
 	

@@ -9,6 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileMerger;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
 public class PreprocessDIAFiles {
 	public static final String deliminator = ":";
@@ -62,7 +63,7 @@ public class PreprocessDIAFiles {
 			if (inputFiles.length==1) {
 				StripeFileGenerator.getFile(inputFiles[0], parameters);
 			} else {
-				StripeFileMerger.merge(inputFiles, outputFile, parameters);
+				StripeFileMerger.merge(new EmptyProgressIndicator(false), inputFiles, outputFile, parameters);
 			}
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");

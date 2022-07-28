@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class SpectronautCSVToLibraryConverter {
 
@@ -128,6 +129,7 @@ public class SpectronautCSVToLibraryConverter {
 									" 3) FragmentMz: [" + productMz + "]\n" +
 									" 4) RelativeIntensity: [" + libraryIntensity + "]\n" +
 									" 5) iRT: [" + rtString + "]");
+							Logger.errorLine("Other headers: "+General.toString(new ArrayList<String>(row.keySet())));
 						} else {
 							Logger.errorLine("Error parsing DIA-NN CSV:");
 							Logger.errorException(e);
@@ -137,6 +139,7 @@ public class SpectronautCSVToLibraryConverter {
 									" 3) ProductMz: [" + productMz + "]\n" +
 									" 4) LibraryIntensity: [" + libraryIntensity + "]\n" +
 									" 5) Tr_recalibrated: [" + rtString + "]");
+							Logger.errorLine("Other headers: "+General.toString(new ArrayList<String>(row.keySet())));
 						}
 						throw new EncyclopediaException(e);
 					}

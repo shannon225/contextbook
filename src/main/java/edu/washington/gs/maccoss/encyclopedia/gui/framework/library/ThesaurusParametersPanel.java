@@ -257,6 +257,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				percolator,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
 				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,
+				PercolatorExecutor.DEFAULT_TRAINING_ITERATIONS,
 				dataAcquisitionType,
 				numberOfJobsValue,
 				25f,

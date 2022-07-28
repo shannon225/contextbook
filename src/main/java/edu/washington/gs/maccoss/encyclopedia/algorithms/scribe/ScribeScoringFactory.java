@@ -26,6 +26,11 @@ public class ScribeScoringFactory implements LibraryScoringFactory {
 	public ScribeScoringFactory(SearchParameters parameters) {
 		this.parameters=parameters;
 	}
+	
+	@Override
+	public String getName() {
+		return "Scribe 1.X Scoring System";
+	}
 
 	@Override
 	public PSMScorer getLibraryScorer(LibraryBackgroundInterface background) {
