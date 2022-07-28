@@ -82,10 +82,11 @@ public class AlternatePeakLocationInferrer {
 				
 				bestRTInSec.forEachEntry(new TObjectFloatProcedure<String>() {
 					@Override
-					public boolean execute(String a, float b) {
-						float alt=rtInSec.get(a);
+					public boolean execute(String modSeq, float b) {
+						float alt=rtInSec.get(modSeq);
 						if (rtInSec.getNoEntryValue()!=alt) {
-							points.add(new XYPoint(b/60f, alt/60f)); // both in minutes
+							points.add(new RTRTPoint(b / 60f, alt / 60f, // both in minutes
+							                         false, modSeq));
 						}
 						return true;
 					}
