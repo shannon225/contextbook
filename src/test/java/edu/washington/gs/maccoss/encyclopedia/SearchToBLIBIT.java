@@ -554,12 +554,11 @@ public class SearchToBLIBIT {
 									p.getPeptideModSeq(),
 									job.getDiaFileReader().getOriginalFileName()
 							),
-							p.getPredictedActual(),
-							inferrer.getWarpedRTInSec(job, p.getPeptideModSeq()),
+							p.getPredictedActual(), // in mins
+							inferrer.getWarpedRTInSec(job, p.getPeptideModSeq()) / 60f, // convert to mins
 							0.0001);
 				}
 			}
-
 		}
 
 		assertHasPercolatorMetadata(file);
