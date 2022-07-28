@@ -7,6 +7,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJob
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -30,6 +31,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.zip.DataFormatException;
 
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
 import static org.junit.Assert.*;
@@ -467,7 +469,7 @@ public class SearchToBLIBIT {
 	 *
 	 * @see SearchToBLIB.OutputFormat#ALIB
 	 */
-	private void assertValidAlib(LibraryFile file, List<SearchJobData> jobData) throws SQLException, IOException {
+	private void assertValidAlib(LibraryFile file, List<SearchJobData> jobData) throws SQLException, IOException, DataFormatException {
 		try (Connection c = file.getConnection()) {
 			try (Statement s = c.createStatement()) {
 				try (ResultSet rs = s.executeQuery("SELECT count() FROM entries;")) {
@@ -545,10 +547,11 @@ public class SearchToBLIBIT {
 			}
 
 			// Same check as above, but with the decoded `inferrer`.
-			// Just ensure the inferred RTs match the corresponding saved points.
 			final PeakLocationInferrerInterface inferrer = SearchToBLIB.readInferrer(file, jobData, searchParameters);
 			for (SearchJobData job : jobData) {
-				for (RetentionTimeAlignmentInterface.AlignmentDataPoint p : inferrer.getAlignmentData(job)) {
+				final List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignmentData = inferrer.getAlignmentData(job);
+				// Just ensure the inferred RTs match the corresponding saved points.
+				for (RetentionTimeAlignmentInterface.AlignmentDataPoint p : alignmentData) {
 					assertEquals(
 							String.format("%s in %s",
 									p.getPeptideModSeq(),
@@ -556,7 +559,24 @@ public class SearchToBLIBIT {
 							),
 							p.getPredictedActual(), // in mins
 							inferrer.getWarpedRTInSec(job, p.getPeptideModSeq()) / 60f, // convert to mins
-							0.0001);
+							0.0001
+					);
+				}
+
+				if (alignmentData.isEmpty()) {
+					// This is the "seed" job, so we need different assertions -- check that inferrer's
+					// warped RT matches the saved alignment RT (derived from this job).
+					for (LibraryEntry e : file.getAllEntries(false, searchParameters.getAAConstants())) {
+						assertEquals(
+								String.format("%s in %s",
+										e.getPeptideModSeq(),
+										job.getDiaFileReader().getOriginalFileName()
+								),
+								e.getRetentionTime(), // in sec
+								inferrer.getWarpedRTInSec(job, e.getPeptideModSeq()),
+								0.0001
+						);
+					}
 				}
 			}
 		}

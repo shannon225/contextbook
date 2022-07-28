@@ -389,7 +389,8 @@ public abstract class AbstractEndToEndIT {
 	}
 
 	/**
-	 * Check that the results for the given jobs match the given reference. More targeted version of {@link #assertValidBasedOnReference(LibraryFile, String)}.
+	 * Check that the results for the given jobs match the given reference. More targeted version of {@link #assertValidBasedOnReference(LibraryFile, String)},
+	 * but also much stricter -- expects the same set of quantifications, including identical RT and intensity.
 	 */
 	private void assertJobResultsMatch(Collection<? extends QuantitativeSearchJobData> jobs, LibraryFile quantFile, Path refElib) throws Exception {
 		try (Connection c = quantFile.getConnection()) {
@@ -516,6 +517,8 @@ public abstract class AbstractEndToEndIT {
 					" WHERE SourceFile = ?" +
 					" AND (" +
 							" abs(q.rtinsecondscenter - rq.rtinsecondscenter) > ?" +
+							" OR abs(q.rtinsecondsstart - rq.rtinsecondsstart) > ?" +
+							" OR abs(q.rtinsecondsstop - rq.rtinsecondsstop) > ?" +
 							" OR abs(q.totalintensity - rq.totalintensity) > ?" +
 					");"
 			)) {
@@ -523,6 +526,8 @@ public abstract class AbstractEndToEndIT {
 					s.setString(1, job.getDiaFileReader().getOriginalFileName());
 					s.setDouble(2, epsilon);
 					s.setDouble(3, epsilon);
+					s.setDouble(4, epsilon);
+					s.setDouble(5, epsilon);
 
 					try (ResultSet rs = s.executeQuery()) {
 						assertTrue(rs.next());
