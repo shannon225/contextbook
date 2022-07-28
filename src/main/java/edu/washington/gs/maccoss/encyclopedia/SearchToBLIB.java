@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.primitives.Floats;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.*;
@@ -50,6 +51,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.DataFormatException;
 
 public class SearchToBLIB {
@@ -972,7 +974,7 @@ public class SearchToBLIB {
 						continue;
 					}
 
-					elib.addRtAlignment(job, inferrer);
+					elib.addRtAlignment(job, getRawAlignmentPoints(job, inferrer));
 
 					subProgress.update("Done writing alignment for job " + job.getDiaFileReader().getOriginalFileName(), 1f);
 				}
@@ -989,6 +991,49 @@ public class SearchToBLIB {
 			Logger.errorException(ioe);
 			throw new EncyclopediaException("Error creating ELIB file", ioe);
 		}
+	}
+
+	/**
+	 * Create a special set of alignment points meant for writing to an ALIB, in order to capture the precise
+	 * RT alignment mapping in each file. This is only possible in specific circumstances, but these should be
+	 * satisfied for any run producing an ALIB (the inferrer, alignment, and warper all must be of the expected
+	 * types, or this method falls back to match the normal set of points written to an ELIB).
+	 *
+	 * @see #readInferrer(LibraryFile, List, SearchParameters)
+	 */
+	private static List<AlignmentDataPoint> getRawAlignmentPoints(SearchJobData job, PeakLocationInferrerInterface inferrer) {
+		if (inferrer instanceof SimplePeakLocationInferrer) {
+			final SimplePeakLocationInferrer spli = (SimplePeakLocationInferrer) inferrer;
+			final RetentionTimeAlignmentInterface alignment = spli.getAlignment(job);
+
+			if (alignment instanceof AbstractRetentionTimeFilter) {
+				AbstractRetentionTimeFilter artf = (AbstractRetentionTimeFilter) alignment;
+				final edu.washington.gs.maccoss.encyclopedia.utils.math.Function rtWarper = artf.getRtWarper();
+
+				if (rtWarper instanceof LinearInterpolatedFunction) {
+					// Concatenate the peptides' points with the full set of knots from the function.
+					// This should provide all required information while keeping all segment slopes the same.
+					return Stream.concat(
+							inferrer.getAlignmentData(job).stream(),
+							rtWarper.getKnots().stream()
+									.map(xy -> AlignmentDataPoint.of(
+											(float) xy.x,
+											Float.NEGATIVE_INFINITY, // work around NOT NULL constraint
+											(float) xy.y,
+											Float.NEGATIVE_INFINITY, // work around NOT NULL constraint
+											Float.NEGATIVE_INFINITY, // work around NOT NULL constraint
+											false,
+											null
+									))
+					).collect(Collectors.toList());
+				}
+			}
+		}
+
+		// fallback -- not ideal because it only uses the input points (along with their predictions though)
+
+		Logger.errorLine("Unable to get exact RT alignment mapping! Falling back to peptide retentiontimes only.");
+		return inferrer.getAlignmentData(job);
 	}
 
 	/**
@@ -1181,6 +1226,8 @@ public class SearchToBLIB {
 	 *
 	 * @return an appropriate {@code PeakLocationInferrerInterface} that can be used for quantification of some or all
 	 *         jobs recorded in the ALIB.
+	 *
+	 * @see #getRawAlignmentPoints(SearchJobData, PeakLocationInferrerInterface) used in creating the data read by this method
 	 */
 	static PeakLocationInferrerInterface readInferrer(LibraryFile alignmentFile, List<? extends SearchJobData> jobs, SearchParameters parameters) throws IOException, SQLException {
 		final HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap = Maps.newHashMap();
@@ -1216,7 +1263,7 @@ public class SearchToBLIB {
 
 					Logger.logLine(job.getDiaFileReader().getOriginalFileName() + " alignment points: read " + alignmentData.size() );
 
-					if (alignmentData.isEmpty()) {
+					if (alignmentData.stream().noneMatch(p -> Objects.nonNull(p.getPeptideModSeq()))) {
 						// "Seed" experiment won't have alignment points and shouldn't be populated in the map.
 						Logger.logLine("Assuming job " + job.getDiaFileReader().getOriginalFileName() + " is the seed; using 1-1 RT mapping.");
 						continue;
@@ -1224,98 +1271,86 @@ public class SearchToBLIB {
 
 					alignmentDataMap.put(job, alignmentData);
 
-					final RetentionTimeAlignmentInterface alignment;
+					// Generate the necessary linear interpolation for prediction -- MUST use ALL points
+					final ArrayList<XYPoint> alignmentPoints = alignmentData.stream()
+							// RTs must be in _minutes_ to match AlternatePeakLocationInferrer, but these values are
+							// already in minutes when we read them from `retentiontimes`.
+							.map(p -> new XYPoint(p.getLibrary(), p.getPredictedActual()))
+							.sorted(Comparator.comparingDouble(XYPoint::getX))
+							.collect(Collectors.toCollection(ArrayList::new));
 
-					if (false) {
-						// Try to recompute the alignment from the recorded points. This is a big risk, 'cause we
-						// don't enforce that the computed probabilities and deltas match the original!
-						final ArrayList<XYPoint> alignmentPoints = alignmentData.stream()
-								// RTs must be in _minutes_ to match AlternatePeakLocationInferrer, but these values are
-								// already in minutes when we read them from `retentiontimes`.
-								.map(p -> new XYPoint(p.getLibrary(), p.getActual()))
-								.collect(Collectors.toCollection(ArrayList::new));
-						alignment = RetentionTimeFilter.getFilter(alignmentPoints);
-					} else {
-						// Use a straightforward reimplementation based on the exact data.
+					// Check for monotonic function (don't require strict monotonicity though, as we see this sometimes).
+					//TODO: non-strictness means the function may not be correctly invertible! This is an upstream problem, however.
+					final boolean increasing = true;
+					for (int i = 1; i < alignmentPoints.size(); i++) {
+						final double y = alignmentPoints.get(i).getY();
+						final double prev = alignmentPoints.get(i - 1).getY();
 
-						// Generate the necessary linear interpolation for prediction
-						final ArrayList<XYPoint> alignmentPoints = alignmentData.stream()
-								// RTs must be in _minutes_ to match AlternatePeakLocationInferrer, but these values are
-								// already in minutes when we read them from `retentiontimes`.
-								.map(p -> new XYPoint(p.getLibrary(), p.getPredictedActual()))
+						if (
+								(increasing && y < prev)
+								|| (!increasing && y > prev)
+						) throw new IllegalStateException(String.format(
+								"Alignment warp is not monotonic! (%.02f, %.02f) -> (%.02f, %.02f)",
+								alignmentPoints.get(i - 1).getX(),
+								prev,
+								alignmentPoints.get(i).getX(),
+								y
+						));
+					}
+
+					final RetentionTimeAlignmentInterface alignment = new RetentionTimeAlignmentInterface() {
+						static final double MATCH_TOLERANCE = 1e-3;
+
+						final LinearInterpolatedFunction rtWarper = new LinearInterpolatedFunction(alignmentPoints);
+
+						/**
+						 * Points are sorted by delta (x), but function is not monotonic. NOT INVERTIBLE!
+						 */
+						final LinearInterpolatedFunction probModel = new LinearInterpolatedFunction(alignmentData.stream()
+								// Filter out raw knots without delta/probability fields
+								.filter(p -> Float.isFinite(p.getDelta()) && Floats.isFinite(p.getProbability()))
+								.map(p -> new XYPoint(p.getDelta(), p.getProbability()))
 								.sorted(Comparator.comparingDouble(XYPoint::getX))
-								.collect(Collectors.toCollection(ArrayList::new));
+								.collect(Collectors.toCollection(ArrayList::new))
+						);
 
-						// Check for monotonic function (don't require strict monotonicity though, as we see this sometimes).
-						//TODO: non-strictness means the function may not be correctly invertible! This is an upstream problem, however.
-						final boolean increasing = true;
-						for (int i = 1; i < alignmentPoints.size(); i++) {
-							final double y = alignmentPoints.get(i).getY();
-							final double prev = alignmentPoints.get(i - 1).getY();
-
-							if (
-									(increasing && y < prev)
-									|| (!increasing && y > prev)
-							) throw new IllegalStateException(String.format(
-									"Alignment warp is not monotonic! (%.02f, %.02f) -> (%.02f, %.02f)",
-									alignmentPoints.get(i - 1).getX(),
-									prev,
-									alignmentPoints.get(i).getX(),
-									y
-							));
+						@Override
+						public List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed) {
+							return alignmentData;
 						}
 
-						alignment = new RetentionTimeAlignmentInterface() {
-							static final double MATCH_TOLERANCE = 1e-3;
+						@Override
+						public float getYValue(float xrt) {
+							return rtWarper.getYValue(xrt);
+						}
 
-							final LinearInterpolatedFunction rtWarper = new LinearInterpolatedFunction(alignmentPoints);
+						@Override
+						public float getXValue(float yrt) {
+							return rtWarper.getXValue(yrt);
+						}
 
-							/**
-							 * Points are sorted by delta (x), but function is not monotonic. NOT INVERTIBLE!
-							 */
-							final LinearInterpolatedFunction probModel = new LinearInterpolatedFunction(alignmentData.stream()
-									.map(p -> new XYPoint(p.getDelta(), p.getProbability()))
-									.sorted(Comparator.comparingDouble(XYPoint::getX))
-									.collect(Collectors.toCollection(ArrayList::new))
-							);
+						@Override
+						public float getProbabilityFitsModel(float actualRT, float modelRT) {
+							final float delta = getDelta(actualRT, modelRT);
+							return probModel.getYValue(delta);
+						}
 
-							@Override
-							public List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed) {
-								return alignmentData;
-							}
-
-							@Override
-							public float getYValue(float xrt) {
-								return rtWarper.getYValue(xrt);
-							}
-
-							@Override
-							public float getXValue(float yrt) {
-								return rtWarper.getXValue(yrt);
-							}
-
-							@Override
-							public float getProbabilityFitsModel(float actualRT, float modelRT) {
-								final float delta = getDelta(actualRT, modelRT);
-								return probModel.getYValue(delta);
-							}
-
-							@Override
-							public float getDelta(float actualRT, float modelRT) {
-								// quick-n-dirty -- require exact match
-								for (AlignmentDataPoint p : alignmentData) {
-									if (
-											Math.abs(actualRT - p.getActual()) < MATCH_TOLERANCE
-											&& Math.abs(modelRT - p.getPredictedActual()) < MATCH_TOLERANCE
-									) {
-										return p.getDelta();
-									}
+						@Override
+						public float getDelta(float actualRT, float modelRT) {
+							// quick-n-dirty -- require exact match
+							for (AlignmentDataPoint p : alignmentData) {
+								if (
+										Floats.isFinite(p.getActual())
+												&& Math.abs(actualRT - p.getActual()) < MATCH_TOLERANCE
+												&& Math.abs(modelRT - p.getPredictedActual()) < MATCH_TOLERANCE
+								) {
+									return p.getDelta();
 								}
-
-								throw new IllegalStateException("No such alignment point with actual/model RT " + actualRT + " / " + modelRT);
 							}
-						};
-					}
+
+							throw new IllegalStateException("No such alignment point with actual/model RT " + actualRT + " / " + modelRT);
+						}
+					};
 
 					alignmentMap.put(job, alignment);
 				}

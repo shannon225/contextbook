@@ -400,7 +400,7 @@ public abstract class AbstractEndToEndIT {
 				s.execute();
 			}
 
-			final double epsilon = 0.00001;
+			final double epsilon = 1e-3;
 
 			// Note: "seed" job will have no RT points, so this is commented
 //			try (PreparedStatement s = c.prepareStatement(

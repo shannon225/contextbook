@@ -632,7 +632,15 @@ public class SearchToBLIBIT {
 			for (SearchJobData job : jobData) {
 				final List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignmentData = inferrer.getAlignmentData(job);
 				// Just ensure the inferred RTs match the corresponding saved points.
+				boolean hadPeptidePoint = false;
 				for (RetentionTimeAlignmentInterface.AlignmentDataPoint p : alignmentData) {
+					if (null == p.getPeptideModSeq()) {
+						// In an ALIB not all RT points will be for a peptide, some may just be alignment "knots"
+						continue;
+					} else if (!hadPeptidePoint) {
+						hadPeptidePoint = true;
+					}
+
 					assertEquals(
 							String.format("%s in %s",
 									p.getPeptideModSeq(),
@@ -644,7 +652,7 @@ public class SearchToBLIBIT {
 					);
 				}
 
-				if (alignmentData.isEmpty()) {
+				if (!hadPeptidePoint) {
 					// This is the "seed" job, so we need different assertions -- check that inferrer's
 					// warped RT matches the saved alignment RT (derived from this job).
 					for (LibraryEntry e : file.getAllEntries(false, searchParameters.getAAConstants())) {

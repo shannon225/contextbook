@@ -1,11 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
@@ -15,6 +9,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
+
+import java.util.*;
 
 public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface {
 	private static float RT_OUTLIER_REJECTION_PROBABILITY=0.001f;
@@ -131,5 +127,9 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 	@Override
 	public List<RetentionTimeAlignmentInterface.AlignmentDataPoint> getAlignmentData(SearchJobData job) {
 		return alignmentDataMap.getOrDefault(job, Collections.emptyList());
+	}
+
+	public RetentionTimeAlignmentInterface getAlignment(SearchJobData jobData) {
+		return alignmentMap.get(jobData);
 	}
 }
