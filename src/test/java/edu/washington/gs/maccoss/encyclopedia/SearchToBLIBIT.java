@@ -1,11 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.ImmutableList;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.AlternatePeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
@@ -14,7 +16,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import org.apache.commons.io.FileUtils;
@@ -28,9 +32,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
@@ -38,6 +41,7 @@ import static org.junit.Assert.*;
 
 public class SearchToBLIBIT {
 	private static final String MOCK_PERCOLATOR_VERSION = "percolator_test_version";
+	static final double DELTA = 0.0001;
 
 	private final ProgressIndicator progress = new EmptyProgressIndicator();
 
@@ -246,6 +250,83 @@ public class SearchToBLIBIT {
 			assertTrue("Result file had no entries", 0 < numEntries);
 
 			assertValidAlib(file, jobData);
+		} finally {
+			file.close();
+		}
+	}
+
+	/**
+	 * Same as above, but at a lower level to enable direct comparison of the inferrer.
+	 */
+	@Test
+	public void testConvertMultiSampleAlignOnlyAlignment() throws Exception {
+		// create quant parameters
+		final HashMap<String, String> parameterMap = searchParameters.toParameterMap();
+		parameterMap.put("-quantifyAcrossSamples", "true");
+		searchParameters = SearchParameterParser.parseParameters(parameterMap);
+
+		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		Files.delete(libFile); // can't exist (we're trying to create it)
+		FileUtils.forceDeleteOnExit(libFile.toFile());
+
+		final List<SearchJobData> jobData = ImmutableList.of(
+				getSearchJobDataA(),
+				getSearchJobDataB()
+		);
+
+		// We reproduce the behavior of this method to get access to lower-level info, i.e. `inferrer`
+//		SearchToBLIB.convert(progress,
+//				jobData,
+//				libFile.toFile(),
+//				SearchToBLIB.OutputFormat.ALIB,
+//				true
+//		);
+		final SearchJobData representativeJob = jobData.iterator().next();
+		String filename=libFile.toFile().getName();
+		if (filename.lastIndexOf('.')>0) {
+			filename=filename.substring(0, filename.lastIndexOf('.'));
+		}
+		File bigFeatureFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_features.txt");
+		File bigPercolatorFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_results.txt");
+		File bigPercolatorDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_decoy.txt");
+		File bigPercolatorProteinFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_results.txt");
+		File bigPercolatorProteinDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_decoy.txt");
+		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, representativeJob.getPercolatorFiles().getFastaFile(), bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile, searchParameters);
+
+		Logger.logLine("Running global Percolator analysis.");
+		TableConcatenator.concatenateTables(
+				jobData.stream()
+						.map(SearchJobData::getPercolatorFiles)
+						.map(PercolatorExecutionData::getInputTSV)
+						.collect(Collectors.toCollection(ArrayList::new)),
+				bigFeatureFile
+		);
+
+		int modelNumber = Integer.MAX_VALUE; // always use the last model (if reusing a model)
+		final Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides = PercolatorExecutor.executePercolatorTSV(searchParameters.getPercolatorVersionNumber(), bigPercolatorFiles, searchParameters.getEffectivePercolatorThreshold(), searchParameters.getAAConstants(), modelNumber);
+
+		final PeakLocationInferrerInterface inferrer = AlternatePeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), jobData, passingPeptides.x, searchParameters);
+
+		SearchToBLIB.OutputFormat.ALIB.convert(
+				new EmptyProgressIndicator(),
+				jobData,
+				libFile.toFile(),
+				passingPeptides,
+				Optional.of(bigPercolatorFiles),
+				Optional.of(inferrer),
+				searchParameters
+		);
+
+		final LibraryFile file = new LibraryFile();
+		try {
+			file.openFile(libFile.toFile());
+
+			final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
+			assertTrue("Result file had no entries", 0 < numEntries);
+
+			assertValidAlib(file, jobData);
+
+			assertSameInferrer(inferrer, SearchToBLIB.readInferrer(file, jobData, searchParameters), jobData);
 		} finally {
 			file.close();
 		}
@@ -559,7 +640,7 @@ public class SearchToBLIBIT {
 							),
 							p.getPredictedActual(), // in mins
 							inferrer.getWarpedRTInSec(job, p.getPeptideModSeq()) / 60f, // convert to mins
-							0.0001
+							DELTA
 					);
 				}
 
@@ -574,7 +655,7 @@ public class SearchToBLIBIT {
 								),
 								e.getRetentionTime(), // in sec
 								inferrer.getWarpedRTInSec(job, e.getPeptideModSeq()),
-								0.0001
+								DELTA
 						);
 					}
 				}
@@ -582,6 +663,28 @@ public class SearchToBLIBIT {
 		}
 
 		assertHasPercolatorMetadata(file);
+	}
+
+	private void assertSameInferrer(PeakLocationInferrerInterface expected, PeakLocationInferrerInterface actual, List<SearchJobData> jobs) {
+		final Set<String> allPeptides = jobs.stream()
+				.flatMap(j -> expected.getAlignmentData(j).stream())
+				.map(RetentionTimeAlignmentInterface.AlignmentDataPoint::getPeptideModSeq)
+				.collect(Collectors.toSet());
+
+		// Check each peptide's predicted RT in each job
+		for (SearchJobData job : jobs) {
+			for (String modSeq : allPeptides) {
+				assertEquals(
+						String.format("wrong warped RT: %s in %s",
+								modSeq,
+								job.getDiaFileReader().getOriginalFileName()
+						),
+						expected.getWarpedRTInSec(job, modSeq),
+						actual.getWarpedRTInSec(job, modSeq),
+						DELTA
+				);
+			}
+		}
 	}
 
 	private SearchJobData getSearchJobDataA() throws IOException, SQLException {

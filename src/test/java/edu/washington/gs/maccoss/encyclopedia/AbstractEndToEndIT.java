@@ -422,7 +422,7 @@ public abstract class AbstractEndToEndIT {
 //				}
 //			}
 
-			// Check that the job's RT alignment data is the same (it should just be straight copied through)
+			// Check that each job's RT alignment data is the same (it should just be straight copied through)
 			try (PreparedStatement s = c.prepareStatement(
 					"SELECT t.peptidemodseq, t.predicted, r.predicted" +
 					" FROM retentiontimes t" +
@@ -510,6 +510,71 @@ public abstract class AbstractEndToEndIT {
 				}
 			}
 
+			// Check for different entries -- counts
+			try (PreparedStatement s = c.prepareStatement(
+					"SELECT count(), peptidemodseq" +
+							" FROM entries e" +
+							" LEFT JOIN ref.entries re USING (PeptideModSeq, PrecursorCharge, SourceFile)" +
+							" WHERE SourceFile = ?" +
+							" AND (" +
+							" abs(e.rtinseconds - re.rtinseconds) > ?" +
+							");"
+			)) {
+				for (QuantitativeSearchJobData job : jobs) {
+					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+					s.setDouble(2, epsilon);
+
+					try (ResultSet rs = s.executeQuery()) {
+						assertTrue(rs.next());
+
+						final int numMismatch = rs.getInt(1);
+
+						Logger.logLine(String.format("Found %d mismatched entries for %s, e.g. %s",
+								numMismatch,
+								job.getDiaFileReader().getOriginalFileName(),
+								rs.getString(2)
+						));
+//						assertEquals(0, numMismatch); // will be asserted row-by-row below
+					}
+				}
+			}
+
+			// Assert for each entry individually
+			try (PreparedStatement s = c.prepareStatement(
+					"SELECT" +
+							" e.peptidemodseq," +
+							" e.rtinseconds," +
+							" re.rtinseconds" +
+							" FROM entries e" +
+							" LEFT JOIN ref.entries re USING (PeptideModSeq, PrecursorCharge, SourceFile)" +
+							" WHERE SourceFile = ?;"
+			)) {
+				for (QuantitativeSearchJobData job : jobs) {
+					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+
+					try (ResultSet rs = s.executeQuery()) {
+						while (rs.next()) {
+							final String pep = rs.getString(1);
+							final float rt = rs.getFloat(2);
+							final float refRt = rs.getFloat(3);
+
+							assertEquals(
+									String.format("entry rt mismatch: %s in %s: expected %.02f, got %.02f",
+											pep,
+											job.getDiaFileReader().getOriginalFileName(),
+											refRt,
+											rt
+									),
+									refRt,
+									rt,
+									epsilon
+							);
+						}
+					}
+				}
+			}
+
+			// Check for different quantification -- counts
 			try (PreparedStatement s = c.prepareStatement(
 					"SELECT count(), peptidemodseq" +
 					" FROM peptidequants q" +
@@ -534,16 +599,17 @@ public abstract class AbstractEndToEndIT {
 
 						final int numMismatch = rs.getInt(1);
 
-						Logger.logLine(String.format("Found %d mismatched peptides for %s, e.g. %s",
+						Logger.logLine(String.format("Found %d mismatched quants for %s, e.g. %s",
 								numMismatch,
 								job.getDiaFileReader().getOriginalFileName(),
 								rs.getString(2)
 						));
-//						assertEquals(0, numMismatch);
+//						assertEquals(0, numMismatch); // will be asserted row-by-row below
 					}
 				}
 			}
 
+			// Assert for each peptide's quant individually
 			try (PreparedStatement s = c.prepareStatement(
 					"SELECT" +
 					" q.peptidemodseq," +
@@ -573,7 +639,7 @@ public abstract class AbstractEndToEndIT {
 							final double[] refIons = ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(8), rs.getInt(9)));
 
 							assertEquals(
-									String.format("rt mismatch: %s in %s: expected (%.02f, %.02f), got (%.02f, %.02f)",
+									String.format("quant rt mismatch: %s in %s: expected (%.02f, %.02f), got (%.02f, %.02f)",
 											pep,
 											job.getDiaFileReader().getOriginalFileName(),
 											refRt,
