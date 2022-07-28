@@ -69,6 +69,10 @@ public class SearchToBLIBTest {
 					0.0001
 			);
 		}
+		assertArrayEquals(
+				sortExpected.stream().map(AlignmentDataPoint::getPeptideModSeq).toArray(),
+				sortActual.stream().map(AlignmentDataPoint::getPeptideModSeq).toArray()
+		);
 	}
 
 	private static SearchJobData mockJob(SearchParameters parameters) {

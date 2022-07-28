@@ -1,6 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.ImmutableList;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
@@ -522,6 +524,42 @@ public class SearchToBLIBIT {
 					}
 				}
 			}
+
+			try (PreparedStatement ps = c.prepareStatement(
+					"SELECT count()" +
+					" FROM retentiontimes rt" +
+					" JOIN entries e USING (peptidemodseq)" +
+					" WHERE abs(e.rtinseconds - rt.library) > 0.001;"
+			)) {
+				try (ResultSet rs = ps.executeQuery()) {
+					assertTrue(rs.next());
+
+					final int nEntries = rs.getInt(1);
+
+					assertEquals(
+							"Too many mismatched RTs! All entries should match recorded \"library\" RT!",
+							0,
+							nEntries
+					);
+				}
+			}
+
+			// Same check as above, but with the decoded `inferrer`.
+			// Just ensure the inferred RTs match the corresponding saved points.
+			final PeakLocationInferrerInterface inferrer = SearchToBLIB.readInferrer(file, jobData, searchParameters);
+			for (SearchJobData job : jobData) {
+				for (RetentionTimeAlignmentInterface.AlignmentDataPoint p : inferrer.getAlignmentData(job)) {
+					assertEquals(
+							String.format("%s in %s",
+									p.getPeptideModSeq(),
+									job.getDiaFileReader().getOriginalFileName()
+							),
+							p.getPredictedActual(),
+							inferrer.getWarpedRTInSec(job, p.getPeptideModSeq()),
+							0.0001);
+				}
+			}
+
 		}
 
 		assertHasPercolatorMetadata(file);
