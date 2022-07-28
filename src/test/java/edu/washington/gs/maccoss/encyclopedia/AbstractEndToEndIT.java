@@ -240,6 +240,11 @@ public abstract class AbstractEndToEndIT {
 		}
 	}
 
+	/**
+	 * Try running the two-step align-then-quantify workflow, quantifying only a subset of files.
+	 * This test does not compare the results to a regression reference, but instead asserts that every peptide
+	 * is quantified identically to the single-step align-and-quant approach used in {@link #testWholePipelineMultipleDataQuant()}.
+	 */
 	@Test
 	public void testWholePipelineMultipleDataAlignOnlyQuantWorkflow() throws Exception {
 		final ImmutableList<QuantitativeSearchJobData> jobData = ImmutableList.of(jobDataA, jobDataB, jobDataC);
@@ -362,8 +367,26 @@ public abstract class AbstractEndToEndIT {
 
 		final List<LibraryEntry> peptides = newFile.getAllEntries(false, AminoAcidConstants.createEmptyFixedAndVariable());
 
-		assertTrue ("Fewer peptides than expected in " + newFile.getName(), peptides.size() > LOWER_BOUND_PEPTIDE_MATCH * expectedPeptides.size());
-		assertTrue("More peptides than expected in " + newFile.getName(), peptides.size() < UPPER_BOUND_PEPTIDE_MATCH * expectedPeptides.size());
+		assertTrue(
+				String.format(
+						"Fewer peptides than expected in %s: %d < %.02f",
+						newFile.getName(),
+						peptides.size(),
+						LOWER_BOUND_PEPTIDE_MATCH * expectedPeptides.size()
+				),
+				peptides.size() > LOWER_BOUND_PEPTIDE_MATCH * expectedPeptides.size()
+		);
+
+		assertTrue(
+				String.format(
+						"More peptides than expected in %s: %d > %.02f",
+						newFile.getName(),
+						peptides.size(),
+						UPPER_BOUND_PEPTIDE_MATCH * expectedPeptides.size()
+				),
+				peptides.size() < UPPER_BOUND_PEPTIDE_MATCH * expectedPeptides.size()
+		);
+
 		final long peptideMatches = peptides.stream()
 				.filter(hasPeptideMatch(expectedPeptides))
 				.count();

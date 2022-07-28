@@ -39,6 +39,13 @@ import java.util.zip.DataFormatException;
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
 import static org.junit.Assert.*;
 
+/**
+ * This class exercises {@code SearchToBlib} by converting already-computed single-search results in various ways.
+ * Associated assertions are generally fairly light, and focus more on ensuring that the various modes of
+ * conversion {@code SearchToBlib} function without error and give sensible output. For more detailed testing of the
+ * exact results of this conversion, see {@link AbstractEndToEndIT} which carefully runs the entire search pipeline
+ * including the conversion tested here, and makes more careful assertions that the results are as expected.
+ */
 public class SearchToBLIBIT {
 	private static final String MOCK_PERCOLATOR_VERSION = "percolator_test_version";
 	static final double DELTA = 0.0001;
@@ -211,12 +218,16 @@ public class SearchToBLIBIT {
 		);
 
 		final LibraryFile file = new LibraryFile();
-		file.openFile(libFile.toFile());
+		try {
+			file.openFile(libFile.toFile());
 
-		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
-		assertTrue("Result file had no entries", 0 < numEntries);
+			final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
+			assertTrue("Result file had no entries", 0 < numEntries);
 
-		assertHasPercolatorMetadata(file);
+			assertHasPercolatorMetadata(file);
+		} finally {
+			file.close();
+		}
 	}
 
 	@Test
@@ -344,9 +355,9 @@ public class SearchToBLIBIT {
 		parameterMap.put("-quantifyAcrossSamples", "true");
 		searchParameters = SearchParameterParser.parseParameters(parameterMap);
 
-		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
-		Files.delete(libFile); // can't exist (we're trying to create it)
-		FileUtils.forceDeleteOnExit(libFile.toFile());
+		final Path alignmentFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		Files.delete(alignmentFile); // can't exist (we're trying to create it)
+		FileUtils.forceDeleteOnExit(alignmentFile.toFile());
 
 		final Path quantFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
 		Files.delete(quantFile); // can't exist (we're trying to create it)
@@ -359,30 +370,30 @@ public class SearchToBLIBIT {
 
 		SearchToBLIB.convert(progress,
 				jobData,
-				libFile.toFile(),
+				alignmentFile.toFile(),
 				SearchToBLIB.OutputFormat.ALIB,
 				true
 		);
 
-		final LibraryFile file = new LibraryFile();
+		final LibraryFile alignmentLib = new LibraryFile();
 		try {
-			file.openFile(libFile.toFile());
+			alignmentLib.openFile(alignmentFile.toFile());
 
-			final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
+			final int numEntries = alignmentLib.getAllEntries(false, searchParameters.getAAConstants()).size();
 			assertTrue("Result file had no entries", 0 < numEntries);
 
-			assertValidAlib(file, jobData);
+			assertValidAlib(alignmentLib, jobData);
 		} catch (AssertionError e) {
 			Assume.assumeNoException("Test setup failed: unable to produce valid alignment-only results", e);
 		} finally {
-			file.close();
+			alignmentLib.close();
 		}
 
 		SearchToBLIB.convertElibQuantOnly(progress,
 //				jobData.subList(0, 1), // only the first job -- SUCCEEDS (this is the "seed" file)
 				jobData.subList(1, 2), // only the second job -- more difficult b/c RT alignment is involved
 				quantFile.toFile(),
-				libFile.toFile(),
+				alignmentFile.toFile(),
 				searchParameters
 		);
 
@@ -399,7 +410,11 @@ public class SearchToBLIBIT {
 				}
 			}
 
-			//TODO: other assertions specific to this output format
+			final int numEntries = quantLib.getAllEntries(false, searchParameters.getAAConstants()).size();
+			assertTrue("Result file had no entries", 0 < numEntries);
+
+			// Not written to quant file
+//			assertHasPercolatorMetadata(quantLib);
 		} finally {
 			quantLib.close();
 		}
@@ -408,17 +423,19 @@ public class SearchToBLIBIT {
 	/**
 	 * Test what happens running the quant-only conversion ({@code -alignmentFrom})
 	 * with a "normal" search library rather than an alignment-only results file.
+	 *
+	 * We expect that this will succeed and at least be reasonable.
 	 */
-	@Test(expected = NullPointerException.class) // failure due to ELIB missing pi0
+	@Test
 	public void testConvertMultiSampleQuantOnlyWithNormalElib() throws Exception {
 		// create quant parameters
 		final HashMap<String, String> parameterMap = searchParameters.toParameterMap();
 		parameterMap.put("-quantifyAcrossSamples", "true");
 		searchParameters = SearchParameterParser.parseParameters(parameterMap);
 
-		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
-		Files.delete(libFile); // can't exist (we're trying to create it)
-		FileUtils.forceDeleteOnExit(libFile.toFile());
+		final Path quantFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		Files.delete(quantFile); // can't exist (we're trying to create it)
+		FileUtils.forceDeleteOnExit(quantFile.toFile());
 
 		final List<SearchJobData> jobData = ImmutableList.of(
 				getSearchJobDataA()
@@ -426,17 +443,17 @@ public class SearchToBLIBIT {
 
 		SearchToBLIB.convertElibQuantOnly(progress,
 				jobData,
-				libFile.toFile(),
-				// Read alignment from the input (search) library
-				((LibraryFile) ((EncyclopediaJobData) jobData.iterator().next()).getLibrary()).getFile(),
+				quantFile.toFile(),
+				// Read alignment from the job's existing results
+				((QuantitativeSearchJobData) jobData.iterator().next()).getResultLibrary(),
 				searchParameters
 		);
 
-		final LibraryFile file = new LibraryFile();
+		final LibraryFile quantLib = new LibraryFile();
 		try {
-			file.openFile(libFile.toFile());
+			quantLib.openFile(quantFile.toFile());
 
-			try (Connection c = file.getConnection()) {
+			try (Connection c = quantLib.getConnection()) {
 				try (Statement s = c.createStatement()) {
 					try (ResultSet rs = s.executeQuery("SELECT count() FROM peptidequants;")) {
 						assertTrue(rs.next());
@@ -445,9 +462,13 @@ public class SearchToBLIBIT {
 				}
 			}
 
-			//TODO: other assertions specific to this output format
+			final int numEntries = quantLib.getAllEntries(false, searchParameters.getAAConstants()).size();
+			assertTrue("Result file had no entries", 0 < numEntries);
+
+			// Not written to quant file
+//			assertHasPercolatorMetadata(quantLib);
 		} finally {
-			file.close();
+			quantLib.close();
 		}
 	}
 

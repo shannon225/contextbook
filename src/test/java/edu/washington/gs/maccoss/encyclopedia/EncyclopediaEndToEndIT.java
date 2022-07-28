@@ -2,19 +2,31 @@ package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import org.junit.AfterClass;
+import org.junit.AssumptionViolatedException;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.List;
+
+import static org.junit.Assert.assertTrue;
 
 public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 	static final String REFERENCE_SEARCH1_RESOURCE = "/edu/washington/gs/maccoss/encyclopedia/reference_data/encyc_dia_1.elib";
@@ -93,5 +105,82 @@ public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 	@Override
 	public String getReferenceMultiQuantResource() throws Exception {
 		return REFERENCE_MULTI_QUANT_RESOURCE;
+	}
+
+	/**
+	 * Test running a search using the "alignment only" library (ALIB) output by the `-alignOnly` mode.
+	 * This is <emph>not a supported mode of operation</emph>, but may happen accidentally. It will likely not give
+	 * exactly the same results as searching a more normally-generated library, but should succeed and
+	 * at least give reasonable results.
+	 */
+	@Test
+	public void testWholePipelineMultipleDataQuantUsingAlignmentOnlyLibrary() throws Exception {
+		final ImmutableList<QuantitativeSearchJobData> initialJobData = ImmutableList.of(jobDataA, jobDataB, jobDataC);
+		final List<SearchJobData> jobData = Lists.newArrayList();
+
+		final LibraryFile alignmentLib = new LibraryFile();
+		final int numAlignedPeptides;
+		try {
+			// Generate the alignment-only output
+			final Path alignmentFile = Files.createTempFile(tempDir, "test_", ".elib");
+			try {
+				SearchToBLIB.convert(new EmptyProgressIndicator(), initialJobData, alignmentFile.toFile(), SearchToBLIB.OutputFormat.ALIB, true);
+
+				assertTrue("Output was created?", Files.exists(alignmentFile));
+
+				alignmentLib.openFile(alignmentFile.toFile());
+
+				// Perform some quick checks on the alignment-only results
+				assertSanityTest(alignmentLib, getPeptideFloor(), getProteinFloor());
+
+				try (Connection c = alignmentLib.getConnection()) {
+					try (Statement s = c.createStatement()) {
+						numAlignedPeptides = s.executeQuery("SELECT count() FROM entries").getInt(1);
+					}
+				}
+			} catch (Exception e) {
+				throw new AssumptionViolatedException("Unable to generate reference results", e);
+			}
+
+			// Now we run the "normal" search-and-quant approach, but using the alignment-only library.
+			// This requires regenerating the job data.
+			for (QuantitativeSearchJobData job : initialJobData) {
+				final Path newDia = Files.createTempFile(tempDir, "test_", ".dia");
+				Files.copy(job.getDiaFileReader().getFile().toPath(), newDia, StandardCopyOption.REPLACE_EXISTING);
+
+				final EncyclopediaJobData newJob = new EncyclopediaJobData(
+						newDia.toFile(),
+						fastaFile,
+						alignmentLib,
+						libraryScoringFactory
+				);
+				jobData.add(newJob);
+
+				Encyclopedia.runSearch(new EmptyProgressIndicator(), newJob);
+			}
+
+			SearchToBLIB.convert(
+					new EmptyProgressIndicator(),
+					jobData,
+					tempReport,
+					SearchToBLIB.OutputFormat.ELIB,
+					true
+			);
+		} finally {
+			alignmentLib.close();
+		}
+
+		final LibraryFile quantFile = new LibraryFile();
+		try {
+			quantFile.openFile(tempReport);
+
+			assertSanityTest(quantFile, getPeptideFloor() * jobData.size(), getProteinFloor());
+
+			// We don't assert any validity based on reference, as long as we get sane numbers we consider this
+			// to be "good enough".
+//			assertValidBasedOnReference(quantFile, getReferenceMultiQuantResource());
+		} finally {
+			quantFile.close();
+		}
 	}
 }

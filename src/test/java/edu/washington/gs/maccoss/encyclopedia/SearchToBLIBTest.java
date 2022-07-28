@@ -30,6 +30,11 @@ import java.util.zip.DataFormatException;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assume.assumeFalse;
 
+/**
+ * This test simply makes unit-level checks to some helper methods, using mock data. For a much more
+ * in-depth test of {@code SearchToBLIB} (using previously-computed single-sample search results)
+ * see {@link SearchToBLIBIT}.
+ */
 public class SearchToBLIBTest {
 	@Test
 	public void testAlignmentRoundTrip() throws Exception {
