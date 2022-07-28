@@ -32,6 +32,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearInterpolatedFunction;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
@@ -1237,7 +1238,47 @@ public class SearchToBLIB {
 					} else {
 						// Use a straightforward reimplementation based on the exact data.
 
+						// Generate the necessary linear interpolation for prediction
+						final ArrayList<XYPoint> alignmentPoints = alignmentData.stream()
+								// RTs must be in _minutes_ to match AlternatePeakLocationInferrer, but these values are
+								// already in minutes when we read them from `retentiontimes`.
+								.map(p -> new XYPoint(p.getLibrary(), p.getPredictedActual()))
+								.sorted(Comparator.comparingDouble(XYPoint::getX))
+								.collect(Collectors.toCollection(ArrayList::new));
+
+						// Check for monotonic function (don't require strict monotonicity though, as we see this sometimes).
+						//TODO: non-strictness means the function may not be correctly invertible! This is an upstream problem, however.
+						final boolean increasing = true;
+						for (int i = 1; i < alignmentPoints.size(); i++) {
+							final double y = alignmentPoints.get(i).getY();
+							final double prev = alignmentPoints.get(i - 1).getY();
+
+							if (
+									(increasing && y < prev)
+									|| (!increasing && y > prev)
+							) throw new IllegalStateException(String.format(
+									"Alignment warp is not monotonic! (%.02f, %.02f) -> (%.02f, %.02f)",
+									alignmentPoints.get(i - 1).getX(),
+									prev,
+									alignmentPoints.get(i).getX(),
+									y
+							));
+						}
+
 						alignment = new RetentionTimeAlignmentInterface() {
+							static final double MATCH_TOLERANCE = 1e-3;
+
+							final LinearInterpolatedFunction rtWarper = new LinearInterpolatedFunction(alignmentPoints);
+
+							/**
+							 * Points are sorted by delta (x), but function is not monotonic. NOT INVERTIBLE!
+							 */
+							final LinearInterpolatedFunction probModel = new LinearInterpolatedFunction(alignmentData.stream()
+									.map(p -> new XYPoint(p.getDelta(), p.getProbability()))
+									.sorted(Comparator.comparingDouble(XYPoint::getX))
+									.collect(Collectors.toCollection(ArrayList::new))
+							);
+
 							@Override
 							public List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed) {
 								return alignmentData;
@@ -1245,31 +1286,18 @@ public class SearchToBLIB {
 
 							@Override
 							public float getYValue(float xrt) {
-								return alignmentData.stream()
-										.map(p -> new Pair<>(Math.abs(p.getLibrary() - xrt), p))
-										.min(Comparator.comparingDouble(p -> p.x))
-										.orElseThrow(() -> new IllegalStateException("No such alignment point with library RT " + xrt))
-										.y.getPredictedActual(); // return predicted RT (y)
+								return rtWarper.getYValue(xrt);
 							}
 
 							@Override
 							public float getXValue(float yrt) {
-								return alignmentData.stream()
-										.map(p -> new Pair<>(Math.abs(p.getActual() - yrt), p))
-										.min(Comparator.comparingDouble(p -> p.x))
-										.orElseThrow(() -> new IllegalStateException("No such alignment point with actual RT " + yrt))
-										.y.getLibrary(); // return library RT (x)
+								return rtWarper.getXValue(yrt);
 							}
 
 							@Override
 							public float getProbabilityFitsModel(float actualRT, float modelRT) {
 								final float delta = getDelta(actualRT, modelRT);
-
-								return alignmentData.stream()
-										.map(p -> new Pair<>(Math.abs(p.getDelta() - delta), p))
-										.min(Comparator.comparingDouble(p -> p.x))
-										.orElseThrow(() -> new IllegalStateException("No such alignment point with delta " + delta))
-										.y.getProbability();
+								return probModel.getYValue(delta);
 							}
 
 							@Override
@@ -1277,8 +1305,8 @@ public class SearchToBLIB {
 								// quick-n-dirty -- require exact match
 								for (AlignmentDataPoint p : alignmentData) {
 									if (
-											Math.abs(actualRT - p.getActual()) < 1e-3
-											&& Math.abs(modelRT - p.getPredictedActual()) < 1e-3
+											Math.abs(actualRT - p.getActual()) < MATCH_TOLERANCE
+											&& Math.abs(modelRT - p.getPredictedActual()) < MATCH_TOLERANCE
 									) {
 										return p.getDelta();
 									}
