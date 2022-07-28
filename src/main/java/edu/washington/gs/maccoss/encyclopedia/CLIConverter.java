@@ -30,7 +30,7 @@ public class CLIConverter {
 			Logger.logLine("EncyclopeDIA Converter Help");
 			Logger.timelessLogLine("EncyclopeDIA Converter allows to convert files from one format to another.");
 			Logger.timelessLogLine("Available converters: ");
-			Logger.timelessLogLine("\t-prositCSVToLibrary\tConvert Prosit/Spectronaut CSV to library (use -convert -prositcsvtolibrary -h for help)");
+			Logger.timelessLogLine("\t-prositCSVToLibrary\tConvert Prosit/Spectronaut/DIA-NN CSV to library (use -convert -prositcsvtolibrary -h for help)");
 			Logger.timelessLogLine("\t-blibToLib\tConvert Convert BLIB to Library (use -convert -blibToLib -h for help)");
 			Logger.timelessLogLine("\t-mspToLib\tConvert Convert SPTXT/MSP to Library (use -convert -mspToLib -h for help)");
 			Logger.timelessLogLine("\t-openswathTSVToLibrary\tConvert OpenSwath TSV to library (use -convert -openswathTSVToLibrary -h for help)");
