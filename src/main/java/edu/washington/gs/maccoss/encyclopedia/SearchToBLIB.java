@@ -1316,7 +1316,9 @@ public class SearchToBLIB {
 
 						@Override
 						public List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed) {
-							return alignmentData;
+							return alignmentData.stream()
+									.filter(p -> Objects.nonNull(p.getPeptideModSeq()))
+									.collect(Collectors.toList());
 						}
 
 						@Override
