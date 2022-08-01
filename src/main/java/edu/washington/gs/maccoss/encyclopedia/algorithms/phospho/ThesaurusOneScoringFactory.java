@@ -37,6 +37,11 @@ public class ThesaurusOneScoringFactory implements LibraryScoringFactory {
 	}
 	
 	@Override
+	public String getPrimaryScoreName() {
+		return EncyclopediaOneScorer.getPrimaryScoreName();
+	}
+	
+	@Override
 	public String getName() {
 		return "Thesaurus 1.X Scoring System";
 	}

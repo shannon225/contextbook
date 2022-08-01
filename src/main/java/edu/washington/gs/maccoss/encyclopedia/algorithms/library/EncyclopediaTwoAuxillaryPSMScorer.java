@@ -208,10 +208,10 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 	public static String[] getScoreNames(boolean runXCorr) {
 		// extra scores at the beginning
 		if (runXCorr) {
-			return new String[] {"e2Score", "evalue", "correlationToGaussian", "correlationToPrecursor", "isIntegratedSignal", "isIntegratedPrecursor", "numPeaksWithGoodCorrelation",  
+			return new String[] {"ScribeScore", "evalue", "correlationToGaussian", "correlationToPrecursor", "isIntegratedSignal", "isIntegratedPrecursor", "numPeaksWithGoodCorrelation",  
 					"primary", "xCorrLib", "xCorrModel", "LogDotProduct", "sumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass"};
 		} else {
-			return new String[] {"e2Score", "evalue", "correlationToGaussian", "correlationToPrecursor", "isIntegratedSignal", "isIntegratedPrecursor", "numPeaksWithGoodCorrelation", 
+			return new String[] {"ScribeScore", "evalue", "correlationToGaussian", "correlationToPrecursor", "isIntegratedSignal", "isIntegratedPrecursor", "numPeaksWithGoodCorrelation", 
 					"primary", "LogDotProduct", "sumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "xCorrModel"};
 		}
 	}

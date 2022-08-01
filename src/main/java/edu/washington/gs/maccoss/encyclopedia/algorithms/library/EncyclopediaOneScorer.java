@@ -22,6 +22,9 @@ public class EncyclopediaOneScorer implements EncyclopediaScorer {
 		auxScorer=new EncyclopediaOneAuxillaryPSMScorer(parameters, background, true);
 	}
 	
+	public static String getPrimaryScoreName() {
+		return "primary";
+	}
 
 	@Override
 	public EncyclopediaOneAuxillaryPSMScorer getAuxScorer() {

@@ -26,6 +26,11 @@ public class EncyclopediaTwoScoringFactory implements LibraryScoringFactory {
 	}
 	
 	@Override
+	public String getPrimaryScoreName() {
+		return EncyclopediaTwoScorer.getPrimaryScoreName();
+	}
+	
+	@Override
 	public String getName() {
 		return "EncyclopeDIA 2.X Scoring System";
 	}

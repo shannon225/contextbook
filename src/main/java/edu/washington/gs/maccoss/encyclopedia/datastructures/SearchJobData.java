@@ -23,4 +23,6 @@ public interface SearchJobData {
 	boolean hasBeenRun();
 
 	String getSearchType();
+	
+	String getPrimaryScoreName();
 }

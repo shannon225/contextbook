@@ -21,7 +21,10 @@ public class EncyclopediaTwoScorer implements EncyclopediaScorer {
 		this.parameters=parameters;
 		auxScorer=new EncyclopediaTwoAuxillaryPSMScorer(parameters, background, true);
 	}
-	
+
+	public static String getPrimaryScoreName() {
+		return "ScribeScore";
+	}
 
 	@Override
 	public EncyclopediaTwoAuxillaryPSMScorer getAuxScorer() {

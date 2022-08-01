@@ -18,6 +18,7 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsC
 
 public interface LibraryScoringFactory {
 	public String getName();
+	public String getPrimaryScoreName();
 	public SearchParameters getParameters();
 	public PSMScorer getLibraryScorer(LibraryBackgroundInterface background);
 	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<AbstractScoringResult> resultsQueue);

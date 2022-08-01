@@ -26,6 +26,11 @@ public class EncyclopediaOneScoringFactory implements LibraryScoringFactory {
 	}
 	
 	@Override
+	public String getPrimaryScoreName() {
+		return EncyclopediaOneScorer.getPrimaryScoreName();
+	}
+	
+	@Override
 	public String getName() {
 		return "EncyclopeDIA 1.X Scoring System";
 	}

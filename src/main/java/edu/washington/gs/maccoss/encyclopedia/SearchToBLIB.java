@@ -340,7 +340,7 @@ public class SearchToBLIB {
 				runningPercolator=false;
 			} else {
 				Logger.logLine("Running global Percolator analysis.");
-				TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
+				TableConcatenator.concatenatePINTables(featureFiles, bigFeatureFile, representativeJob.getPrimaryScoreName());
 				
 				// delete if exists
 				if (bigPercolatorFiles.getModelFile().exists()) {

@@ -8,6 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringT
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneAuxillaryPSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
@@ -27,6 +28,11 @@ public class XCorDIAOneScoringFactory implements LibraryScoringFactory {
 
 	public XCorDIAOneScoringFactory(PecanSearchParameters parameters) {
 		this.parameters=parameters;
+	}
+	
+	@Override
+	public String getPrimaryScoreName() {
+		return EncyclopediaOneScorer.getPrimaryScoreName();
 	}
 	
 	@Override

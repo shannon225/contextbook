@@ -50,6 +50,10 @@ public class BlibFileTest extends TestCase {
 			public StripeFileInterface getDiaFileReader() {
 				return null;
 			}
+			@Override
+			public String getPrimaryScoreName() {
+				return "primary";
+			}
 		};
 
 		File blibFile=new File("/Users/searleb/Downloads/yeast/yeast_narrow_dda_library.blib");
