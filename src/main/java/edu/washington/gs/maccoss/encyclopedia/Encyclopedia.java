@@ -30,6 +30,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTime
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
@@ -70,7 +71,6 @@ public class Encyclopedia {
 	public static final String INPUT_DIA_TAG="-i";
 	public static final String BACKGROUND_FASTA_TAG="-f";
 	public static final String QUIET_MODE_ARG = "-quiet";
-	public static final String LEGACY_V1_MODE_ARG = "-v1scoring";
 
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
@@ -163,12 +163,7 @@ public class Encyclopedia {
 				Logger.logLine("EncyclopeDIA version "+ProgramType.getGlobalVersion());
 				
 				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
-				LibraryScoringFactory factory;
-				if (arguments.containsKey(LEGACY_V1_MODE_ARG)) {
-					factory=new EncyclopediaOneScoringFactory(parameters);
-				} else {
-					factory=new EncyclopediaTwoScoringFactory(parameters);
-				}
+				LibraryScoringFactory factory=EncyclopediaScoringFactory.getScoringFactory(arguments, parameters);
 				Logger.logLine("Using "+factory.getName());
 				
 	

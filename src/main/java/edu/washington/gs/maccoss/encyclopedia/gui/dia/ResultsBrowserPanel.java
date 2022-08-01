@@ -255,6 +255,19 @@ public class ResultsBrowserPanel extends JPanel {
 				LibraryFile.OPEN_IN_PLACE=false;
 
 				ArrayList<LibraryEntry> entries=library.getEntries(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), false, parameters.getAAConstants());
+				int numHaveMinimum=0;
+				int numHaveMaximum=0;
+				for (LibraryEntry entry : entries) {
+					float[] correlation=entry.getCorrelationArray();
+					int n=0;
+					for (float c : correlation) {
+						if (c>=TransitionRefiner.quantitativeCorrelationThreshold) n++;
+					}
+					if (n>=parameters.getMinNumOfQuantitativePeaks()) numHaveMinimum++;
+					if (n>=parameters.getNumberOfQuantitativePeaks()) numHaveMaximum++;
+				}
+				Logger.logLine("Total entries: "+entries.size()+", "+parameters.getMinNumOfQuantitativePeaks()+"+ ions:"+numHaveMinimum+", "+parameters.getNumberOfQuantitativePeaks()+"+ ions:"+numHaveMaximum);
+				
 
 				final Optional<Path> source = library.getSource(parameters);
 				if (source.isPresent()) {

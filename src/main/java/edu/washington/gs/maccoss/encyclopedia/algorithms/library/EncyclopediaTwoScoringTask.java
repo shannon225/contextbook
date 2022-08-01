@@ -125,7 +125,7 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 				double[] masses=results.y;
 				float[] intensities=results.z;
 				
-				primary[i]=scores[1];
+				primary[i]=scores[0]*0.075f+scores[1]*0.43f;
 				allMasses[i]=masses;
 				allRawIntensities[i]=General.multiply(intensities, intensities); // undo the sqrt
 				retentionTimes[i]=super.stripes.get(i).getScanStartTime();
@@ -245,10 +245,13 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 						correlationToPrecursor=Correlation.getPearsons(precursor, median);
 						correlationToPlusOne=Correlation.getPearsons(precursorPlusOne, median);
 					}
+
+					Triplet<float[], double[], float[]> results=score(stripe, ions, predictedIntensities, correlation);
+					float[] scores=results.x;
 					
-					auxScoreArray=General.concatenate(new float[] {score, evalue, correlationToGaussian, 
-							correlationToPrecursor, correlationToPlusOne, isIntegratedSignal, isIntegratedPrecursor,
-							numPeaksWithGoodCorrelation, numPeaksWithGreatCorrelation}, auxScoreArray);
+					auxScoreArray=General.concatenate(new float[] {scores[1], evalue, correlationToGaussian, 
+							correlationToPrecursor, isIntegratedSignal, isIntegratedPrecursor,
+							numPeaksWithGoodCorrelation}, auxScoreArray);
 					
 					// block out a 40 scan window
 					for (int j=lowerWindow; j<=upperWindow; j++) {
@@ -266,7 +269,7 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 					consideredPeaks++;
 					
 					// don't add if we don't have enough quantitative ions (add below if it's still the best and there are no matches)
-					//if (numPeaksWithGoodCorrelation<parameters.getMinNumOfQuantitativePeaks()) continue;
+					if (numPeaksWithGoodCorrelation<parameters.getMinNumOfQuantitativePeaks()) continue;
 					
 					result.addStripe(score, auxScoreArray, stripe);
 					if (identifiedPeaks>peaksKept) {

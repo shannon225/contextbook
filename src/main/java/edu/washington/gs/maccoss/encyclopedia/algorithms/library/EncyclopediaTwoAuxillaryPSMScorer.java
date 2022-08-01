@@ -194,9 +194,9 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 			SparseXCorrCalculator sparseModel=sparseModelCalculator!=null?sparseModelCalculator:new SparseXCorrCalculator(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters);
 			float xCorrModel=sparseModel.score(sparseScan);
 			
-			return new float[] {xTandem, xCorrLib, xCorrModel, (float)Log.protectedLog10(dotProduct), (float)Log.protectedLog10(weightedDotProduct), sumOfSquaredErrors, weightedSumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
+			return new float[] {xTandem, xCorrLib, xCorrModel, (float)Log.protectedLog10(dotProduct), sumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
 		} else {
-			return new float[] {xTandem, (float)Log.protectedLog10(dotProduct), (float)Log.protectedLog10(weightedDotProduct), sumOfSquaredErrors, weightedSumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
+			return new float[] {xTandem, (float)Log.protectedLog10(dotProduct), sumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
 		}
 	}
 
@@ -208,11 +208,11 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 	public static String[] getScoreNames(boolean runXCorr) {
 		// extra scores at the beginning
 		if (runXCorr) {
-			return new String[] {"e2Score", "evalue", "correlationToGaussian", "correlationToPrecursor", "correlationToPlusOne", "isIntegratedSignal", "isIntegratedPrecursor", "numPeaksWithGoodCorrelation", "numPeaksWithGreatCorrelation", 
-					"primary", "xCorrLib", "xCorrModel", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass"};
+			return new String[] {"e2Score", "evalue", "correlationToGaussian", "correlationToPrecursor", "isIntegratedSignal", "isIntegratedPrecursor", "numPeaksWithGoodCorrelation",  
+					"primary", "xCorrLib", "xCorrModel", "LogDotProduct", "sumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass"};
 		} else {
-			return new String[] {"e2Score", "evalue", "correlationToGaussian", "correlationToPrecursor", "correlationToPlusOne", "isIntegratedSignal", "isIntegratedPrecursor", "numPeaksWithGoodCorrelation", "numPeaksWithGreatCorrelation", 
-					"primary", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "xCorrModel"};
+			return new String[] {"e2Score", "evalue", "correlationToGaussian", "correlationToPrecursor", "isIntegratedSignal", "isIntegratedPrecursor", "numPeaksWithGoodCorrelation", 
+					"primary", "LogDotProduct", "sumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "xCorrModel"};
 		}
 	}
 	

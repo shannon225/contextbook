@@ -216,6 +216,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 			libraries.put(libraryFile, library);
 		}
 		
+		// Thesaurus only tested with V1
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
 		ThesaurusJobData job=new ThesaurusJobData(diaFile, library, outputFile, fastaFile, factory);
 		return new ThesaurusJob(processor, job);
