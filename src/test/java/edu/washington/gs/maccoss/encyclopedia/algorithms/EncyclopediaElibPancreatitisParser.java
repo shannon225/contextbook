@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms;
+	package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.awt.Dimension;
 import java.io.File;
