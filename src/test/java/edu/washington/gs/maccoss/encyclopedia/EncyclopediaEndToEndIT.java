@@ -174,7 +174,8 @@ public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 		try {
 			quantFile.openFile(tempReport);
 
-			assertSanityTest(quantFile, getPeptideFloor() * jobData.size(), getProteinFloor());
+			// Only require 2/3rds of the ID count of the normal search (this is a degraded library)
+			assertSanityTest(quantFile, (int) Math.round(0.67 * getPeptideFloor() * jobData.size()), (int) Math.round(0.67 * getProteinFloor()));
 
 			// We don't assert any validity based on reference, as long as we get sane numbers we consider this
 			// to be "good enough".
