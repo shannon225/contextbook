@@ -91,4 +91,9 @@ public class XCorDIAJobData extends QuantitativeSearchJobData {
 	public Optional<LibraryInterface> getLibrary() {
 		return library;
 	}
+	
+	@Override
+	public String getPrimaryScoreName() {
+		return taskFactory.getPrimaryScoreName();
+	}
 }

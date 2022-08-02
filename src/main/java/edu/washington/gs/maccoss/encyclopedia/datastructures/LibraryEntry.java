@@ -367,10 +367,12 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 		return quantifiedIonsArray;
 	}
 	
-	public ArrayList<Peak> getPeaks() {
+	public ArrayList<Peak> getPeaks(float minimumCorrelation) {
 		ArrayList<Peak> peaks=new ArrayList<Peak>();
 		for (int i = 0; i < massArray.length; i++) {
-			peaks.add(new Peak(massArray[i], intensityArray[i]));
+			if (correlationArray[i]>=minimumCorrelation) {
+				peaks.add(new Peak(massArray[i], intensityArray[i]));
+			}
 		}
 		return peaks;
 	}

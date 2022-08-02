@@ -30,6 +30,8 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTime
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -157,11 +159,13 @@ public class Encyclopedia {
 				}
 				FileLogRecorder logRecorder=new FileLogRecorder(new File(outputFile.getAbsolutePath()+EncyclopediaJobData.LOG_FILE_SUFFIX));
 				Logger.addRecorder(logRecorder);
-	
-				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
-				LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
-				
+
 				Logger.logLine("EncyclopeDIA version "+ProgramType.getGlobalVersion());
+				
+				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
+				LibraryScoringFactory factory=EncyclopediaScoringFactory.getScoringFactory(arguments, parameters);
+				Logger.logLine("Using "+factory.getName());
+				
 	
 				Logger.logLine("Parameters:");
 				Logger.logLine(" "+INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());

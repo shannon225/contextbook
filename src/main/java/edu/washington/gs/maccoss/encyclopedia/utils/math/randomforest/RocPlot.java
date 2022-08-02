@@ -10,6 +10,10 @@ public class RocPlot {
 		fprs.add(0.0f);
 		tprs.add(0.0f);
 	}
+	
+	public int size() {
+		return fprs.size();
+	}
 
 	/**
 	 * assumes adding in order of fpr
@@ -37,15 +41,20 @@ public class RocPlot {
 	}
 
 	public float getAUC() {
+		return getAUC(1.0f);
+	}
+	public float getAUC(float maxFPR) {
 		float sum=0.0f;
 		for (int i=0; i<fprs.size(); i++) {
+			if (fprs.get(i)>maxFPR) break;
+			
 			if (i==fprs.size()-1) {
 				sum+=getTrapezoidArea(fprs.get(i), tprs.get(i), 1.0f, 1.0f);
 			} else {
 				sum+=getTrapezoidArea(fprs.get(i), tprs.get(i), fprs.get(i+1), tprs.get(i+1));
 			}
 		}
-		return sum;
+		return sum/maxFPR;
 	}
 
 	public float getTPR(float fpr) {

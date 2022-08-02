@@ -77,4 +77,9 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData {
 	public String getSearchType() {
 		return "EncyclopeDIA";
 	}
+	
+	@Override
+	public String getPrimaryScoreName() {
+		return taskFactory.getPrimaryScoreName();
+	}
 }

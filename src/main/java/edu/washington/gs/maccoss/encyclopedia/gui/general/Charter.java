@@ -37,6 +37,7 @@ import java.util.Map.Entry;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenuItem;
+import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
 import org.jfree.chart.ChartFactory;
@@ -215,6 +216,29 @@ public class Charter {
 		writeAsPDF(chart, f, d);
 	}
 
+	public static void writeAsPDF(JPanel panel, File f, Dimension d) {
+		try {
+			FontFactory.defaultEmbedding = true;
+			
+			// NOTE: this uses itextPDF 4.2, which is LGPL. Do not upgrade to the AGPL version! 
+			Rectangle pagesize=new Rectangle(d.width, d.height);
+			Document document=new Document(pagesize);
+			FileOutputStream os=new FileOutputStream(f);
+			PdfWriter writer=PdfWriter.getInstance(document, os);
+			document.open();
+			PdfContentByte canvas=writer.getDirectContent();
+			PdfTemplate template=canvas.createTemplate(d.width, d.height);
+			Graphics2D g2d=new PdfGraphics2D(template, d.width, d.height);
+			panel.printComponents(g2d);
+			g2d.dispose();
+			canvas.addTemplate(template, 0, 0);
+			document.close();
+			os.close();
+		} catch (Exception e) {
+			Logger.errorException(e);
+		}
+	}
+
 	public static void writeAsPDF(JFreeChart chart, File f, Dimension d) {
 		try {
 			FontFactory.defaultEmbedding = true;
@@ -262,6 +286,16 @@ public class Charter {
 		//Dimension d=new Dimension(400, 300);
 		
 		writeAsSVG(getChart(xAxis, yAxis, displayLegend, traces).getChart(), f, d);
+	}
+	public static void writeAsSVG(JPanel panel, File f, Dimension d) {
+		try {
+			SVGGraphics2D g2 = new SVGGraphics2D(d.width, d.height); 
+	        java.awt.Rectangle r = new java.awt.Rectangle(0, 0, d.width, d.height); 
+	        panel.paint(g2); 
+	        SVGUtils.writeToSVG(f, g2.getSVGElement()); 
+		} catch (Exception e) {
+			Logger.errorException(e);
+		}
 	}
 
 	public static void writeAsSVG(JFreeChart chart, File f, Dimension d) {
@@ -478,8 +512,11 @@ public class Charter {
 		}
 		return getBoxplotChart(title, xAxisLabel, yAxisLabel, categories, floatValues);
 	}
-	
+
 	public static ExtendedChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, String[] categories, TFloatArrayList[] values) {
+		return getBoxplotChart(title, xAxisLabel, yAxisLabel, categories, values, false);
+	}
+	public static ExtendedChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, String[] categories, TFloatArrayList[] values, boolean requireRangeIncludesZero) {
 		assert (categories.length==values.length);
 		boolean displayLegend=false;
 
@@ -491,7 +528,7 @@ public class Charter {
 		CategoryBoxPlotterRenderer renderer=new CategoryBoxPlotterRenderer();
 		CategoryAxis xAxis=new CategoryAxis(xAxisLabel);
 		NumberAxis yAxis=new NumberAxis(yAxisLabel);
-		yAxis.setAutoRangeIncludesZero(false);
+		yAxis.setAutoRangeIncludesZero(requireRangeIncludesZero);
 		CategoryPlot plot=new CategoryPlot(dataset, xAxis, yAxis, renderer);
 
 		Font font=new Font(BASE_FONT_NAME, Font.PLAIN, 24);

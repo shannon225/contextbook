@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms;
+	package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.awt.Dimension;
 import java.io.File;
@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -22,12 +24,18 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterfa
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.ExtendedChartPanel;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.BenjaminiHochberg;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearDiscriminantAnalysis;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.MatrixMath;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.randomforest.RocPlot;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -43,7 +51,8 @@ public class EncyclopediaElibPancreatitisParser {
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException {
 		loadMap();
 		
-		File file=new File("/Users/searle.30/Documents/CCIC/maisam/032922_pancreatitis_grant_dataset/032922_pancreatitis_120_quant_reports.elib");
+		//File file=new File("/Users/searle.30/Documents/CCIC/maisam/032922_pancreatitis_grant_dataset/032922_pancreatitis_120_quant_reports.elib");
+		File file=new File("/Users/searleb/Documents/OSU/projects/maisam_pancreatitis/032922_pancreatitis_grant_dataset/032922_pancreatitis_120_quant_reports.elib");
 		File stub=new File(file.getParent(), "pancreatitis_120_boxplots");
 		//File stub=new File(file.getParent(), "fracture_120_boxplots");
 		FileUtils.deleteDirectory(stub);
@@ -64,7 +73,147 @@ public class EncyclopediaElibPancreatitisParser {
 		ArrayList<ProteinGroupInterface> proteinGroups=library.getProteinGroups();
 		System.out.println(proteinGroups.size()+" total protein groups");
 		File proteinReportFile=LibraryReportExtractor.extractMatrix(library, proteinGroups, true, Optional.of(cvCalculator));
+
+		//String[] keptAccessions=new String[] {"AMYP_HUMAN"};
+		//String[] keptAccessions=new String[] {"CEL2A_HUMAN"};
+		//String[] keptAccessions=new String[] {"AMYP_HUMAN", "CRP_HUMAN", "CEL2A_HUMAN"};
+		String[] keptAccessions=new String[] {"AMYP_HUMAN", "POF1B_HUMAN", "REG1A_HUMAN", "CRP_HUMAN", "CEL2A_HUMAN"};
+		//String[] keptAccessions=new String[] {"AMYP_HUMAN", "POF1B_HUMAN", "SH3L1_HUMAN", "REG1A_HUMAN", "CRP_HUMAN", "CEL2A_HUMAN", "CAYP1_HUMAN", "SYUG_HUMAN", "IDHC_HUMAN", "S100P_HUMAN", "S10A6_HUMAN", "GSHR_HUMAN", "FCL_HUMAN", "BAZ1A_HUMAN", "PHS_HUMAN", "PGDH_HUMAN", "GPD1L_HUMAN", "SCRN1_HUMAN", "CRYM_HUMAN", "EMAL2_HUMAN", "AGR2_HUMAN", "NUCKS_HUMAN", "MTPN_HUMAN", "GSH1_HUMAN", "ALDOC_HUMAN"};
+		createClassifier(proteinReportFile, new HashSet<String>(Arrays.asList(keptAccessions)));
+		//assessProteinSpecificPValues(testDirs, proteinReportFile);
+	}
+	
+	private static void createClassifier(File proteinReportFile, HashSet<String> keptAccessions) {
+		ArrayList<String> accessions=new ArrayList<String>();
+		HashMap<String, TDoubleArrayList> dataMap=new HashMap<>(); 
 		
+		TableParser.parseTSV(proteinReportFile, new TableParserMuscle() {
+			
+			@Override
+			public void processRow(Map<String, String> row) {
+				String proteinAccession=row.get("Protein").split(";")[0].split("\\|")[2];
+				if (!keptAccessions.contains(proteinAccession)) return;
+				
+				accessions.add(proteinAccession);
+				
+				for (Entry<String, SampleCoordinate> entry : sampleKey.entrySet()) {
+					String value=row.get(entry.getKey());
+					float rawIntensity=Float.parseFloat(value);
+					float intensity=(float)log2(rawIntensity);
+					TDoubleArrayList data=dataMap.get(entry.getKey());
+					if (data==null) {
+						data=new TDoubleArrayList();
+						dataMap.put(entry.getKey(), data);
+					}
+					data.add(intensity);
+				}
+			}
+			
+			@Override
+			public void cleanup() {
+			}
+		});
+		System.out.println("Creating classifier with "+accessions.size()+"/"+keptAccessions.size()+" proteins");
+
+		HashMap<String, double[]>[] datasetsByGroup=new HashMap[sampleNames.length];
+		for (int i = 0; i < datasetsByGroup.length; i++) {
+			datasetsByGroup[i]=new HashMap<>();
+		}
+		for (Map.Entry<String, TDoubleArrayList> entry : dataMap.entrySet()) {
+			String key = entry.getKey();
+			TDoubleArrayList val = entry.getValue();
+			
+			SampleCoordinate coords=sampleKey.get(key);
+			int index=coords.getSampleIndex();
+			datasetsByGroup[index].put(key, val.toArray());
+		}
+		
+		for (int i = 0; i < tests.length; i++) {
+			int testIndex=tests[i];
+			
+			HashMap<String, double[]> testDataset=datasetsByGroup[testIndex];
+			HashMap<String, double[]> controlDataset=new HashMap<>();
+			
+			for (int j = 0; j < controls.length; j++) {
+				int controlIndex=controls[j];
+				controlDataset.putAll(datasetsByGroup[controlIndex]);
+			}
+			System.out.println("tests:"+testDataset.size()+" controls:"+controlDataset.size());
+			
+			Pair<double[][], double[][]> testData=getData(testDataset, 0.5f);
+			Pair<double[][], double[][]> controlData=getData(controlDataset, 0.5f);
+			
+			LinearDiscriminantAnalysis model=LinearDiscriminantAnalysis.buildModel(testData.x, controlData.x);
+			
+			ArrayList<ScoredIndex> scores=new ArrayList<>();
+			for (int j = 0; j < testData.y.length; j++) {
+				System.out.println("1\t"+model.getScore(General.toFloatArray(testData.y[j])));
+				scores.add(new ScoredIndex(model.getScore(General.toFloatArray(testData.y[j])), 1));
+			}
+			for (int j = 0; j < controlData.y.length; j++) {
+				System.out.println("0\t"+model.getScore(General.toFloatArray(controlData.y[j])));
+				scores.add(new ScoredIndex(model.getScore(General.toFloatArray(controlData.y[j])), 0));
+			}
+
+			Collections.sort(scores);
+			Collections.reverse(scores);
+			
+			RocPlot plot=getRocPlot(scores, testData.y.length, controlData.y.length);
+			System.out.println(sampleNames[testIndex]+" AUC: "+plot.getAUC()+", eval cases: "+scores.size());
+
+			for (int j = 0; j < accessions.size(); j++) {
+				System.out.println(accessions.get(j)+"\t"+model.getCoefficients()[j]
+						+"\t"+General.mean(MatrixMath.getColumn(testData.x, j))
+						+"\t"+General.mean(MatrixMath.getColumn(controlData.x, j))
+						);
+			}
+			System.out.println("Constant\t"+model.getConstant());
+		}
+	}
+	
+	private static RocPlot getRocPlot(ArrayList<ScoredIndex> scores, int totalPositives, int totalNegatives) {
+		RocPlot roc = new RocPlot();
+		int falsePositives = 0;
+		int truePositives = 0;
+		for (ScoredIndex r : scores) {
+			if (r.y==1) {
+				truePositives++;
+			} else {
+				falsePositives++;
+			}
+
+			float falsePositiveRate = falsePositives / (float) totalNegatives;
+			float truePositiveRate = truePositives / (float) totalPositives;
+			roc.addData(falsePositiveRate, truePositiveRate);
+			System.out.println(roc.size()+"\t"+roc.getAUC()+"\t"+falsePositives+"\t"+truePositives+"\t"+falsePositiveRate+"\t"+truePositiveRate);
+		}
+		System.out.println("ROC:\n"+roc.toString());
+		return roc;
+	}
+
+	
+	private static Pair<double[][], double[][]> getData(HashMap<String, double[]> dataset, float split) {
+		int seed=16807;
+		
+		HashMap<String, double[]> train=new HashMap<>();
+		HashMap<String, double[]> eval=new HashMap<>();
+		
+		for (Map.Entry<String, double[]> entry : dataset.entrySet()) {
+			String key = entry.getKey();
+			double[] val = entry.getValue();
+			seed=RandomGenerator.randomInt(seed);
+			float rand=RandomGenerator.floatFromRandomInt(seed);
+			if (rand>split) {
+				eval.put(key, val);
+			} else {
+				train.put(key, val);
+			}
+		}
+		
+		return new Pair<>(train.values().toArray(new double[0][]), eval.values().toArray(new double[0][]));
+	}
+
+	private static void assessProteinSpecificPValues(File[] testDirs, File proteinReportFile) {
 		ArrayList<String> accessions=new ArrayList<String>();
 		TDoubleArrayList pvalues=new TDoubleArrayList();
 		ArrayList<TFloatArrayList[]> datasets=new ArrayList<TFloatArrayList[]>();

@@ -254,7 +254,13 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public void setFileVersion() throws IOException, SQLException {
+		Connection c=getConnection();
+		c.createStatement().execute("delete from metadata where Key=\'"+VERSION_STRING+"\'");
+		c.commit();
+		c.close();
+		
 		HashMap<String, String> map=new HashMap<String, String>();
+		
 		map.put(VERSION_STRING, MOST_RECENT_VERSION.toString());
 		addMetadata(map);
 	}
@@ -269,6 +275,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		Connection c=getConnection();
 		try {
 			PreparedStatement prep=c.prepareStatement("insert into metadata (Key, Value) VALUES (?,?)");
+			
 			try {
 				for (Entry<String, String> entry : data.entrySet()) {
 					prep.setString(1, entry.getKey());
@@ -1667,6 +1674,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 	private void createNewTables() throws IOException, SQLException {
 		Connection c=getConnection();
+		boolean updated=false;
 		try {
 			Statement s=c.createStatement();
 			try {
@@ -1689,6 +1697,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						s.execute("ALTER TABLE entries ADD COLUMN RTInSecondsStop double");
 						s.execute("ALTER TABLE entries ADD COLUMN MedianChromatogramEncodedLength int");
 						s.execute("ALTER TABLE entries ADD COLUMN MedianChromatogramArray blob");
+						updated=true;
 					}
 					if (new Version(0, 1, 4).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
 						if (userFile!=null) {
@@ -1697,6 +1706,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						s.execute("ALTER TABLE fragmentquants ADD COLUMN Background double");
 						s.execute("ALTER TABLE fragmentquants ADD COLUMN PeptideSeq string");
 						s.execute("ALTER TABLE peptidequants ADD COLUMN PeptideSeq string");
+						updated=true;
 					}
 
 					if (new Version(0, 1, 5).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
@@ -1704,6 +1714,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 							Logger.logLine("Updating library to "+new Version(0, 1, 5));
 						}
 						s.execute("ALTER TABLE peptidequants ADD COLUMN RTInSecondsCenter double");
+						updated=true;
 					}
 
 					if (new Version(0, 1, 6).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
@@ -1711,6 +1722,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 							Logger.logLine("Updating library to "+new Version(0, 1, 6));
 						}
 						s.execute("ALTER TABLE peptidequants ADD COLUMN IdentifiedTICRatio double");
+						updated=true;
 					}
 
 					if (new Version(0, 1, 7).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
@@ -1718,6 +1730,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 							Logger.logLine("Updating library to "+new Version(0, 1, 7));
 						}
 						s.execute("ALTER TABLE fragmentquants ADD COLUMN IonIndex int");
+						updated=true;
 					}
 
 					if (new Version(0, 1, 8).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
@@ -1726,6 +1739,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						}
 						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonMassLength int");
 						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonMassArray blob");
+						updated=true;
 					}
 
 					if (new Version(0, 1, 10).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
@@ -1737,6 +1751,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 						populatePeptideToProtein(c);
 						s.execute("DROP TABLE proteins;");
+						updated=true;
 					}
 
 					if (new Version(0, 1, 11).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
@@ -1747,6 +1762,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonIntensityArray blob");
 						s.execute("ALTER TABLE peptidequants ADD COLUMN MedianChromatogramRTEncodedLength int");
 						s.execute("ALTER TABLE peptidequants ADD COLUMN MedianChromatogramRTArray blob");
+						updated=true;
 					}
 
 					if (new Version(0, 1, 12).amIAbove(version)&&version.amIAbove(new Version(0, 1, 9))) {
@@ -1754,6 +1770,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 							Logger.logLine("Updating library to "+new Version(0, 1, 12));
 						}
 						s.execute("ALTER TABLE peptidetoprotein ADD COLUMN isDecoy boolean");
+						updated=true;
 					}
 
 					if (new Version(0, 1, 15).amIAbove(version)&&version.amIAbove(new Version(0, 0, 9))) {
@@ -1761,12 +1778,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 							Logger.logLine("Updating library to "+new Version(0, 1, 15));
 						}
 						s.execute("ALTER TABLE entries ADD COLUMN QuantifiedIonsArray blob");
-					}
-					
-					try {
-						setFileVersion();
-					} catch (SQLException sqle) {
-						Logger.errorLine("Error trying to set library file version, library is locked for writing");
+						updated=true;
 					}
 				}
 
@@ -1815,6 +1827,15 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			}
 		} finally {
 			c.close();
+		}
+		
+		if (updated) {
+			try {
+				setFileVersion();
+			} catch (SQLException sqle) {
+				Logger.errorLine("Error trying to set library file version, library is locked for writing");
+				sqle.printStackTrace();
+			}
 		}
 	}
 

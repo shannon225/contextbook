@@ -2,6 +2,10 @@ package edu.washington.gs.maccoss.encyclopedia.gui.general;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,9 +13,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-import org.jfree.chart.ChartPanel;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -263,7 +267,7 @@ public class CharterTest {
 				5f, 3f, 5f, 4f, 10f, 70f, 11f, 52f, 2f, 19f, 2f, 4f, 3f, 5f, 1f, 7f, 3f, 1f, 3f, 2f, 28f, 2f, 11f, 1f,
 				2f, 2f, 25f, 1f, 9f, 2f, 3f, 1f, 2f, 27f, 16f, 4f, 2f, 7f, 2f, 3f };
 
-		HashMap<String, String> paramsMap=SearchParameterParser.getDefaultParameters();
+		HashMap<String, String> paramsMap = SearchParameterParser.getDefaultParameters();
 		paramsMap.put("-ptol", "0.5");
 		paramsMap.put("-ptolunits", "AMU");
 		paramsMap.put("-ftol", "0.5");
@@ -271,66 +275,159 @@ public class CharterTest {
 		paramsMap.put("-lftol", "0.5");
 		paramsMap.put("-lftolunits", "AMU");
 		SearchParameters params = SearchParameterParser.parseParameters(paramsMap);
-		LibraryEntry entry=new LibraryEntry("", new HashSet<>(), 1229.74, (byte)2, "ELVISLIVESK", 1, 0, 0, masses, intensities, params.getAAConstants());
-		AnnotatedLibraryEntry annotatedEntry=new AnnotatedLibraryEntry(entry, params);
+		LibraryEntry entry = new LibraryEntry("", new HashSet<>(), 1229.74, (byte) 2, "ELVISLIVESK", 1, 0, 0, masses,
+				intensities, params.getAAConstants());
+		AnnotatedLibraryEntry annotatedEntry = new AnnotatedLibraryEntry(entry, params);
 		Charter.launchChart(annotatedEntry, "ELVISLIVESK");
 	}
-	
+
 	public static void main4(String[] args) {
-		File[] fs=new File("/Volumes/searle_ssd/malaria/UW_SCX_yeast/scx_mzmls").listFiles(new SimpleFilenameFilter(".txt"));
+		File[] fs = new File("/Volumes/searle_ssd/malaria/UW_SCX_yeast/scx_mzmls")
+				.listFiles(new SimpleFilenameFilter(".txt"));
 		Arrays.sort(fs);
 		for (File f : fs) {
 			System.out.println(f.getName());
-			HashMap<Comparable, TFloatArrayList> hash=new HashMap<>();
+			HashMap<Comparable, TFloatArrayList> hash = new HashMap<>();
 			TableParser.parseSSV(f, new TableParserMuscle() {
 				@Override
 				public void processRow(Map<String, String> row) {
-					Integer time=Math.round((Integer.parseInt(row.get("time"))/10.0f))*10;
+					Integer time = Math.round((Integer.parseInt(row.get("time")) / 10.0f)) * 10;
 					String s = row.get("count");
-					if (s==null||s.length()==0) return;
-					float point=Float.parseFloat(s);
-					if (point>20.0f) point=20.0f;
-					TFloatArrayList list=hash.get(time);
-					if (list==null) {
-						list=new TFloatArrayList();
+					if (s == null || s.length() == 0)
+						return;
+					float point = Float.parseFloat(s);
+					if (point > 20.0f)
+						point = 20.0f;
+					TFloatArrayList list = hash.get(time);
+					if (list == null) {
+						list = new TFloatArrayList();
 						hash.put(time, list);
 					}
 					list.add(point);
 				}
+
 				@Override
 				public void cleanup() {
 				}
 			});
-			
-			System.out.println("Parsed "+hash.size()+" values...");
-			final ExtendedChartPanel times=Charter.getBoxplotChart(null, "Retention Time (min)", "Number of MS2s", hash);
+
+			System.out.println("Parsed " + hash.size() + " values...");
+			final ExtendedChartPanel times = Charter.getBoxplotChart(null, "Retention Time (min)", "Number of MS2s",
+					hash);
 			Charter.launchChart(times, "Number of MS2s", new Dimension(500, 200));
 		}
 
 	}
-	
-	
+
+	public static void main(String[] args) {
+		// BOXPLOTTING
+		File f = new File("/Users/searle.30/Documents/CCIC/yi/rna_vs_protein/full_tcell_rna_vs_protein.txt");
+		File dir = new File(f.getParentFile(), "plots_combined");
+		dir.mkdir();
+
+		String[] columns = new String[] {
+				"polyT_ac_1","polyT_ac_2","polyT_ac_3","polyT_chr_1","polyT_chr_2","polyT_chr_3",
+				"051622_Mouse_Tcell_DIA_naive_rep01.dia",
+				"051622_Mouse_Tcell_DIA_naive_rep02.dia", "051622_Mouse_Tcell_DIA_naive_rep03.dia",
+				"051622_Mouse_Tcell_DIA_naive_rep04.dia", "051622_Mouse_Tcell_DIA_naive_rep05.dia",
+				"051622_Mouse_Tcell_DIA_acuteD3_rep01.dia", "051622_Mouse_Tcell_DIA_acuteD3_rep02.dia",
+				"051622_Mouse_Tcell_DIA_acuteD3_rep03.dia", "051622_Mouse_Tcell_DIA_acuteD3_rep04.dia",
+				"051622_Mouse_Tcell_DIA_acuteD3_rep05.dia", "051622_Mouse_Tcell_DIA_chronicD3_rep01.dia",
+				"051622_Mouse_Tcell_DIA_chronicD3_rep02.dia", "051622_Mouse_Tcell_DIA_chronicD3_rep03.dia",
+				"051622_Mouse_Tcell_DIA_chronicD3_rep04.dia", "051622_Mouse_Tcell_DIA_chronicD3_rep05.dia",
+				"051622_Mouse_Tcell_DIA_chronicD7_rep01.dia", "051622_Mouse_Tcell_DIA_chronicD7_rep02.dia",
+				"051622_Mouse_Tcell_DIA_chronicD7_rep03.dia", "051622_Mouse_Tcell_DIA_chronicD7_rep04.dia",
+				"051622_Mouse_Tcell_DIA_chronicD7_rep05.dia" };
+
+		int[] groups = new int[] { 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6 };
+		String[] sampleNames = new String[] { "Acute D8", "Chronic D8", "Naive", "Acute D3", "Chronic D3",
+				"Chronic D7" };
+		int numGroups = 6;
+
+		TableParser.parseTSV(f, new TableParserMuscle() {
+			@Override
+			public void processRow(Map<String, String> row) {
+				String gene = row.get("gene");
+				TFloatArrayList[] data = new TFloatArrayList[numGroups];
+				for (int i = 0; i < data.length; i++) {
+					data[i] = new TFloatArrayList();
+				}
+				for (int i = 0; i < columns.length; i++) {
+					float intensity = Float.parseFloat(row.get(columns[i]));
+					int group = groups[i];
+					data[group - 1].add(intensity);
+				}
+
+				JPanel panel = new JPanel(new FlowLayout());
+
+				panel.setLayout(new GridLayout(0, 2));
+
+				ExtendedChartPanel panel1 = Charter.getBoxplotChart("RNA " + gene, "", "RNA RPKM",
+						new String[] { sampleNames[0], sampleNames[1] }, new TFloatArrayList[] { data[0], data[1] },
+						true);
+				ExtendedChartPanel panel2 = Charter.getBoxplotChart("Protein " + gene, "", "Protein Intensity",
+						new String[] { sampleNames[2], sampleNames[3], sampleNames[4], sampleNames[5] },
+						new TFloatArrayList[] { data[2], data[3], data[4], data[5] }, true);
+				panel1.setSize(150, 150);
+				panel2.setSize(250, 150);
+
+				panel.add(panel1);
+				panel.add(panel2);
+
+				panel.setSize(new Dimension(400, 300));
+
+				JFrame f = new JFrame();
+				f.pack();
+				f.add(panel);
+				f.setVisible(true);
+				f.setSize(400, 300);
+				try {
+					Thread.sleep(100);
+				} catch (Exception e) {
+				}
+
+				File of = new File(dir, gene + "_combined.pdf");
+				Charter.writeAsPDF(panel, of, new Dimension(400, 300));
+
+				// Charter.launchComponent(right, "Boxes", new Dimension(300, 300));
+//				
+//				File f=new File(dir, gene+"_rna.pdf");
+//				Charter.writeAsPDF(panel.getChart(), f, new Dimension(150, 250));
+//				File f2=new File(dir, gene+"_protein.pdf");
+//				Charter.writeAsPDF(panel2.getChart(), f2, new Dimension(150, 250));
+			}
+
+			@Override
+			public void cleanup() {
+			}
+		});
+
+	}
+
 	public static void main2(String[] args) {
-		File f=new File("/Users/searleb/Documents/chromatogram_library_manuscript/quant_replicates/cvs_by_mean.txt");
-		
-		final TFloatFloatHashMap hash=new TFloatFloatHashMap();
+		File f = new File("/Users/searleb/Documents/chromatogram_library_manuscript/quant_replicates/cvs_by_mean.txt");
+
+		final TFloatFloatHashMap hash = new TFloatFloatHashMap();
 		TableParser.parseTSV(f, new TableParserMuscle() {
 			@Override
 			public void processRow(Map<String, String> row) {
 				hash.put(Log.log10(Float.parseFloat(row.get("mean"))), Float.parseFloat(row.get("cv")));
 			}
+
 			@Override
 			public void cleanup() {
 			}
 		});
-		
-		System.out.println("Parsed "+hash.size()+" values...");
-		XYTraceInterface dataset=new XYTrace(hash, GraphType.tinypoint, "Coefficient of Variance", new Color(0.0f, 0.0f, 1.0f, 0.1f), 0.1f);
+
+		System.out.println("Parsed " + hash.size() + " values...");
+		XYTraceInterface dataset = new XYTrace(hash, GraphType.tinypoint, "Coefficient of Variance",
+				new Color(0.0f, 0.0f, 1.0f, 0.1f), 0.1f);
 		Charter.launchChart("Log10 Average Intensity", "Coefficient of Variance", false, dataset);
 	}
 
 	/**
 	 * Methionine: http://mona.fiehnlab.ucdavis.edu/spectra/display/CE000452
+	 * 
 	 * @param args
 	 */
 	public static void main6(String[] args) {
@@ -338,61 +435,76 @@ public class CharterTest {
 				150.051987, 150.054855, 150.058304, 150.063202, 150.065689, 150.067154, 150.069916, 150.074142,
 				299.242279 };
 		float[] intensities = new float[] { 9.029358f, 41.774054f, 0.503758f, 0.418014f, 0.40345f, 0.539593f, 0.682148f,
-				1.009503f, 100f, 0.635989f, 0.550531f, 0.604124f, 0.460001f, 0.433143f, 0.651692f};
-		intensities=General.multiply(intensities, -1);
-		float[] correlations=new float[intensities.length];
-		boolean[] quantifiedIons=new boolean[intensities.length];
-		
-		LibraryEntry trace = new LibraryEntry("Massbank", new HashSet<>(), 1, 150.0583, (byte)1, "M", "M", 1, 3791.84f, 0, masses, intensities, correlations, quantifiedIons, true);
-			
-		System.out.println("CHECK: "+General.toString(trace.getIntensityArray()));
-		System.out.println("VS: "+General.toString(intensities));
-		
+				1.009503f, 100f, 0.635989f, 0.550531f, 0.604124f, 0.460001f, 0.433143f, 0.651692f };
+		intensities = General.multiply(intensities, -1);
+		float[] correlations = new float[intensities.length];
+		boolean[] quantifiedIons = new boolean[intensities.length];
+
+		LibraryEntry trace = new LibraryEntry("Massbank", new HashSet<>(), 1, 150.0583, (byte) 1, "M", "M", 1, 3791.84f,
+				0, masses, intensities, correlations, quantifiedIons, true);
+
+		System.out.println("CHECK: " + General.toString(trace.getIntensityArray()));
+		System.out.println("VS: " + General.toString(intensities));
+
 		Charter.launchChart(trace);
 	}
-	
-	public static void main(String[] args) throws Exception {
-		File actualFile=new File("/Users/searleb/Documents/maccoss/barnes/chris_barnes/actual_peptides_for_chris_barnes.dlib");
-		File predictedFile=new File("/Users/searleb/Documents/maccoss/barnes/chris_barnes/peptides_for_chris_barnes.dlib");
-		File altpredictedFile=new File("/Users/searleb/Documents/maccoss/barnes/chris_barnes/alt_peptides_for_chris_barnes.dlib");
-		HashMap<String, String> paramMap=SearchParameterParser.getDefaultParameters();
+
+	public static void main7(String[] args) throws Exception {
+		File actualFile = new File(
+				"/Users/searleb/Documents/maccoss/barnes/chris_barnes/actual_peptides_for_chris_barnes.dlib");
+		File predictedFile = new File(
+				"/Users/searleb/Documents/maccoss/barnes/chris_barnes/peptides_for_chris_barnes.dlib");
+		File altpredictedFile = new File(
+				"/Users/searleb/Documents/maccoss/barnes/chris_barnes/alt_peptides_for_chris_barnes.dlib");
+		HashMap<String, String> paramMap = SearchParameterParser.getDefaultParameters();
 		paramMap.put("-ftol", "10");
 		paramMap.put("-lftol", "10");
-		SearchParameters params=SearchParameterParser.parseParameters(paramMap);
-		int peptide=1;
-		
-		LibraryFile actualLibrary=new LibraryFile();
-		actualLibrary.openFile(actualFile);
-		LibraryFile predictedLibrary=new LibraryFile();
-		predictedLibrary.openFile(predictedFile);
-		LibraryFile altpredictedLibrary=new LibraryFile();
-		altpredictedLibrary.openFile(altpredictedFile);
-		
-		ArrayList<LibraryEntry> actual=actualLibrary.getAllEntries(false, params.getAAConstants());
-		ArrayList<LibraryEntry> predicted=predictedLibrary.getAllEntries(false, params.getAAConstants());
-		ArrayList<LibraryEntry> altpredicted=altpredictedLibrary.getAllEntries(false, params.getAAConstants());
-		
+		SearchParameters params = SearchParameterParser.parseParameters(paramMap);
+		int peptide = 1;
 
-		Charter.launchChart(new AnnotatedLibraryEntry(actual.get(peptide), params, true), actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
-		Charter.launchChart(new AnnotatedLibraryEntry(getButterfly(actual.get(peptide), predicted.get(peptide)), params, true), actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
-		Charter.launchChart(new AnnotatedLibraryEntry(getButterfly(actual.get(peptide), altpredicted.get(0)), params, true), actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
+		LibraryFile actualLibrary = new LibraryFile();
+		actualLibrary.openFile(actualFile);
+		LibraryFile predictedLibrary = new LibraryFile();
+		predictedLibrary.openFile(predictedFile);
+		LibraryFile altpredictedLibrary = new LibraryFile();
+		altpredictedLibrary.openFile(altpredictedFile);
+
+		ArrayList<LibraryEntry> actual = actualLibrary.getAllEntries(false, params.getAAConstants());
+		ArrayList<LibraryEntry> predicted = predictedLibrary.getAllEntries(false, params.getAAConstants());
+		ArrayList<LibraryEntry> altpredicted = altpredictedLibrary.getAllEntries(false, params.getAAConstants());
+
+		Charter.launchChart(new AnnotatedLibraryEntry(actual.get(peptide), params, true),
+				actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
+		Charter.launchChart(
+				new AnnotatedLibraryEntry(getButterfly(actual.get(peptide), predicted.get(peptide)), params, true),
+				actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
+		Charter.launchChart(
+				new AnnotatedLibraryEntry(getButterfly(actual.get(peptide), altpredicted.get(0)), params, true),
+				actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
 	}
-	
+
 	public static LibraryEntry getButterfly(LibraryEntry top, LibraryEntry bottom) {
-		double[] masses=new double[top.getMassArray().length+bottom.getMassArray().length];
+		double[] masses = new double[top.getMassArray().length + bottom.getMassArray().length];
 		System.arraycopy(top.getMassArray(), 0, masses, 0, top.getMassArray().length);
 		System.arraycopy(bottom.getMassArray(), 0, masses, top.getMassArray().length, bottom.getMassArray().length);
-		float[] intensities=new float[top.getIntensityArray().length+bottom.getIntensityArray().length];
+		float[] intensities = new float[top.getIntensityArray().length + bottom.getIntensityArray().length];
 		System.arraycopy(normalize(top.getIntensityArray()), 0, intensities, 0, top.getIntensityArray().length);
-		System.arraycopy(General.multiply(normalize(bottom.getIntensityArray()), -1f), 0, intensities, top.getIntensityArray().length, bottom.getIntensityArray().length);
-		float[] correlations=new float[top.getCorrelationArray().length+bottom.getCorrelationArray().length];
+		System.arraycopy(General.multiply(normalize(bottom.getIntensityArray()), -1f), 0, intensities,
+				top.getIntensityArray().length, bottom.getIntensityArray().length);
+		float[] correlations = new float[top.getCorrelationArray().length + bottom.getCorrelationArray().length];
 		System.arraycopy(top.getCorrelationArray(), 0, correlations, 0, top.getCorrelationArray().length);
-		System.arraycopy(bottom.getCorrelationArray(), 0, correlations, top.getCorrelationArray().length, bottom.getCorrelationArray().length);
-		boolean[] quantifiedIons=new boolean[top.getQuantifiedIonsArray().length+bottom.getQuantifiedIonsArray().length];
+		System.arraycopy(bottom.getCorrelationArray(), 0, correlations, top.getCorrelationArray().length,
+				bottom.getCorrelationArray().length);
+		boolean[] quantifiedIons = new boolean[top.getQuantifiedIonsArray().length
+				+ bottom.getQuantifiedIonsArray().length];
 		System.arraycopy(top.getQuantifiedIonsArray(), 0, quantifiedIons, 0, top.getQuantifiedIonsArray().length);
-		System.arraycopy(bottom.getQuantifiedIonsArray(), 0, quantifiedIons, top.getQuantifiedIonsArray().length, bottom.getQuantifiedIonsArray().length);
-		
-		LibraryEntry trace = new LibraryEntry(top.getSource(), top.getAccessions(), top.getSpectrumIndex(), top.getPrecursorMZ(), top.getPrecursorCharge(), top.getLegacyPeptideModSeq(), top.getPeptideModSeq(), top.getCopies(), top.getRetentionTime(), top.getScore(), masses, intensities, correlations, quantifiedIons, true);
+		System.arraycopy(bottom.getQuantifiedIonsArray(), 0, quantifiedIons, top.getQuantifiedIonsArray().length,
+				bottom.getQuantifiedIonsArray().length);
+
+		LibraryEntry trace = new LibraryEntry(top.getSource(), top.getAccessions(), top.getSpectrumIndex(),
+				top.getPrecursorMZ(), top.getPrecursorCharge(), top.getLegacyPeptideModSeq(), top.getPeptideModSeq(),
+				top.getCopies(), top.getRetentionTime(), top.getScore(), masses, intensities, correlations,
+				quantifiedIons, true);
 		return trace;
 	}
 

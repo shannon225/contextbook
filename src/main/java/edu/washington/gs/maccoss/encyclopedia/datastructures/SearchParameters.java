@@ -37,6 +37,7 @@ public class SearchParameters {
 	protected final PercolatorVersion percolatorVersionNumber;
 	protected final int percolatorTrainingSetSize;
 	protected final float percolatorTrainingSetThreshold;
+	protected final int percolatorTrainingIterations;
 	protected final DataAcquisitionType dataAcquisitionType;
 	protected final int numberOfThreadsUsed;	
 	protected final float targetWindowCenter;
@@ -69,7 +70,7 @@ public class SearchParameters {
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, float percolatorProteinThreshold, PercolatorVersion percolatorVersionNumber, int percolatorTrainingSetSize, float percolatorTrainingSetThreshold,
-			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
+			int percolatorTrainingIterations, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
 			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR, Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean enableAdvancedOptions) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
@@ -85,6 +86,7 @@ public class SearchParameters {
 		this.percolatorVersionNumber=percolatorVersionNumber==null?PercolatorVersion.DEFAULT_VERSION:percolatorVersionNumber;
 		this.percolatorTrainingSetSize = percolatorTrainingSetSize;
 		this.percolatorTrainingSetThreshold = percolatorTrainingSetThreshold;
+		this.percolatorTrainingIterations=percolatorTrainingIterations;
 		this.dataAcquisitionType=dataAcquisitionType;
 		this.numberOfThreadsUsed=numberOfThreadsUsed;
 		this.expectedPeakWidth=expectedPeakWidth;
@@ -180,6 +182,7 @@ public class SearchParameters {
 		sb.append(" -enzyme "+enzyme.getName()+"\n");
 		sb.append(" -percolatorThreshold "+percolatorThreshold+"\n");
 		sb.append(" -percolatorVersion "+percolatorVersionNumber+"\n");
+		sb.append(" -percolatorTrainingIterations "+percolatorTrainingIterations+"\n");
 		sb.append(" ").append(OPT_PERC_TRAINING_SIZE).append(" ").append(percolatorTrainingSetSize).append("\n");
 		sb.append(" ").append(OPT_PERC_TRAINING_THRESH).append(" ").append(percolatorTrainingSetThreshold).append("\n");
 		sb.append(" -acquisition "+DataAcquisitionType.toString(dataAcquisitionType)+"\n");
@@ -225,6 +228,7 @@ public class SearchParameters {
 		map.put("-percolatorThreshold", percolatorThreshold+"");
 		map.put("-percolatorVersion", percolatorVersionNumber+"");
 		map.put("-percolatorVersionNumber", percolatorVersionNumber.getMajorVersion()+"");
+		map.put("-percolatorTrainingIterations",percolatorTrainingIterations+"");
 		map.put(OPT_PERC_TRAINING_SIZE, Integer.toString(percolatorTrainingSetSize));
 		map.put(OPT_PERC_TRAINING_THRESH, Float.toString(percolatorTrainingSetThreshold));
 		map.put("-acquisition", DataAcquisitionType.toString(dataAcquisitionType));
@@ -345,6 +349,10 @@ public class SearchParameters {
 	 */
 	public float getPercolatorTrainingSetThreshold() {
 		return percolatorTrainingSetThreshold;
+	}
+	
+	public int getPercolatorTrainingIterations() {
+		return percolatorTrainingIterations;
 	}
 
 	public boolean isDeconvoluteOverlappingWindows() {

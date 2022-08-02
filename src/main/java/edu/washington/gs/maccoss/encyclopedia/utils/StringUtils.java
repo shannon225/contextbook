@@ -3,6 +3,38 @@ package edu.washington.gs.maccoss.encyclopedia.utils;
 import java.util.Arrays;
 
 public class StringUtils {
+	public static String getCommonName(String[] names, String insert) {
+		if (insert==null) insert="";
+		if (names==null||names.length<=1) return insert;
+		String standard=names[0];
+		
+		int pre;
+		PREFIX: for (pre=0; pre<standard.length(); pre++) {
+			char c=standard.charAt(pre);
+			for (int i=1; i<names.length; i++) {
+				if (names[i].charAt(pre)!=c) {
+					break PREFIX;
+				}
+			}
+		}
+		
+		if (pre==standard.length()-1) return insert;
+		
+		int post;
+		POSTFIX: for (post=0; post<standard.length(); post++) {
+			char c=standard.charAt(standard.length()-1-post);
+			for (int i=1; i<names.length; i++) {
+				if (names[i].charAt(names[i].length()-1-post)!=c) {
+					break POSTFIX;
+				}
+			}
+		}
+		
+		String preName=names[0].substring(0, pre);
+		String postName=names[0].substring(names[0].length()-post);
+
+		return preName+insert+postName;
+	}
 	public static String[] getUniquePortion(String[] names) {
 		if (names==null||names.length<=1) return names;
 		String standard=names[0];

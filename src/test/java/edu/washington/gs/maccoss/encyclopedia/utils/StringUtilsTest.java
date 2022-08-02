@@ -3,6 +3,15 @@ package edu.washington.gs.maccoss.encyclopedia.utils;
 import junit.framework.TestCase;
 
 public class StringUtilsTest extends TestCase {
+	public void testCommon() {
+		String[] names=new String[] {"bcs_20161109_yeast_1_to_0_3mz_rep1.mzML", "bcs_20161109_yeast_1_to_0_3mz_rep2.mzML", "bcs_20161109_yeast_1_to_0_3mz_rep3.mzML",
+				"bcs_20161109_yeast_1_to_1_3mz_rep1.mzML", "bcs_20161109_yeast_1_to_1_3mz_rep2.mzML", "bcs_20161109_yeast_1_to_1_3mz_rep3.mzML", "bcs_20161109_yeast_1_to_4_3mz_rep1.mzML",
+				"bcs_20161109_yeast_1_to_4_3mz_rep2.mzML", "bcs_20161109_yeast_1_to_4_3mz_rep3.mzML", "bcs_20161109_yeast_1_to_9_3mz_rep1.mzML", "bcs_20161109_yeast_1_to_9_3mz_rep2.mzML",
+				"bcs_20161109_yeast_1_to_9_3mz_rep3.mzML"};
+		
+		assertEquals("bcs_20161109_yeast_1_to_.mzML", StringUtils.getCommonName(names, null));
+		assertEquals("bcs_20161109_yeast_1_to_combined.mzML", StringUtils.getCommonName(names, "combined"));
+	}
 	public void testTruncation() {
 		String[] names=new String[] {"bcs_20161109_yeast_1_to_0_3mz_rep1.mzML", "bcs_20161109_yeast_1_to_0_3mz_rep2.mzML", "bcs_20161109_yeast_1_to_0_3mz_rep3.mzML",
 				"bcs_20161109_yeast_1_to_1_3mz_rep1.mzML", "bcs_20161109_yeast_1_to_1_3mz_rep2.mzML", "bcs_20161109_yeast_1_to_1_3mz_rep3.mzML", "bcs_20161109_yeast_1_to_4_3mz_rep1.mzML",

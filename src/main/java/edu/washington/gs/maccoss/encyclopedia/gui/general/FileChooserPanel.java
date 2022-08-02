@@ -100,6 +100,7 @@ public class FileChooserPanel extends JPanel {
 		} else {
 			file=filename[0];
 			fileLabel.setText(file.getName());
+			fileLabel.setToolTipText(file.getAbsolutePath());
 			top.setBackground(Color.white);
 		}
 	}

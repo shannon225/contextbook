@@ -11,6 +11,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -72,6 +74,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.ExtendedChartPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.massspec.ChromatogramCharter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
@@ -339,11 +342,13 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 			entries.add(entry);
 			
 			try {
+				ArrayList<PrecursorScan> precursors=dia.getPrecursors(0.0f, Float.MAX_VALUE);
 				ArrayList<FragmentScan> stripes=dia.getStripes(entry.getPrecursorMZ(), 0.0f, Float.MAX_VALUE, false);
 				FragmentationTraceTask task=new FragmentationTraceTask(scorer, FragmentationTraceTask.PLOT_INTENSITIES, entries, stripes, new PrecursorScanMap(new ArrayList<PrecursorScan>()), parameters.getAAConstants());
 				HashMap<LibraryEntry, AbstractScoringResult> result=task.call();
 				
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
+				ArrayList<XYTrace> precursorTraces=new ArrayList<XYTrace>();
 //				for (Entry<LibraryEntry, PeptideScoringResult> resultEntry : result.entrySet()) {
 //					FragmentationScoringResult peptideResult=(FragmentationScoringResult)resultEntry.getValue();
 //
@@ -367,8 +372,26 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 				HashMap<FragmentIon, XYTrace> targetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), entry.getIonAnnotations(), stripes, null,
 						GraphType.boldline);
 				traces.addAll(targetFragmentTraceMap.values());
+
+				XYTraceInterface[] precursorTraceArray=ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), 
+						entry.getPrecursorMZ(), entry.getPrecursorCharge(), precursors);
 				
-				ExtendedChartPanel chart=Charter.getChart("Retention Time (min)", "Intensity", false, traces.toArray(new XYTrace[traces.size()]));
+				double globalMaxYPrecursor=0.0;
+				for (XYTraceInterface trace : precursorTraceArray) {
+					if (trace instanceof XYTrace) {
+						globalMaxYPrecursor=Math.max(globalMaxYPrecursor, General.max(trace.toArrays().y));
+						precursorTraces.add((XYTrace)trace);
+					}
+				}
+
+				double globalMaxYFragment=0.0;
+				for (XYTrace trace : traces) {
+					globalMaxYFragment=Math.max(globalMaxYFragment, General.max(trace.toArrays().y));
+				}
+
+				ExtendedChartPanel chart=ChromatogramCharter.createChart(Optional.ofNullable(precursorTraces),
+						Optional.ofNullable(traces), globalMaxYPrecursor, globalMaxYFragment);
+				//ExtendedChartPanel chart=Charter.getChart("Retention Time (min)", "Intensity", false, traces.toArray(new XYTrace[traces.size()]));
 				addAnnotations(targetFragmentTraceMap, chart);
 				chart.getChart().getXYPlot().addChangeListener(new PlotChangeListener() {
 					

@@ -88,4 +88,9 @@ public class PecanJobData extends QuantitativeSearchJobData {
 		String absolutePath = getPrefixFromOutput(getPercolatorFiles().getPeptideOutputFile());
 		return new File(absolutePath + LibraryFile.ELIB);
 	}
+	
+	@Override
+	public String getPrimaryScoreName() {
+		return taskFactory.getPrimaryScoreName();
+	}
 }
