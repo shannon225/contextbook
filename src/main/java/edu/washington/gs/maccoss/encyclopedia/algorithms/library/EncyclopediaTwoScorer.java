@@ -23,7 +23,7 @@ public class EncyclopediaTwoScorer implements EncyclopediaScorer {
 	}
 
 	public static String getPrimaryScoreName() {
-		return "ScribeScore";
+		return "primary";
 	}
 
 	@Override

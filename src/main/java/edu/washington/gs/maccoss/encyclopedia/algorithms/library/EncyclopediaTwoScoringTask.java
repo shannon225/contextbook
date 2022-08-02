@@ -114,6 +114,7 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
 			
 			float[] primary=new float[super.stripes.size()];
+			float[] secondary=new float[super.stripes.size()];
 			double[][] allMasses=new double[super.stripes.size()][];
 			float[][] allRawIntensities=new float[super.stripes.size()][];
 			float[] retentionTimes=new float[super.stripes.size()];
@@ -125,7 +126,8 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 				double[] masses=results.y;
 				float[] intensities=results.z;
 				
-				primary[i]=scores[0]*0.075f+scores[1]*0.43f;
+				primary[i]=scores[0];//*0.075f+scores[1]*0.43f;
+				secondary[i]=scores[1];
 				allMasses[i]=masses;
 				allRawIntensities[i]=General.multiply(intensities, intensities); // undo the sqrt
 				retentionTimes[i]=super.stripes.get(i).getScanStartTime();
@@ -237,19 +239,16 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 					int isIntegratedPrecursor=0;
 					float correlationToGaussian=0.0f;
 					float correlationToPrecursor=0.0f;
-					float correlationToPlusOne=0.0f;
+					//float correlationToPlusOne=0.0f;
 					if (sumMedianInRange>0) {
 						isIntegratedSignal=1;
 						isIntegratedPrecursor=General.sum(precursor)>0?1:0;
 						correlationToGaussian=Correlation.getPearsons(idealGaussian, median);
 						correlationToPrecursor=Correlation.getPearsons(precursor, median);
-						correlationToPlusOne=Correlation.getPearsons(precursorPlusOne, median);
+						//correlationToPlusOne=Correlation.getPearsons(precursorPlusOne, median);
 					}
-
-					Triplet<float[], double[], float[]> results=score(stripe, ions, predictedIntensities, correlation);
-					float[] scores=results.x;
 					
-					auxScoreArray=General.concatenate(new float[] {scores[1], evalue, correlationToGaussian, 
+					auxScoreArray=General.concatenate(new float[] {primary[index], secondary[index], evalue, correlationToGaussian, 
 							correlationToPrecursor, isIntegratedSignal, isIntegratedPrecursor,
 							numPeaksWithGoodCorrelation}, auxScoreArray);
 					
