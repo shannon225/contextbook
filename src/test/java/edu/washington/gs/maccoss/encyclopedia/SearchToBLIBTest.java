@@ -7,6 +7,8 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationI
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RTRTPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface.AlignmentDataPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -91,6 +93,11 @@ public class SearchToBLIBTest {
 			@Override
 			public String getSearchType() {
 				return "test";
+			}
+
+			@Override
+			public String getPrimaryScoreName() {
+				return EncyclopediaScoringFactory.getDefaultScoringFactory(getParameters()).getPrimaryScoreName();
 			}
 
 			@Override
