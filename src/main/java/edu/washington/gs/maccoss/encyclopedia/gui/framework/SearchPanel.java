@@ -63,11 +63,13 @@ import edu.washington.gs.maccoss.encyclopedia.gui.framework.scribe.ScribeParamet
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.xcordia.XCorDIAParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.AboutDialog;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LogConsole;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.ProgressRenderer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
 
@@ -535,7 +537,7 @@ public class SearchPanel extends JPanel {
 		combineELIB.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.combineELIBs(SearchPanel.this);
+				SearchPanelUtilities.combineELIBs(SearchPanel.this, getJobProcessor());
 			}
 		});
 		convertMenu.add(combineELIB);
@@ -578,7 +580,7 @@ public class SearchPanel extends JPanel {
 		mzmlMergerItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.combineMZMLs(dataMenu, getVisibleTab().getParameters());
+				SearchPanelUtilities.combineMZMLs(dataMenu, getJobProcessor(), getVisibleTab().getParameters());
 			}
 		});
 		dataMenu.add(mzmlMergerItem);
@@ -879,6 +881,10 @@ public class SearchPanel extends JPanel {
 				}
 			}
 		}
+	}
+	
+	public JobProcessor getJobProcessor() {
+		return processorTableModel;
 	}
 	
 	public void loadTargetFile() {

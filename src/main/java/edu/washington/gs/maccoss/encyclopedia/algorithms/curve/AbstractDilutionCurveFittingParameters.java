@@ -3,6 +3,8 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.curve;
 public interface AbstractDilutionCurveFittingParameters {
 
 	public float getWindowInMin();
+	
+	public float getWindowInMin(float rtInSec);
 
 	public int getNumberOfRTAnchors();
 

@@ -111,6 +111,7 @@ public class SearchParameterParser {
 		final PercolatorVersion percolatorVersionNumber;
 		final int percolatorTrainingSetSize;
 		final float percolatorTrainingSetThreshold;
+		final int percolatorTrainingIterations;
 		final DataAcquisitionType dataAcquisitionType;
 		final int numberOfThreadsUsed;
 		final float targetWindowCenter;
@@ -283,6 +284,7 @@ public class SearchParameterParser {
 		percolatorVersionNumber=PercolatorVersion.getVersion(parameters.get("-percolatorVersion"));
 		percolatorTrainingSetSize = ParsingUtils.getInteger(SearchParameters.OPT_PERC_TRAINING_SIZE, parameters, PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE);
 		percolatorTrainingSetThreshold = ParsingUtils.getFloat(SearchParameters.OPT_PERC_TRAINING_THRESH, parameters, PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD);
+		percolatorTrainingIterations= ParsingUtils.getInteger("-percolatorTrainingIterations", parameters, PercolatorExecutor.DEFAULT_TRAINING_ITERATIONS);
 
 		numberOfThreadsUsed=ParsingUtils.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
 		targetWindowCenter=ParsingUtils.getFloat("-targetWindowCenter", parameters, -1f);
@@ -363,6 +365,7 @@ public class SearchParameterParser {
 				percolatorVersionNumber,
 				percolatorTrainingSetSize,
 				percolatorTrainingSetThreshold,
+				percolatorTrainingIterations,
 				dataAcquisitionType,
 				numberOfThreadsUsed,
 				expectedPeakWidth,

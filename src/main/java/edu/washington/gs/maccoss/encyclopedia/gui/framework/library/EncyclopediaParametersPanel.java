@@ -24,6 +24,8 @@ import javax.swing.SpinnerNumberModel;
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
@@ -208,8 +210,8 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 			library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
 			libraries.put(libraryFile, library);
 		}
-		
-		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
+
+		LibraryScoringFactory factory=EncyclopediaScoringFactory.getDefaultScoringFactory(parameters);
 		EncyclopediaJobData job=new EncyclopediaJobData(diaFile, fastaFile, library, factory);
 		return new EncyclopediaJob(processor, job);
 	}
@@ -247,6 +249,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 				percolator,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
 				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,
+				PercolatorExecutor.DEFAULT_TRAINING_ITERATIONS,
 				dataAcquisitionType,
 				numberOfJobsValue,
 				25f,

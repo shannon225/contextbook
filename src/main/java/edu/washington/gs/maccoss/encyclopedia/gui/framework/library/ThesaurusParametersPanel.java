@@ -216,6 +216,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 			libraries.put(libraryFile, library);
 		}
 		
+		// Thesaurus only tested with V1
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
 		ThesaurusJobData job=new ThesaurusJobData(diaFile, library, outputFile, fastaFile, factory);
 		return new ThesaurusJob(processor, job);
@@ -257,6 +258,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				percolator,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
 				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,
+				PercolatorExecutor.DEFAULT_TRAINING_ITERATIONS,
 				dataAcquisitionType,
 				numberOfJobsValue,
 				25f,

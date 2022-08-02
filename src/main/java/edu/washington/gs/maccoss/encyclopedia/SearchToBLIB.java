@@ -7,6 +7,8 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.AlternatePeak
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
@@ -227,7 +229,7 @@ public class SearchToBLIB {
 		boolean writeBlib=ParsingUtils.getBoolean("-blib", arguments, false);
 		
 		SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
-		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
+		LibraryScoringFactory factory=EncyclopediaScoringFactory.getScoringFactory(arguments, parameters);
 		Logger.timelessLogLine("SearchToLIB EncyclopeDIA version "+ProgramType.getGlobalVersion().toString());
 
 		Logger.timelessLogLine("Parameters:");
@@ -338,7 +340,7 @@ public class SearchToBLIB {
 				runningPercolator=false;
 			} else {
 				Logger.logLine("Running global Percolator analysis.");
-				TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
+				TableConcatenator.concatenatePINTables(featureFiles, bigFeatureFile, representativeJob.getPrimaryScoreName());
 				
 				// delete if exists
 				if (bigPercolatorFiles.getModelFile().exists()) {

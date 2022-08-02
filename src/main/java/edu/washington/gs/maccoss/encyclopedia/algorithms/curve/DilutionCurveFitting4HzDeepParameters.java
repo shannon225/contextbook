@@ -15,6 +15,9 @@ public class DilutionCurveFitting4HzDeepParameters implements AbstractDilutionCu
 	public float getWindowInMin() {
 		return windowInMin;
 	}
+	public float getWindowInMin(float rtInSec) {
+		return windowInMin;
+	}
 
 	public int getNumberOfRTAnchors() {
 		return numberOfRTAnchors;

@@ -73,12 +73,16 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileMerger;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileTrimmer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.AboutDialog;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserList;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
+import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
@@ -323,118 +327,6 @@ public class SearchPanelUtilities {
 		dialog.setVisible(true);
 	}
 	
-	public static void combineELIBs(Component root) {
-		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
-		final JDialog dialog=new JDialog(frame, "Combine Libraries", true);
-		
-		final FileChooserPanel saveFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".dlib", ".elib"), true, false);
-		
-		final JPanel choosers=new JPanel();
-		choosers.setLayout(new BoxLayout(choosers, BoxLayout.Y_AXIS));
-		choosers.add(new FileChooserPanel(null, "Add Library", new SimpleFilenameFilter(".dlib", ".elib"), false));
-		
-		JPanel organizer=new JPanel(new BorderLayout());
-		organizer.add(choosers, BorderLayout.NORTH);
-		JScrollPane scrollPane = new JScrollPane(organizer); 
-		scrollPane.setPreferredSize(new Dimension(500, 400));
-		JButton addChooserButton=new JButton("Add Additional Library Selector", fileAddIcon);
-		addChooserButton.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				choosers.add(new FileChooserPanel(null, "Add Library", new SimpleFilenameFilter(".dlib", ".elib"), false), choosers.getComponentCount()-1);
-				choosers.revalidate();
-				choosers.repaint();
-			}
-		});
-		final JCheckBox rtAlignBox=new JCheckBox("RT align samples");
-		final JCheckBox removeDuplicatesBox=new JCheckBox("Remove duplicates");
-		final JCheckBox higherScoresAreBetterBox=new JCheckBox("Higher scores are better");
-		rtAlignBox.setSelected(false);
-		removeDuplicatesBox.setSelected(true);
-		higherScoresAreBetterBox.setSelected(false);
-
-		removeDuplicatesBox.addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				higherScoresAreBetterBox.setEnabled(removeDuplicatesBox.isSelected());
-			}
-		});
-
-		JPanel options=new JPanel();
-		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
-		options.add(scrollPane);
-		options.add(addChooserButton);
-		options.add(saveFileChooser);
-		options.add(rtAlignBox);
-		options.add(removeDuplicatesBox);
-		options.add(higherScoresAreBetterBox);
-		
-		JPanel buttons=new JPanel();
-		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
-		JButton okButton=new JButton("OK");
-		okButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				final ArrayList<File> files=new ArrayList<>();
-				for (Component c : choosers.getComponents()) {
-					if (c instanceof FileChooserPanel) {
-						File f=((FileChooserPanel)c).getFile();
-						if (f!=null&&f.exists()) {
-							files.add(f);
-						}
-					}
-				}
-
-				final File saveFile=saveFileChooser.getFile();
-				final boolean higherScoresAreBetter=higherScoresAreBetterBox.isSelected();
-				final boolean rtAlign=rtAlignBox.isSelected();
-				final boolean removeDuplicates=removeDuplicatesBox.isSelected();
-				
-				if (files.size()>0&&saveFile!=null) {
-					dialog.setVisible(false);
-					dialog.dispose();
-					
-					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library Files") {
-						@Override
-						protected Nothing doInBackgroundForReal() throws Exception {
-							LibraryUtilities.mergeLibraries(files, saveFile, rtAlign, removeDuplicates, higherScoresAreBetter);
-							
-							return Nothing.NOTHING;
-						}
-						@Override
-						protected void doneForReal(Nothing t) {
-						}
-					};
-					worker.execute();
-					
-				} else {
-					JOptionPane.showMessageDialog(frame, "You must specify at least one library file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
-				}
-			}
-		});
-		buttons.add(okButton);
-		JButton cancelButton=new JButton("Cancel");
-		cancelButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				dialog.setVisible(false);
-				dialog.dispose();
-			}
-		});
-		buttons.add(cancelButton);
-		
-		JPanel mainpane=new JPanel(new BorderLayout());
-		mainpane.add(options, BorderLayout.CENTER);
-		mainpane.add(buttons, BorderLayout.SOUTH);
-		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
-		
-		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
-		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		dialog.pack(); 
-		dialog.setVisible(true);
-	}
-	
 	public static void extractSampleSpecificDLIBs(Component root, SearchParameters parameters) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		final JDialog dialog=new JDialog(frame, "Extact Sample-Specific Libraries from ELIB", true);
@@ -506,36 +398,60 @@ public class SearchPanelUtilities {
 		dialog.setVisible(true);
 	}
 	
-	public static void combineMZMLs(Component root, SearchParameters parameters) {
+	public static void combineELIBs(Component root, final JobProcessor processor) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
-		final JDialog dialog=new JDialog(frame, "Combine DIA or mzML Gas Phase Fractions", true);
+		final JDialog dialog=new JDialog(frame, "Combine Libraries", true);
 		
-		final FileChooserPanel saveFileChooser=new FileChooserPanel(null, "DIA File", new SimpleFilenameFilter(".dia"), true, false);
+		final FileChooserPanel saveFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".dlib"), true, false);
+
+		final FileChooserList choosers=new FileChooserList("Library File (.dlib or .elib)", new SimpleFilenameFilter(".dlib", ".elib"));
 		
-		final JPanel choosers=new JPanel();
-		choosers.setLayout(new BoxLayout(choosers, BoxLayout.Y_AXIS));
-		choosers.add(new FileChooserPanel(null, "Add GPF DIA/mzML File", new SimpleFilenameFilter(".mzML", ".dia"), false));
-		
-		JPanel organizer=new JPanel(new BorderLayout());
-		organizer.add(choosers, BorderLayout.NORTH);
-		JScrollPane scrollPane = new JScrollPane(organizer); 
-		scrollPane.setPreferredSize(new Dimension(500, 400));
-		JButton addChooserButton=new JButton("Add Additional GPF DIA/mzML Selector", fileAddIcon);
-		addChooserButton.addActionListener(new ActionListener() {
-			
+		final JCheckBox rtAlignBox=new JCheckBox("RT align samples");
+		final JCheckBox removeDuplicatesBox=new JCheckBox("Remove duplicates");
+		final JCheckBox higherScoresAreBetterBox=new JCheckBox("Higher scores are better");
+		rtAlignBox.setSelected(false);
+		removeDuplicatesBox.setSelected(true);
+		higherScoresAreBetterBox.setSelected(false);
+
+		removeDuplicatesBox.addChangeListener(new ChangeListener() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				choosers.add(new FileChooserPanel(null, "Add GPF DIA/mzML", new SimpleFilenameFilter(".mzML", ".dia"), false), choosers.getComponentCount()-1);
-				choosers.revalidate();
-				choosers.repaint();
+			public void stateChanged(ChangeEvent e) {
+				higherScoresAreBetterBox.setEnabled(removeDuplicatesBox.isSelected());
 			}
 		});
 
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
-		options.add(scrollPane);
-		options.add(addChooserButton);
+		options.add(choosers);
 		options.add(saveFileChooser);
+		options.add(rtAlignBox);
+		options.add(removeDuplicatesBox);
+		options.add(higherScoresAreBetterBox);
+		
+		choosers.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				ArrayList<File> filelist=choosers.getFiles();
+				if (filelist.size()>0) {
+					// choose the last file's directory to place the new file
+					File directory=filelist.get(filelist.size()-1).getParentFile();
+					
+					String[] names=new String[filelist.size()];
+					for (int i = 0; i < names.length; i++) {
+						names[i]=filelist.get(i).getName();
+					}
+					String filename=StringUtils.getCommonName(names, "combined");
+					if (filename.toLowerCase().endsWith(LibraryFile.ELIB)) {
+						filename=filename.substring(0, filename.length()-LibraryFile.ELIB.length())+LibraryFile.DLIB;
+					} else if (!filename.toLowerCase().endsWith(LibraryFile.DLIB)) {
+						filename=filename+LibraryFile.DLIB;
+					}
+					
+					File savefile=new File(directory, filename);
+					saveFileChooser.update(savefile);
+				}
+			}
+		});
 		
 		JPanel buttons=new JPanel();
 		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -544,12 +460,110 @@ public class SearchPanelUtilities {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				final ArrayList<File> files=new ArrayList<>();
-				for (Component c : choosers.getComponents()) {
-					if (c instanceof FileChooserPanel) {
-						File f=((FileChooserPanel)c).getFile();
-						if (f!=null&&f.exists()) {
-							files.add(f);
+				for (File f : choosers.getFiles()) {
+					if (f!=null&&f.exists()) {
+						files.add(f);
+					}
+				}
+
+				final File saveFile=saveFileChooser.getFile();
+				final boolean higherScoresAreBetter=higherScoresAreBetterBox.isSelected();
+				final boolean rtAlign=rtAlignBox.isSelected();
+				final boolean removeDuplicates=removeDuplicatesBox.isSelected();
+				
+				if (files.size()>0&&saveFile!=null) {
+					dialog.setVisible(false);
+					dialog.dispose();
+
+					SwingJob job=new SwingJob(processor) {
+						@Override
+						public String getJobTitle() {
+							return "Merge raw files into "+saveFile.getName();
 						}
+
+						@Override
+						public void runJob() throws Exception {
+							LibraryUtilities.mergeLibraries(getProgressIndicator(), files, saveFile, rtAlign, removeDuplicates, higherScoresAreBetter);
+						}
+					};
+					processor.addJob(job);
+					
+				} else {
+					JOptionPane.showMessageDialog(frame, "You must specify at least one library file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+				}
+			}
+		});
+		buttons.add(okButton);
+		JButton cancelButton=new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+			}
+		});
+		buttons.add(cancelButton);
+		
+		JPanel mainpane=new JPanel(new BorderLayout());
+		mainpane.add(options, BorderLayout.CENTER);
+		mainpane.add(buttons, BorderLayout.SOUTH);
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		
+		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setVisible(true);
+	}
+	
+	public static void combineMZMLs(Component root, final JobProcessor processor, SearchParameters parameters) {
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+		final JDialog dialog=new JDialog(frame, "Combine DIA or mzML Gas Phase Fractions", true);
+		
+		final FileChooserPanel saveFileChooser=new FileChooserPanel(null, "DIA File", new SimpleFilenameFilter(".dia"), true, false);
+		
+		final FileChooserList choosers=new FileChooserList("GPF DIA/mzML File", new SimpleFilenameFilter(".mzML", ".dia"));
+		
+
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(choosers);
+		options.add(saveFileChooser);
+		
+		choosers.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				ArrayList<File> filelist=choosers.getFiles();
+				if (filelist.size()>0) {
+					// choose the last file's directory to place the new file
+					File directory=filelist.get(filelist.size()-1).getParentFile();
+					
+					String[] names=new String[filelist.size()];
+					for (int i = 0; i < names.length; i++) {
+						names[i]=filelist.get(i).getName();
+					}
+					String filename=StringUtils.getCommonName(names, "combined");
+					if (filename.toLowerCase().endsWith(".mzml")) {
+						filename=filename.substring(0, filename.length()-5)+StripeFile.DIA_EXTENSION;
+					} else if (!filename.toLowerCase().endsWith(StripeFile.DIA_EXTENSION)) {
+						filename=filename+StripeFile.DIA_EXTENSION;
+					}
+					
+					File savefile=new File(directory, filename);
+					saveFileChooser.update(savefile);
+				}
+			}
+		});
+		
+		JPanel buttons=new JPanel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JButton okButton=new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final ArrayList<File> files=new ArrayList<>();
+				for (File f : choosers.getFiles()) {
+					if (f!=null&&f.exists()) {
+						files.add(f);
 					}
 				}
 
@@ -559,17 +573,18 @@ public class SearchPanelUtilities {
 					dialog.setVisible(false);
 					dialog.dispose();
 					
-					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library Files") {
+					SwingJob job=new SwingJob(processor) {
 						@Override
-						protected Nothing doInBackgroundForReal() throws Exception {
-							StripeFileMerger.merge(files.toArray(new File[files.size()]), saveFile, parameters);
-							return Nothing.NOTHING;
+						public String getJobTitle() {
+							return "Merge raw files into "+saveFile.getName();
 						}
+
 						@Override
-						protected void doneForReal(Nothing t) {
+						public void runJob() throws Exception {
+							StripeFileMerger.merge(getProgressIndicator(), files.toArray(new File[files.size()]), saveFile, parameters);
 						}
 					};
-					worker.execute();
+					processor.addJob(job);
 					
 				} else {
 					JOptionPane.showMessageDialog(frame, "You must specify at least one DIA/mzML file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);

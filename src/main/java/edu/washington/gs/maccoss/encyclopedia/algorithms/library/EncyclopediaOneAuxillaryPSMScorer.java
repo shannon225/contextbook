@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.EncyclopediaAuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -20,7 +21,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
-public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
+public class EncyclopediaOneAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMScorer {
 	private static final int numPeaksUsedInAverage=3;
 	
 	private final boolean runXCorr;
@@ -46,7 +47,8 @@ public class EncyclopediaOneAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		this.sparseModelCalculator=sparseModelCalculator;
 	}
 
-	public EncyclopediaOneAuxillaryPSMScorer getEntryOptimizedScorer(LibraryEntry entry) {
+	@Override
+	public EncyclopediaAuxillaryPSMScorer getEntryOptimizedScorer(LibraryEntry entry) {
 		SparseXCorrCalculator librarySparse=new SparseXCorrCalculator(entry, new Range((float)entry.getPrecursorMZ()-10f, (float)entry.getPrecursorMZ()+10f), parameters);
 		SparseXCorrCalculator sparseModel=new SparseXCorrCalculator(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters);
 		return new EncyclopediaOneAuxillaryPSMScorer(parameters, background, runXCorr, librarySparse, sparseModel);
