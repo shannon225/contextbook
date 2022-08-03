@@ -346,6 +346,19 @@ public class ResultsBrowserPanel extends JPanel {
 		if (locationData<=5) {
 			locationData=400;
 		}
+		if (entry!=null) {
+			AnnotatedLibraryEntry annotated=new AnnotatedLibraryEntry(entry, parameters);
+			double[] masses=annotated.getMassArray();
+			float[] intensities=annotated.getIntensityArray();
+			float[] correlations=annotated.getCorrelationArray();
+			boolean[] quantifiedIonsArray=annotated.getQuantifiedIonsArray();
+			FragmentIon[] ions=annotated.getIonAnnotations();
+			
+//			System.out.println(annotated.getPeptideModSeq()+", "+annotated.getPrecursorCharge());
+//			for (int i = 0; i < quantifiedIonsArray.length; i++) {
+//				System.out.println(masses[i]+"\t"+intensities[i]+"\t"+correlations[i]+"\t"+quantifiedIonsArray[i]+"\t"+ions[i]);
+//			}
+		}
 		
 		if (entry==null) {
 			split.setLeftComponent(new JLabel("Select a peptide!"));
@@ -385,6 +398,11 @@ public class ResultsBrowserPanel extends JPanel {
 				for (Entry<FragmentIon, XYTrace> pair : fragmentTraceMap.entrySet()) {
 					if (pair.getKey().getIndex()>1) {
 						Optional<Integer> index = parameters.getFragmentTolerance().getIndex(massArray, pair.getKey().getMass());
+//						if (index.isPresent()) {
+//							System.out.println(pair.getKey().getMass()+"\t"+pair.getKey()+"\t"+index.get()+"\t"+quantifiedIonsArray[index.get()]+"\t"+entry.getCorrelationArray()[index.get()]);
+//						} else {
+//							System.out.println(pair.getKey().getMass()+"\t"+pair.getKey()+"\t"+-1+"\t"+false+"\t"+entry.getCorrelationArray()[index.get()]);
+//						}
 						if (index.isPresent()&&quantifiedIonsArray[index.get()]) {
 							traces.add(pair.getValue());
 						} else {
