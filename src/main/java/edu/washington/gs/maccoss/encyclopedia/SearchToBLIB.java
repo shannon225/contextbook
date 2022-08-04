@@ -98,12 +98,11 @@ public class SearchToBLIB {
 	}
 
 	public static void convertXCorDIA(HashMap<String, String> arguments) {
-		if (!arguments.containsKey("-i")||!arguments.containsKey("-f")||!arguments.containsKey("-o")) {
+		if (!arguments.containsKey("-f")||!arguments.containsKey("-o")) {
 			Logger.errorLine("You are required to specify an input file or directory (-i), an input fasta file (-f) and an output library file (-o)");
 			System.exit(1);
 		}
 
-		File diaFile=new File(arguments.get("-i"));
 		File fastaFile=new File(arguments.get("-f"));
 		File outputFile=new File(arguments.get("-o"));
 		boolean alignBetweenFiles=ParsingUtils.getBoolean("-a", arguments, true);
@@ -160,12 +159,11 @@ public class SearchToBLIB {
 	}
 
 	public static void convertPecan(HashMap<String, String> arguments) {
-		if (!arguments.containsKey("-i")||!arguments.containsKey("-f")||!arguments.containsKey("-o")) {
+		if (!arguments.containsKey("-f")||!arguments.containsKey("-o")) {
 			Logger.errorLine("You are required to specify an input file or directory (-i), an input fasta file (-f) and an output library file (-o)");
 			System.exit(1);
 		}
 
-		File diaFile=new File(arguments.get("-i"));
 		File fastaFile=new File(arguments.get("-f"));
 		File outputFile=new File(arguments.get("-o"));
 		boolean alignBetweenFiles=ParsingUtils.getBoolean("-a", arguments, true);
@@ -216,12 +214,11 @@ public class SearchToBLIB {
 	}
 
 	public static void convertEncyclopedia(HashMap<String, String> arguments) {
-		if (!arguments.containsKey("-i")||!arguments.containsKey("-l")||!arguments.containsKey("-o")||!arguments.containsKey("-f")) {
+		if (!arguments.containsKey("-l")||!arguments.containsKey("-o")||!arguments.containsKey("-f")) {
 			Logger.errorLine("You are required to specify an input file or directory (-i), an input library file (-l), a fasta database (-f), and an output library file (-o)");
 			System.exit(1);
 		}
 
-		File diaFile=new File(arguments.get("-i"));
 		File fastaFile=new File(arguments.get("-f"));
 		File libraryFile=new File(arguments.get("-l"));
 		File outputFile=new File(arguments.get("-o"));
