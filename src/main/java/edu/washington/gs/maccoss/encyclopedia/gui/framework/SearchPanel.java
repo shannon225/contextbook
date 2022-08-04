@@ -37,6 +37,7 @@ import javax.swing.table.TableColumn;
 import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.Pecanpie;
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeSearchParameters;
@@ -563,6 +564,15 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		dataMenu.add(mzmlPreprocessorItem);
+
+		JMenuItem mzmlMergerItem=new JMenuItem("Combine Gas Phase Fractions", convertDBIcon);
+		mzmlMergerItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.combineMZMLs(dataMenu, getJobProcessor(), getVisibleTab().getParameters());
+			}
+		});
+		dataMenu.add(mzmlMergerItem);
 		
 		JMenuItem subsetDIA=new JMenuItem("Create Subset mzML", convertDBIcon);
 		subsetDIA.addActionListener(new ActionListener() {
@@ -576,15 +586,6 @@ public class SearchPanel extends JPanel {
 			dataMenu.add(subsetDIA);
 		}
 
-		JMenuItem mzmlMergerItem=new JMenuItem("Combine Gas Phase Fractions", convertDBIcon);
-		mzmlMergerItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.combineMZMLs(dataMenu, getJobProcessor(), getVisibleTab().getParameters());
-			}
-		});
-		dataMenu.add(mzmlMergerItem);
-
 		JMenuItem elibSeperatorItem=new JMenuItem("Extract Sample-Specific Libraries from ELIB", convertDBIcon);
 		elibSeperatorItem.addActionListener(new ActionListener() {
 			@Override
@@ -595,6 +596,19 @@ public class SearchPanel extends JPanel {
 		if (enableAdvancedOptions) {
 			elibSeperatorItem.setText("HIDDEN: "+elibSeperatorItem.getText());
 			dataMenu.add(elibSeperatorItem);
+		}
+
+		JMenuItem toggleScoringSystemItem=new JMenuItem("Toggle EncyclopeDIA Scoring System", libraryBrowserIcon);
+		toggleScoringSystemItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				EncyclopediaScoringFactory.USE_LEGACY_SCORING_SYSTEM=!EncyclopediaScoringFactory.USE_LEGACY_SCORING_SYSTEM;
+				JOptionPane.showMessageDialog(SearchPanel.this,"USE_LEGACY_SCORING_SYSTEM set to "+EncyclopediaScoringFactory.USE_LEGACY_SCORING_SYSTEM,"EncyclopeDIA Scoring System", JOptionPane.PLAIN_MESSAGE);
+			}
+		});
+		if (enableAdvancedOptions) {
+			toggleScoringSystemItem.setText("HIDDEN: "+toggleScoringSystemItem.getText());
+			dataMenu.add(toggleScoringSystemItem);
 		}
 		
 		dataMenu.addSeparator();

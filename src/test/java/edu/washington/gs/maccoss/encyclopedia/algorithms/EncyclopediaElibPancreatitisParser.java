@@ -42,18 +42,19 @@ import gnu.trove.list.array.TFloatArrayList;
 public class EncyclopediaElibPancreatitisParser {
 	private static final float pvalueThreshold = 0.05f;
 	public static String[] sampleNames=new String[] {"CP", "AP", "Cont 1", "Cont 2", "Frac"};
-	public static int[] tests=new int[] {0, 1};
-	public static int[] controls=new int[] {2, 3, 4};
-	//public static int[] tests=new int[] {4};
-	//public static int[] controls=new int[] {2, 3};
+	//public static int[] tests=new int[] {0, 1};
+	//public static int[] controls=new int[] {2, 3, 4};
+	public static int[] tests=new int[] {1, 4};
+	public static int[] controls=new int[] {2, 3};
 	public static HashMap<String, SampleCoordinate> sampleKey=new HashMap<>();
 
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException {
 		loadMap();
 		
-		//File file=new File("/Users/searle.30/Documents/CCIC/maisam/032922_pancreatitis_grant_dataset/032922_pancreatitis_120_quant_reports.elib");
-		File file=new File("/Users/searleb/Documents/OSU/projects/maisam_pancreatitis/032922_pancreatitis_grant_dataset/032922_pancreatitis_120_quant_reports.elib");
-		File stub=new File(file.getParent(), "pancreatitis_120_boxplots");
+		File file=new File("/Users/searle.30/Documents/CCIC/maisam/032922_pancreatitis_grant_dataset/032922_pancreatitis_120_quant_reports.elib");
+		//File file=new File("/Users/searleb/Documents/OSU/projects/maisam_pancreatitis/032922_pancreatitis_grant_dataset/032922_pancreatitis_120_quant_reports.elib");
+		//File stub=new File(file.getParent(), "pancreatitis_120_boxplots");
+		File stub=new File(file.getParent(), "acute_pain_120_boxplots");
 		//File stub=new File(file.getParent(), "fracture_120_boxplots");
 		FileUtils.deleteDirectory(stub);
 		
@@ -77,8 +78,11 @@ public class EncyclopediaElibPancreatitisParser {
 		//String[] keptAccessions=new String[] {"AMYP_HUMAN"};
 		//String[] keptAccessions=new String[] {"CEL2A_HUMAN"};
 		//String[] keptAccessions=new String[] {"AMYP_HUMAN", "CRP_HUMAN", "CEL2A_HUMAN"};
-		String[] keptAccessions=new String[] {"AMYP_HUMAN", "POF1B_HUMAN", "REG1A_HUMAN", "CRP_HUMAN", "CEL2A_HUMAN"};
+		//String[] keptAccessions=new String[] {"AMYP_HUMAN", "POF1B_HUMAN", "REG1A_HUMAN", "CRP_HUMAN", "CEL2A_HUMAN"};
 		//String[] keptAccessions=new String[] {"AMYP_HUMAN", "POF1B_HUMAN", "SH3L1_HUMAN", "REG1A_HUMAN", "CRP_HUMAN", "CEL2A_HUMAN", "CAYP1_HUMAN", "SYUG_HUMAN", "IDHC_HUMAN", "S100P_HUMAN", "S10A6_HUMAN", "GSHR_HUMAN", "FCL_HUMAN", "BAZ1A_HUMAN", "PHS_HUMAN", "PGDH_HUMAN", "GPD1L_HUMAN", "SCRN1_HUMAN", "CRYM_HUMAN", "EMAL2_HUMAN", "AGR2_HUMAN", "NUCKS_HUMAN", "MTPN_HUMAN", "GSH1_HUMAN", "ALDOC_HUMAN"};
+		
+		String[] keptAccessions=new String[] {"FETUA_HUMAN", "CYTM_HUMAN", "A1AG1_HUMAN", "LV218_HUMAN"};
+		
 		createClassifier(proteinReportFile, new HashSet<String>(Arrays.asList(keptAccessions)));
 		//assessProteinSpecificPValues(testDirs, proteinReportFile);
 	}
