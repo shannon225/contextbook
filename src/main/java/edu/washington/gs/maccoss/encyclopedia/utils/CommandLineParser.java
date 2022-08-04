@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class CommandLineParser {
@@ -45,31 +44,40 @@ public class CommandLineParser {
 	 * Parse the given command line arguments into a list of paths specified by {@code -i}
 	 * and the remaining parameters wtih {@link #parseArguments(String[])}.
 	 */
-	public static Pair<List<Path>, HashMap<String, String>> parseFilesAndArguments(String[] args) {
-		return parseFilesAndArguments(args, "-i");
+	public static Pair<List<String>, HashMap<String, String>> parseMultipleAndRemainingArguments(String[] args) {
+		return parseMultipleAndRemainingArguments(args, "-i");
 	}
 
 	/**
-	 * Parse the given command line arguments into a list of paths specified by {@code filesFlag}
+	 * Parse the given command line arguments into a list of paths specified by {@code multFlag}
 	 * and the remaining parameters wtih {@link #parseArguments(String[])}.
 	 */
-	public static Pair<List<Path>, HashMap<String, String>> parseFilesAndArguments(String[] args, String filesFlag) {
+	public static Pair<List<String>, HashMap<String, String>> parseMultipleAndRemainingArguments(String[] args, String multFlag) {
+		final Pair<List<String>, List<String>> pair = parseMultipleAndGetRemainingArguments(args, multFlag);
+
+		return new Pair<>(
+				pair.x,
+				parseArguments(pair.y.toArray(new String[0]))
+		);
+	}
+
+	public static Pair<List<String>, List<String>> parseMultipleAndGetRemainingArguments(String[] args, String multFlag) {
 		final List<String> mutableArgs = Lists.newLinkedList(Arrays.asList(args));
-		final List<Path> paths = Lists.newArrayListWithExpectedSize(1);
+		final List<String> strings = Lists.newArrayListWithExpectedSize(1);
 
 		for (Iterator<String> iter = mutableArgs.iterator(); iter.hasNext();) {
-			if (Objects.equals(filesFlag, iter.next())) {
+			if (Objects.equals(multFlag, iter.next())) {
 				iter.remove(); // pop the flag
 
-				paths.add(Paths.get(iter.next()));
+				strings.add(iter.next());
 
 				iter.remove(); // pop the path
 			}
 		}
 
 		return new Pair<>(
-				ImmutableList.copyOf(paths),
-				parseArguments(mutableArgs.toArray(new String[0]))
+				ImmutableList.copyOf(strings),
+				ImmutableList.copyOf(mutableArgs)
 		);
 	}
 }
