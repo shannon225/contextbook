@@ -38,7 +38,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
+import org.apache.commons.io.FilenameUtils;
 
+import javax.naming.spi.StateFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -327,6 +329,77 @@ public class SearchToBLIB {
 						EncyclopediaJobData job = new EncyclopediaJobData(file, fastaFile, library, factory);
 						pecanJobs.add(job);
 					}
+				} else if (alignOnly && !diaFile.exists()) {
+					// Special case -- when running alignment-only we may not have the .DIA available but want
+					// to handle the job.
+					pecanJobs.add(new EncyclopediaJobData(
+							diaFile,
+							new StripeFileInterface() {
+								@Override
+								public Map<Range, WindowData> getRanges() {
+									throw new UnsupportedOperationException("File not found: " + diaFile.getAbsolutePath());
+								}
+
+								@Override
+								public void openFile(File userFile) throws IOException, SQLException {
+									throw new UnsupportedOperationException();
+								}
+
+								@Override
+								public ArrayList<PrecursorScan> getPrecursors(float minRT, float maxRT) throws IOException, SQLException, DataFormatException {
+									throw new UnsupportedOperationException("File not found: " + diaFile.getAbsolutePath());
+								}
+
+								@Override
+								public ArrayList<FragmentScan> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
+									throw new UnsupportedOperationException("File not found: " + diaFile.getAbsolutePath());
+								}
+
+								@Override
+								public ArrayList<FragmentScan> getStripes(Range targetMzRange, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
+									throw new UnsupportedOperationException("File not found: " + diaFile.getAbsolutePath());
+								}
+
+								@Override
+								public float getTIC() throws IOException, SQLException {
+									throw new UnsupportedOperationException("File not found: " + diaFile.getAbsolutePath());
+								}
+
+								@Override
+								public float getGradientLength() throws IOException, SQLException {
+									throw new UnsupportedOperationException("File not found: " + diaFile.getAbsolutePath());
+								}
+
+								@Override
+								public void close() {
+									// no-op
+								}
+
+								@Override
+								public boolean isOpen() {
+									return false;
+								}
+
+								@Override
+								public File getFile() {
+									return diaFile;
+								}
+
+								@Override
+								public String getOriginalFileName() {
+									return diaFile.getName();
+								}
+							},
+							EncyclopediaJobData.getPercolatorExecutionData(
+									diaFile,
+									fastaFile,
+									parameters
+							),
+							parameters,
+							ProgramType.getGlobalVersion().toString(),
+							library,
+							factory
+					));
 				} else {
 					EncyclopediaJobData job = new EncyclopediaJobData(diaFile, fastaFile, library, factory);
 					pecanJobs.add(job);
