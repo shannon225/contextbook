@@ -403,30 +403,42 @@ public class SearchToBLIB {
 									return diaFile;
 								}
 
+								private String originalFileName = null;
 								@Override
 								public String getOriginalFileName() {
-									// Workaround: if the DIA file is missing we can't read the
-									// orginal file name, which likely has an .mzML extension.
-									// Instead, get the name used in this job's results ELIB.
-									try (Connection c = new SQLFile() {}.getConnection(getResultLibrary())) {
-										try (Statement s = c.createStatement()) {
-											try (ResultSet rs = s.executeQuery(
-													"SELECT sourcefile" +
-													"FROM entries" +
-													"LIMIT 1;"
-											)) {
-												if (rs.next()) {
-													return rs.getString(1);
-												} else {
-													throw new SQLException("No entries in results ELIB!");
-												}
-											}
-										}
-									} catch (IOException | SQLException e) {
-										Logger.errorLine("Unable to read from results ELIB for job " + diaFile.getName());
+									if (null != originalFileName) {
+										return originalFileName;
 									}
 
-									return diaFile.getName();
+									synchronized (this) {
+										if (null == originalFileName) {
+											// Workaround: if the DIA file is missing we can't read the
+											// orginal file name, which likely has an .mzML extension.
+											// Instead, get the name used in this job's results ELIB.
+											try (Connection c = new SQLFile() {}.getConnection(getResultLibrary())) {
+												try (Statement s = c.createStatement()) {
+													try (ResultSet rs = s.executeQuery(
+															"SELECT sourcefile" +
+																	" FROM entries" +
+																	" LIMIT 1;"
+													)) {
+														if (rs.next()) {
+															return rs.getString(1);
+														} else {
+															throw new SQLException("No entries in results ELIB!");
+														}
+													}
+												}
+											} catch (IOException | SQLException e) {
+												Logger.errorLine("Unable to read from results ELIB for job " + diaFile.getName());
+												Logger.errorException(e);
+											}
+
+											originalFileName = diaFile.getName();
+										}
+									}
+
+									return originalFileName;
 								}
 							};
 						}
