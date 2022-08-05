@@ -47,11 +47,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
+import java.util.Date;
 import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -331,10 +329,30 @@ public class SearchToBLIB {
 					}
 				} else if (alignOnly && !diaFile.exists()) {
 					// Special case -- when running alignment-only we may not have the .DIA available but want
-					// to handle the job.
-					pecanJobs.add(new EncyclopediaJobData(
-							diaFile,
-							new StripeFileInterface() {
+					// to handle the job using Percolator/ELIB results only.
+					// TODO: factor out this "dummy job data" class
+					pecanJobs.add(new EncyclopediaJobData(diaFile, fastaFile, library, factory) {
+						@Override
+						public boolean hasBeenRun() {
+							final PercolatorExecutionData percolatorFiles = getPercolatorFiles();
+							if (!percolatorFiles.getInputTSV().exists()) {
+								Logger.errorLine("Missing feature file: " + percolatorFiles.getInputTSV().getName());
+								return false;
+							}
+							if (!percolatorFiles.getPeptideOutputFile().exists()) {
+								Logger.errorLine("Missing output file: " + percolatorFiles.getPeptideOutputFile().getName());
+								return false;
+							}
+							if (!getResultLibrary().exists()) {
+								Logger.errorLine("Missing output library: " + getResultLibrary().getName());
+								return false;
+							}
+							return true;
+						}
+
+						@Override
+						public StripeFileInterface getDiaFileReader() {
+							return new StripeFileInterface() {
 								@Override
 								public Map<Range, WindowData> getRanges() {
 									throw new UnsupportedOperationException("File not found: " + diaFile.getAbsolutePath());
@@ -387,31 +405,30 @@ public class SearchToBLIB {
 
 								@Override
 								public String getOriginalFileName() {
+									// Workaround: if the DIA file is missing we can't read the
+									// orginal file name, which likely has an .mzML extension.
+									// Instead, get the name used in this job's results ELIB.
+									try (Connection c = new SQLFile() {}.getConnection(getResultLibrary())) {
+										try (Statement s = c.createStatement()) {
+											try (ResultSet rs = s.executeQuery(
+													"SELECT sourcefile" +
+													"FROM entries" +
+													"LIMIT 1;"
+											)) {
+												if (rs.next()) {
+													return rs.getString(1);
+												} else {
+													throw new SQLException("No entries in results ELIB!");
+												}
+											}
+										}
+									} catch (IOException | SQLException e) {
+										Logger.errorLine("Unable to read from results ELIB for job " + diaFile.getName());
+									}
+
 									return diaFile.getName();
 								}
-							},
-							EncyclopediaJobData.getPercolatorExecutionData(
-									diaFile,
-									fastaFile,
-									parameters
-							),
-							parameters,
-							ProgramType.getGlobalVersion().toString(),
-							library,
-							factory
-					) {
-						@Override
-						public boolean hasBeenRun() {
-							final PercolatorExecutionData percolatorFiles = getPercolatorFiles();
-							if (!percolatorFiles.getInputTSV().exists()) {
-								Logger.errorLine("Missing feature file: "+ percolatorFiles.getInputTSV().getName());
-								return false;
-							}
-							if (!percolatorFiles.getPeptideOutputFile().exists()) {
-								Logger.errorLine("Missing output file: "+ percolatorFiles.getPeptideOutputFile().getName());
-								return false;
-							}
-							return true;
+							};
 						}
 					});
 				} else {
