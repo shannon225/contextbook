@@ -656,42 +656,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		return index;
 	}
 
-	@SuppressWarnings("unused")
-	private void internalWriteFragmentQuantLibraryEntriesToConnection(Connection c, Optional<PeakLocationInferrerInterface> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList)
-			throws SQLException, IOException {
-		StringBuilder fragmentPrepString=new StringBuilder(
-				"INSERT INTO fragmentquants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, IonType, IonIndex, FragmentMass, Correlation, Background, DeltaMassPPM, Intensity)");
-		fragmentPrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?)");
-		boolean first=true;
-		for (Pair<TransitionRefinementData, String> pair : dataAndSouceList) {
-			float[] correlationArray=pair.x.getCorrelationArray();
-			for (int i=0; i<correlationArray.length; i++) {
-				if (correlationArray[i]>=TransitionRefiner.identificationCorrelationThreshold) {
-					if (first) {
-						first=false;
-					} else {
-						fragmentPrepString.append(", (?,?,?,?,?,?,?,?,?,?,?)");
-					}
-				}
-			}
-		}
-
-		PreparedStatement fragmentPrep=c.prepareStatement(fragmentPrepString.toString());
-
-		try {
-			int fragIndex=1;
-
-			for (Pair<TransitionRefinementData, String> pair : dataAndSouceList) {
-				fragIndex=prepareFragmentQuantData(pair.x, pair.y, inferrer, fragmentPrep, fragIndex);
-			}
-			fragmentPrep.execute();
-		} finally {
-			fragmentPrep.close();
-		}
-	}
-
 	public int prepareQuantData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrerInterface> inferrer, PreparedStatement peptidePrep, int index, AminoAcidConstants aaConstants) throws SQLException, IOException {
-
 		QuantitativeDIAData topN;
 		if (inferrer.isPresent()) {
 			Optional<QuantitativeDIAData> topNIntensity=inferrer.get().getQuantitativeData(data);
@@ -766,42 +731,6 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			peptidePrep.setInt(index++, 0);
 			peptidePrep.setBytes(index++, null);
 			peptidePrep.setFloat(index++, 0.0f);
-		}
-		return index;
-	}
-
-	public int prepareFragmentQuantData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrerInterface> inferrer, PreparedStatement fragmentPrep, int index)
-			throws SQLException, IOException {
-		float[] correlationArray=data.getCorrelationArray();
-		float[] integrationArray=data.getIntegrationArray();
-		float[] backgroundArray=data.getBackgroundArray();
-
-		Ion[] fragmentMassArray=data.getFragmentMassArray();
-		float[] deltaMassArray=data.getDeltaMassArray().get();
-		float[] ppmArray=new float[deltaMassArray.length];
-
-		float bestCorrelation=-1.0f;
-		for (int i=0; i<deltaMassArray.length; i++) {
-			ppmArray[i]=deltaMassArray[i]*1000000.0f/(float) fragmentMassArray[i].getMass();
-			if (correlationArray[i]>bestCorrelation) {
-				bestCorrelation=correlationArray[i];
-			}
-		}
-
-		for (int i=0; i<correlationArray.length; i++) {
-			if (correlationArray[i]>=TransitionRefiner.identificationCorrelationThreshold) {
-				fragmentPrep.setInt(index++, data.getPrecursorCharge());
-				fragmentPrep.setString(index++, data.getPeptideModSeq());
-				fragmentPrep.setString(index++, data.getPeptideSeq());
-				fragmentPrep.setString(index++, sourceFile);
-				fragmentPrep.setString(index++, IonType.toString(fragmentMassArray[i].getType()));
-				fragmentPrep.setInt(index++, fragmentMassArray[i].getIndex());
-				fragmentPrep.setDouble(index++, fragmentMassArray[i].getMass());
-				fragmentPrep.setFloat(index++, correlationArray[i]);
-				fragmentPrep.setFloat(index++, backgroundArray[i]);
-				fragmentPrep.setFloat(index++, ppmArray[i]);
-				fragmentPrep.setFloat(index++, integrationArray[i]);
-			}
 		}
 		return index;
 	}

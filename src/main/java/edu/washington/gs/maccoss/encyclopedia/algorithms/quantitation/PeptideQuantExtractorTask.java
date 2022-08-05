@@ -137,6 +137,8 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			}
 					
 			double[] fragmentMassArray=FragmentIon.getMasses(data.getFragmentMassArray());
+			
+			// FIXME START WORK HERE
 			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(filename, psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), integrationScore, fragmentMassArray, data.getIntegrationArray(), data);
 			if (limitToQuantifiable) {
 				if (entry.getIonCount()<params.getMinNumOfQuantitativePeaks()||entry.getTIC()<1.0f) {
