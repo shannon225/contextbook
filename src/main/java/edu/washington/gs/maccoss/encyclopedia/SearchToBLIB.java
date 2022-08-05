@@ -399,7 +399,21 @@ public class SearchToBLIB {
 							ProgramType.getGlobalVersion().toString(),
 							library,
 							factory
-					));
+					) {
+						@Override
+						public boolean hasBeenRun() {
+							final PercolatorExecutionData percolatorFiles = getPercolatorFiles();
+							if (!percolatorFiles.getInputTSV().exists()) {
+								Logger.errorLine("Missing feature file: "+ percolatorFiles.getInputTSV().getName());
+								return false;
+							}
+							if (!percolatorFiles.getPeptideOutputFile().exists()) {
+								Logger.errorLine("Missing output file: "+ percolatorFiles.getPeptideOutputFile().getName());
+								return false;
+							}
+							return true;
+						}
+					});
 				} else {
 					EncyclopediaJobData job = new EncyclopediaJobData(diaFile, fastaFile, library, factory);
 					pecanJobs.add(job);
