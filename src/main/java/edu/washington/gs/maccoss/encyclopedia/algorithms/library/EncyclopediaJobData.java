@@ -4,13 +4,14 @@ import java.io.File;
 
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibrarySearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 
-public class EncyclopediaJobData extends QuantitativeSearchJobData {
+public class EncyclopediaJobData extends QuantitativeSearchJobData implements LibrarySearchJobData {
 	public static final String LOG_FILE_SUFFIX=".log";
 	public static final String DECOY_PROTEIN_FILE_SUFFIX=".encyclopedia.protein_decoy.txt";
 	public static final String OUTPUT_PROTEIN_FILE_SUFFIX=".encyclopedia.protein.txt";

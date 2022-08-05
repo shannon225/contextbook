@@ -17,6 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -240,8 +241,16 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	 * @param rts used for plotting
 	 * @return
 	 */
-	public TransitionRefinementData addPeakData(float[] deltaMass, double[] mass, float[] intensity, float[] rts, float identifiedTICRatio) {
-		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, quantitativeIonArray, integrationArray, backgroundArray, medianChromatogram, range, deltaMass, mass, intensity, rts, localizationData.isPresent()?localizationData.get():null, modificationQuantData.isPresent()?modificationQuantData.get():null, identifiedTICRatio, aaConstants);
+	public TransitionRefinementData addPeakData(float[] deltaMass, double[] mass, float[] intensity, float[] rts, float identifiedTICRatio, MassTolerance tolerance) {
+		double[] masses=FragmentIon.getMasses(fragmentMassArray);
+		boolean[] actualQuantitativeIonArray=new boolean[masses.length];
+		for (int i = 0; i < mass.length; i++) {
+			Optional<Integer> index=tolerance.getIndex(masses, mass[i]);
+			if (index.isPresent()) {
+				actualQuantitativeIonArray[index.get()]=true;
+			}
+		}
+		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, actualQuantitativeIonArray, integrationArray, backgroundArray, medianChromatogram, range, deltaMass, mass, intensity, rts, localizationData.isPresent()?localizationData.get():null, modificationQuantData.isPresent()?modificationQuantData.get():null, identifiedTICRatio, aaConstants);
 	}
 	
 	public Ion[] getFragmentMassArray() {

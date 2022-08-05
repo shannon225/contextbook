@@ -41,10 +41,14 @@ public class CorrelationPeakFrequencyCalculator {
 	}
 
 	public void increment(double target, float intensity, float correlation, boolean passesThreshold) {
+		increment(target, intensity, correlation, passesThreshold, true);
+	}
+	
+	public void increment(double target, float intensity, float correlation, boolean passesThreshold, boolean canAdd) {
 		int value=binarySearch(peaks, target);
 		if (value>=0) {
-			peaks.get(value).increment(intensity, correlation, passesThreshold);
-		} else {
+			peaks.get(value).increment(intensity, correlation, passesThreshold||!canAdd);
+		} else if (canAdd) {
 			value=-(value+1);
 			Count c=new Count(target);
 			c.increment(intensity, correlation, passesThreshold);

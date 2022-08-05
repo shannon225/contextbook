@@ -357,6 +357,6 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		double[] massArray=mzs.toArray();
 		float[] intensityArray=intens.toArray();
 		float[] deltaMassArray=deltaMasses.toArray();
-		return data.addPeakData(deltaMassArray, massArray, intensityArray, retentionTimes.toArray(), identifiedTICRatio);
+		return data.addPeakData(deltaMassArray, massArray, intensityArray, retentionTimes.toArray(), identifiedTICRatio, params.getFragmentTolerance());
 	}
 }
