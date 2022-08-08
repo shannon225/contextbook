@@ -25,6 +25,7 @@ public class SearchParameters {
 	public static final String OPT_PERC_TRAINING_SIZE = "-percolatorTrainingSetSize";
 	public static final String OPT_PERC_TRAINING_THRESH = "-percolatorTrainingFDR";
 	public static final String ENABLE_ADVANCED_OPTIONS="-enableAdvancedOptions";
+	public static final String NUMBER_OF_QUANTITATIVE_PEAKS = "-numberOfQuantitativePeaks";
 
 	protected final AminoAcidConstants aaConstants;
 	protected final FragmentationType fragType;
@@ -189,7 +190,7 @@ public class SearchParameters {
 		sb.append(" -numberOfThreadsUsed "+numberOfThreadsUsed+"\n");
 		sb.append(" -expectedPeakWidth "+expectedPeakWidth+"\n");
 		sb.append(" -precursorWindowSize "+precursorWindowSize+"\n");
-		sb.append(" -numberOfQuantitativePeaks "+numberOfQuantitativePeaks+"\n");
+		sb.append(" ").append(NUMBER_OF_QUANTITATIVE_PEAKS).append(" ").append(numberOfQuantitativePeaks).append("\n");
 		sb.append(" -minNumOfQuantitativePeaks "+minNumOfQuantitativePeaks+"\n");
 		sb.append(" -topNTargetsUsed "+topNTargetsUsed+"\n");
 		sb.append(" -quantifyAcrossSamples "+quantifyAcrossSamples+"\n");
@@ -235,7 +236,7 @@ public class SearchParameters {
 		map.put("-numberOfThreadsUsed", numberOfThreadsUsed+"");
 		map.put("-expectedPeakWidth", expectedPeakWidth+"");
 		map.put("-precursorWindowSize", precursorWindowSize+"");
-		map.put("-numberOfQuantitativePeaks", numberOfQuantitativePeaks+"");
+		map.put(NUMBER_OF_QUANTITATIVE_PEAKS, numberOfQuantitativePeaks+"");
 		map.put("-minNumOfQuantitativePeaks", minNumOfQuantitativePeaks+"");
 		map.put("-topNTargetsUsed",topNTargetsUsed+"");
 		map.put("-quantifyAcrossSamples", quantifyAcrossSamples+"");

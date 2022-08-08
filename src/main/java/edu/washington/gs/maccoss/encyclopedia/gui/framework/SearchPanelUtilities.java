@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
-import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -18,10 +17,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.StringTokenizer;
@@ -46,15 +42,12 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaToPrositCSVParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryEntryCleaner;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryToBlibConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MS2PIPReader;
@@ -84,7 +77,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
-import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class SearchPanelUtilities {
 	private static final ImageIcon convertDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/convertdb.png"));
@@ -327,75 +319,36 @@ public class SearchPanelUtilities {
 		dialog.setVisible(true);
 	}
 	
-	public static void extractSampleSpecificDLIBs(Component root, SearchParameters parameters) {
-		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
-		final JDialog dialog=new JDialog(frame, "Extact Sample-Specific Libraries from ELIB", true);
 
-		final FileChooserPanel elibFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".elib"), true, true);
-		final FileChooserPanel saveDirFileChooser=new FileChooserPanel(null, "Save Directory", new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				return true;
+	public static void extractSampleSpecificDLIBs(Component root, final JobProcessor processor) {
+		JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+
+		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
+		for (SwingJob job : processor.getQueue()) {
+			if (job instanceof SearchJob) {
+				jobData.add(((SearchJob)job).getSearchData());
 			}
-		}, true, false);
-
-		JPanel options=new JPanel();
-		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
-		options.add(elibFileChooser);
-		options.add(saveDirFileChooser);
-		
-		JPanel buttons=new JPanel();
-		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
-		JButton okButton=new JButton("OK");
-		okButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				final File saveDir=saveDirFileChooser.getFile();
-				final File elibFile=elibFileChooser.getFile();
-				if (elibFile!=null&&elibFile.exists()&&saveDir!=null) {
-					dialog.setVisible(false);
-					dialog.dispose();
-
-					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Extracting Library File") {
-						@Override
-						protected Nothing doInBackgroundForReal() throws Exception {
-							LibraryFile library=new LibraryFile();
-							library.openFile(elibFile);
-							LibraryUtilities.extractSampleSpecificLibraries(saveDir, library);
-							
-							return Nothing.NOTHING;
-						}
-						@Override
-						protected void doneForReal(Nothing t) {
-						}
-					};
-					worker.execute();
-				} else {
-					JOptionPane.showMessageDialog(frame, "You must specify an ELIB or DLIB library file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+		}
+		if (jobData.size()<2) {
+			JOptionPane.showMessageDialog(frame, "Please queue at least two RAW files first!");
+			
+		} else {
+			FileDialog dialog=new FileDialog(frame, "Save Directory", FileDialog.SAVE);
+			dialog.setFilenameFilter(new FilenameFilter() {
+				@Override
+				public boolean accept(File dir, String name) {
+					return true;
 				}
+			});
+			dialog.setVisible(true);
+			
+			if (dialog.getFiles()!=null&&dialog.getFiles().length>0) {
+				File saveDir=dialog.getFiles()[0];
+
+				Logger.logLine("Added extact sample-specific libraries into ["+saveDir.getAbsolutePath()+"]");
+				processor.addJob(new CombineELIBsAndExtractGroupSpecificLibrariesJob(saveDir, processor));
 			}
-		});
-		buttons.add(okButton);
-		JButton cancelButton=new JButton("Cancel");
-		cancelButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				dialog.setVisible(false);
-				dialog.dispose();
-			}
-		});
-		buttons.add(cancelButton);
-		
-		JPanel mainpane=new JPanel(new BorderLayout());
-		mainpane.add(options, BorderLayout.CENTER);
-		mainpane.add(buttons, BorderLayout.SOUTH);
-		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
-		
-		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
-		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		dialog.pack(); 
-		dialog.setSize(500, 200);
-		dialog.setVisible(true);
+		}
 	}
 	
 	public static void combineELIBs(Component root, final JobProcessor processor) {

@@ -32,7 +32,18 @@ public class EncyclopediaTwoPeakLocationInferrer {
 		Pair<HashMap<SearchJobData,TObjectFloatHashMap<String>>, HashMap<String,double[]>> pair=getArchetypals(subProgress1, pecanJobs, passingPeptides, params);
 		return AlternatePeakLocationInferrer.getInferrer(progress, pecanJobs, pair, params);
 	}
-	static Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> getArchetypals(ProgressIndicator progress, List<? extends SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
+
+	public static Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> getArchetypals(ProgressIndicator progress, List<? extends SearchJobData> jobs, SearchParameters params) {
+		return getArchetypals(progress, jobs, null, params);
+	}
+	private static Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> getArchetypals(ProgressIndicator progress, List<? extends SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
+		HashSet<String> passingPeptideModSeqs=new HashSet<>();
+		// always accept if no passing peptides were used
+		if (passingPeptides!=null) {
+			for (PercolatorPeptide peptide : passingPeptides) {
+				passingPeptideModSeqs.add(peptide.getPeptideModSeq());
+			}
+		}
 
 		HashMap<SearchJobData, TObjectFloatHashMap<String>> retentionTimeMappingsInSeconds=new HashMap<>();
 		HashSet<String> addedLibraries=new HashSet<>();
@@ -66,15 +77,16 @@ public class EncyclopediaTwoPeakLocationInferrer {
 		HashMap<String,double[]> bestIons=new HashMap<String, double[]>();
 		for (Entry<String, CorrelationPeakFrequencyCalculator> entry : ionCounter.entrySet()) {
 			String peptideModSeq=entry.getKey();
-			double[] ions=entry.getValue().getTopNMasses(params.getEffectiveNumberOfQuantitativePeaks());
-			if (ions==null||ions.length==0) {
-				//double[] altIons=weakIonCounter.get(peptideModSeq).getTopNMasses(numberOfQuantitativePeaks);
-				//bestIons.put(peptideModSeq, altIons);
-			} else {
-				if (ions.length>=params.getMinNumOfQuantitativePeaks()) {
-					strongAboveThreshold++;
+			
+			// always accept if no passing peptides were used
+			if (passingPeptideModSeqs.size()==0||passingPeptideModSeqs.contains(peptideModSeq)) {
+				double[] ions=entry.getValue().getTopNMasses(params.getEffectiveNumberOfQuantitativePeaks());
+				if (ions!=null&&ions.length>0) {
+					if (ions.length>=params.getMinNumOfQuantitativePeaks()) {
+						strongAboveThreshold++;
+					}
+					bestIons.put(peptideModSeq, ions);
 				}
-				bestIons.put(peptideModSeq, ions);
 			}
 		}
 		Logger.logLine("Found quantitative ions for "+bestIons.size()+" total peptides ("+strongAboveThreshold+" with "+params.getMinNumOfQuantitativePeaks()+" or more high quality peaks) across all runs.");

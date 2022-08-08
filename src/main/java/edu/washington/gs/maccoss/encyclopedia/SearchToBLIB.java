@@ -296,6 +296,10 @@ public class SearchToBLIB {
 	}
 	
 	public static void convert(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File libFile, boolean writeBlib, boolean alignBetweenFiles) {
+		convert(progress, pecanJobs, libFile, writeBlib, alignBetweenFiles, null);
+	}
+
+	public static void convert(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File libFile, boolean writeBlib, boolean alignBetweenFiles, SearchParameters parameters) {
 		ArrayList<SearchJobData> processedJobs=new ArrayList<SearchJobData>();
 		ArrayList<File> featureFiles=new ArrayList<File>();
 		SearchJobData representativeJob=null;
@@ -332,7 +336,9 @@ public class SearchToBLIB {
 			return;
 		}
 		Logger.logLine("Using "+representativeJob.getDiaFileReader().getOriginalFileName()+" to extract representative search parameters");
-		SearchParameters parameters=representativeJob.getParameters();
+		if (parameters==null) {
+			parameters=representativeJob.getParameters();
+		}
 
 		String filename=libFile.getName();
 		if (filename.lastIndexOf('.')>0) {

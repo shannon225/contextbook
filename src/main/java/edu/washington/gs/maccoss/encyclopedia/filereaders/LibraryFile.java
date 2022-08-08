@@ -948,7 +948,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		Connection c=getConnection();
 		try {
 			PreparedStatement prep=c.prepareStatement(
-					"INSERT INTO entries (PrecursorMZ, PrecursorCharge, PeptideModSeq, PeptideSeq, Copies, RTInSeconds, Score, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, CorrelationEncodedLength, CorrelationArray, QuantifiedIonsArray, RTInSecondsStart, RTInSecondsStop, MedianChromatogramEncodedLength, MedianChromatogramArray, SourceFile) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+					"INSERT INTO entries (PrecursorMZ, PrecursorCharge, PeptideModSeq, PeptideSeq, Copies, RTInSeconds, Score, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, QuantifiedIonsArray, CorrelationEncodedLength, CorrelationArray, RTInSecondsStart, RTInSecondsStop, MedianChromatogramEncodedLength, MedianChromatogramArray, SourceFile) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 			try {
 				for (LibraryEntry entry : entries) {
 					if (requireAccessions&&entry.getAccessions().size()==0)
@@ -967,6 +967,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					byte[] intensityByteArray=ByteConverter.toByteArray(entry.getIntensityArray());
 					prep.setInt(10, intensityByteArray.length);
 					prep.setBytes(11, CompressionUtils.compress(intensityByteArray));
+					
+					byte[] quantifiedIonsArray=ByteConverter.toByteArray(entry.getQuantifiedIonsArray());
+					prep.setBytes(12, CompressionUtils.compress(quantifiedIonsArray));
 
 					if (entry.getMassArray().length!=entry.getIntensityArray().length) {
 						throw new EncyclopediaException("Mass/Intensity array length mismatch! "+entry.getMassArray().length+" != "+entry.getIntensityArray().length+" FOR "+entry.getPeptideModSeq());
@@ -981,11 +984,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 									"Mass/Correlation array length mismatch! "+entry.getMassArray().length+" != "+entry.getIntensityArray().length+" FOR "+entry.getPeptideModSeq());
 						}
 
-						prep.setInt(12, correlationByteArray.length);
-						prep.setBytes(13, CompressionUtils.compress(correlationByteArray));
-						
-						byte[] quantifiedIonsArray=ByteConverter.toByteArray(cast.getQuantifiedIonsArray());
-						prep.setBytes(14, CompressionUtils.compress(quantifiedIonsArray));
+						prep.setInt(13, correlationByteArray.length);
+						prep.setBytes(14, CompressionUtils.compress(correlationByteArray));
 						
 						prep.setFloat(15, cast.getRtRange().getStart());
 						prep.setFloat(16, cast.getRtRange().getStop());
@@ -994,8 +994,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						prep.setInt(17, chromatogramByteArray.length);
 						prep.setBytes(18, CompressionUtils.compress(chromatogramByteArray));
 					} else {
-						prep.setNull(12, Types.INTEGER);
-						prep.setNull(13, Types.BLOB);
+						prep.setNull(13, Types.INTEGER);
 						prep.setNull(14, Types.BLOB);
 						prep.setNull(15, Types.FLOAT);
 						prep.setNull(16, Types.FLOAT);
@@ -1222,6 +1221,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					+ "e.MassArray, " 
 					+ "e.IntensityEncodedLength, " 
 					+ "e.IntensityArray, "
+					+ "e.QuantifiedIonsArray, "
 					+ "e.SourceFile " 
 					+ "from " 
 					+ "entries e "

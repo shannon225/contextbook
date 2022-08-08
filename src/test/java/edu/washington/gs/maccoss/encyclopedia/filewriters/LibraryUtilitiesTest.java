@@ -5,12 +5,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
@@ -116,7 +120,7 @@ public class LibraryUtilitiesTest {
 		File saveFile=new File("/Volumes/bcsbluessd/TPAD/libs/");
 		LibraryFile library=new LibraryFile();
 		library.openFile(inFile);
-		LibraryUtilities.extractSampleSpecificLibraries(saveFile, library);
+		LibraryUtilities.extractSampleSpecificLibraries(new EmptyProgressIndicator(), saveFile, Optional.ofNullable((HashMap<String, double[]>)null), library, SearchParameterParser.getDefaultParametersObject());
 		library.close();
 	}
 }

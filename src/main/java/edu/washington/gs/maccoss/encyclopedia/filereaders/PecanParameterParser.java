@@ -50,7 +50,7 @@ public class PecanParameterParser {
 		map.put("-acquisition", DataAcquisitionType.toString(DataAcquisitionType.DIA));
 		map.put("-precursorWindowSize", "-1");
 		map.put("-numberOfThreadsUsed", Integer.toString(Runtime.getRuntime().availableProcessors()));
-		map.put("-numberOfQuantitativePeaks", "5");
+		map.put(SearchParameters.NUMBER_OF_QUANTITATIVE_PEAKS, "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
 		map.put("-minIntensity", "-1.0");
 		map.put("-requireVariableMods", "false");
@@ -280,7 +280,7 @@ public class PecanParameterParser {
 		numberOfThreadsUsed=ParsingUtils.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
 		targetWindowCenter=ParsingUtils.getFloat("-targetWindowCenter", parameters, -1f);
 		precursorWindowSize=ParsingUtils.getFloat("-precursorWindowSize", parameters, -1f);
-		numberOfQuantitativePeaks=ParsingUtils.getInteger("-numberOfQuantitativePeaks", parameters, 5);
+		numberOfQuantitativePeaks=ParsingUtils.getInteger(SearchParameters.NUMBER_OF_QUANTITATIVE_PEAKS, parameters, 5);
 		minNumOfQuantitativePeaks=ParsingUtils.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
 		topNTargetsUsed=ParsingUtils.getInteger("-topNTargetsUsed", parameters, -1);
 		
