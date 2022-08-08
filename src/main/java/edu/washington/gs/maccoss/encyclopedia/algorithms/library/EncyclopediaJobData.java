@@ -1,14 +1,21 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
-import java.io.File;
-
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.*;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.zip.DataFormatException;
 
 public class EncyclopediaJobData extends QuantitativeSearchJobData {
 	public static final String LOG_FILE_SUFFIX=".log";
@@ -81,5 +88,156 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData {
 	@Override
 	public String getPrimaryScoreName() {
 		return taskFactory.getPrimaryScoreName();
+	}
+
+	/**
+	 * Return an {@code EncyclopeDIAJobData} instance that for {@code diaFile} that will
+	 * function even if the .DIA file doesn't exist. Only useful when the file's results
+	 * are present but the .DIA file doesn't. This allows SearchToBLIB's {@code -alignOnly}
+	 * option to run without access to raw data, which is useful e.g. for large experiments
+	 * where collecting all the raw files is costly.
+	 * <p>
+	 * The returned instance will return {@code true} from {@link #hasBeenRun()} even if
+	 * the .DIA doesn't exist. It will also return a {@code StripeFileInterface} that provides
+	 * the appropriate original file name (read from the file's results ELIB; see
+	 * {@link StripeFileInterface#getOriginalFileName()}) but otherwise throws on attempts to
+	 * read the .DIA's contents.
+	 */
+	public static EncyclopediaJobData getDummyFor(File diaFile, File fastaFile, LibraryInterface library, LibraryScoringFactory factory) {
+		return new DummyEncyclopediaJobData(diaFile, fastaFile, library, factory);
+	}
+
+	/**
+	 * Special class overriding key methods to allow processing results for jobs
+	 * even if the DIA file doesn't exist. This allows SearchToBLIB's {@code -alignOnly}
+	 * option to run without access to raw data, which is useful e.g. for large
+	 * experiments where collecting all the raw files is costly.
+	 * <p>
+	 * Instances will return {@code true} from {@link #hasBeenRun()} even if
+	 * ths .DIA doesn't exist. It will also return a {@code StripeFileInterface} that provides
+	 * the appropriate original file name (read from the file's results ELIB; see
+	 * {@link StripeFileInterface#getOriginalFileName()}) but otherwise throws on attempts to
+	 * read the .DIA's contents.
+	 */
+	private static class DummyEncyclopediaJobData extends EncyclopediaJobData {
+		private String originalFileName = null;
+
+		private DummyEncyclopediaJobData(File diaFile, File fastaFile, LibraryInterface library, LibraryScoringFactory factory) {
+			super(diaFile, fastaFile, library, factory);
+
+			if (Files.exists(diaFile.toPath())) {
+				Logger.errorLine("Creating a dummy job datum for " + diaFile.getName() + " even though it exists!");
+			}
+		}
+
+		@Override
+		public boolean hasBeenRun() {
+			final PercolatorExecutionData percolatorFiles = getPercolatorFiles();
+			if (!percolatorFiles.getInputTSV().exists()) {
+				Logger.errorLine("Missing feature file: " + percolatorFiles.getInputTSV().getName());
+				return false;
+			}
+			if (!percolatorFiles.getPeptideOutputFile().exists()) {
+				Logger.errorLine("Missing output file: " + percolatorFiles.getPeptideOutputFile().getName());
+				return false;
+			}
+			if (!getResultLibrary().exists()) {
+				Logger.errorLine("Missing output library: " + getResultLibrary().getName());
+				return false;
+			}
+			return true;
+		}
+
+		@Override
+		public StripeFileInterface getDiaFileReader() {
+			return new StripeFileInterface() {
+				@Override
+				public Map<Range, WindowData> getRanges() {
+					throw new UnsupportedOperationException("File not found: " + getDiaFile().getAbsolutePath());
+				}
+
+				@Override
+				public void openFile(File userFile) throws IOException, SQLException {
+					throw new UnsupportedOperationException();
+				}
+
+				@Override
+				public ArrayList<PrecursorScan> getPrecursors(float minRT, float maxRT) throws IOException, SQLException, DataFormatException {
+					throw new UnsupportedOperationException("File not found: " + getDiaFile().getAbsolutePath());
+				}
+
+				@Override
+				public ArrayList<FragmentScan> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
+					throw new UnsupportedOperationException("File not found: " + getDiaFile().getAbsolutePath());
+				}
+
+				@Override
+				public ArrayList<FragmentScan> getStripes(Range targetMzRange, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
+					throw new UnsupportedOperationException("File not found: " + getDiaFile().getAbsolutePath());
+				}
+
+				@Override
+				public float getTIC() throws IOException, SQLException {
+					throw new UnsupportedOperationException("File not found: " + getDiaFile().getAbsolutePath());
+				}
+
+				@Override
+				public float getGradientLength() throws IOException, SQLException {
+					throw new UnsupportedOperationException("File not found: " + getDiaFile().getAbsolutePath());
+				}
+
+				@Override
+				public void close() {
+					// no-op
+				}
+
+				@Override
+				public boolean isOpen() {
+					return false;
+				}
+
+				@Override
+				public File getFile() {
+					return getDiaFile();
+				}
+
+				@Override
+				public String getOriginalFileName() {
+					if (null != originalFileName) {
+						return originalFileName;
+					}
+
+					synchronized (this) {
+						if (null == originalFileName) {
+							// Workaround: if the DIA file is missing we can't read the
+							// original file name, which likely has an .mzML extension.
+							// Instead, get the name used in this job's results ELIB.
+							try (Connection c = new SQLFile() {}.getConnection(getResultLibrary())) {
+								try (Statement s = c.createStatement()) {
+									try (ResultSet rs = s.executeQuery(
+											"SELECT sourcefile" +
+													" FROM entries" +
+													" LIMIT 1;"
+									)) {
+										if (rs.next()) {
+											return rs.getString(1);
+										} else {
+											throw new SQLException("No entries in results ELIB!");
+										}
+									}
+								}
+							} catch (IOException | SQLException e) {
+								Logger.errorLine("Unable to read from results ELIB for job " + getDiaFile().getName());
+								Logger.errorException(e);
+							}
+
+							originalFileName = getDiaFile().getName();
+						}
+					}
+
+					return originalFileName;
+				}
+			};
+		}
 	}
 }

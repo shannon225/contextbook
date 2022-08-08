@@ -38,9 +38,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
-import org.apache.commons.io.FilenameUtils;
 
-import javax.naming.spi.StateFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -330,120 +328,7 @@ public class SearchToBLIB {
 				} else if (alignOnly && !diaFile.exists()) {
 					// Special case -- when running alignment-only we may not have the .DIA available but want
 					// to handle the job using Percolator/ELIB results only.
-					// TODO: factor out this "dummy job data" class
-					pecanJobs.add(new EncyclopediaJobData(diaFile, fastaFile, library, factory) {
-						@Override
-						public boolean hasBeenRun() {
-							final PercolatorExecutionData percolatorFiles = getPercolatorFiles();
-							if (!percolatorFiles.getInputTSV().exists()) {
-								Logger.errorLine("Missing feature file: " + percolatorFiles.getInputTSV().getName());
-								return false;
-							}
-							if (!percolatorFiles.getPeptideOutputFile().exists()) {
-								Logger.errorLine("Missing output file: " + percolatorFiles.getPeptideOutputFile().getName());
-								return false;
-							}
-							if (!getResultLibrary().exists()) {
-								Logger.errorLine("Missing output library: " + getResultLibrary().getName());
-								return false;
-							}
-							return true;
-						}
-
-						private String originalFileName = null;
-
-						@Override
-						public StripeFileInterface getDiaFileReader() {
-							return new StripeFileInterface() {
-								@Override
-								public Map<Range, WindowData> getRanges() {
-									throw new UnsupportedOperationException("File not found: " + diaFile.getAbsolutePath());
-								}
-
-								@Override
-								public void openFile(File userFile) throws IOException, SQLException {
-									throw new UnsupportedOperationException();
-								}
-
-								@Override
-								public ArrayList<PrecursorScan> getPrecursors(float minRT, float maxRT) throws IOException, SQLException, DataFormatException {
-									throw new UnsupportedOperationException("File not found: " + diaFile.getAbsolutePath());
-								}
-
-								@Override
-								public ArrayList<FragmentScan> getStripes(double targetMz, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
-									throw new UnsupportedOperationException("File not found: " + diaFile.getAbsolutePath());
-								}
-
-								@Override
-								public ArrayList<FragmentScan> getStripes(Range targetMzRange, float minRT, float maxRT, boolean sqrt) throws IOException, SQLException {
-									throw new UnsupportedOperationException("File not found: " + diaFile.getAbsolutePath());
-								}
-
-								@Override
-								public float getTIC() throws IOException, SQLException {
-									throw new UnsupportedOperationException("File not found: " + diaFile.getAbsolutePath());
-								}
-
-								@Override
-								public float getGradientLength() throws IOException, SQLException {
-									throw new UnsupportedOperationException("File not found: " + diaFile.getAbsolutePath());
-								}
-
-								@Override
-								public void close() {
-									// no-op
-								}
-
-								@Override
-								public boolean isOpen() {
-									return false;
-								}
-
-								@Override
-								public File getFile() {
-									return diaFile;
-								}
-
-								@Override
-								public String getOriginalFileName() {
-									if (null != originalFileName) {
-										return originalFileName;
-									}
-
-									synchronized (this) {
-										if (null == originalFileName) {
-											// Workaround: if the DIA file is missing we can't read the
-											// orginal file name, which likely has an .mzML extension.
-											// Instead, get the name used in this job's results ELIB.
-											try (Connection c = new SQLFile() {}.getConnection(getResultLibrary())) {
-												try (Statement s = c.createStatement()) {
-													try (ResultSet rs = s.executeQuery(
-															"SELECT sourcefile" +
-																	" FROM entries" +
-																	" LIMIT 1;"
-													)) {
-														if (rs.next()) {
-															return rs.getString(1);
-														} else {
-															throw new SQLException("No entries in results ELIB!");
-														}
-													}
-												}
-											} catch (IOException | SQLException e) {
-												Logger.errorLine("Unable to read from results ELIB for job " + diaFile.getName());
-												Logger.errorException(e);
-											}
-
-											originalFileName = diaFile.getName();
-										}
-									}
-
-									return originalFileName;
-								}
-							};
-						}
-					});
+					pecanJobs.add(EncyclopediaJobData.getDummyFor(diaFile, fastaFile, library, factory));
 				} else {
 					EncyclopediaJobData job = new EncyclopediaJobData(diaFile, fastaFile, library, factory);
 					pecanJobs.add(job);
@@ -1594,4 +1479,5 @@ public class SearchToBLIB {
 			Logger.errorException(sqle);
 		}
 	}
+
 }
