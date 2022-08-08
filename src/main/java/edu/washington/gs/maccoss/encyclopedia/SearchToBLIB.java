@@ -350,6 +350,8 @@ public class SearchToBLIB {
 							return true;
 						}
 
+						private String originalFileName = null;
+
 						@Override
 						public StripeFileInterface getDiaFileReader() {
 							return new StripeFileInterface() {
@@ -403,7 +405,6 @@ public class SearchToBLIB {
 									return diaFile;
 								}
 
-								private String originalFileName = null;
 								@Override
 								public String getOriginalFileName() {
 									if (null != originalFileName) {
