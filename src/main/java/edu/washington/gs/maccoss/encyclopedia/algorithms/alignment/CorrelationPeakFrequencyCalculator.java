@@ -48,7 +48,7 @@ public class CorrelationPeakFrequencyCalculator {
 		int value=binarySearch(peaks, target);
 		if (value>=0) {
 			peaks.get(value).increment(intensity, correlation, passesThreshold||!canAdd);
-		} else if (canAdd) {
+		} else if (canAdd&&passesThreshold) {
 			value=-(value+1);
 			Count c=new Count(target);
 			c.increment(intensity, correlation, passesThreshold);

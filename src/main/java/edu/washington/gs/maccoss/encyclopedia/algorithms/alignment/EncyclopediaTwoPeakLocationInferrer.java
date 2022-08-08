@@ -58,10 +58,12 @@ public class EncyclopediaTwoPeakLocationInferrer {
 				LibraryInterface lib=libjob.getLibrary();
 				if (!addedLibraries.contains(lib.getName())) {
 					addedLibraries.add(lib.getName());
+					Logger.logLine("Adding library ["+lib.getName()+"] to ion tracker...");
 					addLibraryToCounter(lib, ionCounter, true, params);
 				}
 				try {
 					LibraryInterface results=BlibToLibraryConverter.getFile(resultLibrary);
+					Logger.logLine("Adding results ["+results.getName()+"] to ion tracker...");
 					TObjectFloatHashMap<String> rtMapping=addLibraryToCounter(results, ionCounter, false, params);
 					retentionTimeMappingsInSeconds.put(job, rtMapping);
 					
@@ -112,12 +114,10 @@ public class EncyclopediaTwoPeakLocationInferrer {
 				float[] correlation=entry.getCorrelationArray();
 				boolean[] isQuant=entry.getQuantifiedIonsArray();
 				for (int i=0; i<correlation.length; i++) {
-					boolean passesThreshold = isQuant[i]&&correlation[i]>=TransitionRefiner.quantitativeCorrelationThreshold;
-					float thisCorrelation=correlation[i];
-					if (correlation[i]<TransitionRefiner.identificationCorrelationThreshold) {
-						thisCorrelation=0.0f;
-					} else if (thisCorrelation<0) {
-						thisCorrelation=0.0f;
+					boolean passesThreshold = isQuant[i]&&(isLibrary||correlation[i]>=TransitionRefiner.quantitativeCorrelationThreshold);
+					float thisCorrelation=0.0f;
+					if (correlation[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+						thisCorrelation=correlation[i];
 					}
 					bestIonsMap.increment(masses[i], intensity[i], thisCorrelation, passesThreshold, isLibrary);
 				}
