@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EncyclopediaAuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
@@ -9,7 +10,10 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SparseXCorrCalculator;
@@ -19,29 +23,35 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TCharDoubleHashMap;
+import gnu.trove.procedure.TCharDoubleProcedure;
 
 public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMScorer {
 	private static final int numPeaksUsedInAverage=3;
 	
+	private static final TCharDoubleHashMap targetImmoniumIons=new TCharDoubleHashMap();
+	{
+		targetImmoniumIons.put('H', 110.0718);
+		targetImmoniumIons.put('Y', 136.0762);
+		targetImmoniumIons.put('W', 159.0922);
+		targetImmoniumIons.put('M', 104.0534);
+		targetImmoniumIons.put('F', 120.0813);
+	}
+	
 	private final boolean runXCorr;
-	private final LibraryBackgroundInterface background;
 	private final SparseXCorrCalculator librarySparseCalculator;
 	private final SparseXCorrCalculator sparseModelCalculator;
 
-	public EncyclopediaTwoAuxillaryPSMScorer(SearchParameters parameters, LibraryBackgroundInterface background, boolean runXCorr) {
+	public EncyclopediaTwoAuxillaryPSMScorer(SearchParameters parameters, boolean runXCorr) {
 		super(parameters);
-		this.background=background;
 		this.runXCorr=runXCorr;
 		this.librarySparseCalculator=null;
 		this.sparseModelCalculator=null;
 	}
 	
-	
-	
-	private EncyclopediaTwoAuxillaryPSMScorer(SearchParameters parameters, LibraryBackgroundInterface background, boolean runXCorr, SparseXCorrCalculator librarySparseCalculator, SparseXCorrCalculator sparseModelCalculator) {
+	private EncyclopediaTwoAuxillaryPSMScorer(SearchParameters parameters, boolean runXCorr, SparseXCorrCalculator librarySparseCalculator, SparseXCorrCalculator sparseModelCalculator) {
 		super(parameters);
 		this.runXCorr=runXCorr;
-		this.background=background;
 		this.librarySparseCalculator=librarySparseCalculator;
 		this.sparseModelCalculator=sparseModelCalculator;
 	}
@@ -50,7 +60,7 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 	public EncyclopediaAuxillaryPSMScorer getEntryOptimizedScorer(LibraryEntry entry) {
 		SparseXCorrCalculator librarySparse=new SparseXCorrCalculator(entry, new Range((float)entry.getPrecursorMZ()-10f, (float)entry.getPrecursorMZ()+10f), parameters);
 		SparseXCorrCalculator sparseModel=new SparseXCorrCalculator(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters);
-		return new EncyclopediaTwoAuxillaryPSMScorer(parameters, background, runXCorr, librarySparse, sparseModel);
+		return new EncyclopediaTwoAuxillaryPSMScorer(parameters, runXCorr, librarySparse, sparseModel);
 	}
 	
 	@Override
@@ -60,12 +70,15 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 		float averageAbsPPM=precursorScores[0];
 		float isotopeDotProduct=precursorScores[1];
 		float averagePPM=precursorScores[2];
+		float percentBlankOverMono=precursorScores[3];
+		float numberPrecursorMatch=precursorScores[4];
 
 		MassTolerance acquiredTolerance=parameters.getFragmentTolerance();
 		MassTolerance libraryTolerance=parameters.getLibraryFragmentTolerance();
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
-		double[] ions=model.getPrimaryIons(parameters.getFragType(), entry.getPrecursorCharge(), false);
-		
+		FragmentIon[] ions=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
+		HashMap<IonType, float[]> matchedIonLadders=new HashMap<>();
+
 		double[] predictedMasses=entry.getMassArray();
 		float[] predictedIntensities=entry.getIntensityArray();
 		float[] correlation=entry.getCorrelationArray();
@@ -80,8 +93,9 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 		TFloatArrayList predictedTargetIntensities=new TFloatArrayList();
 		TFloatArrayList actualTargetIntensities=new TFloatArrayList();
 		ArrayList<XYPoint> fragmentDeltaMasses=new ArrayList<XYPoint>();
-		for (double target : ions) {
-			int[] predictedIndicies=libraryTolerance.getIndicies(predictedMasses, target);
+		for (FragmentIon target : ions) {
+			double targetMass=target.getMass();
+			int[] predictedIndicies=libraryTolerance.getIndicies(predictedMasses, targetMass);
 			float predictedIntensity=0.0f;
 			float maxCorrelation=0.01f;
 			for (int i=0; i<predictedIndicies.length; i++) {
@@ -94,7 +108,7 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 			}
 			
 			if (predictedIntensity>0) {
-				int[] indicies=acquiredTolerance.getIndicies(acquiredMasses, target);
+				int[] indicies=acquiredTolerance.getIndicies(acquiredMasses, targetMass);
 				float intensity=0.0f;
 				float bestPeakIntensity=0.0f;
 				float deltaMass=0.0f;
@@ -104,7 +118,7 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 					if (acquiredIntensities[indicies[j]]>bestPeakIntensity) {
 						bestPeakIntensity=acquiredIntensities[indicies[j]];
 
-						deltaMass=(float)acquiredTolerance.getDeltaScore(target, acquiredMasses[indicies[j]]);
+						deltaMass=(float)acquiredTolerance.getDeltaScore(targetMass, acquiredMasses[indicies[j]]);
 					}
 				}
 				if (intensity>0) {
@@ -112,14 +126,58 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 					if (intensity>intensityThreshold) {
 						numberOfMatchingPeaksAboveThreshold++;
 					}
+					float[] ladder=matchedIonLadders.get(target.getType());
+					if (ladder==null) {
+						ladder=new float[entry.getPeptideSeq().length()];
+						matchedIonLadders.put(target.getType(), ladder);
+					}
+					if (target.getIndex()<=ladder.length) {
+						ladder[target.getIndex()-1]=intensity;
+					}
 				}
-				predictedTargets.add(target);
+				predictedTargets.add(targetMass);
 				predictedTargetIntensities.add(predictedIntensity);
 				actualTargetIntensities.add(intensity);
 				
 				fragmentDeltaMasses.add(new XYPoint(intensity, deltaMass));
 			}
 		}
+		
+		int maxLadderLength=0;
+		for (float[] ladder : matchedIonLadders.values()) {
+			int currentLength=0;
+			for (int i = 0; i < ladder.length; i++) {
+				if (ladder[i]>0.0f) {
+					currentLength++;
+				}
+				if (currentLength>maxLadderLength) {
+					maxLadderLength=currentLength;
+				}
+			}
+		}
+		
+		int[] numImmoniumIonsFound=new int[1];
+		targetImmoniumIons.forEachEntry(new TCharDoubleProcedure() {
+			
+			@Override
+			public boolean execute(char aa, double targetMass) {
+				if (entry.getPeptideSeq().indexOf(aa)>=0) {
+					int[] indicies=acquiredTolerance.getIndicies(acquiredMasses, targetMass);
+
+					for (int j=0; j<indicies.length; j++) {
+						if (acquiredIntensities[indicies[j]]>0) {
+							numImmoniumIonsFound[0]++;
+							break;
+						};
+					}
+				}
+				return true;
+			}
+		});
+		
+		float beta=0.075f*maxLadderLength;
+		float rho=0.15f*numImmoniumIonsFound[0];
+		float sp=General.sum(actualTargetIntensities.toArray())*numberOfMatchingPeaks*(1.0f+beta)*(1.0f+rho)/ions.length;
 		
 		float averageFragmentDeltaMasses=0.0f, averageAbsFragDeltaMass=0.0f;
 		if (fragmentDeltaMasses.size()==0) {
@@ -156,12 +214,16 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 		float contrastAngle=1.0f-(2.0f*(float)Math.acos(protectedDP))/(float)Math.PI;
 		float logit=(float)Math.log(protectedDP/(1.0f-protectedDP));
 		float sumOfSquaredErrors=0.0f; // normalized to sum of targeted intensities
-		
-		for (int i=0; i<predictedTargetIntensitiesArray.length; i++) {
-			if (predictedTargetIntensitiesArray[i]>0.0&&actualTargetIntensitiesArray[i]>0.0) {
-				float delta=predictedTargetIntensitiesArray[i]-actualTargetIntensitiesArray[i];
-				float deltaSquared=delta*delta;
-				sumOfSquaredErrors+=deltaSquared;
+
+		if (predictedTargetIntensitiesArray.length==0) {
+			sumOfSquaredErrors=1.0f;
+		} else {
+			for (int i=0; i<predictedTargetIntensitiesArray.length; i++) {
+				if (predictedTargetIntensitiesArray[i]>0.0&&actualTargetIntensitiesArray[i]>0.0) {
+					float delta=predictedTargetIntensitiesArray[i]-actualTargetIntensitiesArray[i];
+					float deltaSquared=delta*delta;
+					sumOfSquaredErrors+=deltaSquared;
+				}
 			}
 		}
 
@@ -180,9 +242,9 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 			SparseXCorrCalculator sparseModel=sparseModelCalculator!=null?sparseModelCalculator:new SparseXCorrCalculator(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters);
 			float xCorrModel=sparseModel.score(sparseScan);
 			
-			return new float[] {xTandem, xCorrLib, xCorrModel, dotProduct, contrastAngle, logit, sumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
+			return new float[] {xTandem, xCorrLib, xCorrModel, dotProduct, contrastAngle, logit, sumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM, percentBlankOverMono, numberPrecursorMatch, sp, maxLadderLength};
 		} else {
-			return new float[] {xTandem, dotProduct, contrastAngle, logit, sumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM};
+			return new float[] {xTandem, dotProduct, contrastAngle, logit, sumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM, percentBlankOverMono, numberPrecursorMatch, sp, maxLadderLength};
 		}
 	}
 	
@@ -202,19 +264,17 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 		// extra scores at the beginning
 		if (runXCorr) {
 			return new String[] {"primary", "secondary", "evalue", "correlationToGaussian", "correlationToPrecursor", "isIntegratedSignal", "isIntegratedPrecursor", "numPeaksWithGoodCorrelation",  
-					"xTandem", "xCorrLib", "xCorrModel", "dotProduct", "contrastAngle", "logit", "sumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass"};
+					"xTandem", "xCorrLib", "xCorrModel", "dotProduct", "contrastAngle", "logit", "sumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass",
+					"percentBlankOverMono", "numberPrecursorMatch", "sp", "maxLadderLength"};
 		} else {
 			return new String[] {"primary", "secondary", "evalue", "correlationToGaussian", "correlationToPrecursor", "isIntegratedSignal", "isIntegratedPrecursor", "numPeaksWithGoodCorrelation", 
-					"xTandem", "dotProduct", "contrastAngle", "logit", "sumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "xCorrModel"};
+					"xTandem", "dotProduct", "contrastAngle", "logit", "sumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass",
+					"percentBlankOverMono", "numberPrecursorMatch", "sp", "maxLadderLength"};
 		}
 	}
 	
 	@Override
 	public float[] getMissingDataScores(LibraryEntry entry) {
-		float maxFragPPMError=(float)parameters.getFragmentTolerance().getToleranceThreshold();
-		float maxPrePPMError=(float)parameters.getPrecursorTolerance().getToleranceThreshold();
-
-		return new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 
-				maxFragPPMError, maxFragPPMError, 0.0f, maxPrePPMError, maxPrePPMError, 100.0f};
+		throw new EncyclopediaException("Sorry, missing score data is not allowed for EncyclopeDIA v2 Scoring. Please contact the help boards if you see this message.");
 	}
 }
