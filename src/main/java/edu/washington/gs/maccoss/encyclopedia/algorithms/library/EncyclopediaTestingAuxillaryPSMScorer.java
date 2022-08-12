@@ -130,9 +130,9 @@ public class EncyclopediaTestingAuxillaryPSMScorer extends EncyclopediaAuxillary
 		float[] actualTargetIntensitiesArray=actualTargetIntensities.toArray();
 		
 		float[] unnormScores=getScores(predictedTargetIntensitiesArray, actualTargetIntensitiesArray); 
-		float[] sumnormScores=getScores(normalizeToSum(predictedTargetIntensitiesArray), normalizeToSum(actualTargetIntensitiesArray));
-		float[] maxnormScores=getScores(normalizeToMaxOne(predictedTargetIntensitiesArray), normalizeToMaxOne(actualTargetIntensitiesArray));
-		float[] l2normScores=getScores(normalizeToL2(predictedTargetIntensitiesArray), normalizeToL2(actualTargetIntensitiesArray)); 
+		float[] sumnormScores=getScores(General.normalizeToSum(predictedTargetIntensitiesArray), General.normalizeToSum(actualTargetIntensitiesArray));
+		float[] maxnormScores=getScores(General.normalizeToMaxOne(predictedTargetIntensitiesArray), General.normalizeToMaxOne(actualTargetIntensitiesArray));
+		float[] l2normScores=getScores(General.normalizeToL2(predictedTargetIntensitiesArray), General.normalizeToL2(actualTargetIntensitiesArray)); 
 		
 		return General.concatenate(unnormScores, sumnormScores, maxnormScores, l2normScores);
 	}
@@ -167,16 +167,6 @@ public class EncyclopediaTestingAuxillaryPSMScorer extends EncyclopediaAuxillary
 		}
 		
 		return new float[] {dotProduct, contrastAngle, logit, -(float)Math.log(sumOfSquaredErrors), xTandem};
-	}
-	
-	private static float[] normalizeToL2(float[] y) {
-		return General.divide(y, (float)Math.sqrt(General.sum(General.multiply(y, y))));
-	}
-	private static float[] normalizeToMaxOne(float[] y) {
-		return General.divide(y, General.max(y));
-	}
-	private static float[] normalizeToSum(float[] y) {
-		return General.divide(y, General.sum(y));
 	}
 
 	@Override
