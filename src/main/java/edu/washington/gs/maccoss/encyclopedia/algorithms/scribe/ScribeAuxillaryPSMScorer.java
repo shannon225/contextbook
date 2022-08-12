@@ -175,8 +175,8 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 			averageAbsFragDeltaMass=averageAbsFragDeltaMass/numPeaksUsedInAverage;
 		}
 
-		float[] predictedTargetIntensitiesArray=normalizeToL2(predictedTargetIntensities.toArray());
-		float[] actualTargetIntensitiesArray=normalizeToL2(actualTargetIntensities.toArray());
+		float[] predictedTargetIntensitiesArray=General.normalizeToL2(predictedTargetIntensities.toArray());
+		float[] actualTargetIntensitiesArray=General.normalizeToL2(actualTargetIntensities.toArray());
 		
 		float dotProduct=General.sum(General.multiply(predictedTargetIntensitiesArray, actualTargetIntensitiesArray));
 
@@ -214,10 +214,6 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		return new float[] {dotProduct, contrastAngle, logit, xTandem, xCorrLib, xCorrModel, Log.protectedLn(1.0f/sumOfSquaredErrors), 
 				numberOfMatchingPeaks, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, 
 				averageAbsPPM, averagePPM, percentBlankOverMono, numberPrecursorMatch, sp, maxLadderLength};
-	}
-	
-	private static float[] normalizeToL2(float[] y) {
-		return General.divide(y, (float)Math.sqrt(General.sum(General.multiply(y, y))));
 	}
 
 	public static String[] getScoreNames() {

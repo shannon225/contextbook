@@ -201,8 +201,8 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 			averageAbsFragDeltaMass=averageAbsFragDeltaMass/numPeaksUsedInAverage;
 		}
 
-		float[] predictedTargetIntensitiesArray=normalizeToL2(predictedTargetIntensities.toArray());
-		float[] actualTargetIntensitiesArray=normalizeToL2(actualTargetIntensities.toArray());
+		float[] predictedTargetIntensitiesArray=General.normalizeToL2(predictedTargetIntensities.toArray());
+		float[] actualTargetIntensitiesArray=General.normalizeToL2(actualTargetIntensities.toArray());
 		
 		float dotProduct=General.sum(General.multiply(predictedTargetIntensitiesArray, actualTargetIntensitiesArray));
 
@@ -246,13 +246,6 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 		} else {
 			return new float[] {xTandem, dotProduct, contrastAngle, logit, sumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM, percentBlankOverMono, numberPrecursorMatch, sp, maxLadderLength};
 		}
-	}
-	
-	private static float[] normalizeToL2(float[] y) {
-		return General.divide(y, (float)Math.sqrt(General.sum(General.multiply(y, y))));
-	}
-	private static float[] normalizeToSum(float[] y) {
-		return General.divide(y, General.sum(y));
 	}
 
 	@Override
