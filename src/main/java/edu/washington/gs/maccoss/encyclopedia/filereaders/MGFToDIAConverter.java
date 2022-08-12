@@ -11,8 +11,8 @@ import java.util.concurrent.BlockingQueue;
 
 import com.sun.istack.Nullable;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.OverlapDeconvoluter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.spectrumprocessors.OverlapDeconvoluter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;

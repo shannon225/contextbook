@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms;
+package edu.washington.gs.maccoss.encyclopedia.filereaders.spectrumprocessors;
 
 import java.util.ArrayList;
 import java.util.HashMap;

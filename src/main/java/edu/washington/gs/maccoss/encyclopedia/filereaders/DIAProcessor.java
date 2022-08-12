@@ -2,8 +2,6 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -15,64 +13,24 @@ import com.sun.istack.Nullable;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.spectrumprocessors.OverlapDeconvoluter;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
 
-public class MzmlToDIAConverter implements StripeFileReaderInterface {
-	public static final String MZML_EXTENSION=".mzml";
-
+public class DIAProcessor implements StripeFileReaderInterface {
 	static final int DEFAULT_QUEUE_CAPACITY = 2;
 
-	public static void main(String[] args) throws IOException {
-		boolean copy=false;
-		
-		HashMap<String, String> paramMap=PecanParameterParser.getDefaultParameters();
-		paramMap.put("-acquisition", "DIA"); // NON-OVERLAPPING!
-		//paramMap.put("-filterPeaklists", "true"); 
-		
-		SearchParameters parameters=PecanParameterParser.parseParameters(paramMap);
-		System.out.println(parameters);
-		
-		File dir=new File("/Volumes/BriansSSD/bruker/");
-		
-		File[] files=dir.listFiles(new SimpleFilenameFilter(MZML_EXTENSION));
-		for (int i=0; i<files.length; i++) {
-			System.out.println((i+1)+" / "+files.length+"\t Copying "+files[i].getName()+"...");
-
-			File f;
-			if (copy) {
-				f=File.createTempFile(files[i].getName(), MZML_EXTENSION);
-				f.deleteOnExit();
-				Files.copy(files[i].toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
-			} else {
-				f=files[i];
-			}
-			
-			Long time=System.currentTimeMillis();
-			File diaFile=new File(files[i].getAbsolutePath().substring(0, files[i].getAbsolutePath().lastIndexOf('.'))+StripeFile.DIA_EXTENSION);
-			System.out.println("Converting to "+diaFile.getAbsolutePath());
-			
-			convertSAX(f, diaFile, parameters, false);
-
-			if (copy) {
-				f.delete();
-			}
-			System.out.println("Total time: "+(System.currentTimeMillis()-time)/1000f+" seconds");
-		}
-	}
 	
 	@Override
 	public boolean accept(File dir, String name) {
-		return name.toLowerCase().endsWith(MzmlToDIAConverter.MZML_EXTENSION);
+		return name.toLowerCase().endsWith(StripeFile.DIA_EXTENSION);
 	}
 	
 	@Override
 	public boolean canTryToReadFile(File f) {
 		if (!f.exists()||!f.isFile()||!f.canRead()) return false; 
-		return f.getName().toLowerCase().endsWith(MzmlToDIAConverter.MZML_EXTENSION);
+		return f.getName().toLowerCase().endsWith(StripeFile.DIA_EXTENSION);
 	}
 	
 	@Override
@@ -87,32 +45,34 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 	}
 
 	/**
-	 * @param mzMLFile The mzML to convert.
-	 * @param diaFile The location where the .DIA file will be saved.
+	 * @param inputDIAFile The DIA to convert.
+	 * @param outputDIAFile The location where the .DIA file will be saved.
 	 * @param parameters Parameters to use during conversion.
 	 * @param isOpenFileInPlace TODO: must be true!
 	 */
-	static StripeFileInterface convertSAX(File mzMLFile, File diaFile, SearchParameters parameters, boolean isOpenFileInPlace) {
-		return convertSAX(mzMLFile, diaFile, parameters, isOpenFileInPlace, DEFAULT_QUEUE_CAPACITY);
+	static StripeFileInterface convertSAX(File inputDIAFile, File outputDIAFile, SearchParameters parameters, boolean isOpenFileInPlace) {
+		return convertSAX(inputDIAFile, outputDIAFile, parameters, isOpenFileInPlace, DEFAULT_QUEUE_CAPACITY);
 	}
 
 	/**
-	 * @param mzMLFile The mzML to convert.
-	 * @param diaFile The location where the .DIA file will be saved.
+	 * @param inputDIAFile The input DIA to convert.
+	 * @param outputDIAFile The location where the .DIA file will be saved.
 	 * @param parameters Parameters to use during conversion.
 	 * @param isOpenFileInPlace TODO: must be true!
 	 * @param queueCapacity The number of {@link MSMSBlock} kept in the queue(s) between threads. If this many blocks
 	 *                      are still pending processing then the processor will block until space is available. Too-low
 	 *                      of a setting will lower thread utilization, while too high will use excessive memory.
 	 */
-	static StripeFileInterface convertSAX(File mzMLFile, File diaFile, SearchParameters parameters, boolean isOpenFileInPlace, int queueCapacity) {
+	static StripeFileInterface convertSAX(File inputDIAFile, File outputDIAFile, SearchParameters parameters, boolean isOpenFileInPlace, int queueCapacity) {
+
+		/*
 		try {
-			Logger.logLine("Indexing "+mzMLFile.getName()+" ...");
+			Logger.logLine("Indexing "+inputDIAFile.getName()+" ...");
 			StripeFile stripeFile=new StripeFile(isOpenFileInPlace);
 			stripeFile.openFile();
 
 			final BlockingQueue<MSMSBlock> mzmlBlockQueue=new ArrayBlockingQueue<MSMSBlock>(queueCapacity);
-			final MzmlSAXToMSMSProducer producer=new MzmlSAXToMSMSProducer(mzMLFile, 0, mzmlBlockQueue, parameters);
+			final DIAtoMSMSProducer producer=new DIAtoMSMSProducer(inputDIAFile, 0, mzmlBlockQueue, parameters);
 
 			@Nullable OverlapDeconvoluter deconvoluter;
 			MSMSToDIAConsumer consumer;
@@ -134,7 +94,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 				ionInjectionTimesByStripe=deconvoluter.getIonInjectionTimesByStripe();
 				consumer = new MSMSToDIAConsumer(deconvolutionBlockQueue, stripeFile, parameters);
 
-				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
+				Logger.logLine("Converting "+inputDIAFile.getName()+" ...");
 				deconvoluterThread = new Thread(deconvoluter);
 				consumerThread = new Thread(consumer);
 			} else {
@@ -143,7 +103,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 
 				consumer = new MSMSToDIAConsumer(mzmlBlockQueue, stripeFile, parameters);
 
-				Logger.logLine("Converting "+mzMLFile.getName()+" ...");
+				Logger.logLine("Converting "+inputDIAFile.getName()+" ...");
 				consumerThread = new Thread(consumer);
 
 			}
@@ -222,9 +182,9 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 					// can be missing
 					stripeFile.setStartTime(producer.getStartTime());
 				}
-				stripeFile.setFileName(mzMLFile.getName(), producer.getMzMLID(), mzMLFile.getAbsolutePath());
+				stripeFile.setFileName(inputDIAFile.getName(), producer.getMzMLID(), inputDIAFile.getAbsolutePath());
 
-				Logger.logLine("Finalizing "+diaFile.getName()+" ...");
+				Logger.logLine("Finalizing "+outputDIAFile.getName()+" ...");
 				HashMap<Range, WindowData> dutyCycleMap=new HashMap<Range, WindowData>();
 				for (Entry<Range, TFloatArrayList> entry : retentionTimesByStripe.entrySet()) {
 					Range range=entry.getKey();
@@ -235,12 +195,12 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 				}
 				stripeFile.setRanges(dutyCycleMap);
 
-				stripeFile.saveAsFile(diaFile);
+				stripeFile.saveAsFile(outputDIAFile);
 				stripeFile.close();
 				
 				stripeFile=new StripeFile();
-				stripeFile.openFile(diaFile);
-				Logger.logLine("Finished writing "+diaFile.getName()+"!");
+				stripeFile.openFile(outputDIAFile);
+				Logger.logLine("Finished writing "+outputDIAFile.getName()+"!");
 
 				return stripeFile;
 			} catch (InterruptedException ie) {
@@ -254,5 +214,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 			sqle.printStackTrace();
 			throw new EncyclopediaException("DIA writing SQL error!", sqle);
 		}
+		*/
+		return null; //FIXME
 	}
 }

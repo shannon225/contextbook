@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -42,14 +43,14 @@ public class SpectrumUtils {
 			}
 		};
 	}
-	public static Spectrum mergeSpectra(ArrayList<Spectrum> spectra, MassTolerance tolerance) {
+	public static Spectrum mergeSpectra(List<? extends Spectrum> spectra, MassTolerance tolerance) {
 		if (spectra.size()>50) {
 			return binnedMergeSpectra(spectra, 0.1f);
 		} else {
 			return accurateMergeSpectra(spectra, tolerance);
 		}
 	}
-	public static Spectrum binnedMergeSpectra(ArrayList<Spectrum> spectra, double binWidth) {
+	public static Spectrum binnedMergeSpectra(List<? extends Spectrum> spectra, double binWidth) {
 		double maxMz=0.0;
 		for (Spectrum spectrum : spectra) {
 			double mz=spectrum.getMassArray()[spectrum.getMassArray().length-1];
@@ -111,7 +112,7 @@ public class SpectrumUtils {
 		
 		return new PrecursorScan("Combined", 0, minRT, minFraction, isolationWindowLower, isolationWindowUpper, totalIIT, masses.toArray(), intensities.toArray(), tic);
 	}
-	public static Spectrum accurateMergeSpectra(ArrayList<Spectrum> spectra, MassTolerance tolerance) {
+	public static Spectrum accurateMergeSpectra(List<? extends Spectrum> spectra, MassTolerance tolerance) {
 		TDoubleArrayList masses=new TDoubleArrayList();
 		TFloatArrayList intensities=new TFloatArrayList();
 

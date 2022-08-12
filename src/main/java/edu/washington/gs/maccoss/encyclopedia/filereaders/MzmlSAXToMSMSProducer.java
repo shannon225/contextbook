@@ -49,6 +49,8 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 	private final File mzMLFile;
 	private final BlockingQueue<MSMSBlock> mzmlBlockQueue;
 	private final SearchParameters parameters;
+	final private int fraction;
+	
 	private final HashMap<Range, TFloatArrayList> retentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 	private final HashMap<Range, TFloatArrayList> ionInjectionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 	private final ImmutableMultimap.Builder<String, String> softwareAccessionIdToVersionBuilder = ImmutableMultimap.builder();
@@ -57,7 +59,6 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 	private ImmutableList.Builder<InstrumentComponent> instrumentComponentsBuilder = ImmutableList.builder();
 
 	private Throwable error;
-	private int fraction;
 
 	public MzmlSAXToMSMSProducer(File mzMLFile, int fraction, BlockingQueue<MSMSBlock> mzmlBlockQueue, SearchParameters parameters) {
 		this.mzMLFile=mzMLFile;

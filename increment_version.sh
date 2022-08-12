@@ -13,6 +13,7 @@ if [ "$#" -ne 2 ]; then
 fi
 
 echo "Updating ${program} from [${1}] to [${2}]";
+echo `find . -name '*.java' -exec wc {} \; | awk '{sum=sum+$1} END {print sum}'` "total lines of Java code"
 
 TAG=${program}-${1}
 
