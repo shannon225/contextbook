@@ -81,10 +81,14 @@ public class EncyclopediaElibPancreatitisParser {
 		//String[] keptAccessions=new String[] {"AMYP_HUMAN", "POF1B_HUMAN", "REG1A_HUMAN", "CRP_HUMAN", "CEL2A_HUMAN"};
 		//String[] keptAccessions=new String[] {"AMYP_HUMAN", "POF1B_HUMAN", "SH3L1_HUMAN", "REG1A_HUMAN", "CRP_HUMAN", "CEL2A_HUMAN", "CAYP1_HUMAN", "SYUG_HUMAN", "IDHC_HUMAN", "S100P_HUMAN", "S10A6_HUMAN", "GSHR_HUMAN", "FCL_HUMAN", "BAZ1A_HUMAN", "PHS_HUMAN", "PGDH_HUMAN", "GPD1L_HUMAN", "SCRN1_HUMAN", "CRYM_HUMAN", "EMAL2_HUMAN", "AGR2_HUMAN", "NUCKS_HUMAN", "MTPN_HUMAN", "GSH1_HUMAN", "ALDOC_HUMAN"};
 		
+		//String[] keptAccessions=new String[] {"FETUA_HUMAN"};
+		//String[] keptAccessions=new String[] {"CYTM_HUMAN"};
+		//String[] keptAccessions=new String[] {"A1AG1_HUMAN"};
+		//String[] keptAccessions=new String[] {"LV218_HUMAN"};
 		String[] keptAccessions=new String[] {"FETUA_HUMAN", "CYTM_HUMAN", "A1AG1_HUMAN", "LV218_HUMAN"};
 		
-		createClassifier(proteinReportFile, new HashSet<String>(Arrays.asList(keptAccessions)));
-		//assessProteinSpecificPValues(testDirs, proteinReportFile);
+		//createClassifier(proteinReportFile, new HashSet<String>(Arrays.asList(keptAccessions)));
+		assessProteinSpecificPValues(testDirs, proteinReportFile);
 	}
 	
 	private static void createClassifier(File proteinReportFile, HashSet<String> keptAccessions) {
@@ -323,7 +327,7 @@ public class EncyclopediaElibPancreatitisParser {
 					}
 					
 					System.out.println(sampleNames[tests[j]]+"\t"+adjective+"\t"+accession+"\t"+fdrs[i]+"\t"+worstPValues[j]+"\t"+shortestDistance);	
-					ExtendedChartPanel panel=Charter.getBoxplotChart(accession, "", "Log10 Intensity", sampleNames, loggedrawdata);
+					ExtendedChartPanel panel=Charter.getBoxplotChart(accession, "", "Log2 Intensity", sampleNames, loggedrawdata);
 					
 					File f=new File(testDirs[j], accession+".pdf");
 					Charter.writeAsPDF(panel.getChart(), f, new Dimension(250, 150));
