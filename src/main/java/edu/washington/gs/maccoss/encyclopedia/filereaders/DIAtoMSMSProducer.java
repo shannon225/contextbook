@@ -37,8 +37,8 @@ public class DIAtoMSMSProducer implements MSMSProducer {
 
 			float totalRTInSec=stripeFile.getGradientLength();
 			
-			float start=-Float.MAX_VALUE;
-			float stop=-Float.MAX_VALUE;
+			float start=-1.0f;
+			float stop=-1.0f;
 			for (int i = 1; i < STRIPE_CHUNKS; i++) {
 				start=Float.intBitsToFloat(Float.floatToIntBits(stop)+1);
 				stop=totalRTInSec*(i/(float)STRIPE_CHUNKS);
@@ -50,6 +50,7 @@ public class DIAtoMSMSProducer implements MSMSProducer {
 			metadata.putAll(stripeFile.getMetadata());
 			
 			stripeFile.close();
+			putBlock(MSMSBlock.POISON_BLOCK);
 			
 		} catch (IOException ioe) {
 			error=ioe;

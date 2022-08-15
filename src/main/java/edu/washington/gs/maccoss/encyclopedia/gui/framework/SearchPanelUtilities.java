@@ -597,7 +597,7 @@ public class SearchPanelUtilities {
 		mzRange.add(new JSpinner(maxMZ));
 
 		options.add(new LabeledComponent("Precursor Range (m/z)", mzRange));
-		options.add(new LabeledComponent("Rention Time Range (min)", rtRange));
+		options.add(new LabeledComponent("Retention Time Range (min)", rtRange));
 		
 		JPanel buttons=new JPanel();
 		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));

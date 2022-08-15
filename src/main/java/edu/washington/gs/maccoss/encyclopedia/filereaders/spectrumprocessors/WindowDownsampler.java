@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
@@ -25,7 +26,7 @@ import gnu.trove.list.array.TFloatArrayList;
 
 public class WindowDownsampler implements SpectrumProcessor {
 	private final MassTolerance tolerance;
-	private final Map<Range, WindowData> downsampledRangeMap;
+	private final List<Range> downsampledRangeList;
 	private HashMap<Range, Range> targetRangeByActualRangeMap;
 	private BlockingQueue<MSMSBlock> inputQueue;
 	private BlockingQueue<MSMSBlock> outputQueue;
@@ -36,8 +37,8 @@ public class WindowDownsampler implements SpectrumProcessor {
 
 	private Throwable error;
 
-	public WindowDownsampler(Map<Range, WindowData> downsampledRangeMap, MassTolerance tolerance) {
-		this.downsampledRangeMap=downsampledRangeMap;
+	public WindowDownsampler(List<Range> downsampledRangeList, MassTolerance tolerance) {
+		this.downsampledRangeList=downsampledRangeList;
 		this.tolerance=tolerance;
 	}
 	
@@ -45,7 +46,7 @@ public class WindowDownsampler implements SpectrumProcessor {
 	public void initialize(File mzMLFile, SearchParameters params, BlockingQueue<MSMSBlock> inputQueue, BlockingQueue<MSMSBlock> outputQueue) {
 		StripeFileInterface file = StripeFileGenerator.getFile(mzMLFile, params);
 		Map<Range, WindowData> thisRangeMap=file.getRanges();
-		targetRangeByActualRangeMap=mapRanges(thisRangeMap, downsampledRangeMap);
+		targetRangeByActualRangeMap=mapRanges(thisRangeMap, downsampledRangeList);
 		this.inputQueue=inputQueue;
 		this.outputQueue=outputQueue;
 		file.close();
@@ -60,12 +61,12 @@ public class WindowDownsampler implements SpectrumProcessor {
 		return retentionTimesByStripe;
 	}
 	
-	protected static HashMap<Range, Range> mapRanges(Map<Range, WindowData> thisRangeMap, Map<Range, WindowData> downsampledRangeMap) {
+	protected static HashMap<Range, Range> mapRanges(Map<Range, WindowData> thisRangeMap, List<Range> downsampledRangeList) {
 		HashMap<Range, Range> targetRangeByActualRangeMap=new HashMap<Range, Range>();
 		for (Range thisRange : thisRangeMap.keySet()) {			
 			Range truncatedRange=new Range((int)thisRange.getStart(), (int)thisRange.getStop()); // to deal with rounding errors (works out to 1600 m/z)
 			
-			TARGETSCAN: for (Range target : downsampledRangeMap.keySet()) {
+			TARGETSCAN: for (Range target : downsampledRangeList) {
 				if (target.contains(truncatedRange)) {
 					targetRangeByActualRangeMap.put(truncatedRange, target);
 					break TARGETSCAN;
@@ -110,12 +111,14 @@ public class WindowDownsampler implements SpectrumProcessor {
 						
 						Range targetRange=targetRangeByActualRangeMap.get(truncatedRange);
 						
-						ArrayList<FragmentScan> list=scansByTargetRange.get(targetRange);
-						if (list==null) {
-							list=new ArrayList<>();
-							scansByTargetRange.put(targetRange, list);
+						if (targetRange!=null) {
+							ArrayList<FragmentScan> list=scansByTargetRange.get(targetRange);
+							if (list==null) {
+								list=new ArrayList<>();
+								scansByTargetRange.put(targetRange, list);
+							}
+							list.add(thisStripe);
 						}
-						list.add(thisStripe);
 					}
 					
 					for (Entry<Range, ArrayList<FragmentScan>> entry : scansByTargetRange.entrySet()) {

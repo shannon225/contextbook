@@ -23,8 +23,6 @@ public class DIAProcessor {
 	private final SpectrumProcessor processor;
 	private final SearchParameters parameters;
 	
-	
-
 	public DIAProcessor(SpectrumProcessor processor, SearchParameters parameters) {
 		this.processor = processor;
 		this.parameters = parameters;
