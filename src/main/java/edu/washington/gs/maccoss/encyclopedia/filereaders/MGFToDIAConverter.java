@@ -86,7 +86,6 @@ public class MGFToDIAConverter implements StripeFileReaderInterface {
 			final MGFtoMSMSProducer producer=new MGFtoMSMSProducer(mgfFile, mgfBlockQueue);
 
 			Logger.logLine("Converting "+mgfFile.getName()+" ...");
-			@Nullable OverlapDeconvoluter deconvoluter;
 			MSMSToDIAConsumer consumer=new MSMSToDIAConsumer(mgfBlockQueue, stripeFile, parameters);
 
 			final Thread producerThread=new Thread(producer);

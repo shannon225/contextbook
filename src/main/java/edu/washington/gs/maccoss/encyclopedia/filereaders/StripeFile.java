@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Vector;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -621,6 +622,72 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 					throw new EncyclopediaException(ie);
 				}
 				return new ArrayList<FragmentScan>(stripes);
+			} finally {
+				s.close();
+			}
+		} finally {
+			c.close();
+		}
+	}
+	
+	private static final int FRAGMENT_BLOCK_SIZE=1000;
+	public void getStripes(Range targetMzRange, float minRT, float maxRT, final boolean sqrt, BlockingQueue<MSMSBlock> outputQueue) throws IOException, SQLException, DataFormatException, InterruptedException {
+		// TODO consider chunking up the precursors, or intermix both by chunking up requests by RT
+		ArrayList<PrecursorScan> precursors=getPrecursors(minRT, maxRT);
+		outputQueue.put(new MSMSBlock(precursors, new ArrayList<FragmentScan>()));
+		
+		Connection c = getConnection();
+		try {
+			Statement s=c.createStatement();
+			try {
+				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, IonInjectionTime, Fraction from spectra "
+						+"where  IsolationWindowLower <= "+targetMzRange.getStop()+" and IsolationWindowUpper >= "+targetMzRange.getStart()+" and ScanStartTime between "+minRT+" and "+maxRT);
+
+				int cores=Runtime.getRuntime().availableProcessors();
+				ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("STRIPE_"+targetMzRange.getStart()+"_"+targetMzRange.getStop()+"-%d").setDaemon(true).build();
+				LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
+				ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory);
+
+				ArrayList<FragmentScan> fragmentScans=new ArrayList<>();
+				while (rs.next()) {
+					final String spectrumName=rs.getString(1);
+					final String precursorName=rs.getString(2);
+					final int spectrumIndex=rs.getInt(3);
+					final float scanStartTime=rs.getFloat(4);
+					final float isolationWindowLower=rs.getFloat(5);
+					final float isolationWindowUpper=rs.getFloat(6);
+					final int massEncodedLength=rs.getInt(7);
+					final byte[] massBytes=rs.getBytes(8);
+					final int intensityEncodedLength=rs.getInt(9);
+					final byte[] intensityBytes=rs.getBytes(10);
+					Float nullableIonInjectionTime=rs.getFloat(11);
+					if (rs.wasNull()) {
+						nullableIonInjectionTime=null;
+					}
+					final Float ionInjectionTime=nullableIonInjectionTime;
+					final int fraction=rs.getInt(12);
+					
+					FragmentScan msms=getStripe(sqrt, spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massEncodedLength, massBytes,
+							intensityEncodedLength, intensityBytes);
+					fragmentScans.add(msms);
+
+					if (FRAGMENT_BLOCK_SIZE>=fragmentScans.size()) {
+						outputQueue.put(new MSMSBlock(new ArrayList<PrecursorScan>(), fragmentScans));
+						fragmentScans=new ArrayList<FragmentScan>();
+					}
+				}
+				if (0<fragmentScans.size()) {
+					outputQueue.put(new MSMSBlock(new ArrayList<PrecursorScan>(), fragmentScans));
+				}
+
+				executor.shutdown();
+				try {
+					executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+				} catch (InterruptedException ie) {
+					throw new EncyclopediaException(ie);
+				}
+
+				outputQueue.put(MSMSBlock.POISON_BLOCK);
 			} finally {
 				s.close();
 			}

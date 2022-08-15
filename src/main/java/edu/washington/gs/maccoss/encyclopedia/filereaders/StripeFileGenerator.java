@@ -19,7 +19,8 @@ public class StripeFileGenerator {
 	private static final DIAFileReader DIA_FILE_READER=new DIAFileReader();
 	private static final StripeFileReaderInterface[] readers=new StripeFileReaderInterface[] {
 			DIA_FILE_READER,
-			new MzmlToDIAConverter()
+			new MzmlToDIAConverter(),
+			new MGFToDIAConverter()
 	};
 
 	public static StripeFileInterface getFile(File f, SearchParameters parameters) {
