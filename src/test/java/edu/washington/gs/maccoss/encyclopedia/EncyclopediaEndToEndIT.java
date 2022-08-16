@@ -118,13 +118,15 @@ public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 		final ImmutableList<QuantitativeSearchJobData> initialJobData = ImmutableList.of(jobDataA, jobDataB, jobDataC);
 		final List<SearchJobData> jobData = Lists.newArrayList();
 
+		final SearchParameters parameters = libraryScoringFactory.getParameters();
+
 		final LibraryFile alignmentLib = new LibraryFile();
 		final int numAlignedPeptides;
 		try {
 			// Generate the alignment-only output
 			final Path alignmentFile = Files.createTempFile(tempDir, "test_", ".elib");
 			try {
-				SearchToBLIB.convert(new EmptyProgressIndicator(), initialJobData, alignmentFile.toFile(), SearchToBLIB.OutputFormat.ALIB, true);
+				SearchToBLIB.convert(new EmptyProgressIndicator(), initialJobData, alignmentFile.toFile(), SearchToBLIB.OutputFormat.ALIB, true, parameters);
 
 				assertTrue("Output was created?", Files.exists(alignmentFile));
 
@@ -164,7 +166,8 @@ public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 					jobData,
 					tempReport,
 					SearchToBLIB.OutputFormat.ELIB,
-					true
+					true,
+					parameters
 			);
 		} finally {
 			alignmentLib.close();

@@ -73,7 +73,7 @@ public class CombineELIBsAndExtractGroupSpecificLibrariesJob extends SwingJob {
 		progress.update("Calculating global FDR across batch-specific libraries");
 		Logger.logLine("Calculating global FDR across batch-specific libraries");
 		File intermediateQuantLibraryFile=new File(saveDirectory, "batch_combined_quant_report.elib");
-		SearchToBLIB.convert(new SubProgressIndicator(progress, 0.33f), jobData, intermediateQuantLibraryFile, false, true, quantParameters);
+		SearchToBLIB.convert(new SubProgressIndicator(progress, 0.33f), jobData, intermediateQuantLibraryFile, SearchToBLIB.OutputFormat.ELIB, true, quantParameters);
 
 		// identify bestQuant ions
 		progress.update("Calculating global transitions for quantification");

@@ -248,8 +248,9 @@ public abstract class AbstractEndToEndIT {
 	@Test
 	public void testWholePipelineMultipleDataAlignOnlyQuantWorkflow() throws Exception {
 		final ImmutableList<QuantitativeSearchJobData> jobData = ImmutableList.of(jobDataA, jobDataB, jobDataC);
+		final SearchParameters parameters = jobData.iterator().next().getParameters();
 
-		Assume.assumeTrue("Test requires quantitative search parameters", jobData.iterator().next().getParameters().isQuantifySameFragmentsAcrossSamples());
+		Assume.assumeTrue("Test requires quantitative search parameters", parameters.isQuantifySameFragmentsAcrossSamples());
 
 		// First, run search with the normal single-step align-and-quant workflow as a reference comparison
 		final Path standardQuantReport = Files.createTempFile(tempDir, "test_", ".elib");
@@ -259,14 +260,15 @@ public abstract class AbstractEndToEndIT {
 					jobData,
 					standardQuantReport.toFile(),
 					SearchToBLIB.OutputFormat.ELIB,
-					true
+					true,
+					parameters
 			);
 		} catch (Exception e) {
 			Assume.assumeNoException("Unable to generate reference results", e);
 		}
 
 		// Generate the alignment-only output
-		SearchToBLIB.convert(new EmptyProgressIndicator(), jobData, tempReport, SearchToBLIB.OutputFormat.ALIB, true);
+		SearchToBLIB.convert(new EmptyProgressIndicator(), jobData, tempReport, SearchToBLIB.OutputFormat.ALIB, true, parameters);
 
 		assertTrue("Output was created?", FileUtils.directoryContains(tempDir.toFile(), tempReport));
 

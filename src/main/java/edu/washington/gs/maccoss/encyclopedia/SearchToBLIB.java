@@ -180,7 +180,7 @@ public class SearchToBLIB {
 				}
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles);
+			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles, parameters);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
@@ -241,7 +241,7 @@ public class SearchToBLIB {
 				}
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles);
+			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles, parameters);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
@@ -340,7 +340,7 @@ public class SearchToBLIB {
 
 			if (!arguments.containsKey("-alignmentFrom")) {
 				// Main program: convert to appropriate format
-				convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles);
+				convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles, parameters);
 			} else {
 				// Sub-program: quantify from previously-computed alignment/transition refinement
 
@@ -421,8 +421,8 @@ public class SearchToBLIB {
 
 		/**
 		 * Write results to the given location in this format. Typically this method should only be called from
-		 * {@link SearchToBLIB#convert(ProgressIndicator, List, File, OutputFormat, boolean)} which will handle either
-		 * reading or computing the necessary information for a group of samples.
+		 * {@link SearchToBLIB#convert(ProgressIndicator, List, File, OutputFormat, boolean, SearchParameters)}
+		 * which will handle either reading or computing the necessary information for a group of samples.
 		 *
 		 * Will also compute and output related information in some cases, depending on the format.
 		 *
@@ -440,10 +440,10 @@ public class SearchToBLIB {
 	}
 
 	/**
-	 * Legacy form of {@link #convert(ProgressIndicator, List, File, OutputFormat, boolean)} which supports only
-	 * ELIB and BLIB formats.
+	 * Legacy form of {@link #convert(ProgressIndicator, List, File, OutputFormat, boolean, SearchParameters)}
+	 * which supports only ELIB and BLIB formats.
 	 *
-	 * @see #convert(ProgressIndicator, List, File, OutputFormat, boolean)
+	 * @see #convert(ProgressIndicator, List, File, OutputFormat, boolean, SearchParameters)
 	 *
 	 * @deprecated it's better to directly specify the desired output format with an enum constant
 	 */

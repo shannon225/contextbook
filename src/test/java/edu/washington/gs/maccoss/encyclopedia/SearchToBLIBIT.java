@@ -250,7 +250,8 @@ public class SearchToBLIBIT {
 				jobData,
 				libFile.toFile(),
 				SearchToBLIB.OutputFormat.ALIB,
-				true
+				true,
+				searchParameters
 		);
 
 		final LibraryFile file = new LibraryFile();
@@ -372,7 +373,8 @@ public class SearchToBLIBIT {
 				jobData,
 				alignmentFile.toFile(),
 				SearchToBLIB.OutputFormat.ALIB,
-				true
+				true,
+				searchParameters
 		);
 
 		final LibraryFile alignmentLib = new LibraryFile();
