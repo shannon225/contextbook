@@ -60,7 +60,7 @@ public class PecanSearchParameters extends SearchParameters {
 		sb.append(" ").append(OPT_PERC_TRAINING_THRESH).append(" ").append(percolatorTrainingSetThreshold).append("\n");
 		sb.append(" -acquisition "+DataAcquisitionType.toString(dataAcquisitionType)+"\n");
 		sb.append(" -numberOfThreadsUsed "+numberOfThreadsUsed+"\n");
-		sb.append(" -numberOfQuantitativePeaks "+numberOfQuantitativePeaks+"\n");
+		sb.append(" ").append(NUMBER_OF_QUANTITATIVE_PEAKS).append(" ").append(numberOfQuantitativePeaks).append("\n");
 		sb.append(" -minNumOfQuantitativePeaks "+minNumOfQuantitativePeaks+"\n");
 		sb.append(" -alpha "+alpha+"\n");
 		sb.append(" -beta "+beta+"\n");
@@ -101,7 +101,7 @@ public class PecanSearchParameters extends SearchParameters {
 		map.put("-acquisition", DataAcquisitionType.toString(dataAcquisitionType));
 		map.put("-numberOfThreadsUsed", numberOfThreadsUsed+"");
 		map.put("-precursorWindowSize", precursorWindowSize+"");
-		map.put("-numberOfQuantitativePeaks", numberOfQuantitativePeaks+"");
+		map.put(NUMBER_OF_QUANTITATIVE_PEAKS, numberOfQuantitativePeaks+"");
 		map.put("-minNumOfQuantitativePeaks", minNumOfQuantitativePeaks+"");
 		map.put("-alpha", alpha+"");
 		map.put("-beta", beta+"");

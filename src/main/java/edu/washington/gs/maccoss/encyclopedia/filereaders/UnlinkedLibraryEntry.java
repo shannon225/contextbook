@@ -17,18 +17,12 @@ public class UnlinkedLibraryEntry extends LibraryEntry {
 	private final boolean isDecoy;
 	private final boolean markAsDecoy;
 	private final String originalSequence;
-	
+
+	public UnlinkedLibraryEntry(String source, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, AminoAcidConstants aaConstants, boolean isShuffle, boolean isDecoy, boolean markAsDecoy, String originalSequence, LibraryFile file) {
+		this(source, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, new float[massArray.length], new boolean[massArray.length], aaConstants, isShuffle, isDecoy, markAsDecoy, originalSequence, file);
+	}
 	public UnlinkedLibraryEntry(String source, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, boolean[] quantifiedIonsArray, AminoAcidConstants aaConstants, boolean isShuffle, boolean isDecoy, boolean markAsDecoy, String originalSequence, LibraryFile file) {
 		super(source, UNLOADED_ACCESSIONS, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, quantifiedIonsArray, aaConstants);
-		this.file=file;
-		this.isShuffle=isShuffle;
-		this.isDecoy=isDecoy;
-		this.markAsDecoy=markAsDecoy;
-		this.originalSequence=originalSequence;
-	}
-	
-	public UnlinkedLibraryEntry(String source, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, AminoAcidConstants aaConstants, boolean isShuffle, boolean isDecoy, boolean markAsDecoy, String originalSequence, LibraryFile file) {
-		super(source, UNLOADED_ACCESSIONS, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, aaConstants);
 		this.file=file;
 		this.isShuffle=isShuffle;
 		this.isDecoy=isDecoy;

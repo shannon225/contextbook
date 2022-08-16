@@ -137,6 +137,8 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			}
 					
 			double[] fragmentMassArray=FragmentIon.getMasses(data.getFragmentMassArray());
+			
+			// FIXME START WORK HERE
 			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(filename, psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), integrationScore, fragmentMassArray, data.getIntegrationArray(), data);
 			if (limitToQuantifiable) {
 				if (entry.getIonCount()<params.getMinNumOfQuantitativePeaks()||entry.getTIC()<1.0f) {
@@ -357,6 +359,6 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		double[] massArray=mzs.toArray();
 		float[] intensityArray=intens.toArray();
 		float[] deltaMassArray=deltaMasses.toArray();
-		return data.addPeakData(deltaMassArray, massArray, intensityArray, retentionTimes.toArray(), identifiedTICRatio);
+		return data.addPeakData(deltaMassArray, massArray, intensityArray, retentionTimes.toArray(), identifiedTICRatio, params.getFragmentTolerance());
 	}
 }

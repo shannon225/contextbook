@@ -17,9 +17,9 @@ public class EncyclopediaTwoScorer implements EncyclopediaScorer {
 	private final SearchParameters parameters;
 	private final EncyclopediaTwoAuxillaryPSMScorer auxScorer;
 
-	public EncyclopediaTwoScorer(SearchParameters parameters, LibraryBackgroundInterface background) {
+	public EncyclopediaTwoScorer(SearchParameters parameters) {
 		this.parameters=parameters;
-		auxScorer=new EncyclopediaTwoAuxillaryPSMScorer(parameters, background, true);
+		auxScorer=new EncyclopediaTwoAuxillaryPSMScorer(parameters, true);
 	}
 
 	public static String getPrimaryScoreName() {

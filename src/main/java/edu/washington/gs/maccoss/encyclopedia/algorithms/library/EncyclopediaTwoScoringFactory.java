@@ -37,7 +37,7 @@ public class EncyclopediaTwoScoringFactory implements LibraryScoringFactory {
 
 	@Override
 	public PSMPeakScorer getLibraryScorer(LibraryBackgroundInterface background) {
-		return new EncyclopediaTwoScorer(parameters, background); 
+		return new EncyclopediaTwoScorer(parameters); 
 	}
 
 	@Override

@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
@@ -52,70 +53,93 @@ public class TableConcatenator {
 	
 	/**
 	 * Parse TSV.
-	 * Slower, but doesn't assume that tables all have the same headers (assumes headers from the first file). Also, only keeps best peptide based on a primary score
-	 * Also assumes primary scores increase as they get better
+	 * Only keeps best peptide based on a primary score. Assumes primary scores increase as they get better!
 	 * @param tables
 	 */
 	public static void concatenatePINTables(ArrayList<File> tables, File output, String primaryScore) throws IOException {
 		String[] columnNames=null;
+		int sequenceIndex=0;
+		int primaryScoreIndex=0;
+		
 		HashMap<String, ScoredRow> dataset=new HashMap<>();
 
 		for (File file : tables) {
+			Logger.logLine("Parsing Percolator input file "+file.getName());
+			
 			if (columnNames==null) {
 				BufferedReader in=new BufferedReader(new FileReader(file));
 				String header=in.readLine();
 				columnNames=header.split(DELIM, -1);
+				for (int i = 0; i < columnNames.length; i++) {
+					if ("sequence".equals(columnNames[i])) {
+						sequenceIndex=i;
+					} else if (primaryScore.equals(columnNames[i])) {
+						primaryScoreIndex=i;
+					}
+				}
 				in.close();
+				Logger.logLine("Found indicies for sequence: "+sequenceIndex+" and "+primaryScore+": "+primaryScoreIndex);
 			}
 			
-			TableParserMuscle muscle=new PINMuscle(primaryScore, dataset);
-			TableParser.parseTSV(file, muscle);
+			LineParserMuscle muscle=new PINMuscle(dataset, sequenceIndex, primaryScoreIndex);
+			LineParser.parseFile(file, muscle);
 		}
 		
 		ArrayList<ScoredRow> rows=new ArrayList<>(dataset.values());
 		Collections.sort(rows);
+		Logger.logLine("Found "+rows.size()+" total peptides, writing to new Percolator input file...");
 		
 		FileWriter fileStream=new FileWriter(output);
 		PrintWriter out=new PrintWriter(fileStream);
 		out.println(General.toString(columnNames, DELIM));
 		for (ScoredRow row : rows) {
-			Map<String, String> data=row.getRow();
-			for (int i = 0; i < columnNames.length; i++) {
-				if (i>0) out.print(DELIM);
-				out.print(data.get(columnNames[i]));
-			}
-			out.println();
+			out.println(row.getRow());
 		}
 		
 		out.close();
 	}
 	
-	public static class PINMuscle implements TableParserMuscle {
+	public static class PINMuscle implements LineParserMuscle {
 		RuntimeException error=null;
-		private final String primaryScore;
 		private final HashMap<String, ScoredRow> dataset; // only works because tableparser threading still runs just a single processing job
+		private final int sequenceIndex;
+		private final int primaryScoreIndex;
+		private boolean isFirst=true;
 		
-		
-		public PINMuscle(String primaryScore, HashMap<String, ScoredRow> dataset) {
+		public PINMuscle(HashMap<String, ScoredRow> dataset, int sequenceIndex, int primaryScoreIndex) {
 			super();
-			this.primaryScore=primaryScore;
 			this.dataset=dataset;
+			this.sequenceIndex=sequenceIndex;
+			this.primaryScoreIndex=primaryScoreIndex;
 		}
 
 		@Override
-		public void processRow(Map<String, String> row) {
-			String sequence=row.get("sequence");
-			String primaryScoreValue=row.get(primaryScore);
+		public void processRow(String row) {
+			if (isFirst) {
+				// skip header
+				isFirst=false;
+				return;
+			}
+			String[] data=row.split(DELIM, -1);
+			
+			String sequence=data[sequenceIndex];
+			String primaryScoreValue=data[primaryScoreIndex];
 			
 			if (sequence==null) {
 				error=new EncyclopediaException("Couldn't find sequence in PIN file!");
 				throw error;
 			} else if (primaryScoreValue==null) {
-				error=new EncyclopediaException("Couldn't find sequence in primary score ("+primaryScoreValue+") file!");
+				error=new EncyclopediaException("Couldn't find primary score ("+primaryScoreValue+")! Index: "+primaryScoreIndex+", Row: "+row);
 				throw error; 
 			}
 			
-			float primary=Float.parseFloat(primaryScoreValue);
+			float primary;
+			try {
+				primary=Float.parseFloat(primaryScoreValue);
+			} catch (NumberFormatException nfe) {
+				error=new EncyclopediaException("Couldn't parse primary score ("+primaryScoreValue+")! Index: "+primaryScoreIndex+", Row: "+row);
+				throw error; 
+			}
 			
 			ScoredRow previous=dataset.get(sequence);
 			if (previous==null) {
@@ -139,9 +163,9 @@ public class TableConcatenator {
 	public static class ScoredRow implements Comparable<ScoredRow> {
 		private final String peptide;
 		private final float score;
-		private final Map<String, String> row;
+		private final String row;
 		
-		public ScoredRow(String peptide, float score, Map<String, String> row) {
+		public ScoredRow(String peptide, float score, String row) {
 			this.peptide=peptide;
 			this.score=score;
 			this.row=row;
@@ -166,7 +190,7 @@ public class TableConcatenator {
 			return score;
 		}
 		
-		public Map<String, String> getRow() {
+		public String getRow() {
 			return row;
 		}
 	}

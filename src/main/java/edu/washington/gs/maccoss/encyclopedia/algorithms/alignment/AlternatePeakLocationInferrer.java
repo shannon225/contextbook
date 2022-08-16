@@ -35,6 +35,13 @@ public class AlternatePeakLocationInferrer {
 	public static PeakLocationInferrerInterface getAlignmentData(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
 		ProgressIndicator subProgress1=new SubProgressIndicator(progress, 0.5f);
 		Pair<HashMap<SearchJobData,TObjectFloatHashMap<String>>, HashMap<String,double[]>> pair=getArchetypals(subProgress1, pecanJobs, passingPeptides, params);
+		return getInferrer(progress, pecanJobs, pair, params);
+	}
+
+	public static PeakLocationInferrerInterface getInferrer(ProgressIndicator progress,
+			List<? extends SearchJobData> pecanJobs,
+			Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> pair,
+			SearchParameters params) {
 		HashMap<SearchJobData, TObjectFloatHashMap<String>> peptideMappings=pair.x;
 		HashMap<String, double[]> bestIons=pair.y;
 

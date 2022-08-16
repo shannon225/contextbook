@@ -45,9 +45,11 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
-import java.util.Date;
 import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -452,7 +454,8 @@ public class SearchToBLIB {
 				pecanJobs,
 				libFile,
 				writeBlib ? OutputFormat.BLIB : OutputFormat.ELIB,
-				alignBetweenFiles
+				alignBetweenFiles,
+				null
 		);
 	}
 
@@ -469,7 +472,7 @@ public class SearchToBLIB {
 	 * @param outputFormat The format which should be written
 	 * @param alignBetweenFiles If RT alignment
 	 */
-	public static void convert(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File libFile, OutputFormat outputFormat, boolean alignBetweenFiles) {
+	public static void convert(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File libFile, OutputFormat outputFormat, boolean alignBetweenFiles, SearchParameters parameters) {
 		ArrayList<SearchJobData> processedJobs=new ArrayList<SearchJobData>();
 		ArrayList<File> featureFiles=new ArrayList<File>();
 		SearchJobData representativeJob=null;
@@ -505,8 +508,11 @@ public class SearchToBLIB {
 			}
 			return;
 		}
-		Logger.logLine("Using "+representativeJob.getDiaFileReader().getOriginalFileName()+" to extract representative search parameters");
-		SearchParameters parameters=representativeJob.getParameters();
+
+		if (parameters==null) {
+			Logger.logLine("Using "+representativeJob.getDiaFileReader().getOriginalFileName()+" to extract representative search parameters");
+			parameters=representativeJob.getParameters();
+		}
 
 		String filename=libFile.getName();
 		if (filename.lastIndexOf('.')>0) {
@@ -573,7 +579,7 @@ public class SearchToBLIB {
 				if (alignBetweenFiles) {
 					Logger.logLine("Inferring peak boundaries across files...");
 					try {
-						inferrer=Optional.of(AlternatePeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides.x, parameters));
+						inferrer=Optional.of(EncyclopediaTwoPeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides.x, parameters));
 						Logger.logLine("...Finished peak inference.");
 					} catch (Exception e) {
 						Logger.errorLine("RT alignment between files failed! Perhaps this is to build a chromatogram library and not a quantitative experiment? Attempting to recover without alignment.");

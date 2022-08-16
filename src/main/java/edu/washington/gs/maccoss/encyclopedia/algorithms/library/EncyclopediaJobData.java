@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.zip.DataFormatException;
 
-public class EncyclopediaJobData extends QuantitativeSearchJobData {
+public class EncyclopediaJobData extends QuantitativeSearchJobData implements LibrarySearchJobData {
 	public static final String LOG_FILE_SUFFIX=".log";
 	public static final String DECOY_PROTEIN_FILE_SUFFIX=".encyclopedia.protein_decoy.txt";
 	public static final String OUTPUT_PROTEIN_FILE_SUFFIX=".encyclopedia.protein.txt";

@@ -5,12 +5,13 @@ import java.io.File;
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DDASearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibrarySearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 
-public class ScribeJobData extends DDASearchJobData {
+public class ScribeJobData extends DDASearchJobData implements LibrarySearchJobData {
 	public static final String LOG_FILE_SUFFIX=".log";
 	public static final String OUTPUT_FILE_SUFFIX=".scribe.txt";
 	public static final String DECOY_FILE_SUFFIX=".scribe.decoy.txt";

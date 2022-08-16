@@ -5,6 +5,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Optional;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -32,18 +33,25 @@ public class FragmentationTable extends JPanel {
 		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
 		FragmentIon[] all=model.getPrimaryIonObjects(params.getFragType(), spec.getPrecursorCharge(), true);
 		double[] massArray=spec.getMassArray();
-		
+		boolean[] wasQuant=spec.getQuantifiedIonsArray();
+
 		ArrayList<FragmentIon> matched=new ArrayList<FragmentIon>();
+		ArrayList<FragmentIon> matchedAndQuant=new ArrayList<FragmentIon>();
 		for (FragmentIon fragmentIon : all) {
-			boolean match=params.getFragmentTolerance().getIndex(massArray, fragmentIon.getMass()).isPresent();
-			if (match) {
+			Optional<Integer> index = params.getFragmentTolerance().getIndex(massArray, fragmentIon.getMass());
+			if (index.isPresent()) {
 				matched.add(fragmentIon);
+				if (wasQuant[index.get()]) {
+					matchedAndQuant.add(fragmentIon);
+				}
+				System.out.println(fragmentIon+"\t"+wasQuant[index.get()]);
 			}
 		}
 		
 		FragmentIon[] found=matched.toArray(new FragmentIon[matched.size()]);
+		FragmentIon[] foundAndQuant=matchedAndQuant.toArray(new FragmentIon[matchedAndQuant.size()]);
 		
-		FragmentationTableModel tableModel=new FragmentationTableModel(all, found, found);
+		FragmentationTableModel tableModel=new FragmentationTableModel(all, found, foundAndQuant);
 
 		JTable table=new JTable(tableModel);
 		table.setAutoCreateRowSorter(true);

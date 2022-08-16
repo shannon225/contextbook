@@ -436,6 +436,16 @@ public class General {
 		return f;
 	}
 	
+	public static float[] normalizeToL2(float[] y) {
+		return divide(y, (float)Math.sqrt(sum(multiply(y, y))));
+	}
+	public static float[] normalizeToSum(float[] y) {
+		return divide(y, sum(y));
+	}
+	public static float[] normalizeToMaxOne(float[] y) {
+		return divide(y, max(y));
+	}
+	
 	public static float[] firstDerivative(float[] v) {
 		float[] d=new float[v.length-1];
 		for (int i=1; i<v.length; i++) {

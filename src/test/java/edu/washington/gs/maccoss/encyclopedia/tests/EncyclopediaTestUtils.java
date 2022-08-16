@@ -25,8 +25,24 @@ public abstract class EncyclopediaTestUtils {
 		throw new IllegalAccessError();
 	}
 
+	public static Path getEmptyTempFile(Path tmpDir, String name, String suffix) throws IOException {
+		final Path dest;
+		if (tmpDir==null) {
+			dest=Files.createTempFile(name, suffix);
+		} else {
+			dest=Files.createTempFile(tmpDir, name, suffix);
+		}
+		FileUtils.forceDeleteOnExit(dest.toFile());
+		return dest;
+	}
+
 	public static Path getResourceAsTempFile(Class<?> klass, String resource, Path tmpDir, String name, String suffix) throws IOException {
-		final Path dest = Files.createTempFile(tmpDir, name, suffix);
+		final Path dest;
+		if (tmpDir==null) {
+			dest=Files.createTempFile(name, suffix);
+		} else {
+			dest=Files.createTempFile(tmpDir, name, suffix);
+		}
 		FileUtils.forceDeleteOnExit(dest.toFile());
 		copyResourceToFile(klass, resource, dest);
 		return dest;

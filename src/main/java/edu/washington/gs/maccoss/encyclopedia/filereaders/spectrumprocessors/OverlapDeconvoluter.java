@@ -1,5 +1,6 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms;
+package edu.washington.gs.maccoss.encyclopedia.filereaders.spectrumprocessors;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -7,6 +8,7 @@ import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSMSBlock;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -14,10 +16,10 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import gnu.trove.list.array.TFloatArrayList;
 
-public class OverlapDeconvoluter implements Runnable {
+public class OverlapDeconvoluter implements SpectrumProcessor {
 	private final MassTolerance tolerance;
-	private final BlockingQueue<MSMSBlock> inputQueue;
-	private final BlockingQueue<MSMSBlock> outputQueue;
+	private BlockingQueue<MSMSBlock> inputQueue;
+	private BlockingQueue<MSMSBlock> outputQueue;
 	private final HashMap<Range, TFloatArrayList> retentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 	private final HashMap<Range, TFloatArrayList> ionInjectionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 	private final HashMap<Range, TFloatArrayList> truncatedRetentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
@@ -25,19 +27,27 @@ public class OverlapDeconvoluter implements Runnable {
 
 	private Throwable error;
 
-	public OverlapDeconvoluter(MassTolerance tolerance, BlockingQueue<MSMSBlock> inputQueue, BlockingQueue<MSMSBlock> outputQueue) {
+	public OverlapDeconvoluter(MassTolerance tolerance) {
 		this.tolerance=tolerance;
+	}
+
+	@Override
+	public void initialize(File mzMLFile, SearchParameters params, BlockingQueue<MSMSBlock> inputQueue, BlockingQueue<MSMSBlock> outputQueue) {
 		this.inputQueue=inputQueue;
 		this.outputQueue=outputQueue;
 	}
-	
+
+	@Override
 	public HashMap<Range, TFloatArrayList> getRetentionTimesByStripe() {
 		return retentionTimesByStripe;
 	}
+
+	@Override
 	public HashMap<Range, TFloatArrayList> getIonInjectionTimesByStripe() {
 		return ionInjectionTimesByStripe;
 	}
-	
+
+	@Override
 	public void run() {
 		Range cycleStart=null;
 		
@@ -155,15 +165,17 @@ public class OverlapDeconvoluter implements Runnable {
 		}
 	}
 
+	@Override
 	public boolean hadError() {
 		return null != error;
 	}
 
+	@Override
 	public Throwable getError() {
 		return error;
 	}
 	
-	public void addRetentionTime(FragmentScan thisStripe) {
+	private void addRetentionTime(FragmentScan thisStripe) {
 		Range range=thisStripe.getRange();
 		Range truncatedRange=new Range((int)range.getStart(), (int)range.getStop()); // to deal with rounding errors
 		TFloatArrayList stripeRTs=truncatedRetentionTimesByStripe.get(truncatedRange);
@@ -180,8 +192,7 @@ public class OverlapDeconvoluter implements Runnable {
 		stripeIITs.add(thisStripe.getIonInjectionTime());
 	}
 	
-	public static Pair<FragmentScan, FragmentScan> deconvolute(FragmentScan earlyLow, FragmentScan earlyHigh, FragmentScan center, FragmentScan lateLow, FragmentScan lateHigh, MassTolerance tolerance) {
-		
+	protected static Pair<FragmentScan, FragmentScan> deconvolute(FragmentScan earlyLow, FragmentScan earlyHigh, FragmentScan center, FragmentScan lateLow, FragmentScan lateHigh, MassTolerance tolerance) {
 		float[] intensities=center.getIntensityArray();
 		double[] masses=center.getMassArray();
 		
