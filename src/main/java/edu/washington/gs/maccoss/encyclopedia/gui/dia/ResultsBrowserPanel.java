@@ -354,10 +354,10 @@ public class ResultsBrowserPanel extends JPanel {
 			boolean[] quantifiedIonsArray=annotated.getQuantifiedIonsArray();
 			FragmentIon[] ions=annotated.getIonAnnotations();
 			
-//			System.out.println(annotated.getPeptideModSeq()+", "+annotated.getPrecursorCharge());
-//			for (int i = 0; i < quantifiedIonsArray.length; i++) {
-//				System.out.println(masses[i]+"\t"+intensities[i]+"\t"+correlations[i]+"\t"+quantifiedIonsArray[i]+"\t"+ions[i]);
-//			}
+			System.out.println(annotated.getPeptideModSeq()+", "+annotated.getPrecursorCharge());
+			for (int i = 0; i < quantifiedIonsArray.length; i++) {
+				System.out.println(masses[i]+"\t"+intensities[i]+"\t"+correlations[i]+"\t"+quantifiedIonsArray[i]+"\t"+ions[i]);
+			}
 		}
 		
 		if (entry==null) {

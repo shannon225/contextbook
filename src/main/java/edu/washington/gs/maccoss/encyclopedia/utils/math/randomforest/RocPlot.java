@@ -1,12 +1,29 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math.randomforest;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class RocPlot {
-	TFloatArrayList fprs=new TFloatArrayList();
-	TFloatArrayList tprs=new TFloatArrayList();
+	private static final int DEFAULT_ORDER = 4;
+	private final float rounder;
+	private final String name;
+	private final TFloatArrayList fprs=new TFloatArrayList();
+	private final TFloatArrayList tprs=new TFloatArrayList();
+
 
 	public RocPlot() {
+		this(DEFAULT_ORDER);
+	}
+	public RocPlot(String name) {
+		this(DEFAULT_ORDER, name);
+	}
+	public RocPlot(int order) {
+		this(order, "ROC Plot");
+	}
+	public RocPlot(int order, String name) {
+		this.rounder=(float)Math.pow(10, order);
+		this.name=name;
 		fprs.add(0.0f);
 		tprs.add(0.0f);
 	}
@@ -22,9 +39,22 @@ public class RocPlot {
 	 * @param tpr
 	 */
 	public void addData(float fpr, float tpr) {
-		if (fprs.size()>0&&fpr==fprs.get(fprs.size()-1)) {
+		fpr=Math.round(fpr*rounder)/rounder;
+		
+		if (fprs.size()>0&&fpr<=fprs.get(fprs.size()-1)) {
 			// overwrite lower tpr
+			fprs.set(fprs.size()-1, fpr);
 			tprs.set(tprs.size()-1, Math.max(tprs.get(tprs.size()-1), tpr));
+
+			while (true) {
+				if (fprs.size()>1&&fpr<=fprs.get(fprs.size()-2)) {
+					fprs.removeAt(fprs.size()-2);
+					tprs.removeAt(tprs.size()-2);
+				} else {
+					break;
+				}
+			}
+			
 		} else {
 			// increment
 			fprs.add(fpr);
@@ -38,6 +68,10 @@ public class RocPlot {
 			sb.append(fprs.get(i)+"\t"+tprs.get(i)+"\n");
 		}
 		return sb.toString();
+	}
+	
+	public XYTrace getTrace() {
+		return new XYTrace(fprs.toArray(), tprs.toArray(), GraphType.line, name);
 	}
 
 	public float getAUC() {
