@@ -5,12 +5,15 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJob
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
@@ -29,7 +32,22 @@ public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 
 	@BeforeClass
 	public static void buildReports() throws Exception {
-		parameters = SearchParameterParser.getDefaultParametersObject();
+		// IMPORTANT: we must run the search with the same parameters as the reference data.
+		// This can be challenging when the default parameters change! While we can hard-code
+		// certain settings, it can be hard to figure out the changes and copy them here,
+		// so instead we fetch the reference parameters directly. Note that a side effect of this
+		// will be that new versions of reference artifacts built with this code will use whatever
+		// parameters the configured reference used.
+
+		final LibraryFile reference = new LibraryFile();
+		try {
+			final Path refElib = EncyclopediaTestUtils.getResourceAsTempFile(EncyclopediaEndToEndIT.class, REFERENCE_SEARCH1_RESOURCE, tempDir, "reference_", ".elib");
+			reference.openFile(refElib.toFile());
+			parameters = SearchParameterParser.parseParameters(reference.getMetadata());
+		} finally {
+			reference.close();
+		}
+
 		libraryScoringFactory = new EncyclopediaOneScoringFactory(parameters);
 		setUpClass();
 		jobDataA = makeAndDoJob(diaFile);
