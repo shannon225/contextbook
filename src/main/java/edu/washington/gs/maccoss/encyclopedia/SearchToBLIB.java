@@ -48,7 +48,7 @@ import java.util.zip.DataFormatException;
 
 public class SearchToBLIB {
 	public static void main(String[] args) {
-		final Pair<List<String>, HashMap<String, String>> parsedArgs = CommandLineParser.parseMultipleAndRemainingArguments(args);
+		final Pair<List<String>, HashMap<String, String>> parsedArgs = CommandLineParser.parseMultipleAndRemainingArguments(args, Encyclopedia.INPUT_DIA_TAG);
 		final List<String> diaPaths = parsedArgs.x;
 		final HashMap<String, String> arguments = parsedArgs.y;
 

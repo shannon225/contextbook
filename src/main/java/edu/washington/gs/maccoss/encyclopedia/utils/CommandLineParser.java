@@ -41,16 +41,8 @@ public class CommandLineParser {
 	}
 
 	/**
-	 * Parse the given command line arguments into a list of paths specified by {@code -i}
-	 * and the remaining parameters wtih {@link #parseArguments(String[])}.
-	 */
-	public static Pair<List<String>, HashMap<String, String>> parseMultipleAndRemainingArguments(String[] args) {
-		return parseMultipleAndRemainingArguments(args, "-i");
-	}
-
-	/**
-	 * Parse the given command line arguments into a list of paths specified by {@code multFlag}
-	 * and the remaining parameters wtih {@link #parseArguments(String[])}.
+	 * Parse the given command line arguments into a list of strings specified by repeated {@code multFlag} arguments,
+	 * then parse the remaining parameters with {@link #parseArguments(String[])}.
 	 */
 	public static Pair<List<String>, HashMap<String, String>> parseMultipleAndRemainingArguments(String[] args, String multFlag) {
 		final Pair<List<String>, List<String>> pair = parseMultipleAndGetRemainingArguments(args, multFlag);
