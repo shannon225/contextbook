@@ -130,7 +130,7 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 			if (parameters.isDeconvoluteOverlappingWindows()) {
 				BlockingQueue<MSMSBlock> deconvolutionBlockQueue=new ArrayBlockingQueue<MSMSBlock>(queueCapacity);
 				deconvoluter = new OverlapDeconvoluter(parameters.getFragmentTolerance());
-				deconvoluter.initialize(mzMLFile, parameters, mzmlBlockQueue, deconvolutionBlockQueue);
+				deconvoluter.initialize(mzmlBlockQueue, deconvolutionBlockQueue);
 				retentionTimesByStripe=deconvoluter.getRetentionTimesByStripe();
 				ionInjectionTimesByStripe=deconvoluter.getIonInjectionTimesByStripe();
 				consumer = new MSMSToDIAConsumer(deconvolutionBlockQueue, stripeFile, parameters);

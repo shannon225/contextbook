@@ -590,7 +590,7 @@ public class SearchPanel extends JPanel {
 		elibSeperatorItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.extractSampleSpecificDLIBs(dataMenu, getJobProcessor());
+				SearchPanelUtilities.extractSampleSpecificDLIBs(dataMenu, getVisibleTab().getParameters(), getJobProcessor());
 			}
 		});
 		if (enableAdvancedOptions) {

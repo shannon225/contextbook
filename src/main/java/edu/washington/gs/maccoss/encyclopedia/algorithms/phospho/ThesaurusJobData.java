@@ -6,6 +6,7 @@ import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -30,6 +31,11 @@ public class ThesaurusJobData extends EncyclopediaJobData {
 		return new PercolatorExecutionData(new File(getPrefixFromOutput(referenceFileLocation, parameters) + prefix+FEATURE_FILE_SUFFIX), fasta,
 				new File(getPrefixFromOutput(referenceFileLocation, parameters) + prefix+OUTPUT_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation, parameters) + DECOY_FILE_SUFFIX), 
 				new File(getPrefixFromOutput(referenceFileLocation, parameters) + OUTPUT_PROTEIN_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation, parameters) + DECOY_PROTEIN_FILE_SUFFIX), parameters);
+	}
+	
+	@Override
+	public SearchJobData updateQuantFile(File f) {
+		return new ThesaurusJobData(f, getPercolatorFiles(), getParameters(), getVersion(), getLibrary(), getTaskFactory());
 	}
 
 	public ThesaurusJobData updateTaskFactory(LibraryScoringFactory taskFactory) {

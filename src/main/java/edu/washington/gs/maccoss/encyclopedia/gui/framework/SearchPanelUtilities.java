@@ -53,6 +53,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryToBlibConverter
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MS2PIPReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MaxquantMSMSConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.OpenSwathTSVToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SpectronautCSVToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
@@ -319,8 +320,7 @@ public class SearchPanelUtilities {
 		dialog.setVisible(true);
 	}
 	
-
-	public static void extractSampleSpecificDLIBs(Component root, final JobProcessor processor) {
+	public static void extractSampleSpecificDLIBs(Component root, final SearchParameters params, final JobProcessor processor) {
 		JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 
 		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
@@ -333,21 +333,64 @@ public class SearchPanelUtilities {
 			JOptionPane.showMessageDialog(frame, "Please queue at least two RAW files first!");
 			
 		} else {
-			FileDialog dialog=new FileDialog(frame, "Save Directory", FileDialog.SAVE);
-			dialog.setFilenameFilter(new FilenameFilter() {
+			final JDialog dialog=new JDialog(frame, "Extact Sample-Specific Libraries from ELIB", true);
+	
+			final FileChooserPanel diaFileChooser=new FileChooserPanel(null, "Single-injection DIA example", new SimpleFilenameFilter(MzmlToDIAConverter.MZML_EXTENSION, StripeFile.DIA_EXTENSION), true, true);
+			final FileChooserPanel saveDirFileChooser=new FileChooserPanel(null, "Save Directory", new FilenameFilter() {
 				@Override
 				public boolean accept(File dir, String name) {
+					if (dir.exists()&&!dir.isDirectory()) {
+						return false;
+					}
 					return true;
 				}
-			});
-			dialog.setVisible(true);
+			}, true, false);
+	
+			JPanel options=new JPanel();
+			options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+			options.add(diaFileChooser);
+			options.add(saveDirFileChooser);
 			
-			if (dialog.getFiles()!=null&&dialog.getFiles().length>0) {
-				File saveDir=dialog.getFiles()[0];
-
-				Logger.logLine("Added extact sample-specific libraries into ["+saveDir.getAbsolutePath()+"]");
-				processor.addJob(new CombineELIBsAndExtractGroupSpecificLibrariesJob(saveDir, processor));
-			}
+			JPanel buttons=new JPanel();
+			buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+			JButton okButton=new JButton("OK");
+			okButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					final File saveDir=saveDirFileChooser.getFile();
+					final File exampleDIAFile=diaFileChooser.getFile(); // can be missing (null)
+					if (saveDir!=null) {
+						dialog.setVisible(false);
+						dialog.dispose();
+	
+						Logger.logLine("Added extact sample-specific libraries into ["+saveDir.getAbsolutePath()+"]");
+						processor.addJob(new CombineELIBsAndExtractGroupSpecificLibrariesJob(saveDir, Optional.of(exampleDIAFile), params, processor));
+					} else {
+						JOptionPane.showMessageDialog(frame, "You must specify an ELIB or DLIB library file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+					}
+				}
+			});
+			buttons.add(okButton);
+			JButton cancelButton=new JButton("Cancel");
+			cancelButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					dialog.setVisible(false);
+					dialog.dispose();
+				}
+			});
+			buttons.add(cancelButton);
+			
+			JPanel mainpane=new JPanel(new BorderLayout());
+			mainpane.add(options, BorderLayout.CENTER);
+			mainpane.add(buttons, BorderLayout.SOUTH);
+			mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+			
+			dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+			dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+			dialog.pack(); 
+			dialog.setSize(500, 200);
+			dialog.setVisible(true);
 		}
 	}
 	

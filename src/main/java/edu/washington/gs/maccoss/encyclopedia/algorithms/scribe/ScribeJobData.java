@@ -6,6 +6,7 @@ import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DDASearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibrarySearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -46,6 +47,11 @@ public class ScribeJobData extends DDASearchJobData implements LibrarySearchJobD
 		this.library=library;
 		this.fastaFile=fastaFile;
 		this.taskFactory=taskFactory;
+	}
+	
+	@Override
+	public SearchJobData updateQuantFile(File f) {
+		return new ScribeJobData(f, getFastaFile(), getLibrary(), getPercolatorFiles(), getTaskFactory());
 	}
 
 	public static PercolatorExecutionData getPercolatorExecutionData(File referenceFileLocation, File fastaFile, SearchParameters parameters) {

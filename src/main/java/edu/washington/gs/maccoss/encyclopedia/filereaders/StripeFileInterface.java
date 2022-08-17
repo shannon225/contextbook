@@ -18,6 +18,12 @@ public interface StripeFileInterface {
 	 * @return Range: low/high boundaries for stripes, Float value is average time in seconds between cycles 
 	 */
 	Map<Range, WindowData> getRanges();
+	
+	/**
+	 * metadata map for experiment
+	 * @return
+	 */
+	Map<String, String> getMetadata() throws IOException, SQLException;
 
 	/**
 	 * opens specific file on disk

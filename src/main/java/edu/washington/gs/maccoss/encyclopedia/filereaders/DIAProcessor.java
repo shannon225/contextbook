@@ -28,7 +28,7 @@ public class DIAProcessor {
 		this.parameters = parameters;
 	}
 
-	public void processStripeFile(ProgressIndicator progress, File startFile, File resultFile, boolean isOpenFileInPlace) throws IOException, SQLException, DataFormatException {
+	public void processStripeFile(ProgressIndicator progress, StripeFileInterface startFile, File resultFile, boolean isOpenFileInPlace) throws IOException, SQLException, DataFormatException {
 		StripeFile writeFile=new StripeFile(isOpenFileInPlace);
 		writeFile.openFile();
 
@@ -47,7 +47,7 @@ public class DIAProcessor {
 		
 		MSMSToDIAConsumer consumer = new MSMSToDIAConsumer(writingBlockQueue, writeFile, parameters);
 
-		Logger.logLine("Converting "+startFile.getName()+" ...");
+		Logger.logLine("Converting "+startFile.getOriginalFileName()+" ...");
 		final Thread processorThread = new Thread(processor);
 		Thread consumerThread = new Thread(consumer);
 		

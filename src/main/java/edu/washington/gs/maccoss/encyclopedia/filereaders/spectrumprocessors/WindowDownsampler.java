@@ -1,6 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders.spectrumprocessors;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,7 +14,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSMSBlock;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.WindowData;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -43,13 +41,11 @@ public class WindowDownsampler implements SpectrumProcessor {
 	}
 	
 	@Override
-	public void initialize(File mzMLFile, SearchParameters params, BlockingQueue<MSMSBlock> inputQueue, BlockingQueue<MSMSBlock> outputQueue) {
-		StripeFileInterface file = StripeFileGenerator.getFile(mzMLFile, params);
-		Map<Range, WindowData> thisRangeMap=file.getRanges();
+	public void initialize(StripeFileInterface inputFile, SearchParameters params, BlockingQueue<MSMSBlock> inputQueue, BlockingQueue<MSMSBlock> outputQueue) {
+		Map<Range, WindowData> thisRangeMap=inputFile.getRanges();
 		targetRangeByActualRangeMap=mapRanges(thisRangeMap, downsampledRangeList);
 		this.inputQueue=inputQueue;
 		this.outputQueue=outputQueue;
-		file.close();
 	}
 	
 	@Override

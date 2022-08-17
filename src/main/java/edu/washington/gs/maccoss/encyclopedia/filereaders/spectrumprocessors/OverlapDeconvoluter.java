@@ -1,6 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders.spectrumprocessors;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -10,6 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSMSBlock;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -32,7 +32,10 @@ public class OverlapDeconvoluter implements SpectrumProcessor {
 	}
 
 	@Override
-	public void initialize(File mzMLFile, SearchParameters params, BlockingQueue<MSMSBlock> inputQueue, BlockingQueue<MSMSBlock> outputQueue) {
+	public void initialize(StripeFileInterface inputFile, SearchParameters params, BlockingQueue<MSMSBlock> inputQueue, BlockingQueue<MSMSBlock> outputQueue) {
+		this.initialize(inputQueue, outputQueue);
+	}
+	public void initialize(BlockingQueue<MSMSBlock> inputQueue, BlockingQueue<MSMSBlock> outputQueue) {
 		this.inputQueue=inputQueue;
 		this.outputQueue=outputQueue;
 	}
