@@ -101,10 +101,20 @@ public class SearchToBLIBTest {
 			}
 
 			@Override
+			public SearchJobData updateQuantFile(File f) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
 			public StripeFileInterface getDiaFileReader() {
 				return new StripeFileInterface() {
 					@Override
 					public Map<Range, WindowData> getRanges() {
+						throw new UnsupportedOperationException("Not mocked");
+					}
+
+					@Override
+					public Map<String, String> getMetadata() throws IOException, SQLException {
 						throw new UnsupportedOperationException("Not mocked");
 					}
 
