@@ -162,6 +162,11 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData implements Li
 				}
 
 				@Override
+				public Map<String, String> getMetadata() throws IOException, SQLException {
+					throw new UnsupportedOperationException("File not found: " + getDiaFile().getAbsolutePath());
+				}
+
+				@Override
 				public void openFile(File userFile) throws IOException, SQLException {
 					throw new UnsupportedOperationException();
 				}
