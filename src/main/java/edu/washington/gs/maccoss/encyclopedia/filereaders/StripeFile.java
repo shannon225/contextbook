@@ -123,9 +123,10 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 			Logger.logLine("Caching range "+range.toString()+"...");
 			stripes.put(range, stripeFile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, false));
 		}
+		final Map<String, String> metadata=stripeFile.getMetadata();
 		final File userFile = stripeFile.getFile();
 		Logger.logLine("Finished caching "+userFile.getName());
-		return new CachedStripeFile(userFile, ranges, precursors, stripes);
+		return new CachedStripeFile(userFile, ranges, metadata, precursors, stripes);
 	}
 
 	public File getFile() {

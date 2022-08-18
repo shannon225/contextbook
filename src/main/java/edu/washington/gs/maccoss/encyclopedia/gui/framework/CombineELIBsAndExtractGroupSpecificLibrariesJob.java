@@ -2,30 +2,42 @@ package edu.washington.gs.maccoss.encyclopedia.gui.framework;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.SearchToBLIB;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.EncyclopediaTwoPeakLocationInferrer;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.DIAProcessor;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.spectrumprocessors.WindowDownsampler;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class CombineELIBsAndExtractGroupSpecificLibrariesJob extends SwingJob {
 	private final File saveDirectory;
+	private final Optional<File> singleInjectionExample;
+	private final SearchParameters parameters;
 
-	public CombineELIBsAndExtractGroupSpecificLibrariesJob(File saveDirectory, JobProcessor processor) {
+	public CombineELIBsAndExtractGroupSpecificLibrariesJob(File saveDirectory, Optional<File> singleInjectionExample, SearchParameters parameters, JobProcessor processor) {
 		super(processor);
 		this.saveDirectory=saveDirectory;
+		this.singleInjectionExample=singleInjectionExample;
+		this.parameters=parameters;
 	}
 	
 	@Override
@@ -49,11 +61,32 @@ public class CombineELIBsAndExtractGroupSpecificLibrariesJob extends SwingJob {
 			}
 		}
 		
-		// grab jobs from the current queue
+		WindowDownsampler downsampler=null;
+		if (singleInjectionExample.isPresent()) {
+			StripeFileInterface stripeFile=StripeFileGenerator.getFile(singleInjectionExample.get(), parameters, true);
+			ArrayList<Range> downsampledRanges=new ArrayList<Range>(stripeFile.getRanges().keySet());
+			Collections.sort(downsampledRanges);
+			stripeFile.close();
+			Logger.logLine("Downsampling quant data to "+downsampledRanges.size()+" windows");
+
+			downsampler=new WindowDownsampler(downsampledRanges, parameters.getFragmentTolerance());
+		}
+		
+		// grab jobs from the current queue and downsample DIA data
 		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
 		for (SwingJob job : processor.getQueue()) {
 			if (job instanceof SearchJob) {
-				jobData.add(((SearchJob)job).getSearchData());
+				SearchJobData searchData = ((SearchJob)job).getSearchData();
+				
+				if (downsampler!=null) {
+					DIAProcessor processor=new DIAProcessor(downsampler, parameters);
+					File originalFile=searchData.getDiaFileReader().getFile();
+					File newQuantFile=new File(originalFile.getParentFile(), originalFile.getName()+".downsampled"+StripeFile.DIA_EXTENSION);
+					Logger.logLine("Downsampling "+originalFile.getName()+" to create "+newQuantFile.getName());
+					processor.processStripeFile(new EmptyProgressIndicator(), searchData.getDiaFileReader(), newQuantFile, false);
+					searchData=searchData.updateQuantFile(newQuantFile);
+				}
+				jobData.add(searchData);
 			}
 		}
 		Logger.logLine("Found "+jobData.size()+" jobs in the queue to combine...");
@@ -64,7 +97,6 @@ public class CombineELIBsAndExtractGroupSpecificLibrariesJob extends SwingJob {
 		}
 		
 		// force the max number of quant peaks to be all peaks!
-		SearchParameters parameters=jobData.get(0).getParameters();
 		HashMap<String, String> params=parameters.toParameterMap();
 		params.put(SearchParameters.NUMBER_OF_QUANTITATIVE_PEAKS, Integer.toString(Integer.MAX_VALUE));
 		SearchParameters quantParameters=SearchParameterParser.parseParameters(params);

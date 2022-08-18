@@ -8,6 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
@@ -42,6 +43,11 @@ public class PecanJobData extends QuantitativeSearchJobData {
 		this.targetList=targetList;
 		this.fastaFile=fastaFile;
 		this.taskFactory=taskFactory;
+	}
+	
+	@Override
+	public SearchJobData updateQuantFile(File f) {
+		return new PecanJobData(getTargetList(), f, getFastaFile(), getPercolatorFiles(), getTaskFactory());
 	}
 
 	public static PercolatorExecutionData getPercolatorExecutionData(File referenceFileLocation, File fastaFile, SearchParameters parameters) {

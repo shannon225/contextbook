@@ -34,7 +34,10 @@ public class WindowDownsamplerTest extends TestCase {
 		
 		WindowDownsampler downsampler=new WindowDownsampler(downsampledRanges, parameters.getFragmentTolerance());
 		DIAProcessor processor=new DIAProcessor(downsampler, parameters);
-		processor.processStripeFile(new EmptyProgressIndicator(), startFile.toFile(), resultFile, false);
+
+		StripeFileInterface startStripeFile = StripeFileGenerator.getFile(startFile.toFile(), parameters);
+		
+		processor.processStripeFile(new EmptyProgressIndicator(), startStripeFile, resultFile, false);
 		
 		StripeFileInterface file = StripeFileGenerator.getFile(resultFile, parameters);
 		Map<Range, WindowData> ranges=file.getRanges();

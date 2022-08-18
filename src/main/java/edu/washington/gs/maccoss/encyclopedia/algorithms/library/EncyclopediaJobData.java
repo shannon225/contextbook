@@ -47,7 +47,12 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData implements Li
 		this.taskFactory = taskFactory;
 	}
 
-	public static PercolatorExecutionData getPercolatorExecutionData(File referenceFileLocation, File fastaFile, SearchParameters parameters) {
+	@Override
+	public SearchJobData updateQuantFile(File f) {
+		return new EncyclopediaJobData(f, getPercolatorFiles(), getParameters(), getVersion(), getLibrary(), getTaskFactory());
+	}
+
+	private static PercolatorExecutionData getPercolatorExecutionData(File referenceFileLocation, File fastaFile, SearchParameters parameters) {
 		return new PercolatorExecutionData(new File(getPrefixFromOutput(referenceFileLocation) + FEATURE_FILE_SUFFIX), fastaFile,
 				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_FILE_SUFFIX), 
 				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_PROTEIN_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_PROTEIN_FILE_SUFFIX), parameters);

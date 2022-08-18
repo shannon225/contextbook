@@ -1,7 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
@@ -11,6 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import org.junit.AfterClass;
 import org.junit.AssumptionViolatedException;
@@ -23,7 +23,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.Statement;
-import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.Assert.assertTrue;
@@ -44,11 +43,22 @@ public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 
 	@BeforeClass
 	public static void buildReports() throws Exception {
-		parameters = SearchParameterParser.parseParameters(new HashMap<>(ImmutableMap.of(
-				"-percolatorVersion", "3.5" // Required for this test to work; with 3.01 (default) we don't
-				                            // detect any peptides. This test previously only passed due to a bug
-				                            // in defining defaults that resulted in the use of 3.5.
-		)));
+		// IMPORTANT: we must run the search with the same parameters as the reference data.
+		// This can be challenging when the default parameters change! While we can hard-code
+		// certain settings, it can be hard to figure out the changes and copy them here,
+		// so instead we fetch the reference parameters directly. Note that a side effect of this
+		// will be that new versions of reference artifacts built with this code will use whatever
+		// parameters the configured reference used.
+
+		final LibraryFile reference = new LibraryFile();
+		try {
+			final Path refElib = EncyclopediaTestUtils.getResourceAsTempFile(EncyclopediaEndToEndIT.class, REFERENCE_SEARCH1_RESOURCE, tempDir, "reference_", ".elib");
+			reference.openFile(refElib.toFile());
+			parameters = SearchParameterParser.parseParameters(reference.getMetadata());
+		} finally {
+			reference.close();
+		}
+
 		libraryScoringFactory = new EncyclopediaOneScoringFactory(parameters);
 		setUpClass();
 		jobDataA = makeAndDoJob(diaFile);

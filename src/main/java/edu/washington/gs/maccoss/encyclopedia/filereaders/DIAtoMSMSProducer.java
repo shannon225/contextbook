@@ -1,6 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -17,24 +16,20 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 public class DIAtoMSMSProducer implements MSMSProducer {
 	private static final int STRIPE_CHUNKS=20;
 
-	private final File diaFile;
-	private StripeFile stripeFile; 
+	private StripeFileInterface stripeFile; 
 	private final BlockingQueue<MSMSBlock> outputBlockQueue;
 	private final HashMap<String, String> metadata=new HashMap<String, String>();
 
 	private Throwable error;
 
-	public DIAtoMSMSProducer(File diaFile, BlockingQueue<MSMSBlock> outputBlockQueue) {
-		this.diaFile=diaFile;
+	public DIAtoMSMSProducer(StripeFileInterface stripeFile, BlockingQueue<MSMSBlock> outputBlockQueue) {
+		this.stripeFile=stripeFile;
 		this.outputBlockQueue=outputBlockQueue;
 	}
 
 	@Override
 	public void run() {
 		try {
-			stripeFile=new StripeFile();
-			stripeFile.openFile(diaFile);
-
 			float totalRTInSec=stripeFile.getGradientLength();
 			
 			float start=-1.0f;
@@ -49,7 +44,6 @@ public class DIAtoMSMSProducer implements MSMSProducer {
 			
 			metadata.putAll(stripeFile.getMetadata());
 			
-			stripeFile.close();
 			putBlock(MSMSBlock.POISON_BLOCK);
 			
 		} catch (IOException ioe) {
