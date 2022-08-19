@@ -127,7 +127,7 @@ public class EValueCalculator {
 			Pair<Float, Float> equation=LinearRegression.getRegression(scoreArray, countArray);
 			n=scores.size();
 			
-			if (equation.x>=-0.25f) {
+			if (equation.x>=0f) {
 				// if the slope is off (or non-negative) then revert back to X!Tandem defaults
 				m=-0.25f;
 				b=3.5f;
