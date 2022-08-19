@@ -10,6 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearRegression;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 import gnu.trove.procedure.TFloatFloatProcedure;
@@ -18,7 +19,8 @@ public class EValueCalculator {
 	private static final float FAILURE_STATE = -3f; // (a really bad e-value)
 
 	private final int[] counts=new int[100];
-	
+
+	private final int n;
 	private final float m;
 	private final float b;
 
@@ -28,6 +30,28 @@ public class EValueCalculator {
 	private final float minScore;
 	private final float binSize;
 	
+
+	public EValueCalculator(TFloatFloatHashMap scoreMap, float minScore) {
+		this(scoreMap, minScore, estimateBinSize(scoreMap));
+	}
+	private static float estimateBinSize(TFloatFloatHashMap scoreMap) {
+
+		float[] scoreArray=scoreMap.values();
+		float stdev=General.stdev(scoreArray);
+		if (scoreArray.length==0||stdev==0.0f) {
+			return 1;
+		}
+		
+		// Silverman's (1986) rule of thumb (wikipedia)
+		// bandwidth (FWHM for a kernel) for density estimation is similar to binSize in a histogram
+		return stdev*(float)Math.pow(4.0/3.0/scoreArray.length, 1.0/5.0);
+	}
+	/**
+	 * 
+	 * @param scoreMap keys are RT or index, values are scores
+	 * @param minScore
+	 * @param binSize
+	 */
 	public EValueCalculator(TFloatFloatHashMap scoreMap, float minScore, float binSize) {
 		this.minScore=minScore;
 		this.binSize=binSize;
@@ -91,9 +115,27 @@ public class EValueCalculator {
 			}
 		}
 		
-		Pair<Float, Float> equation=LinearRegression.getRegression(scores.toArray(), lnCounts.toArray());
-		m=equation.x;
-		b=equation.y;
+		if (scores.size()<3) {
+			// use default values if the statistics in the survival function is too meager
+			// these are defaults from X!Tandem
+			n=scores.size();
+			m=-0.25f;
+			b=3.5f;
+		} else {
+			float[] scoreArray = scores.toArray();
+			float[] countArray = lnCounts.toArray();
+			Pair<Float, Float> equation=LinearRegression.getRegression(scoreArray, countArray);
+			n=scores.size();
+			
+			if (equation.x>=-0.25f) {
+				// if the slope is off (or non-negative) then revert back to X!Tandem defaults
+				m=-0.25f;
+				b=3.5f;
+			} else {
+				m=equation.x;
+				b=equation.y;
+			}
+		}
 	}
 	public float getNegLnEValue(float score) {
 		if (m>0) return FAILURE_STATE;
@@ -109,6 +151,9 @@ public class EValueCalculator {
 	
 	public float getNegLnEValue() {
 		return getNegLnEValue(maxScore);
+	}
+	public int getN() {
+		return n;
 	}
 	public float getB() {
 		return b;
