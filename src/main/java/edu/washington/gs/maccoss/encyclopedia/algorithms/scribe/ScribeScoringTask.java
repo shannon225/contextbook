@@ -123,6 +123,7 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 			}
 			
 			EValueCalculator calculator=new EValueCalculator(map, 0.1f, 0.1f);
+			System.out.println("size\t"+map.size()+"\t"+calculator.getM()+"\t"+calculator.getB()+"\t"+calculator.getNegLnEValue());
 			
 
 			SpectrumScoringResult result=new SpectrumScoringResult(msms);
