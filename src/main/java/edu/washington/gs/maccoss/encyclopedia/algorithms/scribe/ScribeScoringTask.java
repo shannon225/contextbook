@@ -19,7 +19,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
@@ -122,11 +124,12 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 				continue;
 			}
 			
-			EValueCalculator calculator=new EValueCalculator(map, 0.1f, 0.1f);
+			EValueCalculator calculator=new EValueCalculator(map, 0.1f);
 			
-
 			SpectrumScoringResult result=new SpectrumScoringResult(msms);
 			Collections.sort(goodHits);
+			//System.out.println("size\t"+map.size()+"\t"+calculator.getN()+"\t"+calculator.getM()+"\t"+calculator.getB()+"\t"+calculator.getNegLnEValue()+"\t"+super.entries.get(goodHits.get(goodHits.size()-1).y).getPeptideModSeq()+"\t"+msms.getScanStartTime());
+			
 			int identifiedPeaks=0;
 			for (int i=goodHits.size()-1; i>=0; i--) {
 				float score=goodHits.get(i).x;

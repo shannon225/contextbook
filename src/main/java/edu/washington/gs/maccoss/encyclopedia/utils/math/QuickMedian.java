@@ -22,6 +22,10 @@ public class QuickMedian {
 	public static float iqr(float[] data) {
 		return select(data, 0.75f)-select(data, 0.25f);
 	}
+	
+	public static float range90(float[] data) {
+		return select(data, 0.95f)-select(data, 0.05f);
+	}
 
 	/**
 	 * this is destructive to the array order! (it sorts it)
