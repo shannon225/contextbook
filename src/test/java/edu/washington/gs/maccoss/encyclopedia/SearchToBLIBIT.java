@@ -634,8 +634,8 @@ public class SearchToBLIBIT {
 			try (PreparedStatement ps = c.prepareStatement(
 					"SELECT count()" +
 					" FROM retentiontimes rt" +
-					" JOIN entries e USING (peptidemodseq)" +
-					" WHERE abs(e.rtinseconds - rt.library) > 0.001;"
+					" LEFT JOIN entries e USING (peptidemodseq)" +
+					" WHERE e.rowid IS NULL OR abs(e.rtinseconds - rt.library) > 0.001;"
 			)) {
 				try (ResultSet rs = ps.executeQuery()) {
 					assertTrue(rs.next());
