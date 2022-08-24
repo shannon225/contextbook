@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.*;
 import java.util.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
@@ -631,11 +632,14 @@ public class SearchToBLIBIT {
 				}
 			}
 
+			// Note that we only check peptides that were both passing in the global context, and were used
+			// for alignment. There will be mismatches both directions (passing peptides not used for alignment
+			// as well as non-passing peptides that _are_ used for alignment).
 			try (PreparedStatement ps = c.prepareStatement(
-					"SELECT count()" +
-					" FROM retentiontimes rt" +
-					" JOIN entries e USING (peptidemodseq)" +
-					" WHERE abs(e.rtinseconds - rt.library) > 0.001;"
+					"SELECT count(), e.peptidemodseq, e.rtinseconds, rt.library" +
+					" FROM entries e" +
+					" JOIN retentiontimes rt USING (peptidemodseq)" +
+					" WHERE rt.rowid IS NULL OR abs(e.rtinseconds - rt.library) > 0.001;"
 			)) {
 				try (ResultSet rs = ps.executeQuery()) {
 					assertTrue(rs.next());
@@ -643,12 +647,17 @@ public class SearchToBLIBIT {
 					final int nEntries = rs.getInt(1);
 
 					assertEquals(
-							"Too many mismatched RTs! All entries should match recorded \"library\" RT!",
+							"Too many mismatched RTs! All recorded \"library\" RT should match entry!"
+							+ String.format(" E.g. (%s; expected: %.02f got: %.02f)", rs.getString(2), rs.getObject(3), rs.getObject(4)),
 							0,
 							nEntries
 					);
 				}
 			}
+
+			final Set<String> passingPeptides = SearchToBLIB.readPassingPeptides(file, searchParameters).x.stream()
+					.map(PercolatorPeptide::getPeptideModSeq)
+					.collect(Collectors.toSet());
 
 			// Same check as above, but with the decoded `inferrer`.
 			final PeakLocationInferrerInterface inferrer = SearchToBLIB.readInferrer(file, jobData, searchParameters);
@@ -659,6 +668,10 @@ public class SearchToBLIBIT {
 				for (RetentionTimeAlignmentInterface.AlignmentDataPoint p : alignmentData) {
 					if (null == p.getPeptideModSeq()) {
 						// In an ALIB not all RT points will be for a peptide, some may just be alignment "knots"
+						continue;
+					} else if (!passingPeptides.contains(p.getPeptideModSeq())) {
+						// Also skip points for peptides that were used for alignment but weren't in the
+						// list of global passing peptides, which seems to happen.
 						continue;
 					} else if (!hadPeptidePoint) {
 						hadPeptidePoint = true;
