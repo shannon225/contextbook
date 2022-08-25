@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Floats;
@@ -52,6 +53,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.DataFormatException;
@@ -993,7 +995,7 @@ public class SearchToBLIB {
 				writePercolatorToElib(elib, percolatorExecutionData, parameters);
 
 				// Now compute and write the set of entries that to capture the alignment/transition refinement
-				elib.addEntries(getAlignmentEntries(passingPeptides.x, inferrer, parameters));
+				elib.addEntries(getAlignmentEntries(passingPeptides.x, inferrer, jobs, parameters));
 
 				// Write each job's alignment to the ELIB
 				float increment = 1.0f / jobs.size();
@@ -1074,25 +1076,27 @@ public class SearchToBLIB {
 	/**
 	 * Compute the set of entries to be written to an alignment-only ELIB (ALIB).
 	 *
-	 * This consists of one entry per item of {@code passingPeptides}, with the corresponding aligned RT.
-	 * Each entry's set of peaks will be determined by the quantitative peaks returned from {@code inferrer}
-	 * for that peptide.
+	 * This consists of one entry per item of {@code passingPeptides}, taken from the ID's originating search job,
+	 * but with the peptide's global aligned RT. The set of quantitative peaks returned from {@code inferrer}
+	 * for each peptide will be recorded in the entry's "quantitative ion" array.
 	 *
 	 * @see OutputFormat#ALIB
 	 *
 	 * @param passingPeptides The set of passing peptide IDs from Percolator
 	 * @param inferrer The retention time alignment and transition refinement results for the experiment. Importantly,
 	 *                 all entries will include only the quantitative ions from this inferrer.
+	 * @param jobs The set of jobs from which the passing peptides were computed. These are necessary to correctly
+	 *             capture the identification of each peptide chosen by Percolator.
 	 *
 	 * @return A set of entries suitable for insertion in the ELIB (ALIB) file.
 	 */
-	private static ArrayList<LibraryEntry> getAlignmentEntries(List<? extends PeptidePrecursorWithProteins> passingPeptides, PeakLocationInferrerInterface inferrer, SearchParameters parameters) {
+	private static ArrayList<LibraryEntry> getAlignmentEntries(List<? extends PercolatorPeptide> passingPeptides, PeakLocationInferrerInterface inferrer, List<? extends QuantitativeSearchJobData> jobs, SearchParameters parameters) {
 		return passingPeptides.stream()
-				.map(p -> toAlignmentEntry(p, inferrer, parameters))
+				.map(p -> toAlignmentEntry(p, inferrer, jobs, parameters))
 				.collect(Collectors.toCollection(ArrayList::new));
 	}
 
-	private static LibraryEntry toAlignmentEntry(PeptidePrecursorWithProteins peptide, PeakLocationInferrerInterface inferrer, SearchParameters parameters) {
+	private static LibraryEntry toAlignmentEntry(PercolatorPeptide peptide, PeakLocationInferrerInterface inferrer, List<? extends QuantitativeSearchJobData> jobs, SearchParameters parameters) {
 		float warpedRTInSec;
 		try {
 			// We want the aligned ("seed") RT, not the time in any specific sample, so we pass a "bogus" job. TODO: BIG RISK (NPE, interface abuse)
@@ -1101,28 +1105,22 @@ public class SearchToBLIB {
 			warpedRTInSec = -1f;
 		}
 
-		double[] masses = inferrer.getTopNBestIons(peptide.getPeptideModSeq(), peptide.getPrecursorCharge());
-		if (null == masses) {
-			masses = new double[0];
+		double[] quantIons = inferrer.getTopNBestIons(peptide.getPeptideModSeq(), peptide.getPrecursorCharge());
+		if (null == quantIons) {
+			quantIons = new double[0];
 		}
 
-		final float[] intensities = new float[masses.length];
-		Arrays.fill(intensities, 1f);
+		// Now locate the entry in the initial job
+		final QuantitativeSearchJobData job = getJobForPeptide(peptide.getFile(), jobs);
 
-		return new LibraryEntry(
-				"global",
-				peptide.getAccessions(),
-				-1,
-				parameters.getAAConstants().getChargedMass(peptide.getPeptideModSeq(), peptide.getPrecursorCharge()),
-				peptide.getPrecursorCharge(),
-				peptide.getPeptideModSeq(),
-				0,
-				warpedRTInSec,
-				peptide.getScore(),
-				masses,
-				intensities,
-				parameters.getAAConstants()
-		);
+		job.getResultLibrary() //TODO: cache library for each job
+	}
+
+	private static <T extends SearchJobData> T getJobForPeptide(String file, List<? extends T> jobs) {
+		return jobs.stream()
+				.filter(j -> Objects.equals(file, j.getDiaFileReader().getOriginalFileName()))
+				.findAny()
+				.orElseThrow(() -> new IllegalArgumentException("No job found for file: " + file));
 	}
 
 	/**
