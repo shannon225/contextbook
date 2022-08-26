@@ -40,10 +40,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndic
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -57,6 +54,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.DataFormatException;
+
+import static edu.washington.gs.maccoss.encyclopedia.Encyclopedia.QUIET_MODE_ARG;
 
 public class SearchToBLIB {
 	public static void main(String[] args) {
@@ -308,6 +307,10 @@ public class SearchToBLIB {
 		Logger.timelessLogLine(" -blib "+writeBlib);
 		Logger.timelessLogLine(" -alignOnly " + alignOnly);
 		Logger.timelessLogLine(parameters.toString());
+
+		if (arguments.containsKey(QUIET_MODE_ARG)) {
+			Logger.PRINT_TO_SCREEN = false;
+		}
 
 		try {
 			LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
@@ -1137,22 +1140,34 @@ public class SearchToBLIB {
 		final ArrayList<PercolatorProteinGroup> proteins;
 
 		try {
-			final LibraryFile alignmentFile = new LibraryFile();
 			try {
-				alignmentFile.openFile(alignmentElib);
-
-				passingPeptides = readPassingPeptides(alignmentFile, parameters);
-				proteins = readPassingProteins(alignmentFile, passingPeptides.x);
-
-				inferrer = readInferrer(alignmentFile, jobs, parameters);
-			} finally {
-				alignmentFile.close();
+				FileLogRecorder logRecorder = new FileLogRecorder(new File(elibFile.getAbsolutePath() + EncyclopediaJobData.LOG_FILE_SUFFIX));
+				Logger.addRecorder(logRecorder);
+			} catch (FileNotFoundException | UnsupportedEncodingException e) {
+				Logger.errorLine("Error recording logs to results folder!");
+				Logger.errorException(e);
 			}
-		} catch (IOException | SQLException e) {
-			throw new EncyclopediaException("Unable to read alignment results", e);
-		}
 
-		convertElibQuantOnly(progress, jobs, elibFile, passingPeptides, inferrer, proteins, parameters);
+			try {
+				final LibraryFile alignmentFile = new LibraryFile();
+				try {
+					alignmentFile.openFile(alignmentElib);
+
+					passingPeptides = readPassingPeptides(alignmentFile, parameters);
+					proteins = readPassingProteins(alignmentFile, passingPeptides.x);
+
+					inferrer = readInferrer(alignmentFile, jobs, parameters);
+				} finally {
+					alignmentFile.close();
+				}
+			} catch (IOException | SQLException e) {
+				throw new EncyclopediaException("Unable to read alignment results", e);
+			}
+
+			convertElibQuantOnly(progress, jobs, elibFile, passingPeptides, inferrer, proteins, parameters);
+		} finally {
+			Logger.close();
+		}
 	}
 
 	/**
