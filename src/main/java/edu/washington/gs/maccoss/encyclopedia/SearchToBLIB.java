@@ -39,10 +39,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndic
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -1145,22 +1142,34 @@ public class SearchToBLIB {
 		final ArrayList<PercolatorProteinGroup> proteins;
 
 		try {
-			final LibraryFile alignmentFile = new LibraryFile();
 			try {
-				alignmentFile.openFile(alignmentElib);
-
-				passingPeptides = readPassingPeptides(alignmentFile, parameters);
-				proteins = readPassingProteins(alignmentFile, passingPeptides.x);
-
-				inferrer = readInferrer(alignmentFile, jobs, parameters);
-			} finally {
-				alignmentFile.close();
+				FileLogRecorder logRecorder = new FileLogRecorder(new File(elibFile.getAbsolutePath() + EncyclopediaJobData.LOG_FILE_SUFFIX));
+				Logger.addRecorder(logRecorder);
+			} catch (FileNotFoundException | UnsupportedEncodingException e) {
+				Logger.errorLine("Error recording logs to results folder!");
+				Logger.errorException(e);
 			}
-		} catch (IOException | SQLException e) {
-			throw new EncyclopediaException("Unable to read alignment results", e);
-		}
 
-		convertElibQuantOnly(progress, jobs, elibFile, passingPeptides, inferrer, proteins, parameters);
+			try {
+				final LibraryFile alignmentFile = new LibraryFile();
+				try {
+					alignmentFile.openFile(alignmentElib);
+
+					passingPeptides = readPassingPeptides(alignmentFile, parameters);
+					proteins = readPassingProteins(alignmentFile, passingPeptides.x);
+
+					inferrer = readInferrer(alignmentFile, jobs, parameters);
+				} finally {
+					alignmentFile.close();
+				}
+			} catch (IOException | SQLException e) {
+				throw new EncyclopediaException("Unable to read alignment results", e);
+			}
+
+			convertElibQuantOnly(progress, jobs, elibFile, passingPeptides, inferrer, proteins, parameters);
+		} finally {
+			Logger.close();
+		}
 	}
 
 	/**
