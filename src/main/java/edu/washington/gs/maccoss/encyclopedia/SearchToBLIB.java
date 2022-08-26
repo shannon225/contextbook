@@ -56,6 +56,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.DataFormatException;
 
+import static edu.washington.gs.maccoss.encyclopedia.Encyclopedia.QUIET_MODE_ARG;
+
 public class SearchToBLIB {
 	public static void main(String[] args) {
 		final Pair<List<String>, HashMap<String, String>> parsedArgs = CommandLineParser.parseMultipleAndRemainingArguments(args, Encyclopedia.INPUT_DIA_TAG);
@@ -306,6 +308,10 @@ public class SearchToBLIB {
 		Logger.timelessLogLine(" -blib "+writeBlib);
 		Logger.timelessLogLine(" -alignOnly " + alignOnly);
 		Logger.timelessLogLine(parameters.toString());
+
+		if (arguments.containsKey(QUIET_MODE_ARG)) {
+			Logger.PRINT_TO_SCREEN = false;
+		}
 
 		try {
 			LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
