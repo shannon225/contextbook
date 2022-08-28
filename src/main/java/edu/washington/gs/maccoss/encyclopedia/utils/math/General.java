@@ -435,6 +435,16 @@ public class General {
 		}
 		return f;
 	}
+
+	public static float[] divide(float[] v1, float[] v2) {
+		assert(v1.length==v2.length);
+		
+		float[] r=new float[v1.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=v1[i]/v2[i];
+		}
+		return r;
+	}
 	
 	public static float[] normalizeToL2(float[] y) {
 		return divide(y, (float)Math.sqrt(sum(multiply(y, y))));
@@ -635,6 +645,14 @@ public class General {
 		float[] r=new float[v1.length];
 		for (int i=0; i<r.length; i++) {
 			r[i]=v1[i]-v;
+		}
+		return r;
+	}
+
+	public static float[] subtract(float[] v1, float[] v2) {
+		float[] r=new float[v1.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=v1[i]-v2[i];
 		}
 		return r;
 	}
