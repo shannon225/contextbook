@@ -73,8 +73,10 @@ public class CombineELIBsAndExtractGroupSpecificLibrariesJob extends SwingJob {
 		}
 		
 		// grab jobs from the current queue and downsample DIA data
+		
 		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
-		for (SwingJob job : processor.getQueue()) {
+		ArrayList<SwingJob> queue = processor.getQueue();
+		for (SwingJob job : queue) {
 			if (job instanceof SearchJob) {
 				SearchJobData searchData = ((SearchJob)job).getSearchData();
 				
@@ -83,7 +85,7 @@ public class CombineELIBsAndExtractGroupSpecificLibrariesJob extends SwingJob {
 					File originalFile=searchData.getDiaFileReader().getFile();
 					File newQuantFile=new File(originalFile.getParentFile(), originalFile.getName()+".downsampled"+StripeFile.DIA_EXTENSION);
 					Logger.logLine("Downsampling "+originalFile.getName()+" to create "+newQuantFile.getName());
-					processor.processStripeFile(new EmptyProgressIndicator(), searchData.getDiaFileReader(), newQuantFile, false);
+					processor.processStripeFile(new SubProgressIndicator(progress, 0.25f/queue.size()), searchData.getDiaFileReader(), newQuantFile, false);
 					searchData=searchData.updateQuantFile(newQuantFile);
 				}
 				jobData.add(searchData);
@@ -105,12 +107,12 @@ public class CombineELIBsAndExtractGroupSpecificLibrariesJob extends SwingJob {
 		progress.update("Calculating global FDR across batch-specific libraries");
 		Logger.logLine("Calculating global FDR across batch-specific libraries");
 		File intermediateQuantLibraryFile=new File(saveDirectory, "batch_combined_quant_report.elib");
-		SearchToBLIB.convert(new SubProgressIndicator(progress, 0.33f), jobData, intermediateQuantLibraryFile, false, true, quantParameters);
+		SearchToBLIB.convert(new SubProgressIndicator(progress, 0.25f), jobData, intermediateQuantLibraryFile, false, true, quantParameters);
 
 		// identify bestQuant ions
 		progress.update("Calculating global transitions for quantification");
 		Logger.logLine("Calculating global transitions for quantification");
-		Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> archetypalData=EncyclopediaTwoPeakLocationInferrer.getArchetypals(new SubProgressIndicator(progress, 0.33f), jobData, parameters);
+		Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> archetypalData=EncyclopediaTwoPeakLocationInferrer.getArchetypals(new SubProgressIndicator(progress, 0.25f), jobData, parameters);
 		HashMap<String, double[]> globalTransitions=archetypalData.y;
 		int numWithAtLeastX=0;
 		int numWithAtLeastY=0;
@@ -128,6 +130,6 @@ public class CombineELIBsAndExtractGroupSpecificLibrariesJob extends SwingJob {
 		Logger.logLine("Extract individual batch libraries from global analysis");
 		LibraryFile library=new LibraryFile();
 		library.openFile(intermediateQuantLibraryFile);
-		LibraryUtilities.extractSampleSpecificLibraries(new SubProgressIndicator(progress, 0.34f), saveDirectory, Optional.of(globalTransitions), library, parameters);
+		LibraryUtilities.extractSampleSpecificLibraries(new SubProgressIndicator(progress, 0.25f), saveDirectory, Optional.of(globalTransitions), library, parameters);
 	}
 }
