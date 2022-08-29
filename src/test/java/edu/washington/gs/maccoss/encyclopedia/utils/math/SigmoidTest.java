@@ -2,9 +2,6 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
 import java.util.Random;
 
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import gnu.trove.list.array.TFloatArrayList;
 import junit.framework.TestCase;
 

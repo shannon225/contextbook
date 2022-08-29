@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
+import java.util.Arrays;
+
 /**
  * based on gradient descent of the algebraic sigmoid described here:
  * http://rstudio-pubs-static.s3.amazonaws.com/252141_6c6b1b2857a04a80a6bbfbc0481e1469.html
@@ -35,21 +37,27 @@ public class Sigmoid {
 		this.d = d;
 		this.alpha = alpha;
 	}
-	
+
 	public void train(float[] xs, float[] ys, int maxIterations) {
+		float[] weights=new float[xs.length];
+		Arrays.fill(weights, 1.0f);
+		train(xs, ys, weights, maxIterations);
+	}
+	
+	public void train(float[] xs, float[] ys, float[] weights, int maxIterations) {
 		for (int i = 0; i < maxIterations; i++) {
 			float oldA=a;
 			float oldB=b;
 			float oldC=c;
 			float oldD=d;
 			
-			float gradientA = alpha*gradientA(xs, ys);
+			float gradientA = alpha*gradientA(xs, ys, weights);
 			adjustA(gradientA);
-			float gradientB = alpha*gradientB(xs, ys);
+			float gradientB = alpha*gradientB(xs, ys, weights);
 			adjustB(gradientB);
-			float gradientC = alpha*gradientC(xs, ys);
+			float gradientC = alpha*gradientC(xs, ys, weights);
 			adjustC(gradientC);
-			float gradientD = alpha*gradientD(xs, ys);
+			float gradientD = alpha*gradientD(xs, ys, weights);
 			adjustD(gradientD);
 			
 			// change beyond floating point error
@@ -79,11 +87,11 @@ public class Sigmoid {
 	 * @param ys
 	 * @return
 	 */
-	private float gradientA(float[] xs, float[] ys) {
+	private float gradientA(float[] xs, float[] ys, float[] weights) {
 		float[] xAdjs=General.add(General.multiply(xs, b), a);
 		float[] xAdjsSqaredPlus1=General.add(General.multiply(xAdjs, xAdjs), 1.0f);
 		float[] numerator=General.subtract(General.multiply(General.subtract(ys, d), General.protectedSqrt(xAdjsSqaredPlus1)), General.multiply(xAdjs, c));
-		return General.sum(General.divide(General.multiply(numerator, -2.0f*c), General.multiply(xAdjsSqaredPlus1, xAdjsSqaredPlus1)));
+		return General.sum(General.multiply(weights, General.divide(General.multiply(numerator, -2.0f*c), General.multiply(xAdjsSqaredPlus1, xAdjsSqaredPlus1))));
 	}
 	
 	/**
@@ -92,11 +100,11 @@ public class Sigmoid {
 	 * @param ys
 	 * @return
 	 */
-	private float gradientB(float[] xs, float[] ys) {
+	private float gradientB(float[] xs, float[] ys, float[] weights) {
 		float[] xAdjs=General.add(General.multiply(xs, b), a);
 		float[] xAdjsSqaredPlus1=General.add(General.multiply(xAdjs, xAdjs), 1.0f);
 		float[] numerator=General.subtract(General.multiply(General.subtract(ys, d), General.protectedSqrt(xAdjsSqaredPlus1)), General.multiply(xAdjs, c));
-		return General.sum(General.divide(General.multiply(numerator, General.multiply(xs, -2.0f*c)), General.multiply(xAdjsSqaredPlus1, xAdjsSqaredPlus1)));
+		return General.sum(General.multiply(weights, General.divide(General.multiply(numerator, General.multiply(xs, -2.0f*c)), General.multiply(xAdjsSqaredPlus1, xAdjsSqaredPlus1))));
 	}
 
 	/**
@@ -105,12 +113,12 @@ public class Sigmoid {
 	 * @param ys
 	 * @return
 	 */
-	private float gradientC(float[] xs, float[] ys) {
+	private float gradientC(float[] xs, float[] ys, float[] weights) {
 		float[] xAdjs=General.add(General.multiply(xs, b), a);
 		float[] xAdjsSqaredPlus1=General.add(General.multiply(xAdjs, xAdjs), 1.0f);
 		
 		float[] numerator=General.subtract(General.multiply(xAdjs, c), General.multiply(General.protectedSqrt(xAdjsSqaredPlus1), General.subtract(ys,  d)));
-		return General.sum(General.divide(General.multiply(numerator, 2.0f), General.add(xAdjs, 1.0f)));
+		return General.sum(General.multiply(weights, General.divide(General.multiply(numerator, 2.0f), General.add(xAdjs, 1.0f))));
 	}
 
 	/**
@@ -119,12 +127,12 @@ public class Sigmoid {
 	 * @param ys
 	 * @return
 	 */
-	private float gradientD(float[] xs, float[] ys) {
+	private float gradientD(float[] xs, float[] ys, float[] weights) {
 		float[] xAdjs=General.add(General.multiply(xs, b), a);
 		float[] xAdjsSqaredPlus1=General.add(General.multiply(xAdjs, xAdjs), 1.0f);
 		
 		float[] subTerm=General.divide(General.multiply(xAdjs, c), General.protectedSqrt(xAdjsSqaredPlus1));
-		return General.sum(General.multiply(General.subtract(General.subtract(ys, d), subTerm), -2.0f));
+		return General.sum(General.multiply(weights, General.multiply(General.subtract(General.subtract(ys, d), subTerm), -2.0f)));
 	}
 	
 	public float getValue(float x) {

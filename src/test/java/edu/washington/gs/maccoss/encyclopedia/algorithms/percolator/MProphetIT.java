@@ -4,8 +4,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -21,6 +23,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class MProphetIT {
+	public static void main(String[] args) throws Exception {
+		File featureFile=new File("/Users/searleb/Documents/teaching/encyclopedia/test/23aug2017_hela_serum_timecourse_wide_1a.dia.features.txt");
+		File fastaFile=new File(featureFile.getParent(), "uniprot-9606.fasta");
+		processMProphet(featureFile, fastaFile);
+	}
+	
 	@Test
 	public void testMProphet() throws Exception {
 		doMProphetTest();
@@ -37,6 +45,11 @@ public class MProphetIT {
 		fastaFile.deleteOnExit();
 		Files.copy(is, fastaFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
+		processMProphet(featureFile, fastaFile);
+	}
+
+	private static void processMProphet(File featureFile, File fastaFile)
+			throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		MProphetExecutionData percolatorFiles=getMProphetFiles(featureFile, fastaFile, SearchParameterParser.getDefaultParametersObject());
 
 		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());

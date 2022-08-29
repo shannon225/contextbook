@@ -22,12 +22,15 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.LineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.LineParserMuscle;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.FloatPair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearDiscriminantAnalysis;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RunningMedianWarper;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Sigmoid;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.randomforest.RocPlot;
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -90,19 +93,73 @@ public class MProphet implements Runnable {
 			}
 		}
 
-		ArrayList<XYPoint>[] points=PivotTableGenerator.createPivotTables(new float[][] {targetScores.toArray(), decoyScores.toArray()}, true);
+		// 1 stdev below the mean (still in the increasing section) or 10000 values, which ever is bigger 
+		float medianDecoy=QuickMedian.select(decoyScores.toArray(), Math.max(0.1586f, 10000f/decoyScores.size()));
 		
-		float medianDecoy=QuickMedian.median(decoyScores.toArray());
+		int bestBinCount=0;
+		float bestWeightedAverage=0.0f;
+		float bestSumSquaredErrors=Float.MAX_VALUE;
+		for (int binCount = 10; binCount < 100; binCount++) {
+			FloatPair weightedAverageData = getPi0Estimate(targetScores, decoyScores, medianDecoy, binCount);
+			//System.out.println(binCount+"\t"+weightedAverageData.getOne()+"\t"+weightedAverageData.getTwo());
+			
+			if (weightedAverageData.getTwo()<bestSumSquaredErrors) {
+				bestSumSquaredErrors=weightedAverageData.getTwo();
+				bestWeightedAverage=weightedAverageData.getOne();
+				bestBinCount=binCount;
+			}
+		}
+
+		ArrayList<XYPoint>[] points=PivotTableGenerator.createPivotTables(new float[][] {targetScores.toArray(), decoyScores.toArray()}, true);
+		ArrayList<XYPoint> targets = points[0];
+		ArrayList<XYPoint> decoys = points[1];
+
+		ArrayList<XYPoint> scaledDecoys=new ArrayList<XYPoint>();
+		ArrayList<XYPoint> delta=new ArrayList<XYPoint>();
+		ArrayList<XYPoint> thresholdedDelta=new ArrayList<XYPoint>();
+		for (int i = 0; i < targets.size(); i++) {
+			XYPoint target = targets.get(i);
+			XYPoint decoy = decoys.get(i);
+			double deltaRatio=target.y/(target.y+decoy.y);
+			delta.add(new XYPoint(target.x, deltaRatio));
+			thresholdedDelta.add(new XYPoint(target.x, Math.max(bestWeightedAverage, deltaRatio)));
+			scaledDecoys.add(new XYPoint(decoy.x, decoy.y*bestWeightedAverage));
+		}
+		
+		XYTraceInterface[] traces=new XYTraceInterface[2];
+		traces[0]=new XYTrace(targets, GraphType.line, "Target");
+		traces[1]=new XYTrace(scaledDecoys, GraphType.line, "Decoy*pi0");
+		Charter.launchChart("LDA Score", "Count", true, traces);
+
+		XYTrace ratioTrace = new XYTrace(delta, GraphType.line, "Ratio");
+
+		int order=Math.max(3, Math.round(delta.size()/50f));
+		RunningMedianWarper warper=new RunningMedianWarper(thresholdedDelta, order, true);
+		XYTrace curveFit=new XYTrace(warper.getKnots(), GraphType.dashedline, "Fit");
+		XYTrace piZeroTrace=new XYTrace(new double[] {targets.get(0).x, medianDecoy}, new double[] {bestWeightedAverage, bestWeightedAverage}, GraphType.dashedline, "Pi0");
+		Charter.launchChart("LDA Score", "Ratio", true, ratioTrace, curveFit, piZeroTrace);
+		
+		try {Thread.sleep(1000000000);} catch (Exception e) {} // FIXME
+		
+		Pair<ArrayList<PercolatorPeptide>, Float> thisResult=new Pair<ArrayList<PercolatorPeptide>, Float>(null, null);
+		return thisResult;
+	}
+
+	private FloatPair getPi0Estimate(TFloatArrayList targetScores, TFloatArrayList decoyScores, float medianDecoy, int binCount) {
+		ArrayList<XYPoint>[] localpoints=PivotTableGenerator.createPivotTables(new float[][] {targetScores.toArray(), decoyScores.toArray()}, true, binCount);
+		ArrayList<XYPoint> localtargets = localpoints[0];
+		ArrayList<XYPoint> localdecoys = localpoints[1];
 		
 		float sumWeights=0;
 		float weightedAverage=0;
-		ArrayList<XYPoint> delta=new ArrayList<XYPoint>();
-		for (int i = 0; i < points[0].size(); i++) {
-			XYPoint target = points[0].get(i);
-			XYPoint decoy = points[1].get(i);
+		ArrayList<XYPoint> localdelta=new ArrayList<XYPoint>();
+		
+		for (int i = 0; i < localtargets.size(); i++) {
+			XYPoint target = localtargets.get(i);
+			XYPoint decoy = localdecoys.get(i);
 			double x=target.x;
 			double deltaRatio=target.y/(target.y+decoy.y);
-			delta.add(new XYPoint(x, deltaRatio));
+			localdelta.add(new XYPoint(x, deltaRatio));
 			
 			if (x<medianDecoy) {
 				sumWeights+=decoy.y;
@@ -110,22 +167,21 @@ public class MProphet implements Runnable {
 			}
 		}
 		weightedAverage=weightedAverage/sumWeights;
-		
-		XYTraceInterface[] traces=new XYTraceInterface[2];
-		traces[0]=new XYTrace(points[0], GraphType.line, "Target");
-		traces[1]=new XYTrace(points[1], GraphType.line, "Decoy");
-		Charter.launchChart("LDA Score", "Count", true, traces);
 
-		XYTrace ratioTrace = new XYTrace(delta, GraphType.line, "Ratio");
-		XYTrace piZeroTrace=new XYTrace(new double[] {points[0].get(0).x, medianDecoy}, new double[] {weightedAverage, weightedAverage}, GraphType.dashedline, "Pi0");
-		Charter.launchChart("LDA Score", "Ratio", true, ratioTrace, piZeroTrace);
-		
-		try {
-		Thread.sleep(1000000000);
-		} catch (Exception e) {}
-		
-		Pair<ArrayList<PercolatorPeptide>, Float> thisResult=new Pair<ArrayList<PercolatorPeptide>, Float>(null, null);
-		return thisResult;
+		float sumSquaredErrors=0.0f;
+		int n=0;
+		for (int i = 0; i < localtargets.size(); i++) {
+			XYPoint target = localtargets.get(i);
+			double x=target.x;
+			if (x<medianDecoy) {
+				n++;
+				XYPoint decoy = localdecoys.get(i);
+				double deltaRatio=target.y/(target.y+decoy.y);
+				double delta=weightedAverage-deltaRatio;
+				sumSquaredErrors+=delta*delta*decoy.y;
+			}
+		}
+		return new FloatPair(weightedAverage, sumSquaredErrors);
 	}
 	
 	private static RocPlot getRocPlot(ArrayList<ScoredIndex> scores, int totalPositives, int totalNegatives) {
