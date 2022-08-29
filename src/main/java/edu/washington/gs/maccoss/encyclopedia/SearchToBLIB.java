@@ -1,6 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Floats;
@@ -32,6 +31,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearInterpolatedFunction;
@@ -50,7 +50,6 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.DataFormatException;
@@ -1090,16 +1089,34 @@ public class SearchToBLIB {
 	 *                 all entries will include only the quantitative ions from this inferrer.
 	 * @param jobs The set of jobs from which the passing peptides were computed. These are necessary to correctly
 	 *             capture the identification of each peptide chosen by Percolator.
+	 * @param parameters The parameters used for processing.
 	 *
 	 * @return A set of entries suitable for insertion in the ELIB (ALIB) file.
 	 */
 	private static ArrayList<LibraryEntry> getAlignmentEntries(List<? extends PercolatorPeptide> passingPeptides, PeakLocationInferrerInterface inferrer, List<? extends QuantitativeSearchJobData> jobs, SearchParameters parameters) {
-		return passingPeptides.stream()
-				.map(p -> toAlignmentEntry(p, inferrer, jobs, parameters))
-				.collect(Collectors.toCollection(ArrayList::new));
+		final Map<String, LibraryFile> jobsByName = Maps.newHashMap();
+		try {
+			jobs.forEach(j -> {
+				try {
+					final LibraryFile f = new LibraryFile();
+					f.openFile(j.getResultLibrary());
+
+					jobsByName.put(j.getDiaFileReader().getOriginalFileName(), f);
+				} catch (IOException | SQLException e) {
+					Logger.errorLine("Unable to open results file " + j.getResultLibrary());
+					throw new EncyclopediaException(e);
+				}
+			});
+
+			return passingPeptides.stream()
+					.map(p -> toAlignmentEntry(p, inferrer, jobsByName, parameters))
+					.collect(Collectors.toCollection(ArrayList::new));
+		} finally {
+			jobsByName.values().forEach(LibraryFile::close);
+		}
 	}
 
-	private static LibraryEntry toAlignmentEntry(PercolatorPeptide peptide, PeakLocationInferrerInterface inferrer, List<? extends QuantitativeSearchJobData> jobs, SearchParameters parameters) {
+	private static LibraryEntry toAlignmentEntry(PercolatorPeptide peptide, PeakLocationInferrerInterface inferrer, Map<String, LibraryFile> resultsByJob, SearchParameters parameters) {
 		float warpedRTInSec;
 		try {
 			// We want the aligned ("seed") RT, not the time in any specific sample, so we pass a "bogus" job. TODO: BIG RISK (NPE, interface abuse)
@@ -1113,17 +1130,87 @@ public class SearchToBLIB {
 			quantIons = new double[0];
 		}
 
-		// Now locate the entry in the initial job
-		final QuantitativeSearchJobData job = getJobForPeptide(peptide.getFile(), jobs);
+		final LibraryFile jobResults = resultsByJob.get(peptide.getFile());
+		try {
+			final ArrayList<LibraryEntry> entries = jobResults.getEntries(peptide.getPeptideModSeq(), peptide.getPrecursorCharge(), false);
 
-		job.getResultLibrary() //TODO: cache library for each job
+			return toAlignmentEntry(getBestEntry(entries), warpedRTInSec, quantIons, parameters);
+		} catch (NullPointerException | IOException | SQLException | DataFormatException e) {
+			throw new EncyclopediaException("Unable to get entries from " + peptide.getFile(), e);
+		}
 	}
 
-	private static <T extends SearchJobData> T getJobForPeptide(String file, List<? extends T> jobs) {
-		return jobs.stream()
-				.filter(j -> Objects.equals(file, j.getDiaFileReader().getOriginalFileName()))
-				.findAny()
-				.orElseThrow(() -> new IllegalArgumentException("No job found for file: " + file));
+	private static LibraryEntry toAlignmentEntry(LibraryEntry bestEntry, float rtInSec, double[] quantIons, SearchParameters parameters) {
+		final double[] mzs = bestEntry.getMassArray();
+		final boolean[] isQuantIon = new boolean[mzs.length];
+
+		final MassTolerance tol = parameters.getFragmentTolerance();
+
+		// Just do a quadratic search, as the tolerance makes co-iteration very tricky.
+		int numQuantIons = 0;
+		for (int i = 0; i < mzs.length; i++) {
+			for (double quantIon : quantIons) {
+				if (tol.equals(mzs[i], quantIon)) {
+					isQuantIon[i] = true;
+					numQuantIons += 1;
+					break;
+				}
+			}
+		}
+
+		if (numQuantIons != quantIons.length) {
+			Logger.errorLine(String.format(
+					"Did not find enough quant ions for %s+%d in %s! (expected: %s) Proceeding but some ions will be omitted!",
+					bestEntry.getPeptideModSeq(),
+					bestEntry.getPrecursorCharge(),
+					bestEntry.getSource(),
+					Arrays.toString(quantIons)
+			));
+		}
+
+		if (bestEntry instanceof ChromatogramLibraryEntry) {
+			return new ChromatogramLibraryEntry(
+					bestEntry.getSource(),
+					bestEntry.getAccessions(),
+					bestEntry.getSpectrumIndex(),
+					bestEntry.getPrecursorMZ(),
+					bestEntry.getPrecursorCharge(),
+					bestEntry.getPeptideModSeq(),
+					bestEntry.getCopies(),
+					rtInSec,
+					bestEntry.getScore(),
+					mzs,
+					bestEntry.getIntensityArray(),
+					bestEntry.getCorrelationArray(),
+					isQuantIon,
+					((ChromatogramLibraryEntry) bestEntry).getMedianChromatogram(),
+					((ChromatogramLibraryEntry) bestEntry).getRtRange(),
+					parameters.getAAConstants()
+			);
+		}
+
+		return new LibraryEntry(
+				bestEntry.getSource(),
+				bestEntry.getAccessions(),
+				bestEntry.getSpectrumIndex(),
+				bestEntry.getPrecursorMZ(),
+				bestEntry.getPrecursorCharge(),
+				bestEntry.getPeptideModSeq(),
+				PeptideUtils.getCorrectedMasses(bestEntry.getPeptideModSeq(), parameters.getAAConstants()),
+				bestEntry.getCopies(),
+				rtInSec,
+				bestEntry.getScore(),
+				mzs,
+				bestEntry.getIntensityArray(),
+				bestEntry.getCorrelationArray(),
+				isQuantIon
+		);
+	}
+
+	private static <T extends LibraryEntry> T getBestEntry(List<? extends T> entries) {
+		return entries.stream()
+				.min(Comparator.comparing(LibraryEntry::getScore))
+				.orElse(null);
 	}
 
 	/**
