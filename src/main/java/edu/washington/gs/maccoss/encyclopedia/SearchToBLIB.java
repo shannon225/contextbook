@@ -1135,6 +1135,15 @@ public class SearchToBLIB {
 		try {
 			final ArrayList<LibraryEntry> entries = jobResults.getEntries(peptide.getPeptideModSeq(), peptide.getPrecursorCharge(), false);
 
+			if (entries.isEmpty()) {
+				throw new EncyclopediaException(String.format(
+						"Unable to find entry for %s in %s (for %s)",
+						peptide.getPeptideModSeq(),
+						peptide.getFile(),
+						peptide.getPsmID()
+				));
+			}
+
 			return toAlignmentEntry(getBestEntry(entries), warpedRTInSec, quantIons, parameters);
 		} catch (NullPointerException | IOException | SQLException | DataFormatException e) {
 			throw new EncyclopediaException("Unable to get entries from " + peptide.getFile(), e);
