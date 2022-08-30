@@ -258,9 +258,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		c.createStatement().execute("delete from metadata where Key=\'"+VERSION_STRING+"\'");
 		c.commit();
 		c.close();
-		
+
 		HashMap<String, String> map=new HashMap<String, String>();
-		
+
 		map.put(VERSION_STRING, MOST_RECENT_VERSION.toString());
 		addMetadata(map);
 	}
@@ -275,7 +275,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		Connection c=getConnection();
 		try {
 			PreparedStatement prep=c.prepareStatement("insert into metadata (Key, Value) VALUES (?,?)");
-			
+
 			try {
 				for (Entry<String, String> entry : data.entrySet()) {
 					prep.setString(1, entry.getKey());
@@ -973,7 +973,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					byte[] intensityByteArray=ByteConverter.toByteArray(entry.getIntensityArray());
 					prep.setInt(10, intensityByteArray.length);
 					prep.setBytes(11, CompressionUtils.compress(intensityByteArray));
-					
+
 					byte[] quantifiedIonsArray=ByteConverter.toByteArray(entry.getQuantifiedIonsArray());
 					prep.setBytes(12, CompressionUtils.compress(quantifiedIonsArray));
 
@@ -1058,8 +1058,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	public ArrayList<LibraryEntry> getEntries(String peptideModSeq, byte charge, boolean sqrt) throws IOException, SQLException, DataFormatException {
 		try (Connection c=getConnection()) {
 			try (PreparedStatement s=c.prepareStatement("select "+"e.PrecursorMZ, "+"e.PrecursorCharge, "+"e.PeptideModSeq, "+"e.Copies, "+"e.RTInSeconds, "+"e.Score, "+"e.MassEncodedLength, "
-					+"e.MassArray, "+"e.IntensityEncodedLength, "+"e.IntensityArray, "+"e.CorrelationEncodedLength, "+"e.CorrelationArray blob, "+"e.RTInSecondsStart, "+"e.RTInSecondsStop, "
-					+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"e.QuantifiedIonsArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile "+"from "
+					+"e.MassArray, "+"e.IntensityEncodedLength, "+"e.IntensityArray, "+"e.CorrelationEncodedLength, "+"e.CorrelationArray blob, "+"e.QuantifiedIonsArray, "+"e.RTInSecondsStart," +
+					""+"e.RTInSecondsStop, "+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile "+"from "
 					+"entries e "+"left join peptidetoprotein p "+"on "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"where e.PeptideModSeq = ? "+"and e.PrecursorCharge = ? "+"group by e.rowid;")) {
 				s.setString(1, peptideModSeq);
 				s.setByte(2, charge);
@@ -1212,7 +1212,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		connection.close();
 		return accessions;
 	}
-	
+
 	public ArrayList<LibraryEntry> getUnlinkedEntries(Range precursorMz, boolean sqrt, AminoAcidConstants aaConstants) throws IOException, SQLException, DataFormatException {
 		try (Connection c = getConnection()) {
 			try (PreparedStatement s = c.prepareStatement("select " 
@@ -1228,7 +1228,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					+ "e.IntensityEncodedLength, " 
 					+ "e.IntensityArray, "
 					+ "e.QuantifiedIonsArray, "
-					+ "e.SourceFile " 
+					+ "e.SourceFile "
 					+ "from " 
 					+ "entries e "
 					+ "where e.PrecursorMz between ? and ?;")) {
@@ -1757,7 +1757,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		} finally {
 			c.close();
 		}
-		
+
 		if (updated) {
 			try {
 				setFileVersion();

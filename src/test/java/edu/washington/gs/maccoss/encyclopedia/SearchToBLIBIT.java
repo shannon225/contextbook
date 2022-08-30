@@ -33,7 +33,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.*;
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
@@ -165,13 +164,7 @@ public class SearchToBLIBIT {
 				true
 		);
 
-		final LibraryFile file = new LibraryFile();
-		file.openFile(libFile.toFile());
-
-		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
-		assertTrue("Result file had no entries", 0 < numEntries);
-
-		assertHasPercolatorMetadata(file);
+		assertValidElib(libFile);
 	}
 
 	@Test
@@ -218,17 +211,7 @@ public class SearchToBLIBIT {
 				true
 		);
 
-		final LibraryFile file = new LibraryFile();
-		try {
-			file.openFile(libFile.toFile());
-
-			final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
-			assertTrue("Result file had no entries", 0 < numEntries);
-
-			assertHasPercolatorMetadata(file);
-		} finally {
-			file.close();
-		}
+		assertValidElib(libFile);
 	}
 
 	@Test
@@ -490,14 +473,16 @@ public class SearchToBLIBIT {
 				true
 		);
 
+		assertValidElib(libFile);
+
 		final LibraryFile file = new LibraryFile();
-		file.openFile(libFile.toFile());
+		try {
+			file.openFile(libFile.toFile());
 
-		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
-		assertTrue("Result file had no entries", 0 < numEntries);
-
-		assertHasPercolatorMetadata(file);
-		assertEquals("Found unexpected Percolator version in output ELIB", MOCK_PERCOLATOR_VERSION, file.getMetadata().get(LibraryFile.PERCOLATOR_VERSION));
+			assertEquals("Found unexpected Percolator version in output ELIB", MOCK_PERCOLATOR_VERSION, file.getMetadata().get(LibraryFile.PERCOLATOR_VERSION));
+		} finally {
+			file.close();
+		}
 	}
 
 	@Test
@@ -538,23 +523,42 @@ public class SearchToBLIBIT {
 				true
 		);
 
+		assertValidElib(libFile);
+
 		final LibraryFile file = new LibraryFile();
-		file.openFile(libFile.toFile());
+		try {
+			file.openFile(libFile.toFile());
 
-		final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
-		assertTrue("Result file had no entries", 0 < numEntries);
-
-		assertHasPercolatorMetadata(file);
-		assertEquals("Found unexpected Percolator version in output ELIB", MOCK_PERCOLATOR_VERSION, file.getMetadata().get(LibraryFile.PERCOLATOR_VERSION));
+			assertEquals("Found unexpected Percolator version in output ELIB", MOCK_PERCOLATOR_VERSION, file.getMetadata().get(LibraryFile.PERCOLATOR_VERSION));
+		} finally {
+			file.close();
+		}
 	}
 
-	private void assertValidBlib(Path blib) throws IOException {
+	private static void assertValidBlib(Path blib) throws IOException {
 		assertTrue("BLIB doesn't exist!", Files.exists(blib));
 
 		assertTrue("BLIB is too short!", 1024L < Files.size(blib));
 	}
 
-	private void assertHasPercolatorMetadata(LibraryFile file) throws IOException, SQLException {
+	private void assertValidElib(Path libFile) throws IOException, SQLException, DataFormatException {
+		final LibraryFile file = new LibraryFile();
+		try {
+			file.openFile(libFile.toFile());
+
+			final List<LibraryEntry> allEntries = file.getAllEntries(false, searchParameters.getAAConstants());
+
+			final int numEntries = allEntries.size();
+			assertTrue("Result file had no entries", 0 < numEntries);
+
+			assertHasPercolatorMetadata(file);
+			checkEntry(file, allEntries.iterator().next()); // sanity check for the entry
+		} finally {
+			file.close();
+		}
+	}
+
+	private static void assertHasPercolatorMetadata(LibraryFile file) throws IOException, SQLException {
 		if (null == file) {
 			throw new NullPointerException("Can't run assertions on null LibraryFile!");
 		}
@@ -565,6 +569,20 @@ public class SearchToBLIBIT {
 
 		assertNotNull(metadata.get(LibraryFile.PERCOLATOR_VERSION));
 		assertNotNull(metadata.get("pi0"));
+	}
+
+	/**
+	 * Check that accessing the given entry directly in the file functions.
+	 */
+	private static void checkEntry(LibraryFile file, LibraryEntry entry) throws DataFormatException, SQLException, IOException {
+		final List<LibraryEntry> candidates = file.getEntries(entry.getPeptideModSeq(), entry.getPrecursorCharge(), false);
+
+		assertFalse("Entry not found!", candidates.isEmpty());
+
+		final LibraryEntry match = candidates.iterator().next();
+		assertArrayEquals(entry.getMassArray(), match.getMassArray(), Double.MIN_VALUE);
+		assertArrayEquals(entry.getIntensityArray(), match.getIntensityArray(), Float.MIN_VALUE);
+		assertArrayEquals(entry.getQuantifiedIonsArray(), match.getQuantifiedIonsArray());
 	}
 
 	/**
