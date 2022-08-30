@@ -21,7 +21,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 public class ScribeSearchParameters extends SearchParameters {
-
+	@Override
 	public void savePreferences(File libraryFile, File fastaFile) throws IOException,BackingStoreException {
 		Preferences prefs=Preferences.userRoot().node("Scribe");
 		HashMap<String, String> map=toParameterMap();
@@ -45,7 +45,7 @@ public class ScribeSearchParameters extends SearchParameters {
 		return map;
 	}
 
-	
+	@Override
 	public HashMap<String, String> toParameterMap() {
 		HashMap<String, String> map=super.toParameterMap();
 

@@ -18,7 +18,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 public class XCordiaSearchParameters extends PecanSearchParameters {
-
+	@Override
 	public void savePreferences(File backgroundFastaFile, File targetFastaFile) throws IOException,BackingStoreException {
 		Preferences prefs=Preferences.userRoot().node("xcordia");
 		HashMap<String, String> map=toParameterMap();
