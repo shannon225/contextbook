@@ -8,17 +8,17 @@ import org.w3c.dom.NodeList;
 import edu.washington.gs.maccoss.encyclopedia.Pecanpie;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
 public class PecanJob extends SearchJob {
-	public PecanJob(JobProcessor processor, PecanJobData pecanData) {
-		super(processor, pecanData);
+	public PecanJob(PecanJobData pecanData) {
+		super(pecanData);
 	}
 	
 	@Override
-	public void runJob() throws Exception {
-		Pecanpie.runPie(getProgressIndicator(), getPecanData());
+	public void runJob(ProgressIndicator progress) throws Exception {
+		Pecanpie.runPie(progress, getPecanData());
 	}
 	
 	public PecanJobData getPecanData() {
@@ -32,7 +32,7 @@ public class PecanJob extends SearchJob {
 		getPecanData().writeToXML(doc, rootElement);
 	}
 
-	public static PecanJob readFromXML(Document doc, Element rootElement, JobProcessor processor) {
+	public static PecanJob readFromXML(Document doc, Element rootElement) {
 		if (!rootElement.getTagName().equals(PecanJob.class.getSimpleName())) {
 			throw new EncyclopediaException("Unexpected XML parsing element, found ["+rootElement.getTagName()+"] when expecting ["+PecanJob.class.getSimpleName()+"]");
 		}
@@ -43,7 +43,7 @@ public class PecanJob extends SearchJob {
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 Element element = (Element) node;
                 if (element.getTagName().equals(PecanJobData.class.getSimpleName())) {
-                	return new PecanJob(processor, PecanJobData.readFromXML(doc, element));
+                	return new PecanJob(PecanJobData.readFromXML(doc, element));
                 }
             }
 		}

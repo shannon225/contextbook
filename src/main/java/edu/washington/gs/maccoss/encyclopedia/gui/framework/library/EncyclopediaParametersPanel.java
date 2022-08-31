@@ -23,9 +23,7 @@ import javax.swing.SpinnerNumberModel;
 
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
@@ -43,11 +41,9 @@ import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInter
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
@@ -189,21 +185,20 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	 * @see edu.washington.gs.maccoss.encyclopedia.gui.pecan.ParametersPanelInterface#getJob(java.io.File, edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel)
 	 */
 	@Override
-	public SwingJob getJob(File diaFile, JobProcessorTableModel model) {
+	public void getJob(File diaFile, JobProcessorTableModel model) {
 		SearchParameters parameters=getParameters();
 		File libraryFile=libraryFileChooser.getFile();
 		File fastaFile=getBackgroundFastaFile();
-		if (libraryFile==null) return null;
-		SearchJob job=getJob(diaFile, fastaFile, libraryFile, model, parameters);
+		if (libraryFile==null) return;
+		SearchJob job=getJob(diaFile, fastaFile, libraryFile, parameters);
 
 		if (job!=null) {
 			model.addJob(job);
 		}
-		return job;
 	}
 
 	private static HashMap<File, LibraryInterface> libraries=new HashMap<File, LibraryInterface>();
-	static SearchJob getJob(File diaFile, File fastaFile, File libraryFile, JobProcessor processor, SearchParameters parameters) {
+	static SearchJob getJob(File diaFile, File fastaFile, File libraryFile, SearchParameters parameters) {
 		
 		LibraryInterface library=libraries.get(libraryFile);
 		if (library==null) {
@@ -213,7 +208,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 
 		LibraryScoringFactory factory=EncyclopediaScoringFactory.getDefaultScoringFactory(parameters);
 		EncyclopediaJobData job=new EncyclopediaJobData(diaFile, fastaFile, library, factory);
-		return new EncyclopediaJob(processor, job);
+		return new EncyclopediaJob(job);
 	}
 
 	public SearchParameters getParameters() {

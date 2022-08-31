@@ -46,11 +46,9 @@ import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
@@ -198,23 +196,22 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		return Optional.empty();
 	}
 	
-	public SwingJob getJob(File diaFile, JobProcessorTableModel model) {
+	public void getJob(File diaFile, JobProcessorTableModel model) {
 		PecanSearchParameters parameters=getParameters();
 		File fastaFile=backgroundFasta.getFile();
-		if (fastaFile==null) return null;
+		if (fastaFile==null) return;
 		File targetFile=targetFasta.getFile();
-		if (targetFile==null) return null;
+		if (targetFile==null) return;
 		File libraryFile=libraryFileChooser.getFile();
-		SearchJob job=getJob(diaFile, fastaFile, targetFile, Optional.ofNullable(libraryFile), model, parameters);
+		SearchJob job=getJob(diaFile, fastaFile, targetFile, Optional.ofNullable(libraryFile), parameters);
 
 		if (job!=null) {
 			model.addJob(job);
 		}
-		return job;
 	}
 
 	private static HashMap<File, LibraryInterface> libraries=new HashMap<File, LibraryInterface>();
-	static SearchJob getJob(File diaFile, File fastaFile, File targetFile, Optional<File> libraryFile, JobProcessor processor, PecanSearchParameters parameters) {
+	static SearchJob getJob(File diaFile, File fastaFile, File targetFile, Optional<File> libraryFile, PecanSearchParameters parameters) {
 		ArrayList<FastaPeptideEntry> targets=null;
 		if (targetFile!=null&&!targetFile.equals(fastaFile)) {
 			Logger.logLine("Reading targets from ["+targetFile.getName()+"]");
@@ -256,7 +253,7 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		} else {
 			jobData=new XCorDIAJobData(Optional.ofNullable(targets), maybeLibrary, diaFile, fastaFile, factory);
 		}
-		return new XCorDIAJob(processor, jobData);
+		return new XCorDIAJob(jobData);
 	}
 
 	public XCordiaSearchParameters getParameters() {

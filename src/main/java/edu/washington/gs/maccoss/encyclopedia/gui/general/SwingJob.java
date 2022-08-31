@@ -42,21 +42,15 @@ public abstract class SwingJob extends SwingWorker<Nothing, ProgressMessage> {
 		if (progress>0) { // not in error
 			progress=1.0f;
 		}
-		processor.fireJobUpdated(this);
 	}
 
 	@Override
 	protected void process(List<ProgressMessage> chunks) {
-		boolean updated=false;
 		for (ProgressMessage p : chunks) {
 			if (progress<=p.getProgress()) {
 				progress=p.getProgress();
 				message=p.getMessage();
-				updated=true;
 			}
-		}
-		if (updated) {
-			processor.fireJobUpdated(this);
 		}
 	}
 

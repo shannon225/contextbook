@@ -2,12 +2,14 @@ package edu.washington.gs.maccoss.encyclopedia.gui.general;
 
 import java.util.ArrayList;
 
+import edu.washington.gs.maccoss.encyclopedia.jobs.WorkerJob;
+
 public interface JobProcessor {
 
-	ArrayList<SwingJob> getQueue();
+	ArrayList<WorkerJob> getQueue();
 
-	void addJob(SwingJob job);
+	void addJob(WorkerJob job);
 
-	void fireJobUpdated(SwingJob job);
+	void fireJobUpdated(WorkerJob job);
 
 }

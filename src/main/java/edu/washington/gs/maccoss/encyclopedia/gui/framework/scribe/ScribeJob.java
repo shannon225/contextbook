@@ -8,17 +8,17 @@ import org.w3c.dom.NodeList;
 import edu.washington.gs.maccoss.encyclopedia.Scribe;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeJobData;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
 public class ScribeJob extends SearchJob {
-	public ScribeJob(JobProcessor processor, ScribeJobData pecanData) {
-		super(processor, pecanData);
+	public ScribeJob(ScribeJobData pecanData) {
+		super(pecanData);
 	}
 	
 	@Override
-	public void runJob() throws Exception {
-		Scribe.runSearch(getProgressIndicator(), getScribeData());
+	public void runJob(ProgressIndicator progress) throws Exception {
+		Scribe.runSearch(progress, getScribeData());
 	}
 	
 	public ScribeJobData getScribeData() {
@@ -32,7 +32,7 @@ public class ScribeJob extends SearchJob {
 		getScribeData().writeToXML(doc, rootElement);
 	}
 
-	public static ScribeJob readFromXML(Document doc, Element rootElement, JobProcessor processor) {
+	public static ScribeJob readFromXML(Document doc, Element rootElement) {
 		if (!rootElement.getTagName().equals(ScribeJob.class.getSimpleName())) {
 			throw new EncyclopediaException("Unexpected XML parsing element, found ["+rootElement.getTagName()+"] when expecting ["+ScribeJob.class.getSimpleName()+"]");
 		}
@@ -43,7 +43,7 @@ public class ScribeJob extends SearchJob {
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 Element element = (Element) node;
                 if (element.getTagName().equals(ScribeJobData.class.getSimpleName())) {
-                	return new ScribeJob(processor, ScribeJobData.readFromXML(doc, element));
+                	return new ScribeJob(ScribeJobData.readFromXML(doc, element));
                 }
             }
 		}

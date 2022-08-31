@@ -8,17 +8,17 @@ import org.w3c.dom.NodeList;
 import edu.washington.gs.maccoss.encyclopedia.XCorDIA;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
 public class XCorDIAJob extends SearchJob {
-	public XCorDIAJob(JobProcessor processor, XCorDIAJobData pecanData) {
-		super(processor, pecanData);
+	public XCorDIAJob(XCorDIAJobData pecanData) {
+		super(pecanData);
 	}
 	
 	@Override
-	public void runJob() throws Exception {
-		XCorDIA.runPie(getProgressIndicator(), getXCorDIAData());
+	public void runJob(ProgressIndicator progress) throws Exception {
+		XCorDIA.runPie(progress, getXCorDIAData());
 	}
 	
 	public XCorDIAJobData getXCorDIAData() {
@@ -32,7 +32,7 @@ public class XCorDIAJob extends SearchJob {
 		getXCorDIAData().writeToXML(doc, rootElement);
 	}
 
-	public static XCorDIAJob readFromXML(Document doc, Element rootElement, JobProcessor processor) {
+	public static XCorDIAJob readFromXML(Document doc, Element rootElement) {
 		if (!rootElement.getTagName().equals(XCorDIAJob.class.getSimpleName())) {
 			throw new EncyclopediaException("Unexpected XML parsing element, found ["+rootElement.getTagName()+"] when expecting ["+XCorDIAJob.class.getSimpleName()+"]");
 		}
@@ -43,7 +43,7 @@ public class XCorDIAJob extends SearchJob {
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 Element element = (Element) node;
                 if (element.getTagName().equals(XCorDIAJobData.class.getSimpleName())) {
-                	return new XCorDIAJob(processor, XCorDIAJobData.readFromXML(doc, element));
+                	return new XCorDIAJob(XCorDIAJobData.readFromXML(doc, element));
                 }
             }
 		}

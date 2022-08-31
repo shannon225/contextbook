@@ -1,16 +1,14 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.framework;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.WorkerJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLObject;
 
-public abstract class SearchJob extends SwingJob implements XMLObject {
+public abstract class SearchJob implements WorkerJob, XMLObject {
 
 	protected final SearchJobData data;
 
-	public SearchJob(JobProcessor processor, SearchJobData data) {
-		super(processor);
+	public SearchJob(SearchJobData data) {
 		this.data=data;
 	}
 

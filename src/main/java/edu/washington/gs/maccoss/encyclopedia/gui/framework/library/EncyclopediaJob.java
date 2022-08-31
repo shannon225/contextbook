@@ -7,20 +7,18 @@ import org.w3c.dom.NodeList;
 
 import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
 public class EncyclopediaJob extends SearchJob {
-	public EncyclopediaJob(JobProcessor processor, EncyclopediaJobData libraryData) {
-		super(processor, libraryData);
+	public EncyclopediaJob(EncyclopediaJobData libraryData) {
+		super(libraryData);
 	}
 	
 	@Override
-	public void runJob() throws Exception {
-		Encyclopedia.runSearch(getProgressIndicator(), getLibraryData());
+	public void runJob(ProgressIndicator progress) throws Exception {
+		Encyclopedia.runSearch(progress, getLibraryData());
 	}
 	
 	public EncyclopediaJobData getLibraryData() {
@@ -34,7 +32,7 @@ public class EncyclopediaJob extends SearchJob {
 		getLibraryData().writeToXML(doc, rootElement);
 	}
 
-	public static EncyclopediaJob readFromXML(Document doc, Element rootElement, JobProcessor processor) {
+	public static EncyclopediaJob readFromXML(Document doc, Element rootElement) {
 		if (!rootElement.getTagName().equals(EncyclopediaJob.class.getSimpleName())) {
 			throw new EncyclopediaException("Unexpected XML parsing element, found ["+rootElement.getTagName()+"] when expecting ["+EncyclopediaJob.class.getSimpleName()+"]");
 		}
@@ -45,7 +43,7 @@ public class EncyclopediaJob extends SearchJob {
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 Element element = (Element) node;
                 if (element.getTagName().equals(EncyclopediaJobData.class.getSimpleName())) {
-                	return new EncyclopediaJob(processor, EncyclopediaJobData.readFromXML(doc, element));
+                	return new EncyclopediaJob(EncyclopediaJobData.readFromXML(doc, element));
                 }
             }
 		}

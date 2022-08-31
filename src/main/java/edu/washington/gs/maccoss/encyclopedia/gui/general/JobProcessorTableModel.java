@@ -11,13 +11,14 @@ import javax.swing.table.AbstractTableModel;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import edu.washington.gs.maccoss.encyclopedia.jobs.WorkerJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class JobProcessorTableModel extends AbstractTableModel implements JobProcessor {
 	private static final long serialVersionUID=1L;
 	
 	private final String[] columnNames= {"File", "Progress"};
-	private final ArrayList<SwingJob> queue=new ArrayList<SwingJob>();
+	private final ArrayList<SwingWorkerJob> queue=new ArrayList<SwingWorkerJob>();
 	private final ExecutorService executor;
 	
 	public JobProcessorTableModel() {
@@ -61,18 +62,23 @@ public class JobProcessorTableModel extends AbstractTableModel implements JobPro
 	 * @see edu.washington.gs.maccoss.encyclopedia.gui.pecan.JobProcessor#getQueue()
 	 */
 	@Override
-	public ArrayList<SwingJob> getQueue() {
-		return queue;
+	public ArrayList<WorkerJob> getQueue() {
+		ArrayList<WorkerJob> jobs=new ArrayList<WorkerJob>();
+		for (SwingWorkerJob job : queue) {
+			jobs.add(job.getJob());
+		}
+		return jobs;
 	}
 	
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.gui.pecan.JobProcessor#addJob(edu.washington.gs.maccoss.encyclopedia.gui.pecan.PecanJob)
 	 */
 	@Override
-	public void addJob(SwingJob job) {
+	public void addJob(WorkerJob job) {
 		Logger.logLine("Adding new job to queue: "+job.getJobTitle());
-		queue.add(job);
-		executor.submit(job);
+		SwingWorkerJob swingJob=new SwingWorkerJob(this, job);
+		queue.add(swingJob);
+		executor.submit(swingJob);
 		fireTableDataChanged();
 	}
 	
@@ -85,9 +91,9 @@ public class JobProcessorTableModel extends AbstractTableModel implements JobPro
 	 * @see edu.washington.gs.maccoss.encyclopedia.gui.pecan.JobProcessor#fireJobUpdated(edu.washington.gs.maccoss.encyclopedia.gui.pecan.PecanJob)
 	 */
 	@Override
-	public void fireJobUpdated(SwingJob job) {
+	public void fireJobUpdated(WorkerJob job) {
 		for (int i=0; i<queue.size(); i++) {
-			if (job==queue.get(i)) {
+			if (job==queue.get(i).getJob()) {
 				fireTableRowsUpdated(i, i);
 			}
 		}

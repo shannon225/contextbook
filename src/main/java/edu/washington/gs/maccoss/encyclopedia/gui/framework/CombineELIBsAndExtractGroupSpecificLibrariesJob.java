@@ -20,21 +20,21 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.spectrumprocessors.WindowDownsampler;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.WorkerJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
-public class CombineELIBsAndExtractGroupSpecificLibrariesJob extends SwingJob {
+public class CombineELIBsAndExtractGroupSpecificLibrariesJob implements WorkerJob {
 	private final File saveDirectory;
 	private final Optional<File> singleInjectionExample;
 	private final SearchParameters parameters;
+	JobProcessor processor;
 
 	public CombineELIBsAndExtractGroupSpecificLibrariesJob(File saveDirectory, Optional<File> singleInjectionExample, SearchParameters parameters, JobProcessor processor) {
-		super(processor);
+		this.processor=processor;
 		this.saveDirectory=saveDirectory;
 		this.singleInjectionExample=singleInjectionExample;
 		this.parameters=parameters;
@@ -46,8 +46,7 @@ public class CombineELIBsAndExtractGroupSpecificLibrariesJob extends SwingJob {
 	}
 
 	@Override
-	public void runJob() throws Exception {
-		ProgressIndicator progress = getProgressIndicator();
+	public void runJob(ProgressIndicator progress) throws Exception {
 		// make sure saveDirectory is indeed a directory
 		if (saveDirectory.exists()) {
 			if(!saveDirectory.isDirectory()) {
@@ -75,8 +74,8 @@ public class CombineELIBsAndExtractGroupSpecificLibrariesJob extends SwingJob {
 		// grab jobs from the current queue and downsample DIA data
 		
 		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
-		ArrayList<SwingJob> queue = processor.getQueue();
-		for (SwingJob job : queue) {
+		ArrayList<WorkerJob> queue = processor.getQueue();
+		for (WorkerJob job : queue) {
 			if (job instanceof SearchJob) {
 				SearchJobData searchData = ((SearchJob)job).getSearchData();
 				

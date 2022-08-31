@@ -83,14 +83,16 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
+import edu.washington.gs.maccoss.encyclopedia.jobs.WorkerJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.XMLDriverFactory;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
 public class SearchPanelUtilities {
 	private static final ImageIcon convertDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/convertdb.png"));
@@ -337,7 +339,7 @@ public class SearchPanelUtilities {
 		JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 
 		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
-		for (SwingJob job : processor.getQueue()) {
+		for (WorkerJob job : processor.getQueue()) {
 			if (job instanceof SearchJob) {
 				jobData.add(((SearchJob)job).getSearchData());
 			}
@@ -347,47 +349,18 @@ public class SearchPanelUtilities {
 			
 		} else {
 			FileDialog dialog=new FileDialog(frame, "Select an XML file", FileDialog.SAVE);
-			dialog.setFilenameFilter(new SimpleFilenameFilter(".encxml"));
+			SimpleFilenameFilter filter = new SimpleFilenameFilter(XMLDriverFactory.DRIVER_XML_EXTENSION);
+			dialog.setFilenameFilter(filter);
 			dialog.setVisible(true);
 			File[] files=dialog.getFiles();
 			if (files!=null&&files.length>0) {
-				ArrayList<SwingJob> queue=processor.getQueue();
-
-				PrintWriter writer=null;
-				try {
-					writer=new PrintWriter(files[0], "UTF-8");
-	
-					DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-					DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-	
-					// root elements
-					Document doc = docBuilder.newDocument();
-					Element rootElement = doc.createElement("EncyclopeDIA");
-					doc.appendChild(rootElement);
-
-					for (SwingJob job : queue) {
-						if (job instanceof XMLObject) {
-							((XMLObject)job).writeToXML(doc, rootElement);
-						}
-					}
-
-					TransformerFactory transformerFactory = TransformerFactory.newInstance();
-					Transformer transformer = transformerFactory.newTransformer();
-					transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-
-					DOMSource source = new DOMSource(doc);
-
-					transformer.transform(source, new StreamResult(writer));
-					transformer.transform(source, new StreamResult(System.out));
-					
-					
-				} catch (Exception e) {
-					throw new EncyclopediaException("Error writing parameters!", e);
-				} finally {
-					if (writer!=null) {
-						writer.close();
-					}
+				ArrayList<WorkerJob> queue=processor.getQueue();
+				File file=files[0];
+				if (!filter.accept(file.getName())) {
+					file=new File(file.getParent(), file.getName()+XMLDriverFactory.DRIVER_XML_EXTENSION);
 				}
+
+				XMLDriverFactory.writeXML(queue, file);
 			}
 		}
 	}
@@ -396,7 +369,7 @@ public class SearchPanelUtilities {
 		JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 
 		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
-		for (SwingJob job : processor.getQueue()) {
+		for (WorkerJob job : processor.getQueue()) {
 			if (job instanceof SearchJob) {
 				jobData.add(((SearchJob)job).getSearchData());
 			}
@@ -543,15 +516,15 @@ public class SearchPanelUtilities {
 					dialog.setVisible(false);
 					dialog.dispose();
 
-					SwingJob job=new SwingJob(processor) {
+					WorkerJob job=new WorkerJob() {
 						@Override
 						public String getJobTitle() {
 							return "Merge raw files into "+saveFile.getName();
 						}
 
 						@Override
-						public void runJob() throws Exception {
-							LibraryUtilities.mergeLibraries(getProgressIndicator(), files, saveFile, rtAlign, removeDuplicates, higherScoresAreBetter);
+						public void runJob(ProgressIndicator progress) throws Exception {
+							LibraryUtilities.mergeLibraries(progress, files, saveFile, rtAlign, removeDuplicates, higherScoresAreBetter);
 						}
 					};
 					processor.addJob(job);
@@ -641,15 +614,15 @@ public class SearchPanelUtilities {
 					dialog.setVisible(false);
 					dialog.dispose();
 					
-					SwingJob job=new SwingJob(processor) {
+					WorkerJob job=new WorkerJob() {
 						@Override
 						public String getJobTitle() {
 							return "Merge raw files into "+saveFile.getName();
 						}
 
 						@Override
-						public void runJob() throws Exception {
-							StripeFileMerger.merge(getProgressIndicator(), files.toArray(new File[files.size()]), saveFile, parameters);
+						public void runJob(ProgressIndicator progress) throws Exception {
+							StripeFileMerger.merge(progress, files.toArray(new File[files.size()]), saveFile, parameters);
 						}
 					};
 					processor.addJob(job);
