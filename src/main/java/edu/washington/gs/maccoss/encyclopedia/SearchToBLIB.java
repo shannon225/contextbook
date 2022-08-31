@@ -997,8 +997,7 @@ public class SearchToBLIB {
 				writePercolatorToElib(elib, percolatorExecutionData, parameters);
 
 				// Now compute and write the set of entries that to capture the alignment/transition refinement
-				//TODO: remove unsafe generic cast!! This will cause weird casting problems downstream when in error!
-				elib.addEntries(getAlignmentEntries(passingPeptides.x, inferrer, (List<? extends QuantitativeSearchJobData>) jobs, parameters));
+				elib.addEntries(getAlignmentEntries(passingPeptides.x, inferrer, jobs, parameters));
 
 				// Write each job's alignment to the ELIB
 				float increment = 1.0f / jobs.size();
