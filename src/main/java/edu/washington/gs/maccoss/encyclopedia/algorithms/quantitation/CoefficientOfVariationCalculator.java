@@ -10,7 +10,9 @@ import java.util.TreeMap;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.impl.unmodifiable.TUnmodifiableObjectFloatMap;
 import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.TObjectFloatMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
@@ -50,7 +52,7 @@ public class CoefficientOfVariationCalculator {
 	}
 	
 //	private HashSet<String> alreadySeen=new HashSet<>();
-	public float getReplicateNormalizationFactor(String sourceFile, TObjectFloatHashMap<String> ticBySourceFileMap) {
+	public float getReplicateNormalizationFactor(String sourceFile, TObjectFloatMap<String> ticBySourceFileMap) {
 		int samp=sampleKey.get(sourceFile).getSampleIndex();
 		
 		float target=0.0f;
@@ -120,5 +122,11 @@ public class CoefficientOfVariationCalculator {
 		}
 		
 		return new Pair<Float, Boolean>(General.stdev(lmNormalized.toArray()), atLeastSampleFullyMeasured);
+	}
+
+	public IntensityNormalizer getNormalizer(TObjectFloatMap<String> ticBySourceFileMap) {
+		final TObjectFloatMap<String> ticMap = new TUnmodifiableObjectFloatMap<>(new TObjectFloatHashMap<>(ticBySourceFileMap));
+
+		return (totalIntensity, sourceFile) -> totalIntensity*getReplicateNormalizationFactor(sourceFile, ticMap);
 	}
 }

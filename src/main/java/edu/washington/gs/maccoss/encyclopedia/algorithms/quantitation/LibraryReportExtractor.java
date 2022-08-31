@@ -87,23 +87,27 @@ public class LibraryReportExtractor {
 				
 				proteinWriter=new PrintWriter(proteinReportFile, "UTF-8");
 				proteinWriter.print("Protein\tNumPeptides\tPeptideSequences");
-				
-				float averageTIC=0.0f;
+
 				TObjectFloatHashMap<String> ticBySourceFileMap=new TObjectFloatHashMap<String>();
 				for (String sourceFile : sourceFiles) {
 					if (normalizeByTIC) {
 						float tic=library.getTIC(sourceFile);
 						ticBySourceFileMap.put(sourceFile, tic);
-						averageTIC+=tic;
 					}
-					
+
 					peptideWriter.print("\t"+sourceFile);
 					proteinWriter.print("\t"+sourceFile);
 				}
-				if (sourceFiles.size()>0) {
-					averageTIC=averageTIC/sourceFiles.size();
+
+				final IntensityNormalizer normalizer;
+				if (!normalizeByTIC) {
+					normalizer = IntensityNormalizer::identity;
+				} else if (cvCalculator.isPresent()) {
+					normalizer = cvCalculator.get().getNormalizer(ticBySourceFileMap);
+				} else {
+					normalizer = IntensityNormalizer.tic(ticBySourceFileMap);
 				}
-				
+
 				peptideWriter.println();
 				proteinWriter.println();
 				Logger.logLine("Found "+sourceFiles.size()+" data files");
@@ -149,19 +153,8 @@ public class LibraryReportExtractor {
 						throw new EncyclopediaException("Unexpected sample: "+sourceFile);
 					}
 
-					// FIXME NEED TO NORMALIZE BY TIC
-					float normalizedIntensity;
-					if (cvCalculator.isPresent()) {
-						normalizedIntensity=totalIntensity*cvCalculator.get().getReplicateNormalizationFactor(sourceFile, ticBySourceFileMap);
-					} else {
-						float tic=ticBySourceFileMap.get(sourceFile);
-						if (tic>0.0f) {
-							normalizedIntensity=totalIntensity/tic*averageTIC;
-						} else {
-							normalizedIntensity=totalIntensity;
-						}
-					}
-					
+					final float normalizedIntensity = normalizer.normalize(totalIntensity, sourceFile);
+
 					Pair<String, float[]> pair=intensitiesByPeptideModSeq.get(peptideModSeq);
 					int[] numFragmentsArray=numFragmentsByPeptideModSeq.get(peptideModSeq);
 					float[] intensitiesArray;
