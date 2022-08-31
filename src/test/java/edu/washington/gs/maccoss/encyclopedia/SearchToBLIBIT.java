@@ -19,6 +19,8 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import org.apache.commons.io.FileUtils;
@@ -33,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.*;
 import java.util.*;
+import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 import java.nio.file.Paths;
 import java.sql.SQLException;
@@ -599,12 +602,48 @@ public class SearchToBLIBIT {
 	/**
 	 * Assert that tabular peptide/protein quant files exist for the given ELIB path and appear "normal".
 	 */
-	private void assertHasQuantReports(Path libFile) {
+	private static void assertHasQuantReports(Path libFile) {
 		final Path peps = Paths.get(libFile.toAbsolutePath().toString() + ".peptides.txt");
 		final Path prots = Paths.get(libFile.toAbsolutePath().toString() + ".proteins.txt");
 
 		assertTrue(Files.exists(peps));
 		assertTrue(Files.exists(prots));
+
+		// Check that column counts match expected
+		checkTabularFile(peps, cols -> assertTrue(cols > 3), rows -> assertTrue(rows > 1));
+	}
+
+	private static void checkTabularFile(Path f, IntConsumer colCheck, IntConsumer rowCheck) {
+		final CountingTableMuscle muscle = new CountingTableMuscle();
+		TableParser.parseTSV(f.toFile(), muscle);
+
+		colCheck.accept(muscle.columns);
+		rowCheck.accept(muscle.rows);
+	}
+
+	private static class CountingTableMuscle implements TableParserMuscle {
+		int columns = -1;
+		int rows = -1;
+
+		@Override
+		public void processRow(Map<String, String> row) {
+			if (columns < 0) {
+				columns = row.size();
+			} else {
+				assertEquals("Wrong number of columns in row " + rows, columns, row.size());
+			}
+
+			rows += 1;
+		}
+
+		@Override
+		public void cleanup() {
+			assertFalse("Never encountered any rows!", columns == -1);
+			assertFalse("Never encountered any rows!", rows == -1);
+
+			assertTrue("Didn't find any columns!", columns > 0);
+			assertTrue("Didn't find any rows!", rows > 0);
+		}
 	}
 
 	/**
