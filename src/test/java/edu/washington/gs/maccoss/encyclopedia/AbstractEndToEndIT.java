@@ -10,6 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 import org.apache.commons.io.FileUtils;
 import org.junit.*;
 import org.slf4j.LoggerFactory;
@@ -416,6 +417,8 @@ public abstract class AbstractEndToEndIT {
 	/**
 	 * Check that the results for the given jobs match the given reference. More targeted version of {@link #assertValidBasedOnReference(LibraryFile, String)},
 	 * but also much stricter -- expects the same set of quantifications, including identical RT and intensity.
+	 *
+	 * Also check associated quant reports exist and match.
 	 */
 	private void assertJobResultsMatch(Collection<? extends QuantitativeSearchJobData> jobs, LibraryFile quantFile, Path refElib) throws Exception {
 		try (Connection c = quantFile.getConnection()) {
@@ -705,6 +708,15 @@ public abstract class AbstractEndToEndIT {
 				}
 			}
 		}
+
+		SearchToBLIBIT.assertHasQuantReports(libraryFile.toPath());
+		SearchToBLIBIT.assertHasQuantReports(refElib);
+
+		//TODO: diff files
+		final ExternalExecutor diffExec = new ExternalExecutor(new String[]{"diff", "-qs", libraryFile.getAbsolutePath(), refElib.toAbsolutePath().toString()});
+		diffExec.start();
+		diffExec.waitFor();
+		assertEquals(0, diffExec.getResultCode());
 	}
 
 	/**

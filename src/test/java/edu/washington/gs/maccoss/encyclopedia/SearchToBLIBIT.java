@@ -602,7 +602,7 @@ public class SearchToBLIBIT {
 	/**
 	 * Assert that tabular peptide/protein quant files exist for the given ELIB path and appear "normal".
 	 */
-	private static void assertHasQuantReports(Path libFile) {
+	public static void assertHasQuantReports(Path libFile) {
 		final Path peps = Paths.get(libFile.toAbsolutePath().toString() + ".peptides.txt");
 		final Path prots = Paths.get(libFile.toAbsolutePath().toString() + ".proteins.txt");
 
