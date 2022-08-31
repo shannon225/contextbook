@@ -558,6 +558,24 @@ public class SearchPanel extends JPanel {
 		dataMenu.setMnemonic(KeyEvent.VK_D);
 		bar.add(dataMenu);
 
+		JMenuItem saveDriverItem=new JMenuItem("Save XML driver file", convertDBIcon);
+		saveDriverItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.saveDriverFile(dataMenu, getVisibleTab().getParameters(), getJobProcessor());
+			}
+		});
+		dataMenu.add(saveDriverItem);
+		
+		JMenuItem loadDriverItem=new JMenuItem("Load XML driver file", convertDBIcon);
+		loadDriverItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.loadDriverFile(dataMenu, getVisibleTab().getParameters(), getJobProcessor());
+			}
+		});
+		dataMenu.add(loadDriverItem);
+		
 		JMenuItem mzmlPreprocessorItem=new JMenuItem("Preprocess mzMLs", convertDBIcon);
 		mzmlPreprocessorItem.addActionListener(new ActionListener() {
 			@Override
@@ -586,30 +604,6 @@ public class SearchPanel extends JPanel {
 		if (enableAdvancedOptions) {
 			elibSeperatorItem.setText("HIDDEN: "+elibSeperatorItem.getText());
 			dataMenu.add(elibSeperatorItem);
-		}
-
-		JMenuItem saveDriverItem=new JMenuItem("Save XML driver file", convertDBIcon);
-		saveDriverItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.saveDriverFile(dataMenu, getVisibleTab().getParameters(), getJobProcessor());
-			}
-		});
-		if (enableAdvancedOptions) {
-			saveDriverItem.setText("HIDDEN: "+saveDriverItem.getText());
-			dataMenu.add(saveDriverItem);
-		}
-
-		JMenuItem loadDriverItem=new JMenuItem("Load XML driver file", convertDBIcon);
-		loadDriverItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.loadDriverFile(dataMenu, getVisibleTab().getParameters(), getJobProcessor());
-			}
-		});
-		if (enableAdvancedOptions) {
-			loadDriverItem.setText("HIDDEN: "+loadDriverItem.getText());
-			dataMenu.add(loadDriverItem);
 		}
 		
 		JMenuItem subsetDIA=new JMenuItem("Create Subset mzML", convertDBIcon);

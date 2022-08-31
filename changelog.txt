@@ -1,12 +1,14 @@
 EncyclopeDIA changelog for user-facing changes:
 
 encyclopedia-2.0.0-SNAPSHOT
+ - Feature: added Scribe searching for DDA
  - Feature: added spectrum-specific browsing and annotation to peptide browser, added precursor browsing and the ability to export or append spectra to libraries
  - Feature: support for DIA-NN libraries through OpenSwath/Spectronaut parser
  - Feature: added "-mergeLibraries" command line option to merge/RT align across multiple libraries
  - Feature: added drag and drop for combining libraries and GPF-DIA runs. These features now operate within the queue, making it possible to queue up multiple merges
  - Feature: major speedup when preparing quant reports by only giving percolator access to the best scoring targets and decoys
  - Feature: improved/sped up ROC plotting in feature browser
+ - Feature: added batch driving multiple searches from the GUI or the CLI using an XML driver file
  - Bugfix: removed Jzy3D from build, which introduced an old version of Log4J
  - Bugfix: changed default behavior of “-quantifyAcrossSamples” to "true" to match GUI. This setting is only used if "-a true". If "true" and "-a true", then for below threshold peptides EncyclopeDIA will search within a +/- 1.5*expectedPeakWidth window around the RT alignment for the best peptide location. If "false" and "-a true", then for below threshold peptides EncyclopeDIA will always integrate entirely based on the exact RT alignment.
 
