@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -23,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.Statement;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.Assert.assertTrue;
@@ -50,14 +52,21 @@ public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 		// will be that new versions of reference artifacts built with this code will use whatever
 		// parameters the configured reference used.
 
+		final HashMap<String, String> metadata;
+
 		final LibraryFile reference = new LibraryFile();
 		try {
 			final Path refElib = EncyclopediaTestUtils.getResourceAsTempFile(EncyclopediaEndToEndIT.class, REFERENCE_SEARCH1_RESOURCE, tempDir, "reference_", ".elib");
 			reference.openFile(refElib.toFile());
-			parameters = SearchParameterParser.parseParameters(reference.getMetadata());
+			metadata = Maps.newHashMap(reference.getMetadata());
 		} finally {
 			reference.close();
 		}
+
+		// This must be true for most tests, regardless of what the reference did.
+		metadata.put("-quantifyAcrossSamples", "true");
+
+		parameters = SearchParameterParser.parseParameters(metadata);
 
 		libraryScoringFactory = new EncyclopediaOneScoringFactory(parameters);
 		setUpClass();
