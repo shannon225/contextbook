@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.gui.general;
 
 import java.util.List;
 
+import edu.washington.gs.maccoss.encyclopedia.jobs.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.jobs.WorkerJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.ProgressMessage;
 

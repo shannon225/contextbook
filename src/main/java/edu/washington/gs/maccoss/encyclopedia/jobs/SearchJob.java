@@ -1,7 +1,6 @@
-package edu.washington.gs.maccoss.encyclopedia.gui.framework;
+package edu.washington.gs.maccoss.encyclopedia.jobs;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
-import edu.washington.gs.maccoss.encyclopedia.jobs.WorkerJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLObject;
 
 public abstract class SearchJob implements WorkerJob, XMLObject {

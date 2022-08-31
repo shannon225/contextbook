@@ -11,6 +11,7 @@ import javax.swing.table.AbstractTableModel;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import edu.washington.gs.maccoss.encyclopedia.jobs.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.jobs.WorkerJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 

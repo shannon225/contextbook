@@ -1,12 +1,10 @@
-package edu.washington.gs.maccoss.encyclopedia.gui.framework;
+package edu.washington.gs.maccoss.encyclopedia.jobs;
 
 import java.io.File;
 import java.util.ArrayList;
 
 import edu.washington.gs.maccoss.encyclopedia.SearchToBLIB;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
-import edu.washington.gs.maccoss.encyclopedia.jobs.WorkerJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 

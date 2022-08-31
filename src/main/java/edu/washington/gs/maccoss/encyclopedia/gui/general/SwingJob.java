@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.swing.SwingWorker;
 
+import edu.washington.gs.maccoss.encyclopedia.jobs.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.ProgressMessage;

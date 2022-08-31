@@ -1,8 +1,6 @@
-package edu.washington.gs.maccoss.encyclopedia.gui.general;
+package edu.washington.gs.maccoss.encyclopedia.jobs;
 
 import java.util.ArrayList;
-
-import edu.washington.gs.maccoss.encyclopedia.jobs.WorkerJob;
 
 public interface JobProcessor {
 

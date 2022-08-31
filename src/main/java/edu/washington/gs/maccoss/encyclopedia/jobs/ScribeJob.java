@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.gui.framework.scribe;
+package edu.washington.gs.maccoss.encyclopedia.jobs;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -7,7 +7,6 @@ import org.w3c.dom.NodeList;
 
 import edu.washington.gs.maccoss.encyclopedia.Scribe;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeJobData;
-import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 

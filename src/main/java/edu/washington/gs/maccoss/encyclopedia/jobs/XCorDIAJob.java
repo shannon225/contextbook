@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.gui.framework.xcordia;
+package edu.washington.gs.maccoss.encyclopedia.jobs;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -7,7 +7,6 @@ import org.w3c.dom.NodeList;
 
 import edu.washington.gs.maccoss.encyclopedia.XCorDIA;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
-import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 

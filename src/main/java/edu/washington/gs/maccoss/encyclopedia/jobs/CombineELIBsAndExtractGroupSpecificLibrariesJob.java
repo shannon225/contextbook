@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.gui.framework;
+package edu.washington.gs.maccoss.encyclopedia.jobs;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -19,8 +19,6 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.spectrumprocessors.WindowDownsampler;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
-import edu.washington.gs.maccoss.encyclopedia.jobs.WorkerJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
