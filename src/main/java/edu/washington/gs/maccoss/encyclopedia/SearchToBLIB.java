@@ -1456,6 +1456,8 @@ public class SearchToBLIB {
 			throw new IllegalArgumentException("Can't extract quantities for zero peptides!");
 		}
 
+		Objects.requireNonNull(proteins, "Unable to proceed without previously-computed protein groups!");
+
 		try {
 			LibraryFile elib=new LibraryFile();
 			elib.openFile();
@@ -1480,10 +1482,15 @@ public class SearchToBLIB {
 
 			writeElibMetadata(elib, jobs, parameters, true);
 
+			// Write _all_ passing peptide scores to results ELIB, as they're used downstream (quant reports)
+			// without caring which sample each peptide was scored in. Don't bother with decoys (should be fine).
+			elib.addTargetDecoyPeptides(passingPeptides.x, Lists.newArrayList());
+
+			// We must also take the protein connections from the entries so they're available to quant reporting.
+			elib.addProteinsFromPercolator(passingPeptides.x);
+
 			elib.createIndices();
 			elib.saveAsFile(elibFile);
-
-			Objects.requireNonNull(proteins, "Unable to proceed without previously-computed protein groups!");
 
 			try {
 				LibraryReportExtractor.extractMatrix(elib, proteins, true);
