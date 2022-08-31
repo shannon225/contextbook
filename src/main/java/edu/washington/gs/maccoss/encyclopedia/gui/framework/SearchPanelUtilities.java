@@ -367,6 +367,24 @@ public class SearchPanelUtilities {
 		}
 	}
 	
+	public static void loadDriverFile(Component root, final SearchParameters params, final JobProcessor processor) {
+		JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+
+		FileDialog dialog=new FileDialog(frame, "Select an XML file", FileDialog.LOAD);
+		SimpleFilenameFilter filter = new SimpleFilenameFilter(XMLDriverFactory.DRIVER_XML_EXTENSION);
+		dialog.setFilenameFilter(filter);
+		dialog.setVisible(true);
+		File[] files=dialog.getFiles();
+		if (files!=null&&files.length>0) {
+
+			ArrayList<WorkerJob> queue=XMLDriverFactory.readXML(files[0]);
+
+			for (WorkerJob job : queue) {
+				processor.addJob(job);
+			}
+		}
+	}
+	
 	public static void extractSampleSpecificDLIBs(Component root, final SearchParameters params, final JobProcessor processor) {
 		JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 

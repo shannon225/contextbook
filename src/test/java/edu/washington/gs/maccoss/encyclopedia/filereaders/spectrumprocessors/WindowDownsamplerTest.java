@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.DIAProcessor;
@@ -47,7 +48,12 @@ public class WindowDownsamplerTest extends TestCase {
 		}
 		
 		assertEquals(3, file.getPrecursors(0, Float.MAX_VALUE).size());
-		assertEquals(12, file.getStripes(new Range(0, 99999), 0.0f, Float.MAX_VALUE, false).size());
+		ArrayList<FragmentScan> stripes = file.getStripes(new Range(0, 99999), 0.0f, Float.MAX_VALUE, false);
+		
+			for (FragmentScan fragmentScan : stripes) {
+				System.out.println(fragmentScan.getScanStartTime()+"\t"+fragmentScan.getRange());
+			}
+		assertEquals(12, stripes.size());
 	}
 	
 	protected static Path getResourceAsTempFile(String name, String suffix, String resource) throws IOException {

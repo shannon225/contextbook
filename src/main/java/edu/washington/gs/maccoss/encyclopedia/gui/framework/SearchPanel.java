@@ -575,17 +575,17 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		dataMenu.add(mzmlMergerItem);
-		
-		JMenuItem subsetDIA=new JMenuItem("Create Subset mzML", convertDBIcon);
-		subsetDIA.addActionListener(new ActionListener() {
+
+		JMenuItem elibSeperatorItem=new JMenuItem("Extract Sample-Specific Libraries from ELIB", convertDBIcon);
+		elibSeperatorItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.subsetDIA(SearchPanel.this, getVisibleTab().getParameters());
+				SearchPanelUtilities.extractSampleSpecificDLIBs(dataMenu, getVisibleTab().getParameters(), getJobProcessor());
 			}
 		});
 		if (enableAdvancedOptions) {
-			subsetDIA.setText("HIDDEN: "+subsetDIA.getText());
-			dataMenu.add(subsetDIA);
+			elibSeperatorItem.setText("HIDDEN: "+elibSeperatorItem.getText());
+			dataMenu.add(elibSeperatorItem);
 		}
 
 		JMenuItem saveDriverItem=new JMenuItem("Save XML driver file", convertDBIcon);
@@ -600,16 +600,28 @@ public class SearchPanel extends JPanel {
 			dataMenu.add(saveDriverItem);
 		}
 
-		JMenuItem elibSeperatorItem=new JMenuItem("Extract Sample-Specific Libraries from ELIB", convertDBIcon);
-		elibSeperatorItem.addActionListener(new ActionListener() {
+		JMenuItem loadDriverItem=new JMenuItem("Load XML driver file", convertDBIcon);
+		loadDriverItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.extractSampleSpecificDLIBs(dataMenu, getVisibleTab().getParameters(), getJobProcessor());
+				SearchPanelUtilities.loadDriverFile(dataMenu, getVisibleTab().getParameters(), getJobProcessor());
 			}
 		});
 		if (enableAdvancedOptions) {
-			elibSeperatorItem.setText("HIDDEN: "+elibSeperatorItem.getText());
-			dataMenu.add(elibSeperatorItem);
+			loadDriverItem.setText("HIDDEN: "+loadDriverItem.getText());
+			dataMenu.add(loadDriverItem);
+		}
+		
+		JMenuItem subsetDIA=new JMenuItem("Create Subset mzML", convertDBIcon);
+		subsetDIA.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.subsetDIA(SearchPanel.this, getVisibleTab().getParameters());
+			}
+		});
+		if (enableAdvancedOptions) {
+			subsetDIA.setText("HIDDEN: "+subsetDIA.getText());
+			dataMenu.add(subsetDIA);
 		}
 
 		JMenuItem toggleScoringSystemItem=new JMenuItem("Toggle EncyclopeDIA Scoring System", libraryBrowserIcon);
