@@ -586,6 +586,18 @@ public class SearchPanel extends JPanel {
 			dataMenu.add(subsetDIA);
 		}
 
+		JMenuItem saveDriverItem=new JMenuItem("Save XML driver file", convertDBIcon);
+		saveDriverItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.saveDriverFile(dataMenu, getVisibleTab().getParameters(), getJobProcessor());
+			}
+		});
+		if (enableAdvancedOptions) {
+			saveDriverItem.setText("HIDDEN: "+saveDriverItem.getText());
+			dataMenu.add(saveDriverItem);
+		}
+
 		JMenuItem elibSeperatorItem=new JMenuItem("Extract Sample-Specific Libraries from ELIB", convertDBIcon);
 		elibSeperatorItem.addActionListener(new ActionListener() {
 			@Override

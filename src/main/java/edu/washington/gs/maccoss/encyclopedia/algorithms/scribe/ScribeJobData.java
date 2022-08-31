@@ -74,6 +74,11 @@ public class ScribeJobData extends DDASearchJobData implements LibrarySearchJobD
 		getParameters().writeToXML(doc, rootElement);
 	}
 	
+	@Override
+	public PercolatorExecutionData getPercolatorFiles() {
+		return super.getPercolatorFiles().getDDAVersion();
+	}
+	
 	public static ScribeJobData readFromXML(Document doc, Element rootElement) {
 		if (!rootElement.getTagName().equals(ScribeJobData.class.getSimpleName())) {
 			throw new EncyclopediaException("Unexpected XML parsing element, found ["+rootElement.getTagName()+"] when expecting ["+ScribeJobData.class.getSimpleName()+"]");

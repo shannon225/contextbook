@@ -15,6 +15,7 @@ import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -41,6 +42,16 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaToPrositCSVParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
@@ -74,9 +85,11 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 
 public class SearchPanelUtilities {
@@ -318,6 +331,65 @@ public class SearchPanelUtilities {
 		dialog.pack(); 
 		dialog.setSize(500, 200);
 		dialog.setVisible(true);
+	}
+	
+	public static void saveDriverFile(Component root, final SearchParameters params, final JobProcessor processor) {
+		JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+
+		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
+		for (SwingJob job : processor.getQueue()) {
+			if (job instanceof SearchJob) {
+				jobData.add(((SearchJob)job).getSearchData());
+			}
+		}
+		if (jobData.size()<1) {
+			JOptionPane.showMessageDialog(frame, "Please queue at least one RAW file first!");
+			
+		} else {
+			FileDialog dialog=new FileDialog(frame, "Select an XML file", FileDialog.SAVE);
+			dialog.setFilenameFilter(new SimpleFilenameFilter(".encxml"));
+			dialog.setVisible(true);
+			File[] files=dialog.getFiles();
+			if (files!=null&&files.length>0) {
+				ArrayList<SwingJob> queue=processor.getQueue();
+
+				PrintWriter writer=null;
+				try {
+					writer=new PrintWriter(files[0], "UTF-8");
+	
+					DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+					DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+	
+					// root elements
+					Document doc = docBuilder.newDocument();
+					Element rootElement = doc.createElement("EncyclopeDIA");
+					doc.appendChild(rootElement);
+
+					for (SwingJob job : queue) {
+						if (job instanceof XMLObject) {
+							((XMLObject)job).writeToXML(doc, rootElement);
+						}
+					}
+
+					TransformerFactory transformerFactory = TransformerFactory.newInstance();
+					Transformer transformer = transformerFactory.newTransformer();
+					transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+					DOMSource source = new DOMSource(doc);
+
+					transformer.transform(source, new StreamResult(writer));
+					transformer.transform(source, new StreamResult(System.out));
+					
+					
+				} catch (Exception e) {
+					throw new EncyclopediaException("Error writing parameters!", e);
+				} finally {
+					if (writer!=null) {
+						writer.close();
+					}
+				}
+			}
+		}
 	}
 	
 	public static void extractSampleSpecificDLIBs(Component root, final SearchParameters params, final JobProcessor processor) {
