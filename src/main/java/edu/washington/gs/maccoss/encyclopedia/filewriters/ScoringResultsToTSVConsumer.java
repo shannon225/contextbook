@@ -37,7 +37,7 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 				
 				if (AbstractScoringResult.POISON_RESULT==result) break;
 				if (!printedHeader) {
-					writer.print("id\tTD\tScanNr\t");
+					writer.print("id\tLabel\tScanNr\t");
 					for (String name : scoreNames) {
 						writer.print(name);
 						writer.print('\t');
@@ -46,7 +46,7 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 					if (result instanceof RescoredPeptideScoringResult||result instanceof RescoredSpectrumScoringResult) {
 						writer.print("deltaRT\t");//discriminantScore\t");
 					}
-					writer.print("numMissedCleavage\tpepLength\tcharge1\tcharge2\tcharge3\tcharge4\tprecursorMz\tprecursorMass\tRTinMin\tsequence\tprotein");
+					writer.print("numMissedCleavage\tpepLength\tcharge1\tcharge2\tcharge3\tcharge4\tprecursorMz\tprecursorMass\tRTinMin\tsequence\tProteins");
 					// Percolator assumes linux line endings on Mac!
 					switch (os) {
 						case MAC:
@@ -106,7 +106,7 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 				writer.print("\t"+sequence);
 
 				HashSet<String> accessions=peptide.getAccessions();
-				writer.print("\t"+ PSMData.accessionsToString(accessions));
+				writer.print("\t"+ PSMData.accessionsToString(accessions, "\t"));
 
 				// Percolator assumes linux line endings on Mac!
 				switch (os) {

@@ -9,22 +9,29 @@ import java.util.Optional;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
-import gnu.trove.map.hash.TDoubleObjectHashMap;
-import gnu.trove.map.hash.TFloatObjectHashMap;
 
-public class SearchParameters {
+public class SearchParameters implements XMLObject {
 	private static final String NO_FILE = "none";
 	public static final String OPT_PERC_TRAINING_SIZE = "-percolatorTrainingSetSize";
 	public static final String OPT_PERC_TRAINING_THRESH = "-percolatorTrainingFDR";
 	public static final String ENABLE_ADVANCED_OPTIONS="-enableAdvancedOptions";
+	public static final String NUMBER_OF_QUANTITATIVE_PEAKS = "-numberOfQuantitativePeaks";
 
 	protected final AminoAcidConstants aaConstants;
 	protected final FragmentationType fragType;
@@ -37,6 +44,7 @@ public class SearchParameters {
 	protected final PercolatorVersion percolatorVersionNumber;
 	protected final int percolatorTrainingSetSize;
 	protected final float percolatorTrainingSetThreshold;
+	protected final int percolatorTrainingIterations;
 	protected final DataAcquisitionType dataAcquisitionType;
 	protected final int numberOfThreadsUsed;	
 	protected final float targetWindowCenter;
@@ -69,7 +77,7 @@ public class SearchParameters {
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, float percolatorProteinThreshold, PercolatorVersion percolatorVersionNumber, int percolatorTrainingSetSize, float percolatorTrainingSetThreshold,
-			DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
+			int percolatorTrainingIterations, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
 			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR, Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean enableAdvancedOptions) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
@@ -85,6 +93,7 @@ public class SearchParameters {
 		this.percolatorVersionNumber=percolatorVersionNumber==null?PercolatorVersion.DEFAULT_VERSION:percolatorVersionNumber;
 		this.percolatorTrainingSetSize = percolatorTrainingSetSize;
 		this.percolatorTrainingSetThreshold = percolatorTrainingSetThreshold;
+		this.percolatorTrainingIterations=percolatorTrainingIterations;
 		this.dataAcquisitionType=dataAcquisitionType;
 		this.numberOfThreadsUsed=numberOfThreadsUsed;
 		this.expectedPeakWidth=expectedPeakWidth;
@@ -180,13 +189,14 @@ public class SearchParameters {
 		sb.append(" -enzyme "+enzyme.getName()+"\n");
 		sb.append(" -percolatorThreshold "+percolatorThreshold+"\n");
 		sb.append(" -percolatorVersion "+percolatorVersionNumber+"\n");
+		sb.append(" -percolatorTrainingIterations "+percolatorTrainingIterations+"\n");
 		sb.append(" ").append(OPT_PERC_TRAINING_SIZE).append(" ").append(percolatorTrainingSetSize).append("\n");
 		sb.append(" ").append(OPT_PERC_TRAINING_THRESH).append(" ").append(percolatorTrainingSetThreshold).append("\n");
 		sb.append(" -acquisition "+DataAcquisitionType.toString(dataAcquisitionType)+"\n");
 		sb.append(" -numberOfThreadsUsed "+numberOfThreadsUsed+"\n");
 		sb.append(" -expectedPeakWidth "+expectedPeakWidth+"\n");
 		sb.append(" -precursorWindowSize "+precursorWindowSize+"\n");
-		sb.append(" -numberOfQuantitativePeaks "+numberOfQuantitativePeaks+"\n");
+		sb.append(" ").append(NUMBER_OF_QUANTITATIVE_PEAKS).append(" ").append(numberOfQuantitativePeaks).append("\n");
 		sb.append(" -minNumOfQuantitativePeaks "+minNumOfQuantitativePeaks+"\n");
 		sb.append(" -topNTargetsUsed "+topNTargetsUsed+"\n");
 		sb.append(" -quantifyAcrossSamples "+quantifyAcrossSamples+"\n");
@@ -225,13 +235,14 @@ public class SearchParameters {
 		map.put("-percolatorThreshold", percolatorThreshold+"");
 		map.put("-percolatorVersion", percolatorVersionNumber+"");
 		map.put("-percolatorVersionNumber", percolatorVersionNumber.getMajorVersion()+"");
+		map.put("-percolatorTrainingIterations",percolatorTrainingIterations+"");
 		map.put(OPT_PERC_TRAINING_SIZE, Integer.toString(percolatorTrainingSetSize));
 		map.put(OPT_PERC_TRAINING_THRESH, Float.toString(percolatorTrainingSetThreshold));
 		map.put("-acquisition", DataAcquisitionType.toString(dataAcquisitionType));
 		map.put("-numberOfThreadsUsed", numberOfThreadsUsed+"");
 		map.put("-expectedPeakWidth", expectedPeakWidth+"");
 		map.put("-precursorWindowSize", precursorWindowSize+"");
-		map.put("-numberOfQuantitativePeaks", numberOfQuantitativePeaks+"");
+		map.put(NUMBER_OF_QUANTITATIVE_PEAKS, numberOfQuantitativePeaks+"");
 		map.put("-minNumOfQuantitativePeaks", minNumOfQuantitativePeaks+"");
 		map.put("-topNTargetsUsed",topNTargetsUsed+"");
 		map.put("-quantifyAcrossSamples", quantifyAcrossSamples+"");
@@ -250,6 +261,65 @@ public class SearchParameters {
         map.put("-precursorIsolationRangeFile", (precursorIsolationRangeFile.isPresent()?precursorIsolationRangeFile.get().getAbsolutePath():NO_FILE));
         map.put("-percolatorModelFile", (percolatorModelFile.isPresent()?percolatorModelFile.get().getAbsolutePath():NO_FILE));
 		return map;
+	}
+	
+	public HashMap<String, String> getNonDefaultParameters() {
+		HashMap<String, String> defaults=SearchParameterParser.getDefaultParametersObject().toParameterMap();
+		return getSpecificParameters(defaults);
+	}
+
+	public HashMap<String, String> getSpecificParameters(HashMap<String, String> defaults) {
+		HashMap<String, String> map=toParameterMap();
+		HashMap<String, String> nonDefaults=new HashMap<>();
+		
+		for (Entry<String, String> entry : map.entrySet()) {
+			if (defaults.containsKey(entry.getKey())) {
+				String defaultValue=defaults.get(entry.getKey());
+				if (!entry.getValue().equals(defaultValue)) {
+					nonDefaults.put(entry.getKey(), entry.getValue());
+				}
+			} else {
+				nonDefaults.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return nonDefaults;
+	}
+	
+	@Override
+	public void writeToXML(Document doc, Element parentElement) {
+		HashMap<String, String> nondefaults=getNonDefaultParameters();
+		
+		Element rootElement=doc.createElement(getClass().getSimpleName());
+		parentElement.appendChild(rootElement);
+		
+		for (Entry<String, String> entry : nondefaults.entrySet()) {
+			Element param=doc.createElement("param");
+			param.setAttribute("key", entry.getKey());
+			param.setAttribute("value", entry.getValue());
+			rootElement.appendChild(param);
+		}
+	}
+	
+	public static SearchParameters readFromXML(Document doc, Element rootElement) {
+		if (!rootElement.getTagName().equals(SearchParameters.class.getSimpleName())) {
+			throw new EncyclopediaException("Unexpected XML parsing element, found ["+rootElement.getTagName()+"] when expecting ["+SearchParameters.class.getSimpleName()+"]");
+		}
+		
+		HashMap<String, String> paramMap=SearchParameterParser.getDefaultParametersObject().toParameterMap();
+		
+		NodeList nodes=rootElement.getChildNodes();
+		for (int i = 0; i < nodes.getLength(); i++) {
+			Node node = nodes.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                Element element = (Element) node;
+                if ("param".equals(element.getTagName())) {
+                	String key=element.getAttribute("key");
+                	String value=element.getAttribute("value");
+                	paramMap.put(key, value);
+                }
+            }
+		}
+		return SearchParameterParser.parseParameters(paramMap);
 	}
 	
 	public DataAcquisitionType getDataAcquisitionType() {
@@ -345,6 +415,10 @@ public class SearchParameters {
 	 */
 	public float getPercolatorTrainingSetThreshold() {
 		return percolatorTrainingSetThreshold;
+	}
+	
+	public int getPercolatorTrainingIterations() {
+		return percolatorTrainingIterations;
 	}
 
 	public boolean isDeconvoluteOverlappingWindows() {

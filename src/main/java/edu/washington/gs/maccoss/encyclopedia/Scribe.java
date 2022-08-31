@@ -287,7 +287,7 @@ public class Scribe {
 		// get stripes
 		int rangesFinished=0;
 		float numberOfTasks=2.0f+ranges.size();
-		for (Range range : ranges) {
+		for (Range range : ranges) { // ranges are in order
 			float baseProgress=(1.0f+rangesFinished)/numberOfTasks;
 			
 			ThreadableTask<Nothing> task=new ThreadableTask<Nothing>() {
@@ -303,7 +303,7 @@ public class Scribe {
 						// assumes some +1Hs, so straight number of neutrons above target
 						double targetStop=range.getStop()+MassConstants.neutronMass*NUMBER_OF_ISOTOPES_ABOVE_MONOISOTOPIC;
 						double widerStop=targetStop+parameters.getFragmentTolerance().getTolerance(targetStop);
-						ArrayList<LibraryEntry> entries=library.getUnlinkedEntries(new Range(widerStart, widerStop), true, parameters.getAAConstants());
+						ArrayList<LibraryEntry> entries=library.getEntries(new Range(widerStart, widerStop), true, parameters.getAAConstants());
 						if (entries.size()==0) return Nothing.NOTHING;
 						
 						ArrayList<FragmentScan> stripes=stripefile.getStripes(range, -Float.MAX_VALUE, Float.MAX_VALUE, true);
@@ -404,7 +404,8 @@ public class Scribe {
 	}
 
 	private static PercolatorExecutionData getPercolatorData(ScribeJobData job) {
-		return job.getPercolatorFiles().getDDAVersion();
+		// returns DDA version automatically now
+		return job.getPercolatorFiles();
 	}
 	
 	public static Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface> repercolatePeptides(ProgressIndicator progress, ScribeJobData job, StripeFileInterface stripefile, SaveResultsConsumer saveResultsConsumer, RetentionTimeAlignmentInterface filter) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {

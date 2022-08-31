@@ -21,7 +21,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 public class ScribeSearchParameters extends SearchParameters {
-
+	@Override
 	public void savePreferences(File libraryFile, File fastaFile) throws IOException,BackingStoreException {
 		Preferences prefs=Preferences.userRoot().node("Scribe");
 		HashMap<String, String> map=toParameterMap();
@@ -45,7 +45,7 @@ public class ScribeSearchParameters extends SearchParameters {
 		return map;
 	}
 
-	
+	@Override
 	public HashMap<String, String> toParameterMap() {
 		HashMap<String, String> map=super.toParameterMap();
 
@@ -73,6 +73,7 @@ public class ScribeSearchParameters extends SearchParameters {
 			PercolatorVersion percolatorVersionNumber,
 			int percolatorTrainingSetSize,
 			float percolatorTrainingSetThreshold,
+			int percolatorTrainingIterations,
 			DataAcquisitionType dataAcquisitionType,
 			int numberOfThreadsUsed,
 			float expectedPeakWidth,
@@ -108,6 +109,7 @@ public class ScribeSearchParameters extends SearchParameters {
 				percolatorVersionNumber,
 				percolatorTrainingSetSize,
 				percolatorTrainingSetThreshold,
+				percolatorTrainingIterations,
 				dataAcquisitionType,
 				numberOfThreadsUsed,
 				expectedPeakWidth,
@@ -147,6 +149,7 @@ public class ScribeSearchParameters extends SearchParameters {
 				params.getPercolatorVersionNumber(),
 				params.getPercolatorTrainingSetSize(),
 				params.getPercolatorTrainingSetThreshold(),
+				params.getPercolatorTrainingIterations(),
 				params.getDataAcquisitionType(),
 				params.getNumberOfThreadsUsed(),
 				params.getExpectedPeakWidth(),

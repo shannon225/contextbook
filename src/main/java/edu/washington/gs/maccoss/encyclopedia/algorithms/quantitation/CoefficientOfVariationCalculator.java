@@ -49,7 +49,7 @@ public class CoefficientOfVariationCalculator {
 		return maximumAcceptedCV;
 	}
 	
-	private HashSet<String> alreadySeen=new HashSet<>();
+//	private HashSet<String> alreadySeen=new HashSet<>();
 	public float getReplicateNormalizationFactor(String sourceFile, TObjectFloatHashMap<String> ticBySourceFileMap) {
 		int samp=sampleKey.get(sourceFile).getSampleIndex();
 		
@@ -64,13 +64,13 @@ public class CoefficientOfVariationCalculator {
 			totalTIC+=tic;
 		}
 		float factor=(totalTIC/samplesInRep.size())/target;
-		if (!alreadySeen.contains(sourceFile)) {
-			System.out.println(sourceFile+"\t"+factor);
-			for (String name : samplesInRep) {
-				System.out.println("\t"+name+" --> "+ticBySourceFileMap.get(name));
-			}
-			alreadySeen.add(sourceFile);
-		}
+//		if (!alreadySeen.contains(sourceFile)) {
+//			System.out.println(sourceFile+"\t"+factor);
+//			for (String name : samplesInRep) {
+//				System.out.println("\t"+name+" --> "+ticBySourceFileMap.get(name));
+//			}
+//			alreadySeen.add(sourceFile);
+//		}
 		return factor;
 	}
 

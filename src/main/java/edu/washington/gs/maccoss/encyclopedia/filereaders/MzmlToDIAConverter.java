@@ -12,9 +12,9 @@ import java.util.concurrent.BlockingQueue;
 
 import com.sun.istack.Nullable;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.OverlapDeconvoluter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.spectrumprocessors.OverlapDeconvoluter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -23,6 +23,8 @@ import gnu.trove.list.array.TFloatArrayList;
 
 public class MzmlToDIAConverter implements StripeFileReaderInterface {
 	public static final String MZML_EXTENSION=".mzml";
+
+	static final int DEFAULT_QUEUE_CAPACITY = 2;
 
 	public static void main(String[] args) throws IOException {
 		boolean copy=false;
@@ -84,13 +86,32 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 		}
 	}
 
+	/**
+	 * @param mzMLFile The mzML to convert.
+	 * @param diaFile The location where the .DIA file will be saved.
+	 * @param parameters Parameters to use during conversion.
+	 * @param isOpenFileInPlace TODO: must be true!
+	 */
 	static StripeFileInterface convertSAX(File mzMLFile, File diaFile, SearchParameters parameters, boolean isOpenFileInPlace) {
+		return convertSAX(mzMLFile, diaFile, parameters, isOpenFileInPlace, DEFAULT_QUEUE_CAPACITY);
+	}
+
+	/**
+	 * @param mzMLFile The mzML to convert.
+	 * @param diaFile The location where the .DIA file will be saved.
+	 * @param parameters Parameters to use during conversion.
+	 * @param isOpenFileInPlace TODO: must be true!
+	 * @param queueCapacity The number of {@link MSMSBlock} kept in the queue(s) between threads. If this many blocks
+	 *                      are still pending processing then the processor will block until space is available. Too-low
+	 *                      of a setting will lower thread utilization, while too high will use excessive memory.
+	 */
+	static StripeFileInterface convertSAX(File mzMLFile, File diaFile, SearchParameters parameters, boolean isOpenFileInPlace, int queueCapacity) {
 		try {
 			Logger.logLine("Indexing "+mzMLFile.getName()+" ...");
 			StripeFile stripeFile=new StripeFile(isOpenFileInPlace);
 			stripeFile.openFile();
 
-			final BlockingQueue<MSMSBlock> mzmlBlockQueue=new ArrayBlockingQueue<MSMSBlock>(1);
+			final BlockingQueue<MSMSBlock> mzmlBlockQueue=new ArrayBlockingQueue<MSMSBlock>(queueCapacity);
 			final MzmlSAXToMSMSProducer producer=new MzmlSAXToMSMSProducer(mzMLFile, 0, mzmlBlockQueue, parameters);
 
 			@Nullable OverlapDeconvoluter deconvoluter;
@@ -107,8 +128,9 @@ public class MzmlToDIAConverter implements StripeFileReaderInterface {
 			HashMap<Range, TFloatArrayList> ionInjectionTimesByStripe=producer.getIonInjectionTimesByStripe();
 
 			if (parameters.isDeconvoluteOverlappingWindows()) {
-				BlockingQueue<MSMSBlock> deconvolutionBlockQueue=new ArrayBlockingQueue<MSMSBlock>(1);
-				deconvoluter = new OverlapDeconvoluter(parameters.getFragmentTolerance(), mzmlBlockQueue, deconvolutionBlockQueue);
+				BlockingQueue<MSMSBlock> deconvolutionBlockQueue=new ArrayBlockingQueue<MSMSBlock>(queueCapacity);
+				deconvoluter = new OverlapDeconvoluter(parameters.getFragmentTolerance());
+				deconvoluter.initialize(mzmlBlockQueue, deconvolutionBlockQueue);
 				retentionTimesByStripe=deconvoluter.getRetentionTimesByStripe();
 				ionInjectionTimesByStripe=deconvoluter.getIonInjectionTimesByStripe();
 				consumer = new MSMSToDIAConsumer(deconvolutionBlockQueue, stripeFile, parameters);

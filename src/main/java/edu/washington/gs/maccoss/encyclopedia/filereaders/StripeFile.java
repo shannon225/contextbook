@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Vector;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -122,9 +123,10 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 			Logger.logLine("Caching range "+range.toString()+"...");
 			stripes.put(range, stripeFile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, false));
 		}
+		final Map<String, String> metadata=stripeFile.getMetadata();
 		final File userFile = stripeFile.getFile();
 		Logger.logLine("Finished caching "+userFile.getName());
-		return new CachedStripeFile(userFile, ranges, precursors, stripes);
+		return new CachedStripeFile(userFile, ranges, metadata, precursors, stripes);
 	}
 
 	public File getFile() {
@@ -368,6 +370,9 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		}
 	}
 
+	/**
+	 * Add the given block of precursor scans to the file using a single prepared statement and commit.
+	 */
 	public void addPrecursor(ArrayList<PrecursorScan> precursors) throws IOException, SQLException {
 		Connection c = getConnection();
 		try {
@@ -454,59 +459,43 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		return isOpenFileInPlace;
 	}
 
-	private static final int NUMBER_OF_STRIPES_AT_ONCE=10;
+	/**
+	 * Add the given block of fragment scans to the file using a single prepared statement and commit.
+	 */
 	public void addStripe(ArrayList<FragmentScan> stripes) throws IOException, SQLException {
-		Connection c = getConnection();
-		try {
-			int start=0;
-			int stop=NUMBER_OF_STRIPES_AT_ONCE;
-			while (stop<stripes.size()) {
-				internalAddStripeToConnection(stripes.subList(start, stop), c);
-				start=stop;
-				stop=stop+NUMBER_OF_STRIPES_AT_ONCE;
-			}
-			if (start<stripes.size()) {
-				internalAddStripeToConnection(stripes.subList(start, stripes.size()), c);
-			}
+		try (Connection c = getConnection()) {
+			try (PreparedStatement prep = c.prepareStatement("insert into spectra (SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, Fraction, IonInjectionTime, IsolationWindowLower, IsolationWindowCenter, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray)" + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")) {
+				// handle commits manually
+				c.setAutoCommit(false);
 
-			c.commit();
+				internalAddStripeToStatement(stripes, prep);
 
-		} finally {
-			c.close();
+				c.commit();
+			}
 		}
 	}
 
-	private void internalAddStripeToConnection(List<FragmentScan> stripes, Connection c) throws SQLException, IOException {
-		StringBuilder sb=new StringBuilder("insert into spectra (SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, Fraction, IonInjectionTime, IsolationWindowLower, IsolationWindowCenter, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray)");
-		sb.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
-		for (int i=1; i<stripes.size(); i++) {
-			sb.append(", (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+	private void internalAddStripeToStatement(List<FragmentScan> stripes, PreparedStatement prep) throws SQLException, IOException {
+		for (FragmentScan stripe : stripes) {
+			int index = 1;
+			prep.setString(index++, stripe.getSpectrumName());
+			prep.setString(index++, stripe.getPrecursorName());
+			prep.setInt(index++, stripe.getSpectrumIndex());
+			prep.setFloat(index++, stripe.getScanStartTime());
+			prep.setInt(index++, stripe.getFraction());
+			prep.setFloat(index++, stripe.getIonInjectionTime());
+			prep.setDouble(index++, stripe.getIsolationWindowLower());
+			prep.setDouble(index++, stripe.getIsolationWindowCenter());
+			prep.setDouble(index++, stripe.getIsolationWindowUpper());
+			byte[] massByteArray = ByteConverter.toByteArray(stripe.getMassArray());
+			prep.setInt(index++, massByteArray.length);
+			prep.setBytes(index++, CompressionUtils.compress(massByteArray));
+			byte[] intensityByteArray = ByteConverter.toByteArray(stripe.getIntensityArray());
+			prep.setInt(index++, intensityByteArray.length);
+			prep.setBytes(index++, CompressionUtils.compress(intensityByteArray));
+			prep.addBatch();
 		}
-		PreparedStatement prep=c.prepareStatement(sb.toString());
-		try {
-			int index=1;
-			for (FragmentScan stripe : stripes) {
-				prep.setString(index++, stripe.getSpectrumName());
-				prep.setString(index++, stripe.getPrecursorName());
-				prep.setInt(index++, stripe.getSpectrumIndex());
-				prep.setFloat(index++, stripe.getScanStartTime());
-				prep.setInt(index++, stripe.getFraction());
-				prep.setFloat(index++, stripe.getIonInjectionTime());
-				prep.setDouble(index++, stripe.getIsolationWindowLower());
-				prep.setDouble(index++, stripe.getIsolationWindowCenter());
-				prep.setDouble(index++, stripe.getIsolationWindowUpper());
-				byte[] massByteArray=ByteConverter.toByteArray(stripe.getMassArray());
-				prep.setInt(index++, massByteArray.length);
-				prep.setBytes(index++, CompressionUtils.compress(massByteArray));
-				byte[] intensityByteArray=ByteConverter.toByteArray(stripe.getIntensityArray());
-				prep.setInt(index++, intensityByteArray.length);
-				prep.setBytes(index++, CompressionUtils.compress(intensityByteArray));
-			}
-			prep.execute();
-			prep.close();
-		} finally {
-			prep.close();
-		}
+		prep.executeBatch();
 	}
 
 	/* (non-Javadoc)
@@ -634,6 +623,72 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 					throw new EncyclopediaException(ie);
 				}
 				return new ArrayList<FragmentScan>(stripes);
+			} finally {
+				s.close();
+			}
+		} finally {
+			c.close();
+		}
+	}
+	
+	private static final int FRAGMENT_BLOCK_SIZE=1000;
+	public void getStripes(Range targetMzRange, float minRT, float maxRT, final boolean sqrt, BlockingQueue<MSMSBlock> outputQueue) throws IOException, SQLException, DataFormatException, InterruptedException {
+		// TODO consider chunking up the precursors, or intermix both by chunking up requests by RT
+		ArrayList<PrecursorScan> precursors=getPrecursors(minRT, maxRT);
+		outputQueue.put(new MSMSBlock(precursors, new ArrayList<FragmentScan>()));
+		
+		Connection c = getConnection();
+		try {
+			Statement s=c.createStatement();
+			try {
+				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, IonInjectionTime, Fraction from spectra "
+						+"where  IsolationWindowLower <= "+targetMzRange.getStop()+" and IsolationWindowUpper >= "+targetMzRange.getStart()+" and ScanStartTime between "+minRT+" and "+maxRT);
+
+				int cores=Runtime.getRuntime().availableProcessors();
+				ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("STRIPE_"+targetMzRange.getStart()+"_"+targetMzRange.getStop()+"-%d").setDaemon(true).build();
+				LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
+				ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory);
+
+				ArrayList<FragmentScan> fragmentScans=new ArrayList<>();
+				while (rs.next()) {
+					final String spectrumName=rs.getString(1);
+					final String precursorName=rs.getString(2);
+					final int spectrumIndex=rs.getInt(3);
+					final float scanStartTime=rs.getFloat(4);
+					final float isolationWindowLower=rs.getFloat(5);
+					final float isolationWindowUpper=rs.getFloat(6);
+					final int massEncodedLength=rs.getInt(7);
+					final byte[] massBytes=rs.getBytes(8);
+					final int intensityEncodedLength=rs.getInt(9);
+					final byte[] intensityBytes=rs.getBytes(10);
+					Float nullableIonInjectionTime=rs.getFloat(11);
+					if (rs.wasNull()) {
+						nullableIonInjectionTime=null;
+					}
+					final Float ionInjectionTime=nullableIonInjectionTime;
+					final int fraction=rs.getInt(12);
+					
+					FragmentScan msms=getStripe(sqrt, spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massEncodedLength, massBytes,
+							intensityEncodedLength, intensityBytes);
+					fragmentScans.add(msms);
+
+					if (FRAGMENT_BLOCK_SIZE>=fragmentScans.size()) {
+						outputQueue.put(new MSMSBlock(new ArrayList<PrecursorScan>(), fragmentScans));
+						fragmentScans=new ArrayList<FragmentScan>();
+					}
+				}
+				if (0<fragmentScans.size()) {
+					outputQueue.put(new MSMSBlock(new ArrayList<PrecursorScan>(), fragmentScans));
+				}
+
+				executor.shutdown();
+				try {
+					executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+				} catch (InterruptedException ie) {
+					throw new EncyclopediaException(ie);
+				}
+
+				outputQueue.put(MSMSBlock.POISON_BLOCK);
 			} finally {
 				s.close();
 			}

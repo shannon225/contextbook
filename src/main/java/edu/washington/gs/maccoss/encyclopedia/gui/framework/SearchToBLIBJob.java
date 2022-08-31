@@ -7,6 +7,7 @@ import edu.washington.gs.maccoss.encyclopedia.SearchToBLIB;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class SearchToBLIBJob extends SwingJob {
 	private final File blibFile;
@@ -32,6 +33,7 @@ public class SearchToBLIBJob extends SwingJob {
 			}
 		}
 
+		Logger.logLine("Found "+jobData.size()+" jobs in the queue to combine...");
 		SearchToBLIB.convert(getProgressIndicator(), jobData, blibFile, true, alignBetweenFiles);
 	}
 }

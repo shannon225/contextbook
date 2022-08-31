@@ -18,7 +18,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 public class XCordiaSearchParameters extends PecanSearchParameters {
-
+	@Override
 	public void savePreferences(File backgroundFastaFile, File targetFastaFile) throws IOException,BackingStoreException {
 		Preferences prefs=Preferences.userRoot().node("xcordia");
 		HashMap<String, String> map=toParameterMap();
@@ -67,6 +67,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 			PercolatorVersion percolatorVersionNumber,
 			int percolatorTrainingSetSize,
 			float percolatorTrainingSetThreshold,
+			int percolatorTrainingIterations,
 			float alpha,
 			float beta,
 			DataAcquisitionType dataAcquisitionType,
@@ -109,6 +110,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				percolatorVersionNumber,
 				percolatorTrainingSetSize,
 				percolatorTrainingSetThreshold,
+				percolatorTrainingIterations,
 				alpha,
 				beta,
 				dataAcquisitionType,
@@ -143,6 +145,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 			float percolatorProteinThreshold,
 			int percolatorTrainingSetSize,
 			float percolatorTrainingSetThreshold,
+			int percolatorTrainingIterations,
 			int maxMissedCleavages,
 			byte minCharge,
 			byte maxCharge,
@@ -169,6 +172,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				percolatorProteinThreshold,
 				percolatorTrainingSetSize,
 				percolatorTrainingSetThreshold,
+				percolatorTrainingIterations,
 				maxMissedCleavages,
 				minCharge,
 				maxCharge,
@@ -210,6 +214,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				params.getPercolatorVersionNumber(),
 				params.getPercolatorTrainingSetSize(),
 				params.getPercolatorTrainingSetThreshold(),
+				params.getPercolatorTrainingIterations(),
 				params.getAlpha(),
 				params.getBeta(),
 				params.getDataAcquisitionType(),

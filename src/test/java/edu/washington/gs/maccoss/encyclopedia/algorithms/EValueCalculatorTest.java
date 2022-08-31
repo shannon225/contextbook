@@ -10,7 +10,7 @@ public class EValueCalculatorTest extends TestCase {
 	public static void main(String[] args) {
 		TFloatFloatHashMap map=generateRandomData();
 		map=generateData();
-		EValueCalculator calculator=new EValueCalculator(map, 0f, 3.34826734E11f/100);
+		EValueCalculator calculator=new EValueCalculator(map, 0f);
 		XYTraceInterface[] traces=calculator.toUnloggedTraces();
 		traces=calculator.toTraces();
 		Charter.launchChart("score", "count", false, traces);

@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.utils;
 
+import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -40,10 +41,7 @@ public class Logger {
 
 	public static void logException(Throwable e) {
 		if (PRINT_TO_SCREEN) {
-			System.out.println(format.format(new Date())+e);
-			for (StackTraceElement ste : e.getStackTrace()) {
-				System.out.println("\t"+ste.toString());
-			}
+			writeStacktraceLines(e, System.out);
 		}
 		for (LogRecorder recorder : recorders) {
 			recorder.logException(e);
@@ -52,16 +50,21 @@ public class Logger {
 
 	public static void errorException(Throwable e) {
 		if (PRINT_TO_SCREEN) {
-			System.err.println(format.format(new Date())+e);
-			for (StackTraceElement ste : e.getStackTrace()) {
-				System.err.println("\t"+ste.toString());
-			}
+			writeStacktraceLines(e, System.err);
 		}
 		for (LogRecorder recorder : recorders) {
 			recorder.errorException(e);
 		}
 	}
-	
+
+	static void writeStacktraceLines(Throwable throwable, PrintStream stream) {
+		// Log the timestamp without a linebreak
+		stream.print(format.format(new Date()));
+
+		// Log the full stacktrace
+		throwable.printStackTrace(stream);
+	}
+
 	public static void close() {
 		for (LogRecorder recorder : recorders) {
 			recorder.close();

@@ -26,6 +26,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class SearchParameterParser {
+
 	public static HashMap<String,String> getDefaultParameters() {
 		HashMap<String, String> map=new HashMap<String, String>();
 		map.put("-fixed", "C=57.0214635");
@@ -51,10 +52,9 @@ public class SearchParameterParser {
 		map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
 		map.put("-scoringBreadthType", ScoringBreadthType.RECALIBRATED_PEAK_WIDTH.toShortname());
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
-		map.put("-numberOfQuantitativePeaks", "5");
+		map.put(SearchParameters.NUMBER_OF_QUANTITATIVE_PEAKS, "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
 		map.put("-topNTargetsUsed", "-1");
-		map.put("-minQuantitativeIonNumber", "3");
 		map.put("-verifyModificationIons", "true");
 		map.put("-minIntensity", "-1.0");
 		map.put("-rtWindowInMin", "-1.0");
@@ -78,9 +78,8 @@ public class SearchParameterParser {
 		map.put("-percolatorLocation", "internal");
 		map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
-		map.put("-numberOfQuantitativePeaks", "5");
+		map.put(SearchParameters.NUMBER_OF_QUANTITATIVE_PEAKS, "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
-		map.put("-minQuantitativeIonNumber", "3");
 		return map;
 	}
 	
@@ -113,6 +112,7 @@ public class SearchParameterParser {
 		final PercolatorVersion percolatorVersionNumber;
 		final int percolatorTrainingSetSize;
 		final float percolatorTrainingSetThreshold;
+		final int percolatorTrainingIterations;
 		final DataAcquisitionType dataAcquisitionType;
 		final int numberOfThreadsUsed;
 		final float targetWindowCenter;
@@ -285,12 +285,13 @@ public class SearchParameterParser {
 		percolatorVersionNumber=PercolatorVersion.getVersion(parameters.get("-percolatorVersion"));
 		percolatorTrainingSetSize = ParsingUtils.getInteger(SearchParameters.OPT_PERC_TRAINING_SIZE, parameters, PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE);
 		percolatorTrainingSetThreshold = ParsingUtils.getFloat(SearchParameters.OPT_PERC_TRAINING_THRESH, parameters, PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD);
+		percolatorTrainingIterations= ParsingUtils.getInteger("-percolatorTrainingIterations", parameters, PercolatorExecutor.DEFAULT_TRAINING_ITERATIONS);
 
 		numberOfThreadsUsed=ParsingUtils.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
 		targetWindowCenter=ParsingUtils.getFloat("-targetWindowCenter", parameters, -1f);
 		precursorWindowSize=ParsingUtils.getFloat("-precursorWindowSize", parameters, -1f);
 		expectedPeakWidth=ParsingUtils.getFloat("-expectedPeakWidth", parameters, 25f);
-		numberOfQuantitativePeaks=ParsingUtils.getInteger("-numberOfQuantitativePeaks", parameters, 5);
+		numberOfQuantitativePeaks=ParsingUtils.getInteger(SearchParameters.NUMBER_OF_QUANTITATIVE_PEAKS, parameters, 5);
 		minNumOfQuantitativePeaks=ParsingUtils.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
 		topNTargetsUsed=ParsingUtils.getInteger("-topNTargetsUsed", parameters, -1);
 		
@@ -365,6 +366,7 @@ public class SearchParameterParser {
 				percolatorVersionNumber,
 				percolatorTrainingSetSize,
 				percolatorTrainingSetThreshold,
+				percolatorTrainingIterations,
 				dataAcquisitionType,
 				numberOfThreadsUsed,
 				expectedPeakWidth,

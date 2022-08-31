@@ -6,10 +6,13 @@ import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -22,8 +25,15 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Quadruplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.LibraryEntryModifier;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakChromatogram;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
+import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryUtilities {
@@ -54,21 +64,23 @@ public class LibraryUtilities {
 		saveLibrary.close();
 	}
 	
-	public static void extractSampleSpecificLibraries(final File saveDir, LibraryInterface library) throws IOException, SQLException, DataFormatException {
+	public static void extractSampleSpecificLibraries(ProgressIndicator progress, File saveDir, Optional<HashMap<String, double[]>> targetTransitions, LibraryInterface library, final SearchParameters parameters) throws IOException, SQLException, DataFormatException {
 		List<Path> sources=library.getSourceFiles();
 		saveDir.mkdirs();
 		for (Path path : sources) {
 			String name=path.getFileName().toString();
+			progress.update("Extracting out spectra associated with ["+name+"]...");
 			Logger.logLine("Extracting out spectra associated with ["+name+"]...");
 			File saveFile=new File(saveDir, name+LibraryFile.DLIB);
-			extractSampleSpecificLibrary(saveFile, name, true, library);
+			extractSampleSpecificLibrary(progress, saveFile, name, true, targetTransitions.isPresent()?targetTransitions.get():null, library, parameters);
 		}
+		progress.update("Finished extracting "+sources.size()+" batch-specific libraries!");
 	}
 		
-	
-	public static void extractSampleSpecificLibrary(final File saveFile, String sourceFile, boolean useBestFragmentation, LibraryInterface library) throws IOException, SQLException, DataFormatException {
+	private static void extractSampleSpecificLibrary(final ProgressIndicator progress, final File saveFile, String sourceFile, boolean useBestFragmentation, HashMap<String, double[]> targetTransitions, LibraryInterface library, final SearchParameters parameters) throws IOException, SQLException, DataFormatException {
 		LibraryFile saveLibrary=new LibraryFile();
 		saveLibrary.openFile();
+		MassTolerance tolerance=parameters.getFragmentTolerance();
 		
 		HashMap<String, LibraryEntry> targetSource=new HashMap<>();
 		HashMap<String, LibraryEntry> bestSource=new HashMap<>();		
@@ -87,14 +99,73 @@ public class LibraryUtilities {
 		ArrayList<LibraryEntry> toWrite=new ArrayList<>();
 		for (Entry<String, LibraryEntry> entry : targetSource.entrySet()) {
 			String key=entry.getKey();
-			LibraryEntry targetEntry=entry.getValue();
+			LibraryEntry thisSamplesEntry=entry.getValue();
 			LibraryEntry bestEntry=bestSource.get(key);
+			String peptideModSeq=thisSamplesEntry.getPeptideModSeq();
 			
-			if (bestEntry!=null&&bestEntry.getScore()<targetEntry.getScore()) {
-				toWrite.add(targetEntry.updateMS2(bestEntry.getMassArray(), bestEntry.getIntensityArray(), bestEntry.getCorrelationArray(), bestEntry.getQuantifiedIonsArray()));
-			} else {
-				toWrite.add(targetEntry);
+			double[] targets=null; // targets stays null if no transitions are targetted
+			if (targetTransitions!=null) {
+				targets=targetTransitions.get(peptideModSeq);
+				if (targets==null) {
+					Logger.errorLine("Missing transitions for "+peptideModSeq+", skipping peptide");
+					continue; // ignore peptides that don't have transitions
+				} else if (targets.length==0 ) {
+					Logger.errorLine("Zero targeted transitions for "+peptideModSeq+", skipping peptide");
+					continue; // ignore peptides that don't have transitions
+				}
 			}
+
+			double[] massArray;
+			float[] intensityArray;
+			float[] correlationArray;
+			boolean[] quantifiedIonsArray;
+			if (bestEntry!=null&&bestEntry.getScore()<thisSamplesEntry.getScore()) {
+				massArray = bestEntry.getMassArray();
+				intensityArray = bestEntry.getIntensityArray();
+				correlationArray = bestEntry.getCorrelationArray();
+				quantifiedIonsArray = bestEntry.getQuantifiedIonsArray();
+			} else {
+				massArray = thisSamplesEntry.getMassArray();
+				intensityArray = thisSamplesEntry.getIntensityArray();
+				correlationArray = thisSamplesEntry.getCorrelationArray();
+				quantifiedIonsArray = thisSamplesEntry.getQuantifiedIonsArray();
+			}
+			
+			if (targets!=null) {
+				// reset quantifiedIonsArray for targets
+				quantifiedIonsArray=new boolean[massArray.length];
+				TDoubleArrayList missing=new TDoubleArrayList();
+				for (int i = 0; i < targets.length; i++) {
+					Optional<Integer> index=tolerance.getIndex(massArray, targets[i]);
+					if (index.isPresent()) {
+						quantifiedIonsArray[index.get()]=true;
+					} else {
+						missing.add(targets[i]);
+					}
+				}
+				
+				if (missing.size()>0) {
+					// if targets are missing, then make sure they're added
+					ArrayList<PeakChromatogram> peaks=new ArrayList<PeakChromatogram>();
+					for (int i = 0; i < massArray.length; i++) {
+						peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], correlationArray[i], quantifiedIonsArray[i]));
+					}
+					
+					for (double mass : missing.toArray()) {
+						peaks.add(new PeakChromatogram(mass, Float.MIN_NORMAL, 0.0f, true));
+					}
+					
+					Collections.sort(peaks);
+					Quadruplet<double[], float[], float[], boolean[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
+					
+					massArray=arrays.x;
+					intensityArray=arrays.y;
+					correlationArray=arrays.z;
+					quantifiedIonsArray=arrays.w;
+				}
+			}
+
+			toWrite.add(thisSamplesEntry.updateMS2(massArray, intensityArray, correlationArray, quantifiedIonsArray));
 		}
 		Logger.logLine("Found "+toWrite.size()+" peptides from "+sourceFile+". Writing to ["+saveFile.getAbsolutePath()+"]...");
 		
@@ -149,10 +220,12 @@ public class LibraryUtilities {
 		return false;
 	}
 	
-	public static LibraryFile mergeLibraries(ArrayList<File> files, File saveFile, boolean rtAlign, boolean removeDuplicates, boolean higherScoresAreBetter) throws IOException, SQLException, DataFormatException {
+	public static LibraryFile mergeLibraries(ProgressIndicator progress, ArrayList<File> files, File saveFile, boolean rtAlign, boolean removeDuplicates, boolean higherScoresAreBetter) throws IOException, SQLException, DataFormatException {
 		HashMap<String, ArrayList<LibraryEntry>> groupedEntries=new HashMap<>();
 		int totalEntries=0;
+		int count=0;
 		for (File elibFile : files) {
+			count++;
 			LibraryFile library=new LibraryFile();
 			library.openFile(elibFile);
 			ArrayList<LibraryEntry> localEntries = library.getAllEntries(false,  new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
@@ -166,12 +239,14 @@ public class LibraryUtilities {
 				list.add(entry);
 				totalEntries++;
 			}
+			progress.update("Found "+localEntries.size()+" entries from "+elibFile.getName(), count/(files.size()+1.0f));
 			Logger.logLine("Found "+localEntries.size()+" entries from "+elibFile.getName()+", "+totalEntries+" total entries from "+groupedEntries.size()+" sources...");
 			library.close();
 		}
 		
 		ArrayList<LibraryEntry> allEntries;
 		if (rtAlign) {
+			progress.update("Correcting retention times...");
 			allEntries=LibraryEntryCleaner.correctRTs(groupedEntries, saveFile);
 		} else {
 			allEntries=new ArrayList<>();
@@ -181,6 +256,7 @@ public class LibraryUtilities {
 		}
 		if (removeDuplicates) {
 			allEntries=LibraryEntryCleaner.removeDuplicateEntries(allEntries, higherScoresAreBetter);
+			progress.update("Removing duplicates...");
 		}
 
 		LibraryFile saveLibrary=new LibraryFile();
@@ -192,6 +268,7 @@ public class LibraryUtilities {
 		saveLibrary.saveAsFile(saveFile);
 		
 		saveLibrary.close();
+		progress.update("Saved "+saveFile.getName()+", "+allEntries.size()+" total", 1.0f);
 		Logger.logLine("Saved "+saveFile.getName()+", "+allEntries.size()+" total");
 		return saveLibrary;
 	}

@@ -152,4 +152,11 @@ public class PercolatorExecutorTest extends TestCase {
 		PercolatorExecutionData percolatorFiles=new PercolatorExecutionData(featureFile, fastaFile, outputFile, decoyFile, outputProteinFile, decoyProteinFile, parameters);
 		return percolatorFiles;
 	}
+
+	public void testCheckPercolatorVersion() throws Exception {
+		// These version strings match the currently-shipped Linux executables
+		assertEquals("3.05.0", PercolatorExecutor.checkPercolatorVersion(PercolatorVersion.v3p05));
+		assertTrue(PercolatorExecutor.checkPercolatorVersion(PercolatorVersion.v3p01).startsWith("3.01"));
+		assertEquals("2.09", PercolatorExecutor.checkPercolatorVersion(PercolatorVersion.v2p10));
+	}
 }

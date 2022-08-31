@@ -23,4 +23,8 @@ public interface SearchJobData {
 	boolean hasBeenRun();
 
 	String getSearchType();
+	
+	String getPrimaryScoreName();
+	
+	SearchJobData updateQuantFile(File f);
 }

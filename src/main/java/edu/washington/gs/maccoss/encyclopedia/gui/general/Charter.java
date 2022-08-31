@@ -4,7 +4,9 @@ import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FileDialog;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.Toolkit;
@@ -22,17 +24,20 @@ import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.text.AttributedString;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenuItem;
+import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
 import org.jfree.chart.ChartFactory;
@@ -76,6 +81,7 @@ import com.itextpdf.text.pdf.PdfWriter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Boxplotter.CategoryBoxPlotterRenderer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -91,6 +97,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class Charter {
@@ -209,6 +216,29 @@ public class Charter {
 		writeAsPDF(chart, f, d);
 	}
 
+	public static void writeAsPDF(JPanel panel, File f, Dimension d) {
+		try {
+			FontFactory.defaultEmbedding = true;
+			
+			// NOTE: this uses itextPDF 4.2, which is LGPL. Do not upgrade to the AGPL version! 
+			Rectangle pagesize=new Rectangle(d.width, d.height);
+			Document document=new Document(pagesize);
+			FileOutputStream os=new FileOutputStream(f);
+			PdfWriter writer=PdfWriter.getInstance(document, os);
+			document.open();
+			PdfContentByte canvas=writer.getDirectContent();
+			PdfTemplate template=canvas.createTemplate(d.width, d.height);
+			Graphics2D g2d=new PdfGraphics2D(template, d.width, d.height);
+			panel.printComponents(g2d);
+			g2d.dispose();
+			canvas.addTemplate(template, 0, 0);
+			document.close();
+			os.close();
+		} catch (Exception e) {
+			Logger.errorException(e);
+		}
+	}
+
 	public static void writeAsPDF(JFreeChart chart, File f, Dimension d) {
 		try {
 			FontFactory.defaultEmbedding = true;
@@ -256,6 +286,16 @@ public class Charter {
 		//Dimension d=new Dimension(400, 300);
 		
 		writeAsSVG(getChart(xAxis, yAxis, displayLegend, traces).getChart(), f, d);
+	}
+	public static void writeAsSVG(JPanel panel, File f, Dimension d) {
+		try {
+			SVGGraphics2D g2 = new SVGGraphics2D(d.width, d.height); 
+	        java.awt.Rectangle r = new java.awt.Rectangle(0, 0, d.width, d.height); 
+	        panel.paint(g2); 
+	        SVGUtils.writeToSVG(f, g2.getSVGElement()); 
+		} catch (Exception e) {
+			Logger.errorException(e);
+		}
 	}
 
 	public static void writeAsSVG(JFreeChart chart, File f, Dimension d) {
@@ -465,8 +505,18 @@ public class Charter {
 		}
 		return getBoxplotChart(title, xAxisLabel, yAxisLabel, categories, values);
 	}
-	
+	public static ExtendedChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, String[] categories, TDoubleArrayList[] values) {
+		TFloatArrayList[] floatValues=new TFloatArrayList[values.length];
+		for (int i = 0; i < floatValues.length; i++) {
+			floatValues[i]=new TFloatArrayList(General.toFloatArray(values[i].toArray()));
+		}
+		return getBoxplotChart(title, xAxisLabel, yAxisLabel, categories, floatValues);
+	}
+
 	public static ExtendedChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, String[] categories, TFloatArrayList[] values) {
+		return getBoxplotChart(title, xAxisLabel, yAxisLabel, categories, values, false);
+	}
+	public static ExtendedChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, String[] categories, TFloatArrayList[] values, boolean requireRangeIncludesZero) {
 		assert (categories.length==values.length);
 		boolean displayLegend=false;
 
@@ -478,7 +528,7 @@ public class Charter {
 		CategoryBoxPlotterRenderer renderer=new CategoryBoxPlotterRenderer();
 		CategoryAxis xAxis=new CategoryAxis(xAxisLabel);
 		NumberAxis yAxis=new NumberAxis(yAxisLabel);
-		yAxis.setAutoRangeIncludesZero(false);
+		yAxis.setAutoRangeIncludesZero(requireRangeIncludesZero);
 		CategoryPlot plot=new CategoryPlot(dataset, xAxis, yAxis, renderer);
 
 		Font font=new Font(BASE_FONT_NAME, Font.PLAIN, 24);
@@ -874,6 +924,7 @@ public class Charter {
 			chartPanel.getChart().getLegend().setItemFont(font3);
 		}
 		addCopyDataMenu(xAxis, chartPanel, traces);
+		addSaveAsDlib(chartPanel, traces);
 		
 		//rangeAxis.setTickUnit(new NumberTickUnit(20)); 
 		//domainAxis.setTickUnit(new NumberTickUnit(20));
@@ -945,6 +996,63 @@ public class Charter {
 				StringSelection stringSelection = new StringSelection(sb.toString());
 				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 				clipboard.setContents(stringSelection, null);
+			}
+		});
+	}
+	
+	private static void addSaveAsDlib(final ExtendedChartPanel chartPanel, final XYTraceInterface... traces) {
+
+		final ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
+		for (XYTraceInterface trace : traces) {
+			if (trace instanceof AnnotatedLibraryEntry) {
+				AnnotatedLibraryEntry entry=(AnnotatedLibraryEntry)trace;
+				
+				entries.add(entry);
+			}
+		}
+		// don't bother continuing if we don't have any annotated spectra
+		if (entries.size()==0) {
+			return;
+		}
+
+		JMenuItem saveLibItem=new JMenuItem("Append to library...");
+		chartPanel.getPopupMenu().add(saveLibItem, 5);
+		saveLibItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				FileDialog dialog=new FileDialog((Frame)null, "Select a new or existing library file", FileDialog.SAVE);
+				dialog.setFilenameFilter(new SimpleFilenameFilter(LibraryFile.DLIB));
+				dialog.setVisible(true);
+				File[] fs=dialog.getFiles();
+				try {
+					LibraryFile library=new LibraryFile();
+					if (fs!=null&&fs.length>0&&fs[0]!=null) {
+						if (fs[0].exists()&&fs[0].canRead()) {
+							library.openFile(fs[0]);
+							
+						} else {
+							if (!fs[0].getName().toLowerCase().endsWith(LibraryFile.DLIB)) {
+								File newFile=new File(fs[0].getAbsolutePath()+LibraryFile.DLIB);
+								fs[0]=newFile;
+							}
+							library.openFile();
+						}
+
+						library.addEntries(entries, false);
+						library.addProteinsFromEntries(entries);
+						library.createIndices();
+	
+						library.saveAsFile(fs[0]);
+						library.close();
+					}
+				
+				} catch (SQLException sqle) {
+					Logger.errorLine("Found SQL error adding data to library file...");
+					Logger.errorException(sqle);
+				} catch (IOException ioe) {
+					Logger.errorLine("Found IO error adding data to library file...");
+					Logger.errorException(ioe);
+				}
 			}
 		});
 	}

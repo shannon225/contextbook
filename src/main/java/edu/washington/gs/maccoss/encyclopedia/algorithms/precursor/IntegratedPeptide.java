@@ -156,7 +156,7 @@ public class IntegratedPeptide implements HasRetentionTime {
 				boolean[] fakeQuantifiableIonsArray=new boolean[msms.getMassArray().length];
 				Arrays.fill(fakeQuantifiableIonsArray, true);
 				IntegratedLibraryEntry entry=new IntegratedLibraryEntry(sourceFile, psm.getAccessions(), psm.getSpectrumIndex(), psm.getPrecursorMZ(), psm.getPrecursorCharge(), 
-						psm.getPeptideModSeq(), copies, msms.getScanStartTime(), psm.getScore(), msms.getMassArray(), msms.getIntensityArray(), fakeCorrelationArray, fakeQuantifiableIonsArray, data);
+						psm.getPeptideModSeq(), copies, msms.getScanStartTime(), psm.getScore(), bestPSM.getPeptideData().getSortingScore(), msms.getMassArray(), msms.getIntensityArray(), fakeCorrelationArray, fakeQuantifiableIonsArray, data);
 				entries.add(entry);
 			}
 		}

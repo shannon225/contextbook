@@ -134,7 +134,7 @@ public class LibraryComparisonTest {
 		savefile.saveAsFile(new File(kb.getParentFile(), "massive_kb_with_prosit_rts.dlib"));
 		System.out.println("done!");
 	}
-	public static void main(String[] args) throws Exception {
+	public static void main4(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 
 //		File[] libraryFilesDDA=new File[] {
@@ -251,5 +251,35 @@ public class LibraryComparisonTest {
 			}
 		}
 		file.close();
+	}
+
+	public static void main(String[] args) throws Exception {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		File larger=new File("/Users/searleb/Documents/damien/dda_library_search/uniprot_human_25apr2019.fasta.trypsin.z1-4_nce33.dlib");	
+		File smaller=new File("/Users/searleb/Documents/damien/dda_library_search/hela/23aug2017_hela_serum_timecourse_pool_dda_001.dia.dlib");
+		//smaller=new File("/Users/searleb/Documents/teaching/encyclopedia/final/quantitative_samples/23aug2017_hela_serum_timecourse_wide_1a.mzML.elib");
+		smaller=new File("/Users/searleb/Documents/teaching/encyclopedia/final/example_DIA/23aug2017_hela_serum_timecourse_wide_1a.mzML.elib");
+
+		LibraryFile library=new LibraryFile();
+		library.openFile(larger);
+		
+		LibraryFile file=new LibraryFile();
+		file.openFile(smaller);
+		ArrayList<LibraryEntry> entries=file.getAllEntries(false, parameters.getAAConstants());
+		
+
+		for (LibraryEntry entry : entries) {
+			ArrayList<LibraryEntry> candidates=library.getEntries(entry.getPeptideModSeq(), entry.getPrecursorCharge(), false);
+			if (candidates.size()>0) {
+				AnnotatedLibraryEntry dda=AnnotatedLibraryEntry.getAnnotationsOnly(entry, parameters);
+				float correlation=(float)Correlation.getPearsons(candidates.get(0), dda, parameters.getFragmentTolerance());
+				
+				System.out.println(entry.getPeptideModSeq()+"\t"+entry.getPrecursorCharge()+"\t"+entry.getRetentionTime()/60f+"\t"+candidates.get(0).getRetentionTime()+"\t"+correlation);
+				
+			}
+		}
+		
+		file.close();
+		library.close();
 	}
 }

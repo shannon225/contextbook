@@ -47,6 +47,19 @@ public final class PrositCSVWriterTest extends AbstractFileConverterTest {
 				true
 		);
 	}
+	
+	@Test
+	public void testConvertNCE() {
+		assertEquals(36.666666f, PrositCSVWriter.convertNCE(33.0f, (byte)2, (byte)1), 0.0001f);
+		assertEquals(33.0f, PrositCSVWriter.convertNCE(33.0f, (byte)2, (byte)2), 0.0001f);
+		assertEquals(31.166668f, PrositCSVWriter.convertNCE(33.0f, (byte)2, (byte)3), 0.0001f);
+		assertEquals(29.333334f, PrositCSVWriter.convertNCE(33.0f, (byte)2, (byte)4), 0.0001f);
+		
+		assertEquals(38.82353f, PrositCSVWriter.convertNCE(33.0f, (byte)3, (byte)1), 0.0001f);
+		assertEquals(34.941174f, PrositCSVWriter.convertNCE(33.0f, (byte)3, (byte)2), 0.0001f);
+		assertEquals(33.0f, PrositCSVWriter.convertNCE(33.0f, (byte)3, (byte)3), 0.0001f);
+		assertEquals(31.058823f, PrositCSVWriter.convertNCE(33.0f, (byte)3, (byte)4), 0.0001f);
+	}
 
 	@Test(expected = NullPointerException.class)
 	public void testNullFasta() throws Exception {
