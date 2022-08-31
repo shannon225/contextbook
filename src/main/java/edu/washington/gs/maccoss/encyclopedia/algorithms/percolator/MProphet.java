@@ -126,20 +126,20 @@ public class MProphet implements Runnable {
 			scaledDecoys.add(new XYPoint(decoy.x, decoy.y*bestWeightedAverage));
 		}
 		
-		XYTraceInterface[] traces=new XYTraceInterface[2];
-		traces[0]=new XYTrace(targets, GraphType.line, "Target");
-		traces[1]=new XYTrace(scaledDecoys, GraphType.line, "Decoy*pi0");
-		Charter.launchChart("LDA Score", "Count", true, traces);
-
-		XYTrace ratioTrace = new XYTrace(delta, GraphType.line, "Ratio");
-
-		int order=Math.max(3, Math.round(delta.size()/50f));
-		RunningMedianWarper warper=new RunningMedianWarper(thresholdedDelta, order, true);
-		XYTrace curveFit=new XYTrace(warper.getKnots(), GraphType.dashedline, "Fit");
-		XYTrace piZeroTrace=new XYTrace(new double[] {targets.get(0).x, medianDecoy}, new double[] {bestWeightedAverage, bestWeightedAverage}, GraphType.dashedline, "Pi0");
-		Charter.launchChart("LDA Score", "Ratio", true, ratioTrace, curveFit, piZeroTrace);
-		
-		try {Thread.sleep(1000000000);} catch (Exception e) {} // FIXME
+//		XYTraceInterface[] traces=new XYTraceInterface[2];
+//		traces[0]=new XYTrace(targets, GraphType.line, "Target");
+//		traces[1]=new XYTrace(scaledDecoys, GraphType.line, "Decoy*pi0");
+//		Charter.launchChart("LDA Score", "Count", true, traces);
+//
+//		XYTrace ratioTrace = new XYTrace(delta, GraphType.line, "Ratio");
+//
+//		int order=Math.max(3, Math.round(delta.size()/50f));
+//		RunningMedianWarper warper=new RunningMedianWarper(thresholdedDelta, order, true);
+//		XYTrace curveFit=new XYTrace(warper.getKnots(), GraphType.dashedline, "Fit");
+//		XYTrace piZeroTrace=new XYTrace(new double[] {targets.get(0).x, medianDecoy}, new double[] {bestWeightedAverage, bestWeightedAverage}, GraphType.dashedline, "Pi0");
+//		Charter.launchChart("LDA Score", "Ratio", true, ratioTrace, curveFit, piZeroTrace);
+//		
+//		try {Thread.sleep(1000000000);} catch (Exception e) {} // FIXME
 		
 		Pair<ArrayList<PercolatorPeptide>, Float> thisResult=new Pair<ArrayList<PercolatorPeptide>, Float>(null, null);
 		return thisResult;
