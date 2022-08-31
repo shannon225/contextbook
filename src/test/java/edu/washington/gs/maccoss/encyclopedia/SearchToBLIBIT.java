@@ -34,6 +34,10 @@ import java.nio.file.Path;
 import java.sql.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.nio.file.Paths;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.zip.DataFormatException;
 
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
@@ -212,6 +216,7 @@ public class SearchToBLIBIT {
 		);
 
 		assertValidElib(libFile);
+		assertHasQuantReports(libFile);
 	}
 
 	@Test
@@ -404,6 +409,8 @@ public class SearchToBLIBIT {
 		} finally {
 			quantLib.close();
 		}
+
+		assertHasQuantReports(quantFile);
 	}
 
 	/**
@@ -456,6 +463,8 @@ public class SearchToBLIBIT {
 		} finally {
 			quantLib.close();
 		}
+
+		assertHasQuantReports(quantFile);
 	}
 
 	@Test
@@ -533,6 +542,8 @@ public class SearchToBLIBIT {
 		} finally {
 			file.close();
 		}
+
+		// does NOT have quant reports (single file)
 	}
 
 	private static void assertValidBlib(Path blib) throws IOException {
@@ -583,6 +594,17 @@ public class SearchToBLIBIT {
 		assertArrayEquals(entry.getMassArray(), match.getMassArray(), Double.MIN_VALUE);
 		assertArrayEquals(entry.getIntensityArray(), match.getIntensityArray(), Float.MIN_VALUE);
 		assertArrayEquals(entry.getQuantifiedIonsArray(), match.getQuantifiedIonsArray());
+	}
+
+	/**
+	 * Assert that tabular peptide/protein quant files exist for the given ELIB path and appear "normal".
+	 */
+	private void assertHasQuantReports(Path libFile) {
+		final Path peps = Paths.get(libFile.toAbsolutePath().toString() + ".peptides.txt");
+		final Path prots = Paths.get(libFile.toAbsolutePath().toString() + ".proteins.txt");
+
+		assertTrue(Files.exists(peps));
+		assertTrue(Files.exists(prots));
 	}
 
 	/**
