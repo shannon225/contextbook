@@ -1493,6 +1493,8 @@ public class SearchToBLIB {
 			elib.saveAsFile(elibFile);
 
 			try {
+				//TODO: we want to produce _normalized_ results for the subset of files we're quantifying
+				// This will require computing the correct normalization constants from the _alignment_ ELIB.
 				LibraryReportExtractor.extractMatrix(elib, proteins, true);
 			} catch (DataFormatException e) {
 				Logger.errorException(e);
