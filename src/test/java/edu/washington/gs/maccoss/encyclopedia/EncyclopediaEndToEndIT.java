@@ -1,7 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
@@ -46,12 +45,28 @@ public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 
 	@BeforeClass
 	public static void buildReports() throws Exception {
-		// Run with default parameters, except for Percolator, which performs better for the test data
-		// and was previously used in this test due to an inconsistency in default definition.
-		// This will fail when running with a reference artifact version that was built with different default parameters!
-		parameters = SearchParameterParser.parseParameters(new HashMap<>(ImmutableMap.of(
-				"-percolatorVersion", "3.5"
-		)));
+		// IMPORTANT: we must run the search with the same parameters as the reference data.
+		// This can be challenging when the default parameters change! While we can hard-code
+		// certain settings, it can be hard to figure out the changes and copy them here,
+		// so instead we fetch the reference parameters directly. Note that a side effect of this
+		// will be that new versions of reference artifacts built with this code will use whatever
+		// parameters the configured reference used.
+
+		final HashMap<String, String> metadata;
+
+		final LibraryFile reference = new LibraryFile();
+		try {
+			final Path refElib = EncyclopediaTestUtils.getResourceAsTempFile(EncyclopediaEndToEndIT.class, REFERENCE_SEARCH1_RESOURCE, tempDir, "reference_", ".elib");
+			reference.openFile(refElib.toFile());
+			metadata = Maps.newHashMap(reference.getMetadata());
+		} finally {
+			reference.close();
+		}
+
+		// This must be true for most tests, regardless of what the reference did.
+		metadata.put("-quantifyAcrossSamples", "true");
+
+		parameters = SearchParameterParser.parseParameters(metadata);
 
 		libraryScoringFactory = new EncyclopediaOneScoringFactory(parameters);
 		setUpClass();
