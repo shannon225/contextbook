@@ -90,9 +90,9 @@ public class IRTdbFile extends SQLFile {
 					idCounter++;
 					prepStatement.setInt(1, idCounter); // id
 					prepStatement.setString(2, entry.getPeptideSeq()); // pepSeq
-					prepStatement.setDouble(3, entry.getScanStartTime()); // precursorMZ
-					prepStatement.setBoolean(4, isStandard); // precursorMZ
-					prepStatement.setInt(5, isStandard?1:0); // precursorCharge
+					prepStatement.setDouble(3, entry.getScanStartTime()/60f); // rt in min
+					prepStatement.setBoolean(4, isStandard);
+					prepStatement.setInt(5, isStandard?1:0);
 					prepStatement.addBatch();
 				}
 				prepStatement.executeBatch();
