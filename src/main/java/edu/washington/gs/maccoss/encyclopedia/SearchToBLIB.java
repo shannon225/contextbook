@@ -1420,8 +1420,15 @@ public class SearchToBLIB {
 				try (ResultSet rs = ps.executeQuery()) {
 					while (rs.next()) {
 						final String modSeq = rs.getString(1);
-						alignedRTInMinBySequenceMap.put(modSeq, rs.getFloat(2) / 60f); // must be converted to minutes for use by the inferrer
+
 						bestIons.put(modSeq, ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(3), rs.getInt(4))));
+
+						final float rtInSec = rs.getFloat(2);
+						if (rs.wasNull() || !Float.isFinite(rtInSec) || rtInSec < 0) { // null/nan, infinite, or negative values should not be recorded in the alignment
+							continue;
+						}
+
+						alignedRTInMinBySequenceMap.put(modSeq, rtInSec / 60f); // must be converted to minutes for use by the inferrer
 					}
 				} catch (DataFormatException e) {
 					throw new EncyclopediaException("Invalid mass encoding!", e);
