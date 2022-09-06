@@ -64,13 +64,15 @@ import edu.washington.gs.maccoss.encyclopedia.gui.framework.scribe.ScribeParamet
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.xcordia.XCorDIAParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.AboutDialog;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LogConsole;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.ProgressRenderer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.JobProcessor;
+import edu.washington.gs.maccoss.encyclopedia.jobs.SearchToBLIBJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.SearchToELIBJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
 
@@ -556,6 +558,24 @@ public class SearchPanel extends JPanel {
 		dataMenu.setMnemonic(KeyEvent.VK_D);
 		bar.add(dataMenu);
 
+		JMenuItem saveDriverItem=new JMenuItem("Save XML driver file", convertDBIcon);
+		saveDriverItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.saveDriverFile(dataMenu, getVisibleTab().getParameters(), getJobProcessor());
+			}
+		});
+		dataMenu.add(saveDriverItem);
+		
+		JMenuItem loadDriverItem=new JMenuItem("Load XML driver file", convertDBIcon);
+		loadDriverItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.loadDriverFile(dataMenu, getVisibleTab().getParameters(), getJobProcessor());
+			}
+		});
+		dataMenu.add(loadDriverItem);
+		
 		JMenuItem mzmlPreprocessorItem=new JMenuItem("Preprocess mzMLs", convertDBIcon);
 		mzmlPreprocessorItem.addActionListener(new ActionListener() {
 			@Override
@@ -573,18 +593,6 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		dataMenu.add(mzmlMergerItem);
-		
-		JMenuItem subsetDIA=new JMenuItem("Create Subset mzML", convertDBIcon);
-		subsetDIA.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.subsetDIA(SearchPanel.this, getVisibleTab().getParameters());
-			}
-		});
-		if (enableAdvancedOptions) {
-			subsetDIA.setText("HIDDEN: "+subsetDIA.getText());
-			dataMenu.add(subsetDIA);
-		}
 
 		JMenuItem elibSeperatorItem=new JMenuItem("Extract Sample-Specific Libraries from ELIB", convertDBIcon);
 		elibSeperatorItem.addActionListener(new ActionListener() {
@@ -596,6 +604,18 @@ public class SearchPanel extends JPanel {
 		if (enableAdvancedOptions) {
 			elibSeperatorItem.setText("HIDDEN: "+elibSeperatorItem.getText());
 			dataMenu.add(elibSeperatorItem);
+		}
+		
+		JMenuItem subsetDIA=new JMenuItem("Create Subset mzML", convertDBIcon);
+		subsetDIA.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.subsetDIA(SearchPanel.this, getVisibleTab().getParameters());
+			}
+		});
+		if (enableAdvancedOptions) {
+			subsetDIA.setText("HIDDEN: "+subsetDIA.getText());
+			dataMenu.add(subsetDIA);
 		}
 
 		JMenuItem toggleScoringSystemItem=new JMenuItem("Toggle EncyclopeDIA Scoring System", libraryBrowserIcon);

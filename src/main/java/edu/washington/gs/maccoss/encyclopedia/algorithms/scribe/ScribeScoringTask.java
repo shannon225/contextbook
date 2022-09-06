@@ -95,10 +95,12 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 					if (otherScores[0]>0) {
 						//float composite=xcorrs[i]; // "main" score is based on xcorr
 						//float composite=otherScores[0]; // "main" score is based on xtandem
-						float composite=otherScores[1]; // "main" score is based on sum of squared errors
+						//float composite=otherScores[1]; // "main" score is based on sum of squared errors
 						//float composite=otherScores[2]; // "main" score is based on dot product
 						//float composite=otherScores[3]; // "main" score is based on spectral angle
 						//float composite=otherScores[4]; // "main" score is based on logit
+						
+						float composite=xcorrs[i]*0.37f+otherScores[0]*0.017f+otherScores[1]*0.61f+0.61f;
 						goodHits.add(new ScoredIndex(composite, i));
 						map.put(i, composite);
 					}

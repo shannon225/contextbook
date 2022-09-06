@@ -134,7 +134,8 @@ public class BlibToLibraryConverter {
 			BlibFile blib = new BlibFile();
 			blib.openFile(blibFile);
 			if (irtFile.isPresent()) {
-				IRTdbFile irt = new IRTdbFile(irtFile.get());
+				IRTdbFile irt = new IRTdbFile();
+				irt.openFile(irtFile.get());
 				irtMap = irt.getIRTs();
 			}
 			blib.getCopyEntriesToLibrary(elib, Optional.ofNullable(irtMap), fastaFile, params);

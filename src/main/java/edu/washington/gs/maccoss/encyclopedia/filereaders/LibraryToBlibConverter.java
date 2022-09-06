@@ -33,6 +33,23 @@ public class LibraryToBlibConverter {
 			blib.createIndices();
 			blib.saveFile();
 			blib.close();
+
+			String irtFileName=blibFile.getName();
+			if (irtFileName.endsWith(BlibFile.BLIB)) {
+				irtFileName=irtFileName.substring(0, irtFileName.length()-BlibFile.BLIB.length());
+			}
+			File irtFile=new File(blibFile.getParentFile(), irtFileName+IRTdbFile.IRTDB);
+			Logger.logLine("Writing paired irtDB file [" + irtFile.getAbsolutePath() + "]...");
+			
+			IRTdbFile irt=new IRTdbFile();
+			irt.openFile();
+			irt.setUserFile(irtFile);
+			irt.dropIndices();
+			irt.addLibrary(allEntries);
+			irt.createIndices();
+			irt.saveFile();
+			irt.close();
+			
 			library.close();
 			Logger.logLine("Finished reading " + blibFile.getName());
 		} catch (IOException | SQLException | DataFormatException e) {

@@ -13,7 +13,7 @@ public class LinearDiscriminantAnalysisTest {
 	
 	
 	public static void main(String[] args) {
-		File f=new File("/Users/searleb/Documents/teaching/encyclopedia/test/23aug2017_hela_serum_timecourse_wide_1a.dia.features.txt");
+		File f=new File("/Users/searleb/Documents/damien/dda_library_search/scoring_tests/multiple_evalues/23aug2017_hela_serum_timecourse_pool_dda_001.dia.scribe.features.txt");
 //		final String[] headers = new String[] { "e2Score", "evalue", "correlationToGaussian", "correlationToPrecursor",
 //				"correlationToPlusOne", "isIntegratedSignal", "isIntegratedPrecursor", "numPeaksWithGoodCorrelation",
 //				"numPeaksWithGreatCorrelation", "primary", "xCorrLib", "xCorrModel", "LogDotProduct",
@@ -22,7 +22,10 @@ public class LinearDiscriminantAnalysisTest {
 //				"isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "deltaRT",
 //				"numMissedCleavage" };
 		
-		final String[] headers = new String[] { "e2Score", "primary" };
+		//id	Label	ScanNr	DotProduct	contrastAngle	logit	primary	xCorrLib	xCorrModel	lnInvSumOfSquaredErrors	numberOfMatchingPeaks	averageAbsFragmentDeltaMass	averageFragmentDeltaMasses	isotopeDotProduct	averageAbsParentDeltaMass	averageParentDeltaMass	percentBlankOverMono	numberPrecursorMatch	Sp	maxLadderLength	eValueXCorr	eValueTandem	eValueSumSquares	oneHotXCorr	oneHotTandem	oneHotSumSquares	numConsidered	deltaRT	numMissedCleavage	pepLength	charge1	charge2	charge3	charge4	precursorMz	precursorMass	RTinMin	sequence	Proteins
+
+		
+		final String[] headers = new String[] { "xCorrLib" , "primary", "lnInvSumOfSquaredErrors"};
 		
 //		File f=new File("/Users/searleb/Documents/teaching/encyclopedia/test/old_encyclopedia/23aug2017_hela_serum_timecourse_wide_1a.dia.features.txt");		
 //		final String[] headers = new String[] { "primary", "xCorrLib", "xCorrModel", "LogDotProduct",
@@ -40,7 +43,7 @@ public class LinearDiscriminantAnalysisTest {
 			
 			@Override
 			public void processRow(Map<String, String> row) {
-				int td=Integer.parseInt(row.get("TD"));
+				int td=Integer.parseInt(row.get("Label"));
 				
 				float[] data=new float[headers.length];
 				for (int i = 0; i < headers.length; i++) {

@@ -1,6 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -8,10 +10,15 @@ import java.util.TreeMap;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.jobs.WorkerJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.XMLDriverFactory;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.ConfigFileParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
 public class Main {
 
@@ -34,8 +41,8 @@ public class Main {
 		} else if (arguments.containsKey("-thesaurus")) {
 			Thesaurus.main(args);
 			
-		//} else if (arguments.containsKey("-scribe")) {
-		//	Scribe.main(args);
+		} else if (arguments.containsKey("-scribe")) {
+			Scribe.main(args);
 			
 		} else if (arguments.containsKey("-browser")) {
 			DIABrowser.main(args);
@@ -54,6 +61,24 @@ public class Main {
 			
 		} else if (arguments.containsKey("-xcordia")) {
 			XCorDIA.main(args);
+			
+		} else if (arguments.containsKey("-batch")) {
+			File f=new File(arguments.get("-batch"));
+			if (f.exists()&&f.canRead()) {
+				ArrayList<WorkerJob> jobs=XMLDriverFactory.readXML(f);
+				ProgressIndicator progress=new EmptyProgressIndicator(false);
+				
+				for (WorkerJob job : jobs) {
+					try {
+						job.runJob(progress);
+					} catch (Exception e) {
+						throw new EncyclopediaException("Encountered unexpected exception running "+job.getJobTitle(), e);
+					}
+				}
+				
+			} else {
+				Logger.errorLine("You are required to specify an driver XML file ("+XMLDriverFactory.DRIVER_XML_EXTENSION+")");
+			}
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("EncyclopeDIA Help");

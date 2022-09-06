@@ -39,15 +39,15 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
-import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.PecanJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
@@ -183,21 +183,20 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		return Optional.empty();
 	}
 	
-	public SwingJob getJob(File diaFile, JobProcessorTableModel model) {
+	public void getJob(File diaFile, JobProcessorTableModel model) {
 		PecanSearchParameters parameters=getParameters();
 		File fastaFile=backgroundFasta.getFile();
-		if (fastaFile==null) return null;
+		if (fastaFile==null) return;
 		File targetFile=targetFasta.getFile();
-		if (targetFile==null) return null;
-		SearchJob job=getJob(diaFile, fastaFile, targetFile, model, parameters);
+		if (targetFile==null) return;
+		SearchJob job=getJob(diaFile, fastaFile, targetFile, parameters);
 
 		if (job!=null) {
 			model.addJob(job);
 		}
-		return job;
 	}
 
-	static SearchJob getJob(File diaFile, File fastaFile, File targetFile, JobProcessor processor, PecanSearchParameters parameters) {
+	static SearchJob getJob(File diaFile, File fastaFile, File targetFile, PecanSearchParameters parameters) {
 		
 		ArrayList<FastaPeptideEntry> targets=null;
 		if (targetFile!=null&&!targetFile.equals(fastaFile)) {
@@ -213,7 +212,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		
 		PercolatorExecutionData percolatorFiles=PecanJobData.getPercolatorExecutionData(diaFile, fastaFile, parameters);
 		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, percolatorFiles.getInputTSV());
-		return new PecanJob(processor, new PecanJobData(Optional.ofNullable(targets), diaFile, fastaFile, percolatorFiles, factory));
+		return new PecanJob(new PecanJobData(Optional.ofNullable(targets), diaFile, fastaFile, percolatorFiles, factory));
 	}
 
 	public PecanSearchParameters getParameters() {

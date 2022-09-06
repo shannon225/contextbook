@@ -15,6 +15,7 @@ import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -41,6 +42,16 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaToPrositCSVParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
@@ -69,15 +80,21 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileTrimmer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.AboutDialog;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserList;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
+import edu.washington.gs.maccoss.encyclopedia.jobs.CombineELIBsAndExtractGroupSpecificLibrariesJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.JobProcessor;
+import edu.washington.gs.maccoss.encyclopedia.jobs.SearchJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.WorkerJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.XMLDriverFactory;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
 public class SearchPanelUtilities {
 	private static final ImageIcon convertDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/convertdb.png"));
@@ -320,11 +337,59 @@ public class SearchPanelUtilities {
 		dialog.setVisible(true);
 	}
 	
+	public static void saveDriverFile(Component root, final SearchParameters params, final JobProcessor processor) {
+		JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+
+		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
+		for (WorkerJob job : processor.getQueue()) {
+			if (job instanceof SearchJob) {
+				jobData.add(((SearchJob)job).getSearchData());
+			}
+		}
+		if (jobData.size()<1) {
+			JOptionPane.showMessageDialog(frame, "Please queue at least one RAW file first!");
+			
+		} else {
+			FileDialog dialog=new FileDialog(frame, "Select an XML file", FileDialog.SAVE);
+			SimpleFilenameFilter filter = new SimpleFilenameFilter(XMLDriverFactory.DRIVER_XML_EXTENSION);
+			dialog.setFilenameFilter(filter);
+			dialog.setVisible(true);
+			File[] files=dialog.getFiles();
+			if (files!=null&&files.length>0) {
+				ArrayList<WorkerJob> queue=processor.getQueue();
+				File file=files[0];
+				if (!filter.accept(file.getName())) {
+					file=new File(file.getParent(), file.getName()+XMLDriverFactory.DRIVER_XML_EXTENSION);
+				}
+
+				XMLDriverFactory.writeXML(queue, file);
+			}
+		}
+	}
+	
+	public static void loadDriverFile(Component root, final SearchParameters params, final JobProcessor processor) {
+		JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+
+		FileDialog dialog=new FileDialog(frame, "Select an XML file", FileDialog.LOAD);
+		SimpleFilenameFilter filter = new SimpleFilenameFilter(XMLDriverFactory.DRIVER_XML_EXTENSION);
+		dialog.setFilenameFilter(filter);
+		dialog.setVisible(true);
+		File[] files=dialog.getFiles();
+		if (files!=null&&files.length>0) {
+
+			ArrayList<WorkerJob> queue=XMLDriverFactory.readXML(files[0]);
+
+			for (WorkerJob job : queue) {
+				processor.addJob(job);
+			}
+		}
+	}
+	
 	public static void extractSampleSpecificDLIBs(Component root, final SearchParameters params, final JobProcessor processor) {
 		JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 
 		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
-		for (SwingJob job : processor.getQueue()) {
+		for (WorkerJob job : processor.getQueue()) {
 			if (job instanceof SearchJob) {
 				jobData.add(((SearchJob)job).getSearchData());
 			}
@@ -471,15 +536,15 @@ public class SearchPanelUtilities {
 					dialog.setVisible(false);
 					dialog.dispose();
 
-					SwingJob job=new SwingJob(processor) {
+					WorkerJob job=new WorkerJob() {
 						@Override
 						public String getJobTitle() {
 							return "Merge raw files into "+saveFile.getName();
 						}
 
 						@Override
-						public void runJob() throws Exception {
-							LibraryUtilities.mergeLibraries(getProgressIndicator(), files, saveFile, rtAlign, removeDuplicates, higherScoresAreBetter);
+						public void runJob(ProgressIndicator progress) throws Exception {
+							LibraryUtilities.mergeLibraries(progress, files, saveFile, rtAlign, removeDuplicates, higherScoresAreBetter);
 						}
 					};
 					processor.addJob(job);
@@ -569,15 +634,15 @@ public class SearchPanelUtilities {
 					dialog.setVisible(false);
 					dialog.dispose();
 					
-					SwingJob job=new SwingJob(processor) {
+					WorkerJob job=new WorkerJob() {
 						@Override
 						public String getJobTitle() {
 							return "Merge raw files into "+saveFile.getName();
 						}
 
 						@Override
-						public void runJob() throws Exception {
-							StripeFileMerger.merge(getProgressIndicator(), files.toArray(new File[files.size()]), saveFile, parameters);
+						public void runJob(ProgressIndicator progress) throws Exception {
+							StripeFileMerger.merge(progress, files.toArray(new File[files.size()]), saveFile, parameters);
 						}
 					};
 					processor.addJob(job);

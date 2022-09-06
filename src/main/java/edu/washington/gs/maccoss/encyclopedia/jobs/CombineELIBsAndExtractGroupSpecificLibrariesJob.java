@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.gui.framework;
+package edu.washington.gs.maccoss.encyclopedia.jobs;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -19,22 +19,20 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.spectrumprocessors.WindowDownsampler;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
-public class CombineELIBsAndExtractGroupSpecificLibrariesJob extends SwingJob {
+public class CombineELIBsAndExtractGroupSpecificLibrariesJob implements WorkerJob {
 	private final File saveDirectory;
 	private final Optional<File> singleInjectionExample;
 	private final SearchParameters parameters;
+	JobProcessor processor;
 
 	public CombineELIBsAndExtractGroupSpecificLibrariesJob(File saveDirectory, Optional<File> singleInjectionExample, SearchParameters parameters, JobProcessor processor) {
-		super(processor);
+		this.processor=processor;
 		this.saveDirectory=saveDirectory;
 		this.singleInjectionExample=singleInjectionExample;
 		this.parameters=parameters;
@@ -46,8 +44,7 @@ public class CombineELIBsAndExtractGroupSpecificLibrariesJob extends SwingJob {
 	}
 
 	@Override
-	public void runJob() throws Exception {
-		ProgressIndicator progress = getProgressIndicator();
+	public void runJob(ProgressIndicator progress) throws Exception {
 		// make sure saveDirectory is indeed a directory
 		if (saveDirectory.exists()) {
 			if(!saveDirectory.isDirectory()) {
@@ -73,8 +70,10 @@ public class CombineELIBsAndExtractGroupSpecificLibrariesJob extends SwingJob {
 		}
 		
 		// grab jobs from the current queue and downsample DIA data
+
 		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
-		for (SwingJob job : processor.getQueue()) {
+		ArrayList<WorkerJob> queue = processor.getQueue();
+		for (WorkerJob job : queue) {
 			if (job instanceof SearchJob) {
 				SearchJobData searchData = ((SearchJob)job).getSearchData();
 				
@@ -83,7 +82,7 @@ public class CombineELIBsAndExtractGroupSpecificLibrariesJob extends SwingJob {
 					File originalFile=searchData.getDiaFileReader().getFile();
 					File newQuantFile=new File(originalFile.getParentFile(), originalFile.getName()+".downsampled"+StripeFile.DIA_EXTENSION);
 					Logger.logLine("Downsampling "+originalFile.getName()+" to create "+newQuantFile.getName());
-					processor.processStripeFile(new EmptyProgressIndicator(), searchData.getDiaFileReader(), newQuantFile, false);
+					processor.processStripeFile(new SubProgressIndicator(progress, 0.25f/queue.size()), searchData.getDiaFileReader(), newQuantFile, false);
 					searchData=searchData.updateQuantFile(newQuantFile);
 				}
 				jobData.add(searchData);
@@ -105,12 +104,12 @@ public class CombineELIBsAndExtractGroupSpecificLibrariesJob extends SwingJob {
 		progress.update("Calculating global FDR across batch-specific libraries");
 		Logger.logLine("Calculating global FDR across batch-specific libraries");
 		File intermediateQuantLibraryFile=new File(saveDirectory, "batch_combined_quant_report.elib");
-		SearchToBLIB.convert(new SubProgressIndicator(progress, 0.33f), jobData, intermediateQuantLibraryFile, SearchToBLIB.OutputFormat.ELIB, true, quantParameters);
+		SearchToBLIB.convert(new SubProgressIndicator(progress, 0.25f), jobData, intermediateQuantLibraryFile, SearchToBLIB.OutputFormat.ELIB, true, quantParameters);
 
 		// identify bestQuant ions
 		progress.update("Calculating global transitions for quantification");
 		Logger.logLine("Calculating global transitions for quantification");
-		Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> archetypalData=EncyclopediaTwoPeakLocationInferrer.getArchetypals(new SubProgressIndicator(progress, 0.33f), jobData, parameters);
+		Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> archetypalData=EncyclopediaTwoPeakLocationInferrer.getArchetypals(new SubProgressIndicator(progress, 0.25f), jobData, parameters);
 		HashMap<String, double[]> globalTransitions=archetypalData.y;
 		int numWithAtLeastX=0;
 		int numWithAtLeastY=0;
@@ -128,6 +127,6 @@ public class CombineELIBsAndExtractGroupSpecificLibrariesJob extends SwingJob {
 		Logger.logLine("Extract individual batch libraries from global analysis");
 		LibraryFile library=new LibraryFile();
 		library.openFile(intermediateQuantLibraryFile);
-		LibraryUtilities.extractSampleSpecificLibraries(new SubProgressIndicator(progress, 0.34f), saveDirectory, Optional.of(globalTransitions), library, parameters);
+		LibraryUtilities.extractSampleSpecificLibraries(new SubProgressIndicator(progress, 0.25f), saveDirectory, Optional.of(globalTransitions), library, parameters);
 	}
 }

@@ -404,7 +404,8 @@ public class Scribe {
 	}
 
 	private static PercolatorExecutionData getPercolatorData(ScribeJobData job) {
-		return job.getPercolatorFiles().getDDAVersion();
+		// returns DDA version automatically now
+		return job.getPercolatorFiles();
 	}
 	
 	public static Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface> repercolatePeptides(ProgressIndicator progress, ScribeJobData job, StripeFileInterface stripefile, SaveResultsConsumer saveResultsConsumer, RetentionTimeAlignmentInterface filter) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {

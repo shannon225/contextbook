@@ -4,7 +4,14 @@ import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.*;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLObject;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.zip.DataFormatException;
 
-public class EncyclopediaJobData extends QuantitativeSearchJobData implements LibrarySearchJobData {
+public class EncyclopediaJobData extends QuantitativeSearchJobData implements LibrarySearchJobData, XMLObject {
 	public static final String LOG_FILE_SUFFIX=".log";
 	public static final String DECOY_PROTEIN_FILE_SUFFIX=".encyclopedia.protein_decoy.txt";
 	public static final String OUTPUT_PROTEIN_FILE_SUFFIX=".encyclopedia.protein.txt";
@@ -48,11 +55,78 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData implements Li
 	}
 
 	@Override
+	public void writeToXML(Document doc, Element parentElement) {
+		Element rootElement=doc.createElement(getClass().getSimpleName());
+		parentElement.appendChild(rootElement);
+
+		XMLUtils.writeTag(doc, rootElement, "diaFile", getDiaFile().getAbsolutePath());
+		XMLUtils.writeTag(doc, rootElement, "version", getVersion());
+		if (library instanceof LibraryFile) {
+			XMLUtils.writeTag(doc, rootElement, "library", ((LibraryFile) library).getFile().getAbsolutePath());
+		}
+
+		getPercolatorFiles().writeToXML(doc, rootElement);
+		getParameters().writeToXML(doc, rootElement);
+	}
+
+
+	public static EncyclopediaJobData readFromXML(Document doc, Element rootElement) {
+		if (!rootElement.getTagName().equals(EncyclopediaJobData.class.getSimpleName())) {
+			throw new EncyclopediaException("Unexpected XML parsing element, found ["+rootElement.getTagName()+"] when expecting ["+EncyclopediaJobData.class.getSimpleName()+"]");
+		}
+		File diaFile=null;
+		File library=null;
+		String version=null;
+		PercolatorExecutionData percolatorData=null;
+		SearchParameters readParams=null;
+
+		NodeList nodes=rootElement.getChildNodes();
+
+		// read params first
+		for (int i = 0; i < nodes.getLength(); i++) {
+			Node node = nodes.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                Element element = (Element) node;
+                if (element.getTagName().equals(SearchParameters.class.getSimpleName())) {
+                	readParams=SearchParameters.readFromXML(doc, element);
+                }
+            }
+		}
+		if (readParams==null) throw new EncyclopediaException("Found null readParams in "+rootElement.getTagName());
+
+		for (int i = 0; i < nodes.getLength(); i++) {
+			Node node = nodes.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                Element element = (Element) node;
+                if ("diaFile".equals(element.getTagName())) {
+                	diaFile=new File(element.getTextContent());
+                } else if ("library".equals(element.getTagName())) {
+                	library=new File(element.getTextContent());
+                } else if ("version".equals(element.getTagName())) {
+                	version=element.getTextContent();
+                } else if (element.getTagName().equals(PercolatorExecutionData.class.getSimpleName())) {
+                	percolatorData=PercolatorExecutionData.readFromXML(doc, element, readParams);
+                }
+            }
+		}
+
+		if (diaFile==null) throw new EncyclopediaException("Found null diaFile in "+rootElement.getTagName());
+		if (library==null) throw new EncyclopediaException("Found null library in "+rootElement.getTagName());
+		if (version==null) throw new EncyclopediaException("Found null version in "+rootElement.getTagName());
+		if (percolatorData==null) throw new EncyclopediaException("Found null percolatorData in "+rootElement.getTagName());
+
+		LibraryInterface libraryObject=BlibToLibraryConverter.getFile(library, percolatorData.getFastaFile(), readParams);
+
+		LibraryScoringFactory factory=EncyclopediaScoringFactory.getDefaultScoringFactory(readParams);
+		return new EncyclopediaJobData(diaFile,  percolatorData, readParams,  version, libraryObject, factory);
+	}
+
+	@Override
 	public SearchJobData updateQuantFile(File f) {
 		return new EncyclopediaJobData(f, getPercolatorFiles(), getParameters(), getVersion(), getLibrary(), getTaskFactory());
 	}
 
-	private static PercolatorExecutionData getPercolatorExecutionData(File referenceFileLocation, File fastaFile, SearchParameters parameters) {
+	protected static PercolatorExecutionData getPercolatorExecutionData(File referenceFileLocation, File fastaFile, SearchParameters parameters) {
 		return new PercolatorExecutionData(new File(getPrefixFromOutput(referenceFileLocation) + FEATURE_FILE_SUFFIX), fastaFile,
 				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_FILE_SUFFIX), 
 				new File(getPrefixFromOutput(referenceFileLocation) + OUTPUT_PROTEIN_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation) + DECOY_PROTEIN_FILE_SUFFIX), parameters);

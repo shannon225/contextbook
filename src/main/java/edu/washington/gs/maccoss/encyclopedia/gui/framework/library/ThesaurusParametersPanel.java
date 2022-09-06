@@ -37,14 +37,13 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
-import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.SearchJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.ThesaurusJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
@@ -193,21 +192,20 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 	 * @see edu.washington.gs.maccoss.encyclopedia.gui.pecan.ParametersPanelInterface#getJob(java.io.File, edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel)
 	 */
 	@Override
-	public SwingJob getJob(File diaFile, JobProcessorTableModel model) {
+	public void getJob(File diaFile, JobProcessorTableModel model) {
 		SearchParameters parameters=getParameters();
 		File libraryFile=libraryFileChooser.getFile();
 		File fastaFile=getBackgroundFastaFile();
-		if (libraryFile==null) return null;
-		SearchJob job=getJob(diaFile, libraryFile, fastaFile, model, parameters);
+		if (libraryFile==null) return;
+		SearchJob job=getJob(diaFile, libraryFile, fastaFile, parameters);
 
 		if (job!=null) {
 			model.addJob(job);
 		}
-		return job;
 	}
 
 	private static HashMap<File, LibraryInterface> libraries=new HashMap<File, LibraryInterface>();
-	static SearchJob getJob(File diaFile, File libraryFile, File fastaFile, JobProcessor processor, SearchParameters parameters) {
+	static SearchJob getJob(File diaFile, File libraryFile, File fastaFile, SearchParameters parameters) {
 		File outputFile=new File(diaFile.getAbsolutePath()+ThesaurusJobData.OUTPUT_FILE_SUFFIX);
 		
 		LibraryInterface library=libraries.get(libraryFile);
@@ -219,7 +217,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 		// Thesaurus only tested with V1
 		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
 		ThesaurusJobData job=new ThesaurusJobData(diaFile, library, outputFile, fastaFile, factory);
-		return new ThesaurusJob(processor, job);
+		return new ThesaurusJob(job);
 	}
 
 	public ThesaurusSearchParameters getParameters() {

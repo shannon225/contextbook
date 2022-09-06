@@ -1,20 +1,20 @@
-package edu.washington.gs.maccoss.encyclopedia.gui.framework;
+package edu.washington.gs.maccoss.encyclopedia.jobs;
 
 import java.io.File;
 import java.util.ArrayList;
 
 import edu.washington.gs.maccoss.encyclopedia.SearchToBLIB;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
-public class SearchToBLIBJob extends SwingJob {
+public class SearchToBLIBJob implements WorkerJob {
 	private final File blibFile;
 	private final boolean alignBetweenFiles;
+	JobProcessor processor;
 
 	public SearchToBLIBJob(File blibFile, boolean alignBetweenFiles, JobProcessor processor) {
-		super(processor);
+		this.processor=processor;
 		this.blibFile=blibFile;
 		this.alignBetweenFiles=alignBetweenFiles;
 	}
@@ -25,15 +25,15 @@ public class SearchToBLIBJob extends SwingJob {
 	}
 
 	@Override
-	public void runJob() throws Exception {
+	public void runJob(ProgressIndicator progress) throws Exception {
 		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
-		for (SwingJob job : processor.getQueue()) {
+		for (WorkerJob job : processor.getQueue()) {
 			if (job instanceof SearchJob) {
 				jobData.add(((SearchJob)job).getSearchData());
 			}
 		}
 
 		Logger.logLine("Found "+jobData.size()+" jobs in the queue to combine...");
-		SearchToBLIB.convert(getProgressIndicator(), jobData, blibFile, true, alignBetweenFiles);
+		SearchToBLIB.convert(progress, jobData, blibFile, true, alignBetweenFiles);
 	}
 }

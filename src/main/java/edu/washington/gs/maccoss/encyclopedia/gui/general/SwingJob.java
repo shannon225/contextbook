@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.swing.SwingWorker;
 
+import edu.washington.gs.maccoss.encyclopedia.jobs.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.ProgressMessage;
@@ -42,21 +43,15 @@ public abstract class SwingJob extends SwingWorker<Nothing, ProgressMessage> {
 		if (progress>0) { // not in error
 			progress=1.0f;
 		}
-		processor.fireJobUpdated(this);
 	}
 
 	@Override
 	protected void process(List<ProgressMessage> chunks) {
-		boolean updated=false;
 		for (ProgressMessage p : chunks) {
 			if (progress<=p.getProgress()) {
 				progress=p.getProgress();
 				message=p.getMessage();
-				updated=true;
 			}
-		}
-		if (updated) {
-			processor.fireJobUpdated(this);
 		}
 	}
 

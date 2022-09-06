@@ -7,13 +7,22 @@ import gnu.trove.set.hash.TDoubleHashSet;
 
 public class PivotTableGenerator {
 	public static ArrayList<XYPoint>[] createPivotTables(float[][] datas, boolean removeNonZero) {
+		int length=0;
+		for (int a=0; a<datas.length; a++) {
+			length+=datas[a].length;
+		}
+		
+		int binCount=(length/datas.length)/200;
+		binCount=Math.max(binCount, 50);
+		return createPivotTables(datas, removeNonZero, binCount);
+	}
+	
+	public static ArrayList<XYPoint>[] createPivotTables(float[][] datas, boolean removeNonZero, int binCount) {
 		float actualMin=Float.MAX_VALUE;
 		float actualMax=-Float.MAX_VALUE;
 		
-		int length=0;
 		for (int a=0; a<datas.length; a++) {
 			float[] data=datas[a];
-			length+=data.length;
 			for (int i=0; i<data.length; i++) {
 				if (data[i]>actualMax) {
 					actualMax=data[i];
@@ -23,9 +32,6 @@ public class PivotTableGenerator {
 				}
 			}
 		}
-		
-		int binCount=(length/datas.length)/200;
-		binCount=Math.max(binCount, 50);
 
 		@SuppressWarnings("unchecked")
 		ArrayList<XYPoint>[] traces=new ArrayList[datas.length];
