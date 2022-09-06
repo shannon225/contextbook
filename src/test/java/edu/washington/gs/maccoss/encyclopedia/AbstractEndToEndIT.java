@@ -254,6 +254,10 @@ public abstract class AbstractEndToEndIT {
 		Assume.assumeTrue("Test requires quantitative search parameters", parameters.isQuantifySameFragmentsAcrossSamples());
 
 		// First, run search with the normal single-step align-and-quant workflow as a reference comparison
+		Logger.logLine("*********************************************");
+		Logger.logLine("GENERATING REGULAR QUANT RESULTS AS REFERENCE");
+		Logger.logLine("*********************************************");
+
 		final Path standardQuantReport = Files.createTempFile(tempDir, "test_", ".elib");
 		try {
 			SearchToBLIB.convert(
@@ -268,8 +272,20 @@ public abstract class AbstractEndToEndIT {
 			Assume.assumeNoException("Unable to generate reference results", e);
 		}
 
+		Logger.logLine("*********************************************");
+		Logger.logLine("DONE WITH REGULAR QUANT RESULTS AS REFERENCE");
+		Logger.logLine("*********************************************");
+
+		Logger.logLine("*********************************************");
+		Logger.logLine("CREATING ALIGNMENT-ONLY RESULTS FOR ALL JOBS");
+		Logger.logLine("*********************************************");
+
 		// Generate the alignment-only output
 		SearchToBLIB.convert(new EmptyProgressIndicator(), jobData, tempReport, SearchToBLIB.OutputFormat.ALIB, true, parameters);
+
+		Logger.logLine("*********************************************");
+		Logger.logLine("DONE WITH ALIGNMENT-ONLY RESULTS FOR ALL JOBS");
+		Logger.logLine("*********************************************");
 
 		assertTrue("Output was created?", FileUtils.directoryContains(tempDir.toFile(), tempReport));
 
@@ -290,6 +306,10 @@ public abstract class AbstractEndToEndIT {
 			outputFile.close();
 		}
 
+		Logger.logLine("*********************************************");
+		Logger.logLine("QUANTIFYING PEPTIDES IN A SUBSET OF JOBS");
+		Logger.logLine("*********************************************");
+
 		// Now we execute the quant step for two of the three jobs: the "seed" job and a non-seed, as RT alignment
 		// differs between the two types of job.
 		final ImmutableList<QuantitativeSearchJobData> quantJobData = jobData.subList(1, 3);
@@ -301,6 +321,10 @@ public abstract class AbstractEndToEndIT {
 				tempReport,
 				quantJobData.iterator().next().getParameters()
 		);
+
+		Logger.logLine("*********************************************");
+		Logger.logLine("DONE QUANTIFYING PEPTIDES IN A SUBSET OF JOBS");
+		Logger.logLine("*********************************************");
 
 		final LibraryFile quantFile = new LibraryFile();
 		try {
