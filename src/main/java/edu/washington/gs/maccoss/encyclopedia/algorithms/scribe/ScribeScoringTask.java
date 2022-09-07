@@ -142,6 +142,7 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 				float deltaCn=(xcorr==0.0f||secondMaxXCorr==0.0f)?0.0f:(xcorr-secondMaxXCorr)/maxXCorr;
 
 				LibraryEntry entry=super.entries.get(index);
+				int chargeMatch=(msms.getCharge()==0||msms.getCharge()==entry.getPrecursorCharge())?1:0;
 					
 				float[] predictedIsotopeDistribution=getIsotopeDistribution(entry);
 				float[] auxScoreArray=scorerFunction.auxScore(entry, msms, predictedIsotopeDistribution, precursors);
@@ -150,7 +151,7 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 					//System.out.println("cut\t"+3);
 					//continue;
 				}
-				result.addPeptide(score, General.concatenate(auxScoreArray, evalue, map.size(), deltaCn), entry);
+				result.addPeptide(score, General.concatenate(auxScoreArray, evalue, map.size(), deltaCn, chargeMatch), entry);
 				
 				if (identifiedPeaks>peaksKept) {
 					// keep N+1 peaks

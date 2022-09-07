@@ -220,7 +220,7 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		return new String[] {"DotProduct", "contrastAngle", "logit", "primary", "xCorrLib", "xCorrModel", "lnInvSumOfSquaredErrors", 
 				"numberOfMatchingPeaks", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", 
 				"averageAbsParentDeltaMass", "averageParentDeltaMass", "percentBlankOverMono", "numberPrecursorMatch", "Sp", "maxLadderLength", 
-				"eValue", "numConsidered", "deltaCn"};
+				"eValue", "numConsidered", "deltaCn", "chargeMatch"};
 	}
 	
 	@Override
